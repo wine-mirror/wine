@@ -1545,6 +1545,16 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "red"), "str=%s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    str = a2bstr("fixed");
+    hres = IHTMLStyle_put_backgroundAttachment(style, str);
+    ok(hres == S_OK, "put_backgroundAttachment failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_backgroundAttachment(style, &str);
+    ok(hres == S_OK, "get_backgroundAttachment failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "fixed"), "ret = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     /* padding */
     hres = IHTMLStyle_get_padding(style, &str);
     ok(hres == S_OK, "get_padding failed: %08x\n", hres);

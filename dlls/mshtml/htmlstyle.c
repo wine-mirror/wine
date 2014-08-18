@@ -37,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR attrBackground[] =
     {'b','a','c','k','g','r','o','u','n','d',0};
+static const WCHAR attrBackgroundAttachment[] =
+    {'b','a','c','k','g','r','o','u','n','d','-','a','t','t','a','c','h','m','e','n','t',0};
 static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrBackgroundImage[] =
@@ -205,6 +207,7 @@ typedef struct {
 
 static const style_tbl_entry_t style_tbl[] = {
     {attrBackground,           DISPID_IHTMLSTYLE_BACKGROUND},
+    {attrBackgroundAttachment, DISPID_IHTMLSTYLE_BACKGROUNDATTACHMENT},
     {attrBackgroundColor,      DISPID_IHTMLSTYLE_BACKGROUNDCOLOR},
     {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
     {attrBackgroundPosition,   DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
@@ -1077,15 +1080,19 @@ static HRESULT WINAPI HTMLStyle_get_backgroundRepeat(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_backgroundAttachment(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_BACKGROUND_ATTACHMENT, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundAttachment(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_BACKGROUND_ATTACHMENT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPosition(IHTMLStyle *iface, BSTR v)
