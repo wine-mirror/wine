@@ -5940,6 +5940,7 @@ static void test_td_elem(IHTMLElement *elem)
     IHTMLTableCell *cell;
     HRESULT hres;
     LONG lval;
+    BSTR str;
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTableCell, (void**)&cell);
     ok(hres == S_OK, "Could not get IHTMLTableRow iface: %08x\n", hres);
@@ -5950,6 +5951,20 @@ static void test_td_elem(IHTMLElement *elem)
     hres = IHTMLTableCell_get_cellIndex(cell, &lval);
     ok(hres == S_OK, "get cellIndex failed: %08x\n", hres);
     ok(lval == 1, "Expected 1, got %d\n", lval);
+
+    str = a2bstr("left");
+    hres = IHTMLTableCell_put_align(cell, str);
+    ok(hres == S_OK, "put_align failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLTableCell_get_align(cell, &str);
+    ok(hres == S_OK, "get_align failed: %08x\n", hres);
+    ok(str != NULL, "str is NULL\n");
+    if (str != NULL && hres == S_OK) {
+        ok(!strcmp_wa(str, "left"), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }
 
     IHTMLTableCell_Release(cell);
 }

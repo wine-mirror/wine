@@ -128,15 +128,33 @@ static HRESULT WINAPI HTMLTableCell_get_colSpan(IHTMLTableCell *iface, LONG *p)
 static HRESULT WINAPI HTMLTableCell_put_align(IHTMLTableCell *iface, BSTR v)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&str, v);
+    nsres = nsIDOMHTMLTableCellElement_SetAlign(This->nscell, &str);
+    nsAString_Finish(&str);
+    if (NS_FAILED(nsres)) {
+        ERR("Set Align failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableCell_get_align(IHTMLTableCell *iface, BSTR *p)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&str, NULL);
+    nsres = nsIDOMHTMLTableCellElement_GetAlign(This->nscell, &str);
+
+    return return_nsstr(nsres, &str, p);
 }
 
 static HRESULT WINAPI HTMLTableCell_put_vAlign(IHTMLTableCell *iface, BSTR v)
