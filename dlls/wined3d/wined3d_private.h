@@ -1634,7 +1634,7 @@ struct wined3d_driver_info
     enum wined3d_pci_device device;
     const char *name;
     const char *description;
-    unsigned int vidmem;
+    UINT64 vram_bytes;
     DWORD version_high;
     DWORD version_low;
 };
@@ -1683,8 +1683,8 @@ struct wined3d_adapter
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     unsigned int cfg_count;
     struct wined3d_pixel_format *cfgs;
-    unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
-    unsigned int            UsedTextureRam;
+    UINT64 vram_bytes;
+    UINT64 vram_bytes_used;
     LUID luid;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -1694,7 +1694,7 @@ struct wined3d_adapter
 };
 
 BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
-unsigned int adapter_adjust_memory(struct wined3d_adapter *adapter, int amount) DECLSPEC_HIDDEN;
+UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

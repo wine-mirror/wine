@@ -409,11 +409,13 @@ fail:
 }
 
 /* Adjust the amount of used texture memory */
-unsigned int adapter_adjust_memory(struct wined3d_adapter *adapter, int amount)
+UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 {
-    adapter->UsedTextureRam += amount;
-    TRACE("Adjusted adapter memory by %d to %d.\n", amount, adapter->UsedTextureRam);
-    return adapter->UsedTextureRam;
+    adapter->vram_bytes_used += amount;
+    TRACE("Adjusted used adapter memory by 0x%s to 0x%s.\n",
+            wine_dbgstr_longlong(amount),
+            wine_dbgstr_longlong(adapter->vram_bytes_used));
+    return adapter->vram_bytes_used;
 }
 
 static void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
@@ -1498,21 +1500,21 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     if ((gpu_desc = get_gpu_description(driver_info->vendor, driver_info->device)))
     {
         driver_info->description = gpu_desc->description;
-        driver_info->vidmem = gpu_desc->vidmem * 1024 * 1024;
+        driver_info->vram_bytes = (UINT64)gpu_desc->vidmem * 1024 * 1024;
         driver = gpu_desc->driver;
     }
     else
     {
         ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
         driver_info->description = "Direct3D HAL";
-        driver_info->vidmem = WINE_DEFAULT_VIDMEM;
+        driver_info->vram_bytes = WINE_DEFAULT_VIDMEM;
         driver = DRIVER_UNKNOWN;
     }
 
     if (wined3d_settings.emulated_textureram)
     {
         TRACE("Overriding amount of video memory with %u bytes.\n", wined3d_settings.emulated_textureram);
-        driver_info->vidmem = wined3d_settings.emulated_textureram;
+        driver_info->vram_bytes = wined3d_settings.emulated_textureram;
     }
 
     /* Try to obtain driver version information for the current Windows version. This fails in
@@ -3401,7 +3403,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
     memcpy(&identifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(identifier->device_identifier));
     identifier->whql_level = (flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
     memcpy(&identifier->adapter_luid, &adapter->luid, sizeof(identifier->adapter_luid));
-    identifier->video_memory = adapter->TextureRam;
+    identifier->video_memory = min(~(SIZE_T)0, adapter->vram_bytes);
 
     return WINED3D_OK;
 }
@@ -5104,9 +5106,9 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         return FALSE;
     }
 
-    adapter->TextureRam = adapter->driver_info.vidmem;
-    adapter->UsedTextureRam = 0;
-    TRACE("Emulating %u MB of texture ram.\n", adapter->TextureRam / (1024 * 1024));
+    adapter->vram_bytes = adapter->driver_info.vram_bytes;
+    adapter->vram_bytes_used = 0;
+    TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->vram_bytes));
 
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
@@ -5132,9 +5134,9 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
     adapter->driver_info.name = "Display";
     adapter->driver_info.description = "WineD3D DirectDraw Emulation";
     if (wined3d_settings.emulated_textureram)
-        adapter->TextureRam = wined3d_settings.emulated_textureram;
+        adapter->vram_bytes = wined3d_settings.emulated_textureram;
     else
-        adapter->TextureRam = 128 * 1024 * 1024;
+        adapter->vram_bytes = 128 * 1024 * 1024;
 
     initPixelFormatsNoGL(&adapter->gl_info);
 
