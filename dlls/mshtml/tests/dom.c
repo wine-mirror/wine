@@ -3362,6 +3362,20 @@ static void _test_input_get_size(unsigned line, IHTMLInputElement *input, LONG e
     ok_(__FILE__,line) (hres == E_INVALIDARG, "Expect ret E_INVALIDARG, got: %08x\n", hres);
 }
 
+#define test_input_readOnly(u,b) _test_input_readOnly(__LINE__,u,b)
+static void _test_input_readOnly(unsigned line, IHTMLInputElement *input, VARIANT_BOOL v)
+{
+    HRESULT hres;
+    VARIANT_BOOL b = 100;
+
+    hres = IHTMLInputElement_put_readOnly(input, v);
+    ok_(__FILE__,line)(hres == S_OK, "put readOnly failed: %08x\n", hres);
+
+    hres = IHTMLInputElement_get_readOnly(input, &b);
+    ok_(__FILE__,line)(hres == S_OK, "get readOnly failed: %08x\n", hres);
+    ok_(__FILE__,line)(v == b, "Expect %x, got %x\n", v, b);
+}
+
 #define test_elem_class(u,c) _test_elem_class(__LINE__,u,c)
 static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
 {
@@ -7011,6 +7025,9 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_size(input, 15);
         test_input_set_size(input, 0, CTL_E_INVALIDPROPERTYVALUE);
         test_input_get_size(input, 15);
+
+        test_input_readOnly(input, VARIANT_TRUE);
+        test_input_readOnly(input, VARIANT_FALSE);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);
