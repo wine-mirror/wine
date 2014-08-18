@@ -6913,6 +6913,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_contains(elem, elem3, VARIANT_FALSE);
         test_elem_contains(elem, elem2, VARIANT_FALSE);
         test_elem_contains(elem, elem, VARIANT_TRUE);
+        test_elem_contains(elem, NULL, VARIANT_FALSE);
         IHTMLElement_Release(elem2);
 
         elem2 = test_elem_get_parent((IUnknown*)elem3);

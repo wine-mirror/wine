@@ -882,22 +882,22 @@ static HRESULT WINAPI HTMLElement_contains(IHTMLElement *iface, IHTMLElement *pC
                                            VARIANT_BOOL *pfResult)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    HTMLElement *child;
-    cpp_bool result;
-    nsresult nsres;
+    cpp_bool result = FALSE;
 
     TRACE("(%p)->(%p %p)\n", This, pChild, pfResult);
 
-    child = unsafe_impl_from_IHTMLElement(pChild);
-    if(!child) {
-        ERR("not our element\n");
-        return E_FAIL;
-    }
+    if(pChild) {
+        HTMLElement *child;
+        nsresult nsres;
 
-    nsres = nsIDOMNode_Contains(This->node.nsnode, child->node.nsnode, &result);
-    if(NS_FAILED(nsres)) {
-        ERR("failed\n");
-        return E_FAIL;
+        child = unsafe_impl_from_IHTMLElement(pChild);
+        if(!child) {
+            ERR("not our element\n");
+            return E_FAIL;
+        }
+
+        nsres = nsIDOMNode_Contains(This->node.nsnode, child->node.nsnode, &result);
+        assert(nsres == NS_OK);
     }
 
     *pfResult = result ? VARIANT_TRUE : VARIANT_FALSE;
