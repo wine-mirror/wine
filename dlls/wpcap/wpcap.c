@@ -134,6 +134,12 @@ const char* CDECL wine_pcap_lib_version(void)
     return ret;
 }
 
+int CDECL wine_pcap_list_datalinks(pcap_t *p, int **dlt_buffer)
+{
+    TRACE("(%p %p)\n", p, dlt_buffer);
+    return pcap_list_datalinks(p, dlt_buffer);
+}
+
 char* CDECL wine_pcap_lookupdev(char *errbuf)
 {
     TRACE("(%p)\n", errbuf);

@@ -34,7 +34,7 @@
 @ stub pcap_getnonblock
 @ stub pcap_is_swapped
 @ cdecl pcap_lib_version() wine_pcap_lib_version
-@ stub pcap_list_datalinks
+@ cdecl pcap_list_datalinks(ptr ptr) wine_pcap_list_datalinks
 @ stub pcap_live_dump
 @ stub pcap_live_dump_ended
 @ cdecl pcap_lookupdev(ptr) wine_pcap_lookupdev
