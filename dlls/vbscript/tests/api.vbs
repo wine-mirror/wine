@@ -1207,4 +1207,34 @@ Call ok(getVT(Exp(True)) = "VT_R8", "getVT(Exp(True)) = " & getVT(Exp(True)))
 Call ok(Approch(Exp(CByte(2)), 7.389), "Exp(CByte(2)) = " & Exp(CByte(2)))
 Call ok(getVT(Exp(CByte(2))) = "VT_R8", "getVT(Exp(CByte(2))) = " & getVT(Exp(CByte(2))))
 
+Sub testLogError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = Log(strings)
+    Call ok(Err.number = error_num1, "Err.number1 = " & Err.number)
+
+    Call Err.clear()
+    Call Log(strings)
+    Call ok(Err.number = error_num2, "Err.number2 = " & Err.number)
+End Sub
+
+Call testLogError(0, 5, 5)
+Call testLogError(-2, 5, 5)
+Call testLogError(False, 5, 5)
+Call testLogError(True, 5, 5)
+Call ok(Approch(Log(1), 0), "Log(1) = " & Log(1))
+Call ok(getVT(Log(1)) = "VT_R8", "getVT(Log(1)) = " & getVT(Log(1)))
+Call ok(Approch(Log(CCur(0.5)), -0.6931), "Log(CCur(0.5)) = " & Log(CCur(0.5)))
+Call ok(getVT(Log(CCur(0.5))) = "VT_R8", "getVT(Log(CCur(0.5))) = " & getVT(Log(CCur(0.5))))
+Call ok(Approch(Log(CSng(2.7182)), 1), "Log(CSng(2.7182)) = " & Log(CSng(2.7182)))
+Call ok(getVT(Log(CSng(2.7182))) = "VT_R8", "getVT(Log(CSng(PI))) = " & getVT(Log(CSng(PI))))
+Call ok(Approch(Log(32768), 10.3972), "Log(32768) = " & Log(32768))
+Call ok(getVT(Log(32768)) = "VT_R8", "getVT(Log(32768)) = " & getVT(Log(32768)))
+Call ok(Approch(Log("10"), 2.3025), "Log(""10"") = " & Log("10"))
+Call ok(getVT(Log("10")) = "VT_R8", "getVT(Log(""10"")) = " & getVT(Log("10")))
+Call ok(Approch(Log(CByte(2)), 0.6931), "Log(CByte(2)) = " & Log(CByte(2)))
+Call ok(getVT(Log(CByte(2))) = "VT_R8", "getVT(Log(CByte(2))) = " & getVT(Log(CByte(2))))
+
 Call reportSuccess()
