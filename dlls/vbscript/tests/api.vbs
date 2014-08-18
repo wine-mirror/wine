@@ -1078,4 +1078,41 @@ Call ok(getVT(Sqr(False)) = "VT_R8", "getVT(Sqr(False)) = " & getVT(Sqr(False)))
 Call ok(Sqr(CByte(225)) = 15, "Sqr(CByte(225)) = " & Sqr(CByte(225)))
 Call ok(getVT(Sqr(CByte(225))) = "VT_R8", "getVT(Sqr(CByte(225))) = " & getVT(Sqr(CByte(225))))
 
+Function Approch(func, res)
+    If Abs(func - res) < 0.001 Then
+        Approch = True
+    Else
+        Approch = False
+    End If
+End Function
+
+Const PI = 3.1415926
+
+Call ok(Approch(Cos(Empty), 1), "Cos(Empty) = " & Cos(Empty))
+Call ok(getVT(Cos(Empty)) = "VT_R8", "getVT(Cos(Empty)) = " & getVT(Cos(Empty)))
+Call ok(Approch(Cos(PI / 6), Sqr(3) / 2), "Cos(PI / 6) = " & Cos(PI / 6))
+Call ok(getVT(Cos(PI / 6)) = "VT_R8", "getVT(Cos(PI / 6)) = " & getVT(Cos(PI / 6)))
+Call ok(Approch(Cos(CCur(PI / 4)), Sqr(2) / 2), "Cos(CCur(PI / 4)) = " & Cos(CCur(PI / 4)))
+Call ok(getVT(Cos(CCur(PI / 4))) = "VT_R8", "getVT(Cos(CCur(PI / 4))) = " & getVT(Cos(CCur(PI / 4))))
+Call ok(Approch(Cos(CSng(PI / 3)), 1 / 2), "Cos(CSng(PI / 3)) = " & Cos(CSng(PI / 3)))
+Call ok(getVT(Cos(CSng(PI / 3))) = "VT_R8", "getVT(Cos(CSng(PI))) = " & getVT(Cos(CSng(PI))))
+Call ok(Approch(Cos(PI / 2), 0), "Cos(0) = " & Cos(PI / 2))
+Call ok(getVT(Cos(PI / 2)) = "VT_R8", "getVT(Cos(PI / 2)) = " & getVT(Cos(PI / 2)))
+Call ok(Approch(Cos(PI), -1), "Cos(PI) = " & Cos(PI))
+Call ok(getVT(Cos(PI)) = "VT_R8", "getVT(Cos(PI)) = " & getVT(Cos(PI)))
+Call ok(Approch(Cos(5 * PI / 4), -Sqr(2) / 2), "Cos(5 * PI / 4) = " & Cos(5 * PI / 4))
+Call ok(getVT(Cos(5 * PI / 4)) = "VT_R8", "getVT(Cos(5 * PI / 4)) = " & getVT(Cos(5 * PI / 4)))
+Call ok(Approch(Cos(3 * PI / 2), 0), "Cos(3 * PI / 2) = " & Cos(3 * PI / 2))
+Call ok(getVT(Cos(3 * PI / 2)) = "VT_R8", "getVT(Cos(3 * PI / 2)) = " & getVT(Cos(3 * PI / 2)))
+Call ok(Approch(Cos(2 * PI), 1), "Cos(2 * PI) = " & Cos(2 * PI))
+Call ok(getVT(Cos(2 * PI)) = "VT_R8", "getVT(Cos(2 * PI)) = " & getVT(Cos(2 * PI)))
+Call ok(Approch(Cos("-32768"), 0.3729), "Cos(""-32768"") = " & Cos("-32768"))
+Call ok(getVT(Cos("-32768")) = "VT_R8", "getVT(Cos(""-32768"")) = " & getVT(Cos("-32768")))
+Call ok(Approch(Cos(False), 1), "Cos(False) = " & Cos(False))
+Call ok(getVT(Cos(False)) = "VT_R8", "getVT(Cos(False)) = " & getVT(Cos(False)))
+Call ok(Approch(Cos(True), 0.5403), "Cos(True) = " & Cos(True))
+Call ok(getVT(Cos(True)) = "VT_R8", "getVT(Cos(True)) = " & getVT(Cos(True)))
+Call ok(Approch(Cos(CByte(255)), -0.8623), "Cos(CByte(255)) = " & Cos(CByte(255)))
+Call ok(getVT(Cos(CByte(255))) = "VT_R8", "getVT(Cos(CByte(255))) = " & getVT(Cos(CByte(255))))
+
 Call reportSuccess()

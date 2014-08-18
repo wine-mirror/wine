@@ -669,8 +669,14 @@ static HRESULT Global_Ant(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Cos(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    double d;
+
+    hres = to_double(arg, &d);
+    if(FAILED(hres))
+        return hres;
+
+    return return_double(res, cos(d));
 }
 
 static HRESULT Global_Sin(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
