@@ -208,6 +208,12 @@ const unsigned char* CDECL wine_pcap_next(pcap_t *p, struct pcap_pkthdr *h)
     return pcap_next(p, h);
 }
 
+int CDECL wine_pcap_next_ex(pcap_t *p, struct pcap_pkthdr **pkt_header, const unsigned char **pkt_data)
+{
+    TRACE("(%p %p %p)\n", p, pkt_header, pkt_data);
+    return pcap_next_ex(p, pkt_header, pkt_data);
+}
+
 #define PCAP_OPENFLAG_PROMISCUOUS 1
 
 pcap_t* CDECL wine_pcap_open(const char *source, int snaplen, int flags, int read_timeout,

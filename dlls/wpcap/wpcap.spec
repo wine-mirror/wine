@@ -44,7 +44,7 @@
 @ cdecl pcap_minor_version(ptr) wine_pcap_minor_version
 @ cdecl pcap_next(ptr ptr) wine_pcap_next
 @ stub pcap_next_etherent
-@ stub pcap_next_ex
+@ cdecl pcap_next_ex(ptr ptr ptr) wine_pcap_next_ex
 @ stub pcap_offline_filter
 @ stub pcap_offline_read
 @ cdecl pcap_open(str long long long ptr ptr) wine_pcap_open
