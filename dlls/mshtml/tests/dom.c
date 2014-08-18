@@ -5080,6 +5080,25 @@ static void _test_language_string(unsigned line, const WCHAR *lang, LCID lcid)
     }
 }
 
+#define test_table_length(t,l)  _test_table_length(__LINE__,t,l)
+static void _test_table_length(unsigned line, IHTMLTable *table, LONG expect)
+{
+    IHTMLElementCollection *col;
+    HRESULT hres;
+    LONG len;
+
+    hres = IHTMLTable_get_rows(table, &col);
+    ok_(__FILE__,line)(hres == S_OK, "get_rows failed: %08x\n", hres);
+    ok_(__FILE__,line)(col != NULL, "col = NULL\n");
+    if (hres != S_OK || col == NULL)
+        return;
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok_(__FILE__,line)(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok_(__FILE__,line)(len == expect, "Expect %d, got %d\n", expect, len);
+
+    IHTMLElementCollection_Release(col);
+}
+
 static void test_navigator(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
@@ -5990,6 +6009,40 @@ static void _test_table_cell_spacing(unsigned line, IHTMLTable *table, const cha
     VariantClear(&v);
 }
 
+static void test_table_modify(IHTMLTable *table)
+{
+    IDispatch *disp;
+    IHTMLTableRow *row;
+    HRESULT hres;
+    LONG index;
+
+    test_table_length(table, 2);
+
+    hres = IHTMLTable_insertRow(table, 0, &disp);
+    ok(hres == S_OK, "insertRow failed: %08x\n", hres);
+    ok(disp != NULL, "disp == NULL\n");
+    test_table_length(table, 3);
+    if (hres != S_OK || disp == NULL)
+        return;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLTableRow, (void**)&row);
+    IDispatch_Release(disp);
+
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
+    ok(row != NULL, "row == NULL\n");
+
+    index = 0xdeadbeef;
+    hres = IHTMLTableRow_get_rowIndex(row, &index);
+    ok(hres == S_OK, "get_rowIndex failed: %08x\n", hres);
+    ok(index == 0, "index = %d, expected 0\n", index);
+
+    IHTMLTableRow_Release(row);
+
+    hres = IHTMLTable_deleteRow(table, 0);
+    ok(hres == S_OK, "deleteRow failed: %08x\n", hres);
+    test_table_length(table, 2);
+}
+
 static void test_table_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
@@ -6151,6 +6204,8 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_width = %08x\n", hres);
     ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    test_table_modify(table);
 
     bstr = a2bstr("summary");
     hres = IHTMLTable3_put_summary(table3, bstr);

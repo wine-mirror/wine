@@ -622,15 +622,41 @@ static HRESULT WINAPI HTMLTable_deleteCaption(IHTMLTable *iface)
 static HRESULT WINAPI HTMLTable_insertRow(IHTMLTable *iface, LONG index, IDispatch **row)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%d %p)\n", This, index, row);
-    return E_NOTIMPL;
+    nsIDOMHTMLElement *nselem;
+    HTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %p)\n", This, index, row);
+    nsres = nsIDOMHTMLTableElement_InsertRow(This->nstable, index, &nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Insert Row at %d failed: %08x\n", index, nsres);
+        return E_FAIL;
+    }
+
+    hres = HTMLTableRow_Create(This->element.node.doc, nselem, &elem);
+    nsIDOMHTMLElement_Release(nselem);
+    if (FAILED(hres)) {
+        ERR("Create TableRow failed: %08x\n", hres);
+        return hres;
+    }
+
+    *row = (IDispatch *)&elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_deleteRow(IHTMLTable *iface, LONG index)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%d)\n", This, index);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, index);
+    nsres = nsIDOMHTMLTableElement_DeleteRow(This->nstable, index);
+    if(NS_FAILED(nsres)) {
+        ERR("Delete Row failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_readyState(IHTMLTable *iface, BSTR *p)
