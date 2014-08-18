@@ -661,10 +661,16 @@ static HRESULT Global_IsObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
     return S_OK;
 }
 
-static HRESULT Global_Ant(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Atn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    double d;
+
+    hres = to_double(arg, &d);
+    if(FAILED(hres))
+        return hres;
+
+    return return_double(res, atan(d));
 }
 
 static HRESULT Global_Cos(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -2027,7 +2033,7 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_ISNUMERIC,                 Global_IsNumeric, 0, 1},
     {DISPID_GLOBAL_ISARRAY,                   Global_IsArray, 0, 1},
     {DISPID_GLOBAL_ISOBJECT,                  Global_IsObject, 0, 1},
-    {DISPID_GLOBAL_ATN,                       Global_Ant, 0, 1},
+    {DISPID_GLOBAL_ATN,                       Global_Atn, 0, 1},
     {DISPID_GLOBAL_COS,                       Global_Cos, 0, 1},
     {DISPID_GLOBAL_SIN,                       Global_Sin, 0, 1},
     {DISPID_GLOBAL_TAN,                       Global_Tan, 0, 1},
