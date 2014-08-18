@@ -20,6 +20,7 @@
 #define __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H
 
 #include <assert.h>
+#include <limits.h>
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION

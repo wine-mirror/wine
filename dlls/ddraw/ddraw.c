@@ -1926,7 +1926,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         struct wined3d_adapter_identifier desc = {0};
 
         hr = wined3d_get_adapter_identifier(ddraw->wined3d, WINED3DADAPTER_DEFAULT, 0, &desc);
-        *total = desc.video_memory;
+        *total = min(UINT_MAX, desc.video_memory);
     }
 
     wined3d_mutex_unlock();
