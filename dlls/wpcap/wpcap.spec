@@ -12,7 +12,7 @@
 @ stub pcap_compile_nopcap
 @ stub pcap_createsrcstr
 @ cdecl pcap_datalink(ptr) wine_pcap_datalink
-@ stub pcap_datalink_name_to_val
+@ cdecl pcap_datalink_name_to_val(str) wine_pcap_datalink_name_to_val
 @ stub pcap_datalink_val_to_description
 @ cdecl pcap_datalink_val_to_name(long) wine_pcap_datalink_val_to_name
 @ cdecl pcap_dispatch(ptr long ptr ptr) wine_pcap_dispatch
