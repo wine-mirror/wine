@@ -45,6 +45,12 @@ int CDECL wine_pcap_datalink(pcap_t *p)
     return pcap_datalink(p);
 }
 
+const char* CDECL wine_pcap_datalink_val_to_name(int dlt)
+{
+    TRACE("(%i)\n", dlt);
+    return pcap_datalink_val_to_name(dlt);
+}
+
 typedef struct
 {
     void (CALLBACK *pfn_cb)(u_char *, const struct pcap_pkthdr *, const u_char *);
