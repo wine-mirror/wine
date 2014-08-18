@@ -232,6 +232,12 @@ pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, 
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
 }
 
+int CDECL wine_pcap_sendpacket(pcap_t *p, const unsigned char *buf, int size)
+{
+    TRACE("(%p %p %i)\n", p, buf, size);
+    return pcap_sendpacket(p, buf, size);
+}
+
 int CDECL wine_pcap_set_datalink(pcap_t *p, int dlt)
 {
     TRACE("(%p %i)\n", p, dlt);

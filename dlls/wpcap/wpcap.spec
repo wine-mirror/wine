@@ -58,7 +58,7 @@
 @ stub pcap_remoteact_cleanup
 @ stub pcap_remoteact_close
 @ stub pcap_remoteact_list
-@ stub pcap_sendpacket
+@ cdecl pcap_sendpacket(ptr ptr long) wine_pcap_sendpacket
 @ stub pcap_sendqueue_alloc
 @ stub pcap_sendqueue_destroy
 @ stub pcap_sendqueue_queue
