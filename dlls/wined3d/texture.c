@@ -734,8 +734,8 @@ static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
     surface_prepare_map_memory(surface);
-    surface_load_location(surface, surface->map_binding);
-    surface_invalidate_location(surface, ~surface->map_binding);
+    surface_load_location(surface, surface->resource.map_binding);
+    surface_invalidate_location(surface, ~surface->resource.map_binding);
 }
 
 static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource)

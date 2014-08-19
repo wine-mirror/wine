@@ -2037,6 +2037,7 @@ struct wined3d_resource
     enum wined3d_pool pool;
     DWORD access_flags;
     DWORD draw_binding;
+    DWORD map_binding;
     UINT width;
     UINT height;
     UINT depth;
@@ -2233,7 +2234,6 @@ struct wined3d_surface
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_texture *container;
     struct wined3d_swapchain *swapchain;
-    DWORD map_binding;
     void *user_memory;
     DWORD locations;
 
