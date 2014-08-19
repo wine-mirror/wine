@@ -1590,7 +1590,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->current_rt = target;
     ret->tid = GetCurrentThreadId();
 
-    ret->render_offscreen = surface_is_offscreen(target);
+    ret->render_offscreen = wined3d_resource_is_offscreen(&target->resource);
     ret->draw_buffers_mask = context_generate_rt_mask(GL_BACK);
     ret->valid = 1;
 
@@ -2316,7 +2316,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         {
             context_validate_onscreen_formats(context, fb->depth_stencil);
 
-            if (!rt_count || surface_is_offscreen(rts[0]))
+            if (!rt_count || wined3d_resource_is_offscreen(&rts[0]->resource))
             {
                 for (i = 0; i < rt_count; ++i)
                 {
@@ -2349,7 +2349,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         }
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && (!rt_count || surface_is_offscreen(rts[0])))
+            && (!rt_count || wined3d_resource_is_offscreen(&rts[0]->resource)))
     {
         for (i = 0; i < rt_count; ++i)
         {
@@ -3030,7 +3030,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
 
-    render_offscreen = surface_is_offscreen(target);
+    render_offscreen = wined3d_resource_is_offscreen(&target->resource);
     if (context->current_rt == target && render_offscreen == old_render_offscreen) return;
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
