@@ -1350,7 +1350,7 @@ INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
 HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DATE *pDateOut)
 {
   UDATE ud;
-  double dateVal, dateSign;
+  double dateVal = 0;
 
   TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08x,0x%08x,%p)\n", pUdateIn,
         pUdateIn->st.wMonth, pUdateIn->st.wDay, pUdateIn->st.wYear,
@@ -1360,6 +1360,8 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
 
   if (lcid != MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT))
     FIXME("lcid possibly not handled, treating as en-us\n");
+  if (dwFlags & ~(VAR_TIMEVALUEONLY|VAR_DATEVALUEONLY))
+    FIXME("unsupported flags: %x\n", dwFlags);
 
   ud = *pUdateIn;
 
@@ -1370,15 +1372,18 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
     return E_INVALIDARG;
 
   /* Date */
-  dateVal = VARIANT_DateFromJulian(VARIANT_JulianFromDMY(ud.st.wYear, ud.st.wMonth, ud.st.wDay));
+  if (!(dwFlags & VAR_TIMEVALUEONLY))
+    dateVal = VARIANT_DateFromJulian(VARIANT_JulianFromDMY(ud.st.wYear, ud.st.wMonth, ud.st.wDay));
 
-  /* Sign */
-  dateSign = (dateVal < 0.0) ? -1.0 : 1.0;
+  if ((dwFlags & VAR_TIMEVALUEONLY) || !(dwFlags & VAR_DATEVALUEONLY))
+  {
+    double dateSign = (dateVal < 0.0) ? -1.0 : 1.0;
 
-  /* Time */
-  dateVal += ud.st.wHour / 24.0 * dateSign;
-  dateVal += ud.st.wMinute / 1440.0 * dateSign;
-  dateVal += ud.st.wSecond / 86400.0 * dateSign;
+    /* Time */
+    dateVal += ud.st.wHour / 24.0 * dateSign;
+    dateVal += ud.st.wMinute / 1440.0 * dateSign;
+    dateVal += ud.st.wSecond / 86400.0 * dateSign;
+  }
 
   TRACE("Returning %g\n", dateVal);
   *pDateOut = dateVal;

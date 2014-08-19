@@ -1934,6 +1934,12 @@ static void test_VarDateFromUdate(void)
   /* for DATE values 0.0 < x < 1.0, x and -x represent the same datetime */
   /* but when converting to DATE, prefer the positive versions */
   UD2T(30,12,1899,6,0,0,0,6,364,0,S_OK,0.25);
+
+  UD2T(1,1,1980,18,1,16,0,2,1,VAR_TIMEVALUEONLY,S_OK,0.7508796296296296);
+  UD2T(1,1,1980,18,1,16,0,2,1,VAR_DATEVALUEONLY,S_OK,29221.0);
+  UD2T(25,12,1899,6,0,0,0,1,359,VAR_TIMEVALUEONLY,S_OK,0.25);
+  UD2T(25,12,1899,6,0,0,0,1,359,VAR_DATEVALUEONLY,S_OK,-5.0);
+  UD2T(1,-1,1980,18,1,16,0,0,0,VAR_TIMEVALUEONLY|VAR_DATEVALUEONLY,S_OK,0.7508796296296296);
 }
 
 static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
