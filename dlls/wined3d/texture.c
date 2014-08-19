@@ -742,8 +742,7 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 {
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
-    surface_set_container(surface, NULL);
-    wined3d_surface_decref(surface);
+    wined3d_surface_destroy(surface);
 }
 
 static const struct wined3d_texture_ops texture2d_ops =

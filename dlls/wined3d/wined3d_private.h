@@ -2303,7 +2303,6 @@ void surface_prepare_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
-void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
@@ -2313,6 +2312,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 void surface_validate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         GLenum target, GLint level, DWORD flags, struct wined3d_surface **surface) DECLSPEC_HIDDEN;
+void wined3d_surface_destroy(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_prepare_map_memory(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,

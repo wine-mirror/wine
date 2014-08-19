@@ -103,6 +103,15 @@ static void surface_cleanup(struct wined3d_surface *surface)
     resource_cleanup(&surface->resource);
 }
 
+void wined3d_surface_destroy(struct wined3d_surface *surface)
+{
+    TRACE("surface %p.\n", surface);
+
+    surface_cleanup(surface);
+    surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
+    HeapFree(GetProcessHeap(), 0, surface);
+}
+
 void surface_update_draw_binding(struct wined3d_surface *surface)
 {
     if (!surface_is_offscreen(surface) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
@@ -148,14 +157,6 @@ void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapc
     TRACE("surface %p, swapchain %p.\n", surface, swapchain);
 
     surface->swapchain = swapchain;
-    surface_update_draw_binding(surface);
-}
-
-void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container)
-{
-    TRACE("surface %p, container %p.\n", surface, container);
-
-    surface->container = container;
     surface_update_draw_binding(surface);
 }
 
@@ -2135,49 +2136,24 @@ static inline unsigned short float_32_to_16(const float *in)
 
 ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
 {
-    ULONG refcount;
-
     TRACE("surface %p, swapchain %p, container %p.\n",
             surface, surface->swapchain, surface->container);
 
     if (surface->swapchain)
         return wined3d_swapchain_incref(surface->swapchain);
 
-    if (surface->container)
-        return wined3d_texture_incref(surface->container);
-
-    refcount = InterlockedIncrement(&surface->resource.ref);
-    TRACE("%p increasing refcount to %u.\n", surface, refcount);
-
-    return refcount;
+    return wined3d_texture_incref(surface->container);
 }
 
 ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 {
-    ULONG refcount;
-
     TRACE("surface %p, swapchain %p, container %p.\n",
             surface, surface->swapchain, surface->container);
 
     if (surface->swapchain)
         return wined3d_swapchain_decref(surface->swapchain);
 
-    if (surface->container)
-        return wined3d_texture_decref(surface->container);
-
-    refcount = InterlockedDecrement(&surface->resource.ref);
-    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
-
-    if (!refcount)
-    {
-        surface_cleanup(surface);
-        surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
-
-        TRACE("Destroyed surface %p.\n", surface);
-        HeapFree(GetProcessHeap(), 0, surface);
-    }
-
-    return refcount;
+    return wined3d_texture_decref(surface->container);
 }
 
 void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
@@ -6016,7 +5992,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         return hr;
     }
 
-    surface_set_container(surface, container);
+    surface->container = container;
+    surface_update_draw_binding(surface);
     surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);
@@ -6036,11 +6013,9 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     surface->texture_level = level;
 
     /* Call the private setup routine */
-    hr = surface->surface_ops->surface_private_setup(surface);
-    if (FAILED(hr))
+    if (FAILED(hr = surface->surface_ops->surface_private_setup(surface)))
     {
-        ERR("Private setup failed, returning %#x\n", hr);
-        surface_set_container(surface, NULL);
+        ERR("Private setup failed, hr %#x.\n", hr);
         surface_cleanup(surface);
         return hr;
     }
@@ -6091,8 +6066,7 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
             wined3d_texture_get_parent(container), object, &parent, &parent_ops)))
     {
         WARN("Failed to create surface parent, hr %#x.\n", hr);
-        surface_set_container(object, NULL);
-        wined3d_surface_decref(object);
+        wined3d_surface_destroy(object);
         return hr;
     }
 
