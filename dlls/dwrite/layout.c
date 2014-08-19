@@ -239,20 +239,20 @@ static void free_layout_range(struct layout_range *range)
     heap_free(range);
 }
 
-static void free_layout_ranges_list(struct list *ranges)
+static void free_layout_ranges_list(struct dwrite_textlayout *layout)
 {
     struct layout_range *cur, *cur2;
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range, entry) {
         list_remove(&cur->entry);
         free_layout_range(cur);
     }
 }
 
-static struct layout_range *find_outer_range(struct list *ranges, const DWRITE_TEXT_RANGE *range)
+static struct layout_range *find_outer_range(struct dwrite_textlayout *layout, const DWRITE_TEXT_RANGE *range)
 {
     struct layout_range *cur;
 
-    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
 
         if (cur->range.startPosition > range->startPosition)
             return NULL;
@@ -267,11 +267,11 @@ static struct layout_range *find_outer_range(struct list *ranges, const DWRITE_T
     return NULL;
 }
 
-static struct layout_range *get_layout_range_by_pos(struct list *ranges, UINT32 pos)
+static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos)
 {
     struct layout_range *cur;
 
-    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
         DWRITE_TEXT_RANGE *r = &cur->range;
         if (r->startPosition <= pos && pos < r->startPosition + r->length)
             return cur;
@@ -339,7 +339,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     DWRITE_TEXT_RANGE r;
 
     /* If new range is completely within existing range, split existing range in two */
-    if ((outer = find_outer_range(ranges, &value->range))) {
+    if ((outer = find_outer_range(layout, &value->range))) {
 
         /* no need to add same range */
         if (is_same_layout_attrvalue(outer, attr, value))
@@ -401,7 +401,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
 
     /* Now it's only possible that given range contains some existing ranges, fully or partially.
        Update all of them. */
-    left = get_layout_range_by_pos(ranges, value->range.startPosition);
+    left = get_layout_range_by_pos(layout, value->range.startPosition);
     if (left->range.startPosition == value->range.startPosition)
         changed = set_layout_range_attrval(left, attr, value);
     else /* need to split */ {
@@ -490,7 +490,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
-        free_layout_ranges_list(&This->ranges);
+        free_layout_ranges_list(This);
         release_format_data(&This->format);
         heap_free(This->str);
         heap_free(This);
@@ -900,7 +900,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontWeight(IDWriteTextLayout *i
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *weight = range->weight;
     if (r) *r = range->range;
 
@@ -918,7 +918,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout *if
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *style = range->style;
     if (r) *r = range->range;
 
@@ -952,7 +952,7 @@ static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout *iface,
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *underline = range->underline;
     if (r) *r = range->range;
 
@@ -970,7 +970,7 @@ static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout *iface
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *strikethrough = range->strikethrough;
     if (r) *r = range->range;
 
@@ -988,7 +988,7 @@ static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout *iface
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *effect = range->effect;
     if (*effect)
         IUnknown_AddRef(*effect);
@@ -1005,7 +1005,7 @@ static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout *iface,
 
     TRACE("(%p)->(%u %p %p)\n", This, position, object, r);
 
-    range = get_layout_range_by_pos(&This->ranges, position);
+    range = get_layout_range_by_pos(This, position);
     *object = range ? range->object : NULL;
     if (*object)
         IDWriteInlineObject_AddRef(*object);
