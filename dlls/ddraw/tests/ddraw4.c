@@ -6649,6 +6649,7 @@ static void test_create_surface_pitch(void)
             ok(U1(surface_desc).lPitch == test_data[i].pitch_out32,
                     "Test %u: Got unexpected pitch %u, expected %u.\n",
                     i, U1(surface_desc).lPitch, test_data[i].pitch_out32);
+        ok(!surface_desc.lpSurface, "Test %u: Got unexpected lpSurface %p.\n", i, surface_desc.lpSurface);
 
         IDirectDrawSurface4_Release(surface);
     }

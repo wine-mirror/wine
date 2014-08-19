@@ -6224,6 +6224,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
             desc->u1.lPitch = wined3d_surface_get_pitch(wined3d_surface);
         }
     }
+    desc->lpSurface = NULL;
 
     wined3d_surface_incref(wined3d_surface);
     surface->wined3d_surface = wined3d_surface;
