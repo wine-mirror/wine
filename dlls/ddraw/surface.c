@@ -1011,12 +1011,9 @@ static HRESULT surface_lock(struct ddraw_surface *This,
             SetRect(&This->ddraw->primary_lock, 0, 0, This->surface_desc.dwWidth, This->surface_desc.dwHeight);
     }
 
-    /* Override the memory area. The pitch should be set already. Strangely windows
-     * does not set the LPSURFACE flag on locked surfaces !?!.
-     * DDSD->dwFlags |= DDSD_LPSURFACE;
-     */
-    This->surface_desc.lpSurface = map_desc.data;
+    /* Windows does not set DDSD_LPSURFACE on locked surfaces. */
     DD_STRUCT_COPY_BYSIZE(DDSD,&(This->surface_desc));
+    DDSD->lpSurface = map_desc.data;
 
     TRACE("locked surface returning description :\n");
     if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(DDSD);
@@ -1161,12 +1158,8 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
 
     wined3d_mutex_lock();
     hr = wined3d_surface_unmap(surface->wined3d_surface);
-    if (SUCCEEDED(hr))
-    {
-        if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            hr = ddraw_surface_update_frontbuffer(surface, &surface->ddraw->primary_lock, FALSE);
-        surface->surface_desc.lpSurface = NULL;
-    }
+    if (SUCCEEDED(hr) && surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        hr = ddraw_surface_update_frontbuffer(surface, &surface->ddraw->primary_lock, FALSE);
     wined3d_mutex_unlock();
 
     return hr;
