@@ -1323,9 +1323,16 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6700,         "AMD Radeon HD 6700 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7660D,        "AMD Radeon HD 7660D",              DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7700,         "AMD Radeon HD 7700 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7800,         "AMD Radeon HD 7800 Series",        DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD7900,         "AMD Radeon HD 7900 Series",        DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8600M,        "AMD Radeon HD 8600M Series",       DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8670,         "AMD Radeon HD 8670",               DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8770,         "AMD Radeon HD 8770",               DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R3,             "AMD Radeon HD 8400 / R3 Series",   DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R7,             "AMD Radeon(TM) R7 Graphics",       DRIVER_AMD_R600,         2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9,             "AMD Radeon R9 290",                DRIVER_AMD_R600,         4096},
 
     /* VMware */
     {HW_VENDOR_VMWARE,     CARD_VMWARE_SVGA3D,             "VMware SVGA 3D (Microsoft Corporation - WDDM)",             DRIVER_VMWARE,        1024},
@@ -1996,11 +2003,19 @@ cards_intel[] =
  * These are returned but not handled: RC410, RV380. */
 cards_amd_mesa[] =
 {
+    /* Sea Islands */
+    {"HAWAII",                      CARD_AMD_RADEON_R9    },
+    {"KAVERI",                      CARD_AMD_RADEON_R7    },
+    {"KABINI",                      CARD_AMD_RADEON_R3    },
+    {"BONAIRE",                     CARD_AMD_RADEON_HD8770},
     /* Southern Islands */
+    {"OLAND",                       CARD_AMD_RADEON_HD8670},
+    {"HAINAN",                      CARD_AMD_RADEON_HD8600M},
     {"TAHITI",                      CARD_AMD_RADEON_HD7900},
     {"PITCAIRN",                    CARD_AMD_RADEON_HD7800},
     {"CAPE VERDE",                  CARD_AMD_RADEON_HD7700},
     /* Northern Islands */
+    {"ARUBA",                       CARD_AMD_RADEON_HD7660D},
     {"CAYMAN",                      CARD_AMD_RADEON_HD6900},
     {"BARTS",                       CARD_AMD_RADEON_HD6800},
     {"TURKS",                       CARD_AMD_RADEON_HD6600},
