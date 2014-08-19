@@ -201,8 +201,7 @@ static const char *get_language_name(int lid) {
 static int compare_accelerator(accelerator_t *accelerator1, accelerator_t *accelerator2) {
 	int different = 0;
 	event_t *ev1 = NULL, *ev2 = NULL;
-	if(!different &&
-	   ((accelerator1->memopt != accelerator2->memopt) ||
+	if(((accelerator1->memopt != accelerator2->memopt) ||
 	   (accelerator1->lvc.version != accelerator2->lvc.version) ||
 	   (accelerator1->lvc.characts != accelerator2->lvc.characts)))
 		different = 1;
@@ -224,8 +223,7 @@ static int compare_accelerator(accelerator_t *accelerator1, accelerator_t *accel
 
 static int compare_bitmap(bitmap_t *bitmap1, bitmap_t *bitmap2) {
 	int different = 0;
-	if(!different &&
-	   ((bitmap1->memopt != bitmap2->memopt) ||
+	if(((bitmap1->memopt != bitmap2->memopt) ||
 	   (bitmap1->data->lvc.version != bitmap2->data->lvc.version) ||
 	   (bitmap1->data->lvc.characts != bitmap2->data->lvc.characts)))
 		different = 1;
@@ -234,8 +232,7 @@ static int compare_bitmap(bitmap_t *bitmap1, bitmap_t *bitmap2) {
 
 static int compare_cursor(cursor_t *cursor1, cursor_t *cursor2) {
 	int different = 0;
-	if(!different &&
-	   ((cursor1->id != cursor2->id) ||
+	if(((cursor1->id != cursor2->id) ||
 	   (cursor1->width != cursor2->width) ||
 	   (cursor1->height != cursor2->height) ||
 	   (cursor1->xhot != cursor2->xhot) ||
@@ -251,8 +248,7 @@ static int compare_cursor(cursor_t *cursor1, cursor_t *cursor2) {
 static int compare_cursor_group(cursor_group_t *cursor_group1, cursor_group_t *cursor_group2) {
 	int different = 0;
 	cursor_t *cursor1 = NULL, *cursor2 = NULL;
-	if(!different &&
-	   ((cursor_group1->memopt != cursor_group2->memopt) ||
+	if(((cursor_group1->memopt != cursor_group2->memopt) ||
 	   (cursor_group1->lvc.version != cursor_group2->lvc.version) ||
 	   (cursor_group1->lvc.characts != cursor_group2->lvc.characts)))
 		different = 1;
@@ -279,14 +275,12 @@ static int compare_control(control_t *control1, control_t *control2) {
 	int different = 0;
 	char *nameid = NULL;
 	int ignore_style;
-	if(!different &&
-		((control1 && !control2) ||
-		(!control1 && control2)))
-			different = 1;
+	if(((control1 && !control2) || (!control1 && control2)))
+		different = 1;
 	if(different || !control1 || !control2)
 		return different;
 	nameid = strdup(get_nameid_str(control1->ctlclass));
-	if(!different && strcmp(nameid, get_nameid_str(control2->ctlclass)))
+	if(strcmp(nameid, get_nameid_str(control2->ctlclass)))
 		different = 1;
 	free(nameid);
         if (different)
@@ -297,8 +291,7 @@ static int compare_control(control_t *control1, control_t *control2) {
         if (control1->ctlclass->type == name_ord && control1->ctlclass->name.i_name == CT_BUTTON)
             ignore_style = 0x2000;          /* BS_MULTILINE*/
 
-	if(!different && 
-	   (control1->id != control2->id))
+	if((control1->id != control2->id))
 		different = 1;
 	if(!different && control1->gotstyle && control2->gotstyle) {
 		if((!control1->style || !control2->style) ||
@@ -332,8 +325,7 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 	int different = 0;
 	char *nameid = NULL;
 	control_t *ctrl1, *ctrl2;
-	if(!different &&
-	   ((dialog1->memopt != dialog2->memopt) ||
+	if(((dialog1->memopt != dialog2->memopt) ||
 	   (dialog1->lvc.version != dialog2->lvc.version) ||
 	   (dialog1->lvc.characts != dialog2->lvc.characts)))
 		different = 1;
@@ -384,8 +376,7 @@ static int compare_dialog(dialog_t *dialog1, dialog_t *dialog2) {
 
 static int compare_font(font_t *font1, font_t *font2) {
 	int different = 0;
-	if(!different &&
-	   ((font1->memopt != font2->memopt) ||
+	if(((font1->memopt != font2->memopt) ||
 	   (font1->data->lvc.version != font2->data->lvc.version) ||
 	   (font1->data->lvc.characts != font2->data->lvc.characts)))
 		different = 1;
@@ -394,8 +385,7 @@ static int compare_font(font_t *font1, font_t *font2) {
 
 static int compare_fontdir(fontdir_t *fontdir1, fontdir_t *fontdir2) {
 	int different = 0;
-	if(!different &&
-	   ((fontdir1->memopt != fontdir2->memopt) ||
+	if(((fontdir1->memopt != fontdir2->memopt) ||
 	   (fontdir1->data->lvc.version != fontdir2->data->lvc.version) ||
 	   (fontdir1->data->lvc.characts != fontdir2->data->lvc.characts)))
 		different = 1;
@@ -404,8 +394,7 @@ static int compare_fontdir(fontdir_t *fontdir1, fontdir_t *fontdir2) {
 
 static int compare_icon(icon_t *icon1, icon_t *icon2) {
 	int different = 0;
-	if(!different &&
-	   ((icon1->id != icon2->id) ||
+	if(((icon1->id != icon2->id) ||
 	   (icon1->width != icon2->width) ||
 	   (icon1->height != icon2->height)))
 		different = 1;
@@ -419,8 +408,7 @@ static int compare_icon(icon_t *icon1, icon_t *icon2) {
 static int compare_icon_group(icon_group_t *icon_group1, icon_group_t *icon_group2) {
 	int different = 0;
 	icon_t *icon1 = NULL, *icon2 = NULL;
-	if(!different &&
-	   ((icon_group1->memopt != icon_group2->memopt) ||
+	if(((icon_group1->memopt != icon_group2->memopt) ||
 	   (icon_group1->lvc.version != icon_group2->lvc.version) ||
 	   (icon_group1->lvc.characts != icon_group2->lvc.characts)))
 		different = 1;
@@ -524,8 +512,7 @@ static int compare_menu_item(menu_item_t *menu_item1, menu_item_t *menu_item2) {
 
 static int compare_menu(menu_t *menu1, menu_t *menu2) {
 	int different = 0;
-	if(!different &&
-	   ((menu1->memopt != menu2->memopt) ||
+	if(((menu1->memopt != menu2->memopt) ||
 	   (menu1->lvc.version != menu2->lvc.version) ||
 	   (menu1->lvc.characts != menu2->lvc.characts)))
 		different = 1;
@@ -536,8 +523,7 @@ static int compare_menu(menu_t *menu1, menu_t *menu2) {
 
 static int compare_rcdata(rcdata_t *rcdata1, rcdata_t *rcdata2) {
 	int different = 0;
-	if(!different &&
-	   ((rcdata1->memopt != rcdata2->memopt) ||
+	if(((rcdata1->memopt != rcdata2->memopt) ||
 	   (rcdata1->data->lvc.version != rcdata2->data->lvc.version) ||
 	   (rcdata1->data->lvc.characts != rcdata2->data->lvc.characts)))
 		different = 1;
@@ -546,8 +532,7 @@ static int compare_rcdata(rcdata_t *rcdata1, rcdata_t *rcdata2) {
 
 static int compare_html(html_t *rcdata1, html_t *rcdata2) {
         int different = 0;
-        if(!different &&
-           ((rcdata1->memopt != rcdata2->memopt) ||
+        if(((rcdata1->memopt != rcdata2->memopt) ||
            (rcdata1->data->lvc.version != rcdata2->data->lvc.version) ||
            (rcdata1->data->lvc.characts != rcdata2->data->lvc.characts)))
                 different = 1;
@@ -585,8 +570,7 @@ static int compare_stringtable(stringtable_t *stringtable1, stringtable_t *strin
 static int compare_user(user_t *user1, user_t *user2) {
 	int different = 0;
 	char *nameid = NULL;
-	if(!different &&
-	   ((user1->memopt != user2->memopt) ||
+	if(((user1->memopt != user2->memopt) ||
 	   (user1->data->lvc.version != user2->data->lvc.version) ||
 	   (user1->data->lvc.characts != user2->data->lvc.characts)))
 		different = 1;
@@ -599,8 +583,7 @@ static int compare_user(user_t *user1, user_t *user2) {
 
 static int compare_messagetable(messagetable_t *messagetable1, messagetable_t *messagetable2) {
 	int different = 0;
-	if(!different &&
-	   ((messagetable1->memopt != messagetable2->memopt) ||
+	if(((messagetable1->memopt != messagetable2->memopt) ||
 	   (messagetable1->data->lvc.version != messagetable2->data->lvc.version) ||
 	   (messagetable1->data->lvc.characts != messagetable2->data->lvc.characts)))
 		different = 1;
@@ -609,8 +592,7 @@ static int compare_messagetable(messagetable_t *messagetable1, messagetable_t *m
 
 static int compare_string(string_t *string1, string_t *string2) {
 	int different = 0;
-	if(!different &&
-	   ((string1->size != string2->size) ||
+	if(((string1->size != string2->size) ||
 	   (string1->type != string2->type)))
 		different = 1;
 	if(!different) {
@@ -629,8 +611,7 @@ static int compare_ver_block(ver_block_t *ver_block1, ver_block_t *ver_block2);
 static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 	int different = 0;
 	int i = 0;
-	if(!different &&
-	   (ver_value1->type == ver_value2->type)) {
+	if((ver_value1->type == ver_value2->type)) {
 		switch(ver_value1->type) {
 			case val_str:
 				if(!different && ver_value1->key && ver_value2->key)
@@ -648,8 +629,7 @@ static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 					(!ver_value1->key && ver_value2->key)))
 						different = 1;
 				if(!different && ver_value1->value.words && ver_value2->value.words) {
-					if(!different &&
-					   (ver_value1->value.words->nwords != ver_value2->value.words->nwords))
+					if(ver_value1->value.words->nwords != ver_value2->value.words->nwords)
 						different = 1;
 					if(!different)
 						for(i = 0; i < ver_value1->value.words->nwords; i++) {
@@ -681,28 +661,25 @@ static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 
 static int compare_ver_block(ver_block_t *ver_block1, ver_block_t *ver_block2) {
 	int different = 0;
-	ver_value_t *ver_value1 = NULL, *ver_value2 = NULL;
-	if(!different) {
-		ver_value1 = ver_block1->values;
-		ver_value2 = ver_block2->values;
-		while(!different && ver_value1 && ver_value2) {
-			different = compare_ver_value(ver_value1, ver_value2);
-			ver_value1 = ver_value1->next;
-			ver_value2 = ver_value2->next;
-		}
-		if(!different &&
-		   ((ver_value1 && !ver_value2) ||
-		   (!ver_value1 && ver_value2)))
-			different = 1;
+	ver_value_t *ver_value1 = ver_block1->values, *ver_value2 = ver_block2->values;
+
+	while(!different && ver_value1 && ver_value2) {
+		different = compare_ver_value(ver_value1, ver_value2);
+		ver_value1 = ver_value1->next;
+		ver_value2 = ver_value2->next;
 	}
+	if(!different &&
+	   ((ver_value1 && !ver_value2) ||
+	   (!ver_value1 && ver_value2)))
+		different = 1;
+
 	return different;
 }
 
 static int compare_versioninfo(versioninfo_t *versioninfo1, versioninfo_t *versioninfo2) {
 	int different = 0;
 	ver_block_t *ver_block1 = NULL, *ver_block2 = NULL;
-	if(!different &&
-	   ((versioninfo1->memopt != versioninfo2->memopt) ||
+	if(((versioninfo1->memopt != versioninfo2->memopt) ||
 	   (versioninfo1->lvc.version != versioninfo2->lvc.version) ||
 	   (versioninfo1->lvc.characts != versioninfo2->lvc.characts)))
 		different = 1;
@@ -779,8 +756,7 @@ static int compare_versioninfo(versioninfo_t *versioninfo1, versioninfo_t *versi
 
 static int compare_dlginit(dlginit_t *dlginit1, dlginit_t *dlginit2) {
 	int different = 0;
-	if(!different &&
-	   ((dlginit1->memopt != dlginit2->memopt) ||
+	if(((dlginit1->memopt != dlginit2->memopt) ||
 	   (dlginit1->data->lvc.version != dlginit2->data->lvc.version) ||
 	   (dlginit1->data->lvc.characts != dlginit2->data->lvc.characts)))
 		different = 1;
@@ -805,8 +781,7 @@ static int compare_toolbar_item(toolbar_item_t *toolbar_item1, toolbar_item_t *t
 
 static int compare_toolbar(toolbar_t *toolbar1, toolbar_t *toolbar2) {
 	int different = 0;
-	if(!different &&
-	   ((toolbar1->memopt != toolbar2->memopt) ||
+	if(((toolbar1->memopt != toolbar2->memopt) ||
 	   (toolbar1->lvc.version != toolbar2->lvc.version) ||
 	   (toolbar1->lvc.characts != toolbar2->lvc.characts)))
 		different = 1;
@@ -817,8 +792,7 @@ static int compare_toolbar(toolbar_t *toolbar1, toolbar_t *toolbar2) {
 
 static int compare_ani_curico(ani_curico_t *ani_curico1, ani_curico_t *ani_curico2) {
 	int different = 0;
-	if(!different &&
-	   ((ani_curico1->memopt != ani_curico2->memopt) ||
+	if(((ani_curico1->memopt != ani_curico2->memopt) ||
 	   (ani_curico1->data->lvc.version != ani_curico2->data->lvc.version) ||
 	   (ani_curico1->data->lvc.characts != ani_curico2->data->lvc.characts)))
 		different = 1;
