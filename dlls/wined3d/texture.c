@@ -1064,9 +1064,7 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 {
     struct wined3d_volume *volume = volume_from_resource(sub_resource);
 
-    /* Cleanup the container. */
-    volume_set_container(volume, NULL);
-    wined3d_volume_decref(volume);
+    wined3d_volume_destroy(volume);
 }
 
 static const struct wined3d_texture_ops texture3d_ops =

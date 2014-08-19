@@ -27,13 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container)
-{
-    TRACE("volume %p, container %p.\n", volume, container);
-
-    volume->container = container;
-}
-
 static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 {
     if (volume->resource.heap_memory)
@@ -461,6 +454,18 @@ static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
     context_release(context);
 }
 
+void wined3d_volume_destroy(struct wined3d_volume *volume)
+{
+    TRACE("volume %p.\n", volume);
+
+    if (volume->pbo)
+        wined3d_volume_free_pbo(volume);
+
+    resource_cleanup(&volume->resource);
+    volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
+    HeapFree(GetProcessHeap(), 0, volume);
+}
+
 static void volume_unload(struct wined3d_resource *resource)
 {
     struct wined3d_volume *volume = volume_from_resource(resource);
@@ -504,46 +509,16 @@ static void volume_unload(struct wined3d_resource *resource)
 
 ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
 {
-    ULONG refcount;
+    TRACE("Forwarding to container %p.\n", volume->container);
 
-    if (volume->container)
-    {
-        TRACE("Forwarding to container %p.\n", volume->container);
-        return wined3d_texture_incref(volume->container);
-    }
-
-    refcount = InterlockedIncrement(&volume->resource.ref);
-
-    TRACE("%p increasing refcount to %u.\n", volume, refcount);
-
-    return refcount;
+    return wined3d_texture_incref(volume->container);
 }
 
 ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
 {
-    ULONG refcount;
+    TRACE("Forwarding to container %p.\n", volume->container);
 
-    if (volume->container)
-    {
-        TRACE("Forwarding to container %p.\n", volume->container);
-        return wined3d_texture_decref(volume->container);
-    }
-
-    refcount = InterlockedDecrement(&volume->resource.ref);
-
-    TRACE("%p decreasing refcount to %u.\n", volume, refcount);
-
-    if (!refcount)
-    {
-        if (volume->pbo)
-            wined3d_volume_free_pbo(volume);
-
-        resource_cleanup(&volume->resource);
-        volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
-        HeapFree(GetProcessHeap(), 0, volume);
-    }
-
-    return refcount;
+    return wined3d_texture_decref(volume->container);
 }
 
 void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
@@ -846,7 +821,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
         volume->flags |= WINED3D_VFLAG_PBO;
     }
 
-    volume_set_container(volume, container);
+    volume->container = container;
 
     return WINED3D_OK;
 }
@@ -879,8 +854,7 @@ HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wi
             wined3d_texture_get_parent(container), object, &parent, &parent_ops)))
     {
         WARN("Failed to create volume parent, hr %#x.\n", hr);
-        volume_set_container(object, NULL);
-        wined3d_volume_decref(object);
+        wined3d_volume_destroy(object);
         return hr;
     }
 

@@ -2188,9 +2188,9 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 
 HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         unsigned int level, struct wined3d_volume **volume) DECLSPEC_HIDDEN;
+void wined3d_volume_destroy(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
         BOOL srgb_mode) DECLSPEC_HIDDEN;
-void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
         const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
