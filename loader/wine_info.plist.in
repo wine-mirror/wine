@@ -22,5 +22,7 @@
     <string>@PACKAGE_VERSION@</string>
     <key>NSPrincipalClass</key>
     <string>WineApplication</string>
+    <key>LSUIElement</key>
+    <string>1</string>
 </dict>
 </plist>
