@@ -112,16 +112,6 @@ void wined3d_surface_destroy(struct wined3d_surface *surface)
     HeapFree(GetProcessHeap(), 0, surface);
 }
 
-void surface_update_draw_binding(struct wined3d_surface *surface)
-{
-    if (!wined3d_resource_is_offscreen(&surface->resource) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        surface->resource.draw_binding = WINED3D_LOCATION_DRAWABLE;
-    else if (surface->resource.multisample_type)
-        surface->resource.draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
-    else
-        surface->resource.draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
-}
-
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
         unsigned int *width, unsigned int *height)
 {
@@ -157,7 +147,7 @@ void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapc
     TRACE("surface %p, swapchain %p.\n", surface, swapchain);
 
     surface->swapchain = swapchain;
-    surface_update_draw_binding(surface);
+    wined3d_resource_update_draw_binding(&surface->resource);
 }
 
 struct blt_info
@@ -5974,7 +5964,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     }
 
     surface->container = container;
-    surface_update_draw_binding(surface);
+    wined3d_resource_update_draw_binding(&surface->resource);
     surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);

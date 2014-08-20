@@ -323,3 +323,13 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
      * offscreen, otherwise onscreen */
     return swapchain->render_to_fbo;
 }
+
+void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
+{
+    if (!wined3d_resource_is_offscreen(resource) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        resource->draw_binding = WINED3D_LOCATION_DRAWABLE;
+    else if (resource->multisample_type)
+        resource->draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
+    else
+        resource->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
+}

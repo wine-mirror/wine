@@ -1144,10 +1144,10 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
 {
     UINT i;
 
-    surface_update_draw_binding(swapchain->front_buffer);
+    wined3d_resource_update_draw_binding(&swapchain->front_buffer->resource);
 
     for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
     {
-        surface_update_draw_binding(swapchain->back_buffers[i]);
+        wined3d_resource_update_draw_binding(&swapchain->back_buffers[i]->resource);
     }
 }
