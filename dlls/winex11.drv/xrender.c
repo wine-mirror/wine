@@ -102,23 +102,6 @@ static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 /* WXR_FORMAT_B8G8R8X8 */ { 32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
-static const ColorShifts wxr_color_shifts[WXR_NB_FORMATS] =
-{
-    /* format                phys red    phys green  phys blue   log red     log green   log blue */
-/* WXR_FORMAT_MONO     */ { { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 }  },
-/* WXR_FORMAT_GRAY     */ { { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 }  },
-/* WXR_FORMAT_X1R5G5B5 */ { {10,5,31},  { 5,5,31},  { 0,5,31},  {10,5,31},  { 5,5,31},  { 0,5,31}  },
-/* WXR_FORMAT_X1B5G5R5 */ { { 0,5,31},  { 5,5,31},  {10,5,31},  { 0,5,31},  { 5,5,31},  {10,5,31}  },
-/* WXR_FORMAT_R5G6B5   */ { {11,5,31},  { 5,6,63},  { 0,5,31},  {11,5,31},  { 5,6,63},  { 0,5,31}  },
-/* WXR_FORMAT_B5G6R5   */ { { 0,5,31},  { 5,6,63},  {11,5,31},  { 0,5,31},  { 5,6,63},  {11,5,31}  },
-/* WXR_FORMAT_R8G8B8   */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
-/* WXR_FORMAT_B8G8R8   */ { { 0,8,255}, { 8,8,255}, {16,8,255}, { 0,8,255}, { 8,8,255}, {16,8,255} },
-/* WXR_FORMAT_A8R8G8B8 */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
-/* WXR_FORMAT_B8G8R8A8 */ { { 8,8,255}, {16,8,255}, {24,8,255}, { 8,8,255}, {16,8,255}, {24,8,255} },
-/* WXR_FORMAT_X8R8G8B8 */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
-/* WXR_FORMAT_B8G8R8X8 */ { { 8,8,255}, {16,8,255}, {24,8,255}, { 8,8,255}, {16,8,255}, {24,8,255} },
-};
-
 static enum wxr_format default_format = WXR_INVALID_FORMAT;
 static XRenderPictFormat *pict_formats[WXR_NB_FORMATS + 1 /* invalid format */];
 
