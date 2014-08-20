@@ -2113,6 +2113,7 @@ struct wined3d_texture
     const struct wined3d_texture_ops *texture_ops;
     struct gl_texture texture_rgb, texture_srgb;
     struct wined3d_resource **sub_resources;
+    struct wined3d_swapchain *swapchain;
     UINT layer_count;
     UINT level_count;
     float pow2_matrix[16];
@@ -2153,6 +2154,8 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
+void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
+        struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
 #define WINED3D_VFLAG_ALLOCATED         0x00000001
 #define WINED3D_VFLAG_SRGB_ALLOCATED    0x00000002
@@ -2234,7 +2237,6 @@ struct wined3d_surface
     struct wined3d_resource resource;
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_texture *container;
-    struct wined3d_swapchain *swapchain;
     void *user_memory;
     DWORD locations;
 
@@ -2303,7 +2305,6 @@ void surface_prepare_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
-void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,

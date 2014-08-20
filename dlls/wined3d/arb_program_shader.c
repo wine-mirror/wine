@@ -7280,10 +7280,10 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 /* Context activation is done by the caller. */
 static void upload_palette(const struct wined3d_surface *surface, struct wined3d_context *context)
 {
+    const struct wined3d_palette *palette = surface->container->swapchain ? surface->container->swapchain->palette : NULL;
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
-    const struct wined3d_palette *palette = surface->swapchain ? surface->swapchain->palette : NULL;
 
     if (!priv->palette_texture)
         gl_info->gl_ops.gl.p_glGenTextures(1, &priv->palette_texture);
@@ -7674,7 +7674,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     arbfp_blit_unset(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->swapchain && (dst_surface->swapchain->front_buffer == dst_surface)))
+            || (dst_surface->container->swapchain
+            && (dst_surface->container->swapchain->front_buffer == dst_surface)))
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);

@@ -1826,7 +1826,7 @@ static void context_get_rt_size(const struct wined3d_context *context, SIZE *siz
 {
     const struct wined3d_surface *rt = context->current_rt;
 
-    if (rt->swapchain && rt->swapchain->front_buffer == rt)
+    if (rt->container->swapchain && rt->container->swapchain->front_buffer == rt)
     {
         RECT window_size;
 
@@ -2204,7 +2204,7 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
         const struct wined3d_surface *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
-    struct wined3d_swapchain *swapchain = context->current_rt->swapchain;
+    struct wined3d_swapchain *swapchain = context->current_rt->container->swapchain;
 
     if (context->render_offscreen || !depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format)) return;
@@ -2225,7 +2225,7 @@ static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device
 {
     if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
         return 0;
-    else if (rt->swapchain)
+    else if (rt->container->swapchain)
         return context_generate_rt_mask_from_surface(rt);
     else
         return context_generate_rt_mask(device->offscreenBuffer);
@@ -3112,11 +3112,11 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
     {
         context = current_context;
     }
-    else if (target->swapchain)
+    else if (target->container->swapchain)
     {
         TRACE("Rendering onscreen.\n");
 
-        context = swapchain_get_context(target->swapchain);
+        context = swapchain_get_context(target->container->swapchain);
     }
     else
     {

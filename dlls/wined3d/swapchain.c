@@ -40,7 +40,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
      * is the last buffer to be destroyed, FindContext() depends on that. */
     if (swapchain->front_buffer)
     {
-        surface_set_swapchain(swapchain->front_buffer, NULL);
+        wined3d_texture_set_swapchain(swapchain->front_buffer->container, NULL);
         if (wined3d_surface_decref(swapchain->front_buffer))
             WARN("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
         swapchain->front_buffer = NULL;
@@ -52,7 +52,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 
         while (i--)
         {
-            surface_set_swapchain(swapchain->back_buffers[i], NULL);
+            wined3d_texture_set_swapchain(swapchain->back_buffers[i]->container, NULL);
             if (wined3d_surface_decref(swapchain->back_buffers[i]))
                 WARN("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
         }
@@ -854,7 +854,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         goto err;
     }
 
-    surface_set_swapchain(swapchain->front_buffer, swapchain);
+    wined3d_texture_set_swapchain(swapchain->front_buffer->container, swapchain);
     if (!(device->wined3d->flags & WINED3D_NO3D))
     {
         surface_validate_location(swapchain->front_buffer, WINED3D_LOCATION_DRAWABLE);
@@ -964,7 +964,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
                 swapchain->desc.backbuffer_count = i;
                 goto err;
             }
-            surface_set_swapchain(swapchain->back_buffers[i], swapchain);
+            wined3d_texture_set_swapchain(swapchain->back_buffers[i]->container, swapchain);
         }
     }
 
@@ -1005,7 +1005,7 @@ err:
         {
             if (swapchain->back_buffers[i])
             {
-                surface_set_swapchain(swapchain->back_buffers[i], NULL);
+                wined3d_texture_set_swapchain(swapchain->back_buffers[i]->container, NULL);
                 wined3d_surface_decref(swapchain->back_buffers[i]);
             }
         }
@@ -1025,7 +1025,7 @@ err:
 
     if (swapchain->front_buffer)
     {
-        surface_set_swapchain(swapchain->front_buffer, NULL);
+        wined3d_texture_set_swapchain(swapchain->front_buffer->container, NULL);
         wined3d_surface_decref(swapchain->front_buffer);
     }
 

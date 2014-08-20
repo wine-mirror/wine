@@ -145,6 +145,19 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
     resource_cleanup(&texture->resource);
 }
 
+void wined3d_texture_set_swapchain(struct wined3d_texture *texture, struct wined3d_swapchain *swapchain)
+{
+    unsigned int i, count;
+
+    texture->swapchain = swapchain;
+
+    count = texture->level_count * texture->layer_count;
+    for (i = 0; i < count; ++i)
+    {
+        wined3d_resource_update_draw_binding(wined3d_texture_get_sub_resource(texture, i));
+    }
+}
+
 void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 {
     texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
@@ -476,8 +489,14 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
 
 ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 {
-    ULONG refcount = InterlockedIncrement(&texture->resource.ref);
+    ULONG refcount;
 
+    TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
+
+    if (texture->swapchain)
+        return wined3d_swapchain_incref(texture->swapchain);
+
+    refcount = InterlockedIncrement(&texture->resource.ref);
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
 
     return refcount;
@@ -485,8 +504,14 @@ ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 
 ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 {
-    ULONG refcount = InterlockedDecrement(&texture->resource.ref);
+    ULONG refcount;
 
+    TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
+
+    if (texture->swapchain)
+        return wined3d_swapchain_decref(texture->swapchain);
+
+    refcount = InterlockedDecrement(&texture->resource.ref);
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
 
     if (!refcount)

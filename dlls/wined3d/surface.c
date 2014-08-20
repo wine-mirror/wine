@@ -115,7 +115,7 @@ void wined3d_surface_destroy(struct wined3d_surface *surface)
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
         unsigned int *width, unsigned int *height)
 {
-    if (surface->swapchain)
+    if (surface->container->swapchain)
     {
         /* The drawable size of an onscreen drawable is the surface size.
          * (Actually: The window size, but the surface is created in window
@@ -140,14 +140,6 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
         *width = context->current_rt->pow2Width;
         *height = context->current_rt->pow2Height;
     }
-}
-
-void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain)
-{
-    TRACE("surface %p, swapchain %p.\n", surface, swapchain);
-
-    surface->swapchain = swapchain;
-    wined3d_resource_update_draw_binding(&surface->resource);
 }
 
 struct blt_info
@@ -757,7 +749,7 @@ static void surface_unmap(struct wined3d_surface *surface)
         return;
     }
 
-    if (surface->swapchain && surface->swapchain->front_buffer == surface)
+    if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface)
         surface_load_location(surface, surface->resource.draw_binding);
     else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         FIXME("Depth / stencil buffer locking is not implemented.\n");
@@ -976,7 +968,7 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
 
     if (wined3d_settings.strict_draw_ordering
             || (dst_location == WINED3D_LOCATION_DRAWABLE
-            && dst_surface->swapchain->front_buffer == dst_surface))
+            && dst_surface->container->swapchain->front_buffer == dst_surface))
         gl_info->gl_ops.gl.p_glFlush();
 
     context_release(context);
@@ -1030,7 +1022,7 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
     switch (format->id)
     {
         case WINED3DFMT_P8_UINT:
-            palette = surface->swapchain ? surface->swapchain->palette : NULL;
+            palette = surface->container->swapchain ? surface->container->swapchain->palette : NULL;
 
             if (palette)
             {
@@ -1299,8 +1291,8 @@ static void gdi_surface_unmap(struct wined3d_surface *surface)
     TRACE("surface %p.\n", surface);
 
     /* Tell the swapchain to update the screen. */
-    if (surface->swapchain && surface == surface->swapchain->front_buffer)
-        x11_copy_to_screen(surface->swapchain, &surface->lockedRect);
+    if (surface->container->swapchain && surface == surface->container->swapchain->front_buffer)
+        x11_copy_to_screen(surface->container->swapchain, &surface->lockedRect);
 
     memset(&surface->lockedRect, 0, sizeof(RECT));
 }
@@ -1614,7 +1606,8 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
              * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
              * conflicts with this.
              */
-            if (!((blit_supported && surface->swapchain && surface == surface->swapchain->front_buffer))
+            if (!((blit_supported && surface->container->swapchain
+                    && surface == surface->container->swapchain->front_buffer))
                     || colorkey_active || !use_texturing)
             {
                 format->glFormat = GL_RGBA;
@@ -1982,7 +1975,7 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
 
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 {
-    const struct wined3d_swapchain *swapchain = surface->swapchain;
+    const struct wined3d_swapchain *swapchain = surface->container->swapchain;
 
     TRACE("surface %p.\n", surface);
 
@@ -2122,22 +2115,14 @@ static inline unsigned short float_32_to_16(const float *in)
 
 ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
 {
-    TRACE("surface %p, swapchain %p, container %p.\n",
-            surface, surface->swapchain, surface->container);
-
-    if (surface->swapchain)
-        return wined3d_swapchain_incref(surface->swapchain);
+    TRACE("surface %p, container %p.\n", surface, surface->container);
 
     return wined3d_texture_incref(surface->container);
 }
 
 ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 {
-    TRACE("surface %p, swapchain %p, container %p.\n",
-            surface, surface->swapchain, surface->container);
-
-    if (surface->swapchain)
-        return wined3d_swapchain_decref(surface->swapchain);
+    TRACE("surface %p, container %p.\n", surface, surface->container);
 
     return wined3d_texture_decref(surface->container);
 }
@@ -3244,10 +3229,10 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
 
         case WINED3D_CT_PALETTED:
-            if (surface->swapchain && surface->swapchain->palette)
+            if (surface->container->swapchain && surface->container->swapchain->palette)
             {
                 unsigned int x, y;
-                const struct wined3d_palette *palette = surface->swapchain->palette;
+                const struct wined3d_palette *palette = surface->container->swapchain->palette;
                 for (y = 0; y < height; y++)
                 {
                     source = src + pitch * y;
@@ -3691,7 +3676,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
             wined3d_gl_min_mip_filter(minMipLookup, filter, WINED3D_TEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    if (!src_surface->swapchain || src_surface == src_surface->swapchain->back_buffers[0])
+    if (!src_surface->container->swapchain || src_surface == src_surface->container->swapchain->back_buffers[0])
     {
         src = backup ? backup : src_surface->container->texture_rgb.name;
     }
@@ -3870,7 +3855,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 {
     UINT drawable_height;
 
-    if (surface->swapchain && surface == surface->swapchain->front_buffer)
+    if (surface->container->swapchain && surface == surface->container->swapchain->front_buffer)
     {
         POINT offset = {0, 0};
         RECT windowsize;
@@ -3951,7 +3936,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     device->blitter->unset_shader(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->swapchain && dst_surface->swapchain->front_buffer == dst_surface))
+            || (dst_surface->container->swapchain && dst_surface->container->swapchain->front_buffer == dst_surface))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -3992,7 +3977,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_swapchain = dst_surface->swapchain;
+    dst_swapchain = dst_surface->container->swapchain;
 
     if (src_surface)
     {
@@ -4002,7 +3987,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             return WINED3DERR_INVALIDCALL;
         }
 
-        src_swapchain = src_surface->swapchain;
+        src_swapchain = src_surface->container->swapchain;
     }
     else
     {
@@ -5728,11 +5713,11 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     }
 
     if (src_surface)
-        src_swapchain = src_surface->swapchain;
+        src_swapchain = src_surface->container->swapchain;
     else
         src_swapchain = NULL;
 
-    dst_swapchain = dst_surface->swapchain;
+    dst_swapchain = dst_surface->container->swapchain;
 
     /* This isn't strictly needed. FBO blits for example could deal with
      * cross-swapchain blits by first downloading the source to a texture
