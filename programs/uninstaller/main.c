@@ -49,7 +49,6 @@ static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
 static int cmp_by_name(const void *a, const void *b);
 
-static const WCHAR BackSlashW[] = { '\\', 0 };
 static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR PathUninstallW[] = {
         'S','o','f','t','w','a','r','e','\\',
