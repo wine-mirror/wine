@@ -4,3 +4,5 @@ EXTRALIBS = @LIBPCAP@
 
 C_SRCS = \
 	wpcap.c
+
+RC_SRCS = version.rc
