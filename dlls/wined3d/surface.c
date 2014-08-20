@@ -750,7 +750,7 @@ static void surface_unmap(struct wined3d_surface *surface)
     }
 
     if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface)
-        surface_load_location(surface, surface->resource.draw_binding);
+        surface_load_location(surface, surface->container->resource.draw_binding);
     else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         FIXME("Depth / stencil buffer locking is not implemented.\n");
 }
@@ -4133,8 +4133,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         src_surface->container->color_key_flags = old_color_key_flags;
         src_surface->container->src_blt_color_key = old_blt_key;
 
-        surface_validate_location(dst_surface, dst_surface->resource.draw_binding);
-        surface_invalidate_location(dst_surface, ~dst_surface->resource.draw_binding);
+        surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
+        surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
 
         return WINED3D_OK;
     }
@@ -4720,7 +4720,8 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
             context_release(context);
             return WINED3D_OK;
         }
-        else if (location & surface->locations && surface->resource.draw_binding != WINED3D_LOCATION_DRAWABLE)
+        else if (location & surface->locations
+                && surface->container->resource.draw_binding != WINED3D_LOCATION_DRAWABLE)
         {
             /* Already up to date, nothing to do. */
             return WINED3D_OK;
@@ -5763,8 +5764,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_surface->resource.draw_binding, &src_rect,
-                    dst_surface, dst_surface->resource.draw_binding, &dst_rect)))
+            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_surface->container->resource.draw_binding,
+                    &src_rect, dst_surface, dst_surface->container->resource.draw_binding, &dst_rect)))
                 return WINED3D_OK;
         }
     }
@@ -5814,7 +5815,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, &src_rect)))
                     {
                         if (!wined3d_resource_is_offscreen(&dst_surface->resource))
-                            surface_load_location(dst_surface, dst_surface->resource.draw_binding);
+                            surface_load_location(dst_surface, dst_surface->container->resource.draw_binding);
                         return WINED3D_OK;
                     }
                 }
@@ -5850,10 +5851,10 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 TRACE("Using FBO blit.\n");
 
                 surface_blt_fbo(device, filter,
-                        src_surface, src_surface->resource.draw_binding, &src_rect,
-                        dst_surface, dst_surface->resource.draw_binding, &dst_rect);
-                surface_validate_location(dst_surface, dst_surface->resource.draw_binding);
-                surface_invalidate_location(dst_surface, ~dst_surface->resource.draw_binding);
+                        src_surface, src_surface->container->resource.draw_binding, &src_rect,
+                        dst_surface, dst_surface->container->resource.draw_binding, &dst_rect);
+                surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
+                surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
 
                 return WINED3D_OK;
             }
@@ -5949,7 +5950,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     }
 
     surface->container = container;
-    wined3d_resource_update_draw_binding(&surface->resource);
     surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);

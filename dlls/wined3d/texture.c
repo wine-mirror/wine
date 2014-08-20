@@ -64,6 +64,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         WARN("Failed to initialize resource, returning %#x\n", hr);
         return hr;
     }
+    wined3d_resource_update_draw_binding(&texture->resource);
 
     texture->texture_ops = texture_ops;
     texture->sub_resources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -147,15 +148,8 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
 
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture, struct wined3d_swapchain *swapchain)
 {
-    unsigned int i, count;
-
     texture->swapchain = swapchain;
-
-    count = texture->level_count * texture->layer_count;
-    for (i = 0; i < count; ++i)
-    {
-        wined3d_resource_update_draw_binding(wined3d_texture_get_sub_resource(texture, i));
-    }
+    wined3d_resource_update_draw_binding(&texture->resource);
 }
 
 void wined3d_texture_set_dirty(struct wined3d_texture *texture)
