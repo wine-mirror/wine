@@ -100,7 +100,6 @@ static const WCHAR externals[][10] = {
         {'A','T','T','R','I','B','\0'},
         {'X','C','O','P','Y','\0'}
 };
-static const WCHAR fslashW[] = {'/','\0'};
 static const WCHAR onW[]  = {'O','N','\0'};
 static const WCHAR offW[] = {'O','F','F','\0'};
 static const WCHAR parmY[] = {'/','Y','\0'};
