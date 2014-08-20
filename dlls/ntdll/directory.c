@@ -1381,7 +1381,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
     WCHAR short_nameW[12];
     WCHAR *filename;
     UNICODE_STRING str;
-    ULONG attributes = 0;
+    ULONG attributes;
 
     io->u.Status = STATUS_SUCCESS;
     long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
@@ -1418,12 +1418,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
         if (!match_filename( &str, mask )) return NULL;
     }
 
-    if (lstat( long_name, &st ) == -1) return NULL;
-    if (S_ISLNK( st.st_mode ))
-    {
-        if (stat( long_name, &st ) == -1) return NULL;
-        if (S_ISDIR( st.st_mode )) attributes |= FILE_ATTRIBUTE_REPARSE_POINT;
-    }
+    if (get_file_info( long_name, &st, &attributes ) == -1) return NULL;
     if (is_ignored_file( &st ))
     {
         TRACE( "ignoring file %s\n", long_name );
@@ -1441,10 +1436,9 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
     info = (union file_directory_info *)((char *)info_ptr + io->Information);
     if (st.st_dev != curdir.dev) st.st_ino = 0;  /* ignore inode if on a different device */
     /* all the structures start with a FileDirectoryInformation layout */
-    fill_stat_info( &st, info, class );
+    fill_file_info( &st, attributes, info, class );
     info->dir.NextEntryOffset = total_len;
     info->dir.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
-    info->dir.FileAttributes |= attributes;
 
     switch (class)
     {

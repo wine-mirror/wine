@@ -148,7 +148,9 @@ extern NTSTATUS COMM_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
 /* file I/O */
 struct stat;
 extern NTSTATUS FILE_GetNtStatus(void) DECLSPEC_HIDDEN;
-extern NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class ) DECLSPEC_HIDDEN;
+extern int get_file_info( const char *path, struct stat *st, ULONG *attr ) DECLSPEC_HIDDEN;
+extern NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
+                                FILE_INFORMATION_CLASS class ) DECLSPEC_HIDDEN;
 extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
 extern void DIR_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir ) DECLSPEC_HIDDEN;
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name ) DECLSPEC_HIDDEN;
