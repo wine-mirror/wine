@@ -116,6 +116,12 @@ int CDECL wine_pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
     return ret;
 }
 
+int CDECL wine_pcap_findalldevs_ex(char *source, void *auth, pcap_if_t **alldevs, char *errbuf)
+{
+    FIXME("(%s %p %p %p): partial stub\n", debugstr_a(source), auth, alldevs, errbuf);
+    return wine_pcap_findalldevs(alldevs, errbuf);
+}
+
 void CDECL wine_pcap_freealldevs(pcap_if_t *alldevs)
 {
     TRACE("(%p)\n", alldevs);
