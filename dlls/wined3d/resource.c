@@ -316,7 +316,7 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
         return TRUE;
 
     /* The front buffer is always onscreen */
-    if (resource == &swapchain->front_buffer->container->resource)
+    if (resource == &swapchain->front_buffer->resource)
         return FALSE;
 
     /* If the swapchain is rendered to an FBO, the backbuffer is

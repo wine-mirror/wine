@@ -2622,7 +2622,7 @@ struct wined3d_swapchain
     struct wined3d_device *device;
 
     struct wined3d_surface **back_buffers;
-    struct wined3d_surface *front_buffer;
+    struct wined3d_texture *front_buffer;
     struct wined3d_swapchain_desc desc;
     struct wined3d_display_mode original_mode;
     struct wined3d_gamma_ramp orig_gamma;

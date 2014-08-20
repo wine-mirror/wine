@@ -749,7 +749,7 @@ static void surface_unmap(struct wined3d_surface *surface)
         return;
     }
 
-    if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface)
+    if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface->container)
         surface_load_location(surface, surface->container->resource.draw_binding);
     else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         FIXME("Depth / stencil buffer locking is not implemented.\n");
@@ -968,7 +968,7 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
 
     if (wined3d_settings.strict_draw_ordering
             || (dst_location == WINED3D_LOCATION_DRAWABLE
-            && dst_surface->container->swapchain->front_buffer == dst_surface))
+            && dst_surface->container->swapchain->front_buffer == dst_surface->container))
         gl_info->gl_ops.gl.p_glFlush();
 
     context_release(context);
@@ -1291,7 +1291,7 @@ static void gdi_surface_unmap(struct wined3d_surface *surface)
     TRACE("surface %p.\n", surface);
 
     /* Tell the swapchain to update the screen. */
-    if (surface->container->swapchain && surface == surface->container->swapchain->front_buffer)
+    if (surface->container->swapchain && surface->container == surface->container->swapchain->front_buffer)
         x11_copy_to_screen(surface->container->swapchain, &surface->lockedRect);
 
     memset(&surface->lockedRect, 0, sizeof(RECT));
@@ -1607,7 +1607,7 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
              * conflicts with this.
              */
             if (!((blit_supported && surface->container->swapchain
-                    && surface == surface->container->swapchain->front_buffer))
+                    && surface->container == surface->container->swapchain->front_buffer))
                     || colorkey_active || !use_texturing)
             {
                 format->glFormat = GL_RGBA;
@@ -1995,7 +1995,7 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
         TRACE("Returning GL_BACK\n");
         return GL_BACK;
     }
-    else if (surface == swapchain->front_buffer)
+    else if (surface->container == swapchain->front_buffer)
     {
         TRACE("Returning GL_FRONT\n");
         return GL_FRONT;
@@ -3855,7 +3855,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 {
     UINT drawable_height;
 
-    if (surface->container->swapchain && surface == surface->container->swapchain->front_buffer)
+    if (surface->container->swapchain && surface->container == surface->container->swapchain->front_buffer)
     {
         POINT offset = {0, 0};
         RECT windowsize;
@@ -3936,7 +3936,8 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     device->blitter->unset_shader(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->container->swapchain && dst_surface->container->swapchain->front_buffer == dst_surface))
+            || (dst_surface->container->swapchain
+            && dst_surface->container->swapchain->front_buffer == dst_surface->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -4309,7 +4310,8 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
          * directly on the FBO texture. That's because we need to flip. */
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                context->swapchain->front_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
+                surface_from_resource(wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)),
+                NULL, WINED3D_LOCATION_DRAWABLE);
         if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
@@ -4355,7 +4357,8 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         TRACE("Copying depth texture to onscreen depth buffer.\n");
 
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                context->swapchain->front_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
+                surface_from_resource(wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)),
+                NULL, WINED3D_LOCATION_DRAWABLE);
         surface_depth_blt(surface, context, surface->container->texture_rgb.name,
                 0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");
@@ -5828,7 +5831,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
              * to the frontbuffer instead of doing a Flip(). D3D8 and D3D9
              * applications can't blit directly to the frontbuffer. */
             if (dst_swapchain && dst_swapchain->back_buffers
-                    && dst_surface == dst_swapchain->front_buffer
+                    && dst_surface->container == dst_swapchain->front_buffer
                     && src_surface == dst_swapchain->back_buffers[0])
             {
                 enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;

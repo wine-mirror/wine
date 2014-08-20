@@ -462,7 +462,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     }
 
     if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
-            && target->container->swapchain && target->container->swapchain->front_buffer == target))
+            && target->container->swapchain && target->container->swapchain->front_buffer == target->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -913,7 +913,8 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->swapchains[0] = swapchain;
     device_init_swapchain_state(device, swapchain);
 
-    context = context_acquire(device, swapchain->front_buffer);
+    context = context_acquire(device,
+            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0)));
 
     create_dummy_textures(device, context);
 
@@ -4169,7 +4170,8 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
         return E_OUTOFMEMORY;
     }
 
-    target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
+    target = swapchain->back_buffers ? swapchain->back_buffers[0]
+            : surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
     if (!(context = context_create(swapchain, target, swapchain->ds_format)))
     {
         WARN("Failed to create context.\n");
@@ -4401,7 +4403,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         UINT i;
 
-        if (FAILED(hr = wined3d_surface_update_desc(swapchain->front_buffer, swapchain->desc.backbuffer_width,
+        if (FAILED(hr = wined3d_surface_update_desc(surface_from_resource(
+                wined3d_texture_get_sub_resource(swapchain->front_buffer, 0)), swapchain->desc.backbuffer_width,
                 swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
                 swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
             return hr;

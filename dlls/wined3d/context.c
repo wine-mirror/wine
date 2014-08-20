@@ -1826,7 +1826,7 @@ static void context_get_rt_size(const struct wined3d_context *context, SIZE *siz
 {
     const struct wined3d_surface *rt = context->current_rt;
 
-    if (rt->container->swapchain && rt->container->swapchain->front_buffer == rt)
+    if (rt->container->swapchain && rt->container->swapchain->front_buffer == rt->container)
     {
         RECT window_size;
 
@@ -3104,7 +3104,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
             if (swapchain->back_buffers)
                 target = swapchain->back_buffers[0];
             else
-                target = swapchain->front_buffer;
+                target = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
         }
     }
 
