@@ -5,3 +5,8 @@ C_SRCS = \
 	analyzer.c \
 	font.c \
 	layout.c
+
+FONT_SRCS = \
+	wine_test.sfd
+
+RC_SRCS = resource.rc

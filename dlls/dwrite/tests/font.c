@@ -41,6 +41,154 @@ static IDWriteFactory *factory;
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR blahW[]  = {'B','l','a','h','!',0};
 
+/* Here is a functional custom font set of interfaces */
+struct test_fontdatastream
+{
+    IDWriteFontFileStream IDWriteFontFileStream_iface;
+    LONG ref;
+
+    LPVOID data;
+    DWORD size;
+};
+
+static inline struct test_fontdatastream *impl_from_IDWriteFontFileStream(IDWriteFontFileStream* iface)
+{
+    return CONTAINING_RECORD(iface, struct test_fontdatastream, IDWriteFontFileStream_iface);
+}
+
+static HRESULT WINAPI fontdatastream_QueryInterface(IDWriteFontFileStream *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileStream))
+    {
+        *obj = iface;
+        IDWriteFontFileStream_AddRef(iface);
+        return S_OK;
+    }
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fontdatastream_AddRef(IDWriteFontFileStream *iface)
+{
+    struct test_fontdatastream *This = impl_from_IDWriteFontFileStream(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    return ref;
+}
+
+static ULONG WINAPI fontdatastream_Release(IDWriteFontFileStream *iface)
+{
+    struct test_fontdatastream *This = impl_from_IDWriteFontFileStream(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+    return ref;
+}
+
+static HRESULT WINAPI fontdatastream_ReadFileFragment(IDWriteFontFileStream *iface, void const **fragment_start, UINT64 offset, UINT64 fragment_size, void **fragment_context)
+{
+    struct test_fontdatastream *This = impl_from_IDWriteFontFileStream(iface);
+    *fragment_context = NULL;
+    if (offset+fragment_size > This->size)
+    {
+        *fragment_start = NULL;
+        return E_FAIL;
+    }
+    else
+    {
+        *fragment_start = (BYTE*)This->data + offset;
+        return S_OK;
+    }
+}
+
+static void WINAPI fontdatastream_ReleaseFileFragment(IDWriteFontFileStream *iface, void *fragment_context)
+{
+    /* Do Nothing */
+}
+
+static HRESULT WINAPI fontdatastream_GetFileSize(IDWriteFontFileStream *iface, UINT64 *size)
+{
+    struct test_fontdatastream *This = impl_from_IDWriteFontFileStream(iface);
+    *size = This->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI fontdatastream_GetLastWriteTime(IDWriteFontFileStream *iface, UINT64 *last_writetime)
+{
+    return E_NOTIMPL;
+}
+
+static const IDWriteFontFileStreamVtbl fontdatastreamvtbl =
+{
+    fontdatastream_QueryInterface,
+    fontdatastream_AddRef,
+    fontdatastream_Release,
+    fontdatastream_ReadFileFragment,
+    fontdatastream_ReleaseFileFragment,
+    fontdatastream_GetFileSize,
+    fontdatastream_GetLastWriteTime
+};
+
+static HRESULT create_fontdatastream(LPVOID data, UINT size, IDWriteFontFileStream** iface)
+{
+    struct test_fontdatastream *This = HeapAlloc(GetProcessHeap(), 0, sizeof(struct test_fontdatastream));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->data = data;
+    This->size = size;
+    This->ref = 1;
+    This->IDWriteFontFileStream_iface.lpVtbl = &fontdatastreamvtbl;
+
+    *iface = &This->IDWriteFontFileStream_iface;
+    return S_OK;
+}
+
+static HRESULT WINAPI resourcefontfileloader_QueryInterface(IDWriteFontFileLoader *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileLoader))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI resourcefontfileloader_AddRef(IDWriteFontFileLoader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI resourcefontfileloader_Release(IDWriteFontFileLoader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI resourcefontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+{
+    LPVOID data;
+    DWORD size;
+    HGLOBAL mem;
+
+    mem = LoadResource(GetModuleHandleA(NULL), *(HRSRC*)fontFileReferenceKey);
+    ok(mem != NULL, "Failed to lock font resource\n");
+    if (mem)
+    {
+        size = SizeofResource(GetModuleHandleA(NULL), *(HRSRC*)fontFileReferenceKey);
+        data = LockResource(mem);
+        return create_fontdatastream(data, size, fontFileStream);
+    }
+    return E_FAIL;
+}
+
+static const struct IDWriteFontFileLoaderVtbl resourcefontfileloadervtbl = {
+    resourcefontfileloader_QueryInterface,
+    resourcefontfileloader_AddRef,
+    resourcefontfileloader_Release,
+    resourcefontfileloader_CreateStreamFromKey
+};
+
+
 static void test_CreateFontFromLOGFONT(void)
 {
     static const WCHAR tahomaspW[] = {'T','a','h','o','m','a',' ',0};
@@ -762,6 +910,7 @@ static void test_FontLoader(void)
     IDWriteFontFileLoader floader = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
+    IDWriteFontFileLoader rloader = { &resourcefontfileloadervtbl };
     IDWriteFontFile *ffile = NULL;
     BOOL support = 1;
     DWRITE_FONT_FILE_TYPE type = 1;
@@ -769,6 +918,7 @@ static void test_FontLoader(void)
     UINT32 count = 1;
     IDWriteFontFace *fface = NULL;
     HRESULT hr;
+    HRSRC font;
 
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -778,6 +928,8 @@ static void test_FontLoader(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
     ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &rloader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &ffile);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -807,11 +959,33 @@ static void test_FontLoader(void)
     ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(ffile);
 
+    font = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
+    ok(font != NULL, "Failed to find font resource\n");
+    if (font)
+    {
+        hr = IDWriteFactory_CreateCustomFontFileReference(factory, &font, sizeof(HRSRC), &rloader, &ffile);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(support == TRUE, "got %i\n", support);
+        ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
+        ok(face == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face);
+        ok(count == 1, "got %i\n", count);
+
+        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, 0, &fface);
+        ok(hr == S_OK, "got 0x%08x\n",hr);
+        IDWriteFontFace_Release(fface);
+        IDWriteFontFile_Release(ffile);
+    }
+
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &rloader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
