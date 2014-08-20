@@ -128,6 +128,8 @@ static const WCHAR attrLetterSpacing[] =
     {'l','e','t','t','e','r','-','s','p','a','c','i','n','g',0};
 static const WCHAR attrLineHeight[] =
     {'l','i','n','e','-','h','e','i','g','h','t',0};
+static const WCHAR attrListStyle[] =
+    {'l','i','s','t','-','s','t','y','l','e',0};
 static const WCHAR attrListStyleType[] =
     {'l','i','s','t','-','s','t','y','l','e','-','t','y','p','e',0};
 static const WCHAR attrListStylePosition[] =
@@ -252,6 +254,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrLeft,                 DISPID_IHTMLSTYLE_LEFT},
     {attrLetterSpacing,        DISPID_IHTMLSTYLE_LETTERSPACING},
     {attrLineHeight,           DISPID_IHTMLSTYLE_LINEHEIGHT},
+    {attrListStyle,            DISPID_IHTMLSTYLE_LISTSTYLE},
     {attrListStylePosition,    DISPID_IHTMLSTYLE_LISTSTYLEPOSITION},
     {attrListStyleType,        DISPID_IHTMLSTYLE_LISTSTYLETYPE},
     {attrMargin,               DISPID_IHTMLSTYLE_MARGIN},
@@ -2241,15 +2244,19 @@ static HRESULT WINAPI HTMLStyle_get_listStyleImage(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_listStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_LIST_STYLE, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_listStyle(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_LIST_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_whiteSpace(IHTMLStyle *iface, BSTR v)

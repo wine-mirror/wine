@@ -59,6 +59,22 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
+static const WCHAR *strstr_wa(const WCHAR *str, const char *suba)
+{
+    BSTR sub;
+    const WCHAR *ret = NULL;
+    sub = a2bstr(suba);
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = sub;
+        while (*p1 && *p2 && *p1 == *p2) { p1++; p2++; }
+        if (!*p2) {ret = str; break;}
+        str++;
+    }
+    SysFreeString(sub);
+    return ret;
+}
+
 #define test_var_bstr(a,b) _test_var_bstr(__LINE__,a,b)
 static void _test_var_bstr(unsigned line, const VARIANT *v, const char *expect)
 {
@@ -2193,6 +2209,24 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_listStylePosition failed: %08x\n", hres);
     ok(!strcmp_wa(str, "inside"), "listStyleType = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    str = a2bstr("decimal-leading-zero none inside");
+    hres = IHTMLStyle_put_listStyle(style, str);
+    ok(hres == S_OK || broken(hres == E_INVALIDARG), /* win 2000 */
+        "put_listStyle(%s) failed: %08x\n", wine_dbgstr_w(str), hres);
+    SysFreeString(str);
+
+    if (hres != E_INVALIDARG) {
+        hres = IHTMLStyle_get_listStyle(style, &str);
+        ok(hres == S_OK, "get_listStyle failed: %08x\n", hres);
+        ok(strstr_wa(str, "decimal-leading-zero") == str &&
+           strstr_wa(str, "none") != NULL &&
+           strstr_wa(str, "inside") != NULL,
+            "listStyle = %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+    }  else {
+        win_skip("IHTMLStyle_put_listStyle already failed\n");
+    }
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
