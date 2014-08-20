@@ -3773,6 +3773,13 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const POINT *dst_point)
 {
+    const struct wined3d_format *src_format = src_surface->resource.format;
+    const struct wined3d_format *dst_format = dst_surface->resource.format;
+    UINT update_w, update_h;
+    UINT dst_w, dst_h;
+    RECT r, dst_rect;
+    POINT p;
+
     TRACE("device %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
             device, src_surface, wine_dbgstr_rect(src_rect),
             dst_surface, wine_dbgstr_point(dst_point));
@@ -3781,6 +3788,67 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     {
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
                 src_surface, dst_surface);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (src_format->id != dst_format->id)
+    {
+        WARN("Source and destination surfaces should have the same format.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!dst_point)
+    {
+        p.x = 0;
+        p.y = 0;
+        dst_point = &p;
+    }
+    else if (dst_point->x < 0 || dst_point->y < 0)
+    {
+        WARN("Invalid destination point.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!src_rect)
+    {
+        r.left = 0;
+        r.top = 0;
+        r.right = src_surface->resource.width;
+        r.bottom = src_surface->resource.height;
+        src_rect = &r;
+    }
+    else if (src_rect->left < 0 || src_rect->left >= src_rect->right
+            || src_rect->top < 0 || src_rect->top >= src_rect->bottom)
+    {
+        WARN("Invalid source rectangle.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    dst_w = dst_surface->resource.width;
+    dst_h = dst_surface->resource.height;
+
+    update_w = src_rect->right - src_rect->left;
+    update_h = src_rect->bottom - src_rect->top;
+
+    if (update_w > dst_w || dst_point->x > dst_w - update_w
+            || update_h > dst_h || dst_point->y > dst_h - update_h)
+    {
+        WARN("Destination out of bounds.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if ((src_surface->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+            && !surface_check_block_align(src_surface, src_rect))
+    {
+        WARN("Source rectangle not block-aligned.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
+    if ((dst_surface->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+            && !surface_check_block_align(dst_surface, &dst_rect))
+    {
+        WARN("Destination rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
