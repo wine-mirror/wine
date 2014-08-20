@@ -782,12 +782,6 @@ static int X11DRV_SysPaletteLookupPixel( COLORREF col, BOOL skipReserved )
 }
 
  
-static inline BOOL colour_is_brighter(RGBQUAD c1, RGBQUAD c2)
-{
-    return (c1.rgbRed * c1.rgbRed + c1.rgbGreen * c1.rgbGreen + c1.rgbBlue * c1.rgbBlue) > 
-        (c2.rgbRed * c2.rgbRed + c2.rgbGreen * c2.rgbGreen + c2.rgbBlue * c2.rgbBlue);
-}
-
 /***********************************************************************
  *           X11DRV_PALETTE_GetColor
  *
