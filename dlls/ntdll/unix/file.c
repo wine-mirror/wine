@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <unistd.h>
@@ -97,6 +98,9 @@
 #endif
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_XATTR_H
+#include <sys/xattr.h>
 #endif
 #include <time.h>
 #include <unistd.h>
@@ -166,6 +170,9 @@ typedef struct
 #define MAX_DIR_ENTRY_LEN 255  /* max length of a directory entry in chars */
 
 #define MAX_IGNORED_FILES 4
+
+#define SAMBA_XATTR_DOS_ATTRIB  "user.DOSATTRIB"
+#define XATTR_ATTRIBS_MASK      (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)
 
 struct file_identity
 {
@@ -354,6 +361,22 @@ NTSTATUS errno_to_status( int err )
         return STATUS_UNSUCCESSFUL;
     }
 }
+
+
+static int xattr_get( const char *path, const char *name, void *value, size_t size )
+{
+#ifdef HAVE_SYS_XATTR_H
+# ifdef XATTR_ADDITIONAL_OPTIONS
+    return getxattr( path, name, value, size, 0, 0 );
+# else
+    return getxattr( path, name, value, size );
+# endif
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
 
 /* get space from the current directory data buffer, allocating a new one if necessary */
 static void *get_dir_data_space( struct dir_data *data, unsigned int size )
@@ -1451,6 +1474,27 @@ static inline ULONG get_file_attributes( const struct stat *st )
 }
 
 
+/* decode the xattr-stored DOS attributes */
+static int parse_samba_dos_attrib_data( char *data, int len )
+{
+    char *end;
+    int val;
+
+    if (len > 2 && data[0] == '0' && data[1] == 'x')
+    {
+        data[len] = 0;
+        val = strtol( data, &end, 16 );
+        if (!*end) return val & XATTR_ATTRIBS_MASK;
+    }
+    else
+    {
+        static BOOL once;
+        if (!once++) FIXME( "Unhandled " SAMBA_XATTR_DOS_ATTRIB " extended attribute value.\n" );
+    }
+    return 0;
+}
+
+
 static BOOL fd_is_mount_point( int fd, const struct stat *st )
 {
     struct stat parent;
@@ -1479,7 +1523,8 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
 static int get_file_info( const char *path, struct stat *st, ULONG *attr )
 {
     char *parent_path;
-    int ret;
+    char attr_data[65];
+    int attr_len, ret;
 
     *attr = 0;
     ret = lstat( path, st );
@@ -1505,6 +1550,14 @@ static int get_file_info( const char *path, struct stat *st, ULONG *attr )
         free( parent_path );
     }
     *attr |= get_file_attributes( st );
+
+    attr_len = xattr_get( path, SAMBA_XATTR_DOS_ATTRIB, attr_data, sizeof(attr_data)-1 );
+    if (attr_len != -1)
+        *attr |= parse_samba_dos_attrib_data( attr_data, attr_len );
+    else if (errno != ENODATA && errno != ENOTSUP)
+        WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB " from \"%s\". errno %d (%s)\n",
+              path, errno, strerror( errno ) );
+
     return ret;
 }
 
