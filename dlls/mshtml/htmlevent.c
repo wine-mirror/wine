@@ -218,7 +218,7 @@ static const event_info_t event_info[] = {
     {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
         EVENT_CANCELABLE},
     {submitW,            onsubmitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE}
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS}
 };
 
 eventid_t str_to_eid(LPCWSTR str)

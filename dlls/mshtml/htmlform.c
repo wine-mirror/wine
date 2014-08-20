@@ -714,12 +714,24 @@ static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface,
     return S_OK;
 }
 
+static HRESULT HTMLFormElement_handle_event(HTMLDOMNode *iface, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
+{
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(eid == EVENTID_SUBMIT) {
+        *prevent_default = TRUE;
+        return IHTMLFormElement_submit(&This->IHTMLFormElement_iface);
+    }
+
+    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
+}
+
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_handle_event,
+    HTMLFormElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,
     NULL,
