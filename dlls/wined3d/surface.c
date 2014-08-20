@@ -1985,7 +1985,7 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
         return GL_NONE;
     }
 
-    if (swapchain->back_buffers && swapchain->back_buffers[0] == surface)
+    if (swapchain->back_buffers && swapchain->back_buffers[0] == surface->container)
     {
         if (swapchain->render_to_fbo)
         {
@@ -3676,7 +3676,8 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
             wined3d_gl_min_mip_filter(minMipLookup, filter, WINED3D_TEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    if (!src_surface->container->swapchain || src_surface == src_surface->container->swapchain->back_buffers[0])
+    if (!src_surface->container->swapchain
+            || src_surface->container == src_surface->container->swapchain->back_buffers[0])
     {
         src = backup ? backup : src_surface->container->texture_rgb.name;
     }
@@ -5832,7 +5833,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
              * applications can't blit directly to the frontbuffer. */
             if (dst_swapchain && dst_swapchain->back_buffers
                     && dst_surface->container == dst_swapchain->front_buffer
-                    && src_surface == dst_swapchain->back_buffers[0])
+                    && src_surface->container == dst_swapchain->back_buffers[0])
             {
                 enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;
 

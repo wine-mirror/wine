@@ -3102,7 +3102,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
         {
             struct wined3d_swapchain *swapchain = device->swapchains[0];
             if (swapchain->back_buffers)
-                target = swapchain->back_buffers[0];
+                target = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
             else
                 target = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
         }

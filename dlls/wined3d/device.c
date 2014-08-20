@@ -854,7 +854,8 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
             wined3d_device_set_render_target(device, i, NULL, FALSE);
         }
         if (swapchain->back_buffers && swapchain->back_buffers[0])
-            wined3d_device_set_render_target(device, 0, swapchain->back_buffers[0], TRUE);
+            wined3d_device_set_render_target(device, 0,
+                    surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)), TRUE);
     }
 
     wined3d_device_set_depth_stencil(device, ds_enable ? device->auto_depth_stencil : NULL);
@@ -4170,7 +4171,8 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
         return E_OUTOFMEMORY;
     }
 
-    target = swapchain->back_buffers ? swapchain->back_buffers[0]
+    target = swapchain->back_buffers
+            ? surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0))
             : surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
     if (!(context = context_create(swapchain, target, swapchain->ds_format)))
     {
@@ -4233,7 +4235,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_device_set_render_target(device, i, NULL, FALSE);
         }
         if (swapchain->back_buffers && swapchain->back_buffers[0])
-            wined3d_device_set_render_target(device, 0, swapchain->back_buffers[0], FALSE);
+            wined3d_device_set_render_target(device, 0,
+                    surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)), FALSE);
     }
     wined3d_device_set_depth_stencil(device, NULL);
 
@@ -4411,7 +4414,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
-            if (FAILED(hr = wined3d_surface_update_desc(swapchain->back_buffers[i], swapchain->desc.backbuffer_width,
+            if (FAILED(hr = wined3d_surface_update_desc(surface_from_resource(
+                    wined3d_texture_get_sub_resource(swapchain->back_buffers[i], 0)), swapchain->desc.backbuffer_width,
                     swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
                     swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
                 return hr;
