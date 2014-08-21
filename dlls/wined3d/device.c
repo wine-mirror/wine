@@ -3741,22 +3741,32 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 }
 
 void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color)
+        struct wined3d_rendertarget_view *view, const struct wined3d_color *color)
 {
     struct wined3d_resource *resource;
     HRESULT hr;
     RECT rect;
 
-    resource = rendertarget_view->resource;
-    if (resource->type != WINED3D_RTYPE_SURFACE)
+    TRACE("device %p, view %p, color {%.8e, %.8e, %.8e, %.8e}.\n",
+            device, view, color->r, color->g, color->b, color->a);
+
+    resource = view->resource;
+    if (resource->type != WINED3D_RTYPE_TEXTURE && resource->type != WINED3D_RTYPE_CUBE_TEXTURE)
     {
-        FIXME("Only supported on surface resources\n");
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
         return;
     }
 
-    SetRect(&rect, 0, 0, resource->width, resource->height);
-    hr = surface_color_fill(surface_from_resource(resource), &rect, color);
-    if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
+    if (view->depth > 1)
+    {
+        FIXME("Layered clears not implemented.\n");
+        return;
+    }
+
+    SetRect(&rect, 0, 0, view->width, view->height);
+    resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), view->sub_resource_idx);
+    if (FAILED(hr = surface_color_fill(surface_from_resource(resource), &rect, color)))
+        ERR("Color fill failed, hr %#x.\n", hr);
 }
 
 struct wined3d_surface * CDECL wined3d_device_get_render_target(const struct wined3d_device *device,
