@@ -4016,7 +4016,7 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
     }
 
     device_clear_render_targets(device, 1, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
-    wined3d_rendertarget_view_decref(view);
+    wined3d_rendertarget_view_decref_worker(view);
 
     return WINED3D_OK;
 }
@@ -4036,7 +4036,7 @@ static HRESULT ffp_blit_depth_fill(struct wined3d_device *device, struct wined3d
     }
 
     device_clear_render_targets(device, 0, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
-    wined3d_rendertarget_view_decref(fb.depth_stencil);
+    wined3d_rendertarget_view_decref_worker(fb.depth_stencil);
 
     return WINED3D_OK;
 }

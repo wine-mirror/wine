@@ -79,6 +79,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SURFACE_PRELOAD,
     WINED3D_CS_OP_UPDATE_TEXTURE,
     WINED3D_CS_OP_EVICT_RESOURCE,
+    WINED3D_CS_OP_VIEW_DESTROY,
     WINED3D_CS_OP_STOP,
 };
 
@@ -457,6 +458,12 @@ struct wined3d_cs_buffer_preload
 {
     enum wined3d_cs_op opcode;
     struct wined3d_buffer *buffer;
+};
+
+struct wined3d_cs_view_destroy
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_rendertarget_view *view;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2338,6 +2345,26 @@ void wined3d_cs_emit_buffer_preload(struct wined3d_cs *cs, struct wined3d_buffer
     cs->ops->submit(cs, sizeof(*op));
 }
 
+static UINT wined3d_cs_exec_view_destroy(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_view_destroy *op = data;
+
+    wined3d_rendertarget_view_destroy(op->view);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_view_destroy(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_cs_view_destroy *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_VIEW_DESTROY;
+    op->view = view;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2395,6 +2422,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SURFACE_PRELOAD            */ wined3d_cs_exec_surface_preload,
     /* WINED3D_CS_OP_UPDATE_TEXTURE             */ wined3d_cs_exec_update_texture,
     /* WINED3D_CS_OP_EVICT_RESOURCE             */ wined3d_cs_exec_evict_resource,
+    /* WINED3D_CS_OP_VIEW_DESTROY               */ wined3d_cs_exec_view_destroy,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
