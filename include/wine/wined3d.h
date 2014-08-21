@@ -1934,6 +1934,25 @@ struct wined3d_buffer_desc
     UINT misc_flags;
 };
 
+struct wined3d_rendertarget_view_desc
+{
+    enum wined3d_format_id format_id;
+    union
+    {
+        struct
+        {
+            unsigned int start_idx;
+            unsigned int count;
+        } buffer;
+        struct
+        {
+            unsigned int level_idx;
+            unsigned int layer_idx;
+            unsigned int layer_count;
+        } texture;
+    } u;
+};
+
 struct wined3d_shader_signature_element
 {
     const char *semantic_name;
@@ -2357,8 +2376,8 @@ DWORD __cdecl wined3d_resource_get_priority(const struct wined3d_resource *resou
 void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void *parent);
 DWORD __cdecl wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority);
 
-HRESULT __cdecl wined3d_rendertarget_view_create(struct wined3d_resource *resource,
-        void *parent, struct wined3d_rendertarget_view **rendertarget_view);
+HRESULT __cdecl wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, struct wined3d_rendertarget_view **view);
 ULONG __cdecl wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view);
 void * __cdecl wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view);
 struct wined3d_resource * __cdecl wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view);

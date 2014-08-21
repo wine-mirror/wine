@@ -654,9 +654,73 @@ static const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl =
     d3d10_rendertarget_view_GetDesc,
 };
 
+static void wined3d_rendertarget_view_desc_from_d3d10core(struct wined3d_rendertarget_view_desc *wined3d_desc,
+        const D3D10_RENDER_TARGET_VIEW_DESC *desc)
+{
+    wined3d_desc->format_id = wined3dformat_from_dxgi_format(desc->Format);
+
+    switch (desc->ViewDimension)
+    {
+        case D3D10_RTV_DIMENSION_BUFFER:
+            wined3d_desc->u.buffer.start_idx = desc->u.Buffer.ElementOffset;
+            wined3d_desc->u.buffer.count = desc->u.Buffer.ElementWidth;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE1D:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture1D.MipSlice;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE1DARRAY:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture1DArray.MipSlice;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture1DArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture1DArray.ArraySize;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE2D:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture2D.MipSlice;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE2DARRAY:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture2DArray.MipSlice;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture2DArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture2DArray.ArraySize;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE2DMS:
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE2DMSARRAY:
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture2DMSArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture2DMSArray.ArraySize;
+            break;
+
+        case D3D10_RTV_DIMENSION_TEXTURE3D:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture3D.MipSlice;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture3D.FirstWSlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture3D.WSize;
+            break;
+
+        default:
+            FIXME("Unhandled view dimension %#x.\n", desc->ViewDimension);
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+    }
+}
+
 HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
+    struct wined3d_rendertarget_view_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
@@ -680,8 +744,8 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
         return E_FAIL;
     }
 
-    hr = wined3d_rendertarget_view_create(wined3d_resource, view, &view->wined3d_view);
-    if (FAILED(hr))
+    wined3d_rendertarget_view_desc_from_d3d10core(&wined3d_desc, &view->desc);
+    if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource, view, &view->wined3d_view)))
     {
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
         return hr;

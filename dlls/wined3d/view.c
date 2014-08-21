@@ -63,30 +63,54 @@ struct wined3d_resource * CDECL wined3d_rendertarget_view_get_resource(const str
 }
 
 static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
-        struct wined3d_resource *resource, void *parent)
+        const struct wined3d_rendertarget_view_desc *desc, struct wined3d_resource *resource, void *parent)
 {
+    const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
+
     view->refcount = 1;
     view->resource = resource;
     wined3d_resource_incref(resource);
     view->parent = parent;
+
+    view->format = wined3d_get_format(gl_info, desc->format_id);
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        view->sub_resource_idx = 0;
+        view->buffer_offset = desc->u.buffer.start_idx;
+        view->width = desc->u.buffer.count;
+        view->height = 1;
+        view->depth = 1;
+    }
+    else
+    {
+        struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
+        struct wined3d_resource *sub_resource;
+
+        view->sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
+        sub_resource = wined3d_texture_get_sub_resource(texture, view->sub_resource_idx);
+
+        view->buffer_offset = 0;
+        view->width = sub_resource->width;
+        view->height = sub_resource->height;
+        view->depth = desc->u.texture.layer_count;
+    }
 }
 
-HRESULT CDECL wined3d_rendertarget_view_create(struct wined3d_resource *resource,
-        void *parent, struct wined3d_rendertarget_view **rendertarget_view)
+HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, struct wined3d_rendertarget_view **view)
 {
     struct wined3d_rendertarget_view *object;
 
-    TRACE("resource %p, parent %p, rendertarget_view %p.\n",
-            resource, parent, rendertarget_view);
+    TRACE("desc %p, resource %p, parent %p, view %p.\n",
+            desc, resource, parent, view);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_rendertarget_view_init(object, resource, parent);
+    wined3d_rendertarget_view_init(object, desc, resource, parent);
 
     TRACE("Created render target view %p.\n", object);
-    *rendertarget_view = object;
+    *view = object;
 
     return WINED3D_OK;
 }

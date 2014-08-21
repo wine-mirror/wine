@@ -2617,6 +2617,14 @@ struct wined3d_rendertarget_view
 
     struct wined3d_resource *resource;
     void *parent;
+
+    const struct wined3d_format *format;
+    unsigned int sub_resource_idx;
+    unsigned int buffer_offset;
+
+    unsigned int width;
+    unsigned int height;
+    unsigned int depth;
 };
 
 struct wined3d_swapchain_ops
