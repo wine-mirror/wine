@@ -40,7 +40,10 @@ ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *v
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
     if (!refcount)
+    {
+        wined3d_resource_decref(view->resource);
         HeapFree(GetProcessHeap(), 0, view);
+    }
 
     return refcount;
 }
@@ -64,6 +67,7 @@ static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *vie
 {
     view->refcount = 1;
     view->resource = resource;
+    wined3d_resource_incref(resource);
     view->parent = parent;
 }
 

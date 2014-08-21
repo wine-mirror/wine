@@ -2020,6 +2020,8 @@ static inline void context_invalidate_active_texture(struct wined3d_context *con
 
 struct wined3d_resource_ops
 {
+    ULONG (*resource_incref)(struct wined3d_resource *resource);
+    ULONG (*resource_decref)(struct wined3d_resource *resource);
     void (*resource_unload)(struct wined3d_resource *resource);
 };
 
@@ -2050,6 +2052,16 @@ struct wined3d_resource
     const struct wined3d_parent_ops *parent_ops;
     const struct wined3d_resource_ops *resource_ops;
 };
+
+static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
+{
+    return resource->resource_ops->resource_incref(resource);
+}
+
+static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
+{
+    return resource->resource_ops->resource_decref(resource);
+}
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,

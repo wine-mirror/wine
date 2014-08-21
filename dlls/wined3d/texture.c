@@ -771,6 +771,16 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_sub_resource_cleanup,
 };
 
+static ULONG texture_resource_incref(struct wined3d_resource *resource)
+{
+    return wined3d_texture_incref(wined3d_texture_from_resource(resource));
+}
+
+static ULONG texture_resource_decref(struct wined3d_resource *resource)
+{
+    return wined3d_texture_decref(wined3d_texture_from_resource(resource));
+}
+
 static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
@@ -791,6 +801,8 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
 
 static const struct wined3d_resource_ops texture_resource_ops =
 {
+    texture_resource_incref,
+    texture_resource_decref,
     wined3d_texture_unload,
 };
 

@@ -772,8 +772,20 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
     return WINED3D_OK;
 }
 
+static ULONG volume_resource_incref(struct wined3d_resource *resource)
+{
+    return wined3d_volume_incref(volume_from_resource(resource));
+}
+
+static ULONG volume_resource_decref(struct wined3d_resource *resource)
+{
+    return wined3d_volume_decref(volume_from_resource(resource));
+}
+
 static const struct wined3d_resource_ops volume_resource_ops =
 {
+    volume_resource_incref,
+    volume_resource_decref,
     volume_unload,
 };
 

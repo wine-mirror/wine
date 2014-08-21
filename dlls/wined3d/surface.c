@@ -1158,6 +1158,16 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     surface_invalidate_location(surface, WINED3D_LOCATION_BUFFER);
 }
 
+static ULONG surface_resource_incref(struct wined3d_resource *resource)
+{
+    return wined3d_surface_incref(surface_from_resource(resource));
+}
+
+static ULONG surface_resource_decref(struct wined3d_resource *resource)
+{
+    return wined3d_surface_decref(surface_from_resource(resource));
+}
+
 static void surface_unload(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
@@ -1236,6 +1246,8 @@ static void surface_unload(struct wined3d_resource *resource)
 
 static const struct wined3d_resource_ops surface_resource_ops =
 {
+    surface_resource_incref,
+    surface_resource_decref,
     surface_unload,
 };
 

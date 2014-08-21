@@ -1113,8 +1113,20 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     }
 }
 
+static ULONG buffer_resource_incref(struct wined3d_resource *resource)
+{
+    return wined3d_buffer_incref(buffer_from_resource(resource));
+}
+
+static ULONG buffer_resource_decref(struct wined3d_resource *resource)
+{
+    return wined3d_buffer_decref(buffer_from_resource(resource));
+}
+
 static const struct wined3d_resource_ops buffer_resource_ops =
 {
+    buffer_resource_incref,
+    buffer_resource_decref,
     buffer_unload,
 };
 
