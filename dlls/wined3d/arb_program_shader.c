@@ -7278,10 +7278,10 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(const struct wined3d_surface *surface, struct wined3d_context *context)
+static void upload_palette(const struct wined3d_texture *texture, struct wined3d_context *context)
 {
-    const struct wined3d_palette *palette = surface->container->swapchain ? surface->container->swapchain->palette : NULL;
-    struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_palette *palette = texture->swapchain ? texture->swapchain->palette : NULL;
+    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
 
@@ -7538,7 +7538,7 @@ err_out:
     }
 
     if (fixup == COMPLEX_FIXUP_P8)
-        upload_palette(surface, context);
+        upload_palette(surface->container, context);
 
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
