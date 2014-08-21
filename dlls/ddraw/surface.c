@@ -322,6 +322,8 @@ static void ddraw_surface_add_iface(struct ddraw_surface *surface)
         if (surface->ifaceToRelease)
             IUnknown_AddRef(surface->ifaceToRelease);
         wined3d_mutex_lock();
+        if (surface->wined3d_rtv)
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         if (surface->wined3d_surface)
             wined3d_surface_incref(surface->wined3d_surface);
         if (surface->wined3d_texture)
@@ -526,6 +528,8 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
                 surface, surface->ref7, surface->ref4, surface->ref3, surface->ref2, surface->ref1);
     }
 
+    if (surface->wined3d_rtv)
+        wined3d_rendertarget_view_decref(surface->wined3d_rtv);
     if (surface->wined3d_texture)
         wined3d_texture_decref(surface->wined3d_texture);
     if (surface->wined3d_surface)
@@ -1208,11 +1212,12 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 {
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+    struct wined3d_rendertarget_view *tmp_rtv, *src_rtv, *rtv;
     struct ddraw_texture *ddraw_texture, *prev_ddraw_texture;
     DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
-    struct wined3d_surface *tmp, *rt;
     struct wined3d_texture *texture;
     IDirectDrawSurface7 *current;
+    struct wined3d_surface *tmp;
     HRESULT hr;
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
@@ -1225,9 +1230,10 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     wined3d_mutex_lock();
 
+    tmp_rtv = ddraw_surface_get_rendertarget_view(dst_impl);
     tmp = dst_impl->wined3d_surface;
     texture = dst_impl->wined3d_texture;
-    rt = wined3d_device_get_render_target(dst_impl->ddraw->wined3d_device, 0);
+    rtv = wined3d_device_get_rendertarget_view(dst_impl->ddraw->wined3d_device, 0);
     ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
 
     if (src_impl)
@@ -1249,8 +1255,11 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
             }
         }
 
-        if (rt == dst_impl->wined3d_surface)
-            wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
+        src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
+        if (rtv == dst_impl->wined3d_rtv)
+            wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
+        wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
+        dst_impl->wined3d_rtv = src_rtv;
         wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
         dst_impl->wined3d_surface = src_impl->wined3d_surface;
         prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
@@ -1276,8 +1285,11 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
             }
 
             src_impl = impl_from_IDirectDrawSurface7(current);
-            if (rt == dst_impl->wined3d_surface)
-                wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
+            src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
+            if (rtv == dst_impl->wined3d_rtv)
+                wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
+            wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
+            dst_impl->wined3d_rtv = src_rtv;
             wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
             dst_impl->wined3d_surface = src_impl->wined3d_surface;
             prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
@@ -1290,8 +1302,10 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     /* We don't have to worry about potential texture bindings, since
      * flippable surfaces can never be textures. */
-    if (rt == src_impl->wined3d_surface)
-        wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, tmp, FALSE);
+    if (rtv == src_impl->wined3d_rtv)
+        wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, tmp_rtv, FALSE);
+    wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
+    src_impl->wined3d_rtv = tmp_rtv;
     wined3d_resource_set_parent(wined3d_surface_get_resource(tmp), src_impl);
     src_impl->wined3d_surface = tmp;
     wined3d_resource_set_parent(wined3d_texture_get_resource(texture), ddraw_texture);
@@ -6226,4 +6240,42 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     wined3d_private_store_init(&surface->private_store);
 
     return DD_OK;
+}
+
+static void STDMETHODCALLTYPE view_wined3d_object_destroyed(void *parent)
+{
+    struct ddraw_surface *surface = parent;
+
+    /* If the surface reference count drops to zero, we release our reference
+     * to the view, but don't clear the pointer yet, in case e.g. a
+     * GetRenderTarget() call brings the surface back before the view is
+     * actually destroyed. When the view is destroyed, we need to clear the
+     * pointer, or a subsequent surface AddRef() would reference it again.
+     *
+     * This is safe because as long as the view still has a reference to the
+     * texture, the surface is also still alive, and we're called before the
+     * view releases that reference. */
+    surface->wined3d_rtv = NULL;
+}
+
+static const struct wined3d_parent_ops ddraw_view_wined3d_parent_ops =
+{
+    view_wined3d_object_destroyed,
+};
+
+struct wined3d_rendertarget_view *ddraw_surface_get_rendertarget_view(struct ddraw_surface *surface)
+{
+    HRESULT hr;
+
+    if (surface->wined3d_rtv)
+        return surface->wined3d_rtv;
+
+    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(surface->wined3d_surface,
+            surface, &ddraw_view_wined3d_parent_ops, &surface->wined3d_rtv)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    return surface->wined3d_rtv;
 }

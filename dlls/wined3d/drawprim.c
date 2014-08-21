@@ -613,7 +613,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            struct wined3d_surface *target = device->fb.render_targets[i];
+            struct wined3d_surface *target = wined3d_rendertarget_view_get_surface(device->fb.render_targets[i]);
             if (target)
             {
                 surface_load_location(target, target->container->resource.draw_binding);
@@ -622,7 +622,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         }
     }
 
-    context = context_acquire(device, device->fb.render_targets[0]);
+    context = context_acquire(device, wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]));
     if (!context->valid)
     {
         context_release(context);

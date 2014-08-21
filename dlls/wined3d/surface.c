@@ -3977,6 +3977,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         enum wined3d_texture_filter_type filter)
 {
     struct wined3d_device *device = dst_surface->resource.device;
+    const struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]);
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
 
@@ -4009,9 +4010,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     }
 
     /* Early sort out of cases where no render target is used */
-    if (!dst_swapchain && !src_swapchain
-            && src_surface != device->fb.render_targets[0]
-            && dst_surface != device->fb.render_targets[0])
+    if (!dst_swapchain && !src_swapchain && src_surface != rt && dst_surface != rt)
     {
         TRACE("No surface is render target, not using hardware blit.\n");
         return WINED3DERR_INVALIDCALL;
@@ -4040,16 +4039,16 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     if (dst_swapchain)
     {
         /* Handled with regular texture -> swapchain blit */
-        if (src_surface == device->fb.render_targets[0])
+        if (src_surface == rt)
             TRACE("Blit from active render target to a swapchain\n");
     }
-    else if (src_swapchain && dst_surface == device->fb.render_targets[0])
+    else if (src_swapchain && dst_surface == rt)
     {
         FIXME("Implement blit from a swapchain to the active render target\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((src_swapchain || src_surface == device->fb.render_targets[0]) && !dst_swapchain)
+    if ((src_swapchain || src_surface == rt) && !dst_swapchain)
     {
         /* Blit from render target to texture */
         BOOL stretchx;
@@ -4899,9 +4898,19 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
         const RECT *dst_rect, const struct wined3d_color *color)
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
-    struct wined3d_fb_state fb = {&dst_surface, NULL};
+    struct wined3d_rendertarget_view *view;
+    struct wined3d_fb_state fb = {&view, NULL};
+    HRESULT hr;
+
+    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
+            NULL, &wined3d_null_parent_ops, &view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
 
     device_clear_render_targets(device, 1, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
+    wined3d_rendertarget_view_decref(view);
 
     return WINED3D_OK;
 }
@@ -5901,7 +5910,7 @@ cpu:
 }
 
 static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, GLenum target, GLint level, DWORD flags)
+        const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer, DWORD flags)
 {
     struct wined3d_device *device = container->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -5983,6 +5992,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
     surface->texture_target = target;
     surface->texture_level = level;
+    surface->texture_layer = layer;
 
     /* Call the private setup routine */
     if (FAILED(hr = surface->surface_ops->surface_private_setup(surface)))
@@ -6010,7 +6020,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
 }
 
 HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        GLenum target, GLint level, DWORD flags, struct wined3d_surface **surface)
+        GLenum target, unsigned int level, unsigned int layer, DWORD flags, struct wined3d_surface **surface)
 {
     struct wined3d_device_parent *device_parent = container->resource.device->device_parent;
     const struct wined3d_parent_ops *parent_ops;
@@ -6019,15 +6029,15 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
     HRESULT hr;
 
     TRACE("container %p, width %u, height %u, format %s, usage %s (%#x), pool %s, "
-            "multisample_type %#x, multisample_quality %u, target %#x, level %d, flags %#x, surface %p.\n",
+            "multisample_type %#x, multisample_quality %u, target %#x, level %u, layer %u, flags %#x, surface %p.\n",
             container, desc->width, desc->height, debug_d3dformat(desc->format),
             debug_d3dusage(desc->usage), desc->usage, debug_d3dpool(desc->pool),
-            desc->multisample_type, desc->multisample_quality, target, level, flags, surface);
+            desc->multisample_type, desc->multisample_quality, target, level, layer, flags, surface);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = surface_init(object, container, desc, target, level, flags)))
+    if (FAILED(hr = surface_init(object, container, desc, target, level, layer, flags)))
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

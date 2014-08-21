@@ -65,8 +65,14 @@ static ULONG WINAPI d3d8_texture_2d_AddRef(IDirect3DTexture8 *iface)
 
     if (ref == 1)
     {
+        struct d3d8_surface *surface;
+
         IDirect3DDevice8_AddRef(texture->parent_device);
         wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d8_surface, rtv_entry)
+        {
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
+        }
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
     }
@@ -84,8 +90,13 @@ static ULONG WINAPI d3d8_texture_2d_Release(IDirect3DTexture8 *iface)
     if (!ref)
     {
         IDirect3DDevice8 *parent_device = texture->parent_device;
+        struct d3d8_surface *surface;
 
         wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d8_surface, rtv_entry)
+        {
+            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+        }
         wined3d_texture_decref(texture->wined3d_texture);
         wined3d_mutex_unlock();
 
@@ -413,8 +424,14 @@ static ULONG WINAPI d3d8_texture_cube_AddRef(IDirect3DCubeTexture8 *iface)
 
     if (ref == 1)
     {
+        struct d3d8_surface *surface;
+
         IDirect3DDevice8_AddRef(texture->parent_device);
         wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d8_surface, rtv_entry)
+        {
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
+        }
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
     }
@@ -432,10 +449,15 @@ static ULONG WINAPI d3d8_texture_cube_Release(IDirect3DCubeTexture8 *iface)
     if (!ref)
     {
         IDirect3DDevice8 *parent_device = texture->parent_device;
+        struct d3d8_surface *surface;
 
         TRACE("Releasing child %p.\n", texture->wined3d_texture);
 
         wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d8_surface, rtv_entry)
+        {
+            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+        }
         wined3d_texture_decref(texture->wined3d_texture);
         wined3d_mutex_unlock();
 
@@ -1133,6 +1155,7 @@ HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
 
     texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DTexture8_Vtbl;
     d3d8_resource_init(&texture->resource);
+    list_init(&texture->rtv_list);
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1174,6 +1197,7 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
 
     texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DCubeTexture8_Vtbl;
     d3d8_resource_init(&texture->resource);
+    list_init(&texture->rtv_list);
 
     desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1214,6 +1238,7 @@ HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *dev
 
     texture->IDirect3DBaseTexture8_iface.lpVtbl = (const IDirect3DBaseTexture8Vtbl *)&Direct3DVolumeTexture8_Vtbl;
     d3d8_resource_init(&texture->resource);
+    list_init(&texture->rtv_list);
 
     desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);

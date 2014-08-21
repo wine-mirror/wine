@@ -69,6 +69,8 @@ static ULONG WINAPI d3d9_surface_AddRef(IDirect3DSurface9 *iface)
         if (surface->parent_device)
             IDirect3DDevice9Ex_AddRef(surface->parent_device);
         wined3d_mutex_lock();
+        if (surface->wined3d_rtv)
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         wined3d_surface_incref(surface->wined3d_surface);
         wined3d_mutex_unlock();
     }
@@ -97,6 +99,8 @@ static ULONG WINAPI d3d9_surface_Release(IDirect3DSurface9 *iface)
         IDirect3DDevice9Ex *parent_device = surface->parent_device;
 
         wined3d_mutex_lock();
+        if (surface->wined3d_rtv)
+            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
         wined3d_surface_decref(surface->wined3d_surface);
         wined3d_mutex_unlock();
 
@@ -351,6 +355,7 @@ void surface_init(struct d3d9_surface *surface, IUnknown *container_parent,
     d3d9_resource_init(&surface->resource);
     surface->resource.refcount = 0;
     surface->wined3d_surface = wined3d_surface;
+    list_init(&surface->rtv_entry);
     surface->container = container_parent;
 
     if (container_parent && SUCCEEDED(IUnknown_QueryInterface(container_parent,
@@ -378,6 +383,48 @@ void surface_init(struct d3d9_surface *surface, IUnknown *container_parent,
     }
 
     *parent_ops = &d3d9_surface_wined3d_parent_ops;
+}
+
+static void STDMETHODCALLTYPE view_wined3d_object_destroyed(void *parent)
+{
+    struct d3d9_surface *surface = parent;
+
+    /* If the surface reference count drops to zero, we release our reference
+     * to the view, but don't clear the pointer yet, in case e.g. a
+     * GetRenderTarget() call brings the surface back before the view is
+     * actually destroyed. When the view is destroyed, we need to clear the
+     * pointer, or a subsequent surface AddRef() would reference it again.
+     *
+     * This is safe because as long as the view still has a reference to the
+     * texture, the surface is also still alive, and we're called before the
+     * view releases that reference. */
+    surface->wined3d_rtv = NULL;
+    list_remove(&surface->rtv_entry);
+}
+
+static const struct wined3d_parent_ops d3d9_view_wined3d_parent_ops =
+{
+    view_wined3d_object_destroyed,
+};
+
+struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9_surface *surface)
+{
+    HRESULT hr;
+
+    if (surface->wined3d_rtv)
+        return surface->wined3d_rtv;
+
+    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(surface->wined3d_surface,
+            surface, &d3d9_view_wined3d_parent_ops, &surface->wined3d_rtv)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    if (surface->texture)
+        list_add_head(&surface->texture->rtv_list, &surface->rtv_entry);
+
+    return surface->wined3d_rtv;
 }
 
 struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface)

@@ -745,7 +745,8 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
     }
 
     wined3d_rendertarget_view_desc_from_d3d10core(&wined3d_desc, &view->desc);
-    if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource, view, &view->wined3d_view)))
+    if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
+            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
     {
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
         return hr;

@@ -1345,8 +1345,8 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_render_target(device->wined3d_device, idx,
-            surface_impl ? surface_impl->wined3d_surface : NULL, TRUE);
+    hr = wined3d_device_set_rendertarget_view(device->wined3d_device, idx,
+            surface_impl ? d3d9_surface_get_rendertarget_view(surface_impl) : NULL, TRUE);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1355,7 +1355,7 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWORD idx, IDirect3DSurface9 **surface)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d_surface *wined3d_surface;
+    struct wined3d_rendertarget_view *wined3d_rtv;
     struct d3d9_surface *surface_impl;
     HRESULT hr = D3D_OK;
 
@@ -1371,9 +1371,11 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
 
     wined3d_mutex_lock();
-    if ((wined3d_surface = wined3d_device_get_render_target(device->wined3d_device, idx)))
+    if ((wined3d_rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, idx)))
     {
-        surface_impl = wined3d_surface_get_parent(wined3d_surface);
+        /* We want the sub resource parent here, since the view itself may be
+         * internal to wined3d and may not have a parent. */
+        surface_impl = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_rtv);
         *surface = &surface_impl->IDirect3DSurface9_iface;
         IDirect3DSurface9_AddRef(*surface);
     }

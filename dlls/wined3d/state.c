@@ -381,7 +381,7 @@ static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_fo
 
 static void state_blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_surface *target = state->fb->render_targets[0];
+    const struct wined3d_format *rt_format = state->fb->render_targets[0]->format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum srcBlend, dstBlend;
     enum wined3d_blend d3d_blend;
@@ -395,8 +395,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         /* Disable blending in all cases even without pixelshaders.
          * With blending on we could face a big performance penalty.
          * The d3d9 visual test confirms the behavior. */
-        if (context->render_offscreen
-                && !(target->resource.format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+        if (context->render_offscreen && !(rt_format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
         {
             gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
             checkGLcall("glDisable GL_BLEND");
@@ -432,9 +431,8 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     }
     else
     {
-        srcBlend = gl_blend_factor(d3d_blend, target->resource.format);
-        dstBlend = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLEND],
-                target->resource.format);
+        srcBlend = gl_blend_factor(d3d_blend, rt_format);
+        dstBlend = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLEND], rt_format);
     }
 
     if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
@@ -484,9 +482,8 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         }
         else
         {
-            srcBlendAlpha = gl_blend_factor(d3d_blend, target->resource.format);
-            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLENDALPHA],
-                    target->resource.format);
+            srcBlendAlpha = gl_blend_factor(d3d_blend, rt_format);
+            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLENDALPHA], rt_format);
         }
 
         GL_EXTCALL(glBlendFuncSeparateEXT(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
@@ -4637,14 +4634,14 @@ void vertexdeclaration(struct wined3d_context *context, const struct wined3d_sta
 
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_surface *target = state->fb->render_targets[0];
+    const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;
 
-    if (vp.width > target->resource.width)
-        vp.width = target->resource.width;
-    if (vp.height > target->resource.height)
-        vp.height = target->resource.height;
+    if (vp.width > target->width)
+        vp.width = target->width;
+    if (vp.height > target->height)
+        vp.height = target->height;
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
     checkGLcall("glDepthRange");
@@ -4658,7 +4655,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     {
         UINT width, height;
 
-        surface_get_drawable_size(target, context, &width, &height);
+        surface_get_drawable_size(wined3d_rendertarget_view_get_surface(target), context, &width, &height);
         gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)),
                 vp.width, vp.height);
     }
@@ -4817,11 +4814,11 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
     }
     else
     {
-        const struct wined3d_surface *target = state->fb->render_targets[0];
+        const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
         UINT height;
         UINT width;
 
-        surface_get_drawable_size(target, context, &width, &height);
+        surface_get_drawable_size(wined3d_rendertarget_view_get_surface(target), context, &width, &height);
         gl_info->gl_ops.gl.p_glScissor(r->left, height - r->bottom, r->right - r->left, r->bottom - r->top);
     }
     checkGLcall("glScissor");
@@ -4884,13 +4881,13 @@ static void psorigin(struct wined3d_context *context, const struct wined3d_state
 
 void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_format *rt_format = state->fb->render_targets[0]->format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_surface *rt = state->fb->render_targets[0];
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
     if (state->render_states[WINED3D_RS_SRGBWRITEENABLE]
-            && rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
+            && rt_format->flags & WINED3DFMT_FLAG_SRGB_WRITE)
         gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
     else
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);

@@ -1175,7 +1175,7 @@ struct wined3d_context
 
 struct wined3d_fb_state
 {
-    struct wined3d_surface **render_targets;
+    struct wined3d_rendertarget_view **render_targets;
     struct wined3d_surface *depth_stencil;
 };
 
@@ -1945,6 +1945,7 @@ struct wined3d_device
     struct wined3d_device_creation_parameters create_parms;
     HWND focus_window;
 
+    struct wined3d_rendertarget_view *back_buffer_view;
     struct wined3d_swapchain **swapchains;
     UINT swapchain_count;
 
@@ -2262,8 +2263,9 @@ struct wined3d_surface
     GLuint                    pbo;
     GLuint rb_multisample;
     GLuint rb_resolved;
-    GLint texture_level;
     GLenum texture_target;
+    unsigned int texture_level;
+    unsigned int texture_layer;
 
     RECT                      lockedRect;
     int                       lockCount;
@@ -2323,7 +2325,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;
 void surface_validate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        GLenum target, GLint level, DWORD flags, struct wined3d_surface **surface) DECLSPEC_HIDDEN;
+        GLenum target, unsigned int level, unsigned int layer, DWORD flags,
+        struct wined3d_surface **surface) DECLSPEC_HIDDEN;
 void wined3d_surface_destroy(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_prepare_map_memory(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
@@ -2509,8 +2512,8 @@ void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buff
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target_idx,
-        struct wined3d_surface *render_target) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int view_idx,
+        struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT sampler_idx, struct wined3d_sampler *sampler) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler_state(struct wined3d_cs *cs, UINT sampler_idx,
@@ -2617,6 +2620,7 @@ struct wined3d_rendertarget_view
 
     struct wined3d_resource *resource;
     void *parent;
+    const struct wined3d_parent_ops *parent_ops;
 
     const struct wined3d_format *format;
     unsigned int sub_resource_idx;
@@ -2626,6 +2630,25 @@ struct wined3d_rendertarget_view
     unsigned int height;
     unsigned int depth;
 };
+
+static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
+        const struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_resource *resource;
+    struct wined3d_texture *texture;
+
+    if (!view)
+        return NULL;
+
+    if (view->resource->type != WINED3D_RTYPE_TEXTURE && view->resource->type != WINED3D_RTYPE_CUBE_TEXTURE)
+        return NULL;
+
+    texture = wined3d_texture_from_resource(view->resource);
+    if (!(resource = wined3d_texture_get_sub_resource(texture, view->sub_resource_idx)))
+        return NULL;
+
+    return surface_from_resource(resource);
+}
 
 struct wined3d_swapchain_ops
 {

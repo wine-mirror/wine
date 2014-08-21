@@ -53,6 +53,8 @@ struct d3d10_shader_info
     struct wined3d_shader_signature *output_signature;
 };
 
+extern const struct wined3d_parent_ops d3d10_null_wined3d_parent_ops DECLSPEC_HIDDEN;
+
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology) DECLSPEC_HIDDEN;
 const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;

@@ -907,7 +907,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
             struct wined3d_surface *surface;
 
             if (FAILED(hr = wined3d_surface_create(texture, &surface_desc,
-                    cube_targets[j], i, surface_flags, &surface)))
+                    cube_targets[j], i, j, surface_flags, &surface)))
             {
                 WARN("Failed to create surface, hr %#x.\n", hr);
                 wined3d_texture_cleanup(texture);
@@ -1061,7 +1061,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         struct wined3d_surface *surface;
 
         if (FAILED(hr = wined3d_surface_create(texture, &surface_desc,
-                texture->target, i, surface_flags, &surface)))
+                texture->target, i, 0, surface_flags, &surface)))
         {
             WARN("Failed to create surface, hr %#x.\n", hr);
             wined3d_texture_cleanup(texture);

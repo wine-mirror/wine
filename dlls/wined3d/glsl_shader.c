@@ -1257,7 +1257,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             {
                 float ycorrection[] =
                 {
-                    context->render_offscreen ? 0.0f : fb->render_targets[0]->resource.height,
+                    context->render_offscreen ? 0.0f : fb->render_targets[0]->height,
                     context->render_offscreen ? 1.0f : -1.0f,
                     0.0f,
                     0.0f,

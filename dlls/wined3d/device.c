@@ -286,8 +286,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
 {
+    struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
-    struct wined3d_surface *target = rt_count ? fb->render_targets[0] : NULL;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
@@ -308,7 +308,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         for (i = 0; i < rt_count; ++i)
         {
-            struct wined3d_surface *rt = fb->render_targets[i];
+            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
             if (rt)
                 surface_load_location(rt, rt->container->resource.draw_binding);
         }
@@ -386,7 +386,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         for (i = 0; i < rt_count; ++i)
         {
-            struct wined3d_surface *rt = fb->render_targets[i];
+            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
 
             if (rt)
             {
@@ -851,11 +851,10 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     {
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            wined3d_device_set_render_target(device, i, NULL, FALSE);
+            wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
         }
-        if (swapchain->back_buffers && swapchain->back_buffers[0])
-            wined3d_device_set_render_target(device, 0,
-                    surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)), TRUE);
+        if (device->back_buffer_view)
+            wined3d_device_set_rendertarget_view(device, 0, device->back_buffer_view, TRUE);
     }
 
     wined3d_device_set_depth_stencil(device, ds_enable ? device->auto_depth_stencil : NULL);
@@ -901,6 +900,14 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (FAILED(hr))
     {
         WARN("Failed to create implicit swapchain\n");
+        goto err_out;
+    }
+
+    if (swapchain_desc->backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
+            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
+            NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
         goto err_out;
     }
 
@@ -964,6 +971,8 @@ err_out:
     HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
     HeapFree(GetProcessHeap(), 0, device->swapchains);
     device->swapchain_count = 0;
+    if (device->back_buffer_view)
+        wined3d_rendertarget_view_decref(device->back_buffer_view);
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
     if (device->blit_priv)
@@ -1083,7 +1092,12 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        wined3d_device_set_render_target(device, i, NULL, FALSE);
+        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
+    }
+    if (device->back_buffer_view)
+    {
+        wined3d_rendertarget_view_decref(device->back_buffer_view);
+        device->back_buffer_view = NULL;
     }
 
     context_release(context);
@@ -3213,8 +3227,8 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
         }
         else if (flags & WINED3DCLEAR_TARGET)
         {
-            if (ds->resource.width < device->fb.render_targets[0]->resource.width
-                    || ds->resource.height < device->fb.render_targets[0]->resource.height)
+            if (ds->resource.width < device->fb.render_targets[0]->width
+                    || ds->resource.height < device->fb.render_targets[0]->height)
             {
                 WARN("Silently ignoring depth and target clear with mismatching sizes\n");
                 return WINED3D_OK;
@@ -3532,11 +3546,10 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
     if (state->render_states[WINED3D_RS_ZENABLE] || state->render_states[WINED3D_RS_ZWRITEENABLE]
             || state->render_states[WINED3D_RS_STENCILENABLE])
     {
+        struct wined3d_rendertarget_view *rt = device->fb.render_targets[0];
         struct wined3d_surface *ds = device->fb.depth_stencil;
-        struct wined3d_surface *target = device->fb.render_targets[0];
 
-        if(ds && target
-                && (ds->resource.width < target->resource.width || ds->resource.height < target->resource.height))
+        if(ds && rt && (ds->resource.width < rt->width || ds->resource.height < rt->height))
         {
             WARN("Depth stencil is smaller than the color buffer, returning D3DERR_CONFLICTINGRENDERSTATE\n");
             return WINED3DERR_CONFLICTINGRENDERSTATE;
@@ -3769,18 +3782,18 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         ERR("Color fill failed, hr %#x.\n", hr);
 }
 
-struct wined3d_surface * CDECL wined3d_device_get_render_target(const struct wined3d_device *device,
-        UINT render_target_idx)
+struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
+        unsigned int view_idx)
 {
-    TRACE("device %p, render_target_idx %u.\n", device, render_target_idx);
+    TRACE("device %p, view_idx %u.\n", device, view_idx);
 
-    if (render_target_idx >= device->adapter->gl_info.limits.buffers)
+    if (view_idx >= device->adapter->gl_info.limits.buffers)
     {
         WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
         return NULL;
     }
 
-    return device->fb.render_targets[render_target_idx];
+    return device->fb.render_targets[view_idx];
 }
 
 struct wined3d_surface * CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device)
@@ -3790,61 +3803,61 @@ struct wined3d_surface * CDECL wined3d_device_get_depth_stencil(const struct win
     return device->fb.depth_stencil;
 }
 
-HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
-        UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport)
+HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device,
+        unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport)
 {
-    struct wined3d_surface *prev;
+    struct wined3d_rendertarget_view *prev;
 
-    TRACE("device %p, render_target_idx %u, render_target %p, set_viewport %#x.\n",
-            device, render_target_idx, render_target, set_viewport);
+    TRACE("device %p, view_idx %u, view %p, set_viewport %#x.\n",
+            device, view_idx, view, set_viewport);
 
-    if (render_target_idx >= device->adapter->gl_info.limits.buffers)
+    if (view_idx >= device->adapter->gl_info.limits.buffers)
     {
         WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (render_target && !(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    if (view && !(view->resource->usage & WINED3DUSAGE_RENDERTARGET))
     {
-        WARN("Surface %p doesn't have render target usage.\n", render_target);
+        WARN("View resource %p doesn't have render target usage.\n", view->resource);
         return WINED3DERR_INVALIDCALL;
     }
 
     /* Set the viewport and scissor rectangles, if requested. Tests show that
      * stateblock recording is ignored, the change goes directly into the
      * primary stateblock. */
-    if (!render_target_idx && set_viewport)
+    if (!view_idx && set_viewport)
     {
         struct wined3d_state *state = &device->state;
 
         state->viewport.x = 0;
         state->viewport.y = 0;
-        state->viewport.width = render_target->resource.width;
-        state->viewport.height = render_target->resource.height;
+        state->viewport.width = view->width;
+        state->viewport.height = view->height;
         state->viewport.min_z = 0.0f;
         state->viewport.max_z = 1.0f;
         wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
         state->scissor_rect.top = 0;
         state->scissor_rect.left = 0;
-        state->scissor_rect.right = render_target->resource.width;
-        state->scissor_rect.bottom = render_target->resource.height;
+        state->scissor_rect.right = view->width;
+        state->scissor_rect.bottom = view->height;
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
 
-    prev = device->fb.render_targets[render_target_idx];
-    if (render_target == prev)
+    prev = device->fb.render_targets[view_idx];
+    if (view == prev)
         return WINED3D_OK;
 
-    if (render_target)
-        wined3d_surface_incref(render_target);
-    device->fb.render_targets[render_target_idx] = render_target;
-    wined3d_cs_emit_set_render_target(device->cs, render_target_idx, render_target);
+    if (view)
+        wined3d_rendertarget_view_incref(view);
+    device->fb.render_targets[view_idx] = view;
+    wined3d_cs_emit_set_rendertarget_view(device->cs, view_idx, view);
     /* Release after the assignment, to prevent device_resource_released()
      * from seeing the surface as still in use. */
     if (prev)
-        wined3d_surface_decref(prev);
+        wined3d_rendertarget_view_decref(prev);
 
     return WINED3D_OK;
 }
@@ -4242,11 +4255,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            wined3d_device_set_render_target(device, i, NULL, FALSE);
+            wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
         }
-        if (swapchain->back_buffers && swapchain->back_buffers[0])
-            wined3d_device_set_render_target(device, 0,
-                    surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)), FALSE);
     }
     wined3d_device_set_depth_stencil(device, NULL);
 
@@ -4439,6 +4449,19 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
+    if (device->back_buffer_view)
+    {
+        wined3d_rendertarget_view_decref(device->back_buffer_view);
+        device->back_buffer_view = NULL;
+    }
+    if (swapchain->desc.backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
+            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
+            NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
     {
@@ -4521,22 +4544,24 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         device_init_swapchain_state(device, swapchain);
     }
-    else
+    else if (device->back_buffer_view)
     {
-        struct wined3d_surface *rt = device->fb.render_targets[0];
+        struct wined3d_rendertarget_view *view = device->back_buffer_view;
         struct wined3d_state *state = &device->state;
+
+        wined3d_device_set_rendertarget_view(device, 0, view, FALSE);
 
         /* Note the min_z / max_z is not reset. */
         state->viewport.x = 0;
         state->viewport.y = 0;
-        state->viewport.width = rt->resource.width;
-        state->viewport.height = rt->resource.height;
+        state->viewport.width = view->width;
+        state->viewport.height = view->height;
         wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
         state->scissor_rect.top = 0;
         state->scissor_rect.left = 0;
-        state->scissor_rect.right = rt->resource.width;
-        state->scissor_rect.bottom = rt->resource.height;
+        state->scissor_rect.right = view->width;
+        state->scissor_rect.bottom = view->height;
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
@@ -4627,7 +4652,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
                 for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
                 {
-                    if (device->fb.render_targets[i] == surface)
+                    if (wined3d_rendertarget_view_get_surface(device->fb.render_targets[i]) == surface)
                     {
                         ERR("Surface %p is still in use as render target %u.\n", surface, i);
                         device->fb.render_targets[i] = NULL;

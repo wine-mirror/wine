@@ -2154,8 +2154,8 @@ struct wined3d_sampler * __cdecl wined3d_device_get_ps_sampler(const struct wine
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
 DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
-struct wined3d_surface * __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
-        UINT render_target_idx);
+struct wined3d_rendertarget_view * __cdecl wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
+        unsigned int view_idx);
 DWORD __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state);
 void __cdecl wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect);
@@ -2238,8 +2238,8 @@ HRESULT __cdecl wined3d_device_set_ps_consts_i(struct wined3d_device *device,
 void __cdecl wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value);
-HRESULT __cdecl wined3d_device_set_render_target(struct wined3d_device *device,
-        UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport);
+HRESULT __cdecl wined3d_device_set_rendertarget_view(struct wined3d_device *device,
+        unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport);
 void __cdecl wined3d_device_set_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value);
 void __cdecl wined3d_device_set_scissor_rect(struct wined3d_device *device, const RECT *rect);
@@ -2377,11 +2377,16 @@ void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void
 DWORD __cdecl wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority);
 
 HRESULT __cdecl wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
-        struct wined3d_resource *resource, void *parent, struct wined3d_rendertarget_view **view);
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_rendertarget_view **view);
+HRESULT __cdecl wined3d_rendertarget_view_create_from_surface(struct wined3d_surface *surface,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_rendertarget_view **view);
 ULONG __cdecl wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view);
 void * __cdecl wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view);
 struct wined3d_resource * __cdecl wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view);
+void * __cdecl wined3d_rendertarget_view_get_sub_resource_parent(const struct wined3d_rendertarget_view *view);
 ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view);
+void __cdecl wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent);
 
 HRESULT __cdecl wined3d_sampler_create(void *parent, struct wined3d_sampler **sampler);
 ULONG __cdecl wined3d_sampler_decref(struct wined3d_sampler *sampler);

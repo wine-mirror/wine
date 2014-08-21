@@ -31,7 +31,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_DRAW,
     WINED3D_CS_OP_SET_VIEWPORT,
     WINED3D_CS_OP_SET_SCISSOR_RECT,
-    WINED3D_CS_OP_SET_RENDER_TARGET,
+    WINED3D_CS_OP_SET_RENDERTARGET_VIEW,
     WINED3D_CS_OP_SET_DEPTH_STENCIL,
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
     WINED3D_CS_OP_SET_STREAM_SOURCE,
@@ -95,11 +95,11 @@ struct wined3d_cs_set_scissor_rect
     const RECT *rect;
 };
 
-struct wined3d_cs_set_render_target
+struct wined3d_cs_set_rendertarget_view
 {
     enum wined3d_cs_op opcode;
-    UINT render_target_idx;
-    struct wined3d_surface *render_target;
+    unsigned int view_idx;
+    struct wined3d_rendertarget_view *view;
 };
 
 struct wined3d_cs_set_depth_stencil
@@ -346,23 +346,23 @@ void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect)
     cs->ops->submit(cs);
 }
 
-static void wined3d_cs_exec_set_render_target(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_rendertarget_view(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_render_target *op = data;
+    const struct wined3d_cs_set_rendertarget_view *op = data;
 
-    cs->state.fb->render_targets[op->render_target_idx] = op->render_target;
+    cs->state.fb->render_targets[op->view_idx] = op->view;
     device_invalidate_state(cs->device, STATE_FRAMEBUFFER);
 }
 
-void wined3d_cs_emit_set_render_target(struct wined3d_cs *cs, UINT render_target_idx,
-        struct wined3d_surface *render_target)
+void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int view_idx,
+        struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_cs_set_render_target *op;
+    struct wined3d_cs_set_rendertarget_view *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_RENDER_TARGET;
-    op->render_target_idx = render_target_idx;
-    op->render_target = render_target;
+    op->opcode = WINED3D_CS_OP_SET_RENDERTARGET_VIEW;
+    op->view_idx = view_idx;
+    op->view = view;
 
     cs->ops->submit(cs);
 }
@@ -851,7 +851,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_DRAW                   */ wined3d_cs_exec_draw,
     /* WINED3D_CS_OP_SET_VIEWPORT           */ wined3d_cs_exec_set_viewport,
     /* WINED3D_CS_OP_SET_SCISSOR_RECT       */ wined3d_cs_exec_set_scissor_rect,
-    /* WINED3D_CS_OP_SET_RENDER_TARGET      */ wined3d_cs_exec_set_render_target,
+    /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW  */ wined3d_cs_exec_set_rendertarget_view,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL      */ wined3d_cs_exec_set_depth_stencil,
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION */ wined3d_cs_exec_set_vertex_declaration,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE      */ wined3d_cs_exec_set_stream_source,
