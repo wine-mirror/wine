@@ -529,8 +529,8 @@ void output_module( DLLSPEC *spec )
              spec->characteristics );
     output( "\t.short 0x%04x\n",          /* Magic */
              get_ptr_size() == 8 ? IMAGE_NT_OPTIONAL_HDR64_MAGIC : IMAGE_NT_OPTIONAL_HDR32_MAGIC );
-    output( "\t.byte 0\n" );              /* MajorLinkerVersion */
-    output( "\t.byte 0\n" );              /* MinorLinkerVersion */
+    output( "\t.byte 7\n" );              /* MajorLinkerVersion */
+    output( "\t.byte 10\n" );             /* MinorLinkerVersion */
     output( "\t.long 0\n" );              /* SizeOfCode */
     output( "\t.long 0\n" );              /* SizeOfInitializedData */
     output( "\t.long 0\n" );              /* SizeOfUninitializedData */
@@ -710,8 +710,8 @@ void output_fake_module( DLLSPEC *spec )
     put_word( get_ptr_size() == 8 ?
               IMAGE_NT_OPTIONAL_HDR64_MAGIC :
               IMAGE_NT_OPTIONAL_HDR32_MAGIC );       /* Magic */
-    put_byte(  0 );                                  /* MajorLinkerVersion */
-    put_byte(  0 );                                  /* MinorLinkerVersion */
+    put_byte(  7 );                                  /* MajorLinkerVersion */
+    put_byte(  10 );                                 /* MinorLinkerVersion */
     put_dword( text_size );                          /* SizeOfCode */
     put_dword( 0 );                                  /* SizeOfInitializedData */
     put_dword( 0 );                                  /* SizeOfUninitializedData */
