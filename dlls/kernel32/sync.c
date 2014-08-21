@@ -1790,9 +1790,34 @@ BOOL WINAPI SetNamedPipeHandleState(
 {
     /* should be a fixme, but this function is called a lot by the RPC
      * runtime, and it slows down InstallShield a fair bit. */
-    WARN("stub: %p %p/%d %p %p\n",
+    WARN("semi-stub: %p %p/%d %p %p\n",
           hNamedPipe, lpMode, lpMode ? *lpMode : 0, lpMaxCollectionCount, lpCollectDataTimeout);
-    return FALSE;
+
+    if (lpMode)
+    {
+        FILE_PIPE_INFORMATION fpi;
+        IO_STATUS_BLOCK iosb;
+        NTSTATUS status;
+
+        if (*lpMode & ~(PIPE_READMODE_MESSAGE | PIPE_NOWAIT))
+            status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            fpi.CompletionMode = (*lpMode & PIPE_NOWAIT) ?
+                FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
+            fpi.ReadMode = (*lpMode & PIPE_READMODE_MESSAGE) ?
+                FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
+            status = NtSetInformationFile(hNamedPipe, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
+        }
+
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1854,15 +1879,11 @@ BOOL WINAPI CallNamedPipeW(
 
     mode = PIPE_READMODE_MESSAGE;
     ret = SetNamedPipeHandleState(pipe, &mode, NULL, NULL);
-
-    /* Currently SetNamedPipeHandleState() is a stub returning FALSE */
-    if (ret) FIXME("Now that SetNamedPipeHandleState() is more than a stub, please update CallNamedPipeW\n");
-    /*
     if (!ret)
     {
         CloseHandle(pipe);
         return FALSE;
-    }*/
+    }
 
     ret = TransactNamedPipe(pipe, lpInput, lpInputSize, lpOutput, lpOutputSize, lpBytesRead, NULL);
     CloseHandle(pipe);
