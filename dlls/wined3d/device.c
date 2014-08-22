@@ -287,6 +287,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         float depth, DWORD stencil)
 {
     struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
+    struct wined3d_surface *depth_stencil = fb->depth_stencil
+            ? wined3d_rendertarget_view_get_surface(fb->depth_stencil) : NULL;
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
@@ -331,18 +333,17 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     else
     {
         render_offscreen = TRUE;
-        drawable_width = fb->depth_stencil->pow2Width;
-        drawable_height = fb->depth_stencil->pow2Height;
+        drawable_width = depth_stencil->pow2Width;
+        drawable_height = depth_stencil->pow2Height;
     }
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->container->resource.draw_binding
-                : WINED3D_LOCATION_DRAWABLE;
+        DWORD location = render_offscreen ? fb->depth_stencil->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        if (!render_offscreen && fb->depth_stencil != device->onscreen_depth_stencil)
-            device_switch_onscreen_ds(device, context, fb->depth_stencil);
-        prepare_ds_clear(fb->depth_stencil, context, location,
+        if (!render_offscreen && depth_stencil != device->onscreen_depth_stencil)
+            device_switch_onscreen_ds(device, context, depth_stencil);
+        prepare_ds_clear(depth_stencil, context, location,
                 draw_rect, rect_count, clear_rect, &ds_rect);
     }
 
@@ -370,10 +371,9 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->container->resource.draw_binding
-                : WINED3D_LOCATION_DRAWABLE;
+        DWORD location = render_offscreen ? fb->depth_stencil->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_modify_ds_location(fb->depth_stencil, location, ds_rect.right, ds_rect.bottom);
+        surface_modify_ds_location(depth_stencil, location, ds_rect.right, ds_rect.bottom);
 
         gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
@@ -857,7 +857,7 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
             wined3d_device_set_rendertarget_view(device, 0, device->back_buffer_view, TRUE);
     }
 
-    wined3d_device_set_depth_stencil(device, ds_enable ? device->auto_depth_stencil : NULL);
+    wined3d_device_set_depth_stencil_view(device, ds_enable ? device->auto_depth_stencil_view : NULL);
     wined3d_device_set_render_state(device, WINED3D_RS_ZENABLE, ds_enable);
 }
 
@@ -1074,20 +1074,21 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     if (device->fb.depth_stencil)
     {
-        surface = device->fb.depth_stencil;
+        struct wined3d_rendertarget_view *view = device->fb.depth_stencil;
 
-        TRACE("Releasing depth/stencil buffer %p.\n", surface);
+        TRACE("Releasing depth/stencil view %p.\n", view);
 
         device->fb.depth_stencil = NULL;
-        wined3d_surface_decref(surface);
+        wined3d_rendertarget_view_decref(view);
     }
 
-    if (device->auto_depth_stencil)
+    if (device->auto_depth_stencil_view)
     {
-        surface = device->auto_depth_stencil;
-        device->auto_depth_stencil = NULL;
-        if (wined3d_surface_decref(surface))
-            FIXME("Something's still holding the auto depth stencil buffer (%p).\n", surface);
+        struct wined3d_rendertarget_view *view = device->auto_depth_stencil_view;
+
+        device->auto_depth_stencil_view = NULL;
+        if (wined3d_rendertarget_view_decref(view))
+            ERR("Something's still holding the auto depth/stencil view (%p).\n", view);
     }
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
@@ -1907,8 +1908,7 @@ static void resolve_depth_buffer(struct wined3d_state *state)
             || !(texture->resource.format->flags & WINED3DFMT_FLAG_DEPTH))
         return;
     surface = surface_from_resource(texture->sub_resources[0]);
-    depth_stencil = state->fb->depth_stencil;
-    if (!depth_stencil)
+    if (!(depth_stencil = wined3d_rendertarget_view_get_surface(state->fb->depth_stencil)))
         return;
 
     wined3d_surface_blt(surface, NULL, depth_stencil, NULL, 0, NULL, WINED3D_TEXF_POINT);
@@ -3218,7 +3218,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
 
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        struct wined3d_surface *ds = device->fb.depth_stencil;
+        struct wined3d_rendertarget_view *ds = device->fb.depth_stencil;
         if (!ds)
         {
             WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
@@ -3227,8 +3227,8 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
         }
         else if (flags & WINED3DCLEAR_TARGET)
         {
-            if (ds->resource.width < device->fb.render_targets[0]->width
-                    || ds->resource.height < device->fb.render_targets[0]->height)
+            if (ds->width < device->fb.render_targets[0]->width
+                    || ds->height < device->fb.render_targets[0]->height)
             {
                 WARN("Silently ignoring depth and target clear with mismatching sizes\n");
                 return WINED3D_OK;
@@ -3547,9 +3547,9 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
             || state->render_states[WINED3D_RS_STENCILENABLE])
     {
         struct wined3d_rendertarget_view *rt = device->fb.render_targets[0];
-        struct wined3d_surface *ds = device->fb.depth_stencil;
+        struct wined3d_rendertarget_view *ds = device->fb.depth_stencil;
 
-        if(ds && rt && (ds->resource.width < rt->width || ds->resource.height < rt->height))
+        if (ds && rt && (ds->width < rt->width || ds->height < rt->height))
         {
             WARN("Depth stencil is smaller than the color buffer, returning D3DERR_CONFLICTINGRENDERSTATE\n");
             return WINED3DERR_CONFLICTINGRENDERSTATE;
@@ -3796,7 +3796,7 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(co
     return device->fb.render_targets[view_idx];
 }
 
-struct wined3d_surface * CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device)
+struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(const struct wined3d_device *device)
 {
     TRACE("device %p.\n", device);
 
@@ -3862,25 +3862,24 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struct wined3d_surface *depth_stencil)
+void CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *device, struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_surface *prev = device->fb.depth_stencil;
+    struct wined3d_rendertarget_view *prev;
 
-    TRACE("device %p, depth_stencil %p, old depth_stencil %p.\n",
-            device, depth_stencil, prev);
+    TRACE("device %p, view %p.\n", device, view);
 
-    if (prev == depth_stencil)
+    prev = device->fb.depth_stencil;
+    if (prev == view)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
         return;
     }
 
-    device->fb.depth_stencil = depth_stencil;
-    if (depth_stencil)
-        wined3d_surface_incref(depth_stencil);
-    wined3d_cs_emit_set_depth_stencil(device->cs, depth_stencil);
+    if ((device->fb.depth_stencil = view))
+        wined3d_rendertarget_view_incref(view);
+    wined3d_cs_emit_set_depth_stencil_view(device->cs, view);
     if (prev)
-        wined3d_surface_decref(prev);
+        wined3d_rendertarget_view_decref(prev);
 }
 
 static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
@@ -4258,7 +4257,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
         }
     }
-    wined3d_device_set_depth_stencil(device, NULL);
+    wined3d_device_set_depth_stencil_view(device, NULL);
 
     if (device->onscreen_depth_stencil)
     {
@@ -4324,35 +4323,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         swapchain->device_window = swapchain_desc->device_window;
         wined3d_swapchain_set_window(swapchain, NULL);
     }
-
-    if (swapchain_desc->enable_auto_depth_stencil && !device->auto_depth_stencil)
-    {
-        struct wined3d_resource_desc surface_desc;
-
-        TRACE("Creating the depth stencil buffer\n");
-
-        surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
-        surface_desc.format = swapchain_desc->auto_depth_stencil_format;
-        surface_desc.multisample_type = swapchain_desc->multisample_type;
-        surface_desc.multisample_quality = swapchain_desc->multisample_quality;
-        surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
-        surface_desc.pool = WINED3D_POOL_DEFAULT;
-        surface_desc.width = swapchain_desc->backbuffer_width;
-        surface_desc.height = swapchain_desc->backbuffer_height;
-        surface_desc.depth = 1;
-        surface_desc.size = 0;
-
-        if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                device->device_parent, &surface_desc, &device->auto_depth_stencil)))
-        {
-            ERR("Failed to create the depth stencil buffer, hr %#x.\n", hr);
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
-
-    /* Reset the depth stencil */
-    if (swapchain_desc->enable_auto_depth_stencil)
-        wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
 
     if (mode)
     {
@@ -4440,13 +4410,48 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
                     swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
                 return hr;
         }
-        if (device->auto_depth_stencil)
+    }
+
+    if (device->auto_depth_stencil_view)
+    {
+        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
+        device->auto_depth_stencil_view = NULL;
+    }
+    if (swapchain->desc.enable_auto_depth_stencil)
+    {
+        struct wined3d_resource_desc surface_desc;
+        struct wined3d_surface *surface;
+
+        TRACE("Creating the depth stencil buffer\n");
+
+        surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
+        surface_desc.format = swapchain->desc.auto_depth_stencil_format;
+        surface_desc.multisample_type = swapchain->desc.multisample_type;
+        surface_desc.multisample_quality = swapchain->desc.multisample_quality;
+        surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
+        surface_desc.pool = WINED3D_POOL_DEFAULT;
+        surface_desc.width = swapchain->desc.backbuffer_width;
+        surface_desc.height = swapchain->desc.backbuffer_height;
+        surface_desc.depth = 1;
+        surface_desc.size = 0;
+
+        if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
+                device->device_parent, &surface_desc, &surface)))
         {
-            if (FAILED(hr = wined3d_surface_update_desc(device->auto_depth_stencil, swapchain->desc.backbuffer_width,
-                    swapchain->desc.backbuffer_height, device->auto_depth_stencil->resource.format->id,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
-                return hr;
+            ERR("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
+            return WINED3DERR_INVALIDCALL;
         }
+
+        hr = wined3d_rendertarget_view_create_from_surface(surface,
+                NULL, &wined3d_null_parent_ops, &device->auto_depth_stencil_view);
+        wined3d_surface_decref(surface);
+        if (FAILED(hr))
+        {
+            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            return hr;
+        }
+
+        wined3d_device_set_depth_stencil_view(device, device->auto_depth_stencil_view);
     }
 
     if (device->back_buffer_view)
@@ -4659,7 +4664,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
                     }
                 }
 
-                if (device->fb.depth_stencil == surface)
+                if (wined3d_rendertarget_view_get_surface(device->fb.depth_stencil) == surface)
                 {
                     ERR("Surface %p is still in use as depth/stencil buffer.\n", surface);
                     device->fb.depth_stencil = NULL;

@@ -597,13 +597,14 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 
     if (fb->depth_stencil)
     {
-        if (swapchain->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || fb->depth_stencil->flags & SFLAG_DISCARD)
+        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
+
+        if (ds && (swapchain->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+                || ds->flags & SFLAG_DISCARD))
         {
-            surface_modify_ds_location(fb->depth_stencil, WINED3D_LOCATION_DISCARDED,
-                    fb->depth_stencil->resource.width,
-                    fb->depth_stencil->resource.height);
-            if (fb->depth_stencil == swapchain->device->onscreen_depth_stencil)
+            surface_modify_ds_location(ds, WINED3D_LOCATION_DISCARDED,
+                    fb->depth_stencil->width, fb->depth_stencil->height);
+            if (ds == swapchain->device->onscreen_depth_stencil)
             {
                 wined3d_surface_decref(swapchain->device->onscreen_depth_stencil);
                 swapchain->device->onscreen_depth_stencil = NULL;
@@ -982,15 +983,26 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     if (desc->enable_auto_depth_stencil && !(device->wined3d->flags & WINED3D_NO3D))
     {
         TRACE("Creating depth/stencil buffer.\n");
-        if (!device->auto_depth_stencil)
+        if (!device->auto_depth_stencil_view)
         {
+            struct wined3d_surface *ds;
+
             surface_desc.format = swapchain->desc.auto_depth_stencil_format;
             surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
 
             if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                    device->device_parent, &surface_desc, &device->auto_depth_stencil)))
+                    device->device_parent, &surface_desc, &ds)))
             {
-                WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
+                WARN("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
+                goto err;
+            }
+
+            hr = wined3d_rendertarget_view_create_from_surface(ds,
+                    NULL, &wined3d_null_parent_ops, &device->auto_depth_stencil_view);
+            wined3d_surface_decref(ds);
+            if (FAILED(hr))
+            {
+                ERR("Failed to create rendertarget view, hr %#x.\n", hr);
                 goto err;
             }
         }

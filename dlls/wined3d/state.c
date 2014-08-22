@@ -1765,7 +1765,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
     if (state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS]
             || state->render_states[WINED3D_RS_DEPTHBIAS])
     {
-        const struct wined3d_surface *depth = state->fb->depth_stencil;
+        const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
         float scale;
 
         union
@@ -1790,7 +1790,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         {
             if (depth)
             {
-                const struct wined3d_format *fmt = depth->resource.format;
+                const struct wined3d_format *fmt = depth->format;
                 scale = powf(2, fmt->depth_size) - 1;
                 TRACE("Depth format %s, using depthbias scale of %.8e.\n",
                       debug_d3dformat(fmt->id), scale);

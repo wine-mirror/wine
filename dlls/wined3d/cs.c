@@ -32,7 +32,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_VIEWPORT,
     WINED3D_CS_OP_SET_SCISSOR_RECT,
     WINED3D_CS_OP_SET_RENDERTARGET_VIEW,
-    WINED3D_CS_OP_SET_DEPTH_STENCIL,
+    WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW,
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
     WINED3D_CS_OP_SET_STREAM_SOURCE,
     WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ,
@@ -102,10 +102,10 @@ struct wined3d_cs_set_rendertarget_view
     struct wined3d_rendertarget_view *view;
 };
 
-struct wined3d_cs_set_depth_stencil
+struct wined3d_cs_set_depth_stencil_view
 {
     enum wined3d_cs_op opcode;
-    struct wined3d_surface *depth_stencil;
+    struct wined3d_rendertarget_view *view;
 };
 
 struct wined3d_cs_set_vertex_declaration
@@ -367,20 +367,21 @@ void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int v
     cs->ops->submit(cs);
 }
 
-static void wined3d_cs_exec_set_depth_stencil(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_depth_stencil *op = data;
+    const struct wined3d_cs_set_depth_stencil_view *op = data;
     struct wined3d_device *device = cs->device;
-    struct wined3d_surface *prev;
+    struct wined3d_rendertarget_view *prev;
 
     if ((prev = cs->state.fb->depth_stencil))
     {
-        if (device->swapchains[0]->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
-                || prev->flags & SFLAG_DISCARD)
+        struct wined3d_surface *prev_surface = wined3d_rendertarget_view_get_surface(prev);
+
+        if (prev_surface && (device->swapchains[0]->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+                || prev_surface->flags & SFLAG_DISCARD))
         {
-            surface_modify_ds_location(prev, WINED3D_LOCATION_DISCARDED,
-                    prev->resource.width, prev->resource.height);
-            if (prev == device->onscreen_depth_stencil)
+            surface_modify_ds_location(prev_surface, WINED3D_LOCATION_DISCARDED, prev->width, prev->height);
+            if (prev_surface == device->onscreen_depth_stencil)
             {
                 wined3d_surface_decref(device->onscreen_depth_stencil);
                 device->onscreen_depth_stencil = NULL;
@@ -388,9 +389,9 @@ static void wined3d_cs_exec_set_depth_stencil(struct wined3d_cs *cs, const void 
         }
     }
 
-    cs->fb.depth_stencil = op->depth_stencil;
+    cs->fb.depth_stencil = op->view;
 
-    if (!prev != !op->depth_stencil)
+    if (!prev != !op->view)
     {
         /* Swapping NULL / non NULL depth stencil affects the depth and tests */
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_ZENABLE));
@@ -398,7 +399,7 @@ static void wined3d_cs_exec_set_depth_stencil(struct wined3d_cs *cs, const void 
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     }
-    else if (prev && prev->resource.format->depth_size != op->depth_stencil->resource.format->depth_size)
+    else if (prev && prev->format->depth_size != op->view->format->depth_size)
     {
         device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     }
@@ -406,13 +407,13 @@ static void wined3d_cs_exec_set_depth_stencil(struct wined3d_cs *cs, const void 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 }
 
-void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_surface *depth_stencil)
+void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_cs_set_depth_stencil *op;
+    struct wined3d_cs_set_depth_stencil_view *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_DEPTH_STENCIL;
-    op->depth_stencil = depth_stencil;
+    op->opcode = WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW;
+    op->view = view;
 
     cs->ops->submit(cs);
 }
@@ -852,7 +853,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_VIEWPORT           */ wined3d_cs_exec_set_viewport,
     /* WINED3D_CS_OP_SET_SCISSOR_RECT       */ wined3d_cs_exec_set_scissor_rect,
     /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW  */ wined3d_cs_exec_set_rendertarget_view,
-    /* WINED3D_CS_OP_SET_DEPTH_STENCIL      */ wined3d_cs_exec_set_depth_stencil,
+    /* WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW */ wined3d_cs_exec_set_depth_stencil_view,
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION */ wined3d_cs_exec_set_vertex_declaration,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE      */ wined3d_cs_exec_set_stream_source,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ */ wined3d_cs_exec_set_stream_source_freq,

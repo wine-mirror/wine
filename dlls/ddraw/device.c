@@ -6759,13 +6759,13 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     if (!depthStencil)
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
-        wined3d_device_set_depth_stencil(device->wined3d_device, NULL);
+        wined3d_device_set_depth_stencil_view(device->wined3d_device, NULL);
         return WINED3D_ZB_FALSE;
     }
 
     dsi = impl_from_IDirectDrawSurface7(depthStencil);
-    TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->wined3d_surface);
-    wined3d_device_set_depth_stencil(device->wined3d_device, dsi->wined3d_surface);
+    wined3d_device_set_depth_stencil_view(device->wined3d_device,
+            ddraw_surface_get_rendertarget_view(dsi));
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3D_ZB_TRUE;

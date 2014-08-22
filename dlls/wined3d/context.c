@@ -2201,13 +2201,13 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 
 /* The caller provides a context */
 static void context_validate_onscreen_formats(struct wined3d_context *context,
-        const struct wined3d_surface *depth_stencil)
+        const struct wined3d_rendertarget_view *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
     struct wined3d_swapchain *swapchain = context->current_rt->container->swapchain;
 
     if (context->render_offscreen || !depth_stencil) return;
-    if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format)) return;
+    if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->format)) return;
 
     /* TODO: If the requested format would satisfy the needs of the existing one(reverse match),
      * or no onscreen depth buffer was created, the OpenGL drawable could be changed to the new
@@ -2280,8 +2280,8 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
     context_invalidate_state(context, STATE_FRAMEBUFFER);
 }
 
-static BOOL context_validate_rt_config(UINT rt_count,
-        struct wined3d_rendertarget_view * const *rts, const struct wined3d_surface *ds)
+static BOOL context_validate_rt_config(UINT rt_count, struct wined3d_rendertarget_view * const *rts,
+        const struct wined3d_rendertarget_view *ds)
 {
     unsigned int i;
 
@@ -2329,7 +2329,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                     context->blit_targets[i] = NULL;
                     ++i;
                 }
-                context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil,
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
+                        wined3d_rendertarget_view_get_surface(fb->depth_stencil),
                         rt_count ? rts[0]->resource->draw_binding : WINED3D_LOCATION_TEXTURE_RGB);
             }
             else
@@ -2446,7 +2447,8 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
             {
                 context->blit_targets[i] = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
             }
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil,
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
+                    wined3d_rendertarget_view_get_surface(fb->depth_stencil),
                     fb->render_targets[0]->resource->draw_binding);
         }
     }

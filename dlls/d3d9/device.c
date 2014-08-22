@@ -1397,7 +1397,8 @@ static HRESULT WINAPI d3d9_device_SetDepthStencilSurface(IDirect3DDevice9Ex *ifa
     TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
 
     wined3d_mutex_lock();
-    wined3d_device_set_depth_stencil(device->wined3d_device, ds_impl ? ds_impl->wined3d_surface : NULL);
+    wined3d_device_set_depth_stencil_view(device->wined3d_device,
+            ds_impl ? d3d9_surface_get_rendertarget_view(ds_impl) : NULL);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -1406,7 +1407,7 @@ static HRESULT WINAPI d3d9_device_SetDepthStencilSurface(IDirect3DDevice9Ex *ifa
 static HRESULT WINAPI d3d9_device_GetDepthStencilSurface(IDirect3DDevice9Ex *iface, IDirect3DSurface9 **depth_stencil)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    struct wined3d_surface *wined3d_surface;
+    struct wined3d_rendertarget_view *wined3d_dsv;
     struct d3d9_surface *surface_impl;
     HRESULT hr = D3D_OK;
 
@@ -1416,9 +1417,11 @@ static HRESULT WINAPI d3d9_device_GetDepthStencilSurface(IDirect3DDevice9Ex *ifa
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_surface = wined3d_device_get_depth_stencil(device->wined3d_device)))
+    if ((wined3d_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
     {
-        surface_impl = wined3d_surface_get_parent(wined3d_surface);
+        /* We want the sub resource parent here, since the view itself may be
+         * internal to wined3d and may not have a parent. */
+        surface_impl = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_dsv);
         *depth_stencil = &surface_impl->IDirect3DSurface9_iface;
         IDirect3DSurface9_AddRef(*depth_stencil);
     }

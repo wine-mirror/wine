@@ -1176,7 +1176,7 @@ struct wined3d_context
 struct wined3d_fb_state
 {
     struct wined3d_rendertarget_view **render_targets;
-    struct wined3d_surface *depth_stencil;
+    struct wined3d_rendertarget_view *depth_stencil;
 };
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
@@ -1955,7 +1955,7 @@ struct wined3d_device
     /* Render Target Support */
     struct wined3d_fb_state fb;
     struct wined3d_surface *onscreen_depth_stencil;
-    struct wined3d_surface *auto_depth_stencil;
+    struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
     /* For rendering to a texture using glCopyTexImage */
     GLuint                  depth_blt_texture;
@@ -2506,7 +2506,8 @@ void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_depth_stencil(struct wined3d_cs *cs, struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
+        struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;

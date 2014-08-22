@@ -4923,13 +4923,22 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
     return WINED3D_OK;
 }
 
-static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_surface *surface, const RECT *rect, float depth)
+static HRESULT ffp_blit_depth_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
+        const RECT *dst_rect, float depth)
 {
-    const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
-    struct wined3d_fb_state fb = {NULL, surface};
+    const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
+    struct wined3d_fb_state fb = {NULL, NULL};
+    HRESULT hr;
 
-    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
+            NULL, &wined3d_null_parent_ops, &fb.depth_stencil)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    device_clear_render_targets(device, 0, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+    wined3d_rendertarget_view_decref(fb.depth_stencil);
 
     return WINED3D_OK;
 }
