@@ -916,8 +916,46 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetSamplers(ID3D10Device1 *iface,
 static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device1 *iface,
         UINT view_count, ID3D10RenderTargetView **render_target_views, ID3D10DepthStencilView **depth_stencil_view)
 {
-    FIXME("iface %p, view_count %u, render_target_views %p, depth_stencil_view %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct wined3d_rendertarget_view *wined3d_view;
+
+    TRACE("iface %p, view_count %u, render_target_views %p, depth_stencil_view %p.\n",
             iface, view_count, render_target_views, depth_stencil_view);
+
+    if (render_target_views)
+    {
+        struct d3d10_rendertarget_view *view_impl;
+        unsigned int i;
+
+        for (i = 0; i < view_count; ++i)
+        {
+            if (!(wined3d_view = wined3d_device_get_rendertarget_view(device->wined3d_device, i)))
+            {
+                render_target_views[i] = NULL;
+                continue;
+            }
+
+            view_impl = wined3d_rendertarget_view_get_parent(wined3d_view);
+            render_target_views[i] = &view_impl->ID3D10RenderTargetView_iface;
+            ID3D10RenderTargetView_AddRef(render_target_views[i]);
+        }
+    }
+
+    if (depth_stencil_view)
+    {
+        struct d3d10_depthstencil_view *view_impl;
+
+        if (!(wined3d_view = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+        {
+            *depth_stencil_view = NULL;
+        }
+        else
+        {
+            view_impl = wined3d_rendertarget_view_get_parent(wined3d_view);
+            *depth_stencil_view = &view_impl->ID3D10DepthStencilView_iface;
+            ID3D10DepthStencilView_AddRef(*depth_stencil_view);
+        }
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device1 *iface,
