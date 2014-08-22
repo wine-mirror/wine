@@ -5697,6 +5697,33 @@ static void test_window(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
+static void test_dom_implementation(IHTMLDocument2 *doc)
+{
+    IHTMLDocument5 *doc5 = get_htmldoc5_iface((IUnknown*)doc);
+    IHTMLDOMImplementation *dom_implementation;
+    VARIANT_BOOL b;
+    VARIANT v;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDocument5_get_implementation(doc5, &dom_implementation);
+    IHTMLDocument5_Release(doc5);
+    ok(hres == S_OK, "get_implementation failed: %08x\n", hres);
+    ok(dom_implementation != NULL, "dom_implementation == NULL\n");
+
+    str = a2bstr("test");
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("1.0");
+    b = 100;
+    hres = IHTMLDOMImplementation_hasFeature(dom_implementation, str, v, &b);
+    SysFreeString(str);
+    VariantClear(&v);
+    ok(hres == S_OK, "hasFeature failed: %08x\n", hres);
+    ok(!b, "hasFeature returned %x\n", b);
+
+    IHTMLDOMImplementation_Release(dom_implementation);
+}
+
 static void test_defaults(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *stylesheetcol;
@@ -5831,6 +5858,7 @@ static void test_defaults(IHTMLDocument2 *doc)
 
     test_default_selection(doc);
     test_doc_title(doc, "");
+    test_dom_implementation(doc);
 }
 
 #define test_button_name(a,b) _test_button_name(__LINE__,a,b)

@@ -2617,8 +2617,21 @@ static HRESULT WINAPI HTMLDocument5_get_doctype(IHTMLDocument5 *iface, IHTMLDOMN
 static HRESULT WINAPI HTMLDocument5_get_implementation(IHTMLDocument5 *iface, IHTMLDOMImplementation **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLDocumentNode *doc_node = This->doc_node;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!doc_node->dom_implementation) {
+        HRESULT hres;
+
+        hres = create_dom_implementation(&doc_node->dom_implementation);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IHTMLDOMImplementation_AddRef(doc_node->dom_implementation);
+    *p = doc_node->dom_implementation;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument5_createAttribute(IHTMLDocument5 *iface, BSTR bstrattrName,

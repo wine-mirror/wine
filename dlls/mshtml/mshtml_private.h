@@ -136,6 +136,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLDocument5) \
     XIID(IHTMLDOMAttribute) \
     XIID(IHTMLDOMChildrenCollection) \
+    XIID(IHTMLDOMImplementation) \
     XIID(IHTMLDOMNode) \
     XIID(IHTMLDOMNode2) \
     XIID(IHTMLDOMTextNode) \
@@ -732,6 +733,8 @@ struct HTMLDocumentNode {
     BOOL content_ready;
     event_target_t *body_event_target;
 
+    IHTMLDOMImplementation *dom_implementation;
+
     ICatInformation *catmgr;
     nsDocumentEventListener *nsevent_listener;
     BOOL *event_vector;
@@ -762,6 +765,7 @@ HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
+HRESULT create_dom_implementation(IHTMLDOMImplementation**) DECLSPEC_HIDDEN;
 
 HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 

@@ -533,6 +533,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLDocument7);
     X(IID_IHTMLDOMAttribute);
     X(IID_IHTMLDOMChildrenCollection);
+    X(IID_IHTMLDOMImplementation);
     X(IID_IHTMLDOMNode);
     X(IID_IHTMLDOMNode2);
     X(IID_IHTMLElement);
