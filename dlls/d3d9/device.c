@@ -1271,8 +1271,14 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    /* Colorfill can only be used on rendertarget surfaces, or offscreen plain surfaces in D3DPOOL_DEFAULT */
-    hr = wined3d_device_color_fill(device->wined3d_device, surface_impl->wined3d_surface, rect, &c);
+    if (desc.pool != WINED3D_POOL_DEFAULT && desc.pool != WINED3D_POOL_SYSTEM_MEM)
+    {
+        WARN("Color-fill not allowed on surfaces in pool %#x.\n", desc.pool);
+        return D3DERR_INVALIDCALL;
+    }
+
+    hr = wined3d_device_clear_rendertarget_view(device->wined3d_device,
+            d3d9_surface_get_rendertarget_view(surface_impl), rect, &c);
 
     wined3d_mutex_unlock();
 

@@ -535,14 +535,16 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *ifac
 static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *iface,
         ID3D10RenderTargetView *render_target_view, const FLOAT color_rgba[4])
 {
-    struct d3d10_device *This = impl_from_ID3D10Device(iface);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_rendertarget_view *view = unsafe_impl_from_ID3D10RenderTargetView(render_target_view);
     const struct wined3d_color color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
+    HRESULT hr;
 
-    TRACE("iface %p, render_target_view %p, color_rgba [%f %f %f %f]\n",
+    TRACE("iface %p, render_target_view %p, color_rgba {%.8e, %.8e, %.8e, %.8e}.\n",
             iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
 
-    wined3d_device_clear_rendertarget_view(This->wined3d_device, view->wined3d_view, &color);
+    if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL, &color)))
+        ERR("Failed to clear view, hr %#x.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *iface,

@@ -609,9 +609,11 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     }
     else
     {
+        const RECT rect = {0, 0, surface->resource.width, surface->resource.height};
         const struct wined3d_color c = {1.0f, 1.0f, 1.0f, 1.0f};
+
         /* Fill the surface with a white color to show that wined3d is there */
-        wined3d_device_color_fill(device, surface, NULL, &c);
+        surface_color_fill(surface, &rect, &c);
     }
 
 out:
@@ -3658,30 +3660,6 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
     return surface_upload_from_surface(dst_surface, dst_point, src_surface, src_rect);
 }
 
-HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
-        struct wined3d_surface *surface, const RECT *rect, const struct wined3d_color *color)
-{
-    RECT r;
-
-    TRACE("device %p, surface %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
-            device, surface, wine_dbgstr_rect(rect),
-            color->r, color->g, color->b, color->a);
-
-    if (surface->resource.pool != WINED3D_POOL_DEFAULT && surface->resource.pool != WINED3D_POOL_SYSTEM_MEM)
-    {
-        WARN("Color-fill not allowed on %s surfaces.\n", debug_d3dpool(surface->resource.pool));
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (!rect)
-    {
-        SetRect(&r, 0, 0, surface->resource.width, surface->resource.height);
-        rect = &r;
-    }
-
-    return surface_color_fill(surface, rect, color);
-}
-
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
@@ -3753,33 +3731,37 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
     }
 }
 
-void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const struct wined3d_color *color)
+HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
+        struct wined3d_rendertarget_view *view, const RECT *rect, const struct wined3d_color *color)
 {
     struct wined3d_resource *resource;
-    HRESULT hr;
-    RECT rect;
+    RECT r;
 
-    TRACE("device %p, view %p, color {%.8e, %.8e, %.8e, %.8e}.\n",
-            device, view, color->r, color->g, color->b, color->a);
+    TRACE("device %p, view %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
+            device, view, wine_dbgstr_rect(rect), color->r, color->g, color->b, color->a);
 
     resource = view->resource;
     if (resource->type != WINED3D_RTYPE_TEXTURE && resource->type != WINED3D_RTYPE_CUBE_TEXTURE)
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
-        return;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (view->depth > 1)
     {
         FIXME("Layered clears not implemented.\n");
-        return;
+        return WINED3DERR_INVALIDCALL;
     }
 
-    SetRect(&rect, 0, 0, view->width, view->height);
+    if (!rect)
+    {
+        SetRect(&r, 0, 0, view->width, view->height);
+        rect = &r;
+    }
+
     resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), view->sub_resource_idx);
-    if (FAILED(hr = surface_color_fill(surface_from_resource(resource), &rect, color)))
-        ERR("Color fill failed, hr %#x.\n", hr);
+
+    return surface_color_fill(surface_from_resource(resource), rect, color);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
