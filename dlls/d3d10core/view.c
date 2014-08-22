@@ -404,6 +404,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_Release(ID3D10DepthStenci
 
     if (!refcount)
     {
+        wined3d_rendertarget_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
@@ -492,9 +493,63 @@ static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
     d3d10_depthstencil_view_GetDesc,
 };
 
+static void wined3d_depth_stencil_view_desc_from_d3d10core(struct wined3d_rendertarget_view_desc *wined3d_desc,
+        const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
+{
+    wined3d_desc->format_id = wined3dformat_from_dxgi_format(desc->Format);
+
+    switch (desc->ViewDimension)
+    {
+        case D3D10_DSV_DIMENSION_TEXTURE1D:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture1D.MipSlice;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_DSV_DIMENSION_TEXTURE1DARRAY:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture1DArray.MipSlice;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture1DArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture1DArray.ArraySize;
+            break;
+
+        case D3D10_DSV_DIMENSION_TEXTURE2D:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture2D.MipSlice;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_DSV_DIMENSION_TEXTURE2DARRAY:
+            wined3d_desc->u.texture.level_idx = desc->u.Texture2DArray.MipSlice;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture2DArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture2DArray.ArraySize;
+            break;
+
+        case D3D10_DSV_DIMENSION_TEXTURE2DMS:
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+
+        case D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY:
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = desc->u.Texture2DMSArray.FirstArraySlice;
+            wined3d_desc->u.texture.layer_count = desc->u.Texture2DMSArray.ArraySize;
+            break;
+
+        default:
+            FIXME("Unhandled view dimension %#x.\n", desc->ViewDimension);
+            wined3d_desc->u.texture.level_idx = 0;
+            wined3d_desc->u.texture.layer_idx = 0;
+            wined3d_desc->u.texture.layer_count = 1;
+            break;
+    }
+}
+
 HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
 {
+    struct wined3d_rendertarget_view_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
     view->ID3D10DepthStencilView_iface.lpVtbl = &d3d10_depthstencil_view_vtbl;
@@ -510,12 +565,35 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struc
         view->desc = *desc;
     }
 
+    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
+    {
+        ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
+        return E_FAIL;
+    }
+
+    wined3d_depth_stencil_view_desc_from_d3d10core(&wined3d_desc, &view->desc);
+    if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
+            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+    {
+        WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(view->device);
 
     return S_OK;
+}
+
+struct d3d10_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_depthstencil_view_vtbl);
+
+    return impl_from_ID3D10DepthStencilView(iface);
 }
 
 static inline struct d3d10_rendertarget_view *impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface)
