@@ -1051,8 +1051,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         }
         else if(!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_READONLY)))
         {
-            FIXME("waiting for cs, flags 0x%04x.\n", flags);
-            device->cs->ops->finish(device->cs);
+            wined3d_resource_wait_fence(&buffer->resource);
         }
     }
 
