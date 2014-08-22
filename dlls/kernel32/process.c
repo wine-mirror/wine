@@ -2342,9 +2342,10 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
     else switch (binary_info.type)
     {
     case BINARY_PE:
-        TRACE( "starting %s as Win%d binary (%p-%p, arch %04x)\n",
+        TRACE( "starting %s as Win%d binary (%p-%p, arch %04x%s)\n",
                debugstr_w(name), (binary_info.flags & BINARY_FLAG_64BIT) ? 64 : 32,
-               binary_info.res_start, binary_info.res_end, binary_info.arch );
+               binary_info.res_start, binary_info.res_end, binary_info.arch,
+               (binary_info.flags & BINARY_FLAG_FAKEDLL) ? ", fakedll" : "" );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, &binary_info, FALSE );
         break;

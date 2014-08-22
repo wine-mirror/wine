@@ -75,8 +75,9 @@ enum binary_type
     BINARY_UNIX_LIB
 };
 
-#define BINARY_FLAG_DLL   0x01
-#define BINARY_FLAG_64BIT 0x02
+#define BINARY_FLAG_DLL     0x01
+#define BINARY_FLAG_64BIT   0x02
+#define BINARY_FLAG_FAKEDLL 0x04
 
 struct binary_info
 {
