@@ -119,6 +119,7 @@ typedef struct
     char           d_name[256];
 } KERNEL_DIRENT64;
 
+#undef getdents64
 static inline int getdents64( int fd, char *de, unsigned int size )
 {
     return syscall( __NR_getdents64, fd, de, size );
