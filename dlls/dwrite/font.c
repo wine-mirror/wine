@@ -215,7 +215,7 @@ static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection(IDWr
     return CONTAINING_RECORD(iface, struct dwrite_fontcollection, IDWriteFontCollection_iface);
 }
 
-static HRESULT WINAPI _dwritefontfile_GetFontFileStream(IDWriteFontFile *iface, IDWriteFontFileStream **stream)
+static HRESULT _dwritefontfile_GetFontFileStream(IDWriteFontFile *iface, IDWriteFontFileStream **stream)
 {
     HRESULT hr;
     struct dwrite_fontfile *This = impl_from_IDWriteFontFile(iface);
