@@ -21,6 +21,8 @@
 #ifndef __WINE_SERVER_FILE_H
 #define __WINE_SERVER_FILE_H
 
+#include <sys/types.h>
+
 #include "object.h"
 
 struct fd;
