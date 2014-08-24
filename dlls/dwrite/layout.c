@@ -330,6 +330,12 @@ static inline BOOL is_in_layout_range(const DWRITE_TEXT_RANGE *outer, const DWRI
            (inner->startPosition + inner->length <= outer->startPosition + outer->length);
 }
 
+static inline HRESULT return_range(const struct layout_range *range, DWRITE_TEXT_RANGE *r)
+{
+    if (r) *r = range->range;
+    return S_OK;
+}
+
 /* Set attribute value for given range, does all needed splitting/merging of existing ranges. */
 static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
@@ -902,9 +908,8 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontWeight(IDWriteTextLayout *i
 
     range = get_layout_range_by_pos(This, position);
     *weight = range->weight;
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout *iface,
@@ -920,9 +925,8 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout *if
 
     range = get_layout_range_by_pos(This, position);
     *style = range->style;
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout *iface,
@@ -954,9 +958,8 @@ static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout *iface,
 
     range = get_layout_range_by_pos(This, position);
     *underline = range->underline;
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout *iface,
@@ -972,9 +975,8 @@ static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout *iface
 
     range = get_layout_range_by_pos(This, position);
     *strikethrough = range->strikethrough;
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout *iface,
@@ -992,9 +994,8 @@ static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout *iface
     *effect = range->effect;
     if (*effect)
         IUnknown_AddRef(*effect);
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout *iface,
@@ -1009,9 +1010,8 @@ static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout *iface,
     *object = range ? range->object : NULL;
     if (*object)
         IDWriteInlineObject_AddRef(*object);
-    if (r) *r = range->range;
 
-    return S_OK;
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetTypography(IDWriteTextLayout *iface,

@@ -628,6 +628,15 @@ static void test_SetInlineObject(void)
     ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
+    /* get from somewhere inside a range */
+    inlinetest = NULL;
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 1, &inlinetest, &r2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
+    IDWriteInlineObject_Release(inlinetest);
+
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj2, range);
