@@ -50,7 +50,7 @@ struct dwrite_textformat_data {
 
     FLOAT spacing;
     FLOAT baseline;
-    FLOAT size;
+    FLOAT fontsize;
 
     DWRITE_TRIMMING trimming;
     IDWriteInlineObject *trimmingsign;
@@ -62,6 +62,7 @@ enum layout_range_attr_kind {
     LAYOUT_RANGE_ATTR_WEIGHT,
     LAYOUT_RANGE_ATTR_STYLE,
     LAYOUT_RANGE_ATTR_STRETCH,
+    LAYOUT_RANGE_ATTR_FONTSIZE,
     LAYOUT_RANGE_ATTR_EFFECT,
     LAYOUT_RANGE_ATTR_INLINE,
     LAYOUT_RANGE_ATTR_UNDERLINE,
@@ -75,6 +76,7 @@ struct layout_range_attr_value {
         DWRITE_FONT_WEIGHT weight;
         DWRITE_FONT_STYLE style;
         DWRITE_FONT_STRETCH stretch;
+        FLOAT fontsize;
         IDWriteInlineObject *object;
         IUnknown *effect;
         BOOL underline;
@@ -88,6 +90,7 @@ struct layout_range {
     DWRITE_TEXT_RANGE range;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
+    FLOAT fontsize;
     DWRITE_FONT_STRETCH stretch;
     IDWriteInlineObject *object;
     IUnknown *effect;
@@ -170,6 +173,8 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
         return range->style == value->u.style;
     case LAYOUT_RANGE_ATTR_STRETCH:
         return range->stretch == value->u.stretch;
+    case LAYOUT_RANGE_ATTR_FONTSIZE:
+        return range->fontsize == value->u.fontsize;
     case LAYOUT_RANGE_ATTR_INLINE:
         return range->object == value->u.object;
     case LAYOUT_RANGE_ATTR_EFFECT:
@@ -192,6 +197,7 @@ static inline BOOL is_same_layout_attributes(struct layout_range const *left, st
     return left->weight == right->weight &&
            left->style  == right->style &&
            left->stretch == right->stretch &&
+           left->fontsize == right->fontsize &&
            left->object == right->object &&
            left->effect == right->effect &&
            left->underline == right->underline &&
@@ -216,6 +222,7 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range->weight = layout->format.weight;
     range->style  = layout->format.style;
     range->stretch = layout->format.stretch;
+    range->fontsize = layout->format.fontsize;
     range->object = NULL;
     range->effect = NULL;
     range->underline = FALSE;
@@ -316,6 +323,10 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
     case LAYOUT_RANGE_ATTR_STRETCH:
         changed = dest->stretch != value->u.stretch;
         dest->stretch = value->u.stretch;
+        break;
+    case LAYOUT_RANGE_ATTR_FONTSIZE:
+        changed = dest->fontsize != value->u.fontsize;
+        dest->fontsize = value->u.fontsize;
         break;
     case LAYOUT_RANGE_ATTR_INLINE:
         changed = dest->object != value->u.object;
@@ -719,7 +730,7 @@ static FLOAT WINAPI dwritetextlayout_GetFontSize(IDWriteTextLayout *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
     TRACE("(%p)\n", This);
-    return This->format.size;
+    return This->format.fontsize;
 }
 
 static UINT32 WINAPI dwritetextlayout_GetLocaleNameLength(IDWriteTextLayout *iface)
@@ -826,8 +837,16 @@ static HRESULT WINAPI dwritetextlayout_SetFontStretch(IDWriteTextLayout *iface, 
 static HRESULT WINAPI dwritetextlayout_SetFontSize(IDWriteTextLayout *iface, FLOAT size, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%f %s): stub\n", This, size, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%.2f %s)\n", This, size, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.fontsize = size;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_FONTSIZE, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetUnderline(IDWriteTextLayout *iface, BOOL underline, DWRITE_TEXT_RANGE range)
@@ -1003,11 +1022,20 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout *
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout *iface,
-    UINT32 position, FLOAT *size, DWRITE_TEXT_RANGE *range)
+    UINT32 position, FLOAT *size, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, size, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, size, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(This, position);
+    *size = range->fontsize;
+
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout *iface,
@@ -1265,7 +1293,7 @@ static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWr
         layout->format.weight  = IDWriteTextFormat_GetFontWeight(format);
         layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
         layout->format.stretch = IDWriteTextFormat_GetFontStretch(format);
-        layout->format.size    = IDWriteTextFormat_GetFontSize(format);
+        layout->format.fontsize= IDWriteTextFormat_GetFontSize(format);
         layout->format.textalignment = IDWriteTextFormat_GetTextAlignment(format);
         layout->format.paralign = IDWriteTextFormat_GetParagraphAlignment(format);
         layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
@@ -1662,7 +1690,7 @@ static FLOAT WINAPI dwritetextformat_GetFontSize(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
     TRACE("(%p)\n", This);
-    return This->format.size;
+    return This->format.fontsize;
 }
 
 static UINT32 WINAPI dwritetextformat_GetLocaleNameLength(IDWriteTextFormat *iface)
@@ -1732,7 +1760,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.locale_len = strlenW(locale);
     This->format.weight = weight;
     This->format.style = style;
-    This->format.size = size;
+    This->format.fontsize = size;
     This->format.stretch = stretch;
     This->format.textalignment = DWRITE_TEXT_ALIGNMENT_LEADING;
     This->format.paralign = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
