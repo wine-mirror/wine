@@ -61,10 +61,12 @@ struct dwrite_textformat_data {
 enum layout_range_attr_kind {
     LAYOUT_RANGE_ATTR_WEIGHT,
     LAYOUT_RANGE_ATTR_STYLE,
+    LAYOUT_RANGE_ATTR_STRETCH,
     LAYOUT_RANGE_ATTR_EFFECT,
     LAYOUT_RANGE_ATTR_INLINE,
     LAYOUT_RANGE_ATTR_UNDERLINE,
-    LAYOUT_RANGE_ATTR_STRIKETHROUGH
+    LAYOUT_RANGE_ATTR_STRIKETHROUGH,
+    LAYOUT_RANGE_ATTR_FONTCOLL
 };
 
 struct layout_range_attr_value {
@@ -72,10 +74,12 @@ struct layout_range_attr_value {
     union {
         DWRITE_FONT_WEIGHT weight;
         DWRITE_FONT_STYLE style;
+        DWRITE_FONT_STRETCH stretch;
         IDWriteInlineObject *object;
         IUnknown *effect;
         BOOL underline;
         BOOL strikethrough;
+        IDWriteFontCollection *collection;
     } u;
 };
 
@@ -84,10 +88,12 @@ struct layout_range {
     DWRITE_TEXT_RANGE range;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
+    DWRITE_FONT_STRETCH stretch;
     IDWriteInlineObject *object;
     IUnknown *effect;
     BOOL underline;
     BOOL strikethrough;
+    IDWriteFontCollection *collection;
 };
 
 struct dwrite_textlayout {
@@ -162,6 +168,8 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
         return range->weight == value->u.weight;
     case LAYOUT_RANGE_ATTR_STYLE:
         return range->style == value->u.style;
+    case LAYOUT_RANGE_ATTR_STRETCH:
+        return range->stretch == value->u.stretch;
     case LAYOUT_RANGE_ATTR_INLINE:
         return range->object == value->u.object;
     case LAYOUT_RANGE_ATTR_EFFECT:
@@ -170,6 +178,8 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
         return range->underline == value->u.underline;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         return range->strikethrough == value->u.strikethrough;
+    case LAYOUT_RANGE_ATTR_FONTCOLL:
+        return range->collection == value->u.collection;
     default:
         ;
     }
@@ -181,10 +191,12 @@ static inline BOOL is_same_layout_attributes(struct layout_range const *left, st
 {
     return left->weight == right->weight &&
            left->style  == right->style &&
+           left->stretch == right->stretch &&
            left->object == right->object &&
            left->effect == right->effect &&
            left->underline == right->underline &&
-           left->strikethrough == right->strikethrough;
+           left->strikethrough == right->strikethrough &&
+           left->collection == right->collection;
 }
 
 static inline BOOL is_same_text_range(const DWRITE_TEXT_RANGE *left, const DWRITE_TEXT_RANGE *right)
@@ -203,10 +215,14 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range->range = *r;
     range->weight = layout->format.weight;
     range->style  = layout->format.style;
+    range->stretch = layout->format.stretch;
     range->object = NULL;
     range->effect = NULL;
     range->underline = FALSE;
     range->strikethrough = FALSE;
+    range->collection = layout->format.collection;
+    if (range->collection)
+        IDWriteFontCollection_Release(range->collection);
 
     return range;
 }
@@ -226,6 +242,8 @@ static struct layout_range *alloc_layout_range_from(struct layout_range *from, c
         IDWriteInlineObject_AddRef(range->object);
     if (range->effect)
         IUnknown_AddRef(range->effect);
+    if (range->collection)
+        IDWriteFontCollection_AddRef(range->collection);
 
     return range;
 }
@@ -236,6 +254,8 @@ static void free_layout_range(struct layout_range *range)
         IDWriteInlineObject_Release(range->object);
     if (range->effect)
         IUnknown_Release(range->effect);
+    if (range->collection)
+        IDWriteFontCollection_Release(range->collection);
     heap_free(range);
 }
 
@@ -293,6 +313,10 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         changed = dest->style != value->u.style;
         dest->style = value->u.style;
         break;
+    case LAYOUT_RANGE_ATTR_STRETCH:
+        changed = dest->stretch != value->u.stretch;
+        dest->stretch = value->u.stretch;
+        break;
     case LAYOUT_RANGE_ATTR_INLINE:
         changed = dest->object != value->u.object;
         if (changed && dest->object)
@@ -316,6 +340,14 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         changed = dest->strikethrough != value->u.strikethrough;
         dest->strikethrough = value->u.strikethrough;
+        break;
+    case LAYOUT_RANGE_ATTR_FONTCOLL:
+        changed = dest->collection != value->u.collection;
+        if (changed && dest->collection)
+            IDWriteFontCollection_Release(dest->collection);
+        dest->collection = value->u.collection;
+        if (dest->collection)
+            IDWriteFontCollection_AddRef(dest->collection);
         break;
     default:
         ;
@@ -727,8 +759,16 @@ static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout *iface, FL
 static HRESULT WINAPI dwritetextlayout_SetFontCollection(IDWriteTextLayout *iface, IDWriteFontCollection* collection, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%p %s): stub\n", This, collection, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%p %s)\n", This, collection, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.collection = collection;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_FONTCOLL, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetFontFamilyName(IDWriteTextLayout *iface, WCHAR const *name, DWRITE_TEXT_RANGE range)
@@ -771,8 +811,16 @@ static HRESULT WINAPI dwritetextlayout_SetFontStyle(IDWriteTextLayout *iface, DW
 static HRESULT WINAPI dwritetextlayout_SetFontStretch(IDWriteTextLayout *iface, DWRITE_FONT_STRETCH stretch, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%d %s): stub\n", This, stretch, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%d %s)\n", This, stretch, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.stretch = stretch;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STRETCH, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetFontSize(IDWriteTextLayout *iface, FLOAT size, DWRITE_TEXT_RANGE range)
@@ -871,12 +919,20 @@ static FLOAT WINAPI dwritetextlayout_GetMaxHeight(IDWriteTextLayout *iface)
     return This->maxheight;
 }
 
-static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayout *iface, UINT32 pos,
-    IDWriteFontCollection** collection, DWRITE_TEXT_RANGE *range)
+static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayout *iface, UINT32 position,
+    IDWriteFontCollection** collection, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, collection, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, collection, r);
+
+    range = get_layout_range_by_pos(This, position);
+    *collection = range ? range->collection : NULL;
+    if (*collection)
+        IDWriteFontCollection_AddRef(*collection);
+
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontFamilyNameLength(IDWriteTextLayout *iface,
@@ -930,11 +986,20 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout *if
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout *iface,
-    UINT32 position, DWRITE_FONT_STRETCH *stretch, DWRITE_TEXT_RANGE *range)
+    UINT32 position, DWRITE_FONT_STRETCH *stretch, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, stretch, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, stretch, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(This, position);
+    *stretch = range->stretch;
+
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout *iface,
