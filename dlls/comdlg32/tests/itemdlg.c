@@ -1363,7 +1363,7 @@ static void test_customize_onfolderchange(IFileDialog *pfd)
     item = find_window(dlg_hwnd, NULL, visualgroup1W);
     ok(item == NULL, "Found item: %p\n", item);
     item = find_window(dlg_hwnd, NULL, visualgroup2W);
-    ok(item == NULL, "Found item: %p\n", item);
+    todo_wine ok(item == NULL, "Found item: %p\n", item);
 
     br = PostMessageW(dlg_hwnd, WM_COMMAND, IDCANCEL, 0);
     ok(br, "Failed\n");
@@ -1380,6 +1380,7 @@ static void test_customize(void)
     DWORD cookie;
     LPWSTR tmpstr;
     UINT i;
+    UINT id_vgroup1, id_text, id_editbox1;
     LONG ref;
     HWND dlg_hwnd;
     HRESULT hr;
@@ -1632,25 +1633,25 @@ static void test_customize(void)
     ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, i, label);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, visualgroup1W);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    todo_wine ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
+    ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, visualgroup2W);
-    todo_wine ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_StartVisualGroup(pfdc, ++i, label);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_EndVisualGroup(pfdc);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     i++; /* Nonexisting control */
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
@@ -1892,6 +1893,127 @@ static void test_customize(void)
             ok(hr == S_OK, "got 0x%08x.\n", hr);
         }
     }
+
+    IFileDialogCustomize_Release(pfdc);
+    ref = IFileDialog_Release(pfod);
+    ok(!ref, "Refcount not zero (%d).\n", ref);
+
+
+    /* Some more tests for VisualGroup behavior */
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfod);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&pfdc);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    i = -1;
+    id_vgroup1 = ++i;
+    hr = IFileDialogCustomize_StartVisualGroup(pfdc, id_vgroup1, visualgroup1W);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    id_text = ++i;
+    hr = IFileDialogCustomize_AddText(pfdc, id_text, label);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    id_editbox1 = ++i;
+    hr = IFileDialogCustomize_AddEditBox(pfdc, id_editbox1, editbox1W);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+
+    /* Set all Visible but not Enabled */
+    hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_VISIBLE);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
+    cdstate = 0xdeadbeef;
+
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    /* Set text to Visible but not Enabled */
+    hr = IFileDialogCustomize_SetControlState(pfdc, id_text, CDCS_VISIBLE);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
+    cdstate = 0xdeadbeef;
+
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    /* Set vgroup to inactive */
+    hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_INACTIVE);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_INACTIVE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    /* Set vgroup to Enabled and Visible again */
+    hr = IFileDialogCustomize_SetControlState(pfdc, id_vgroup1, CDCS_ENABLEDVISIBLE);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_vgroup1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_text, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_VISIBLE, "got 0x%08x.\n", cdstate);
+
+    cdstate = 0xdeadbeef;
+    hr = IFileDialogCustomize_GetControlState(pfdc, id_editbox1, &cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+
+    hr = IFileDialogCustomize_MakeProminent(pfdc, id_vgroup1);
+    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     IFileDialogCustomize_Release(pfdc);
     ref = IFileDialog_Release(pfod);
