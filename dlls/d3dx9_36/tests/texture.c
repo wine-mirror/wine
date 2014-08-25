@@ -340,6 +340,28 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(format == expected, "Returned format %u, expected %u\n", format, expected);
 
+    if(SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+            mode.Format, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, D3DFMT_L8)))
+        expected = D3DFMT_L8;
+    else
+        expected = D3DFMT_X8R8G8B8;
+
+    format = D3DFMT_L8;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, D3DUSAGE_RENDERTARGET, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == expected, "Returned format %u, expected %u\n", format, expected);
+
+    if(SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+            mode.Format, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, D3DFMT_L16)))
+        expected = D3DFMT_L16;
+    else
+        expected = D3DFMT_A16B16G16R16;
+
+    format = D3DFMT_L16;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, D3DUSAGE_RENDERTARGET, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == expected, "Returned format %u, expected %u\n", format, expected);
+
     /* Block-based texture formats and size < block size. */
     if (has_2d_dxt5)
     {

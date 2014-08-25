@@ -184,6 +184,27 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
     }
 }
 
+static D3DFORMAT get_luminance_replacement_format(D3DFORMAT format)
+{
+    static const struct
+    {
+        D3DFORMAT luminance_format;
+        D3DFORMAT replacement_format;
+    } luminance_replacements[] =
+    {
+        {D3DFMT_L8, D3DFMT_X8R8G8B8},
+        {D3DFMT_A8L8, D3DFMT_A8R8G8B8},
+        {D3DFMT_A4L4, D3DFMT_A4R4G4B4},
+        {D3DFMT_L16, D3DFMT_A16B16G16R16}
+    };
+    unsigned int i;
+
+    for (i = 0; i < sizeof(luminance_replacements) / sizeof(luminance_replacements[0]); ++i)
+        if (format == luminance_replacements[i].luminance_format)
+            return luminance_replacements[i].replacement_format;
+    return format;
+}
+
 HRESULT WINAPI D3DXCheckTextureRequirements(struct IDirect3DDevice9 *device, UINT *width, UINT *height,
         UINT *miplevels, DWORD usage, D3DFORMAT *format, D3DPOOL pool)
 {
@@ -255,16 +276,16 @@ HRESULT WINAPI D3DXCheckTextureRequirements(struct IDirect3DDevice9 *device, UIN
             FIXME("Pixel format %x not handled\n", usedformat);
             goto cleanup;
         }
+        fmt = get_format_info(get_luminance_replacement_format(usedformat));
 
         allow_24bits = fmt->bytes_per_pixel == 3;
-        channels = (fmt->bits[0] ? 1 : 0) + (fmt->bits[1] ? 1 : 0)
-            + (fmt->bits[2] ? 1 : 0) + (fmt->bits[3] ? 1 : 0);
+        channels = !!fmt->bits[0] + !!fmt->bits[1] + !!fmt->bits[2] + !!fmt->bits[3];
         usedformat = D3DFMT_UNKNOWN;
 
         while ((curfmt = get_format_info_idx(i)))
         {
-            unsigned int curchannels = (curfmt->bits[0] ? 1 : 0) + (curfmt->bits[1] ? 1 : 0)
-                + (curfmt->bits[2] ? 1 : 0) + (curfmt->bits[3] ? 1 : 0);
+            unsigned int curchannels = !!curfmt->bits[0] + !!curfmt->bits[1]
+                    + !!curfmt->bits[2] + !!curfmt->bits[3];
             int score;
 
             i++;
