@@ -24,22 +24,61 @@
 
 #include "resources.h"
 
-static HRESULT create_file(const char *filename, const char *data, const unsigned int size)
+static char temp_path[MAX_PATH];
+
+static BOOL create_file(const char *filename, const char *data, const unsigned int size, char *out_path)
 {
-    DWORD received;
+    DWORD written;
     HANDLE hfile;
+    char path[MAX_PATH];
 
-    hfile = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    if(hfile == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32(GetLastError());
+    if (!*temp_path)
+        GetTempPathA(sizeof(temp_path), temp_path);
 
-    if(WriteFile(hfile, data, size, &received, NULL))
+    strcpy(path, temp_path);
+    strcat(path, filename);
+    hfile = CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (WriteFile(hfile, data, size, &written, NULL))
     {
         CloseHandle(hfile);
-        return D3D_OK;
+
+        if (out_path)
+            strcpy(out_path, path);
+        return TRUE;
     }
 
     CloseHandle(hfile);
-    return D3DERR_INVALIDCALL;
+    return FALSE;
+}
+
+static void delete_file(const char *filename)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, filename);
+    DeleteFileA(path);
+}
+
+static BOOL create_directory(const char *name)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, name);
+    return CreateDirectoryA(path, NULL);
+}
+
+static void delete_directory(const char *name)
+{
+    char path[MAX_PATH];
+
+    strcpy(path, temp_path);
+    strcat(path, name);
+    RemoveDirectoryA(path);
 }
 
 static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE include_type,
@@ -155,7 +194,7 @@ static void assembleshader_test(void)
         }
     };
     struct D3DXIncludeImpl include;
-    HRESULT shader_vsh_res;
+    char shader_vsh_path[MAX_PATH], shader3_vsh_path[MAX_PATH];
     static const WCHAR shader_filename_w[] = {'s','h','a','d','e','r','.','v','s','h',0};
 
     /* pDefines test */
@@ -242,14 +281,14 @@ static void assembleshader_test(void)
     if (shader)
         ID3DXBuffer_Release(shader);
 
-    shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
-    if(SUCCEEDED(shader_vsh_res)) {
-        create_file("incl.vsh", testincl, sizeof(testincl) - 1);
+    if (create_file("shader.vsh", testshader, sizeof(testshader) - 1, shader_vsh_path))
+    {
+        create_file("incl.vsh", testincl, sizeof(testincl) - 1, NULL);
 
         /* D3DXAssembleShaderFromFile + #include test */
         shader = NULL;
         messages = NULL;
-        hr = D3DXAssembleShaderFromFileA("shader.vsh",
+        hr = D3DXAssembleShaderFromFileA(shader_vsh_path,
                                          NULL, NULL, D3DXSHADER_SKIPVALIDATION,
                                          &shader, &messages);
         ok(hr == D3D_OK, "D3DXAssembleShaderFromFile test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
@@ -271,16 +310,17 @@ static void assembleshader_test(void)
         }
         if(shader) ID3DXBuffer_Release(shader);
 
-        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1);
-        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1);
-        if(CreateDirectoryA("include", NULL)) {
-            create_file("include/incl3.vsh", testincl3, sizeof(testincl3) - 1);
-            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1);
+        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1, shader3_vsh_path);
+        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1, NULL);
+        if (create_directory("include"))
+        {
+            create_file("include\\incl3.vsh", testincl3, sizeof(testincl3) - 1, NULL);
+            create_file("include\\incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1, NULL);
 
             /* path search #include test */
             shader = NULL;
             messages = NULL;
-            hr = D3DXAssembleShaderFromFileA("shader3.vsh", NULL, NULL,
+            hr = D3DXAssembleShaderFromFileA(shader3_vsh_path, NULL, NULL,
                                              D3DXSHADER_SKIPVALIDATION,
                                              &shader, &messages);
             ok(hr == D3D_OK, "D3DXAssembleShaderFromFile path search test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
@@ -291,13 +331,13 @@ static void assembleshader_test(void)
             if(shader) ID3DXBuffer_Release(shader);
         } else skip("Couldn't create \"include\" directory\n");
 
-        DeleteFileA("shader.vsh");
-        DeleteFileA("incl.vsh");
-        DeleteFileA("shader3.vsh");
-        DeleteFileA("incl4.vsh");
-        DeleteFileA("include/incl3.vsh");
-        DeleteFileA("include/incl4.vsh");
-        RemoveDirectoryA("include");
+        delete_file("shader.vsh");
+        delete_file("incl.vsh");
+        delete_file("shader3.vsh");
+        delete_file("incl4.vsh");
+        delete_file("include\\incl3.vsh");
+        delete_file("include\\incl4.vsh");
+        delete_directory("include");
 
         /* The main shader is also to be loaded through the ID3DXInclude object. */
         shader = NULL;
@@ -403,23 +443,24 @@ static void d3dxpreprocess_test(void)
             "#error \"wrong include\"\n";
     HRESULT hr;
     ID3DXBuffer *shader, *messages;
-    HRESULT shader_vsh_res;
+    char shader_vsh_path[MAX_PATH], shader3_vsh_path[MAX_PATH];
     static struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
     static const WCHAR shader_filename_w[] = {'s','h','a','d','e','r','.','v','s','h',0};
 
-    shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
-    if(SUCCEEDED(shader_vsh_res)) {
-        create_file("incl.vsh", testincl, sizeof(testincl) - 1);
-        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1);
-        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1);
-        if(CreateDirectoryA("include", NULL)) {
-            create_file("include/incl3.vsh", testincl3, sizeof(testincl3) - 1);
-            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1);
+    if (create_file("shader.vsh", testshader, sizeof(testshader) - 1, shader_vsh_path))
+    {
+        create_file("incl.vsh", testincl, sizeof(testincl) - 1, NULL);
+        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1, shader3_vsh_path);
+        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1, NULL);
+        if (create_directory("include"))
+        {
+            create_file("include\\incl3.vsh", testincl3, sizeof(testincl3) - 1, NULL);
+            create_file("include\\incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1, NULL);
 
             /* path search #include test */
             shader = NULL;
             messages = NULL;
-            hr = D3DXPreprocessShaderFromFileA("shader3.vsh", NULL, NULL,
+            hr = D3DXPreprocessShaderFromFileA(shader3_vsh_path, NULL, NULL,
                                                &shader, &messages);
             ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile path search test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
             if(messages) {
@@ -432,7 +473,7 @@ static void d3dxpreprocess_test(void)
         /* D3DXPreprocessShaderFromFile + #include test */
         shader = NULL;
         messages = NULL;
-        hr = D3DXPreprocessShaderFromFileA("shader.vsh",
+        hr = D3DXPreprocessShaderFromFileA(shader_vsh_path,
                                            NULL, NULL,
                                            &shader, &messages);
         ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
@@ -454,13 +495,13 @@ static void d3dxpreprocess_test(void)
         }
         if(shader) ID3DXBuffer_Release(shader);
 
-        DeleteFileA("shader.vsh");
-        DeleteFileA("incl.vsh");
-        DeleteFileA("shader3.vsh");
-        DeleteFileA("incl4.vsh");
-        DeleteFileA("include/incl3.vsh");
-        DeleteFileA("include/incl4.vsh");
-        RemoveDirectoryA("include");
+        delete_file("shader.vsh");
+        delete_file("incl.vsh");
+        delete_file("shader3.vsh");
+        delete_file("incl4.vsh");
+        delete_file("include\\incl3.vsh");
+        delete_file("include\\incl4.vsh");
+        delete_directory("include");
 
         /* The main shader is also to be loaded through the ID3DXInclude object. */
         shader = NULL;
