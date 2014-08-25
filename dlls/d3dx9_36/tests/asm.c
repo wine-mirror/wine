@@ -86,6 +86,13 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE
         /* Also check for the correct parent_data content */
         ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value\n");
     }
+    else if (!strcmp(filename, "include/incl3.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
+        memcpy(buffer, include, sizeof(include));
+        *bytes = sizeof(include);
+        ok(!parent_data, "wrong parent_data value\n");
+    }
     else
     {
         ok(0, "Unexpected #include for file %s.\n", filename);
@@ -220,6 +227,20 @@ static void assembleshader_test(void)
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
+
+    /* #include with a path. */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXAssembleShader(testshader3, strlen(testshader3), NULL, &include.ID3DXInclude_iface,
+            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+    ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000ffff);
+    if (messages)
+    {
+        trace("Path search D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if (shader)
+        ID3DXBuffer_Release(shader);
 
     shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
     if(SUCCEEDED(shader_vsh_res)) {
