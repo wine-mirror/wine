@@ -23,8 +23,12 @@
 extern "C" {
 #endif
 
+#define RM_SESSION_KEY_LEN sizeof(GUID)
+#define CCH_RM_SESSION_KEY RM_SESSION_KEY_LEN*2
 #define CCH_RM_MAX_APP_NAME 255
 #define CH_RM_MAX_SVC_NAME 63
+#define RM_INVALID_TS_SESSION -1
+#define RM_INVALID_PROCESS -1
 
 typedef enum  {
     RmUnknownApp = 0,
@@ -35,6 +39,15 @@ typedef enum  {
     RmConsole = 5,
     RmCritical = 1000
 } RM_APP_TYPE;
+
+typedef enum _RM_REBOOT_REASON {
+    RmRebootReasonNone             = 0x0000,
+    RmRebootReasonPermissionDenied = 0x0001,
+    RmRebootReasonSessionMismatch  = 0x0002,
+    RmRebootReasonCriticalProcess  = 0x0004,
+    RmRebootReasonCriticalService  = 0x0008,
+    RmRebootReasonDetectedSelf     = 0x0010
+} RM_REBOOT_REASON;
 
 typedef struct {
     DWORD dwProcessId;
