@@ -1400,8 +1400,20 @@ static HRESULT Global_Now(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Date(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME lt;
+    UDATE ud;
+    DATE date;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    GetLocalTime(&lt);
+    ud.st = lt;
+    ud.wDayOfYear = 0;
+    hres = VarDateFromUdateEx(&ud, 0, VAR_DATEVALUEONLY, &date);
+    if(FAILED(hres))
+        return hres;
+    return return_date(res, date);
 }
 
 static HRESULT Global_Time(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
