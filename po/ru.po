@@ -850,7 +850,7 @@ msgstr "Файл не существует"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Среди выбранных объектов не только папки"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1041,10 +1041,8 @@ msgid "Open File"
 msgstr "Открыть файл"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Новая папка"
+msgstr "Выберите папку"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
