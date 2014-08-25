@@ -81,7 +81,6 @@ static HRESULT SendFurther( IPin *from, SendPinFunc fnMiddle, LPVOID arg, SendPi
     hr = IPin_QueryInternalConnections( from, NULL, &amount );
     if (hr != E_NOTIMPL && amount)
         FIXME("Use QueryInternalConnections!\n");
-     hr = S_OK;
 
     pin_info.pFilter = NULL;
     hr = IPin_QueryPinInfo( from, &pin_info );
