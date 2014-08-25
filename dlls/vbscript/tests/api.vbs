@@ -1238,5 +1238,6 @@ Call ok(Approch(Log(CByte(2)), 0.6931), "Log(CByte(2)) = " & Log(CByte(2)))
 Call ok(getVT(Log(CByte(2))) = "VT_R8", "getVT(Log(CByte(2))) = " & getVT(Log(CByte(2))))
 
 Call ok(getVT(Date) = "VT_DATE", "getVT(Date) = " & getVT(Date))
+Call ok(getVT(Time) = "VT_DATE", "getVT(Time) = " & getVT(Time))
 
 Call reportSuccess()
