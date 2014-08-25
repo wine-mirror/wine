@@ -687,6 +687,14 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 
     cs->ops->submit(cs, sizeof(*op));
 
+    /* D3D10 documentation suggests that Windows allows the game to run
+     * 3 frames ahead of the GPU. Increasing this above 1 causes uneven
+     * animation in some games, most notably StarCraft II. The framerates
+     * don't show this problem. The issue is more noticable with vsync
+     * on, but also happens with vsync off.
+     *
+     * In Counter-Strike: Source a frame difference of 3 causes noticable
+     * input delay that makes the game unplayable. */
     while (pending > 1)
         pending = InterlockedCompareExchange(&cs->pending_presents, 0, 0);
 }
