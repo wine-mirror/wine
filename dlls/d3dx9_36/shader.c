@@ -242,7 +242,7 @@ static HRESULT WINAPI d3dincludefromfile_open(ID3DXInclude *iface, D3DXINCLUDE_T
         const char *filename, const void *parent_data, const void **data, UINT *bytes)
 {
     const char *p, *parent_name = "";
-    char *pathname = NULL;
+    char *pathname = NULL, *ptr;
     char **buffer = NULL;
     HANDLE file;
     UINT size;
@@ -259,14 +259,23 @@ static HRESULT WINAPI d3dincludefromfile_open(ID3DXInclude *iface, D3DXINCLUDE_T
 
     TRACE("Looking up for include file %s, parent %s\n", debugstr_a(filename), debugstr_a(parent_name));
 
-    if ((p = strrchr(parent_name, '\\')) || (p = strrchr(parent_name, '/'))) p++;
-    else p = parent_name;
+    if ((p = strrchr(parent_name, '\\')))
+        ++p;
+    else
+        p = parent_name;
     pathname = HeapAlloc(GetProcessHeap(), 0, (p - parent_name) + strlen(filename) + 1);
     if(!pathname)
         return HRESULT_FROM_WIN32(GetLastError());
 
     memcpy(pathname, parent_name, p - parent_name);
     strcpy(pathname + (p - parent_name), filename);
+    ptr = pathname + (p - parent_name);
+    while (*ptr)
+    {
+        if (*ptr == '/')
+            *ptr = '\\';
+        ++ptr;
+    }
 
     file = CreateFileA(pathname, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if(file == INVALID_HANDLE_VALUE)
