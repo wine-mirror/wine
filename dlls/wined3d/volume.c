@@ -824,7 +824,6 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
 
     volume->texture_level = level;
     volume->locations = WINED3D_LOCATION_DISCARDED;
-    volume->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
     if (desc->pool == WINED3D_POOL_DEFAULT && desc->usage & WINED3DUSAGE_DYNAMIC
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]

@@ -6006,7 +6006,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     if (lockable || desc->format == WINED3DFMT_D16_LOCKABLE)
         surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
-    surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
     surface->texture_target = target;
     surface->texture_level = level;
     surface->texture_layer = layer;

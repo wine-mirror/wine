@@ -110,6 +110,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent = parent;
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
+    resource->map_binding = WINED3D_LOCATION_SYSMEM;
 
     if (size)
     {
