@@ -97,6 +97,7 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
     if (FAILED(hr))
     {
         skip("A32B32G32R32F format not available on this device\n");
+        IDirect3D9_Release(d3d9_ptr);
         return NULL;
     }
 
@@ -107,6 +108,7 @@ static IDirect3DDevice9 *init_d3d9(IDirect3DVertexDeclaration9 **vdeclaration,
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL,
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+    IDirect3D9_Release(d3d9_ptr);
     if (FAILED(hr))
     {
         skip("could not create Direct3D9 device\n");
