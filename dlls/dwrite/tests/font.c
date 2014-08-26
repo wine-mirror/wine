@@ -989,6 +989,51 @@ static void test_FontLoader(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
+static void test_CreateFontFileReference(void)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+    HRESULT hr;
+    WCHAR font_name[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
+    IDWriteFontFile *ffile = NULL;
+    BOOL support = 1;
+    DWRITE_FONT_FILE_TYPE type = 1;
+    DWRITE_FONT_FACE_TYPE face = 1;
+    UINT32 count = 1;
+    IDWriteFontFace *fface = NULL;
+
+    file = CreateFileW(font_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
+    if (file == INVALID_HANDLE_VALUE) return;
+
+    res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, font_name, NULL, &ffile);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(support == TRUE, "got %i\n", support);
+    ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
+    ok(face == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face);
+    ok(count == 1, "got %i\n", count);
+
+    hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, 0, &fface);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    IDWriteFontFace_Release(fface);
+    IDWriteFontFile_Release(ffile);
+
+    DeleteFileW(font_name);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1011,6 +1056,7 @@ START_TEST(font)
     test_ConvertFontFaceToLOGFONT();
     test_CustomFontCollection();
     test_FontLoader();
+    test_CreateFontFileReference();
 
     IDWriteFactory_Release(factory);
 }

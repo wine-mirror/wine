@@ -1296,3 +1296,248 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
 
     return S_OK;
 }
+
+/* IDWriteLocalFontFileLoader and its required IDWriteFontFileStream */
+
+struct dwrite_localfontfilestream
+{
+    IDWriteFontFileStream IDWriteFontFileStream_iface;
+    LONG ref;
+
+    HANDLE handle;
+};
+
+struct dwrite_localfontfileloader {
+    IDWriteLocalFontFileLoader IDWriteLocalFontFileLoader_iface;
+    LONG ref;
+};
+
+static inline struct dwrite_localfontfileloader *impl_from_IDWriteLocalFontFileLoader(IDWriteLocalFontFileLoader *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_localfontfileloader, IDWriteLocalFontFileLoader_iface);
+}
+
+static inline struct dwrite_localfontfilestream *impl_from_IDWriteFontFileStream(IDWriteFontFileStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_localfontfilestream, IDWriteFontFileStream_iface);
+}
+
+static HRESULT WINAPI localfontfilestream_QueryInterface(IDWriteFontFileStream *iface, REFIID riid, void **obj)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileStream))
+    {
+        *obj = iface;
+        IDWriteFontFileStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI localfontfilestream_AddRef(IDWriteFontFileStream *iface)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+        if (This->handle != INVALID_HANDLE_VALUE)
+            CloseHandle(This->handle);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream *iface, void const **fragment_start, UINT64 offset, UINT64 fragment_size, void **fragment_context)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    LARGE_INTEGER distance;
+    DWORD bytes = fragment_size;
+    DWORD read;
+
+    TRACE("(%p)->(%p, %s, %s, %p)\n",This, fragment_start,
+          wine_dbgstr_longlong(offset), wine_dbgstr_longlong(fragment_size), fragment_context);
+
+    *fragment_context = NULL;
+    distance.QuadPart = offset;
+    if (!SetFilePointerEx(This->handle, distance, NULL, FILE_BEGIN))
+        return E_FAIL;
+    *fragment_start = *fragment_context = heap_alloc(bytes);
+    if (!*fragment_context)
+        return E_FAIL;
+    if (!ReadFile(This->handle, *fragment_context, bytes, &read, NULL))
+    {
+        heap_free(*fragment_context);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static void WINAPI localfontfilestream_ReleaseFileFragment(IDWriteFontFileStream *iface, void *fragment_context)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    TRACE("(%p)->(%p)\n", This, fragment_context);
+    heap_free(fragment_context);
+}
+
+static HRESULT WINAPI localfontfilestream_GetFileSize(IDWriteFontFileStream *iface, UINT64 *size)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    LARGE_INTEGER li;
+    TRACE("(%p)->(%p)\n",This, size);
+    GetFileSizeEx(This->handle, &li);
+    *size = li.QuadPart;
+    return S_OK;
+}
+
+static HRESULT WINAPI localfontfilestream_GetLastWriteTime(IDWriteFontFileStream *iface, UINT64 *last_writetime)
+{
+    struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
+    FIXME("(%p)->(%p): stub\n",This, last_writetime);
+    *last_writetime = 0;
+    return E_NOTIMPL;
+}
+
+static const IDWriteFontFileStreamVtbl localfontfilestreamvtbl =
+{
+    localfontfilestream_QueryInterface,
+    localfontfilestream_AddRef,
+    localfontfilestream_Release,
+    localfontfilestream_ReadFileFragment,
+    localfontfilestream_ReleaseFileFragment,
+    localfontfilestream_GetFileSize,
+    localfontfilestream_GetLastWriteTime
+};
+
+static HRESULT create_localfontfilestream(HANDLE handle, IDWriteFontFileStream** iface)
+{
+    struct dwrite_localfontfilestream *This = heap_alloc(sizeof(struct dwrite_localfontfilestream));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->ref = 1;
+    This->handle = handle;
+    This->IDWriteFontFileStream_iface.lpVtbl = &localfontfilestreamvtbl;
+
+    *iface = &This->IDWriteFontFileStream_iface;
+    return S_OK;
+}
+
+static HRESULT WINAPI localfontfileloader_QueryInterface(IDWriteLocalFontFileLoader *iface, REFIID riid, void **obj)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileLoader) || IsEqualIID(riid, &IID_IDWriteLocalFontFileLoader))
+    {
+        *obj = iface;
+        IDWriteLocalFontFileLoader_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI localfontfileloader_AddRef(IDWriteLocalFontFileLoader *iface)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI localfontfileloader_Release(IDWriteLocalFontFileLoader *iface)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+{
+    HANDLE handle;
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    const WCHAR *name = (const WCHAR*)fontFileReferenceKey;
+
+    TRACE("(%p)->(%p, %i, %p)\n",This, fontFileReferenceKey, fontFileReferenceKeySize, fontFileStream);
+
+    TRACE("name: %s\n",debugstr_w(name));
+    handle = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (handle == INVALID_HANDLE_VALUE)
+        return E_FAIL;
+
+    return create_localfontfilestream(handle, fontFileStream);
+}
+
+static HRESULT WINAPI localfontfileloader_GetFilePathLengthFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, UINT32 *length)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    TRACE("(%p)->(%p, %i, %p)\n",This, key, key_size, length);
+    *length = key_size;
+    return S_OK;
+}
+
+static HRESULT WINAPI localfontfileloader_GetFilePathFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, WCHAR *path, UINT32 length)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    TRACE("(%p)->(%p, %i, %p, %i)\n",This, key, key_size, path, length);
+    if (length < key_size)
+        return E_INVALIDARG;
+    lstrcpynW((WCHAR*)key, path, key_size);
+    return S_OK;
+}
+
+static HRESULT WINAPI localfontfileloader_GetLastWriteTimeFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, FILETIME *writetime)
+{
+    struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
+    FIXME("(%p)->(%p, %i, %p):stub \n",This, key, key_size, writetime);
+    return E_NOTIMPL;
+}
+
+static const struct IDWriteLocalFontFileLoaderVtbl localfontfileloadervtbl = {
+    localfontfileloader_QueryInterface,
+    localfontfileloader_AddRef,
+    localfontfileloader_Release,
+    localfontfileloader_CreateStreamFromKey,
+    localfontfileloader_GetFilePathLengthFromKey,
+    localfontfileloader_GetFilePathFromKey,
+    localfontfileloader_GetLastWriteTimeFromKey
+};
+
+HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface)
+{
+    struct dwrite_localfontfileloader *This = heap_alloc(sizeof(struct dwrite_localfontfileloader));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->ref = 1;
+    This->IDWriteLocalFontFileLoader_iface.lpVtbl = &localfontfileloadervtbl;
+
+    *iface = &This->IDWriteLocalFontFileLoader_iface;
+    return S_OK;
+}

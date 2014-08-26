@@ -363,6 +363,8 @@ struct dwritefactory{
     IDWriteFactory IDWriteFactory_iface;
     LONG ref;
 
+    IDWriteLocalFontFileLoader* localfontfileloader;
+
     IDWriteFontCollectionLoader **loaders;
     LONG loader_count;
     IDWriteFontFileLoader **file_loaders;
@@ -410,6 +412,8 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory *iface)
 
     if (!ref) {
         int i;
+        if (This->localfontfileloader)
+            IDWriteLocalFontFileLoader_Release(This->localfontfileloader);
         for (i = 0; i < This->loader_count; i++)
             if (This->loaders[i])
                 IDWriteFontCollectionLoader_Release(This->loaders[i]);
@@ -501,9 +505,17 @@ static HRESULT WINAPI dwritefactory_UnregisterFontCollectionLoader(IDWriteFactor
 static HRESULT WINAPI dwritefactory_CreateFontFileReference(IDWriteFactory *iface,
     WCHAR const *path, FILETIME const *writetime, IDWriteFontFile **font_file)
 {
+    HRESULT hr;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_w(path), writetime, font_file);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(path), writetime, font_file);
+
+    if (!This->localfontfileloader)
+    {
+        hr = create_localfontfileloader(&This->localfontfileloader);
+        if (FAILED(hr))
+            return hr;
+    }
+    return create_font_file((IDWriteFontFileLoader*)This->localfontfileloader, path, sizeof(WCHAR) * (strlenW(path)+1), font_file);
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory *iface,
@@ -742,6 +754,7 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
 
     This->IDWriteFactory_iface.lpVtbl = &dwritefactoryvtbl;
     This->ref = 1;
+    This->localfontfileloader = NULL;
     This->loader_count = 2;
     This->loaders = heap_alloc_zero(sizeof(*This->loaders) * 2);
     This->file_loader_count = 2;
