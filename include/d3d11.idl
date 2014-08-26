@@ -176,6 +176,28 @@ const UINT D3D11_SO_NO_RASTERIZED_STREAM               = 0xffffffff;
 const UINT D3D11_SO_OUTPUT_COMPONENT_COUNT             = 128;
 const UINT D3D11_SO_STREAM_COUNT                       = 4;
 
+const UINT D3D11_SPEC_DATE_DAY   = 16;
+const UINT D3D11_SPEC_DATE_MONTH = 05;
+const UINT D3D11_SPEC_DATE_YEAR  = 2011;
+
+cpp_quote("#define D3D11_SPEC_VERSION                   (1.07)")
+cpp_quote("#define D3D11_SRGB_GAMMA                     (2.2f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_DENOMINATOR_1    (12.92f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_DENOMINATOR_2    (1.055f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_EXPONENT         (2.4f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_OFFSET           (0.055f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_THRESHOLD        (0.04045f)")
+cpp_quote("#define D3D11_SRGB_TO_FLOAT_TOLERANCE_IN_ULP (0.5f)")
+
+const UINT D3D11_STANDARD_COMPONENT_BIT_COUNT                     = 32;
+const UINT D3D11_STANDARD_COMPONENT_BIT_COUNT_DOUBLED             = 64;
+const UINT D3D11_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE = 4;
+const UINT D3D11_STANDARD_PIXEL_COMPONENT_COUNT                   = 128;
+const UINT D3D11_STANDARD_PIXEL_ELEMENT_COUNT                     = 32;
+const UINT D3D11_STANDARD_VECTOR_SIZE                             = 4;
+const UINT D3D11_STANDARD_VERTEX_ELEMENT_COUNT                    = 32;
+const UINT D3D11_STANDARD_VERTEX_TOTAL_COMPONENT_COUNT            = 64;
+
 cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
 cpp_quote("struct CD3D11_DEFAULT {};")
 cpp_quote("extern const DECLSPEC_SELECTANY CD3D11_DEFAULT D3D11_DEFAULT;")
