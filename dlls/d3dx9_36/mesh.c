@@ -3294,9 +3294,6 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
             hr = parse_vertex_colors(child, mesh_data);
         } else if (IsEqualGUID(&type, &TID_D3DRMMeshTextureCoords)) {
             hr = parse_texture_coords(child, mesh_data);
-        hr = filedata->lpVtbl->GetChild(filedata, i, &child);
-        if (FAILED(hr))
-            goto end;
         } else if (IsEqualGUID(&type, &TID_D3DRMMeshMaterialList) &&
                    (provide_flags & PROVIDE_MATERIALS))
         {
