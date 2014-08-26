@@ -27,6 +27,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
+#define WINED3D_VFLAG_ALLOCATED         0x00000001
+#define WINED3D_VFLAG_SRGB_ALLOCATED    0x00000002
+#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000004
+
 static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 {
     if (volume->resource.heap_memory)
