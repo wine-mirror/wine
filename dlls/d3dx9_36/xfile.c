@@ -19,6 +19,7 @@
 
 #include "wine/debug.h"
 
+#define COBJMACROS
 #include "d3dx9.h"
 #include "d3dx9xof.h"
 #undef MAKE_DDHRESULT
@@ -319,6 +320,7 @@ static HRESULT d3dx9_file_data_create(IDirectXFileObject *dxfile_object, ID3DXFi
         if (SUCCEEDED(ret))
         {
             ret = IDirectXFileDataReference_Resolve(reference, &object->dxfile_data);
+            IUnknown_Release(reference);
             if (FAILED(ret))
             {
                 HeapFree(GetProcessHeap(), 0, object);
@@ -345,7 +347,9 @@ static HRESULT d3dx9_file_data_create(IDirectXFileObject *dxfile_object, ID3DXFi
             ret = E_OUTOFMEMORY;
             break;
         }
-        if (FAILED(ret = d3dx9_file_data_create(data_object, &object->children[object->nb_children])))
+        ret = d3dx9_file_data_create(data_object, &object->children[object->nb_children]);
+        IUnknown_Release(data_object);
+        if (FAILED(ret))
             break;
         object->nb_children++;
     }
@@ -599,8 +603,10 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
             ret = E_OUTOFMEMORY;
             break;
         }
-        if (FAILED(ret = d3dx9_file_data_create((IDirectXFileObject*)data_object,
-                &object->children[object->nb_children])))
+        ret = d3dx9_file_data_create((IDirectXFileObject*)data_object,
+                &object->children[object->nb_children]);
+        IUnknown_Release(data_object);
+        if (FAILED(ret))
             break;
         object->nb_children++;
     }

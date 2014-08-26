@@ -2751,16 +2751,20 @@ static HRESULT parse_material(ID3DXFileData *filedata, D3DXMATERIAL *material)
             return hr;
         hr = child->lpVtbl->GetType(child, &type);
         if (FAILED(hr))
-            return hr;
+            goto err;
 
         if (IsEqualGUID(&type, &TID_D3DRMTextureFilename)) {
             hr = parse_texture_filename(child, &material->pTextureFilename);
             if (FAILED(hr))
-                return hr;
+                goto err;
         }
+        IUnknown_Release(child);
     }
-
     return D3D_OK;
+
+err:
+    IUnknown_Release(child);
+    return hr;
 }
 
 static void destroy_materials(struct mesh_data *mesh)
@@ -2781,7 +2785,7 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
     SIZE_T data_size;
     const DWORD *data, *in_ptr;
     GUID type;
-    ID3DXFileData *child;
+    ID3DXFileData *child = NULL;
     DWORD num_materials;
     DWORD i;
     SIZE_T nb_children;
@@ -2864,6 +2868,9 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
             if (FAILED(hr))
                 goto end;
         }
+
+        IUnknown_Release(child);
+        child = NULL;
     }
     if (num_materials != mesh->num_materials) {
         WARN("only %u of %u materials defined\n", num_materials, mesh->num_materials);
@@ -2871,6 +2878,8 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
     }
 
 end:
+    if (child)
+        IUnknown_Release(child);
     filedata->lpVtbl->Unlock(filedata);
     return hr;
 }
@@ -3168,7 +3177,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
     const BYTE *data, *in_ptr;
     DWORD *index_out_ptr;
     GUID type;
-    ID3DXFileData *child;
+    ID3DXFileData *child = NULL;
     DWORD i;
     SIZE_T nb_children;
     DWORD nb_skin_weigths_info = 0;
@@ -3316,6 +3325,9 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         }
         if (FAILED(hr))
             goto end;
+
+        IUnknown_Release(child);
+        child = NULL;
     }
 
     if (mesh_data->skin_info && (nb_skin_weigths_info != mesh_data->nb_bones)) {
@@ -3328,6 +3340,8 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
     hr = D3D_OK;
 
 end:
+    if (child)
+        IUnknown_Release(child);
     filedata->lpVtbl->Unlock(filedata);
     return hr;
 }
@@ -3856,7 +3870,7 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
             return hr;
         hr = child->lpVtbl->GetType(child, &type);
         if (FAILED(hr))
-            return hr;
+            goto err;
 
         if (IsEqualGUID(&type, &TID_D3DRMMesh)) {
             hr = load_mesh_container(child, options, device, alloc_hier, next_container);
@@ -3870,10 +3884,15 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
                 next_child = &(*next_child)->pFrameSibling;
         }
         if (FAILED(hr))
-            return hr;
-    }
+            goto err;
 
+        IUnknown_Release(child);
+    }
     return D3D_OK;
+
+err:
+    IUnknown_Release(child);
+    return hr;
 }
 
 HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memory_size, DWORD options,
@@ -4139,12 +4158,15 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
             return hr;
         hr = child->lpVtbl->GetType(child, &type);
         if (FAILED(hr))
-            return hr;
+            goto err;
 
         if (IsEqualGUID(&type, &TID_D3DRMMesh)) {
             struct mesh_container *container = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*container));
             if (!container)
-                return E_OUTOFMEMORY;
+            {
+                hr = E_OUTOFMEMORY;
+                goto err;
+            }
             list_add_tail(container_list, &container->entry);
             container->transform = transform;
 
@@ -4160,10 +4182,15 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
             hr = parse_frame(child, options, device, &transform, container_list, provide_flags);
         }
         if (FAILED(hr))
-            return hr;
-    }
+            goto err;
 
+        IUnknown_Release(child);
+    }
     return D3D_OK;
+
+err:
+    IUnknown_Release(child);
+    return hr;
 }
 
 HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, DWORD options,
