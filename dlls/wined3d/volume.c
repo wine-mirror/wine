@@ -364,7 +364,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             break;
 
         case WINED3D_LOCATION_BUFFER:
-            if (!volume->pbo || !(volume->flags & WINED3D_VFLAG_PBO))
+            if (!volume->pbo)
                 ERR("Trying to load WINED3D_LOCATION_BUFFER without setting it up first.\n");
 
             if (volume->locations & WINED3D_LOCATION_DISCARDED)
@@ -627,7 +627,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
 
     flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
 
-    if (volume->flags & WINED3D_VFLAG_PBO)
+    if (volume->resource.map_binding == WINED3D_LOCATION_BUFFER)
     {
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
@@ -723,11 +723,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
     {
         wined3d_texture_set_dirty(volume->container);
-
-        if (volume->flags & WINED3D_VFLAG_PBO)
-            wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_BUFFER);
-        else
-            wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
+        wined3d_volume_invalidate_location(volume, ~volume->resource.map_binding);
     }
 
     volume->resource.map_count++;
@@ -753,7 +749,7 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (volume->flags & WINED3D_VFLAG_PBO)
+    if (volume->resource.map_binding == WINED3D_LOCATION_BUFFER)
     {
         struct wined3d_device *device = volume->resource.device;
         struct wined3d_context *context = context_acquire(device, NULL);
@@ -824,13 +820,14 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
 
     volume->texture_level = level;
     volume->locations = WINED3D_LOCATION_DISCARDED;
+    volume->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
     if (desc->pool == WINED3D_POOL_DEFAULT && desc->usage & WINED3DUSAGE_DYNAMIC
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
             && !format->convert)
     {
         wined3d_resource_free_sysmem(&volume->resource);
-        volume->flags |= WINED3D_VFLAG_PBO;
+        volume->resource.map_binding = WINED3D_LOCATION_BUFFER;
     }
 
     volume->container = container;
