@@ -546,8 +546,6 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     IDirect3DTexture9 **texptr;
     IDirect3DTexture9 *buftex;
     IDirect3DSurface9 *surface;
-    BOOL file_width = FALSE, file_height = FALSE;
-    BOOL file_format = FALSE, file_miplevels = FALSE;
     BOOL dynamic_texture;
     D3DXIMAGE_INFO imginfo;
     UINT loaded_miplevels, skip_levels;
@@ -590,25 +588,21 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     if (width == D3DX_FROM_FILE)
     {
-        file_width = TRUE;
         width = imginfo.Width;
     }
 
     if (height == D3DX_FROM_FILE)
     {
-        file_height = TRUE;
         height = imginfo.Height;
     }
 
     if (format == D3DFMT_FROM_FILE)
     {
-        file_format = TRUE;
         format = imginfo.Format;
     }
 
     if (miplevels == D3DX_FROM_FILE)
     {
-        file_miplevels = TRUE;
         miplevels = imginfo.MipLevels;
     }
 
@@ -646,14 +640,6 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     {
         FIXME("Generation of mipmaps for compressed pixel formats is not implemented yet.\n");
         miplevels = 1;
-    }
-
-    if (((file_width) && (width != imginfo.Width))    ||
-        ((file_height) && (height != imginfo.Height)) ||
-        ((file_format) && (format != imginfo.Format)) ||
-        ((file_miplevels) && (miplevels != imginfo.MipLevels)))
-    {
-        return D3DERR_NOTAVAILABLE;
     }
 
     if (FAILED(IDirect3DDevice9_GetDeviceCaps(device, &caps)))
