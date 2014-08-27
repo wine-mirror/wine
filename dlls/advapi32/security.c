@@ -494,12 +494,12 @@ BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
     if (!ServerName || !ServerName[0])
         return TRUE;
 
-    buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
+    buf = heap_alloc(dwSize * sizeof(WCHAR));
     Result = GetComputerNameW(buf,  &dwSize);
     if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
         ServerName += 2;
     Result = Result && !lstrcmpW(ServerName, buf);
-    HeapFree(GetProcessHeap(), 0, buf);
+    heap_free(buf);
 
     return Result;
 }
@@ -686,7 +686,7 @@ CheckTokenMembership( HANDLE token, PSID sid_to_check,
     if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         goto exit;
 
-    token_groups = HeapAlloc(GetProcessHeap(), 0, size);
+    token_groups = heap_alloc(size);
     if (!token_groups)
     {
         ret = FALSE;
@@ -712,7 +712,7 @@ CheckTokenMembership( HANDLE token, PSID sid_to_check,
     }
 
 exit:
-    HeapFree(GetProcessHeap(), 0, token_groups);
+    heap_free(token_groups);
     if (thread_token != NULL) CloseHandle(thread_token);
 
     return ret;
@@ -1051,7 +1051,7 @@ IsTokenRestricted( HANDLE TokenHandle )
     if (status != STATUS_BUFFER_TOO_SMALL)
         return FALSE;
  
-    groups = HeapAlloc(GetProcessHeap(), 0, size);
+    groups = heap_alloc(size);
     if (!groups)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1061,16 +1061,12 @@ IsTokenRestricted( HANDLE TokenHandle )
     status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, groups, size, &size);
     if (status != STATUS_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, groups);
+        heap_free(groups);
         return set_ntstatus(status);
     }
  
-    if (groups->GroupCount)
-        restricted = TRUE;
-    else
-        restricted = FALSE;
-     
-    HeapFree(GetProcessHeap(), 0, groups);
+    restricted = groups->GroupCount > 0;
+    heap_free(groups);
  
     return restricted;
 }
@@ -1893,7 +1889,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
     ret = LookupPrivilegeNameW(lpSystemNameW.Buffer, lpLuid, NULL, &wLen);
     if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
-        LPWSTR lpNameW = HeapAlloc(GetProcessHeap(), 0, wLen * sizeof(WCHAR));
+        LPWSTR lpNameW = heap_alloc(wLen * sizeof(WCHAR));
 
         ret = LookupPrivilegeNameW(lpSystemNameW.Buffer, lpLuid, lpNameW,
          &wLen);
@@ -1922,7 +1918,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
                 *cchName = len - 1;
             }
         }
-        HeapFree(GetProcessHeap(), 0, lpNameW);
+        heap_free(lpNameW);
     }
     RtlFreeUnicodeString(&lpSystemNameW);
     return ret;
@@ -2020,7 +2016,7 @@ GetFileSecurityA( LPCSTR lpFileName,
     name = SERV_dup(lpFileName);
     r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
                           nLength, lpnLengthNeeded );
-    HeapFree( GetProcessHeap(), 0, name );
+    heap_free( name );
 
     return r;
 }
@@ -2085,9 +2081,9 @@ LookupAccountSidA(
 
     systemW = SERV_dup(system);
     if (account)
-        accountW = HeapAlloc( GetProcessHeap(), 0, accountSizeW * sizeof(WCHAR) );
+        accountW = heap_alloc( accountSizeW * sizeof(WCHAR) );
     if (domain)
-        domainW = HeapAlloc( GetProcessHeap(), 0, domainSizeW * sizeof(WCHAR) );
+        domainW = heap_alloc( domainSizeW * sizeof(WCHAR) );
 
     r = LookupAccountSidW( systemW, sid, accountW, &accountSizeW, domainW, &domainSizeW, name_use );
 
@@ -2112,9 +2108,9 @@ LookupAccountSidA(
         *domainSize = domainSizeW + 1;
     }
 
-    HeapFree( GetProcessHeap(), 0, systemW );
-    HeapFree( GetProcessHeap(), 0, accountW );
-    HeapFree( GetProcessHeap(), 0, domainW );
+    heap_free( systemW );
+    heap_free( accountW );
+    heap_free( domainW );
 
     return r;
 }
@@ -2183,7 +2179,7 @@ LookupAccountSidW(
             DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
             BOOL result;
 
-            computer_name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            computer_name = heap_alloc(size * sizeof(WCHAR));
             result = GetComputerNameW(computer_name,  &size);
 
             if (result) {
@@ -2236,8 +2232,7 @@ LookupAccountSidW(
                             break;
                         case 1000:	/* first user account */
                             size = UNLEN + 1;
-                            account_name = HeapAlloc(
-                                GetProcessHeap(), 0, size * sizeof(WCHAR));
+                            account_name = heap_alloc(size * sizeof(WCHAR));
                             if (GetUserNameW(account_name, &size))
                                 ac = account_name;
                             else
@@ -2284,14 +2279,14 @@ LookupAccountSidW(
         else
             *accountSize = ac_len + 1;
 
-        HeapFree(GetProcessHeap(), 0, account_name);
-        HeapFree(GetProcessHeap(), 0, computer_name);
+        heap_free(account_name);
+        heap_free(computer_name);
         if (status) *name_use = use;
         return status;
     }
 
-    HeapFree(GetProcessHeap(), 0, account_name);
-    HeapFree(GetProcessHeap(), 0, computer_name);
+    heap_free(account_name);
+    heap_free(computer_name);
     SetLastError(ERROR_NONE_MAPPED);
     return FALSE;
 }
@@ -2310,7 +2305,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 
     name = SERV_dup(lpFileName);
     r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
-    HeapFree( GetProcessHeap(), 0, name );
+    heap_free( name );
 
     return r;
 }
@@ -2630,7 +2625,7 @@ LookupAccountNameA(
     RtlCreateUnicodeStringFromAsciiz(&lpAccountW, account);
 
     if (ReferencedDomainName)
-        lpReferencedDomainNameW = HeapAlloc(GetProcessHeap(), 0, *cbReferencedDomainName * sizeof(WCHAR));
+        lpReferencedDomainNameW = heap_alloc(*cbReferencedDomainName * sizeof(WCHAR));
 
     ret = LookupAccountNameW(lpSystemW.Buffer, lpAccountW.Buffer, sid, cbSid, lpReferencedDomainNameW,
         cbReferencedDomainName, name_use);
@@ -2643,7 +2638,7 @@ LookupAccountNameA(
 
     RtlFreeUnicodeString(&lpSystemW);
     RtlFreeUnicodeString(&lpAccountW);
-    HeapFree(GetProcessHeap(), 0, lpReferencedDomainNameW);
+    heap_free(lpReferencedDomainNameW);
 
     return ret;
 }
@@ -2830,7 +2825,7 @@ BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
         {
             DWORD len, sidLen = SECURITY_MAX_SID_SIZE;
 
-            if (!(pSid = HeapAlloc( GetProcessHeap(), 0, sidLen ))) return FALSE;
+            if (!(pSid = heap_alloc( sidLen ))) return FALSE;
 
             if ((ret = CreateWellKnownSid( ACCOUNT_SIDS[i].type, NULL, pSid, &sidLen )))
             {
@@ -2862,7 +2857,7 @@ BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
             if (ret)
                 *peUse = ACCOUNT_SIDS[i].name_use;
 
-            HeapFree(GetProcessHeap(), 0, pSid);
+            heap_free(pSid);
             *handled = TRUE;
             return ret;
         }
@@ -2887,7 +2882,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
     /* Let the current Unix user id masquerade as first Windows user account */
 
     nameLen = UNLEN + 1;
-    if (!(userName = HeapAlloc( GetProcessHeap(), 0, nameLen * sizeof(WCHAR) ))) return FALSE;
+    if (!(userName = heap_alloc( nameLen * sizeof(WCHAR) ))) return FALSE;
 
     if (domain.Buffer)
     {
@@ -2918,7 +2913,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, userName);
+    heap_free(userName);
     return ret;
 }
 
@@ -3588,7 +3583,7 @@ static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR *
 
         if (objA)
         {
-            if (!(objW = HeapAlloc( GetProcessHeap(), 0, sizeof(OBJECTS_AND_NAME_W) )))
+            if (!(objW = heap_alloc( sizeof(OBJECTS_AND_NAME_W) )))
                 return ERROR_NOT_ENOUGH_MEMORY;
 
             objW->ObjectsPresent = objA->ObjectsPresent;
@@ -3616,7 +3611,7 @@ static void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
     switch (form)
     {
     case TRUSTEE_IS_NAME:
-        HeapFree( GetProcessHeap(), 0, trustee_nameW );
+        heap_free( trustee_nameW );
         break;
     case TRUSTEE_IS_OBJECTS_AND_NAME:
     {
@@ -3624,10 +3619,10 @@ static void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
 
         if (objW)
         {
-            HeapFree( GetProcessHeap(), 0, objW->ptstrName );
-            HeapFree( GetProcessHeap(), 0, objW->InheritedObjectTypeName );
-            HeapFree( GetProcessHeap(), 0, objW->ObjectTypeName );
-            HeapFree( GetProcessHeap(), 0, objW );
+            heap_free( objW->ptstrName );
+            heap_free( objW->InheritedObjectTypeName );
+            heap_free( objW->ObjectTypeName );
+            heap_free( objW );
         }
 
         break;
@@ -3656,7 +3651,7 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
     if (!count && !OldAcl)
         return ERROR_SUCCESS;
 
-    pEntriesW = HeapAlloc( GetProcessHeap(), 0, count * sizeof(EXPLICIT_ACCESSW) );
+    pEntriesW = heap_alloc( count * sizeof(EXPLICIT_ACCESSW) );
     if (!pEntriesW)
         return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -3692,7 +3687,7 @@ cleanup:
     for (free_index = 0; free_index < alloc_index; ++free_index)
         free_trustee_name( pEntriesW[free_index].Trustee.TrusteeForm, pEntriesW[free_index].Trustee.ptstrName );
 
-    HeapFree( GetProcessHeap(), 0, pEntriesW );
+    heap_free( pEntriesW );
     return err;
 }
 
@@ -3717,7 +3712,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
         return ERROR_SUCCESS;
 
     /* allocate array of maximum sized sids allowed */
-    ppsid = HeapAlloc(GetProcessHeap(), 0, count * (sizeof(SID *) + FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES])));
+    ppsid = heap_alloc(count * (sizeof(SID *) + FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES])));
     if (!ppsid)
         return ERROR_OUTOFMEMORY;
 
@@ -3955,7 +3950,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
     }
 
 exit:
-    HeapFree(GetProcessHeap(), 0, ppsid);
+    heap_free(ppsid);
     return ret;
 }
 
@@ -3976,7 +3971,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
                            psidGroup, pDacl, pSacl );
 
-    HeapFree( GetProcessHeap(), 0, wstr );
+    heap_free( wstr );
 
     return r;
 }
@@ -4599,7 +4594,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
     ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
                                                                StringSDRevision, SecurityDescriptor,
                                                                SecurityDescriptorSize);
-    HeapFree(GetProcessHeap(), 0, StringSecurityDescriptorW);
+    heap_free(StringSecurityDescriptorW);
 
     return ret;
 }
@@ -5049,7 +5044,7 @@ BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorA(PSECURITY_DESCR
         int lenA;
 
         lenA = WideCharToMultiByte(CP_ACP, 0, wstr, len, NULL, 0, NULL, NULL);
-        *OutputString = HeapAlloc(GetProcessHeap(), 0, lenA);
+        *OutputString = heap_alloc(lenA);
         WideCharToMultiByte(CP_ACP, 0, wstr, len, *OutputString, lenA, NULL, NULL);
         LocalFree(wstr);
 
@@ -5106,7 +5101,7 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
     {
         WCHAR *wStringSid = SERV_dup(StringSid);
         bret = ConvertStringSidToSidW(wStringSid, Sid);
-        HeapFree(GetProcessHeap(), 0, wStringSid);
+        heap_free(wStringSid);
     }
     return bret;
 }
@@ -5197,11 +5192,11 @@ BOOL WINAPI CreatePrivateObjectSecurity(
     needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
     needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, needed ))) return FALSE;
+    if (!(buffer = heap_alloc( needed ))) return FALSE;
     relative = (SECURITY_DESCRIPTOR_RELATIVE *)buffer;
     if (!InitializeSecurityDescriptor( relative, SECURITY_DESCRIPTOR_REVISION ))
     {
-        HeapFree( GetProcessHeap(), 0, buffer );
+        heap_free( buffer );
         return FALSE;
     }
     relative->Control |= SE_SELF_RELATIVE;
@@ -5230,7 +5225,7 @@ BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor
 {
     FIXME("%p - stub\n", ObjectDescriptor);
 
-    HeapFree( GetProcessHeap(), 0, *ObjectDescriptor );
+    heap_free( *ObjectDescriptor );
     return TRUE;
 }
 
@@ -5279,12 +5274,12 @@ BOOL WINAPI CreateProcessAsUserA(
     ret = CreateProcessAsUserW(hToken, appW, cmdlnW, lpProcessAttributes,
             lpThreadAttributes, bInheritHandles, dwCreationFlags,
             lpEnvironment, cwdW, &sinfo, lpProcessInformation);
-    HeapFree(GetProcessHeap(), 0, appW);
-    HeapFree(GetProcessHeap(), 0, cmdlnW);
-    HeapFree(GetProcessHeap(), 0, cwdW);
-    HeapFree(GetProcessHeap(), 0, sinfo.lpReserved);
-    HeapFree(GetProcessHeap(), 0, sinfo.lpDesktop);
-    HeapFree(GetProcessHeap(), 0, sinfo.lpTitle);
+    heap_free(appW);
+    heap_free(cmdlnW);
+    heap_free(cwdW);
+    heap_free(sinfo.lpReserved);
+    heap_free(sinfo.lpDesktop);
+    heap_free(sinfo.lpTitle);
 
     return ret;
 }
@@ -5573,7 +5568,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     r = GetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, ppsidOwner,
                            ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor );
 
-    HeapFree( GetProcessHeap(), 0, wstr );
+    heap_free( wstr );
 
     return r;
 }

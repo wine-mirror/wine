@@ -78,7 +78,7 @@ static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
         ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
         if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)
         {
-            ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz + size);
+            ptr = heap_alloc_zero(sz + size);
             if (!ptr) return NULL;
             ustr = (UNICODE_STRING*)(ptr + ofs);
             ustr->MaximumLength = size;
@@ -86,7 +86,7 @@ static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
             ret = RegQueryValueExW(key, wg, NULL, NULL, (LPBYTE)ustr->Buffer, &size);
             if (ret != ERROR_SUCCESS)
             {
-                HeapFree(GetProcessHeap(), 0, ptr);
+                heap_free(ptr);
                 ptr = NULL;
             }   
             else ustr->Length = size - sizeof(WCHAR);
@@ -96,8 +96,7 @@ static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
     if (!ptr)
     {
         static const WCHAR wDomain[] = {'D','O','M','A','I','N','\0'};
-        ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        sz + sizeof(wDomain));
+        ptr = heap_alloc_zero(sz + sizeof(wDomain));
         if (!ptr) return NULL;
         ustr = (UNICODE_STRING*)(ptr + ofs);
         ustr->MaximumLength = sizeof(wDomain);
@@ -265,7 +264,7 @@ NTSTATUS WINAPI LsaFreeMemory(IN PVOID Buffer)
 {
     TRACE("(%p)\n", Buffer);
 
-    HeapFree(GetProcessHeap(), 0, Buffer);
+    heap_free(Buffer);
     return STATUS_SUCCESS;
 }
 
@@ -689,8 +688,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
     {
         case PolicyAuditEventsInformation: /* 2 */
         {
-            PPOLICY_AUDIT_EVENTS_INFO p = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                    sizeof(POLICY_AUDIT_EVENTS_INFO));
+            PPOLICY_AUDIT_EVENTS_INFO p = heap_alloc_zero(sizeof(POLICY_AUDIT_EVENTS_INFO));
             p->AuditingMode = FALSE; /* no auditing */
             *Buffer = p;
         }
@@ -720,7 +718,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
             };
 
             DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-            struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*xdi));
+            struct di * xdi = heap_alloc_zero(sizeof(*xdi));
 
             xdi->info.DomainName.MaximumLength = dwSize * sizeof(WCHAR);
             xdi->info.DomainName.Buffer = xdi->domain;
@@ -733,7 +731,7 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 
             if (!ADVAPI_GetComputerSid(&xdi->sid))
             {
-                HeapFree(GetProcessHeap(), 0, xdi);
+                heap_free(xdi);
 
                 WARN("Computer SID not found\n");
 
