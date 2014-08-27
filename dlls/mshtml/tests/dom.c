@@ -7041,8 +7041,10 @@ static void test_elems(IHTMLDocument2 *doc)
             ok(hres == S_OK, "get_type failed: %08x\n", hres);
             ok(type == NULL, "Unexpected type %s\n", wine_dbgstr_w(type));
 
-            hres = IHTMLScriptElement_put_type (script, a2bstr ("text/javascript"));
+            type = a2bstr("text/javascript");
+            hres = IHTMLScriptElement_put_type (script, type);
             ok(hres == S_OK, "put_type failed: %08x\n", hres);
+            SysFreeString(type);
             hres = IHTMLScriptElement_get_type(script, &type);
             ok(hres == S_OK, "get_type failed: %08x\n", hres);
             ok(!strcmp_wa(type, "text/javascript"), "Unexpected type %s\n", wine_dbgstr_w(type));
