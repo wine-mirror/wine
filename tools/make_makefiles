@@ -444,13 +444,14 @@ sub assign_sources_to_makefiles(@)
     # preserve shared source files from the parent makefile
     foreach my $file (@makefiles)
     {
-        my %make = %{$makefiles{$file}};
+        my $make = $makefiles{$file};
         my $parent = get_parent_makefile( $file );
         next unless $parent;
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "C_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "IDL_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "LEX_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "BISON_SRCS" );
+        ${${$make}{"=flags"}}{"clean"} = 1 if defined ${$make}{"=IDL_SRCS"} && @{${$make}{"=IDL_SRCS"}};
     }
 }
 
