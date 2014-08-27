@@ -515,6 +515,8 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numInd
             IWICBitmapSource_Release(sourceBitmap);
         if (dstFrame)
             IWICBitmapFrameEncode_Release(dstFrame);
+        if (options)
+            IPropertyBag2_Release(options);
     }
 
     hr = IWICBitmapEncoder_Commit(encoder);
