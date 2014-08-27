@@ -41,7 +41,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
@@ -114,6 +113,7 @@ struct glsl_vs_program
     GLenum vertex_color_clamp;
     GLint *uniform_f_locations;
     GLint uniform_i_locations[MAX_CONST_I];
+    GLint uniform_b_locations[MAX_CONST_B];
     GLint pos_fixup_location;
 };
 
@@ -129,6 +129,7 @@ struct glsl_ps_program
     GLhandleARB id;
     GLint *uniform_f_locations;
     GLint uniform_i_locations[MAX_CONST_I];
+    GLint uniform_b_locations[MAX_CONST_B];
     GLint bumpenv_mat_location[MAX_TEXTURES];
     GLint bumpenv_lum_scale_location[MAX_TEXTURES];
     GLint bumpenv_lum_offset_location[MAX_TEXTURES];
@@ -648,12 +649,8 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
     {
         if (!(constants_set & 1)) continue;
 
-        TRACE_(d3d_constants)("Loading constants %u: %i, %i, %i, %i\n",
-                i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
-
         /* We found this uniform name in the program - go ahead and send the data */
         GL_EXTCALL(glUniform4ivARB(locations[i], 1, &constants[i*4]));
-        checkGLcall("glUniform4ivARB");
     }
 
     /* Load immediate constants */
@@ -664,41 +661,25 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
         unsigned int idx = lconst->idx;
         const GLint *values = (const GLint *)lconst->value;
 
-        TRACE_(d3d_constants)("Loading local constants %i: %i, %i, %i, %i\n", idx,
-            values[0], values[1], values[2], values[3]);
-
         /* We found this uniform name in the program - go ahead and send the data */
         GL_EXTCALL(glUniform4ivARB(locations[idx], 1, values));
-        checkGLcall("glUniform4ivARB");
         ptr = list_next(&shader->constantsI, ptr);
     }
+    checkGLcall("glUniform4ivARB()");
 }
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        GLhandleARB programId, const BOOL *constants, WORD constants_set)
+        const GLint locations[MAX_CONST_B], const BOOL *constants, WORD constants_set)
 {
-    GLint tmp_loc;
     unsigned int i;
-    char tmp_name[10];
-    const char *prefix;
     struct list* ptr;
 
-    prefix = shader_glsl_get_prefix(shader->reg_maps.shader_version.type);
-
-    /* TODO: Benchmark and see if it would be beneficial to store the
-     * locations of the constants to avoid looking up each time */
     for (i = 0; constants_set; constants_set >>= 1, ++i)
     {
         if (!(constants_set & 1)) continue;
 
-        TRACE_(d3d_constants)("Loading constants %i: %i;\n", i, constants[i]);
-
-        /* TODO: Benchmark and see if it would be beneficial to store the
-         * locations of the constants to avoid looking up each time */
-        snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, i);
-        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-        GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, &constants[i]));
+        GL_EXTCALL(glUniform1ivARB(locations[i], 1, &constants[i]));
     }
 
     /* Load immediate constants */
@@ -709,15 +690,10 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
         unsigned int idx = lconst->idx;
         const GLint *values = (const GLint *)lconst->value;
 
-        TRACE_(d3d_constants)("Loading local constants %i: %i\n", idx, values[0]);
-
-        snprintf(tmp_name, sizeof(tmp_name), "%s_b[%i]", prefix, idx);
-        tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));
-        GL_EXTCALL(glUniform1ivARB(tmp_loc, 1, values));
+        GL_EXTCALL(glUniform1ivARB(locations[idx], 1, values));
         ptr = list_next(&shader->constantsB, ptr);
     }
-
-    checkGLcall("shader_glsl_load_constantsB()");
+    checkGLcall("glUniform1ivARB()");
 }
 
 static void reset_program_constant_version(struct wine_rb_entry *entry, void *context)
@@ -772,7 +748,6 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     float position_fixup[4];
     DWORD update_mask = 0;
 
-    GLhandleARB programId;
     struct glsl_shader_prog_link *prog = ctx_data->glsl_program;
     UINT constant_version;
     int i;
@@ -781,7 +756,6 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         /* No GLSL program set - nothing to do. */
         return;
     }
-    programId = prog->programId;
     constant_version = prog->constant_version;
     update_mask = context->constant_update_mask & prog->constant_update_mask;
 
@@ -794,7 +768,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 vshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_B)
-        shader_glsl_load_constantsB(vshader, gl_info, programId, state->vs_consts_b,
+        shader_glsl_load_constantsB(vshader, gl_info, prog->vs.uniform_b_locations, state->vs_consts_b,
                 vshader->reg_maps.boolean_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_POS_FIXUP)
@@ -813,7 +787,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 pshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_B)
-        shader_glsl_load_constantsB(pshader, gl_info, programId, state->ps_consts_b,
+        shader_glsl_load_constantsB(pshader, gl_info, prog->ps.uniform_b_locations, state->ps_consts_b,
                 pshader->reg_maps.boolean_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_BUMP_ENV)
@@ -5719,6 +5693,12 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
         vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
     }
 
+    for (i = 0; i < MAX_CONST_B; ++i)
+    {
+        snprintf(name, sizeof(name), "vs_b[%u]", i);
+        vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "posFixup"));
 }
 
@@ -5742,6 +5722,12 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     {
         snprintf(name, sizeof(name), "ps_i[%u]", i);
         ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+    }
+
+    for (i = 0; i < MAX_CONST_B; ++i)
+    {
+        snprintf(name, sizeof(name), "ps_b[%u]", i);
+        ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
     }
 
     for (i = 0; i < MAX_TEXTURES; ++i)
