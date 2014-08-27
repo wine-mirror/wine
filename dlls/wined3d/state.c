@@ -4203,13 +4203,32 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     break;
 
                 case WINED3DFMT_R16G16_FLOAT:
-                    /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
-                     * byte float according to the IEEE standard
-                     */
-                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
+                    if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
+                    {
+                        /* Not supported by GL_ARB_half_float_vertex. */
+                        GL_EXTCALL(glVertexAttrib2hvNV(i, (const GLhalfNV *)ptr));
+                    }
+                    else
+                    {
+                        float x = float_16_to_32(((const unsigned short *)ptr) + 0);
+                        float y = float_16_to_32(((const unsigned short *)ptr) + 1);
+                        GL_EXTCALL(glVertexAttrib2fARB(i, x, y));
+                    }
                     break;
                 case WINED3DFMT_R16G16B16A16_FLOAT:
-                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
+                    if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
+                    {
+                        /* Not supported by GL_ARB_half_float_vertex. */
+                        GL_EXTCALL(glVertexAttrib4hvNV(i, (const GLhalfNV *)ptr));
+                    }
+                    else
+                    {
+                        float x = float_16_to_32(((const unsigned short *)ptr) + 0);
+                        float y = float_16_to_32(((const unsigned short *)ptr) + 1);
+                        float z = float_16_to_32(((const unsigned short *)ptr) + 2);
+                        float w = float_16_to_32(((const unsigned short *)ptr) + 3);
+                        GL_EXTCALL(glVertexAttrib4fARB(i, x, y, z, w));
+                    }
                     break;
 
                 default:
