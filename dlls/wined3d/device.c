@@ -4756,8 +4756,6 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
-    context_resource_released(device, resource, type);
-
     switch (type)
     {
         case WINED3D_RTYPE_SURFACE:

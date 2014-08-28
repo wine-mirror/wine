@@ -240,6 +240,8 @@ void wined3d_resource_free_bo(struct wined3d_resource *resource)
 
 void wined3d_resource_cleanup_cs(struct wined3d_resource *resource)
 {
+    context_resource_released(resource->device, resource, resource->type);
+
     if (resource->buffer)
         wined3d_resource_free_bo(resource);
 
