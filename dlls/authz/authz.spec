@@ -14,7 +14,7 @@
 @ stub AuthzInitializeObjectAccessAuditEvent
 @ stub AuthzInitializeObjectAccessAuditEvent2
 @ stdcall AuthzInitializeResourceManager(long ptr ptr ptr wstr ptr)
-@ stub AuthzInstallSecurityEventSource
+@ stdcall AuthzInstallSecurityEventSource(long ptr)
 @ stub AuthzOpenObjectAudit
 @ stub AuthzRegisterSecurityEventSource
 @ stub AuthzReportSecurityEvent

@@ -56,3 +56,14 @@ BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, LPVOID pfnAccessChecker,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+
+/***********************************************************************
+ *              AuthzInstallSecurityEventSource (AUTHZ.@)
+ */
+BOOL WINAPI AuthzInstallSecurityEventSource(DWORD dwFlags, LPVOID pRegistration)
+{
+    FIXME("(0x%X,%p): stub\n", dwFlags, pRegistration);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
