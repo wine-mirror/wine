@@ -78,7 +78,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
     else
         hr = ScriptItemize(string, cchString, 15, Control, State, outpItems, &outnItems);
 
-    winetest_ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    winetest_ok(hr == S_OK, "ScriptItemize should return S_OK not %08x\n", hr);
     if (nItemsBroken && (broken(nItemsBroken[0] == outnItems) || broken(nItemsBroken[1] == outnItems)))
     {
         winetest_win_skip("This test broken on this platform\n");
@@ -728,10 +728,9 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
         return;
     }
     if (valid > 0)
-        winetest_ok(!hr, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
-    else if (hr)
+        winetest_ok(hr == S_OK, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
+    else if (hr != S_OK)
         winetest_trace("ScriptItemizeOpenType should return S_OK not %08x\n", hr);
-
 
     if (outnItems <= item)
     {
@@ -1165,7 +1164,7 @@ static void test_ScriptShapeOpenType(HDC hdc)
     memset(&State, 0 , sizeof(State));
 
     hr = pScriptItemizeOpenType(test1, 4, 2, &Control, &State, items, tags, &outnItems);
-    ok(!hr, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, NULL, &nb);
@@ -1337,7 +1336,7 @@ static void test_ScriptShape(HDC hdc)
     int nb;
 
     hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
-    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptItemize should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, NULL, &nb);
@@ -1357,7 +1356,7 @@ static void test_ScriptShape(HDC hdc)
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
-    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
 
@@ -1365,7 +1364,7 @@ static void test_ScriptShape(HDC hdc)
     memset(logclust,-1,sizeof(logclust));
     memset(attrs,-1,sizeof(attrs));
     hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
-    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(nb == 4, "Wrong number of items\n");
     ok(logclust[0] == 0, "clusters out of order\n");
     ok(logclust[1] == 1, "clusters out of order\n");
@@ -1426,7 +1425,7 @@ static void test_ScriptShape(HDC hdc)
     memset(logclust,-1,sizeof(logclust));
     memset(attrs,-1,sizeof(attrs));
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs2, logclust, attrs, &nb);
-    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(nb == 4, "Wrong number of items\n");
     ok(glyphs2[0] == glyphs[3], "Glyphs not reordered properly\n");
     ok(glyphs2[1] == glyphs[2], "Glyphs not reordered properly\n");
@@ -1470,11 +1469,11 @@ static void test_ScriptPlace(HDC hdc)
     ABC abc[4];
 
     hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
-    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptItemize should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
-    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     hr = ScriptPlace(hdc, &sc, glyphs, 4, NULL, &items[0].a, widths, NULL, NULL);
@@ -1496,7 +1495,7 @@ static void test_ScriptPlace(HDC hdc)
        "ScriptPlace should return E_FAIL or E_INVALIDARG, not %08x\n", hr);
 
     hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, offset, NULL);
-    ok(!hr, "ScriptPlace should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptPlace should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
     ret = ExtTextOutW(hdc, 1, 1, 0, NULL, glyphs, 4, widths);
@@ -1550,7 +1549,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = 5;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -1562,7 +1561,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    if (hr == 0) {
+    if (hr == S_OK) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
         cMaxGlyphs = cInChars;
@@ -1581,16 +1580,16 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "ScriptPlace should return S_OK not (%08x)\n", hr);
             hr = ScriptPlace(NULL, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "ScriptPlace should return S_OK not (%08x)\n", hr);
             for (cnt=0; cnt < pcGlyphs; cnt++)
                 pwOutGlyphs[cnt] = pwOutGlyphs1[cnt];                 /* Send to next function */
         }
@@ -1601,14 +1600,14 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         cInChars = 5;
         cMaxItems = 255;
         hr = ScriptItemize(TestItem2, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-        ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+        ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
         /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is   *
          *  returned.                                                                               */
         ok (pItem[0].iCharPos == 0 && pItem[1].iCharPos == cInChars,
                             "Start pos not = 0 (%d) or end pos not = %d (%d)\n",
                              pItem[0].iCharPos, cInChars, pItem[1].iCharPos);
         /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue                    */
-        if (hr == 0) {
+        if (hr == S_OK) {
              cChars = cInChars;
              cMaxGlyphs = 256;
              pItem[0].a.fNoGlyphIndex = 1;                /* say no translate                     */
@@ -1616,16 +1615,16 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
                               cMaxGlyphs, &pItem[0].a,
                               pwOutGlyphs2, pwLogClust, psva, &pcGlyphs);
              ok (hr != E_PENDING, "If psc should not be NULL (%08x) and the E_PENDING should be returned\n", hr);
-             ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+             ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
              ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
              ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
              for (cnt=0; cnt < cChars && TestItem2[cnt] == pwOutGlyphs2[cnt]; cnt++) {}
              ok (cnt == cChars, "Translation to place when told not to. WCHAR %d - %04x != %04x\n",
                            cnt, TestItem2[cnt], pwOutGlyphs2[cnt]);
-             if (hr ==0) {
+             if (hr == S_OK) {
                  hr = ScriptPlace(hdc, &psc, pwOutGlyphs2, pcGlyphs, psva, &pItem[0].a, piAdvance,
                                   pGoffset, pABC);
-                 ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
+                 ok (hr == S_OK, "ScriptPlace should return S_OK not (%08x)\n", hr);
              }
         }
         ScriptFreeCache( &psc);
@@ -1637,8 +1636,8 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = (sizeof(TestItem3)/2)-1;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem3, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
-    if  (hr == 0)
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
+    if  (hr == S_OK)
 	{
         ok (pcItems == 3, "The number of SCRIPT_ITEMS should be 3 not %d\n", pcItems);
         if (pcItems > 2)
@@ -1659,8 +1658,8 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     cInChars = (sizeof(TestItem4)/2)-1;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem4, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
-    if  (hr == 0)
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
+    if  (hr == S_OK)
 	{
         ok (pcItems == 5, "The number of SCRIPT_ITEMS should be 5 not %d\n", pcItems);
         if (pcItems > 4)
@@ -1696,7 +1695,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
      */
     cInChars = (sizeof(TestItem5)-1)/sizeof(WCHAR);
     hr = ScriptItemize(TestItem5, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     ok (pcItems == 4, "There should have been 4 items, found %d\n", pcItems);
     ok (pItem[0].a.s.uBidiLevel == 1, "The first character should have been bidi=1 not %d\n",
                                        pItem[0].a.s.uBidiLevel);
@@ -1762,7 +1761,7 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
     /*  Check to see if the results are the same as those returned by ScriptShape  */
     hr = ScriptGetCMap(hdc, &psc, TestItem1, cInChars, dwFlags, pwOutGlyphs3);
-    ok (hr == 0, "ScriptGetCMap should return 0 not (%08x)\n", hr);
+    ok (hr == S_OK, "ScriptGetCMap should return S_OK not (%08x)\n", hr);
     ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
     for (cnt=0; cnt < cChars && pwOutGlyphs[cnt] == pwOutGlyphs3[cnt]; cnt++) {}
     ok (cnt == cInChars, "Translation not correct. WCHAR %d - %04x != %04x\n",
@@ -2054,7 +2053,7 @@ static void test_ScriptTextOut(HDC hdc)
     cInChars = 5;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -2066,21 +2065,21 @@ static void test_ScriptTextOut(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    if (hr == 0) {
+    if (hr == S_OK) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
-        if (hr ==0) {
+        if (hr == S_OK) {
             /* Note hdc is needed as glyph info is not yet in psc                  */
             hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
             ScriptFreeCache(&psc);              /* Get rid of psc for next test set */
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
 
@@ -2110,7 +2109,7 @@ static void test_ScriptTextOut(HDC hdc)
             /* Set that it returns 0 status */
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
 
             /* Test Rect Rgn is acceptable */
             rect.top = 10;
@@ -2119,7 +2118,7 @@ static void test_ScriptTextOut(HDC hdc)
             rect.right = 40;
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
 
             iCP = 1;
             hr = ScriptCPtoX(iCP, fTrailing, cChars, pcGlyphs, (const WORD *) &pwLogClust,
@@ -2172,7 +2171,7 @@ static void test_ScriptTextOut2(HDC hdc)
     cInChars = 5;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -2184,21 +2183,21 @@ static void test_ScriptTextOut2(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    if (hr == 0) {
+    if (hr == S_OK) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc2, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             /* Note hdc is needed as glyph info is not yet in psc                  */
             hr = ScriptPlace(hdc2, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
 
             /*   key part!!!   cached dc is being deleted  */
             hr = DeleteDC(hdc2);
@@ -2210,7 +2209,7 @@ static void test_ScriptTextOut2(HDC hdc)
              */
             hr = ScriptTextOut(hdc1, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
             ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
 
             DeleteDC(hdc1);
@@ -2248,7 +2247,7 @@ static void test_ScriptTextOut3(HDC hdc)
     cInChars = 2;
     cMaxItems = 255;
     hr = ScriptItemize(TestItem1, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
-    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (hr == S_OK, "ScriptItemize should return S_OK, returned %08x\n", hr);
     /*  This test is for the interim operation of ScriptItemize where only one SCRIPT_ITEM is *
      *  returned.                                                                             */
     ok (pcItems > 0, "The number of SCRIPT_ITEMS should be greater than 0\n");
@@ -2260,21 +2259,21 @@ static void test_ScriptTextOut3(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 2;
-    if (hr == 0) {
+    if (hr == S_OK) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
                          pwOutGlyphs1, pwLogClust, psva, &pcGlyphs);
-        ok (hr == 0, "ScriptShape should return 0 not (%08x)\n", hr);
+        ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
         if (hr ==0) {
             /* Note hdc is needed as glyph info is not yet in psc                  */
             hr = ScriptPlace(hdc, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
-            ok (hr == 0, "Should return 0 not (%08x)\n", hr);
+            ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
 
             /* Test Rect Rgn is acceptable */
             rect.top = 10;
@@ -2283,8 +2282,7 @@ static void test_ScriptTextOut3(HDC hdc)
             rect.right = 40;
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
-            ok (hr == 0, "ScriptTextOut should return 0 not (%08x)\n", hr);
-
+            ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
         }
         /* Clean up and go   */
         ScriptFreeCache(&psc);
@@ -2966,7 +2964,7 @@ static void test_ScriptBreak(void)
     HRESULT hr;
 
     hr = ScriptItemize(test, 3, 4, NULL, NULL, items, NULL);
-    ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptItemize should return S_OK not %08x\n", hr);
 
     /*
      * This Test crashes pre Vista.
@@ -2983,7 +2981,7 @@ static void test_ScriptBreak(void)
 
     memset(&la, 0, sizeof(la));
     hr = ScriptBreak(test, 1, &items[0].a, &la);
-    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptBreak should return S_OK not %08x\n", hr);
 
     ok(!la.fSoftBreak, "fSoftBreak set\n");
     ok(la.fWhiteSpace, "fWhiteSpace not set\n");
@@ -2994,7 +2992,7 @@ static void test_ScriptBreak(void)
 
     memset(&la, 0, sizeof(la));
     hr = ScriptBreak(test + 1, 1, &items[1].a, &la);
-    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptBreak should return S_OK not %08x\n", hr);
 
     ok(!la.fSoftBreak, "fSoftBreak set\n");
     ok(!la.fWhiteSpace, "fWhiteSpace set\n");
@@ -3005,7 +3003,7 @@ static void test_ScriptBreak(void)
 
     memset(&la, 0, sizeof(la));
     hr = ScriptBreak(test + 2, 1, &items[2].a, &la);
-    ok(!hr, "ScriptBreak should return S_OK not %08x\n", hr);
+    ok(hr == S_OK, "ScriptBreak should return S_OK not %08x\n", hr);
 
     ok(!la.fSoftBreak, "fSoftBreak set\n");
     ok(!la.fWhiteSpace, "fWhiteSpace set\n");
