@@ -58,26 +58,6 @@ ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *v
     return refcount;
 }
 
-/* Ugly hack for ffp_blit_depth_fill that allows destroying a view from inside the
- * worker thread. */
-ULONG wined3d_rendertarget_view_decref_worker(struct wined3d_rendertarget_view *view)
-{
-    ULONG refcount = InterlockedDecrement(&view->refcount);
-
-    TRACE("%p decreasing refcount to %u.\n", view, refcount);
-
-    if (!refcount)
-    {
-        /* Call wined3d_object_destroyed() before releasing the resource,
-         * since releasing the resource may end up destroying the parent. */
-        view->parent_ops->wined3d_object_destroyed(view->parent);
-        wined3d_resource_decref(view->resource);
-        wined3d_rendertarget_view_destroy(view);
-    }
-
-    return refcount;
-}
-
 void * CDECL wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view)
 {
     TRACE("view %p.\n", view);

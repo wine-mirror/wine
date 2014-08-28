@@ -4000,19 +4000,26 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
         const RECT *dst_rect, const struct wined3d_color *color)
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
-    struct wined3d_rendertarget_view *view;
-    struct wined3d_fb_state fb = {&view, NULL};
-    HRESULT hr;
+    struct wined3d_rendertarget_view view, *view_ptr = &view;
+    struct wined3d_fb_state fb = {&view_ptr, NULL, 1};
+    struct wined3d_texture *texture = dst_surface->container;
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
-            NULL, &wined3d_null_parent_ops, &view)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
-    }
+    /* Can't incref / decref the resource here. This is executed inside the worker
+     * thread. Playing with the refcount here makes the worker thread visible to
+     * the client lib. Problems occur when the worker thread happens to hold the
+     * last reference and the resource destruction callbacks are called from the
+     * wrong thread. */
+    view.resource = &texture->resource;
+    view.parent = NULL;
+    view.parent_ops = &wined3d_null_parent_ops;
+    view.format = dst_surface->resource.format;
+    view.buffer_offset = 0;
+    view.width = dst_surface->resource.width;
+    view.height = dst_surface->resource.height;
+    view.depth = 1;
+    view.sub_resource_idx = dst_surface->texture_layer * texture->level_count + dst_surface->texture_level;
 
     device_clear_render_targets(device, 1, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
-    wined3d_rendertarget_view_decref_worker(view);
 
     return WINED3D_OK;
 }
@@ -4021,18 +4028,21 @@ static HRESULT ffp_blit_depth_fill(struct wined3d_device *device, struct wined3d
         const RECT *dst_rect, float depth)
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
-    struct wined3d_fb_state fb = {NULL, NULL};
-    HRESULT hr;
+    struct wined3d_rendertarget_view view;
+    struct wined3d_fb_state fb = {NULL, &view};
+    struct wined3d_texture *texture = dst_surface->container;
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
-            NULL, &wined3d_null_parent_ops, &fb.depth_stencil)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
-    }
+    view.resource = &dst_surface->container->resource;
+    view.parent = NULL;
+    view.parent_ops = &wined3d_null_parent_ops;
+    view.format = dst_surface->resource.format;
+    view.buffer_offset = 0;
+    view.width = dst_surface->resource.width;
+    view.height = dst_surface->resource.height;
+    view.depth = 1;
+    view.sub_resource_idx = dst_surface->texture_layer * texture->level_count + dst_surface->texture_level;
 
     device_clear_render_targets(device, 0, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
-    wined3d_rendertarget_view_decref_worker(fb.depth_stencil);
 
     return WINED3D_OK;
 }

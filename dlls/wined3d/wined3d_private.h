@@ -2946,7 +2946,6 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
     return surface_from_resource(resource);
 }
 
-ULONG wined3d_rendertarget_view_decref_worker(struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_destroy(struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 
 struct wined3d_shader_resource_view
