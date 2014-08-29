@@ -1,7 +1,7 @@
 /*
  *    Text analyzing tests
  *
- * Copyright 2012 Nikolay Sivov for CodeWeavers
+ * Copyright 2012-2014 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -167,16 +167,10 @@ static void ok_sequence_(struct call_sequence **seq, int sequence_index,
             switch (actual->kind)
             {
             case ScriptAnalysis:
-            {
-                const struct script_analysis *sa_act = &actual->sa;
-                const struct script_analysis *sa_exp = &expected->sa;
-
-                test_uint(sa_act->pos, sa_exp->pos, "position", &ctxt);
-                test_uint(sa_act->len, sa_exp->len, "length", &ctxt);
-                test_uint(sa_act->shapes, sa_exp->shapes, "shapes", &ctxt);
-
+                test_uint(actual->sa.pos, expected->sa.pos, "position", &ctxt);
+                test_uint(actual->sa.len, expected->sa.len, "length", &ctxt);
+                test_uint(actual->sa.shapes, expected->sa.shapes, "shapes", &ctxt);
                 break;
-            }
             default:
                 ok(0, "%s: callback not handled, %s\n", context, get_analysis_kind_name(actual->kind));
             }
@@ -271,13 +265,20 @@ static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *if
     return S_OK;
 }
 
+#define BREAKPOINT_COUNT 20
+static DWRITE_LINE_BREAKPOINT g_actual_bp[BREAKPOINT_COUNT];
+
 static HRESULT WINAPI analysissink_SetLineBreakpoints(IDWriteTextAnalysisSink *iface,
         UINT32 position,
         UINT32 length,
         DWRITE_LINE_BREAKPOINT const* breakpoints)
 {
-    ok(0, "unexpected\n");
-    return E_NOTIMPL;
+    if (position + length > BREAKPOINT_COUNT) {
+        ok(0, "SetLineBreakpoints: reported pos=%u, len=%u overflows expected length %d\n", position, length, BREAKPOINT_COUNT);
+        return E_FAIL;
+    }
+    memcpy(&g_actual_bp[position], breakpoints, length*sizeof(DWRITE_LINE_BREAKPOINT));
+    return S_OK;
 }
 
 static HRESULT WINAPI analysissink_SetBidiLevel(IDWriteTextAnalysisSink *iface,
@@ -794,7 +795,9 @@ static void init_expected_sa(struct call_sequence **seq, const struct sa_test *t
         struct call_entry call;
 
         call.kind = ScriptAnalysis;
-        call.sa = test->sa[i];
+        call.sa.pos = test->sa[i].pos;
+        call.sa.len = test->sa[i].len;
+        call.sa.shapes = test->sa[i].shapes;
         add_call(seq, 0, &call);
     }
 
@@ -825,6 +828,84 @@ static void test_AnalyzeScript(void)
     IDWriteTextAnalyzer_Release(analyzer);
 }
 
+struct linebreaks_test {
+    const WCHAR text[BREAKPOINT_COUNT+1];
+    DWRITE_LINE_BREAKPOINT bp[BREAKPOINT_COUNT];
+};
+
+static struct linebreaks_test linebreaks_tests[] = {
+    { {'A','-','B',' ',0xad,'C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0},
+      {
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     TRUE,  FALSE },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, TRUE  },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     TRUE,  FALSE }
+      }
+    },
+    { { 0 } }
+};
+
+static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_BREAKPOINT *actual)
+{
+    const WCHAR *text = test->text;
+    int cmp = memcmp(test->bp, actual, sizeof(*actual)*BREAKPOINT_COUNT);
+    ok(!cmp, "%s: got wrong breakpoint data\n", wine_dbgstr_w(test->text));
+    if (cmp) {
+        int i = 0;
+        while (*text) {
+            ok(!memcmp(&test->bp[i], &actual[i], sizeof(*actual)),
+                "%s: got (%d, %d, %d, %d), expected (%d, %d, %d, %d)\n",
+                wine_dbgstr_wn(&test->text[i], 1),
+                g_actual_bp[i].breakConditionBefore,
+                g_actual_bp[i].breakConditionAfter,
+                g_actual_bp[i].isWhitespace,
+                g_actual_bp[i].isSoftHyphen,
+                test->bp[i].breakConditionBefore,
+                test->bp[i].breakConditionAfter,
+                test->bp[i].isWhitespace,
+                test->bp[i].isSoftHyphen);
+            text++;
+            i++;
+        }
+    }
+}
+
+static void test_SetLineBreakpoints(void)
+{
+    const struct linebreaks_test *ptr = linebreaks_tests;
+    IDWriteTextAnalyzer *analyzer;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    while (*ptr->text)
+    {
+        g_source = ptr->text;
+
+        memset(g_actual_bp, 0, sizeof(g_actual_bp));
+        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+        compare_breakpoints(ptr, g_actual_bp);
+
+        ptr++;
+    }
+
+    IDWriteTextAnalyzer_Release(analyzer);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -841,6 +922,7 @@ START_TEST(analyzer)
     init_call_sequences(expected_seq, 1);
 
     test_AnalyzeScript();
+    test_SetLineBreakpoints();
 
     IDWriteFactory_Release(factory);
 }
