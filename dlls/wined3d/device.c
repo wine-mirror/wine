@@ -4454,6 +4454,27 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
+    /* Free implicit resources and wait for the command stream before modifying
+     * swapchain parameters. After modifying the swapchain parameters a new GL
+     * context may be acquired by the worker thread. This causes problems in the
+     * d3d8/9 test that passes a hidden window as the new device window.
+     * SetPixelFormat will call SetWindowPos inside the X11 driver, which sends
+     * a message to the window to query the icon. Since the worker thread is
+     * not the thread that created the window and the d3d8 test does not run
+     * an event loop this deadlocks. Set up the window first from the main thread
+     * before calling SetPixelFormat from the worker thread to avoid this. */
+    if (device->auto_depth_stencil_view)
+    {
+        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
+        device->auto_depth_stencil_view = NULL;
+    }
+    if (device->back_buffer_view)
+    {
+        wined3d_rendertarget_view_decref(device->back_buffer_view);
+        device->back_buffer_view = NULL;
+    }
+    device->cs->ops->finish(device->cs);
+
     TRACE("New params:\n");
     TRACE("backbuffer_width %u\n", swapchain_desc->backbuffer_width);
     TRACE("backbuffer_height %u\n", swapchain_desc->backbuffer_height);
@@ -4580,11 +4601,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             swapchain_desc->multisample_type, swapchain_desc->multisample_quality)))
         return hr;
 
-    if (device->auto_depth_stencil_view)
-    {
-        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
-        device->auto_depth_stencil_view = NULL;
-    }
     if (swapchain->desc.enable_auto_depth_stencil)
     {
         struct wined3d_resource_desc texture_desc;
@@ -4627,11 +4643,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_device_set_depth_stencil_view(device, device->auto_depth_stencil_view);
     }
 
-    if (device->back_buffer_view)
-    {
-        wined3d_rendertarget_view_decref(device->back_buffer_view);
-        device->back_buffer_view = NULL;
-    }
     if (swapchain->desc.backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
             surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
             NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
