@@ -4400,13 +4400,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     unsigned int i;
 
     TRACE("device %p, swapchain_desc %p, mode %p, callback %p.\n", device, swapchain_desc, mode, callback);
-
-    if (wined3d_settings.cs_multithreaded)
-    {
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
-    }
+    wined3d_cs_emit_glfinish(device->cs);
+    device->cs->ops->finish(device->cs);
 
     if (!(swapchain = wined3d_device_get_swapchain(device, 0)))
     {
