@@ -507,8 +507,8 @@
 @ stdcall ObjectPrivilegeAuditAlarmW(wstr ptr long long ptr long)
 @ stdcall OpenBackupEventLogA (str str)
 @ stdcall OpenBackupEventLogW (wstr wstr)
-# @ stub OpenEncryptedFileRawA
-# @ stub OpenEncryptedFileRawW
+@ stdcall OpenEncryptedFileRawA(str long ptr)
+@ stdcall OpenEncryptedFileRawW(wstr long ptr)
 @ stdcall OpenEventLogA (str str)
 @ stdcall OpenEventLogW (wstr wstr)
 @ stdcall OpenProcessToken(long long ptr)

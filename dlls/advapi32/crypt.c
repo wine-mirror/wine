@@ -2260,6 +2260,36 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, const BYTE *pbSignature, DW
 }
 
 /******************************************************************************
+ * OpenEncryptedFileRawA   (ADVAPI32.@)
+ *
+ * See OpenEncryptedFileRawW
+ */
+DWORD WINAPI OpenEncryptedFileRawA(LPCSTR filename, ULONG flags, PVOID *context)
+{
+    FIXME("(%s, %x, %p): stub\n", debugstr_a(filename), flags, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * OpenEncryptedFileRawW   (ADVAPI32.@)
+ *
+ * Opens an EFS encrypted file for backup/restore
+ *
+ * PARAMS
+ *  filename   [I] Filename to operate on
+ *  flags     [I] Operation to perform
+ *  context    [I] Handle to the context (out)
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI OpenEncryptedFileRawW(LPCWSTR filename, ULONG flags, PVOID *context)
+{
+    FIXME("(%s, %x, %p): stub\n", debugstr_w(filename), flags, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * SystemFunction030   (ADVAPI32.@)
  *
  * Tests if two blocks of 16 bytes are equal
