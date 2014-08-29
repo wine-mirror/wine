@@ -2290,6 +2290,25 @@ DWORD WINAPI OpenEncryptedFileRawW(LPCWSTR filename, ULONG flags, PVOID *context
 }
 
 /******************************************************************************
+ * ReadEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Export encrypted files
+ *
+ * PARAMS
+ *  export   [I] pointer to the export callback function
+ *  callback     [I] pointer to the application defined context
+ *  context    [I] pointer to the system context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI ReadEncryptedFileRaw(PFE_EXPORT_FUNC export, PVOID callback, PVOID context)
+{
+    FIXME("(%p, %p, %p): stub\n", export, callback, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * SystemFunction030   (ADVAPI32.@)
  *
  * Tests if two blocks of 16 bytes are equal

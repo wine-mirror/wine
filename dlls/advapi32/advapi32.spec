@@ -566,7 +566,7 @@
 @ stdcall QueryTraceW(int64 wstr ptr)
 # @ stub QueryUsersOnEncryptedFile
 @ stdcall QueryWindows31FilesMigration(long)
-# @ stub ReadEncryptedFileRaw
+@ stdcall ReadEncryptedFileRaw(ptr ptr ptr)
 @ stdcall ReadEventLogA (long long long ptr long ptr ptr)
 @ stdcall ReadEventLogW (long long long ptr long ptr ptr)
 @ stdcall RegCloseKey(long)
