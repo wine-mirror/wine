@@ -59,7 +59,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 
     backupW = SERV_dup(lpBackupFileName);
     ret = BackupEventLogW(hEventLog, backupW);
-    HeapFree(GetProcessHeap(), 0, backupW);
+    heap_free(backupW);
 
     return ret;
 }
@@ -116,7 +116,7 @@ BOOL WINAPI ClearEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 
     backupW = SERV_dup(lpBackupFileName);
     ret = ClearEventLogW(hEventLog, backupW);
-    HeapFree(GetProcessHeap(), 0, backupW);
+    heap_free(backupW);
 
     return ret;
 }
@@ -447,8 +447,8 @@ HANDLE WINAPI OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
     uncnameW = SERV_dup(lpUNCServerName);
     filenameW = SERV_dup(lpFileName);
     handle = OpenBackupEventLogW(uncnameW, filenameW);
-    HeapFree(GetProcessHeap(), 0, uncnameW);
-    HeapFree(GetProcessHeap(), 0, filenameW);
+    heap_free(uncnameW);
+    heap_free(filenameW);
 
     return handle;
 }
@@ -506,8 +506,8 @@ HANDLE WINAPI OpenEventLogA( LPCSTR uncname, LPCSTR source )
     uncnameW = SERV_dup(uncname);
     sourceW = SERV_dup(source);
     handle = OpenEventLogW(uncnameW, sourceW);
-    HeapFree(GetProcessHeap(), 0, uncnameW);
-    HeapFree(GetProcessHeap(), 0, sourceW);
+    heap_free(uncnameW);
+    heap_free(sourceW);
 
     return handle;
 }
@@ -688,7 +688,7 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
     if (wNumStrings == 0) return TRUE;
     if (!lpStrings) return TRUE;
 
-    wideStrArray = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWSTR) * wNumStrings);
+    wideStrArray = heap_alloc(sizeof(LPWSTR) * wNumStrings);
     for (i = 0; i < wNumStrings; i++)
     {
         RtlCreateUnicodeStringFromAsciiz(&str, lpStrings[i]);
@@ -697,10 +697,8 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
     ret = ReportEventW(hEventLog, wType, wCategory, dwEventID, lpUserSid,
                        wNumStrings, dwDataSize, (LPCWSTR *)wideStrArray, lpRawData);
     for (i = 0; i < wNumStrings; i++)
-    {
-        HeapFree( GetProcessHeap(), 0, wideStrArray[i] );
-    }
-    HeapFree(GetProcessHeap(), 0, wideStrArray);
+        heap_free( wideStrArray[i] );
+    heap_free(wideStrArray);
     return ret;
 }
 

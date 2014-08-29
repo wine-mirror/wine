@@ -59,7 +59,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
     BOOL ret;
     DWORD sizeW = *lpSize;
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeW * sizeof(WCHAR) )))
+    if (!(buffer = heap_alloc( sizeW * sizeof(WCHAR) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -71,7 +71,7 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
     else
         *lpSize = sizeW;
 
-    HeapFree( GetProcessHeap(), 0, buffer );
+    heap_free( buffer );
     return ret;
 }
 
