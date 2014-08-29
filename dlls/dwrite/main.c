@@ -468,7 +468,7 @@ static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory 
         int new_count = 0;
 
         new_count = This->loader_count * 2;
-        new_list = heap_realloc(This->loaders, new_count * sizeof(*This->loaders));
+        new_list = heap_realloc_zero(This->loaders, new_count * sizeof(*This->loaders));
 
         if (!new_list)
             return E_OUTOFMEMORY;
@@ -603,7 +603,7 @@ static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface
         int new_count = 0;
 
         new_count = This->file_loader_count * 2;
-        new_list = heap_realloc(This->file_loaders, new_count * sizeof(*This->file_loaders));
+        new_list = heap_realloc_zero(This->file_loaders, new_count * sizeof(*This->file_loaders));
 
         if (!new_list)
             return E_OUTOFMEMORY;
