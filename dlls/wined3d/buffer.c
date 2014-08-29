@@ -673,6 +673,12 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         GL_EXTCALL(glBufferData(This->buffer_type_hint, This->resource.size, NULL, GL_STREAM_DRAW));
         checkGLcall("glBufferData");
     }
+    else if (flags & WINED3D_BUFFER_SYNC && This->flags & WINED3D_BUFFER_APPLESYNC)
+    {
+        /* OSX doesn't do non-blocking asynchonous glBufferSubData like Linux drivers do, so we want to set
+         * GL_BUFFER_FLUSHING_UNMAP_APPLE to GL_FALSE. This means we have to do synchonization ourselves. */
+        buffer_sync_apple(This, 0, gl_info);
+    }
 
     while (This->modified_areas)
     {
@@ -1035,9 +1041,9 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 buffer->flags |= WINED3D_BUFFER_DISCARD;
                 buffer->ignore_discard = TRUE;
             }
+            else if (!(flags & WINED3D_MAP_NOOVERWRITE))
+                buffer->flags |= WINED3D_BUFFER_SYNC;
         }
-        if (!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD)))
-            buffer->flags |= WINED3D_BUFFER_SYNC;
     }
 
     if (wined3d_settings.cs_multithreaded && count == 1)
@@ -1052,6 +1058,10 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         else if(!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_READONLY)))
         {
             wined3d_resource_wait_fence(&buffer->resource);
+            /* Writing to the (otherwise worker thread controlled)
+             * flags field is OK here since the wait_fence call made
+             * sure the buffer is idle. */
+            buffer->flags |= WINED3D_BUFFER_SYNC;
         }
     }
 
