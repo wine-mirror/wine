@@ -2434,3 +2434,22 @@ NTSTATUS WINAPI SystemFunction041(PVOID memory, ULONG length, ULONG flags)
 	FIXME("(%p, %x, %x): stub [RtlDecryptMemory]\n", memory, length, flags);
 	return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * WriteEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Import encrypted files
+ *
+ * PARAMS
+ *  import   [I] pointer to the import callback function
+ *  callback     [I] pointer to the application defined context
+ *  context    [I] pointer to the system context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI WriteEncryptedFileRaw(PFE_IMPORT_FUNC import, PVOID callback, PVOID context)
+{
+    FIXME("(%p, %p, %p): stub\n", import, callback, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
