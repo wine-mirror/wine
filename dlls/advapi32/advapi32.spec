@@ -84,7 +84,7 @@
 @ stdcall ClearEventLogA (long str)
 @ stdcall ClearEventLogW (long wstr)
 # @ stub CloseCodeAuthzLevel
-# @ stub CloseEncryptedFileRaw
+@ stdcall CloseEncryptedFileRaw(ptr)
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
 # @ stub CloseThreadWaitChainSession

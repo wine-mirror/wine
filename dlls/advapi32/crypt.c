@@ -319,6 +319,23 @@ static void CRYPT_CreateMachineGuid(void)
 	}
 }
 
+
+/******************************************************************************
+ * CloseEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Close encrypted files
+ *
+ * PARAMS
+ *  context    [I] pointer to the context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+void WINAPI CloseEncryptedFileRaw(PVOID context)
+{
+    FIXME("(%p): stub\n", context);
+}
+
 /******************************************************************************
  * CryptAcquireContextW (ADVAPI32.@)
  *
