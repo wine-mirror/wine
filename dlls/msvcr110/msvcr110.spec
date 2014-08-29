@@ -2085,7 +2085,7 @@
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
 @ cdecl ldiv(long long) MSVCRT_ldiv
-@ stub llabs
+@ cdecl -ret64 llabs(int64) MSVCRT_llabs
 @ stub lldiv
 @ cdecl localeconv() MSVCRT_localeconv
 @ cdecl log(double) MSVCRT_log

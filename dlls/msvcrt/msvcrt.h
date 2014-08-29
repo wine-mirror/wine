@@ -67,6 +67,7 @@ typedef unsigned short MSVCRT__ino_t;
 typedef unsigned int   MSVCRT__fsize_t;
 typedef int            MSVCRT_long;
 typedef unsigned int   MSVCRT_ulong;
+typedef __int64        MSVCRT_longlong;
 #ifdef _WIN64
 typedef unsigned __int64 MSVCRT_size_t;
 typedef __int64 MSVCRT_intptr_t;

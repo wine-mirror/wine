@@ -766,6 +766,14 @@ MSVCRT_long CDECL MSVCRT_labs( MSVCRT_long n )
 }
 
 /*********************************************************************
+ *		llabs (MSVCRT.@)
+ */
+MSVCRT_longlong CDECL MSVCRT_llabs( MSVCRT_longlong n )
+{
+    return n >= 0 ? n : -n;
+}
+
+/*********************************************************************
  *		_abs64 (MSVCRT.@)
  */
 __int64 CDECL _abs64( __int64 n )
