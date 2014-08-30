@@ -1462,6 +1462,29 @@ complex_float* __cdecl complex_float_pow_cf(complex_float *ret, const complex_fl
     return complex_float_pow(ret, l, &c);
 }
 
+/*  ??$pow@M@std@@YA?AV?$complex@M@0@ABV10@H@Z  */
+/*  ??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@H@Z */
+complex_float* __cdecl complex_float_pow_ci(complex_float *ret, const complex_float *l, int r)
+{
+    complex_float c = *l;
+    complex_float temp = { 1.0, 0 };
+    complex_float_assign(ret, &temp);
+
+    if(r < 0) {
+        r = -r;
+        complex_float_div(&c, &temp, l);
+    }
+
+    for(; r>0; r>>=1) {
+        if(r & 1)
+            complex_float_mult_assign(ret, &c);
+        complex_float_assign(&temp, &c);
+        complex_float_mult_assign(&c, &temp);
+    }
+
+    return ret;
+}
+
 /* ??$sqrt@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
 /* ??$sqrt@M@std@@YA?AV?$complex@M@0@AEBV10@@Z */
 complex_float* __cdecl complex_float_sqrt(complex_float *ret, const complex_float *l)
@@ -2156,6 +2179,31 @@ complex_double* __cdecl complex_double_pow_cd(complex_double *ret, const complex
 {
     complex_double c = { *r, 0 };
     return complex_double_pow(ret, l, &c);
+}
+
+/*  ??$pow@N@std@@YA?AV?$complex@N@0@ABV10@H@Z  */
+/*  ??$pow@N@std@@YA?AV?$complex@N@0@AEBV10@H@Z */
+/*  ??$pow@O@std@@YA?AV?$complex@O@0@ABV10@H@Z  */
+/*  ??$pow@O@std@@YA?AV?$complex@O@0@AEBV10@H@Z */
+complex_double* __cdecl complex_double_pow_ci(complex_double *ret, const complex_double *l, int r)
+{
+    complex_double c = *l;
+    complex_double temp = { 1.0, 0 };
+    complex_double_assign(ret, &temp);
+
+    if(r < 0) {
+        r = -r;
+        complex_double_div(&c, &temp, l);
+    }
+
+    for(; r>0; r>>=1) {
+        if(r & 1)
+            complex_double_mult_assign(ret, &c);
+        complex_double_assign(&temp, &c);
+        complex_double_mult_assign(&c, &temp);
+    }
+
+    return ret;
 }
 
 /* ??$sqrt@N@std@@YA?AV?$complex@N@0@ABV10@@Z */
