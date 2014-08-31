@@ -202,6 +202,18 @@ static void events_OnSelectionChange(FileDialogImpl *This)
     }
 }
 
+static void events_OnTypeChange(FileDialogImpl *This)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IFileDialogEvents_OnTypeChange(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface);
+    }
+}
+
 static inline HRESULT get_cctrl_event(IFileDialogEvents *pfde, IFileDialogControlEvents **pfdce)
 {
     return IFileDialogEvents_QueryInterface(pfde, &IID_IFileDialogControlEvents, (void**)pfdce);
@@ -1542,6 +1554,9 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     update_control_text(This);
     update_layout(This);
 
+    if(This->filterspec_count)
+        events_OnTypeChange(This);
+
     return TRUE;
 }
 
@@ -1652,6 +1667,11 @@ static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM l
             }
             CoTaskMemFree(filename);
         }
+
+        /* The documentation claims that OnTypeChange is called only
+         * when the dialog is opened, but this is obviously not the
+         * case. */
+        events_OnTypeChange(This);
     }
 
     return FALSE;

@@ -1197,7 +1197,7 @@ static void test_events(void)
     /* pfdeimpl->OnSelectionChange too unreliable to test. Can be 0, 1 or even 2. */
     pfdeimpl->OnSelectionChange = 0;
     /* Called once just by showing the dialog */
-    todo_wine ok(pfdeimpl->OnTypeChange == 1, "Got %d\n", pfdeimpl->OnTypeChange);
+    ok(pfdeimpl->OnTypeChange == 1, "Got %d\n", pfdeimpl->OnTypeChange);
     pfdeimpl->OnTypeChange = 0;
 
     ensure_zero_events(pfdeimpl);
