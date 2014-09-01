@@ -1145,6 +1145,12 @@ static void test_settargetpath(void)
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = MsiGetPropertyA( hpkg, "OutOfNoRbDiskSpace", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
+    trace( "OutOfNoRbDiskSpace = \"%s\"\n", buffer );
+
     r = MsiSetTargetPathA( 0, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 

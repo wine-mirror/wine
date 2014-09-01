@@ -2355,6 +2355,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR szPrimaryVolumeSpaceAvailable[] =
         {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
          'A','v','a','i','l','a','b','l','e',0};
+    static const WCHAR szOutOfNoRbDiskSpace[] =
+        {'O','u','t','O','f','N','o','R','b','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
     MSIQUERY *view;
     WCHAR *level, *primary_key, *primary_folder;
@@ -2431,6 +2433,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     /* FIXME: check volume disk space */
     msi_set_property( package->db, szOutOfDiskSpace, szZero, -1 );
+    msi_set_property( package->db, szOutOfNoRbDiskSpace, szZero, -1 );
 
     return MSI_SetFeatureStates(package);
 }
