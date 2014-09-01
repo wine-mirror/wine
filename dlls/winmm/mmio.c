@@ -516,9 +516,8 @@ static LONG	MMIO_GrabNextBuffer(LPWINE_MMIO wm, int for_read)
 {
     LONG	size = wm->info.cchBuffer;
 
-    TRACE("bo=%x do=%x of=%lx\n",
-	  wm->info.lBufOffset, wm->info.lDiskOffset,
-	  send_message(wm->ioProc, &wm->info, MMIOM_SEEK, 0, SEEK_CUR, FALSE));
+    TRACE("bo=%x do=%x\n",
+	  wm->info.lBufOffset, wm->info.lDiskOffset);
 
     wm->info.lBufOffset = wm->info.lDiskOffset;
     wm->info.pchNext = wm->info.pchBuffer;
