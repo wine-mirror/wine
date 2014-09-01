@@ -3008,11 +3008,25 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 'a';
+    size = 0;
+    state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_MOREDATA, "Expected INSTALLSTATE_MOREDATA, got %d\n", state);
+    ok(path[0] == 'a', "got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
     path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    size = 0;
+    path[0] = 'a';
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_MOREDATA, "Expected INSTALLSTATE_MOREDATA, got %d\n", state);
+    ok(path[0] == 'a', "got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
 
     path[0] = 0;
