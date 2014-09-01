@@ -955,13 +955,13 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device1 *ifa
 
         for (i = 0; i < view_count; ++i)
         {
-            if (!(wined3d_view = wined3d_device_get_rendertarget_view(device->wined3d_device, i)))
+            if (!(wined3d_view = wined3d_device_get_rendertarget_view(device->wined3d_device, i))
+                    || !(view_impl = wined3d_rendertarget_view_get_parent(wined3d_view)))
             {
                 render_target_views[i] = NULL;
                 continue;
             }
 
-            view_impl = wined3d_rendertarget_view_get_parent(wined3d_view);
             render_target_views[i] = &view_impl->ID3D10RenderTargetView_iface;
             ID3D10RenderTargetView_AddRef(render_target_views[i]);
         }
@@ -971,13 +971,13 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device1 *ifa
     {
         struct d3d10_depthstencil_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+        if (!(wined3d_view = wined3d_device_get_depth_stencil_view(device->wined3d_device))
+                || !(view_impl = wined3d_rendertarget_view_get_parent(wined3d_view)))
         {
             *depth_stencil_view = NULL;
         }
         else
         {
-            view_impl = wined3d_rendertarget_view_get_parent(wined3d_view);
             *depth_stencil_view = &view_impl->ID3D10DepthStencilView_iface;
             ID3D10DepthStencilView_AddRef(*depth_stencil_view);
         }
