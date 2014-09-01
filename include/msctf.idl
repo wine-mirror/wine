@@ -1556,3 +1556,48 @@ interface ITfInputProcessorProfileActivationSink : IUnknown
         [in] HKL hkl,
         [in] DWORD dwFlags);
 }
+
+[
+    object,
+    local,
+    uuid(a1adaaa2-3a24-449d-ac96-5183e7f5c217),
+    pointer_default(unique)
+]
+interface ITfMouseSink : IUnknown
+{
+    HRESULT OnMouseEvent(
+        [in] ULONG uEdge,
+        [in] ULONG uQuadrant,
+        [in] DWORD dwBtnStatus,
+        [out] BOOL *pfEaten);
+}
+
+[
+    object,
+    uuid(09d146cd-a544-4132-925b-7afa8ef322d0),
+    pointer_default(unique)
+]
+interface ITfMouseTracker : IUnknown
+{
+    HRESULT AdviseMouseSink(
+        [in] ITfRange *range,
+        [in] ITfMouseSink *pSink,
+        [out] DWORD *pdwCookie);
+
+    HRESULT UnadviseMouseSink([in] DWORD dwCookie);
+}
+
+[
+    object,
+    uuid(3bdd78e2-c16e-47fd-b883-ce6facc1a208),
+    pointer_default(unique)
+]
+interface ITfMouseTrackerACP : IUnknown
+{
+    HRESULT AdviseMouseSink(
+        [in] ITfRangeACP *range,
+        [in] ITfMouseSink *pSink,
+        [out] DWORD *pdwCookie);
+
+    HRESULT UnadviseMouseSink([in] DWORD dwCookie);
+}
