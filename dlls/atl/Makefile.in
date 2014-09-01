@@ -9,4 +9,6 @@ C_SRCS = \
 	atl_ax.c \
 	registrar.c
 
-IDL_SRCS = atl_classes.idl
+IDL_SRCS = \
+	atl_classes.idl \
+	atl_lib.idl

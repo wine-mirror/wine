@@ -16792,12 +16792,12 @@ wine_fn_config_test dlls/apphelp/tests apphelp_test
 wine_fn_config_dll appwiz.cpl enable_appwiz_cpl po
 wine_fn_config_dll atl enable_atl clean,implib
 wine_fn_config_test dlls/atl/tests atl_test
-wine_fn_config_dll atl100 enable_atl100 implib
+wine_fn_config_dll atl100 enable_atl100 clean,implib
 wine_fn_config_test dlls/atl100/tests atl100_test
-wine_fn_config_dll atl110 enable_atl110
-wine_fn_config_dll atl80 enable_atl80 implib
+wine_fn_config_dll atl110 enable_atl110 clean
+wine_fn_config_dll atl80 enable_atl80 clean,implib
 wine_fn_config_test dlls/atl80/tests atl80_test
-wine_fn_config_dll atl90 enable_atl90
+wine_fn_config_dll atl90 enable_atl90 clean
 wine_fn_config_dll authz enable_authz
 wine_fn_config_dll avicap32 enable_avicap32 implib
 wine_fn_config_dll avifil32 enable_avifil32 clean,implib,po
