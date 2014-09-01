@@ -10280,7 +10280,7 @@ int __cdecl wctob(wint_t wc)
 {
     char ret[MB_LEN_MAX];
 
-    if (wc == WEOF || _Wcrtomb( ret, wc, NULL, NULL ) != -1) return EOF;
+    if (wc == WEOF || _Wcrtomb( ret, wc, NULL, NULL ) != 1) return EOF;
     return ret[0];
 }
 
