@@ -322,7 +322,7 @@ static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
 
     while (TRUE)
     {
-        status = NtWaitForMultipleObjects( 2, handles, FALSE, alertable,
+        status = NtWaitForMultipleObjects( 2, handles, TRUE, alertable,
                                            get_nt_timeout( &timeout, wait_work_item->Milliseconds ) );
         if (status == STATUS_WAIT_0 || status == STATUS_TIMEOUT)
         {

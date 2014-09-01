@@ -849,7 +849,7 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
  *		NtWaitForMultipleObjects (NTDLL.@)
  */
 NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
-                                          BOOLEAN wait_all, BOOLEAN alertable,
+                                          BOOLEAN wait_any, BOOLEAN alertable,
                                           const LARGE_INTEGER *timeout )
 {
     select_op_t select_op;
@@ -858,7 +858,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
     if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
 
     if (alertable) flags |= SELECT_ALERTABLE;
-    select_op.wait.op = wait_all ? SELECT_WAIT_ALL : SELECT_WAIT;
+    select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
     return server_select( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
 }

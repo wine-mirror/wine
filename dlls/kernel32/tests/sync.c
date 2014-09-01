@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winternl.h>
 
 #include "wine/test.h"
 
@@ -55,6 +56,7 @@ static VOID   (WINAPI *pReleaseSRWLockExclusive)(PSRWLOCK);
 static VOID   (WINAPI *pReleaseSRWLockShared)(PSRWLOCK);
 static BOOLEAN (WINAPI *pTryAcquireSRWLockExclusive)(PSRWLOCK);
 static BOOLEAN (WINAPI *pTryAcquireSRWLockShared)(PSRWLOCK);
+static NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
 
 static void test_signalandwait(void)
 {
@@ -1153,15 +1155,32 @@ static void test_WaitForMultipleObjects(void)
     }
 
     /* a manual-reset event remains signaled, an auto-reset event is cleared */
-    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
     ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %d\n", r);
-    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+    r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
     ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %d\n", r);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
     for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
-        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, 0, 0);
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
+        ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %d\n", i, r);
+    }
+
+    /* run same test with Nt* call */
+    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+        SetEvent(maxevents[i]);
+
+    /* a manual-reset event remains signaled, an auto-reset event is cleared */
+    r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
+    ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %d\n", r);
+    r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
+    ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %d\n", r);
+    ok(ResetEvent(maxevents[0]), "ResetEvent\n");
+    for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
+    {
+        /* the lowest index is checked first and remaining events are untouched */
+        r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
         ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %d\n", i, r);
     }
 
@@ -2287,6 +2306,8 @@ static void test_srwlock_example(void)
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandleA("kernel32.dll");
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+
     pChangeTimerQueueTimer = (void*)GetProcAddress(hdll, "ChangeTimerQueueTimer");
     pCreateTimerQueue = (void*)GetProcAddress(hdll, "CreateTimerQueue");
     pCreateTimerQueueTimer = (void*)GetProcAddress(hdll, "CreateTimerQueueTimer");
@@ -2312,6 +2333,7 @@ START_TEST(sync)
     pReleaseSRWLockShared = (void *)GetProcAddress(hdll, "ReleaseSRWLockShared");
     pTryAcquireSRWLockExclusive = (void *)GetProcAddress(hdll, "TryAcquireSRWLockExclusive");
     pTryAcquireSRWLockShared = (void *)GetProcAddress(hdll, "TryAcquireSRWLockShared");
+    pNtWaitForMultipleObjects = (void *)GetProcAddress(hntdll, "NtWaitForMultipleObjects");
 
     test_signalandwait();
     test_mutex();
