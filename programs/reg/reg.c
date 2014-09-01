@@ -28,7 +28,7 @@ static int reg_printfW(const WCHAR *msg, ...)
     WCHAR msg_buffer[8192];
 
     va_start(va_args, msg);
-    vsprintfW(msg_buffer, msg, va_args);
+    vsnprintfW(msg_buffer, 8192, msg, va_args);
     va_end(va_args);
 
     wlen = lstrlenW(msg_buffer);
