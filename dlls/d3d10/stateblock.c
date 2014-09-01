@@ -28,11 +28,202 @@ struct d3d10_stateblock
 {
     ID3D10StateBlock ID3D10StateBlock_iface;
     LONG refcount;
+
+    ID3D10Device *device;
+    D3D10_STATE_BLOCK_MASK mask;
+
+    ID3D10VertexShader *vs;
+    ID3D10SamplerState *vs_samplers[D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    ID3D10ShaderResourceView *vs_resources[D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D10Buffer *vs_cbs[D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
+    ID3D10GeometryShader *gs;
+    ID3D10SamplerState *gs_samplers[D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    ID3D10ShaderResourceView *gs_resources[D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D10Buffer *gs_cbs[D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
+    ID3D10PixelShader *ps;
+    ID3D10SamplerState *ps_samplers[D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    ID3D10ShaderResourceView *ps_resources[D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D10Buffer *ps_cbs[D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
+    ID3D10Buffer *vbs[D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    UINT vb_strides[D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    UINT vb_offsets[D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D10Buffer *ib;
+    DXGI_FORMAT ib_format;
+    UINT ib_offset;
+    ID3D10InputLayout *il;
+    D3D10_PRIMITIVE_TOPOLOGY topology;
+    ID3D10RenderTargetView *rtvs[D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    ID3D10DepthStencilView *dsv;
+    ID3D10DepthStencilState *dss;
+    ID3D10BlendState *bs;
+    float blend_factor[4];
+    UINT sample_mask;
+    D3D10_VIEWPORT vps[D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+    D3D10_RECT scissor_rects[D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+    ID3D10RasterizerState *rs;
+    ID3D10Buffer *so_buffers[D3D10_SO_BUFFER_SLOT_COUNT];
+    UINT so_offsets[D3D10_SO_BUFFER_SLOT_COUNT];
+    ID3D10Predicate *predicate;
+    BOOL predicate_value;
 };
 
 static inline struct d3d10_stateblock *impl_from_ID3D10StateBlock(ID3D10StateBlock *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d10_stateblock, ID3D10StateBlock_iface);
+}
+
+static void stateblock_cleanup(struct d3d10_stateblock *stateblock)
+{
+    unsigned int i;
+
+    if (stateblock->vs)
+    {
+        ID3D10VertexShader_Release(stateblock->vs);
+        stateblock->vs = NULL;
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->vs_samplers[i])
+        {
+            ID3D10SamplerState_Release(stateblock->vs_samplers[i]);
+            stateblock->vs_samplers[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->vs_resources[i])
+        {
+            ID3D10ShaderResourceView_Release(stateblock->vs_resources[i]);
+            stateblock->vs_resources[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->vs_cbs[i])
+        {
+            ID3D10Buffer_Release(stateblock->vs_cbs[i]);
+            stateblock->vs_cbs[i] = NULL;
+        }
+    }
+
+    if (stateblock->gs)
+    {
+        ID3D10GeometryShader_Release(stateblock->gs);
+        stateblock->gs = NULL;
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->gs_samplers[i])
+        {
+            ID3D10SamplerState_Release(stateblock->gs_samplers[i]);
+            stateblock->gs_samplers[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->gs_resources[i])
+        {
+            ID3D10ShaderResourceView_Release(stateblock->gs_resources[i]);
+            stateblock->gs_resources[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->gs_cbs[i])
+        {
+            ID3D10Buffer_Release(stateblock->gs_cbs[i]);
+            stateblock->gs_cbs[i] = NULL;
+        }
+    }
+
+    if (stateblock->ps)
+    {
+        ID3D10PixelShader_Release(stateblock->ps);
+        stateblock->ps = NULL;
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->ps_samplers[i])
+        {
+            ID3D10SamplerState_Release(stateblock->ps_samplers[i]);
+            stateblock->ps_samplers[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->ps_resources[i])
+        {
+            ID3D10ShaderResourceView_Release(stateblock->ps_resources[i]);
+            stateblock->ps_resources[i] = NULL;
+        }
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->ps_cbs[i])
+        {
+            ID3D10Buffer_Release(stateblock->ps_cbs[i]);
+            stateblock->ps_cbs[i] = NULL;
+        }
+    }
+
+    for (i = 0; i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->vbs[i])
+        {
+            ID3D10Buffer_Release(stateblock->vbs[i]);
+            stateblock->vbs[i] = NULL;
+        }
+    }
+    if (stateblock->ib)
+    {
+        ID3D10Buffer_Release(stateblock->ib);
+        stateblock->ib = NULL;
+    }
+    if (stateblock->il)
+    {
+        ID3D10InputLayout_Release(stateblock->il);
+        stateblock->il = NULL;
+    }
+
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        if (stateblock->rtvs[i])
+        {
+            ID3D10RenderTargetView_Release(stateblock->rtvs[i]);
+            stateblock->rtvs[i] = NULL;
+        }
+    }
+    if (stateblock->dsv)
+    {
+        ID3D10DepthStencilView_Release(stateblock->dsv);
+        stateblock->dsv = NULL;
+    }
+    if (stateblock->bs)
+    {
+        ID3D10BlendState_Release(stateblock->bs);
+        stateblock->bs = NULL;
+    }
+
+    if (stateblock->rs)
+    {
+        ID3D10RasterizerState_Release(stateblock->rs);
+        stateblock->rs = NULL;
+    }
+
+    for (i = 0; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->so_buffers[i])
+        {
+            ID3D10Buffer_Release(stateblock->so_buffers[i]);
+            stateblock->so_buffers[i] = NULL;
+        }
+    }
+
+    if (stateblock->predicate)
+    {
+        ID3D10Predicate_Release(stateblock->predicate);
+        stateblock->predicate = NULL;
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_stateblock_QueryInterface(ID3D10StateBlock *iface, REFIID iid, void **object)
@@ -75,16 +266,114 @@ static ULONG STDMETHODCALLTYPE d3d10_stateblock_Release(ID3D10StateBlock *iface)
     TRACE("%p decreasing refcount to %u.\n", stateblock, refcount);
 
     if (!refcount)
+    {
+        stateblock_cleanup(stateblock);
         HeapFree(GetProcessHeap(), 0, stateblock);
+    }
 
     return refcount;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    unsigned int vp_count = D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    struct d3d10_stateblock *stateblock = impl_from_ID3D10StateBlock(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    stateblock_cleanup(stateblock);
+
+    if (stateblock->mask.VS)
+        ID3D10Device_VSGetShader(stateblock->device, &stateblock->vs);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.VSSamplers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_VSGetSamplers(stateblock->device, i, 1, &stateblock->vs_samplers[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.VSShaderResources[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_VSGetShaderResources(stateblock->device, i, 1, &stateblock->vs_resources[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.VSConstantBuffers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_VSGetConstantBuffers(stateblock->device, i, 1, &stateblock->vs_cbs[i]);
+    }
+
+    if (stateblock->mask.GS)
+        ID3D10Device_GSGetShader(stateblock->device, &stateblock->gs);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.GSSamplers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_GSGetSamplers(stateblock->device, i, 1, &stateblock->gs_samplers[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.GSShaderResources[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_GSGetShaderResources(stateblock->device, i, 1, &stateblock->gs_resources[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.GSConstantBuffers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_GSGetConstantBuffers(stateblock->device, i, 1, &stateblock->gs_cbs[i]);
+    }
+
+    if (stateblock->mask.PS)
+        ID3D10Device_PSGetShader(stateblock->device, &stateblock->ps);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.PSSamplers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_PSGetSamplers(stateblock->device, i, 1, &stateblock->ps_samplers[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.PSShaderResources[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_PSGetShaderResources(stateblock->device, i, 1, &stateblock->ps_resources[i]);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.PSConstantBuffers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_PSGetConstantBuffers(stateblock->device, i, 1, &stateblock->ps_cbs[i]);
+    }
+
+    for (i = 0; i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        if (stateblock->mask.IAVertexBuffers[i >> 3] & (1 << (i & 7)))
+            ID3D10Device_IAGetVertexBuffers(stateblock->device, i, 1, &stateblock->vbs[i],
+                    &stateblock->vb_strides[i], &stateblock->vb_offsets[i]);
+    }
+    if (stateblock->mask.IAIndexBuffer)
+        ID3D10Device_IAGetIndexBuffer(stateblock->device, &stateblock->ib,
+                &stateblock->ib_format, &stateblock->ib_offset);
+    if (stateblock->mask.IAInputLayout)
+        ID3D10Device_IAGetInputLayout(stateblock->device, &stateblock->il);
+    if (stateblock->mask.IAPrimitiveTopology)
+        ID3D10Device_IAGetPrimitiveTopology(stateblock->device, &stateblock->topology);
+
+    if (stateblock->mask.OMRenderTargets)
+        ID3D10Device_OMGetRenderTargets(stateblock->device, D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT,
+                stateblock->rtvs, &stateblock->dsv);
+    if (stateblock->mask.OMBlendState)
+        ID3D10Device_OMGetBlendState(stateblock->device, &stateblock->bs,
+                stateblock->blend_factor, &stateblock->sample_mask);
+
+    if (stateblock->mask.RSViewports)
+        ID3D10Device_RSGetViewports(stateblock->device, &vp_count, stateblock->vps);
+    if (stateblock->mask.RSScissorRects)
+        ID3D10Device_RSGetScissorRects(stateblock->device, &vp_count, stateblock->scissor_rects);
+    if (stateblock->mask.RSRasterizerState)
+        ID3D10Device_RSGetState(stateblock->device, &stateblock->rs);
+
+    if (stateblock->mask.SOBuffers)
+        ID3D10Device_SOGetTargets(stateblock->device, D3D10_SO_BUFFER_SLOT_COUNT,
+                stateblock->so_buffers, stateblock->so_offsets);
+
+    if (stateblock->mask.Predication)
+        ID3D10Device_GetPredication(stateblock->device, &stateblock->predicate, &stateblock->predicate_value);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
@@ -137,6 +426,10 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
 
     object->ID3D10StateBlock_iface.lpVtbl = &d3d10_stateblock_vtbl;
     object->refcount = 1;
+
+    object->device = device;
+    ID3D10Device_AddRef(object->device);
+    object->mask = *mask;
 
     TRACE("Created stateblock %p.\n", object);
     *stateblock = &object->ID3D10StateBlock_iface;
