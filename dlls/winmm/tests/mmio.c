@@ -636,9 +636,9 @@ static void test_mmioOpen_fourcc(void)
     mmioGetInfo(hmmio, &mmio, 0);
     ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
             mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
-    todo_wine ok(mmio.adwInfo[1] == 0, "mmioOpenA sent MMIOM_SEEK, got %d\n",
+    ok(mmio.adwInfo[1] == 0, "mmioOpenA sent MMIOM_SEEK, got %d\n",
        mmio.adwInfo[1]);
-    todo_wine ok(mmio.lDiskOffset == 0, "mmioOpenA updated lDiskOffset, got %d\n",
+    ok(mmio.lDiskOffset == 0, "mmioOpenA updated lDiskOffset, got %d\n",
        mmio.lDiskOffset);
     mmioClose(hmmio, 0);
 
