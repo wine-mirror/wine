@@ -912,13 +912,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if(msi_strequal(argvW[i]+2, "b+!"))
 			{
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG;
-				WINE_FIXME("Unknown modifier: !\n");
+				WINE_FIXME("Unhandled modifier: !\n");
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG|INSTALLUILEVEL_HIDECANCEL;
+			}
+			else if(msi_strequal(argvW[i]+2, "b-!"))
+			{
+				WINE_FIXME("Unhandled modifier: !\n");
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY|INSTALLUILEVEL_HIDECANCEL;
 			}
 			else if(msi_strequal(argvW[i]+2, "b!"))
 			{
-				InstallUILevel = INSTALLUILEVEL_BASIC;
-				WINE_FIXME("Unknown modifier: !\n");
+				WINE_FIXME("Unhandled modifier: !\n");
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_HIDECANCEL;
 			}
 			else
 			{
