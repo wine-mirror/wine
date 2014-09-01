@@ -7754,7 +7754,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-    WCHAR *reinstall, *remove, *patch;
+    WCHAR *reinstall, *remove, *patch, *productcode;
     BOOL ui_exists;
     UINT rc;
 
@@ -7822,6 +7822,15 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_parse_command_line( package, szCommandLine, FALSE );
     msi_adjust_privilege_properties( package );
     msi_set_context( package );
+
+    productcode = msi_dup_property( package->db, szProductCode );
+    if (strcmpiW( productcode, package->ProductCode ))
+    {
+        TRACE( "product code changed %s -> %s\n", debugstr_w(package->ProductCode), debugstr_w(productcode) );
+        msi_free( package->ProductCode );
+        package->ProductCode = productcode;
+    }
+    else msi_free( productcode );
 
     if (msi_get_property_int( package->db, szDisableRollback, 0 ))
     {
