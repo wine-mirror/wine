@@ -1515,7 +1515,7 @@ static HRESULT WINAPI localfontfileloader_GetFilePathFromKey(IDWriteLocalFontFil
 static HRESULT WINAPI localfontfileloader_GetLastWriteTimeFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, FILETIME *writetime)
 {
     struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
-    FIXME("(%p)->(%p, %i, %p):stub \n",This, key, key_size, writetime);
+    FIXME("(%p)->(%p, %i, %p):stub\n",This, key, key_size, writetime);
     return E_NOTIMPL;
 }
 
