@@ -265,8 +265,14 @@ static void test_empty_headers_param(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, empty, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok(ret, "failed to send request %u\n", GetLastError());
 
+ done:
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
@@ -315,6 +321,11 @@ static void test_SendRequest (void)
 
     context++;
     ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, context);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
 
     context = 0;
@@ -346,9 +357,9 @@ static void test_SendRequest (void)
     ok(bytes_rw == sizeof(test_post) - 1, "Read %u bytes\n", bytes_rw);
     ok(!memcmp(buffer, test_post, sizeof(test_post) - 1), "Data read did not match.\n");
 
+ done:
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
- done:
     ret = WinHttpCloseHandle(connection);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
     ret = WinHttpCloseHandle(session);
@@ -845,18 +856,17 @@ static void test_secure_connection(void)
     WinHttpSetStatusCallback(req, cert_error, WINHTTP_CALLBACK_STATUS_SECURE_FAILURE, 0);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    ok(ret, "failed to send request %u\n", GetLastError());
-    if (!ret)
+    if (!ret && (GetLastError() == ERROR_WINHTTP_SECURE_FAILURE || GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT))
     {
         skip("secure connection failed, skipping remaining secure tests\n");
         goto cleanup;
     }
+    ok(ret, "failed to send request %u\n", GetLastError());
 
     size = sizeof(cert);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &cert, &size );
     ok(ret, "failed to retrieve certificate context %u\n", GetLastError());
-    if (ret)
-        CertFreeCertificateContext(cert);
+    if (ret) CertFreeCertificateContext(cert);
 
     size = sizeof(bitness);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_KEY_BITNESS, &bitness, &size );
@@ -920,6 +930,11 @@ static void test_request_parameter_defaults(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
@@ -936,6 +951,11 @@ static void test_request_parameter_defaults(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
@@ -959,6 +979,7 @@ static void test_request_parameter_defaults(void)
     ok(ret, "failed unexpectedly %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
 
+done:
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
@@ -1719,12 +1740,11 @@ static void test_resolve_timeout(void)
 
         SetLastError(0xdeadbeef);
         ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-        if(ret == 1)
+        if (ret)
         {
             skip("nxdomain returned success. Broken ISP redirects?\n");
-            return;
+            goto done;
         }
-        ok(!ret, "sent request\n");
         ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
            "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
 
@@ -1749,8 +1769,14 @@ static void test_resolve_timeout(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok(ret, "failed to send request\n");
 
+ done:
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
@@ -3071,6 +3097,11 @@ static void test_chunked_read(void)
     if (!req) goto done;
 
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
     ok( ret, "WinHttpSendRequest failed with error %u\n", GetLastError() );
 
     ret = WinHttpReceiveResponse( req, NULL );
