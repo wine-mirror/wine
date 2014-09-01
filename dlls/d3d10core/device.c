@@ -475,10 +475,36 @@ static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device1 *iface)
 static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device1 *iface, ID3D10RasterizerState *rasterizer_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    const D3D10_RASTERIZER_DESC *desc;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
-    device->rasterizer_state = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
+    if (!(device->rasterizer_state = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state)))
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, WINED3D_CULL_CCW);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
+        return;
+    }
+
+    desc = &device->rasterizer_state->desc;
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
+    /* glFrontFace() */
+    if (desc->FrontCounterClockwise)
+        FIXME("Ignoring FrontCounterClockwise %#x.\n", desc->FrontCounterClockwise);
+    /* OpenGL style depth bias. */
+    if (desc->DepthBias || desc->SlopeScaledDepthBias)
+        FIXME("Ignoring depth bias.\n");
+    /* GL_DEPTH_CLAMP */
+    if (!desc->DepthClipEnable)
+        FIXME("Ignoring DepthClipEnable %#x.\n", desc->DepthClipEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, desc->ScissorEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, desc->MultisampleEnable);
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_ANTIALIASEDLINEENABLE, desc->AntialiasedLineEnable);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,
