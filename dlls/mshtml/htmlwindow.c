@@ -264,6 +264,9 @@ static void release_inner_window(HTMLInnerWindow *This)
         IOmHistory_Release(&This->history->IOmHistory_iface);
     }
 
+    if(This->session_storage)
+        IHTMLStorage_Release(This->session_storage);
+
     if(This->mon)
         IMoniker_Release(This->mon);
 
