@@ -125,6 +125,16 @@ typedef struct
 #define MS_OS2_TAG  MS_MAKE_TAG('O','S','/','2')
 #define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
 
+struct dwrite_font_data {
+    DWRITE_FONT_STYLE style;
+    DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_WEIGHT weight;
+    DWRITE_FONT_SIMULATIONS simulations;
+    DWRITE_FONT_METRICS metrics;
+
+    WCHAR *facename;
+};
+
 struct dwrite_fontcollection {
     IDWriteFontCollection IDWriteFontCollection_iface;
     LONG ref;
@@ -148,11 +158,8 @@ struct dwrite_font {
     BOOL is_system;
     IDWriteFontFamily *family;
     IDWriteFontFace *face;
-    DWRITE_FONT_STYLE style;
-    DWRITE_FONT_STRETCH stretch;
-    DWRITE_FONT_WEIGHT weight;
-    DWRITE_FONT_METRICS metrics;
-    WCHAR *facename;
+
+    struct dwrite_font_data *data;
 };
 
 #define DWRITE_FONTTABLE_MAGIC 0xededfafa
@@ -528,10 +535,10 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
 
     This->is_system = TRUE;
     memset(&This->logfont, 0, sizeof(This->logfont));
-    This->logfont.lfItalic = font->style == DWRITE_FONT_STYLE_ITALIC;
+    This->logfont.lfItalic = font->data->style == DWRITE_FONT_STYLE_ITALIC;
     /* weight values from DWRITE_FONT_WEIGHT match values used for LOGFONT */
-    This->logfont.lfWeight = font->weight;
-    strcpyW(This->logfont.lfFaceName, font->facename);
+    This->logfont.lfWeight = font->data->weight;
+    strcpyW(This->logfont.lfFaceName, font->data->facename);
 
     *face = &This->IDWriteFontFace_iface;
 
@@ -583,7 +590,8 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
     {
         if (This->face) IDWriteFontFace_Release(This->face);
         IDWriteFontFamily_Release(This->family);
-        heap_free(This->facename);
+        heap_free(This->data->facename);
+        heap_free(This->data);
         heap_free(This);
     }
 
@@ -604,21 +612,21 @@ static DWRITE_FONT_WEIGHT WINAPI dwritefont_GetWeight(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
     TRACE("(%p)\n", This);
-    return This->weight;
+    return This->data->weight;
 }
 
 static DWRITE_FONT_STRETCH WINAPI dwritefont_GetStretch(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
     TRACE("(%p)\n", This);
-    return This->stretch;
+    return This->data->stretch;
 }
 
 static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
     TRACE("(%p)\n", This);
-    return This->style;
+    return This->data->style;
 }
 
 static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont *iface)
@@ -646,8 +654,8 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont *iface,
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_SIMULATIONS_NONE;
+    TRACE("(%p)\n", This);
+    return This->data->simulations;
 }
 
 static void WINAPI dwritefont_GetMetrics(IDWriteFont *iface, DWRITE_FONT_METRICS *metrics)
@@ -655,7 +663,7 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont *iface, DWRITE_FONT_METRICS
     struct dwrite_font *This = impl_from_IDWriteFont(iface);
 
     TRACE("(%p)->(%p)\n", This, metrics);
-    *metrics = This->metrics;
+    *metrics = This->data->metrics;
 }
 
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont *iface, UINT32 value, BOOL *exists)
@@ -1011,10 +1019,10 @@ static void get_font_properties(struct dwrite_font *font, HDC hdc)
     LONG size;
 
     /* default stretch and weight to normal */
-    font->stretch = DWRITE_FONT_STRETCH_NORMAL;
-    font->weight = DWRITE_FONT_WEIGHT_NORMAL;
+    font->data->stretch = DWRITE_FONT_STRETCH_NORMAL;
+    font->data->weight = DWRITE_FONT_WEIGHT_NORMAL;
 
-    memset(&font->metrics, 0, sizeof(font->metrics));
+    memset(&font->data->metrics, 0, sizeof(font->data->metrics));
 
     size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
     if (size != GDI_ERROR)
@@ -1026,31 +1034,31 @@ static void get_font_properties(struct dwrite_font *font, HDC hdc)
 
         /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
         if (GET_BE_WORD(tt_os2.usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-            font->stretch = GET_BE_WORD(tt_os2.usWidthClass);
+            font->data->stretch = GET_BE_WORD(tt_os2.usWidthClass);
 
-        font->weight = GET_BE_WORD(tt_os2.usWeightClass);
-        TRACE("stretch=%d, weight=%d\n", font->stretch, font->weight);
+        font->data->weight = GET_BE_WORD(tt_os2.usWeightClass);
+        TRACE("stretch=%d, weight=%d\n", font->data->stretch, font->data->weight);
 
-        font->metrics.ascent    = GET_BE_WORD(tt_os2.sTypoAscender);
-        font->metrics.descent   = GET_BE_WORD(tt_os2.sTypoDescender);
-        font->metrics.lineGap   = GET_BE_WORD(tt_os2.sTypoLineGap);
-        font->metrics.capHeight = GET_BE_WORD(tt_os2.sCapHeight);
-        font->metrics.xHeight   = GET_BE_WORD(tt_os2.sxHeight);
-        font->metrics.strikethroughPosition  = GET_BE_WORD(tt_os2.yStrikeoutPosition);
-        font->metrics.strikethroughThickness = GET_BE_WORD(tt_os2.yStrikeoutSize);
+        font->data->metrics.ascent    = GET_BE_WORD(tt_os2.sTypoAscender);
+        font->data->metrics.descent   = GET_BE_WORD(tt_os2.sTypoDescender);
+        font->data->metrics.lineGap   = GET_BE_WORD(tt_os2.sTypoLineGap);
+        font->data->metrics.capHeight = GET_BE_WORD(tt_os2.sCapHeight);
+        font->data->metrics.xHeight   = GET_BE_WORD(tt_os2.sxHeight);
+        font->data->metrics.strikethroughPosition  = GET_BE_WORD(tt_os2.yStrikeoutPosition);
+        font->data->metrics.strikethroughThickness = GET_BE_WORD(tt_os2.yStrikeoutSize);
     }
 
     memset(&tt_head, 0, sizeof(tt_head));
     if (GetFontData(hdc, MS_HEAD_TAG, 0, &tt_head, sizeof(tt_head)) != GDI_ERROR)
     {
-        font->metrics.designUnitsPerEm = GET_BE_WORD(tt_head.unitsPerEm);
+        font->data->metrics.designUnitsPerEm = GET_BE_WORD(tt_head.unitsPerEm);
     }
 
     memset(&tt_post, 0, sizeof(tt_post));
     if (GetFontData(hdc, MS_POST_TAG, 0, &tt_post, sizeof(tt_post)) != GDI_ERROR)
     {
-        font->metrics.underlinePosition = GET_BE_WORD(tt_post.underlinePosition);
-        font->metrics.underlineThickness = GET_BE_WORD(tt_post.underlineThickness);
+        font->data->metrics.underlinePosition = GET_BE_WORD(tt_post.underlinePosition);
+        font->data->metrics.underlineThickness = GET_BE_WORD(tt_post.underlineThickness);
     }
 }
 
@@ -1069,10 +1077,17 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 
     This = heap_alloc(sizeof(struct dwrite_font));
     if (!This) return E_OUTOFMEMORY;
+    This->data = heap_alloc(sizeof(struct dwrite_font_data));
+    if (!This->data)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
 
     hfont = CreateFontIndirectW(logfont);
     if (!hfont)
     {
+        heap_free(This->data);
         heap_free(This);
         return DWRITE_E_NOFONT;
     }
@@ -1084,6 +1099,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     otm = heap_alloc(ret);
     if (!otm)
     {
+        heap_free(This->data);
         heap_free(This);
         DeleteDC(hdc);
         DeleteObject(hfont);
@@ -1105,6 +1121,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     heap_free(otm);
     if (hr != S_OK)
     {
+        heap_free(This->data);
         heap_free(This);
         return hr;
     }
@@ -1114,8 +1131,9 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->face = NULL;
     This->is_system = TRUE;
     This->family = family;
-    This->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
-    This->facename = heap_strdupW(logfont->lfFaceName);
+    This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    This->data->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+    This->data->facename = heap_strdupW(logfont->lfFaceName);
 
     *font = &This->IDWriteFont_iface;
 
