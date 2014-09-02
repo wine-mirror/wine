@@ -499,6 +499,57 @@ static void test_style4(IHTMLStyle4 *style4)
     VariantClear(&vdefault);
 }
 
+static void test_style5(IHTMLStyle5 *style5)
+{
+    HRESULT hres;
+    VARIANT v;
+    VARIANT vdefault;
+
+    /* minWidth */
+    hres = IHTMLStyle5_get_minWidth(style5, &vdefault);
+    ok(hres == S_OK, "get_minWidth failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("12px");
+    hres = IHTMLStyle5_put_minWidth(style5, v);
+    ok(hres == S_OK, "put_minWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_get_minWidth(style5, &v);
+    ok(hres == S_OK, "get_minWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "12px"), "expect 12px got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10%");
+    hres = IHTMLStyle5_put_minWidth(style5, v);
+    ok(hres == S_OK, "put_minWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_get_minWidth(style5, &v);
+    ok(hres == S_OK, "get_minWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "10%"), "expect 10%% got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("10");
+    hres = IHTMLStyle5_put_minWidth(style5, v);
+    ok(hres == S_OK, "put_minWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_get_minWidth(style5, &v);
+    ok(hres == S_OK, "get_minWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "10px"), "expect 10px got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_put_minWidth(style5, vdefault);
+    ok(hres == S_OK, "put_minWidth failed: %08x\n", hres);
+    VariantClear(&vdefault);
+}
+
 static void test_style6(IHTMLStyle6 *style)
 {
     BSTR str;
@@ -544,6 +595,7 @@ static void test_body_style(IHTMLStyle *style)
     IHTMLStyle2 *style2;
     IHTMLStyle3 *style3;
     IHTMLStyle4 *style4;
+    IHTMLStyle5 *style5;
     IHTMLStyle6 *style6;
     VARIANT_BOOL b;
     VARIANT v;
@@ -2247,6 +2299,14 @@ static void test_body_style(IHTMLStyle *style)
     if(SUCCEEDED(hres)) {
         test_style4(style4);
         IHTMLStyle4_Release(style4);
+    }
+
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle5, (void**)&style5);
+    if(SUCCEEDED(hres)) {
+        test_style5(style5);
+        IHTMLStyle5_Release(style5);
+    }else {
+        win_skip("IHTMLStyle5 not available\n");
     }
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle6, (void**)&style6);
