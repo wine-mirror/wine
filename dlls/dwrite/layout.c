@@ -229,7 +229,7 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range->strikethrough = FALSE;
     range->collection = layout->format.collection;
     if (range->collection)
-        IDWriteFontCollection_Release(range->collection);
+        IDWriteFontCollection_AddRef(range->collection);
 
     return range;
 }
@@ -1781,14 +1781,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
         IDWriteFontCollection_AddRef(collection);
     }
     else
-    {
-        HRESULT hr = get_system_fontcollection(&This->format.collection);
-        if (hr != S_OK)
-        {
-            IDWriteTextFormat_Release(&This->IDWriteTextFormat_iface);
-            return hr;
-        }
-    }
+        ERR("Collection should always be set\n");
 
     *format = &This->IDWriteTextFormat_iface;
 
