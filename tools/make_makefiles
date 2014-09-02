@@ -578,7 +578,8 @@ sub update_linguas(@)
 }
 
 
-die "needs to be run from a git checkout" unless -d ".git";
+my $git_dir = $ENV{GIT_DIR} || ".git";
+die "needs to be run from a git checkout" unless -d $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z`;
 @linguas = map { (my $ret = $_) =~ s/^po\/(.*)\.po/$1/; $ret; } grep /^po\/.*\.po$/, @all_files;
