@@ -174,6 +174,30 @@ char* CDECL MSVCRT__strupr(char *str)
 }
 
 /*********************************************************************
+ *              _strnset_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__strnset_s(char *str, MSVCRT_size_t size, int c, MSVCRT_size_t count)
+{
+    MSVCRT_size_t i;
+
+    if(!str && !size && !count) return 0;
+    if(!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(size > 0)) return MSVCRT_EINVAL;
+
+    for(i=0; i<size-1 && i<count; i++) {
+        if(!str[i]) return 0;
+        str[i] = c;
+    }
+    for(; i<size; i++)
+        if(!str[i]) return 0;
+
+    str[0] = 0;
+    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+}
+
+/*********************************************************************
  *		_strnset (MSVCRT.@)
  */
 char* CDECL MSVCRT__strnset(char* str, int value, MSVCRT_size_t len)

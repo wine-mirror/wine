@@ -971,7 +971,7 @@
 @ cdecl _strnicoll(str str long) MSVCRT__strnicoll
 @ cdecl _strnicoll_l(str str long ptr) MSVCRT__strnicoll_l
 @ cdecl _strnset(str long long) MSVCRT__strnset
-# stub _strnset_s(str long long long)
+@ cdecl _strnset_s(str long long long) MSVCRT__strnset_s
 @ cdecl _strrev(str) MSVCRT__strrev
 @ cdecl _strset(str long)
 # stub _strset_s(str long long)
