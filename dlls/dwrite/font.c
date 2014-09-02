@@ -126,6 +126,8 @@ typedef struct
 #define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
 
 struct dwrite_fontface_data {
+    LONG ref;
+
     DWRITE_FONT_FACE_TYPE type;
     UINT32 file_count;
     IDWriteFontFile ** files;
@@ -139,6 +141,8 @@ struct dwrite_font_data {
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_METRICS metrics;
+
+    struct dwrite_fontface_data *face_data;
 
     WCHAR *facename;
 };
@@ -247,6 +251,11 @@ static HRESULT _dwritefontfile_GetFontFileStream(IDWriteFontFile *iface, IDWrite
 static VOID _free_fontface_data(struct dwrite_fontface_data *data)
 {
     int i;
+    if (!data)
+        return;
+    i = InterlockedDecrement(&data->ref);
+    if (i > 0)
+        return;
     for (i = 0; i < data->file_count; i++)
         IDWriteFontFile_Release(data->files[i]);
     heap_free(data->files);
@@ -607,6 +616,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
         if (This->face) IDWriteFontFace_Release(This->face);
         IDWriteFontFamily_Release(This->family);
         heap_free(This->data->facename);
+        _free_fontface_data(This->data->face_data);
         heap_free(This->data);
         heap_free(This);
     }
@@ -711,11 +721,16 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont *iface, IDWriteFontF
     else
     {
         TRACE("(%p)->(%p)\n", This, face);
-        if (This->face)
+
+        if (!This->face)
         {
-            *face = This->face;
-            IDWriteFontFace_AddRef(*face);
+            HRESULT hr = font_create_fontface(NULL, This->data->face_data->type, This->data->face_data->file_count, This->data->face_data->files, This->data->face_data->index, This->data->face_data->simulations, &This->face);
+            if (FAILED(hr)) return hr;
         }
+
+        *face = This->face;
+        IDWriteFontFace_AddRef(*face);
+
         return S_OK;
     }
 }
@@ -1150,6 +1165,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
     This->data->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
     This->data->facename = heap_strdupW(logfont->lfFaceName);
+    This->data->face_data = NULL;
 
     *font = &This->IDWriteFont_iface;
 
@@ -1298,6 +1314,7 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
 
     This->IDWriteFontFace_iface.lpVtbl = &dwritefontfacevtbl;
     This->ref = 1;
+    This->data->ref = 1;
     This->data->type = facetype;
     This->data->file_count = files_number;
     This->data->files = heap_alloc(sizeof(*This->data->files) * files_number);
