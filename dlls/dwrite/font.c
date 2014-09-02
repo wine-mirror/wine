@@ -125,6 +125,14 @@ typedef struct
 #define MS_OS2_TAG  MS_MAKE_TAG('O','S','/','2')
 #define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
 
+struct dwrite_fontface_data {
+    DWRITE_FONT_FACE_TYPE type;
+    UINT32 file_count;
+    IDWriteFontFile ** files;
+    DWRITE_FONT_SIMULATIONS simulations;
+    UINT32 index;
+};
+
 struct dwrite_font_data {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
@@ -174,11 +182,7 @@ struct dwrite_fontface {
     IDWriteFontFace IDWriteFontFace_iface;
     LONG ref;
 
-    DWRITE_FONT_FACE_TYPE type;
-    UINT32 file_count;
-    IDWriteFontFile ** files;
-    DWRITE_FONT_SIMULATIONS simulations;
-    UINT32 index;
+    struct dwrite_fontface_data *data;
 
     BOOL is_system;
     LOGFONTW logfont;
@@ -240,6 +244,15 @@ static HRESULT _dwritefontfile_GetFontFileStream(IDWriteFontFile *iface, IDWrite
     return E_FAIL;
 }
 
+static VOID _free_fontface_data(struct dwrite_fontface_data *data)
+{
+    int i;
+    for (i = 0; i < data->file_count; i++)
+        IDWriteFontFile_Release(data->files[i]);
+    heap_free(data->files);
+    heap_free(data);
+}
+
 static HRESULT WINAPI dwritefontface_QueryInterface(IDWriteFontFace *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
@@ -274,10 +287,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace *iface)
 
     if (!ref)
     {
-        int i;
-        for (i = 0; i < This->file_count; i++)
-            IDWriteFontFile_Release(This->files[i]);
-        heap_free(This->files);
+        _free_fontface_data(This->data);
         heap_free(This);
     }
 
@@ -288,7 +298,7 @@ static DWRITE_FONT_FACE_TYPE WINAPI dwritefontface_GetType(IDWriteFontFace *ifac
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
     TRACE("(%p)\n", This);
-    return This->type;
+    return This->data->type;
 }
 
 static HRESULT WINAPI dwritefontface_GetFiles(IDWriteFontFace *iface, UINT32 *number_of_files,
@@ -299,16 +309,16 @@ static HRESULT WINAPI dwritefontface_GetFiles(IDWriteFontFace *iface, UINT32 *nu
     TRACE("(%p)->(%p %p)\n", This, number_of_files, fontfiles);
     if (fontfiles == NULL)
     {
-        *number_of_files = This->file_count;
+        *number_of_files = This->data->file_count;
         return S_OK;
     }
-    if (*number_of_files < This->file_count)
+    if (*number_of_files < This->data->file_count)
         return E_INVALIDARG;
 
-    for (i = 0; i < This->file_count; i++)
+    for (i = 0; i < This->data->file_count; i++)
     {
-        IDWriteFontFile_AddRef(This->files[i]);
-        fontfiles[i] = This->files[i];
+        IDWriteFontFile_AddRef(This->data->files[i]);
+        fontfiles[i] = This->data->files[i];
     }
 
     return S_OK;
@@ -318,14 +328,14 @@ static UINT32 WINAPI dwritefontface_GetIndex(IDWriteFontFace *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
     TRACE("(%p)\n", This);
-    return This->index;
+    return This->data->index;
 }
 
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefontface_GetSimulations(IDWriteFontFace *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
     TRACE("(%p)\n", This);
-    return This->simulations;
+    return This->data->simulations;
 }
 
 static BOOL WINAPI dwritefontface_IsSymbolFont(IDWriteFontFace *iface)
@@ -417,15 +427,15 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace *iface, UIN
             return E_OUTOFMEMORY;
 
         *exists = FALSE;
-        for (i = 0; i < This->file_count && !(*exists); i++)
+        for (i = 0; i < This->data->file_count && !(*exists); i++)
         {
             IDWriteFontFileStream *stream;
-            hr = _dwritefontfile_GetFontFileStream(This->files[i], &stream);
+            hr = _dwritefontfile_GetFontFileStream(This->data->files[i], &stream);
             if (FAILED(hr))
                 continue;
             table->file_index = i;
 
-            hr = find_font_table(stream, This->index, table_tag, table_data, &table->context, table_size, exists);
+            hr = find_font_table(stream, This->data->index, table_tag, table_data, &table->context, table_size, exists);
 
             IDWriteFontFileStream_Release(stream);
         }
@@ -451,7 +461,7 @@ static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace *iface, void 
         return;
     }
 
-    hr = _dwritefontfile_GetFontFileStream(This->files[table->file_index], &stream);
+    hr = _dwritefontfile_GetFontFileStream(This->data->files[table->file_index], &stream);
     if (FAILED(hr))
         return;
     IDWriteFontFileStream_ReleaseFileFragment(stream, table->context);
@@ -524,14 +534,20 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
 
     This = heap_alloc(sizeof(struct dwrite_fontface));
     if (!This) return E_OUTOFMEMORY;
+    This->data = heap_alloc(sizeof(struct dwrite_fontface_data));
+    if (!This->data)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
 
     This->IDWriteFontFace_iface.lpVtbl = &dwritefontfacevtbl;
     This->ref = 1;
-    This->type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
-    This->file_count = 0;
-    This->files = NULL;
-    This->index = 0;
-    This->simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    This->data->type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+    This->data->file_count = 0;
+    This->data->files = NULL;
+    This->data->index = 0;
+    This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
 
     This->is_system = TRUE;
     memset(&This->logfont, 0, sizeof(This->logfont));
@@ -1273,14 +1289,20 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
 
     This = heap_alloc(sizeof(struct dwrite_fontface));
     if (!This) return E_OUTOFMEMORY;
+    This->data = heap_alloc(sizeof(struct dwrite_fontface_data));
+    if (!This)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
 
     This->IDWriteFontFace_iface.lpVtbl = &dwritefontfacevtbl;
     This->ref = 1;
-    This->type = facetype;
-    This->file_count = files_number;
-    This->files = heap_alloc(sizeof(*This->files) * files_number);
+    This->data->type = facetype;
+    This->data->file_count = files_number;
+    This->data->files = heap_alloc(sizeof(*This->data->files) * files_number);
     /* Verify font file streams */
-    for (i = 0; i < This->file_count && SUCCEEDED(hr); i++)
+    for (i = 0; i < This->data->file_count && SUCCEEDED(hr); i++)
     {
         IDWriteFontFileStream *stream;
         hr = _dwritefontfile_GetFontFileStream(font_files[i], &stream);
@@ -1289,18 +1311,19 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     }
     if (FAILED(hr))
     {
-        heap_free(This->files);
+        heap_free(This->data->files);
+        heap_free(This->data);
         heap_free(This);
         return hr;
     }
-    for (i = 0; i < This->file_count; i++)
+    for (i = 0; i < This->data->file_count; i++)
     {
-        This->files[i] = font_files[i];
+        This->data->files[i] = font_files[i];
         IDWriteFontFile_AddRef(font_files[i]);
     }
 
-    This->index = index;
-    This->simulations = sim_flags;
+    This->data->index = index;
+    This->data->simulations = sim_flags;
     This->is_system = FALSE;
 
     *font_face = &This->IDWriteFontFace_iface;
