@@ -983,7 +983,7 @@
 # stub _strtol_l(str ptr long ptr)
 @ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
-# stub _strtoul_l(str ptr long ptr)
+@ cdecl _strtoul_l(str ptr long ptr) MSVCRT_strtoul_l
 @ cdecl _strupr(str) MSVCRT__strupr
 @ cdecl _strupr_l(str ptr) MSVCRT__strupr_l
 @ cdecl _strupr_s(str long) MSVCRT__strupr_s

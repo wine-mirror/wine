@@ -982,11 +982,11 @@ MSVCRT_long CDECL MSVCRT_strtol(const char* nptr, char** end, int base)
 }
 
 /******************************************************************
- *		strtoul (MSVCRT.@)
+ *		_strtoul_l (MSVCRT.@)
  */
-MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
+MSVCRT_ulong CDECL MSVCRT_strtoul_l(const char* nptr, char** end, int base, MSVCRT__locale_t locale)
 {
-    __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, NULL);
+    __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, locale);
 
     if(ret > MSVCRT_ULONG_MAX) {
         ret = MSVCRT_ULONG_MAX;
@@ -997,6 +997,14 @@ MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
     }
 
     return ret;
+}
+
+/******************************************************************
+ *		strtoul (MSVCRT.@)
+ */
+MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
+{
+    return MSVCRT_strtoul_l(nptr, end, base, NULL);
 }
 
 /*********************************************************************
