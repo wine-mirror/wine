@@ -1162,10 +1162,11 @@ complex_float* __thiscall complex_float_mult_assign_float(complex_float *this, c
 DEFINE_THISCALL_WRAPPER(complex_float_mult_assign, 8)
 complex_float* __thiscall complex_float_mult_assign(complex_float *this, const complex_float *r)
 {
-    complex_float tmp = *this;
+    complex_float tmp;
 
-    this->real = tmp.real*r->real - tmp.imag*r->imag;
-    this->imag = tmp.real*r->imag + tmp.imag*r->real;
+    tmp.real = this->real*r->real - this->imag*r->imag;
+    tmp.imag = this->real*r->imag + this->imag*r->real;
+    *this = tmp;
     return this;
 }
 
@@ -1819,10 +1820,11 @@ complex_double* __thiscall complex_double_mult_assign_double(complex_double *thi
 DEFINE_THISCALL_WRAPPER(complex_double_mult_assign, 8)
 complex_double* __thiscall complex_double_mult_assign(complex_double *this, const complex_double *r)
 {
-    complex_double tmp = *this;
+    complex_double tmp;
 
-    this->real = tmp.real*r->real - tmp.imag*r->imag;
-    this->imag = tmp.real*r->imag + tmp.imag*r->real;
+    tmp.real = this->real*r->real - this->imag*r->imag;
+    tmp.imag = this->real*r->imag + this->imag*r->real;
+    *this = tmp;
     return this;
 }
 
