@@ -635,17 +635,18 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
                 if((cookie_iter->flags & INTERNET_COOKIE_HTTPONLY) && !(flags & INTERNET_COOKIE_HTTPONLY))
                     continue;
 
-                if(res->size) {
+
+                if(!res->size) {
+                    res->cookies = heap_alloc(4*sizeof(*res->cookies));
+                    if(!res->cookies)
+                        continue;
+                    res->size = 4;
+                }else if(res->cnt == res->size) {
                     cookie_t **new_cookies = heap_realloc(res->cookies, res->size*2*sizeof(*res->cookies));
                     if(!new_cookies)
                         continue;
                     res->cookies = new_cookies;
                     res->size *= 2;
-                }else {
-                    res->cookies = heap_alloc(4*sizeof(*res->cookies));
-                    if(!res->cookies)
-                        continue;
-                    res->size = 4;
                 }
 
                 if(res->cnt)
