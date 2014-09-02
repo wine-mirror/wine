@@ -696,6 +696,47 @@ DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info )
 
+#if _MSVCR_VER >= 80
+typedef exception bad_alloc;
+extern const vtable_ptr MSVCRT_bad_alloc_vtable;
+
+static void bad_alloc_ctor(bad_alloc *this, const char **name)
+{
+    MSVCRT_exception_ctor(this, name);
+    this->vtable = &MSVCRT_bad_alloc_vtable;
+}
+
+/* bad_alloc class implementation */
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_copy_ctor,8)
+bad_alloc * __thiscall MSVCRT_bad_alloc_copy_ctor(bad_alloc * _this, const bad_alloc * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_bad_alloc_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_dtor,4)
+void __thiscall MSVCRT_bad_alloc_dtor(bad_alloc * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
+
+__ASM_VTABLE(bad_alloc,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+DEFINE_RTTI_DATA1( bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@" )
+DEFINE_EXCEPTION_TYPE_INFO( bad_alloc, 1, &exception_cxx_type_info, NULL )
+
+void throw_bad_alloc(const char *str)
+{
+    bad_alloc e;
+    bad_alloc_ctor(&e, &str);
+    _CxxThrowException(&e, &bad_alloc_exception_type);
+}
+#endif
+
 void msvcrt_init_exception(void *base)
 {
 #ifdef __x86_64__
@@ -703,6 +744,7 @@ void msvcrt_init_exception(void *base)
     init_exception_rtti(base);
 #if _MSVCR_VER >= 80
     init_exception_old_rtti(base);
+    init_bad_alloc_rtti(base);
 #endif
     init_bad_typeid_rtti(base);
     init_bad_cast_rtti(base);
@@ -712,6 +754,9 @@ void msvcrt_init_exception(void *base)
     init_bad_typeid_cxx(base);
     init_bad_cast_cxx(base);
     init___non_rtti_object_cxx(base);
+#if _MSVCR_VER >= 80
+    init_bad_alloc_cxx(base);
+#endif
 #endif
 }
 
