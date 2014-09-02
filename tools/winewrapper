@@ -88,6 +88,8 @@ if [ -x "$topdir/loader/$name" ]
 then WINELOADER="$topdir/loader/$name"
 elif [ -x "$topdir/loader/wine" ]
 then WINELOADER="$topdir/loader/wine"
+elif [ -x "$topdir/loader/wine64" ]
+then WINELOADER="$topdir/loader/wine64"
 else
   echo "$name: could not find the Wine loader in $topdir"
   exit 1
