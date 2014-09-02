@@ -1521,7 +1521,8 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
     if (wined3d_settings.emulated_textureram)
     {
-        TRACE("Overriding amount of video memory with %u bytes.\n", wined3d_settings.emulated_textureram);
+        TRACE("Overriding amount of video memory with 0x%s bytes.\n",
+                wine_dbgstr_longlong(wined3d_settings.emulated_textureram));
         driver_info->vram_bytes = wined3d_settings.emulated_textureram;
     }
 
