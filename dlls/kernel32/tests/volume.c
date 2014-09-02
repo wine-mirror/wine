@@ -683,6 +683,94 @@ static void test_GetVolumePathNameA(void)
             "\\??\\ReallyBogus", "%CurrentDrive%\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
+        { /* test 20 */
+            "C:", "C:", 2,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 21 */
+            "C:", "C:", 3,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 22 */
+            "C:\\", "C:", 2,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 23 */
+            "C:\\", "C:", 3,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 24 */
+            "C::", "C:", 2,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 25 */
+            "C::", "C:", 3,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 26 */
+            "C::", "C:\\", 4,
+            NO_ERROR, ERROR_MORE_DATA
+        },
+        { /* test 27 */
+            "C:\\windows\\system32\\AnInvalidFolder", "C:", 3,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 28 */
+            "\\\\?\\C:\\AnInvalidFolder", "\\\\?\\C:", 3,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 29 */
+            "\\\\?\\C:\\AnInvalidFolder", "\\\\?\\C:", 6,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 30 */
+            "\\\\?\\C:\\AnInvalidFolder", "\\\\?\\C:", 7,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 31 */
+            "\\\\?\\c:\\AnInvalidFolder", "\\\\?\\c:", 7,
+            NO_ERROR, ERROR_FILENAME_EXCED_RANGE
+        },
+        { /* test 32 */
+            "C:/", "C:\\", 4,
+            NO_ERROR, ERROR_MORE_DATA
+        },
+        { /* test 33 */
+            "M:/", "", 4,
+            ERROR_FILE_NOT_FOUND, ERROR_MORE_DATA
+        },
+        { /* test 34 */
+            "C:ABC:DEF:\\AnInvalidFolder", "C:\\", 4,
+            NO_ERROR, ERROR_MORE_DATA
+        },
+        { /* test 35 */
+            "?:ABC:DEF:\\AnInvalidFolder", "?:\\" /* win2k, winxp */, sizeof(volume_path),
+            ERROR_FILE_NOT_FOUND, NO_ERROR
+        },
+        { /* test 36 */
+            "relative/path", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 37 */
+            "/unix-style/absolute/path", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 38 */
+            "\\??\\C:\\NonExistent", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 39 */
+            "\\??\\M:\\NonExistent", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 40 */
+            "somefile:def", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 41 */
+            "s:omefile", "S:\\" /* win2k, winxp */, sizeof(volume_path),
+            ERROR_FILE_NOT_FOUND, NO_ERROR
+        },
     };
     BOOL ret, success;
     DWORD error;
@@ -709,6 +797,9 @@ static void test_GetVolumePathNameA(void)
         BOOL expected_ret = test_paths[i].error == NO_ERROR ? TRUE : FALSE;
 
         volume_path[0] = 0;
+        if (test_paths[i].path_len < sizeof(volume_path))
+            volume_path[ test_paths[i].path_len ] = 0x11;
+
         SetLastError( 0xdeadbeef );
         ret = pGetVolumePathNameA( test_paths[i].file_name, output, test_paths[i].path_len );
         error = GetLastError();
@@ -734,6 +825,10 @@ static void test_GetVolumePathNameA(void)
             ok(success, "GetVolumePathName test %d unexpectedly returned error 0x%x (expected 0x%x).\n",
                         i, error, test_paths[i].error);
         }
+
+        if (test_paths[i].path_len < sizeof(volume_path))
+            ok(volume_path[ test_paths[i].path_len ] == 0x11,
+               "GetVolumePathName test %d corrupted byte after end of buffer.\n", i);
     }
 }
 
