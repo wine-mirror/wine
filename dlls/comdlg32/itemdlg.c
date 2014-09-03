@@ -1880,10 +1880,9 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypeIndex(IFileDialog2 *iface, UINT 
     if(!This->filterspecs)
         return E_FAIL;
 
-    if(iFileType >= This->filterspec_count)
-        This->filetypeindex = This->filterspec_count - 1;
-    else
-        This->filetypeindex = iFileType;
+    iFileType = max(iFileType, 1);
+    iFileType = min(iFileType, This->filterspec_count);
+    This->filetypeindex = iFileType-1;
 
     return S_OK;
 }
@@ -1896,7 +1895,10 @@ static HRESULT WINAPI IFileDialog2_fnGetFileTypeIndex(IFileDialog2 *iface, UINT 
     if(!piFileType)
         return E_INVALIDARG;
 
-    *piFileType = This->filetypeindex;
+    if(This->filterspec_count == 0)
+        *piFileType = 0;
+    else
+        *piFileType = This->filetypeindex + 1;
 
     return S_OK;
 }

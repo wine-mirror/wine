@@ -643,8 +643,6 @@ static void test_basics(void)
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, filterspec);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
-    hr = IFileOpenDialog_SetFileTypeIndex(pfod, -1);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 0);
     ok(hr == E_FAIL, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 1);
@@ -655,25 +653,39 @@ static void test_basics(void)
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 0);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(filetype == 1, "got %d\n", filetype);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 100);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(filetype == 1, "got %d\n", filetype);
     hr = IFileOpenDialog_SetFileTypes(pfod, 1, filterspec);
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 1, &filterspec[1]);
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
 
-    hr = IFileSaveDialog_SetFileTypeIndex(pfsd, -1);
-    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 0);
     ok(hr == E_FAIL, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 1);
     ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-    hr = IFileSaveDialog_SetFileTypes(pfsd, 1, filterspec);
+    hr = IFileSaveDialog_SetFileTypes(pfsd, 2, filterspec);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    /* I hope noone relies on this one */
+    todo_wine ok(filetype == 0, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 0);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(filetype == 1, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypeIndex(pfsd, 100);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
+    hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(filetype == 2, "got %d\n", filetype);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 1, filterspec);
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 1, &filterspec[1]);
