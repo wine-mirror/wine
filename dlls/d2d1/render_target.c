@@ -483,11 +483,11 @@ static D2D1_SIZE_F STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTa
 
 static D2D1_SIZE_U STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelSize(ID2D1RenderTarget *iface)
 {
-    static const D2D1_SIZE_U size = {0, 0};
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
 
-    return size;
+    return render_target->pixel_size;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_d3d_render_target_GetMaximumBitmapSize(ID2D1RenderTarget *iface)
@@ -566,9 +566,12 @@ static const struct ID2D1RenderTargetVtbl d2d_d3d_render_target_vtbl =
     d2d_d3d_render_target_IsSupported,
 };
 
-void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
+HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
+    DXGI_SURFACE_DESC surface_desc;
+    HRESULT hr;
+
     static const D2D1_MATRIX_3X2_F identity =
     {
         1.0f, 0.0f,
@@ -581,5 +584,15 @@ void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
     render_target->refcount = 1;
 
+    if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+    {
+        WARN("Failed to get surface desc, hr %#x.\n", hr);
+        return hr;
+    }
+
+    render_target->pixel_size.width = surface_desc.Width;
+    render_target->pixel_size.height = surface_desc.Height;
     render_target->transform = identity;
+
+    return S_OK;
 }
