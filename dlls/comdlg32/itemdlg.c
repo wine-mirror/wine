@@ -3265,7 +3265,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize
     HRESULT hr;
     TRACE("%p (%d, %p, %d)\n", This, dwIDCtl, pszLabel, bChecked);
 
-    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX, 0,
+    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX|BS_MULTILINE, 0,
                           This->cctrl_def_height, &ctrl);
     if(SUCCEEDED(hr))
     {
