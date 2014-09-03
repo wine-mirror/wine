@@ -84,6 +84,8 @@ void wined3d_surface_cleanup_cs(struct wined3d_surface *surface)
 static void surface_cleanup(struct wined3d_surface *surface)
 {
     struct wined3d_surface *overlay, *cur;
+    struct wined3d_cs *cs = surface->resource.device->cs;
+    BOOL user_mem = surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY;
 
     TRACE("surface %p.\n", surface);
 
@@ -97,7 +99,13 @@ static void surface_cleanup(struct wined3d_surface *surface)
     }
 
     resource_cleanup(&surface->resource);
-    wined3d_cs_emit_surface_cleanup(surface->resource.device->cs, surface);
+    wined3d_cs_emit_surface_cleanup(cs, surface);
+
+    /* Wait for the CS to finish operations on this surface when user memory was in use.
+     * The application is allowed to free the memory after texture / surface destruction
+     * returns. */
+    if (user_mem)
+        wined3d_resource_wait_fence(&surface->container->resource);
 }
 
 void wined3d_surface_destroy(struct wined3d_surface *surface)
