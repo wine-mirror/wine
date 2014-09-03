@@ -6,7 +6,7 @@
 @ stub D3D10CreateDeviceAndSwapChain1
 @ stdcall D3D10CreateEffectFromMemory(ptr long long ptr ptr ptr) d3d10.D3D10CreateEffectFromMemory
 @ stub D3D10CreateEffectPoolFromMemory
-@ stub D3D10CreateStateBlock
+@ stdcall D3D10CreateStateBlock(ptr ptr ptr) d3d10.D3D10CreateStateBlock
 @ stub D3D10DisassembleEffect
 @ stub D3D10DisassembleShader
 @ stub D3D10GetGeometryShaderProfile
@@ -20,11 +20,11 @@
 @ stub D3D10PreprocessShader
 @ stub D3D10ReflectShader
 @ stub D3D10RegisterLayers
-@ stub D3D10StateBlockMaskDifference
-@ stub D3D10StateBlockMaskDisableAll
-@ stub D3D10StateBlockMaskDisableCapture
-@ stub D3D10StateBlockMaskEnableAll
-@ stub D3D10StateBlockMaskEnableCapture
-@ stub D3D10StateBlockMaskGetSetting
-@ stub D3D10StateBlockMaskIntersect
-@ stub D3D10StateBlockMaskUnion
+@ stdcall D3D10StateBlockMaskDifference(ptr ptr ptr) d3d10.D3D10StateBlockMaskDifference
+@ stdcall D3D10StateBlockMaskDisableAll(ptr) d3d10.D3D10StateBlockMaskDisableAll
+@ stdcall D3D10StateBlockMaskDisableCapture(ptr long long long) d3d10.D3D10StateBlockMaskDisableCapture
+@ stdcall D3D10StateBlockMaskEnableAll(ptr) d3d10.D3D10StateBlockMaskEnableAll
+@ stdcall D3D10StateBlockMaskEnableCapture(ptr long long long) d3d10.D3D10StateBlockMaskEnableCapture
+@ stdcall D3D10StateBlockMaskGetSetting(ptr long long) d3d10.D3D10StateBlockMaskGetSetting
+@ stdcall D3D10StateBlockMaskIntersect(ptr ptr ptr) d3d10.D3D10StateBlockMaskIntersect
+@ stdcall D3D10StateBlockMaskUnion(ptr ptr ptr) d3d10.D3D10StateBlockMaskUnion
