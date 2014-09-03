@@ -167,6 +167,8 @@ struct dwrite_fontfamily {
     UINT32  font_count;
     UINT32  alloc;
 
+    IDWriteFontCollection* collection;
+
     WCHAR *familyname;
 };
 
@@ -836,6 +838,8 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
         int i;
         heap_free(This->familyname);
 
+        if (This->collection)
+            IDWriteFontCollection_Release(This->collection);
         for (i = 0; i < This->font_count; i++)
             _free_font_data(This->fonts[i]);
         heap_free(This->fonts);
@@ -848,8 +852,15 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
 static HRESULT WINAPI dwritefontfamily_GetFontCollection(IDWriteFontFamily *iface, IDWriteFontCollection **collection)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    FIXME("(%p)->(%p): stub\n", This, collection);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, collection);
+    if (This->collection)
+    {
+        IDWriteFontCollection_AddRef(This->collection);
+        *collection = This->collection;
+        return S_OK;
+    }
+    else
+        return E_NOTIMPL;
 }
 
 static UINT32 WINAPI dwritefontfamily_GetFontCount(IDWriteFontFamily *iface)
@@ -1130,6 +1141,7 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
     This->font_count = 0;
     This->alloc = 2;
     This->fonts = heap_alloc(sizeof(*This->fonts) * 2);
+    This->collection = NULL;
     This->familyname = heap_strdupW(familyname);
 
     *family = &This->IDWriteFontFamily_iface;
