@@ -208,6 +208,7 @@ struct dwrite_fontfile {
 };
 
 static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **family);
+static HRESULT create_font_base(IDWriteFont **font);
 
 static inline struct dwrite_fontface *impl_from_IDWriteFontFace(IDWriteFontFace *iface)
 {
@@ -1120,6 +1121,32 @@ static void get_font_properties(struct dwrite_font *font, HDC hdc)
     }
 }
 
+static HRESULT create_font_base(IDWriteFont **font)
+{
+    struct dwrite_font *This;
+    *font = NULL;
+
+    This = heap_alloc(sizeof(struct dwrite_font));
+    if (!This) return E_OUTOFMEMORY;
+    This->data = heap_alloc(sizeof(struct dwrite_font_data));
+    if (!This->data)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
+
+    This->IDWriteFont_iface.lpVtbl = &dwritefontvtbl;
+    This->ref = 1;
+    This->data->face_data = NULL;
+    This->face = NULL;
+    This->family = NULL;
+    This->is_system = FALSE;
+
+    *font = &This->IDWriteFont_iface;
+
+    return S_OK;
+}
+
 HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 {
     const WCHAR* facename, *familyname;
@@ -1131,16 +1158,11 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     HDC hdc;
     int ret;
 
-    *font = NULL;
+    hr = create_font_base(font);
+    if (FAILED(hr))
+        return hr;
 
-    This = heap_alloc(sizeof(struct dwrite_font));
-    if (!This) return E_OUTOFMEMORY;
-    This->data = heap_alloc(sizeof(struct dwrite_font_data));
-    if (!This->data)
-    {
-        heap_free(This);
-        return E_OUTOFMEMORY;
-    }
+    This = impl_from_IDWriteFont(*font);
 
     hfont = CreateFontIndirectW(logfont);
     if (!hfont)
@@ -1184,17 +1206,11 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
         return hr;
     }
 
-    This->IDWriteFont_iface.lpVtbl = &dwritefontvtbl;
-    This->ref = 1;
-    This->face = NULL;
     This->is_system = TRUE;
     This->family = family;
     This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
     This->data->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
     This->data->facename = heap_strdupW(logfont->lfFaceName);
-    This->data->face_data = NULL;
-
-    *font = &This->IDWriteFont_iface;
 
     return S_OK;
 }
