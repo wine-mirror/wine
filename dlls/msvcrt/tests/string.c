@@ -2548,6 +2548,8 @@ static void test__stricmp(void)
     ok(ret > 0, "_stricmp returned %d\n", ret);
     ret = _stricmp("\xa5", "\xb9");
     ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
 
     setlocale(LC_ALL, "C");
 }

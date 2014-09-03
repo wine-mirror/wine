@@ -1766,7 +1766,7 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
     MSVCRT_pthreadlocinfo locinfo;
-    char c1, c2;
+    int c1, c2;
 
     if(s1==NULL || s2==NULL)
         return MSVCRT__NLSCMPERROR;
