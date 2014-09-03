@@ -434,7 +434,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_BeginDraw(ID2D1RenderTarget *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_EndDraw(ID2D1RenderTarget *iface,
