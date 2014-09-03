@@ -139,10 +139,10 @@ static const test_data_t test_data[] = {
         TESTF_REDIRECT
     },
     {
-        "http://www.codeweavers.com/",
-        "http://www.codeweavers.com/",
-        "www.codeweavers.com",
-        "",
+        "http://test.winehq.org/tests/gzip.php",
+        "http://test.winehq.org/tests/gzip.php",
+        "test.winehq.org",
+        "/tests/gzip.php",
         "Accept-Encoding: gzip, deflate",
         TESTF_COMPRESSED
     },
@@ -1210,11 +1210,11 @@ static void HttpSendRequestEx_test(void)
     hSession = InternetOpenA("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
     ok( hSession != NULL ,"Unable to open Internet session\n");
-    hConnect = InternetConnectA(hSession, "crossover.codeweavers.com",
+    hConnect = InternetConnectA(hSession, "test.winehq.org",
             INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
             0);
-    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
-    hRequest = HttpOpenRequestA(hConnect, "POST", "/posttest.php",
+    ok( hConnect != NULL, "Unable to connect to http://test.winehq.org\n");
+    hRequest = HttpOpenRequestA(hConnect, "POST", "/tests/post.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
@@ -1626,11 +1626,11 @@ static void HttpHeaders_test(void)
     hSession = InternetOpenA("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
     ok( hSession != NULL ,"Unable to open Internet session\n");
-    hConnect = InternetConnectA(hSession, "crossover.codeweavers.com",
+    hConnect = InternetConnectA(hSession, "test.winehq.org",
             INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
             0);
-    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
-    hRequest = HttpOpenRequestA(hConnect, "POST", "/posttest.php",
+    ok( hConnect != NULL, "Unable to connect to http://test.winehq.org\n");
+    hRequest = HttpOpenRequestA(hConnect, "POST", "/tests/post.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
@@ -1713,7 +1713,7 @@ static void HttpHeaders_test(void)
     ok((len < sizeof(buffer)-sizeof(CHAR)) && (buffer[len/sizeof(CHAR)] == 0),"No NUL at end\n");
     ok(len == strlen(buffer) * sizeof(CHAR), "Length wrong\n");
     /* what's in the middle differs between Wine and Windows so currently we check only the beginning and the end */
-    ok(strncmp(buffer, "POST /posttest.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
+    ok(strncmp(buffer, "POST /tests/post.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
     ok(strcmp(buffer + strlen(buffer) - 4, "\r\n\r\n")==0, "Invalid end of headers string\n");
     ok(index == 0, "Index was incremented\n");
 
@@ -5177,7 +5177,7 @@ static const struct notification_data notification_data[] = {
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
         "POST",
         "test.winehq.org",
-        "tests/posttest.php",
+        "tests/post.php",
         "Public ID=codeweavers"
     },
     {
@@ -5185,7 +5185,7 @@ static const struct notification_data notification_data[] = {
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
         "POST",
         "test.winehq.org",
-        "tests/posttest.php"
+        "tests/post.php"
     },
     {
         async_send_request_ex_resolve_failure_test,
@@ -5485,7 +5485,6 @@ START_TEST(http)
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[1]);
     InternetReadFile_test(0, &test_data[1]);
-    first_connection_to_test_url = TRUE;
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[2]);
     test_security_flags();
     InternetReadFile_test(0, &test_data[2]);
