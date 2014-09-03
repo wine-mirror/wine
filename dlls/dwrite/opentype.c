@@ -62,6 +62,44 @@ typedef struct {
     DWORD length;
 } TT_TableRecord;
 
+typedef struct {
+    WORD platformID;
+    WORD encodingID;
+    DWORD offset;
+} CMAP_EncodingRecord;
+
+typedef struct {
+    WORD version;
+    WORD numTables;
+    CMAP_EncodingRecord tables[1];
+} CMAP_Header;
+
+typedef struct {
+    DWORD startCharCode;
+    DWORD endCharCode;
+    DWORD startGlyphID;
+} CMAP_SegmentedCoverage_group;
+
+typedef struct {
+    WORD format;
+    WORD reserved;
+    DWORD length;
+    DWORD language;
+    DWORD nGroups;
+    CMAP_SegmentedCoverage_group groups[1];
+} CMAP_SegmentedCoverage;
+
+typedef struct {
+    WORD format;
+    WORD length;
+    WORD language;
+    WORD segCountX2;
+    WORD searchRange;
+    WORD entrySelector;
+    WORD rangeShift;
+    WORD endCode[1];
+} CMAP_SegmentMapping_0;
+
 HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     /* TODO: Do font validation */
@@ -168,4 +206,111 @@ HRESULT find_font_table(IDWriteFontFileStream *stream, UINT32 font_index, UINT32
     }
 
     return hr;
+}
+
+/**********
+ * CMAP
+ **********/
+
+static int compare_group(const void *a, const void* b)
+{
+    const DWORD *chr = a;
+    const CMAP_SegmentedCoverage_group *group = b;
+
+    if (*chr < GET_BE_DWORD(group->startCharCode))
+        return -1;
+    if (*chr > GET_BE_DWORD(group->endCharCode))
+        return 1;
+    return 0;
+}
+
+static void CMAP4_GetGlyphIndex(CMAP_SegmentMapping_0* format, DWORD utf32c, LPWORD pgi)
+{
+    WORD *startCode;
+    SHORT *idDelta;
+    WORD *idRangeOffset;
+    int segment;
+
+    int segment_count = GET_BE_WORD(format->segCountX2)/2;
+    /* This is correct because of the padding before startCode */
+    startCode = (WORD*)((BYTE*)format + sizeof(CMAP_SegmentMapping_0) + (sizeof(WORD) * segment_count));
+    idDelta = (SHORT*)(((BYTE*)startCode) + (sizeof(WORD) * segment_count));
+    idRangeOffset = (WORD*)(((BYTE*)idDelta) + (sizeof(WORD) * segment_count));
+
+    segment = 0;
+    while(GET_BE_WORD(format->endCode[segment]) < 0xffff)
+    {
+        if (utf32c <= GET_BE_WORD(format->endCode[segment]))
+            break;
+        segment++;
+    }
+    if (segment >= segment_count)
+        return;
+    TRACE("Segment %i of %i\n",segment, segment_count);
+    if (GET_BE_WORD(startCode[segment]) > utf32c)
+        return;
+    TRACE("In range %i -> %i\n", GET_BE_WORD(startCode[segment]), GET_BE_WORD(format->endCode[segment]));
+    if (GET_BE_WORD(idRangeOffset[segment]) == 0)
+    {
+        *pgi = (SHORT)(GET_BE_WORD(idDelta[segment])) + utf32c;
+    }
+    else
+    {
+        WORD ro = GET_BE_WORD(idRangeOffset[segment])/2;
+        WORD co =  (utf32c - GET_BE_WORD(startCode[segment]));
+        WORD *index = (WORD*)((BYTE*)&idRangeOffset[segment] + (ro + co));
+        *pgi = GET_BE_WORD(*index);
+    }
+}
+
+static void CMAP12_GetGlyphIndex(CMAP_SegmentedCoverage* format, DWORD utf32c, LPWORD pgi)
+{
+    CMAP_SegmentedCoverage_group *group = NULL;
+
+    group = bsearch(&utf32c, format->groups, GET_BE_DWORD(format->nGroups),
+                    sizeof(CMAP_SegmentedCoverage_group), compare_group);
+
+    if (group)
+    {
+        DWORD offset = utf32c - GET_BE_DWORD(group->startCharCode);
+        *pgi = GET_BE_DWORD(group->startGlyphID) + offset;
+    }
+}
+
+VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD flags)
+{
+    int i;
+    CMAP_Header *CMAP_Table = NULL;
+
+    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
+        *pgi = 0xffff;
+    else
+        *pgi = 0;
+
+    CMAP_Table = data;
+
+    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables); i++)
+    {
+        WORD type;
+        WORD *table;
+
+        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+            continue;
+
+        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
+        type = GET_BE_WORD(*table);
+        TRACE("Type %i\n", type);
+        /* Break when we find a handled type */
+        switch(type)
+        {
+            case 4:
+                CMAP4_GetGlyphIndex((CMAP_SegmentMapping_0*) table, utf32c, pgi);
+                break;
+            case 12:
+                CMAP12_GetGlyphIndex((CMAP_SegmentedCoverage*) table, utf32c, pgi);
+                break;
+            default:
+                TRACE("Type %i unhandled.\n", type);
+        }
+    }
 }

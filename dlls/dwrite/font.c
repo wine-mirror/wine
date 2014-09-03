@@ -124,6 +124,7 @@ typedef struct
 #define MS_HEAD_TAG MS_MAKE_TAG('h','e','a','d')
 #define MS_OS2_TAG  MS_MAKE_TAG('O','S','/','2')
 #define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
+#define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
 
 struct dwrite_fontface_data {
     LONG ref;
@@ -187,6 +188,10 @@ struct dwrite_fontface {
     LONG ref;
 
     struct dwrite_fontface_data *data;
+
+    LPVOID CMAP_table;
+    LPVOID CMAP_context;
+    DWORD CMAP_size;
 
     BOOL is_system;
     LOGFONTW logfont;
@@ -296,6 +301,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace *iface)
 
     if (!ref)
     {
+        if (This->CMAP_context)
+            IDWriteFontFace_ReleaseFontTable(iface, This->CMAP_context);
         _free_fontface_data(This->data);
         heap_free(This);
     }
@@ -379,12 +386,13 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
     UINT32 count, UINT16 *glyph_indices)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
+    unsigned int i;
+
     if (This->is_system)
     {
         HFONT hfont;
         WCHAR *str;
         HDC hdc;
-        unsigned int i;
 
         TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
 
@@ -408,8 +416,24 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
     }
     else
     {
-        FIXME("(%p)->(%p %u %p): Stub\n", This, codepoints, count, glyph_indices);
-        return E_NOTIMPL;
+        HRESULT hr;
+        TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
+        if (!This->CMAP_table)
+        {
+            BOOL exists = FALSE;
+            hr = IDWriteFontFace_TryGetFontTable(iface, MS_CMAP_TAG, (const void**)&This->CMAP_table, &This->CMAP_size, &This->CMAP_context, &exists);
+            if (FAILED(hr) || !exists)
+            {
+                ERR("Font does not have a CMAP table\n");
+                return E_FAIL;
+            }
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            OpenType_CMAP_GetGlyphIndex(This->CMAP_table, codepoints[i], &glyph_indices[i], 0);
+        }
+        return S_OK;
     }
 }
 
@@ -557,6 +581,9 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
     This->data->files = NULL;
     This->data->index = 0;
     This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    This->CMAP_table = NULL;
+    This->CMAP_context = NULL;
+    This->CMAP_size = 0;
 
     This->is_system = TRUE;
     memset(&This->logfont, 0, sizeof(This->logfont));
@@ -1318,6 +1345,9 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     This->data->type = facetype;
     This->data->file_count = files_number;
     This->data->files = heap_alloc(sizeof(*This->data->files) * files_number);
+    This->CMAP_table = NULL;
+    This->CMAP_context = NULL;
+    This->CMAP_size = 0;
     /* Verify font file streams */
     for (i = 0; i < This->data->file_count && SUCCEEDED(hr); i++)
     {
