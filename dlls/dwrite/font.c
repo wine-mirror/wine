@@ -642,7 +642,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont *iface)
     if (!ref)
     {
         if (This->face) IDWriteFontFace_Release(This->face);
-        IDWriteFontFamily_Release(This->family);
+        if (This->family) IDWriteFontFamily_Release(This->family);
         heap_free(This->data->facename);
         _free_fontface_data(This->data->face_data);
         heap_free(This->data);
