@@ -31,6 +31,8 @@ struct d2d_d3d_render_target
 
     D2D1_SIZE_U pixel_size;
     D2D1_MATRIX_3X2_F transform;
+    float dpi_x;
+    float dpi_y;
 };
 
 HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,

@@ -466,10 +466,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetDpi(ID2D1RenderTarget *if
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *iface, float *dpi_x, float *dpi_y)
 {
-    FIXME("iface %p, dpi_x %p, dpi_y %p stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    *dpi_x = 96.0f;
-    *dpi_y = 96.0f;
+    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
+
+    *dpi_x = render_target->dpi_x;
+    *dpi_y = render_target->dpi_y;
 }
 
 static D2D1_SIZE_F STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface)
@@ -593,6 +595,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
     render_target->transform = identity;
+    render_target->dpi_x = desc->dpiX;
+    render_target->dpi_y = desc->dpiY;
+
+    if (render_target->dpi_x == 0.0f && render_target->dpi_y == 0.0f)
+    {
+        render_target->dpi_x = 96.0f;
+        render_target->dpi_y = 96.0f;
+    }
 
     return S_OK;
 }
