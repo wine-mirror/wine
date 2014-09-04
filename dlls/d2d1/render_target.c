@@ -461,7 +461,18 @@ static D2D1_PIXEL_FORMAT STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetDpi(ID2D1RenderTarget *iface, float dpi_x, float dpi_y)
 {
-    FIXME("iface %p, dpi_x %.8e, dpi_y %.8e stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, dpi_x %.8e, dpi_y %.8e.\n", iface, dpi_x, dpi_y);
+
+    if (dpi_x == 0.0f && dpi_y == 0.0f)
+    {
+        dpi_x = 96.0f;
+        dpi_y = 96.0f;
+    }
+
+    render_target->dpi_x = dpi_x;
+    render_target->dpi_y = dpi_y;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *iface, float *dpi_x, float *dpi_y)
