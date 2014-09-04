@@ -100,6 +100,90 @@ typedef struct {
     WORD endCode[1];
 } CMAP_SegmentMapping_0;
 
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    ULONG version;
+    ULONG revision;
+    ULONG checksumadj;
+    ULONG magic;
+    USHORT flags;
+    USHORT unitsPerEm;
+    ULONGLONG created;
+    ULONGLONG modified;
+    SHORT xMin;
+    SHORT yMin;
+    SHORT xMax;
+    SHORT yMax;
+    USHORT macStyle;
+    USHORT lowestRecPPEM;
+    SHORT direction_hint;
+    SHORT index_format;
+    SHORT glyphdata_format;
+} TT_HEAD;
+
+typedef struct
+{
+    ULONG Version;
+    ULONG italicAngle;
+    SHORT underlinePosition;
+    SHORT underlineThickness;
+    ULONG fixed_pitch;
+    ULONG minmemType42;
+    ULONG maxmemType42;
+    ULONG minmemType1;
+    ULONG maxmemType1;
+} TT_POST;
+
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taken from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+#include "poppack.h"
+
 HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     /* TODO: Do font validation */
@@ -312,5 +396,52 @@ VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD fl
             default:
                 TRACE("Type %i unhandled.\n", type);
         }
+    }
+}
+
+VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+{
+    TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
+    TT_HEAD *tt_head = (TT_HEAD*)head;
+    TT_POST *tt_post = (TT_POST*)post;
+
+    /* default stretch, weight and style to normal */
+    *stretch = DWRITE_FONT_STRETCH_NORMAL;
+    *weight = DWRITE_FONT_WEIGHT_NORMAL;
+    *style = DWRITE_FONT_STYLE_NORMAL;
+
+    memset(metrics, 0, sizeof(*metrics));
+
+    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
+    if (tt_os2)
+    {
+        if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+            *stretch = GET_BE_WORD(tt_os2->usWidthClass);
+
+        *weight = GET_BE_WORD(tt_os2->usWeightClass);
+        TRACE("stretch=%d, weight=%d\n", *stretch, *weight);
+
+        metrics->ascent    = GET_BE_WORD(tt_os2->sTypoAscender);
+        metrics->descent   = GET_BE_WORD(tt_os2->sTypoDescender);
+        metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
+        metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
+        metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
+        metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
+        metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
+    }
+
+    if (tt_head)
+    {
+        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
+        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+        if (macStyle & 0x0002)
+            *style = DWRITE_FONT_STYLE_ITALIC;
+
+    }
+
+    if (tt_post)
+    {
+        metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
+        metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
     }
 }

@@ -25,98 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-/* PANOSE is 10 bytes in size, need to pack the structure properly */
-#include "pshpack2.h"
-typedef struct
-{
-    ULONG version;
-    ULONG revision;
-    ULONG checksumadj;
-    ULONG magic;
-    USHORT flags;
-    USHORT unitsPerEm;
-    ULONGLONG created;
-    ULONGLONG modified;
-    SHORT xMin;
-    SHORT yMin;
-    SHORT xMax;
-    SHORT yMax;
-    USHORT macStyle;
-    USHORT lowestRecPPEM;
-    SHORT direction_hint;
-    SHORT index_format;
-    SHORT glyphdata_format;
-} TT_HEAD;
-
-typedef struct
-{
-    ULONG Version;
-    ULONG italicAngle;
-    SHORT underlinePosition;
-    SHORT underlineThickness;
-    ULONG fixed_pitch;
-    ULONG minmemType42;
-    ULONG maxmemType42;
-    ULONG minmemType1;
-    ULONG maxmemType1;
-} TT_POST;
-
-typedef struct
-{
-    USHORT version;
-    SHORT xAvgCharWidth;
-    USHORT usWeightClass;
-    USHORT usWidthClass;
-    SHORT fsType;
-    SHORT ySubscriptXSize;
-    SHORT ySubscriptYSize;
-    SHORT ySubscriptXOffset;
-    SHORT ySubscriptYOffset;
-    SHORT ySuperscriptXSize;
-    SHORT ySuperscriptYSize;
-    SHORT ySuperscriptXOffset;
-    SHORT ySuperscriptYOffset;
-    SHORT yStrikeoutSize;
-    SHORT yStrikeoutPosition;
-    SHORT sFamilyClass;
-    PANOSE panose;
-    ULONG ulUnicodeRange1;
-    ULONG ulUnicodeRange2;
-    ULONG ulUnicodeRange3;
-    ULONG ulUnicodeRange4;
-    CHAR achVendID[4];
-    USHORT fsSelection;
-    USHORT usFirstCharIndex;
-    USHORT usLastCharIndex;
-    /* According to the Apple spec, original version didn't have the below fields,
-     * version numbers were taken from the OpenType spec.
-     */
-    /* version 0 (TrueType 1.5) */
-    USHORT sTypoAscender;
-    USHORT sTypoDescender;
-    USHORT sTypoLineGap;
-    USHORT usWinAscent;
-    USHORT usWinDescent;
-    /* version 1 (TrueType 1.66) */
-    ULONG ulCodePageRange1;
-    ULONG ulCodePageRange2;
-    /* version 2 (OpenType 1.2) */
-    SHORT sxHeight;
-    SHORT sCapHeight;
-    USHORT usDefaultChar;
-    USHORT usBreakChar;
-    USHORT usMaxContext;
-} TT_OS2_V2;
-#include "poppack.h"
-
-#ifdef WORDS_BIGENDIAN
-#define GET_BE_WORD(x) (x)
-#define GET_BE_DWORD(x) (x)
-#else
-#define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
-#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)));
-#endif
-
 #define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
                     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
                     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
@@ -1149,57 +1057,6 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
     return S_OK;
 }
 
-static void get_font_properties(struct dwrite_font *font, HDC hdc)
-{
-    TT_OS2_V2 tt_os2;
-    TT_HEAD tt_head;
-    TT_POST tt_post;
-    LONG size;
-
-    /* default stretch and weight to normal */
-    font->data->stretch = DWRITE_FONT_STRETCH_NORMAL;
-    font->data->weight = DWRITE_FONT_WEIGHT_NORMAL;
-
-    memset(&font->data->metrics, 0, sizeof(font->data->metrics));
-
-    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
-    if (size != GDI_ERROR)
-    {
-        if (size > sizeof(tt_os2)) size = sizeof(tt_os2);
-
-        memset(&tt_os2, 0, sizeof(tt_os2));
-        if (GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size) != size) return;
-
-        /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-        if (GET_BE_WORD(tt_os2.usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-            font->data->stretch = GET_BE_WORD(tt_os2.usWidthClass);
-
-        font->data->weight = GET_BE_WORD(tt_os2.usWeightClass);
-        TRACE("stretch=%d, weight=%d\n", font->data->stretch, font->data->weight);
-
-        font->data->metrics.ascent    = GET_BE_WORD(tt_os2.sTypoAscender);
-        font->data->metrics.descent   = GET_BE_WORD(tt_os2.sTypoDescender);
-        font->data->metrics.lineGap   = GET_BE_WORD(tt_os2.sTypoLineGap);
-        font->data->metrics.capHeight = GET_BE_WORD(tt_os2.sCapHeight);
-        font->data->metrics.xHeight   = GET_BE_WORD(tt_os2.sxHeight);
-        font->data->metrics.strikethroughPosition  = GET_BE_WORD(tt_os2.yStrikeoutPosition);
-        font->data->metrics.strikethroughThickness = GET_BE_WORD(tt_os2.yStrikeoutSize);
-    }
-
-    memset(&tt_head, 0, sizeof(tt_head));
-    if (GetFontData(hdc, MS_HEAD_TAG, 0, &tt_head, sizeof(tt_head)) != GDI_ERROR)
-    {
-        font->data->metrics.designUnitsPerEm = GET_BE_WORD(tt_head.unitsPerEm);
-    }
-
-    memset(&tt_post, 0, sizeof(tt_post));
-    if (GetFontData(hdc, MS_POST_TAG, 0, &tt_post, sizeof(tt_post)) != GDI_ERROR)
-    {
-        font->data->metrics.underlinePosition = GET_BE_WORD(tt_post.underlinePosition);
-        font->data->metrics.underlineThickness = GET_BE_WORD(tt_post.underlineThickness);
-    }
-}
-
 static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFont **font)
 {
     struct dwrite_font *This;
@@ -1248,6 +1105,10 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     HFONT hfont;
     HDC hdc;
     int ret;
+    LPVOID tt_os2 = NULL;
+    LPVOID tt_head = NULL;
+    LPVOID tt_post = NULL;
+    LONG size;
 
     hr = create_font_base(font);
     if (FAILED(hr))
@@ -1279,7 +1140,32 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     otm->otmSize = ret;
     ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
 
-    get_font_properties(This, hdc);
+    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_os2 = heap_alloc(size);
+        GetFontData(hdc, MS_OS2_TAG, 0, tt_os2, size);
+    }
+    size = GetFontData(hdc, MS_HEAD_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_head = heap_alloc(size);
+        GetFontData(hdc, MS_HEAD_TAG, 0, tt_head, size);
+    }
+    size = GetFontData(hdc, MS_POST_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_post = heap_alloc(size);
+        GetFontData(hdc, MS_POST_TAG, 0, tt_post, size);
+    }
+
+    get_font_properties(tt_os2, tt_head, tt_post, &This->data->metrics, &This->data->stretch, &This->data->weight, &This->data->style);
+    heap_free(tt_os2);
+    heap_free(tt_head);
+    heap_free(tt_post);
+
+    if (logfont->lfItalic)
+        This->data->style = DWRITE_FONT_STYLE_ITALIC;
 
     DeleteDC(hdc);
     DeleteObject(hfont);
@@ -1300,7 +1186,6 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     This->is_system = TRUE;
     This->family = family;
     This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    This->data->style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
     This->data->facename = heap_strdupW(logfont->lfFaceName);
 
     return S_OK;
