@@ -11325,10 +11325,10 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   case "$LIBEXT" in
     dll) ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest.exe | grep "ncurses" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_ncurses=`otool -L conftest$ac_exeext | grep "libncurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libncurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_ncurses=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libncurses\\.$LIBEXT" | sed -e "s/^.*\\[\\(libncurses\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+    dylib) ac_cv_lib_soname_ncurses=`otool -L conftest$ac_exeext | grep "libncursesw\\{0,1\\}\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libncursesw\\{0,1\\}\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_ncurses=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libncursesw\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\\[\\(libncursesw\\{0,1\\}\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
        if ${ac_cv_lib_soname_ncurses:+false} :; then :
-  ac_cv_lib_soname_ncurses=`$LDD conftest$ac_exeext | grep "libncurses\\.$LIBEXT" | sed -e "s/^.*\(libncurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+  ac_cv_lib_soname_ncurses=`$LDD conftest$ac_exeext | grep "libncursesw\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\(libncursesw\\{0,1\\}\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
 fi ;;
   esac
 fi
@@ -16950,7 +16950,7 @@ wine_fn_config_dll dpnet enable_dpnet clean,implib
 wine_fn_config_test dlls/dpnet/tests dpnet_test
 wine_fn_config_dll dpnhpast enable_dpnhpast
 wine_fn_config_dll dpnlobby enable_dpnlobby
-wine_fn_config_dll dpvoice enable_dpvoice
+wine_fn_config_dll dpvoice enable_dpvoice clean
 wine_fn_config_dll dpwsockx enable_dpwsockx
 wine_fn_config_dll drmclien enable_drmclien
 wine_fn_config_dll dsound enable_dsound clean,implib

@@ -1370,7 +1370,7 @@ dnl **** Check which curses lib to use ***
 CURSES_LIBS=""
 if test "$ac_cv_header_ncurses_h" = "yes"
 then
-    WINE_CHECK_SONAME(ncurses,waddch,[CURSES_LIBS="-lncurses"])
+    WINE_CHECK_SONAME(ncurses,waddch,[CURSES_LIBS="-lncurses"],,,[[libncursesw\\{0,1\\}]])
 elif test "$ac_cv_header_curses_h" = "yes"
 then
     WINE_CHECK_SONAME(curses,waddch,[CURSES_LIBS="-lcurses"])
@@ -2859,7 +2859,7 @@ WINE_CONFIG_DLL(dpnet,,[clean,implib])
 WINE_CONFIG_TEST(dlls/dpnet/tests)
 WINE_CONFIG_DLL(dpnhpast)
 WINE_CONFIG_DLL(dpnlobby)
-WINE_CONFIG_DLL(dpvoice)
+WINE_CONFIG_DLL(dpvoice,,[clean])
 WINE_CONFIG_DLL(dpwsockx)
 WINE_CONFIG_DLL(drmclien)
 WINE_CONFIG_DLL(dsound,,[clean,implib])
