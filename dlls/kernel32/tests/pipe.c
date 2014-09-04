@@ -344,6 +344,34 @@ static void test_CreateNamedPipe(int pipemode)
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 6a check\n");
             if (readden <= sizeof(obuf))
                 ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+
+            /* Test how ReadFile behaves when the buffer is not big enough for the whole message */
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile 7\n");
+            ok(written == sizeof(obuf2), "write file len 7\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile 7\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 7\n");
+            ok(readden == 4, "read got %d bytes 7\n", readden);
+            ok(ReadFile(hFile, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile 7\n");
+            ok(readden == sizeof(obuf2) - 4, "read got %d bytes 7\n", readden);
+            ok(memcmp(obuf2, ibuf, written) == 0, "content check 7\n");
+
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile 8\n");
+            ok(written == sizeof(obuf), "write file len 8\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile 8\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 8\n");
+            ok(readden == 4, "read got %d bytes 8\n", readden);
+            ok(ReadFile(hnp, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile 8\n");
+            ok(readden == sizeof(obuf) - 4, "read got %d bytes 8\n", readden);
+            ok(memcmp(obuf, ibuf, written) == 0, "content check 8\n");
+
         }
 
         /* Picky conformance tests */
