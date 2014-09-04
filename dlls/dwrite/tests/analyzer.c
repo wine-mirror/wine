@@ -834,13 +834,12 @@ struct linebreaks_test {
 };
 
 static struct linebreaks_test linebreaks_tests[] = {
-    { {'A','-','B',' ',0xad,'C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0},
+    { {'A','-','B',' ','C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0},
       {
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
           { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     TRUE,  FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, TRUE  },
           { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
           { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
           { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
@@ -880,13 +879,18 @@ static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_
     }
 }
 
-static void test_SetLineBreakpoints(void)
+static void test_AnalyzeLineBreakpoints(void)
 {
+    static const WCHAR emptyW[] = {0};
     const struct linebreaks_test *ptr = linebreaks_tests;
     IDWriteTextAnalyzer *analyzer;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    g_source = emptyW;
+    hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, 0, &analysissink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     while (*ptr->text)
@@ -895,9 +899,7 @@ static void test_SetLineBreakpoints(void)
 
         memset(g_actual_bp, 0, sizeof(g_actual_bp));
         hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == S_OK)
         compare_breakpoints(ptr, g_actual_bp);
 
         ptr++;
@@ -922,7 +924,7 @@ START_TEST(analyzer)
     init_call_sequences(expected_seq, 1);
 
     test_AnalyzeScript();
-    test_SetLineBreakpoints();
+    test_AnalyzeLineBreakpoints();
 
     IDWriteFactory_Release(factory);
 }

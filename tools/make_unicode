@@ -2274,6 +2274,7 @@ dump_mirroring( "dlls/usp10/mirror.c" );
 dump_bracket( "dlls/usp10/bracket.c" );
 dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
+dump_linebreak( "dlls/dwrite/linebreak.c" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
 dump_intl_nls("loader/l_intl.nls");
 dump_vertical( "dlls/gdi32/vertical.c" );
