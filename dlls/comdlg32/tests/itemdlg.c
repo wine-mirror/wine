@@ -191,7 +191,7 @@ static LRESULT CALLBACK test_customize_dlgproc(HWND hwnd, UINT message, WPARAM w
         case IDT_CLOSEDIALOG:
             /* Calling IFileDialog_Close here does not work */
             br = PostMessageW(hwnd, WM_COMMAND, IDCANCEL, 0);
-            ok(br, "Failed");
+            ok(br, "Failed\n");
             return TRUE;
         }
     }
