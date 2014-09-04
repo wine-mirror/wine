@@ -251,7 +251,9 @@ static void test_CreateNamedPipe(int pipemode)
             }
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 5a check\n");
-    
+            if (readden <= sizeof(obuf))
+                ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+
             /* Multiple writes in the reverse direction */
             /* the write of obuf2 from write4 should still be in the buffer */
             ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek6a\n");
@@ -281,6 +283,8 @@ static void test_CreateNamedPipe(int pipemode)
             }
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 6a check\n");
+            if (readden <= sizeof(obuf))
+                ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
         }
 
         /* Picky conformance tests */
