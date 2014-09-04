@@ -355,6 +355,37 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
     return S_OK;
 }
 
+HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings)
+{
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *New;
+    int i;
+
+    *strings = NULL;
+
+    New = heap_alloc(sizeof(struct localizedstrings));
+    if (!This) return E_OUTOFMEMORY;
+
+    New->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
+    New->ref = 1;
+    New->count = This->count;
+    New->data = heap_alloc(sizeof(struct localizedpair) * New->count);
+    if (!New->data) {
+        heap_free(New);
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < New->count; i++)
+    {
+        New->data[i].locale = heap_strdupW(This->data[i].locale);
+        New->data[i].string = heap_strdupW(This->data[i].string);
+    }
+    New->alloc = New->count;
+
+    *strings = &New->IDWriteLocalizedStrings_iface;
+
+    return S_OK;
+}
+
 struct dwritefactory{
     IDWriteFactory IDWriteFactory_iface;
     LONG ref;

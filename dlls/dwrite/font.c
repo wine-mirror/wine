@@ -77,7 +77,7 @@ struct dwrite_fontfamily {
 
     IDWriteFontCollection* collection;
 
-    WCHAR *familyname;
+    IDWriteLocalizedStrings *familyname;
 };
 
 struct dwrite_font {
@@ -123,7 +123,7 @@ struct dwrite_fontfile {
     IDWriteFontFileStream *stream;
 };
 
-static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **family);
+static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFontFamily **family);
 static HRESULT create_font_base(IDWriteFont **font);
 static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFont **font);
 
@@ -744,7 +744,7 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
     if (!ref)
     {
         int i;
-        heap_free(This->familyname);
+        IDWriteLocalizedStrings_Release(This->familyname);
 
         if (This->collection)
             IDWriteFontCollection_Release(This->collection);
@@ -803,15 +803,7 @@ static HRESULT WINAPI dwritefontfamily_GetFont(IDWriteFontFamily *iface, UINT32 
 static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, IDWriteLocalizedStrings **names)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
-    HRESULT hr;
-
-    TRACE("(%p)->(%p)\n", This, names);
-
-    hr = create_localizedstrings(names);
-    if (FAILED(hr)) return hr;
-
-    return add_localizedstring(*names, enusW, This->familyname);
+    return clone_localizedstring(This->familyname, names);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
@@ -828,7 +820,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
         memset(&lf, 0, sizeof(lf));
         lf.lfWeight = weight;
         lf.lfItalic = style == DWRITE_FONT_STYLE_ITALIC;
-        strcpyW(lf.lfFaceName, This->familyname);
+        IDWriteLocalizedStrings_GetString(This->familyname, 0, lf.lfFaceName, LF_FACESIZE);
 
         return create_font_from_logfont(&lf, font);
     }
@@ -929,6 +921,9 @@ static UINT32 WINAPI dwritefontcollection_GetFontFamilyCount(IDWriteFontCollecti
 static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *iface, UINT32 index, IDWriteFontFamily **family)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
+    HRESULT hr;
+    IDWriteLocalizedStrings *familyname;
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
     TRACE("(%p)->(%u %p)\n", This, index, family);
 
@@ -938,7 +933,12 @@ static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *
         return E_FAIL;
     }
 
-    return create_fontfamily(This->families[index], family);
+    hr = create_localizedstrings(&familyname);
+    if (FAILED(hr))
+        return hr;
+    add_localizedstring(familyname, enusW, This->families[index]);
+
+    return create_fontfamily(familyname, family);
 }
 
 static HRESULT WINAPI dwritefontcollection_FindFamilyName(IDWriteFontCollection *iface, const WCHAR *name, UINT32 *index, BOOL *exists)
@@ -1035,7 +1035,7 @@ HRESULT get_system_fontcollection(IDWriteFontCollection **collection)
     return S_OK;
 }
 
-static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **family)
+static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFontFamily **family)
 {
     struct dwrite_fontfamily *This;
 
@@ -1050,7 +1050,7 @@ static HRESULT create_fontfamily(const WCHAR *familyname, IDWriteFontFamily **fa
     This->alloc = 2;
     This->fonts = heap_alloc(sizeof(*This->fonts) * 2);
     This->collection = NULL;
-    This->familyname = heap_strdupW(familyname);
+    This->familyname = familyname;
 
     *family = &This->IDWriteFontFamily_iface;
 
@@ -1098,6 +1098,7 @@ static HRESULT create_font_base(IDWriteFont **font)
 HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
 {
     const WCHAR* facename, *familyname;
+    IDWriteLocalizedStrings *name;
     struct dwrite_font *This;
     IDWriteFontFamily *family;
     OUTLINETEXTMETRICW *otm;
@@ -1105,6 +1106,7 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     HFONT hfont;
     HDC hdc;
     int ret;
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
     LPVOID tt_os2 = NULL;
     LPVOID tt_head = NULL;
     LPVOID tt_post = NULL;
@@ -1174,7 +1176,15 @@ HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
     familyname = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFamilyName);
     TRACE("facename=%s, familyname=%s\n", debugstr_w(facename), debugstr_w(familyname));
 
-    hr = create_fontfamily(familyname, &family);
+    hr = create_localizedstrings(&name);
+    if (FAILED(hr))
+    {
+        heap_free(This);
+        return hr;
+    }
+    add_localizedstring(name, enusW, familyname);
+    hr = create_fontfamily(name, &family);
+
     heap_free(otm);
     if (hr != S_OK)
     {
