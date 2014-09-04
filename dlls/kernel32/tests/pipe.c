@@ -127,6 +127,21 @@ static void test_CreateNamedPipe(int pipemode)
         /* Make sure we can read and write a few bytes in both directions */
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf), "read got %d bytes\n", readden);
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
+
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2), "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
+
+        /* Now the same again, but with an additional call to PeekNamedPipe */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf), "write file len 1\n");
         ok(PeekNamedPipe(hFile, NULL, 0, NULL, &readden, NULL), "Peek\n");
         ok(readden == sizeof(obuf), "peek 1 got %d bytes\n", readden);
