@@ -90,11 +90,19 @@ INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
 }
 
 /*********************************************************************
+ *              _wcsnicmp_l (MSVCRT.@)
+ */
+INT CDECL MSVCRT__wcsnicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, INT n, MSVCRT__locale_t locale)
+{
+    return strncmpiW(str1, str2, n);
+}
+
+/*********************************************************************
  *              _wcsnicmp (MSVCRT.@)
  */
 INT CDECL MSVCRT__wcsnicmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, INT n)
 {
-    return strncmpiW(str1, str2, n);
+    return MSVCRT__wcsnicmp_l(str1, str2, n, NULL);
 }
 
 /*********************************************************************
