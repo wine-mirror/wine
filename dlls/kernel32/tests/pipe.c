@@ -160,6 +160,65 @@ static void test_CreateNamedPipe(int pipemode)
         ok(readden == sizeof(obuf2), "read 2 got %d bytes\n", readden);
         ok(memcmp(obuf2, ibuf, written) == 0, "content 2 check\n");
 
+        /* Test how ReadFile behaves when the buffer is not big enough for the whole message */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        ok(ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile\n");
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hFile, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2) - 4, "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
+
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        if (pipemode == PIPE_TYPE_BYTE)
+        {
+            ok(ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+        }
+        else
+        {
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+        }
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hnp, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf) - 4, "read got %d bytes\n", readden);
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
+
+        /* Similar to above, but use a read buffer size small enough to read in three parts */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        if (pipemode == PIPE_TYPE_BYTE)
+        {
+            ok(ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            ok(readden == 4, "read got %d bytes\n", readden);
+            ok(ReadFile(hnp, ibuf + 4, 4, &readden, NULL), "ReadFile\n");
+        }
+        else
+        {
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+            ok(readden == 4, "read got %d bytes\n", readden);
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf + 4, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+        }
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hnp, ibuf + 8, sizeof(ibuf) - 8, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2) - 8, "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
+
         /* Test reading of multiple writes */
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile3a\n");
