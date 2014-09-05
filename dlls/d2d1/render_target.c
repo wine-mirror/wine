@@ -488,10 +488,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *if
 
 static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface, D2D1_SIZE_F *size)
 {
-    FIXME("iface %p, size %p stub!\n", iface, size);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    size->width = 0.0f;
-    size->height = 0.0f;
+    TRACE("iface %p, size %p.\n", iface, size);
+
+    size->width = render_target->pixel_size.width / (render_target->dpi_x / 96.0f);
+    size->height = render_target->pixel_size.height / (render_target->dpi_y / 96.0f);
     return size;
 }
 
