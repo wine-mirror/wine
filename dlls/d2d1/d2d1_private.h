@@ -21,8 +21,17 @@
 
 #include "wine/debug.h"
 
+#include <limits.h>
 #define COBJMACROS
 #include "d2d1.h"
+
+struct d2d_clip_stack
+{
+    D2D1_RECT_F *stack;
+    unsigned int stack_size;
+    unsigned int current;
+    D2D1_RECT_F clip_rect;
+};
 
 struct d2d_d3d_render_target
 {
@@ -38,9 +47,11 @@ struct d2d_d3d_render_target
     ID3D10Buffer *clear_vb;
     ID3D10VertexShader *clear_vs;
     ID3D10PixelShader *clear_ps;
+    ID3D10RasterizerState *clear_rs;
 
     D2D1_SIZE_U pixel_size;
     D2D1_MATRIX_3X2_F transform;
+    struct d2d_clip_stack clip_stack;
     float dpi_x;
     float dpi_y;
 };

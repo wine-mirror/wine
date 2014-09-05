@@ -23,6 +23,110 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+#define INITIAL_CLIP_STACK_SIZE 4
+
+static void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
+    dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
+}
+
+static void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
+{
+    if (point->x < dst->left)
+        dst->left = point->x;
+    if (point->y < dst->top)
+        dst->top = point->y;
+    if (point->x > dst->right)
+        dst->right = point->x;
+    if (point->y > dst->bottom)
+        dst->bottom = point->y;
+}
+
+static void d2d_rect_intersect(D2D1_RECT_F *dst, const D2D1_RECT_F *src)
+{
+    if (src->left > dst->left)
+        dst->left = src->left;
+    if (src->top > dst->top)
+        dst->top = src->top;
+    if (src->right < dst->right)
+        dst->right = src->right;
+    if (src->bottom < dst->bottom)
+        dst->bottom = src->bottom;
+}
+
+static void d2d_rect_set(D2D1_RECT_F *dst, float left, float top, float right, float bottom)
+{
+    dst->left = left;
+    dst->top = top;
+    dst->right = right;
+    dst->bottom = bottom;
+}
+
+static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack, unsigned int w, unsigned int h)
+{
+    if (!(stack->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
+        return FALSE;
+
+    stack->stack_size = INITIAL_CLIP_STACK_SIZE;
+    stack->current = 0;
+
+    stack->clip_rect.left = 0.0f;
+    stack->clip_rect.top = 0.0f;
+    stack->clip_rect.right = w;
+    stack->clip_rect.bottom = h;
+
+    return TRUE;
+}
+
+static void d2d_clip_stack_cleanup(struct d2d_clip_stack *stack)
+{
+    HeapFree(GetProcessHeap(), 0, stack->stack);
+}
+
+static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F *rect)
+{
+    if (stack->current == stack->stack_size - 1)
+    {
+        D2D1_RECT_F *new_stack;
+        unsigned int new_size;
+
+        if (stack->stack_size > UINT_MAX / 2)
+            return FALSE;
+
+        new_size = stack->stack_size * 2;
+        if (!(new_stack = HeapReAlloc(GetProcessHeap(), 0, stack->stack, new_size * sizeof(*stack->stack))))
+            return FALSE;
+
+        stack->stack = new_stack;
+        stack->stack_size = new_size;
+    }
+
+    stack->stack[stack->current++] = *rect;
+    d2d_rect_intersect(&stack->clip_rect, rect);
+
+    return TRUE;
+}
+
+static void d2d_clip_stack_pop(struct d2d_clip_stack *stack, unsigned int w, unsigned int h)
+{
+    unsigned int i;
+
+    if (!stack->current)
+        return;
+
+    --stack->current;
+    stack->clip_rect.left = 0.0f;
+    stack->clip_rect.top = 0.0f;
+    stack->clip_rect.right = w;
+    stack->clip_rect.bottom = h;
+
+    for (i = 0; i < stack->current; ++i)
+    {
+        d2d_rect_intersect(&stack->clip_rect, &stack->stack[i]);
+    }
+}
+
 static inline struct d2d_d3d_render_target *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_d3d_render_target, ID2D1RenderTarget_iface);
@@ -66,7 +170,9 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
 
     if (!refcount)
     {
+        d2d_clip_stack_cleanup(&render_target->clip_stack);
         ID3D10RenderTargetView_Release(render_target->view);
+        ID3D10RasterizerState_Release(render_target->clear_rs);
         ID3D10PixelShader_Release(render_target->clear_ps);
         ID3D10VertexShader_Release(render_target->clear_vs);
         ID3D10Buffer_Release(render_target->clear_vb);
@@ -428,12 +534,38 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_RestoreDrawingState(ID2D1Ren
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PushAxisAlignedClip(ID2D1RenderTarget *iface,
         const D2D1_RECT_F *clip_rect, D2D1_ANTIALIAS_MODE antialias_mode)
 {
-    FIXME("iface %p, clip_rect %p, antialias_mode %#x stub!\n", iface, clip_rect, antialias_mode);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    D2D1_RECT_F transformed_rect;
+    float x_scale, y_scale;
+    D2D1_POINT_2F point;
+
+    TRACE("iface %p, clip_rect %p, antialias_mode %#x.\n", iface, clip_rect, antialias_mode);
+
+    if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
+        FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
+
+    x_scale = render_target->dpi_x / 96.0f;
+    y_scale = render_target->dpi_y / 96.0f;
+    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->top * y_scale);
+    d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->top * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+
+    if (!d2d_clip_stack_push(&render_target->clip_stack, &transformed_rect))
+        WARN("Failed to push clip rect.\n");
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PopAxisAlignedClip(ID2D1RenderTarget *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    d2d_clip_stack_pop(&render_target->clip_stack, render_target->pixel_size.width, render_target->pixel_size.height);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *color)
@@ -441,6 +573,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
+    D3D10_RECT scissor_rect;
     unsigned int offset;
     D3D10_VIEWPORT vp;
     ID3D10Buffer *cb;
@@ -471,6 +604,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
 
+    scissor_rect.left = render_target->clip_stack.clip_rect.left + 0.5f;
+    scissor_rect.top = render_target->clip_stack.clip_rect.top + 0.5f;
+    scissor_rect.right = render_target->clip_stack.clip_rect.right + 0.5f;
+    scissor_rect.bottom = render_target->clip_stack.clip_rect.bottom + 0.5f;
+
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -489,6 +627,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     ID3D10Device_PSSetConstantBuffers(render_target->device, 0, 1, &cb);
     ID3D10Device_PSSetShader(render_target->device, render_target->clear_ps);
     ID3D10Device_RSSetViewports(render_target->device, 1, &vp);
+    ID3D10Device_RSSetScissorRects(render_target->device, 1, &scissor_rect);
+    ID3D10Device_RSSetState(render_target->device, render_target->clear_rs);
     ID3D10Device_OMSetRenderTargets(render_target->device, 1, &render_target->view, NULL);
 
     ID3D10Device_Draw(render_target->device, 4, 0);
@@ -657,6 +797,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_STATE_BLOCK_MASK state_mask;
     DXGI_SURFACE_DESC surface_desc;
+    D3D10_RASTERIZER_DESC rs_desc;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Resource *resource;
     HRESULT hr;
@@ -808,6 +949,22 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
+    rs_desc.FillMode = D3D10_FILL_SOLID;
+    rs_desc.CullMode = D3D10_CULL_BACK;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = TRUE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    if (FAILED(hr = ID3D10Device_CreateRasterizerState(render_target->device, &rs_desc, &render_target->clear_rs)))
+    {
+        WARN("Failed to create clear rasterizer state, hr %#x.\n", hr);
+        goto err;
+    }
+
     if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
     {
         WARN("Failed to get surface desc, hr %#x.\n", hr);
@@ -817,6 +974,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
     render_target->transform = identity;
+
+    if (!d2d_clip_stack_init(&render_target->clip_stack, surface_desc.Width, surface_desc.Height))
+    {
+        WARN("Failed to initialize clip stack.\n");
+        hr = E_FAIL;
+        goto err;
+    }
+
     render_target->dpi_x = desc->dpiX;
     render_target->dpi_y = desc->dpiY;
 
@@ -831,6 +996,8 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 err:
     if (render_target->view)
         ID3D10RenderTargetView_Release(render_target->view);
+    if (render_target->clear_rs)
+        ID3D10RasterizerState_Release(render_target->clear_rs);
     if (render_target->clear_ps)
         ID3D10PixelShader_Release(render_target->clear_ps);
     if (render_target->clear_vs)
