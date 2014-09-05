@@ -1468,19 +1468,19 @@ complex_float* __cdecl complex_float_pow_cf(complex_float *ret, const complex_fl
 complex_float* __cdecl complex_float_pow_ci(complex_float *ret, const complex_float *l, int r)
 {
     complex_float c = *l;
-    complex_float temp = { 1.0, 0 };
-    complex_float_assign(ret, &temp);
+    complex_float unit_value = { 1.0, 0 };
+    complex_float_assign(ret, &unit_value);
 
     if(r < 0) {
         r = -r;
-        complex_float_div(&c, &temp, l);
+        complex_float_div(&c, &unit_value, l);
     }
 
     for(; r>0; r>>=1) {
         if(r & 1)
             complex_float_mult_assign(ret, &c);
-        complex_float_assign(&temp, &c);
-        complex_float_mult_assign(&c, &temp);
+        if(r != 1)
+            complex_float_mult_assign(&c, &c);
     }
 
     return ret;
@@ -2190,19 +2190,19 @@ complex_double* __cdecl complex_double_pow_cd(complex_double *ret, const complex
 complex_double* __cdecl complex_double_pow_ci(complex_double *ret, const complex_double *l, int r)
 {
     complex_double c = *l;
-    complex_double temp = { 1.0, 0 };
-    complex_double_assign(ret, &temp);
+    complex_double unit_value = { 1.0, 0 };
+    complex_double_assign(ret, &unit_value);
 
     if(r < 0) {
         r = -r;
-        complex_double_div(&c, &temp, l);
+        complex_double_div(&c, &unit_value, l);
     }
 
     for(; r>0; r>>=1) {
         if(r & 1)
             complex_double_mult_assign(ret, &c);
-        complex_double_assign(&temp, &c);
-        complex_double_mult_assign(&c, &temp);
+        if(r != 1)
+            complex_double_mult_assign(&c, &c);
     }
 
     return ret;
