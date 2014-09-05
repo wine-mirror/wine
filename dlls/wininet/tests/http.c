@@ -4224,7 +4224,7 @@ static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
-    ok(info.dwKeySize == 128, "dwKeySize = %u\n", info.dwKeySize);
+    ok(info.dwKeySize == 128 || info.dwKeySize == 256, "dwKeySize = %u\n", info.dwKeySize);
 
     release_cert_info(&info);
 }
@@ -4811,7 +4811,6 @@ static void test_user_agent_header(void)
     ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
     ok(ret, "HttpQueryInfo failed\n");
-    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", err);
 
     InternetCloseHandle(req);
 
