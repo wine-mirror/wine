@@ -450,12 +450,13 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_EndDraw(ID2D1RenderTarget
     return S_OK;
 }
 
-static D2D1_PIXEL_FORMAT STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface)
+static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface,
+        D2D1_PIXEL_FORMAT *format)
 {
-    static const D2D1_PIXEL_FORMAT format = {DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN};
+    FIXME("iface %p, format %p stub!\n", iface, format);
 
-    FIXME("iface %p stub!\n", iface);
-
+    format->format = DXGI_FORMAT_UNKNOWN;
+    format->alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
     return format;
 }
 
@@ -485,22 +486,24 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *if
     *dpi_y = render_target->dpi_y;
 }
 
-static D2D1_SIZE_F STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface)
+static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface, D2D1_SIZE_F *size)
 {
-    static const D2D1_SIZE_F size = {0.0f, 0.0f};
+    FIXME("iface %p, size %p stub!\n", iface, size);
 
-    FIXME("iface %p stub!\n", iface);
-
+    size->width = 0.0f;
+    size->height = 0.0f;
     return size;
 }
 
-static D2D1_SIZE_U STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelSize(ID2D1RenderTarget *iface)
+static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelSize(ID2D1RenderTarget *iface,
+        D2D1_SIZE_U *pixel_size)
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    TRACE("iface %p.\n", iface);
+    TRACE("iface %p, pixel_size %p.\n", iface, pixel_size);
 
-    return render_target->pixel_size;
+    *pixel_size = render_target->pixel_size;
+    return pixel_size;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_d3d_render_target_GetMaximumBitmapSize(ID2D1RenderTarget *iface)

@@ -828,6 +828,13 @@ static int is_inherited_method(const type_t *iface, const var_t *func)
   return 0;
 }
 
+static int is_aggregate_return(const var_t *func)
+{
+  enum type_type type = type_get_type(type_function_get_rettype(func->type));
+  return type == TYPE_STRUCT || type == TYPE_UNION ||
+         type == TYPE_COCLASS || type == TYPE_INTERFACE;
+}
+
 static void write_method_macro(FILE *header, const type_t *iface, const char *name)
 {
   const statement_t *stmt;
@@ -846,7 +853,8 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
       first_iface = 0;
     }
 
-    if (!is_callas(func->attrs) && !is_inherited_method(iface, func)) {
+    if (!is_callas(func->attrs) && !is_inherited_method(iface, func) &&
+        !is_aggregate_return(func)) {
       const var_t *arg;
 
       fprintf(header, "#define %s_%s(This", name, get_name(func));
@@ -947,12 +955,24 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const char 
       fprintf(header, " %s_%s(", name, get_name(func));
       write_args(header, type_get_function_args(func->type), name, 1, FALSE);
       fprintf(header, ") {\n");
-      fprintf(header, "    %s", is_void(type_function_get_rettype(func->type)) ? "" : "return ");
-      fprintf(header, "This->lpVtbl->%s(This", get_name(func));
+      ++indentation;
+      if (!is_aggregate_return(func)) {
+        indent(header, 0);
+        fprintf(header, "%sThis->lpVtbl->%s(This",
+                is_void(type_function_get_rettype(func->type)) ? "" : "return ",
+                get_name(func));
+      } else {
+        indent(header, 0);
+        write_type_decl_left(header, type_function_get_rettype(func->type));
+        fprintf(header, " __ret;\n");
+        indent(header, 0);
+        fprintf(header, "return *This->lpVtbl->%s(This,&__ret", get_name(func));
+      }
       if (type_get_function_args(func->type))
           LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
       fprintf(header, ");\n");
+      --indentation;
       fprintf(header, "}\n");
     }
   }
@@ -979,11 +999,26 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
       if (!callconv) callconv = "STDMETHODCALLTYPE";
       indent(header, 0);
       write_type_decl_left(header, type_function_get_rettype(func->type));
+      if (is_aggregate_return(func))
+        fprintf(header, " *");
       if (is_inherited_method(iface, func))
         fprintf(header, " (%s *%s_%s)(\n", callconv, iface->name, func->name);
       else
         fprintf(header, " (%s *%s)(\n", callconv, get_name(func));
-      write_args(header, type_get_function_args(func->type), name, 1, TRUE);
+      ++indentation;
+      indent(header, 0);
+      fprintf(header, "%s *This", name);
+      if (is_aggregate_return(func)) {
+        fprintf(header, ",\n");
+        indent(header, 0);
+        write_type_decl_left(header, type_function_get_rettype(func->type));
+        fprintf(header, " *__ret");
+      }
+      --indentation;
+      if (type_get_function_args(func->type)) {
+        fprintf(header, ",\n");
+        write_args(header, type_get_function_args(func->type), name, 0, TRUE);
+      }
       fprintf(header, ");\n");
       fprintf(header, "\n");
     }
