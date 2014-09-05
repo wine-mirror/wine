@@ -29,6 +29,16 @@ struct d2d_d3d_render_target
     ID2D1RenderTarget ID2D1RenderTarget_iface;
     LONG refcount;
 
+    ID3D10Device *device;
+    ID3D10RenderTargetView *view;
+    ID3D10StateBlock *stateblock;
+
+    ID3D10InputLayout *clear_il;
+    unsigned int clear_vb_stride;
+    ID3D10Buffer *clear_vb;
+    ID3D10VertexShader *clear_vs;
+    ID3D10PixelShader *clear_ps;
+
     D2D1_SIZE_U pixel_size;
     D2D1_MATRIX_3X2_F transform;
     float dpi_x;

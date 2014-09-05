@@ -1,6 +1,6 @@
 MODULE    = d2d1.dll
 IMPORTLIB = d2d1
-IMPORTS   = uuid
+IMPORTS   = d3d10_1 dxguid uuid
 
 C_SRCS = \
 	brush.c \
