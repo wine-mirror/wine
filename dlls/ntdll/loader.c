@@ -142,7 +142,9 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
  *		call_dll_entry_point
  *
  * Some brain-damaged dlls (ir32_32.dll for instance) modify ebx in
- * their entry point, so we need a small asm wrapper.
+ * their entry point, so we need a small asm wrapper. Testing indicates
+ * that only modifying esi leads to a crash, so use this one to backup
+ * ebp while running the dll entry proc.
  */
 #ifdef __i386__
 extern BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module, UINT reason, void *reserved );
@@ -154,13 +156,24 @@ __ASM_GLOBAL_FUNC(call_dll_entry_point,
                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                   "pushl %ebx\n\t"
                   __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
-                  "subl $8,%esp\n\t"
+                  "pushl %esi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                  "pushl %edi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                  "movl %ebp,%esi\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %esi\n\t")
                   "pushl 20(%ebp)\n\t"
                   "pushl 16(%ebp)\n\t"
                   "pushl 12(%ebp)\n\t"
                   "movl 8(%ebp),%eax\n\t"
                   "call *%eax\n\t"
-                  "leal -4(%ebp),%esp\n\t"
+                  "movl %esi,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                  "leal -12(%ebp),%esp\n\t"
+                  "popl %edi\n\t"
+                  __ASM_CFI(".cfi_same_value %edi\n\t")
+                  "popl %esi\n\t"
+                  __ASM_CFI(".cfi_same_value %esi\n\t")
                   "popl %ebx\n\t"
                   __ASM_CFI(".cfi_same_value %ebx\n\t")
                   "popl %ebp\n\t"
