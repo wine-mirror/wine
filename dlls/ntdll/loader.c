@@ -1030,7 +1030,7 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
                     GetCurrentThreadId(), *callback, module, reason_names[reason] );
         __TRY
         {
-            (*callback)( module, reason, NULL );
+            call_dll_entry_point( (DLLENTRYPROC)*callback, module, reason, NULL );
         }
         __EXCEPT_ALL
         {
