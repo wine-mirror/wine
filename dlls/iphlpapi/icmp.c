@@ -179,6 +179,32 @@ HANDLE WINAPI Icmp6CreateFile(VOID)
 
 
 /***********************************************************************
+ *		Icmp6SendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI Icmp6SendEcho2(
+    HANDLE                   IcmpHandle,
+    HANDLE                   Event,
+    PIO_APC_ROUTINE          ApcRoutine,
+    PVOID                    ApcContext,
+    struct sockaddr_in6*     SourceAddress,
+    struct sockaddr_in6*     DestinationAddress,
+    LPVOID                   RequestData,
+    WORD                     RequestSize,
+    PIP_OPTION_INFORMATION   RequestOptions,
+    LPVOID                   ReplyBuffer,
+    DWORD                    ReplySize,
+    DWORD                    Timeout
+    )
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle, Event,
+            ApcRoutine, ApcContext, SourceAddress, DestinationAddress, RequestData,
+            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+
+/***********************************************************************
  *		IcmpCreateFile (IPHLPAPI.@)
  */
 HANDLE WINAPI IcmpCreateFile(VOID)
