@@ -4583,12 +4583,12 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     if ((lpmii->fMask & (MIIM_TYPE|MIIM_STRING))) {
          if( !menu->text ) {
                 if(lpmii->dwTypeData && lpmii->cch) {
-                    lpmii->cch = 0;
                     if( unicode)
                         *((WCHAR *)lpmii->dwTypeData) = 0;
                     else
                         *((CHAR *)lpmii->dwTypeData) = 0;
                 }
+                lpmii->cch = 0;
          } else {
             int len;
             if (unicode)
