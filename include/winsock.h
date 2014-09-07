@@ -261,6 +261,7 @@ extern "C" {
 #define IPPROTO_UDP                17
 #define IPPROTO_IDP                22
 #define IPPROTO_IPV6               41
+#define IPPROTO_ICMPV6             58
 #define IPPROTO_ND                 77
 #define IPPROTO_RAW                255
 #define IPPROTO_MAX                256
@@ -273,6 +274,7 @@ extern "C" {
 #define WS_IPPROTO_UDP             17
 #define WS_IPPROTO_IDP             22
 #define WS_IPPROTO_IPV6            41
+#define WS_IPPROTO_ICMPV6          58
 #define WS_IPPROTO_ND              77
 #define WS_IPPROTO_RAW             255
 #define WS_IPPROTO_MAX             256
