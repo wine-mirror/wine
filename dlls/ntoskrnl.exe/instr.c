@@ -366,18 +366,34 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 context->Eip += prefixlen+3;
                 return ExceptionContinueExecution;
             }
-            ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
+            ERR("Unsupported DR register -> EAX, eip+2 is %02x\n", instr[2]);
             /* fallthrough to illegal instruction */
             break;
         case 0x23: /* mov eax drX */
             switch (instr[2])
             {
+            case 0xc0: /* mov eax, dr0 */
+                context->Dr0 = context->Eax;
+                context->Eip += prefixlen+3;
+                return ExceptionContinueExecution;
             case 0xc8: /* mov eax, dr1 */
                 context->Dr1 = context->Eax;
                 context->Eip += prefixlen+3;
                 return ExceptionContinueExecution;
+            case 0xd0: /* mov eax, dr2 */
+                context->Dr2 = context->Eax;
+                context->Eip += prefixlen+3;
+                return ExceptionContinueExecution;
+            case 0xd8: /* mov eax, dr3 */
+                context->Dr3 = context->Eax;
+                context->Eip += prefixlen+3;
+                return ExceptionContinueExecution;
+            case 0xf8: /* mov eax, dr7 */
+                context->Dr7 = context->Eax;
+                context->Eip += prefixlen+3;
+                return ExceptionContinueExecution;
             }
-            ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
+            ERR("Unsupported EAX -> DR register, eip+2 is %02x\n", instr[2]);
             /* fallthrough to illegal instruction */
             break;
         }
