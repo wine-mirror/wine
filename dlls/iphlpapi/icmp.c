@@ -148,6 +148,37 @@ static int in_cksum(u_short *addr, int len)
  */
 
 /***********************************************************************
+ *		Icmp6CreateFile (IPHLPAPI.@)
+ */
+HANDLE WINAPI Icmp6CreateFile(VOID)
+{
+    icmp_t* icp;
+
+    int sid=socket(AF_INET6,SOCK_RAW,IPPROTO_ICMPV6);
+    if (sid < 0)
+    {
+        /* Mac OS X supports non-privileged ICMP via SOCK_DGRAM type. */
+        sid=socket(AF_INET6,SOCK_DGRAM,IPPROTO_ICMPV6);
+    }
+    if (sid < 0) {
+        ERR_(winediag)("Failed to use ICMPV6 (network ping), this requires special permissions.\n");
+        SetLastError(ERROR_ACCESS_DENIED);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    icp=HeapAlloc(GetProcessHeap(), 0, sizeof(*icp));
+    if (icp==NULL) {
+        close(sid);
+        SetLastError(IP_NO_RESOURCES);
+        return INVALID_HANDLE_VALUE;
+    }
+    icp->sid=sid;
+    icp->default_opts.OptionsSize=IP_OPTS_UNKNOWN;
+    return (HANDLE)icp;
+}
+
+
+/***********************************************************************
  *		IcmpCreateFile (IPHLPAPI.@)
  */
 HANDLE WINAPI IcmpCreateFile(VOID)
