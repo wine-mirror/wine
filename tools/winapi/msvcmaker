@@ -199,7 +199,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $dir =~ s/\/Makefile\.in$//;
 
 	    my $dsp_file = $testdll;
-	    $dsp_file =~ s/\.(dll|drv)$/_test.dsp/;
+	    $dsp_file =~ s/\.(dll|drv|ocx)$/_test.dsp/;
 	    $dsp_file = "$dir/$dsp_file";
 
 	    $wine_test_dsp_files{$dsp_file}{files} = [@files, "testlist.c"];
