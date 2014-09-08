@@ -676,8 +676,14 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
     else if (flags & WINED3D_BUFFER_SYNC && This->flags & WINED3D_BUFFER_APPLESYNC)
     {
         /* OSX doesn't do non-blocking asynchonous glBufferSubData like Linux drivers do, so we want to set
-         * GL_BUFFER_FLUSHING_UNMAP_APPLE to GL_FALSE. This means we have to do synchonization ourselves. */
-        buffer_sync_apple(This, 0, gl_info);
+         * GL_BUFFER_SERIALIZED_MODIFY_APPLE to GL_FALSE. Unfortunately ARB_sync and APPLE_fence are pretty
+         * slow on OSX. Putting the buffer back into synchronized mode for future maps is a lot faster.
+         * (GeForce 650M, Mavericks). The difference between ARB_sync and normal buffer operation is small
+         * in the glMapBuffer codepath without CSMT. */
+        glFinish();
+        GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
+        checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
+        This->flags &= ~WINED3D_BUFFER_APPLESYNC;
     }
 
     while (This->modified_areas)
