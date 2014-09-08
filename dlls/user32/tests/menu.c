@@ -1369,6 +1369,11 @@ static void test_menu_iteminfo( void )
         MFT_SEPARATOR, 0, 0, 0, 0, 0, 0, string, 0, 0,
         empty, OK, ER );
     TMII_DONE
+    TMII_INSMI( MIIM_STRING|MIIM_FTYPE, MFT_STRING, -1, -1, 0, 0, 0, -1, NULL, 0, 0, OK );
+    TMII_GMII ( MIIM_STRING|MIIM_FTYPE, 80,
+        MFT_SEPARATOR, 0, 0, 0, 0, 0, 0, NULL, 0, 0,
+        NULL, OK, ER );
+    TMII_DONE
 
     /* How is that with bitmaps? */ 
     TMII_INSMI( MIIM_BITMAP, -1, -1, -1, 0, 0, 0, -1, 0, -1, hbm, OK );
