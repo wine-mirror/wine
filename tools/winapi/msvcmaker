@@ -178,7 +178,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    next;
 	}
 
-	if(/^MODULE\s*=\s*([\w\.]+)$/) {
+	if(/^MODULE\s*=\s*([\w\.-]+)$/) {
 	    $module = $1;
 	} elsif (/^\@MAKE_IMPLIB_RULES\@/) {
 	    $type = "lib";
