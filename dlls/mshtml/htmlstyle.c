@@ -684,6 +684,9 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
     nsAString str_value;
     HRESULT hres;
 
+    if(!p)
+        return E_POINTER;
+
     nsAString_Init(&str_value, NULL);
 
     hres = get_nsstyle_attr_nsval(This->nsstyle, sid, &str_value);

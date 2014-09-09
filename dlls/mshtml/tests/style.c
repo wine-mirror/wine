@@ -1164,6 +1164,9 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_pixelLeft failed: %08x\n", hres);
     ok(l == 6, "pixelLeft = %d\n", l);
 
+    hres = IHTMLStyle_get_pixelLeft(style, NULL);
+    ok(hres == E_POINTER, "get_pixelLeft failed: %08x\n", hres);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_left(style, &v);
     ok(hres == S_OK, "get_left failed: %08x\n", hres);
