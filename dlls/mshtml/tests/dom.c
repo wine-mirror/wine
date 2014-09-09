@@ -5599,7 +5599,7 @@ static void test_body_funs(IHTMLBodyElement *body)
 
     hres = IHTMLBodyElement_get_bgColor(body, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6081,7 +6081,7 @@ static void test_tr_elem(IHTMLElement *elem)
 
     hres = IHTMLTableRow_get_bgColor(row, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6093,7 +6093,7 @@ static void test_tr_elem(IHTMLElement *elem)
 
     hres = IHTMLTableRow_get_bgColor(row, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6323,7 +6323,7 @@ static void test_table_elem(IHTMLElement *elem)
 
     hres = IHTMLTable_get_bgColor(table, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6335,7 +6335,7 @@ static void test_table_elem(IHTMLElement *elem)
 
     hres = IHTMLTable_get_bgColor(table, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
