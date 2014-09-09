@@ -485,8 +485,23 @@ HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD 
 
 HRESULT WINAPI CorBindToCurrentRuntime(LPCWSTR filename, REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    FIXME("(%s, %s, %s, %p): stub\n", debugstr_w(filename), debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    HRESULT ret;
+    ICLRRuntimeInfo *info;
+
+    TRACE("(%s, %s, %s, %p)\n", debugstr_w(filename), debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    ret = get_runtime_info(NULL, NULL, filename, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+
+    if (SUCCEEDED(ret))
+    {
+        ret = ICLRRuntimeInfo_GetInterface(info, rclsid, riid, ppv);
+
+        ICLRRuntimeInfo_Release(info);
+    }
+
+    return ret;
 }
 
 STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
