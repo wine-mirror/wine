@@ -1210,6 +1210,17 @@ static void test_body_style(IHTMLStyle *style)
        f == 4.9f, /* IE8 */
        "expected 4.0 or 4.9 (IE8) got %f\n", f);
 
+    hres = IHTMLStyle_put_pixelTop(style, 6);
+    ok(hres == S_OK, "put_pixelTop failed: %08x\n", hres);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelTop(style, &l);
+    ok(hres == S_OK, "get_pixelTop failed: %08x\n", hres);
+    ok(l == 6, "pixelTop = %d\n", l);
+
+    hres = IHTMLStyle_get_pixelTop(style, NULL);
+    ok(hres == E_POINTER, "get_pixelTop failed: %08x\n", hres);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("3px");
     hres = IHTMLStyle_put_top(style, v);
@@ -1227,6 +1238,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_posTop failed: %08x\n", hres);
     ok(f == 3.0, "expected 3.0 got %f\n", f);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelTop(style, &l);
+    ok(hres == S_OK, "get_pixelTop failed: %08x\n", hres);
+    ok(l == 3, "pixelTop = %d\n", l);
+
     V_VT(&v) = VT_NULL;
     hres = IHTMLStyle_put_top(style, v);
     ok(hres == S_OK, "put_top failed: %08x\n", hres);
@@ -1237,6 +1253,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(v) != NULL\n");
     VariantClear(&v);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelTop(style, &l);
+    ok(hres == S_OK, "get_pixelTop failed: %08x\n", hres);
+    ok(!l, "pixelTop = %d\n", l);
 
     /* Test posHeight */
     hres = IHTMLStyle_get_posHeight(style, NULL);
