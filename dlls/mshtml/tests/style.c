@@ -963,6 +963,11 @@ static void test_body_style(IHTMLStyle *style)
        f == 2.2f, /* IE8 */
        "f = %f\n", f);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelWidth(style, &l);
+    ok(hres == S_OK, "get_pixelWidth failed: %08x\n", hres);
+    ok(l == 2, "pixelWidth = %d\n", l);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("auto");
     hres = IHTMLStyle_put_width(style, v);
@@ -981,6 +986,11 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_width(style, v);
     ok(hres == S_OK, "put_width failed: %08x\n", hres);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelWidth(style, &l);
+    ok(hres == S_OK, "get_pixelWidth failed: %08x\n", hres);
+    ok(l == 100, "pixelWidth = %d\n", l);
+
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_width(style, &v);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
@@ -990,6 +1000,14 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_put_pixelWidth(style, 50);
     ok(hres == S_OK, "put_pixelWidth failed: %08x\n", hres);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelWidth(style, &l);
+    ok(hres == S_OK, "get_pixelWidth failed: %08x\n", hres);
+    ok(l == 50, "pixelWidth = %d\n", l);
+
+    hres = IHTMLStyle_get_pixelWidth(style, NULL);
+    ok(hres == E_POINTER, "get_pixelWidth failed: %08x\n", hres);
 
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_width(style, &v);
