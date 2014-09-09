@@ -1254,6 +1254,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(hres == S_OK, "get_posHeight failed: %08x\n", hres);
     ok(f == 0.0, "expected 0.0 got %f\n", f);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(!l, "pixelHeight = %d\n", l);
+
     hres = IHTMLStyle_put_posHeight(style, 4.9f);
     ok(hres == S_OK, "put_posHeight failed: %08x\n", hres);
 
@@ -1262,6 +1267,13 @@ static void test_body_style(IHTMLStyle *style)
     ok(f == 4.0 ||
        f == 4.9f, /* IE8 */
        "expected 4.0 or 4.9 (IE8) got %f\n", f);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(l == 4 ||
+       l == 5, /* IE8 */
+       "pixelHeight = %d\n", l);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("70px");
@@ -1276,6 +1288,11 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(V_BSTR(&v), "70px"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(l == 70, "pixelHeight = %d\n", l);
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = NULL;
     hres = IHTMLStyle_put_height(style, v);
@@ -1288,6 +1305,22 @@ static void test_body_style(IHTMLStyle *style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
     ok(!V_BSTR(&v), "V_BSTR(v) = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(!l, "pixelHeight = %d\n", l);
+
+    hres = IHTMLStyle_put_pixelHeight(style, 50);
+    ok(hres == S_OK, "put_pixelHeight failed: %08x\n", hres);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(l == 50, "pixelHeight = %d\n", l);
+
+    hres = IHTMLStyle_get_pixelHeight(style, NULL);
+    ok(hres == E_POINTER, "get_pixelHeight failed: %08x\n", hres);
 
     V_VT(&v) = VT_I4;
     V_I4(&v) = 64;
@@ -1304,6 +1337,11 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_posHeight(style, &f);
     ok(hres == S_OK, "get_posHeight failed: %08x\n", hres);
     ok(f == 64.0, "expected 64.0 got %f\n", f);
+
+    l = 0xdeadbeef;
+    hres = IHTMLStyle_get_pixelHeight(style, &l);
+    ok(hres == S_OK, "get_pixelHeight failed: %08x\n", hres);
+    ok(l == 64, "pixelHeight = %d\n", l);
 
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_cursor(style, &str);
