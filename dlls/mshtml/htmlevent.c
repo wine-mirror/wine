@@ -1328,16 +1328,8 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *eve
         return S_OK;
 
     if(event_info[eid].flags & EVENT_BIND_TO_BODY) {
-        nsIDOMHTMLElement *nsbody;
-        nsresult nsres;
-
-        nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
-        if(NS_SUCCEEDED(nsres) && nsbody) {
-            nsnode = (nsIDOMNode*)nsbody;
-        }else {
-            ERR("GetBody failed: %08x\n", nsres);
-            return E_UNEXPECTED;
-        }
+        nsnode = doc->node.nsnode;
+        nsIDOMNode_AddRef(nsnode);
     }
 
     doc->event_vector[eid] = TRUE;
