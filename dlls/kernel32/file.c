@@ -374,17 +374,20 @@ BOOL WINAPI ReadFileScatter( HANDLE file, FILE_SEGMENT_ELEMENT *segments, DWORD 
 {
     PIO_STATUS_BLOCK io_status;
     LARGE_INTEGER offset;
+    void *cvalue = NULL;
     NTSTATUS status;
 
     TRACE( "(%p %p %u %p)\n", file, segments, count, overlapped );
 
     offset.u.LowPart = overlapped->u.s.Offset;
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
     io_status->Information = 0;
 
-    status = NtReadFileScatter( file, NULL, NULL, NULL, io_status, segments, count, &offset, NULL );
+    status = NtReadFileScatter( file, overlapped->hEvent, NULL, cvalue, io_status,
+                                segments, count, &offset, NULL );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -513,17 +516,20 @@ BOOL WINAPI WriteFileGather( HANDLE file, FILE_SEGMENT_ELEMENT *segments, DWORD 
 {
     PIO_STATUS_BLOCK io_status;
     LARGE_INTEGER offset;
+    void *cvalue = NULL;
     NTSTATUS status;
 
     TRACE( "%p %p %u %p\n", file, segments, count, overlapped );
 
     offset.u.LowPart = overlapped->u.s.Offset;
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
     io_status->Information = 0;
 
-    status = NtWriteFileGather( file, NULL, NULL, NULL, io_status, segments, count, &offset, NULL );
+    status = NtWriteFileGather( file, overlapped->hEvent, NULL, cvalue, io_status,
+                                segments, count, &offset, NULL );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
