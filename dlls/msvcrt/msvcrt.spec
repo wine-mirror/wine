@@ -209,7 +209,7 @@
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno
-# stub __dstbias()
+@ cdecl __dstbias() MSVCRT___p__dstbias
 @ cdecl __fpecode()
 @ stub __get_app_type
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
@@ -255,7 +255,7 @@
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
-@ cdecl __p__dstbias()
+@ cdecl __p__dstbias() MSVCRT___p__dstbias
 @ cdecl __p__environ() MSVCRT___p__environ
 @ stub __p__fileinfo()
 @ cdecl __p__fmode()

@@ -220,7 +220,7 @@
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno
-@ stub __dstbias
+@ cdecl __dstbias() MSVCRT___p__dstbias
 @ stub -arch=i386 ___fls_getvalue@4
 @ stub -arch=x86_64 __fls_getvalue
 @ stub -arch=i386 ___fls_setvalue@8
@@ -277,7 +277,7 @@
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
-@ cdecl __p__dstbias()
+@ cdecl __p__dstbias() MSVCRT___p__dstbias
 @ cdecl __p__environ() MSVCRT___p__environ
 @ cdecl __p__fmode()
 @ cdecl __p__iob() MSVCRT___iob_func
