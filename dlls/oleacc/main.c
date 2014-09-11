@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "commctrl.h"
+#include "rpcproxy.h"
 
 #include "initguid.h"
 #include "oleacc_private.h"
@@ -414,14 +415,14 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, void **ppv)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_register_resources(oleacc_handle);
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_unregister_resources(oleacc_handle);
 }
 
 void WINAPI GetOleaccVersionInfo(DWORD* pVersion, DWORD* pBuild)
