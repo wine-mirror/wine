@@ -99,7 +99,6 @@ MAKE_FUNCPTR(getmaxx)
 #ifndef getmaxy
 MAKE_FUNCPTR(getmaxy)
 #endif
-MAKE_FUNCPTR(getmouse)
 MAKE_FUNCPTR(has_colors)
 MAKE_FUNCPTR(init_pair)
 MAKE_FUNCPTR(initscr)
@@ -122,6 +121,7 @@ MAKE_FUNCPTR(waddchnstr)
 MAKE_FUNCPTR(wmove)
 MAKE_FUNCPTR(wgetch)
 #ifdef HAVE_MOUSEMASK
+MAKE_FUNCPTR(getmouse)
 MAKE_FUNCPTR(mouseinterval)
 MAKE_FUNCPTR(mousemask)
 #endif
@@ -163,7 +163,6 @@ static BOOL WCCURSES_bind_libcurses(void)
 #ifndef getmaxy
     LOAD_FUNCPTR(getmaxy)
 #endif
-    LOAD_FUNCPTR(getmouse)
     LOAD_FUNCPTR(has_colors)
     LOAD_FUNCPTR(init_pair)
     LOAD_FUNCPTR(initscr)
@@ -186,6 +185,7 @@ static BOOL WCCURSES_bind_libcurses(void)
     LOAD_FUNCPTR(wmove)
     LOAD_FUNCPTR(wgetch)
 #ifdef HAVE_MOUSEMASK
+    LOAD_FUNCPTR(getmouse)
     LOAD_FUNCPTR(mouseinterval)
     LOAD_FUNCPTR(mousemask)
 #endif
@@ -214,7 +214,6 @@ sym_not_found:
 #ifndef getmaxy
 #define getmaxy p_getmaxy
 #endif
-#define getmouse p_getmouse
 #define has_colors p_has_colors
 #define init_pair p_init_pair
 #define initscr p_initscr
@@ -222,8 +221,11 @@ sym_not_found:
 #define intrflush p_intrflush
 #endif
 #define keypad p_keypad
+#ifdef HAVE_MOUSEMASK
+#define getmouse p_getmouse
 #define mouseinterval p_mouseinterval
 #define mousemask p_mousemask
+#endif
 #define newpad p_newpad
 #ifndef nodelay
 #define nodelay p_nodelay
