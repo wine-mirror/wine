@@ -17454,6 +17454,7 @@ wine_fn_config_program plugplay enable_plugplay install
 wine_fn_config_program presentationfontcache enable_presentationfontcache install
 wine_fn_config_program progman enable_progman install,po
 wine_fn_config_program reg enable_reg install,po
+wine_fn_config_test programs/reg/tests reg.exe_test
 wine_fn_config_program regasm enable_regasm install
 wine_fn_config_program regedit enable_regedit install,installbin,manpage,po
 wine_fn_config_test programs/regedit/tests regedit.exe_test
