@@ -27,10 +27,10 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winsock2.h"
 #include "initguid.h"
 #include "wbemcli.h"
 #include "wbemprov.h"
-#include "winsock2.h"
 #include "iphlpapi.h"
 #include "tlhelp32.h"
 #include "d3d10.h"
