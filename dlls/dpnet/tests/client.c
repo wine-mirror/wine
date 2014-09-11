@@ -211,7 +211,7 @@ static void test_get_sp_caps(void)
        "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
 }
 
-void test_lobbyclient(void)
+static void test_lobbyclient(void)
 {
     HRESULT hr;
     IDirectPlay8LobbyClient *client = NULL;
