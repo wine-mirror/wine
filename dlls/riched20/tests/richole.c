@@ -86,10 +86,11 @@ static void create_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **txt
 static void release_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **txtDoc,
                                ITextSelection **txtSel)
 {
+  if(txtSel)
+    ITextSelection_Release(*txtSel);
   ITextDocument_Release(*txtDoc);
   IRichEditOle_Release(*reOle);
   DestroyWindow(*w);
-  ITextSelection_Release(*txtSel);
 }
 
 static ULONG get_refcount(IUnknown *iface)
@@ -486,6 +487,37 @@ static void test_ITextSelection_GetText(void)
   release_interfaces(&w, &reOle, &txtDoc, &txtSel);
 }
 
+static void test_ITextDocument_Range(void)
+{
+  HWND w;
+  IRichEditOle *reOle = NULL;
+  ITextDocument *txtDoc = NULL;
+  ITextRange *txtRge = NULL;
+  ITextRange *pointer = NULL;
+  HRESULT hres;
+  ULONG refcount;
+
+  create_interfaces(&w, &reOle, &txtDoc, NULL);
+  hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
+  ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
+  refcount = get_refcount((IUnknown *)txtRge);
+  ok(refcount == 1, "get wrong refcount: returned %d expected 1\n", refcount);
+
+  pointer = txtRge;
+  hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
+  ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
+  ok(pointer != txtRge, "A new pointer should be returned\n");
+  ITextRange_Release(pointer);
+
+  hres = ITextDocument_Range(txtDoc, 0, 0, NULL);
+  ok(hres == E_INVALIDARG, "ITextDocument_Range should fail 0x%x.\n", hres);
+
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+  hres = ITextRange_CanEdit(txtRge, NULL);
+  ok(hres == CO_E_RELEASED, "ITextRange after ITextDocument destroyed\n");
+  ITextRange_Release(txtRge);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -496,4 +528,5 @@ START_TEST(richole)
   test_Interfaces();
   test_ITextDocument_Open();
   test_ITextSelection_GetText();
+  test_ITextDocument_Range();
 }
