@@ -3925,7 +3925,9 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     else
     {
         FIXME("poorly handled shortcut format, advertised shortcut\n");
-        IShellLinkW_SetPath(sl,comp->FullKeypath);
+        path = resolve_keypath( package, comp );
+        IShellLinkW_SetPath( sl, path );
+        msi_free( path );
     }
 
     if (!MSI_RecordIsNull(row,6))
