@@ -649,6 +649,10 @@ DWORD       WINAPI DoEnvironmentSubstA(LPSTR, UINT);
 DWORD       WINAPI DoEnvironmentSubstW(LPWSTR, UINT);
 #define     DoEnvironmentSubst WINELIB_NAME_AW(DoEnvironmentSubst)
 
+HRESULT     WINAPI SHEnumerateUnreadMailAccountsA(HKEY,DWORD,LPSTR,INT);
+HRESULT     WINAPI SHEnumerateUnreadMailAccountsW(HKEY,DWORD,LPWSTR,INT);
+#define     SHEnumerateUnreadMailAccounts WINELIB_NAME_AW(SHEnumerateUnreadMailAccounts)
+
 
 #ifdef __cplusplus
 } /* extern "C" */
