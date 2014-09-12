@@ -37,6 +37,10 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
 
+static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
+        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter);
+
 void wined3d_surface_cleanup_cs(struct wined3d_surface *surface)
 {
     if (surface->rb_multisample || surface->rb_resolved || !list_empty(&surface->renderbuffers))
@@ -1471,9 +1475,11 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
+    /* Use surface_cpu_blt() instead of uploading directly if we need
+     * conversion. Avoid calling wined3d_surface_blt() since that goes
+     * through the CS. */
     if (dst_format->convert || wined3d_format_get_color_key_conversion(dst_surface->container, FALSE))
-        return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
+        return surface_cpu_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
 
     context = context_acquire(dst_surface->resource.device, NULL);
     gl_info = context->gl_info;
