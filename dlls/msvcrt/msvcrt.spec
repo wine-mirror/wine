@@ -898,7 +898,7 @@
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo(long)
 @ cdecl _set_fmode(long) MSVCRT__set_fmode
-@ cdecl _set_output_format(long)
+@ cdecl _set_output_format(long) MSVCRT__set_output_format
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) MSVCRT__setjmp

@@ -1632,7 +1632,7 @@
 @ cdecl _set_fmode(long) MSVCRT__set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ stub _set_malloc_crt_max_wait
-@ cdecl _set_output_format(long)
+@ cdecl _set_output_format(long) MSVCRT__set_output_format
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _seterrormode(long)
