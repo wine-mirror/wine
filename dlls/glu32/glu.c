@@ -352,30 +352,6 @@ int WINAPI wine_gluNurbsCallback(void *arg0,int arg1,void *arg2) {
 }
 
 /***********************************************************************
- *		gluBeginPolygon (GLU32.@)
- */
-extern int gluBeginPolygon(void *arg0);
-int WINAPI wine_gluBeginPolygon(void *arg0) {
-	return gluBeginPolygon(arg0);
-}
-
-/***********************************************************************
- *		gluEndPolygon (GLU32.@)
- */
-extern int gluEndPolygon(void *arg0);
-int WINAPI wine_gluEndPolygon(void *arg0) {
-	return gluEndPolygon(arg0);
-}
-
-/***********************************************************************
- *		gluNextContour (GLU32.@)
- */
-extern int gluNextContour(void *arg0,int arg1);
-int WINAPI wine_gluNextContour(void *arg0,int arg1) {
-	return gluNextContour(arg0,arg1);
-}
-
-/***********************************************************************
  *		gluGetString (GLU32.@)
  */
 extern int gluGetString(int arg0);
@@ -616,4 +592,35 @@ void WINAPI wine_gluTessNormal(void *tess, double arg1, double arg2, double arg3
 {
     wine_tess_t *wine_tess = tess;
     gluTessNormal(wine_tess->tess, arg1, arg2, arg3);
+}
+
+/***********************************************************************
+ *      gluBeginPolygon (GLU32.@)
+ */
+void WINAPI wine_gluBeginPolygon(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    wine_tess->polygon_data = NULL;
+    gluTessBeginPolygon(wine_tess->tess, wine_tess);
+    gluTessBeginContour(wine_tess->tess);
+}
+
+/***********************************************************************
+ *      gluEndPolygon (GLU32.@)
+ */
+void WINAPI wine_gluEndPolygon(void *tess)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessEndContour(wine_tess->tess);
+    gluTessEndPolygon(wine_tess->tess);
+}
+
+/***********************************************************************
+ *      gluNextContour (GLU32.@)
+ */
+void WINAPI wine_gluNextContour(void *tess, int arg1)
+{
+    wine_tess_t *wine_tess = tess;
+    gluTessEndContour(wine_tess->tess);
+    gluTessBeginContour(wine_tess->tess);
 }
