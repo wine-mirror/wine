@@ -58,6 +58,24 @@ struct d2d_d3d_render_target
 HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
 
+struct d2d_wic_render_target
+{
+    ID2D1RenderTarget ID2D1RenderTarget_iface;
+    LONG refcount;
+
+    IDXGISurface *dxgi_surface;
+    ID2D1RenderTarget *dxgi_target;
+    ID3D10Texture2D *readback_texture;
+    IWICBitmap *bitmap;
+
+    unsigned int width;
+    unsigned int height;
+    unsigned int bpp;
+};
+
+HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory *factory,
+        IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
+
 struct d2d_gradient
 {
     ID2D1GradientStopCollection ID2D1GradientStopCollection_iface;

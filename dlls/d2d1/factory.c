@@ -173,9 +173,25 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Factory *iface,
         IWICBitmap *target, const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target)
 {
-    FIXME("iface %p, target %p, desc %p, render_target %p stub!\n", iface, target, desc, render_target);
+    struct d2d_wic_render_target *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, target %p, desc %p, render_target %p.\n", iface, target, desc, render_target);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_wic_render_target_init(object, iface, target, desc)))
+    {
+        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created render target %p.\n", object);
+    *render_target = &object->ID2D1RenderTarget_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory *iface,

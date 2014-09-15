@@ -196,6 +196,7 @@ SRCDIR_INCLUDES = \
 	custcntl.h \
 	cvconst.h \
 	d2dbasetypes.h \
+	d2derr.h \
 	d3d.h \
 	d3d10_1shader.h \
 	d3d10effect.h \

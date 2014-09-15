@@ -20,6 +20,7 @@ import "unknwn.idl";
 import "dcommon.h";
 import "d2dbasetypes.h";
 import "d3d10_1.idl";
+import "d2derr.h";
 
 cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef DrawText")
