@@ -21,6 +21,8 @@
 
 #include "wine/debug.h"
 
+#include <assert.h>
+
 #define COBJMACROS
 #include "winbase.h"
 #include "wingdi.h"
@@ -82,7 +84,7 @@ struct dxgi_factory
     LONG refcount;
     struct wined3d *wined3d;
     UINT adapter_count;
-    IWineDXGIAdapter **adapters;
+    IDXGIAdapter1 **adapters;
     BOOL extended;
 };
 
@@ -114,7 +116,7 @@ void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) 
 /* IDXGIAdapter */
 struct dxgi_adapter
 {
-    IWineDXGIAdapter IWineDXGIAdapter_iface;
+    IDXGIAdapter1 IDXGIAdapter1_iface;
     IWineDXGIFactory *parent;
     LONG refcount;
     UINT ordinal;
@@ -122,6 +124,7 @@ struct dxgi_adapter
 };
 
 HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */
 struct dxgi_swapchain

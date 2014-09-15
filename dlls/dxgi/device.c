@@ -348,12 +348,17 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 {
     struct wined3d_device_parent *wined3d_device_parent;
     IWineDXGIDeviceParent *dxgi_device_parent;
-    IWineDXGIAdapter *wine_adapter;
-    UINT adapter_ordinal;
+    struct dxgi_adapter *dxgi_adapter;
     struct wined3d *wined3d;
     void *layer_base;
     HRESULT hr;
     WINED3DCAPS caps;
+
+    if (!(dxgi_adapter = unsafe_impl_from_IDXGIAdapter1((IDXGIAdapter1 *)adapter)))
+    {
+        WARN("This is not the adapter we're looking for.\n");
+        return E_FAIL;
+    }
 
     device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;
     device->refcount = 1;
@@ -376,18 +381,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
     wined3d = IWineDXGIFactory_get_wined3d(device->factory);
 
-    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IWineDXGIAdapter, (void **)&wine_adapter);
-    if (FAILED(hr))
-    {
-        WARN("This is not the adapter we're looking for, returning %#x.\n", hr);
-        EnterCriticalSection(&dxgi_cs);
-        wined3d_decref(wined3d);
-        LeaveCriticalSection(&dxgi_cs);
-        goto fail;
-    }
-    adapter_ordinal = IWineDXGIAdapter_get_ordinal(wine_adapter);
-    IWineDXGIAdapter_Release(wine_adapter);
-
     hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface, &IID_IWineDXGIDeviceParent,
             (void **)&dxgi_device_parent);
     if (FAILED(hr))
@@ -400,7 +393,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     FIXME("Ignoring adapter type.\n");
 
-    hr = wined3d_get_device_caps(wined3d, adapter_ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
+    hr = wined3d_get_device_caps(wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
     if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
     {
         WARN("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
@@ -410,7 +403,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
 
     EnterCriticalSection(&dxgi_cs);
-    hr = wined3d_device_create(wined3d, adapter_ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
+    hr = wined3d_device_create(wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
             wined3d_device_parent, &device->wined3d_device);
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
     wined3d_decref(wined3d);

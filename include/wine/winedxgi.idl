@@ -31,16 +31,6 @@ interface IWineDXGIFactory : IDXGIFactory1
 [
     object,
     local,
-    uuid(ab1de34c-2963-4ffd-8493-40f580e510e5)
-]
-interface IWineDXGIAdapter : IDXGIAdapter1
-{
-    UINT get_ordinal();
-}
-
-[
-    object,
-    local,
     uuid(3e1ff30b-c951-48c3-b010-0fb49f3dca71)
 ]
 interface IWineDXGIDevice : IDXGIDevice

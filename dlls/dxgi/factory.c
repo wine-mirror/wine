@@ -77,7 +77,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
 
         for (i = 0; i < This->adapter_count; ++i)
         {
-            IWineDXGIAdapter_Release(This->adapters[i]);
+            IDXGIAdapter1_Release(This->adapters[i]);
         }
         HeapFree(GetProcessHeap(), 0, This->adapters);
 
@@ -357,7 +357,7 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 
             for (j = 0; j < i; ++j)
             {
-                IWineDXGIAdapter_Release(factory->adapters[j]);
+                IDXGIAdapter1_Release(factory->adapters[j]);
             }
             hr = E_OUTOFMEMORY;
             goto fail;
@@ -373,12 +373,12 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
             HeapFree(GetProcessHeap(), 0, adapter);
             for (j = 0; j < i; ++j)
             {
-                IWineDXGIAdapter_Release(factory->adapters[j]);
+                IDXGIAdapter1_Release(factory->adapters[j]);
             }
             goto fail;
         }
 
-        factory->adapters[i] = &adapter->IWineDXGIAdapter_iface;
+        factory->adapters[i] = &adapter->IDXGIAdapter1_iface;
     }
 
     factory->extended = extended;
