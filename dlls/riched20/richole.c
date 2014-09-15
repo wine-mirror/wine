@@ -492,8 +492,11 @@ static ULONG WINAPI ITextRange_fnRelease(ITextRange *me)
     TRACE ("%p ref=%u\n", This, ref);
     if (ref == 0)
     {
-        This->reOle = NULL;
-        list_remove(&This->entry);
+        if (This->reOle)
+        {
+            list_remove(&This->entry);
+            This->reOle = NULL;
+        }
         heap_free(This);
     }
     return ref;
