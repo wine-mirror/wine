@@ -1569,11 +1569,16 @@ static HRESULT WINAPI ITextSelection_fnSetText(ITextSelection *me, BSTR bstr)
 static HRESULT WINAPI ITextSelection_fnGetChar(ITextSelection *me, LONG *pch)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ME_Cursor *start = NULL, *end = NULL;
+
     if (!This->reOle)
         return CO_E_RELEASED;
+    TRACE("%p\n", pch);
+    if (!pch)
+        return E_INVALIDARG;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ME_GetSelection(This->reOle->editor, &start, &end);
+    return range_GetChar(This->reOle->editor, start, pch);
 }
 
 static HRESULT WINAPI ITextSelection_fnSetChar(ITextSelection *me, LONG ch)
