@@ -63,18 +63,13 @@ static void d2d_rect_set(D2D1_RECT_F *dst, float left, float top, float right, f
     dst->bottom = bottom;
 }
 
-static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack, unsigned int w, unsigned int h)
+static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
 {
     if (!(stack->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
         return FALSE;
 
-    stack->stack_size = INITIAL_CLIP_STACK_SIZE;
-    stack->current = 0;
-
-    stack->clip_rect.left = 0.0f;
-    stack->clip_rect.top = 0.0f;
-    stack->clip_rect.right = w;
-    stack->clip_rect.bottom = h;
+    stack->size = INITIAL_CLIP_STACK_SIZE;
+    stack->count = 0;
 
     return TRUE;
 }
@@ -86,45 +81,37 @@ static void d2d_clip_stack_cleanup(struct d2d_clip_stack *stack)
 
 static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F *rect)
 {
-    if (stack->current == stack->stack_size - 1)
+    D2D1_RECT_F r;
+
+    if (stack->count == stack->size)
     {
         D2D1_RECT_F *new_stack;
         unsigned int new_size;
 
-        if (stack->stack_size > UINT_MAX / 2)
+        if (stack->size > UINT_MAX / 2)
             return FALSE;
 
-        new_size = stack->stack_size * 2;
+        new_size = stack->size * 2;
         if (!(new_stack = HeapReAlloc(GetProcessHeap(), 0, stack->stack, new_size * sizeof(*stack->stack))))
             return FALSE;
 
         stack->stack = new_stack;
-        stack->stack_size = new_size;
+        stack->size = new_size;
     }
 
-    stack->stack[stack->current++] = *rect;
-    d2d_rect_intersect(&stack->clip_rect, rect);
+    r = *rect;
+    if (stack->count)
+        d2d_rect_intersect(&r, &stack->stack[stack->count - 1]);
+    stack->stack[stack->count++] = r;
 
     return TRUE;
 }
 
-static void d2d_clip_stack_pop(struct d2d_clip_stack *stack, unsigned int w, unsigned int h)
+static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
 {
-    unsigned int i;
-
-    if (!stack->current)
+    if (!stack->count)
         return;
-
-    --stack->current;
-    stack->clip_rect.left = 0.0f;
-    stack->clip_rect.top = 0.0f;
-    stack->clip_rect.right = w;
-    stack->clip_rect.bottom = h;
-
-    for (i = 0; i < stack->current; ++i)
-    {
-        d2d_rect_intersect(&stack->clip_rect, &stack->stack[i]);
-    }
+    --stack->count;
 }
 
 static inline struct d2d_d3d_render_target *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
@@ -565,7 +552,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_PopAxisAlignedClip(ID2D1Rend
 
     TRACE("iface %p.\n", iface);
 
-    d2d_clip_stack_pop(&render_target->clip_stack, render_target->pixel_size.width, render_target->pixel_size.height);
+    d2d_clip_stack_pop(&render_target->clip_stack);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *color)
@@ -573,7 +560,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
-    D3D10_RECT scissor_rect;
     unsigned int offset;
     D3D10_VIEWPORT vp;
     ID3D10Buffer *cb;
@@ -604,11 +590,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
 
-    scissor_rect.left = render_target->clip_stack.clip_rect.left + 0.5f;
-    scissor_rect.top = render_target->clip_stack.clip_rect.top + 0.5f;
-    scissor_rect.right = render_target->clip_stack.clip_rect.right + 0.5f;
-    scissor_rect.bottom = render_target->clip_stack.clip_rect.bottom + 0.5f;
-
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -627,8 +608,19 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     ID3D10Device_PSSetConstantBuffers(render_target->device, 0, 1, &cb);
     ID3D10Device_PSSetShader(render_target->device, render_target->clear_ps);
     ID3D10Device_RSSetViewports(render_target->device, 1, &vp);
-    ID3D10Device_RSSetScissorRects(render_target->device, 1, &scissor_rect);
-    ID3D10Device_RSSetState(render_target->device, render_target->clear_rs);
+    if (render_target->clip_stack.count)
+    {
+        const D2D1_RECT_F *clip_rect;
+        D3D10_RECT scissor_rect;
+
+        clip_rect = &render_target->clip_stack.stack[render_target->clip_stack.count - 1];
+        scissor_rect.left = clip_rect->left + 0.5f;
+        scissor_rect.top = clip_rect->top + 0.5f;
+        scissor_rect.right = clip_rect->right + 0.5f;
+        scissor_rect.bottom = clip_rect->bottom + 0.5f;
+        ID3D10Device_RSSetScissorRects(render_target->device, 1, &scissor_rect);
+        ID3D10Device_RSSetState(render_target->device, render_target->clear_rs);
+    }
     ID3D10Device_OMSetRenderTargets(render_target->device, 1, &render_target->view, NULL);
 
     ID3D10Device_Draw(render_target->device, 4, 0);
@@ -975,7 +967,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     render_target->pixel_size.height = surface_desc.Height;
     render_target->transform = identity;
 
-    if (!d2d_clip_stack_init(&render_target->clip_stack, surface_desc.Width, surface_desc.Height))
+    if (!d2d_clip_stack_init(&render_target->clip_stack))
     {
         WARN("Failed to initialize clip stack.\n");
         hr = E_FAIL;

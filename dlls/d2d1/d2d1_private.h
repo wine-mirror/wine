@@ -28,9 +28,8 @@
 struct d2d_clip_stack
 {
     D2D1_RECT_F *stack;
-    unsigned int stack_size;
-    unsigned int current;
-    D2D1_RECT_F clip_rect;
+    unsigned int size;
+    unsigned int count;
 };
 
 struct d2d_d3d_render_target
