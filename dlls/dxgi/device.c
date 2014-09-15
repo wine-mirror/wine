@@ -80,6 +80,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
     {
         if (This->child_layer) IUnknown_Release(This->child_layer);
         EnterCriticalSection(&dxgi_cs);
+        wined3d_device_uninit_3d(This->wined3d_device);
         wined3d_device_decref(This->wined3d_device);
         LeaveCriticalSection(&dxgi_cs);
         IDXGIFactory1_Release(This->factory);
@@ -248,18 +249,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
 
 /* IWineDXGIDevice methods */
 
-static struct wined3d_device * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDXGIDevice *iface)
-{
-    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
-
-    TRACE("iface %p\n", iface);
-
-    EnterCriticalSection(&dxgi_cs);
-    wined3d_device_incref(This->wined3d_device);
-    LeaveCriticalSection(&dxgi_cs);
-    return This->wined3d_device;
-}
-
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface, const DXGI_SURFACE_DESC *desc,
         DXGI_USAGE usage, const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
 {
@@ -338,7 +327,6 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_SetGPUThreadPriority,
     dxgi_device_GetGPUThreadPriority,
     /* IWineDXGIAdapter methods */
-    dxgi_device_get_wined3d_device,
     dxgi_device_create_surface,
     dxgi_device_create_swapchain,
 };
@@ -347,6 +335,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         IDXGIFactory *factory, IDXGIAdapter *adapter)
 {
     struct wined3d_device_parent *wined3d_device_parent;
+    struct wined3d_swapchain_desc swapchain_desc;
     IWineDXGIDeviceParent *dxgi_device_parent;
     struct dxgi_adapter *dxgi_adapter;
     struct dxgi_factory *dxgi_factory;
@@ -407,6 +396,18 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, returning %#x.\n", hr);
+        IUnknown_Release(device->child_layer);
+        return hr;
+    }
+
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
+    swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
+    swapchain_desc.device_window = dxgi_factory_get_device_window(dxgi_factory);
+    swapchain_desc.windowed = TRUE;
+    if (FAILED(hr = wined3d_device_init_3d(device->wined3d_device, &swapchain_desc)))
+    {
+        ERR("Failed to initialize 3D, hr %#x.\n", hr);
+        wined3d_device_decref(device->wined3d_device);
         IUnknown_Release(device->child_layer);
         return hr;
     }

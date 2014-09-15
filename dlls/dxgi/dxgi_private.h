@@ -86,9 +86,11 @@ struct dxgi_factory
     UINT adapter_count;
     IDXGIAdapter1 **adapters;
     BOOL extended;
+    HWND device_window;
 };
 
 HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended) DECLSPEC_HIDDEN;
+HWND dxgi_factory_get_device_window(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
 struct dxgi_factory *unsafe_impl_from_IDXGIFactory1(IDXGIFactory1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIDevice */
