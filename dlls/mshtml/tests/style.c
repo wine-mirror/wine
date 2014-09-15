@@ -2750,6 +2750,10 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     VariantClear(&v);
 
+    hres = IHTMLCurrentStyle_get_textTransform(current_style, &str);
+    ok(hres == S_OK, "get_textTransform failed: %08x\n", hres);
+    SysFreeString(str);
+
     current_style2 = get_current_style2_iface((IUnknown*)current_style);
 
     b = 100;
