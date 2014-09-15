@@ -407,12 +407,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
     return TRUE;
 }
 
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, void **ppv)
-{
-    FIXME("%s %s %p: stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
