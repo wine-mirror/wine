@@ -105,7 +105,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter1 *iface, RE
 
     TRACE("iface %p, iid %s, parent %p\n", iface, debugstr_guid(iid), parent);
 
-    return IWineDXGIFactory_QueryInterface(adapter->parent, iid, parent);
+    return IDXGIFactory1_QueryInterface(&adapter->parent->IDXGIFactory1_iface, iid, parent);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter1 *iface,
@@ -134,7 +134,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc1(IDXGIAdapter1 *iface, DXG
     struct dxgi_adapter *adapter = impl_from_IDXGIAdapter1(iface);
     struct wined3d_adapter_identifier adapter_id;
     char description[128];
-    struct wined3d *wined3d;
     HRESULT hr;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
@@ -142,15 +141,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc1(IDXGIAdapter1 *iface, DXG
     if (!desc)
         return E_INVALIDARG;
 
-    wined3d = IWineDXGIFactory_get_wined3d(adapter->parent);
     adapter_id.driver_size = 0;
     adapter_id.description = description;
     adapter_id.description_size = sizeof(description);
     adapter_id.device_name_size = 0;
 
     EnterCriticalSection(&dxgi_cs);
-    hr = wined3d_get_adapter_identifier(wined3d, adapter->ordinal, 0, &adapter_id);
-    wined3d_decref(wined3d);
+    hr = wined3d_get_adapter_identifier(adapter->parent->wined3d, adapter->ordinal, 0, &adapter_id);
     LeaveCriticalSection(&dxgi_cs);
 
     if (FAILED(hr))
@@ -224,7 +221,7 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface)
     return CONTAINING_RECORD(iface, struct dxgi_adapter, IDXGIAdapter1_iface);
 }
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal)
+HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal)
 {
     struct dxgi_output *output;
 

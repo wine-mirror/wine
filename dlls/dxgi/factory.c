@@ -24,75 +24,70 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
-static inline struct dxgi_factory *impl_from_IWineDXGIFactory(IWineDXGIFactory *iface)
+static inline struct dxgi_factory *impl_from_IDXGIFactory1(IDXGIFactory1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dxgi_factory, IWineDXGIFactory_iface);
+    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory1_iface);
 }
 
-/* IUnknown methods */
-
-static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IDXGIFactory1 *iface, REFIID iid, void **out)
 {
-    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
 
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-            || IsEqualGUID(riid, &IID_IDXGIObject)
-            || IsEqualGUID(riid, &IID_IDXGIFactory)
-            || (factory->extended && IsEqualGUID(riid, &IID_IDXGIFactory1))
-            || IsEqualGUID(riid, &IID_IWineDXGIFactory))
+    if ((factory->extended && IsEqualGUID(iid, &IID_IDXGIFactory1))
+            || IsEqualGUID(iid, &IID_IDXGIFactory)
+            || IsEqualGUID(iid, &IID_IDXGIObject)
+            || IsEqualGUID(iid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
-        *object = iface;
+        *out = iface;
         return S_OK;
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
 
-    *object = NULL;
+    *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IWineDXGIFactory *iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_AddRef(IDXGIFactory1 *iface)
 {
-    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
+    ULONG refcount = InterlockedIncrement(&factory->refcount);
 
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
+static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory1 *iface)
 {
-    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
+    ULONG refcount = InterlockedDecrement(&factory->refcount);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
     {
         UINT i;
 
-        for (i = 0; i < This->adapter_count; ++i)
+        for (i = 0; i < factory->adapter_count; ++i)
         {
-            IDXGIAdapter1_Release(This->adapters[i]);
+            IDXGIAdapter1_Release(factory->adapters[i]);
         }
-        HeapFree(GetProcessHeap(), 0, This->adapters);
+        HeapFree(GetProcessHeap(), 0, factory->adapters);
 
         EnterCriticalSection(&dxgi_cs);
-        wined3d_decref(This->wined3d);
+        wined3d_decref(factory->wined3d);
         LeaveCriticalSection(&dxgi_cs);
-        HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, factory);
     }
 
     return refcount;
 }
 
-/* IDXGIObject methods */
-
-static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -100,7 +95,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IWineDXGIFactory *i
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory1 *iface,
         REFGUID guid, const IUnknown *object)
 {
     FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
@@ -108,7 +103,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IWineDXGIF
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
@@ -116,23 +111,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IWineDXGIFactory *i
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IWineDXGIFactory *iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IDXGIFactory1 *iface, REFIID iid, void **parent)
 {
-    WARN("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
+    WARN("iface %p, iid %s, parent %p.\n", iface, debugstr_guid(iid), parent);
 
     *parent = NULL;
 
     return E_NOINTERFACE;
 }
 
-/* IDXGIFactory methods */
-
-static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory1 *iface,
         UINT adapter_idx, IDXGIAdapter1 **adapter)
 {
-    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
 
-    TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
+    TRACE("iface %p, adapter_idx %u, adapter %p.\n", iface, adapter_idx, adapter);
 
     if (!adapter)
         return DXGI_ERROR_INVALID_CALL;
@@ -146,27 +139,27 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IWineDXGIFactory *if
     *adapter = (IDXGIAdapter1 *)factory->adapters[adapter_idx];
     IDXGIAdapter1_AddRef(*adapter);
 
-    TRACE("Returning adapter %p\n", *adapter);
+    TRACE("Returning adapter %p.\n", *adapter);
 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IDXGIFactory1 *iface,
         UINT adapter_idx, IDXGIAdapter **adapter)
 {
-    TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
+    TRACE("iface %p, adapter_idx %u, adapter %p.\n", iface, adapter_idx, adapter);
 
     return dxgi_factory_EnumAdapters1(iface, adapter_idx, (IDXGIAdapter1 **)adapter);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface, HWND window, UINT flags)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory1 *iface, HWND window, UINT flags)
 {
     FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFactory *iface, HWND *window)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory1 *iface, HWND *window)
 {
     FIXME("iface %p, window %p stub!\n", iface, window);
 
@@ -181,7 +174,7 @@ static UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
         return rational->Numerator;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
     struct wined3d_swapchain *wined3d_swapchain;
@@ -267,7 +260,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IWineDXGIFactory *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IDXGIFactory1 *iface,
         HMODULE swrast, IDXGIAdapter **adapter)
 {
     FIXME("iface %p, swrast %p, adapter %p stub!\n", iface, swrast, adapter);
@@ -275,57 +268,45 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IWineDXGIFac
     return E_NOTIMPL;
 }
 
-static BOOL STDMETHODCALLTYPE dxgi_factory_IsCurrent(IWineDXGIFactory *iface)
+static BOOL STDMETHODCALLTYPE dxgi_factory_IsCurrent(IDXGIFactory1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return TRUE;
 }
 
-/* IWineDXGIFactory methods */
-
-static struct wined3d * STDMETHODCALLTYPE dxgi_factory_get_wined3d(IWineDXGIFactory *iface)
+static const struct IDXGIFactory1Vtbl dxgi_factory_vtbl =
 {
-    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
-
-    TRACE("iface %p\n", iface);
-
-    EnterCriticalSection(&dxgi_cs);
-    wined3d_incref(This->wined3d);
-    LeaveCriticalSection(&dxgi_cs);
-    return This->wined3d;
-}
-
-static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
-{
-    /* IUnknown methods */
     dxgi_factory_QueryInterface,
     dxgi_factory_AddRef,
     dxgi_factory_Release,
-    /* IDXGIObject methods */
     dxgi_factory_SetPrivateData,
     dxgi_factory_SetPrivateDataInterface,
     dxgi_factory_GetPrivateData,
     dxgi_factory_GetParent,
-    /* IDXGIFactory methods */
     dxgi_factory_EnumAdapters,
     dxgi_factory_MakeWindowAssociation,
     dxgi_factory_GetWindowAssociation,
     dxgi_factory_CreateSwapChain,
     dxgi_factory_CreateSoftwareAdapter,
-    /* IDXGIFactory1 methods */
     dxgi_factory_EnumAdapters1,
     dxgi_factory_IsCurrent,
-    /* IWineDXGIFactory methods */
-    dxgi_factory_get_wined3d,
 };
+
+struct dxgi_factory *unsafe_impl_from_IDXGIFactory1(IDXGIFactory1 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &dxgi_factory_vtbl);
+    return CONTAINING_RECORD(iface, struct dxgi_factory, IDXGIFactory1_iface);
+}
 
 static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 {
     HRESULT hr;
     UINT i;
 
-    factory->IWineDXGIFactory_iface.lpVtbl = &dxgi_factory_vtbl;
+    factory->IDXGIFactory1_iface.lpVtbl = &dxgi_factory_vtbl;
     factory->refcount = 1;
 
     EnterCriticalSection(&dxgi_cs);
@@ -363,8 +344,7 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
             goto fail;
         }
 
-        hr = dxgi_adapter_init(adapter, &factory->IWineDXGIFactory_iface, i);
-        if (FAILED(hr))
+        if (FAILED(hr = dxgi_adapter_init(adapter, factory, i)))
         {
             UINT j;
 
@@ -410,8 +390,8 @@ HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)
 
     TRACE("Created factory %p.\n", object);
 
-    hr = IWineDXGIFactory_QueryInterface(&object->IWineDXGIFactory_iface, riid, factory);
-    IWineDXGIFactory_Release(&object->IWineDXGIFactory_iface);
+    hr = IDXGIFactory1_QueryInterface(&object->IDXGIFactory1_iface, riid, factory);
+    IDXGIFactory1_Release(&object->IDXGIFactory1_iface);
 
     return hr;
 }

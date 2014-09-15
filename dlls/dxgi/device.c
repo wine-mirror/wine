@@ -82,7 +82,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
         EnterCriticalSection(&dxgi_cs);
         wined3d_device_decref(This->wined3d_device);
         LeaveCriticalSection(&dxgi_cs);
-        IWineDXGIFactory_Release(This->factory);
+        IDXGIFactory1_Release(This->factory);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -148,7 +148,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, 
     wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
     LeaveCriticalSection(&dxgi_cs);
 
-    return IWineDXGIFactory_EnumAdapters(This->factory, create_parameters.adapter_idx, adapter);
+    return IDXGIFactory1_EnumAdapters(This->factory, create_parameters.adapter_idx, adapter);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *iface,
@@ -349,10 +349,16 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     struct wined3d_device_parent *wined3d_device_parent;
     IWineDXGIDeviceParent *dxgi_device_parent;
     struct dxgi_adapter *dxgi_adapter;
-    struct wined3d *wined3d;
+    struct dxgi_factory *dxgi_factory;
     void *layer_base;
     HRESULT hr;
     WINED3DCAPS caps;
+
+    if (!(dxgi_factory = unsafe_impl_from_IDXGIFactory1((IDXGIFactory1 *)factory)))
+    {
+        WARN("This is not the factory we're looking for.\n");
+        return E_FAIL;
+    }
 
     if (!(dxgi_adapter = unsafe_impl_from_IDXGIAdapter1((IDXGIAdapter1 *)adapter)))
     {
@@ -365,65 +371,48 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     layer_base = device + 1;
 
-    hr = layer->create(layer->id, &layer_base, 0,
-            device, &IID_IUnknown, (void **)&device->child_layer);
-    if (FAILED(hr))
+    if (FAILED(hr = layer->create(layer->id, &layer_base, 0,
+            device, &IID_IUnknown, (void **)&device->child_layer)))
     {
         WARN("Failed to create device, returning %#x.\n", hr);
-        goto fail;
+        return hr;
     }
 
-    hr = IDXGIFactory_QueryInterface(factory, &IID_IWineDXGIFactory, (void **)&device->factory);
-    if (FAILED(hr))
-    {
-        WARN("This is not the factory we're looking for, returning %#x.\n", hr);
-        goto fail;
-    }
-    wined3d = IWineDXGIFactory_get_wined3d(device->factory);
-
-    hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface, &IID_IWineDXGIDeviceParent,
-            (void **)&dxgi_device_parent);
-    if (FAILED(hr))
+    if (FAILED(hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface,
+            &IID_IWineDXGIDeviceParent, (void **)&dxgi_device_parent)))
     {
         ERR("DXGI device should implement IWineD3DDeviceParent.\n");
-        goto fail;
+        IUnknown_Release(device->child_layer);
+        return hr;
     }
-
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
+    IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
     FIXME("Ignoring adapter type.\n");
 
-    hr = wined3d_get_device_caps(wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
+    hr = wined3d_get_device_caps(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
     if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
     {
         WARN("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
         if (SUCCEEDED(hr))
             hr = E_FAIL;
-        goto fail;
+        IUnknown_Release(device->child_layer);
+        return hr;
     }
 
     EnterCriticalSection(&dxgi_cs);
-    hr = wined3d_device_create(wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
-            wined3d_device_parent, &device->wined3d_device);
-    IWineDXGIDeviceParent_Release(dxgi_device_parent);
-    wined3d_decref(wined3d);
+    hr = wined3d_device_create(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL,
+            NULL, 0, 4, wined3d_device_parent, &device->wined3d_device);
     LeaveCriticalSection(&dxgi_cs);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, returning %#x.\n", hr);
-        goto fail;
+        IUnknown_Release(device->child_layer);
+        return hr;
     }
+
+    device->factory = &dxgi_factory->IDXGIFactory1_iface;
+    IDXGIFactory1_AddRef(device->factory);
 
     return S_OK;
-
-fail:
-    if (device->wined3d_device)
-    {
-        EnterCriticalSection(&dxgi_cs);
-        wined3d_device_decref(device->wined3d_device);
-        LeaveCriticalSection(&dxgi_cs);
-    }
-    if (device->factory) IWineDXGIFactory_Release(device->factory);
-    if (device->child_layer) IUnknown_Release(device->child_layer);
-    return hr;
 }
