@@ -2561,6 +2561,8 @@ static void test_IWinHttpRequest(void)
     method = SysAllocString( method1W );
     SysFreeString( url );
     url = SysAllocString( url1W );
+    V_VT( &async ) = VT_ERROR;
+    V_ERROR( &async ) = DISP_E_PARAMNOTFOUND;
     hr = IWinHttpRequest_Open( req, method, url, async );
     ok( hr == S_OK, "got %08x\n", hr );
 
