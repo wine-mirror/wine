@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -744,6 +745,75 @@ IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode *doc, ns
     }
 
     return HTMLElementCollection_Create(buf.buf, buf.len);
+}
+
+HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
+{
+    elem_vector_t buf = {NULL, 0, 8};
+    nsIDOMNode *parent_node, *iter;
+    UINT16 parent_type;
+    HTMLDOMNode *node;
+    int i;
+    nsresult nsres;
+    HRESULT hres;
+
+    iter = elem->node.nsnode;
+    nsIDOMNode_AddRef(iter);
+
+    /* Find document or document fragment parent. */
+    while(1) {
+        nsres = nsIDOMNode_GetParentNode(iter, &parent_node);
+        nsIDOMNode_Release(iter);
+        assert(nsres == NS_OK);
+        if(!parent_node)
+            break;
+
+        nsres = nsIDOMNode_GetNodeType(parent_node, &parent_type);
+        assert(nsres == NS_OK);
+
+        if(parent_type != ELEMENT_NODE) {
+            if(parent_type != DOCUMENT_NODE && parent_type != DOCUMENT_FRAGMENT_NODE)
+                FIXME("Unexpected parent_type %d\n", parent_type);
+            break;
+        }
+
+        iter = parent_node;
+    }
+
+    if(!parent_node) {
+        *ret = -1;
+        return S_OK;
+    }
+
+    hres = get_node(elem->node.doc, parent_node, TRUE, &node);
+    nsIDOMNode_Release(parent_node);
+    if(FAILED(hres))
+        return hres;
+
+
+    /* Create all children collection and find the element in it.
+     * This could be optimized if we ever find the reason. */
+    buf.buf = heap_alloc(buf.size*sizeof(*buf.buf));
+    if(!buf.buf) {
+        IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    create_all_list(elem->node.doc, node, &buf);
+
+    for(i=0; i < buf.len; i++) {
+        if(buf.buf[i] == elem)
+            break;
+    }
+    IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
+    heap_free(buf.buf);
+    if(i == buf.len) {
+        FIXME("The element is not in parent's child list?\n");
+        return E_UNEXPECTED;
+    }
+
+    *ret = i;
+    return S_OK;
 }
 
 static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems, DWORD len)

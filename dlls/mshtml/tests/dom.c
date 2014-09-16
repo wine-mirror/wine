@@ -1142,6 +1142,17 @@ static void _test_elem_offset(unsigned line, IUnknown *unk, const char *parent_t
     IHTMLElement_Release(elem);
 }
 
+#define test_elem_source_index(a,b) _test_elem_source_index(__LINE__,a,b)
+static void _test_elem_source_index(unsigned line, IHTMLElement *elem, int index)
+{
+    LONG l = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_sourceIndex(elem, &l);
+    ok_(__FILE__,line)(hres == S_OK, "get_sourceIndex failed: %08x\n", hres);
+    ok_(__FILE__,line)(l == index, "sourceIndex = %d, expected %d\n", l, index);
+}
+
 #define get_doc_node(d) _get_doc_node(__LINE__,d)
 static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
 {
@@ -2105,6 +2116,26 @@ static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t 
     IHTMLElement_Release(elem);
 }
 
+#define get_elem_col_item_idx(a,b) _get_elem_col_item_idx(__LINE__,a,b)
+static IHTMLElement *_get_elem_col_item_idx(unsigned line, IHTMLElementCollection *col, int i)
+{
+    VARIANT name, index;
+    IHTMLElement *elem;
+    IDispatch *disp;
+    HRESULT hres;
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_I4;
+    V_I4(&name) = i;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok_(__FILE__,line)(hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line)(disp != NULL, "disp == NULL\n");
+
+    elem = _get_elem_iface(line, (IUnknown*)disp);
+    IDispatch_Release(disp);
+    return elem;
+}
+
 #define test_elem_collection(c,t,l) _test_elem_collection(__LINE__,c,t,l)
 static void _test_elem_collection(unsigned line, IUnknown *unk,
         const elem_type_t *elem_types, LONG exlen)
@@ -2290,20 +2321,8 @@ static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t ty
 
     HeapFree(GetProcessHeap(), 0, types);
 
-    if(ret) {
-        IDispatch *disp;
-        VARIANT v;
-
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = 0;
-        disp = NULL;
-        hres = IHTMLElementCollection_item(col, v, v, &disp);
-        ok(hres == S_OK, "item failed: %08x\n", hres);
-        ok(disp != NULL, "disp == NULL\n");
-        *ret = _get_elem_iface(line, (IUnknown*)disp);
-        IDispatch_Release(disp);
-    }
-
+    if(ret)
+        *ret = get_elem_col_item_idx(col, 0);
     IHTMLElementCollection_Release(col);
 }
 
@@ -6909,6 +6928,15 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     test_elem_col_item(col, "x", item_types, sizeof(item_types)/sizeof(item_types[0]));
+
+    elem = get_elem_col_item_idx(col, 0);
+    test_elem_source_index(elem, 0);
+    IHTMLElement_Release(elem);
+
+    elem = get_elem_col_item_idx(col, 3);
+    test_elem_source_index(elem, 3);
+    IHTMLElement_Release(elem);
+
     IHTMLElementCollection_Release(col);
 
     hres = IHTMLDocument2_get_images(doc, &collection);
@@ -7012,6 +7040,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
         elem2 = test_elem_get_parent((IUnknown*)elem3);
         ok(elem2 == NULL, "elem2 != NULL\n");
+        test_elem_source_index(elem3, 0);
         IHTMLElement_Release(elem3);
 
         test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2, NULL);
@@ -7737,6 +7766,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     ok(type == 1, "type=%d\n", type);
     test_ifaces((IUnknown*)elem, elem_iids);
     test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement, "[object]");
+    test_elem_source_index(elem, -1);
 
     body = doc_get_body(doc);
     test_node_has_child((IUnknown*)body, VARIANT_FALSE);
@@ -8333,7 +8363,9 @@ static void test_docfrag(IHTMLDocument2 *doc)
     ok(location == (void*)0xdeadbeef, "location changed\n");
 
     br = test_create_elem(doc, "BR");
+    test_elem_source_index(br, -1);
     test_node_append_child((IUnknown*)frag, (IUnknown*)br);
+    test_elem_source_index(br, 0);
     IHTMLElement_Release(br);
 
     div = get_elem_by_id(doc, "divid", TRUE);
