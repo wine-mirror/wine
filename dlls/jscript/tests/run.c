@@ -95,6 +95,7 @@ DEFINE_EXPECT(dispexfunc_value);
 DEFINE_EXPECT(testobj_delete_test);
 DEFINE_EXPECT(testobj_delete_nodelete);
 DEFINE_EXPECT(testobj_value);
+DEFINE_EXPECT(testobj_construct);
 DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_withprop_d);
 DEFINE_EXPECT(testobj_withprop_i);
@@ -362,6 +363,10 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
             ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
             break;
         case INVOKE_FUNC|INVOKE_PROPERTYGET:
+            ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+            break;
+        case DISPATCH_CONSTRUCT:
+            CHECK_EXPECT(testobj_construct);
             ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
             break;
         default:
@@ -2120,6 +2125,10 @@ static BOOL run_tests(void)
     SET_EXPECT(testobj_value);
     parse_script_a("ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
     CHECK_CALLED(testobj_value);
+
+    SET_EXPECT(testobj_construct);
+    parse_script_a("var t = new testObj(1);");
+    CHECK_CALLED(testobj_construct);
 
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
