@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include "d2d1_private.h"
+#include "wincodec.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
@@ -201,10 +202,89 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap(ID2D1RenderTarget *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    FIXME("iface %p, bitmap_source %p, desc %p, bitmap %p stub!\n",
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    unsigned int bpp, data_size;
+    D2D1_SIZE_U size;
+    WICRect rect;
+    UINT32 pitch;
+    HRESULT hr;
+    void *data;
+
+    TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n",
             iface, bitmap_source, desc, bitmap);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IWICBitmapSource_GetSize(bitmap_source, &size.width, &size.height)))
+    {
+        WARN("Failed to get bitmap size, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!desc)
+    {
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
+        bitmap_desc.dpiX = 0.0f;
+        bitmap_desc.dpiY = 0.0f;
+    }
+    else
+    {
+        bitmap_desc = *desc;
+    }
+
+    if (bitmap_desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
+    {
+        WICPixelFormatGUID wic_format;
+
+        if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
+        {
+            WARN("Failed to get bitmap format, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppPBGRA)
+                || IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppBGR))
+        {
+            bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        }
+        else
+        {
+            WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&wic_format));
+            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+        }
+    }
+
+    switch (bitmap_desc.pixelFormat.format)
+    {
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            bpp = 4;
+            break;
+
+        default:
+            FIXME("Unhandled format %#x.\n", bitmap_desc.pixelFormat.format);
+            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
+
+    pitch = ((bpp * size.width) + 15) & ~15;
+    data_size = pitch * size.height;
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, data_size)))
+        return E_OUTOFMEMORY;
+
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = size.width;
+    rect.Height = size.height;
+    if (FAILED(hr = IWICBitmapSource_CopyPixels(bitmap_source, &rect, pitch, data_size, data)))
+    {
+        WARN("Failed to copy bitmap pixels, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, data);
+        return hr;
+    }
+
+    hr = d2d_d3d_render_target_CreateBitmap(iface, size, data, pitch, &bitmap_desc, bitmap);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1RenderTarget *iface,
