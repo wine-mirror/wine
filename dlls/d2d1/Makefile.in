@@ -5,6 +5,7 @@ IMPORTS   = d3d10_1 dxguid uuid
 C_SRCS = \
 	brush.c \
 	factory.c \
+	mesh.c \
 	render_target.c \
 	stroke.c \
 	wic_render_target.c

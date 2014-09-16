@@ -304,9 +304,19 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTa
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTarget *iface, ID2D1Mesh **mesh)
 {
-    FIXME("iface %p, mesh %p stub!\n", iface, mesh);
+    struct d2d_mesh *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, mesh %p.\n", iface, mesh);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_mesh_init(object);
+
+    TRACE("Created mesh %p.\n", object);
+    *mesh = &object->ID2D1Mesh_iface;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawLine(ID2D1RenderTarget *iface,
