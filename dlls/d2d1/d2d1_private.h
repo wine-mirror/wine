@@ -115,4 +115,13 @@ struct d2d_mesh
 
 void d2d_mesh_init(struct d2d_mesh *mesh) DECLSPEC_HIDDEN;
 
+struct d2d_bitmap
+{
+    ID2D1Bitmap ID2D1Bitmap_iface;
+    LONG refcount;
+};
+
+void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *src_data,
+        UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D2D1_PRIVATE_H */
