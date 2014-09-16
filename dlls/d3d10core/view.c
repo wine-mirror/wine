@@ -894,6 +894,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderRe
 
     if (!refcount)
     {
+        wined3d_shader_resource_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
@@ -999,6 +1000,12 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
     else
     {
         view->desc = *desc;
+    }
+
+    if (FAILED(hr = wined3d_shader_resource_view_create(view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+    {
+        WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
+        return hr;
     }
 
     view->resource = resource;

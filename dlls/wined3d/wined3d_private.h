@@ -2646,6 +2646,14 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
     return surface_from_resource(resource);
 }
 
+struct wined3d_shader_resource_view
+{
+    LONG refcount;
+
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+};
+
 struct wined3d_swapchain_ops
 {
     void (*swapchain_present)(struct wined3d_swapchain *swapchain, const RECT *src_rect,

@@ -158,3 +158,47 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_surface(struct wined3d_surfa
 
     return wined3d_rendertarget_view_create(&desc, &surface->container->resource, parent, parent_ops, view);
 }
+
+ULONG CDECL wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view)
+{
+    ULONG refcount = InterlockedIncrement(&view->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", view, refcount);
+
+    return refcount;
+}
+
+ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view)
+{
+    ULONG refcount = InterlockedDecrement(&view->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+
+    if (!refcount)
+    {
+        view->parent_ops->wined3d_object_destroyed(view->parent);
+        HeapFree(GetProcessHeap(), 0, view);
+    }
+
+    return refcount;
+}
+
+HRESULT CDECL wined3d_shader_resource_view_create(void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_shader_resource_view **view)
+{
+    struct wined3d_shader_resource_view *object;
+
+    TRACE("parent %p, parent_ops %p, view %p.\n", parent, parent_ops, view);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
+
+    TRACE("Created shader resource view %p.\n", object);
+    *view = object;
+
+    return WINED3D_OK;
+}

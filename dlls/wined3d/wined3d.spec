@@ -199,6 +199,10 @@
 @ cdecl wined3d_shader_incref(ptr)
 @ cdecl wined3d_shader_set_local_constants_float(ptr long ptr long)
 
+@ cdecl wined3d_shader_resource_view_create(ptr ptr ptr)
+@ cdecl wined3d_shader_resource_view_decref(ptr)
+@ cdecl wined3d_shader_resource_view_incref(ptr)
+
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
 @ cdecl wined3d_stateblock_create(ptr long ptr)
