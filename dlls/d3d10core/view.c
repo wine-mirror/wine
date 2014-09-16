@@ -1015,3 +1015,11 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
 
     return S_OK;
 }
+
+struct d3d10_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_shader_resource_view_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_shader_resource_view, ID3D10ShaderResourceView_iface);
+}

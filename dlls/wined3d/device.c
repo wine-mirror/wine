@@ -2140,6 +2140,38 @@ struct wined3d_buffer * CDECL wined3d_device_get_vs_cb(const struct wined3d_devi
     return device->state.cb[WINED3D_SHADER_TYPE_VERTEX][idx];
 }
 
+static void wined3d_device_set_shader_resource_view(struct wined3d_device *device,
+        enum wined3d_shader_type type, UINT idx, struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_shader_resource_view *prev;
+
+    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
+    {
+        WARN("Invalid view index %u.\n", idx);
+        return;
+    }
+
+    prev = device->update_state->shader_resource_view[type][idx];
+    if (view == prev)
+        return;
+
+    if (view)
+        wined3d_shader_resource_view_incref(view);
+    device->update_state->shader_resource_view[type][idx] = view;
+    if (!device->recording)
+        wined3d_cs_emit_set_shader_resource_view(device->cs, type, idx, view);
+    if (prev)
+        wined3d_shader_resource_view_decref(prev);
+}
+
+void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
+        UINT idx, struct wined3d_shader_resource_view *view)
+{
+    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
+
+    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx, view);
+}
+
 static void wined3d_device_set_sampler(struct wined3d_device *device,
         enum wined3d_shader_type type, UINT idx, struct wined3d_sampler *sampler)
 {

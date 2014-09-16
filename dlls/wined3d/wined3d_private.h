@@ -156,16 +156,17 @@ void *wined3d_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;
 void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 /* Device caps */
-#define MAX_STREAM_OUT          4
-#define MAX_STREAMS             16
-#define MAX_TEXTURES            8
-#define MAX_FRAGMENT_SAMPLERS   16
-#define MAX_VERTEX_SAMPLERS     4
-#define MAX_COMBINED_SAMPLERS   (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
-#define MAX_ACTIVE_LIGHTS       8
-#define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
-#define MAX_CONSTANT_BUFFERS    15
-#define MAX_SAMPLER_OBJECTS     16
+#define MAX_STREAM_OUT              4
+#define MAX_STREAMS                 16
+#define MAX_TEXTURES                8
+#define MAX_FRAGMENT_SAMPLERS       16
+#define MAX_VERTEX_SAMPLERS         4
+#define MAX_COMBINED_SAMPLERS       (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
+#define MAX_ACTIVE_LIGHTS           8
+#define MAX_CLIPPLANES              WINED3DMAXUSERCLIPPLANES
+#define MAX_CONSTANT_BUFFERS        15
+#define MAX_SAMPLER_OBJECTS         16
+#define MAX_SHADER_RESOURCE_VIEWS   128
 
 struct min_lookup
 {
@@ -1865,6 +1866,7 @@ struct wined3d_state
     struct wined3d_shader *shader[WINED3D_SHADER_TYPE_COUNT];
     struct wined3d_buffer *cb[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *sampler[WINED3D_SHADER_TYPE_COUNT][MAX_SAMPLER_OBJECTS];
+    struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
 
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
@@ -2510,6 +2512,8 @@ void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int view_idx,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
+        UINT view_idx, struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT sampler_idx, struct wined3d_sampler *sampler) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler_state(struct wined3d_cs *cs, UINT sampler_idx,
