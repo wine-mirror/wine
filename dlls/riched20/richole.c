@@ -1630,11 +1630,15 @@ static HRESULT WINAPI ITextSelection_fnSetFormattedText(ITextSelection *me, ITex
 static HRESULT WINAPI ITextSelection_fnGetStart(ITextSelection *me, LONG *pcpFirst)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG lim;
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!pcpFirst)
+        return E_INVALIDARG;
+    ME_GetSelectionOfs(This->reOle->editor, pcpFirst, &lim);
+    TRACE("%d\n", *pcpFirst);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG cpFirst)
@@ -1650,11 +1654,15 @@ static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG cpFirst
 static HRESULT WINAPI ITextSelection_fnGetEnd(ITextSelection *me, LONG *pcpLim)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG first;
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!pcpLim)
+        return E_INVALIDARG;
+    ME_GetSelectionOfs(This->reOle->editor, &first, pcpLim);
+    TRACE("%d\n", *pcpLim);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG cpLim)
