@@ -638,8 +638,11 @@ static HRESULT WINAPI ITextRange_fnGetStart(ITextRange *me, LONG *pcpFirst)
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (!pcpFirst)
+        return E_INVALIDARG;
+    *pcpFirst = This->start;
+    TRACE("%d\n", *pcpFirst);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnSetStart(ITextRange *me, LONG cpFirst)
@@ -658,8 +661,11 @@ static HRESULT WINAPI ITextRange_fnGetEnd(ITextRange *me, LONG *pcpLim)
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (!pcpLim)
+        return E_INVALIDARG;
+    *pcpLim = This->end;
+    TRACE("%d\n", *pcpLim);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG cpLim)
