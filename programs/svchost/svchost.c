@@ -204,7 +204,7 @@ static BOOL AddServiceElem(LPWSTR service_name,
     RegCloseKey(service_hkey);
 
     /* Load the DLL and obtain a pointer to ServiceMain entry point */
-    library = LoadLibraryW(dll_name_long);
+    library = LoadLibraryExW(dll_name_long, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!library)
     {
         WINE_ERR("failed to load library %s, err=%u\n",
