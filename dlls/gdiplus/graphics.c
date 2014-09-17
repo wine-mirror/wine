@@ -593,30 +593,47 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
     }
 }
 
-static ARGB transform_color(ARGB color, const ColorMatrix *matrix)
+static BOOL round_color_matrix(const ColorMatrix *matrix, int values[5][5])
 {
-    REAL val[5], res[4];
+    /* Convert floating point color matrix to int[5][5], return TRUE if it's an identity */
+    BOOL identity = TRUE;
+    int i, j;
+
+    for (i=0; i<4; i++)
+        for (j=0; j<5; j++)
+        {
+            if (matrix->m[j][i] != (i == j ? 1.0 : 0.0))
+                identity = FALSE;
+            values[j][i] = gdip_round(matrix->m[j][i] * 256.0);
+        }
+
+    return identity;
+}
+
+static ARGB transform_color(ARGB color, int matrix[5][5])
+{
+    int val[5], res[4];
     int i, j;
     unsigned char a, r, g, b;
 
-    val[0] = ((color >> 16) & 0xff) / 255.0; /* red */
-    val[1] = ((color >> 8) & 0xff) / 255.0; /* green */
-    val[2] = (color & 0xff) / 255.0; /* blue */
-    val[3] = ((color >> 24) & 0xff) / 255.0; /* alpha */
-    val[4] = 1.0; /* translation */
+    val[0] = ((color >> 16) & 0xff); /* red */
+    val[1] = ((color >> 8) & 0xff); /* green */
+    val[2] = (color & 0xff); /* blue */
+    val[3] = ((color >> 24) & 0xff); /* alpha */
+    val[4] = 255; /* translation */
 
     for (i=0; i<4; i++)
     {
-        res[i] = 0.0;
+        res[i] = 0;
 
         for (j=0; j<5; j++)
-            res[i] += matrix->m[j][i] * val[j];
+            res[i] += matrix[j][i] * val[j];
     }
 
-    a = min(max(floorf(res[3]*255.0), 0.0), 255.0);
-    r = min(max(floorf(res[0]*255.0), 0.0), 255.0);
-    g = min(max(floorf(res[1]*255.0), 0.0), 255.0);
-    b = min(max(floorf(res[2]*255.0), 0.0), 255.0);
+    a = min(max(res[3] / 256, 0), 255);
+    r = min(max(res[0] / 256, 0), 255);
+    g = min(max(res[1] / 256, 0), 255);
+    b = min(max(res[2] / 256, 0), 255);
 
     return (a << 24) | (r << 16) | (g << 8) | b;
 }
@@ -703,28 +720,41 @@ static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
         attributes->colormatrices[ColorAdjustTypeDefault].enabled)
     {
         const struct color_matrix *colormatrices;
+        int color_matrix[5][5];
+        int gray_matrix[5][5];
+        BOOL identity;
 
         if (attributes->colormatrices[type].enabled)
             colormatrices = &attributes->colormatrices[type];
         else
             colormatrices = &attributes->colormatrices[ColorAdjustTypeDefault];
 
-        for (x=0; x<width; x++)
-            for (y=0; y<height; y++)
-            {
-                ARGB *src_color;
-                src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+        identity = round_color_matrix(&colormatrices->colormatrix, color_matrix);
 
-                if (colormatrices->flags == ColorMatrixFlagsDefault ||
-                    !color_is_gray(*src_color))
+        if (colormatrices->flags == ColorMatrixFlagsAltGray)
+            identity = (round_color_matrix(&colormatrices->graymatrix, gray_matrix) && identity);
+
+        if (!identity)
+        {
+            for (x=0; x<width; x++)
+            {
+                for (y=0; y<height; y++)
                 {
-                    *src_color = transform_color(*src_color, &colormatrices->colormatrix);
-                }
-                else if (colormatrices->flags == ColorMatrixFlagsAltGray)
-                {
-                    *src_color = transform_color(*src_color, &colormatrices->graymatrix);
+                    ARGB *src_color;
+                    src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+
+                    if (colormatrices->flags == ColorMatrixFlagsDefault ||
+                        !color_is_gray(*src_color))
+                    {
+                        *src_color = transform_color(*src_color, color_matrix);
+                    }
+                    else if (colormatrices->flags == ColorMatrixFlagsAltGray)
+                    {
+                        *src_color = transform_color(*src_color, gray_matrix);
+                    }
                 }
             }
+        }
     }
 
     if (attributes->gamma_enabled[type] ||
