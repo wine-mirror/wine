@@ -183,6 +183,13 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
     return refcount;
 }
 
+void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view)
+{
+    TRACE("view %p.\n", view);
+
+    return view->parent;
+}
+
 HRESULT CDECL wined3d_shader_resource_view_create(void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view)
 {

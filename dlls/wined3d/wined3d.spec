@@ -94,6 +94,7 @@
 @ cdecl wined3d_device_get_vs_consts_b(ptr long ptr long)
 @ cdecl wined3d_device_get_vs_consts_f(ptr long ptr long)
 @ cdecl wined3d_device_get_vs_consts_i(ptr long ptr long)
+@ cdecl wined3d_device_get_vs_resource_view(ptr long)
 @ cdecl wined3d_device_get_vs_sampler(ptr long)
 @ cdecl wined3d_device_incref(ptr)
 @ cdecl wined3d_device_init_3d(ptr ptr)
@@ -202,6 +203,7 @@
 
 @ cdecl wined3d_shader_resource_view_create(ptr ptr ptr)
 @ cdecl wined3d_shader_resource_view_decref(ptr)
+@ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr)
