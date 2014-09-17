@@ -2857,6 +2857,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     else if (image->type == ImageTypeBitmap)
     {
         GpBitmap* bitmap = (GpBitmap*)image;
+        BOOL do_resampling = FALSE;
         BOOL use_software = FALSE;
 
         TRACE("graphics: %.2fx%.2f dpi, fmt %#x, scale %f, image: %.2fx%.2f dpi, fmt %#x, color %08x\n",
@@ -2865,12 +2866,14 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             graphics->scale, image->xres, image->yres, bitmap->format,
             imageAttributes ? imageAttributes->outside_color : 0);
 
-        if (imageAttributes || graphics->alpha_hdc ||
-            (graphics->image && graphics->image->type == ImageTypeBitmap) ||
-            ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X ||
+        if (ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X ||
             ptf[1].X - ptf[0].X != srcwidth || ptf[2].Y - ptf[0].Y != srcheight ||
             srcx < 0 || srcy < 0 ||
             srcx + srcwidth > bitmap->width || srcy + srcheight > bitmap->height)
+            do_resampling = TRUE;
+
+        if (imageAttributes || graphics->alpha_hdc || do_resampling ||
+            (graphics->image && graphics->image->type == ImageTypeBitmap))
             use_software = TRUE;
 
         if (use_software)
@@ -2881,7 +2884,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             int i, x, y, src_stride, dst_stride;
             GpMatrix dst_to_src;
             REAL m11, m12, m21, m22, mdx, mdy;
-            LPBYTE src_data, dst_data;
+            LPBYTE src_data, dst_data, dst_dyn_data=NULL;
             BitmapData lockeddata;
             InterpolationMode interpolation = graphics->interpolation;
             PixelOffsetMode offset_mode = graphics->pixeloffset;
@@ -2926,22 +2929,25 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             stat = GdipInvertMatrix(&dst_to_src);
             if (stat != Ok) return stat;
 
-            dst_data = GdipAlloc(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
-            if (!dst_data) return OutOfMemory;
-
-            dst_stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
-
-            get_bitmap_sample_size(interpolation, imageAttributes->wrap,
-                bitmap, srcx, srcy, srcwidth, srcheight, &src_area);
+            if (do_resampling)
+            {
+                get_bitmap_sample_size(interpolation, imageAttributes->wrap,
+                    bitmap, srcx, srcy, srcwidth, srcheight, &src_area);
+            }
+            else
+            {
+                /* Make sure src_area is equal in size to dst_area. */
+                src_area.X = srcx + dst_area.left - pti[0].x;
+                src_area.Y = srcy + dst_area.top - pti[0].y;
+                src_area.Width = dst_area.right - dst_area.left;
+                src_area.Height = dst_area.bottom - dst_area.top;
+            }
 
             TRACE("src_area: %d x %d\n", src_area.Width, src_area.Height);
 
             src_data = GdipAlloc(sizeof(ARGB) * src_area.Width * src_area.Height);
             if (!src_data)
-            {
-                GdipFree(dst_data);
                 return OutOfMemory;
-            }
             src_stride = sizeof(ARGB) * src_area.Width;
 
             /* Read the bits we need from the source bitmap into an ARGB buffer. */
@@ -2960,7 +2966,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             if (stat != Ok)
             {
                 GdipFree(src_data);
-                GdipFree(dst_data);
                 return stat;
             }
 
@@ -2968,40 +2973,57 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 src_area.Width, src_area.Height,
                 src_stride, ColorAdjustTypeBitmap);
 
-            /* Transform the bits as needed to the destination. */
-            GdipTransformMatrixPoints(&dst_to_src, dst_to_src_points, 3);
-
-            x_dx = dst_to_src_points[1].X - dst_to_src_points[0].X;
-            x_dy = dst_to_src_points[1].Y - dst_to_src_points[0].Y;
-            y_dx = dst_to_src_points[2].X - dst_to_src_points[0].X;
-            y_dy = dst_to_src_points[2].Y - dst_to_src_points[0].Y;
-
-            for (x=dst_area.left; x<dst_area.right; x++)
+            if (do_resampling)
             {
-                for (y=dst_area.top; y<dst_area.bottom; y++)
+                /* Transform the bits as needed to the destination. */
+                dst_data = dst_dyn_data = GdipAlloc(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
+                if (!dst_data)
                 {
-                    GpPointF src_pointf;
-                    ARGB *dst_color;
+                    GdipFree(src_data);
+                    return OutOfMemory;
+                }
 
-                    src_pointf.X = dst_to_src_points[0].X + x * x_dx + y * y_dx;
-                    src_pointf.Y = dst_to_src_points[0].Y + x * x_dy + y * y_dy;
+                dst_stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
 
-                    dst_color = (ARGB*)(dst_data + dst_stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
+                GdipTransformMatrixPoints(&dst_to_src, dst_to_src_points, 3);
 
-                    if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth && src_pointf.Y >= srcy && src_pointf.Y < srcy+srcheight)
-                        *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf,
-                                                           imageAttributes, interpolation, offset_mode);
-                    else
-                        *dst_color = 0;
+                x_dx = dst_to_src_points[1].X - dst_to_src_points[0].X;
+                x_dy = dst_to_src_points[1].Y - dst_to_src_points[0].Y;
+                y_dx = dst_to_src_points[2].X - dst_to_src_points[0].X;
+                y_dy = dst_to_src_points[2].Y - dst_to_src_points[0].Y;
+
+                for (x=dst_area.left; x<dst_area.right; x++)
+                {
+                    for (y=dst_area.top; y<dst_area.bottom; y++)
+                    {
+                        GpPointF src_pointf;
+                        ARGB *dst_color;
+
+                        src_pointf.X = dst_to_src_points[0].X + x * x_dx + y * y_dx;
+                        src_pointf.Y = dst_to_src_points[0].Y + x * x_dy + y * y_dy;
+
+                        dst_color = (ARGB*)(dst_data + dst_stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
+
+                        if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth && src_pointf.Y >= srcy && src_pointf.Y < srcy+srcheight)
+                            *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf,
+                                                               imageAttributes, interpolation, offset_mode);
+                        else
+                            *dst_color = 0;
+                    }
                 }
             }
-
-            GdipFree(src_data);
+            else
+            {
+                dst_data = src_data;
+                dst_stride = src_stride;
+            }
 
             stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
                 dst_data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, dst_stride);
 
-            GdipFree(dst_data);
+            GdipFree(src_data);
+
+            GdipFree(dst_dyn_data);
 
             return stat;
         }
