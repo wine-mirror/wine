@@ -72,6 +72,7 @@
 @ cdecl wined3d_device_get_ps_consts_b(ptr long ptr long)
 @ cdecl wined3d_device_get_ps_consts_f(ptr long ptr long)
 @ cdecl wined3d_device_get_ps_consts_i(ptr long ptr long)
+@ cdecl wined3d_device_get_ps_resource_view(ptr long)
 @ cdecl wined3d_device_get_ps_sampler(ptr long)
 @ cdecl wined3d_device_get_raster_status(ptr long ptr)
 @ cdecl wined3d_device_get_render_state(ptr long)
