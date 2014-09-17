@@ -34,4 +34,5 @@ HRESULT NetFwProfile_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT NetFwAuthorizedApplication_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT NetFwAuthorizedApplications_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT NetFwOpenPorts_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT NetFwOpenPort_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT NetFwServices_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;

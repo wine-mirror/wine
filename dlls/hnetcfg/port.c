@@ -321,7 +321,7 @@ static const struct INetFwOpenPortVtbl fw_port_vtbl =
     fw_port_get_BuiltIn
 };
 
-static HRESULT NetFwOpenPort_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT NetFwOpenPort_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 {
     fw_port *fp;
 
