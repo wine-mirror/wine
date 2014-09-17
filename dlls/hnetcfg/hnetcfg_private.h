@@ -21,6 +21,7 @@ enum type_id
     INetFwAuthorizedApplication_tid,
     INetFwAuthorizedApplications_tid,
     INetFwMgr_tid,
+    INetFwOpenPort_tid,
     INetFwPolicy_tid,
     INetFwProfile_tid,
     last_tid
