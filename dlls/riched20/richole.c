@@ -1754,11 +1754,16 @@ static HRESULT WINAPI ITextSelection_fnGetStoryType(ITextSelection *me, LONG *pV
 static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG start, end;
+    HRESULT hres;
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ME_GetSelectionOfs(This->reOle->editor, &start, &end);
+    hres = range_Collapse(bStart, &start, &end);
+    if (SUCCEEDED(hres))
+        ME_SetSelection(This->reOle->editor, start, end);
+    return hres;
 }
 
 static HRESULT WINAPI ITextSelection_fnExpand(ITextSelection *me, LONG Unit, LONG *pDelta)
