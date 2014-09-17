@@ -576,8 +576,6 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
 
     GetSystemTimeAsFileTime(&tm);
 
-    EnterCriticalSection(&cookie_cs);
-
     len = strlenW(host);
     p = host+len;
     while(p>host && p[-1]!='.') p--;
@@ -604,7 +602,6 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
     domain = get_cookie_domain(host, FALSE);
     if(!domain) {
         TRACE("Unknown host %s\n", debugstr_w(host));
-        LeaveCriticalSection(&cookie_cs);
         return ERROR_NO_MORE_ITEMS;
     }
 
@@ -660,7 +657,6 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
         }
     }
 
-    LeaveCriticalSection(&cookie_cs);
     return ERROR_SUCCESS;
 }
 
@@ -694,35 +690,43 @@ static void cookie_set_to_string(const cookie_set_t *cookie_set, WCHAR *str)
 DWORD get_cookie_header(const WCHAR *host, const WCHAR *path, WCHAR **ret)
 {
     cookie_set_t cookie_set = {0};
-    WCHAR *header, *ptr;
     DWORD res;
 
     static const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' '};
 
+    EnterCriticalSection(&cookie_cs);
+
     res = get_cookie(host, path, INTERNET_COOKIE_HTTPONLY, &cookie_set);
-    if(res != ERROR_SUCCESS)
+    if(res != ERROR_SUCCESS) {
+        LeaveCriticalSection(&cookie_cs);
         return res;
-    if(!cookie_set.cnt) {
-        *ret = NULL;
-        return ERROR_SUCCESS;
     }
 
-    ptr = header = heap_alloc(sizeof(cookieW) + (cookie_set.string_len + 3 /* crlf0 */) * sizeof(WCHAR));
-    if(!header)
-        return ERROR_NOT_ENOUGH_MEMORY;
+    if(cookie_set.cnt) {
+        WCHAR *header, *ptr;
 
-    memcpy(ptr, cookieW, sizeof(cookieW));
-    ptr += sizeof(cookieW)/sizeof(*cookieW);
+        ptr = header = heap_alloc(sizeof(cookieW) + (cookie_set.string_len + 3 /* crlf0 */) * sizeof(WCHAR));
+        if(header) {
+            memcpy(ptr, cookieW, sizeof(cookieW));
+            ptr += sizeof(cookieW)/sizeof(*cookieW);
 
-    cookie_set_to_string(&cookie_set, ptr);
-    heap_free(cookie_set.cookies);
-    ptr += cookie_set.string_len;
+            cookie_set_to_string(&cookie_set, ptr);
+            heap_free(cookie_set.cookies);
+            ptr += cookie_set.string_len;
 
-    *ptr++ = '\r';
-    *ptr++ = '\n';
-    *ptr++ = 0;
+            *ptr++ = '\r';
+            *ptr++ = '\n';
+            *ptr++ = 0;
 
-    *ret = header;
+            *ret = header;
+        }else {
+            res = ERROR_NOT_ENOUGH_MEMORY;
+        }
+    }else {
+        *ret = NULL;
+    }
+
+    LeaveCriticalSection(&cookie_cs);
     return ERROR_SUCCESS;
 }
 
@@ -765,32 +769,36 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return FALSE;
     }
 
+    EnterCriticalSection(&cookie_cs);
+
     res = get_cookie(host, path, flags, &cookie_set);
     if(res != ERROR_SUCCESS) {
+        LeaveCriticalSection(&cookie_cs);
         SetLastError(res);
         return FALSE;
     }
 
-    if(!cookie_set.cnt) {
+    if(cookie_set.cnt) {
+        if(!lpCookieData || cookie_set.string_len+1 > *lpdwSize) {
+            *lpdwSize = (cookie_set.string_len + 1) * sizeof(WCHAR);
+            TRACE("returning %u\n", *lpdwSize);
+            if(lpCookieData) {
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                ret = FALSE;
+            }
+        }else {
+            *lpdwSize = cookie_set.string_len + 1;
+            cookie_set_to_string(&cookie_set, lpCookieData);
+            lpCookieData[cookie_set.string_len] = 0;
+        }
+    }else {
         TRACE("no cookies found for %s\n", debugstr_w(host));
         SetLastError(ERROR_NO_MORE_ITEMS);
         return FALSE;
     }
 
-    if(!lpCookieData || cookie_set.string_len+1 > *lpdwSize) {
-        *lpdwSize = (cookie_set.string_len + 1) * sizeof(WCHAR);
-        TRACE("returning %u\n", *lpdwSize);
-        if(lpCookieData) {
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            ret = FALSE;
-        }
-    }else {
-        *lpdwSize = cookie_set.string_len + 1;
-        cookie_set_to_string(&cookie_set, lpCookieData);
-        lpCookieData[cookie_set.string_len] = 0;
-    }
-
     heap_free(cookie_set.cookies);
+    LeaveCriticalSection(&cookie_cs);
     return ret;
 }
 
