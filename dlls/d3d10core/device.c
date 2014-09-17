@@ -380,8 +380,19 @@ static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
-    FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
+
+    for (i = 0; i < view_count; ++i)
+    {
+        struct d3d10_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
+
+        wined3d_device_set_gs_resource_view(device->wined3d_device, start_slot + i,
+                view ? view->wined3d_view : NULL);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,
