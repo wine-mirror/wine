@@ -2085,7 +2085,7 @@ static void test_default_arg_conv(IHTMLWindow2 *window)
     test_elem_disabled(elem, VARIANT_TRUE);
 
     V_VT(&v) = VT_I4;
-    V_BSTR(&v) = 0;
+    V_I4(&v) = 0;
     hres = dispex_propput(dispex, DISPID_IHTMLELEMENT3_DISABLED, 0, &v, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
 
