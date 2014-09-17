@@ -743,14 +743,25 @@ static HRESULT WINAPI ITextRange_fnGetStoryType(ITextRange *me, LONG *pValue)
     return E_NOTIMPL;
 }
 
+static HRESULT range_Collapse(LONG bStart, LONG *start, LONG *end)
+{
+  if (*end == *start)
+      return S_FALSE;
+
+  if (bStart == tomEnd || bStart == tomFalse)
+      *start = *end;
+  else
+      *end = *start;
+  return S_OK;
+}
+
 static HRESULT WINAPI ITextRange_fnCollapse(ITextRange *me, LONG bStart)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    return range_Collapse(bStart, &This->start, &This->end);
 }
 
 static HRESULT WINAPI ITextRange_fnExpand(ITextRange *me, LONG Unit, LONG *pDelta)
