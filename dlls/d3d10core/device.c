@@ -2324,6 +2324,10 @@ HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
         WARN("Failed to initialize blend state rbtree.\n");
         return E_FAIL;
     }
+    device->blend_factor[0] = 1.0f;
+    device->blend_factor[1] = 1.0f;
+    device->blend_factor[2] = 1.0f;
+    device->blend_factor[3] = 1.0f;
 
     if (wine_rb_init(&device->depthstencil_states, &d3d10_depthstencil_state_rb_ops) == -1)
     {
