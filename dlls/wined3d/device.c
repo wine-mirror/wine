@@ -90,7 +90,8 @@ GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 
         default:
             FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
-            return GL_NONE;
+        case WINED3D_PT_UNDEFINED:
+            return ~0u;
     }
 }
 
@@ -130,6 +131,7 @@ static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_t
 
         default:
             FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
+        case ~0u:
             return WINED3D_PT_UNDEFINED;
     }
 }
