@@ -55,6 +55,7 @@ struct d3d10_stateblock
     ID3D10RenderTargetView *rtvs[D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT];
     ID3D10DepthStencilView *dsv;
     ID3D10DepthStencilState *dss;
+    UINT stencil_ref;
     ID3D10BlendState *bs;
     float blend_factor[4];
     UINT sample_mask;
@@ -197,6 +198,11 @@ static void stateblock_cleanup(struct d3d10_stateblock *stateblock)
     {
         ID3D10DepthStencilView_Release(stateblock->dsv);
         stateblock->dsv = NULL;
+    }
+    if (stateblock->dss)
+    {
+        ID3D10DepthStencilState_Release(stateblock->dss);
+        stateblock->dss = NULL;
     }
     if (stateblock->bs)
     {
@@ -355,6 +361,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Capture(ID3D10StateBlock *ifac
     if (stateblock->mask.OMRenderTargets)
         ID3D10Device_OMGetRenderTargets(stateblock->device, D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT,
                 stateblock->rtvs, &stateblock->dsv);
+    if (stateblock->mask.OMDepthStencilState)
+        ID3D10Device_OMGetDepthStencilState(stateblock->device, &stateblock->dss, &stateblock->stencil_ref);
     if (stateblock->mask.OMBlendState)
         ID3D10Device_OMGetBlendState(stateblock->device, &stateblock->bs,
                 stateblock->blend_factor, &stateblock->sample_mask);
@@ -454,6 +462,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_stateblock_Apply(ID3D10StateBlock *iface)
     if (stateblock->mask.OMRenderTargets)
         ID3D10Device_OMSetRenderTargets(stateblock->device, D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT,
                 stateblock->rtvs, stateblock->dsv);
+    if (stateblock->mask.OMDepthStencilState)
+        ID3D10Device_OMSetDepthStencilState(stateblock->device, stateblock->dss, stateblock->stencil_ref);
     if (stateblock->mask.OMBlendState)
         ID3D10Device_OMSetBlendState(stateblock->device, stateblock->bs,
                 stateblock->blend_factor, stateblock->sample_mask);
