@@ -2328,6 +2328,7 @@ HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
     device->blend_factor[1] = 1.0f;
     device->blend_factor[2] = 1.0f;
     device->blend_factor[3] = 1.0f;
+    device->sample_mask = D3D10_DEFAULT_SAMPLE_MASK;
 
     if (wine_rb_init(&device->depthstencil_states, &d3d10_depthstencil_state_rb_ops) == -1)
     {
