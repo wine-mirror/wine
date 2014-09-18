@@ -794,7 +794,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     }else {
         TRACE("no cookies found for %s\n", debugstr_w(host));
         SetLastError(ERROR_NO_MORE_ITEMS);
-        return FALSE;
+        ret = FALSE;
     }
 
     heap_free(cookie_set.cookies);
