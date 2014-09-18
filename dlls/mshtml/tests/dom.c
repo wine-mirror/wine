@@ -4236,8 +4236,17 @@ static void _get_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, VARIANT
     HRESULT hres;
 
     hres = IHTMLDOMAttribute_get_nodeValue(attr, v);
-    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x\n", hres);
     ok_(__FILE__,line) (V_VT(v) == vt, "vt=%d, expected %d\n", V_VT(v), vt);
+}
+
+#define put_attr_node_value(a,b) _put_attr_node_value(__LINE__,a,b)
+static void _put_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, VARIANT v)
+{
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_put_nodeValue(attr, v);
+    ok_(__FILE__,line) (hres == S_OK, "put_nodeValue failed: %08x\n", hres);
 }
 
 #define get_window_doc(e) _get_window_doc(__LINE__,e)
@@ -7548,12 +7557,31 @@ static void test_attr(IHTMLElement *elem)
     ok(!strcmp_wa(V_BSTR(&v), "divid"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("divid2");
+    put_attr_node_value(attr, v);
+
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!strcmp_wa(V_BSTR(&v), "divid2"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
     get_attr_node_value(attr, &v, VT_BSTR);
     ok(!V_BSTR(&v), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("newvalue");
+    put_attr_node_value(attr, v);
+    VariantClear(&v);
+
+    attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!strcmp_wa(V_BSTR(&v), "newvalue"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     test_attr_specified(attr, VARIANT_TRUE);
     IHTMLDOMAttribute_Release(attr);
 
@@ -7564,6 +7592,14 @@ static void test_attr(IHTMLElement *elem)
     get_attr_node_value(attr, &v, VT_I4);
     ok(V_I4(&v) == 100, "V_I4(v) = %d\n", V_I4(&v));
     test_attr_specified(attr, VARIANT_TRUE);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 150;
+    put_attr_node_value(attr, v);
+
+    get_attr_node_value(attr, &v, VT_I4);
+    ok(V_I4(&v) == 150, "V_I4(v) = %d\n", V_I4(&v));
+
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, "tabIndex", TRUE);
