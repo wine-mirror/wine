@@ -1276,8 +1276,6 @@ HRESULT CDECL wined3d_device_get_stream_source(const struct wined3d_device *devi
 
     stream = &device->state.streams[stream_idx];
     *buffer = stream->buffer;
-    if (*buffer)
-        wined3d_buffer_incref(*buffer);
     if (offset)
         *offset = stream->offset;
     *stride = stream->stride;

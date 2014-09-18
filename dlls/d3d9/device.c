@@ -2769,7 +2769,6 @@ static HRESULT WINAPI d3d9_device_GetStreamSource(IDirect3DDevice9Ex *iface,
         buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
         *buffer = &buffer_impl->IDirect3DVertexBuffer9_iface;
         IDirect3DVertexBuffer9_AddRef(*buffer);
-        wined3d_buffer_decref(wined3d_buffer);
     }
     else
     {
