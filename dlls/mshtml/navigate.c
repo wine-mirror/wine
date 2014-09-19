@@ -938,7 +938,6 @@ static const BSCallbackVtbl BufferBSCVtbl = {
 HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
 {
     BufferBSC *bsc;
-    int cp = CP_ACP;
     WCHAR *text;
     HRESULT hres;
 
@@ -981,19 +980,17 @@ HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
         break;
 
     case BOM_UTF8:
-        cp = CP_UTF8;
-        /* fallthrough */
     default: {
         DWORD len;
 
-        len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+        len = MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
         text = heap_alloc((len+1)*sizeof(WCHAR));
         if(!text) {
             hres = E_OUTOFMEMORY;
             break;
         }
 
-        MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, text, len);
+        MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, text, len);
         text[len] = 0;
     }
     }
