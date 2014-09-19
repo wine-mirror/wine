@@ -750,6 +750,51 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 }
 
+static void test_typography(void)
+{
+    DWRITE_FONT_FEATURE feature;
+    IDWriteTypography *typography;
+    UINT32 count;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTypography(factory, &typography);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    feature.nameTag = DWRITE_FONT_FEATURE_TAG_KERNING;
+    feature.parameter = 1;
+    hr = IDWriteTypography_AddFontFeature(typography, feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = IDWriteTypography_GetFontFeatureCount(typography);
+    ok(count == 1, "got %u\n", count);
+
+    /* duplicated features work just fine */
+    feature.nameTag = DWRITE_FONT_FEATURE_TAG_KERNING;
+    feature.parameter = 0;
+    hr = IDWriteTypography_AddFontFeature(typography, feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = IDWriteTypography_GetFontFeatureCount(typography);
+    ok(count == 2, "got %u\n", count);
+
+    memset(&feature, 0, sizeof(feature));
+    hr = IDWriteTypography_GetFontFeature(typography, 0, &feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(feature.nameTag == DWRITE_FONT_FEATURE_TAG_KERNING, "got tag %x\n", feature.nameTag);
+    ok(feature.parameter == 1, "got %u\n", feature.parameter);
+
+    memset(&feature, 0, sizeof(feature));
+    hr = IDWriteTypography_GetFontFeature(typography, 1, &feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(feature.nameTag == DWRITE_FONT_FEATURE_TAG_KERNING, "got tag %x\n", feature.nameTag);
+    ok(feature.parameter == 0, "got %u\n", feature.parameter);
+
+    hr = IDWriteTypography_GetFontFeature(typography, 2, &feature);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    IDWriteTypography_Release(typography);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -773,6 +818,7 @@ START_TEST(layout)
     test_fontweight();
     test_SetInlineObject();
     test_draw_sequence();
+    test_typography();
 
     IDWriteFactory_Release(factory);
 }

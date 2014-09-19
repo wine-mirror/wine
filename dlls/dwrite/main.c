@@ -696,8 +696,8 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory *iface, WCHA
 static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWriteTypography **typography)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%p): stub\n", This, typography);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, typography);
+    return create_typography(typography);
 }
 
 static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory *iface, IDWriteGdiInterop **gdi_interop)
