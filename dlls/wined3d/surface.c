@@ -1102,7 +1102,7 @@ static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface
 
 static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
 {
-    const struct wined3d_resource *resource = &surface->resource;
+    const struct wined3d_resource *resource = &surface->container->resource;
     struct wined3d_device *device = resource->device;
     const struct blit_shader *blitter;
 
