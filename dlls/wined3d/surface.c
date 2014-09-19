@@ -1511,7 +1511,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
         if (srgb)
             internal = format->glGammaInternal;
         else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET
-                && wined3d_resource_is_offscreen(&surface->resource))
+                && wined3d_resource_is_offscreen(&surface->container->resource))
             internal = format->rtInternal;
         else
             internal = format->glInternal;
@@ -1856,7 +1856,7 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
     if (srgb)
         internal = format->glGammaInternal;
     else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET
-            && wined3d_resource_is_offscreen(&surface->resource))
+            && wined3d_resource_is_offscreen(&surface->container->resource))
         internal = format->rtInternal;
     else
         internal = format->glInternal;
@@ -3047,7 +3047,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if (wined3d_resource_is_offscreen(&surface->resource))
+    if (wined3d_resource_is_offscreen(&surface->container->resource))
     {
         /* Mapping the primary render target which is not on a swapchain.
          * Read from the back buffer. */
@@ -3146,7 +3146,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
 
     TRACE("Reading back offscreen render target %p.\n", surface);
 
-    if (wined3d_resource_is_offscreen(&surface->resource))
+    if (wined3d_resource_is_offscreen(&surface->container->resource))
         gl_info->gl_ops.gl.p_glReadBuffer(device->offscreenBuffer);
     else
         gl_info->gl_ops.gl.p_glReadBuffer(surface_get_gl_buffer(surface));
@@ -3513,7 +3513,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 
     /* Bind the target texture */
     context_bind_texture(context, dst_surface->container->target, dst_surface->container->texture_rgb.name);
-    if (wined3d_resource_is_offscreen(&src_surface->resource))
+    if (wined3d_resource_is_offscreen(&src_surface->container->resource))
     {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
@@ -3619,7 +3619,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     context_apply_blit_state(context, device);
     wined3d_texture_load(dst_surface->container, context, FALSE);
 
-    src_offscreen = wined3d_resource_is_offscreen(&src_surface->resource);
+    src_offscreen = wined3d_resource_is_offscreen(&src_surface->container->resource);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
     if (!noBackBufferBackup && !src_surface->container->texture_rgb.name)
     {
@@ -3919,7 +3919,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     /* Activate the destination context, set it up for blitting */
     context_apply_blit_state(context, device);
 
-    if (!wined3d_resource_is_offscreen(&dst_surface->resource))
+    if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     device->blitter->set_shader(device->blit_priv, context, src_surface);
@@ -4522,7 +4522,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
     RECT r;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && wined3d_resource_is_offscreen(&surface->resource))
+            && wined3d_resource_is_offscreen(&surface->container->resource))
     {
         ERR("Trying to load offscreen surface into WINED3D_LOCATION_DRAWABLE.\n");
         return WINED3DERR_INVALIDCALL;
@@ -4550,7 +4550,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     BYTE *mem = NULL;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && wined3d_resource_is_offscreen(&surface->resource)
+            && wined3d_resource_is_offscreen(&surface->container->resource)
             && (surface->locations & WINED3D_LOCATION_DRAWABLE))
     {
         surface_load_fb_texture(surface, srgb);
@@ -5856,7 +5856,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
 
                     if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, &src_rect)))
                     {
-                        if (!wined3d_resource_is_offscreen(&dst_surface->resource))
+                        if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
                             surface_load_location(dst_surface, dst_surface->container->resource.draw_binding);
                         return WINED3D_OK;
                     }

@@ -305,9 +305,6 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
 {
     struct wined3d_swapchain *swapchain;
 
-    if (resource->type == WINED3D_RTYPE_SURFACE)
-        resource = &surface_from_resource(resource)->container->resource;
-
     /* Only texture resources can be onscreen. */
     if (resource->type != WINED3D_RTYPE_TEXTURE)
         return TRUE;
