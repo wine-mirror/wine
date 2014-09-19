@@ -304,6 +304,7 @@ struct d3d10_query
 
 HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
         const D3D10_QUERY_DESC *desc, BOOL predicate) DECLSPEC_HIDDEN;
+struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 
 /* IDirect3D10Device1 */
 struct d3d10_device

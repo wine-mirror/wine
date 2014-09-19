@@ -29,6 +29,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_PRESENT,
     WINED3D_CS_OP_CLEAR,
     WINED3D_CS_OP_DRAW,
+    WINED3D_CS_OP_SET_PREDICATION,
     WINED3D_CS_OP_SET_VIEWPORT,
     WINED3D_CS_OP_SET_SCISSOR_RECT,
     WINED3D_CS_OP_SET_RENDERTARGET_VIEW,
@@ -82,6 +83,13 @@ struct wined3d_cs_draw
     UINT start_instance;
     UINT instance_count;
     BOOL indexed;
+};
+
+struct wined3d_cs_set_predication
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_query *predicate;
+    BOOL value;
 };
 
 struct wined3d_cs_set_viewport
@@ -313,6 +321,26 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_coun
     op->start_instance = start_instance;
     op->instance_count = instance_count;
     op->indexed = indexed;
+
+    cs->ops->submit(cs);
+}
+
+static void wined3d_cs_exec_set_predication(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_predication *op = data;
+
+    cs->state.predicate = op->predicate;
+    cs->state.predicate_value = op->value;
+}
+
+void wined3d_cs_emit_set_predication(struct wined3d_cs *cs, struct wined3d_query *predicate, BOOL value)
+{
+    struct wined3d_cs_set_predication *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_PREDICATION;
+    op->predicate = predicate;
+    op->value = value;
 
     cs->ops->submit(cs);
 }
@@ -880,6 +908,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
     /* WINED3D_CS_OP_CLEAR                      */ wined3d_cs_exec_clear,
     /* WINED3D_CS_OP_DRAW                       */ wined3d_cs_exec_draw,
+    /* WINED3D_CS_OP_SET_PREDICATION            */ wined3d_cs_exec_set_predication,
     /* WINED3D_CS_OP_SET_VIEWPORT               */ wined3d_cs_exec_set_viewport,
     /* WINED3D_CS_OP_SET_SCISSOR_RECT           */ wined3d_cs_exec_set_scissor_rect,
     /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW      */ wined3d_cs_exec_set_rendertarget_view,

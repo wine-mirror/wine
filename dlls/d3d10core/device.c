@@ -385,7 +385,13 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device1 *iface,
 
 static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, ID3D10Predicate *predicate, BOOL value)
 {
-    FIXME("iface %p, predicate %p, value %d stub!\n", iface, predicate, value);
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct d3d10_query *query;
+
+    TRACE("iface %p, predicate %p, value %#x.\n", iface, predicate, value);
+
+    query = unsafe_impl_from_ID3D10Query((ID3D10Query *)predicate);
+    wined3d_device_set_predication(device->wined3d_device, query ? query->wined3d_query : NULL, value);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *iface,

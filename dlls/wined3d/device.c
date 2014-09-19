@@ -3333,6 +3333,27 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
     return WINED3D_OK;
 }
 
+void CDECL wined3d_device_set_predication(struct wined3d_device *device,
+        struct wined3d_query *predicate, BOOL value)
+{
+    struct wined3d_query *prev;
+
+    TRACE("device %p, predicate %p, value %#x.\n", device, predicate, value);
+
+    prev = device->update_state->predicate;
+    if (predicate)
+    {
+        FIXME("Predicated rendering not implemented.\n");
+        wined3d_query_incref(predicate);
+    }
+    device->update_state->predicate = predicate;
+    device->update_state->predicate_value = value;
+    if (!device->recording)
+        wined3d_cs_emit_set_predication(device->cs, predicate, value);
+    if (prev)
+        wined3d_query_decref(prev);
+}
+
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
         enum wined3d_primitive_type primitive_type)
 {

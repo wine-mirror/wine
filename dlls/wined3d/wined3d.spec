@@ -126,6 +126,7 @@
 @ cdecl wined3d_device_set_multithreaded(ptr)
 @ cdecl wined3d_device_set_npatch_mode(ptr float)
 @ cdecl wined3d_device_set_pixel_shader(ptr ptr)
+@ cdecl wined3d_device_set_predication(ptr ptr long)
 @ cdecl wined3d_device_set_primitive_type(ptr long)
 @ cdecl wined3d_device_set_ps_cb(ptr long ptr)
 @ cdecl wined3d_device_set_ps_consts_b(ptr long ptr long)

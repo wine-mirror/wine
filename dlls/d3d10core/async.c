@@ -171,6 +171,14 @@ static const struct ID3D10QueryVtbl d3d10_query_vtbl =
     d3d10_query_GetDesc,
 };
 
+struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d10_query_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d10_query, ID3D10Query_iface);
+}
+
 HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
         const D3D10_QUERY_DESC *desc, BOOL predicate)
 {
