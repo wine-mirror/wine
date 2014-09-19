@@ -2351,7 +2351,7 @@ static void test_body_style(IHTMLStyle *style)
     if (hres != E_INVALIDARG) {
         hres = IHTMLStyle_get_listStyle(style, &str);
         ok(hres == S_OK, "get_listStyle failed: %08x\n", hres);
-        ok(strstr_wa(str, "decimal-leading-zero") == str &&
+        ok(strstr_wa(str, "decimal-leading-zero") &&
            strstr_wa(str, "none") != NULL &&
            strstr_wa(str, "inside") != NULL,
             "listStyle = %s\n", wine_dbgstr_w(str));
