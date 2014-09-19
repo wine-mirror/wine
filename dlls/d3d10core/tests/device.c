@@ -961,8 +961,9 @@ static void test_create_predicate(void)
 
     query_desc.Query = D3D10_QUERY_SO_OVERFLOW_PREDICATE;
     hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
-    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
-    ID3D10Predicate_Release(predicate);
+    todo_wine ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Predicate_Release(predicate);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);

@@ -171,10 +171,42 @@ static const struct ID3D10QueryVtbl d3d10_query_vtbl =
     d3d10_query_GetDesc,
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device, BOOL predicate)
+HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
+        const D3D10_QUERY_DESC *desc, BOOL predicate)
 {
+    HRESULT hr;
+
+    static const enum wined3d_query_type query_type_map[] =
+    {
+        /* D3D10_QUERY_EVENT                    */  WINED3D_QUERY_TYPE_EVENT,
+        /* D3D10_QUERY_OCCLUSION                */  WINED3D_QUERY_TYPE_OCCLUSION,
+        /* D3D10_QUERY_TIMESTAMP                */  WINED3D_QUERY_TYPE_TIMESTAMP,
+        /* D3D10_QUERY_TIMESTAMP_DISJOINT       */  WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT,
+        /* D3D10_QUERY_PIPELINE_STATISTICS      */  WINED3D_QUERY_TYPE_PIPELINE_STATISTICS,
+        /* D3D10_QUERY_OCCLUSION_PREDICATE      */  WINED3D_QUERY_TYPE_OCCLUSION,
+        /* D3D10_QUERY_SO_STATISTICS            */  WINED3D_QUERY_TYPE_SO_STATISTICS,
+        /* D3D10_QUERY_SO_OVERFLOW_PREDICATE    */  WINED3D_QUERY_TYPE_SO_OVERFLOW,
+    };
+
+    if (desc->Query > sizeof(query_type_map) / sizeof(*query_type_map))
+    {
+        FIXME("Unhandled query type %#x.\n", desc->Query);
+        return E_INVALIDARG;
+    }
+
+    if (desc->MiscFlags)
+        FIXME("Ignoring MiscFlags %#x.\n", desc->MiscFlags);
+
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
+
+    if (FAILED(hr = wined3d_query_create(device->wined3d_device,
+            query_type_map[desc->Query], &query->wined3d_query)))
+    {
+        WARN("Failed to create wined3d query, hr %#x.\n", hr);
+        return hr;
+    }
+
     query->predicate = predicate;
     query->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(query->device);

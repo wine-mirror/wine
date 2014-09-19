@@ -1722,7 +1722,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device1 *iface,
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_query_init(object, device, FALSE)))
+    if (FAILED(hr = d3d10_query_init(object, device, desc, FALSE)))
     {
         WARN("Failed to initialize query, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -1756,7 +1756,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device1 *ifa
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_query_init(object, device, TRUE)))
+    if (FAILED(hr = d3d10_query_init(object, device, desc, TRUE)))
     {
         WARN("Failed to initialize predicate, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

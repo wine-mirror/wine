@@ -694,6 +694,9 @@ enum wined3d_pool
 
 enum wined3d_query_type
 {
+    WINED3D_QUERY_TYPE_PIPELINE_STATISTICS  = 1,
+    WINED3D_QUERY_TYPE_SO_STATISTICS        = 2,
+    WINED3D_QUERY_TYPE_SO_OVERFLOW          = 3,
     WINED3D_QUERY_TYPE_VCACHE               = 4,
     WINED3D_QUERY_TYPE_RESOURCE_MANAGER     = 5,
     WINED3D_QUERY_TYPE_VERTEX_STATS         = 6,
