@@ -209,7 +209,7 @@ HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
     query->refcount = 1;
 
     if (FAILED(hr = wined3d_query_create(device->wined3d_device,
-            query_type_map[desc->Query], &query->wined3d_query)))
+            query_type_map[desc->Query], query, &query->wined3d_query)))
     {
         WARN("Failed to create wined3d query, hr %#x.\n", hr);
         return hr;

@@ -421,6 +421,13 @@ static HRESULT wined3d_event_query_ops_get_data(struct wined3d_query *query,
     return S_OK;
 }
 
+void * CDECL wined3d_query_get_parent(const struct wined3d_query *query)
+{
+    TRACE("query %p.\n", query);
+
+    return query->parent;
+}
+
 enum wined3d_query_type CDECL wined3d_query_get_type(const struct wined3d_query *query)
 {
     TRACE("query %p.\n", query);
@@ -698,9 +705,12 @@ static const struct wined3d_query_ops timestamp_disjoint_query_ops =
     wined3d_timestamp_disjoint_query_ops_issue,
 };
 
-static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device, enum wined3d_query_type type)
+static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device,
+        enum wined3d_query_type type, void *parent)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
+    query->parent = parent;
 
     switch (type)
     {
@@ -797,7 +807,7 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
 }
 
 HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, struct wined3d_query **query)
+        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
 {
     struct wined3d_query *object;
     HRESULT hr;
@@ -808,8 +818,7 @@ HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = query_init(object, device, type);
-    if (FAILED(hr))
+    if (FAILED(hr = query_init(object, device, type, parent)))
     {
         WARN("Failed to initialize query, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

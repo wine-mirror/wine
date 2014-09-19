@@ -3354,6 +3354,14 @@ void CDECL wined3d_device_set_predication(struct wined3d_device *device,
         wined3d_query_decref(prev);
 }
 
+struct wined3d_query * CDECL wined3d_device_get_predication(struct wined3d_device *device, BOOL *value)
+{
+    TRACE("device %p, value %p.\n", device, value);
+
+    *value = device->state.predicate_value;
+    return device->state.predicate;
+}
+
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
         enum wined3d_primitive_type primitive_type)
 {

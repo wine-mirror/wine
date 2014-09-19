@@ -2145,6 +2145,7 @@ HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *dev
 void __cdecl wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material);
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
+struct wined3d_query * __cdecl wined3d_device_get_predication(struct wined3d_device *device, BOOL *value);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
         enum wined3d_primitive_type *primitive_topology);
 struct wined3d_buffer * __cdecl wined3d_device_get_ps_cb(const struct wined3d_device *device, UINT idx);
@@ -2304,10 +2305,11 @@ HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
 
 HRESULT __cdecl wined3d_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, struct wined3d_query **query);
+        enum wined3d_query_type type, void *parent, struct wined3d_query **query);
 ULONG __cdecl wined3d_query_decref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_get_data(struct wined3d_query *query, void *data, UINT data_size, DWORD flags);
 UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
+void * __cdecl wined3d_query_get_parent(const struct wined3d_query *query);
 enum wined3d_query_type __cdecl wined3d_query_get_type(const struct wined3d_query *query);
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
