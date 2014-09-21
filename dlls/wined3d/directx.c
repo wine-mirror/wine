@@ -2217,12 +2217,12 @@ card_fallback_amd[] =
 },
 card_fallback_intel[] =
 {
-    CARD_INTEL_915G,                /* D3D5 */
-    CARD_INTEL_915G,                /* D3D6 */
-    CARD_INTEL_915G,                /* D3D7 */
+    CARD_INTEL_845G,                /* D3D5 */
+    CARD_INTEL_845G,                /* D3D6 */
+    CARD_INTEL_845G,                /* D3D7 */
     CARD_INTEL_915G,                /* D3D8 */
     CARD_INTEL_915G,                /* D3D9_SM2 */
-    CARD_INTEL_915G,                /* D3D9_SM3 */
+    CARD_INTEL_945G,                /* D3D9_SM3 */
     CARD_INTEL_G45,                 /* D3D10 */
     CARD_INTEL_IVBD,                /* D3D11 */
 };
