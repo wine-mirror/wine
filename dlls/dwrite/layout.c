@@ -271,6 +271,8 @@ static struct layout_range *alloc_layout_range_from(struct layout_range *from, c
 
 static void free_layout_range(struct layout_range *range)
 {
+    if (!range)
+        return;
     if (range->object)
         IDWriteInlineObject_Release(range->object);
     if (range->effect)
