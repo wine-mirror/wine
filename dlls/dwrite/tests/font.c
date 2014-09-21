@@ -957,7 +957,7 @@ static void test_FontLoader(void)
     ok(face == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face);
     ok(count == 0, "got %i\n", count);
 
-    hr = IDWriteFactory_CreateFontFace(factory, type, 1, &ffile, 0, 0, &fface);
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &ffile, 0, 0, &fface);
     ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(ffile);
 
