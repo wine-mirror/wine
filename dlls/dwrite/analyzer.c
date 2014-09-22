@@ -381,7 +381,7 @@ static inline void set_break_condition(UINT32 pos, enum BreakConditionLocation l
     }
 }
 
-static inline WCHAR get_table_entry(const unsigned short *table, WCHAR ch)
+static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
 }
