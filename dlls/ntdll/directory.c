@@ -3307,8 +3307,10 @@ struct read_changes_info
     HANDLE FileHandle;
     PVOID Buffer;
     ULONG BufferSize;
+    ULONG data_size;
     PIO_APC_ROUTINE apc;
     void           *apc_arg;
+    char            data[1];
 };
 
 /* callback for ioctl user APC */
@@ -3322,14 +3324,13 @@ static void WINAPI read_changes_user_apc( void *arg, IO_STATUS_BLOCK *io, ULONG 
 static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
 {
     struct read_changes_info *info = user;
-    char data[PATH_MAX];
     NTSTATUS ret;
     int size;
 
     SERVER_START_REQ( read_change )
     {
         req->handle = wine_server_obj_handle( info->FileHandle );
-        wine_server_set_reply( req, data, PATH_MAX );
+        wine_server_set_reply( req, info->data, info->data_size );
         ret = wine_server_call( req );
         size = wine_server_reply_size( reply );
     }
@@ -3340,7 +3341,7 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
         PFILE_NOTIFY_INFORMATION pfni = info->Buffer;
         int i, left = info->BufferSize;
         DWORD *last_entry_offset = NULL;
-        struct filesystem_event *event = (struct filesystem_event*)data;
+        struct filesystem_event *event = (struct filesystem_event*)info->data;
 
         while (size && left >= sizeof(*pfni))
         {
@@ -3413,6 +3414,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
 {
     struct read_changes_info *info;
     NTSTATUS status;
+    ULONG size = max( 4096, BufferSize );
     ULONG_PTR cvalue = ApcRoutine ? 0 : (ULONG_PTR)ApcContext;
 
     TRACE("%p %p %p %p %p %p %u %u %d\n",
@@ -3425,7 +3427,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     if (CompletionFilter == 0 || (CompletionFilter & ~FILE_NOTIFY_ALL))
         return STATUS_INVALID_PARAMETER;
 
-    info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof *info );
+    info = RtlAllocateHeap( GetProcessHeap(), 0, offsetof( struct read_changes_info, data[size] ));
     if (!info)
         return STATUS_NO_MEMORY;
 
@@ -3434,6 +3436,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     info->BufferSize = BufferSize;
     info->apc        = ApcRoutine;
     info->apc_arg    = ApcContext;
+    info->data_size  = size;
 
     SERVER_START_REQ( read_directory_changes )
     {
