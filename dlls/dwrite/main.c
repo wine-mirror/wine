@@ -364,7 +364,7 @@ HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedSt
     *strings = NULL;
 
     New = heap_alloc(sizeof(struct localizedstrings));
-    if (!This) return E_OUTOFMEMORY;
+    if (!New) return E_OUTOFMEMORY;
 
     New->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
     New->ref = 1;
