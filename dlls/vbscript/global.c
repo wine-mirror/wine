@@ -112,9 +112,6 @@ static HRESULT return_short(VARIANT *res, short val)
 
 static HRESULT return_int(VARIANT *res, int val)
 {
-    if((short)val == val)
-        return return_short(res, val);
-
     if(res) {
         V_VT(res) = VT_I4;
         V_I4(res) = val;
@@ -417,9 +414,7 @@ static HRESULT Global_CLng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     if(!res)
         return DISP_E_BADVARTYPE;
 
-    V_VT(res) = VT_I4;
-    V_I4(res) = i;
-    return S_OK;
+    return return_int(res, i);
 }
 
 static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1778,12 +1773,7 @@ static HRESULT Global_ScriptEngineMajorVersion(vbdisp_t *This, VARIANT *arg, uns
 
     assert(args_cnt == 0);
 
-    if(res) {
-        V_VT(res) = VT_I4;
-        V_I4(res) = VBSCRIPT_MAJOR_VERSION;
-    }
-
-    return S_OK;
+    return return_int(res, VBSCRIPT_MAJOR_VERSION);
 }
 
 static HRESULT Global_ScriptEngineMinorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1792,12 +1782,7 @@ static HRESULT Global_ScriptEngineMinorVersion(vbdisp_t *This, VARIANT *arg, uns
 
     assert(args_cnt == 0);
 
-    if(res) {
-        V_VT(res) = VT_I4;
-        V_I4(res) = VBSCRIPT_MINOR_VERSION;
-    }
-
-    return S_OK;
+    return return_int(res, VBSCRIPT_MINOR_VERSION);
 }
 
 static HRESULT Global_ScriptEngineBuildVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1806,12 +1791,7 @@ static HRESULT Global_ScriptEngineBuildVersion(vbdisp_t *This, VARIANT *arg, uns
 
     assert(args_cnt == 0);
 
-    if(res) {
-        V_VT(res) = VT_I4;
-        V_I4(res) = VBSCRIPT_BUILD_VERSION;
-    }
-
-    return S_OK;
+    return return_int(res, VBSCRIPT_BUILD_VERSION);
 }
 
 static HRESULT Global_FormatNumber(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

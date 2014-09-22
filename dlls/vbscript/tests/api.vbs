@@ -242,6 +242,7 @@ Call ok(x = 2, "InStr returned " & x)
 
 x = InStr("abcd", "bc")
 Call ok(x = 2, "InStr returned " & x)
+Call ok(getVT(x) = "VT_I4*", "getVT(InStr) returned " & getVT(x))
 
 x = InStr("abc", "bc")
 Call ok(x = 2, "InStr returned " & x)
@@ -335,6 +336,7 @@ Call ok(Len("") = 0, "Len() = " & Len(""))
 Call ok(Len(1) = 1, "Len(1) = " & Len(1))
 Call ok(isNull(Len(null)), "Len(null) = " & Len(null))
 Call ok(Len(empty) = 0, "Len(empty) = " & Len(empty))
+Call ok(getVT(Len("abc")) = "VT_I4", "getVT(Len(abc)) = " & getVT(Len("abc")))
 
 Call ok(Space(1) = " ", "Space(1) = " & Space(1) & """")
 Call ok(Space(0) = "", "Space(0) = " & Space(0) & """")
