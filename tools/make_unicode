@@ -1172,7 +1172,7 @@ sub get_lb_ranges()
 sub dump_indic($)
 {
     my $filename = shift;
-    my @indic_table = ($indic_types{'Other'}) x 65536;;
+    my @indic_table = ($indic_types{'Other'}) x 65536;
 
     my $INPUT = open_data_file( $UNIDATA, "IndicSyllabicCategory.txt" );
     while (<$INPUT>)
@@ -1252,7 +1252,7 @@ sub dump_indic($)
 sub dump_linebreak($)
 {
     my $filename = shift;
-    my @break_table = ($break_types{'XX'}) x 65536;;
+    my @break_table = ($break_types{'XX'}) x 65536;
     my $next_group = 0;
 
     my $INPUT = open_data_file( $UNIDATA, "LineBreak.txt" );
@@ -1294,6 +1294,118 @@ sub dump_linebreak($)
     save_file($filename);
 }
 
+################################################################
+# dump Script IDs table
+sub dump_scripts($)
+{
+    my $filename = shift;
+    my $header = $filename;
+    my @scripts_table = (0) x 65536; # 0 means unknown script
+    my $next_group = 0;
+    my %scripts;
+    my $i;
+
+    my $INPUT = open_data_file( $UNIDATA, "Scripts.txt" );
+    while (<$INPUT>)
+    {
+        my $type = "";
+
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        {
+            $type = $2;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        {
+            $type = $3;
+        }
+        else
+        {
+            die "malformed line $_";
+        }
+
+        # ignore some scripts
+        if ($type eq "" || $type eq "Common" || $type eq "Inherited")
+        {
+            next;
+        }
+
+        $scripts{$type} = -1;
+    }
+
+    $i = 2;
+    foreach my $script (sort keys %scripts) {
+        $scripts{$script} = $i;
+        $i++;
+    }
+
+    # now fill a table
+    seek $INPUT, 0, 0;
+    while (<$INPUT>)
+    {
+        my $type = "";
+
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        {
+            $type = $2;
+            if (defined $scripts{$type})
+            {
+                $scripts_table[hex $1] = $scripts{$type};
+            }
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        {
+            $type = $3;
+            if (defined $scripts{$type})
+            {
+                foreach my $i (hex $1 .. hex $2)
+                {
+                    $scripts_table[$i] = $scripts{$type};
+                }
+            }
+            next;
+        }
+    }
+
+    close $INPUT;
+
+    $header = "$filename.h";
+    open OUTPUT,">$header.new" or die "Cannot create $header";
+    print "Building $header\n";
+    print OUTPUT "/* Unicode Script IDs */\n";
+    print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+
+    # reserve Unknown and Control ids
+    print OUTPUT "enum unicode_script_id {\n";
+    print OUTPUT "    Script_Unknown = 0,\n";
+    print OUTPUT "    Script_Control = 1,\n";
+    foreach my $script (sort keys %scripts)
+    {
+        print OUTPUT "    Script_$script = $scripts{$script},\n";
+    }
+    print OUTPUT "};\n";
+
+    close OUTPUT;
+    save_file($header);
+
+    $filename = "$filename.c";
+    open OUTPUT,">$filename.new" or die "Cannot create $header";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Script IDs */\n";
+    print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+
+    dump_two_level_mapping( "wine_scripts_table", @scripts_table);
+    close OUTPUT;
+    save_file($filename);
+}
 
 ################################################################
 # dump the BiDi mirroring table
@@ -1333,7 +1445,7 @@ sub dump_mirroring($)
 sub dump_bracket($)
 {
     my $filename = shift;
-    my @bracket_table = (0) x 65536;;
+    my @bracket_table = (0) x 65536;
 
     my $INPUT = open_data_file( $UNIDATA, "BidiBrackets.txt" );
     while (<$INPUT>)
@@ -2275,6 +2387,7 @@ dump_bracket( "dlls/usp10/bracket.c" );
 dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_linebreak( "dlls/dwrite/linebreak.c" );
+dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
 dump_intl_nls("loader/l_intl.nls");
 dump_vertical( "dlls/gdi32/vertical.c" );

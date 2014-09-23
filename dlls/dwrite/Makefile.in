@@ -9,4 +9,5 @@ C_SRCS = \
 	layout.c \
 	linebreak.c \
 	main.c \
-	opentype.c
+	opentype.c \
+	scripts.c
