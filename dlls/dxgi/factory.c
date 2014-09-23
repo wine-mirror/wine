@@ -381,6 +381,7 @@ HWND dxgi_factory_get_device_window(struct dxgi_factory *factory)
         if (!(factory->device_window = CreateWindowA("static", "DXGI device window",
                 WS_DISABLED, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
         {
+            LeaveCriticalSection(&dxgi_cs);
             ERR("Failed to create a window.\n");
             return NULL;
         }
