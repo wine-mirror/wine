@@ -4360,6 +4360,8 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
 
     if (!IsWindow( hWnd ))
         return FALSE;
+    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+        return TRUE;
 
     if ((hMenu = GetMenu( hWnd )) && (lppop = MENU_GetMenu( hMenu ))) {
         lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
