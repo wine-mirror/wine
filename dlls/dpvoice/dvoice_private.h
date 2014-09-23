@@ -21,5 +21,6 @@
 #define __DVOICE_PRIVATE_H__
 
 extern HRESULT DPVOICE_CreateDirectPlayVoiceClient(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DPVOICE_CreateDirectPlayVoiceServer(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 #endif

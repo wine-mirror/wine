@@ -3,7 +3,8 @@ IMPORTS   = dxguid uuid
 
 C_SRCS = \
 	client.c \
-	main.c
+	main.c \
+	server.c
 
 RC_SRCS = version.rc
 
