@@ -861,6 +861,17 @@ HRESULT wined3d_resource_map(struct wined3d_resource *resource,
     TRACE("resource %p, map_desc %p, box %p, flags %#x.\n",
             resource, map_desc, box, flags);
 
+    if (resource->usage & WINED3DUSAGE_RENDERTARGET && wined3d_settings.ignore_rt_map)
+    {
+        WARN("Ignoring render target map, only finishing CS.\n");
+        wined3d_cs_emit_glfinish(device->cs);
+        map_desc->row_pitch = 0;
+        map_desc->slice_pitch = 0;
+        map_desc->data = NULL;
+        device->cs->ops->finish(device->cs);
+        return WINED3D_OK;
+    }
+
     if (resource->map_count)
     {
         WARN("Volume is already mapped.\n");
@@ -963,6 +974,12 @@ HRESULT wined3d_resource_unmap(struct wined3d_resource *resource)
 {
     struct wined3d_device *device = resource->device;
     TRACE("resource %p.\n", resource);
+
+    if (resource->usage & WINED3DUSAGE_RENDERTARGET && wined3d_settings.ignore_rt_map)
+    {
+        WARN("Ignoring render target unmap.\n");
+        return WINED3D_OK;
+    }
 
     if (!resource->map_count)
     {

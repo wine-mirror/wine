@@ -279,6 +279,7 @@ struct wined3d_settings
     unsigned int max_sm_ps;
     BOOL no_3d;
     BOOL cs_multithreaded;
+    BOOL ignore_rt_map;
 };
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
