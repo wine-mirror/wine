@@ -1141,6 +1141,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
     } best[ICNS_SLOTS];
     int indexes[ICNS_SLOTS];
     int i;
+    const char* tmpdir;
     char *icnsPath = NULL;
     LARGE_INTEGER zero;
     HRESULT hr;
@@ -1210,7 +1211,8 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    icnsPath = heap_printf("/tmp/%s.icns", *nativeIdentifier);
+    if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
+    icnsPath = heap_printf("%s/%s.icns", tmpdir, *nativeIdentifier);
     if (icnsPath == NULL)
     {
         hr = E_OUTOFMEMORY;
