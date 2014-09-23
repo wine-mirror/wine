@@ -739,7 +739,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
 
     hres = bind_mon_to_wstr(script_host->window, mon, &text);
     IMoniker_Release(mon);
-    if(FAILED(hres))
+    if(FAILED(hres) || !text)
         return;
 
     parse_text(script_host, text);
