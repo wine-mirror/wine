@@ -1049,7 +1049,7 @@ static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFon
     This = heap_alloc(sizeof(struct dwrite_fontfamily));
     if (!This) return E_OUTOFMEMORY;
     This->data = heap_alloc(sizeof(struct dwrite_fontfamily_data));
-    if (!This)
+    if (!This->data)
     {
         heap_free(This);
         return E_OUTOFMEMORY;
@@ -1346,7 +1346,7 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     This = heap_alloc(sizeof(struct dwrite_fontface));
     if (!This) return E_OUTOFMEMORY;
     This->data = heap_alloc(sizeof(struct dwrite_fontface_data));
-    if (!This)
+    if (!This->data)
     {
         heap_free(This);
         return E_OUTOFMEMORY;
