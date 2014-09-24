@@ -1255,6 +1255,27 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
     return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
+
+static void HTMLInputElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsinput)
+        note_cc_edge((nsISupports*)This->nsinput, "This->nsinput", cb);
+}
+
+static void HTMLInputElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsinput) {
+        nsIDOMHTMLInputElement *nsinput = This->nsinput;
+
+        This->nsinput = NULL;
+        nsIDOMHTMLInputElement_Release(nsinput);
+    }
+}
+
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
     HTMLElement_destructor,
@@ -1266,6 +1287,13 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElementImpl_fire_event,
     HTMLInputElementImpl_put_disabled,
     HTMLInputElementImpl_get_disabled,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLInputElement_traverse,
+    HTMLInputElement_unlink
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1296,10 +1324,7 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLInputElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement, (void**)&ret->nsinput);
-
-    /* Share nsinput reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsinput == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
