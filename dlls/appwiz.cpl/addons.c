@@ -723,11 +723,11 @@ BOOL install_addon(addon_t addon_type)
 
     /*
      * Try to find addon .msi file in following order:
-     * - directory stored in $dir_config_key value of HKCU/Wine/Software/$config_key key
+     * - directory stored in $dir_config_key value of HKCU/Software/Wine/$config_key key
      * - $datadir/$addon_subdir/
      * - $INSTALL_DATADIR/wine/$addon_subdir/
      * - /usr/share/wine/$addon_subdir/
-     * - download from URL stored in $url_config_key value of HKCU/Wine/Software/$config_key key
+     * - download from URL stored in $url_config_key value of HKCU/Software/Wine/$config_key key
      */
     if (install_from_registered_dir() == INSTALL_NEXT
         && install_from_default_dir() == INSTALL_NEXT
