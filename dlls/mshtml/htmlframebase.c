@@ -707,12 +707,9 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
     if(NS_FAILED(nsres)) {
         This->nsframe = NULL;
         nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
-        assert(nsres == NS_OK && (nsIDOMNode*)This->nsiframe == This->element.node.nsnode);
+        assert(nsres == NS_OK);
     }else {
         assert((nsIDOMNode*)This->nsframe == This->element.node.nsnode);
         This->nsiframe = NULL;
     }
-
-    /* Share the reference with nsnode */
-    nsIDOMNode_Release(This->element.node.nsnode);
 }
