@@ -726,6 +726,26 @@ static HRESULT HTMLFormElement_handle_event(HTMLDOMNode *iface, eventid_t eid, n
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
+static void HTMLFormElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsform)
+        note_cc_edge((nsISupports*)This->nsform, "This->nsform", cb);
+}
+
+static void HTMLFormElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsform) {
+        nsIDOMHTMLFormElement *nsform = This->nsform;
+
+        This->nsform = NULL;
+        nsIDOMHTMLFormElement_Release(nsform);
+    }
+}
+
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     HTMLFormElement_QI,
     HTMLElement_destructor,
@@ -740,7 +760,10 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     NULL,
     NULL,
     HTMLFormElement_get_dispid,
-    HTMLFormElement_invoke
+    HTMLFormElement_invoke,
+    NULL,
+    HTMLFormElement_traverse,
+    HTMLFormElement_unlink
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {
@@ -771,10 +794,7 @@ HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLFormElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLFormElement, (void**)&ret->nsform);
-
-    /* Share the reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsform == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
