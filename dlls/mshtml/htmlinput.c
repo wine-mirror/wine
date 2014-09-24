@@ -1255,7 +1255,6 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
     return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
-
 static void HTMLInputElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLInputElement *This = impl_from_HTMLDOMNode(iface);

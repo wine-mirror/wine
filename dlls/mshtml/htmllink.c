@@ -397,6 +397,25 @@ static HRESULT HTMLLinkElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL
     return IHTMLLinkElement_get_disabled(&This->IHTMLLinkElement_iface, p);
 }
 
+static void HTMLLinkElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nslink)
+        note_cc_edge((nsISupports*)This->nslink, "This->nslink", cb);
+}
+
+static void HTMLLinkElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nslink) {
+        nsIDOMHTMLLinkElement *nslink = This->nslink;
+
+        This->nslink = NULL;
+        nsIDOMHTMLLinkElement_Release(nslink);
+    }
+}
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     HTMLLinkElement_QI,
     HTMLElement_destructor,
@@ -408,6 +427,13 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     NULL,
     HTMLLinkElementImpl_put_disabled,
     HTMLLinkElementImpl_get_disabled,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLLinkElement_traverse,
+    HTMLLinkElement_unlink
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {
@@ -437,10 +463,7 @@ HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLLinkElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLLinkElement, (void**)&ret->nslink);
-
-    /* Share nslink reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nslink == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
