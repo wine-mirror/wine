@@ -1479,6 +1479,37 @@ static void _test_anchor_hostname(unsigned line, IUnknown *unk, const char *host
     SysFreeString(str);
 }
 
+#define test_anchor_search(a,h,n) _test_anchor_search(__LINE__,a,h,n)
+static void _test_anchor_search(unsigned line, IUnknown *elem, const char *search, BOOL allowbroken)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, elem);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_search(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_search failed: %08x\n", hres);
+    if ( ! str && allowbroken)
+        win_skip("skip ie6 incorrect behavior\n");
+    else if(search)
+        ok_(__FILE__,line)(!strcmp_wa(str, search), "search = %s, expected %s\n", wine_dbgstr_w(str), search);
+    else
+        ok_(__FILE__,line)(!str, "search = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_put_search(a,h) _test_anchor_put_search(__LINE__,a,h)
+static void _test_anchor_put_search(unsigned line, IUnknown *unk, const char *search)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = search ? a2bstr(search) : NULL;
+    hres = IHTMLAnchorElement_put_search(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_search failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
 #define test_anchor_hash(a,h) _test_anchor_hash(__LINE__,a,h)
 static void _test_anchor_hash(unsigned line, IHTMLElement *elem, const char *exhash)
 {
@@ -7331,8 +7362,25 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_name((IUnknown*)elem, NULL);
         test_anchor_put_name((IUnknown*)elem, "x");
 
-        test_anchor_put_href((IUnknown*)elem, "http://test/#hash");
+        test_anchor_put_href((IUnknown*)elem, "http://test/?how#hash");
         test_anchor_hash(elem, "#hash");
+        test_anchor_search((IUnknown*)elem, "?how", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?word=press");
+        test_anchor_search((IUnknown*)elem, "?word=press", FALSE);
+        test_anchor_put_search((IUnknown*)elem, "?????word???press");
+        test_anchor_search((IUnknown*)elem, "?????word???press", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD"); /* encoded cjk characters */
+        test_anchor_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?how?old=are");
+        test_anchor_search((IUnknown*)elem, "?how?old=are", FALSE);
+
+        /* due to incorrect behavior of ie6, search string without leading "?" is interpreted
+        as part of the pathname, and can not be accessed by get_search. */
+        test_anchor_put_search((IUnknown*)elem, "word=abc");
+        test_anchor_search((IUnknown*)elem, "?word=abc", TRUE);
 
         IHTMLElement_Release(elem);
     }

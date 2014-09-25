@@ -479,15 +479,31 @@ static HRESULT WINAPI HTMLAnchorElement_get_protocol(IHTMLAnchorElement *iface, 
 static HRESULT WINAPI HTMLAnchorElement_put_search(IHTMLAnchorElement *iface, BSTR v)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLAnchorElement_SetSearch(This->nsanchor, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAnchorElement_get_search(IHTMLAnchorElement *iface, BSTR *p)
 {
     HTMLAnchorElement *This = impl_from_IHTMLAnchorElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString search_str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&search_str, NULL);
+    nsres = nsIDOMHTMLAnchorElement_GetSearch(This->nsanchor, &search_str);
+    return return_nsstr(nsres, &search_str, p);
 }
 
 static HRESULT WINAPI HTMLAnchorElement_put_hash(IHTMLAnchorElement *iface, BSTR v)
