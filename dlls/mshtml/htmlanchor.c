@@ -737,13 +737,44 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
+static void HTMLAnchorElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsanchor)
+        note_cc_edge((nsISupports*)This->nsanchor, "This->nsanchor", cb);
+}
+
+static void HTMLAnchorElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsanchor) {
+        nsIDOMHTMLAnchorElement *nsanchor = This->nsanchor;
+
+        This->nsanchor = NULL;
+        nsIDOMHTMLAnchorElement_Release(nsanchor);
+    }
+}
+
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLAnchorElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
     HTMLAnchorElement_handle_event,
-    HTMLElement_get_attr_col
+    HTMLElement_get_attr_col,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLAnchorElement_traverse,
+    HTMLAnchorElement_unlink
 };
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {
@@ -775,10 +806,7 @@ HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLAnchorElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLAnchorElement, (void**)&ret->nsanchor);
-
-    /* Shere the reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsanchor == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
