@@ -1313,11 +1313,11 @@ sub dump_scripts($)
         next if /^\#/;  # skip comments
         next if /^\s*$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([_a-zA-Z]+)\s*/)
         {
             $type = $2;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([_a-zA-Z]+)\s*/)
         {
             $type = $3;
         }
