@@ -2835,15 +2835,27 @@ static void test_download(DWORD flags)
     CLEAR_CALLED(QueryStatus_STOP);
 }
 
-static void test_Refresh(IWebBrowser2 *webbrowser)
+static void test_Refresh(IWebBrowser2 *webbrowser, BOOL use_refresh2)
 {
     HRESULT hres;
 
     trace("Refresh...\n");
 
     SET_EXPECT(Exec_DocHostCommandHandler_2300);
-    hres = IWebBrowser2_Refresh(webbrowser);
-    ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+
+    if(use_refresh2) {
+        VARIANT v;
+
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = REFRESH_NORMAL;
+
+        hres = IWebBrowser2_Refresh2(webbrowser, &v);
+        ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+    }else {
+        hres = IWebBrowser2_Refresh(webbrowser);
+        ok(hres == S_OK, "Refresh failed: %08x\n", hres);
+    }
+
     CHECK_CALLED(Exec_DocHostCommandHandler_2300);
 
     test_download(DWL_REFRESH);
@@ -3423,7 +3435,8 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             test_Navigate2(webbrowser, "http://test.winehq.org/tests/hello.html");
             test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
 
-            test_Refresh(webbrowser);
+            test_Refresh(webbrowser, FALSE);
+            test_Refresh(webbrowser, TRUE);
 
             trace("put_href http URL...\n");
             test_put_href(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
