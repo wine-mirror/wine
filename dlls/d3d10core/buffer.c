@@ -154,12 +154,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP
 
     TRACE("iface %p, map_type %u, map_flags %#x, data %p.\n", iface, map_type, map_flags, data);
 
-    if (map_type != D3D10_MAP_READ_WRITE)
-        FIXME("Ignoring map_type %#x.\n", map_type);
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
-    return wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data, 0);
+    return wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data,
+            wined3d_map_flags_from_d3d10_map_type(map_type));
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)

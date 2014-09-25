@@ -63,6 +63,7 @@ DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSP
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
+DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
