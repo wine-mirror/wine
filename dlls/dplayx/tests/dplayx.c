@@ -685,7 +685,7 @@ static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, W
     }
 
     hr = IDirectPlayX_InitializeConnection( pDP, pAddress, 0 );
-    todo_wine checkHR( DP_OK, hr );
+    checkHR( DP_OK, hr );
 
     HeapFree( GetProcessHeap(), 0, pAddress );
 
@@ -743,7 +743,7 @@ static void test_DirectPlayCreate(void)
     if ( hr == DP_OK )
         IDirectPlayX_Release( pDP );
     hr = DirectPlayCreate( (LPGUID) &DPSPGUID_TCPIP, &pDP, NULL );
-    todo_wine checkHR( DP_OK, hr );
+    checkHR( DP_OK, hr );
     if ( hr == DP_OK )
         IDirectPlayX_Release( pDP );
 
@@ -915,9 +915,9 @@ static BOOL CALLBACK EnumConnections_cb2( LPCGUID lpguidSP,
     if( IsEqualGUID(lpguidSP, &DPSPGUID_TCPIP) )
     {
         hr = IDirectPlayX_InitializeConnection( pDP, lpConnection, 0 );
-        todo_wine checkHR( DP_OK, hr );
+        checkHR( DP_OK, hr );
         hr = IDirectPlayX_InitializeConnection( pDP, lpConnection, 0 );
-        todo_wine checkHR( DPERR_ALREADYINITIALIZED, hr );
+        checkHR( DPERR_ALREADYINITIALIZED, hr );
     }
 
     return TRUE;
@@ -976,7 +976,7 @@ static void test_GetCaps(void)
     {
 
         hr = IDirectPlayX_GetCaps( pDP, &dpcaps, dwFlags );
-        todo_wine checkHR( DP_OK, hr );
+        checkHR( DP_OK, hr );
 
 
         if ( hr == DP_OK )
@@ -1085,7 +1085,7 @@ static void test_Open(void)
 
     /* Uninitialized  dpsd */
     hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
-    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+    checkHR( DPERR_INVALIDPARAMS, hr );
 
 
     dpsd_server.dwSize = sizeof(DPSESSIONDESC2);
@@ -1095,7 +1095,7 @@ static void test_Open(void)
 
     /* Regular operation */
     hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
-    todo_wine checkHR( DP_OK, hr );
+    checkHR( DP_OK, hr );
 
     /* Opening twice */
     hr = IDirectPlayX_Open( pDP_server, &dpsd_server, DPOPEN_CREATE );
@@ -1698,12 +1698,16 @@ static void test_SessionDesc(void)
     checkHR( DPERR_INVALIDPARAMS, hr );
     hr = IDirectPlayX_GetSessionDesc( pDP[0], NULL, NULL );
     checkHR( DPERR_INVALIDPARAM, hr );
+if(0)
+{
+    /* Crashes under Win7 */
     hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], NULL );
     checkHR( DPERR_INVALIDPARAM, hr );
     dwDataSize=-1;
     hr = IDirectPlayX_GetSessionDesc( pDP[0], lpData[0], &dwDataSize );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( -1, dwDataSize );
+}
 
     /* Get: Insufficient buffer size */
     dwDataSize=0;
@@ -2498,10 +2502,14 @@ static void test_PlayerName(void)
     checkHR( DPERR_INVALIDPLAYER, hr );
     check( 1024, dwDataSize );
 
+if(0)
+{
+    /* Crashes under Win7 */
     dwDataSize = -1;
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DPERR_INVALIDPARAMS, hr );
     check( -1, dwDataSize );
+}
 
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, NULL );
     checkHR( DPERR_INVALIDPARAMS, hr );
@@ -5789,6 +5797,9 @@ static void test_GetMessageQueue(void)
     check( -1, dwNumBytes );
 
     /* - Remote players */
+if(0)
+{
+    /* Crash under Win7 */
     dwNumMsgs = dwNumBytes = -1;
     hr = IDirectPlayX_GetMessageQueue( pDP[0], 0, dpid[3],
                                        DPMESSAGEQUEUE_RECEIVE,
@@ -5796,6 +5807,7 @@ static void test_GetMessageQueue(void)
     checkHR( DPERR_INVALIDPLAYER, hr ); /* Player 3 is remote */
     check( -1, dwNumMsgs );
     check( -1, dwNumBytes );
+}
 
     dwNumMsgs = dwNumBytes = -1;
     hr = IDirectPlayX_GetMessageQueue( pDP[0], dpid[3], 0,
