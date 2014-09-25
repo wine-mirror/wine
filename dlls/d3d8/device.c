@@ -557,16 +557,17 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_swapchain_desc desc;
     struct d3d8_swapchain *object;
+    HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
             iface, present_parameters, swapchain);
 
     wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
-    if (SUCCEEDED(d3d8_swapchain_create(device, &desc, &object)))
+    if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, &object)))
         *swapchain = &object->IDirect3DSwapChain8_iface;
     present_parameters_from_wined3d_swapchain_desc(present_parameters, &desc);
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
