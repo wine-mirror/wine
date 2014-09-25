@@ -993,6 +993,26 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return HTMLElement_QI(&This->element.node, riid, ppv);
 }
 
+static void HTMLTable_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLTable *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nstable)
+        note_cc_edge((nsISupports*)This->nstable, "This->nstable", cb);
+}
+
+static void HTMLTable_unlink(HTMLDOMNode *iface)
+{
+    HTMLTable *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nstable) {
+        nsIDOMHTMLTableElement *nstable = This->nstable;
+
+        This->nstable = NULL;
+        nsIDOMHTMLTableElement_Release(nstable);
+    }
+}
+
 static const cpc_entry_t HTMLTable_cpc[] = {
     {&DIID_HTMLTableEvents},
     HTMLELEMENT_CPC,
@@ -1005,7 +1025,18 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     HTMLTable_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    HTMLElement_get_attr_col,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLTable_traverse,
+    HTMLTable_unlink
 };
 
 static const tid_t HTMLTable_iface_tids[] = {
@@ -1040,10 +1071,7 @@ HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLE
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableElement, (void**)&ret->nstable);
-
-    /* Share the reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nstable == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
