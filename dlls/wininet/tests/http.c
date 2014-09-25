@@ -5475,6 +5475,55 @@ static void init_status_tests(void)
 #undef STATUS_STRING
 }
 
+static void WINAPI header_cb( HINTERNET handle, DWORD_PTR ctx, DWORD status, LPVOID info, DWORD len )
+{
+    if (status == INTERNET_STATUS_REQUEST_COMPLETE) SetEvent( (HANDLE)ctx );
+}
+
+static void test_concurrent_header_access(void)
+{
+    HINTERNET ses, con, req;
+    DWORD index, len, err;
+    BOOL ret;
+    char buf[128];
+    HANDLE wait = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    ses = InternetOpenA( "winetest", 0, NULL, NULL, INTERNET_FLAG_ASYNC );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, NULL, "/", NULL, NULL, NULL, 0, (DWORD_PTR)wait );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    pInternetSetStatusCallbackA( req, header_cb );
+
+    SetLastError( 0xdeadbeef );
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    err = GetLastError();
+    ok( !ret, "HttpSendRequestA succeeded\n" );
+    ok( err == ERROR_IO_PENDING, "got %u\n", ERROR_IO_PENDING );
+
+    ret = HttpAddRequestHeadersA( req, "winetest: winetest", ~0u, HTTP_ADDREQ_FLAG_ADD );
+    ok( ret, "HttpAddRequestHeadersA failed %u\n", GetLastError() );
+
+    index = 0;
+    len = sizeof(buf);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                          buf, &len, &index );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( strstr( buf, "winetest: winetest" ) != NULL, "header missing\n" );
+
+    WaitForSingleObject( wait, 5000 );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+    CloseHandle( wait );
+}
+
 START_TEST(http)
 {
     HMODULE hdll;
@@ -5517,4 +5566,5 @@ START_TEST(http)
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[3]);
     test_connection_failure();
     test_default_service_port();
+    test_concurrent_header_access();
 }
