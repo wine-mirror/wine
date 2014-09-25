@@ -22,6 +22,7 @@
 #define COBJMACROS
 
 #include "dwrite.h"
+#include "dwrite_2.h"
 #include "dwrite_private.h"
 #include "scripts.h"
 
@@ -490,11 +491,14 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_QueryInterface(IDWriteTextAnalyzer *iface, REFIID riid, void **obj)
+static HRESULT WINAPI dwritetextanalyzer_QueryInterface(IDWriteTextAnalyzer2 *iface, REFIID riid, void **obj)
 {
     TRACE("(%s %p)\n", debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteTextAnalyzer))
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalyzer2) ||
+        IsEqualIID(riid, &IID_IDWriteTextAnalyzer1) ||
+        IsEqualIID(riid, &IID_IDWriteTextAnalyzer) ||
+        IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
         return S_OK;
@@ -505,17 +509,17 @@ static HRESULT WINAPI dwritetextanalyzer_QueryInterface(IDWriteTextAnalyzer *ifa
 
 }
 
-static ULONG WINAPI dwritetextanalyzer_AddRef(IDWriteTextAnalyzer *iface)
+static ULONG WINAPI dwritetextanalyzer_AddRef(IDWriteTextAnalyzer2 *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI dwritetextanalyzer_Release(IDWriteTextAnalyzer *iface)
+static ULONG WINAPI dwritetextanalyzer_Release(IDWriteTextAnalyzer2 *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
     const WCHAR *text;
@@ -530,21 +534,21 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer *ifac
     return analyze_script(text, len, sink);
 }
 
-static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
     FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
     FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
     DWRITE_LINE_BREAKPOINT *breakpoints = NULL;
@@ -605,7 +609,7 @@ done:
     return hr;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT32 length, IDWriteFontFace* font_face, BOOL is_sideways,
     BOOL is_rtl, DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale,
     IDWriteNumberSubstitution* substitution, DWRITE_TYPOGRAPHIC_FEATURES const** features,
@@ -619,7 +623,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
     UINT32 text_len, UINT16 const* glyph_indices, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
     UINT32 glyph_count, IDWriteFontFace * font_face, FLOAT fontEmSize, BOOL is_sideways, BOOL is_rtl,
@@ -632,7 +636,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer *iface,
+static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
     UINT32 text_len, UINT16 const* glyph_indices, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
     UINT32 glyph_count, IDWriteFontFace * font_face, FLOAT fontEmSize, FLOAT pixels_per_dip,
@@ -647,7 +651,110 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     return E_NOTIMPL;
 }
 
-static const struct IDWriteTextAnalyzerVtbl textanalyzervtbl = {
+static HRESULT WINAPI dwritetextanalyzer1_ApplyCharacterSpacing(IDWriteTextAnalyzer2 *iface,
+    FLOAT leading_spacing, FLOAT trailing_spacing, FLOAT min_advance_width, UINT32 len,
+    UINT32 glyph_count, UINT16 const *clustermap, FLOAT const *advances, DWRITE_GLYPH_OFFSET const *offsets,
+    DWRITE_SHAPING_GLYPH_PROPERTIES const *props, FLOAT *modified_advances, DWRITE_GLYPH_OFFSET *modified_offsets)
+{
+    FIXME("(%.2f %.2f %.2f %u %u %p %p %p %p %p %p): stub\n", leading_spacing, trailing_spacing, min_advance_width,
+        len, glyph_count, clustermap, advances, offsets, props, modified_advances, modified_offsets);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetBaseline(IDWriteTextAnalyzer2 *iface, IDWriteFontFace *face,
+    DWRITE_BASELINE baseline, BOOL vertical, BOOL is_simulation_allowed, DWRITE_SCRIPT_ANALYSIS sa,
+    const WCHAR *localeName, INT32 *baseline_coord, BOOL *exists)
+{
+    FIXME("(%p %d %d %u %s %p %p): stub\n", face, vertical, is_simulation_allowed, sa.script, debugstr_w(localeName),
+        baseline_coord, exists);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_AnalyzeVerticalGlyphOrientation(IDWriteTextAnalyzer2 *iface,
+    IDWriteTextAnalysisSource1* source, UINT32 text_pos, UINT32 len, IDWriteTextAnalysisSink1 *sink)
+{
+    FIXME("(%p %u %u %p): stub\n", source, text_pos, len, sink);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetGlyphOrientationTransform(IDWriteTextAnalyzer2 *iface,
+    DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, DWRITE_MATRIX *transform)
+{
+    FIXME("(%d %d %p): stub\n", angle, is_sideways, transform);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyzer2 *iface, DWRITE_SCRIPT_ANALYSIS sa,
+    DWRITE_SCRIPT_PROPERTIES *props)
+{
+    FIXME("(%u %p): stub\n", sa.script, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetTextComplexity(IDWriteTextAnalyzer2 *iface, const WCHAR *text,
+    UINT32 len, IDWriteFontFace *face, BOOL *is_simple, UINT32 *len_read, UINT16 *indices)
+{
+    FIXME("(%s:%u %p %p %p %p): stub\n", debugstr_wn(text, len), len, face, is_simple, len_read, indices);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetJustificationOpportunities(IDWriteTextAnalyzer2 *iface,
+    IDWriteFontFace *face, FLOAT font_em_size, DWRITE_SCRIPT_ANALYSIS sa, UINT32 length, UINT32 glyph_count,
+    const WCHAR *text, const UINT16 *clustermap, const DWRITE_SHAPING_GLYPH_PROPERTIES *prop, DWRITE_JUSTIFICATION_OPPORTUNITY *jo)
+{
+    FIXME("(%p %.2f %u %u %u %s %p %p %p): stub\n", face, font_em_size, sa.script, length, glyph_count,
+        debugstr_w(text), clustermap, prop, jo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_JustifyGlyphAdvances(IDWriteTextAnalyzer2 *iface,
+    FLOAT width, UINT32 glyph_count, const DWRITE_JUSTIFICATION_OPPORTUNITY *jo, const FLOAT *advances,
+    const DWRITE_GLYPH_OFFSET *offsets, FLOAT *justifiedadvances, DWRITE_GLYPH_OFFSET *justifiedoffsets)
+{
+    FIXME("(%.2f %u %p %p %p %p %p): stub\n", width, glyph_count, jo, advances, offsets, justifiedadvances,
+        justifiedoffsets);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer1_GetJustifiedGlyphs(IDWriteTextAnalyzer2 *iface,
+    IDWriteFontFace *face, FLOAT font_em_size, DWRITE_SCRIPT_ANALYSIS sa, UINT32 length,
+    UINT32 glyph_count, UINT32 max_glyphcount, const UINT16 *clustermap, const UINT16 *indices,
+    const FLOAT *advances, const FLOAT *justifiedadvances, const DWRITE_GLYPH_OFFSET *justifiedoffsets,
+    const DWRITE_SHAPING_GLYPH_PROPERTIES *prop, UINT32 *actual_count, UINT16 *modified_clustermap,
+    UINT16 *modified_indices, FLOAT *modified_advances, DWRITE_GLYPH_OFFSET *modified_offsets)
+{
+    FIXME("(%p %.2f %u %u %u %u %p %p %p %p %p %p %p %p %p %p %p): stub\n", face, font_em_size, sa.script,
+        length, glyph_count, max_glyphcount, clustermap, indices, advances, justifiedadvances, justifiedoffsets,
+        prop, actual_count, modified_clustermap, modified_indices, modified_advances, modified_offsets);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer2_GetGlyphOrientationTransform(IDWriteTextAnalyzer2 *iface,
+    DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, FLOAT originX, FLOAT originY, DWRITE_MATRIX *transform)
+{
+    FIXME("(%d %d %.2f %.2f %p): stub\n", angle, is_sideways, originX, originY, transform);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer2_GetTypographicFeatures(IDWriteTextAnalyzer2 *iface,
+    IDWriteFontFace *face, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *localeName,
+    UINT32 max_tagcount, UINT32 *actual_tagcount, DWRITE_FONT_FEATURE_TAG *tags)
+{
+    FIXME("(%p %u %s %u %p %p): stub\n", face, sa.script, debugstr_w(localeName), max_tagcount, actual_tagcount,
+        tags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAnalyzer2 *iface,
+    IDWriteFontFace *face, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *localeName,
+    DWRITE_FONT_FEATURE_TAG feature, UINT32 glyph_count, const UINT16 *indices, UINT8 *feature_applies)
+{
+    FIXME("(%p %u %s %x %u %p %p): stub\n", face, sa.script, debugstr_w(localeName), feature, glyph_count, indices,
+        feature_applies);
+    return E_NOTIMPL;
+}
+
+static const struct IDWriteTextAnalyzer2Vtbl textanalyzervtbl = {
     dwritetextanalyzer_QueryInterface,
     dwritetextanalyzer_AddRef,
     dwritetextanalyzer_Release,
@@ -657,13 +764,25 @@ static const struct IDWriteTextAnalyzerVtbl textanalyzervtbl = {
     dwritetextanalyzer_AnalyzeLineBreakpoints,
     dwritetextanalyzer_GetGlyphs,
     dwritetextanalyzer_GetGlyphPlacements,
-    dwritetextanalyzer_GetGdiCompatibleGlyphPlacements
+    dwritetextanalyzer_GetGdiCompatibleGlyphPlacements,
+    dwritetextanalyzer1_ApplyCharacterSpacing,
+    dwritetextanalyzer1_GetBaseline,
+    dwritetextanalyzer1_AnalyzeVerticalGlyphOrientation,
+    dwritetextanalyzer1_GetGlyphOrientationTransform,
+    dwritetextanalyzer1_GetScriptProperties,
+    dwritetextanalyzer1_GetTextComplexity,
+    dwritetextanalyzer1_GetJustificationOpportunities,
+    dwritetextanalyzer1_JustifyGlyphAdvances,
+    dwritetextanalyzer1_GetJustifiedGlyphs,
+    dwritetextanalyzer2_GetGlyphOrientationTransform,
+    dwritetextanalyzer2_GetTypographicFeatures,
+    dwritetextanalyzer2_CheckTypographicFeature
 };
 
-static IDWriteTextAnalyzer textanalyzer = { &textanalyzervtbl };
+static IDWriteTextAnalyzer2 textanalyzer = { &textanalyzervtbl };
 
 HRESULT get_textanalyzer(IDWriteTextAnalyzer **ret)
 {
-    *ret = &textanalyzer;
+    *ret = (IDWriteTextAnalyzer*)&textanalyzer;
     return S_OK;
 }
