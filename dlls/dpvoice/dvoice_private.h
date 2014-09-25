@@ -22,5 +22,6 @@
 
 extern HRESULT DPVOICE_CreateDirectPlayVoiceClient(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 extern HRESULT DPVOICE_CreateDirectPlayVoiceServer(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DPVOICE_CreateDirectPlayVoiceTest(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 #endif

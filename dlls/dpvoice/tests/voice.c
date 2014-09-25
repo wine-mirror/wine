@@ -239,7 +239,7 @@ static BOOL test_init_dpvoice_client(void)
 
             /* See if we can get the default values from the registry and try again. */
             hr = CoCreateInstance(&CLSID_DirectPlayVoiceTest, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayVoiceTest, (void **)&voicetest);
-            todo_wine ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
+            ok(hr == S_OK, "CoCreateInstance failed with 0x%08x\n", hr);
             if(hr == S_OK)
             {
                 hr = IDirectPlayVoiceTest_CheckAudioSetup(voicetest, &DSDEVID_DefaultVoicePlayback, &DSDEVID_DefaultVoiceCapture,
@@ -322,6 +322,27 @@ static void test_cleanup_dpvoice(void)
     }
 }
 
+static void create_voicetest(void)
+{
+    HRESULT hr;
+    IDirectPlayVoiceTest *voicetest;
+
+    hr = CoCreateInstance(&CLSID_DirectPlayVoiceTest, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayVoiceTest, (void **)&voicetest);
+    if(hr == S_OK)
+    {
+        hr = IDirectPlayVoiceTest_CheckAudioSetup(voicetest, &DSDEVID_DefaultVoicePlayback, &DSDEVID_DefaultVoiceCapture,
+                                                          NULL, DVFLAGS_QUERYONLY);
+        todo_wine ok(hr == S_OK || hr == DVERR_RUNSETUP, "CheckAudioSetup failed with 0x%08x\n", hr);
+
+        IDirectPlayVoiceTest_Release(voicetest);
+    }
+    else
+    {
+        /* Everything after Windows XP doesnt have dpvoice installed. */
+        win_skip("IDirectPlayVoiceClient not supported on thie platform\n");
+    }
+}
+
 START_TEST(voice)
 {
     HRESULT hr;
@@ -330,6 +351,8 @@ START_TEST(voice)
     ok(hr == S_OK, "failed to init com\n");
     if(hr != S_OK)
         return;
+
+    create_voicetest();
 
     if(test_init_dpvoice_server() && test_init_dpvoice_client())
     {

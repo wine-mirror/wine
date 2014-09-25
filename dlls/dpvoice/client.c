@@ -41,9 +41,20 @@ typedef struct IDirectPlayVoiceClientImpl
     LONG ref;
 } IDirectPlayVoiceClientImpl;
 
+typedef struct IDirectPlayVoiceTestImpl
+{
+    IDirectPlayVoiceTest IDirectPlayVoiceTest_iface;
+    LONG ref;
+} IDirectPlayVoiceTestImpl;
+
 static inline IDirectPlayVoiceClientImpl *impl_from_IDirectPlayVoiceClient(IDirectPlayVoiceClient *iface)
 {
     return CONTAINING_RECORD(iface, IDirectPlayVoiceClientImpl, IDirectPlayVoiceClient_iface);
+}
+
+static inline IDirectPlayVoiceTestImpl *impl_from_IDirectPlayVoiceTest(IDirectPlayVoiceTest *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectPlayVoiceTestImpl, IDirectPlayVoiceTest_iface);
 }
 
 static HRESULT WINAPI dpvclient_QueryInterface(IDirectPlayVoiceClient *iface, REFIID riid, void **ppv)
@@ -229,6 +240,81 @@ HRESULT DPVOICE_CreateDirectPlayVoiceClient(IClassFactory *iface, IUnknown *pUnk
 
     ret = IDirectPlayVoiceClient_QueryInterface(&client->IDirectPlayVoiceClient_iface, riid, ppobj);
     IDirectPlayVoiceClient_Release(&client->IDirectPlayVoiceClient_iface);
+
+    return ret;
+}
+
+static HRESULT WINAPI dpvtest_QueryInterface(IDirectPlayVoiceTest *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectPlayVoiceTest))
+    {
+        IUnknown_AddRef(iface);
+        *ppv = iface;
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s,%p),not found\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dpvtest_AddRef(IDirectPlayVoiceTest *iface)
+{
+    IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI dpvtest_Release(IDirectPlayVoiceTest *iface)
+{
+    IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%u\n", This, ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI dpvtest_CheckAudioSetup(IDirectPlayVoiceTest *iface, const GUID *pguidPlaybackDevice, const GUID *pguidCaptureDevice,
+                     HWND hwndParent, DWORD dwFlags)
+{
+    IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
+    FIXME("%p %p %p %p %d\n", This, pguidPlaybackDevice, pguidCaptureDevice, hwndParent, dwFlags);
+    return E_NOTIMPL;
+}
+
+static const IDirectPlayVoiceTestVtbl DirectPlayVoiceTest_Vtbl =
+{
+    dpvtest_QueryInterface,
+    dpvtest_AddRef,
+    dpvtest_Release,
+    dpvtest_CheckAudioSetup
+};
+
+HRESULT DPVOICE_CreateDirectPlayVoiceTest(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj)
+{
+    IDirectPlayVoiceTestImpl* test;
+    HRESULT ret;
+
+    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppobj);
+
+    *ppobj = NULL;
+
+    test = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlayVoiceTestImpl));
+    if (!test)
+        return E_OUTOFMEMORY;
+
+    test->IDirectPlayVoiceTest_iface.lpVtbl = &DirectPlayVoiceTest_Vtbl;
+    test->ref = 1;
+
+    ret = IDirectPlayVoiceTest_QueryInterface(&test->IDirectPlayVoiceTest_iface, riid, ppobj);
+    IDirectPlayVoiceTest_Release(&test->IDirectPlayVoiceTest_iface);
 
     return ret;
 }

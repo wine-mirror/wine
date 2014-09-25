@@ -96,6 +96,7 @@ static IClassFactoryImpl DPVOICE_CFS[] =
 {
     { { &DICF_Vtbl }, 1, &CLSID_DirectPlayVoiceClient,  DPVOICE_CreateDirectPlayVoiceClient },
     { { &DICF_Vtbl }, 1, &CLSID_DirectPlayVoiceServer,  DPVOICE_CreateDirectPlayVoiceServer },
+    { { &DICF_Vtbl }, 1, &CLSID_DirectPlayVoiceTest,    DPVOICE_CreateDirectPlayVoiceTest },
     { { NULL }, 0, NULL, NULL }
 };
 
