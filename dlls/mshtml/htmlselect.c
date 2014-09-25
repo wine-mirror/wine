@@ -615,6 +615,26 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
     return S_OK;
 }
 
+static void HTMLSelectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsselect)
+        note_cc_edge((nsISupports*)This->nsselect, "This->nsselect", cb);
+}
+
+static void HTMLSelectElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsselect) {
+        nsIDOMHTMLSelectElement *nsselect = This->nsselect;
+
+        This->nsselect = NULL;
+        nsIDOMHTMLSelectElement_Release(nsselect);
+    }
+}
+
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     HTMLSelectElement_QI,
     HTMLElement_destructor,
@@ -629,7 +649,10 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     NULL,
     NULL,
     HTMLSelectElement_get_dispid,
-    HTMLSelectElement_invoke
+    HTMLSelectElement_invoke,
+    NULL,
+    HTMLSelectElement_traverse,
+    HTMLSelectElement_unlink
 };
 
 static const tid_t HTMLSelectElement_tids[] = {
@@ -661,10 +684,7 @@ HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLSelectElement,
                                              (void**)&ret->nsselect);
-
-    /* Share nsselect reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsselect == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
