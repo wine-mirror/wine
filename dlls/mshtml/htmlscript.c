@@ -391,6 +391,26 @@ static HRESULT HTMLScriptElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
     return IHTMLScriptElement_get_readyState(&This->IHTMLScriptElement_iface, p);
 }
 
+static void HTMLScriptElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsscript)
+        note_cc_edge((nsISupports*)This->nsscript, "This->nsscript", cb);
+}
+
+static void HTMLScriptElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsscript) {
+        nsIDOMHTMLScriptElement *nsscript = This->nsscript;
+
+        This->nsscript = NULL;
+        nsIDOMHTMLScriptElement_Release(nsscript);
+    }
+}
+
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_QI,
     HTMLElement_destructor,
@@ -403,7 +423,12 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    HTMLScriptElement_get_readystate
+    HTMLScriptElement_get_readystate,
+    NULL,
+    NULL,
+    NULL,
+    HTMLScriptElement_traverse,
+    HTMLScriptElement_unlink
 };
 
 HRESULT script_elem_from_nsscript(HTMLDocumentNode *doc, nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
@@ -448,10 +473,7 @@ HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLScriptElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
-
-    /* Share nsscript reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsscript == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
