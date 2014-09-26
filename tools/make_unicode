@@ -1301,7 +1301,7 @@ sub dump_scripts($)
     my $filename = shift;
     my $header = $filename;
     my @scripts_table = (0) x 65536; # 0 means unknown script
-    my $next_group = 0;
+    my $script_index;
     my %scripts;
     my $i;
 
@@ -1335,10 +1335,9 @@ sub dump_scripts($)
         $scripts{$type} = -1;
     }
 
-    $i = 2;
+    $script_index = 1;
     foreach my $script (sort keys %scripts) {
-        $scripts{$script} = $i;
-        $i++;
+        $scripts{$script} = ++$script_index;
     }
 
     # now fill a table
@@ -1382,14 +1381,15 @@ sub dump_scripts($)
     print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
-    # reserve Unknown and Control ids
+    # reserve Unknown and Common ids
     print OUTPUT "enum unicode_script_id {\n";
     print OUTPUT "    Script_Unknown = 0,\n";
-    print OUTPUT "    Script_Control = 1,\n";
+    print OUTPUT "    Script_Common = 1,\n";
     foreach my $script (sort keys %scripts)
     {
         print OUTPUT "    Script_$script = $scripts{$script},\n";
     }
+    print OUTPUT "    Script_LastId = $script_index\n";
     print OUTPUT "};\n";
 
     close OUTPUT;

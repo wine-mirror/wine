@@ -908,6 +908,38 @@ static void test_AnalyzeLineBreakpoints(void)
     IDWriteTextAnalyzer_Release(analyzer);
 }
 
+static void test_GetScriptProperties(void)
+{
+    IDWriteTextAnalyzer1 *analyzer1;
+    IDWriteTextAnalyzer *analyzer;
+    DWRITE_SCRIPT_ANALYSIS sa;
+    DWRITE_SCRIPT_PROPERTIES props;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
+    IDWriteTextAnalyzer_Release(analyzer);
+    if (hr != S_OK) {
+        win_skip("IDWriteTextAnalyzer1 is not supported.\n");
+        return;
+    }
+
+    sa.script = 1000;
+    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, NULL);
+
+    sa.script = 0;
+    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteTextAnalyzer1_Release(analyzer1);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -925,6 +957,7 @@ START_TEST(analyzer)
 
     test_AnalyzeScript();
     test_AnalyzeLineBreakpoints();
+    test_GetScriptProperties();
 
     IDWriteFactory_Release(factory);
 }

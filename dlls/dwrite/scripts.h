@@ -4,7 +4,7 @@
 
 enum unicode_script_id {
     Script_Unknown = 0,
-    Script_Control = 1,
+    Script_Common = 1,
     Script_Arabic = 2,
     Script_Armenian = 3,
     Script_Avestan = 4,
@@ -128,4 +128,5 @@ enum unicode_script_id {
     Script_Vai = 122,
     Script_Warang_Citi = 123,
     Script_Yi = 124,
+    Script_LastId = 124
 };

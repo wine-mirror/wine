@@ -31,6 +31,140 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 extern const unsigned short wine_linebreak_table[];
 extern const unsigned short wine_scripts_table[];
 
+struct dwritescript_properties {
+    DWRITE_SCRIPT_PROPERTIES props;
+    BOOL is_complex;
+};
+
+/* NOTE: keep this array synced with script ids from scripts.h */
+static const struct dwritescript_properties dwritescripts_properties[Script_LastId+1] = {
+    { /* Zzzz */ { 0x7a7a7a5a, 999, 15, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Zyyy */ { 0x7979795a, 998,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Arab */ { 0x62617241, 160,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, TRUE },
+    { /* Armn */ { 0x6e6d7241, 230,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Avst */ { 0x74737641, 134,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Bali */ { 0x696c6142, 360, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 } },
+    { /* Bamu */ { 0x756d6142, 435,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Bass */ { 0x73736142, 259,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Batk */ { 0x6b746142, 365,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Beng */ { 0x676e6542, 325, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, TRUE },
+    { /* Bopo */ { 0x6f706f42, 285,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Brah */ { 0x68617242, 300,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Brai */ { 0x69617242, 570,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Bugi */ { 0x69677542, 367,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Buhd */ { 0x64687542, 372,  8, 0x0020, 0, 0, 1, 0, 0, 0, 0 } },
+    { /* Cans */ { 0x736e6143, 440,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Cari */ { 0x69726143, 201,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 } },
+    { /* Aghb */ { 0x62686741, 239,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Cakm */ { 0x6d6b6143, 349,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Cham */ { 0x6d616843, 358,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Cher */ { 0x72656843, 445,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Copt */ { 0x74706f43, 204,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Xsux */ { 0x78757358,  20,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Cprt */ { 0x74727043, 403,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 } },
+    { /* Cyrl */ { 0x6c727943, 220,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Dsrt */ { 0x74727344, 250,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Deva */ { 0x61766544, 315, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, TRUE },
+    { /* Dupl */ { 0x6c707544, 755,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Egyp */ { 0x70796745,  50,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Elba */ { 0x61626c45, 226,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Ethi */ { 0x69687445, 430,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Geor */ { 0x726f6547, 240,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Glag */ { 0x67616c47, 225,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Goth */ { 0x68746f47, 206,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Gran */ { 0x6e617247, 343,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Grek */ { 0x6b657247, 200,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Gujr */ { 0x726a7547, 320, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Guru */ { 0x75727547, 310, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, TRUE },
+    { /* Hani */ { 0x696e6148, 500,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Hang */ { 0x676e6148, 286,  8, 0x0020, 1, 1, 1, 1, 0, 0, 0 }, TRUE },
+    { /* Hano */ { 0x6f6e6148, 371,  8, 0x0020, 0, 0, 1, 0, 0, 0, 0 } },
+    { /* Hebr */ { 0x72626548, 125,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Hira */ { 0x61726948, 410,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Armi */ { 0x696d7241, 124,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Phli */ { 0x696c6850, 131,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Prti */ { 0x69747250, 130,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Java */ { 0x6176614a, 361, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 } },
+    { /* Kthi */ { 0x6968744b, 317, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 } },
+    { /* Knda */ { 0x61646e4b, 345, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Kana */ { 0x616e614b, 411,  8, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Kali */ { 0x696c614b, 357,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Khar */ { 0x7261684b, 305, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 } },
+    { /* Khmr */ { 0x726d684b, 355,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, TRUE },
+    { /* Khoj */ { 0x6a6f684b, 322,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Sind */ { 0x646e6953, 318,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Laoo */ { 0x6f6f614c, 356,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, TRUE },
+    { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Lepc */ { 0x6370654c, 335,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Limb */ { 0x626d694c, 336,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Lina */ { 0x616e694c, 400,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Linb */ { 0x626e694c, 401,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Lisu */ { 0x7573694c, 399,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Lyci */ { 0x6963794c, 202,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Lydi */ { 0x6964794c, 116,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Mahj */ { 0x6a68614d, 314,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Mlym */ { 0x6d796c4d, 347, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Mand */ { 0x646e614d, 140,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 } },
+    { /* Mani */ { 0x696e614d, 139,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Mtei */ { 0x6965744d, 337,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Mend */ { 0x646e654d, 438,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Merc */ { 0x6372654d, 101,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Mero */ { 0x6f72654d, 100,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Plrd */ { 0x64726c50, 282,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Modi */ { 0x69646f4d, 324,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Mong */ { 0x676e6f4d, 145,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, TRUE },
+    { /* Mroo */ { 0x6f6f724d, 199,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Mymr */ { 0x726d794d, 350, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Nbat */ { 0x7461624e, 159,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Talu */ { 0x756c6154, 354,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Nkoo */ { 0x6f6f6b4e, 165,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, TRUE },
+    { /* Ogam */ { 0x6d61674f, 212,  1, 0x1680, 0, 1, 0, 0, 0, 1, 0 }, TRUE },
+    { /* Olck */ { 0x6b636c4f, 261,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Ital */ { 0x6c617449, 210,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Narb */ { 0x6272614e, 106,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Perm */ { 0x6d726550, 227,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Xpeo */ { 0x6f657058,  30,  1, 0x0020, 0, 1, 1, 1, 0, 0, 0 }, TRUE },
+    { /* Sarb */ { 0x62726153, 105,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Orkh */ { 0x686b724f, 175,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Orya */ { 0x6179724f, 327, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Osma */ { 0x616d734f, 260,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Hmng */ { 0x676e6d48, 450,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Palm */ { 0x6d6c6150, 126,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Pauc */ { 0x63756150, 263,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Phag */ { 0x67616850, 331,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, TRUE },
+    { /* Phnx */ { 0x786e6850, 115,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 } },
+    { /* Phlp */ { 0x706c6850, 132,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Rjng */ { 0x676e6a52, 363,  8, 0x0020, 1, 0, 1, 0, 0, 0, 0 } },
+    { /* Runr */ { 0x726e7552, 211,  1, 0x0020, 0, 0, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Samr */ { 0x726d6153, 123,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Saur */ { 0x72756153, 344,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Shrd */ { 0x64726853, 319,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Shaw */ { 0x77616853, 281,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Sidd */ { 0x64646953, 302,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Sinh */ { 0x686e6953, 348,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Sora */ { 0x61726f53, 398,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Sund */ { 0x646e7553, 362,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
+    { /* Sylo */ { 0x6f6c7953, 316,  8, 0x0020, 1, 1, 0, 0, 0, 1, 0 } },
+    { /* Syrc */ { 0x63727953, 135,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, TRUE },
+    { /* Tglg */ { 0x676c6754, 370,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Tagb */ { 0x62676154, 373,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Tale */ { 0x656c6154, 353,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Lana */ { 0x616e614c, 351,  8, 0x0020, 1, 0, 1, 0, 0, 0, 0 } },
+    { /* Tavt */ { 0x74766154, 359,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 } },
+    { /* Takr */ { 0x726b6154, 321,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Taml */ { 0x6c6d6154, 346, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Telu */ { 0x756c6554, 340, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Thaa */ { 0x61616854, 170,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Thai */ { 0x69616854, 352,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, TRUE },
+    { /* Tibt */ { 0x74626954, 330,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Tfng */ { 0x676e6654, 120,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Tirh */ { 0x68726954, 326,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Ugar */ { 0x72616755,  40,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 } },
+    { /* Vaii */ { 0x69696156, 470,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, TRUE },
+    { /* Wara */ { 0x61726157, 262,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Yiii */ { 0x69696959, 460,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, TRUE }
+};
+
 static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
@@ -42,7 +176,7 @@ static inline UINT16 get_char_script(WCHAR c)
     if (script == Script_Unknown) {
         WORD type;
         if (GetStringTypeW(CT_CTYPE1, &c, 1, &type) && (type & C1_CNTRL))
-            script = Script_Control;
+            script = Script_Common;
     }
     return script;
 }
@@ -65,7 +199,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
 
         /* Unknown type is ignored when preceded or followed by another script */
         if (sa.script == Script_Unknown) sa.script = script;
-        if (script == Script_Unknown && sa.script != Script_Control) script = sa.script;
+        if (script == Script_Unknown && sa.script != Script_Common) script = sa.script;
         /* this is a length of a sequence to be reported next */
         if (sa.script == script) length++;
 
@@ -73,7 +207,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
         {
             HRESULT hr;
 
-            sa.shapes = sa.script != Script_Control ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+            sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
             hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
             if (FAILED(hr)) return hr;
             pos = i;
@@ -83,7 +217,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
     }
 
     /* 1 length case or normal completion call */
-    sa.shapes = sa.script != Script_Control ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+    sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
     return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
 }
 
@@ -687,8 +821,13 @@ static HRESULT WINAPI dwritetextanalyzer1_GetGlyphOrientationTransform(IDWriteTe
 static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyzer2 *iface, DWRITE_SCRIPT_ANALYSIS sa,
     DWRITE_SCRIPT_PROPERTIES *props)
 {
-    FIXME("(%u %p): stub\n", sa.script, props);
-    return E_NOTIMPL;
+    TRACE("(%u %p)\n", sa.script, props);
+
+    if (sa.script > Script_LastId)
+        return E_INVALIDARG;
+
+    *props = dwritescripts_properties[sa.script].props;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer1_GetTextComplexity(IDWriteTextAnalyzer2 *iface, const WCHAR *text,
