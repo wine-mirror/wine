@@ -3343,7 +3343,10 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         }
     }
 
-    MultiByteToWideChar(CP_ACP, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
+    if(aOriginCharset && strcasecmp(aOriginCharset, "utf-8"))
+        FIXME("Unsupported charset %s\n", debugstr_a(aOriginCharset));
+
+    MultiByteToWideChar(CP_UTF8, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
 
     if(base_wine_uri) {
         hres = combine_url(base_wine_uri->uri, new_spec, &urlmon_uri);
