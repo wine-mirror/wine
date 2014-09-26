@@ -830,11 +830,61 @@ static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyze
     return S_OK;
 }
 
+static inline BOOL is_char_from_simple_script(WCHAR c)
+{
+    if (IS_HIGH_SURROGATE(c) || IS_LOW_SURROGATE(c))
+        return FALSE;
+    else {
+        UINT16 script = get_char_script(c);
+        return !dwritescripts_properties[script].is_complex;
+    }
+}
+
 static HRESULT WINAPI dwritetextanalyzer1_GetTextComplexity(IDWriteTextAnalyzer2 *iface, const WCHAR *text,
     UINT32 len, IDWriteFontFace *face, BOOL *is_simple, UINT32 *len_read, UINT16 *indices)
 {
-    FIXME("(%s:%u %p %p %p %p): stub\n", debugstr_wn(text, len), len, face, is_simple, len_read, indices);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    int i;
+
+    TRACE("(%s:%u %p %p %p %p)\n", debugstr_wn(text, len), len, face, is_simple, len_read, indices);
+
+    *is_simple = FALSE;
+    *len_read = 0;
+
+    if (!face)
+        return E_INVALIDARG;
+
+    if (len == 0) {
+        *is_simple = TRUE;
+        return S_OK;
+    }
+
+    *is_simple = text[0] && is_char_from_simple_script(text[0]);
+    for (i = 1; i < len && text[i]; i++) {
+        if (is_char_from_simple_script(text[i])) {
+            if (!*is_simple)
+                break;
+        }
+        else
+            *is_simple = FALSE;
+    }
+
+    *len_read = i;
+
+    /* fetch indices */
+    if (*is_simple && indices) {
+        UINT32 *codepoints = heap_alloc(*len_read*sizeof(UINT32));
+        if (!codepoints)
+            return E_OUTOFMEMORY;
+
+        for (i = 0; i < *len_read; i++)
+            codepoints[i] = text[i];
+
+        hr = IDWriteFontFace_GetGlyphIndices(face, codepoints, *len_read, indices);
+        heap_free(codepoints);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextanalyzer1_GetJustificationOpportunities(IDWriteTextAnalyzer2 *iface,

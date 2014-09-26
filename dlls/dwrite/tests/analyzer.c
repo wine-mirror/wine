@@ -922,7 +922,7 @@ static void test_GetScriptProperties(void)
     hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
     IDWriteTextAnalyzer_Release(analyzer);
     if (hr != S_OK) {
-        win_skip("IDWriteTextAnalyzer1 is not supported.\n");
+        win_skip("GetScriptProperties() is not supported.\n");
         return;
     }
 
@@ -937,6 +937,117 @@ if (0) /* crashes on native */
     hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    IDWriteTextAnalyzer1_Release(analyzer1);
+}
+
+struct textcomplexity_test {
+    const WCHAR text[5];
+    UINT32 length;
+    BOOL simple;
+    UINT32 len_read;
+};
+
+static const struct textcomplexity_test textcomplexity_tests[] = {
+    { {0},                     1, FALSE, 1 },
+    { {0},                     0,  TRUE, 0 },
+    { {0x610,0},               0,  TRUE, 0 },
+    { {'A','B','C','D',0},     3,  TRUE, 3 },
+    { {'A','B','C','D',0},     5,  TRUE, 4 },
+    { {'A','B','C','D',0},    10,  TRUE, 4 },
+    { {'A',0x610,'C','D',0},   1,  TRUE, 1 },
+    { {'A',0x610,'C','D',0},   2, FALSE, 2 },
+    { {0x610,'A','C','D',0},   1, FALSE, 1 },
+    { {0x610,'A','C','D',0},   2, FALSE, 1 },
+    { {0x610,0x610,'C','D',0}, 2, FALSE, 2 },
+    { {0xd800,'A','B',0},      1, FALSE, 1 },
+    { {0xd800,'A','B',0},      2, FALSE, 1 },
+    { {0xdc00,'A','B',0},      2, FALSE, 1 }
+};
+
+static void test_GetTextComplexity(void)
+{
+    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+    static const WCHAR textW[] = {'A','B','C',0};
+    IDWriteTextAnalyzer1 *analyzer1;
+    IDWriteTextAnalyzer *analyzer;
+    IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
+    UINT16 indices[10];
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    BOOL simple;
+    HRESULT hr;
+    UINT32 len;
+    int i;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
+    IDWriteTextAnalyzer_Release(analyzer);
+    if (hr != S_OK) {
+        win_skip("GetTextComplexity() is not supported.\n");
+        return;
+    }
+
+if (0) { /* crashes on native */
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, NULL, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, NULL, NULL, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, NULL, &len, NULL);
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, &simple, NULL, NULL);
+}
+
+    len = 1;
+    simple = TRUE;
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, NULL, 0, NULL, &simple, &len, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(len == 0, "got %d\n", len);
+    ok(simple == FALSE, "got %d\n", simple);
+
+    len = 1;
+    simple = TRUE;
+    indices[0] = 1;
+    hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, textW, 3, NULL, &simple, &len, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(len == 0, "got %d\n", len);
+    ok(simple == FALSE, "got %d\n", simple);
+    ok(indices[0] == 1, "got %d\n", indices[0]);
+
+    /* so font face is required, create one */
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    for (i = 0; i < sizeof(textcomplexity_tests)/sizeof(struct textcomplexity_test); i++) {
+       const struct textcomplexity_test *ptr = &textcomplexity_tests[i];
+       len = 1;
+       simple = !ptr->simple;
+       indices[0] = 0;
+       hr = IDWriteTextAnalyzer1_GetTextComplexity(analyzer1, ptr->text, ptr->length, fontface, &simple, &len, indices);
+       ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+       ok(len == ptr->len_read, "%d: read length: got %d, expected %d\n", i, len, ptr->len_read);
+       ok(simple == ptr->simple, "%d: simple: got %d, expected %d\n", i, simple, ptr->simple);
+       if (simple && ptr->length)
+           ok(indices[0] > 0, "%d: got %d\n", i, indices[0]);
+       else
+           ok(indices[0] == 0, "%d: got %d\n", i, indices[0]);
+    }
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteGdiInterop_Release(interop);
     IDWriteTextAnalyzer1_Release(analyzer1);
 }
 
@@ -958,6 +1069,7 @@ START_TEST(analyzer)
     test_AnalyzeScript();
     test_AnalyzeLineBreakpoints();
     test_GetScriptProperties();
+    test_GetTextComplexity();
 
     IDWriteFactory_Release(factory);
 }
