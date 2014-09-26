@@ -259,6 +259,9 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_SetSP(IDirectPlay8Address *iface,
 
     This->init = TRUE;
     This->SP_guid = *pguidSP;
+
+    IDirectPlay8Address_AddComponent(iface, DPNA_KEY_PROVIDER, &This->SP_guid, sizeof(GUID), DPNA_DATATYPE_GUID);
+
     return DPN_OK;
 }
 

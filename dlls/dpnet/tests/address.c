@@ -171,6 +171,49 @@ static void address_addcomponents(void)
     }
 }
 
+static void address_setsp(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *localaddr = NULL;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
+    if(SUCCEEDED(hr))
+    {
+        DWORD components;
+        WCHAR *name;
+        GUID  guid = IID_Random;
+        DWORD type;
+        DWORD namelen = 0;
+        DWORD bufflen = 0;
+
+        hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(components == 0, "components=%d", components);
+
+        hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(components == 1, "components=%d", components);
+
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, NULL, &namelen, NULL, &bufflen, &type);
+        todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        name =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, namelen * sizeof(WCHAR));
+
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, name, &namelen, (void*)&guid, &bufflen, &type);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(type == DPNA_DATATYPE_GUID, "wrong datatype: %d\n", type);
+        todo_wine ok(IsEqualGUID(&guid, &CLSID_DP8SP_TCPIP), "wrong guid\n");
+
+        HeapFree(GetProcessHeap(), 0, name);
+
+        IDirectPlay8Address_Release(localaddr);
+    }
+}
+
 START_TEST(address)
 {
     HRESULT hr;
@@ -182,6 +225,7 @@ START_TEST(address)
 
     create_directplay_address();
     address_addcomponents();
+    address_setsp();
 
     CoUninitialize();
 }
