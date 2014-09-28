@@ -139,8 +139,8 @@ static BOOL test_init_dpvoice_server(void)
     }
     else
     {
-        /* Everything after Windows XP doesnt have dpvoice installed. */
-        win_skip("IDirectPlayVoiceServer not supported on thie platform\n");
+        /* Everything after Windows XP doesn't have dpvoice installed. */
+        win_skip("IDirectPlayVoiceServer not supported on this platform\n");
     }
 
     return vserver != NULL;
@@ -276,8 +276,8 @@ static BOOL test_init_dpvoice_client(void)
     }
     else
     {
-        /* Everything after Windows XP doesnt have dpvoice installed. */
-        win_skip("IDirectPlayVoiceClient not supported on thie platform\n");
+        /* Everything after Windows XP doesn't have dpvoice installed. */
+        win_skip("IDirectPlayVoiceClient not supported on this platform\n");
     }
 
     return vclient != NULL;
@@ -338,8 +338,8 @@ static void create_voicetest(void)
     }
     else
     {
-        /* Everything after Windows XP doesnt have dpvoice installed. */
-        win_skip("IDirectPlayVoiceClient not supported on thie platform\n");
+        /* Everything after Windows XP doesn't have dpvoice installed. */
+        win_skip("IDirectPlayVoiceClient not supported on this platform\n");
     }
 }
 

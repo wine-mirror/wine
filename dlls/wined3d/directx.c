@@ -1692,8 +1692,8 @@ static enum wined3d_d3d_level d3d_level_from_caps(const struct shader_caps *shad
     }
     if (shader_caps->vs_version == 3)
     {
-        /* Wine can not use SM 4 on mesa drivers as the necessary functionality is not exposed
-         * on compatibility contexts */
+        /* Wine cannot use SM 4 on mesa drivers as the necessary functionality
+         * is not exposed on compatibility contexts */
         if (glsl_version >= MAKEDWORD_VERSION(1, 30))
             return WINED3D_D3D_LEVEL_10;
         return WINED3D_D3D_LEVEL_9_SM3;

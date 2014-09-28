@@ -127,9 +127,9 @@ static void test_CreateNamedPipe(int pipemode)
     else
         trace("test_CreateNamedPipe starting in message mode\n");
 
-    /* Wait for non existing pipe */
+    /* Wait for nonexistent pipe */
     ret = WaitNamedPipeA(PIPENAME, 2000);
-    ok(ret == 0, "WaitNamedPipe returned %d for non existing pipe\n", ret);
+    ok(ret == 0, "WaitNamedPipe returned %d for nonexistent pipe\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     /* Bad parameter checks */

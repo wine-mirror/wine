@@ -29,7 +29,7 @@ static HWND get_container_hwnd(WindowsMediaPlayer *This)
     HWND hwnd = NULL;
     HRESULT hres;
 
-    /* IOleInPlaceSite (which inherits from IOleWindow) is prefered. */
+    /* IOleInPlaceSite (which inherits from IOleWindow) is preferred. */
     hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ole_window);
     if(FAILED(hres)) {
         hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleWindow, (void**)&ole_window);

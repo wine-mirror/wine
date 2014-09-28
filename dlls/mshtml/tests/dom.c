@@ -7378,7 +7378,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_search((IUnknown*)elem, "?how?old=are", FALSE);
 
         /* due to incorrect behavior of ie6, search string without leading "?" is interpreted
-        as part of the pathname, and can not be accessed by get_search. */
+        as part of the pathname, and cannot be accessed by get_search. */
         test_anchor_put_search((IUnknown*)elem, "word=abc");
         test_anchor_search((IUnknown*)elem, "?word=abc", TRUE);
 

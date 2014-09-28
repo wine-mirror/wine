@@ -878,7 +878,7 @@ static void test_wmp(void)
         win_skip("CLSID_WindowsMediaPlayer not registered\n");
         return;
     }
-    ok(hres == S_OK, "Coult not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
+    ok(hres == S_OK, "Could not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IWMPCore, (void**)&wmpcore);
     ok(hres == S_OK, "got 0x%08x\n", hres);

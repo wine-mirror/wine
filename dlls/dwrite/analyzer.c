@@ -366,7 +366,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 break;
             case b_ZW:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-            /* LB8 - break before character after zero-width space, skip spaces inbetween */
+            /* LB8 - break before character after zero-width space, skip spaces in-between */
                 while (i < count-1 && break_class[i+1] == b_SP)
                     i++;
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
