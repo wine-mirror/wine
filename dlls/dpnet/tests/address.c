@@ -189,14 +189,14 @@ static void address_setsp(void)
 
         hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(components == 0, "components=%d", components);
+        ok(components == 0, "components=%d\n", components);
 
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(components == 1, "components=%d", components);
+        ok(components == 1, "components=%d\n", components);
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, NULL, &namelen, NULL, &bufflen, &type);
         todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
