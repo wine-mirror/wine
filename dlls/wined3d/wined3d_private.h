@@ -2350,16 +2350,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_ALLOCATED         0x00000800 /* A GL texture is allocated for this surface. */
 #define SFLAG_SRGBALLOCATED     0x00001000 /* A sRGB GL texture is allocated for this surface. */
 
-/* In some conditions the surface memory must not be freed:
- * SFLAG_CONVERTED: Converting the data back would take too long
- * SFLAG_DYNLOCK: Avoid freeing the data for performance
- * SFLAG_CLIENT: OpenGL uses our memory as backup
- */
-#define SFLAG_DONOTFREE     (SFLAG_CONVERTED        | \
-                             SFLAG_DYNLOCK          | \
-                             SFLAG_CLIENT           | \
-                             SFLAG_PIN_SYSMEM)
-
 enum wined3d_conversion_type
 {
     WINED3D_CT_NONE,

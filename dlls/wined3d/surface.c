@@ -587,7 +587,12 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
 
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
-    if (surface->resource.map_count || surface->flags & SFLAG_DONOTFREE)
+    /* In some conditions the surface memory must not be freed:
+     * SFLAG_CONVERTED: Converting the data back would take too long
+     * SFLAG_DYNLOCK: Avoid freeing the data for performance
+     * SFLAG_CLIENT: OpenGL uses our memory as backup */
+    if (surface->resource.map_count || surface->flags & (SFLAG_CONVERTED | SFLAG_DYNLOCK
+            | SFLAG_CLIENT | SFLAG_PIN_SYSMEM))
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
