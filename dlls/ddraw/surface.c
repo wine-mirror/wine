@@ -5605,6 +5605,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     DDSURFACEDESC2 *desc, *mip_desc;
     struct ddraw_texture *texture;
     UINT layers, levels, i, j;
+    unsigned int pitch = 0;
     HRESULT hr;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p, version %u.\n",
@@ -5969,6 +5970,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 HeapFree(GetProcessHeap(), 0, texture);
                 return DDERR_INVALIDPARAMS;
             }
+
+            pitch = desc->u1.lPitch;
         }
     }
 
@@ -6073,6 +6076,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         }
     }
 
+    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_surface_update_desc(root->wined3d_surface,
+            wined3d_desc.width, wined3d_desc.height, wined3d_desc.format,
+            WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
+    {
+        ERR("Failed to set surface memory, hr %#x.\n", hr);
+        goto fail;
+    }
+
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
         unsigned int count = desc->dwBackBufferCount;
@@ -6148,13 +6159,12 @@ fail:
     return hr;
 }
 
-HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,
+void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,
         struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
 {
     DDSURFACEDESC2 *desc = &surface->surface_desc;
     struct wined3d_resource_desc wined3d_desc;
     unsigned int version = texture->version;
-    HRESULT hr;
 
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
     surface->IDirectDrawSurface4_iface.lpVtbl = &ddraw_surface4_vtbl;
@@ -6193,46 +6203,18 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     if (format_is_compressed(&desc->u4.ddpfPixelFormat))
     {
         if (desc->dwFlags & DDSD_LPSURFACE)
-        {
-            if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
-                    wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
-                    desc->lpSurface, 0)))
-            {
-                ERR("Failed to set surface memory, hr %#x.\n", hr);
-                return hr;
-            }
-
-            desc->dwFlags |= DDSD_LINEARSIZE;
-            desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_PITCH);
             desc->u1.dwLinearSize = ~0u;
-        }
         else
-        {
-            desc->dwFlags |= DDSD_LINEARSIZE;
-            desc->dwFlags &= ~DDSD_PITCH;
             desc->u1.dwLinearSize = wined3d_surface_get_pitch(wined3d_surface) * ((desc->dwHeight + 3) / 4);
-        }
+        desc->dwFlags |= DDSD_LINEARSIZE;
+        desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_PITCH);
     }
     else
     {
-        if (desc->dwFlags & DDSD_LPSURFACE)
-        {
-            if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
-                    wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
-                    desc->lpSurface, desc->u1.lPitch)))
-            {
-                ERR("Failed to set surface memory, hr %#x.\n", hr);
-                return hr;
-            }
-
-            desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_LINEARSIZE);
-        }
-        else
-        {
-            desc->dwFlags |= DDSD_PITCH;
-            desc->dwFlags &= ~DDSD_LINEARSIZE;
+        if (!(desc->dwFlags & DDSD_LPSURFACE))
             desc->u1.lPitch = wined3d_surface_get_pitch(wined3d_surface);
-        }
+        desc->dwFlags |= DDSD_PITCH;
+        desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_LINEARSIZE);
     }
     desc->lpSurface = NULL;
 
@@ -6241,8 +6223,6 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     *parent_ops = &ddraw_surface_wined3d_parent_ops;
 
     wined3d_private_store_init(&surface->private_store);
-
-    return DD_OK;
 }
 
 static void STDMETHODCALLTYPE view_wined3d_object_destroyed(void *parent)
