@@ -129,11 +129,13 @@ static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
 static NTSTATUS (WINAPI * pNtCreateKey)( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
                              PULONG dispos );
+static NTSTATUS (WINAPI * pNtQueryKey)(HANDLE,KEY_INFORMATION_CLASS,PVOID,ULONG,PULONG);
 static NTSTATUS (WINAPI * pNtQueryValueKey)(HANDLE,const UNICODE_STRING *,KEY_VALUE_INFORMATION_CLASS,void *,DWORD,DWORD *);
 static NTSTATUS (WINAPI * pNtSetValueKey)(HANDLE, const PUNICODE_STRING, ULONG,
                                ULONG, const void*, ULONG  );
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE,PROCESSINFOCLASS,PVOID,ULONG,PULONG);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(PUNICODE_STRING);
+static LONG     (WINAPI * pRtlCompareUnicodeString)(const PUNICODE_STRING,const PUNICODE_STRING,BOOLEAN);
 static BOOLEAN  (WINAPI * pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
 static LPVOID   (WINAPI * pRtlReAllocateHeap)(IN PVOID, IN ULONG, IN PVOID, IN ULONG);
 static NTSTATUS (WINAPI * pRtlAppendUnicodeToString)(PUNICODE_STRING, PCWSTR);
@@ -174,11 +176,13 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtCreateKey)
     NTDLL_GET_PROC(NtFlushKey)
     NTDLL_GET_PROC(NtDeleteKey)
+    NTDLL_GET_PROC(NtQueryKey)
     NTDLL_GET_PROC(NtQueryValueKey)
     NTDLL_GET_PROC(NtQueryInformationProcess)
     NTDLL_GET_PROC(NtSetValueKey)
     NTDLL_GET_PROC(NtOpenKey)
     NTDLL_GET_PROC(RtlFormatCurrentUserKeyPath)
+    NTDLL_GET_PROC(RtlCompareUnicodeString)
     NTDLL_GET_PROC(RtlReAllocateHeap)
     NTDLL_GET_PROC(RtlAppendUnicodeToString)
     NTDLL_GET_PROC(RtlUnicodeStringToAnsiString)
@@ -1276,6 +1280,42 @@ static void test_long_value_name(void)
     pNtClose(key);
 }
 
+static void test_NtQueryKey(void)
+{
+    HANDLE key;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    ULONG len;
+    KEY_NAME_INFORMATION *info = NULL;
+    UNICODE_STRING str;
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+
+    status = pNtQueryKey(key, KeyNameInformation, NULL, 0, &len);
+    if (status == STATUS_INVALID_PARAMETER) {
+        win_skip("KeyNameInformation is not supported\n");
+        pNtClose(key);
+        return;
+    }
+    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08x\n", status);
+
+    info = HeapAlloc(GetProcessHeap(), 0, len);
+    status = pNtQueryKey(key, KeyNameInformation, info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+
+    str.Buffer = info->Name;
+    str.Length = info->NameLength;
+    todo_wine ok(pRtlCompareUnicodeString(&winetestpath, &str, TRUE) == 0,
+       "got %s, expected %s\n",
+       wine_dbgstr_wn(str.Buffer, str.Length/sizeof(WCHAR)),
+       wine_dbgstr_wn(winetestpath.Buffer, winetestpath.Length/sizeof(WCHAR)));
+
+    HeapFree(GetProcessHeap(), 0, info);
+    pNtClose(key);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -1296,6 +1336,7 @@ START_TEST(reg)
     test_RtlQueryRegistryValues();
     test_RtlpNtQueryValueKey();
     test_NtFlushKey();
+    test_NtQueryKey();
     test_NtQueryValueKey();
     test_long_value_name();
     test_NtDeleteKey();
