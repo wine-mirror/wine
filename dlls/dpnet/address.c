@@ -316,9 +316,53 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetNumComponents(IDirectPlay8Addre
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(IDirectPlay8Address *iface,
         const WCHAR *const pwszName, void *pvBuffer, DWORD *pdwBufferSize, DWORD *pdwDataType)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
-  TRACE("(%p): stub\n", This);
-  return DPN_OK; 
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    struct component *entry;
+
+    TRACE("(%p)->(%p %p %p %p)\n", This, pwszName, pvBuffer, pdwBufferSize, pdwDataType);
+
+    if(!pwszName || !pdwBufferSize || !pdwDataType || (!pvBuffer && pdwBufferSize))
+        return E_POINTER;
+
+    LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
+    {
+        if (lstrcmpW(pwszName, entry->name) == 0)
+        {
+            TRACE("Found %s\n", debugstr_w(pwszName));
+
+            if(*pdwBufferSize < entry->size)
+            {
+                *pdwBufferSize = entry->size;
+                return DPNERR_BUFFERTOOSMALL;
+            }
+
+            *pdwBufferSize = entry->size;
+            *pdwDataType   = entry->type;
+
+            switch (entry->type)
+            {
+                case DPNA_DATATYPE_DWORD:
+                    memcpy(pvBuffer, &entry->data.value, sizeof(DWORD));
+                    break;
+                case DPNA_DATATYPE_GUID:
+                    memcpy(pvBuffer, &entry->data.guid, sizeof(GUID));
+                    break;
+                case DPNA_DATATYPE_STRING:
+                    memcpy(pvBuffer, &entry->data.string, entry->size);
+                    break;
+                case DPNA_DATATYPE_STRING_ANSI:
+                    memcpy(pvBuffer, &entry->data.ansi, entry->size);
+                    break;
+                case DPNA_DATATYPE_BINARY:
+                    memcpy(pvBuffer, &entry->data.binary, entry->size);
+                    break;
+            }
+
+            return S_OK;
+        }
+    }
+
+    return DPNERR_DOESNOTEXIST;
 }
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByIndex(IDirectPlay8Address *iface,
@@ -364,7 +408,6 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
         list_add_tail(&This->components, &entry->entry);
     }
 
-    entry->size = dwDataSize;
     switch (dwDataType)
     {
         case DPNA_DATATYPE_DWORD:
@@ -401,6 +444,8 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             TRACE("(%p, %u): BINARY Type\n", lpvData, dwDataSize);
             break;
     }
+
+    entry->size = dwDataSize;
 
     return DPN_OK;
 }

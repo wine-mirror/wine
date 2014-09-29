@@ -102,11 +102,28 @@ static void address_addcomponents(void)
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD), DPNA_DATATYPE_DWORD);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, NULL, &compguid, &size, &type);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, NULL, &size, &type);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, NULL, &type);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        size = sizeof(GUID)-1;
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, &type);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+        ok(size == sizeof(GUID), "got %d\n", size);
+
         size = sizeof(GUID);
         hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, &type);
-        todo_wine ok(IsEqualGUID(&compguid, &IID_Random), "incorrect guid\n");
-        ok(size == sizeof(GUID), "incorrect size\n");
-        todo_wine ok(type == DPNA_DATATYPE_GUID, "incorrect type\n");
+        ok(IsEqualGUID(&compguid, &IID_Random), "incorrect guid\n");
+        ok(size == sizeof(GUID), "incorrect size got %d\n", size);
+        ok(type == DPNA_DATATYPE_GUID, "incorrect type\n");
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetNumComponents(localaddr, NULL);
