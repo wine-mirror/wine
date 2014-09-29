@@ -7216,12 +7216,45 @@ todo_wine
     ok(ret, "UnregisterClass(my_window) failed\n");
 }
 
+static void simulate_click(int x, int y)
+{
+    INPUT input[2];
+    UINT events_no;
+
+    SetCursorPos(x, y);
+    memset(input, 0, sizeof(input));
+    input[0].type = INPUT_MOUSE;
+    U(input[0]).mi.dx = x;
+    U(input[0]).mi.dy = y;
+    U(input[0]).mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    input[1].type = INPUT_MOUSE;
+    U(input[1]).mi.dx = x;
+    U(input[1]).mi.dy = y;
+    U(input[1]).mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    events_no = SendInput(2, input, sizeof(input[0]));
+    ok(events_no == 2, "SendInput returned %d\n", events_no);
+}
+
+static WNDPROC def_static_proc;
+static BOOL got_hittest;
+static LRESULT WINAPI static_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if(msg == WM_NCHITTEST)
+        got_hittest = TRUE;
+    if(msg == WM_LBUTTONDOWN)
+        ok(0, "unexpected call\n");
+
+    return def_static_proc(hwnd, msg, wp, lp);
+}
+
 static void window_from_point_proc(HWND parent)
 {
     HANDLE start_event, end_event;
     HANDLE win, child_static, child_button;
+    BOOL got_click;
     DWORD ret;
     POINT pt;
+    MSG msg;
 
     start_event = OpenEventA(EVENT_ALL_ACCESS, FALSE, "test_wfp_start");
     ok(start_event != 0, "OpenEvent failed\n");
@@ -7242,7 +7275,27 @@ static void window_from_point_proc(HWND parent)
     win = WindowFromPoint(pt);
     ok(win == child_button, "WindowFromPoint returned %p, expected %p\n", win, child_button);
 
+    /* without this window simulate click test keeps sending WM_NCHITTEST
+     * message to child_static in an infinite loop */
+    win = CreateWindowExA(0, "button", "button", WS_CHILD | WS_VISIBLE,
+            0, 0, 100, 100, parent, 0, NULL, NULL);
+    ok(win != 0, "CreateWindowEx failed\n");
+    def_static_proc = (void*)SetWindowLongPtrA(child_static,
+            GWLP_WNDPROC, (LONG_PTR)static_hook_proc);
+    flush_events(TRUE);
     SetEvent(start_event);
+
+    got_hittest = FALSE;
+    got_click = FALSE;
+    while(!got_click && wait_for_message(&msg)) {
+        if(msg.message == WM_LBUTTONUP) {
+            ok(msg.hwnd == win, "msg.hwnd = %p, expected %p\n", msg.hwnd, win);
+            got_click = TRUE;
+        }
+        DispatchMessageA(&msg);
+    }
+    ok(got_hittest, "transparent window didn't get WM_NCHITTEST message\n");
+    todo_wine ok(got_click, "button under static window didn't get WM_LBUTTONUP\n");
 
     ret = WaitForSingleObject(end_event, 5000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", ret);
@@ -7305,6 +7358,9 @@ static void test_window_from_point(const char *argv0)
     child = GetWindow(hwnd, GW_CHILD);
     win = WindowFromPoint(pt);
     ok(win == child, "WindowFromPoint returned %p, expected %p\n", win, child);
+
+    simulate_click(150, 150);
+    flush_events(TRUE);
 
     child = GetWindow(child, GW_HWNDNEXT);
     pt.x = 250;
@@ -7838,20 +7894,7 @@ START_TEST(win)
 
     if(!SetForegroundWindow(hwndMain)) {
         /* workaround for foreground lock timeout */
-        INPUT input[2];
-        UINT events_no;
-
-        memset(input, 0, sizeof(input));
-        input[0].type = INPUT_MOUSE;
-        U(input[0]).mi.dx = 101;
-        U(input[0]).mi.dy = 101;
-        U(input[0]).mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-        input[0].type = INPUT_MOUSE;
-        U(input[0]).mi.dx = 101;
-        U(input[0]).mi.dy = 101;
-        U(input[0]).mi.dwFlags = MOUSEEVENTF_LEFTUP;
-        events_no = SendInput(2, input, sizeof(input[0]));
-        ok(events_no == 2, "SendInput returned %d\n", events_no);
+        simulate_click(101, 101);
         ok(SetForegroundWindow(hwndMain), "SetForegroundWindow failed\n");
     }
 
