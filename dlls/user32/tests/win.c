@@ -7200,6 +7200,44 @@ todo_wine
     ok(ret, "UnregisterClass(my_window) failed\n");
 }
 
+static void test_window_from_point(void)
+{
+    HWND hwnd, child, win;
+    POINT pt;
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL, WS_POPUP | WS_VISIBLE,
+            100, 100, 200, 100, 0, 0, NULL, NULL);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    pt.x = pt.y = 150;
+    win = WindowFromPoint(pt);
+    pt.x = 250;
+    if(win == hwnd)
+        win = WindowFromPoint(pt);
+    if(win != hwnd) {
+        skip("there's another window covering test window\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    child = CreateWindowExA(0, "static", "static", WS_CHILD | WS_VISIBLE,
+            0, 0, 100, 100, hwnd, 0, NULL, NULL);
+    ok(child != 0, "CreateWindowEx failed\n");
+    pt.x = pt.y = 150;
+    win = WindowFromPoint(pt);
+    ok(win == hwnd, "WindowFromPoint returned %p, expected %p\n", win, hwnd);
+    DestroyWindow(child);
+
+    child = CreateWindowExA(0, "button", "button", WS_CHILD | WS_VISIBLE,
+                0, 0, 100, 100, hwnd, 0, NULL, NULL);
+    ok(child != 0, "CreateWindowEx failed\n");
+    win = WindowFromPoint(pt);
+    ok(win == child, "WindowFromPoint returned %p, expected %p\n", win, child);
+    DestroyWindow(child);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_map_points(void)
 {
     BOOL ret;
@@ -7745,6 +7783,7 @@ START_TEST(win)
 
     /* Add the tests below this line */
     test_child_window_from_point();
+    test_window_from_point();
     test_thick_child_size(hwndMain);
     test_fullscreen();
     test_hwnd_message();
