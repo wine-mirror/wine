@@ -701,6 +701,54 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT width, UINT height,
+        enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
+        UINT multisample_quality, void *mem, UINT pitch)
+{
+    struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
+    struct wined3d_surface *surface;
+
+    TRACE("texture %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
+            "mem %p, pitch %u.\n",
+            texture, width, height, debug_d3dformat(format_id), multisample_type, multisample_type, mem, pitch);
+
+    if (!resource_size)
+        return WINED3DERR_INVALIDCALL;
+
+    if (texture->level_count * texture->layer_count > 1)
+    {
+        WARN("Texture has multiple sub-resources, not supported.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (texture->resource.type == WINED3D_RTYPE_VOLUME_TEXTURE)
+    {
+        WARN("Not supported on volume textures.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    surface = surface_from_resource(texture->sub_resources[0]);
+    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
+    {
+        WARN("Surface is mapped or the DC is in use.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (device->d3d_initialized)
+        texture->resource.resource_ops->resource_unload(&texture->resource);
+
+    texture->resource.format = format;
+    texture->resource.multisample_type = multisample_type;
+    texture->resource.multisample_quality = multisample_quality;
+    texture->resource.width = width;
+    texture->resource.height = height;
+
+    return wined3d_surface_update_desc(surface, gl_info, mem, pitch);
+}
+
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
 {
     /* TODO: Implement filters using GL_SGI_generate_mipmaps. */

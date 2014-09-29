@@ -2465,10 +2465,6 @@ HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC d
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
 HRESULT __cdecl wined3d_surface_unmap(struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_update_desc(struct wined3d_surface *surface,
-        UINT width, UINT height, enum wined3d_format_id format_id,
-        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
-        void *mem, UINT pitch);
 HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx);
 HRESULT __cdecl wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
@@ -2521,6 +2517,10 @@ HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *
 HRESULT __cdecl wined3d_texture_set_color_key(struct wined3d_texture *texture,
         DWORD flags, const struct wined3d_color_key *color_key);
 DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod);
+HRESULT __cdecl wined3d_texture_update_desc(struct wined3d_texture *texture,
+        UINT width, UINT height, enum wined3d_format_id format_id,
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
+        void *mem, UINT pitch);
 
 HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
         const struct wined3d_vertex_element *elements, UINT element_count, void *parent,

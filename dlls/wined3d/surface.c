@@ -2363,35 +2363,14 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
-        UINT width, UINT height, enum wined3d_format_id format_id,
-        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
-        void *mem, UINT pitch)
+HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, void *mem, unsigned int pitch)
 {
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
-    UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
-    struct wined3d_texture *texture;
+    struct wined3d_resource *texture_resource = &surface->container->resource;
+    unsigned int width, height;
     BOOL create_dib = FALSE;
-    HRESULT hr;
     DWORD valid_location = 0;
-
-    TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
-            "mem %p, pitch %u.\n",
-            surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type, mem, pitch);
-
-    if (!resource_size)
-        return WINED3DERR_INVALIDCALL;
-
-    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
-    {
-        WARN("Surface is mapped or the DC is in use.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (device->d3d_initialized)
-        surface->resource.resource_ops->resource_unload(&surface->resource);
+    HRESULT hr;
 
     if (surface->flags & SFLAG_DIBSECTION)
     {
@@ -2405,6 +2384,8 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     surface->locations = 0;
     wined3d_resource_free_sysmem(&surface->resource);
 
+    width = texture_resource->width;
+    height = texture_resource->height;
     surface->resource.width = width;
     surface->resource.height = height;
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
@@ -2427,20 +2408,20 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     else
         surface->flags &= ~SFLAG_NONPOW2;
 
-    surface->user_memory = mem;
-    if (surface->user_memory)
+    if ((surface->user_memory = mem))
     {
         surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
     }
     surface->pitch = pitch;
-    surface->resource.format = format;
-    surface->resource.multisample_type = multisample_type;
-    surface->resource.multisample_quality = multisample_quality;
+    surface->resource.format = texture_resource->format;
+    surface->resource.multisample_type = texture_resource->multisample_type;
+    surface->resource.multisample_quality = texture_resource->multisample_quality;
     if (surface->pitch)
         surface->resource.size = height * surface->pitch;
     else
-        surface->resource.size = resource_size;
+        surface->resource.size = wined3d_format_calculate_size(texture_resource->format,
+                texture_resource->device->surface_alignment, width, height, 1);
 
     /* The format might be changed to a format that needs conversion.
      * If the surface didn't use PBOs previously but could now, don't
@@ -2448,13 +2429,6 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
      * color keys. */
     if (surface->resource.map_binding == WINED3D_LOCATION_BUFFER && !surface_use_pbo(surface))
         surface->resource.map_binding = create_dib ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
-
-    texture = surface->container;
-    texture->resource.format = format;
-    texture->resource.multisample_type = multisample_type;
-    texture->resource.multisample_quality = multisample_quality;
-    texture->resource.width = width;
-    texture->resource.height = height;
 
     if (create_dib)
     {

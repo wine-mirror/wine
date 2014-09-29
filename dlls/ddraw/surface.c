@@ -4466,7 +4466,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         format_id = wined3dformat_from_ddrawformat(&This->surface_desc.u4.ddpfPixelFormat);
     }
 
-    if (FAILED(hr = wined3d_surface_update_desc(This->wined3d_surface, width, height,
+    if (FAILED(hr = wined3d_texture_update_desc(This->wined3d_texture, width, height,
             format_id, WINED3D_MULTISAMPLE_NONE, 0, DDSD->lpSurface, pitch)))
     {
         WARN("Failed to update surface desc, hr %#x.\n", hr);
@@ -6076,7 +6076,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         }
     }
 
-    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_surface_update_desc(root->wined3d_surface,
+    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_texture_update_desc(wined3d_texture,
             wined3d_desc.width, wined3d_desc.height, wined3d_desc.format,
             WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
     {

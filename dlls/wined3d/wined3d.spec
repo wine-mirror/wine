@@ -238,7 +238,6 @@
 @ cdecl wined3d_surface_restore(ptr)
 @ cdecl wined3d_surface_set_overlay_position(ptr long long)
 @ cdecl wined3d_surface_unmap(ptr)
-@ cdecl wined3d_surface_update_desc(ptr long long long long long ptr long)
 @ cdecl wined3d_surface_update_overlay(ptr ptr ptr ptr long ptr)
 @ cdecl wined3d_surface_update_overlay_z_order(ptr long ptr)
 
@@ -273,6 +272,7 @@
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)
 @ cdecl wined3d_texture_set_color_key(ptr long ptr)
 @ cdecl wined3d_texture_set_lod(ptr long)
+@ cdecl wined3d_texture_update_desc(ptr long long long long long ptr long)
 
 @ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)
