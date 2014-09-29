@@ -1865,10 +1865,13 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
 
     TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
-    if ((search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
-	|| flags != 0)
+    if (flags != 0)
     {
-        FIXME("options not implemented 0x%08x 0x%08x\n", search_op, flags );
+        FIXME("flags not implemented 0x%08x\n", flags );
+    }
+    if (search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
+    {
+        FIXME("search_op not implemented 0x%08x\n", search_op);
         return INVALID_HANDLE_VALUE;
     }
     if (level != FindExInfoStandard)
