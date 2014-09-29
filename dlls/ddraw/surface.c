@@ -5943,12 +5943,29 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 HeapFree(GetProcessHeap(), 0, texture);
                 return DDERR_INVALIDPARAMS;
             }
+
+            if ((desc->dwFlags & DDSD_LINEARSIZE)
+                    && desc->u1.dwLinearSize < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+                            wined3d_desc.format, wined3d_desc.width) * ((desc->dwHeight + 3) / 4))
+            {
+                WARN("Invalid linear size %u specified.\n", desc->u1.dwLinearSize);
+                HeapFree(GetProcessHeap(), 0, texture);
+                return DDERR_INVALIDPARAMS;
+            }
         }
         else
         {
             if (!(desc->dwFlags & DDSD_PITCH))
             {
                 WARN("User memory surfaces should explicitly specify the pitch.\n");
+                HeapFree(GetProcessHeap(), 0, texture);
+                return DDERR_INVALIDPARAMS;
+            }
+
+            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+                    wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
+            {
+                WARN("Invalid pitch %u specified.\n", desc->u1.lPitch);
                 HeapFree(GetProcessHeap(), 0, texture);
                 return DDERR_INVALIDPARAMS;
             }
@@ -6177,13 +6194,6 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     {
         if (desc->dwFlags & DDSD_LPSURFACE)
         {
-            if ((desc->dwFlags & DDSD_LINEARSIZE)
-                    && desc->u1.dwLinearSize < wined3d_surface_get_pitch(wined3d_surface) * ((desc->dwHeight + 3) / 4))
-            {
-                WARN("Invalid linear size %u specified.\n", desc->u1.dwLinearSize);
-                return DDERR_INVALIDPARAMS;
-            }
-
             if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
                     wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
                     desc->lpSurface, 0)))
@@ -6207,13 +6217,6 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     {
         if (desc->dwFlags & DDSD_LPSURFACE)
         {
-            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
-                    wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
-            {
-                WARN("Invalid pitch %u specified.\n", desc->u1.lPitch);
-                return DDERR_INVALIDPARAMS;
-            }
-
             if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
                     wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
                     desc->lpSurface, desc->u1.lPitch)))
