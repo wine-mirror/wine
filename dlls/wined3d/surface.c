@@ -1585,11 +1585,11 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
     }
 }
 
-static void d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck,
+static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alpha_ck,
         struct wined3d_format *format, enum wined3d_conversion_type *conversion_type)
 {
-    BOOL colorkey_active = need_alpha_ck && (surface->container->color_key_flags & WINEDDSD_CKSRCBLT);
-    const struct wined3d_device *device = surface->resource.device;
+    BOOL colorkey_active = need_alpha_ck && (texture->color_key_flags & WINEDDSD_CKSRCBLT);
+    const struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i;
 
@@ -1611,14 +1611,14 @@ static void d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alp
         {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_ARGB32,   GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
     };
 
-    *format = *surface->resource.format;
+    *format = *texture->resource.format;
     *conversion_type = WINED3D_CT_NONE;
 
     if (colorkey_active)
     {
         for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
         {
-            if (color_key_info[i].src_format != surface->resource.format->id)
+            if (color_key_info[i].src_format != texture->resource.format->id)
                 continue;
 
             *conversion_type = color_key_info[i].conversion_type;
@@ -1630,12 +1630,12 @@ static void d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alp
         }
     }
 
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT)
+    if (texture->resource.format->id == WINED3DFMT_P8_UINT)
     {
         /* FIXME: This should check if the blitter backend can do P8
          * conversion, instead of checking for ARB_fragment_program. */
-        if (!((gl_info->supported[ARB_FRAGMENT_PROGRAM] && surface->container->swapchain
-                && surface->container == surface->container->swapchain->front_buffer)) || colorkey_active)
+        if (!((gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
+                && texture == texture->swapchain->front_buffer)) || colorkey_active)
         {
             *conversion_type = WINED3D_CT_PALETTED;
             format->glInternal = GL_RGBA;
@@ -1644,7 +1644,7 @@ static void d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alp
             format->conv_byte_count = 4;
         }
     }
-    else if (surface->resource.format->id == WINED3DFMT_B2G3R3_UNORM && colorkey_active)
+    else if (texture->resource.format->id == WINED3DFMT_B2G3R3_UNORM && colorkey_active)
     {
         /* This texture format will never be used... So do not care about
          * color-keying up until the point in time it will be needed. */
@@ -1762,7 +1762,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     }
 
     /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
-    d3dfmt_get_conv(dst_surface, FALSE, &format, &convert);
+    d3dfmt_get_conv(dst_surface->container, FALSE, &format, &convert);
     if (convert != WINED3D_CT_NONE || format.convert)
         return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
 
@@ -3095,7 +3095,7 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
 
     if (surface->flags & alloc_flag) return;
 
-    d3dfmt_get_conv(surface, TRUE, &format, &convert);
+    d3dfmt_get_conv(surface->container, TRUE, &format, &convert);
     if (convert != WINED3D_CT_NONE || format.convert)
         surface->flags |= SFLAG_CONVERTED;
     else surface->flags &= ~SFLAG_CONVERTED;
@@ -4518,7 +4518,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     /* Upload from system memory */
 
-    d3dfmt_get_conv(surface, TRUE /* We need color keying */, &format, &convert);
+    d3dfmt_get_conv(surface->container, TRUE /* We need color keying */, &format, &convert);
 
     if (srgb)
     {
@@ -5666,7 +5666,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     /* We want to avoid invalidating the sysmem location for converted
      * surfaces, since otherwise we'd have to convert the data back when
      * locking them. */
-    d3dfmt_get_conv(dst_surface, TRUE, &dst_conv_fmt, &dst_convert_type);
+    d3dfmt_get_conv(dst_surface->container, TRUE, &dst_conv_fmt, &dst_convert_type);
     if (dst_convert_type != WINED3D_CT_NONE || dst_conv_fmt.convert || dst_surface->flags & SFLAG_CONVERTED)
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
