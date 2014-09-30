@@ -231,6 +231,16 @@ static BOOL skip_comment(parser_ctx_t *ctx)
     return TRUE;
 }
 
+static BOOL skip_spaces(parser_ctx_t *ctx)
+{
+    while(ctx->ptr < ctx->end && isspaceW(*ctx->ptr)) {
+        if(is_endline(*ctx->ptr++))
+            ctx->nl = TRUE;
+    }
+
+    return ctx->ptr != ctx->end;
+}
+
 static BOOL unescape(WCHAR *str)
 {
     WCHAR *pd, *p, c;
@@ -534,11 +544,7 @@ static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
 static int next_token(parser_ctx_t *ctx, void *lval)
 {
     do {
-        while(ctx->ptr < ctx->end && isspaceW(*ctx->ptr)) {
-            if(is_endline(*ctx->ptr++))
-                ctx->nl = TRUE;
-        }
-        if(ctx->ptr == ctx->end)
+        if(!skip_spaces(ctx))
             return tEOF;
     }while(skip_comment(ctx) || skip_html_comment(ctx));
 
