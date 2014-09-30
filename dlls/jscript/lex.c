@@ -388,7 +388,7 @@ literal_t *new_boolean_literal(parser_ctx_t *ctx, BOOL bval)
     return ret;
 }
 
-static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **literal)
+static BOOL parse_double_literal(parser_ctx_t *ctx, LONG int_part, double *ret)
 {
     LONGLONG d, hlp;
     int exp = 0;
@@ -435,13 +435,15 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
                 ctx->ptr++;
             }else if(!isdigitW(*ctx->ptr)) {
                 WARN("Expected exponent part\n");
-                return lex_error(ctx, E_FAIL);
+                lex_error(ctx, E_FAIL);
+                return FALSE;
             }
         }
 
         if(ctx->ptr == ctx->end) {
             WARN("unexpected end of file\n");
-            return lex_error(ctx, E_FAIL);
+            lex_error(ctx, E_FAIL);
+            return FALSE;
         }
 
         while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
@@ -457,14 +459,15 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
 
     if(is_identifier_char(*ctx->ptr)) {
         WARN("wrong char after zero\n");
-        return lex_error(ctx, JS_E_MISSING_SEMICOLON);
+        lex_error(ctx, JS_E_MISSING_SEMICOLON);
+        return FALSE;
     }
 
-    *literal = new_double_literal(ctx, exp>=0 ? d*pow(10, exp) : d/pow(10, -exp));
-    return tNumericLiteral;
+    *ret = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
+    return TRUE;
 }
 
-static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
+static BOOL parse_numeric_literal(parser_ctx_t *ctx, double *ret)
 {
     LONG l, d;
 
@@ -473,7 +476,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
         if(*ctx->ptr == 'x' || *ctx->ptr == 'X') {
             if(++ctx->ptr == ctx->end) {
                 ERR("unexpected end of file\n");
-                return 0;
+                return FALSE;
             }
 
             while(ctx->ptr < ctx->end && (d = hex_to_int(*ctx->ptr)) != -1) {
@@ -483,11 +486,12 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
 
             if(ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr)) {
                 WARN("unexpected identifier char\n");
-                return lex_error(ctx, JS_E_MISSING_SEMICOLON);
+                lex_error(ctx, JS_E_MISSING_SEMICOLON);
+                return FALSE;
             }
 
-            *literal = new_double_literal(ctx, l);
-            return tNumericLiteral;
+            *ret = l;
+            return TRUE;
         }
 
         if(isdigitW(*ctx->ptr)) {
@@ -509,20 +513,22 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
             /* FIXME: Do we need it here? */
             if(ctx->ptr < ctx->end && (is_identifier_char(*ctx->ptr) || *ctx->ptr == '.')) {
                 WARN("wrong char after octal literal: '%c'\n", *ctx->ptr);
-                return lex_error(ctx, JS_E_MISSING_SEMICOLON);
+                lex_error(ctx, JS_E_MISSING_SEMICOLON);
+                return FALSE;
             }
 
-            *literal = new_double_literal(ctx, val);
-            return tNumericLiteral;
+            *ret = val;
+            return TRUE;
         }
 
         if(is_identifier_char(*ctx->ptr)) {
             WARN("wrong char after zero\n");
-            return lex_error(ctx, JS_E_MISSING_SEMICOLON);
+            lex_error(ctx, JS_E_MISSING_SEMICOLON);
+            return FALSE;
         }
     }
 
-    return parse_double_literal(ctx, l, literal);
+    return parse_double_literal(ctx, l, ret);
 }
 
 static int next_token(parser_ctx_t *ctx, void *lval)
@@ -550,8 +556,15 @@ static int next_token(parser_ctx_t *ctx, void *lval)
         return parse_identifier(ctx, lval);
     }
 
-    if(isdigitW(*ctx->ptr))
-        return parse_numeric_literal(ctx, lval);
+    if(isdigitW(*ctx->ptr)) {
+        double n;
+
+        if(!parse_numeric_literal(ctx, &n))
+            return -1;
+
+        *(literal_t**)lval = new_double_literal(ctx, n);
+        return tNumericLiteral;
+    }
 
     switch(*ctx->ptr) {
     case '{':
@@ -571,8 +584,13 @@ static int next_token(parser_ctx_t *ctx, void *lval)
         return '}';
 
     case '.':
-        if(++ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-            return parse_double_literal(ctx, 0, lval);
+        if(++ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+            double n;
+            if(!parse_double_literal(ctx, 0, &n))
+                return -1;
+            *(literal_t**)lval = new_double_literal(ctx, n);
+            return tNumericLiteral;
+        }
         return '.';
 
     case '<':
