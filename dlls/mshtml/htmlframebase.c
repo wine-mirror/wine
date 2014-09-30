@@ -709,7 +709,6 @@ void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMHTMLEl
         nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLIFrameElement, (void**)&This->nsiframe);
         assert(nsres == NS_OK);
     }else {
-        assert((nsIDOMNode*)This->nsframe == This->element.node.nsnode);
         This->nsiframe = NULL;
     }
 }
