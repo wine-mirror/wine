@@ -25,6 +25,7 @@
 #include "activscp.h"
 #include "objsafe.h"
 #include "engine.h"
+#include "parser.h"
 
 #include "parser.tab.h"
 
