@@ -72,4 +72,97 @@ try {
 }
 ok(tmp, "expected syntax exception");
 
+ok(isNaN(@test), "@test = " + @test);
+
+@set @test = 1
+ok(@test === 1, "@test = " + @test);
+
+@set @test = 0
+ok(@test === 0, "@test = " + @test);
+
+tmp = false
+@set @test = @test tmp=true
+ok(@test === 0, "@test = " + @test);
+ok(tmp, "expr after @set not evaluated");
+
+@set @test = !@test
+ok(@test === true, "@test = " + @test);
+
+@set @test = (@test+1+true)
+ok(@test === 3, "@test = " + @test);
+
+@set
+ @test
+ =
+ 2
+ok(@test === 2, "@test = " + @test);
+
+@set
+ @test
+ =
+ (
+ 2
+ +
+ 2
+ )
+ok(@test === 4, "@test = " + @test);
+
+@set @test = 2.5
+ok(@test === 2.5, "@test = " + @test);
+
+@set @test = 0x4
+ok(@test === 4, "@test = " + @test);
+
+@set @test = (2 + 2/2)
+ok(@test === 3, "@test = " + @test);
+
+@set @test = (false+false)
+ok(@test === 0, "@test = " + @test);
+
+@set @test = ((1+1)*((3)+1))
+ok(@test === 8, "@test = " + @test);
+
+@set @_test = true
+ok(@_test === true, "@_test = " + @_test);
+
+@set @$test = true
+ok(@$test === true, "@$test = " + @$test);
+
+@set @newtest = (@newtest != @newtest)
+ok(@newtest === true, "@newtest = " + @newtest);
+
+@set @test = (false != 0)
+ok(@test === false, "@test = " + @test);
+
+@set @test = (1 != true)
+ok(@test === false, "@test = " + @test);
+
+@set @test = (0 != true)
+ok(@test === true, "@test = " + @test);
+
+var exception_map = {
+    JS_E_EXPECTED_IDENTIFIER:  {type: "SyntaxError", number: -2146827278},
+    JS_E_EXPECTED_ASSIGN:      {type: "SyntaxError", number: -2146827277},
+    JS_E_EXPECTED_AT:          {type: "SyntaxError", number: -2146827256}
+};
+
+function testException(src, id) {
+    var ex = exception_map[id];
+    var ret = "", num = "";
+
+    try {
+        eval(src);
+    } catch(e) {
+        ret = e.name;
+        num = e.number;
+    }
+
+    ok(ret === ex.type, "Exception test, ret = " + ret + ", expected " + ex.type +". Executed code: " + src);
+    ok(num === ex.number, "Exception test, num = " + num + ", expected " + ex.number + ". Executed function: " + src);
+}
+
+testException("@set test=true", "JS_E_EXPECTED_AT");
+testException("@set @1=true", "JS_E_EXPECTED_IDENTIFIER");
+testException("@set @test x=true", "JS_E_EXPECTED_ASSIGN");
+
 reportSuccess();
