@@ -1604,11 +1604,11 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     }
     color_key_info[] =
     {
-        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_565,      GL_RGB5_A1, GL_RGBA,    GL_UNSIGNED_SHORT_5_5_5_1,      2},
-        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_5551,     GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
-        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_RGB24,    GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
-        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_RGB32_888,   GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
-        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_ARGB32,   GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
+        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   GL_RGB5_A1, GL_RGBA,    GL_UNSIGNED_SHORT_5_5_5_1,      2},
+        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
+        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
+        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
+        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_B8G8R8A8, GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
     };
 
     *format = *texture->resource.format;
@@ -1637,7 +1637,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
         if (!((gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
                 && texture == texture->swapchain->front_buffer)) || colorkey_active)
         {
-            *conversion_type = WINED3D_CT_PALETTED;
+            *conversion_type = WINED3D_CT_P8;
             format->glInternal = GL_RGBA;
             format->glFormat = GL_RGBA;
             format->glType = GL_UNSIGNED_BYTE;
@@ -3174,7 +3174,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
         }
 
-        case WINED3D_CT_PALETTED:
+        case WINED3D_CT_P8:
             if (surface->container->swapchain && surface->container->swapchain->palette)
             {
                 unsigned int x, y;
@@ -3210,7 +3210,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
             break;
 
-        case WINED3D_CT_CK_565:
+        case WINED3D_CT_CK_B5G6R5:
         {
             /* Converting the 565 format in 5551 packed to emulate color-keying.
 
@@ -3242,7 +3242,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
         break;
 
-        case WINED3D_CT_CK_5551:
+        case WINED3D_CT_CK_B5G5R5X1:
         {
             /* Converting X1R5G5B5 format to R5G5B5A1 to emulate color-keying. */
             unsigned int x, y;
@@ -3265,7 +3265,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
         break;
 
-        case WINED3D_CT_CK_RGB24:
+        case WINED3D_CT_CK_B8G8R8:
         {
             /* Converting R8G8B8 format to R8G8B8A8 with color-keying. */
             unsigned int x, y;
@@ -3286,7 +3286,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
         break;
 
-        case WINED3D_CT_RGB32_888:
+        case WINED3D_CT_CK_B8G8R8X8:
         {
             /* Converting X8R8G8B8 format to R8G8B8A8 with color-keying. */
             unsigned int x, y;
@@ -3307,7 +3307,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
         break;
 
-        case WINED3D_CT_CK_ARGB32:
+        case WINED3D_CT_CK_B8G8R8A8:
         {
             unsigned int x, y;
             for (y = 0; y < height; ++y)

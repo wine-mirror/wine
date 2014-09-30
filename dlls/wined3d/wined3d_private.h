@@ -2353,12 +2353,12 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 enum wined3d_conversion_type
 {
     WINED3D_CT_NONE,
-    WINED3D_CT_PALETTED,
-    WINED3D_CT_CK_565,
-    WINED3D_CT_CK_5551,
-    WINED3D_CT_CK_RGB24,
-    WINED3D_CT_RGB32_888,
-    WINED3D_CT_CK_ARGB32,
+    WINED3D_CT_P8,
+    WINED3D_CT_CK_B5G6R5,
+    WINED3D_CT_CK_B5G5R5X1,
+    WINED3D_CT_CK_B8G8R8,
+    WINED3D_CT_CK_B8G8R8X8,
+    WINED3D_CT_CK_B8G8R8A8,
 };
 
 struct wined3d_sampler
