@@ -3650,110 +3650,132 @@ msgid "Expected ')'"
 msgstr "Očekivano ')'"
 
 #: jscript.rc:40
+msgid "Expected identifier"
+msgstr ""
+
+#: jscript.rc:41
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '='"
+msgstr "Očekivano ';'"
+
+#: jscript.rc:42
 #, fuzzy
 msgid "Invalid character"
 msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije.\n"
 
-#: jscript.rc:41
+#: jscript.rc:43
 msgid "Unterminated string constant"
 msgstr "Nezavršena konstanta niski"
 
-#: jscript.rc:42
+#: jscript.rc:44
 msgid "'return' statement outside of function"
 msgstr ""
 
-#: jscript.rc:43
+#: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
 msgstr ""
 
-#: jscript.rc:44
+#: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
-#: jscript.rc:45
+#: jscript.rc:47
 msgid "Label redefined"
 msgstr ""
 
-#: jscript.rc:46
+#: jscript.rc:48
 #, fuzzy
 msgid "Label not found"
 msgstr "Datoteka nije pronađena"
 
-#: jscript.rc:47
+#: jscript.rc:49
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@end'"
+msgstr "Očekivano ';'"
+
+#: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:50
+#: jscript.rc:51
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@'"
+msgstr "Očekivano ';'"
+
+#: jscript.rc:54
 msgid "Number expected"
 msgstr "Očekivani broj"
 
-#: jscript.rc:48
+#: jscript.rc:52
 msgid "Function expected"
 msgstr "Očekivana funkcija"
 
-#: jscript.rc:49
+#: jscript.rc:53
 msgid "'[object]' is not a date object"
 msgstr "„[object]“ nije vremenski objekat"
 
-#: jscript.rc:51
+#: jscript.rc:55
 msgid "Object expected"
 msgstr "Očekivani objekat"
 
-#: jscript.rc:52
+#: jscript.rc:56
 msgid "Illegal assignment"
 msgstr "Nedozvoljen zadatak"
 
-#: jscript.rc:53
+#: jscript.rc:57
 msgid "'|' is undefined"
 msgstr "„|“ nije određeno"
 
-#: jscript.rc:54
+#: jscript.rc:58
 msgid "Boolean object expected"
 msgstr "Očekivani objekat istinitosne vrednosti"
 
-#: jscript.rc:55
+#: jscript.rc:59
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "Datum brisanja"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr "VBArray objekat se očekuje"
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr "Očekivani objekat JScript vrste"
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr "Sintaksna greška u regularnom izrazu"
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI sadrži neispravne znakove"
 
-#: jscript.rc:59
+#: jscript.rc:63
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI sadrži neispravne znakove"
 
-#: jscript.rc:61
+#: jscript.rc:65
 #, fuzzy
 msgid "Number of fraction digits is out of range"
 msgstr "Potpis je van dometa.\n"
 
-#: jscript.rc:62
+#: jscript.rc:66
 #, fuzzy
 #| msgid "Subscript out of range"
 msgid "Precision is out of range"
 msgstr "Potpis je van dometa"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr "Niz dužine mora biti konačan pozitivan ceo broj"
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr "Očekivani niz objekta"
 

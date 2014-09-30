@@ -3496,105 +3496,121 @@ msgid "Expected ')'"
 msgstr ""
 
 #: jscript.rc:40
-msgid "Invalid character"
+msgid "Expected identifier"
 msgstr ""
 
 #: jscript.rc:41
-msgid "Unterminated string constant"
+msgid "Expected '='"
 msgstr ""
 
 #: jscript.rc:42
-msgid "'return' statement outside of function"
+msgid "Invalid character"
 msgstr ""
 
 #: jscript.rc:43
-msgid "Can't have 'break' outside of loop"
+msgid "Unterminated string constant"
 msgstr ""
 
 #: jscript.rc:44
-msgid "Can't have 'continue' outside of loop"
+msgid "'return' statement outside of function"
 msgstr ""
 
 #: jscript.rc:45
-msgid "Label redefined"
+msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:46
+msgid "Can't have 'continue' outside of loop"
+msgstr ""
+
+#: jscript.rc:47
+msgid "Label redefined"
+msgstr ""
+
+#: jscript.rc:48
 #, fuzzy
 msgid "Label not found"
 msgstr "'%s' pout nén esse trové."
 
-#: jscript.rc:47
-msgid "Conditional compilation is turned off"
+#: jscript.rc:49
+msgid "Expected '@end'"
 msgstr ""
 
 #: jscript.rc:50
-msgid "Number expected"
-msgstr ""
-
-#: jscript.rc:48
-msgid "Function expected"
-msgstr ""
-
-#: jscript.rc:49
-msgid "'[object]' is not a date object"
+msgid "Conditional compilation is turned off"
 msgstr ""
 
 #: jscript.rc:51
-msgid "Object expected"
-msgstr ""
-
-#: jscript.rc:52
-msgid "Illegal assignment"
-msgstr ""
-
-#: jscript.rc:53
-msgid "'|' is undefined"
+msgid "Expected '@'"
 msgstr ""
 
 #: jscript.rc:54
-msgid "Boolean object expected"
+msgid "Number expected"
+msgstr ""
+
+#: jscript.rc:52
+msgid "Function expected"
+msgstr ""
+
+#: jscript.rc:53
+msgid "'[object]' is not a date object"
 msgstr ""
 
 #: jscript.rc:55
+msgid "Object expected"
+msgstr ""
+
+#: jscript.rc:56
+msgid "Illegal assignment"
+msgstr ""
+
+#: jscript.rc:57
+msgid "'|' is undefined"
+msgstr ""
+
+#: jscript.rc:58
+msgid "Boolean object expected"
+msgstr ""
+
+#: jscript.rc:59
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "&Rafacer\tDel"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr ""
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr ""
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr ""
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr ""
 
-#: jscript.rc:59
+#: jscript.rc:63
 msgid "URI to be decoded is incorrect"
 msgstr ""
 
-#: jscript.rc:61
+#: jscript.rc:65
 msgid "Number of fraction digits is out of range"
 msgstr ""
 
-#: jscript.rc:62
+#: jscript.rc:66
 #, fuzzy
 msgid "Precision is out of range"
 msgstr "Cwé rexhe"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr ""
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr ""
 

@@ -111,6 +111,11 @@ static BOOL is_identifier_char(WCHAR c)
     return isalnumW(c) || c == '$' || c == '_' || c == '\\';
 }
 
+static BOOL is_identifier_first_char(WCHAR c)
+{
+    return isalphaW(c) || c == '$' || c == '_' || c == '\\';
+}
+
 static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
 {
     const WCHAR *p1 = ctx->ptr;
@@ -878,6 +883,65 @@ static int init_cc(parser_ctx_t *ctx)
     return 0;
 }
 
+static BOOL parse_cc_identifier(parser_ctx_t *ctx, const WCHAR **ret, unsigned *ret_len)
+{
+    if(*ctx->ptr != '@') {
+        lex_error(ctx, JS_E_EXPECTED_AT);
+        return FALSE;
+    }
+
+    if(!is_identifier_first_char(*++ctx->ptr)) {
+        lex_error(ctx, JS_E_EXPECTED_IDENTIFIER);
+        return FALSE;
+    }
+
+    *ret = ctx->ptr;
+    while(++ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr));
+    *ret_len = ctx->ptr - *ret;
+    return TRUE;
+}
+
+int try_parse_ccval(parser_ctx_t *ctx, ccval_t *r)
+{
+    if(!skip_spaces(ctx))
+        return -1;
+
+    if(isdigitW(*ctx->ptr)) {
+        double n;
+
+        if(!parse_numeric_literal(ctx, &n))
+            return -1;
+
+        *r = ccval_num(n);
+        return 1;
+    }
+
+    if(*ctx->ptr == '@') {
+        const WCHAR *ident;
+        unsigned ident_len;
+        cc_var_t *cc_var;
+
+        if(!parse_cc_identifier(ctx, &ident, &ident_len))
+            return -1;
+
+        cc_var = find_cc_var(ctx->script->cc, ident, ident_len);
+        *r = cc_var ? cc_var->val : ccval_num(NAN);
+        return 1;
+    }
+
+    if(!check_keyword(ctx, trueW, NULL)) {
+        *r = ccval_bool(TRUE);
+        return 1;
+    }
+
+    if(!check_keyword(ctx, falseW, NULL)) {
+        *r = ccval_bool(FALSE);
+        return 1;
+    }
+
+    return 0;
+}
+
 static int cc_token(parser_ctx_t *ctx, void *lval)
 {
     unsigned id_len = 0;
@@ -894,8 +958,34 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
         return init_cc(ctx);
 
     if(!check_keyword(ctx, setW, NULL)) {
-        FIXME("@set not implemented\n");
-        return lex_error(ctx, E_NOTIMPL);
+        const WCHAR *ident;
+        unsigned ident_len;
+        cc_var_t *var;
+
+        if(!skip_spaces(ctx))
+            return lex_error(ctx, JS_E_EXPECTED_AT);
+
+        if(!parse_cc_identifier(ctx, &ident, &ident_len))
+            return -1;
+
+        if(!skip_spaces(ctx) || *ctx->ptr != '=')
+            return lex_error(ctx, JS_E_EXPECTED_ASSIGN);
+        ctx->ptr++;
+
+        if(!parse_cc_expr(ctx)) {
+            WARN("parsing CC expression failed\n");
+            return -1;
+        }
+
+        var = find_cc_var(ctx->script->cc, ident, ident_len);
+        if(var) {
+            var->val = ctx->ccval;
+        }else {
+            if(!new_cc_var(ctx->script->cc, ident, ident_len, ctx->ccval))
+                return lex_error(ctx, E_OUTOFMEMORY);
+        }
+
+        return 0;
     }
 
     if(!check_keyword(ctx, ifW, NULL)) {

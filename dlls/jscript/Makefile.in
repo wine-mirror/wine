@@ -33,4 +33,5 @@ IDL_SRCS = \
 	jsglobal.idl
 
 BISON_SRCS = \
+	cc_parser.y \
 	parser.y

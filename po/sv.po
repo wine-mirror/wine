@@ -3527,102 +3527,124 @@ msgid "Expected ')'"
 msgstr "')' förväntades"
 
 #: jscript.rc:40
+msgid "Expected identifier"
+msgstr ""
+
+#: jscript.rc:41
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '='"
+msgstr "';' förväntades"
+
+#: jscript.rc:42
 msgid "Invalid character"
 msgstr "Ogiltigt tecken"
 
-#: jscript.rc:41
+#: jscript.rc:43
 msgid "Unterminated string constant"
 msgstr "Oterminerad strängkonstant"
 
-#: jscript.rc:42
+#: jscript.rc:44
 msgid "'return' statement outside of function"
 msgstr "'return' utanför funktion"
 
-#: jscript.rc:43
+#: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
 msgstr "Går ej att ha 'break' utanför loop"
 
-#: jscript.rc:44
+#: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
 msgstr "Går ej att ha 'continue' utanför loop"
 
-#: jscript.rc:45
+#: jscript.rc:47
 msgid "Label redefined"
 msgstr "Etiketten är redan definierat"
 
-#: jscript.rc:46
+#: jscript.rc:48
 msgid "Label not found"
 msgstr "Etiketten hittades inte"
 
-#: jscript.rc:47
+#: jscript.rc:49
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@end'"
+msgstr "';' förväntades"
+
+#: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Villkorlig kompilering är avslagen"
 
-#: jscript.rc:50
+#: jscript.rc:51
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@'"
+msgstr "';' förväntades"
+
+#: jscript.rc:54
 msgid "Number expected"
 msgstr "Nummer förväntades"
 
-#: jscript.rc:48
+#: jscript.rc:52
 msgid "Function expected"
 msgstr "Funktion förväntades"
 
-#: jscript.rc:49
+#: jscript.rc:53
 msgid "'[object]' is not a date object"
 msgstr "'[object]' är inte ett datumobjekt"
 
-#: jscript.rc:51
+#: jscript.rc:55
 msgid "Object expected"
 msgstr "Objekt förväntades"
 
-#: jscript.rc:52
+#: jscript.rc:56
 msgid "Illegal assignment"
 msgstr "Ogiltig tilldelning"
 
-#: jscript.rc:53
+#: jscript.rc:57
 msgid "'|' is undefined"
 msgstr "'|' är odefinierat"
 
-#: jscript.rc:54
+#: jscript.rc:58
 msgid "Boolean object expected"
 msgstr "Boolskt objekt förväntades"
 
-#: jscript.rc:55
+#: jscript.rc:59
 msgid "Cannot delete '|'"
 msgstr "'|' kan inte tas bort"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr "VBArray-objekt förväntades"
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr "JScript-objekt förväntades"
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr "Syntaxfel i reguljärt uttryck"
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr "Den URI som ska kodas innehåller ogiltiga tecken"
 
-#: jscript.rc:59
+#: jscript.rc:63
 msgid "URI to be decoded is incorrect"
 msgstr "Den URI som ska avkodas är felaktig"
 
-#: jscript.rc:61
+#: jscript.rc:65
 msgid "Number of fraction digits is out of range"
 msgstr "Antal decimaler är utanför giltigt intervall"
 
-#: jscript.rc:62
+#: jscript.rc:66
 msgid "Precision is out of range"
 msgstr "Precision är utanför giltigt intervall"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr "Array-längd måste vara ett positivt ändligt heltal"
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr "Array-objekt förväntades"
 

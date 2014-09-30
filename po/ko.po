@@ -3531,102 +3531,126 @@ msgid "Expected ')'"
 msgstr "')' 가 필요합니다"
 
 #: jscript.rc:40
+#, fuzzy
+#| msgid "Subject Key Identifier"
+msgid "Expected identifier"
+msgstr "주제 키 식별자"
+
+#: jscript.rc:41
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '='"
+msgstr "';' 가 필요합니다"
+
+#: jscript.rc:42
 msgid "Invalid character"
 msgstr "잘못된 문자"
 
-#: jscript.rc:41
+#: jscript.rc:43
 msgid "Unterminated string constant"
 msgstr "끝나지 않은 문자열 상수"
 
-#: jscript.rc:42
+#: jscript.rc:44
 msgid "'return' statement outside of function"
 msgstr "함수 밖에 'return'문장이 있음"
 
-#: jscript.rc:43
+#: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
 msgstr "루프 바깥에는 'break'를 사용할 수 없음"
 
-#: jscript.rc:44
+#: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
 msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
-#: jscript.rc:45
+#: jscript.rc:47
 msgid "Label redefined"
 msgstr "라벨이 중복정의됨"
 
-#: jscript.rc:46
+#: jscript.rc:48
 msgid "Label not found"
 msgstr "라벨을 찾을 수 없음"
 
-#: jscript.rc:47
+#: jscript.rc:49
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@end'"
+msgstr "';' 가 필요합니다"
+
+#: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "조건부 컴파일이 해제되어 있음"
 
-#: jscript.rc:50
+#: jscript.rc:51
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@'"
+msgstr "';' 가 필요합니다"
+
+#: jscript.rc:54
 msgid "Number expected"
 msgstr "숫자가 필요합니다"
 
-#: jscript.rc:48
+#: jscript.rc:52
 msgid "Function expected"
 msgstr "함수가 필요합니다"
 
-#: jscript.rc:49
+#: jscript.rc:53
 msgid "'[object]' is not a date object"
 msgstr "'[객체]' 는 날짜 객체가 아님"
 
-#: jscript.rc:51
+#: jscript.rc:55
 msgid "Object expected"
 msgstr "객체가 필요합니다"
 
-#: jscript.rc:52
+#: jscript.rc:56
 msgid "Illegal assignment"
 msgstr "잘못된 할당"
 
-#: jscript.rc:53
+#: jscript.rc:57
 msgid "'|' is undefined"
 msgstr "'|' 는 정의되지 않았음"
 
-#: jscript.rc:54
+#: jscript.rc:58
 msgid "Boolean object expected"
 msgstr "볼린 객제가 필요함"
 
-#: jscript.rc:55
+#: jscript.rc:59
 msgid "Cannot delete '|'"
 msgstr "'|'를 지울 수 없음"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr "VBArray 갹체가 필요함"
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr "JScript 객체가 필요함"
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr "정규 표현식에 문법오류가 있음"
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI 는 올바르지 않은 문자를 포함해서 인코딩되었음"
 
-#: jscript.rc:59
+#: jscript.rc:63
 msgid "URI to be decoded is incorrect"
 msgstr "해독하는 URI가 올바르지 않음"
 
-#: jscript.rc:61
+#: jscript.rc:65
 msgid "Number of fraction digits is out of range"
 msgstr "분수 값이 범위를 벗어남"
 
-#: jscript.rc:62
+#: jscript.rc:66
 msgid "Precision is out of range"
 msgstr "정밀도 범위를 벗어남"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 

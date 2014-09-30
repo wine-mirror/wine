@@ -41,6 +41,8 @@ typedef struct _parser_ctx_t {
     BOOL lexer_error;
     HRESULT hres;
 
+    ccval_t ccval;
+
     heap_pool_t heap;
 } parser_ctx_t;
 
@@ -361,6 +363,9 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
+BOOL try_parse_ccval(parser_ctx_t*,ccval_t*) DECLSPEC_HIDDEN;
+BOOL parse_cc_expr(parser_ctx_t*) DECLSPEC_HIDDEN;
+
 static inline ccval_t ccval_num(double n)
 {
     ccval_t r;
@@ -375,4 +380,14 @@ static inline ccval_t ccval_bool(BOOL b)
     r.is_num = FALSE;
     r.u.b = b;
     return r;
+}
+
+static inline BOOL get_ccbool(ccval_t v)
+{
+    return v.is_num ? v.u.n != 0 : v.u.b;
+}
+
+static inline double get_ccnum(ccval_t v)
+{
+    return v.is_num ? v.u.n : v.u.b;
 }

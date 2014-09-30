@@ -3561,102 +3561,126 @@ msgid "Expected ')'"
 msgstr "Oczekiwane ')'"
 
 #: jscript.rc:40
+#, fuzzy
+#| msgid "Subject Key Identifier"
+msgid "Expected identifier"
+msgstr "Identyfikator klucza podmiotu"
+
+#: jscript.rc:41
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '='"
+msgstr "Oczekiwane ';'"
+
+#: jscript.rc:42
 msgid "Invalid character"
 msgstr "Nieprawidłowy znak"
 
-#: jscript.rc:41
+#: jscript.rc:43
 msgid "Unterminated string constant"
 msgstr "Niezakończona stała znakowa"
 
-#: jscript.rc:42
+#: jscript.rc:44
 msgid "'return' statement outside of function"
 msgstr "polecenie powrotu 'return' jest poza funkcją"
 
-#: jscript.rc:43
+#: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
 msgstr "Nie można umieścić 'break' poza pętlą"
 
-#: jscript.rc:44
+#: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
 msgstr "Nie można umieścić 'continue' poza pętlą"
 
-#: jscript.rc:45
+#: jscript.rc:47
 msgid "Label redefined"
 msgstr "Etykieta zdefiniowana ponownie"
 
-#: jscript.rc:46
+#: jscript.rc:48
 msgid "Label not found"
 msgstr "Nie znaleziono etykiety"
 
-#: jscript.rc:47
+#: jscript.rc:49
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@end'"
+msgstr "Oczekiwane ';'"
+
+#: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Warunkowa kompilacja jest wyłączona"
 
-#: jscript.rc:50
+#: jscript.rc:51
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@'"
+msgstr "Oczekiwane ';'"
+
+#: jscript.rc:54
 msgid "Number expected"
 msgstr "Oczekiwana liczba"
 
-#: jscript.rc:48
+#: jscript.rc:52
 msgid "Function expected"
 msgstr "Oczekiwana funkcja"
 
-#: jscript.rc:49
+#: jscript.rc:53
 msgid "'[object]' is not a date object"
 msgstr "'[obiekt]' nie jest obiektem daty"
 
-#: jscript.rc:51
+#: jscript.rc:55
 msgid "Object expected"
 msgstr "Oczekiwany obiekt"
 
-#: jscript.rc:52
+#: jscript.rc:56
 msgid "Illegal assignment"
 msgstr "Niepoprawne przypisanie"
 
-#: jscript.rc:53
+#: jscript.rc:57
 msgid "'|' is undefined"
 msgstr "'|' jest niezdefiniowany"
 
-#: jscript.rc:54
+#: jscript.rc:58
 msgid "Boolean object expected"
 msgstr "Oczekiwany obiekt boolean"
 
-#: jscript.rc:55
+#: jscript.rc:59
 msgid "Cannot delete '|'"
 msgstr "Nie można usunąć '|'"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr "Oczekiwany obiekt VBArray"
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr "Oczekiwany obiekt JScript"
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr "Błąd składni w regularnym wyrażeniu"
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr "Kodowane URI zawiera niewłaściwe znaki"
 
-#: jscript.rc:59
+#: jscript.rc:63
 msgid "URI to be decoded is incorrect"
 msgstr "URI do dekodowania jest niepoprawny"
 
-#: jscript.rc:61
+#: jscript.rc:65
 msgid "Number of fraction digits is out of range"
 msgstr "Ilość cyfr znaczących jest poza zakresem"
 
-#: jscript.rc:62
+#: jscript.rc:66
 msgid "Precision is out of range"
 msgstr "Precyzja jest poza poza zakresem"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr "Długość tablicy musi być skończoną dodatnią liczbą stałą"
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr "Oczekiwany obiekt tablicowy"
 
