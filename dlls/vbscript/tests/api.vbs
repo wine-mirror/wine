@@ -1242,4 +1242,26 @@ Call ok(getVT(Log(CByte(2))) = "VT_R8", "getVT(Log(CByte(2))) = " & getVT(Log(CB
 Call ok(getVT(Date) = "VT_DATE", "getVT(Date) = " & getVT(Date))
 Call ok(getVT(Time) = "VT_DATE", "getVT(Time) = " & getVT(Time))
 
+Sub testRGBError(arg1, arg2, arg3, error_num)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = RGB(arg1, arg2, arg3)
+    Call ok(Err.number = error_num, "Err.number1 = " & Err.number)
+
+    Call Err.clear()
+    Call RGB(arg1, arg2, arg3)
+    Call ok(Err.number = error_num, "Err.number2 = " & Err.number)
+End Sub
+
+Call ok(RGB(0, &h1f&, &hf1&) =  &hf11f00&, "RGB(0, &h1f&, &hf1&) = " & RGB(0, &h1f&, &hf1&))
+Call ok(getVT(RGB(0, &h1f&, &hf1&)) = "VT_I4", "getVT(RGB(&hf1&, &h1f&, &hf1&)) = " & getVT(RGB(&hf1&, &h1f&, &hf1&)))
+Call ok(RGB(&hef&, &hab&, &hcd&) =  &hcdabef&, "RGB(&hef&, &hab&, &hcd&) = " & RGB(&hef&, &hab&, &hcd&))
+Call ok(getVT(RGB(&hef&, &hab&, &hcd&)) = "VT_I4", "getVT(RGB(&hef&, &hab&, &hcd&)) = " & getVT(RGB(&hef&, &hab&, &hcd&)))
+Call ok(RGB(&h1&, &h100&, &h111&) =  &hffff01&, "RGB(&h1&, &h100&, &h111&) = " & RGB(&h1&, &h100&, &h111&))
+Call ok(getVT(RGB(&h1&, &h100&, &h111&)) = "VT_I4", "getVT(RGB(&h1&, &h100&, &h111&)) = " & getVT(RGB(&h1&, &h100&, &h111&)))
+Call testRGBError(-1, &h1e&, &h3b&, 5)
+Call testRGBError(&h4d&, -2, &h2f&, 5)
+
 Call reportSuccess()
