@@ -789,11 +789,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
 }
 
 struct _cc_var_t {
-    BOOL is_num;
-    union {
-        BOOL b;
-        DOUBLE n;
-    } u;
+    ccval_t val;
     struct _cc_var_t *next;
     unsigned name_len;
     WCHAR name[0];
@@ -811,18 +807,18 @@ void release_cc(cc_ctx_t *cc)
     heap_free(cc);
 }
 
-static BOOL add_cc_var(cc_ctx_t *cc, const WCHAR *name, cc_var_t *v)
+static BOOL new_cc_var(cc_ctx_t *cc, const WCHAR *name, int len, ccval_t v)
 {
     cc_var_t *new_v;
-    unsigned len;
 
-    len = strlenW(name);
+    if(len == -1)
+        len = strlenW(name);
 
     new_v = heap_alloc(sizeof(cc_var_t) + (len+1)*sizeof(WCHAR));
     if(!new_v)
         return FALSE;
 
-    memcpy(new_v, v, sizeof(*v));
+    new_v->val = v;
     memcpy(new_v->name, name, (len+1)*sizeof(WCHAR));
     new_v->name_len = len;
     new_v->next = cc->vars;
@@ -845,7 +841,6 @@ static cc_var_t *find_cc_var(cc_ctx_t *cc, const WCHAR *name, unsigned name_len)
 static int init_cc(parser_ctx_t *ctx)
 {
     cc_ctx_t *cc;
-    cc_var_t v;
 
     static const WCHAR _win32W[] = {'_','w','i','n','3','2',0};
     static const WCHAR _win64W[] = {'_','w','i','n','6','4',0};
@@ -863,24 +858,12 @@ static int init_cc(parser_ctx_t *ctx)
         return lex_error(ctx, E_OUTOFMEMORY);
 
     cc->vars = NULL;
-    v.is_num = FALSE;
-    v.u.b = TRUE;
-    if(!add_cc_var(cc, _jscriptW, &v)
-       || !add_cc_var(cc, sizeof(void*) == 8 ? _win64W : _win32W, &v)
-       || !add_cc_var(cc, sizeof(void*) == 8 ? _amd64W : _x86W, &v)) {
-        release_cc(cc);
-        return lex_error(ctx, E_OUTOFMEMORY);
-    }
 
-    v.is_num = TRUE;
-    v.u.n = JSCRIPT_BUILD_VERSION;
-    if(!add_cc_var(cc, _jscript_buildW, &v)) {
-        release_cc(cc);
-        return lex_error(ctx, E_OUTOFMEMORY);
-    }
-
-    v.u.n = JSCRIPT_MAJOR_VERSION + (DOUBLE)JSCRIPT_MINOR_VERSION/10.0;
-    if(!add_cc_var(cc, _jscript_versionW, &v)) {
+    if(!new_cc_var(cc, _jscriptW, -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, sizeof(void*) == 8 ? _win64W : _win32W, -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, sizeof(void*) == 8 ? _amd64W : _x86W, -1, ccval_bool(TRUE))
+       || !new_cc_var(cc, _jscript_versionW, -1, ccval_num(JSCRIPT_MAJOR_VERSION + (DOUBLE)JSCRIPT_MINOR_VERSION/10.0))
+       || !new_cc_var(cc, _jscript_buildW, -1, ccval_num(JSCRIPT_BUILD_VERSION))) {
         release_cc(cc);
         return lex_error(ctx, E_OUTOFMEMORY);
     }
@@ -941,12 +924,12 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
 
     var = find_cc_var(ctx->script->cc, ctx->ptr, id_len);
     ctx->ptr += id_len;
-    if(!var || var->is_num) {
-        *(literal_t**)lval = new_double_literal(ctx, var ? var->u.n : NAN);
+    if(!var || var->val.is_num) {
+        *(literal_t**)lval = new_double_literal(ctx, var ? var->val.u.n : NAN);
         return tNumericLiteral;
     }
 
-    *(literal_t**)lval = new_boolean_literal(ctx, var->u.b);
+    *(literal_t**)lval = new_boolean_literal(ctx, var->val.u.b);
     return tBooleanLiteral;
 }
 

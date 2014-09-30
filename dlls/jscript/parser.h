@@ -20,6 +20,14 @@ typedef struct _source_elements_t source_elements_t;
 typedef struct _expression_t expression_t;
 typedef struct _statement_t statement_t;
 
+typedef struct {
+    BOOL is_num;
+    union {
+        BOOL b;
+        double n;
+    } u;
+} ccval_t;
+
 typedef struct _parser_ctx_t {
     const WCHAR *begin;
     const WCHAR *end;
@@ -352,3 +360,19 @@ typedef struct {
     expression_t expr;
     prop_val_t *property_list;
 } property_value_expression_t;
+
+static inline ccval_t ccval_num(double n)
+{
+    ccval_t r;
+    r.is_num = TRUE;
+    r.u.n = n;
+    return r;
+}
+
+static inline ccval_t ccval_bool(BOOL b)
+{
+    ccval_t r;
+    r.is_num = FALSE;
+    r.u.b = b;
+    return r;
+}
