@@ -165,11 +165,6 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Yiii */ { 0x69696959, 460,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, TRUE }
 };
 
-static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)
-{
-    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
-}
-
 static inline UINT16 get_char_script(WCHAR c)
 {
     UINT16 script = get_table_entry(wine_scripts_table, c);
@@ -671,8 +666,82 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *ifa
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
-    FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
-    return E_NOTIMPL;
+    UINT8 *levels = NULL, *explicit = NULL;
+    UINT8 baselevel, level, explicit_level;
+    WCHAR *buff = NULL;
+    const WCHAR *text;
+    UINT32 len, pos, i;
+    HRESULT hr;
+
+    TRACE("(%p %u %u %p)\n", source, position, length, sink);
+
+    if (length == 0)
+        return S_OK;
+
+    /* get some, check for length */
+    text = NULL;
+    len = 0;
+    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, &text, &len);
+    if (FAILED(hr)) return hr;
+
+    if (len < length) {
+        UINT32 read;
+
+        buff = heap_alloc(length*sizeof(WCHAR));
+        if (!buff)
+            return E_OUTOFMEMORY;
+        memcpy(buff, text, len*sizeof(WCHAR));
+        read = len;
+
+        while (read < length && text) {
+            text = NULL;
+            len = 0;
+            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, &text, &len);
+            if (FAILED(hr))
+                goto done;
+            memcpy(&buff[read], text, min(len, length-read)*sizeof(WCHAR));
+            read += len;
+        }
+
+        text = buff;
+    }
+
+    levels = heap_alloc(length*sizeof(*levels));
+    explicit = heap_alloc(length*sizeof(*explicit));
+
+    if (!levels || !explicit) {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    baselevel = IDWriteTextAnalysisSource_GetParagraphReadingDirection(source);
+    hr = bidi_computelevels(text, length, baselevel, explicit, levels);
+    if (FAILED(hr))
+        goto done;
+
+    level = levels[0];
+    explicit_level = explicit[0];
+    pos = 0;
+    for (i = 1; i < length; i++) {
+        if (levels[i] != level || explicit[i] != explicit_level) {
+            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, i - pos, explicit_level, level);
+            if (FAILED(hr))
+                break;
+            level = levels[i];
+            explicit_level = explicit[i];
+            pos = i;
+        }
+
+        if (i == length - 1)
+            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, length - pos, explicit_level, level);
+    }
+
+done:
+    heap_free(explicit);
+    heap_free(levels);
+    heap_free(buff);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAnalyzer2 *iface,

@@ -2384,6 +2384,7 @@ DUMP_COMPOSE_TABLES( "libs/wine/compose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_bracket( "dlls/usp10/bracket.c" );
+dump_bracket( "dlls/dwrite/bracket.c" );
 dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_linebreak( "dlls/dwrite/linebreak.c" );
