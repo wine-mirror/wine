@@ -1591,115 +1591,65 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
     BOOL colorkey_active = need_alpha_ck && (surface->container->color_key_flags & WINEDDSD_CKSRCBLT);
     const struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    BOOL blit_supported = FALSE;
+    unsigned int i;
 
-    /* Copy the default values from the surface. Below we might perform fixups */
-    /* TODO: get rid of color keying desc fixups by using e.g. a table. */
+    static const struct
+    {
+        enum wined3d_format_id src_format;
+        enum wined3d_conversion_type conversion_type;
+        GLint gl_internal;
+        GLint gl_format;
+        GLint gl_type;
+        unsigned int conv_byte_count;
+    }
+    color_key_info[] =
+    {
+        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_565,      GL_RGB5_A1, GL_RGBA,    GL_UNSIGNED_SHORT_5_5_5_1,      2},
+        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_5551,     GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
+        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_RGB24,    GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
+        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_RGB32_888,   GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
+        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_ARGB32,   GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
+    };
+
     *format = *surface->resource.format;
     *conversion_type = WINED3D_CT_NONE;
 
-    /* Ok, now look if we have to do any conversion */
-    switch (surface->resource.format->id)
+    if (colorkey_active)
     {
-        case WINED3DFMT_P8_UINT:
-            /* Below the call to blit_supported is disabled for Wine 1.2
-             * because the function isn't operating correctly yet. At the
-             * moment 8-bit blits are handled in software and if certain GL
-             * extensions are around, surface conversion is performed at
-             * upload time. The blit_supported call recognizes it as a
-             * destination fixup. This type of upload 'fixup' and 8-bit to
-             * 8-bit blits need to be handled by the blit_shader.
-             * TODO: get rid of this #if 0. */
-#if 0
-            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format,
-                    &rect, surface->resource.usage, surface->resource.pool, surface->resource.format);
-#endif
-            blit_supported = gl_info->supported[ARB_FRAGMENT_PROGRAM];
+        for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
+        {
+            if (color_key_info[i].src_format != surface->resource.format->id)
+                continue;
 
-            /* Use conversion when the blit_shader backend supports it. It only supports this in case of
-             * texturing. Further also use conversion in case of color keying.
-             * Paletted textures can be emulated using shaders but only do that for 2D purposes e.g. situations
-             * in which the main render target uses p8. Some games like GTA Vice City use P8 for texturing which
-             * conflicts with this.
-             */
-            if (!((blit_supported && surface->container->swapchain
-                    && surface->container == surface->container->swapchain->front_buffer))
-                    || colorkey_active || !use_texturing)
-            {
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA;
-                format->glType = GL_UNSIGNED_BYTE;
-                format->conv_byte_count = 4;
-                *conversion_type = WINED3D_CT_PALETTED;
-            }
+            *conversion_type = color_key_info[i].conversion_type;
+            format->glInternal = color_key_info[i].gl_internal;
+            format->glFormat = color_key_info[i].gl_format;
+            format->glType = color_key_info[i].gl_type;
+            format->conv_byte_count = color_key_info[i].conv_byte_count;
             break;
+        }
+    }
 
-        case WINED3DFMT_B2G3R3_UNORM:
-            /* **********************
-                GL_UNSIGNED_BYTE_3_3_2
-                ********************** */
-            if (colorkey_active) {
-                /* This texture format will never be used.. So do not care about color keying
-                    up until the point in time it will be needed :-) */
-                FIXME(" ColorKeying not supported in the RGB 332 format !\n");
-            }
-            break;
-
-        case WINED3DFMT_B5G6R5_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_565;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGB5_A1;
-                format->glType = GL_UNSIGNED_SHORT_5_5_5_1;
-                format->conv_byte_count = 2;
-            }
-            break;
-
-        case WINED3DFMT_B5G5R5X1_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_5551;
-                format->glFormat = GL_BGRA;
-                format->glInternal = GL_RGB5_A1;
-                format->glType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-                format->conv_byte_count = 2;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_RGB24;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA8;
-                format->glType = GL_UNSIGNED_INT_8_8_8_8;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8X8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_RGB32_888;
-                format->glFormat = GL_RGBA;
-                format->glInternal = GL_RGBA8;
-                format->glType = GL_UNSIGNED_INT_8_8_8_8;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            if (colorkey_active)
-            {
-                *conversion_type = WINED3D_CT_CK_ARGB32;
-                format->conv_byte_count = 4;
-            }
-            break;
-
-        default:
-            break;
+    if (surface->resource.format->id == WINED3DFMT_P8_UINT)
+    {
+        /* FIXME: This should check if the blitter backend can do P8
+         * conversion, instead of checking for ARB_fragment_program. */
+        if (!((gl_info->supported[ARB_FRAGMENT_PROGRAM] && surface->container->swapchain
+                && surface->container == surface->container->swapchain->front_buffer))
+                || colorkey_active || !use_texturing)
+        {
+            *conversion_type = WINED3D_CT_PALETTED;
+            format->glInternal = GL_RGBA;
+            format->glFormat = GL_RGBA;
+            format->glType = GL_UNSIGNED_BYTE;
+            format->conv_byte_count = 4;
+        }
+    }
+    else if (surface->resource.format->id == WINED3DFMT_B2G3R3_UNORM && colorkey_active)
+    {
+        /* This texture format will never be used... So do not care about
+         * color-keying up until the point in time it will be needed. */
+        FIXME("Color-keying not supported with WINED3DFMT_B2G3R3_UNORM.\n");
     }
 
     if (*conversion_type != WINED3D_CT_NONE)
