@@ -142,6 +142,7 @@ IRichEditOle_fnRelease(IRichEditOle *me)
         ITextRangeImpl *txtRge;
         TRACE ("Destroying %p\n", This);
         This->txtSel->reOle = NULL;
+        This->editor->reOle = NULL;
         ITextSelection_Release(&This->txtSel->ITextSelection_iface);
         IOleClientSite_Release(&This->clientSite->IOleClientSite_iface);
         LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, entry)
