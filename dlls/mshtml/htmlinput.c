@@ -256,6 +256,7 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsIDOMHTMLFormElement *nsform;
+    nsIDOMNode *form_node;
     HTMLDOMNode *node;
     HRESULT hres;
     nsresult nsres;
@@ -269,8 +270,12 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
         return E_FAIL;
     }
 
-    hres = get_node(This->element.node.doc, (nsIDOMNode*)nsform, TRUE, &node);
+    nsres = nsIDOMHTMLFormElement_QueryInterface(nsform, &IID_nsIDOMNode, (void**)&form_node);
     nsIDOMHTMLFormElement_Release(nsform);
+    assert(nsres == NS_OK);
+
+    hres = get_node(This->element.node.doc, form_node, TRUE, &node);
+    nsIDOMNode_Release(form_node);
     if (FAILED(hres))
         return hres;
 
@@ -1233,7 +1238,7 @@ static HRESULT HTMLInputElementImpl_fire_event(HTMLDOMNode *iface, eventid_t eid
 
         *handled = TRUE;
 
-        nsres = nsIDOMHTMLInputElement_Click(This->nsinput);
+        nsres = nsIDOMHTMLElement_Click(This->element.nselem);
         if(NS_FAILED(nsres)) {
             ERR("Click failed: %08x\n", nsres);
             return E_FAIL;
