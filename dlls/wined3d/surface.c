@@ -3168,12 +3168,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
     switch (conversion_type)
     {
-        case WINED3D_CT_NONE:
-        {
-            memcpy(dst, src, pitch * height);
-            break;
-        }
-
         case WINED3D_CT_P8:
             if (surface->container->swapchain && surface->container->swapchain->palette)
             {
