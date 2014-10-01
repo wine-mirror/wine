@@ -89,6 +89,7 @@ static inline unsigned short get_table_entry(const unsigned short *table, WCHAR 
 
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC_HIDDEN;
+extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,IDWriteTextLayout**) DECLSPEC_HIDDEN;

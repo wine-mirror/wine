@@ -165,6 +165,20 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Yiii */ { 0x69696959, 460,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, TRUE }
 };
 
+struct dwrite_numbersubstitution {
+    IDWriteNumberSubstitution IDWriteNumberSubstitution_iface;
+    LONG ref;
+
+    DWRITE_NUMBER_SUBSTITUTION_METHOD method;
+    WCHAR *locale;
+    BOOL ignore_user_override;
+};
+
+static inline struct dwrite_numbersubstitution *impl_from_IDWriteNumberSubstitution(IDWriteNumberSubstitution *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_numbersubstitution, IDWriteNumberSubstitution_iface);
+}
+
 static inline UINT16 get_char_script(WCHAR c)
 {
     UINT16 script = get_table_entry(wine_scripts_table, c);
@@ -1042,5 +1056,84 @@ static IDWriteTextAnalyzer2 textanalyzer = { &textanalyzervtbl };
 HRESULT get_textanalyzer(IDWriteTextAnalyzer **ret)
 {
     *ret = (IDWriteTextAnalyzer*)&textanalyzer;
+    return S_OK;
+}
+
+static HRESULT WINAPI dwritenumbersubstitution_QueryInterface(IDWriteNumberSubstitution *iface, REFIID riid, void **obj)
+{
+    struct dwrite_numbersubstitution *This = impl_from_IDWriteNumberSubstitution(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IDWriteNumberSubstitution) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IDWriteNumberSubstitution_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dwritenumbersubstitution_AddRef(IDWriteNumberSubstitution *iface)
+{
+    struct dwrite_numbersubstitution *This = impl_from_IDWriteNumberSubstitution(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI dwritenumbersubstitution_Release(IDWriteNumberSubstitution *iface)
+{
+    struct dwrite_numbersubstitution *This = impl_from_IDWriteNumberSubstitution(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref) {
+        heap_free(This->locale);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static const struct IDWriteNumberSubstitutionVtbl numbersubstitutionvtbl = {
+    dwritenumbersubstitution_QueryInterface,
+    dwritenumbersubstitution_AddRef,
+    dwritenumbersubstitution_Release
+};
+
+HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD method, const WCHAR *locale,
+    BOOL ignore_user_override, IDWriteNumberSubstitution **ret)
+{
+    struct dwrite_numbersubstitution *substitution;
+
+    *ret = NULL;
+
+    if (method < DWRITE_NUMBER_SUBSTITUTION_METHOD_FROM_CULTURE || method > DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL)
+        return E_INVALIDARG;
+
+    if (method != DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE && !IsValidLocaleName(locale))
+        return E_INVALIDARG;
+
+    substitution = heap_alloc(sizeof(*substitution));
+    if (!substitution)
+        return E_OUTOFMEMORY;
+
+    substitution->IDWriteNumberSubstitution_iface.lpVtbl = &numbersubstitutionvtbl;
+    substitution->ref = 1;
+    substitution->ignore_user_override = ignore_user_override;
+    substitution->method = method;
+    substitution->locale = heap_strdupW(locale);
+    if (locale && !substitution->locale) {
+        heap_free(substitution);
+        return E_OUTOFMEMORY;
+    }
+
+    *ret = &substitution->IDWriteNumberSubstitution_iface;
     return S_OK;
 }

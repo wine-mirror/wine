@@ -1046,9 +1046,44 @@ if (0) { /* crashes on native */
            ok(indices[0] == 0, "%d: got %d\n", i, indices[0]);
     }
 
+    IDWriteFont_Release(font);
     IDWriteFontFace_Release(fontface);
     IDWriteGdiInterop_Release(interop);
     IDWriteTextAnalyzer1_Release(analyzer1);
+}
+
+static void test_numbersubstitution(void)
+{
+    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+    IDWriteNumberSubstitution *substitution;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, NULL, FALSE, &substitution);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteNumberSubstitution_Release(substitution);
+
+    /* invalid method */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL+1, NULL, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* invalid method */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, -1, NULL, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* invalid locale */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, dummyW, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL, dummyW, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL, dummyW, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* invalid locale, but it's not needed for this method */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, dummyW, FALSE, &substitution);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteNumberSubstitution_Release(substitution);
 }
 
 START_TEST(analyzer)
@@ -1070,6 +1105,7 @@ START_TEST(analyzer)
     test_AnalyzeLineBreakpoints();
     test_GetScriptProperties();
     test_GetTextComplexity();
+    test_numbersubstitution();
 
     IDWriteFactory_Release(factory);
 }
