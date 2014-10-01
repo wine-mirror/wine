@@ -1051,6 +1051,9 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     }
 
     if(!check_keyword(ctx, ifW, NULL)) {
+        if(!init_cc(ctx))
+            return -1;
+
         if(!skip_spaces(ctx) || *ctx->ptr != '(')
             return lex_error(ctx, JS_E_MISSING_LBRACKET);
 
