@@ -3546,16 +3546,12 @@ msgid "Expected ')'"
 msgstr "Ожидается «)»"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Идентификатор ключа субъекта"
+msgstr "Ожидается идентификатор"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Ожидается «;»"
+msgstr "Ожидается «=»"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3586,20 +3582,16 @@ msgid "Label not found"
 msgstr "Метка не найдена"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Ожидается «;»"
+msgstr "Ожидается «@end»"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Условная компиляция отключена"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Ожидается «;»"
+msgstr "Ожидается «@»"
 
 #: jscript.rc:54
 msgid "Number expected"
