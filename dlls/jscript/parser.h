@@ -42,6 +42,7 @@ typedef struct _parser_ctx_t {
     HRESULT hres;
 
     ccval_t ccval;
+    unsigned cc_if_depth;
 
     heap_pool_t heap;
 } parser_ctx_t;

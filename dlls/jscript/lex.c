@@ -63,6 +63,9 @@ static const WCHAR voidW[] = {'v','o','i','d',0};
 static const WCHAR whileW[] = {'w','h','i','l','e',0};
 static const WCHAR withW[] = {'w','i','t','h',0};
 
+static const WCHAR elifW[] = {'e','l','i','f',0};
+static const WCHAR endW[] = {'e','n','d',0};
+
 static const struct {
     const WCHAR *word;
     int token;
@@ -942,6 +945,61 @@ int try_parse_ccval(parser_ctx_t *ctx, ccval_t *r)
     return 0;
 }
 
+static int skip_code(parser_ctx_t *ctx, BOOL exec_else)
+{
+    int if_depth = 1;
+    const WCHAR *ptr;
+
+    while(1) {
+        ptr = strchrW(ctx->ptr, '@');
+        if(!ptr) {
+            WARN("No @end\n");
+            return lex_error(ctx, JS_E_EXPECTED_CCEND);
+        }
+        ctx->ptr = ptr+1;
+
+        if(!check_keyword(ctx, endW, NULL)) {
+            if(--if_depth)
+                continue;
+            return 0;
+        }
+
+        if(exec_else && !check_keyword(ctx, elifW, NULL)) {
+            if(if_depth > 1)
+                continue;
+
+            if(!skip_spaces(ctx) || *ctx->ptr != '(')
+                return lex_error(ctx, JS_E_MISSING_LBRACKET);
+
+            if(!parse_cc_expr(ctx))
+                return -1;
+
+            if(!get_ccbool(ctx->ccval))
+                continue; /* skip block of code */
+
+            /* continue parsing */
+            ctx->cc_if_depth++;
+            return 0;
+        }
+
+        if(exec_else && !check_keyword(ctx, elseW, NULL)) {
+            if(if_depth > 1)
+                continue;
+
+            /* parse else block */
+            ctx->cc_if_depth++;
+            return 0;
+        }
+
+        if(!check_keyword(ctx, ifW, NULL)) {
+            if_depth++;
+            continue;
+        }
+
+        ctx->ptr++;
+    }
+}
+
 static int cc_token(parser_ctx_t *ctx, void *lval)
 {
     unsigned id_len = 0;
@@ -949,8 +1007,6 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
 
     static const WCHAR cc_onW[] = {'c','c','_','o','n',0};
     static const WCHAR setW[] = {'s','e','t',0};
-    static const WCHAR elifW[] = {'e','l','i','f',0};
-    static const WCHAR endW[] = {'e','n','d',0};
 
     ctx->ptr++;
 
@@ -989,23 +1045,34 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     }
 
     if(!check_keyword(ctx, ifW, NULL)) {
-        FIXME("@if not implemented\n");
-        return lex_error(ctx, E_NOTIMPL);
+        if(!skip_spaces(ctx) || *ctx->ptr != '(')
+            return lex_error(ctx, JS_E_MISSING_LBRACKET);
+
+        if(!parse_cc_expr(ctx))
+            return -1;
+
+        if(get_ccbool(ctx->ccval)) {
+            /* continue parsing block inside if */
+            ctx->cc_if_depth++;
+            return 0;
+        }
+
+        return skip_code(ctx, TRUE);
     }
 
-    if(!check_keyword(ctx, elifW, NULL)) {
-        FIXME("@elif not implemented\n");
-        return lex_error(ctx, E_NOTIMPL);
-    }
+    if(!check_keyword(ctx, elifW, NULL) || !check_keyword(ctx, elseW, NULL)) {
+        if(!ctx->cc_if_depth)
+            return lex_error(ctx, JS_E_SYNTAX);
 
-    if(!check_keyword(ctx, elseW, NULL)) {
-        FIXME("@else not implemented\n");
-        return lex_error(ctx, E_NOTIMPL);
+        return skip_code(ctx, FALSE);
     }
 
     if(!check_keyword(ctx, endW, NULL)) {
-        FIXME("@end not implemented\n");
-        return lex_error(ctx, E_NOTIMPL);
+        if(!ctx->cc_if_depth)
+            return lex_error(ctx, JS_E_SYNTAX);
+
+        ctx->cc_if_depth--;
+        return 0;
     }
 
     if(!ctx->script->cc)
