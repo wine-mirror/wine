@@ -140,9 +140,107 @@ ok(@test === false, "@test = " + @test);
 @set @test = (0 != true)
 ok(@test === true, "@test = " + @test);
 
+@if (false)
+    this wouldn not parse
+"@end
+
+@if (false) "@end
+
+tmp = "@if (false) @end";
+ok(tmp.length === 16, "tmp.length = " + tmp.length);
+
+@if(true)
+tmp = true
+@end
+ok(tmp === true, "tmp = " + tmp);
+
+@if(false)
+@if this would not CC parse
+this will not parse
+@elif(true)
+this will also not parse
+@else
+this also will not parse
+@if let me complicate things a bit
+@end enough
+@end
+@end
+
+@if(false)
+this will not parse
+@else
+tmp = 2
+@else
+this will not be parsed
+@else
+also this
+@end
+ok(tmp === 2, "tmp = " + tmp);
+
+@if(true)
+tmp = 3;
+@else
+just skip this
+@end
+ok(tmp === 3, "tmp = " + tmp);
+
+@if(true)
+tmp = 4;
+@elif(true)
+this will not parse
+@elif nor this
+@else
+just skip this
+@end
+ok(tmp === 4, "tmp = " + tmp);
+
+@if(false)
+this will not parse
+@elif(false)
+nor this would
+@elif(true)
+tmp = 5;
+@elif nor this
+@else
+just skip this
+@end
+ok(tmp === 5, "tmp = " + tmp);
+
+@if (!@_jscript)
+this would not parse
+@if(true)
+@else
+@if(false)
+@end
+@end
+@elif (@_jscript)
+tmp = 6;
+@elif (true)
+@if xxx
+@else
+@if @elif @elif @else @end
+@end
+@else
+this would not parse
+@end
+ok(tmp === 6, "tmp = " + tmp);
+
+@if(true)
+@if(false)
+@else
+tmp = 7;
+@end
+@else
+this would not parse
+@end
+ok(tmp === 7, "tmp = " + tmp);
+
 var exception_map = {
+    JS_E_SYNTAX:               {type: "SyntaxError", number: -2146827286},
+    JS_E_MISSING_LBRACKET:     {type: "SyntaxError", number: -2146827283},
     JS_E_EXPECTED_IDENTIFIER:  {type: "SyntaxError", number: -2146827278},
     JS_E_EXPECTED_ASSIGN:      {type: "SyntaxError", number: -2146827277},
+    JS_E_EXPECTED_CCEND:       {type: "SyntaxError", number: -2146827259},
     JS_E_EXPECTED_AT:          {type: "SyntaxError", number: -2146827256}
 };
 
@@ -164,5 +262,11 @@ function testException(src, id) {
 testException("@set test=true", "JS_E_EXPECTED_AT");
 testException("@set @1=true", "JS_E_EXPECTED_IDENTIFIER");
 testException("@set @test x=true", "JS_E_EXPECTED_ASSIGN");
+testException("@if false\n@end", "JS_E_MISSING_LBRACKET");
+testException("@if (false)\n", "JS_E_EXPECTED_CCEND");
+testException("@end\n", "JS_E_SYNTAX");
+testException("@elif\n", "JS_E_SYNTAX");
+testException("@else\n", "JS_E_SYNTAX");
+testException("@if false\n@elif true\n@end", "JS_E_MISSING_LBRACKET");
 
 reportSuccess();
