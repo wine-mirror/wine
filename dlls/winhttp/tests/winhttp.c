@@ -876,12 +876,15 @@ static void test_secure_connection(void)
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT, &info, &size );
     ok(ret, "failed to retrieve certificate info %u\n", GetLastError());
 
-    trace("lpszSubjectInfo %s\n", wine_dbgstr_w(info.lpszSubjectInfo));
-    trace("lpszIssuerInfo %s\n", wine_dbgstr_w(info.lpszIssuerInfo));
-    trace("lpszProtocolName %s\n", wine_dbgstr_w(info.lpszProtocolName));
-    trace("lpszSignatureAlgName %s\n", wine_dbgstr_w(info.lpszSignatureAlgName));
-    trace("lpszEncryptionAlgName %s\n", wine_dbgstr_w(info.lpszEncryptionAlgName));
-    trace("dwKeySize %u\n", info.dwKeySize);
+    if (!ret)
+    {
+        trace("lpszSubjectInfo %s\n", wine_dbgstr_w(info.lpszSubjectInfo));
+        trace("lpszIssuerInfo %s\n", wine_dbgstr_w(info.lpszIssuerInfo));
+        trace("lpszProtocolName %s\n", wine_dbgstr_w(info.lpszProtocolName));
+        trace("lpszSignatureAlgName %s\n", wine_dbgstr_w(info.lpszSignatureAlgName));
+        trace("lpszEncryptionAlgName %s\n", wine_dbgstr_w(info.lpszEncryptionAlgName));
+        trace("dwKeySize %u\n", info.dwKeySize);
+    }
 
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
