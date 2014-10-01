@@ -1638,9 +1638,9 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
                 && texture == texture->swapchain->front_buffer)) || colorkey_active)
         {
             *conversion_type = WINED3D_CT_P8;
-            format->glInternal = GL_RGBA;
-            format->glFormat = GL_RGBA;
-            format->glType = GL_UNSIGNED_BYTE;
+            format->glInternal = GL_RGBA8;
+            format->glFormat = GL_BGRA;
+            format->glType = GL_UNSIGNED_INT_8_8_8_8_REV;
             format->conv_byte_count = 4;
         }
     }
@@ -3180,9 +3180,9 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     for (x = 0; x < width; x++)
                     {
                         BYTE color = *source++;
-                        *dest++ = palette->colors[color].rgbRed;
-                        *dest++ = palette->colors[color].rgbGreen;
                         *dest++ = palette->colors[color].rgbBlue;
+                        *dest++ = palette->colors[color].rgbGreen;
+                        *dest++ = palette->colors[color].rgbRed;
                         *dest++ = 0;
                     }
                 }
