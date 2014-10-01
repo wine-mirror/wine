@@ -3534,16 +3534,12 @@ msgid "Expected ')'"
 msgstr "Odotettiin merkkiä ')'"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Haltijan avaimen tunniste"
+msgstr "Odotettiin tunnistetta"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Odotettiin merkkiä ';'"
+msgstr "Odotettiin merkkiä '='"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3574,20 +3570,16 @@ msgid "Label not found"
 msgstr "Nimiötä ei löydy"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Odotettiin merkkiä ';'"
+msgstr "Odotettiin sanaa '@end'"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Ehdollinen kääntäminen on pois käytöstä"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Odotettiin merkkiä ';'"
+msgstr "Odotettiin merkkiä '@'"
 
 #: jscript.rc:54
 msgid "Number expected"
