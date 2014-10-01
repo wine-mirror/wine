@@ -1604,7 +1604,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     }
     color_key_info[] =
     {
-        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   GL_RGB5_A1, GL_RGBA,    GL_UNSIGNED_SHORT_5_5_5_1,      2},
+        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
         {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
         {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
         {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
@@ -3207,35 +3207,22 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
 
         case WINED3D_CT_CK_B5G6R5:
-        {
-            /* Converting the 565 format in 5551 packed to emulate color-keying.
-
-              Note : in all these conversion, it would be best to average the averaging
-                      pixels to get the color of the pixel that will be color-keyed to
-                      prevent 'color bleeding'. This will be done later on if ever it is
-                      too visible.
-
-              Note2: Nvidia documents say that their driver does not support alpha + color keying
-                     on the same surface and disables color keying in such a case
-            */
-            const WORD *Source;
-            WORD *Dest;
-
-            TRACE("Color keyed 565\n");
-
-            for (y = 0; y < height; y++) {
-                Source = (const WORD *)(src + y * pitch);
-                Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    WORD color = *Source++;
-                    *Dest = ((color & 0xffc0) | ((color & 0x1f) << 1));
+            for (y = 0; y < height; ++y)
+            {
+                source = src + pitch * y;
+                dest = dst + outpitch * y;
+                for (x = 0; x < width; ++x)
+                {
+                    WORD color = *(const WORD *)source;
                     if (!color_in_range(&surface->container->src_blt_color_key, color))
-                        *Dest |= 0x0001;
-                    Dest++;
+                        *(WORD *)dest = 0x8000 | ((color & 0xffc0) >> 1) | (color & 0x1f);
+                    else
+                        *(WORD *)dest = ((color & 0xffc0) >> 1) | (color & 0x1f);
+                    source += 2;
+                    dest += 2;
                 }
             }
-        }
-        break;
+            break;
 
         case WINED3D_CT_CK_B5G5R5X1:
         {
