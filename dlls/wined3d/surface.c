@@ -3161,6 +3161,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
 {
     const BYTE *source;
+    unsigned int x, y;
     BYTE *dest;
 
     TRACE("src %p, dst %p, pitch %u, width %u, height %u, outpitch %u, conversion_type %#x, surface %p.\n",
@@ -3171,7 +3172,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         case WINED3D_CT_P8:
             if (surface->container->swapchain && surface->container->swapchain->palette)
             {
-                unsigned int x, y;
                 const struct wined3d_palette *palette = surface->container->swapchain->palette;
                 for (y = 0; y < height; y++)
                 {
@@ -3199,9 +3199,11 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                  * starting and we don't want the screen to flash in an ugly
                  * color. */
                 FIXME("P8 surface loaded without a palette.\n");
-                memset(dst, 0, height * outpitch);
+                for (y = 0; y < height; ++y)
+                {
+                    memset(&dst[outpitch * y], 0, width * 4);
+                }
             }
-
             break;
 
         case WINED3D_CT_CK_B5G6R5:
@@ -3216,7 +3218,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
               Note2: Nvidia documents say that their driver does not support alpha + color keying
                      on the same surface and disables color keying in such a case
             */
-            unsigned int x, y;
             const WORD *Source;
             WORD *Dest;
 
@@ -3239,7 +3240,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         case WINED3D_CT_CK_B5G5R5X1:
         {
             /* Converting X1R5G5B5 format to R5G5B5A1 to emulate color-keying. */
-            unsigned int x, y;
             const WORD *Source;
             WORD *Dest;
             TRACE("Color keyed 5551\n");
@@ -3260,9 +3260,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         break;
 
         case WINED3D_CT_CK_B8G8R8:
-        {
             /* Converting R8G8B8 format to R8G8B8A8 with color-keying. */
-            unsigned int x, y;
             for (y = 0; y < height; y++)
             {
                 source = src + pitch * y;
@@ -3277,13 +3275,10 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     dest += 4;
                 }
             }
-        }
-        break;
+            break;
 
         case WINED3D_CT_CK_B8G8R8X8:
-        {
             /* Converting X8R8G8B8 format to R8G8B8A8 with color-keying. */
-            unsigned int x, y;
             for (y = 0; y < height; y++)
             {
                 source = src + pitch * y;
@@ -3298,12 +3293,9 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     dest += 4;
                 }
             }
-        }
-        break;
+            break;
 
         case WINED3D_CT_CK_B8G8R8A8:
-        {
-            unsigned int x, y;
             for (y = 0; y < height; ++y)
             {
                 source = src + pitch * y;
@@ -3318,8 +3310,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     dest += 4;
                 }
             }
-        }
-        break;
+            break;
 
         default:
             ERR("Unsupported conversion type %#x.\n", conversion_type);
