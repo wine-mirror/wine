@@ -444,12 +444,20 @@ static void test_SHSearchMapInt(void)
   ok(i == values[0], "Len 3, expected %d, got %d\n", values[0], i);
 }
 
-static void test_alloc_shared(void)
+struct shared_struct
 {
+    DWORD value;
+    HANDLE handle;
+};
+
+static void test_alloc_shared(int argc, char **argv)
+{
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = { 0 };
     DWORD procid;
-    HANDLE hmem;
-    int val;
-    int* p;
+    HANDLE hmem, hmem2 = 0;
+    struct shared_struct val, *p;
     BOOL ret;
 
     procid=GetCurrentProcessId();
@@ -458,19 +466,82 @@ static void test_alloc_shared(void)
     ret = pSHFreeShared(hmem, procid);
     ok( ret, "SHFreeShared failed: %u\n", GetLastError());
 
-    val=0x12345678;
-    hmem=pSHAllocShared(&val,4,procid);
+    val.value = 0x12345678;
+    val.handle = 0;
+    hmem = pSHAllocShared(&val, sizeof(val), procid);
     ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
 
     p=pSHLockShared(hmem,procid);
     ok(p!=NULL,"SHLockShared failed: %u\n", GetLastError());
     if (p!=NULL)
-        ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);
+        ok(p->value == 0x12345678, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345678);
     ret = pSHUnlockShared(p);
     ok( ret, "SHUnlockShared failed: %u\n", GetLastError());
 
+    sprintf(cmdline, "%s %s %d %p", argv[0], argv[1], procid, hmem);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "could not create child process error: %u\n", GetLastError());
+    if (ret)
+    {
+        winetest_wait_child_process(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+
+        p = pSHLockShared(hmem, procid);
+        ok(p != NULL,"SHLockShared failed: %u\n", GetLastError());
+        if (p != NULL && p->value != 0x12345678)
+        {
+            ok(p->value == 0x12345679, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345679);
+            hmem2 = p->handle;
+            ok(hmem2 != NULL, "Expected handle in shared memory\n");
+        }
+        ret = pSHUnlockShared(p);
+        ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+    }
+
     ret = pSHFreeShared(hmem, procid);
     ok( ret, "SHFreeShared failed: %u\n", GetLastError());
+
+    if (hmem2)
+    {
+        p = pSHLockShared(hmem2, procid);
+        todo_wine
+        ok(p != NULL,"SHLockShared failed: %u\n", GetLastError());
+        if (p != NULL)
+            ok(p->value == 0xDEADBEEF, "Wrong value in shared memory: %d instead of %d\n", p->value, 0xDEADBEEF);
+        ret = pSHUnlockShared(p);
+        todo_wine
+        ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+
+        ret = pSHFreeShared(hmem2, procid);
+        todo_wine
+        ok(ret, "SHFreeShared failed: %u\n", GetLastError());
+    }
+}
+
+static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
+{
+    struct shared_struct val, *p;
+    BOOL ret;
+
+    p = pSHLockShared(hmem, procid);
+    ok(p != NULL || broken(p == NULL) /* Windows 7/8 */, "SHLockShared failed: %u\n", GetLastError());
+    if (p == NULL)
+    {
+        win_skip("Subprocess failed to modify shared memory, skipping test\n");
+        return;
+    }
+
+    ok(p->value == 0x12345678, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345678);
+    p->value++;
+
+    val.value = 0xDEADBEEF;
+    val.handle = 0;
+    p->handle = pSHAllocShared(&val, sizeof(val), procid);
+    ok(p->handle != NULL, "SHAllocShared failed: %u\n", GetLastError());
+
+    ret = pSHUnlockShared(p);
+    ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
 }
 
 static void test_fdsa(void)
@@ -3057,6 +3128,9 @@ static void test_SHSetParentHwnd(void)
 
 START_TEST(ordinal)
 {
+    char **argv;
+    int argc;
+
     hShlwapi = GetModuleHandleA("shlwapi.dll");
     is_win2k_and_lower = GetProcAddress(hShlwapi, "StrChrNW") == 0;
     is_win9x = GetProcAddress(hShlwapi, (LPSTR)99) == 0; /* StrCpyNXA */
@@ -3069,6 +3143,17 @@ START_TEST(ordinal)
 
     init_pointers();
 
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 4)
+    {
+        DWORD procid;
+        HANDLE hmem;
+        sscanf(argv[2], "%d", &procid);
+        sscanf(argv[3], "%p", &hmem);
+        test_alloc_shared_remote(procid, hmem);
+        return;
+    }
+
     hmlang = LoadLibraryA("mlang.dll");
     pLcidToRfc1766A = (void *)GetProcAddress(hmlang, "LcidToRfc1766A");
 
@@ -3077,7 +3162,7 @@ START_TEST(ordinal)
 
     test_GetAcceptLanguagesA();
     test_SHSearchMapInt();
-    test_alloc_shared();
+    test_alloc_shared(argc, argv);
     test_fdsa();
     test_GetShellSecurityDescriptor();
     test_SHPackDispParams();
