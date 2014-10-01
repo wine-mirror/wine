@@ -852,7 +852,7 @@ static cc_var_t *find_cc_var(cc_ctx_t *cc, const WCHAR *name, unsigned name_len)
     return NULL;
 }
 
-static int init_cc(parser_ctx_t *ctx)
+static BOOL init_cc(parser_ctx_t *ctx)
 {
     cc_ctx_t *cc;
 
@@ -865,11 +865,13 @@ static int init_cc(parser_ctx_t *ctx)
     static const WCHAR _jscript_versionW[] = {'_','j','s','c','r','i','p','t','_','v','e','r','s','i','o','n',0};
 
     if(ctx->script->cc)
-        return 0;
+        return TRUE;
 
     cc = heap_alloc(sizeof(cc_ctx_t));
-    if(!cc)
-        return lex_error(ctx, E_OUTOFMEMORY);
+    if(!cc) {
+        lex_error(ctx, E_OUTOFMEMORY);
+        return FALSE;
+    }
 
     cc->vars = NULL;
 
@@ -879,11 +881,12 @@ static int init_cc(parser_ctx_t *ctx)
        || !new_cc_var(cc, _jscript_versionW, -1, ccval_num(JSCRIPT_MAJOR_VERSION + (DOUBLE)JSCRIPT_MINOR_VERSION/10.0))
        || !new_cc_var(cc, _jscript_buildW, -1, ccval_num(JSCRIPT_BUILD_VERSION))) {
         release_cc(cc);
-        return lex_error(ctx, E_OUTOFMEMORY);
+        lex_error(ctx, E_OUTOFMEMORY);
+        return FALSE;
     }
 
     ctx->script->cc = cc;
-    return 0;
+    return TRUE;
 }
 
 static BOOL parse_cc_identifier(parser_ctx_t *ctx, const WCHAR **ret, unsigned *ret_len)
@@ -1011,12 +1014,15 @@ static int cc_token(parser_ctx_t *ctx, void *lval)
     ctx->ptr++;
 
     if(!check_keyword(ctx, cc_onW, NULL))
-        return init_cc(ctx);
+        return init_cc(ctx) ? 0 : -1;
 
     if(!check_keyword(ctx, setW, NULL)) {
         const WCHAR *ident;
         unsigned ident_len;
         cc_var_t *var;
+
+        if(!init_cc(ctx))
+            return -1;
 
         if(!skip_spaces(ctx))
             return lex_error(ctx, JS_E_EXPECTED_AT);

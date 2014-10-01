@@ -2183,6 +2183,8 @@ static BOOL run_tests(void)
     CHECK_CALLED(testobj_withprop_d);
     CHECK_CALLED(testobj_withprop_i);
 
+    parse_script_a("@set @t=2\nok(@t === 2, '@t = ' + @t);");
+
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
