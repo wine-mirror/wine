@@ -505,16 +505,13 @@ static void test_alloc_shared(int argc, char **argv)
     if (hmem2)
     {
         p = pSHLockShared(hmem2, procid);
-        todo_wine
         ok(p != NULL,"SHLockShared failed: %u\n", GetLastError());
         if (p != NULL)
             ok(p->value == 0xDEADBEEF, "Wrong value in shared memory: %d instead of %d\n", p->value, 0xDEADBEEF);
         ret = pSHUnlockShared(p);
-        todo_wine
         ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
 
         ret = pSHFreeShared(hmem2, procid);
-        todo_wine
         ok(ret, "SHFreeShared failed: %u\n", GetLastError());
     }
 }
