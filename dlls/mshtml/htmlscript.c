@@ -136,7 +136,7 @@ static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR 
         return S_OK;
     }
 
-    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    nsres = nsIDOMHTMLElement_GetParentNode(This->element.nselem, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         This->parse_on_bind = TRUE;
@@ -214,7 +214,7 @@ static HRESULT WINAPI HTMLScriptElement_put_text(IHTMLScriptElement *iface, BSTR
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    nsres = nsIDOMHTMLElement_GetParentNode(This->element.nselem, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         This->parse_on_bind = TRUE;
@@ -433,10 +433,16 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
 
 HRESULT script_elem_from_nsscript(HTMLDocumentNode *doc, nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
 {
+    nsIDOMNode *nsnode;
     HTMLDOMNode *node;
+    nsresult nsres;
     HRESULT hres;
 
-    hres = get_node(doc, (nsIDOMNode*)nsscript, TRUE, &node);
+    nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMNode, (void**)&nsnode);
+    assert(nsres == NS_OK);
+
+    hres = get_node(doc, nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
 
