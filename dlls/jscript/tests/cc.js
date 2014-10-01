@@ -140,6 +140,12 @@ ok(@test === false, "@test = " + @test);
 @set @test = (0 != true)
 ok(@test === true, "@test = " + @test);
 
+@set @test = (true-2)
+ok(@test === -1, "@test = " + @test);
+
+@set @test = (true-@_jscript)
+ok(@test === 0, "@test = " + @test);
+
 @if (false)
     this wouldn not parse
 "@end

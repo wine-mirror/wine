@@ -66,6 +66,7 @@ static int cc_parser_lex(void *lval, parser_ctx_t *ctx)
     case '(':
     case ')':
     case '+':
+    case '-':
     case '*':
     case '/':
         return *ctx->ptr++;
@@ -105,6 +106,8 @@ CCAdditiveExpression
     : CCMultiplicativeExpression    { $$ = $1; }
     | CCAdditiveExpression '+' CCMultiplicativeExpression
                                     { $$ = ccval_num(get_ccnum($1) + get_ccnum($3)); }
+    | CCAdditiveExpression '-' CCMultiplicativeExpression
+                                    { $$ = ccval_num(get_ccnum($1) - get_ccnum($3)); }
 
 CCMultiplicativeExpression
     : CCUnaryExpression             { $$ = $1; }
