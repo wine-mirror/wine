@@ -236,6 +236,17 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         if ([window contentView] != self)
             return;
 
+        if (window.shapeChangedSinceLastDraw && window.shape && !window.colorKeyed && !window.usePerPixelAlpha)
+        {
+            [[NSColor clearColor] setFill];
+            NSRectFill(rect);
+
+            [window.shape addClip];
+
+            [[NSColor windowBackgroundColor] setFill];
+            NSRectFill(rect);
+        }
+
         if (window.surface && window.surface_mutex &&
             !pthread_mutex_lock(window.surface_mutex))
         {
@@ -289,7 +300,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         // If the window may be transparent, then we have to invalidate the
         // shadow every time we draw.  Also, if this is the first time we've
         // drawn since changing from transparent to opaque.
-        if (![window isOpaque] || window.shapeChangedSinceLastDraw)
+        if (window.colorKeyed || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw)
         {
             window.shapeChangedSinceLastDraw = FALSE;
             [window invalidateShadow];
@@ -1373,11 +1384,15 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     {
         if (![self isOpaque] && !self.needsTransparency)
         {
+            self.shapeChangedSinceLastDraw = TRUE;
+            [[self contentView] setNeedsDisplay:YES];
             [self setBackgroundColor:[NSColor windowBackgroundColor]];
             [self setOpaque:YES];
         }
         else if ([self isOpaque] && self.needsTransparency)
         {
+            self.shapeChangedSinceLastDraw = TRUE;
+            [[self contentView] setNeedsDisplay:YES];
             [self setBackgroundColor:[NSColor clearColor]];
             [self setOpaque:NO];
         }
