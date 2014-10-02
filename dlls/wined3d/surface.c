@@ -3192,6 +3192,29 @@ static void convert_p8_uint_b8g8r8a8_unorm(const BYTE *src, unsigned int src_pit
     }
 }
 
+static void convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_color_key *color_key)
+{
+    const WORD *src_row;
+    unsigned int x, y;
+    WORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (WORD *)&src[src_pitch * y];
+        dst_row = (WORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            WORD src_color = src_row[x];
+            if (!color_in_range(color_key, src_color))
+                dst_row[x] = 0x8000 | ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
+            else
+                dst_row[x] = ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
+        }
+    }
+}
+
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height,
         UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
 {
@@ -3215,21 +3238,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
 
         case WINED3D_CT_CK_B5G6R5:
-            for (y = 0; y < height; ++y)
-            {
-                source = src + pitch * y;
-                dest = dst + outpitch * y;
-                for (x = 0; x < width; ++x)
-                {
-                    WORD color = *(const WORD *)source;
-                    if (!color_in_range(&texture->src_blt_color_key, color))
-                        *(WORD *)dest = 0x8000 | ((color & 0xffc0) >> 1) | (color & 0x1f);
-                    else
-                        *(WORD *)dest = ((color & 0xffc0) >> 1) | (color & 0x1f);
-                    source += 2;
-                    dest += 2;
-                }
-            }
+            convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(src, pitch, dst, outpitch,
+                    width, height, &texture->src_blt_color_key);
             break;
 
         case WINED3D_CT_CK_B5G5R5X1:
