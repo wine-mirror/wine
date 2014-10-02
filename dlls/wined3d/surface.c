@@ -1591,28 +1591,28 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     BOOL colorkey_active = need_alpha_ck && (texture->color_key_flags & WINEDDSD_CKSRCBLT);
     const struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_format *dst_format;
+    enum wined3d_format_id dst_format_id;
     unsigned int i;
 
     static const struct
     {
         enum wined3d_format_id src_format;
         enum wined3d_conversion_type conversion_type;
-        GLint gl_internal;
-        GLint gl_format;
-        GLint gl_type;
-        unsigned int conv_byte_count;
+        enum wined3d_format_id dst_format;
     }
     color_key_info[] =
     {
-        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
-        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
-        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
-        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
-        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_B8G8R8A8, GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
+        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   WINED3DFMT_B5G5R5A1_UNORM},
+        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, WINED3DFMT_B5G5R5A1_UNORM},
+        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   WINED3DFMT_B8G8R8A8_UNORM},
+        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, WINED3DFMT_B8G8R8A8_UNORM},
+        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_B8G8R8A8, WINED3DFMT_B8G8R8A8_UNORM},
     };
 
     *format = *texture->resource.format;
     *conversion_type = WINED3D_CT_NONE;
+    dst_format_id = format->id;
 
     if (colorkey_active)
     {
@@ -1622,10 +1622,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
                 continue;
 
             *conversion_type = color_key_info[i].conversion_type;
-            format->glInternal = color_key_info[i].gl_internal;
-            format->glFormat = color_key_info[i].gl_format;
-            format->glType = color_key_info[i].gl_type;
-            format->conv_byte_count = color_key_info[i].conv_byte_count;
+            dst_format_id = color_key_info[i].dst_format;
             break;
         }
     }
@@ -1638,10 +1635,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
                 && texture == texture->swapchain->front_buffer)) || colorkey_active)
         {
             *conversion_type = WINED3D_CT_P8;
-            format->glInternal = GL_RGBA8;
-            format->glFormat = GL_BGRA;
-            format->glType = GL_UNSIGNED_INT_8_8_8_8_REV;
-            format->conv_byte_count = 4;
+            dst_format_id = WINED3DFMT_B8G8R8A8_UNORM;
         }
     }
     else if (texture->resource.format->id == WINED3DFMT_B2G3R3_UNORM && colorkey_active)
@@ -1653,8 +1647,13 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
 
     if (*conversion_type != WINED3D_CT_NONE)
     {
-        format->rtInternal = format->glInternal;
+        dst_format = wined3d_get_format(gl_info, dst_format_id);
+        format->glInternal = dst_format->glInternal;
         format->glGammaInternal = format->glInternal;
+        format->rtInternal = format->glInternal;
+        format->glFormat = dst_format->glFormat;
+        format->glType = dst_format->glType;
+        format->conv_byte_count = dst_format->byte_count;
     }
 }
 
