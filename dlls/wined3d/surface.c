@@ -3156,9 +3156,47 @@ static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD colo
             && color <= color_key->color_space_high_value;
 }
 
+static void convert_p8_uint_b8g8r8a8_unorm(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const BYTE *src_row;
+    unsigned int x, y;
+    DWORD *dst_row;
+
+    if (!palette)
+    {
+        /* FIXME: This should probably use the system palette. */
+        FIXME("P8 surface loaded without a palette.\n");
+
+        for (y = 0; y < height; ++y)
+        {
+            memset(&dst[dst_pitch * y], 0, width * 4);
+        }
+
+        return;
+    }
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = &src[src_pitch * y];
+        dst_row = (DWORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            BYTE src_color = src_row[x];
+            dst_row[x] = 0xff000000
+                    | (palette->colors[src_color].rgbRed << 16)
+                    | (palette->colors[src_color].rgbGreen << 8)
+                    | palette->colors[src_color].rgbBlue;
+        }
+    }
+}
+
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height,
         UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
 {
+    struct wined3d_palette *palette = NULL;
+    struct wined3d_texture *texture;
     const BYTE *source;
     unsigned int x, y;
     BYTE *dest;
@@ -3166,43 +3204,14 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
     TRACE("src %p, dst %p, pitch %u, width %u, height %u, outpitch %u, conversion_type %#x, surface %p.\n",
             src, dst, pitch, width, height, outpitch, conversion_type, surface);
 
+    texture = surface->container;
     switch (conversion_type)
     {
         case WINED3D_CT_P8:
-            if (surface->container->swapchain && surface->container->swapchain->palette)
-            {
-                const struct wined3d_palette *palette = surface->container->swapchain->palette;
-                for (y = 0; y < height; y++)
-                {
-                    source = src + pitch * y;
-                    dest = dst + outpitch * y;
-                    for (x = 0; x < width; x++)
-                    {
-                        BYTE color = *source++;
-                        *dest++ = palette->colors[color].rgbBlue;
-                        *dest++ = palette->colors[color].rgbGreen;
-                        *dest++ = palette->colors[color].rgbRed;
-                        *dest++ = 0;
-                    }
-                }
-            }
-            else
-            {
-                /* This should probably use the system palette, but unless
-                 * the X server is running in P8 mode there is no such thing.
-                 * The probably best solution is to set the fixed 20 colors
-                 * from the default windows palette and set the rest to black,
-                 * white, or some ugly pink. For now use black for the entire
-                 * palette. Don't use pink everywhere. Age of Empires 2 draws
-                 * a front buffer filled with zeroes without a palette when
-                 * starting and we don't want the screen to flash in an ugly
-                 * color. */
-                FIXME("P8 surface loaded without a palette.\n");
-                for (y = 0; y < height; ++y)
-                {
-                    memset(&dst[outpitch * y], 0, width * 4);
-                }
-            }
+            if (texture->swapchain && texture->swapchain->palette)
+                palette = texture->swapchain->palette;
+            convert_p8_uint_b8g8r8a8_unorm(src, pitch, dst, outpitch,
+                    width, height, palette, &texture->src_blt_color_key);
             break;
 
         case WINED3D_CT_CK_B5G6R5:
@@ -3213,7 +3222,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; ++x)
                 {
                     WORD color = *(const WORD *)source;
-                    if (!color_in_range(&surface->container->src_blt_color_key, color))
+                    if (!color_in_range(&texture->src_blt_color_key, color))
                         *(WORD *)dest = 0x8000 | ((color & 0xffc0) >> 1) | (color & 0x1f);
                     else
                         *(WORD *)dest = ((color & 0xffc0) >> 1) | (color & 0x1f);
@@ -3235,7 +3244,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = color;
-                    if (!color_in_range(&surface->container->src_blt_color_key, color))
+                    if (!color_in_range(&texture->src_blt_color_key, color))
                         *Dest |= (1 << 15);
                     else
                         *Dest &= ~(1 << 15);
@@ -3253,7 +3262,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; ++x)
                 {
                     DWORD color = ((DWORD)source[2] << 16) | ((DWORD)source[1] << 8) | (DWORD)source[0];
-                    if (!color_in_range(&surface->container->src_blt_color_key, color))
+                    if (!color_in_range(&texture->src_blt_color_key, color))
                         color |= 0xff000000;
                     *(DWORD *)dest = color;
                     source += 3;
@@ -3270,7 +3279,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; ++x)
                 {
                     DWORD color = *(const DWORD *)source;
-                    if (color_in_range(&surface->container->src_blt_color_key, color))
+                    if (color_in_range(&texture->src_blt_color_key, color))
                         *(DWORD *)dest = color & ~0xff000000;
                     else
                         *(DWORD *)dest = color | 0xff000000;
@@ -3288,7 +3297,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; ++x)
                 {
                     DWORD color = *(const DWORD *)source;
-                    if (color_in_range(&surface->container->src_blt_color_key, color))
+                    if (color_in_range(&texture->src_blt_color_key, color))
                         color &= ~0xff000000;
                     *(DWORD*)dest = color;
                     source += 4;
