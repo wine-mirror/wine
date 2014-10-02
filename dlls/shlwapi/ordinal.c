@@ -265,8 +265,8 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
  *
  * PARAMS
  * hShared     [I] Shared memory handle to duplicate
- * dwDstProcId [I] ID of the process wanting the duplicated handle
  * dwSrcProcId [I] ID of the process owning hShared
+ * dwDstProcId [I] ID of the process wanting the duplicated handle
  * dwAccess    [I] Desired DuplicateHandle() access
  * dwOptions   [I] Desired DuplicateHandle() options
  *
@@ -275,7 +275,7 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
  * Failure: A NULL handle.
  *
  */
-HANDLE WINAPI SHMapHandle(HANDLE hShared, DWORD dwDstProcId, DWORD dwSrcProcId,
+HANDLE WINAPI SHMapHandle(HANDLE hShared, DWORD dwSrcProcId, DWORD dwDstProcId,
                           DWORD dwAccess, DWORD dwOptions)
 {
   HANDLE hRet;
