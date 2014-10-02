@@ -182,6 +182,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 @property (nonatomic) pthread_mutex_t* surface_mutex;
 
 @property (copy, nonatomic) NSBezierPath* shape;
+@property (copy, nonatomic) NSData* shapeData;
 @property (nonatomic) BOOL shapeChangedSinceLastDraw;
 @property (readonly, nonatomic) BOOL needsTransparency;
 
@@ -540,7 +541,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     @synthesize disabled, noActivate, floating, fullscreen, fakingClose, latentParentWindow, hwnd, queue;
     @synthesize surface, surface_mutex;
-    @synthesize shape, shapeChangedSinceLastDraw;
+    @synthesize shape, shapeData, shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
     @synthesize imeData, commandDone;
@@ -634,6 +635,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [latentChildWindows release];
         [latentParentWindow release];
         [shape release];
+        [shapeData release];
         [super dealloc];
     }
 
@@ -1401,7 +1403,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     - (void) setShape:(NSBezierPath*)newShape
     {
         if (shape == newShape) return;
-        if (shape && newShape && [shape isEqual:newShape]) return;
 
         if (shape)
         {
@@ -2379,16 +2380,24 @@ void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
 
     OnMainThread(^{
         if (!rects || !count)
+        {
             window.shape = nil;
+            window.shapeData = nil;
+        }
         else
         {
-            NSBezierPath* path;
-            unsigned int i;
+            size_t length = sizeof(*rects) * count;
+            if (window.shapeData.length != length || memcmp(window.shapeData.bytes, rects, length))
+            {
+                NSBezierPath* path;
+                unsigned int i;
 
-            path = [NSBezierPath bezierPath];
-            for (i = 0; i < count; i++)
-                [path appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
-            window.shape = path;
+                path = [NSBezierPath bezierPath];
+                for (i = 0; i < count; i++)
+                    [path appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
+                window.shape = path;
+                window.shapeData = [NSData dataWithBytes:rects length:length];
+            }
         }
     });
 

@@ -44,6 +44,7 @@
     pthread_mutex_t* surface_mutex;
 
     NSBezierPath* shape;
+    NSData* shapeData;
     BOOL shapeChangedSinceLastDraw;
 
     BOOL colorKeyed;
