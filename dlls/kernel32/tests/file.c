@@ -2608,21 +2608,37 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
         skip("File system supports directory filtering\n");
         /* Results from the previous call are not cleared */
         ok(strcmp(search_results.cFileName, "dir1") == 0, "Third entry should be 'dir1' is %s\n", search_results.cFileName);
-        FindClose( handle );
-        goto cleanup;
     }
+    else
+    {
+        ok(ret, "Fetching fourth file failed\n");
+        ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
 
-    ok(ret, "Fetching fourth file failed\n");
-    ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
+        ok(FindNextFileA(handle, &search_results), "Fetching fifth file failed\n");
+        ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
 
-    ok(FindNextFileA(handle, &search_results), "Fetching fifth file failed\n");
-    ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
+        ok(FindNextFileA(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
+    }
 
 #undef CHECK_NAME
 
-    ok(FindNextFileA(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
-
     FindClose( handle );
+
+    /* Most Windows systems seem to ignore the FIND_FIRST_EX_CASE_SENSITIVE flag. Unofficial documentation
+     * suggests that there are registry keys and that it might depend on the used filesystem. */
+    SetLastError(0xdeadbeef);
+    handle = pFindFirstFileExA("TEST-DIR\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
+    if (flags & FIND_FIRST_EX_CASE_SENSITIVE)
+    {
+        ok(handle != INVALID_HANDLE_VALUE || GetLastError() == ERROR_PATH_NOT_FOUND,
+           "Unexpected error %x, expected valid handle or ERROR_PATH_NOT_FOUND\n", GetLastError());
+        trace("FindFirstFileExA flag FIND_FIRST_EX_CASE_SENSITIVE is %signored\n",
+              (handle == INVALID_HANDLE_VALUE) ? "not " : "");
+    }
+    else
+        ok(handle != INVALID_HANDLE_VALUE, "Unexpected error %x, expected valid handle\n", GetLastError());
+    if (handle != INVALID_HANDLE_VALUE)
+        FindClose( handle );
 
 cleanup:
     DeleteFileA("test-dir\\file1");
@@ -4177,9 +4193,11 @@ START_TEST(file)
     test_FindFirstFileA();
     test_FindNextFileA();
     test_FindFirstFileExA(0, 0);
+    test_FindFirstFileExA(0, FIND_FIRST_EX_CASE_SENSITIVE);
     test_FindFirstFileExA(0, FIND_FIRST_EX_LARGE_FETCH);
     /* FindExLimitToDirectories is ignored if the file system doesn't support directory filtering */
     test_FindFirstFileExA(FindExSearchLimitToDirectories, 0);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_CASE_SENSITIVE);
     test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_LARGE_FETCH);
     test_LockFile();
     test_file_sharing();
