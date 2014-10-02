@@ -2562,7 +2562,7 @@ static void test_FindNextFileA(void)
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES\n");
 }
 
-static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
+static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
 {
     WIN32_FIND_DATAA search_results;
     HANDLE handle;
@@ -2579,10 +2579,15 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
     SetLastError(0xdeadbeef);
-    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, 0);
+    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("FindFirstFileExA is not implemented\n");
+        goto cleanup;
+    }
+    if ((flags & FIND_FIRST_EX_LARGE_FETCH) && handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("FindFirstFileExA flag FIND_FIRST_EX_LARGE_FETCH not supported, skipping test\n");
         goto cleanup;
     }
     ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
@@ -4171,9 +4176,11 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
-    test_FindFirstFileExA(0);
+    test_FindFirstFileExA(0, 0);
+    test_FindFirstFileExA(0, FIND_FIRST_EX_LARGE_FETCH);
     /* FindExLimitToDirectories is ignored if the file system doesn't support directory filtering */
-    test_FindFirstFileExA(FindExSearchLimitToDirectories);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, 0);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_LARGE_FETCH);
     test_LockFile();
     test_file_sharing();
     test_offset_in_overlapped_structure();

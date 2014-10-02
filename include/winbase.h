@@ -289,6 +289,9 @@ typedef enum _FINDEX_INFO_LEVELS
 	FindExInfoMaxInfoLevel
 } FINDEX_INFO_LEVELS;
 
+#define FIND_FIRST_EX_CASE_SENSITIVE 1
+#define FIND_FIRST_EX_LARGE_FETCH    2
+
 typedef enum _FINDEX_SEARCH_OPS
 {
 	FindExSearchNameMatch,
