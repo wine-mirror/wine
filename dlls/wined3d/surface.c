@@ -3215,6 +3215,29 @@ static void convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsig
     }
 }
 
+static void convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_color_key *color_key)
+{
+    const WORD *src_row;
+    unsigned int x, y;
+    WORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (WORD *)&src[src_pitch * y];
+        dst_row = (WORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            WORD src_color = src_row[x];
+            if (color_in_range(color_key, src_color))
+                dst_row[x] = src_color & ~0x8000;
+            else
+                dst_row[x] = src_color | 0x8000;
+        }
+    }
+}
+
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height,
         UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
 {
@@ -3243,26 +3266,9 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
 
         case WINED3D_CT_CK_B5G5R5X1:
-        {
-            /* Converting X1R5G5B5 format to R5G5B5A1 to emulate color-keying. */
-            const WORD *Source;
-            WORD *Dest;
-            TRACE("Color keyed 5551\n");
-            for (y = 0; y < height; y++) {
-                Source = (const WORD *)(src + y * pitch);
-                Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width; x++ ) {
-                    WORD color = *Source++;
-                    *Dest = color;
-                    if (!color_in_range(&texture->src_blt_color_key, color))
-                        *Dest |= (1 << 15);
-                    else
-                        *Dest &= ~(1 << 15);
-                    Dest++;
-                }
-            }
-        }
-        break;
+            convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key(src, pitch, dst, outpitch,
+                    width, height, &texture->src_blt_color_key);
+            break;
 
         case WINED3D_CT_CK_B8G8R8:
             for (y = 0; y < height; ++y)
