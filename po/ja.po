@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-08-06 00:34+0900\n"
+"PO-Revision-Date: 2014-10-02 23:14+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
@@ -3532,16 +3532,12 @@ msgid "Expected ')'"
 msgstr "')'を期待していました"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "サブジェクト キー識別子"
+msgstr "識別子を期待していました"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "';'を期待していました"
+msgstr "'='を期待していました"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3572,20 +3568,16 @@ msgid "Label not found"
 msgstr "ラベルが見つかりません"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "';'を期待していました"
+msgstr "'@end'を期待していました"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "条件コンパイルはオフにされています"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "';'を期待していました"
+msgstr "'@'を期待していました"
 
 #: jscript.rc:54
 msgid "Number expected"
