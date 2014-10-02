@@ -152,8 +152,33 @@ ok(@test === true, "@test = " + @test);
 @set @test = (1==false+1)
 ok(@test === true, "@test = " + @test);
 
-@set @test = (1+true==false+1)
-ok(@test === false, "@test = " + @test);
+function expect(val, exval) {
+    ok(val === exval, "got " + val + " expected " + exval);
+}
+
+@set @test = (false < 0.5)
+expect(@test, true);
+
+@set @test = (true == 0 < 0.5)
+expect(@test, true);
+
+@set @test = (false < 0)
+expect(@test, false);
+
+@set @test = (false > 0.5)
+expect(@test, false);
+
+@set @test = (1 < true)
+expect(@test, false);
+
+@set @test = (1 <= true)
+expect(@test, true);
+
+@set @test = (1 >= true)
+expect(@test, true);
+
+@set @test = (1 >= true-1)
+expect(@test, true);
 
 @if (false)
     this wouldn not parse

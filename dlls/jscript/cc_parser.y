@@ -192,13 +192,13 @@ CCEqualityExpression
 CCRelationalExpression
     : CCShiftExpression             { $$ = $1; }
     | CCRelationalExpression '<' CCShiftExpression
-                                    { FIXME("'<' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccnum($1) < get_ccnum($3)); }
     | CCRelationalExpression tLEQ CCShiftExpression
-                                    { FIXME("'<=' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccnum($1) <= get_ccnum($3)); }
     | CCRelationalExpression '>' CCShiftExpression
-                                    { FIXME("'>' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccnum($1) > get_ccnum($3)); }
     | CCRelationalExpression tGEQ CCShiftExpression
-                                    { FIXME("'>=' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccnum($1) >= get_ccnum($3)); }
 
 CCShiftExpression
     : CCAdditiveExpression          { $$ = $1; }
