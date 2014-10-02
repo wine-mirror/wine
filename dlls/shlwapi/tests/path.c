@@ -1626,7 +1626,7 @@ static void test_PathIsRelativeW(void)
     LPWSTR path;
 
     if (!pPathIsRelativeW) {
-        win_skip("PathIsRelativeA not available\n");
+        win_skip("PathIsRelativeW not available\n");
         return;
     }
 

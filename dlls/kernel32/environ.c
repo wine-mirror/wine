@@ -503,7 +503,7 @@ DWORD WINAPI GetFirmwareEnvironmentVariableA(LPCSTR name, LPCSTR guid, PVOID buf
 }
 
 /***********************************************************************
- *              GetFirmwareEnvironmentVariableA         (KERNEL32.@)
+ *              GetFirmwareEnvironmentVariableW         (KERNEL32.@)
  */
 DWORD WINAPI GetFirmwareEnvironmentVariableW(LPCWSTR name, LPCWSTR guid, PVOID buffer, DWORD size)
 {

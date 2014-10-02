@@ -490,8 +490,8 @@ static void fog_test(IDirect3DDevice7 *device)
         {{ 0.0f,  0.0f, 1.5f}, 0xffff0000, 0xff000000},
     };
     /* Untransformed ones. Give them a different diffuse color to make the
-     * test look nicer. It also makes making sure that they are drawn
-     * correctly easier. */
+     * test look nicer. It also helps making sure that they are drawn
+     * correctly. */
     struct
     {
         struct vec4 position;
