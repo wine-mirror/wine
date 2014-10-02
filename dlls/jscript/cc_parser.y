@@ -37,10 +37,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
     ccval_t ccval;
 }
 
-%token tNEQ
+%token tEQ tEQEQ tNEQ tNEQEQ tLSHIFT tRSHIFT tRRSHIFT tOR tAND tLEQ tGEQ
 %token <ccval> tCCValue
 
-%type <ccval> CCUnaryExpression CCEqualityExpression CCAdditiveExpression CCMultiplicativeExpression
+%type <ccval> CCUnaryExpression CCLogicalORExpression CCLogicalANDExpression
+%type <ccval> CCBitwiseORExpression CCBitwiseXORExpression CCBitwiseANDExpression
+%type <ccval> CCEqualityExpression CCRelationalExpression CCShiftExpression CCAdditiveExpression CCMultiplicativeExpression
 
 %{
 
@@ -69,14 +71,65 @@ static int cc_parser_lex(void *lval, parser_ctx_t *ctx)
     case '-':
     case '*':
     case '/':
+    case '~':
+    case '%':
+    case '^':
         return *ctx->ptr++;
+    case '=':
+         if(*++ctx->ptr == '=') {
+             if(*++ctx->ptr == '=') {
+                 ctx->ptr++;
+                 return tEQEQ;
+             }
+             return tEQ;
+         }
+         break;
     case '!':
         if(*++ctx->ptr == '=') {
-            ctx->ptr++;
+            if(*++ctx->ptr == '=') {
+                ctx->ptr++;
+                return tNEQEQ;
+            }
             return tNEQ;
         }
-
         return '!';
+    case '<':
+        switch(*++ctx->ptr) {
+        case '<':
+            ctx->ptr++;
+            return tLSHIFT;
+        case '=':
+            ctx->ptr++;
+            return tLEQ;
+        default:
+            return '<';
+        }
+    case '>':
+        switch(*++ctx->ptr) {
+        case '>':
+            if(*++ctx->ptr == '>') {
+                ctx->ptr++;
+                return tRRSHIFT;
+            }
+            return tRSHIFT;
+        case '=':
+            ctx->ptr++;
+            return tGEQ;
+        default:
+            return '>';
+        }
+    case '|':
+        if(*++ctx->ptr == '|') {
+            ctx->ptr++;
+            return tOR;
+        }
+        return '|';
+    case '&':
+        if(*++ctx->ptr == '&') {
+            ctx->ptr++;
+            return tAND;
+        }
+        return '&';
     }
 
     WARN("Failed to interpret %s\n", debugstr_w(ctx->ptr));
@@ -94,13 +147,67 @@ CCExpr
 
 CCUnaryExpression
     : tCCValue                      { $$ = $1; }
-    | '(' CCEqualityExpression ')'  { $$ = $2; }
+    | '(' CCLogicalORExpression ')' { $$ = $2; }
     | '!' CCUnaryExpression         { $$ = ccval_bool(!get_ccbool($2)); };
+    | '~' CCUnaryExpression         { FIXME("'~' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | '+' CCUnaryExpression         { FIXME("'+' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | '-' CCUnaryExpression         { FIXME("'-' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCLogicalORExpression
+    : CCLogicalANDExpression        { $$ = $1; }
+    | CCLogicalORExpression tOR CCLogicalANDExpression
+                                    { FIXME("'||' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCLogicalANDExpression
+    : CCBitwiseORExpression         { $$ = $1; }
+    | CCBitwiseANDExpression tAND CCBitwiseORExpression
+                                    { FIXME("'&&' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCBitwiseORExpression
+    : CCBitwiseXORExpression        { $$ = $1; }
+    | CCBitwiseORExpression '|' CCBitwiseXORExpression
+                                    { FIXME("'|' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCBitwiseXORExpression
+    : CCBitwiseANDExpression        { $$ = $1; }
+    | CCBitwiseXORExpression '^' CCBitwiseANDExpression
+                                    { FIXME("'^' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCBitwiseANDExpression
+    : CCEqualityExpression          { $$ = $1; }
+    | CCBitwiseANDExpression '&' CCEqualityExpression
+                                    { FIXME("'&' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
 
 CCEqualityExpression
-    : CCAdditiveExpression          { $$ = $1; }
-    | CCEqualityExpression tNEQ CCAdditiveExpression
+    : CCRelationalExpression        { $$ = $1; }
+    | CCEqualityExpression tEQ CCRelationalExpression
+                                    { FIXME("'==' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCEqualityExpression tNEQ CCRelationalExpression
                                     { $$ = ccval_bool(get_ccnum($1) != get_ccnum($3)); }
+    | CCEqualityExpression tEQEQ CCRelationalExpression
+                                    { FIXME("'===' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCEqualityExpression tNEQEQ CCRelationalExpression
+                                    { FIXME("'!==' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCRelationalExpression
+    : CCShiftExpression             { $$ = $1; }
+    | CCRelationalExpression '<' CCShiftExpression
+                                    { FIXME("'<' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCRelationalExpression tLEQ CCShiftExpression
+                                    { FIXME("'<=' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCRelationalExpression '>' CCShiftExpression
+                                    { FIXME("'>' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCRelationalExpression tGEQ CCShiftExpression
+                                    { FIXME("'>=' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+
+CCShiftExpression
+    : CCAdditiveExpression          { $$ = $1; }
+    | CCShiftExpression tLSHIFT CCAdditiveExpression
+                                    { FIXME("'<<' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCShiftExpression tRSHIFT CCAdditiveExpression
+                                    { FIXME("'>>' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+    | CCShiftExpression tRRSHIFT CCAdditiveExpression
+                                    { FIXME("'>>>' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
 
 CCAdditiveExpression
     : CCMultiplicativeExpression    { $$ = $1; }
@@ -115,6 +222,8 @@ CCMultiplicativeExpression
                                     { $$ = ccval_num(get_ccnum($1) * get_ccnum($3)); }
     | CCMultiplicativeExpression '/' CCUnaryExpression
                                     { $$ = ccval_num(get_ccnum($1) / get_ccnum($3)); }
+    | CCMultiplicativeExpression '%' CCUnaryExpression
+                                    { FIXME("'%%' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
 
 %%
 
