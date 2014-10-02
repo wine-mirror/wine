@@ -241,7 +241,7 @@ static BOOL skip_comment(parser_ctx_t *ctx)
 
 static BOOL skip_spaces(parser_ctx_t *ctx)
 {
-    while(ctx->ptr < ctx->end && isspaceW(*ctx->ptr)) {
+    while(ctx->ptr < ctx->end && (isspaceW(*ctx->ptr) || *ctx->ptr == 0xFEFF /* UTF16 BOM */)) {
         if(is_endline(*ctx->ptr++))
             ctx->nl = TRUE;
     }
