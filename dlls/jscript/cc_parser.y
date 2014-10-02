@@ -181,7 +181,7 @@ CCBitwiseANDExpression
 CCEqualityExpression
     : CCRelationalExpression        { $$ = $1; }
     | CCEqualityExpression tEQ CCRelationalExpression
-                                    { FIXME("'==' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccnum($1) == get_ccnum($3)); }
     | CCEqualityExpression tNEQ CCRelationalExpression
                                     { $$ = ccval_bool(get_ccnum($1) != get_ccnum($3)); }
     | CCEqualityExpression tEQEQ CCRelationalExpression

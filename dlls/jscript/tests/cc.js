@@ -146,6 +146,15 @@ ok(@test === -1, "@test = " + @test);
 @set @test = (true-@_jscript)
 ok(@test === 0, "@test = " + @test);
 
+@set @test = (true==1)
+ok(@test === true, "@test = " + @test);
+
+@set @test = (1==false+1)
+ok(@test === true, "@test = " + @test);
+
+@set @test = (1+true==false+1)
+ok(@test === false, "@test = " + @test);
+
 @if (false)
     this wouldn not parse
 "@end
