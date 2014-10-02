@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-04-19 09:10+0100\n"
+"PO-Revision-Date: 2014-10-02 10:04+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3564,16 +3564,12 @@ msgid "Expected ')'"
 msgstr "« ) » attendu"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Identifiant de clé du sujet"
+msgstr "Identifiant attendu"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "« ; » attendu"
+msgstr "« = » attendu"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3604,20 +3600,16 @@ msgid "Label not found"
 msgstr "Étiquette introuvable"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "« ; » attendu"
+msgstr "« @end » attendu"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "La compilation conditionnelle est désactivée"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "« ; » attendu"
+msgstr "« @ » attendu"
 
 #: jscript.rc:54
 msgid "Number expected"
