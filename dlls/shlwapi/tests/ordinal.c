@@ -46,6 +46,7 @@ static HANDLE (WINAPI *pSHAllocShared)(LPCVOID,DWORD,DWORD);
 static LPVOID (WINAPI *pSHLockShared)(HANDLE,DWORD);
 static BOOL   (WINAPI *pSHUnlockShared)(LPVOID);
 static BOOL   (WINAPI *pSHFreeShared)(HANDLE,DWORD);
+static HANDLE (WINAPI *pSHMapHandle)(HANDLE,DWORD,DWORD,DWORD,DWORD);
 static HRESULT(WINAPIV *pSHPackDispParams)(DISPPARAMS*,VARIANTARG*,UINT,...);
 static HRESULT(WINAPI *pIConnectionPoint_SimpleInvoke)(IConnectionPoint*,DISPID,DISPPARAMS*);
 static HRESULT(WINAPI *pIConnectionPoint_InvokeWithCancel)(IConnectionPoint*,DISPID,DISPPARAMS*,DWORD,DWORD);
@@ -519,8 +520,10 @@ static void test_alloc_shared(int argc, char **argv)
 static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
 {
     struct shared_struct val, *p;
+    HANDLE hmem2;
     BOOL ret;
 
+    /* test directly accessing shared memory of a remote process */
     p = pSHLockShared(hmem, procid);
     ok(p != NULL || broken(p == NULL) /* Windows 7/8 */, "SHLockShared failed: %u\n", GetLastError());
     if (p == NULL)
@@ -539,6 +542,35 @@ static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
 
     ret = pSHUnlockShared(p);
     ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+
+    /* test SHMapHandle */
+    hmem2 = pSHMapHandle(hmem, procid, GetCurrentProcessId(), 0, 0);
+
+    /* It seems like Windows Vista/2008 uses a different internal implementation
+     * for shared memory, and calling SHMapHandle fails with ERROR_INVALID_HANDLE. */
+    todo_wine
+    ok(hmem2 != NULL || broken(hmem2 == NULL && GetLastError() == ERROR_INVALID_HANDLE),
+       "SHMapHandle failed: %u\n", GetLastError());
+    if (hmem2 == NULL && GetLastError() == ERROR_INVALID_HANDLE)
+    {
+        skip("Subprocess failed to map shared memory, skipping test\n");
+        return;
+    }
+
+    p = pSHLockShared(hmem2, GetCurrentProcessId());
+    todo_wine
+    ok(p != NULL, "SHLockShared failed: %u\n", GetLastError());
+
+    if (p != NULL)
+        ok(p->value == 0x12345679, "Wrong value in shared memory: %d instead of %d\n", p->value, 0x12345679);
+
+    ret = pSHUnlockShared(p);
+    todo_wine
+    ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
+
+    ret = pSHFreeShared(hmem2, GetCurrentProcessId());
+    todo_wine
+    ok(ret, "SHFreeShared failed: %u\n", GetLastError());
 }
 
 static void test_fdsa(void)
@@ -3014,6 +3046,7 @@ static void init_pointers(void)
     MAKEFUNC(SHLockShared, 8);
     MAKEFUNC(SHUnlockShared, 9);
     MAKEFUNC(SHFreeShared, 10);
+    MAKEFUNC(SHMapHandle, 11);
     MAKEFUNC(GetAcceptLanguagesA, 14);
     MAKEFUNC(SHSetWindowBits, 165);
     MAKEFUNC(SHSetParentHwnd, 167);
