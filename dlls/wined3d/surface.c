@@ -1607,7 +1607,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
         {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
         {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, GL_RGB5_A1, GL_BGRA,    GL_UNSIGNED_SHORT_1_5_5_5_REV,  2},
         {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
-        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, GL_RGBA8,   GL_RGBA,    GL_UNSIGNED_INT_8_8_8_8,        4},
+        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
         {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_B8G8R8A8, GL_RGBA8,   GL_BGRA,    GL_UNSIGNED_INT_8_8_8_8_REV,    4},
     };
 
@@ -3264,17 +3264,17 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             break;
 
         case WINED3D_CT_CK_B8G8R8X8:
-            /* Converting X8R8G8B8 format to R8G8B8A8 with color-keying. */
-            for (y = 0; y < height; y++)
+            for (y = 0; y < height; ++y)
             {
                 source = src + pitch * y;
                 dest = dst + outpitch * y;
-                for (x = 0; x < width; x++) {
-                    DWORD color = 0xffffff & *(const DWORD*)source;
-                    DWORD dstcolor = color << 8;
-                    if (!color_in_range(&surface->container->src_blt_color_key, color))
-                        dstcolor |= 0xff;
-                    *(DWORD*)dest = dstcolor;
+                for (x = 0; x < width; ++x)
+                {
+                    DWORD color = *(const DWORD *)source;
+                    if (color_in_range(&surface->container->src_blt_color_key, color))
+                        *(DWORD *)dest = color & ~0xff000000;
+                    else
+                        *(DWORD *)dest = color | 0xff000000;
                     source += 4;
                     dest += 4;
                 }
