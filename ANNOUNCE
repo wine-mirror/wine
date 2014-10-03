@@ -1,15 +1,15 @@
-The Wine development release 1.7.27 is now available.
+The Wine development release 1.7.28 is now available.
 
 What's new in this release (see below for details):
-  - Some more work on Direct2D support.
-  - Various improvements to RichEdit interfaces.
-  - Initial support for ICMP version 6.
+  - Support for conditional compilation in JavaScript.
+  - Bidirectional text support in DirectWrite.
+  - Stubs for DirectPlay Voice support.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.7.27.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.27.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.7.28.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.28.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -25,188 +25,225 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.7.27 (total 22):
+Bugs fixed in 1.7.28 (total 21):
 
-  12659  Preferences window missing all user-modifiable settings in Acrobat V7.0 Pro (MSAA AccPropServices implementation needed)
-  13424  msi winetests requires != limited user
-  15013  Thunder:Can't finish any task.
-  21917  SC2 'LazyLaunch' v2.0 fails with 'Exception frame is not in stack limits => unable to dispatch exception.' (TLS callbacks can taint EBP, needs assembly wrapper)
-  25112  AT4RE FastScanner v3.0 hangs when clicking "Minimize"
-  25585  Release key event is lost during lags in some games
-  26414  World of warcraft crashes while changing the display resolution
-  29055  Skyrim freezes on loading screen
-  29509  Visual Studio 2005 trial crashes quickly building Wine
-  32194  Multiple games and applications need bcrypt.dll.BCryptGetFipsAlgorithmMode (Chess Position Trainer, Terraria, .NET System.Security.Cryptography)
-  34642  Adobe Premiere Pro 2.0 exits silently on startup ('GetMenuItemInfo' must zero out 'cch' if mask doesn't specify 'MIIM_TYPE')
-  35134  Multiple game installers wait indefinitely for cmd.exe during execution of batch files (argv[0] is not 'cmd.exe') (Shroud of the Avatar: Forsaken Virtues, Aura Kingdom)
-  35421  BetterInstaller (Somoto Ltd) variant of CheatEngine 6.3 installer crashes
-  35842  Sentinel HASP hardlock.sys kernel driver (bundled with Kompas-3D v14) tries to access to DR7 (not handled in ntoskrnl emulate_instruction)
-  36063  prince of persia 2008 game crashes
-  36109  Magic & Mayhem 2: The Art of Magic sometimes fails to run without native dplay
-  36800  XMP failed to start, services.exe has crashed
-  36974  Iexplore cookie related crashes
-  37163  WiX Toolset v3.8 installer doesn't open with Wine-Mono (unimplemented CorBindToCurrentRuntime)
-  37224  msvcmaker generated wine.dsw fails to load with Visual Express 2005
-  37239  Adobe Premiere Pro 2 deadlocks when opening additional windows (glu32 wrapper functions not sufficient)
-  37253  dlls/wbemprox/builtin.c fails to build on NetBSD 6.1.4
+  20799  (not a Wine bug) Multiple games using OpenAL freezes/crashes during the startup
+  22469  FileMaker Pro 11: Text is upside down when builtin gdiplus is used
+  22987  Irfan view - "Can't paste image from clipboard !"
+  23667  CDBurnerXP 3.0 desktop shortcut uses a generic wine glass icon
+  25705  Action buttons in Lemmings could not be clicked
+  25715  native dxdiag crashes with builtin quartz
+  26738  Steam crashes using ALSA
+  27978  QuickBooks Premier 2011 crash on start
+  31043  Segfault when trying to run Direct3D or OpenGL apps
+  31378  Built in IE - U-Haul dealer network Point of Sale page unusable
+  31815  Rhapsody 4.0 crashes on startup
+  34923  SolidWorks 2014 installer needs ieframe IWebBrowser2::Refresh2
+  35019  ToDoList 6.9.b12 (MFC app) crashes when deleting a task
+  35121  Multiple applications/games fail to start with WinVer set to 'Windows 7' (FindFirstFileExW needs FIND_FIRST_EX_LARGE_FETCH support)(FotoQuelle Fotosoftware v4.13, QT5)
+  37198  Pale Moon Portable 24.7.x fails on startup, reporting "Couldn't load XPCOM" (needs msvcp110.dll '?_BADOFF@std@@3_JB' also exported for 32-bit arch)
+  37221  biet-o-matic 2.14.12: Crashes when past eBay item number with context menu (right click, past)
+  37290  Baltie educational programming language does not run.
+  37304  Different paper size enumerations between cloned printers
+  37305  ApexDC fails to do file operations (file:FindFirstFileExW)
+  37319  [Ubuntu 12.04][Wine.1.4.x/1.6.x] Steam - can't purchase games due to an invalid SSL cerificate
+  37339  Excel 2010 Cant save or open files with Pivot Tables
 
 ----------------------------------------------------------------
 
-Changes since 1.7.26:
+Changes since 1.7.27:
 
-Akihiro Sagawa (1):
-      reg: Add reg.exe test suite.
+Akihiro Sagawa (3):
+      ntdll/tests: Remove duplicated entry.
+      ntdll/tests: Add KeyNameInformation tests.
+      po: Update Japanese translation.
 
 Alexandre Julliard (2):
-      kernel32: Pass the correct completion values in ReadFileScatter and WriteFileGather.
-      dpnet: Add a missing coclass registration.
+      secur32/tests: Update test for the new certificate on winehq.org.
+      kernel32/tests: Fix overlapped status checks for 64-bit.
 
-Alistair Leslie-Hughes (4):
-      dpnet: Stub interface IDirectPlay8LobbyClient.
-      cmd: Dont assume cmd.exe is the first argument.
-      hnetcfg: Allow NetFwOpenPort to be created.
-      hnetcfg: Add typeinfo support to INetFwOpenPort.
+Alistair Leslie-Hughes (7):
+      dpvoice: Add IDirectPlayVoiceClient Support.
+      dpvoice: Add IDirectPlayVoiceServer support.
+      dpvoice: Add DirectPlay Voice test.
+      dpvoice: Add IDirectPlayVoiceTest stub interface.
+      dpnet: Implement IDirectPlay8Address AddComponent.
+      dpnet: Show SetSP adds a component.
+      dpnet: Implement IDirectPlay8Address Duplicate.
 
-André Hentschel (4):
-      rasapi32: Fix a typo in a comment.
-      msvcmaker: Allow hyphens in dll names.
-      msvcmaker: Allow ocx tests.
-      winedbg: Respect TMPDIR environment variable.
+Andreas Fuchs (1):
+      kernel32: Ignore flags on FindFirstFileExW.
 
-Aric Stewart (1):
-      dwrite: Break fontfamily data into its own structure.
+Andrei Slăvoiu (2):
+      wined3d: Adjust the Intel fallbacks to better reflect reality.
+      wined3d: Pass the capabilities directly to d3d_level_from_gl_info and rename it to d3d_level_from_caps.
 
-Austin English (3):
-      ws2_32: Don't assume AI_V4MAPPED is available.
-      wbemprox: Include winsock.h earlier for NetBSD.
-      wineconsole: Only use getmouse when HAVE_MOUSEMASK is defined.
+André Hentschel (5):
+      d3d10core: Fix out of bounds access (Coverity).
+      dwrite: Check correct variable (Coverity).
+      ntdll: Use a dynamic buffer for change notification data.
+      winegcc: Respect TMPDIR environment variable.
+      winemenubuilder: Respect TMPDIR environment variable.
 
-Daniel Lehman (1):
-      ntdll: Use the configured CriticalSection timeout in RtlpWaitForCriticalSection.
+François Gouget (3):
+      dpnet/tests: Add a trailing '\n' to some ok() calls.
+      d2d1: Add a trailing '\n' to a FIXME().
+      Assorted spelling fixes.
 
-Eric Kohl (2):
-      advapi32/tests: Fix typos in test_LsaLookupNames2.
-      rpcrt4: Fix buffer size calculation for arrays with embedded pointers.
-
-François Gouget (2):
-      dpnet/tests: Make test_lobbyclient() static.
-      msvcrt: Prefix _set_output_format() with MSVCRT_ to avoid a collision with MinGW.
+Frédéric Delanoy (2):
+      po: Update French translation.
+      Assorted spelling/grammar fixes.
 
 Hans Leidekker (3):
-      msi: Improve support for advertized shortcuts.
-      winhttp: Verify the async parameter type in IWinHttpRequest::Open.
-      rsaenh: Fix typos in SHA-384/SHA-512 OIDs.
+      wininet/tests: Update test data to match the new certificate on winehq.org.
+      wininet: Protect the request headers array with a critical section.
+      msi: Include the terminating null in the buffer size for decoded stream names.
 
 Hao Peng (1):
-      svchost: Add LOAD_WITH_ALTERED_SEARCH_PATH flag when loading the dll.
+      mshtml: Add IHTMLAnchorElement::search propertyimplementation.
 
-Henri Verbeet (30):
-      widl: Handle aggregate returns in a MSVC compatible way.
-      d2d1: Implement d2d_d3d_render_target_GetSize().
-      d2d1: Implement d2d_d3d_render_target_Clear().
-      d2d1: Implement initial clipping support.
-      d2d1/tests: Add a basic clipping test.
-      d2d1: Simplify clip stack handling.
-      dxgi: Get rid of IWineDXGIAdapter.
-      dxgi: Get rid of IWineDXGIFactory.
-      dxgi: Call wined3d_device_init_3d() on device creation.
-      d2d1: Implement d2d_factory_CreateWicBitmapRenderTarget().
-      d2d1: Implement d2d_d3d_render_target_CreateMesh().
-      d2d1: Implement d2d_d3d_render_target_CreateBitmap().
-      d2d1: Implement d2d_d3d_render_target_CreateBitmapFromWicBitmap().
-      d3d10core: Create wined3d views for shader resource views.
-      d3d10core: Implement d3d10_device_VSSetShaderResources().
-      d3d10core: Implement d3d10_device_VSGetShaderResources().
-      d3d10core: Implement d3d10_device_GSSetShaderResources().
-      d3d10core: Implement d3d10_device_GSGetShaderResources().
-      d3d10core: Implement d3d10_device_PSSetShaderResources().
-      d3d10core: Implement d3d10_device_PSGetShaderResources().
-      d3d10: Also store the depth/stencil state in the stateblock.
-      wined3d: Do not increment the reference count of the returned buffer in wined3d_device_get_stream_source().
-      wined3d: Set the initial primitive type to WINED3D_PT_UNDEFINED.
-      d3d10core: Set the initial blend factors to 1.0f.
-      d3d10core: Set the initial sample mask to D3D10_DEFAULT_SAMPLE_MASK.
-      d3d10core: Create wined3d queries for queries.
-      d3d10core: Implement d3d10_device_SetPredication().
-      d3d10core: Implement d3d10_device_GetPredication().
-      wined3d: Never pass a surface to wined3d_resource_is_offscreen().
-      wined3d: Use the texture resource in wined3d_surface_depth_fill().
+Henri Verbeet (23):
+      d3d8: Get rid of the format switching code in d3d8_device_CopyRects().
+      ddraw: Move the pitch / linear size validation from ddraw_surface_init() to ddraw_surface_create().
+      ddraw: Set user memory in ddraw_surface_create() instead of ddraw_surface_init().
+      wined3d: Replace wined3d_surface_update_desc() with wined3d_texture_update_desc().
+      wined3d: Get rid of SFLAG_DONOTFREE.
+      wined3d: Use wined3d_texture_set_color_key() to manipulate the color-key in surface_blt_special().
+      wined3d: Use a lookup table in d3dfmt_get_conv().
+      wined3d: Get rid of the "use_texturing" parameter to d3dfmt_get_conv().
+      wined3d: Pass a texture to d3dfmt_get_conv().
+      wined3d: Use a more consistent naming for wined3d_conversion_type elements.
+      wined3d: Get rid of the WINED3D_CT_NONE case in d3dfmt_convert_surface().
+      wined3d: Fix the pitch handling in the no-palette WINED3D_CT_P8 case.
+      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_P8.
+      wined3d: Convert to WINED3DFMT_B5G5R5A1_UNORM for WINED3D_CT_CK_B5G6R5.
+      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_CK_B8G8R8.
+      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_CK_B8G8R8X8.
+      wined3d: Just store the wined3d format in color_key_info[].
+      wined3d: Introduce a separate function for WINED3D_CT_P8.
+      wined3d: Introduce a separate function for WINED3D_CT_CK_B5G6R5.
+      wined3d: Introduce a separate function for WINED3D_CT_CK_B5G5R5X1.
+      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8.
+      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8X8.
+      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8A8.
 
-Hugh McMaster (1):
-      user32: Fix spelling in a comment.
+Jacek Caban (40):
+      vbscript: Don't try to convert int to short in return_int.
+      mshtml: Don't share nsform reference with nsnode.
+      mshtml: Don't share nsinput reference with nsnode.
+      mshtml: Don't share nsframe and nsiframe reference with nsnode.
+      mshtml: Don't share nsstyle reference with nsnode.
+      mshtml: Don't share nslink reference with nsnode.
+      mshtml: Don't share nsanchor reference with nsnode.
+      mshtml: Don't share nsselect reference with nsnode.
+      mshtml: Don't share nsoption reference with nsnode.
+      mshtml: Don't share nstextarea reference with nsnode.
+      mshtml: Don't share nstable reference with nsnode.
+      mshtml: Don't share nscell reference with nsnode.
+      mshtml: Don't share nsobject reference with nsnode.
+      ieframe: Added partial Refresh2 implementation.
+      mshtml: Don't share nsimg reference with nsnode.
+      mshtml: Don't share nsscript reference with nsnode.
+      mshtml: Don't share nsrow reference with nsnode.
+      mshtml: Don't share nsbutton reference with nsnode.
+      mshtml: Use UTF-8 encoding in NewURI by default.
+      mshtml: Use proper type for text node in exec_hyperlink.
+      mshtml: Don't assume that nsIDOMHTMLElement inherits from nsIDOMNode in HTMLDocument_createStyleSheet.
+      mshtml: Removed no longer needed assert.
+      jscript: Move parser related declarations to separated header.
+      jscript: Return double from parse_numeric_literal and parse_double_literal.
+      jscript: Added new ccval_t type for CC variable values.
+      jscript: Moved skipping spaces to separated function.
+      jscript: Added conditional compilation @set support.
+      jscript/tests: Added @set tests.
+      jscript: Added support for conditional compilation @if/@elif/@else/@end.
+      jscript: Added tests for @if/@elif/@else/@end.
+      jscript: Implicitly turn CC on for @set instruction.
+      jscript: Implicitly turn CC on for @if instruction.
+      jscript: Added support for '-' CC expression.
+      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmlinput.c.
+      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmloption.c.
+      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmlscript.c.
+      mshtml: Don't assume that nsIDOMHTMLScriptElement inherits from nsIDOMHTMLElement in get_script_guid.
+      jscript: Added parser rules for missing expressions.
+      jscript: Added support for '==' CC expression.
+      jscript: Added support for relational CC expressions.
 
-Jacek Caban (12):
-      mshtml: Bind events to document node instead of body element.
-      mshtml: Added semi-stub IHTMLElement4::onmousewheel propery implementation.
-      oleacc: Added DllRegisterServer and DllUnregisterServer implementations.
-      oleacc: Register CAccPropServices class.
-      oleacc: Added CAccPropServices stub implementation.
-      mshtml: Added IHTMLElement::get_sourceIndex implementation.
-      jscript: Add DISPATCH_PROPERTYGET flag only for DISPATCH_METHOD call in disp_call_value.
-      wininet: Moved critical section locking to get_cookie callers so that cookie_set_t is also protected.
-      wininet: Properly clean up in InternetGetCookieExW if no cookies were found.
-      mshtml: Don't include leading '?' in nsIURL::GetSearch implementation.
-      mshtml: Make listStyle tests less strict about value order.
-      mshtml: Don't use nsIDOMHTMLParamElement.
+Jactry Zeng (1):
+      riched20: Set editor->reOle to NULL when IRichEditOle is released.
 
-Jactry Zeng (16):
-      mshtml/tests: Fix typo.
-      mshtml: Add IHTMLTableCell::bgColor property implementation.
-      mshtml: Return E_POINTER when p is NULL in get_nsstyle_pixel_val.
-      mshtml: Add IHTMLStyle::get_pixelWidth implementation.
-      mshtml: Add IHTMLStyle::pixelHeight property implementation.
-      mshtml: Add IHTMLStyle::pixelTop property implementation.
-      riched20: Stub for ITextRange interface and implement ITextDocument::Range.
-      mshtml: Add IHTMLCurrentStyle::get_textTransform implementation.
-      riched20: Avoid invalid memory access.
-      riched20: Implement ITextRange::GetChar.
-      riched20: Implement ITextSelection::GetChar.
-      riched20: Implement ITextRange::GetStart and ITextRange::GetEnd.
-      riched20: Implement ITextSelection::GetStart and ITextSelection::GetEnd.
-      riched20: Implement ITextRange::GetDuplicate.
-      riched20: Implement ITextRange::Collapse.
-      riched20: Implement ITextSelection::Collapse.
+Johannes Brandstätter (1):
+      d3d10core: Add support for map_type flags D3D10_MAP_READ, D3D10_MAP_WRITE_NO_OVERWRITE and D3D10_MAP_DISCARD.
 
-Marcus Meissner (2):
-      ntoskrnl.exe: Emulate some more mov eax -> drX.
-      shell32: Added stub for SHEnumerateUnreadMailAccountsW.
+Joris van der Wel (1):
+      server: A new function "set_sd_defaults_from_token".
 
-Marko Hauptvogel (4):
-      winsock: Add icmpv6 protocol.
-      iphlpapi: Implement icmpv6 create function.
-      iphlpapi/tests: Fix typo.
-      iphlpapi: Add icmpv6 send stub.
+Ken Thomases (2):
+      winemac: Don't invalidate the window shadow on every draw if it's merely shaped and not color-keyed or using per-pixel alpha.
+      winemac: Properly ignore attempts to set a window's shape to its current shape.
 
-Michael Müller (2):
-      user32: Also set cch member in GetMenuItemInfo when passing a null pointer.
-      bcrypt: Add semi-stub for BCryptGetFipsAlgorithmMode.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Nikolay Sivov (2):
-      msvcrt: Added __dstbias() export.
-      dwrite: Added IDWriteTypography implementation.
+Marcus Meissner (6):
+      dwrite: Use correct variable (Coverity).
+      dwrite: Fixed NULL ptr deref before check (Coverity).
+      dwrite: Avoid NULL ptr dereference (Coverity).
+      wbemprox: Fixed a memory leak in get_sd (Coverity).
+      dwrite: Check correct variable for NULL (Coverity).
+      dxgi: Added missing unlock (Coverity).
 
-Piotr Caban (1):
-      msvcp90: Fix FMTFLAG_showpoint handling in num_put_char__Ffmt.
+Nikolay Sivov (12):
+      usp10: Use proper type for return value.
+      dwrite: Use proper type for return value.
+      dwrite: Implement itemization by script id using Unicode.org data.
+      include: Update dwrite headers to match SDK 8.1.
+      dwrite: Update to IDWriteTextAnalyzer2.
+      dwrite: Allow underscores in script names.
+      dwrite: Implement GetScriptProperties().
+      dwrite: Implement GetTextComplexity().
+      po: Update Russian translation.
+      dwrite: Implement AnalyzeBidi().
+      usp10: Remove comment that's no longer true.
+      dwrite: Implement CreateNumberSubstitution().
 
-Qian Hong (3):
-      mshtml/tests: Fixed typo.
-      mshtml: Handle DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF in invoke_builtin_prop.
-      mshtml: Added IHTMLDOMAttribute::put_nodeValue implementation.
+Piotr Caban (4):
+      user32: Return early on child windows in DrawMenuBar.
+      user32/tests: Add initial WindowFromPoint tests.
+      user32/tests: Add cross-process WindowFromPoint tests.
+      user32/tests: Add cross-process mouse click test.
 
-Sebastian Lackner (4):
-      ntdll: Save more registers in call_dll_entry_point on i386.
-      ntdll: Use call_dll_entry_point to execute TLS callbacks.
-      user32/tests: Add an additional test for GetMenuItemInfo with NULL pointer as TypeData.
-      glu32: Fix wrapper function for glu[Begin|End]Polygon and gluNextContour.
+Qian Hong (5):
+      mshtml: Using UTF-8 as default charset in bind_mon_to_wstr.
+      mshtml: Don't pass NULL string pointer to jscript engine.
+      appwiz.cpl: Fixed typo.
+      winmm: Also initialize sound device thread in mixerGetControlDetails.
+      jscript: Ignore BOM mark in next_token.
 
-Vincent Povirk (3):
-      mscoree: Implement CorBindToCurrentRuntime.
-      gdiplus: Skip resampling when drawing a bitmap with no scaling/rotation.
-      gdiplus: Use integer math to apply color matrices.
+Ralf Habacker (1):
+      wineps.drv: For each printer start page size and source index with the same value.
 
-YongHao Hu (2):
-      msvcp90: Improve complex_float_pow.
-      msvcp90: Fix comment typo.
+Sebastian Lackner (8):
+      msvcp110: Export ?_BADOFF@std@@3_JB on both i386 and win64.
+      shlwapi/tests: Add SH*Shared inter-process tests.
+      shlwapi: Fixed swapped argument order in SHLWAPI_DupSharedHandle command.
+      kernel32/tests: Add tests for FindFirstFileExA with FIND_FIRST_EX_LARGE_FETCH flag.
+      kernel32/tests: Add tests for FindFirstFileExA with FIND_FIRST_EX_CASE_SENSITIVE flag.
+      shlwapi/tests: Add test for SHMapHandle.
+      shlwapi: Fix swapped argument order in SHMapHandle.
+      shlwapi: Remove unnecessary internal function SHLWAPI_DupSharedHandle.
+
+Shuai Meng (1):
+      vbscript: Implemented RGB.
+
+Stefan Dösinger (1):
+      d3d8: Return the correct value in CreateAdditionalSwapChain.
+
+Thomas Faber (1):
+      wined3d: Use correct FXCAPS constant in wined3d_get_device_caps.
+
+Vincent Povirk (1):
+      gdiplus: Process a row instead of a column in inner conversion loop.
 
 --
 Alexandre Julliard
