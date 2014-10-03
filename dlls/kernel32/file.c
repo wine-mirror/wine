@@ -1872,11 +1872,13 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     if (search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
     {
         FIXME("search_op not implemented 0x%08x\n", search_op);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
     }
     if (level != FindExInfoStandard)
     {
         FIXME("info level %d not implemented\n", level );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
     }
 
