@@ -3937,6 +3937,13 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             return SOCKET_ERROR;
         }
 
+        if (out_size && out_size < FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]))
+        {
+            *ret_size = 0;
+            WSASetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+
         if (GetAdaptersInfo(NULL, &size) == ERROR_BUFFER_OVERFLOW)
         {
             IP_ADAPTER_INFO *p, *table = HeapAlloc(GetProcessHeap(), 0, size);
