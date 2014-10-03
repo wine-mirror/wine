@@ -3957,6 +3957,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
             if (total > out_size)
             {
+                *ret_size = total;
                 HeapFree(GetProcessHeap(), 0, table);
                 status = WSAEFAULT;
                 break;

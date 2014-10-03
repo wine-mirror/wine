@@ -7462,6 +7462,46 @@ static void test_completion_port(void)
     CloseHandle(previous_port);
 }
 
+static void test_address_list_query(void)
+{
+    SOCKET_ADDRESS_LIST *address_list;
+    DWORD bytes_returned, size;
+    unsigned int i;
+    SOCKET s;
+    int ret;
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(s != INVALID_SOCKET, "Failed to create socket, error %d.\n", WSAGetLastError());
+
+    bytes_returned = 0;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, 0, &bytes_returned, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
+    ok(bytes_returned >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]),
+            "Got unexpected bytes_returned %u.\n", bytes_returned);
+
+    size = bytes_returned;
+    bytes_returned = 0;
+    address_list = HeapAlloc(GetProcessHeap(), 0, size * 2);
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list, size * 2, &bytes_returned, NULL, NULL);
+    ok(!ret, "Got unexpected ret %d, error %d.\n", ret, WSAGetLastError());
+    ok(bytes_returned == size, "Got unexpected bytes_returned %u, expected %u.\n", bytes_returned, size);
+
+    bytes_returned = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[address_list->iAddressCount]);
+    for (i = 0; i < address_list->iAddressCount; ++i)
+    {
+        bytes_returned += address_list->Address[i].iSockaddrLength;
+    }
+    ok(size == bytes_returned, "Got unexpected size %u, expected %u.\n", size, bytes_returned);
+
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list, size, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
+
+    HeapFree(GetProcessHeap(), 0, address_list);
+    closesocket(s);
+}
+
 static DWORD WINAPI inet_ntoa_thread_proc(void *param)
 {
     ULONG addr;
@@ -7739,6 +7779,7 @@ START_TEST( sock )
     test_WSAAsyncGetServByName();
 
     test_completion_port();
+    test_address_list_query();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
