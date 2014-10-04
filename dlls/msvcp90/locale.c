@@ -9958,8 +9958,28 @@ locale* __thiscall locale_copy_ctor(locale *this, const locale *copy)
 DEFINE_THISCALL_WRAPPER(locale_ctor_locale_cstr, 16)
 locale* __thiscall locale_ctor_locale_cstr(locale *this, const locale *loc, const char *locname, category cat)
 {
-    FIXME("(%p %p %s %d) stub\n", this, loc, locname, cat);
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %p %s %d)\n", this, loc, locname, cat);
+
+    _Locinfo_ctor_cat_cstr(&locinfo, cat, locname);
+    if(!memcmp(locale_string_char_c_str(&locinfo.newlocname), "*", 2)) {
+        _Locinfo_dtor(&locinfo);
+        MSVCRT_operator_delete(this->ptr);
+        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+    }
+
+    this->ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!this->ptr) {
+        ERR("Out of memory\n");
+        _Locinfo_dtor(&locinfo);
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    locale__Locimp_copy_ctor(this->ptr, loc->ptr);
+
+    locale__Locimp__Makeloc(&locinfo, cat, this->ptr, NULL);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0locale@std@@QAE@PBDH@Z */
