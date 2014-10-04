@@ -1522,11 +1522,6 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
     {
         void *page = ROUND_ADDR( addr, page_mask );
         BYTE *vprot = &view->prot[((const char *)page - (const char *)view->base) >> page_shift];
-        if (*vprot & VPROT_GUARD)
-        {
-            VIRTUAL_SetProt( view, page, page_size, *vprot & ~VPROT_GUARD );
-            ret = STATUS_GUARD_PAGE_VIOLATION;
-        }
         if ((err & EXCEPTION_WRITE_FAULT) && (view->protect & VPROT_WRITEWATCH))
         {
             if (*vprot & VPROT_WRITEWATCH)
@@ -1536,6 +1531,11 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
             }
             /* ignore fault if page is writable now */
             if (VIRTUAL_GetUnixProt( *vprot ) & PROT_WRITE) ret = STATUS_SUCCESS;
+        }
+        if (*vprot & VPROT_GUARD)
+        {
+            VIRTUAL_SetProt( view, page, page_size, *vprot & ~VPROT_GUARD );
+            ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );

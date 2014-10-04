@@ -1728,7 +1728,6 @@ static void test_guard_page(void)
     num_guard_page_calls = 0;
     *value       = 1;
     *(value + 1) = 2;
-    todo_wine
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
 
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
