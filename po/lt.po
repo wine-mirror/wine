@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-08-05 21:59+0300\n"
+"PO-Revision-Date: 2014-10-04 10:00+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3543,16 +3543,12 @@ msgid "Expected ')'"
 msgstr "Tikėtasi „)“"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Subjekto rakto identifikatorius"
+msgstr "Tikėtasi identifikatoriaus"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „=“"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3583,20 +3579,16 @@ msgid "Label not found"
 msgstr "Žymė nerasta"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „@end“"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Sąlyginis kompiliavimas išjungtas"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „@“"
 
 #: jscript.rc:54
 msgid "Number expected"
