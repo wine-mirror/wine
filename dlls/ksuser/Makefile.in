@@ -1,0 +1,4 @@
+MODULE    = ksuser.dll
+
+C_SRCS = \
+	main.c

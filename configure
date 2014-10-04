@@ -1068,6 +1068,7 @@ enable_joy_cpl
 enable_jscript
 enable_jsproxy
 enable_kernel32
+enable_ksuser
 enable_ktmw32
 enable_loadperf
 enable_localspl
@@ -17034,6 +17035,7 @@ wine_fn_config_dll kernel32 enable_kernel32 clean,implib,mc
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
+wine_fn_config_dll ksuser enable_ksuser
 wine_fn_config_dll ktmw32 enable_ktmw32
 wine_fn_config_dll loadperf enable_loadperf implib
 wine_fn_config_dll localspl enable_localspl po
