@@ -1453,6 +1453,9 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
         case DW_TAG_subprogram:
             dwarf2_parse_subprogram(ctx, child);
             break;
+        case DW_TAG_const_type:
+            dwarf2_parse_const_type(ctx, child);
+            break;
         case DW_TAG_structure_type:
         case DW_TAG_class_type:
         case DW_TAG_union_type:
