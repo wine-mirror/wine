@@ -557,16 +557,17 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_swapchain_desc desc;
     struct d3d8_swapchain *object;
+    HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
             iface, present_parameters, swapchain);
 
     wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
-    if (SUCCEEDED(d3d8_swapchain_create(device, &desc, &object)))
+    if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, &object)))
         *swapchain = &object->IDirect3DSwapChain8_iface;
     present_parameters_from_wined3d_swapchain_desc(present_parameters, &desc);
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
@@ -987,7 +988,6 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
     UINT src_w, src_h;
-    HRESULT hr;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, src_surface, src_rects, rect_count, dst_surface, dst_points);
@@ -1019,23 +1019,12 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     dst_format = wined3d_desc.format;
 
     /* Check that the source and destination formats match */
-    if (src_format != dst_format && WINED3DFMT_UNKNOWN != dst_format)
+    if (src_format != dst_format)
     {
         WARN("Source %p format must match the destination %p format, returning D3DERR_INVALIDCALL.\n",
                 src_surface, dst_surface);
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
-    }
-    else if (WINED3DFMT_UNKNOWN == dst_format)
-    {
-        TRACE("Converting destination surface from WINED3DFMT_UNKNOWN to the source format.\n");
-        if (FAILED(hr = wined3d_surface_update_desc(dst->wined3d_surface, wined3d_desc.width, wined3d_desc.height,
-                src_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality, NULL, 0)))
-        {
-            WARN("Failed to update surface desc, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
-        }
     }
 
     /* Quick if complete copy ... */
@@ -2798,7 +2787,6 @@ static HRESULT WINAPI d3d8_device_GetStreamSource(IDirect3DDevice8 *iface,
         buffer_impl = wined3d_buffer_get_parent(wined3d_buffer);
         *buffer = &buffer_impl->IDirect3DVertexBuffer8_iface;
         IDirect3DVertexBuffer8_AddRef(*buffer);
-        wined3d_buffer_decref(wined3d_buffer);
     }
     else
     {

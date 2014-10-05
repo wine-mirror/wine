@@ -1,5 +1,5 @@
 TESTDLL   = d3d10core.dll
-IMPORTS   = d3d10
+IMPORTS   = d3d10 user32
 
 C_SRCS = \
 	device.c

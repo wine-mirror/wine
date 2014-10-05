@@ -3971,7 +3971,7 @@ static void test_EnumSystemGeoID(void)
     ret = pEnumSystemGeoID(GEOCLASS_NATION, 0, test_geoid_enumproc);
     ok(ret, "got %d\n", ret);
 
-    /* only first level is enumerated, not the whole hierarchy */
+    /* only the first level is enumerated, not the whole hierarchy */
     geoidenum_count = 0;
     ret = pEnumSystemGeoID(GEOCLASS_NATION, 39070, test_geoid_enumproc2);
     if (ret == 0)

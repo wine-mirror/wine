@@ -7088,7 +7088,7 @@ char* __cdecl num_put_char__Ffmt(const num_put *this, char *fmt, char spec, int 
     *p++ = '%';
     if(fmtfl & FMTFLAG_showpos)
         *p++ = '+';
-    if(fmtfl & FMTFLAG_showbase)
+    if(fmtfl & FMTFLAG_showpoint)
         *p++ = '#';
     *p++ = '.';
     *p++ = '*';
@@ -10280,7 +10280,7 @@ int __cdecl wctob(wint_t wc)
 {
     char ret[MB_LEN_MAX];
 
-    if (wc == WEOF || _Wcrtomb( ret, wc, NULL, NULL ) != -1) return EOF;
+    if (wc == WEOF || _Wcrtomb( ret, wc, NULL, NULL ) != 1) return EOF;
     return ret[0];
 }
 

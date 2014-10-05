@@ -389,6 +389,28 @@ struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource
     }
 }
 
+DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type)
+{
+    switch (map_type)
+    {
+        case D3D10_MAP_READ_WRITE:
+            return 0;
+
+        case D3D10_MAP_READ:
+            return WINED3D_MAP_READONLY;
+
+        case D3D10_MAP_WRITE_DISCARD:
+            return WINED3D_MAP_DISCARD;
+
+        case D3D10_MAP_WRITE_NO_OVERWRITE:
+            return WINED3D_MAP_NOOVERWRITE;
+
+        default:
+            FIXME("Unhandled map_type %#x.\n", map_type);
+            return 0;
+    }
+}
+
 void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;

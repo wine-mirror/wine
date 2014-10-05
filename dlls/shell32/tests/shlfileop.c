@@ -1983,7 +1983,7 @@ static void test_move(void)
 
 
     init_shfo_tests();
-    /*  0 incomming files */
+    /*  0 incoming files */
     set_curr_dir_path(from, "\0\0");
     set_curr_dir_path(to, "test6.txt\0\0");
     retval = SHFileOperationA(&shfo2);

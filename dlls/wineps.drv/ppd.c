@@ -179,9 +179,6 @@ static const struct {
   {NULL,                      0}
 };
 
-static WORD UserPageType = DMPAPER_USER;
-static WORD UserBinType = DMBIN_USER;
-
 /***********************************************************************
  *
  *		PSDRV_PPDDecodeHex
@@ -695,6 +692,8 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
     char *def_pagesize_override = NULL, *def_duplex_override = NULL;
     PAGESIZE *page, *page_cursor2;
     struct map_context c;
+    WORD UserPageType = DMPAPER_USER;
+    WORD UserBinType = DMBIN_USER;
 
     TRACE("file %s\n", debugstr_w(fname));
 

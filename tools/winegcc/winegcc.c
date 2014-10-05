@@ -268,9 +268,12 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     fd = mkstemps( tmp, strlen(suffix) );
     if (fd == -1)
     {
-        /* could not create it in current directory, try in /tmp */
+        /* could not create it in current directory, try in TMPDIR */
+        const char* tmpdir;
+
         free(tmp);
-        tmp = strmake("/tmp/%s-XXXXXX%s", prefix, suffix);
+        if (!(tmpdir = getenv("TMPDIR"))) tmpdir = "/tmp";
+        tmp = strmake("%s/%s-XXXXXX%s", tmpdir, prefix, suffix);
         fd = mkstemps( tmp, strlen(suffix) );
         if (fd == -1) error( "could not create temp file\n" );
     }

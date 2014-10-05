@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "commctrl.h"
+#include "rpcproxy.h"
 
 #include "initguid.h"
 #include "oleacc_private.h"
@@ -406,22 +407,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
     return TRUE;
 }
 
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, void **ppv)
-{
-    FIXME("%s %s %p: stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_register_resources(oleacc_handle);
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_unregister_resources(oleacc_handle);
 }
 
 void WINAPI GetOleaccVersionInfo(DWORD* pVersion, DWORD* pBuild)

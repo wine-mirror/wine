@@ -7645,7 +7645,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && (src_surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DRAWABLE))
             == WINED3D_LOCATION_DRAWABLE
-            && !wined3d_resource_is_offscreen(&src_surface->resource))
+            && !wined3d_resource_is_offscreen(&src_surface->container->resource))
     {
         /* Without FBO blits transferring from the drawable to the texture is
          * expensive, because we have to flip the data in sysmem. Since we can
@@ -7662,7 +7662,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     context_apply_blit_state(context, device);
 
-    if (!wined3d_resource_is_offscreen(&dst_surface->resource))
+    if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     arbfp_blit_set(device->blit_priv, context, src_surface);

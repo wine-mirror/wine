@@ -1230,6 +1230,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
 
     switch(flags) {
     case DISPATCH_PROPERTYPUT:
+    case DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF:
         if(res)
             V_VT(res) = VT_EMPTY;
         hres = builtin_propput(This, func, dp, caller);
@@ -1249,7 +1250,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
 
             if(flags != (DISPATCH_PROPERTYGET|DISPATCH_METHOD) || dp->cArgs) {
                 if(V_VT(&v) != VT_DISPATCH) {
-                    FIXME("Not a function %s\n", debugstr_variant(&v));
+                    FIXME("Not a function %s flags %08x\n", debugstr_variant(&v), flags);
                     VariantClear(&v);
                     return E_FAIL;
                 }

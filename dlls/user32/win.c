@@ -2602,9 +2602,9 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongA( HWND hwnd, INT offset, LONG newval
  * SetWindowLong() alters one of a window's attributes or sets a 32-bit (long)
  * value in a window's extra memory.
  *
- * The _hwnd_ parameter specifies the window.  is the handle to a
- * window that has extra memory. The _newval_ parameter contains the
- * new attribute or extra memory value.  If positive, the _offset_
+ * The _hwnd_ parameter specifies the handle to a window that
+ * has extra memory. The _newval_ parameter contains the new
+ * attribute or extra memory value.  If positive, the _offset_
  * parameter is the byte-addressed location in the window's extra
  * memory to set.  If negative, _offset_ specifies the window
  * attribute to set, and should be one of the following values:
@@ -2615,7 +2615,7 @@ LONG WINAPI DECLSPEC_HOTPATCH SetWindowLongA( HWND hwnd, INT offset, LONG newval
  *
  * GWLP_WNDPROC     Pointer to the window's window procedure.
  *
- * GWLP_HINSTANCE   The window's pplication instance handle.
+ * GWLP_HINSTANCE   The window's application instance handle.
  *
  * GWLP_ID          The window's identifier.
  *

@@ -504,7 +504,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 const char *debugstr_mshtml_guid(const GUID *iid)
 {
 #define X(x) if(IsEqualGUID(iid, &x)) return #x
-    X(DIID_DispHTMLDocument);
     X(DIID_HTMLDocumentEvents);
     X(DIID_HTMLDocumentEvents2);
     X(DIID_HTMLTableEvents);
@@ -517,54 +516,10 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IEnumConnections);
     X(IID_IEnumVARIANT);
     X(IID_IHlinkTarget);
-    X(IID_IHTMLAttributeCollection);
-    X(IID_IHTMLAttributeCollection2);
-    X(IID_IHTMLAttributeCollection3);
-    X(IID_IHTMLCurrentStyle);
-    X(IID_IHTMLCurrentStyle2);
-    X(IID_IHTMLCurrentStyle3);
-    X(IID_IHTMLCurrentStyle4);
-    X(IID_IHTMLDocument);
-    X(IID_IHTMLDocument2);
-    X(IID_IHTMLDocument3);
-    X(IID_IHTMLDocument4);
-    X(IID_IHTMLDocument5);
     X(IID_IHTMLDocument6);
     X(IID_IHTMLDocument7);
-    X(IID_IHTMLDOMAttribute);
-    X(IID_IHTMLDOMChildrenCollection);
-    X(IID_IHTMLDOMImplementation);
-    X(IID_IHTMLDOMNode);
-    X(IID_IHTMLDOMNode2);
-    X(IID_IHTMLElement);
-    X(IID_IHTMLElement2);
-    X(IID_IHTMLElement3);
-    X(IID_IHTMLElement4);
-    X(IID_IHTMLElementCollection);
-    X(IID_IHTMLEventObj);
-    X(IID_IHTMLFiltersCollection);
     X(IID_IHTMLFramesCollection2);
-    X(IID_IHTMLImageElementFactory);
-    X(IID_IHTMLLocation);
-    X(IID_IHTMLOptionElementFactory);
     X(IID_IHTMLPrivateWindow);
-    X(IID_IHTMLRect);
-    X(IID_IHTMLScreen);
-    X(IID_IHTMLStorage);
-    X(IID_IHTMLStyle);
-    X(IID_IHTMLStyle2);
-    X(IID_IHTMLStyle3);
-    X(IID_IHTMLStyle4);
-    X(IID_IHTMLStyle5);
-    X(IID_IHTMLStyle6);
-    X(IID_IHTMLStyleSheet);
-    X(IID_IHTMLStyleSheetRulesCollection);
-    X(IID_IHTMLStyleSheetsCollection);
-    X(IID_IHTMLWindow2);
-    X(IID_IHTMLWindow3);
-    X(IID_IHTMLWindow4);
-    X(IID_IHTMLWindow5);
-    X(IID_IHTMLWindow6);
     X(IID_IHtmlLoadOptions);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
@@ -601,6 +556,11 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IViewObjectEx);
     X(IID_nsCycleCollectionISupports);
     X(IID_nsXPCOMCycleCollectionParticipant);
+#define XIID(x) X(IID_##x);
+#define XDIID(x) X(DIID_##x);
+    TID_LIST
+#undef XIID
+#undef XDIID
 #undef X
 
     return debugstr_guid(iid);

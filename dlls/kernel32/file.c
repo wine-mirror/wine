@@ -374,17 +374,20 @@ BOOL WINAPI ReadFileScatter( HANDLE file, FILE_SEGMENT_ELEMENT *segments, DWORD 
 {
     PIO_STATUS_BLOCK io_status;
     LARGE_INTEGER offset;
+    void *cvalue = NULL;
     NTSTATUS status;
 
     TRACE( "(%p %p %u %p)\n", file, segments, count, overlapped );
 
     offset.u.LowPart = overlapped->u.s.Offset;
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
     io_status->Information = 0;
 
-    status = NtReadFileScatter( file, NULL, NULL, NULL, io_status, segments, count, &offset, NULL );
+    status = NtReadFileScatter( file, overlapped->hEvent, NULL, cvalue, io_status,
+                                segments, count, &offset, NULL );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -513,17 +516,20 @@ BOOL WINAPI WriteFileGather( HANDLE file, FILE_SEGMENT_ELEMENT *segments, DWORD 
 {
     PIO_STATUS_BLOCK io_status;
     LARGE_INTEGER offset;
+    void *cvalue = NULL;
     NTSTATUS status;
 
     TRACE( "%p %p %u %p\n", file, segments, count, overlapped );
 
     offset.u.LowPart = overlapped->u.s.Offset;
     offset.u.HighPart = overlapped->u.s.OffsetHigh;
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
     io_status->Information = 0;
 
-    status = NtWriteFileGather( file, NULL, NULL, NULL, io_status, segments, count, &offset, NULL );
+    status = NtWriteFileGather( file, overlapped->hEvent, NULL, cvalue, io_status,
+                                segments, count, &offset, NULL );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -1859,10 +1865,13 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
 
     TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
-    if ((search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
-	|| flags != 0)
+    if (flags != 0)
     {
-        FIXME("options not implemented 0x%08x 0x%08x\n", search_op, flags );
+        FIXME("flags not implemented 0x%08x\n", flags );
+    }
+    if (search_op != FindExSearchNameMatch && search_op != FindExSearchLimitToDirectories)
+    {
+        FIXME("search_op not implemented 0x%08x\n", search_op);
         return INVALID_HANDLE_VALUE;
     }
     if (level != FindExInfoStandard)

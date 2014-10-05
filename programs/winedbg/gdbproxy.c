@@ -2342,11 +2342,13 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
 {
     char            buf[MAX_PATH];
     int             fd;
-    const char*     gdb_path;
+    const char      *gdb_path, *tmp_path;
     FILE*           f;
 
     if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
-    strcpy(buf,"/tmp/winegdb.XXXXXX");
+    if (!(tmp_path = getenv("TMPDIR"))) tmp_path = "/tmp";
+    strcpy(buf, tmp_path);
+    strcat(buf, "/winegdb.XXXXXX");
     fd = mkstemps(buf, 0);
     if (fd == -1) return FALSE;
     if ((f = fdopen(fd, "w+")) == NULL) return FALSE;

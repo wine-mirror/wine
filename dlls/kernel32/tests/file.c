@@ -2562,7 +2562,7 @@ static void test_FindNextFileA(void)
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES\n");
 }
 
-static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
+static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
 {
     WIN32_FIND_DATAA search_results;
     HANDLE handle;
@@ -2579,10 +2579,15 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
     SetLastError(0xdeadbeef);
-    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, 0);
+    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("FindFirstFileExA is not implemented\n");
+        goto cleanup;
+    }
+    if ((flags & FIND_FIRST_EX_LARGE_FETCH) && handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("FindFirstFileExA flag FIND_FIRST_EX_LARGE_FETCH not supported, skipping test\n");
         goto cleanup;
     }
     ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
@@ -2603,21 +2608,37 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops)
         skip("File system supports directory filtering\n");
         /* Results from the previous call are not cleared */
         ok(strcmp(search_results.cFileName, "dir1") == 0, "Third entry should be 'dir1' is %s\n", search_results.cFileName);
-        FindClose( handle );
-        goto cleanup;
     }
+    else
+    {
+        ok(ret, "Fetching fourth file failed\n");
+        ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
 
-    ok(ret, "Fetching fourth file failed\n");
-    ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
+        ok(FindNextFileA(handle, &search_results), "Fetching fifth file failed\n");
+        ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
 
-    ok(FindNextFileA(handle, &search_results), "Fetching fifth file failed\n");
-    ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
+        ok(FindNextFileA(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
+    }
 
 #undef CHECK_NAME
 
-    ok(FindNextFileA(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
-
     FindClose( handle );
+
+    /* Most Windows systems seem to ignore the FIND_FIRST_EX_CASE_SENSITIVE flag. Unofficial documentation
+     * suggests that there are registry keys and that it might depend on the used filesystem. */
+    SetLastError(0xdeadbeef);
+    handle = pFindFirstFileExA("TEST-DIR\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
+    if (flags & FIND_FIRST_EX_CASE_SENSITIVE)
+    {
+        ok(handle != INVALID_HANDLE_VALUE || GetLastError() == ERROR_PATH_NOT_FOUND,
+           "Unexpected error %x, expected valid handle or ERROR_PATH_NOT_FOUND\n", GetLastError());
+        trace("FindFirstFileExA flag FIND_FIRST_EX_CASE_SENSITIVE is %signored\n",
+              (handle == INVALID_HANDLE_VALUE) ? "not " : "");
+    }
+    else
+        ok(handle != INVALID_HANDLE_VALUE, "Unexpected error %x, expected valid handle\n", GetLastError());
+    if (handle != INVALID_HANDLE_VALUE)
+        FindClose( handle );
 
 cleanup:
     DeleteFileA("test-dir\\file1");
@@ -3959,6 +3980,63 @@ static void test_SetFileValidData(void)
     DeleteFileA(filename);
 }
 
+static void test_WriteFileGather(void)
+{
+    char temp_path[MAX_PATH], filename[MAX_PATH];
+    HANDLE hfile, hiocp1, hiocp2;
+    DWORD ret, size;
+    ULONG_PTR key;
+    FILE_SEGMENT_ELEMENT fse[2];
+    OVERLAPPED ovl, *povl = NULL;
+    SYSTEM_INFO si;
+    LPVOID buf = NULL;
+
+    ret = GetTempPathA( MAX_PATH, temp_path );
+    ok( ret != 0, "GetTempPathA error %d\n", GetLastError() );
+    ok( ret < MAX_PATH, "temp path should fit into MAX_PATH\n" );
+    ret = GetTempFileNameA( temp_path, "wfg", 0, filename );
+    ok( ret != 0, "GetTempFileNameA error %d\n", GetLastError() );
+
+    hfile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS,
+                         FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, 0 );
+    ok( hfile != INVALID_HANDLE_VALUE, "CreateFile failed err %u\n", GetLastError() );
+    if (hfile == INVALID_HANDLE_VALUE) return;
+
+    hiocp1 = CreateIoCompletionPort( INVALID_HANDLE_VALUE, NULL, 999, 0 );
+    hiocp2 = CreateIoCompletionPort( hfile, hiocp1, 999, 0 );
+    ok( hiocp2 != 0, "CreateIoCompletionPort failed err %u\n", GetLastError() );
+
+    GetSystemInfo( &si );
+    buf = VirtualAlloc( NULL, si.dwPageSize, MEM_COMMIT, PAGE_READWRITE );
+    ok( buf != NULL, "VirtualAlloc failed err %u\n", GetLastError() );
+
+    memset( &ovl, 0, sizeof(ovl) );
+    memset( fse, 0, sizeof(fse) );
+    fse[0].Buffer = buf;
+    if (!WriteFileGather( hfile, fse, si.dwPageSize, NULL, &ovl ))
+        ok( GetLastError() == ERROR_IO_PENDING, "WriteFileGather failed err %u\n", GetLastError() );
+
+    ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 1000 );
+    ok( ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError());
+    ok( povl == &ovl, "wrong ovl %p\n", povl );
+
+    memset( &ovl, 0, sizeof(ovl) );
+    memset( fse, 0, sizeof(fse) );
+    fse[0].Buffer = buf;
+    if (!ReadFileScatter( hfile, fse, si.dwPageSize, NULL, &ovl ))
+        ok( GetLastError() == ERROR_IO_PENDING, "ReadFileScatter failed err %u\n", GetLastError() );
+
+    ret = GetQueuedCompletionStatus( hiocp2, &size, &key, &povl, 1000 );
+    ok( ret, "GetQueuedCompletionStatus failed err %u\n", GetLastError());
+    ok( povl == &ovl, "wrong ovl %p\n", povl );
+
+    CloseHandle( hfile );
+    CloseHandle( hiocp1 );
+    CloseHandle( hiocp2 );
+    VirtualFree( buf, 0, MEM_RELEASE );
+    DeleteFileA( filename );
+}
+
 static unsigned file_map_access(unsigned access)
 {
     if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
@@ -4114,9 +4192,13 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
-    test_FindFirstFileExA(0);
+    test_FindFirstFileExA(0, 0);
+    test_FindFirstFileExA(0, FIND_FIRST_EX_CASE_SENSITIVE);
+    test_FindFirstFileExA(0, FIND_FIRST_EX_LARGE_FETCH);
     /* FindExLimitToDirectories is ignored if the file system doesn't support directory filtering */
-    test_FindFirstFileExA(FindExSearchLimitToDirectories);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, 0);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_CASE_SENSITIVE);
+    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_LARGE_FETCH);
     test_LockFile();
     test_file_sharing();
     test_offset_in_overlapped_structure();
@@ -4132,5 +4214,6 @@ START_TEST(file)
     test_GetFileInformationByHandleEx();
     test_OpenFileById();
     test_SetFileValidData();
+    test_WriteFileGather();
     test_file_access();
 }

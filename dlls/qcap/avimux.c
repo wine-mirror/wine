@@ -1678,7 +1678,7 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
         hr = IMediaSample_SetDiscontinuity(sample, FALSE);
     if(SUCCEEDED(hr))
         hr = IMediaSample_SetSyncPoint(sample, flags & AM_SAMPLE_SPLICEPOINT);
-    /* TODO: avoid unnecesarry copying */
+    /* TODO: avoid unnecessary copying */
     if(SUCCEEDED(hr))
         hr = IMediaSample_GetPointer(sample, &buf);
     if(SUCCEEDED(hr)) {

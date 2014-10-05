@@ -1162,10 +1162,11 @@ complex_float* __thiscall complex_float_mult_assign_float(complex_float *this, c
 DEFINE_THISCALL_WRAPPER(complex_float_mult_assign, 8)
 complex_float* __thiscall complex_float_mult_assign(complex_float *this, const complex_float *r)
 {
-    complex_float tmp = *this;
+    complex_float tmp;
 
-    this->real = tmp.real*r->real - tmp.imag*r->imag;
-    this->imag = tmp.real*r->imag + tmp.imag*r->real;
+    tmp.real = this->real*r->real - this->imag*r->imag;
+    tmp.imag = this->real*r->imag + this->imag*r->real;
+    *this = tmp;
     return this;
 }
 
@@ -1460,6 +1461,29 @@ complex_float* __cdecl complex_float_pow_cf(complex_float *ret, const complex_fl
 {
     complex_float c = { *r, 0 };
     return complex_float_pow(ret, l, &c);
+}
+
+/*  ??$pow@M@std@@YA?AV?$complex@M@0@ABV10@H@Z  */
+/*  ??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@H@Z */
+complex_float* __cdecl complex_float_pow_ci(complex_float *ret, const complex_float *l, int r)
+{
+    complex_float c = *l;
+    complex_float unit_value = { 1.0, 0 };
+    complex_float_assign(ret, &unit_value);
+
+    if(r < 0) {
+        r = -r;
+        complex_float_div(&c, &unit_value, l);
+    }
+
+    for(; r>0; r>>=1) {
+        if(r & 1)
+            complex_float_mult_assign(ret, &c);
+        if(r != 1)
+            complex_float_mult_assign(&c, &c);
+    }
+
+    return ret;
 }
 
 /* ??$sqrt@M@std@@YA?AV?$complex@M@0@ABV10@@Z */
@@ -1796,10 +1820,11 @@ complex_double* __thiscall complex_double_mult_assign_double(complex_double *thi
 DEFINE_THISCALL_WRAPPER(complex_double_mult_assign, 8)
 complex_double* __thiscall complex_double_mult_assign(complex_double *this, const complex_double *r)
 {
-    complex_double tmp = *this;
+    complex_double tmp;
 
-    this->real = tmp.real*r->real - tmp.imag*r->imag;
-    this->imag = tmp.real*r->imag + tmp.imag*r->real;
+    tmp.real = this->real*r->real - this->imag*r->imag;
+    tmp.imag = this->real*r->imag + this->imag*r->real;
+    *this = tmp;
     return this;
 }
 
@@ -2156,6 +2181,31 @@ complex_double* __cdecl complex_double_pow_cd(complex_double *ret, const complex
 {
     complex_double c = { *r, 0 };
     return complex_double_pow(ret, l, &c);
+}
+
+/*  ??$pow@N@std@@YA?AV?$complex@N@0@ABV10@H@Z  */
+/*  ??$pow@N@std@@YA?AV?$complex@N@0@AEBV10@H@Z */
+/*  ??$pow@O@std@@YA?AV?$complex@O@0@ABV10@H@Z  */
+/*  ??$pow@O@std@@YA?AV?$complex@O@0@AEBV10@H@Z */
+complex_double* __cdecl complex_double_pow_ci(complex_double *ret, const complex_double *l, int r)
+{
+    complex_double c = *l;
+    complex_double unit_value = { 1.0, 0 };
+    complex_double_assign(ret, &unit_value);
+
+    if(r < 0) {
+        r = -r;
+        complex_double_div(&c, &unit_value, l);
+    }
+
+    for(; r>0; r>>=1) {
+        if(r & 1)
+            complex_double_mult_assign(ret, &c);
+        if(r != 1)
+            complex_double_mult_assign(&c, &c);
+    }
+
+    return ret;
 }
 
 /* ??$sqrt@N@std@@YA?AV?$complex@N@0@ABV10@@Z */

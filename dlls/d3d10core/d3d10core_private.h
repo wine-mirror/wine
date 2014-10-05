@@ -63,6 +63,7 @@ DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSP
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
+DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -157,6 +158,7 @@ struct d3d10_shader_resource_view
     ID3D10ShaderResourceView ID3D10ShaderResourceView_iface;
     LONG refcount;
 
+    struct wined3d_shader_resource_view *wined3d_view;
     D3D10_SHADER_RESOURCE_VIEW_DESC desc;
     ID3D10Resource *resource;
     ID3D10Device1 *device;
@@ -164,6 +166,8 @@ struct d3d10_shader_resource_view
 
 HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d10_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(
+        ID3D10ShaderResourceView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10InputLayout */
 struct d3d10_input_layout
@@ -294,11 +298,14 @@ struct d3d10_query
     ID3D10Query ID3D10Query_iface;
     LONG refcount;
 
+    struct wined3d_query *wined3d_query;
     BOOL predicate;
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device, BOOL predicate) DECLSPEC_HIDDEN;
+HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
+        const D3D10_QUERY_DESC *desc, BOOL predicate) DECLSPEC_HIDDEN;
+struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 
 /* IDirect3D10Device1 */
 struct d3d10_device

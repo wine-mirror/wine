@@ -111,6 +111,9 @@ static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r'
 static const WCHAR mouseupW[] = {'m','o','u','s','e','u','p',0};
 static const WCHAR onmouseupW[] = {'o','n','m','o','u','s','e','u','p',0};
 
+static const WCHAR mousewheelW[] = {'m','o','u','s','e','w','h','e','e','l',0};
+static const WCHAR onmousewheelW[] = {'o','n','m','o','u','s','e','w','h','e','e','l',0};
+
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
 static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
 
@@ -207,6 +210,8 @@ static const event_info_t event_info[] = {
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseupW,           onmouseupW,           EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEUP,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mousewheelW,        onmousewheelW,        EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEWHEEL,
+        0},
     {pasteW,             onpasteW,             EVENTT_NONE,   DISPID_EVMETH_ONPASTE,
         EVENT_CANCELABLE},
     {readystatechangeW,  onreadystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
@@ -1328,16 +1333,8 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *eve
         return S_OK;
 
     if(event_info[eid].flags & EVENT_BIND_TO_BODY) {
-        nsIDOMHTMLElement *nsbody;
-        nsresult nsres;
-
-        nsres = nsIDOMHTMLDocument_GetBody(doc->nsdoc, &nsbody);
-        if(NS_SUCCEEDED(nsres) && nsbody) {
-            nsnode = (nsIDOMNode*)nsbody;
-        }else {
-            ERR("GetBody failed: %08x\n", nsres);
-            return E_UNEXPECTED;
-        }
+        nsnode = doc->node.nsnode;
+        nsIDOMNode_AddRef(nsnode);
     }
 
     doc->event_vector[eid] = TRUE;

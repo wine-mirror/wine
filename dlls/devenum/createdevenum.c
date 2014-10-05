@@ -761,7 +761,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                     VARIANT var;
 
                     V_VT(&var) = VT_I4;
-                    V_UNION(&var, ulVal) = i;
+                    V_I4(&var) = i;
                     res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
                     if (SUCCEEDED(res))
                         res = IPropertyBag_Write(pPropBag, wszWaveOutID, &var);
@@ -769,7 +769,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                         pPropBag = NULL;
 
                     V_VT(&var) = VT_LPWSTR;
-                    V_UNION(&var, bstrVal) = wocaps.szPname;
+                    V_BSTR(&var) = wocaps.szPname;
                     if (SUCCEEDED(res))
                         res = IPropertyBag_Write(pPropBag, wszFriendlyName, &var);
                     if (pPropBag)
@@ -842,7 +842,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                     VARIANT var;
 
                     V_VT(&var) = VT_I4;
-                    V_UNION(&var, ulVal) = i;
+                    V_I4(&var) = i;
                     res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
                     if (SUCCEEDED(res))
                         res = IPropertyBag_Write(pPropBag, wszWaveInID, &var);
@@ -850,7 +850,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                         pPropBag = NULL;
 
                     V_VT(&var) = VT_LPWSTR;
-                    V_UNION(&var, bstrVal) = wicaps.szPname;
+                    V_BSTR(&var) = wicaps.szPname;
                     if (SUCCEEDED(res))
                         res = IPropertyBag_Write(pPropBag, wszFriendlyName, &var);
 
@@ -952,7 +952,7 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
                        OLECHAR wszVfwIndex[] = { 'V','F','W','I','n','d','e','x',0 };
                        VARIANT var;
                        V_VT(&var) = VT_I4;
-                       V_UNION(&var, ulVal) = i;
+                       V_I4(&var) = i;
                        res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
                        if (SUCCEEDED(res)) {
                            res = IPropertyBag_Write(pPropBag, wszVfwIndex, &var);

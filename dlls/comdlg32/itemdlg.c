@@ -202,6 +202,18 @@ static void events_OnSelectionChange(FileDialogImpl *This)
     }
 }
 
+static void events_OnTypeChange(FileDialogImpl *This)
+{
+    events_client *cursor;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IFileDialogEvents_OnTypeChange(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface);
+    }
+}
+
 static inline HRESULT get_cctrl_event(IFileDialogEvents *pfde, IFileDialogControlEvents **pfdce)
 {
     return IFileDialogEvents_QueryInterface(pfde, &IID_IFileDialogControlEvents, (void**)pfdce);
@@ -1523,9 +1535,31 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     hitem = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE);
     if(This->filterspec_count)
     {
-        UINT i;
+        HDC hdc;
+        HFONT font;
+        SIZE size;
+        UINT i, maxwidth = 0;
+
+        hdc = GetDC(hitem);
+        font = (HFONT)SendMessageW(hitem, WM_GETFONT, 0, 0);
+        SelectObject(hdc, font);
+
         for(i = 0; i < This->filterspec_count; i++)
+        {
             SendMessageW(hitem, CB_ADDSTRING, 0, (LPARAM)This->filterspecs[i].pszName);
+
+            if(GetTextExtentPoint32W(hdc, This->filterspecs[i].pszName, lstrlenW(This->filterspecs[i].pszName), &size))
+                maxwidth = max(maxwidth, size.cx);
+        }
+        ReleaseDC(hitem, hdc);
+
+        if(maxwidth > 0)
+        {
+            maxwidth += GetSystemMetrics(SM_CXVSCROLL) + 4;
+            SendMessageW(hitem, CB_SETDROPPEDWIDTH, (WPARAM)maxwidth, 0);
+        }
+        else
+            ERR("Failed to calculate width of filetype dropdown\n");
 
         SendMessageW(hitem, CB_SETCURSEL, This->filetypeindex, 0);
     }
@@ -1541,6 +1575,9 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     init_toolbar(This, hwnd);
     update_control_text(This);
     update_layout(This);
+
+    if(This->filterspec_count)
+        events_OnTypeChange(This);
 
     return TRUE;
 }
@@ -1652,6 +1689,11 @@ static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM l
             }
             CoTaskMemFree(filename);
         }
+
+        /* The documentation claims that OnTypeChange is called only
+         * when the dialog is opened, but this is obviously not the
+         * case. */
+        events_OnTypeChange(This);
     }
 
     return FALSE;
@@ -1860,10 +1902,9 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypeIndex(IFileDialog2 *iface, UINT 
     if(!This->filterspecs)
         return E_FAIL;
 
-    if(iFileType >= This->filterspec_count)
-        This->filetypeindex = This->filterspec_count - 1;
-    else
-        This->filetypeindex = iFileType;
+    iFileType = max(iFileType, 1);
+    iFileType = min(iFileType, This->filterspec_count);
+    This->filetypeindex = iFileType-1;
 
     return S_OK;
 }
@@ -1876,7 +1917,10 @@ static HRESULT WINAPI IFileDialog2_fnGetFileTypeIndex(IFileDialog2 *iface, UINT 
     if(!piFileType)
         return E_INVALIDARG;
 
-    *piFileType = This->filetypeindex;
+    if(This->filterspec_count == 0)
+        *piFileType = 0;
+    else
+        *piFileType = This->filetypeindex + 1;
 
     return S_OK;
 }
@@ -3243,7 +3287,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize
     HRESULT hr;
     TRACE("%p (%d, %p, %d)\n", This, dwIDCtl, pszLabel, bChecked);
 
-    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX, 0,
+    hr = cctrl_create_new(This, dwIDCtl, pszLabel, WC_BUTTONW, BS_AUTOCHECKBOX|BS_MULTILINE, 0,
                           This->cctrl_def_height, &ctrl);
     if(SUCCEEDED(hr))
     {

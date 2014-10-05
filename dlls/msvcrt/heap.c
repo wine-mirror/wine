@@ -150,6 +150,9 @@ void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
   } while(freed);
 
   TRACE("(%ld) out of memory\n", size);
+#if _MSVCR_VER >= 80
+  throw_bad_alloc("bad allocation");
+#endif
   return NULL;
 }
 

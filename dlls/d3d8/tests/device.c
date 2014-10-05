@@ -3343,7 +3343,7 @@ static void test_validate_ps(void)
     *ps = 0xffff0101;                                                           /* ps_1_1                       */
     hr = ValidatePixelShader(ps, ps, 1, 0);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    /* I've seen th 3rd parameter always passed as either 0 or 1, but passing
+    /* I've seen the 3rd parameter always passed as either 0 or 1, but passing
      * other values doesn't seem to hurt. */
     hr = ValidatePixelShader(ps, 0, 12345, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);

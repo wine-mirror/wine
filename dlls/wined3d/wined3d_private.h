@@ -156,16 +156,17 @@ void *wined3d_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;
 void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 
 /* Device caps */
-#define MAX_STREAM_OUT          4
-#define MAX_STREAMS             16
-#define MAX_TEXTURES            8
-#define MAX_FRAGMENT_SAMPLERS   16
-#define MAX_VERTEX_SAMPLERS     4
-#define MAX_COMBINED_SAMPLERS   (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
-#define MAX_ACTIVE_LIGHTS       8
-#define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
-#define MAX_CONSTANT_BUFFERS    15
-#define MAX_SAMPLER_OBJECTS     16
+#define MAX_STREAM_OUT              4
+#define MAX_STREAMS                 16
+#define MAX_TEXTURES                8
+#define MAX_FRAGMENT_SAMPLERS       16
+#define MAX_VERTEX_SAMPLERS         4
+#define MAX_COMBINED_SAMPLERS       (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
+#define MAX_ACTIVE_LIGHTS           8
+#define MAX_CLIPPLANES              WINED3DMAXUSERCLIPPLANES
+#define MAX_CONSTANT_BUFFERS        15
+#define MAX_SAMPLER_OBJECTS         16
+#define MAX_SHADER_RESOURCE_VIEWS   128
 
 struct min_lookup
 {
@@ -257,7 +258,7 @@ struct wined3d_settings
     unsigned short pci_vendor_id;
     unsigned short pci_device_id;
     /* Memory tracking and object counting. */
-    unsigned int emulated_textureram;
+    UINT64 emulated_textureram;
     char *logo;
     int allow_multisampling;
     BOOL strict_draw_ordering;
@@ -1861,10 +1862,13 @@ struct wined3d_state
     INT base_vertex_index;
     INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
     GLenum gl_primitive_type;
+    struct wined3d_query *predicate;
+    BOOL predicate_value;
 
     struct wined3d_shader *shader[WINED3D_SHADER_TYPE_COUNT];
     struct wined3d_buffer *cb[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *sampler[WINED3D_SHADER_TYPE_COUNT][MAX_SAMPLER_OBJECTS];
+    struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
 
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
@@ -2316,6 +2320,8 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
+HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
+        const struct wined3d_gl_info *gl_info, void *mem, unsigned int pitch) DECLSPEC_HIDDEN;
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;
 void surface_validate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
@@ -2344,25 +2350,15 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_ALLOCATED         0x00000800 /* A GL texture is allocated for this surface. */
 #define SFLAG_SRGBALLOCATED     0x00001000 /* A sRGB GL texture is allocated for this surface. */
 
-/* In some conditions the surface memory must not be freed:
- * SFLAG_CONVERTED: Converting the data back would take too long
- * SFLAG_DYNLOCK: Avoid freeing the data for performance
- * SFLAG_CLIENT: OpenGL uses our memory as backup
- */
-#define SFLAG_DONOTFREE     (SFLAG_CONVERTED        | \
-                             SFLAG_DYNLOCK          | \
-                             SFLAG_CLIENT           | \
-                             SFLAG_PIN_SYSMEM)
-
 enum wined3d_conversion_type
 {
     WINED3D_CT_NONE,
-    WINED3D_CT_PALETTED,
-    WINED3D_CT_CK_565,
-    WINED3D_CT_CK_5551,
-    WINED3D_CT_CK_RGB24,
-    WINED3D_CT_RGB32_888,
-    WINED3D_CT_CK_ARGB32,
+    WINED3D_CT_P8,
+    WINED3D_CT_CK_B5G6R5,
+    WINED3D_CT_CK_B5G5R5X1,
+    WINED3D_CT_CK_B8G8R8,
+    WINED3D_CT_CK_B8G8R8X8,
+    WINED3D_CT_CK_B8G8R8A8,
 };
 
 struct wined3d_sampler
@@ -2506,10 +2502,14 @@ void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_predication(struct wined3d_cs *cs,
+        struct wined3d_query *predicate, BOOL value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int view_idx,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
+        UINT view_idx, struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT sampler_idx, struct wined3d_sampler *sampler) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_sampler_state(struct wined3d_cs *cs, UINT sampler_idx,
@@ -2551,6 +2551,8 @@ struct wined3d_query_ops
 struct wined3d_query
 {
     LONG ref;
+
+    void *parent;
     const struct wined3d_query_ops *query_ops;
     struct wined3d_device *device;
     enum query_state         state;
@@ -2645,6 +2647,14 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
 
     return surface_from_resource(resource);
 }
+
+struct wined3d_shader_resource_view
+{
+    LONG refcount;
+
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+};
 
 struct wined3d_swapchain_ops
 {

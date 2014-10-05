@@ -3407,10 +3407,6 @@ HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, AB
  *  Success: S_OK
  *  Failure: Non-zero HRESULT value.
  *
- * BUGS
- *  This stub works correctly for any sequence of a single
- *  embedding level but not for sequences of different
- *  embedding levels, i.e. mixtures of RTL and LTR scripts.
  */
 HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *logtovis)
 {

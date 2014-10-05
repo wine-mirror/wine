@@ -1,6 +1,6 @@
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
-IMPORTS   = dxguid uuid wined3d
+IMPORTS   = dxguid uuid wined3d user32
 
 C_SRCS = \
 	adapter.c \

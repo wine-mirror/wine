@@ -423,12 +423,12 @@ struct security_descriptor *default_get_sd( struct object *obj )
     return obj->sd;
 }
 
-int default_set_sd( struct object *obj, const struct security_descriptor *sd,
-                    unsigned int set_info )
+int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
+                                unsigned int set_info, struct token *token )
 {
     struct security_descriptor new_sd, *new_sd_ptr;
     int present;
-    const SID *owner, *group;
+    const SID *owner = NULL, *group = NULL;
     const ACL *sacl, *dacl;
     char *ptr;
 
@@ -446,9 +446,9 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
         owner = sd_get_owner( obj->sd );
         new_sd.owner_len = obj->sd->owner_len;
     }
-    else
+    else if (token)
     {
-        owner = token_get_user( current->process->token );
+        owner = token_get_user( token );
         new_sd.owner_len = security_sid_len( owner );
     }
 
@@ -462,9 +462,9 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
         group = sd_get_group( obj->sd );
         new_sd.group_len = obj->sd->group_len;
     }
-    else
+    else if (token)
     {
-        group = token_get_primary_group( current->process->token );
+        group = token_get_primary_group( token );
         new_sd.group_len = security_sid_len( group );
     }
 
@@ -494,9 +494,9 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
 
         if (obj->sd && present)
             new_sd.dacl_len = obj->sd->dacl_len;
-        else
+        else if (token)
         {
-            dacl = token_get_default_dacl( current->process->token );
+            dacl = token_get_default_dacl( token );
             new_sd.dacl_len = dacl->AclSize;
         }
     }
@@ -519,6 +519,13 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
     free( obj->sd );
     obj->sd = new_sd_ptr;
     return 1;
+}
+
+/** Set the security descriptor using the current primary token for defaults. */
+int default_set_sd( struct object *obj, const struct security_descriptor *sd,
+                    unsigned int set_info )
+{
+    return set_sd_defaults_from_token( obj, sd, set_info, current->process->token );
 }
 
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,

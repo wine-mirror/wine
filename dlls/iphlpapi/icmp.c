@@ -148,6 +148,63 @@ static int in_cksum(u_short *addr, int len)
  */
 
 /***********************************************************************
+ *		Icmp6CreateFile (IPHLPAPI.@)
+ */
+HANDLE WINAPI Icmp6CreateFile(VOID)
+{
+    icmp_t* icp;
+
+    int sid=socket(AF_INET6,SOCK_RAW,IPPROTO_ICMPV6);
+    if (sid < 0)
+    {
+        /* Mac OS X supports non-privileged ICMP via SOCK_DGRAM type. */
+        sid=socket(AF_INET6,SOCK_DGRAM,IPPROTO_ICMPV6);
+    }
+    if (sid < 0) {
+        ERR_(winediag)("Failed to use ICMPV6 (network ping), this requires special permissions.\n");
+        SetLastError(ERROR_ACCESS_DENIED);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    icp=HeapAlloc(GetProcessHeap(), 0, sizeof(*icp));
+    if (icp==NULL) {
+        close(sid);
+        SetLastError(IP_NO_RESOURCES);
+        return INVALID_HANDLE_VALUE;
+    }
+    icp->sid=sid;
+    icp->default_opts.OptionsSize=IP_OPTS_UNKNOWN;
+    return (HANDLE)icp;
+}
+
+
+/***********************************************************************
+ *		Icmp6SendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI Icmp6SendEcho2(
+    HANDLE                   IcmpHandle,
+    HANDLE                   Event,
+    PIO_APC_ROUTINE          ApcRoutine,
+    PVOID                    ApcContext,
+    struct sockaddr_in6*     SourceAddress,
+    struct sockaddr_in6*     DestinationAddress,
+    LPVOID                   RequestData,
+    WORD                     RequestSize,
+    PIP_OPTION_INFORMATION   RequestOptions,
+    LPVOID                   ReplyBuffer,
+    DWORD                    ReplySize,
+    DWORD                    Timeout
+    )
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle, Event,
+            ApcRoutine, ApcContext, SourceAddress, DestinationAddress, RequestData,
+            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+
+/***********************************************************************
  *		IcmpCreateFile (IPHLPAPI.@)
  */
 HANDLE WINAPI IcmpCreateFile(VOID)

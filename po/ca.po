@@ -3591,107 +3591,131 @@ msgstr "S'esperava ')'"
 
 #: jscript.rc:40
 #, fuzzy
+#| msgid "Subject Key Identifier"
+msgid "Expected identifier"
+msgstr "Identificador de Clau de Subjecte"
+
+#: jscript.rc:41
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '='"
+msgstr "S'esperava ';'"
+
+#: jscript.rc:42
+#, fuzzy
 #| msgid "Invalid parameter.\n"
 msgid "Invalid character"
 msgstr "Paràmetre invàlid.\n"
 
-#: jscript.rc:41
+#: jscript.rc:43
 msgid "Unterminated string constant"
 msgstr "Cadena constant no finalitzat"
 
-#: jscript.rc:42
+#: jscript.rc:44
 msgid "'return' statement outside of function"
 msgstr ""
 
-#: jscript.rc:43
+#: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
 msgstr "No es pot tenir 'break' fora d'un bucle"
 
-#: jscript.rc:44
+#: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
 msgstr "No es pot tenir 'continue' fora d'un bucle"
 
-#: jscript.rc:45
+#: jscript.rc:47
 msgid "Label redefined"
 msgstr "Etiqueta redefinida"
 
-#: jscript.rc:46
+#: jscript.rc:48
 msgid "Label not found"
 msgstr "Etiqueta no trobada"
 
-#: jscript.rc:47
+#: jscript.rc:49
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@end'"
+msgstr "S'esperava ';'"
+
+#: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "La compilació condicional està desactivada"
 
-#: jscript.rc:50
+#: jscript.rc:51
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected '@'"
+msgstr "S'esperava ';'"
+
+#: jscript.rc:54
 msgid "Number expected"
 msgstr "S'esperava un nombre"
 
-#: jscript.rc:48
+#: jscript.rc:52
 msgid "Function expected"
 msgstr "S'esperava una funció"
 
-#: jscript.rc:49
+#: jscript.rc:53
 msgid "'[object]' is not a date object"
 msgstr "'[objecte]' no és un objecte de data"
 
-#: jscript.rc:51
+#: jscript.rc:55
 msgid "Object expected"
 msgstr "S'esperava un objecte"
 
-#: jscript.rc:52
+#: jscript.rc:56
 msgid "Illegal assignment"
 msgstr "Assignació il·legal"
 
-#: jscript.rc:53
+#: jscript.rc:57
 msgid "'|' is undefined"
 msgstr "'|' no està definit"
 
-#: jscript.rc:54
+#: jscript.rc:58
 msgid "Boolean object expected"
 msgstr "S'esperava un objecte booleà"
 
-#: jscript.rc:55
+#: jscript.rc:59
 msgid "Cannot delete '|'"
 msgstr "No es pot suprimir '|'"
 
-#: jscript.rc:56
+#: jscript.rc:60
 msgid "VBArray object expected"
 msgstr "S'esperava un objecte VBArray"
 
-#: jscript.rc:57
+#: jscript.rc:61
 msgid "JScript object expected"
 msgstr "S'esperava un objecte JScript"
 
-#: jscript.rc:58
+#: jscript.rc:62
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
-#: jscript.rc:60
+#: jscript.rc:64
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI per a codificar conté caràcters invàlids"
 
-#: jscript.rc:59
+#: jscript.rc:63
 msgid "URI to be decoded is incorrect"
 msgstr "URI per a descodificar és incorrecte"
 
-#: jscript.rc:61
+#: jscript.rc:65
 #, fuzzy
 #| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
 msgstr "Valor d'enumeració fora de rang.\n"
 
-#: jscript.rc:62
+#: jscript.rc:66
 #, fuzzy
 #| msgid "Subscript out of range"
 msgid "Precision is out of range"
 msgstr "El subíndex està fora del rang"
 
-#: jscript.rc:63
+#: jscript.rc:67
 msgid "Array length must be a finite positive integer"
 msgstr "Longitud del vector ha de ser un enter positiu finit"
 
-#: jscript.rc:64
+#: jscript.rc:68
 msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 

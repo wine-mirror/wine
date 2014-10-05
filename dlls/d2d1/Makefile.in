@@ -1,11 +1,14 @@
 MODULE    = d2d1.dll
 IMPORTLIB = d2d1
-IMPORTS   = uuid
+IMPORTS   = d3d10_1 dxguid uuid
 
 C_SRCS = \
+	bitmap.c \
 	brush.c \
 	factory.c \
+	mesh.c \
 	render_target.c \
-	stroke.c
+	stroke.c \
+	wic_render_target.c
 
 RC_SRCS = version.rc

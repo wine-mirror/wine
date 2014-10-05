@@ -185,7 +185,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         }
     }
 
-    status = NtWaitForMultipleObjects( count, hloc, wait_all, alertable,
+    status = NtWaitForMultipleObjects( count, hloc, !wait_all, alertable,
                                        get_nt_timeout( &time, timeout ) );
 
     if (HIWORD(status))  /* is it an error code? */

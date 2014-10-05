@@ -8,4 +8,6 @@ C_SRCS = \
 	atl_ax.c \
 	registrar.c
 
+IDL_SRCS = atl_lib.idl
+
 RC_SRCS = atl90.rc

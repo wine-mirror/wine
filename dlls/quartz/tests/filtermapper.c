@@ -62,7 +62,7 @@ static BOOL enum_find_filter(const WCHAR *wszFilterName, IEnumMoniker *pEnum)
         {
             CHAR val1[512], val2[512];
 
-            WideCharToMultiByte(CP_ACP, 0, V_UNION(&var, bstrVal), -1, val1, sizeof(val1), 0, 0);
+            WideCharToMultiByte(CP_ACP, 0, V_BSTR(&var), -1, val1, sizeof(val1), 0, 0);
             WideCharToMultiByte(CP_ACP, 0, wszFilterName, -1, val2, sizeof(val2), 0, 0);
             if (!lstrcmpA(val1, val2)) found = TRUE;
         }

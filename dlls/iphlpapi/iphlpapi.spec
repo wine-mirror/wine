@@ -150,9 +150,9 @@
 #@ stub GetUnicastIpAddressEntry
 #@ stub GetUnicastIpAddressTable
 @ stdcall GetUniDirectionalAdapterInfo( ptr ptr )
-#@ stub Icmp6CreateFile
+@ stdcall Icmp6CreateFile()
 #@ stub Icmp6ParseReplies
-#@ stub Icmp6SendEcho2
+@ stdcall Icmp6SendEcho2(ptr ptr ptr ptr ptr ptr ptr long ptr ptr long long)
 @ stdcall IcmpCloseHandle(ptr)
 @ stdcall IcmpCreateFile()
 @ stub IcmpParseReplies

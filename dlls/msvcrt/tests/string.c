@@ -89,6 +89,7 @@ static int (__cdecl *p_tolower)(int);
 static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
 static size_t (__cdecl *p_mbrtowc)(wchar_t*, const char*, size_t, mbstate_t*);
 static int (__cdecl *p__atodbl_l)(_CRT_DOUBLE*,char*,_locale_t);
+static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -2547,6 +2548,8 @@ static void test__stricmp(void)
     ok(ret > 0, "_stricmp returned %d\n", ret);
     ret = _stricmp("\xa5", "\xb9");
     ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
 
     setlocale(LC_ALL, "C");
 }
@@ -2716,6 +2719,36 @@ static void test_strxfrm(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test__strnset_s(void)
+{
+    char buf[5] = {0};
+    int r;
+
+    if(!p__strnset_s) {
+        win_skip("_strnset_s not available\n");
+        return;
+    }
+
+    r = p__strnset_s(NULL, 0, 'a', 0);
+    ok(r == 0, "r = %d\n", r);
+
+    buf[0] = buf[1] = buf[2] = 'b';
+    r = p__strnset_s(buf, sizeof(buf), 'a', 2);
+    ok(r == 0, "r = %d\n", r);
+    ok(!strcmp(buf, "aab"), "buf = %s\n", buf);
+
+    r = p__strnset_s(buf, 0, 'a', 0);
+    ok(r == EINVAL, "r = %d\n", r);
+
+    r = p__strnset_s(NULL, 0, 'a', 1);
+    ok(r == EINVAL, "r = %d\n", r);
+
+    buf[3] = 'b';
+    r = p__strnset_s(buf, sizeof(buf)-1, 'c', 2);
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(!buf[0] && buf[1]=='c' && buf[2]=='b', "buf = %s\n", buf);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2763,6 +2796,7 @@ START_TEST(string)
     p_mbrtowc = (void*)GetProcAddress(hMsvcrt, "mbrtowc");
     p_mbsrtowcs = (void*)GetProcAddress(hMsvcrt, "mbsrtowcs");
     p__atodbl_l = (void*)GetProcAddress(hMsvcrt, "_atodbl_l");
+    p__strnset_s = (void*)GetProcAddress(hMsvcrt, "_strnset_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -2816,4 +2850,5 @@ START_TEST(string)
     test_atoi();
     test_strncpy();
     test_strxfrm();
+    test__strnset_s();
 }

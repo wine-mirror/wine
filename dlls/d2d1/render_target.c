@@ -20,8 +20,100 @@
 #include "wine/port.h"
 
 #include "d2d1_private.h"
+#include "wincodec.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
+
+#define INITIAL_CLIP_STACK_SIZE 4
+
+static void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
+    dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
+}
+
+static void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
+{
+    if (point->x < dst->left)
+        dst->left = point->x;
+    if (point->y < dst->top)
+        dst->top = point->y;
+    if (point->x > dst->right)
+        dst->right = point->x;
+    if (point->y > dst->bottom)
+        dst->bottom = point->y;
+}
+
+static void d2d_rect_intersect(D2D1_RECT_F *dst, const D2D1_RECT_F *src)
+{
+    if (src->left > dst->left)
+        dst->left = src->left;
+    if (src->top > dst->top)
+        dst->top = src->top;
+    if (src->right < dst->right)
+        dst->right = src->right;
+    if (src->bottom < dst->bottom)
+        dst->bottom = src->bottom;
+}
+
+static void d2d_rect_set(D2D1_RECT_F *dst, float left, float top, float right, float bottom)
+{
+    dst->left = left;
+    dst->top = top;
+    dst->right = right;
+    dst->bottom = bottom;
+}
+
+static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
+{
+    if (!(stack->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
+        return FALSE;
+
+    stack->size = INITIAL_CLIP_STACK_SIZE;
+    stack->count = 0;
+
+    return TRUE;
+}
+
+static void d2d_clip_stack_cleanup(struct d2d_clip_stack *stack)
+{
+    HeapFree(GetProcessHeap(), 0, stack->stack);
+}
+
+static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F *rect)
+{
+    D2D1_RECT_F r;
+
+    if (stack->count == stack->size)
+    {
+        D2D1_RECT_F *new_stack;
+        unsigned int new_size;
+
+        if (stack->size > UINT_MAX / 2)
+            return FALSE;
+
+        new_size = stack->size * 2;
+        if (!(new_stack = HeapReAlloc(GetProcessHeap(), 0, stack->stack, new_size * sizeof(*stack->stack))))
+            return FALSE;
+
+        stack->stack = new_stack;
+        stack->size = new_size;
+    }
+
+    r = *rect;
+    if (stack->count)
+        d2d_rect_intersect(&r, &stack->stack[stack->count - 1]);
+    stack->stack[stack->count++] = r;
+
+    return TRUE;
+}
+
+static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
+{
+    if (!stack->count)
+        return;
+    --stack->count;
+}
 
 static inline struct d2d_d3d_render_target *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
 {
@@ -65,7 +157,18 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        d2d_clip_stack_cleanup(&render_target->clip_stack);
+        ID3D10RenderTargetView_Release(render_target->view);
+        ID3D10RasterizerState_Release(render_target->clear_rs);
+        ID3D10PixelShader_Release(render_target->clear_ps);
+        ID3D10VertexShader_Release(render_target->clear_vs);
+        ID3D10Buffer_Release(render_target->clear_vb);
+        ID3D10InputLayout_Release(render_target->clear_il);
+        render_target->stateblock->lpVtbl->Release(render_target->stateblock);
+        ID3D10Device_Release(render_target->device);
         HeapFree(GetProcessHeap(), 0, render_target);
+    }
 
     return refcount;
 }
@@ -80,19 +183,108 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetFactory(ID2D1RenderTarget
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderTarget *iface,
         D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    FIXME("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p stub!\n",
+    struct d2d_bitmap *object;
+
+    TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
             iface, size.width, size.height, src_data, pitch, desc, bitmap);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_bitmap_init(object, size, src_data, pitch, desc);
+
+    TRACE("Created bitmap %p.\n", object);
+    *bitmap = &object->ID2D1Bitmap_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap(ID2D1RenderTarget *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    FIXME("iface %p, bitmap_source %p, desc %p, bitmap %p stub!\n",
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    unsigned int bpp, data_size;
+    D2D1_SIZE_U size;
+    WICRect rect;
+    UINT32 pitch;
+    HRESULT hr;
+    void *data;
+
+    TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n",
             iface, bitmap_source, desc, bitmap);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IWICBitmapSource_GetSize(bitmap_source, &size.width, &size.height)))
+    {
+        WARN("Failed to get bitmap size, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!desc)
+    {
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
+        bitmap_desc.dpiX = 0.0f;
+        bitmap_desc.dpiY = 0.0f;
+    }
+    else
+    {
+        bitmap_desc = *desc;
+    }
+
+    if (bitmap_desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
+    {
+        WICPixelFormatGUID wic_format;
+
+        if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
+        {
+            WARN("Failed to get bitmap format, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppPBGRA)
+                || IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppBGR))
+        {
+            bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        }
+        else
+        {
+            WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&wic_format));
+            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+        }
+    }
+
+    switch (bitmap_desc.pixelFormat.format)
+    {
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            bpp = 4;
+            break;
+
+        default:
+            FIXME("Unhandled format %#x.\n", bitmap_desc.pixelFormat.format);
+            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
+
+    pitch = ((bpp * size.width) + 15) & ~15;
+    data_size = pitch * size.height;
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, data_size)))
+        return E_OUTOFMEMORY;
+
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = size.width;
+    rect.Height = size.height;
+    if (FAILED(hr = IWICBitmapSource_CopyPixels(bitmap_source, &rect, pitch, data_size, data)))
+    {
+        WARN("Failed to copy bitmap pixels, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, data);
+        return hr;
+    }
+
+    hr = d2d_d3d_render_target_CreateBitmap(iface, size, data, pitch, &bitmap_desc, bitmap);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1RenderTarget *iface,
@@ -202,9 +394,19 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTa
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTarget *iface, ID2D1Mesh **mesh)
 {
-    FIXME("iface %p, mesh %p stub!\n", iface, mesh);
+    struct d2d_mesh *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, mesh %p.\n", iface, mesh);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_mesh_init(object);
+
+    TRACE("Created mesh %p.\n", object);
+    *mesh = &object->ID2D1Mesh_iface;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawLine(ID2D1RenderTarget *iface,
@@ -419,70 +621,190 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_RestoreDrawingState(ID2D1Ren
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PushAxisAlignedClip(ID2D1RenderTarget *iface,
         const D2D1_RECT_F *clip_rect, D2D1_ANTIALIAS_MODE antialias_mode)
 {
-    FIXME("iface %p, clip_rect %p, antialias_mode %#x stub!\n", iface, clip_rect, antialias_mode);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    D2D1_RECT_F transformed_rect;
+    float x_scale, y_scale;
+    D2D1_POINT_2F point;
+
+    TRACE("iface %p, clip_rect %p, antialias_mode %#x.\n", iface, clip_rect, antialias_mode);
+
+    if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
+        FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
+
+    x_scale = render_target->dpi_x / 96.0f;
+    y_scale = render_target->dpi_y / 96.0f;
+    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->top * y_scale);
+    d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->top * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+
+    if (!d2d_clip_stack_push(&render_target->clip_stack, &transformed_rect))
+        WARN("Failed to push clip rect.\n");
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PopAxisAlignedClip(ID2D1RenderTarget *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    d2d_clip_stack_pop(&render_target->clip_stack);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *color)
 {
-    FIXME("iface %p, color %p stub!\n", iface, color);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    unsigned int offset;
+    D3D10_VIEWPORT vp;
+    ID3D10Buffer *cb;
+    HRESULT hr;
+
+    TRACE("iface %p, color %p.\n", iface, color);
+
+    buffer_desc.ByteWidth = sizeof(*color);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = color;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &cb)))
+    {
+        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        return;
+    }
+
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = render_target->pixel_size.width;
+    vp.Height = render_target->pixel_size.height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+
+    if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
+    {
+        WARN("Failed to capture stateblock, hr %#x.\n", hr);
+        ID3D10Buffer_Release(cb);
+        return;
+    }
+
+    ID3D10Device_ClearState(render_target->device);
+
+    ID3D10Device_IASetInputLayout(render_target->device, render_target->clear_il);
+    ID3D10Device_IASetPrimitiveTopology(render_target->device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(render_target->device, 0, 1,
+            &render_target->clear_vb, &render_target->clear_vb_stride, &offset);
+    ID3D10Device_VSSetShader(render_target->device, render_target->clear_vs);
+    ID3D10Device_PSSetConstantBuffers(render_target->device, 0, 1, &cb);
+    ID3D10Device_PSSetShader(render_target->device, render_target->clear_ps);
+    ID3D10Device_RSSetViewports(render_target->device, 1, &vp);
+    if (render_target->clip_stack.count)
+    {
+        const D2D1_RECT_F *clip_rect;
+        D3D10_RECT scissor_rect;
+
+        clip_rect = &render_target->clip_stack.stack[render_target->clip_stack.count - 1];
+        scissor_rect.left = clip_rect->left + 0.5f;
+        scissor_rect.top = clip_rect->top + 0.5f;
+        scissor_rect.right = clip_rect->right + 0.5f;
+        scissor_rect.bottom = clip_rect->bottom + 0.5f;
+        ID3D10Device_RSSetScissorRects(render_target->device, 1, &scissor_rect);
+        ID3D10Device_RSSetState(render_target->device, render_target->clear_rs);
+    }
+    ID3D10Device_OMSetRenderTargets(render_target->device, 1, &render_target->view, NULL);
+
+    ID3D10Device_Draw(render_target->device, 4, 0);
+
+    if (FAILED(hr = render_target->stateblock->lpVtbl->Apply(render_target->stateblock)))
+        WARN("Failed to apply stateblock, hr %#x.\n", hr);
+
+    ID3D10Buffer_Release(cb);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_BeginDraw(ID2D1RenderTarget *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_EndDraw(ID2D1RenderTarget *iface,
         D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
-    FIXME("iface %p, tag1 %p, tag2 %p stub!\n", iface, tag1, tag2);
+    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    return E_NOTIMPL;
+    if (tag1)
+        *tag1 = 0;
+    if (tag2)
+        *tag2 = 0;
+
+    return S_OK;
 }
 
-static D2D1_PIXEL_FORMAT STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface)
+static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface,
+        D2D1_PIXEL_FORMAT *format)
 {
-    static const D2D1_PIXEL_FORMAT format = {DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN};
+    FIXME("iface %p, format %p stub!\n", iface, format);
 
-    FIXME("iface %p stub!\n", iface);
-
+    format->format = DXGI_FORMAT_UNKNOWN;
+    format->alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
     return format;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetDpi(ID2D1RenderTarget *iface, float dpi_x, float dpi_y)
 {
-    FIXME("iface %p, dpi_x %.8e, dpi_y %.8e stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, dpi_x %.8e, dpi_y %.8e.\n", iface, dpi_x, dpi_y);
+
+    if (dpi_x == 0.0f && dpi_y == 0.0f)
+    {
+        dpi_x = 96.0f;
+        dpi_y = 96.0f;
+    }
+
+    render_target->dpi_x = dpi_x;
+    render_target->dpi_y = dpi_y;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *iface, float *dpi_x, float *dpi_y)
 {
-    FIXME("iface %p, dpi_x %p, dpi_y %p stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    *dpi_x = 96.0f;
-    *dpi_y = 96.0f;
+    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
+
+    *dpi_x = render_target->dpi_x;
+    *dpi_y = render_target->dpi_y;
 }
 
-static D2D1_SIZE_F STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface)
+static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface, D2D1_SIZE_F *size)
 {
-    static const D2D1_SIZE_F size = {0.0f, 0.0f};
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p, size %p.\n", iface, size);
 
+    size->width = render_target->pixel_size.width / (render_target->dpi_x / 96.0f);
+    size->height = render_target->pixel_size.height / (render_target->dpi_y / 96.0f);
     return size;
 }
 
-static D2D1_SIZE_U STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelSize(ID2D1RenderTarget *iface)
+static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelSize(ID2D1RenderTarget *iface,
+        D2D1_SIZE_U *pixel_size)
 {
-    static const D2D1_SIZE_U size = {0, 0};
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p, pixel_size %p.\n", iface, pixel_size);
 
-    return size;
+    *pixel_size = render_target->pixel_size;
+    return pixel_size;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_d3d_render_target_GetMaximumBitmapSize(ID2D1RenderTarget *iface)
@@ -561,9 +883,80 @@ static const struct ID2D1RenderTargetVtbl d2d_d3d_render_target_vtbl =
     d2d_d3d_render_target_IsSupported,
 };
 
-void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
+HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_STATE_BLOCK_MASK state_mask;
+    DXGI_SURFACE_DESC surface_desc;
+    D3D10_RASTERIZER_DESC rs_desc;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Resource *resource;
+    HRESULT hr;
+
+    static const D3D10_INPUT_ELEMENT_DESC clear_il_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const DWORD clear_vs_code[] =
+    {
+        /* float4 main(float4 position : POSITION) : SV_POSITION
+         * {
+         *     return position;
+         * } */
+        0x43425844, 0x1fa8c27f, 0x52d2f21d, 0xc196fdb7, 0x376f283a, 0x00000001, 0x000001b4, 0x00000005,
+        0x00000034, 0x0000008c, 0x000000c0, 0x000000f4, 0x00000138, 0x46454452, 0x00000050, 0x00000000,
+        0x00000000, 0x00000000, 0x0000001c, 0xfffe0400, 0x00000100, 0x0000001c, 0x7263694d, 0x666f736f,
+        0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e30332e,
+        0x30303239, 0x3336312e, 0xab003438, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e, 0x54415453, 0x00000074,
+        0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    };
+    static const DWORD clear_ps_code[] =
+    {
+        /* float4 color;
+         *
+         * float4 main(float4 position : SV_POSITION) : SV_Target
+         * {
+         *     return color;
+         * } */
+        0x43425844, 0xecd3cc9d, 0x0025bc77, 0x7a333165, 0x5b04c7e4, 0x00000001, 0x0000022c, 0x00000005,
+        0x00000034, 0x00000100, 0x00000134, 0x00000168, 0x000001b0, 0x46454452, 0x000000c4, 0x00000001,
+        0x00000048, 0x00000001, 0x0000001c, 0xffff0400, 0x00000100, 0x00000090, 0x0000003c, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x6f6c4724, 0x736c6162,
+        0xababab00, 0x0000003c, 0x00000001, 0x00000060, 0x00000010, 0x00000000, 0x00000000, 0x00000078,
+        0x00000000, 0x00000010, 0x00000002, 0x00000080, 0x00000000, 0x6f6c6f63, 0xabab0072, 0x00030001,
+        0x00040001, 0x00000000, 0x00000000, 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53,
+        0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e30332e, 0x30303239, 0x3336312e, 0xab003438,
+        0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001,
+        0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653,
+        0x65677261, 0xabab0074, 0x52444853, 0x00000040, 0x00000040, 0x00000010, 0x04000059, 0x00208e46,
+        0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x06000036, 0x001020f2, 0x00000000,
+        0x00208e46, 0x00000000, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000002, 0x00000000,
+        0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000,
+    };
+    static const struct
+    {
+        float x, y;
+    }
+    clear_quad[] =
+    {
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
+    };
     static const D2D1_MATRIX_3X2_F identity =
     {
         1.0f, 0.0f,
@@ -576,5 +969,138 @@ void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
     render_target->refcount = 1;
 
+    if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&render_target->device)))
+    {
+        WARN("Failed to get device interface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&resource)))
+    {
+        WARN("Failed to get ID3D10Resource interface, hr %#x.\n", hr);
+        goto err;
+    }
+
+    hr = ID3D10Device_CreateRenderTargetView(render_target->device, resource, NULL, &render_target->view);
+    ID3D10Resource_Release(resource);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create rendertarget view, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = D3D10StateBlockMaskEnableAll(&state_mask)))
+    {
+        WARN("Failed to create stateblock mask, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = D3D10CreateStateBlock(render_target->device, &state_mask, &render_target->stateblock)))
+    {
+        WARN("Failed to create stateblock, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, clear_il_desc,
+            sizeof(clear_il_desc) / sizeof(*clear_il_desc), clear_vs_code, sizeof(clear_vs_code),
+            &render_target->clear_il)))
+    {
+        WARN("Failed to create clear input layout, hr %#x.\n", hr);
+        goto err;
+    }
+
+    buffer_desc.ByteWidth = sizeof(clear_quad);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = clear_quad;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    render_target->clear_vb_stride = sizeof(*clear_quad);
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device,
+            &buffer_desc, &buffer_data, &render_target->clear_vb)))
+    {
+        WARN("Failed to create clear vertex buffer, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device,
+            clear_vs_code, sizeof(clear_vs_code), &render_target->clear_vs)))
+    {
+        WARN("Failed to create clear vertex shader, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
+            clear_ps_code, sizeof(clear_ps_code), &render_target->clear_ps)))
+    {
+        WARN("Failed to create clear pixel shader, hr %#x.\n", hr);
+        goto err;
+    }
+
+    rs_desc.FillMode = D3D10_FILL_SOLID;
+    rs_desc.CullMode = D3D10_CULL_BACK;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = TRUE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    if (FAILED(hr = ID3D10Device_CreateRasterizerState(render_target->device, &rs_desc, &render_target->clear_rs)))
+    {
+        WARN("Failed to create clear rasterizer state, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+    {
+        WARN("Failed to get surface desc, hr %#x.\n", hr);
+        goto err;
+    }
+
+    render_target->pixel_size.width = surface_desc.Width;
+    render_target->pixel_size.height = surface_desc.Height;
     render_target->transform = identity;
+
+    if (!d2d_clip_stack_init(&render_target->clip_stack))
+    {
+        WARN("Failed to initialize clip stack.\n");
+        hr = E_FAIL;
+        goto err;
+    }
+
+    render_target->dpi_x = desc->dpiX;
+    render_target->dpi_y = desc->dpiY;
+
+    if (render_target->dpi_x == 0.0f && render_target->dpi_y == 0.0f)
+    {
+        render_target->dpi_x = 96.0f;
+        render_target->dpi_y = 96.0f;
+    }
+
+    return S_OK;
+
+err:
+    if (render_target->view)
+        ID3D10RenderTargetView_Release(render_target->view);
+    if (render_target->clear_rs)
+        ID3D10RasterizerState_Release(render_target->clear_rs);
+    if (render_target->clear_ps)
+        ID3D10PixelShader_Release(render_target->clear_ps);
+    if (render_target->clear_vs)
+        ID3D10VertexShader_Release(render_target->clear_vs);
+    if (render_target->clear_vb)
+        ID3D10Buffer_Release(render_target->clear_vb);
+    if (render_target->clear_il)
+        ID3D10InputLayout_Release(render_target->clear_il);
+    if (render_target->stateblock)
+        render_target->stateblock->lpVtbl->Release(render_target->stateblock);
+    if (render_target->device)
+        ID3D10Device_Release(render_target->device);
+    return hr;
 }

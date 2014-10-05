@@ -46,6 +46,21 @@ struct _except_frame_t {
     except_frame_t *next;
 };
 
+typedef struct {
+    enum {
+        EXPRVAL_JSVAL,
+        EXPRVAL_IDREF,
+        EXPRVAL_INVALID
+    } type;
+    union {
+        jsval_t val;
+        struct {
+            IDispatch *disp;
+            DISPID id;
+        } idref;
+    } u;
+} exprval_t;
+
 static HRESULT stack_push(exec_ctx_t *ctx, jsval_t v)
 {
     if(!ctx->stack_size) {

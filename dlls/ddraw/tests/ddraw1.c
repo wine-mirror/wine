@@ -5214,7 +5214,7 @@ static void test_palette_gdi(void)
      * from a regular surface. Tests for the interaction between the ddraw palette and
      * the system palette are not included pending an application that depends on this.
      * The relation between those causes problems on Windows Vista and newer for games
-     * like Age of Empires or Starcraft. Don't emulate it without a real need. */
+     * like Age of Empires or StarCraft. Don't emulate it without a real need. */
     i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
     ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
     for (i = 0; i < sizeof(expected2) / sizeof(*expected2); i++)
@@ -5243,7 +5243,7 @@ static void test_palette_gdi(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     /* Here the offscreen surface appears to use the primary's palette,
-     * but in all likelyhood it is actually the system palette. */
+     * but in all likelihood it is actually the system palette. */
     hr = IDirectDrawSurface_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
     i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);

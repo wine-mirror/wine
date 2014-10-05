@@ -189,7 +189,7 @@ HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUER
     query->refcount = 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_query_create(device->wined3d_device, type, &query->wined3d_query);
+    hr = wined3d_query_create(device->wined3d_device, type, query, &query->wined3d_query);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

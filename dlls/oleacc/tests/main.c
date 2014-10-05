@@ -574,6 +574,18 @@ static void test_default_client_accessible_object(void)
     IAccessible_Release(acc);
 }
 
+static void test_CAccPropServices(void)
+{
+    IAccPropServices *acc_prop_services;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_CAccPropServices, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IAccPropServices, (void**)&acc_prop_services);
+    ok(hres == S_OK, "Could not create CAccPropServices instance: %08x\n", hres);
+
+    IAccPropServices_Release(acc_prop_services);
+}
+
 START_TEST(main)
 {
     int argc;
@@ -612,5 +624,9 @@ START_TEST(main)
     test_default_client_accessible_object();
 
     unregister_window_class();
+    CoUninitialize();
+
+    CoInitialize(NULL);
+    test_CAccPropServices();
     CoUninitialize();
 }

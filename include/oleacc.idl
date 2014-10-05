@@ -18,6 +18,10 @@
 
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#endif
+
 cpp_quote("#define NAVDIR_MIN        0")
 cpp_quote("#define NAVDIR_UP         1")
 cpp_quote("#define NAVDIR_DOWN       2")
@@ -303,7 +307,8 @@ library Accessibility
     interface IAccPropServices;
 
     [
-        uuid(b5f8350b-0548-48b1-a6ee-88bd00b4a5e7)
+        uuid(b5f8350b-0548-48b1-a6ee-88bd00b4a5e7),
+        threading(apartment)
     ]
     coclass CAccPropServices
     {

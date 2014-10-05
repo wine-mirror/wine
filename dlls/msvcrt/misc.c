@@ -377,7 +377,7 @@ unsigned int CDECL MSVCRT__get_output_format(void)
 /*********************************************************************
  * _set_output_format (MSVCRT.@)
  */
-unsigned int CDECL _set_output_format(unsigned int new_output_format)
+unsigned int CDECL MSVCRT__set_output_format(unsigned int new_output_format)
 {
     unsigned int ret = output_format;
 

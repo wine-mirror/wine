@@ -1,0 +1,11 @@
+MODULE    = dpvoice.dll
+IMPORTS   = dxguid uuid
+
+C_SRCS = \
+	client.c \
+	main.c \
+	server.c
+
+RC_SRCS = version.rc
+
+IDL_SRCS = dpvoice.idl

@@ -62,6 +62,128 @@ typedef struct {
     DWORD length;
 } TT_TableRecord;
 
+typedef struct {
+    WORD platformID;
+    WORD encodingID;
+    DWORD offset;
+} CMAP_EncodingRecord;
+
+typedef struct {
+    WORD version;
+    WORD numTables;
+    CMAP_EncodingRecord tables[1];
+} CMAP_Header;
+
+typedef struct {
+    DWORD startCharCode;
+    DWORD endCharCode;
+    DWORD startGlyphID;
+} CMAP_SegmentedCoverage_group;
+
+typedef struct {
+    WORD format;
+    WORD reserved;
+    DWORD length;
+    DWORD language;
+    DWORD nGroups;
+    CMAP_SegmentedCoverage_group groups[1];
+} CMAP_SegmentedCoverage;
+
+typedef struct {
+    WORD format;
+    WORD length;
+    WORD language;
+    WORD segCountX2;
+    WORD searchRange;
+    WORD entrySelector;
+    WORD rangeShift;
+    WORD endCode[1];
+} CMAP_SegmentMapping_0;
+
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    ULONG version;
+    ULONG revision;
+    ULONG checksumadj;
+    ULONG magic;
+    USHORT flags;
+    USHORT unitsPerEm;
+    ULONGLONG created;
+    ULONGLONG modified;
+    SHORT xMin;
+    SHORT yMin;
+    SHORT xMax;
+    SHORT yMax;
+    USHORT macStyle;
+    USHORT lowestRecPPEM;
+    SHORT direction_hint;
+    SHORT index_format;
+    SHORT glyphdata_format;
+} TT_HEAD;
+
+typedef struct
+{
+    ULONG Version;
+    ULONG italicAngle;
+    SHORT underlinePosition;
+    SHORT underlineThickness;
+    ULONG fixed_pitch;
+    ULONG minmemType42;
+    ULONG maxmemType42;
+    ULONG minmemType1;
+    ULONG maxmemType1;
+} TT_POST;
+
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taken from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+#include "poppack.h"
+
 HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     /* TODO: Do font validation */
@@ -168,4 +290,158 @@ HRESULT find_font_table(IDWriteFontFileStream *stream, UINT32 font_index, UINT32
     }
 
     return hr;
+}
+
+/**********
+ * CMAP
+ **********/
+
+static int compare_group(const void *a, const void* b)
+{
+    const DWORD *chr = a;
+    const CMAP_SegmentedCoverage_group *group = b;
+
+    if (*chr < GET_BE_DWORD(group->startCharCode))
+        return -1;
+    if (*chr > GET_BE_DWORD(group->endCharCode))
+        return 1;
+    return 0;
+}
+
+static void CMAP4_GetGlyphIndex(CMAP_SegmentMapping_0* format, DWORD utf32c, LPWORD pgi)
+{
+    WORD *startCode;
+    SHORT *idDelta;
+    WORD *idRangeOffset;
+    int segment;
+
+    int segment_count = GET_BE_WORD(format->segCountX2)/2;
+    /* This is correct because of the padding before startCode */
+    startCode = (WORD*)((BYTE*)format + sizeof(CMAP_SegmentMapping_0) + (sizeof(WORD) * segment_count));
+    idDelta = (SHORT*)(((BYTE*)startCode) + (sizeof(WORD) * segment_count));
+    idRangeOffset = (WORD*)(((BYTE*)idDelta) + (sizeof(WORD) * segment_count));
+
+    segment = 0;
+    while(GET_BE_WORD(format->endCode[segment]) < 0xffff)
+    {
+        if (utf32c <= GET_BE_WORD(format->endCode[segment]))
+            break;
+        segment++;
+    }
+    if (segment >= segment_count)
+        return;
+    TRACE("Segment %i of %i\n",segment, segment_count);
+    if (GET_BE_WORD(startCode[segment]) > utf32c)
+        return;
+    TRACE("In range %i -> %i\n", GET_BE_WORD(startCode[segment]), GET_BE_WORD(format->endCode[segment]));
+    if (GET_BE_WORD(idRangeOffset[segment]) == 0)
+    {
+        *pgi = (SHORT)(GET_BE_WORD(idDelta[segment])) + utf32c;
+    }
+    else
+    {
+        WORD ro = GET_BE_WORD(idRangeOffset[segment])/2;
+        WORD co =  (utf32c - GET_BE_WORD(startCode[segment]));
+        WORD *index = (WORD*)((BYTE*)&idRangeOffset[segment] + (ro + co));
+        *pgi = GET_BE_WORD(*index);
+    }
+}
+
+static void CMAP12_GetGlyphIndex(CMAP_SegmentedCoverage* format, DWORD utf32c, LPWORD pgi)
+{
+    CMAP_SegmentedCoverage_group *group = NULL;
+
+    group = bsearch(&utf32c, format->groups, GET_BE_DWORD(format->nGroups),
+                    sizeof(CMAP_SegmentedCoverage_group), compare_group);
+
+    if (group)
+    {
+        DWORD offset = utf32c - GET_BE_DWORD(group->startCharCode);
+        *pgi = GET_BE_DWORD(group->startGlyphID) + offset;
+    }
+}
+
+VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD flags)
+{
+    int i;
+    CMAP_Header *CMAP_Table = NULL;
+
+    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
+        *pgi = 0xffff;
+    else
+        *pgi = 0;
+
+    CMAP_Table = data;
+
+    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables); i++)
+    {
+        WORD type;
+        WORD *table;
+
+        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+            continue;
+
+        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
+        type = GET_BE_WORD(*table);
+        TRACE("Type %i\n", type);
+        /* Break when we find a handled type */
+        switch(type)
+        {
+            case 4:
+                CMAP4_GetGlyphIndex((CMAP_SegmentMapping_0*) table, utf32c, pgi);
+                break;
+            case 12:
+                CMAP12_GetGlyphIndex((CMAP_SegmentedCoverage*) table, utf32c, pgi);
+                break;
+            default:
+                TRACE("Type %i unhandled.\n", type);
+        }
+    }
+}
+
+VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+{
+    TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
+    TT_HEAD *tt_head = (TT_HEAD*)head;
+    TT_POST *tt_post = (TT_POST*)post;
+
+    /* default stretch, weight and style to normal */
+    *stretch = DWRITE_FONT_STRETCH_NORMAL;
+    *weight = DWRITE_FONT_WEIGHT_NORMAL;
+    *style = DWRITE_FONT_STYLE_NORMAL;
+
+    memset(metrics, 0, sizeof(*metrics));
+
+    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
+    if (tt_os2)
+    {
+        if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+            *stretch = GET_BE_WORD(tt_os2->usWidthClass);
+
+        *weight = GET_BE_WORD(tt_os2->usWeightClass);
+        TRACE("stretch=%d, weight=%d\n", *stretch, *weight);
+
+        metrics->ascent    = GET_BE_WORD(tt_os2->sTypoAscender);
+        metrics->descent   = GET_BE_WORD(tt_os2->sTypoDescender);
+        metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
+        metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
+        metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
+        metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
+        metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
+    }
+
+    if (tt_head)
+    {
+        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
+        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+        if (macStyle & 0x0002)
+            *style = DWRITE_FONT_STYLE_ITALIC;
+
+    }
+
+    if (tt_post)
+    {
+        metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
+        metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
+    }
 }

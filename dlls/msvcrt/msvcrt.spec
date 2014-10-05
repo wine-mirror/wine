@@ -209,7 +209,7 @@
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno
-# stub __dstbias()
+@ cdecl __dstbias() MSVCRT___p__dstbias
 @ cdecl __fpecode()
 @ stub __get_app_type
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
@@ -255,7 +255,7 @@
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
-@ cdecl __p__dstbias()
+@ cdecl __p__dstbias() MSVCRT___p__dstbias
 @ cdecl __p__environ() MSVCRT___p__environ
 @ stub __p__fileinfo()
 @ cdecl __p__fmode()
@@ -898,7 +898,7 @@
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo(long)
 @ cdecl _set_fmode(long) MSVCRT__set_fmode
-@ cdecl _set_output_format(long)
+@ cdecl _set_output_format(long) MSVCRT__set_output_format
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm -norelay _setjmp(ptr) MSVCRT__setjmp
@@ -971,7 +971,7 @@
 @ cdecl _strnicoll(str str long) MSVCRT__strnicoll
 @ cdecl _strnicoll_l(str str long ptr) MSVCRT__strnicoll_l
 @ cdecl _strnset(str long long) MSVCRT__strnset
-# stub _strnset_s(str long long long)
+@ cdecl _strnset_s(str long long long) MSVCRT__strnset_s
 @ cdecl _strrev(str) MSVCRT__strrev
 @ cdecl _strset(str long)
 # stub _strset_s(str long long)

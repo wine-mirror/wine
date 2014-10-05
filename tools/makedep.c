@@ -1816,7 +1816,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             strarray_add( &res_files, strmake( "%s.res", obj ));
             output( "%s.res: %s %s\n", obj_dir_path( make, obj ),
                     tools_path( make, "wrc" ), source->filename );
-            output( "\t%s -o $@ %s", tools_path( make, "wrc" ), source->filename );
+            output( "\t%s -o $@", tools_path( make, "wrc" ) );
             if (make->is_win16) output_filename( "-m16" );
             else output_filenames( target_flags );
             output_filename( "--nostdinc" );
@@ -1827,13 +1827,18 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             {
                 strarray_add( &po_files, source->filename );
                 output_filename( strmake( "--po-dir=%s", top_obj_dir_path( make, "po" )));
+                output_filename( source->filename );
                 output( "\n" );
                 output( "%s.res:", obj_dir_path( make, obj ));
                 output_filenames( mo_files );
                 output( "\n" );
                 output( "%s ", obj_dir_path( make, "rsrc.pot" ));
             }
-            else output( "\n" );
+            else
+            {
+                output_filename( source->filename );
+                output( "\n" );
+            }
             output( "%s.res:", obj_dir_path( make, obj ));
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
@@ -1873,12 +1878,13 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             output_filenames_obj_dir( make, targets );
             output( ": %s\n", tools_path( make, "widl" ));
-            output( "\t%s -o $@ %s", tools_path( make, "widl" ), source->filename );
+            output( "\t%s -o $@", tools_path( make, "widl" ) );
             output_filenames( target_flags );
             output_filenames( includes );
             output_filenames( make->define_args );
             output_filenames( extradefs );
             output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
+            output_filename( source->filename );
             output( "\n" );
             output_filenames_obj_dir( make, targets );
             output( ": %s", source->filename );
@@ -2038,12 +2044,12 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         output_filenames( po_files );
         output( "\n" );
         output( "\t%s -O pot -o $@", tools_path( make, "wrc" ));
-        output_filenames( po_files );
         if (make->is_win16) output_filename( "-m16" );
         else output_filenames( target_flags );
         output_filename( "--nostdinc" );
         output_filenames( includes );
         output_filenames( make->define_args );
+        output_filenames( po_files );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
     }

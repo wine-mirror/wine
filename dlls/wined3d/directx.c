@@ -1521,7 +1521,8 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
 
     if (wined3d_settings.emulated_textureram)
     {
-        TRACE("Overriding amount of video memory with %u bytes.\n", wined3d_settings.emulated_textureram);
+        TRACE("Overriding amount of video memory with 0x%s bytes.\n",
+                wine_dbgstr_longlong(wined3d_settings.emulated_textureram));
         driver_info->vram_bytes = wined3d_settings.emulated_textureram;
     }
 
@@ -1678,47 +1679,33 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     return HW_VENDOR_NVIDIA;
 }
 
-static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info);
-static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info, const struct wined3d_shader_backend_ops *shader_backend_ops);
-
-static enum wined3d_d3d_level d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
+static enum wined3d_d3d_level d3d_level_from_caps(const struct shader_caps *shader_caps, const struct fragment_caps *fragment_caps, DWORD glsl_version)
 {
-    struct shader_caps shader_caps;
-    struct fragment_caps fragment_caps;
-    const struct wined3d_shader_backend_ops *shader_backend;
-    const struct fragment_pipeline *fragment_pipeline;
-
-    shader_backend = select_shader_backend(gl_info);
-    shader_backend->shader_get_caps(gl_info, &shader_caps);
-
-    if (shader_caps.vs_version >= 5)
+    if (shader_caps->vs_version >= 5)
         return WINED3D_D3D_LEVEL_11;
-    if (shader_caps.vs_version == 4)
+    if (shader_caps->vs_version == 4)
     {
         /* No backed supports SM 5 at the moment */
-        if (gl_info->glsl_version >= MAKEDWORD_VERSION(4, 00))
+        if (glsl_version >= MAKEDWORD_VERSION(4, 00))
             return WINED3D_D3D_LEVEL_11;
         return WINED3D_D3D_LEVEL_10;
     }
-    if (shader_caps.vs_version == 3)
+    if (shader_caps->vs_version == 3)
     {
-        /* Wine can not use SM 4 on mesa drivers as the necessary functionality is not exposed
-         * on compatibility contexts */
-        if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
+        /* Wine cannot use SM 4 on mesa drivers as the necessary functionality
+         * is not exposed on compatibility contexts */
+        if (glsl_version >= MAKEDWORD_VERSION(1, 30))
             return WINED3D_D3D_LEVEL_10;
         return WINED3D_D3D_LEVEL_9_SM3;
     }
-    if (shader_caps.vs_version == 2)
+    if (shader_caps->vs_version == 2)
         return WINED3D_D3D_LEVEL_9_SM2;
-    if (shader_caps.vs_version == 1)
+    if (shader_caps->vs_version == 1)
         return WINED3D_D3D_LEVEL_8;
 
-    fragment_pipeline = select_fragment_implementation(gl_info, shader_backend);
-    fragment_pipeline->get_caps(gl_info, &fragment_caps);
-
-    if (fragment_caps.TextureOpCaps & WINED3DTEXOPCAPS_DOTPRODUCT3)
+    if (fragment_caps->TextureOpCaps & WINED3DTEXOPCAPS_DOTPRODUCT3)
         return WINED3D_D3D_LEVEL_7;
-    if (fragment_caps.MaxSimultaneousTextures > 1)
+    if (fragment_caps->MaxSimultaneousTextures > 1)
         return WINED3D_D3D_LEVEL_6;
 
     return WINED3D_D3D_LEVEL_5;
@@ -2216,12 +2203,12 @@ card_fallback_amd[] =
 },
 card_fallback_intel[] =
 {
-    CARD_INTEL_915G,                /* D3D5 */
-    CARD_INTEL_915G,                /* D3D6 */
-    CARD_INTEL_915G,                /* D3D7 */
+    CARD_INTEL_845G,                /* D3D5 */
+    CARD_INTEL_845G,                /* D3D6 */
+    CARD_INTEL_845G,                /* D3D7 */
     CARD_INTEL_915G,                /* D3D8 */
     CARD_INTEL_915G,                /* D3D9_SM2 */
-    CARD_INTEL_915G,                /* D3D9_SM3 */
+    CARD_INTEL_945G,                /* D3D9_SM3 */
     CARD_INTEL_G45,                 /* D3D10 */
     CARD_INTEL_IVBD,                /* D3D11 */
 };
@@ -2279,8 +2266,8 @@ card_vendor_table[] =
 };
 
 
-static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor)
+static enum wined3d_pci_device wined3d_guess_card(const struct shader_caps *shader_caps, const struct fragment_caps *fragment_caps,
+        DWORD glsl_version, const char *gl_renderer, enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor)
 {
     /* A Direct3D device object contains the PCI id (vendor + device) of the
      * videocard which is used for rendering. Various applications use this
@@ -2333,7 +2320,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * memory can be overruled using a registry setting. */
 
     unsigned int i;
-    enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
+    enum wined3d_d3d_level d3d_level = d3d_level_from_caps(shader_caps, fragment_caps, glsl_version);
     enum wined3d_pci_device device;
 
     for (i = 0; i < (sizeof(card_vendor_table) / sizeof(*card_vendor_table)); ++i)
@@ -3030,7 +3017,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     card_vendor = wined3d_guess_card_vendor(gl_vendor_str, gl_renderer_str);
     TRACE("Found GL_VENDOR (%s)->(0x%04x/0x%04x).\n", debugstr_a(gl_vendor_str), gl_vendor, card_vendor);
 
-    device = wined3d_guess_card(gl_info, gl_renderer_str, &gl_vendor, &card_vendor);
+    device = wined3d_guess_card(&shader_caps, &fragment_caps, gl_info->glsl_version, gl_renderer_str, &gl_vendor, &card_vendor);
     TRACE("Found (fake) card: 0x%x (vendor id), 0x%x (device id).\n", card_vendor, device);
 
     gl_info->wrap_lookup[WINED3D_TADDRESS_WRAP - WINED3D_TADDRESS_WRAP] = GL_REPEAT;
@@ -4615,7 +4602,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDFXCAPS_BLTSHRINKX             |
                                         WINEDDFXCAPS_BLTSHRINKXN            |
                                         WINEDDFXCAPS_BLTSHRINKY             |
-                                        WINEDDFXCAPS_BLTSHRINKXN            |
+                                        WINEDDFXCAPS_BLTSHRINKYN            |
                                         WINEDDFXCAPS_BLTSTRETCHX            |
                                         WINEDDFXCAPS_BLTSTRETCHXN           |
                                         WINEDDFXCAPS_BLTSTRETCHY            |

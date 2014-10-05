@@ -136,7 +136,7 @@ static HRESULT WINAPI HTMLScriptElement_put_src(IHTMLScriptElement *iface, BSTR 
         return S_OK;
     }
 
-    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    nsres = nsIDOMHTMLElement_GetParentNode(This->element.nselem, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         This->parse_on_bind = TRUE;
@@ -214,7 +214,7 @@ static HRESULT WINAPI HTMLScriptElement_put_text(IHTMLScriptElement *iface, BSTR
         return E_FAIL;
     }
 
-    nsres = nsIDOMHTMLScriptElement_GetParentNode(This->nsscript, &parent);
+    nsres = nsIDOMHTMLElement_GetParentNode(This->element.nselem, &parent);
     if(NS_FAILED(nsres) || !parent) {
         TRACE("No parent, not executing\n");
         This->parse_on_bind = TRUE;
@@ -391,6 +391,26 @@ static HRESULT HTMLScriptElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
     return IHTMLScriptElement_get_readyState(&This->IHTMLScriptElement_iface, p);
 }
 
+static void HTMLScriptElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsscript)
+        note_cc_edge((nsISupports*)This->nsscript, "This->nsscript", cb);
+}
+
+static void HTMLScriptElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsscript) {
+        nsIDOMHTMLScriptElement *nsscript = This->nsscript;
+
+        This->nsscript = NULL;
+        nsIDOMHTMLScriptElement_Release(nsscript);
+    }
+}
+
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     HTMLScriptElement_QI,
     HTMLElement_destructor,
@@ -403,15 +423,26 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     NULL,
     NULL,
     NULL,
-    HTMLScriptElement_get_readystate
+    HTMLScriptElement_get_readystate,
+    NULL,
+    NULL,
+    NULL,
+    HTMLScriptElement_traverse,
+    HTMLScriptElement_unlink
 };
 
 HRESULT script_elem_from_nsscript(HTMLDocumentNode *doc, nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)
 {
+    nsIDOMNode *nsnode;
     HTMLDOMNode *node;
+    nsresult nsres;
     HRESULT hres;
 
-    hres = get_node(doc, (nsIDOMNode*)nsscript, TRUE, &node);
+    nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMNode, (void**)&nsnode);
+    assert(nsres == NS_OK);
+
+    hres = get_node(doc, nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
     if(FAILED(hres))
         return hres;
 
@@ -448,10 +479,7 @@ HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLScriptElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLScriptElement, (void**)&ret->nsscript);
-
-    /* Share nsscript reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsscript == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;

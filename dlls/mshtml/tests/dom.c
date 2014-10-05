@@ -1142,6 +1142,17 @@ static void _test_elem_offset(unsigned line, IUnknown *unk, const char *parent_t
     IHTMLElement_Release(elem);
 }
 
+#define test_elem_source_index(a,b) _test_elem_source_index(__LINE__,a,b)
+static void _test_elem_source_index(unsigned line, IHTMLElement *elem, int index)
+{
+    LONG l = 0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_sourceIndex(elem, &l);
+    ok_(__FILE__,line)(hres == S_OK, "get_sourceIndex failed: %08x\n", hres);
+    ok_(__FILE__,line)(l == index, "sourceIndex = %d, expected %d\n", l, index);
+}
+
 #define get_doc_node(d) _get_doc_node(__LINE__,d)
 static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
 {
@@ -1465,6 +1476,37 @@ static void _test_anchor_hostname(unsigned line, IUnknown *unk, const char *host
         ok_(__FILE__,line)(!strcmp_wa(str, hostname), "hostname = %s, expected %s\n", wine_dbgstr_w(str), hostname);
     else
         ok_(__FILE__,line)(str == NULL, "hostname = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_search(a,h,n) _test_anchor_search(__LINE__,a,h,n)
+static void _test_anchor_search(unsigned line, IUnknown *elem, const char *search, BOOL allowbroken)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, elem);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_search(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_search failed: %08x\n", hres);
+    if ( ! str && allowbroken)
+        win_skip("skip ie6 incorrect behavior\n");
+    else if(search)
+        ok_(__FILE__,line)(!strcmp_wa(str, search), "search = %s, expected %s\n", wine_dbgstr_w(str), search);
+    else
+        ok_(__FILE__,line)(!str, "search = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_put_search(a,h) _test_anchor_put_search(__LINE__,a,h)
+static void _test_anchor_put_search(unsigned line, IUnknown *unk, const char *search)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = search ? a2bstr(search) : NULL;
+    hres = IHTMLAnchorElement_put_search(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_search failed: %08x\n", hres);
     SysFreeString(str);
 }
 
@@ -2105,6 +2147,26 @@ static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t 
     IHTMLElement_Release(elem);
 }
 
+#define get_elem_col_item_idx(a,b) _get_elem_col_item_idx(__LINE__,a,b)
+static IHTMLElement *_get_elem_col_item_idx(unsigned line, IHTMLElementCollection *col, int i)
+{
+    VARIANT name, index;
+    IHTMLElement *elem;
+    IDispatch *disp;
+    HRESULT hres;
+
+    V_VT(&index) = VT_EMPTY;
+    V_VT(&name) = VT_I4;
+    V_I4(&name) = i;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok_(__FILE__,line)(hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line)(disp != NULL, "disp == NULL\n");
+
+    elem = _get_elem_iface(line, (IUnknown*)disp);
+    IDispatch_Release(disp);
+    return elem;
+}
+
 #define test_elem_collection(c,t,l) _test_elem_collection(__LINE__,c,t,l)
 static void _test_elem_collection(unsigned line, IUnknown *unk,
         const elem_type_t *elem_types, LONG exlen)
@@ -2290,20 +2352,8 @@ static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t ty
 
     HeapFree(GetProcessHeap(), 0, types);
 
-    if(ret) {
-        IDispatch *disp;
-        VARIANT v;
-
-        V_VT(&v) = VT_I4;
-        V_I4(&v) = 0;
-        disp = NULL;
-        hres = IHTMLElementCollection_item(col, v, v, &disp);
-        ok(hres == S_OK, "item failed: %08x\n", hres);
-        ok(disp != NULL, "disp == NULL\n");
-        *ret = _get_elem_iface(line, (IUnknown*)disp);
-        IDispatch_Release(disp);
-    }
-
+    if(ret)
+        *ret = get_elem_col_item_idx(col, 0);
     IHTMLElementCollection_Release(col);
 }
 
@@ -4217,8 +4267,17 @@ static void _get_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, VARIANT
     HRESULT hres;
 
     hres = IHTMLDOMAttribute_get_nodeValue(attr, v);
-    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
+    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x\n", hres);
     ok_(__FILE__,line) (V_VT(v) == vt, "vt=%d, expected %d\n", V_VT(v), vt);
+}
+
+#define put_attr_node_value(a,b) _put_attr_node_value(__LINE__,a,b)
+static void _put_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, VARIANT v)
+{
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_put_nodeValue(attr, v);
+    ok_(__FILE__,line) (hres == S_OK, "put_nodeValue failed: %08x\n", hres);
 }
 
 #define get_window_doc(e) _get_window_doc(__LINE__,e)
@@ -5599,7 +5658,7 @@ static void test_body_funs(IHTMLBodyElement *body)
 
     hres = IHTMLBodyElement_get_bgColor(body, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6081,7 +6140,7 @@ static void test_tr_elem(IHTMLElement *elem)
 
     hres = IHTMLTableRow_get_bgColor(row, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6093,7 +6152,7 @@ static void test_tr_elem(IHTMLElement *elem)
 
     hres = IHTMLTableRow_get_bgColor(row, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6113,6 +6172,7 @@ static void test_td_elem(IHTMLElement *elem)
     HRESULT hres;
     LONG lval;
     BSTR str;
+    VARIANT vbg, vDefaultbg;
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTableCell, (void**)&cell);
     ok(hres == S_OK, "Could not get IHTMLTableRow iface: %08x\n", hres);
@@ -6137,6 +6197,40 @@ static void test_td_elem(IHTMLElement *elem)
         ok(!strcmp_wa(str, "left"), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
     }
+
+    hres = IHTMLTableCell_get_bgColor(cell, &vDefaultbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
+    ok(!V_BSTR(&vDefaultbg), "V_BSTR(bgColor) = %s\n", wine_dbgstr_w(V_BSTR(&vDefaultbg)));
+
+    V_VT(&vbg) = VT_BSTR;
+    V_BSTR(&vbg) = a2bstr("red");
+    hres = IHTMLTableCell_put_bgColor(cell, vbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLTableCell_get_bgColor(cell, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    V_VT(&vbg) = VT_I4;
+    V_I4(&vbg) = 0xff0000;
+    hres = IHTMLTableCell_put_bgColor(cell, vbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLTableCell_get_bgColor(cell, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    /* Restore Originial */
+    hres = IHTMLTableCell_put_bgColor(cell, vDefaultbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vDefaultbg);
 
     IHTMLTableCell_Release(cell);
 }
@@ -6323,7 +6417,7 @@ static void test_table_elem(IHTMLElement *elem)
 
     hres = IHTMLTable_get_bgColor(table, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6335,7 +6429,7 @@ static void test_table_elem(IHTMLElement *elem)
 
     hres = IHTMLTable_get_bgColor(table, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
-    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
 
@@ -6874,6 +6968,15 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_all failed: %08x\n", hres);
     test_elem_collection((IUnknown*)col, all_types, sizeof(all_types)/sizeof(all_types[0]));
     test_elem_col_item(col, "x", item_types, sizeof(item_types)/sizeof(item_types[0]));
+
+    elem = get_elem_col_item_idx(col, 0);
+    test_elem_source_index(elem, 0);
+    IHTMLElement_Release(elem);
+
+    elem = get_elem_col_item_idx(col, 3);
+    test_elem_source_index(elem, 3);
+    IHTMLElement_Release(elem);
+
     IHTMLElementCollection_Release(col);
 
     hres = IHTMLDocument2_get_images(doc, &collection);
@@ -6977,6 +7080,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
         elem2 = test_elem_get_parent((IUnknown*)elem3);
         ok(elem2 == NULL, "elem2 != NULL\n");
+        test_elem_source_index(elem3, 0);
         IHTMLElement_Release(elem3);
 
         test_elem_getelembytag((IUnknown*)elem, ET_OPTION, 2, NULL);
@@ -7258,8 +7362,25 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_name((IUnknown*)elem, NULL);
         test_anchor_put_name((IUnknown*)elem, "x");
 
-        test_anchor_put_href((IUnknown*)elem, "http://test/#hash");
+        test_anchor_put_href((IUnknown*)elem, "http://test/?how#hash");
         test_anchor_hash(elem, "#hash");
+        test_anchor_search((IUnknown*)elem, "?how", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?word=press");
+        test_anchor_search((IUnknown*)elem, "?word=press", FALSE);
+        test_anchor_put_search((IUnknown*)elem, "?????word???press");
+        test_anchor_search((IUnknown*)elem, "?????word???press", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD"); /* encoded cjk characters */
+        test_anchor_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD", FALSE);
+
+        test_anchor_put_search((IUnknown*)elem, "?how?old=are");
+        test_anchor_search((IUnknown*)elem, "?how?old=are", FALSE);
+
+        /* due to incorrect behavior of ie6, search string without leading "?" is interpreted
+        as part of the pathname, and cannot be accessed by get_search. */
+        test_anchor_put_search((IUnknown*)elem, "word=abc");
+        test_anchor_search((IUnknown*)elem, "?word=abc", TRUE);
 
         IHTMLElement_Release(elem);
     }
@@ -7484,12 +7605,31 @@ static void test_attr(IHTMLElement *elem)
     ok(!strcmp_wa(V_BSTR(&v), "divid"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("divid2");
+    put_attr_node_value(attr, v);
+
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!strcmp_wa(V_BSTR(&v), "divid2"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
     get_attr_node_value(attr, &v, VT_BSTR);
     ok(!V_BSTR(&v), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("newvalue");
+    put_attr_node_value(attr, v);
+    VariantClear(&v);
+
+    attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!strcmp_wa(V_BSTR(&v), "newvalue"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     test_attr_specified(attr, VARIANT_TRUE);
     IHTMLDOMAttribute_Release(attr);
 
@@ -7500,6 +7640,14 @@ static void test_attr(IHTMLElement *elem)
     get_attr_node_value(attr, &v, VT_I4);
     ok(V_I4(&v) == 100, "V_I4(v) = %d\n", V_I4(&v));
     test_attr_specified(attr, VARIANT_TRUE);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 150;
+    put_attr_node_value(attr, v);
+
+    get_attr_node_value(attr, &v, VT_I4);
+    ok(V_I4(&v) == 150, "V_I4(v) = %d\n", V_I4(&v));
+
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, "tabIndex", TRUE);
@@ -7702,6 +7850,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     ok(type == 1, "type=%d\n", type);
     test_ifaces((IUnknown*)elem, elem_iids);
     test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement, "[object]");
+    test_elem_source_index(elem, -1);
 
     body = doc_get_body(doc);
     test_node_has_child((IUnknown*)body, VARIANT_FALSE);
@@ -8298,7 +8447,9 @@ static void test_docfrag(IHTMLDocument2 *doc)
     ok(location == (void*)0xdeadbeef, "location changed\n");
 
     br = test_create_elem(doc, "BR");
+    test_elem_source_index(br, -1);
     test_node_append_child((IUnknown*)frag, (IUnknown*)br);
+    test_elem_source_index(br, 0);
     IHTMLElement_Release(br);
 
     div = get_elem_by_id(doc, "divid", TRUE);

@@ -227,13 +227,14 @@ static void STDMETHODCALLTYPE d2d_solid_color_brush_SetColor(ID2D1SolidColorBrus
     FIXME("iface %p, color %p stub!\n", iface, color);
 }
 
-static D2D1_COLOR_F STDMETHODCALLTYPE d2d_solid_color_brush_GetColor(ID2D1SolidColorBrush *iface)
+static D2D1_COLOR_F * STDMETHODCALLTYPE d2d_solid_color_brush_GetColor(ID2D1SolidColorBrush *iface, D2D1_COLOR_F *color)
 {
     static const D2D1_COLOR_F black = {0.0f, 0.0f, 0.0f, 1.0f};
 
-    FIXME("iface %p stub!\n", iface);
+    FIXME("iface %p, color %p stub!\n", iface, color);
 
-    return black;
+    *color = black;
+    return color;
 }
 
 static const struct ID2D1SolidColorBrushVtbl d2d_solid_color_brush_vtbl =
@@ -360,21 +361,23 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearG
     FIXME("iface %p, end_point {%.8e, %.8e} stub!\n", iface, end_point.x, end_point.y);
 }
 
-static D2D1_POINT_2F STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint(ID2D1LinearGradientBrush *iface)
+static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint(ID2D1LinearGradientBrush *iface,
+        D2D1_POINT_2F *point)
 {
-    static const D2D1_POINT_2F point = {0.0f, 0.0f};
+    FIXME("iface %p, point %p stub!\n", iface, point);
 
-    FIXME("iface %p stub!\n", iface);
-
+    point->x = 0.0f;
+    point->y = 0.0f;
     return point;
 }
 
-static D2D1_POINT_2F STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(ID2D1LinearGradientBrush *iface)
+static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(ID2D1LinearGradientBrush *iface,
+        D2D1_POINT_2F *point)
 {
-    static const D2D1_POINT_2F point = {0.0f, 0.0f};
+    FIXME("iface %p, point %p stub!\n", iface, point);
 
-    FIXME("iface %p stub!\n", iface);
-
+    point->x = 0.0f;
+    point->y = 0.0f;
     return point;
 }
 

@@ -43,6 +43,72 @@ static void CALLBACK user_apc(ULONG_PTR param)
     user_apc_ran = TRUE;
 }
 
+
+enum rpcThreadOp
+{
+    RPC_READFILE
+};
+
+struct rpcThreadArgs
+{
+    ULONG_PTR returnValue;
+    DWORD lastError;
+    enum rpcThreadOp op;
+    ULONG_PTR args[5];
+};
+
+static DWORD CALLBACK rpcThreadMain(LPVOID arg)
+{
+    struct rpcThreadArgs *rpcargs = (struct rpcThreadArgs *)arg;
+    trace("rpcThreadMain starting\n");
+    SetLastError( rpcargs->lastError );
+
+    switch (rpcargs->op)
+    {
+        case RPC_READFILE:
+            rpcargs->returnValue = (ULONG_PTR)ReadFile( (HANDLE)rpcargs->args[0],         /* hFile */
+                                                        (LPVOID)rpcargs->args[1],         /* buffer */
+                                                        (DWORD)rpcargs->args[2],          /* bytesToRead */
+                                                        (LPDWORD)rpcargs->args[3],        /* bytesRead */
+                                                        (LPOVERLAPPED)rpcargs->args[4] ); /* overlapped */
+            break;
+
+        default:
+            SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+            rpcargs->returnValue = 0;
+            break;
+    }
+
+    rpcargs->lastError = GetLastError();
+    trace("rpcThreadMain returning\n");
+    return 0;
+}
+
+/* Runs ReadFile(...) from a different thread */
+static BOOL RpcReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead, LPOVERLAPPED overlapped)
+{
+    struct rpcThreadArgs rpcargs;
+    HANDLE thread;
+    DWORD threadId;
+
+    rpcargs.returnValue = 0;
+    rpcargs.lastError = GetLastError();
+    rpcargs.op = RPC_READFILE;
+    rpcargs.args[0] = (ULONG_PTR)hFile;
+    rpcargs.args[1] = (ULONG_PTR)buffer;
+    rpcargs.args[2] = (ULONG_PTR)bytesToRead;
+    rpcargs.args[3] = (ULONG_PTR)bytesRead;
+    rpcargs.args[4] = (ULONG_PTR)overlapped;
+
+    thread = CreateThread(NULL, 0, rpcThreadMain, (void *)&rpcargs, 0, &threadId);
+    ok(thread != NULL, "CreateThread failed. %d\n", GetLastError());
+    ok(WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed with %d.\n", GetLastError());
+    CloseHandle(thread);
+
+    SetLastError(rpcargs.lastError);
+    return (BOOL)rpcargs.returnValue;
+}
+
 static void test_CreateNamedPipe(int pipemode)
 {
     HANDLE hnp;
@@ -61,9 +127,9 @@ static void test_CreateNamedPipe(int pipemode)
     else
         trace("test_CreateNamedPipe starting in message mode\n");
 
-    /* Wait for non existing pipe */
+    /* Wait for nonexistent pipe */
     ret = WaitNamedPipeA(PIPENAME, 2000);
-    ok(ret == 0, "WaitNamedPipe returned %d for non existing pipe\n", ret);
+    ok(ret == 0, "WaitNamedPipe returned %d for nonexistent pipe\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     /* Bad parameter checks */
@@ -127,6 +193,21 @@ static void test_CreateNamedPipe(int pipemode)
         /* Make sure we can read and write a few bytes in both directions */
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf), "read got %d bytes\n", readden);
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
+
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2), "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
+
+        /* Now the same again, but with an additional call to PeekNamedPipe */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf), "write file len 1\n");
         ok(PeekNamedPipe(hFile, NULL, 0, NULL, &readden, NULL), "Peek\n");
         ok(readden == sizeof(obuf), "peek 1 got %d bytes\n", readden);
@@ -144,6 +225,65 @@ static void test_CreateNamedPipe(int pipemode)
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
         ok(readden == sizeof(obuf2), "read 2 got %d bytes\n", readden);
         ok(memcmp(obuf2, ibuf, written) == 0, "content 2 check\n");
+
+        /* Test how ReadFile behaves when the buffer is not big enough for the whole message */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        ok(ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile\n");
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hFile, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2) - 4, "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
+
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        if (pipemode == PIPE_TYPE_BYTE)
+        {
+            ok(ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+        }
+        else
+        {
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+        }
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hnp, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf) - 4, "read got %d bytes\n", readden);
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
+
+        /* Similar to above, but use a read buffer size small enough to read in three parts */
+        memset(ibuf, 0, sizeof(ibuf));
+        ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf2), "write file len\n");
+        if (pipemode == PIPE_TYPE_BYTE)
+        {
+            ok(ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            ok(readden == 4, "read got %d bytes\n", readden);
+            ok(ReadFile(hnp, ibuf + 4, 4, &readden, NULL), "ReadFile\n");
+        }
+        else
+        {
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+            ok(readden == 4, "read got %d bytes\n", readden);
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf + 4, 4, &readden, NULL), "ReadFile\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
+        }
+        ok(readden == 4, "read got %d bytes\n", readden);
+        ok(ReadFile(hnp, ibuf + 8, sizeof(ibuf) - 8, &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf2) - 8, "read got %d bytes\n", readden);
+        ok(memcmp(obuf2, ibuf, written) == 0, "content check\n");
 
         /* Test reading of multiple writes */
         memset(ibuf, 0, sizeof(ibuf));
@@ -236,7 +376,9 @@ static void test_CreateNamedPipe(int pipemode)
             }
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 5a check\n");
-    
+            if (readden <= sizeof(obuf))
+                ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+
             /* Multiple writes in the reverse direction */
             /* the write of obuf2 from write4 should still be in the buffer */
             ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek6a\n");
@@ -266,6 +408,129 @@ static void test_CreateNamedPipe(int pipemode)
             }
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 6a check\n");
+            if (readden <= sizeof(obuf))
+                ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
+
+            /* Test how ReadFile behaves when the buffer is not big enough for the whole message */
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile 7\n");
+            ok(written == sizeof(obuf2), "write file len 7\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile 7\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 7\n");
+            ok(readden == 4, "read got %d bytes 7\n", readden);
+            ok(ReadFile(hFile, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile 7\n");
+            ok(readden == sizeof(obuf2) - 4, "read got %d bytes 7\n", readden);
+            ok(memcmp(obuf2, ibuf, written) == 0, "content check 7\n");
+
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile 8\n");
+            ok(written == sizeof(obuf), "write file len 8\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile 8\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 8\n");
+            ok(readden == 4, "read got %d bytes 8\n", readden);
+            ok(ReadFile(hnp, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile 8\n");
+            ok(readden == sizeof(obuf) - 4, "read got %d bytes 8\n", readden);
+            ok(memcmp(obuf, ibuf, written) == 0, "content check 8\n");
+
+            /* The following test shows that when doing a partial read of a message, the rest
+             * is still in the pipe, and can be received from a second thread. This shows
+             * especially that the content is _not_ stored in thread-local-storage until it is
+             * completely transmitted. The same method works even across multiple processes. */
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile 9\n");
+            ok(written == sizeof(obuf), "write file len 9\n");
+            ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile 9\n");
+            ok(written == sizeof(obuf2), "write file len 9\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile 9\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
+            ok(readden == 4, "read got %d bytes 9\n", readden);
+            SetLastError(0xdeadbeef);
+            ret = RpcReadFile(hFile, ibuf + 4, 4, &readden, NULL);
+            todo_wine
+            ok(!ret, "RpcReadFile 9\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
+            ok(readden == 4, "read got %d bytes 9\n", readden);
+            ret = RpcReadFile(hFile, ibuf + 8, sizeof(ibuf), &readden, NULL);
+            ok(ret, "RpcReadFile 9\n");
+            todo_wine
+            ok(readden == sizeof(obuf) - 8, "read got %d bytes 9\n", readden);
+            ok(memcmp(obuf, ibuf, sizeof(obuf)) == 0, "content check 9\n");
+            if (readden <= sizeof(obuf) - 8) /* blocks forever if second part was already received */
+            {
+                memset(ibuf, 0, sizeof(ibuf));
+                SetLastError(0xdeadbeef);
+                ret = RpcReadFile(hFile, ibuf, 4, &readden, NULL);
+                ok(!ret, "RpcReadFile 9\n");
+                todo_wine
+                ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
+                ok(readden == 4, "read got %d bytes 9\n", readden);
+                SetLastError(0xdeadbeef);
+                todo_wine
+                ok(!ReadFile(hFile, ibuf + 4, 4, &readden, NULL), "ReadFile 9\n");
+                todo_wine
+                ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
+                ok(readden == 4, "read got %d bytes 9\n", readden);
+                ret = RpcReadFile(hFile, ibuf + 8, sizeof(ibuf), &readden, NULL);
+                ok(ret, "RpcReadFile 9\n");
+                ok(readden == sizeof(obuf2) - 8, "read got %d bytes 9\n", readden);
+                ok(memcmp(obuf2, ibuf, sizeof(obuf2)) == 0, "content check 9\n");
+            }
+
+            /* Now the reverse direction */
+            memset(ibuf, 0, sizeof(ibuf));
+            ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile 10\n");
+            ok(written == sizeof(obuf2), "write file len 10\n");
+            ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile 10\n");
+            ok(written == sizeof(obuf), "write file len 10\n");
+            SetLastError(0xdeadbeef);
+            todo_wine
+            ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile 10\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 10\n");
+            ok(readden == 4, "read got %d bytes 10\n", readden);
+            SetLastError(0xdeadbeef);
+            ret = RpcReadFile(hnp, ibuf + 4, 4, &readden, NULL);
+            todo_wine
+            ok(!ret, "RpcReadFile 10\n");
+            todo_wine
+            ok(GetLastError() == ERROR_MORE_DATA, "wrong error 10\n");
+            ok(readden == 4, "read got %d bytes 10\n", readden);
+            ret = RpcReadFile(hnp, ibuf + 8, sizeof(ibuf), &readden, NULL);
+            ok(ret, "RpcReadFile 10\n");
+            todo_wine
+            ok(readden == sizeof(obuf2) - 8, "read got %d bytes 10\n", readden);
+            ok(memcmp(obuf2, ibuf, sizeof(obuf2)) == 0, "content check 10\n");
+            if (readden <= sizeof(obuf2) - 8) /* blocks forever if second part was already received */
+            {
+                memset(ibuf, 0, sizeof(ibuf));
+                SetLastError(0xdeadbeef);
+                ret = RpcReadFile(hnp, ibuf, 4, &readden, NULL);
+                ok(!ret, "RpcReadFile 10\n");
+                todo_wine
+                ok(GetLastError() == ERROR_MORE_DATA, "wrong error 10\n");
+                ok(readden == 4, "read got %d bytes 10\n", readden);
+                SetLastError(0xdeadbeef);
+                todo_wine
+                ok(!ReadFile(hnp, ibuf + 4, 4, &readden, NULL), "ReadFile 10\n");
+                todo_wine
+                ok(GetLastError() == ERROR_MORE_DATA, "wrong error 10\n");
+                ok(readden == 4, "read got %d bytes 10\n", readden);
+                ret = RpcReadFile(hnp, ibuf + 8, sizeof(ibuf), &readden, NULL);
+                ok(ret, "RpcReadFile 10\n");
+                ok(readden == sizeof(obuf) - 8, "read got %d bytes 10\n", readden);
+                ok(memcmp(obuf, ibuf, sizeof(obuf)) == 0, "content check 10\n");
+            }
+
         }
 
         /* Picky conformance tests */

@@ -146,6 +146,8 @@ static const WCHAR attrMarginTop[] =
     {'m','a','r','g','i','n','-','t','o','p',0};
 static const WCHAR attrMinHeight[] =
     {'m','i','n','-','h','e','i','g','h','t',0};
+static const WCHAR attrMinWidth[] =
+    {'m','i','n','-','w','i','d','t','h',0};
 static const WCHAR attrOutline[] =
     {'o','u','t','l','i','n','e',0};
 static const WCHAR attrOverflow[] =
@@ -263,6 +265,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
     {attrMarginTop,            DISPID_IHTMLSTYLE_MARGINTOP},
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
+    {attrMinWidth,             DISPID_IHTMLSTYLE5_MINWIDTH},
     {attrOutline,              DISPID_IHTMLSTYLE6_OUTLINE},
     {attrOverflow,             DISPID_IHTMLSTYLE_OVERFLOW},
     {attrOverflowX,            DISPID_IHTMLSTYLE2_OVERFLOWX},
@@ -680,6 +683,9 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 {
     nsAString str_value;
     HRESULT hres;
+
+    if(!p)
+        return E_POINTER;
 
     nsAString_Init(&str_value, NULL);
 
@@ -2454,15 +2460,19 @@ static HRESULT WINAPI HTMLStyle_get_cssText(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_pixelTop(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    return set_style_pxattr(This->nsstyle, STYLEID_TOP, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_pixelTop(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_pixel_val(This, STYLEID_TOP, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pixelLeft(IHTMLStyle *iface, LONG v)
@@ -2495,22 +2505,28 @@ static HRESULT WINAPI HTMLStyle_put_pixelWidth(IHTMLStyle *iface, LONG v)
 static HRESULT WINAPI HTMLStyle_get_pixelWidth(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_pixel_val(This, STYLEID_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_pixelHeight(IHTMLStyle *iface, LONG v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    return set_style_pxattr(This->nsstyle, STYLEID_HEIGHT, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_pixelHeight(IHTMLStyle *iface, LONG *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_pixel_val(This, STYLEID_HEIGHT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_posTop(IHTMLStyle *iface, float v)

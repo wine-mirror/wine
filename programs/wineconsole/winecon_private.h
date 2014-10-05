@@ -75,7 +75,7 @@ struct inner_data {
     void                (*fnSetFont)(struct inner_data* data, const WCHAR* font, unsigned height, unsigned weight);
     void		(*fnDeleteBackend)(struct inner_data* data);
 
-    void*               private;        /* data part belonging to the chosen backed */
+    void*               private;        /* data part belonging to the chosen backend */
 };
 
 /* from wineconsole.c */

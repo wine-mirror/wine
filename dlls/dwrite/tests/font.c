@@ -919,6 +919,8 @@ static void test_FontLoader(void)
     IDWriteFontFace *fface = NULL;
     HRESULT hr;
     HRSRC font;
+    UINT32 codePoints[1] = {0xa8};
+    UINT16 indices[1];
 
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -955,7 +957,7 @@ static void test_FontLoader(void)
     ok(face == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face);
     ok(count == 0, "got %i\n", count);
 
-    hr = IDWriteFactory_CreateFontFace(factory, type, 1, &ffile, 0, 0, &fface);
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &ffile, 0, 0, &fface);
     ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(ffile);
 
@@ -975,6 +977,9 @@ static void test_FontLoader(void)
 
         hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, 0, &fface);
         ok(hr == S_OK, "got 0x%08x\n",hr);
+        hr = IDWriteFontFace_GetGlyphIndices(fface, codePoints, 1, indices);
+        ok(hr == S_OK, "got0x%08x\n",hr);
+        ok(indices[0] == 6, "got index %i\n",indices[0]);
         IDWriteFontFace_Release(fface);
         IDWriteFontFile_Release(ffile);
     }

@@ -95,6 +95,7 @@ DEFINE_EXPECT(dispexfunc_value);
 DEFINE_EXPECT(testobj_delete_test);
 DEFINE_EXPECT(testobj_delete_nodelete);
 DEFINE_EXPECT(testobj_value);
+DEFINE_EXPECT(testobj_construct);
 DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_withprop_d);
 DEFINE_EXPECT(testobj_withprop_i);
@@ -143,6 +144,7 @@ DEFINE_EXPECT(DeleteMemberByDispID_false);
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
 #define DISPID_TESTOBJ_WITHPROP     0x2002
 
+#define JS_E_OUT_OF_MEMORY 0x800a03ec
 #define JS_E_INVALID_CHAR 0x800a03f6
 
 static const WCHAR testW[] = {'t','e','s','t',0};
@@ -362,6 +364,10 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
             ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
             break;
         case INVOKE_FUNC|INVOKE_PROPERTYGET:
+            ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+            break;
+        case DISPATCH_CONSTRUCT:
+            CHECK_EXPECT(testobj_construct);
             ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
             break;
         default:
@@ -1961,6 +1967,56 @@ static void test_script_exprs(void)
     testing_expr = FALSE;
 }
 
+struct bom_test
+{
+    WCHAR str[1024];
+    HRESULT hres;
+};
+
+static void run_bom_tests(void)
+{
+    BSTR src;
+    int i;
+    HRESULT hres;
+    struct bom_test bom_tests[] = {
+        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
+        {{0xFEFF,'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
+        {{'v',0xFEFF,'a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, JS_E_OUT_OF_MEMORY},
+        {{'v','a','r',0xFEFF,' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
+        {{'v','a','r',' ','a',' ','=',' ','1',';',' ',0xFEFF,'r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
+        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t',0xFEFF,'S','u','c','c','e','s','s','(',')',';','\0'}, JS_E_OUT_OF_MEMORY},
+        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s',0xFEFF,'(',')',';','\0'}, S_OK},
+        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
+        {{'v','a','r',' ','a',' ','=',0xFEFF,' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
+        {{0xFEFF,'v','a','r',' ','a',' ','=',0xFEFF,0xFEFF,' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
+        {{0}}
+    };
+
+    engine_clsid = &CLSID_JScript;
+
+    for (i = 0; bom_tests[i].str[0]; i++)
+    {
+        if(bom_tests[i].hres == S_OK)
+        {
+             SET_EXPECT(global_success_d);
+             SET_EXPECT(global_success_i);
+             src = SysAllocString(bom_tests[i].str);
+             hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, src);
+             ok(hres == S_OK, "test %s failed with %08x\n", wine_dbgstr_w(src), hres);
+             SysFreeString(src);
+             CHECK_CALLED(global_success_d);
+             CHECK_CALLED(global_success_i);
+        }
+        else
+        {
+             src = SysAllocString(bom_tests[i].str);
+             hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, src);
+             todo_wine ok(hres == bom_tests[i].hres, "test %s returned with %08x\n", wine_dbgstr_w(src), hres);
+             SysFreeString(src);
+        }
+    }
+}
+
 static BOOL run_tests(void)
 {
     HRESULT hres;
@@ -2121,6 +2177,10 @@ static BOOL run_tests(void)
     parse_script_a("ok(String.prototype.concat.call(testObj, ' OK') === '1 OK', 'wrong concat result');");
     CHECK_CALLED(testobj_value);
 
+    SET_EXPECT(testobj_construct);
+    parse_script_a("var t = new testObj(1);");
+    CHECK_CALLED(testobj_construct);
+
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
     parse_script_a("this.testPropGet;");
@@ -2173,6 +2233,14 @@ static BOOL run_tests(void)
     parse_script_a("var t = (function () { with(testObj) { return withProp; }})(); ok(t === 1, 't = ' + t);");
     CHECK_CALLED(testobj_withprop_d);
     CHECK_CALLED(testobj_withprop_i);
+
+    parse_script_a("@set @t=2\nok(@t === 2, '@t = ' + @t);");
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    parse_script_a("@if(true)\nif(@_jscript) reportSuccess();\n@end");
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
 
     run_from_res("lang.js");
     run_from_res("api.js");
@@ -2241,6 +2309,8 @@ static BOOL run_tests(void)
         "Microsoft JScript runtime error",
         "Object expected",
         NULL);
+
+    run_bom_tests();
 
     return TRUE;
 }

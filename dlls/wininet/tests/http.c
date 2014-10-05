@@ -32,6 +32,12 @@
 
 #include "wine/test.h"
 
+/* Undocumented security flags */
+#define _SECURITY_FLAG_CERT_REV_FAILED    0x00800000
+#define _SECURITY_FLAG_CERT_INVALID_CA    0x01000000
+#define _SECURITY_FLAG_CERT_INVALID_CN    0x02000000
+#define _SECURITY_FLAG_CERT_INVALID_DATE  0x04000000
+
 #define TEST_URL "http://test.winehq.org/tests/hello.html"
 
 static BOOL first_connection_to_test_url = TRUE;
@@ -73,7 +79,7 @@ static BOOL first_connection_to_test_url = TRUE;
                status < MAX_INTERNET_STATUS && status_string[status] ? \
                status_string[status] : "unknown");                      \
             if (expect[status]) expect[status]--; \
-            else optional[status]--; \
+            else if(optional[status]) optional[status]--; \
         } \
         notified[status]++; \
     }while(0)
@@ -139,10 +145,10 @@ static const test_data_t test_data[] = {
         TESTF_REDIRECT
     },
     {
-        "http://www.codeweavers.com/",
-        "http://www.codeweavers.com/",
-        "www.codeweavers.com",
-        "",
+        "http://test.winehq.org/tests/gzip.php",
+        "http://test.winehq.org/tests/gzip.php",
+        "test.winehq.org",
+        "/tests/gzip.php",
         "Accept-Encoding: gzip, deflate",
         TESTF_COMPRESSED
     },
@@ -728,8 +734,16 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     {
         if (flags & INTERNET_FLAG_ASYNC)
             SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+        /* IE11 calls those in InternetQueryDataAvailable call. */
+        SET_OPTIONAL(INTERNET_STATUS_RECEIVING_RESPONSE);
+        SET_OPTIONAL(INTERNET_STATUS_RESPONSE_RECEIVED);
+
         length = 0;
         res = InternetQueryDataAvailable(hor,&length,0x0,0x0);
+
+        CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+
         if (flags & INTERNET_FLAG_ASYNC)
         {
             if (res)
@@ -750,6 +764,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
                 exlen = length;
                 ok(exlen, "length = 0\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+                CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
                 ok(req_error, "req_error = 0\n");
                 continue;
             }else {
@@ -758,6 +773,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         }else {
             ok(res, "InternetQueryDataAvailable failed: %u\n", GetLastError());
         }
+        CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+
         trace("LENGTH %d\n", length);
         if(test->flags & TESTF_CHUNKED)
             ok(length <= 8192, "length = %d, expected <= 8192\n", length);
@@ -1199,11 +1216,11 @@ static void HttpSendRequestEx_test(void)
     hSession = InternetOpenA("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
     ok( hSession != NULL ,"Unable to open Internet session\n");
-    hConnect = InternetConnectA(hSession, "crossover.codeweavers.com",
+    hConnect = InternetConnectA(hSession, "test.winehq.org",
             INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
             0);
-    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
-    hRequest = HttpOpenRequestA(hConnect, "POST", "/posttest.php",
+    ok( hConnect != NULL, "Unable to connect to http://test.winehq.org\n");
+    hRequest = HttpOpenRequestA(hConnect, "POST", "/tests/post.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
@@ -1615,11 +1632,11 @@ static void HttpHeaders_test(void)
     hSession = InternetOpenA("Wine Regression Test",
             INTERNET_OPEN_TYPE_PRECONFIG,NULL,NULL,0);
     ok( hSession != NULL ,"Unable to open Internet session\n");
-    hConnect = InternetConnectA(hSession, "crossover.codeweavers.com",
+    hConnect = InternetConnectA(hSession, "test.winehq.org",
             INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
             0);
-    ok( hConnect != NULL, "Unable to connect to http://crossover.codeweavers.com\n");
-    hRequest = HttpOpenRequestA(hConnect, "POST", "/posttest.php",
+    ok( hConnect != NULL, "Unable to connect to http://test.winehq.org\n");
+    hRequest = HttpOpenRequestA(hConnect, "POST", "/tests/post.php",
             NULL, NULL, NULL, INTERNET_FLAG_NO_CACHE_WRITE, 0);
     if (!hRequest && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
@@ -1702,7 +1719,7 @@ static void HttpHeaders_test(void)
     ok((len < sizeof(buffer)-sizeof(CHAR)) && (buffer[len/sizeof(CHAR)] == 0),"No NUL at end\n");
     ok(len == strlen(buffer) * sizeof(CHAR), "Length wrong\n");
     /* what's in the middle differs between Wine and Windows so currently we check only the beginning and the end */
-    ok(strncmp(buffer, "POST /posttest.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
+    ok(strncmp(buffer, "POST /tests/post.php HTTP/1", 25)==0, "Invalid beginning of headers string\n");
     ok(strcmp(buffer + strlen(buffer) - 4, "\r\n\r\n")==0, "Invalid end of headers string\n");
     ok(index == 0, "Index was incremented\n");
 
@@ -3232,10 +3249,16 @@ static void test_conn_close(int port)
     res = InternetReadFile(req, buf, avail, &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
 
+    /* IE11 calls those in InternetQueryDataAvailable call. */
+    SET_OPTIONAL(INTERNET_STATUS_RECEIVING_RESPONSE);
+    SET_OPTIONAL(INTERNET_STATUS_RESPONSE_RECEIVED);
+
     res = InternetQueryDataAvailable(req, &avail, 0, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
     ok(!avail, "avail = %u, expected 0\n", avail);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
 
     SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
@@ -3243,6 +3266,7 @@ static void test_conn_close(int port)
     SetEvent(conn_close_event);
     WaitForSingleObject(hCompleteEvent, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
+    CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -4156,15 +4180,14 @@ typedef struct {
 } cert_struct_test_t;
 
 static const cert_struct_test_t test_winehq_org_cert = {
-    "6JcR7G3G8tgjkeoMcitK-bTbzcpumDSy\r\n"
     "GT98380011\r\n"
     "See www.rapidssl.com/resources/cps (c)14\r\n"
     "Domain Control Validated - RapidSSL(R)\r\n"
     "*.winehq.org",
 
     "US\r\n"
-    "\"GeoTrust, Inc.\"\r\n"
-    "RapidSSL CA"
+    "GeoTrust Inc.\r\n"
+    "RapidSSL SHA256 CA - G3"
 };
 
 static const cert_struct_test_t test_winehq_com_cert = {
@@ -4200,7 +4223,7 @@ static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
-    ok(info.dwKeySize == 128, "dwKeySize = %u\n", info.dwKeySize);
+    ok(info.dwKeySize == 128 || info.dwKeySize == 256, "dwKeySize = %u\n", info.dwKeySize);
 
     release_cert_info(&info);
 }
@@ -4233,8 +4256,8 @@ static void _test_security_info(unsigned line, const char *urlc, DWORD error, DW
     }
 }
 
-#define test_secflags_option(a,b) _test_secflags_option(__LINE__,a,b)
-static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
+#define test_secflags_option(a,b,c) _test_secflags_option(__LINE__,a,b,c)
+static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags, DWORD opt_flags)
 {
     DWORD flags, size;
     BOOL res;
@@ -4243,14 +4266,16 @@ static void _test_secflags_option(unsigned line, HINTERNET req, DWORD ex_flags)
     size = sizeof(flags);
     res = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
     ok_(__FILE__,line)(res, "InternetQueryOptionW(INTERNET_OPTION_SECURITY_FLAGS) failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n", flags, ex_flags);
+    ok_(__FILE__,line)((flags & ~opt_flags) == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS flags = %x, expected %x\n",
+                       flags, ex_flags);
 
     /* Option 98 is undocumented and seems to be the same as INTERNET_OPTION_SECURITY_FLAGS */
     flags = 0xdeadbeef;
     size = sizeof(flags);
     res = InternetQueryOptionW(req, 98, &flags, &size);
     ok_(__FILE__,line)(res, "InternetQueryOptionW(98) failed: %u\n", GetLastError());
-    ok_(__FILE__,line)(flags == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS(98) flags = %x, expected %x\n", flags, ex_flags);
+    ok_(__FILE__,line)((flags & ~opt_flags) == ex_flags, "INTERNET_OPTION_SECURITY_FLAGS(98) flags = %x, expected %x\n",
+                       flags, ex_flags);
 }
 
 #define set_secflags(a,b,c) _set_secflags(__LINE__,a,b,c)
@@ -4303,17 +4328,17 @@ static void test_security_flags(void)
         return;
     }
 
-    test_secflags_option(req, 0);
+    test_secflags_option(req, 0, 0);
     test_security_info("https://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_REVOCATION);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION, 0);
 
     set_secflags(req, TRUE, SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID, 0);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID, 0);
 
     flags = SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_SECURE;
     res = InternetSetOptionW(req, 99, &flags, sizeof(flags));
@@ -4323,6 +4348,10 @@ static void test_security_flags(void)
     SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION); /* IE11 calls it, it probably reconnects. */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER); /* IE11 */
     SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
     SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
     SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4339,8 +4368,10 @@ static void test_security_flags(void)
 
     CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
     CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTED_TO_SERVER, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4351,7 +4382,7 @@ static void test_security_flags(void)
 
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA
-            |SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_STRENGTH_STRONG);
+            |SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_CERT_CN_INVALID|SECURITY_FLAG_STRENGTH_STRONG, 0);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -4374,6 +4405,10 @@ static void test_security_flags(void)
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION); /* IE11 calls it, it probably reconnects. */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER); /* IE11 */
     SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -4411,10 +4446,10 @@ static void test_security_flags(void)
     }
     HeapFree(GetProcessHeap(), 0, cert);
 
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTED_TO_SERVER, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CLOSING_CONNECTION, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
@@ -4432,10 +4467,12 @@ static void test_security_flags(void)
     ok(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfoA(HTTP_QUERY_CONTENT_ENCODING) failed: %u\n", GetLastError());
 
     test_request_flags(req, 8);
-    test_secflags_option(req, 0x800000);
+    /* IE11 finds both rev failure and invalid CA. Previous versions required rev failure
+       to be ignored before invalid CA was reported. */
+    test_secflags_option(req, _SECURITY_FLAG_CERT_REV_FAILED, _SECURITY_FLAG_CERT_INVALID_CA);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_REVOCATION);
-    test_secflags_option(req, 0x800000|SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, _SECURITY_FLAG_CERT_REV_FAILED|SECURITY_FLAG_IGNORE_REVOCATION, _SECURITY_FLAG_CERT_INVALID_CA);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -4460,16 +4497,20 @@ static void test_security_flags(void)
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
 
     test_request_flags(req, INTERNET_REQFLAG_NO_HEADERS);
-    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
+    test_secflags_option(req, SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
     test_security_info("https://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
 
     set_secflags(req, FALSE, SECURITY_FLAG_IGNORE_UNKNOWN_CA);
-    test_secflags_option(req, 0x1800000|SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA
-            |SECURITY_FLAG_IGNORE_REVOCATION);
+    test_secflags_option(req, _SECURITY_FLAG_CERT_INVALID_CA|_SECURITY_FLAG_CERT_REV_FAILED
+            |SECURITY_FLAG_IGNORE_REVOCATION|SECURITY_FLAG_IGNORE_UNKNOWN_CA, 0);
     test_http_version(req);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION); /* IE11 calls it, it probably reconnects. */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER); /* IE11 */
     SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
     SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
     SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4484,8 +4525,10 @@ static void test_security_flags(void)
     WaitForSingleObject(hCompleteEvent, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTED_TO_SERVER, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4496,10 +4539,11 @@ static void test_security_flags(void)
 
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_IGNORE_REVOCATION
-            |SECURITY_FLAG_STRENGTH_STRONG|0x1800000);
+            |SECURITY_FLAG_STRENGTH_STRONG|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
 
     test_cert_struct(req, &test_winehq_com_cert);
-    test_security_info("https://test.winehq.com/data/some_file.html?q", 0, 0x1800000);
+    test_security_info("https://test.winehq.com/data/some_file.html?q", 0,
+            _SECURITY_FLAG_CERT_INVALID_CA|_SECURITY_FLAG_CERT_REV_FAILED);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -4532,11 +4576,15 @@ static void test_security_flags(void)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
 
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
-           |SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
+            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
     test_http_version(req);
 
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_OPTIONAL(INTERNET_STATUS_CLOSING_CONNECTION); /* IE11 calls it, it probably reconnects. */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTION_CLOSED); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTING_TO_SERVER); /* IE11 */
+    SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER); /* IE11 */
     SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
     SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
     SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4550,8 +4598,10 @@ static void test_security_flags(void)
     WaitForSingleObject(hCompleteEvent, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
+    CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTED_TO_SERVER, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4561,7 +4611,7 @@ static void test_security_flags(void)
 
     test_request_flags(req, 0);
     test_secflags_option(req, SECURITY_FLAG_SECURE|SECURITY_FLAG_IGNORE_UNKNOWN_CA|SECURITY_FLAG_STRENGTH_STRONG
-            |SECURITY_FLAG_IGNORE_REVOCATION|0x1800000);
+            |SECURITY_FLAG_IGNORE_REVOCATION|_SECURITY_FLAG_CERT_REV_FAILED|_SECURITY_FLAG_CERT_INVALID_CA, 0);
 
     res = InternetReadFile(req, buf, sizeof(buf), &size);
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
@@ -4760,7 +4810,6 @@ static void test_user_agent_header(void)
     ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
     ok(ret, "HttpQueryInfo failed\n");
-    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", err);
 
     InternetCloseHandle(req);
 
@@ -5137,7 +5186,7 @@ static const struct notification_data notification_data[] = {
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
         "POST",
         "test.winehq.org",
-        "tests/posttest.php",
+        "tests/post.php",
         "Public ID=codeweavers"
     },
     {
@@ -5145,7 +5194,7 @@ static const struct notification_data notification_data[] = {
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
         "POST",
         "test.winehq.org",
-        "tests/posttest.php"
+        "tests/post.php"
     },
     {
         async_send_request_ex_resolve_failure_test,
@@ -5426,6 +5475,55 @@ static void init_status_tests(void)
 #undef STATUS_STRING
 }
 
+static void WINAPI header_cb( HINTERNET handle, DWORD_PTR ctx, DWORD status, LPVOID info, DWORD len )
+{
+    if (status == INTERNET_STATUS_REQUEST_COMPLETE) SetEvent( (HANDLE)ctx );
+}
+
+static void test_concurrent_header_access(void)
+{
+    HINTERNET ses, con, req;
+    DWORD index, len, err;
+    BOOL ret;
+    char buf[128];
+    HANDLE wait = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    ses = InternetOpenA( "winetest", 0, NULL, NULL, INTERNET_FLAG_ASYNC );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, NULL, "/", NULL, NULL, NULL, 0, (DWORD_PTR)wait );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    pInternetSetStatusCallbackA( req, header_cb );
+
+    SetLastError( 0xdeadbeef );
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    err = GetLastError();
+    ok( !ret, "HttpSendRequestA succeeded\n" );
+    ok( err == ERROR_IO_PENDING, "got %u\n", ERROR_IO_PENDING );
+
+    ret = HttpAddRequestHeadersA( req, "winetest: winetest", ~0u, HTTP_ADDREQ_FLAG_ADD );
+    ok( ret, "HttpAddRequestHeadersA failed %u\n", GetLastError() );
+
+    index = 0;
+    len = sizeof(buf);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                          buf, &len, &index );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( strstr( buf, "winetest: winetest" ) != NULL, "header missing\n" );
+
+    WaitForSingleObject( wait, 5000 );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+    CloseHandle( wait );
+}
+
 START_TEST(http)
 {
     HMODULE hdll;
@@ -5445,7 +5543,6 @@ START_TEST(http)
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[1]);
     InternetReadFile_test(0, &test_data[1]);
-    first_connection_to_test_url = TRUE;
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[2]);
     test_security_flags();
     InternetReadFile_test(0, &test_data[2]);
@@ -5469,4 +5566,5 @@ START_TEST(http)
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[3]);
     test_connection_failure();
     test_default_service_port();
+    test_concurrent_header_access();
 }

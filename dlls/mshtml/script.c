@@ -739,7 +739,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
 
     hres = bind_mon_to_wstr(script_host->window, mon, &text);
     IMoniker_Release(mon);
-    if(FAILED(hres))
+    if(FAILED(hres) || !text)
         return;
 
     parse_text(script_host, text);
@@ -849,6 +849,7 @@ static BOOL get_guid_from_language(LPCWSTR type, GUID *guid)
 
 static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *nsscript, GUID *guid)
 {
+    nsIDOMHTMLElement *nselem;
     const PRUnichar *language;
     nsAString val_str;
     BOOL ret = FALSE;
@@ -872,7 +873,11 @@ static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *ns
         ERR("GetType failed: %08x\n", nsres);
     }
 
-    nsres = get_elem_attr_value((nsIDOMHTMLElement*)nsscript, languageW, &val_str, &language);
+    nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMHTMLElement, (void**)&nselem);
+    assert(nsres == NS_OK);
+
+    nsres = get_elem_attr_value(nselem, languageW, &val_str, &language);
+    nsIDOMHTMLElement_Release(nselem);
     if(NS_SUCCEEDED(nsres)) {
         if(*language) {
             ret = get_guid_from_language(language, guid);

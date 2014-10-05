@@ -875,7 +875,7 @@ MSVCRT___time32_t CDECL MSVCRT_time(MSVCRT___time32_t* buf)
 #endif
 
 /*********************************************************************
- *		__p_daylight (MSVCRT.@)
+ *		__p__daylight (MSVCRT.@)
  */
 int * CDECL MSVCRT___p__daylight(void)
 {
@@ -883,15 +883,15 @@ int * CDECL MSVCRT___p__daylight(void)
 }
 
 /*********************************************************************
- *		__p_dstbias (MSVCRT.@)
+ *		__p__dstbias (MSVCRT.@)
  */
-int * CDECL __p__dstbias(void)
+int * CDECL MSVCRT___p__dstbias(void)
 {
     return &MSVCRT__dstbias;
 }
 
 /*********************************************************************
- *		__p_timezone (MSVCRT.@)
+ *		__p__timezone (MSVCRT.@)
  */
 MSVCRT_long * CDECL MSVCRT___p__timezone(void)
 {

@@ -1121,6 +1121,8 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
 
     TRACE("state %p, gl_info %p.\n", state, gl_info);
 
+    state->gl_primitive_type = ~0u;
+
     /* Set some of the defaults for lights, transforms etc */
     state->transforms[WINED3D_TS_PROJECTION] = identity;
     state->transforms[WINED3D_TS_VIEW] = identity;

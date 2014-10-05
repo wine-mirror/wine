@@ -364,8 +364,11 @@ typedef struct
     LPWSTR statusText;
     DWORD bytesToWrite;
     DWORD bytesWritten;
+
+    CRITICAL_SECTION headers_section;  /* section to protect the headers array */
     HTTPHEADERW *custHeaders;
     DWORD nCustHeaders;
+
     FILETIME last_modified;
     HANDLE hCacheFile;
     req_file_t *req_file;

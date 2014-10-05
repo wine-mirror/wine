@@ -880,7 +880,7 @@ static void testIcmpSendEcho(void)
 
     if (!pIcmpSendEcho || !pIcmpCreateFile)
     {
-        win_skip( "ImcpSendEcho or IcmpCreateFile not available\n" );
+        win_skip( "IcmpSendEcho or IcmpCreateFile not available\n" );
         return;
     }
     memset(senddata, 0, sizeof(senddata));

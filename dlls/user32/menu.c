@@ -4360,6 +4360,8 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
 
     if (!IsWindow( hWnd ))
         return FALSE;
+    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+        return TRUE;
 
     if ((hMenu = GetMenu( hWnd )) && (lppop = MENU_GetMenu( hMenu ))) {
         lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
@@ -4583,12 +4585,12 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
     if ((lpmii->fMask & (MIIM_TYPE|MIIM_STRING))) {
          if( !menu->text ) {
                 if(lpmii->dwTypeData && lpmii->cch) {
-                    lpmii->cch = 0;
                     if( unicode)
                         *((WCHAR *)lpmii->dwTypeData) = 0;
                     else
                         *((CHAR *)lpmii->dwTypeData) = 0;
                 }
+                lpmii->cch = 0;
          } else {
             int len;
             if (unicode)

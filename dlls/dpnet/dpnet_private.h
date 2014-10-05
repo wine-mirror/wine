@@ -25,6 +25,8 @@
 # error You must include config.h to use this header
 #endif
 
+#include <wine/list.h>
+
 #include "dplay8.h"
 #include "dplobby8.h"
 /*
@@ -60,17 +62,36 @@ struct IDirectPlay8ClientImpl
 /* ------------------- */
 /* IDirectPlay8Address */
 /* ------------------- */
+struct component
+{
+    struct list entry;
+
+    WCHAR *name;
+    DWORD type;
+    DWORD size;
+
+    union
+    {
+        DWORD value;            /* DPNA_DATATYPE_DWORD       */
+        GUID guid;              /* DPNA_DATATYPE_GUID        */
+        WCHAR *string;          /* DPNA_DATATYPE_STRING      */
+        char *ansi;             /* DPNA_DATATYPE_STRING_ANSI */
+        void *binary;           /* DPNA_DATATYPE_BINARY      */
+    } data;
+};
 
 /*****************************************************************************
  * IDirectPlay8Address implementation structure
  */
 struct IDirectPlay8AddressImpl
 {
-  IDirectPlay8Address IDirectPlay8Address_iface;
-  LONG ref;
-  /* IDirectPlay8Address fields */
-  GUID SP_guid;
-  BOOL init;
+    IDirectPlay8Address IDirectPlay8Address_iface;
+    LONG ref;
+    /* IDirectPlay8Address fields */
+    GUID SP_guid;
+    BOOL init;
+
+    struct list components;
 };
 
 /*****************************************************************************
@@ -105,6 +126,7 @@ extern HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkO
 extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 extern void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps) DECLSPEC_HIDDEN;
 

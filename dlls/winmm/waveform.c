@@ -3850,12 +3850,10 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
 				    DWORD fdwDetails)
 {
     WINMM_ControlDetails details;
-    HRESULT hr;
 
     TRACE("(%p, %p, %x)\n", hmix, lpmcdW, fdwDetails);
 
-    hr = WINMM_InitMMDevices();
-    if(FAILED(hr))
+    if(!WINMM_StartDevicesThread())
         return MMSYSERR_NODRIVER;
 
     if(!lpmcdW || !lpmcdW->paDetails)

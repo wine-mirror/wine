@@ -4871,6 +4871,18 @@ static void test_messages(void)
     flush_events();
     ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", FALSE);
     ok(SetCursorPos(pos.x, pos.y), "SetCursorPos failed\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, "TestDialogClass", NULL, WS_CHILD|WS_VISIBLE,
+            0, 0, 100, 100, hparent, 0, GetModuleHandleA(0), NULL);
+    ok(hwnd != 0, "Failed to create custom dialog window\n");
+    flush_events();
+    flush_sequence();
+    ok(DrawMenuBar(hwnd), "DrawMenuBar failed: %d\n", GetLastError());
+    flush_events();
+    ok_sequence(WmEmptySeq, "DrawMenuBar for a child window", FALSE);
+
     DestroyWindow(hwnd);
 
     flush_sequence();

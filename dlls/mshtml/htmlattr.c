@@ -138,11 +138,25 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
     return IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, p);
 }
 
-static HRESULT WINAPI HTMLDOMAttribute_put_nodeName(IHTMLDOMAttribute *iface, VARIANT v)
+static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, VARIANT v)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    DISPID dispidNamed = DISPID_PROPERTYPUT;
+    DISPPARAMS dp = {&v, &dispidNamed, 1, 1};
+    EXCEPINFO ei;
+    VARIANT ret;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(!This->elem) {
+        FIXME("NULL This->elem\n");
+        return E_UNEXPECTED;
+    }
+
+    memset(&ei, 0, sizeof(ei));
+
+    return IDispatchEx_InvokeEx(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYPUT, &dp, &ret, &ei, NULL);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, VARIANT *p)
@@ -216,7 +230,7 @@ static const IHTMLDOMAttributeVtbl HTMLDOMAttributeVtbl = {
     HTMLDOMAttribute_GetIDsOfNames,
     HTMLDOMAttribute_Invoke,
     HTMLDOMAttribute_get_nodeName,
-    HTMLDOMAttribute_put_nodeName,
+    HTMLDOMAttribute_put_nodeValue,
     HTMLDOMAttribute_get_nodeValue,
     HTMLDOMAttribute_get_specified
 };

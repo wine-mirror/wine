@@ -704,6 +704,26 @@ static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
     return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
 }
 
+static void HTMLObjectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsobject)
+        note_cc_edge((nsISupports*)This->nsobject, "This->nsobject", cb);
+}
+
+static void HTMLObjectElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsobject) {
+        nsIDOMHTMLObjectElement *nsobject = This->nsobject;
+
+        This->nsobject = NULL;
+        nsIDOMHTMLObjectElement_Release(nsobject);
+    }
+}
+
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     HTMLObjectElement_QI,
     HTMLObjectElement_destructor,
@@ -718,7 +738,10 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     NULL,
     HTMLObjectElement_get_readystate,
     HTMLObjectElement_get_dispid,
-    HTMLObjectElement_invoke
+    HTMLObjectElement_invoke,
+    NULL,
+    HTMLObjectElement_traverse,
+    HTMLObjectElement_unlink
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
@@ -750,10 +773,7 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     HTMLElement_Init(&ret->plugin_container.element, doc, nselem, &HTMLObjectElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLObjectElement, (void**)&ret->nsobject);
-
-    /* Share nsobject reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsobject == ret->plugin_container.element.node.nsnode);
-    nsIDOMNode_Release(ret->plugin_container.element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->plugin_container.element;
     return S_OK;

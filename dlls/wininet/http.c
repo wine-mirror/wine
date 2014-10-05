@@ -369,6 +369,11 @@ static DWORD WINAPI collect_connections_proc(void *arg)
     FreeLibraryAndExitThread(WININET_hModule, 0);
 }
 
+/***********************************************************************
+ *           HTTP_GetHeader (internal)
+ *
+ * Headers section must be held
+ */
 static LPHTTPHEADERW HTTP_GetHeader(http_request_t *req, LPCWSTR head)
 {
     int HeaderIndex = 0;
@@ -377,6 +382,17 @@ static LPHTTPHEADERW HTTP_GetHeader(http_request_t *req, LPCWSTR head)
         return NULL;
     else
         return &req->custHeaders[HeaderIndex];
+}
+
+static WCHAR *get_host_header( http_request_t *req )
+{
+    HTTPHEADERW *header;
+    WCHAR *ret = NULL;
+
+    EnterCriticalSection( &req->headers_section );
+    if ((header = HTTP_GetHeader( req, hostW ))) ret = heap_strdupW( header->lpszValue );
+    LeaveCriticalSection( &req->headers_section );
+    return ret;
 }
 
 struct data_stream_vtbl_t {
@@ -553,9 +569,11 @@ static DWORD init_gzip_stream(http_request_t *req, BOOL is_gzip)
         return ERROR_OUTOFMEMORY;
     }
 
+    EnterCriticalSection( &req->headers_section );
     index = HTTP_GetCustomHeaderIndex(req, szContent_Length, 0, FALSE);
     if(index != -1)
         HTTP_DeleteCustomHeader(req, index);
+    LeaveCriticalSection( &req->headers_section );
 
     if(req->read_size) {
         memcpy(gzip_stream->buf, req->read_buf+req->read_pos, req->read_size);
@@ -629,19 +647,24 @@ static void HTTP_FixURL(http_request_t *request)
 static WCHAR* build_request_header(http_request_t *request, const WCHAR *verb,
         const WCHAR *path, const WCHAR *version, BOOL use_cr)
 {
+    static const WCHAR szSpace[] = {' ',0};
+    static const WCHAR szColon[] = {':',' ',0};
+    static const WCHAR szCr[] = {'\r',0};
+    static const WCHAR szLf[] = {'\n',0};
     LPWSTR requestString;
     DWORD len, n;
     LPCWSTR *req;
     UINT i;
 
-    static const WCHAR szSpace[] = { ' ',0 };
-    static const WCHAR szColon[] = { ':',' ',0 };
-    static const WCHAR szCr[] = { '\r',0 };
-    static const WCHAR szLf[] = { '\n',0 };
+    EnterCriticalSection( &request->headers_section );
 
     /* allocate space for an array of all the string pointers to be added */
-    len = (request->nCustHeaders)*5 + 10;
-    req = heap_alloc(len*sizeof(LPCWSTR));
+    len = request->nCustHeaders * 5 + 10;
+    if (!(req = heap_alloc( len * sizeof(const WCHAR *) )))
+    {
+        LeaveCriticalSection( &request->headers_section );
+        return NULL;
+    }
 
     /* add the verb, path and HTTP version string */
     n = 0;
@@ -678,6 +701,7 @@ static WCHAR* build_request_header(http_request_t *request, const WCHAR *verb,
 
     requestString = HTTP_build_req( req, 4 );
     heap_free( req );
+    LeaveCriticalSection( &request->headers_section );
     return requestString;
 }
 
@@ -687,14 +711,17 @@ static WCHAR* build_response_header(http_request_t *request, BOOL use_cr)
     static const WCHAR crW[] = { '\r',0 };
     static const WCHAR lfW[] = { '\n',0 };
     static const WCHAR status_fmt[] = { ' ','%','u',' ',0 };
-
     const WCHAR **req;
     WCHAR *ret, buf[14];
     DWORD i, n = 0;
 
-    req = heap_alloc((request->nCustHeaders*5+8)*sizeof(WCHAR*));
-    if(!req)
+    EnterCriticalSection( &request->headers_section );
+
+    if (!(req = heap_alloc( (request->nCustHeaders * 5 + 8) * sizeof(WCHAR *) )))
+    {
+        LeaveCriticalSection( &request->headers_section );
         return NULL;
+    }
 
     if (request->status_code)
     {
@@ -731,6 +758,7 @@ static WCHAR* build_response_header(http_request_t *request, BOOL use_cr)
 
     ret = HTTP_build_req(req, 0);
     heap_free(req);
+    LeaveCriticalSection( &request->headers_section );
     return ret;
 }
 
@@ -742,6 +770,8 @@ static void HTTP_ProcessCookies( http_request_t *request )
 
     if(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES)
         return;
+
+    EnterCriticalSection( &request->headers_section );
 
     while((HeaderIndex = HTTP_GetCustomHeaderIndex(request, szSet_Cookie, numCookies++, FALSE)) != -1)
     {
@@ -770,6 +800,8 @@ static void HTTP_ProcessCookies( http_request_t *request )
         set_cookie(host->lpszValue, request->path, name, data, INTERNET_COOKIE_HTTPONLY);
         heap_free(name);
     }
+
+    LeaveCriticalSection( &request->headers_section );
 }
 
 static void strip_spaces(LPWSTR start)
@@ -1878,6 +1910,8 @@ static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
     if(!host_header)
         return FALSE;
 
+    EnterCriticalSection( &req->headers_section );
+
     if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
         scheme = https;
     else
@@ -1887,6 +1921,8 @@ static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
     if (req->path[0] != '/')
         strcatW(buf, slash);
     strcatW(buf, req->path);
+
+    LeaveCriticalSection( &req->headers_section );
     return TRUE;
 }
 
@@ -1909,6 +1945,8 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
     if(request->req_file)
         req_file_release(request->req_file);
 
+    request->headers_section.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &request->headers_section );
     request->read_section.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &request->read_section );
     WININET_Release(&request->session->hdr);
@@ -2118,17 +2156,18 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_URL: {
+        static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
         WCHAR url[INTERNET_MAX_URL_LENGTH];
         HTTPHEADERW *host;
 
-        static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-
         TRACE("INTERNET_OPTION_URL\n");
 
+        EnterCriticalSection( &req->headers_section );
         host = HTTP_GetHeader(req, hostW);
         strcpyW(url, httpW);
         strcatW(url, host->lpszValue);
         strcatW(url, req->path);
+        LeaveCriticalSection( &req->headers_section );
 
         TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
         return str_to_buffer(url, buffer, size, unicode);
@@ -2404,7 +2443,11 @@ static void create_cache_entry(http_request_t *req)
         b = FALSE;
 
     if(b) {
-        int header_idx = HTTP_GetCustomHeaderIndex(req, szCache_Control, 0, FALSE);
+        int header_idx;
+
+        EnterCriticalSection( &req->headers_section );
+
+        header_idx = HTTP_GetCustomHeaderIndex(req, szCache_Control, 0, FALSE);
         if(header_idx != -1) {
             WCHAR *ptr;
 
@@ -2429,6 +2472,8 @@ static void create_cache_entry(http_request_t *req)
                     ptr++;
             }
         }
+
+        LeaveCriticalSection( &req->headers_section );
     }
 
     if(!b) {
@@ -2929,17 +2974,23 @@ static DWORD set_content_length(http_request_t *request)
         static const WCHAR deflateW[] = {'d','e','f','l','a','t','e',0};
         static const WCHAR gzipW[] = {'g','z','i','p',0};
 
+        EnterCriticalSection( &request->headers_section );
+
         encoding_idx = HTTP_GetCustomHeaderIndex(request, szContent_Encoding, 0, FALSE);
         if(encoding_idx != -1) {
             if(!strcmpiW(request->custHeaders[encoding_idx].lpszValue, gzipW)) {
                 HTTP_DeleteCustomHeader(request, encoding_idx);
+                LeaveCriticalSection( &request->headers_section );
                 return init_gzip_stream(request, TRUE);
             }
             if(!strcmpiW(request->custHeaders[encoding_idx].lpszValue, deflateW)) {
                 HTTP_DeleteCustomHeader(request, encoding_idx);
+                LeaveCriticalSection( &request->headers_section );
                 return init_gzip_stream(request, FALSE);
             }
         }
+
+        LeaveCriticalSection( &request->headers_section );
     }
 
     return ERROR_SUCCESS;
@@ -3309,6 +3360,9 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->send_timeout = session->send_timeout;
     request->receive_timeout = session->receive_timeout;
 
+    InitializeCriticalSection( &request->headers_section );
+    request->headers_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.headers_section");
+
     InitializeCriticalSection( &request->read_section );
     request->read_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.read_section");
 
@@ -3526,11 +3580,17 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
     DWORD level = (dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK);
     INT index = -1;
 
+    EnterCriticalSection( &request->headers_section );
+
     /* Find requested header structure */
     switch (level)
     {
     case HTTP_QUERY_CUSTOM:
-        if (!lpBuffer) return ERROR_INVALID_PARAMETER;
+        if (!lpBuffer)
+        {
+            LeaveCriticalSection( &request->headers_section );
+            return ERROR_INVALID_PARAMETER;
+        }
         index = HTTP_GetCustomHeaderIndex(request, lpBuffer, requested_index, request_only);
         break;
     case HTTP_QUERY_RAW_HEADERS_CRLF:
@@ -3544,7 +3604,10 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             else
                 headers = build_response_header(request, TRUE);
             if (!headers)
+            {
+                LeaveCriticalSection( &request->headers_section );
                 return ERROR_OUTOFMEMORY;
+            }
 
             len = strlenW(headers) * sizeof(WCHAR);
             if (len + sizeof(WCHAR) > *lpdwBufferLength)
@@ -3561,6 +3624,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             *lpdwBufferLength = len;
 
             heap_free(headers);
+            LeaveCriticalSection( &request->headers_section );
             return res;
         }
     case HTTP_QUERY_RAW_HEADERS:
@@ -3572,14 +3636,19 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
                 headers = build_request_header(request, request->verb, request->path, request->version, FALSE);
             else
                 headers = build_response_header(request, FALSE);
+
             if (!headers)
+            {
+                LeaveCriticalSection( &request->headers_section );
                 return ERROR_OUTOFMEMORY;
+            }
 
             len = strlenW(headers) * sizeof(WCHAR);
             if (len > *lpdwBufferLength)
             {
                 *lpdwBufferLength = len;
                 heap_free(headers);
+                LeaveCriticalSection( &request->headers_section );
                 return ERROR_INSUFFICIENT_BUFFER;
             }
 
@@ -3599,6 +3668,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             *lpdwBufferLength = len - sizeof(WCHAR);
 
             heap_free(headers);
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_SUCCESS;
         }
     case HTTP_QUERY_STATUS_TEXT:
@@ -3608,6 +3678,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
+                LeaveCriticalSection( &request->headers_section );
                 return ERROR_INSUFFICIENT_BUFFER;
             }
             if (lpBuffer)
@@ -3616,6 +3687,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
             }
             *lpdwBufferLength = len * sizeof(WCHAR);
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_SUCCESS;
         }
         break;
@@ -3626,6 +3698,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
             if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
             {
                 *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
+                LeaveCriticalSection( &request->headers_section );
                 return ERROR_INSUFFICIENT_BUFFER;
             }
             if (lpBuffer)
@@ -3634,6 +3707,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
                 TRACE("returning data: %s\n", debugstr_wn(lpBuffer, len));
             }
             *lpdwBufferLength = len * sizeof(WCHAR);
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_SUCCESS;
         }
         break;
@@ -3645,7 +3719,10 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         DWORD res = ERROR_SUCCESS;
 
         if(request_only)
+        {
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_HTTP_INVALID_QUERY_REQUEST;
+        }
 
         if(requested_index)
             break;
@@ -3672,6 +3749,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
 
             *lpdwBufferLength = size;
         }
+        LeaveCriticalSection( &request->headers_section );
         return res;
     }
     default:
@@ -3690,6 +3768,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
          (~lphttpHdr->wFlags & HDR_ISREQUEST)))
     {
+        LeaveCriticalSection( &request->headers_section );
         return ERROR_HTTP_HEADER_NOT_FOUND;
     }
 
@@ -3729,6 +3808,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         if (len > *lpdwBufferLength)
         {
             *lpdwBufferLength = len;
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_INSUFFICIENT_BUFFER;
         }
         if (lpBuffer)
@@ -3739,6 +3819,8 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         *lpdwBufferLength = len - sizeof(WCHAR);
     }
     if (lpdwIndex) (*lpdwIndex)++;
+
+    LeaveCriticalSection( &request->headers_section );
     return ERROR_SUCCESS;
 }
 
@@ -4140,13 +4222,15 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         }
     }
 
+    EnterCriticalSection( &request->headers_section );
+
     /* Remove custom content-type/length headers on redirects.  */
     index = HTTP_GetCustomHeaderIndex(request, szContent_Type, 0, TRUE);
-    if (0 <= index)
-        HTTP_DeleteCustomHeader(request, index);
+    if (index != -1) HTTP_DeleteCustomHeader(request, index);
     index = HTTP_GetCustomHeaderIndex(request, szContent_Length, 0, TRUE);
-    if (0 <= index)
-        HTTP_DeleteCustomHeader(request, index);
+    if (index != -1) HTTP_DeleteCustomHeader(request, index);
+
+    LeaveCriticalSection( &request->headers_section );
 
     return ERROR_SUCCESS;
 }
@@ -4604,6 +4688,8 @@ static void HTTP_ProcessExpires(http_request_t *request)
     BOOL expirationFound = FALSE;
     int headerIndex;
 
+    EnterCriticalSection( &request->headers_section );
+
     /* Look for a Cache-Control header with a max-age directive, as it takes
      * precedence over the Expires header.
      */
@@ -4684,11 +4770,15 @@ static void HTTP_ProcessExpires(http_request_t *request)
         request->expires.dwLowDateTime = t.u.LowPart;
         request->expires.dwHighDateTime = t.u.HighPart;
     }
+
+    LeaveCriticalSection( &request->headers_section );
 }
 
 static void HTTP_ProcessLastModified(http_request_t *request)
 {
     int headerIndex;
+
+    EnterCriticalSection( &request->headers_section );
 
     headerIndex = HTTP_GetCustomHeaderIndex(request, szLast_Modified, 0, FALSE);
     if (headerIndex != -1)
@@ -4699,11 +4789,15 @@ static void HTTP_ProcessLastModified(http_request_t *request)
         if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
             request->last_modified = ft;
     }
+
+    LeaveCriticalSection( &request->headers_section );
 }
 
 static void http_process_keep_alive(http_request_t *req)
 {
     int index;
+
+    EnterCriticalSection( &req->headers_section );
 
     if ((index = HTTP_GetCustomHeaderIndex(req, szConnection, 0, FALSE)) != -1)
         req->netconn->keep_alive = !strcmpiW(req->custHeaders[index].lpszValue, szKeepAlive);
@@ -4711,6 +4805,8 @@ static void http_process_keep_alive(http_request_t *req)
         req->netconn->keep_alive = !strcmpiW(req->custHeaders[index].lpszValue, szKeepAlive);
     else
         req->netconn->keep_alive = !strcmpiW(req->version, g_szHttp1_1);
+
+    LeaveCriticalSection( &req->headers_section );
 }
 
 static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
@@ -4882,8 +4978,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
         if (TRACE_ON(wininet))
         {
-            LPHTTPHEADERW Host = HTTP_GetHeader(request, hostW);
-            TRACE("Going to url %s %s\n", debugstr_w(Host->lpszValue), debugstr_w(request->path));
+            HTTPHEADERW *host;
+
+            EnterCriticalSection( &request->headers_section );
+            host = HTTP_GetHeader( request, hostW );
+            TRACE("Going to url %s %s\n", debugstr_w(host->lpszValue), debugstr_w(request->path));
+            LeaveCriticalSection( &request->headers_section );
         }
 
         HTTP_FixURL(request);
@@ -5037,15 +5137,14 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                 dwBufferSize=2048;
                 if (request->status_code == HTTP_STATUS_DENIED)
                 {
-                    LPHTTPHEADERW Host = HTTP_GetHeader(request, hostW);
+                    WCHAR *host = get_host_header( request );
                     DWORD dwIndex = 0;
                     while (HTTP_HttpQueryInfoW(request,HTTP_QUERY_WWW_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex) == ERROR_SUCCESS)
                     {
                         if (HTTP_DoAuthorization(request, szAuthValue,
                                                  &request->authInfo,
                                                  request->session->userName,
-                                                 request->session->password,
-                                                 Host->lpszValue))
+                                                 request->session->password, host))
                         {
                             heap_free(requestString);
                             if(!drain_content(request, TRUE)) {
@@ -5056,6 +5155,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                             break;
                         }
                     }
+                    heap_free( host );
 
                     if(!loop_next) {
                         TRACE("Cleaning wrong authorization data\n");
@@ -5102,8 +5202,11 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     http_release_netconn( request, FALSE );
                     break;
                 }
+                EnterCriticalSection( &request->headers_section );
                 index = HTTP_GetCustomHeaderIndex(request, szProxy_Authorization, 0, TRUE);
                 if (index != -1) HTTP_DeleteCustomHeader(request, index);
+                LeaveCriticalSection( &request->headers_section );
+
                 destroy_authinfo(request->proxyAuthInfo);
                 request->proxyAuthInfo = NULL;
 
@@ -5812,6 +5915,8 @@ static void HTTP_clear_response_headers( http_request_t *request )
 {
     DWORD i;
 
+    EnterCriticalSection( &request->headers_section );
+
     for( i=0; i<request->nCustHeaders; i++)
     {
         if( !request->custHeaders[i].lpszField )
@@ -5823,6 +5928,8 @@ static void HTTP_clear_response_headers( http_request_t *request )
         HTTP_DeleteCustomHeader( request, i );
         i--;
     }
+
+    LeaveCriticalSection( &request->headers_section );
 }
 
 /***********************************************************************
@@ -6023,11 +6130,13 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
 static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
-    INT index = -1;
+    INT index;
     BOOL request_only = dwModifier & HTTP_ADDHDR_FLAG_REQ;
     DWORD res = ERROR_HTTP_INVALID_HEADER;
 
     TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), dwModifier);
+
+    EnterCriticalSection( &request->headers_section );
 
     /* REPLACE wins out over ADD */
     if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE)
@@ -6041,7 +6150,10 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
     if (index >= 0)
     {
         if (dwModifier & HTTP_ADDHDR_FLAG_ADD_IF_NEW)
+        {
+            LeaveCriticalSection( &request->headers_section );
             return ERROR_HTTP_INVALID_HEADER;
+        }
         lphttpHdr = &request->custHeaders[index];
     }
     else if (value)
@@ -6055,10 +6167,16 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
         if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
             hdr.wFlags |= HDR_ISREQUEST;
 
-        return HTTP_InsertCustomHeader(request, &hdr);
+        res = HTTP_InsertCustomHeader(request, &hdr);
+        LeaveCriticalSection( &request->headers_section );
+        return res;
     }
     /* no value to delete */
-    else return ERROR_SUCCESS;
+    else
+    {
+        LeaveCriticalSection( &request->headers_section );
+        return ERROR_SUCCESS;
+    }
 
     if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
 	    lphttpHdr->wFlags |= HDR_ISREQUEST;
@@ -6080,9 +6198,12 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
             if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
                 hdr.wFlags |= HDR_ISREQUEST;
 
-            return HTTP_InsertCustomHeader(request, &hdr);
+            res = HTTP_InsertCustomHeader(request, &hdr);
+            LeaveCriticalSection( &request->headers_section );
+            return res;
         }
 
+        LeaveCriticalSection( &request->headers_section );
         return ERROR_SUCCESS;
     }
     else if (dwModifier & COALESCEFLAGS)
@@ -6130,6 +6251,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
         }
     }
     TRACE("<-- %d\n", res);
+    LeaveCriticalSection( &request->headers_section );
     return res;
 }
 
@@ -6137,7 +6259,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
  *           HTTP_GetCustomHeaderIndex (internal)
  *
  * Return index of custom header from header array
- *
+ * Headers section must be held
  */
 static INT HTTP_GetCustomHeaderIndex(http_request_t *request, LPCWSTR lpszField,
                                      int requested_index, BOOL request_only)
@@ -6174,7 +6296,7 @@ static INT HTTP_GetCustomHeaderIndex(http_request_t *request, LPCWSTR lpszField,
  *           HTTP_InsertCustomHeader (internal)
  *
  * Insert header into array
- *
+ * Headers section must be held
  */
 static DWORD HTTP_InsertCustomHeader(http_request_t *request, LPHTTPHEADERW lpHdr)
 {
@@ -6206,7 +6328,8 @@ static DWORD HTTP_InsertCustomHeader(http_request_t *request, LPHTTPHEADERW lpHd
  *           HTTP_DeleteCustomHeader (internal)
  *
  * Delete header from array
- *  If this function is called, the indexs may change.
+ * If this function is called, the index may change.
+ * Headers section must be held
  */
 static BOOL HTTP_DeleteCustomHeader(http_request_t *request, DWORD index)
 {

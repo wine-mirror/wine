@@ -1625,10 +1625,14 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
 
     nsres = nsIDOMHTMLDocument_GetHead(This->doc_node->nsdoc, &head_elem);
     if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNode *tmp_node;
+        nsIDOMNode *head_node, *tmp_node;
 
-        nsres = nsIDOMHTMLHeadElement_AppendChild(head_elem, (nsIDOMNode*)elem->nselem, &tmp_node);
+        nsres = nsIDOMHTMLHeadElement_QueryInterface(head_elem, &IID_nsIDOMNode, (void**)&head_node);
         nsIDOMHTMLHeadElement_Release(head_elem);
+        assert(nsres == NS_OK);
+
+        nsres = nsIDOMNode_AppendChild(head_node, elem->node.nsnode, &tmp_node);
+        nsIDOMNode_Release(head_node);
         if(NS_SUCCEEDED(nsres) && tmp_node)
             nsIDOMNode_Release(tmp_node);
     }

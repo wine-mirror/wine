@@ -20,6 +20,7 @@
 
 #include "jscript.h"
 #include "engine.h"
+#include "parser.h"
 
 #include "wine/debug.h"
 

@@ -256,6 +256,7 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsIDOMHTMLFormElement *nsform;
+    nsIDOMNode *form_node;
     HTMLDOMNode *node;
     HRESULT hres;
     nsresult nsres;
@@ -269,8 +270,12 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
         return E_FAIL;
     }
 
-    hres = get_node(This->element.node.doc, (nsIDOMNode*)nsform, TRUE, &node);
+    nsres = nsIDOMHTMLFormElement_QueryInterface(nsform, &IID_nsIDOMNode, (void**)&form_node);
     nsIDOMHTMLFormElement_Release(nsform);
+    assert(nsres == NS_OK);
+
+    hres = get_node(This->element.node.doc, form_node, TRUE, &node);
+    nsIDOMNode_Release(form_node);
     if (FAILED(hres))
         return hres;
 
@@ -1233,7 +1238,7 @@ static HRESULT HTMLInputElementImpl_fire_event(HTMLDOMNode *iface, eventid_t eid
 
         *handled = TRUE;
 
-        nsres = nsIDOMHTMLInputElement_Click(This->nsinput);
+        nsres = nsIDOMHTMLElement_Click(This->element.nselem);
         if(NS_FAILED(nsres)) {
             ERR("Click failed: %08x\n", nsres);
             return E_FAIL;
@@ -1255,6 +1260,26 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
     return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
+static void HTMLInputElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsinput)
+        note_cc_edge((nsISupports*)This->nsinput, "This->nsinput", cb);
+}
+
+static void HTMLInputElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nsinput) {
+        nsIDOMHTMLInputElement *nsinput = This->nsinput;
+
+        This->nsinput = NULL;
+        nsIDOMHTMLInputElement_Release(nsinput);
+    }
+}
+
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElement_QI,
     HTMLElement_destructor,
@@ -1266,6 +1291,13 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     HTMLInputElementImpl_fire_event,
     HTMLInputElementImpl_put_disabled,
     HTMLInputElementImpl_get_disabled,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLInputElement_traverse,
+    HTMLInputElement_unlink
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1296,10 +1328,7 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLInputElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLInputElement, (void**)&ret->nsinput);
-
-    /* Share nsinput reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsinput == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;
@@ -1735,6 +1764,26 @@ static HRESULT HTMLButtonElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BO
     return IHTMLButtonElement_get_disabled(&This->IHTMLButtonElement_iface, p);
 }
 
+static void HTMLButtonElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+
+    if(This->nsbutton)
+        note_cc_edge((nsISupports*)This->nsbutton, "This->nsbutton", cb);
+}
+
+static void HTMLButtonElement_unlink(HTMLDOMNode *iface)
+{
+    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+
+    if(This->nsbutton) {
+        nsIDOMHTMLButtonElement *nsbutton = This->nsbutton;
+
+        This->nsbutton = NULL;
+        nsIDOMHTMLButtonElement_Release(nsbutton);
+    }
+}
+
 static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     HTMLButtonElement_QI,
     HTMLElement_destructor,
@@ -1745,7 +1794,14 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     NULL,
     NULL,
     HTMLButtonElementImpl_put_disabled,
-    HTMLButtonElementImpl_get_disabled
+    HTMLButtonElementImpl_get_disabled,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLButtonElement_traverse,
+    HTMLButtonElement_unlink
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {
@@ -1776,10 +1832,7 @@ HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nsele
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLButtonElement_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLButtonElement, (void**)&ret->nsbutton);
-
-    /* Share nsbutton reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nsbutton == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;

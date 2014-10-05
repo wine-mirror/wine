@@ -27,7 +27,7 @@
 @ stdcall BCryptGenRandom(ptr ptr long long)
 @ stub BCryptGenerateKeyPair
 @ stub BCryptGenerateSymmetricKey
-@ stub BCryptGetFipsAlgorithmMode
+@ stdcall BCryptGetFipsAlgorithmMode(ptr)
 @ stub BCryptGetProperty
 @ stub BCryptHashData
 @ stub BCryptImportKey

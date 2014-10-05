@@ -338,6 +338,7 @@ static HRESULT WINAPI ddrawex4_CreateSurface(IDirectDraw4 *iface, DDSURFACEDESC2
     HRESULT hr;
     const DWORD perm_dc_flags = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
     BOOL permanent_dc;
+    IDirectDrawSurface4 *inner_surface;
 
     TRACE("iface %p, desc %p, surface %p, outer_unknown %p.\n",
             iface, desc, surface, outer_unknown);
@@ -362,8 +363,17 @@ static HRESULT WINAPI ddrawex4_CreateSurface(IDirectDraw4 *iface, DDSURFACEDESC2
         permanent_dc = FALSE;
     }
 
-    hr = IDirectDraw4_CreateSurface(ddrawex->parent, desc, surface, outer_unknown);
-    *surface = dds_get_outer(*surface);
+    hr = IDirectDraw4_CreateSurface(ddrawex->parent, desc, &inner_surface, outer_unknown);
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        return hr;
+    }
+
+    *surface = dds_get_outer(inner_surface);
+    /* The wrapper created by dds_get_outer holds a reference to its inner surface. */
+    IDirectDrawSurface4_Release(inner_surface);
+
     if (permanent_dc)
         prepare_permanent_dc(*surface);
 

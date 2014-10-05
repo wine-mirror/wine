@@ -348,6 +348,7 @@
 @ stdcall SHCreateShellItemArrayFromIDLists(long ptr ptr)
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
+@ stdcall SHEnumerateUnreadMailAccountsW(ptr long ptr long)
 @ stdcall SHExtractIconsW(wstr long long long ptr ptr long long) user32.PrivateExtractIconsW
 @ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)

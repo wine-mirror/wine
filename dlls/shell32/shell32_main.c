@@ -1385,3 +1385,12 @@ HRESULT WINAPI SHSetUnreadMailCountW(LPCWSTR mailaddress, DWORD count, LPCWSTR e
     FIXME("%s %x %s: stub\n", debugstr_w(mailaddress), count, debugstr_w(executecommand));
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *              SHEnumerateUnreadMailAccountsW (SHELL32.@)
+ */
+HRESULT WINAPI SHEnumerateUnreadMailAccountsW(HKEY user, DWORD idx, LPWSTR mailaddress, INT mailaddresslen)
+{
+    FIXME("%p %d %p %d: stub\n", user, idx, mailaddress, mailaddresslen);
+    return E_NOTIMPL;
+}

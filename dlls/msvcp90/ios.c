@@ -6497,7 +6497,7 @@ basic_ostream_char* __cdecl basic_ostream_char_endl(basic_ostream_char *ostr)
     return ostr;
 }
 
-/* $?6DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+/* ??$?6DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??$?6DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 basic_ostream_char* __cdecl basic_ostream_char_print_bstr(basic_ostream_char *ostr, const basic_string_char *str)
 {

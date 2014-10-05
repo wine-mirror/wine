@@ -2363,7 +2363,7 @@ int wmain (int argc, WCHAR *argvW[])
    */
   cmdLine = GetCommandLineW();
   WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmdLine));
-  args = 1;                /* start at first arg, skipping cmd.exe itself */
+  args = 0;
 
   opt_c = opt_k = opt_q = opt_s = FALSE;
   WCMD_parameter(cmdLine, args, &argPos, TRUE, TRUE);

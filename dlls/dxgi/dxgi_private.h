@@ -21,6 +21,8 @@
 
 #include "wine/debug.h"
 
+#include <assert.h>
+
 #define COBJMACROS
 #include "winbase.h"
 #include "wingdi.h"
@@ -78,15 +80,18 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSP
 /* IDXGIFactory */
 struct dxgi_factory
 {
-    IWineDXGIFactory IWineDXGIFactory_iface;
+    IDXGIFactory1 IDXGIFactory1_iface;
     LONG refcount;
     struct wined3d *wined3d;
     UINT adapter_count;
-    IWineDXGIAdapter **adapters;
+    IDXGIAdapter1 **adapters;
     BOOL extended;
+    HWND device_window;
 };
 
 HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended) DECLSPEC_HIDDEN;
+HWND dxgi_factory_get_device_window(struct dxgi_factory *factory) DECLSPEC_HIDDEN;
+struct dxgi_factory *unsafe_impl_from_IDXGIFactory1(IDXGIFactory1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIDevice */
 struct dxgi_device
@@ -95,7 +100,7 @@ struct dxgi_device
     IUnknown *child_layer;
     LONG refcount;
     struct wined3d_device *wined3d_device;
-    IWineDXGIFactory *factory;
+    IDXGIFactory1 *factory;
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
@@ -114,14 +119,15 @@ void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) 
 /* IDXGIAdapter */
 struct dxgi_adapter
 {
-    IWineDXGIAdapter IWineDXGIAdapter_iface;
-    IWineDXGIFactory *parent;
+    IDXGIAdapter1 IDXGIAdapter1_iface;
+    struct dxgi_factory *parent;
     LONG refcount;
     UINT ordinal;
     IDXGIOutput *output;
 };
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, IWineDXGIFactory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */
 struct dxgi_swapchain

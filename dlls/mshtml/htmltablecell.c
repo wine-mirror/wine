@@ -174,15 +174,47 @@ static HRESULT WINAPI HTMLTableCell_get_vAlign(IHTMLTableCell *iface, BSTR *p)
 static HRESULT WINAPI HTMLTableCell_put_bgColor(IHTMLTableCell *iface, VARIANT v)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString strColor;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(!variant_to_nscolor(&v, &strColor))
+        return S_OK;
+
+    nsres = nsIDOMHTMLTableCellElement_SetBgColor(This->nscell, &strColor);
+    nsAString_Finish(&strColor);
+    if(NS_FAILED(nsres)) {
+        ERR("SetBgColor(%s) failed: %08x\n", debugstr_variant(&v), nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableCell_get_bgColor(IHTMLTableCell *iface, VARIANT *p)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString strColor;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&strColor, NULL);
+    nsres = nsIDOMHTMLTableCellElement_GetBgColor(This->nscell, &strColor);
+
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *color;
+        nsAString_GetData(&strColor, &color);
+        V_VT(p) = VT_BSTR;
+        hres = nscolor_to_str(color, &V_BSTR(p));
+    }else {
+        ERR("GetBgColor failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+    nsAString_Finish(&strColor);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLTableCell_put_noWrap(IHTMLTableCell *iface, VARIANT_BOOL v)
@@ -366,13 +398,44 @@ static void HTMLTableCell_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
+static void HTMLTableCell_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLTableCell *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nscell)
+        note_cc_edge((nsISupports*)This->nscell, "This->nstablecell", cb);
+}
+
+static void HTMLTableCell_unlink(HTMLDOMNode *iface)
+{
+    HTMLTableCell *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->nscell) {
+        nsIDOMHTMLTableCellElement *nscell = This->nscell;
+
+        This->nscell = NULL;
+        nsIDOMHTMLTableCellElement_Release(nscell);
+    }
+}
+
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
     HTMLTableCell_QI,
     HTMLTableCell_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
     HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    HTMLElement_get_attr_col,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLTableCell_traverse,
+    HTMLTableCell_unlink
 };
 
 static const tid_t HTMLTableCell_iface_tids[] = {
@@ -403,10 +466,7 @@ HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, H
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableCell_dispex);
 
     nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableCellElement, (void**)&ret->nscell);
-
-    /* Share nscell reference with nsnode */
-    assert(nsres == NS_OK && (nsIDOMNode*)ret->nscell == ret->element.node.nsnode);
-    nsIDOMNode_Release(ret->element.node.nsnode);
+    assert(nsres == NS_OK);
 
     *elem = &ret->element;
     return S_OK;

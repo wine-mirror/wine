@@ -2355,6 +2355,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR szPrimaryVolumeSpaceAvailable[] =
         {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
          'A','v','a','i','l','a','b','l','e',0};
+    static const WCHAR szOutOfNoRbDiskSpace[] =
+        {'O','u','t','O','f','N','o','R','b','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
     MSIQUERY *view;
     WCHAR *level, *primary_key, *primary_folder;
@@ -2431,6 +2433,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     /* FIXME: check volume disk space */
     msi_set_property( package->db, szOutOfDiskSpace, szZero, -1 );
+    msi_set_property( package->db, szOutOfNoRbDiskSpace, szZero, -1 );
 
     return MSI_SetFeatureStates(package);
 }
@@ -3922,7 +3925,9 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     else
     {
         FIXME("poorly handled shortcut format, advertised shortcut\n");
-        IShellLinkW_SetPath(sl,comp->FullKeypath);
+        path = resolve_keypath( package, comp );
+        IShellLinkW_SetPath( sl, path );
+        msi_free( path );
     }
 
     if (!MSI_RecordIsNull(row,6))
@@ -7751,7 +7756,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-    WCHAR *reinstall, *remove, *patch;
+    WCHAR *reinstall, *remove, *patch, *productcode;
     BOOL ui_exists;
     UINT rc;
 
@@ -7819,6 +7824,15 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_parse_command_line( package, szCommandLine, FALSE );
     msi_adjust_privilege_properties( package );
     msi_set_context( package );
+
+    productcode = msi_dup_property( package->db, szProductCode );
+    if (strcmpiW( productcode, package->ProductCode ))
+    {
+        TRACE( "product code changed %s -> %s\n", debugstr_w(package->ProductCode), debugstr_w(productcode) );
+        msi_free( package->ProductCode );
+        package->ProductCode = productcode;
+    }
+    else msi_free( productcode );
 
     if (msi_get_property_int( package->db, szDisableRollback, 0 ))
     {

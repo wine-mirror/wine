@@ -319,6 +319,23 @@ static void CRYPT_CreateMachineGuid(void)
 	}
 }
 
+
+/******************************************************************************
+ * CloseEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Close encrypted files
+ *
+ * PARAMS
+ *  context    [I] pointer to the context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+void WINAPI CloseEncryptedFileRaw(PVOID context)
+{
+    FIXME("(%p): stub\n", context);
+}
+
 /******************************************************************************
  * CryptAcquireContextW (ADVAPI32.@)
  *
@@ -2260,6 +2277,55 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, const BYTE *pbSignature, DW
 }
 
 /******************************************************************************
+ * OpenEncryptedFileRawA   (ADVAPI32.@)
+ *
+ * See OpenEncryptedFileRawW
+ */
+DWORD WINAPI OpenEncryptedFileRawA(LPCSTR filename, ULONG flags, PVOID *context)
+{
+    FIXME("(%s, %x, %p): stub\n", debugstr_a(filename), flags, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * OpenEncryptedFileRawW   (ADVAPI32.@)
+ *
+ * Opens an EFS encrypted file for backup/restore
+ *
+ * PARAMS
+ *  filename   [I] Filename to operate on
+ *  flags     [I] Operation to perform
+ *  context    [I] Handle to the context (out)
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI OpenEncryptedFileRawW(LPCWSTR filename, ULONG flags, PVOID *context)
+{
+    FIXME("(%s, %x, %p): stub\n", debugstr_w(filename), flags, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * ReadEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Export encrypted files
+ *
+ * PARAMS
+ *  export   [I] pointer to the export callback function
+ *  callback     [I] pointer to the application defined context
+ *  context    [I] pointer to the system context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI ReadEncryptedFileRaw(PFE_EXPORT_FUNC export, PVOID callback, PVOID context)
+{
+    FIXME("(%p, %p, %p): stub\n", export, callback, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * SystemFunction030   (ADVAPI32.@)
  *
  * Tests if two blocks of 16 bytes are equal
@@ -2384,4 +2450,23 @@ NTSTATUS WINAPI SystemFunction041(PVOID memory, ULONG length, ULONG flags)
 {
 	FIXME("(%p, %x, %x): stub [RtlDecryptMemory]\n", memory, length, flags);
 	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ * WriteEncryptedFileRaw   (ADVAPI32.@)
+ *
+ * Import encrypted files
+ *
+ * PARAMS
+ *  import   [I] pointer to the import callback function
+ *  callback     [I] pointer to the application defined context
+ *  context    [I] pointer to the system context
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: NTSTATUS error code
+ */
+DWORD WINAPI WriteEncryptedFileRaw(PFE_IMPORT_FUNC import, PVOID callback, PVOID context)
+{
+    FIXME("(%p, %p, %p): stub\n", import, callback, context);
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }

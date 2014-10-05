@@ -56,6 +56,15 @@ coclass DirectPlay8Address { interface IDirectPlay8Address; }
 coclass DirectPlay8LobbiedApplication { interface IDirectPlay8LobbiedApplication; }
 
 [
+    helpstring("DirectPlay8LobbyClient Object"),
+    threading(both),
+    progid("DirectPlay8Lobby.LobbyClient.1"),
+    vi_progid("DirectPlay8Lobby.LobbyClient"),
+    uuid(3b2b6775-70b6-45af-8dea-a209c69559f3)
+]
+coclass DirectPlay8LobbyClient { interface IDirectPlay8LobbyClient; }
+
+[
     helpstring("DirectPlay8 Thread Pool Object"),
     threading(both),
     uuid(fc47060e-6153-4b34-b975-8e4121eb7f3c)

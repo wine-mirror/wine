@@ -1590,7 +1590,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->current_rt = target;
     ret->tid = GetCurrentThreadId();
 
-    ret->render_offscreen = wined3d_resource_is_offscreen(&target->resource);
+    ret->render_offscreen = wined3d_resource_is_offscreen(&target->container->resource);
     ret->draw_buffers_mask = context_generate_rt_mask(GL_BACK);
     ret->valid = 1;
 
@@ -3043,7 +3043,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
 
-    render_offscreen = wined3d_resource_is_offscreen(&target->resource);
+    render_offscreen = wined3d_resource_is_offscreen(&target->container->resource);
     if (context->current_rt == target && render_offscreen == old_render_offscreen) return;
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
