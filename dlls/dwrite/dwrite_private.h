@@ -112,6 +112,7 @@ extern VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, D
 extern VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style) DECLSPEC_HIDDEN;
 
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*);
+extern WCHAR bidi_get_mirrored_char(WCHAR);
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

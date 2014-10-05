@@ -1149,6 +1149,21 @@ static void test_GetGlyphs(void)
     ok(actual_count == 4, "got %d\n", actual_count);
     ok(glyphs1[2] != glyphs2[2], "got %d\n", glyphs1[2]);
 
+    /* check that mirroring works */
+    maxglyphcount = 10;
+    actual_count = 0;
+    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
+        NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(actual_count == 4, "got %d\n", actual_count);
+
+    actual_count = 0;
+    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, TRUE, &sa, NULL,
+        NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs2, shapingprops, &actual_count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(actual_count == 4, "got %d\n", actual_count);
+    ok(glyphs1[0] != glyphs2[0], "got %d\n", glyphs1[0]);
+
     IDWriteTextAnalyzer_Release(analyzer);
     IDWriteFontFace_Release(fontface);
 }

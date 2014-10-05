@@ -11,6 +11,7 @@ C_SRCS = \
 	layout.c \
 	linebreak.c \
 	main.c \
+	mirror.c \
 	opentype.c \
 	scripts.c \
 	shape.c

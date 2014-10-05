@@ -897,8 +897,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         if (!update_cluster) {
             codepoint = decode_surrogate_pair(text, i, length);
             if (!codepoint) {
-                /* FIXME: mirror in RTL case */
-                codepoint = text[i];
+                codepoint = is_rtl ? bidi_get_mirrored_char(text[i]) : text[i];
                 string[i] = codepoint;
             }
             else {
