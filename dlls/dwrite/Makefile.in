@@ -12,4 +12,5 @@ C_SRCS = \
 	linebreak.c \
 	main.c \
 	opentype.c \
-	scripts.c
+	scripts.c \
+	shape.c

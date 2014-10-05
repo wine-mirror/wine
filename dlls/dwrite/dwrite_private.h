@@ -112,3 +112,35 @@ extern VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, D
 extern VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style) DECLSPEC_HIDDEN;
 
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*);
+
+/* Glyph shaping */
+enum SCRIPT_JUSTIFY
+{
+    SCRIPT_JUSTIFY_NONE,
+    SCRIPT_JUSTIFY_ARABIC_BLANK,
+    SCRIPT_JUSTIFY_CHARACTER,
+    SCRIPT_JUSTIFY_RESERVED1,
+    SCRIPT_JUSTIFY_BLANK,
+    SCRIPT_JUSTIFY_RESERVED2,
+    SCRIPT_JUSTIFY_RESERVED3,
+    SCRIPT_JUSTIFY_ARABIC_NORMAL,
+    SCRIPT_JUSTIFY_ARABIC_KASHIDA,
+    SCRIPT_JUSTIFY_ARABIC_ALEF,
+    SCRIPT_JUSTIFY_ARABIC_HA,
+    SCRIPT_JUSTIFY_ARABIC_RA,
+    SCRIPT_JUSTIFY_ARABIC_BA,
+    SCRIPT_JUSTIFY_ARABIC_BARA,
+    SCRIPT_JUSTIFY_ARABIC_SEEN,
+    SCRIPT_JUSTIFY_ARABIC_SEEN_M
+};
+
+struct scriptshaping_ops
+{
+    HRESULT (*contextual_shaping)(IDWriteFontFace *fontface, BOOL is_rtl, const WCHAR *text, UINT32 len, UINT32 max_glyph_count,
+                                  UINT16 *clustermap, UINT16 *glyph_indices, UINT32* actual_glyph_count);
+    HRESULT (*set_text_glyphs_props)(IDWriteFontFace *fontface, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+                                     UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props);
+};
+
+extern const struct scriptshaping_ops default_shaping_ops DECLSPEC_HIDDEN;
+extern const struct scriptshaping_ops latn_shaping_ops DECLSPEC_HIDDEN;

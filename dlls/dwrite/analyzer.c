@@ -34,6 +34,7 @@ extern const unsigned short wine_scripts_table[];
 struct dwritescript_properties {
     DWRITE_SCRIPT_PROPERTIES props;
     BOOL is_complex;
+    const struct scriptshaping_ops *ops;
 };
 
 /* NOTE: keep this array synced with script ids from scripts.h */
@@ -94,7 +95,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Khoj */ { 0x6a6f684b, 322,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Sind */ { 0x646e6953, 318,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Laoo */ { 0x6f6f614c, 356,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, TRUE },
-    { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, FALSE, &latn_shaping_ops },
     { /* Lepc */ { 0x6370654c, 335,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
     { /* Limb */ { 0x626d694c, 336,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 } },
     { /* Lina */ { 0x616e694c, 400,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
@@ -177,6 +178,16 @@ struct dwrite_numbersubstitution {
 static inline struct dwrite_numbersubstitution *impl_from_IDWriteNumberSubstitution(IDWriteNumberSubstitution *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_numbersubstitution, IDWriteNumberSubstitution_iface);
+}
+
+static inline UINT32 decode_surrogate_pair(const WCHAR *str, UINT32 index, UINT32 end)
+{
+    if (index < end-1 && IS_SURROGATE_PAIR(str[index], str[index+1])) {
+        UINT32 ch = 0x10000 + ((str[index] - 0xd800) << 10) + (str[index+1] - 0xdc00);
+        TRACE("surrogate pair (%x %x) => %x\n", str[index], str[index+1], ch);
+        return ch;
+    }
+    return 0;
 }
 
 static inline UINT16 get_char_script(WCHAR c)
@@ -827,17 +838,112 @@ done:
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
-    WCHAR const* text, UINT32 length, IDWriteFontFace* font_face, BOOL is_sideways,
+    WCHAR const* text, UINT32 length, IDWriteFontFace* fontface, BOOL is_sideways,
     BOOL is_rtl, DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale,
     IDWriteNumberSubstitution* substitution, DWRITE_TYPOGRAPHIC_FEATURES const** features,
     UINT32 const* feature_range_len, UINT32 feature_ranges, UINT32 max_glyph_count,
     UINT16* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* text_props, UINT16* glyph_indices,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
-    FIXME("(%s:%u %p %d %d %p %s %p %p %p %u %u %p %p %p %p %p): stub\n", debugstr_wn(text, length),
-        length, font_face, is_sideways, is_rtl, analysis, debugstr_w(locale), substitution, features, feature_range_len,
+    const struct dwritescript_properties *scriptprops;
+    WCHAR *string;
+    BOOL update_cluster;
+    UINT32 i, g;
+    HRESULT hr = S_OK;
+    UINT16 script;
+
+    TRACE("(%s:%u %p %d %d %p %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
+        length, fontface, is_sideways, is_rtl, analysis, debugstr_w(locale), substitution, features, feature_range_len,
         feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices, glyph_props, actual_glyph_count);
-    return E_NOTIMPL;
+
+    script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
+
+    if (max_glyph_count < length)
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+    if (substitution)
+        FIXME("number substitution is not supported.\n");
+
+    for (i = 0; i < length; i++) {
+        /* FIXME: set to better values */
+        glyph_props[i].justification = text[i] == ' ' ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
+        glyph_props[i].isClusterStart = 1;
+        glyph_props[i].isDiacritic = 0;
+        glyph_props[i].isZeroWidthSpace = 0;
+        glyph_props[i].reserved = 0;
+
+        /* FIXME: have the shaping engine set this */
+        text_props[i].isShapedAlone = 0;
+        text_props[i].reserved = 0;
+
+        clustermap[i] = i;
+    }
+
+    for (; i < max_glyph_count; i++) {
+        glyph_props[i].justification = SCRIPT_JUSTIFY_NONE;
+        glyph_props[i].isClusterStart = 0;
+        glyph_props[i].isDiacritic = 0;
+        glyph_props[i].isZeroWidthSpace = 0;
+        glyph_props[i].reserved = 0;
+    }
+
+    string = heap_alloc(sizeof(WCHAR)*length);
+    if (!string)
+        return E_OUTOFMEMORY;
+
+    for (i = 0, g = 0, update_cluster = FALSE; i < length; i++) {
+        UINT32 codepoint;
+
+        if (!update_cluster) {
+            codepoint = decode_surrogate_pair(text, i, length);
+            if (!codepoint) {
+                /* FIXME: mirror in RTL case */
+                codepoint = text[i];
+                string[i] = codepoint;
+            }
+            else {
+                string[i] = text[i];
+                string[i+1] = text[i+1];
+                update_cluster = TRUE;
+            }
+
+            hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyph_indices[g]);
+            if (FAILED(hr))
+                goto done;
+
+            g++;
+        }
+        else {
+            INT32 k;
+
+            update_cluster = FALSE;
+            /* mark surrogate halves with same cluster */
+            clustermap[i] = clustermap[i-1];
+            /* update following clusters */
+            for (k = i + 1; k >= 0 && k < length; k++)
+                clustermap[k]--;
+        }
+    }
+    *actual_glyph_count = g;
+
+    scriptprops = &dwritescripts_properties[script];
+    if (scriptprops->ops && scriptprops->ops->contextual_shaping) {
+        hr = scriptprops->ops->contextual_shaping(fontface, is_rtl, string, length, max_glyph_count, clustermap, glyph_indices, actual_glyph_count);
+        if (FAILED(hr))
+            goto done;
+    }
+
+    /* FIXME: apply default features */
+
+    if (scriptprops->ops && scriptprops->ops->set_text_glyphs_props)
+        hr = scriptprops->ops->set_text_glyphs_props(fontface, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+    else
+        hr = default_shaping_ops.set_text_glyphs_props(fontface, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+
+done:
+    heap_free(string);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2 *iface,
