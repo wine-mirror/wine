@@ -1123,6 +1123,12 @@ static void test_GetGlyphs(void)
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got 0x%08x\n", hr);
 
+if (0) {
+    /* NULL fontface - crashes on Windows */
+    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), NULL, FALSE, FALSE, &sa, NULL,
+        NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
+}
+
     /* invalid script id */
     maxglyphcount = 10;
     actual_count = 0;

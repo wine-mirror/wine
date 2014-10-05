@@ -26,6 +26,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
+struct scriptshaping_cache
+{
+    IDWriteFontFace *fontface;
+};
+
+HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, struct scriptshaping_cache **cache)
+{
+    struct scriptshaping_cache *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    if (!ret)
+        return E_OUTOFMEMORY;
+
+    ret->fontface = fontface;
+    IDWriteFontFace_AddRef(fontface);
+
+    *cache = ret;
+
+    return S_OK;
+}
+
+void release_scriptshaping_cache(struct scriptshaping_cache *cache)
+{
+    if (!cache)
+        return;
+    IDWriteFontFace_Release(cache->fontface);
+    heap_free(cache);
+}
+
 static void shape_update_clusters_from_glyphprop(UINT32 glyphcount, UINT32 text_len, UINT16 *clustermap, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
 {
     UINT32 i;
@@ -86,7 +115,7 @@ static INT32 map_glyph_to_text_pos(const UINT16 *clustermap, UINT32 len, UINT16 
     return k;
 }
 
-static HRESULT default_set_text_glyphs_props(IDWriteFontFace *fontface, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+static HRESULT default_set_text_glyphs_props(struct scriptshaping_cache *cache, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
 {
     UINT32 i;
@@ -119,13 +148,13 @@ static HRESULT default_set_text_glyphs_props(IDWriteFontFace *fontface, const WC
     return S_OK;
 }
 
-static HRESULT latn_set_text_glyphs_props(IDWriteFontFace *fontface, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+static HRESULT latn_set_text_glyphs_props(struct scriptshaping_cache *cache, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
 {
     HRESULT hr;
     UINT32 i;
 
-    hr = default_set_text_glyphs_props(fontface, text, len, clustermap, glyph_indices, glyphcount, text_props, glyph_props);
+    hr = default_set_text_glyphs_props(cache, text, len, clustermap, glyph_indices, glyphcount, text_props, glyph_props);
 
     for (i = 0; i < glyphcount; i++)
         if (glyph_props[i].isZeroWidthSpace)

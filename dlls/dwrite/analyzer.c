@@ -846,6 +846,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
     const struct dwritescript_properties *scriptprops;
+    struct scriptshaping_cache *cache;
     WCHAR *string;
     BOOL update_cluster;
     UINT32 i, g;
@@ -925,9 +926,13 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     }
     *actual_glyph_count = g;
 
+    hr = create_scriptshaping_cache(fontface, &cache);
+    if (FAILED(hr))
+        goto done;
+
     scriptprops = &dwritescripts_properties[script];
     if (scriptprops->ops && scriptprops->ops->contextual_shaping) {
-        hr = scriptprops->ops->contextual_shaping(fontface, is_rtl, string, length, max_glyph_count, clustermap, glyph_indices, actual_glyph_count);
+        hr = scriptprops->ops->contextual_shaping(cache, is_rtl, string, length, max_glyph_count, clustermap, glyph_indices, actual_glyph_count);
         if (FAILED(hr))
             goto done;
     }
@@ -935,11 +940,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     /* FIXME: apply default features */
 
     if (scriptprops->ops && scriptprops->ops->set_text_glyphs_props)
-        hr = scriptprops->ops->set_text_glyphs_props(fontface, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+        hr = scriptprops->ops->set_text_glyphs_props(cache, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
     else
-        hr = default_shaping_ops.set_text_glyphs_props(fontface, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+        hr = default_shaping_ops.set_text_glyphs_props(cache, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
 
 done:
+    release_scriptshaping_cache(cache);
     heap_free(string);
 
     return hr;
