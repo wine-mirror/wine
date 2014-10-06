@@ -102,6 +102,10 @@
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
 #endif
+#ifdef HAVE_SYS_EXTATTR_H
+#undef XATTR_ADDITIONAL_OPTIONS
+#include <sys/extattr.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 
@@ -171,7 +175,14 @@ typedef struct
 
 #define MAX_IGNORED_FILES 4
 
-#define SAMBA_XATTR_DOS_ATTRIB  "user.DOSATTRIB"
+#ifndef XATTR_USER_PREFIX
+# define XATTR_USER_PREFIX "user."
+#endif
+#ifndef XATTR_USER_PREFIX_LEN
+# define XATTR_USER_PREFIX_LEN (sizeof(XATTR_USER_PREFIX) - 1)
+#endif
+
+#define SAMBA_XATTR_DOS_ATTRIB  XATTR_USER_PREFIX "DOSATTRIB"
 #define XATTR_ATTRIBS_MASK      (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)
 
 struct file_identity
@@ -371,6 +382,8 @@ static int xattr_fremove( int filedes, const char *name )
 # else
     return fremovexattr( filedes, name );
 # endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_delete_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN] );
 #else
     errno = ENOSYS;
     return -1;
@@ -386,6 +399,9 @@ static int xattr_fset( int filedes, const char *name, const void *value, size_t 
 # else
     return fsetxattr( filedes, name, value, size, 0 );
 # endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_set_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN],
+                           value, size );
 #else
     errno = ENOSYS;
     return -1;
@@ -401,6 +417,9 @@ static int xattr_get( const char *path, const char *name, void *value, size_t si
 # else
     return getxattr( path, name, value, size );
 # endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_get_file( path, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN],
+                             value, size );
 #else
     errno = ENOSYS;
     return -1;
@@ -416,6 +435,9 @@ static int xattr_fget( int filedes, const char *name, void *value, size_t size )
 # else
     return fgetxattr( filedes, name, value, size );
 # endif
+#elif defined(HAVE_SYS_EXTATTR_H)
+    return extattr_get_fd( filedes, EXTATTR_NAMESPACE_USER, &name[XATTR_USER_PREFIX_LEN],
+                           value, size );
 #else
     errno = ENOSYS;
     return -1;

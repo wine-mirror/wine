@@ -467,6 +467,7 @@ AC_CHECK_HEADERS(\
 	sys/cdio.h \
 	sys/epoll.h \
 	sys/event.h \
+	sys/extattr.h \
 	sys/filio.h \
 	sys/ipc.h \
 	sys/link.h \
