@@ -23,23 +23,29 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winternl.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
 static BOOL (WINAPI * pVerifyVersionInfoA)(LPOSVERSIONINFOEXA, DWORD, DWORDLONG);
 static ULONGLONG (WINAPI * pVerSetConditionMask)(ULONGLONG, DWORD, BYTE);
+static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
-#define KERNEL32_GET_PROC(func)                                     \
-    p##func = (void *)GetProcAddress(hKernel32, #func);
+#define GET_PROC(func)                                     \
+    p##func = (void *)GetProcAddress(hmod, #func);
 
 static void init_function_pointers(void)
 {
-    HMODULE hKernel32;
+    HMODULE hmod;
 
-    hKernel32 = GetModuleHandleA("kernel32.dll");
+    hmod = GetModuleHandleA("kernel32.dll");
 
-    KERNEL32_GET_PROC(GetProductInfo);
-    KERNEL32_GET_PROC(VerifyVersionInfoA);
-    KERNEL32_GET_PROC(VerSetConditionMask);
+    GET_PROC(GetProductInfo);
+    GET_PROC(VerifyVersionInfoA);
+    GET_PROC(VerSetConditionMask);
+
+    hmod = GetModuleHandleA("ntdll.dll");
+
+    GET_PROC(RtlGetVersion);
 }
 
 static void test_GetProductInfo(void)
@@ -170,6 +176,21 @@ static void test_VerifyVersionInfo(void)
     info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
     GetVersionExA((OSVERSIONINFOA *)&info);
     servicepack = info.wServicePackMajor;
+
+    /* Win8.1+ returns Win8 version in GetVersionEx when there's no app manifest targeting 8.1 */
+    if (info.dwMajorVersion == 6 && info.dwMinorVersion == 2)
+    {
+        RTL_OSVERSIONINFOEXW rtlinfo;
+        rtlinfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+        ok(SUCCEEDED(pRtlGetVersion(&rtlinfo)), "RtlGetVersion failed\n");
+
+        if (rtlinfo.dwMajorVersion != 6 || rtlinfo.dwMinorVersion != 2)
+        {
+            win_skip("GetVersionEx and VerifyVersionInfo are faking values\n");
+            return;
+        }
+    }
+
     memset(&info, 0, sizeof(info));
 
     ret = pVerifyVersionInfoA(&info, VER_MAJORVERSION | VER_MINORVERSION,
