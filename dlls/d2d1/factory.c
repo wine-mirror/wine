@@ -19,6 +19,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define D2D1_INIT_GUID
 #include "d2d1_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);

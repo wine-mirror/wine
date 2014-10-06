@@ -26,6 +26,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
 #define INITIAL_CLIP_STACK_SIZE 4
 
+struct d2d_draw_text_layout_ctx
+{
+    ID2D1Brush *brush;
+    D2D1_DRAW_TEXT_OPTIONS options;
+};
+
 static void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
 {
     dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
@@ -503,8 +509,19 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawTextLayout(ID2D1RenderTarget *iface,
         D2D1_POINT_2F origin, IDWriteTextLayout *layout, ID2D1Brush *brush, D2D1_DRAW_TEXT_OPTIONS options)
 {
-    FIXME("iface %p, origin {%.8e, %.8e}, layout %p, brush %p, options %#x stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_draw_text_layout_ctx ctx;
+    HRESULT hr;
+
+    TRACE("iface %p, origin {%.8e, %.8e}, layout %p, brush %p, options %#x.\n",
             iface, origin.x, origin.y, layout, brush, options);
+
+    ctx.brush = brush;
+    ctx.options = options;
+
+    if (FAILED(hr = IDWriteTextLayout_Draw(layout,
+            &ctx, &render_target->IDWriteTextRenderer_iface, origin.x, origin.y)))
+        FIXME("Failed to draw text layout, hr %#x.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarget *iface,
@@ -883,6 +900,124 @@ static const struct ID2D1RenderTargetVtbl d2d_d3d_render_target_vtbl =
     d2d_d3d_render_target_IsSupported,
 };
 
+static inline struct d2d_d3d_render_target *impl_from_IDWriteTextRenderer(IDWriteTextRenderer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_d3d_render_target, IDWriteTextRenderer_iface);
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_QueryInterface(IDWriteTextRenderer *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IDWriteTextRenderer)
+            || IsEqualGUID(iid, &IID_IDWritePixelSnapping)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        IDWriteTextRenderer_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG STDMETHODCALLTYPE d2d_text_renderer_AddRef(IDWriteTextRenderer *iface)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d2d_d3d_render_target_AddRef(&render_target->ID2D1RenderTarget_iface);
+}
+
+ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *iface)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d2d_d3d_render_target_Release(&render_target->ID2D1RenderTarget_iface);
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
+        void *ctx, BOOL *disabled)
+{
+    FIXME("iface %p, ctx %p, disabled %p stub!\n", iface, ctx, disabled);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRenderer *iface,
+        void *ctx, DWRITE_MATRIX *transform)
+{
+    FIXME("iface %p, ctx %p, transform %p stub!\n", iface, ctx, transform);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRenderer *iface, void *ctx, float *ppd)
+{
+    FIXME("iface %p, ctx %p, ppd %p stub!\n", iface, ctx, ppd);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *iface, void *ctx,
+        float baseline_origin_x, float baseline_origin_y, DWRITE_MEASURING_MODE measuring_mode,
+        const DWRITE_GLYPH_RUN *glyph_run, const DWRITE_GLYPH_RUN_DESCRIPTION *desc, IUnknown *effect)
+{
+    FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
+            "measuring_mode %#x, glyph_run %p, desc %p, effect %p stub!\n",
+            iface, ctx, baseline_origin_x, baseline_origin_y,
+            measuring_mode, glyph_run, desc, effect);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRenderer *iface, void *ctx,
+        float baseline_origin_x, float baseline_origin_y, const DWRITE_UNDERLINE *underline, IUnknown *effect)
+{
+    FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, underline %p, effect %p stub!\n",
+            iface, ctx, baseline_origin_x, baseline_origin_y, underline, effect);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteTextRenderer *iface, void *ctx,
+        float baseline_origin_x, float baseline_origin_y, const DWRITE_STRIKETHROUGH *strikethrough, IUnknown *effect)
+{
+    FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, strikethrough %p, effect %p stub!\n",
+            iface, ctx, baseline_origin_x, baseline_origin_y, strikethrough, effect);
+
+    return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
+        float origin_x, float origin_y, IDWriteInlineObject *object, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
+{
+    FIXME("iface %p, ctx %p, origin_x %.8e, origin_y %.8e, object %p, is_sideways %#x, is_rtl %#x, effect %p stub!\n",
+            iface, ctx, origin_x, origin_y, object, is_sideways, is_rtl, effect);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDWriteTextRendererVtbl d2d_text_renderer_vtbl =
+{
+    d2d_text_renderer_QueryInterface,
+    d2d_text_renderer_AddRef,
+    d2d_text_renderer_Release,
+    d2d_text_renderer_IsPixelSnappingDisabled,
+    d2d_text_renderer_GetCurrentTransform,
+    d2d_text_renderer_GetPixelsPerDip,
+    d2d_text_renderer_DrawGlyphRun,
+    d2d_text_renderer_DrawUnderline,
+    d2d_text_renderer_DrawStrikethrough,
+    d2d_text_renderer_DrawInlineObject,
+};
+
 HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
@@ -967,6 +1102,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     FIXME("Ignoring render target properties.\n");
 
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
+    render_target->IDWriteTextRenderer_iface.lpVtbl = &d2d_text_renderer_vtbl;
     render_target->refcount = 1;
 
     if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&render_target->device)))

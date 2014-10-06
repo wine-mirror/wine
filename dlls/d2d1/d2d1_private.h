@@ -24,6 +24,10 @@
 #include <limits.h>
 #define COBJMACROS
 #include "d2d1.h"
+#ifdef D2D1_INIT_GUID
+#include "initguid.h"
+#endif
+#include "dwrite.h"
 
 struct d2d_clip_stack
 {
@@ -35,6 +39,7 @@ struct d2d_clip_stack
 struct d2d_d3d_render_target
 {
     ID2D1RenderTarget ID2D1RenderTarget_iface;
+    IDWriteTextRenderer IDWriteTextRenderer_iface;
     LONG refcount;
 
     ID3D10Device *device;
