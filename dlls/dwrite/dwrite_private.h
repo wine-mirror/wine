@@ -19,6 +19,10 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#define DWRITE_MAKE_OPENTYPE_TAG(ch0, ch1, ch2, ch3) \
+                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
@@ -136,7 +140,7 @@ enum SCRIPT_JUSTIFY
 };
 
 struct scriptshaping_cache;
-extern HRESULT create_scriptshaping_cache(IDWriteFontFace*,struct scriptshaping_cache**) DECLSPEC_HIDDEN;
+extern HRESULT create_scriptshaping_cache(IDWriteFontFace*,const WCHAR*,struct scriptshaping_cache**) DECLSPEC_HIDDEN;
 extern void release_scriptshaping_cache(struct scriptshaping_cache*) DECLSPEC_HIDDEN;
 
 struct scriptshaping_ops

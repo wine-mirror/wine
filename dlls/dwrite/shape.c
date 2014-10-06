@@ -29,9 +29,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct scriptshaping_cache
 {
     IDWriteFontFace *fontface;
+    UINT32 language_tag;
 };
 
-HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, struct scriptshaping_cache **cache)
+HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, const WCHAR *locale, struct scriptshaping_cache **cache)
 {
     struct scriptshaping_cache *ret;
 
@@ -41,6 +42,13 @@ HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, struct scriptshapi
 
     ret->fontface = fontface;
     IDWriteFontFace_AddRef(fontface);
+
+    ret->language_tag = DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t');
+    if (locale) {
+        WCHAR tag[5];
+        if (GetLocaleInfoEx(locale, LOCALE_SOPENTYPELANGUAGETAG, tag, sizeof(tag)/sizeof(WCHAR)))
+            ret->language_tag = DWRITE_MAKE_OPENTYPE_TAG(tag[0],tag[1],tag[2],tag[3]);
+    }
 
     *cache = ret;
 

@@ -926,7 +926,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     }
     *actual_glyph_count = g;
 
-    hr = create_scriptshaping_cache(fontface, &cache);
+    hr = create_scriptshaping_cache(fontface, locale, &cache);
     if (FAILED(hr))
         goto done;
 
