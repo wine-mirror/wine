@@ -97,10 +97,16 @@ struct dwrite_font {
 
 #define DWRITE_FONTTABLE_MAGIC 0xededfafa
 
-struct dwrite_fonttable {
+struct dwrite_fonttablecontext {
     UINT32 magic;
-    LPVOID context;
+    void  *context;
     UINT32 file_index;
+};
+
+struct dwrite_fonttable {
+    void  *data;
+    void  *context;
+    UINT32 size;
 };
 
 struct dwrite_fontface {
@@ -108,10 +114,7 @@ struct dwrite_fontface {
     LONG ref;
 
     struct dwrite_fontface_data *data;
-
-    LPVOID CMAP_table;
-    LPVOID CMAP_context;
-    DWORD CMAP_size;
+    struct dwrite_fonttable cmap;
 
     BOOL is_system;
     LOGFONTW logfont;
@@ -236,8 +239,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace *iface)
 
     if (!ref)
     {
-        if (This->CMAP_context)
-            IDWriteFontFace_ReleaseFontTable(iface, This->CMAP_context);
+        if (This->cmap.context)
+            IDWriteFontFace_ReleaseFontTable(iface, This->cmap.context);
         _free_fontface_data(This->data);
         heap_free(This);
     }
@@ -353,10 +356,10 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
     {
         HRESULT hr;
         TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
-        if (!This->CMAP_table)
+        if (!This->cmap.data)
         {
             BOOL exists = FALSE;
-            hr = IDWriteFontFace_TryGetFontTable(iface, MS_CMAP_TAG, (const void**)&This->CMAP_table, &This->CMAP_size, &This->CMAP_context, &exists);
+            hr = IDWriteFontFace_TryGetFontTable(iface, MS_CMAP_TAG, (const void**)&This->cmap.data, &This->cmap.size, &This->cmap.context, &exists);
             if (FAILED(hr) || !exists)
             {
                 ERR("Font does not have a CMAP table\n");
@@ -366,7 +369,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace *iface, UIN
 
         for (i = 0; i < count; i++)
         {
-            OpenType_CMAP_GetGlyphIndex(This->CMAP_table, codepoints[i], &glyph_indices[i], 0);
+            OpenType_CMAP_GetGlyphIndex(This->cmap.data, codepoints[i], &glyph_indices[i], 0);
         }
         return S_OK;
     }
@@ -385,14 +388,14 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace *iface, UIN
     {
         HRESULT hr = S_OK;
         int i;
-        struct dwrite_fonttable *table;
+        struct dwrite_fonttablecontext *tablecontext;
 
         TRACE("(%p)->(%u %p %p %p %p)\n", This, table_tag, table_data, table_size, context, exists);
 
-        table = heap_alloc(sizeof(struct dwrite_fonttable));
-        if (!table)
+        tablecontext = heap_alloc(sizeof(struct dwrite_fonttablecontext));
+        if (!tablecontext)
             return E_OUTOFMEMORY;
-        table->magic = DWRITE_FONTTABLE_MAGIC;
+        tablecontext->magic = DWRITE_FONTTABLE_MAGIC;
 
         *exists = FALSE;
         for (i = 0; i < This->data->file_count && !(*exists); i++)
@@ -401,16 +404,16 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace *iface, UIN
             hr = _dwritefontfile_GetFontFileStream(This->data->files[i], &stream);
             if (FAILED(hr))
                 continue;
-            table->file_index = i;
+            tablecontext->file_index = i;
 
-            hr = find_font_table(stream, This->data->index, table_tag, table_data, &table->context, table_size, exists);
+            hr = find_font_table(stream, This->data->index, table_tag, table_data, &tablecontext->context, table_size, exists);
 
             IDWriteFontFileStream_Release(stream);
         }
         if (FAILED(hr) && !*exists)
-            heap_free(table);
+            heap_free(tablecontext);
         else
-            *context = (LPVOID)table;
+            *context = (void*)tablecontext;
         return hr;
     }
 }
@@ -418,23 +421,23 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace *iface, UIN
 static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace *iface, void *table_context)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace(iface);
-    struct dwrite_fonttable *table = (struct dwrite_fonttable *)table_context;
+    struct dwrite_fonttablecontext *tablecontext = (struct dwrite_fonttablecontext*)table_context;
     IDWriteFontFileStream *stream;
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, table_context);
 
-    if (table->magic != DWRITE_FONTTABLE_MAGIC)
+    if (tablecontext->magic != DWRITE_FONTTABLE_MAGIC)
     {
         TRACE("Invalid table magic\n");
         return;
     }
 
-    hr = _dwritefontfile_GetFontFileStream(This->data->files[table->file_index], &stream);
+    hr = _dwritefontfile_GetFontFileStream(This->data->files[tablecontext->file_index], &stream);
     if (FAILED(hr))
         return;
-    IDWriteFontFileStream_ReleaseFileFragment(stream, table->context);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, tablecontext->context);
     IDWriteFontFileStream_Release(stream);
-    heap_free(table);
+    heap_free(tablecontext);
 }
 
 static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace *iface, FLOAT emSize,
@@ -516,9 +519,9 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
     This->data->files = NULL;
     This->data->index = 0;
     This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    This->CMAP_table = NULL;
-    This->CMAP_context = NULL;
-    This->CMAP_size = 0;
+    This->cmap.data = NULL;
+    This->cmap.context = NULL;
+    This->cmap.size = 0;
 
     This->is_system = TRUE;
     memset(&This->logfont, 0, sizeof(This->logfont));
@@ -1358,9 +1361,9 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     This->data->type = facetype;
     This->data->file_count = files_number;
     This->data->files = heap_alloc(sizeof(*This->data->files) * files_number);
-    This->CMAP_table = NULL;
-    This->CMAP_context = NULL;
-    This->CMAP_size = 0;
+    This->cmap.data = NULL;
+    This->cmap.context = NULL;
+    This->cmap.size = 0;
     /* Verify font file streams */
     for (i = 0; i < This->data->file_count && SUCCEEDED(hr); i++)
     {
