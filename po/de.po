@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-08-13 01:33+0200\n"
+"PO-Revision-Date: 2014-10-06 21:51+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -850,7 +850,7 @@ msgstr "Die Datei existiert nicht"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Die Auswahl enthält ein Objekt, das kein Ordner ist"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -3547,16 +3547,12 @@ msgid "Expected ')'"
 msgstr "')' erwartet"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Schlüsselkennung des Antragstellers"
+msgstr "Bezeichner erwartet"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "';' erwartet"
+msgstr "'=' erwartet"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3587,20 +3583,16 @@ msgid "Label not found"
 msgstr "Label nicht gefunden"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "';' erwartet"
+msgstr "'@end' erwartet"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Bedingte Kompilierung ist ausgeschaltet"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "';' erwartet"
+msgstr "'@' erwartet"
 
 #: jscript.rc:54
 msgid "Number expected"
