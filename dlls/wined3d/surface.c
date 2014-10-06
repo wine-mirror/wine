@@ -1588,7 +1588,6 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
 static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alpha_ck,
         struct wined3d_format *format, enum wined3d_conversion_type *conversion_type)
 {
-    BOOL colorkey_active = need_alpha_ck && (texture->color_key_flags & WINEDDSD_CKSRCBLT);
     const struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *dst_format;
@@ -1614,7 +1613,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     *conversion_type = WINED3D_CT_NONE;
     dst_format_id = format->id;
 
-    if (colorkey_active)
+    if (need_alpha_ck && (texture->color_key_flags & WINEDDSD_CKSRCBLT))
     {
         for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
         {
@@ -1632,8 +1631,8 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     /* FIXME: This should check if the blitter backend can do P8 conversion,
      * instead of checking for ARB_fragment_program. */
     if (texture->resource.format->id == WINED3DFMT_P8_UINT
-            && (!(gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
-            && texture == texture->swapchain->front_buffer) || colorkey_active))
+            && !(gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
+            && texture == texture->swapchain->front_buffer))
     {
         *conversion_type = WINED3D_CT_P8;
         dst_format_id = WINED3DFMT_B8G8R8A8_UNORM;
