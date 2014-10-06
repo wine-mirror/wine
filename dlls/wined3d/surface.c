@@ -1653,7 +1653,7 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
         format->rtInternal = dst_format->rtInternal;
         format->glFormat = dst_format->glFormat;
         format->glType = dst_format->glType;
-        format->conv_byte_count = dst_format->byte_count;
+        format->byte_count = dst_format->byte_count;
     }
 }
 
@@ -4611,8 +4611,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         /* This code is entered for texture formats which need a fixup. */
         UINT height = surface->resource.height;
 
-        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-        dst_pitch = width * format.conv_byte_count;
+        format.byte_count = format.conv_byte_count;
+        dst_pitch = wined3d_format_calculate_pitch(&format, width);
         dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
 
         if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
@@ -4623,7 +4623,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
         format.convert(data.addr, mem, src_pitch, src_pitch * height,
                 dst_pitch, dst_pitch * height, width, height, 1);
-        format.byte_count = format.conv_byte_count;
         src_pitch = dst_pitch;
         data.addr = mem;
     }
@@ -4632,8 +4631,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         /* This code is only entered for color keying fixups */
         UINT height = surface->resource.height;
 
-        /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
-        dst_pitch = width * format.conv_byte_count;
+        dst_pitch = wined3d_format_calculate_pitch(&format, width);
         dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
 
         if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
@@ -4644,7 +4642,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
         d3dfmt_convert_surface(data.addr, mem, src_pitch,
                 width, height, dst_pitch, convert, surface);
-        format.byte_count = format.conv_byte_count;
         src_pitch = dst_pitch;
         data.addr = mem;
     }
