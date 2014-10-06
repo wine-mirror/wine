@@ -611,7 +611,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
         return FALSE;
 
     if (InternalDrag.himl)
-        ImageList_EndDrag ();
+        return FALSE;
 
     cx = himlTrack->cx;
     cy = himlTrack->cy;
