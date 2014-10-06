@@ -456,6 +456,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 144: /* TODO */
         case 178: /* IE11 */
         case 179: /* IE11 */
+        case 180: /* IE11 */
+        case 181: /* IE11 */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
