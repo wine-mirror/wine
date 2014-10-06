@@ -1649,8 +1649,8 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     {
         dst_format = wined3d_get_format(gl_info, dst_format_id);
         format->glInternal = dst_format->glInternal;
-        format->glGammaInternal = format->glInternal;
-        format->rtInternal = format->glInternal;
+        format->glGammaInternal = dst_format->glGammaInternal;
+        format->rtInternal = dst_format->rtInternal;
         format->glFormat = dst_format->glFormat;
         format->glType = dst_format->glType;
         format->conv_byte_count = dst_format->byte_count;
