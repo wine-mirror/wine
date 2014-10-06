@@ -1625,24 +1625,18 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
             dst_format_id = color_key_info[i].dst_format;
             break;
         }
+
+        FIXME("Color-keying not supported with format %s.\n", debug_d3dformat(texture->resource.format->id));
     }
 
-    if (texture->resource.format->id == WINED3DFMT_P8_UINT)
+    /* FIXME: This should check if the blitter backend can do P8 conversion,
+     * instead of checking for ARB_fragment_program. */
+    if (texture->resource.format->id == WINED3DFMT_P8_UINT
+            && (!(gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
+            && texture == texture->swapchain->front_buffer) || colorkey_active))
     {
-        /* FIXME: This should check if the blitter backend can do P8
-         * conversion, instead of checking for ARB_fragment_program. */
-        if (!((gl_info->supported[ARB_FRAGMENT_PROGRAM] && texture->swapchain
-                && texture == texture->swapchain->front_buffer)) || colorkey_active)
-        {
-            *conversion_type = WINED3D_CT_P8;
-            dst_format_id = WINED3DFMT_B8G8R8A8_UNORM;
-        }
-    }
-    else if (texture->resource.format->id == WINED3DFMT_B2G3R3_UNORM && colorkey_active)
-    {
-        /* This texture format will never be used... So do not care about
-         * color-keying up until the point in time it will be needed. */
-        FIXME("Color-keying not supported with WINED3DFMT_B2G3R3_UNORM.\n");
+        *conversion_type = WINED3D_CT_P8;
+        dst_format_id = WINED3DFMT_B8G8R8A8_UNORM;
     }
 
     if (*conversion_type != WINED3D_CT_NONE)
