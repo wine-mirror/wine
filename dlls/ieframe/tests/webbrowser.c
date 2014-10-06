@@ -1997,6 +1997,30 @@ static void test_ClassInfo(IWebBrowser2 *unk)
     IProvideClassInfo2_Release(class_info);
 }
 
+#define expect_oleverb(a,b) _expect_oleverb(__LINE__,a,b)
+static void _expect_oleverb(unsigned line, const OLEVERB *verb, LONG exverb)
+{
+    ok_(__FILE__,line)(verb->lVerb == exverb, "verb->lVerb = %d, expected %d\n", verb->lVerb, exverb);
+    ok_(__FILE__,line)(!verb->lpszVerbName, "verb->lpszVerbName = %s\n", wine_dbgstr_w(verb->lpszVerbName));
+    ok_(__FILE__,line)(!verb->fuFlags, "verb->fuFlags = %x\n", verb->fuFlags);
+    ok_(__FILE__,line)(!verb->grfAttribs, "verb->grfAttribs = %x\n", verb->grfAttribs);
+}
+
+#define test_next_oleverb(a,b) _test_next_oleverb(__LINE__,a,b)
+static void _test_next_oleverb(unsigned line, IEnumOLEVERB *enum_verbs, LONG exverb)
+{
+    ULONG fetched = 0xdeadbeef;
+    OLEVERB verb;
+    HRESULT hres;
+
+    fetched = 0xdeadbeef;
+    memset(&verb, 0xa, sizeof(verb));
+    hres = IEnumOLEVERB_Next(enum_verbs, 1, &verb, &fetched);
+    ok_(__FILE__,line)(hres == S_OK, "Next failed: %08x\n", hres);
+    ok_(__FILE__,line)(!fetched, "fetched = %d\n", fetched);
+    _expect_oleverb(line, &verb, exverb);
+}
+
 static void test_EnumVerbs(IWebBrowser2 *wb)
 {
     IEnumOLEVERB *enum_verbs;
@@ -2014,13 +2038,32 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     ok(enum_verbs != NULL, "enum_verbs == NULL\n");
 
     fetched = 0xdeadbeef;
+    memset(verbs, 0xa, sizeof(verbs));
+    verbs[1].lVerb = 0xdeadbeef;
     hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
     ok(hres == S_OK, "Next failed: %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
+    /* Although fetched==0, an element is returned. */
+    expect_oleverb(verbs, OLEIVERB_PRIMARY);
+    /* The first argument is ignorred and always one element is returned. */
+    ok(verbs[1].lVerb == 0xdeadbeef, "verbs[1].lVerb = %x\n", verbs[1].lVerb);
 
+    test_next_oleverb(enum_verbs, OLEIVERB_INPLACEACTIVATE);
+    test_next_oleverb(enum_verbs, OLEIVERB_UIACTIVATE);
+    test_next_oleverb(enum_verbs, OLEIVERB_SHOW);
+    test_next_oleverb(enum_verbs, OLEIVERB_HIDE);
+
+    /* There is anouther verb, returned correctly. */
     fetched = 0xdeadbeef;
-    hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
-    ok(hres == S_OK, "Next failed: %08x\n", hres);
+    memset(verbs, 0xa, sizeof(verbs));
+    verbs[0].lVerb = 0xdeadbeef;
+    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    todo_wine ok(hres == S_OK, "Next failed: %08x\n", hres);
+    todo_wine ok(fetched == 1, "fetched = %d\n", fetched);
+    todo_wine ok(verbs[0].lVerb != 0xdeadbeef, "verbs[0].lVerb = %x\n", verbs[0].lVerb);
+
+    hres = IEnumOLEVERB_Next(enum_verbs, sizeof(verbs)/sizeof(*verbs), verbs, &fetched);
+    ok(hres == S_FALSE, "Next failed: %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
 
     hres = IEnumOLEVERB_Reset(enum_verbs);
@@ -2041,6 +2084,8 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     hres = IEnumOLEVERB_Next(enum_verbs, 1, verbs, &fetched);
     ok(hres == S_OK, "Next failed: %08x\n", hres);
     ok(!fetched, "fetched = %d\n", fetched);
+
+    test_next_oleverb(enum_verbs, OLEIVERB_SHOW);
 
     IEnumOLEVERB_Release(enum_verbs);
 }

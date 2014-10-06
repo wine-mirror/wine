@@ -292,8 +292,8 @@ static void release_client_site(WebBrowser *This)
 
 typedef struct {
     IEnumOLEVERB IEnumOLEVERB_iface;
-
     LONG ref;
+    LONG iter;
 } EnumOLEVERB;
 
 static inline EnumOLEVERB *impl_from_IEnumOLEVERB(IEnumOLEVERB *iface)
@@ -348,10 +348,20 @@ static HRESULT WINAPI EnumOLEVERB_Next(IEnumOLEVERB *iface, ULONG celt, OLEVERB 
 {
     EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
 
+    static const OLEVERB verbs[] =
+        {{OLEIVERB_PRIMARY},{OLEIVERB_INPLACEACTIVATE},{OLEIVERB_UIACTIVATE},{OLEIVERB_SHOW},{OLEIVERB_HIDE}};
+
     TRACE("(%p)->(%u %p %p)\n", This, celt, rgelt, pceltFetched);
 
+    /* There are a few problems with this implementation, but that's how it seems to work in native. See tests. */
     if(pceltFetched)
         *pceltFetched = 0;
+
+    if(This->iter == sizeof(verbs)/sizeof(*verbs))
+        return S_FALSE;
+
+    if(celt)
+        *rgelt = verbs[This->iter++];
     return S_OK;
 }
 
@@ -365,7 +375,10 @@ static HRESULT WINAPI EnumOLEVERB_Skip(IEnumOLEVERB *iface, ULONG celt)
 static HRESULT WINAPI EnumOLEVERB_Reset(IEnumOLEVERB *iface)
 {
     EnumOLEVERB *This = impl_from_IEnumOLEVERB(iface);
+
     TRACE("(%p)\n", This);
+
+    This->iter = 0;
     return S_OK;
 }
 
@@ -599,6 +612,7 @@ static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEn
 
     ret->IEnumOLEVERB_iface.lpVtbl = &EnumOLEVERBVtbl;
     ret->ref = 1;
+    ret->iter = 0;
 
     *ppEnumOleVerb = &ret->IEnumOLEVERB_iface;
     return S_OK;
