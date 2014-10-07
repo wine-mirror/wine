@@ -23,17 +23,10 @@
 
 #define COBJMACROS
 #include "wine/test.h"
-#include "winuser.h"
-#include "wingdi.h"
 #include <initguid.h>
 #include <d3d9.h>
 
 static HMODULE d3d9_handle = 0;
-
-static BOOL (WINAPI *pEnumDisplaySettingsExA)(const char *device_name,
-        DWORD mode_idx, DEVMODEA *mode, DWORD flags);
-static LONG (WINAPI *pChangeDisplaySettingsExA)(const char *device_name,
-        DEVMODEA *mode, HWND window, DWORD flags, void *param);
 
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
 
@@ -420,8 +413,7 @@ static void test_get_adapter_displaymode_ex(void)
     D3DDISPLAYMODE mode;
     D3DDISPLAYMODEEX mode_ex;
     D3DDISPLAYROTATION rotation;
-    HANDLE hdll;
-    DEVMODEA startmode;
+    DEVMODEW startmode;
     LONG retval;
 
     hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
@@ -447,22 +439,16 @@ static void test_get_adapter_displaymode_ex(void)
        hr);
     ok(d3d9 != NULL && d3d9 != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", d3d9);
-    /* change displayorientation*/
-    hdll = GetModuleHandleA("user32.dll");
-    pEnumDisplaySettingsExA = (void*)GetProcAddress(hdll, "EnumDisplaySettingsExA");
-    pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
-
-    if (!pEnumDisplaySettingsExA || !pChangeDisplaySettingsExA) goto out;
 
     memset(&startmode, 0, sizeof(startmode));
     startmode.dmSize = sizeof(startmode);
-    retval = pEnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &startmode, 0);
+    retval = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &startmode, 0);
     ok(retval, "Failed to retrieve current display mode, retval %d.\n", retval);
     if (!retval) goto out;
 
     startmode.dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT;
     S2(U1(startmode)).dmDisplayOrientation = DMDO_180;
-    retval = pChangeDisplaySettingsExA(NULL, &startmode, NULL, 0, NULL);
+    retval = ChangeDisplaySettingsExW(NULL, &startmode, NULL, 0, NULL);
 
     if(retval == DISP_CHANGE_BADMODE)
     {
@@ -474,7 +460,7 @@ static void test_get_adapter_displaymode_ex(void)
     /* try retrieve orientation info with EnumDisplaySettingsEx*/
     startmode.dmFields = 0;
     S2(U1(startmode)).dmDisplayOrientation = 0;
-    ok(pEnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &startmode, EDS_ROTATEDMODE), "EnumDisplaySettingsEx failed\n");
+    ok(EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &startmode, EDS_ROTATEDMODE), "EnumDisplaySettingsEx failed\n");
 
     /*now that orientation has changed start tests for GetAdapterDisplayModeEx: invalid Size*/
     memset(&mode_ex, 0, sizeof(mode_ex));
@@ -528,7 +514,7 @@ static void test_get_adapter_displaymode_ex(void)
     ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
 
     /* return to the default mode */
-    pChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+    ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
 out:
     IDirect3D9_Release(d3d9);
     IDirect3D9Ex_Release(d3d9ex);
