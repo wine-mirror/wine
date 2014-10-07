@@ -2293,7 +2293,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
     struct ws2_async *wsa;
     NTSTATUS status;
 
-    TRACE("s %ld type %d\n", s, type);
+    TRACE("s %04lx type %d\n", s, type);
 
     wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct ws2_async, iovec[1] ));
     if ( !wsa )
@@ -3744,7 +3744,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     int fd;
     DWORD status = 0, total = 0;
 
-    TRACE("%ld, %s, %p, %d, %p, %d, %p, %p, %p\n",
+    TRACE("%04lx, %s, %p, %d, %p, %d, %p, %p, %p\n",
           s, debugstr_wsaioctl(code), in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
     switch (code)
