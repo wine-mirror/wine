@@ -943,7 +943,12 @@ static HRESULT WINAPI WebBrowser_get_RegisterAsDropTarget(IWebBrowser2 *iface,
         VARIANT_BOOL *pbRegister)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
+
     FIXME("(%p)->(%p)\n", This, pbRegister);
+
+    if(!pbRegister)
+        return E_INVALIDARG;
+
     *pbRegister=0;
     return S_OK;
 }

@@ -2321,6 +2321,10 @@ static void test_ie_funcs(IWebBrowser2 *wb)
         ok(sName!=NULL, "get_Name return a NULL string.\n");
     SysFreeString(sName);
 
+    /* RegisterAsDropTarget */
+    hres = IWebBrowser2_get_RegisterAsDropTarget(wb, NULL);
+    ok(hres == E_INVALIDARG, "get_RegisterAsDropTarget returned: %08x\n", hres);
+
     /* Quit */
 
     hres = IWebBrowser2_Quit(wb);
