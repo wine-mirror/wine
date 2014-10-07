@@ -5,7 +5,7 @@
 @ stdcall FlushViewOfFile(ptr long) kernel32.FlushViewOfFile
 @ stub GetLargePageMinimum
 @ stub GetProcessWorkingSetSizeEx
-@ stub GetSystemFileCacheSize
+@ stdcall GetSystemFileCacheSize(ptr ptr ptr) kernel32.GetSystemFileCacheSize
 @ stdcall GetWriteWatch(long ptr long ptr ptr ptr) kernel32.GetWriteWatch
 @ stdcall MapViewOfFile(long long long long long) kernel32.MapViewOfFile
 @ stdcall MapViewOfFileEx(long long long long long ptr) kernel32.MapViewOfFileEx
