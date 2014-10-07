@@ -222,6 +222,12 @@ typedef enum DWRITE_LINE_SPACING_METHOD
     DWRITE_LINE_SPACING_METHOD_UNIFORM
 } DWRITE_LINE_SPACING_METHOD;
 
+cpp_quote("#define DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d) ( \\")
+cpp_quote("    ((UINT32)(UINT8)(d) << 24) | \\")
+cpp_quote("    ((UINT32)(UINT8)(c) << 16) | \\")
+cpp_quote("    ((UINT32)(UINT8)(b) <<  8) | \\")
+cpp_quote("     (UINT32)(UINT8)(a))")
+
 typedef enum DWRITE_FONT_FEATURE_TAG
 {
     DWRITE_FONT_FEATURE_TAG_ALTERNATIVE_FRACTIONS           = 0x63726661, /* 'afrc' */

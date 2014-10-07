@@ -25,14 +25,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
-                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
-                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
-
-#define MS_HEAD_TAG MS_MAKE_TAG('h','e','a','d')
-#define MS_OS2_TAG  MS_MAKE_TAG('O','S','/','2')
-#define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
-#define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
+#define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
+#define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
+#define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
+#define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 
 struct dwrite_fontface_data {
     LONG ref;
