@@ -1235,8 +1235,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
-       "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
     todo_wine
     {
         ok((info.uliAssemblySizeInKB.u.LowPart == 4),
@@ -1258,8 +1257,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
        "Assembly path was changed\n");
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
-       "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
     todo_wine
     {
         ok((info.uliAssemblySizeInKB.u.LowPart == 4),
@@ -1321,7 +1319,7 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, otherver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           name, &info);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED, "got %08x\n", info.dwAssemblyFlags);
 
     /* short buffer, QUERYASMINFO_FLAG_GETSIZE */
@@ -1331,7 +1329,7 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, otherver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED, "got %08x\n", info.dwAssemblyFlags);
 
     /* display name is "wine, Version=1.0.0.00000" */
@@ -1525,8 +1523,7 @@ static void test_QueryAssemblyInfo(void)
     lstrcatW(name, commasep);
     lstrcatW(name, ver);
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),
-       "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
