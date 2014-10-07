@@ -25,8 +25,10 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winnt.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "excpt.h"
 #include "wine/test.h"
 
 #define NUM_THREADS 4
@@ -40,6 +42,7 @@ static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
+static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 
 /* ############################### */
 
@@ -1543,6 +1546,260 @@ static void test_write_watch(void)
     VirtualFree( base, 0, MEM_FREE );
 }
 
+#ifdef __i386__
+
+static DWORD num_guard_page_calls;
+
+static DWORD guard_page_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                 CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    trace( "exception: %08x flags:%x addr:%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+
+    ok( rec->NumberParameters == 2, "NumberParameters is %d instead of 2\n", rec->NumberParameters );
+    ok( rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION, "ExceptionCode is %08x instead of %08x\n",
+        rec->ExceptionCode, STATUS_GUARD_PAGE_VIOLATION );
+
+    num_guard_page_calls++;
+    *(int *)rec->ExceptionInformation[1] += 0x100;
+
+    return ExceptionContinueExecution;
+}
+
+static void test_guard_page(void)
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    MEMORY_BASIC_INFORMATION info;
+    DWORD ret, size, old_prot;
+    int *value, old_value;
+    void *results[64];
+    ULONG_PTR count;
+    ULONG pagesize;
+    BOOL success;
+    char *base;
+
+    if (!pNtCurrentTeb)
+    {
+        win_skip( "NtCurrentTeb not supported\n" );
+        return;
+    }
+
+    size = 0x1000;
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    value = (int *)base;
+
+    /* verify info structure */
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok( ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %x\n", info.AllocationProtect );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    ok( info.Protect == (PAGE_READWRITE | PAGE_GUARD), "wrong Protect 0x%x\n", info.Protect );
+    ok( info.Type == MEM_PRIVATE, "wrong Type 0x%x\n", info.Type );
+
+    /* put some initial value into the memory */
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+    ok( old_prot == (PAGE_READWRITE | PAGE_GUARD), "wrong old prot %x\n", old_prot );
+
+    *value       = 1;
+    *(value + 1) = 2;
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+    /* test behaviour of VirtualLock - first attempt should fail */
+    SetLastError( 0xdeadbeef );
+    success = VirtualLock( base, size );
+    ok( !success, "VirtualLock unexpectedly succeded\n" );
+    todo_wine
+    ok( GetLastError() == STATUS_GUARD_PAGE_VIOLATION, "wrong error %u\n", GetLastError() );
+
+    success = VirtualLock( base, size );
+    todo_wine
+    ok( success, "VirtualLock failed %u\n", GetLastError() );
+    if (success)
+    {
+        ok( *value == 1, "memory block contains wrong value, expected 1, got 0x%x\n", *value );
+        success = VirtualUnlock( base, size );
+        ok( success, "VirtualUnlock failed %u\n", GetLastError() );
+    }
+
+    /* check info structure again, PAGE_GUARD should be removed now */
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok( ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %x\n", info.AllocationProtect );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    todo_wine
+    ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect );
+    ok( info.Type == MEM_PRIVATE, "wrong Type 0x%x\n", info.Type );
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+    todo_wine
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+    /* test directly accessing the memory - we need to setup an exception handler first */
+    frame.Handler = guard_page_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+
+    num_guard_page_calls = 0;
+    old_value = *value; /* exception handler increments value by 0x100 */
+    *value = 2;
+    ok( old_value == 0x101, "memory block contains wrong value, expected 0x101, got 0x%x\n", old_value );
+    ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
+
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+
+    /* check info structure again, PAGE_GUARD should be removed now */
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok( ret, "VirtualQuery failed %u\n", GetLastError());
+    ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect );
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+    /* test accessing second integer in memory */
+    frame.Handler = guard_page_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+
+    num_guard_page_calls = 0;
+    old_value = *(value + 1);
+    ok( old_value == 0x102, "memory block contains wrong value, expected 0x102, got 0x%x\n", old_value );
+    ok( *value == 2, "memory block contains wrong value, expected 2, got 0x%x\n", *value );
+    ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
+
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+
+    success = VirtualLock( base, size );
+    ok( success, "VirtualLock failed %u\n", GetLastError() );
+    if (success)
+    {
+        ok( *value == 2, "memory block contains wrong value, expected 2, got 0x%x\n", *value );
+        success = VirtualUnlock( base, size );
+        ok( success, "VirtualUnlock failed %u\n", GetLastError() );
+    }
+
+    VirtualFree( base, 0, MEM_FREE );
+
+    /* combined guard page / write watch tests */
+    if (!pGetWriteWatch || !pResetWriteWatch)
+    {
+        win_skip( "GetWriteWatch not supported, skipping combined guard page / write watch tests\n" );
+        return;
+    }
+
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE | PAGE_GUARD  );
+    if (!base && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED))
+    {
+        win_skip( "MEM_WRITE_WATCH not supported\n" );
+        return;
+    }
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    value = (int *)base;
+
+    ret = VirtualQuery( base, &info, sizeof(info) );
+    ok( ret, "VirtualQuery failed %u\n", GetLastError() );
+    ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
+    ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %x\n", info.AllocationProtect );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
+    ok( info.Protect == (PAGE_READWRITE | PAGE_GUARD), "wrong Protect 0x%x\n", info.Protect );
+    ok( info.Type == MEM_PRIVATE, "wrong Type 0x%x\n", info.Type );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    /* writing to a page should trigger should trigger guard page, even if write watch is set */
+    frame.Handler = guard_page_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+
+    num_guard_page_calls = 0;
+    *value       = 1;
+    *(value + 1) = 2;
+    todo_wine
+    ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
+
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    /* write watch is triggered from inside of the guard page handler */
+    frame.Handler = guard_page_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+
+    num_guard_page_calls = 0;
+    old_value = *(value + 1); /* doesn't trigger write watch */
+    ok( old_value == 0x102, "memory block contains wrong value, expected 0x102, got 0x%x\n", old_value );
+    ok( *value == 1, "memory block contains wrong value, expected 1, got 0x%x\n", *value );
+    ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
+
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    /* test behaviour of VirtualLock - first attempt should fail without triggering write watches */
+    SetLastError( 0xdeadbeef );
+    success = VirtualLock( base, size );
+    ok( !success, "VirtualLock unexpectedly succeded\n" );
+    todo_wine
+    ok( GetLastError() == STATUS_GUARD_PAGE_VIOLATION, "wrong error %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    success = VirtualLock( base, size );
+    todo_wine
+    ok( success, "VirtualLock failed %u\n", GetLastError() );
+    if (success)
+    {
+        ok( *value == 1, "memory block contains wrong value, expected 1, got 0x%x\n", *value );
+        success = VirtualUnlock( base, size );
+        ok( success, "VirtualUnlock failed %u\n", GetLastError() );
+    }
+
+    count = 64;
+    results[0] = (void *)0xdeadbeef;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    todo_wine
+    ok( count == 1 || broken(count == 0) /* Windows 8 */, "wrong count %lu\n", count );
+    todo_wine
+    ok( results[0] == base || broken(results[0] == (void *)0xdeadbeef) /* Windows 8 */, "wrong result %p\n", results[0] );
+
+    VirtualFree( base, 0, MEM_FREE );
+}
+
+#endif  /* __i386__ */
+
 static void test_VirtualProtect(void)
 {
     static const struct test_data
@@ -2581,6 +2838,7 @@ START_TEST(virtual)
                                                        "NtAreMappedFilesTheSame" );
     pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtMapViewOfSection");
     pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtUnmapViewOfSection");
+    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
 
     test_shared_memory(FALSE);
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
@@ -2600,4 +2858,7 @@ START_TEST(virtual)
     test_IsBadWritePtr();
     test_IsBadCodePtr();
     test_write_watch();
+#ifdef __i386__
+    test_guard_page();
+#endif
 }
