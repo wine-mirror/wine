@@ -45,6 +45,12 @@ SNMPAPI_STATUS WINAPI SnmpCleanup( void )
     return SNMPAPI_SUCCESS;
 }
 
+HSNMP_SESSION WINAPI SnmpOpen( HWND hwnd, UINT msg )
+{
+    FIXME( "%p %u\n", hwnd, msg );
+    return SNMPAPI_FAILURE;
+}
+
 SNMPAPI_STATUS WINAPI SnmpSetRetransmitMode( smiUINT32 retransmit_mode )
 {
     FIXME( "%u\n", retransmit_mode );

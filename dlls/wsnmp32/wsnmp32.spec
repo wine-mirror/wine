@@ -11,7 +11,7 @@
 120 stub SnmpGetVendorInfo
 200 stdcall SnmpStartup(ptr ptr ptr ptr ptr)
 201 stdcall SnmpCleanup()
-202 stub SnmpOpen
+202 stdcall SnmpOpen(ptr long)
 203 stub SnmpClose
 204 stub SnmpSendMsg
 205 stub SnmpRecvMsg

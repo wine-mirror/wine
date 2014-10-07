@@ -27,6 +27,7 @@ typedef int          smiINT, *smiLPINT;
 typedef smiINT       smiINT32, *smiLPINT32;
 typedef unsigned int smiUINT32, *smiLPUINT32;
 typedef smiUINT32    SNMPAPI_STATUS;
+typedef HANDLE       HSNMP_SESSION;
 
 #define SNMPAPI_NO_SUPPORT  0
 #define SNMPAPI_V1_SUPPORT  1
@@ -44,6 +45,7 @@ typedef smiUINT32    SNMPAPI_STATUS;
 #define SNMPAPI_SUCCESS 1
 
 SNMPAPI_STATUS WINAPI SnmpCleanup(void);
+HSNMP_SESSION  WINAPI SnmpOpen(HWND,UINT);
 SNMPAPI_STATUS WINAPI SnmpSetRetransmitMode(smiUINT32);
 SNMPAPI_STATUS WINAPI SnmpSetTranslateMode(smiUINT32);
 SNMPAPI_STATUS WINAPI SnmpStartup(smiLPUINT32,smiLPUINT32,smiLPUINT32,smiLPUINT32,smiLPUINT32);
