@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <windows.h>
+#include <winternl.h>
 #include <mshtml.h>
 
 #include "winetest.h"
@@ -323,11 +324,14 @@ static void print_version (void)
 # error CPU unknown
 #endif
     OSVERSIONINFOEXA ver;
+    RTL_OSVERSIONINFOEXW rtlver;
     BOOL ext;
     int is_win2k3_r2, is_admin, is_elevated;
     const char *(CDECL *wine_get_build_id)(void);
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     void (CDECL *wine_get_host_version)( const char **sysname, const char **release );
     BOOL (WINAPI *pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
+    NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
     ver.dwOSVersionInfoSize = sizeof(ver);
     if (!(ext = GetVersionExA ((OSVERSIONINFOA *) &ver)))
@@ -336,6 +340,27 @@ static void print_version (void)
 	if (!GetVersionExA ((OSVERSIONINFOA *) &ver))
 	    report (R_FATAL, "Can't get OS version.");
     }
+
+    /* try to get non-faked values */
+    if (ver.dwMajorVersion == 6 && ver.dwMinorVersion == 2)
+    {
+        rtlver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+
+        pRtlGetVersion = (void *)GetProcAddress(hntdll, "RtlGetVersion");
+        pRtlGetVersion(&rtlver);
+
+        ver.dwMajorVersion = rtlver.dwMajorVersion;
+        ver.dwMinorVersion = rtlver.dwMinorVersion;
+        ver.dwBuildNumber = rtlver.dwBuildNumber;
+        ver.dwPlatformId = rtlver.dwPlatformId;
+        ver.wServicePackMajor = rtlver.wServicePackMajor;
+        ver.wServicePackMinor = rtlver.wServicePackMinor;
+        ver.wSuiteMask = rtlver.wSuiteMask;
+        ver.wProductType = rtlver.wProductType;
+
+        WideCharToMultiByte(CP_ACP, 0, rtlver.szCSDVersion, -1, ver.szCSDVersion, sizeof(ver.szCSDVersion), NULL, NULL);
+    }
+
     xprintf ("    Platform=%s%s\n", platform, is_wow64 ? " (WOW64)" : "");
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
@@ -358,8 +383,8 @@ static void print_version (void)
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
 
-    wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
-    wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
+    wine_get_build_id = (void *)GetProcAddress(hntdll, "wine_get_build_id");
+    wine_get_host_version = (void *)GetProcAddress(hntdll, "wine_get_host_version");
     if (wine_get_build_id) xprintf( "    WineBuild=%s\n", wine_get_build_id() );
     if (wine_get_host_version)
     {
