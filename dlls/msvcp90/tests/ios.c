@@ -464,6 +464,8 @@ static fpos_int*            (*__thiscall p_basic_istream_wchar_tellg)(basic_istr
 static basic_istream_wchar* (*__cdecl    p_basic_istream_wchar_getline_bstr_delim)(basic_istream_wchar*, basic_string_wchar*, wchar_t);
 
 /* ostream */
+static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_float)(basic_ostream_char*, float);
+
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
 
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_double)(basic_ostream_wchar*, double);
@@ -544,6 +546,7 @@ static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void 
 
 /* to silence compiler errors */
 static void * (WINAPI *call_thiscall_func2_ptr_dbl)( void *func, void *this, double a );
+static void * (WINAPI *call_thiscall_func2_ptr_flt)( void *func, void *this, float a );
 static void * (WINAPI *call_thiscall_func2_ptr_fpos)( void *func, void *this, fpos_int a );
 
 static void init_thiscall_thunk(void)
@@ -562,6 +565,7 @@ static void init_thiscall_thunk(void)
     call_thiscall_func5 = (void *)thunk;
 
     call_thiscall_func2_ptr_dbl  = (void *)thunk;
+    call_thiscall_func2_ptr_flt  = (void *)thunk;
     call_thiscall_func2_ptr_fpos = (void *)thunk;
 }
 
@@ -574,6 +578,7 @@ static void init_thiscall_thunk(void)
         (const void*)(c), (const void *)(d))
 
 #define call_func2_ptr_dbl(func,_this,a)  call_thiscall_func2_ptr_dbl(func,_this,a)
+#define call_func2_ptr_flt(func,_this,a)  call_thiscall_func2_ptr_flt(func,_this,a)
 #define call_func2_ptr_fpos(func,_this,a) call_thiscall_func2_ptr_fpos(func,_this,a)
 
 #else
@@ -586,6 +591,7 @@ static void init_thiscall_thunk(void)
 #define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
 
 #define call_func2_ptr_dbl   call_func2
+#define call_func2_ptr_flt   call_func2
 #define call_func2_ptr_fpos  call_func2
 
 #endif /* __i386__ */
@@ -681,6 +687,9 @@ static BOOL init(void)
             "?tellg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAA?AV?$fpos@H@2@XZ");
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAEAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AEAV10@AEAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
+
+        SET(p_basic_ostream_char_print_float,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@M@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@N@Z");
@@ -796,6 +805,9 @@ static BOOL init(void)
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
 
+        SET(p_basic_ostream_char_print_float,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@M@Z");
+
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@N@Z");
 
@@ -908,6 +920,9 @@ static BOOL init(void)
             "?tellg@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAE?AV?$fpos@H@2@XZ");
         SET(p_basic_istream_wchar_getline_bstr_delim,
             "??$getline@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@YAAAV?$basic_istream@_WU?$char_traits@_W@std@@@0@AAV10@AAV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@_W@Z");
+
+        SET(p_basic_ostream_char_print_float,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@M@Z");
 
         SET(p_basic_ostream_char_print_double,
             "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@N@Z");
@@ -1951,6 +1966,26 @@ static void test_ostream_print_ushort(void)
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
 }
 
+static void test_ostream_print_float(void)
+{
+    static const char float_str[] = "3.14159";
+
+    basic_stringstream_char ss;
+    basic_string_char pstr;
+    const char *str;
+    float val;
+    val = 3.14159;
+
+    call_func1(p_basic_stringstream_char_ctor, &ss);
+    call_func2_ptr_flt(p_basic_ostream_char_print_float, &ss.base.base2, val);
+    call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+    str = call_func1(p_basic_string_char_cstr, &pstr);
+    ok(!strcmp(float_str, str), "str = %s\n", str);
+
+    call_func1(p_basic_string_char_dtor, &pstr);
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+}
+
 static void test_ostream_print_double(void)
 {
     static const char double_str[] = "3.14159";
@@ -2008,6 +2043,7 @@ START_TEST(ios)
     test_istream_tellg();
     test_istream_getline();
     test_ostream_print_ushort();
+    test_ostream_print_float();
     test_ostream_print_double();
     test_ostream_wchar_print_double();
 
