@@ -511,7 +511,7 @@ static HRESULT WINAPI DMSynthImpl_IKsControl_KsProperty(IKsControl* iface, PKSPR
     }
 
     if (DataLength <  sizeof(DWORD))
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        return E_NOT_SUFFICIENT_BUFFER;
 
     if (IsEqualGUID(&Property->u.s.Set, &GUID_DMUS_PROP_INSTRUMENT2))
     {
