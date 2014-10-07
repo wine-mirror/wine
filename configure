@@ -1364,6 +1364,7 @@ enable_services
 enable_spoolsv
 enable_start
 enable_svchost
+enable_systeminfo
 enable_taskkill
 enable_tasklist
 enable_taskmgr
@@ -17476,6 +17477,7 @@ wine_fn_config_test programs/services/tests services.exe_test
 wine_fn_config_program spoolsv enable_spoolsv install
 wine_fn_config_program start enable_start install,po
 wine_fn_config_program svchost enable_svchost install
+wine_fn_config_program systeminfo enable_systeminfo install
 wine_fn_config_program taskkill enable_taskkill install,po
 wine_fn_config_program tasklist enable_tasklist install
 wine_fn_config_program taskmgr enable_taskmgr install,po
