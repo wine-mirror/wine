@@ -3947,6 +3947,10 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         if (GetAdaptersInfo(NULL, &size) == ERROR_BUFFER_OVERFLOW)
         {
             IP_ADAPTER_INFO *p, *table = HeapAlloc(GetProcessHeap(), 0, size);
+            SOCKET_ADDRESS_LIST *sa_list;
+            SOCKADDR_IN *sockaddr;
+            SOCKET_ADDRESS *sa;
+            unsigned int i;
             DWORD num;
 
             if (!table || GetAdaptersInfo(table, &size))
@@ -3962,7 +3966,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             total = sizeof(SOCKET_ADDRESS_LIST) + sizeof(SOCKET_ADDRESS) * (num - 1);
             total += sizeof(SOCKADDR) * num;
 
-            if (total > out_size)
+            if (total > out_size || !out_buff)
             {
                 *ret_size = total;
                 HeapFree(GetProcessHeap(), 0, table);
@@ -3970,29 +3974,22 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                 break;
             }
 
-            if (out_buff)
+            sa_list = out_buff;
+            sa = sa_list->Address;
+            sockaddr = (SOCKADDR_IN *)((char *)sa + num * sizeof(SOCKET_ADDRESS));
+            sa_list->iAddressCount = num;
+
+            for (p = table, i = 0; p; p = p->Next)
             {
-                unsigned int i;
-                SOCKET_ADDRESS *sa;
-                SOCKET_ADDRESS_LIST *sa_list = out_buff;
-                SOCKADDR_IN *sockaddr;
+                if (!p->IpAddressList.IpAddress.String[0]) continue;
 
-                sa = sa_list->Address;
-                sockaddr = (SOCKADDR_IN *)((char *)sa + num * sizeof(SOCKET_ADDRESS));
-                sa_list->iAddressCount = num;
+                sa[i].lpSockaddr = (SOCKADDR *)&sockaddr[i];
+                sa[i].iSockaddrLength = sizeof(SOCKADDR);
 
-                for (p = table, i = 0; p; p = p->Next)
-                {
-                    if (!p->IpAddressList.IpAddress.String[0]) continue;
-
-                    sa[i].lpSockaddr = (SOCKADDR *)&sockaddr[i];
-                    sa[i].iSockaddrLength = sizeof(SOCKADDR);
-
-                    sockaddr[i].sin_family = AF_INET;
-                    sockaddr[i].sin_port = 0;
-                    sockaddr[i].sin_addr.WS_s_addr = inet_addr(p->IpAddressList.IpAddress.String);
-                    i++;
-                }
+                sockaddr[i].sin_family = AF_INET;
+                sockaddr[i].sin_port = 0;
+                sockaddr[i].sin_addr.WS_s_addr = inet_addr(p->IpAddressList.IpAddress.String);
+                i++;
             }
 
             HeapFree(GetProcessHeap(), 0, table);
