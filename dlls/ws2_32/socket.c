@@ -3963,9 +3963,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             for (p = table, num = 0; p; p = p->Next)
                 if (p->IpAddressList.IpAddress.String[0]) num++;
 
-            total = sizeof(SOCKET_ADDRESS_LIST) + sizeof(SOCKET_ADDRESS) * (num - 1);
-            total += sizeof(SOCKADDR) * num;
-
+            total = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[num]) + num * sizeof(*sockaddr);
             if (total > out_size || !out_buff)
             {
                 *ret_size = total;
@@ -3976,7 +3974,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
             sa_list = out_buff;
             sa = sa_list->Address;
-            sockaddr = (SOCKADDR_IN *)((char *)sa + num * sizeof(SOCKET_ADDRESS));
+            sockaddr = (SOCKADDR_IN *)&sa[num];
             sa_list->iAddressCount = num;
 
             for (p = table, i = 0; p; p = p->Next)
