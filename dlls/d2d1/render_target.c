@@ -905,7 +905,7 @@ static inline struct d2d_d3d_render_target *impl_from_IDWriteTextRenderer(IDWrit
     return CONTAINING_RECORD(iface, struct d2d_d3d_render_target, IDWriteTextRenderer_iface);
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_QueryInterface(IDWriteTextRenderer *iface, REFIID iid, void **out)
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_QueryInterface(IDWriteTextRenderer *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
@@ -924,7 +924,7 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_QueryInterface(IDWriteTextRenderer *
     return E_NOINTERFACE;
 }
 
-ULONG STDMETHODCALLTYPE d2d_text_renderer_AddRef(IDWriteTextRenderer *iface)
+static ULONG STDMETHODCALLTYPE d2d_text_renderer_AddRef(IDWriteTextRenderer *iface)
 {
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
 
@@ -933,7 +933,7 @@ ULONG STDMETHODCALLTYPE d2d_text_renderer_AddRef(IDWriteTextRenderer *iface)
     return d2d_d3d_render_target_AddRef(&render_target->ID2D1RenderTarget_iface);
 }
 
-ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *iface)
+static ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *iface)
 {
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
 
@@ -942,7 +942,7 @@ ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *iface)
     return d2d_d3d_render_target_Release(&render_target->ID2D1RenderTarget_iface);
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
         void *ctx, BOOL *disabled)
 {
     FIXME("iface %p, ctx %p, disabled %p stub!\n", iface, ctx, disabled);
@@ -950,7 +950,7 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextR
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRenderer *iface,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRenderer *iface,
         void *ctx, DWRITE_MATRIX *transform)
 {
     FIXME("iface %p, ctx %p, transform %p stub!\n", iface, ctx, transform);
@@ -958,14 +958,14 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRende
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRenderer *iface, void *ctx, float *ppd)
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRenderer *iface, void *ctx, float *ppd)
 {
     FIXME("iface %p, ctx %p, ppd %p stub!\n", iface, ctx, ppd);
 
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *iface, void *ctx,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *iface, void *ctx,
         float baseline_origin_x, float baseline_origin_y, DWRITE_MEASURING_MODE measuring_mode,
         const DWRITE_GLYPH_RUN *glyph_run, const DWRITE_GLYPH_RUN_DESCRIPTION *desc, IUnknown *effect)
 {
@@ -977,7 +977,7 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *if
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRenderer *iface, void *ctx,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRenderer *iface, void *ctx,
         float baseline_origin_x, float baseline_origin_y, const DWRITE_UNDERLINE *underline, IUnknown *effect)
 {
     FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, underline %p, effect %p stub!\n",
@@ -986,7 +986,7 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRenderer *i
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteTextRenderer *iface, void *ctx,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteTextRenderer *iface, void *ctx,
         float baseline_origin_x, float baseline_origin_y, const DWRITE_STRIKETHROUGH *strikethrough, IUnknown *effect)
 {
     FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, strikethrough %p, effect %p stub!\n",
@@ -995,7 +995,7 @@ HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteTextRendere
     return E_NOTIMPL;
 }
 
-HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
+static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
         float origin_x, float origin_y, IDWriteInlineObject *object, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
     FIXME("iface %p, ctx %p, origin_x %.8e, origin_y %.8e, object %p, is_sideways %#x, is_rtl %#x, effect %p stub!\n",
