@@ -1121,7 +1121,7 @@ static void test_GetGlyphs(void)
     sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "got 0x%08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
 
 if (0) {
     /* NULL fontface - crashes on Windows */

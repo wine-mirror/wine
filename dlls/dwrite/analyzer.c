@@ -860,7 +860,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
 
     if (max_glyph_count < length)
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        return E_NOT_SUFFICIENT_BUFFER;
 
     if (substitution)
         FIXME("number substitution is not supported.\n");
