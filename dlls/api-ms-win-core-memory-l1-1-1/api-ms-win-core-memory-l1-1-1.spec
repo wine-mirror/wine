@@ -16,7 +16,7 @@
 @ stdcall ReadProcessMemory(long ptr ptr long ptr) kernel32.ReadProcessMemory
 @ stdcall ResetWriteWatch(ptr long) kernel32.ResetWriteWatch
 @ stub SetProcessWorkingSetSizeEx
-@ stub SetSystemFileCacheSize
+@ stdcall SetSystemFileCacheSize(long long long) kernel32.SetSystemFileCacheSize
 @ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
 @ stub UnmapViewOfFileEx
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
