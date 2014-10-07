@@ -28,7 +28,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(slc);
 
-DWORD WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue)
+HRESULT WINAPI SLGetWindowsInformation(LPCWSTR name, SLDATATYPE *type, UINT *val, LPBYTE *size)
+{
+    FIXME("(%s %p %p %p) stub\n", debugstr_w(name), type, val, size );
+
+    return SL_E_RIGHT_NOT_GRANTED;
+}
+
+HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue)
 {
     FIXME("(%s) stub\n", debugstr_w(lpszValueName) );
 

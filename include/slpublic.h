@@ -29,7 +29,18 @@ extern "C" {
 #define SLCAPI DECLSPEC_IMPORT
 #endif
 
-SLCAPI DWORD WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue);
+typedef enum _tagSLDATATYPE
+{
+    SL_DATA_NONE     = REG_NONE,
+    SL_DATA_SZ       = REG_SZ,
+    SL_DATA_DWORD    = REG_DWORD,
+    SL_DATA_BINARY   = REG_BINARY,
+    SL_DATA_MULTI_SZ = REG_MULTI_SZ,
+    SL_DATA_SUM      = 100,
+} SLDATATYPE;
+
+SLCAPI HRESULT WINAPI SLGetWindowsInformation(LPCWSTR, SLDATATYPE*, UINT*, LPBYTE*);
+SLCAPI HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR, LPDWORD);
 
 
 #ifdef __cplusplus
