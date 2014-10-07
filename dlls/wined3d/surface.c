@@ -3217,50 +3217,45 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
 }
 
 /* Context activation is done by the caller. */
-static void surface_prepare_texture_internal(struct wined3d_surface *surface,
-        struct wined3d_context *context, BOOL srgb)
-{
-    const struct wined3d_format *format = surface->container->resource.format;
-    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
-    const struct wined3d_color_key_conversion *conversion;
-
-    if (surface->flags & alloc_flag) return;
-
-    if (format->convert)
-    {
-        surface->flags |= SFLAG_CONVERTED;
-    }
-    else if ((conversion = d3dfmt_get_conv(surface->container, TRUE)))
-    {
-        surface->flags |= SFLAG_CONVERTED;
-        format = wined3d_get_format(context->gl_info, conversion->dst_format);
-    }
-    else
-    {
-        surface->flags &= ~SFLAG_CONVERTED;
-    }
-
-    wined3d_texture_bind_and_dirtify(surface->container, context, srgb);
-    surface_allocate_surface(surface, context->gl_info, format, srgb);
-    surface->flags |= alloc_flag;
-}
-
-/* Context activation is done by the caller. */
 void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
     struct wined3d_texture *texture = surface->container;
+    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
+    const struct wined3d_format *format = texture->resource.format;
     UINT sub_count = texture->level_count * texture->layer_count;
+    const struct wined3d_color_key_conversion *conversion;
+    BOOL converted = FALSE;
     UINT i;
 
     TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
 
+    if (format->convert)
+    {
+        converted = TRUE;
+    }
+    else if ((conversion = d3dfmt_get_conv(texture, TRUE)))
+    {
+        converted = TRUE;
+        format = wined3d_get_format(context->gl_info, conversion->dst_format);
+    }
+
+    wined3d_texture_bind_and_dirtify(texture, context, srgb);
+
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_surface *s = surface_from_resource(texture->sub_resources[i]);
-        surface_prepare_texture_internal(s, context, srgb);
-    }
 
-    return;
+        if (s->flags & alloc_flag)
+            continue;
+
+        if (converted)
+            s->flags |= SFLAG_CONVERTED;
+        else
+            s->flags &= ~SFLAG_CONVERTED;
+
+        surface_allocate_surface(s, context->gl_info, format, srgb);
+        s->flags |= alloc_flag;
+    }
 }
 
 void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
