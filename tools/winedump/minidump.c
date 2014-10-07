@@ -342,10 +342,19 @@ void mdmp_dump(void)
                     break;
                 case 1:
                     if (msi->u.s.ProductType == 1) str = "Win7";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                    else if (msi->u.s.ProductType == 3) str = "Server 2008 R2";
                     else str = "6-????";
                     break;
-                case 2: str = "Win8"; break;
+                case 2:
+                    if (msi->u.s.ProductType == 1) str = "Win8";
+                    else if (msi->u.s.ProductType == 3) str = "Server 2012";
+                    else str = "6-????";
+                    break;
+                case 3:
+                    if (msi->u.s.ProductType == 1) str = "Win8.1";
+                    else if (msi->u.s.ProductType == 3) str = "Server 2012 R2";
+                    else str = "6-????";
+                    break;
                 default: str = "6-????"; break;
                 }
                 break;
