@@ -36,6 +36,13 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
+struct wined3d_color_key_conversion
+{
+    enum wined3d_format_id dst_format;
+    void (*convert)(const BYTE *src, unsigned int src_pitch, BYTE *dst, unsigned int dst_pitch, unsigned int width,
+            unsigned int height, const struct wined3d_palette *palette, const struct wined3d_color_key *color_key);
+};
+
 static const DWORD surface_simple_locations =
         WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
         | WINED3D_LOCATION_DIB | WINED3D_LOCATION_BUFFER;
@@ -1585,39 +1592,191 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
     }
 }
 
-static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alpha_ck,
-        enum wined3d_format_id *dst_format_id, enum wined3d_conversion_type *conversion_type)
+static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD color)
+{
+    /* FIXME: Is this really how color keys are supposed to work? I think it
+     * makes more sense to compare the individual channels. */
+    return color >= color_key->color_space_low_value
+            && color <= color_key->color_space_high_value;
+}
+
+static void convert_p8_uint_b8g8r8a8_unorm(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const BYTE *src_row;
+    unsigned int x, y;
+    DWORD *dst_row;
+
+    if (!palette)
+    {
+        /* FIXME: This should probably use the system palette. */
+        FIXME("P8 surface loaded without a palette.\n");
+
+        for (y = 0; y < height; ++y)
+        {
+            memset(&dst[dst_pitch * y], 0, width * 4);
+        }
+
+        return;
+    }
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = &src[src_pitch * y];
+        dst_row = (DWORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            BYTE src_color = src_row[x];
+            dst_row[x] = 0xff000000
+                    | (palette->colors[src_color].rgbRed << 16)
+                    | (palette->colors[src_color].rgbGreen << 8)
+                    | palette->colors[src_color].rgbBlue;
+        }
+    }
+}
+
+static void convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const WORD *src_row;
+    unsigned int x, y;
+    WORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (WORD *)&src[src_pitch * y];
+        dst_row = (WORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            WORD src_color = src_row[x];
+            if (!color_in_range(color_key, src_color))
+                dst_row[x] = 0x8000 | ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
+            else
+                dst_row[x] = ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
+        }
+    }
+}
+
+static void convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const WORD *src_row;
+    unsigned int x, y;
+    WORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (WORD *)&src[src_pitch * y];
+        dst_row = (WORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            WORD src_color = src_row[x];
+            if (color_in_range(color_key, src_color))
+                dst_row[x] = src_color & ~0x8000;
+            else
+                dst_row[x] = src_color | 0x8000;
+        }
+    }
+}
+
+static void convert_b8g8r8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const BYTE *src_row;
+    unsigned int x, y;
+    DWORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = &src[src_pitch * y];
+        dst_row = (DWORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            DWORD src_color = (src_row[x * 3 + 2] << 16) | (src_row[x * 3 + 1] << 8) | src_row[x * 3];
+            if (!color_in_range(color_key, src_color))
+                dst_row[x] = src_color | 0xff000000;
+        }
+    }
+}
+
+static void convert_b8g8r8x8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const DWORD *src_row;
+    unsigned int x, y;
+    DWORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (DWORD *)&src[src_pitch * y];
+        dst_row = (DWORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            DWORD src_color = src_row[x];
+            if (color_in_range(color_key, src_color))
+                dst_row[x] = src_color & ~0xff000000;
+            else
+                dst_row[x] = src_color | 0xff000000;
+        }
+    }
+}
+
+static void convert_b8g8r8a8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
+        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
+        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
+{
+    const DWORD *src_row;
+    unsigned int x, y;
+    DWORD *dst_row;
+
+    for (y = 0; y < height; ++y)
+    {
+        src_row = (DWORD *)&src[src_pitch * y];
+        dst_row = (DWORD *)&dst[dst_pitch * y];
+        for (x = 0; x < width; ++x)
+        {
+            DWORD src_color = src_row[x];
+            if (color_in_range(color_key, src_color))
+                src_color &= ~0xff000000;
+            dst_row[x] = src_color;
+        }
+    }
+}
+
+static const struct wined3d_color_key_conversion * d3dfmt_get_conv(const struct wined3d_texture *texture,
+        BOOL need_alpha_ck)
 {
     unsigned int i;
 
     static const struct
     {
         enum wined3d_format_id src_format;
-        enum wined3d_conversion_type conversion_type;
-        enum wined3d_format_id dst_format;
+        struct wined3d_color_key_conversion conversion;
     }
     color_key_info[] =
     {
-        {WINED3DFMT_B5G6R5_UNORM,   WINED3D_CT_CK_B5G6R5,   WINED3DFMT_B5G5R5A1_UNORM},
-        {WINED3DFMT_B5G5R5X1_UNORM, WINED3D_CT_CK_B5G5R5X1, WINED3DFMT_B5G5R5A1_UNORM},
-        {WINED3DFMT_B8G8R8_UNORM,   WINED3D_CT_CK_B8G8R8,   WINED3DFMT_B8G8R8A8_UNORM},
-        {WINED3DFMT_B8G8R8X8_UNORM, WINED3D_CT_CK_B8G8R8X8, WINED3DFMT_B8G8R8A8_UNORM},
-        {WINED3DFMT_B8G8R8A8_UNORM, WINED3D_CT_CK_B8G8R8A8, WINED3DFMT_B8G8R8A8_UNORM},
+        {WINED3DFMT_B5G6R5_UNORM,   {WINED3DFMT_B5G5R5A1_UNORM, convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key   }},
+        {WINED3DFMT_B5G5R5X1_UNORM, {WINED3DFMT_B5G5R5A1_UNORM, convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key }},
+        {WINED3DFMT_B8G8R8_UNORM,   {WINED3DFMT_B8G8R8A8_UNORM, convert_b8g8r8_unorm_b8g8r8a8_unorm_color_key   }},
+        {WINED3DFMT_B8G8R8X8_UNORM, {WINED3DFMT_B8G8R8A8_UNORM, convert_b8g8r8x8_unorm_b8g8r8a8_unorm_color_key }},
+        {WINED3DFMT_B8G8R8A8_UNORM, {WINED3DFMT_B8G8R8A8_UNORM, convert_b8g8r8a8_unorm_b8g8r8a8_unorm_color_key }},
     };
-
-    *conversion_type = WINED3D_CT_NONE;
-    *dst_format_id = WINED3DFMT_UNKNOWN;
+    static const struct wined3d_color_key_conversion convert_p8 =
+    {
+        WINED3DFMT_B8G8R8A8_UNORM,  convert_p8_uint_b8g8r8a8_unorm
+    };
 
     if (need_alpha_ck && (texture->color_key_flags & WINEDDSD_CKSRCBLT))
     {
         for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
         {
-            if (color_key_info[i].src_format != texture->resource.format->id)
-                continue;
-
-            *conversion_type = color_key_info[i].conversion_type;
-            *dst_format_id = color_key_info[i].dst_format;
-            break;
+            if (color_key_info[i].src_format == texture->resource.format->id)
+                return &color_key_info[i].conversion;
         }
 
         FIXME("Color-keying not supported with format %s.\n", debug_d3dformat(texture->resource.format->id));
@@ -1628,10 +1787,9 @@ static void d3dfmt_get_conv(const struct wined3d_texture *texture, BOOL need_alp
     if (texture->resource.format->id == WINED3DFMT_P8_UINT
             && !(texture->resource.device->adapter->gl_info.supported[ARB_FRAGMENT_PROGRAM]
             && texture->swapchain && texture == texture->swapchain->front_buffer))
-    {
-        *conversion_type = WINED3D_CT_P8;
-        *dst_format_id = WINED3DFMT_B8G8R8A8_UNORM;
-    }
+        return &convert_p8;
+
+    return NULL;
 }
 
 static BOOL surface_check_block_align(struct wined3d_surface *surface, const RECT *rect)
@@ -1661,8 +1819,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
     const struct wined3d_gl_info *gl_info;
-    enum wined3d_conversion_type convert;
-    enum wined3d_format_id format_id;
     struct wined3d_context *context;
     struct wined3d_bo_address data;
     UINT update_w, update_h;
@@ -1738,8 +1894,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     }
 
     /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
-    d3dfmt_get_conv(dst_surface->container, FALSE, &format_id, &convert);
-    if (dst_format->convert || convert != WINED3D_CT_NONE)
+    if (dst_format->convert || d3dfmt_get_conv(dst_surface->container, FALSE))
         return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
 
     context = context_acquire(dst_surface->resource.device, NULL);
@@ -3067,6 +3222,7 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
 {
     const struct wined3d_format *format = surface->container->resource.format;
     DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
+    const struct wined3d_color_key_conversion *conversion;
 
     if (surface->flags & alloc_flag) return;
 
@@ -3074,21 +3230,14 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
     {
         surface->flags |= SFLAG_CONVERTED;
     }
+    else if ((conversion = d3dfmt_get_conv(surface->container, TRUE)))
+    {
+        surface->flags |= SFLAG_CONVERTED;
+        format = wined3d_get_format(context->gl_info, conversion->dst_format);
+    }
     else
     {
-        enum wined3d_conversion_type convert;
-        enum wined3d_format_id format_id;
-
-        d3dfmt_get_conv(surface->container, TRUE, &format_id, &convert);
-        if (convert != WINED3D_CT_NONE)
-        {
-            surface->flags |= SFLAG_CONVERTED;
-            format = wined3d_get_format(context->gl_info, format_id);
-        }
-        else
-        {
-            surface->flags &= ~SFLAG_CONVERTED;
-        }
+        surface->flags &= ~SFLAG_CONVERTED;
     }
 
     wined3d_texture_bind_and_dirtify(surface->container, context, srgb);
@@ -3138,212 +3287,6 @@ void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl
                 surface->pow2Width, surface->pow2Height);
         TRACE("Created resolved rb %u.\n", surface->rb_resolved);
     }
-}
-
-static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD color)
-{
-    /* FIXME: Is this really how color keys are supposed to work? I think it
-     * makes more sense to compare the individual channels. */
-    return color >= color_key->color_space_low_value
-            && color <= color_key->color_space_high_value;
-}
-
-static void convert_p8_uint_b8g8r8a8_unorm(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_palette *palette, const struct wined3d_color_key *color_key)
-{
-    const BYTE *src_row;
-    unsigned int x, y;
-    DWORD *dst_row;
-
-    if (!palette)
-    {
-        /* FIXME: This should probably use the system palette. */
-        FIXME("P8 surface loaded without a palette.\n");
-
-        for (y = 0; y < height; ++y)
-        {
-            memset(&dst[dst_pitch * y], 0, width * 4);
-        }
-
-        return;
-    }
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = &src[src_pitch * y];
-        dst_row = (DWORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            BYTE src_color = src_row[x];
-            dst_row[x] = 0xff000000
-                    | (palette->colors[src_color].rgbRed << 16)
-                    | (palette->colors[src_color].rgbGreen << 8)
-                    | palette->colors[src_color].rgbBlue;
-        }
-    }
-}
-
-static void convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_color_key *color_key)
-{
-    const WORD *src_row;
-    unsigned int x, y;
-    WORD *dst_row;
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = (WORD *)&src[src_pitch * y];
-        dst_row = (WORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            WORD src_color = src_row[x];
-            if (!color_in_range(color_key, src_color))
-                dst_row[x] = 0x8000 | ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
-            else
-                dst_row[x] = ((src_color & 0xffc0) >> 1) | (src_color & 0x1f);
-        }
-    }
-}
-
-static void convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_color_key *color_key)
-{
-    const WORD *src_row;
-    unsigned int x, y;
-    WORD *dst_row;
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = (WORD *)&src[src_pitch * y];
-        dst_row = (WORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            WORD src_color = src_row[x];
-            if (color_in_range(color_key, src_color))
-                dst_row[x] = src_color & ~0x8000;
-            else
-                dst_row[x] = src_color | 0x8000;
-        }
-    }
-}
-
-static void convert_b8g8r8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_color_key *color_key)
-{
-    const BYTE *src_row;
-    unsigned int x, y;
-    DWORD *dst_row;
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = &src[src_pitch * y];
-        dst_row = (DWORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            DWORD src_color = (src_row[x * 3 + 2] << 16) | (src_row[x * 3 + 1] << 8) | src_row[x * 3];
-            if (!color_in_range(color_key, src_color))
-                dst_row[x] = src_color | 0xff000000;
-        }
-    }
-}
-
-static void convert_b8g8r8x8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_color_key *color_key)
-{
-    const DWORD *src_row;
-    unsigned int x, y;
-    DWORD *dst_row;
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = (DWORD *)&src[src_pitch * y];
-        dst_row = (DWORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            DWORD src_color = src_row[x];
-            if (color_in_range(color_key, src_color))
-                dst_row[x] = src_color & ~0xff000000;
-            else
-                dst_row[x] = src_color | 0xff000000;
-        }
-    }
-}
-
-static void convert_b8g8r8a8_unorm_b8g8r8a8_unorm_color_key(const BYTE *src, unsigned int src_pitch,
-        BYTE *dst, unsigned int dst_pitch, unsigned int width, unsigned int height,
-        const struct wined3d_color_key *color_key)
-{
-    const DWORD *src_row;
-    unsigned int x, y;
-    DWORD *dst_row;
-
-    for (y = 0; y < height; ++y)
-    {
-        src_row = (DWORD *)&src[src_pitch * y];
-        dst_row = (DWORD *)&dst[dst_pitch * y];
-        for (x = 0; x < width; ++x)
-        {
-            DWORD src_color = src_row[x];
-            if (color_in_range(color_key, src_color))
-                src_color &= ~0xff000000;
-            dst_row[x] = src_color;
-        }
-    }
-}
-
-static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height,
-        UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
-{
-    struct wined3d_palette *palette = NULL;
-    struct wined3d_texture *texture;
-
-    TRACE("src %p, dst %p, pitch %u, width %u, height %u, outpitch %u, conversion_type %#x, surface %p.\n",
-            src, dst, pitch, width, height, outpitch, conversion_type, surface);
-
-    texture = surface->container;
-    switch (conversion_type)
-    {
-        case WINED3D_CT_P8:
-            if (texture->swapchain && texture->swapchain->palette)
-                palette = texture->swapchain->palette;
-            convert_p8_uint_b8g8r8a8_unorm(src, pitch, dst, outpitch,
-                    width, height, palette, &texture->src_blt_color_key);
-            break;
-
-        case WINED3D_CT_CK_B5G6R5:
-            convert_b5g6r5_unorm_b5g5r5a1_unorm_color_key(src, pitch, dst, outpitch,
-                    width, height, &texture->src_blt_color_key);
-            break;
-
-        case WINED3D_CT_CK_B5G5R5X1:
-            convert_b5g5r5x1_unorm_b5g5r5a1_unorm_color_key(src, pitch, dst, outpitch,
-                    width, height, &texture->src_blt_color_key);
-            break;
-
-        case WINED3D_CT_CK_B8G8R8:
-            convert_b8g8r8_unorm_b8g8r8a8_unorm_color_key(src, pitch, dst, outpitch,
-                    width, height, &texture->src_blt_color_key);
-            break;
-
-        case WINED3D_CT_CK_B8G8R8X8:
-            convert_b8g8r8x8_unorm_b8g8r8a8_unorm_color_key(src, pitch, dst, outpitch,
-                    width, height, &texture->src_blt_color_key);
-            break;
-
-        case WINED3D_CT_CK_B8G8R8A8:
-            convert_b8g8r8a8_unorm_b8g8r8a8_unorm_color_key(src, pitch, dst, outpitch,
-                    width, height, &texture->src_blt_color_key);
-            break;
-
-        default:
-            ERR("Unsupported conversion type %#x.\n", conversion_type);
-    }
-    return WINED3D_OK;
 }
 
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
@@ -4479,9 +4422,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 {
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture *texture = surface->container;
-    enum wined3d_conversion_type convert;
-    enum wined3d_format_id format_id;
     struct wined3d_context *context;
     UINT width, src_pitch, dst_pitch;
     struct wined3d_bo_address data;
@@ -4581,14 +4523,13 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     src_pitch = wined3d_surface_get_pitch(surface);
 
     format = *texture->resource.format;
-    d3dfmt_get_conv(texture, TRUE, &format_id, &convert);
-    if (convert != WINED3D_CT_NONE)
-        format = *wined3d_get_format(gl_info, format_id);
+    if ((conversion = d3dfmt_get_conv(texture, TRUE)))
+        format = *wined3d_get_format(gl_info, conversion->dst_format);
 
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * SFLAG_CONVERTED but it isn't set (yet) in all cases it is getting
      * called. */
-    if ((convert != WINED3D_CT_NONE || format.convert) && surface->pbo)
+    if ((format.convert || conversion) && surface->pbo)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
@@ -4623,9 +4564,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         src_pitch = dst_pitch;
         data.addr = mem;
     }
-    else if (convert != WINED3D_CT_NONE)
+    else if (conversion)
     {
         /* This code is only entered for color keying fixups */
+        struct wined3d_palette *palette = NULL;
         UINT height = surface->resource.height;
 
         dst_pitch = wined3d_format_calculate_pitch(&format, width);
@@ -4637,8 +4579,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        d3dfmt_convert_surface(data.addr, mem, src_pitch,
-                width, height, dst_pitch, convert, surface);
+        if (texture->swapchain && texture->swapchain->palette)
+            palette = texture->swapchain->palette;
+        conversion->convert(data.addr, src_pitch, mem, dst_pitch,
+                width, height, palette, &texture->src_blt_color_key);
         src_pitch = dst_pitch;
         data.addr = mem;
     }
@@ -5565,8 +5509,6 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     DWORD src_ds_flags, dst_ds_flags;
     RECT src_rect, dst_rect;
     BOOL scale, convert;
-    enum wined3d_conversion_type dst_convert_type;
-    enum wined3d_format_id dst_conv_fmt_id;
 
     static const DWORD simple_blit = WINEDDBLT_ASYNC
             | WINEDDBLT_COLORFILL
@@ -5681,9 +5623,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     /* We want to avoid invalidating the sysmem location for converted
      * surfaces, since otherwise we'd have to convert the data back when
      * locking them. */
-    d3dfmt_get_conv(dst_surface->container, TRUE, &dst_conv_fmt_id, &dst_convert_type);
     if (dst_surface->flags & SFLAG_CONVERTED || dst_surface->container->resource.format->convert
-            || dst_convert_type != WINED3D_CT_NONE)
+            || d3dfmt_get_conv(dst_surface->container, TRUE))
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
         goto cpu;

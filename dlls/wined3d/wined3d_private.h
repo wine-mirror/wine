@@ -2350,17 +2350,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_ALLOCATED         0x00000800 /* A GL texture is allocated for this surface. */
 #define SFLAG_SRGBALLOCATED     0x00001000 /* A sRGB GL texture is allocated for this surface. */
 
-enum wined3d_conversion_type
-{
-    WINED3D_CT_NONE,
-    WINED3D_CT_P8,
-    WINED3D_CT_CK_B5G6R5,
-    WINED3D_CT_CK_B5G5R5X1,
-    WINED3D_CT_CK_B8G8R8,
-    WINED3D_CT_CK_B8G8R8X8,
-    WINED3D_CT_CK_B8G8R8A8,
-};
-
 struct wined3d_sampler
 {
     LONG refcount;
