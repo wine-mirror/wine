@@ -926,6 +926,7 @@ MSVCRT_ulong* __cdecl MSVCRT___doserrno(void);
 int* __cdecl     MSVCRT__errno(void);
 char* __cdecl    MSVCRT_getenv(const char*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
+int __cdecl      MSVCRT__fclose_nolock(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);
 MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
 MSVCRT_clock_t __cdecl MSVCRT_clock(void);

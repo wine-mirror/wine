@@ -443,7 +443,7 @@
 @ cdecl _execvpe(str ptr ptr)
 @ cdecl _exit(long) MSVCRT__exit
 @ cdecl _expand(ptr long)
-@ stub _fclose_nolock
+@ cdecl _fclose_nolock(ptr) MSVCRT__fclose_nolock
 @ cdecl _fcloseall() MSVCRT__fcloseall
 @ cdecl _fcvt(double long ptr ptr) MSVCRT__fcvt
 @ cdecl _fcvt_s(ptr long double long ptr ptr) MSVCRT__fcvt_s

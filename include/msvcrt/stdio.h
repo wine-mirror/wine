@@ -129,6 +129,7 @@ int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
 void   __cdecl clearerr(FILE*);
 int    __cdecl fclose(FILE*);
+int    __cdecl _fclose_nolock(FILE*);
 int    __cdecl feof(FILE*);
 int    __cdecl ferror(FILE*);
 int    __cdecl fflush(FILE*);

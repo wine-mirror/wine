@@ -3373,9 +3373,22 @@ int CDECL MSVCRT__putw(int val, MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
 {
-  int r, flag;
+  int ret;
 
   MSVCRT__lock_file(file);
+  ret = MSVCRT__fclose_nolock(file);
+  MSVCRT__unlock_file(file);
+
+  return ret;
+}
+
+/*********************************************************************
+ *		_fclose_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fclose_nolock(MSVCRT_FILE* file)
+{
+  int r, flag;
+
   flag = file->_flag;
   MSVCRT_free(file->_tmpfname);
   file->_tmpfname = NULL;
@@ -3386,9 +3399,7 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
       MSVCRT_free(file->_base);
 
   r=MSVCRT__close(file->_file);
-
   file->_flag = 0;
-  MSVCRT__unlock_file(file);
 
   return ((r == -1) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
