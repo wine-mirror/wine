@@ -84,8 +84,8 @@
 @ stub CM_Get_Device_Interface_ListW
 @ stub CM_Get_Device_Interface_List_ExA
 @ stub CM_Get_Device_Interface_List_ExW
-@ stub CM_Get_Device_Interface_List_SizeA
-@ stub CM_Get_Device_Interface_List_SizeW
+@ stdcall CM_Get_Device_Interface_List_SizeA(ptr ptr str long) setupapi.CM_Get_Device_Interface_List_SizeA
+@ stdcall CM_Get_Device_Interface_List_SizeW(ptr ptr wstr long) setupapi.CM_Get_Device_Interface_List_SizeW
 @ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr) setupapi.CM_Get_Device_Interface_List_Size_ExA
 @ stdcall CM_Get_Device_Interface_List_Size_ExW(ptr ptr wstr long ptr) setupapi.CM_Get_Device_Interface_List_Size_ExW
 @ stub CM_Get_First_Log_Conf
