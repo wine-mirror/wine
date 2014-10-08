@@ -3481,7 +3481,8 @@ static HRESULT device_update_volume(struct wined3d_device *device,
 
     context = context_acquire(device, NULL);
 
-    wined3d_volume_load(dst_volume, context, FALSE);
+    /* Only a prepare, since we're uploading the entire volume. */
+    wined3d_texture_prepare_texture(dst_volume->container, context, FALSE);
 
     data.buffer_object = 0;
     data.addr = src.data;
