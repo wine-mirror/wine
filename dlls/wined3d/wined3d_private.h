@@ -3036,6 +3036,13 @@ struct wined3d_rational
     UINT denominator;
 };
 
+struct wined3d_color_key_conversion
+{
+    enum wined3d_format_id dst_format;
+    void (*convert)(const BYTE *src, unsigned int src_pitch, BYTE *dst, unsigned int dst_pitch, unsigned int width,
+            unsigned int height, const struct wined3d_palette *palette, const struct wined3d_color_key *color_key);
+};
+
 struct wined3d_format
 {
     enum wined3d_format_id id;
@@ -3083,6 +3090,8 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
 DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface,
         const struct wined3d_color *color) DECLSPEC_HIDDEN;
+const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
+        const struct wined3d_texture *texture, BOOL need_alpha_ck) DECLSPEC_HIDDEN;
 
 static inline BOOL use_vs(const struct wined3d_state *state)
 {
