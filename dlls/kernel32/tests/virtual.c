@@ -28,6 +28,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "winuser.h"
 #include "excpt.h"
 #include "wine/test.h"
 
@@ -1797,6 +1798,449 @@ static void test_guard_page(void)
     VirtualFree( base, 0, MEM_FREE );
 }
 
+DWORD num_execute_fault_calls;
+
+static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    ULONG flags = MEM_EXECUTE_OPTION_ENABLE;
+
+    trace( "exception: %08x flags:%x addr:%p info[0]:%ld info[1]:%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           rec->ExceptionInformation[0], (void *)rec->ExceptionInformation[1] );
+
+    ok( rec->NumberParameters == 2, "NumberParameters is %d instead of 2\n", rec->NumberParameters );
+    ok( rec->ExceptionCode == STATUS_ACCESS_VIOLATION || rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION,
+        "ExceptionCode is %08x instead of STATUS_ACCESS_VIOLATION or STATUS_GUARD_PAGE_VIOLATION\n", rec->ExceptionCode );
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags), NULL );
+
+    if (rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
+    {
+
+        todo_wine
+        ok( rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ||
+            broken(!(flags & MEM_EXECUTE_OPTION_DISABLE) && rec->ExceptionInformation[0] == EXCEPTION_READ_FAULT), /* Windows 2000 */
+            "ExceptionInformation[0] is %d instead of %d\n", (DWORD)rec->ExceptionInformation[0], EXCEPTION_EXECUTE_FAULT );
+
+        num_guard_page_calls++;
+    }
+    else if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION)
+    {
+        DWORD err, old_prot;
+        BOOL success;
+
+        err = (flags & MEM_EXECUTE_OPTION_DISABLE) ? EXCEPTION_EXECUTE_FAULT : EXCEPTION_READ_FAULT;
+        ok( rec->ExceptionInformation[0] == err, "ExceptionInformation[0] is %d instead of %d\n",
+            (DWORD)rec->ExceptionInformation[0], err );
+
+        success = VirtualProtect( (void *)rec->ExceptionInformation[1], 16, PAGE_EXECUTE_READWRITE, &old_prot );
+        ok( success, "VirtualProtect failed %u\n", GetLastError() );
+        ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
+
+        num_execute_fault_calls++;
+    }
+
+    return ExceptionContinueExecution;
+}
+
+static inline DWORD send_message_excpt( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    DWORD ret;
+
+    frame.Handler = execute_fault_seh_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+
+    num_guard_page_calls = num_execute_fault_calls = 0;
+    ret = SendMessageA( hWnd, WM_USER, 0, 0 );
+
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+
+    return ret;
+}
+
+static LRESULT CALLBACK jmp_test_func( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    if (uMsg == WM_USER)
+        return 42;
+
+    return DefWindowProcA( hWnd, uMsg, wParam, lParam );
+}
+
+static LRESULT CALLBACK atl_test_func( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    DWORD arg = (DWORD)hWnd;
+    ok( arg == 0x11223344, "arg is 0x%08x instead of 0x11223344\n", arg );
+    return 43;
+}
+
+static void test_atl_thunk_emulation( ULONG dep_flags )
+{
+    static const char code_jmp[] = {0xE9, 0x00, 0x00, 0x00, 0x00};
+    static const char code_atl[] = {0xC7, 0x44, 0x24, 0x04, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
+    static const char cls_name[] = "atl_thunk_class";
+    DWORD ret, size, old_prot;
+    ULONG old_flags = MEM_EXECUTE_OPTION_ENABLE;
+    void *results[64];
+    ULONG_PTR count;
+    ULONG pagesize;
+    WNDCLASSEXA wc;
+    BOOL success;
+    char *base;
+    HWND hWnd;
+
+    if (!pNtCurrentTeb)
+    {
+        win_skip( "NtCurrentTeb not supported\n" );
+        return;
+    }
+
+    trace( "Running DEP tests with ProcessExecuteFlags = %d\n", dep_flags );
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &old_flags, sizeof(old_flags), NULL );
+    if (old_flags != dep_flags)
+    {
+        ret = NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &dep_flags, sizeof(dep_flags) );
+        if (ret == STATUS_INVALID_INFO_CLASS) /* Windows 2000 */
+        {
+            win_skip( "Skipping DEP tests with ProcessExecuteFlags = %d\n", dep_flags );
+            return;
+        }
+        ok( !ret, "NtSetInformationProcess failed with status %08x\n", ret );
+    }
+
+    size = 0x1000;
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+
+    memcpy( base, code_jmp, sizeof(code_jmp) );
+    *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
+
+    /* On Windows, the ATL Thunk emulation is only enabled while running WndProc functions,
+     * whereas in Wine such a limitation doesn't exist yet. We want to test in a scenario
+     * where it is active, so that application which depend on that still work properly.
+     * We have no exception handler enabled yet, so give proper EXECUTE permissions to
+     * prevent crashes while creating the window. */
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    memset( &wc, 0, sizeof(wc) );
+    wc.cbSize        = sizeof(wc);
+    wc.style         = CS_VREDRAW | CS_HREDRAW;
+    wc.hInstance     = GetModuleHandleA( 0 );
+    wc.hCursor       = LoadCursorA( NULL, (LPCSTR)IDC_ARROW );
+    wc.hbrBackground = NULL;
+    wc.lpszClassName = cls_name;
+    wc.lpfnWndProc   = (WNDPROC)base;
+    success = RegisterClassExA(&wc) != 0;
+    ok( success, "RegisterClassExA failed %u\n", GetLastError() );
+
+    hWnd = CreateWindowExA(0, cls_name, "Test", WS_TILEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok( hWnd != 0, "CreateWindowExA failed %u\n", GetLastError() );
+
+    ret = SendMessageA(hWnd, WM_USER, 0, 0);
+    ok( ret == 42, "SendMessage returned unexpected result %d\n", ret );
+
+    /* At first try with an instruction which is not recognized as proper ATL thunk
+     * by the Windows ATL Thunk Emulator. Removing execute permissions will lead to
+     * STATUS_ACCESS_VIOLATION exceptions when DEP is enabled. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Now a bit more complicated, the page containing the code is protected with
+     * PAGE_GUARD memory protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 1, "expected one STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        todo_wine
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Now test with a proper ATL thunk instruction. */
+
+    memcpy( base, code_atl, sizeof(code_atl) );
+    *(DWORD *)(base + 9) = (DWORD_PTR)atl_test_func - (DWORD_PTR)(base + 13);
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = SendMessageA(hWnd, WM_USER, 0, 0);
+    ok( ret == 43, "SendMessage returned unexpected result %d\n", ret );
+
+    /* Try executing with PAGE_READWRITE protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        todo_wine
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Now a bit more complicated, the page containing the code is protected with
+     * PAGE_GUARD memory protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    /* the same, but with PAGE_GUARD set */
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 1, "expected one STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        todo_wine
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Restore the JMP instruction, set to executable, and then destroy the Window */
+
+    memcpy( base, code_jmp, sizeof(code_jmp) );
+    *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    DestroyWindow( hWnd );
+
+    success = UnregisterClassA( cls_name, GetModuleHandleA(0) );
+    ok( success, "UnregisterClass failed %u\n", GetLastError() );
+
+    VirtualFree( base, 0, MEM_FREE );
+
+    /* Repeat the tests from above with MEM_WRITE_WATCH protected memory. */
+
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE  );
+    if (!base && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED))
+    {
+        win_skip( "MEM_WRITE_WATCH not supported\n" );
+        goto out;
+    }
+    ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    memcpy( base, code_jmp, sizeof(code_jmp) );
+    *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    /* Create a new window class and associcated Window (see above) */
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    memset( &wc, 0, sizeof(wc) );
+    wc.cbSize        = sizeof(wc);
+    wc.style         = CS_VREDRAW | CS_HREDRAW;
+    wc.hInstance     = GetModuleHandleA( 0 );
+    wc.hCursor       = LoadCursorA( NULL, (LPCSTR)IDC_ARROW );
+    wc.hbrBackground = NULL;
+    wc.lpszClassName = cls_name;
+    wc.lpfnWndProc   = (WNDPROC)base;
+    success = RegisterClassExA(&wc) != 0;
+    ok( success, "RegisterClassExA failed %u\n", GetLastError() );
+
+    hWnd = CreateWindowExA(0, cls_name, "Test", WS_TILEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok( hWnd != 0, "CreateWindowExA failed %u\n", GetLastError() );
+
+    ret = SendMessageA(hWnd, WM_USER, 0, 0);
+    ok( ret == 42, "SendMessage returned unexpected result %d\n", ret );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    /* At first try with an instruction which is not recognized as proper ATL thunk
+     * by the Windows ATL Thunk Emulator. Removing execute permissions will lead to
+     * STATUS_ACCESS_VIOLATION exceptions when DEP is enabled. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        todo_wine
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Now a bit more complicated, the page containing the code is protected with
+     * PAGE_GUARD memory protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 1, "expected one STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        todo_wine
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %lu\n", count );
+
+    /* Now test with a proper ATL thunk instruction. */
+
+    memcpy( base, code_atl, sizeof(code_atl) );
+    *(DWORD *)(base + 9) = (DWORD_PTR)atl_test_func - (DWORD_PTR)(base + 13);
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = SendMessageA(hWnd, WM_USER, 0, 0);
+    ok( ret == 43, "SendMessage returned unexpected result %d\n", ret );
+
+    /* Try executing with PAGE_READWRITE protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        todo_wine
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0, "wrong count %lu\n", count );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* Now a bit more complicated, the page containing the code is protected with
+     * PAGE_GUARD memory protection. */
+
+    success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    /* the same, but with PAGE_GUARD set */
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 1, "expected one STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        todo_wine
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %lu\n", count );
+
+    /* Restore the JMP instruction, set to executable, and then destroy the Window */
+
+    memcpy( base, code_jmp, sizeof(code_jmp) );
+    *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    DestroyWindow( hWnd );
+
+    success = UnregisterClassA( cls_name, GetModuleHandleA(0) );
+    ok( success, "UnregisterClass failed %u\n", GetLastError() );
+
+    VirtualFree( base, 0, MEM_FREE );
+
+out:
+    if (old_flags != dep_flags)
+    {
+        ret = NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &old_flags, sizeof(old_flags) );
+        ok( !ret, "NtSetInformationProcess failed with status %08x\n", ret );
+    }
+}
+
 #endif  /* __i386__ */
 
 static void test_VirtualProtect(void)
@@ -2859,5 +3303,10 @@ START_TEST(virtual)
     test_write_watch();
 #ifdef __i386__
     test_guard_page();
+    /* The following tests should be executed as a last step, and in exactly this
+     * order, since ATL thunk emulation cannot be enabled anymore on Windows. */
+    test_atl_thunk_emulation( MEM_EXECUTE_OPTION_ENABLE );
+    test_atl_thunk_emulation( MEM_EXECUTE_OPTION_DISABLE );
+    test_atl_thunk_emulation( MEM_EXECUTE_OPTION_DISABLE | MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION );
 #endif
 }
