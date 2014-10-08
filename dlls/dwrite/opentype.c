@@ -180,11 +180,19 @@ typedef struct
 } TT_OS2_V2;
 #include "poppack.h"
 
-HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
+HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     /* TODO: Do font validation */
-    const char* tag = font_data;
+    const void *font_data;
+    const char* tag;
+    void *context;
+    HRESULT hr;
 
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &font_data, 0, sizeof(TTC_Header_V1), &context);
+    if (FAILED(hr))
+        return hr;
+
+    tag = font_data;
     *supported = FALSE;
     *file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
     if (face_type)
@@ -212,6 +220,8 @@ HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_
     {
         *file_type = DWRITE_FONT_FILE_TYPE_CFF;
     }
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
     return S_OK;
 }
 

@@ -106,7 +106,7 @@ extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DE
 extern HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace **font_face) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
-extern HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported) DECLSPEC_HIDDEN;
+extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,UINT32*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,BOOL*) DECLSPEC_HIDDEN;
 extern HRESULT find_font_table(IDWriteFontFileStream *stream, UINT32 font_index, UINT32 tag, const void** table_data, void** table_context, UINT32 *table_size, BOOL* found) DECLSPEC_HIDDEN;
 extern VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
 extern VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style) DECLSPEC_HIDDEN;

@@ -1276,12 +1276,10 @@ static HRESULT WINAPI dwritefontfile_GetLoader(IDWriteFontFile *iface, IDWriteFo
 
 static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSupportedFontType, DWRITE_FONT_FILE_TYPE *fontFileType, DWRITE_FONT_FACE_TYPE *fontFaceType, UINT32 *numberOfFaces)
 {
-    HRESULT hr;
-    const void *font_data;
-    void *context;
-    IDWriteFontFileStream *stream;
-
     struct dwrite_fontfile *This = impl_from_IDWriteFontFile(iface);
+    IDWriteFontFileStream *stream;
+    HRESULT hr;
+
     FIXME("(%p)->(%p, %p, %p, %p): Stub\n", This, isSupportedFontType, fontFileType, fontFaceType, numberOfFaces);
 
     *isSupportedFontType = FALSE;
@@ -1293,12 +1291,9 @@ static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSup
     hr = IDWriteFontFileLoader_CreateStreamFromKey(This->loader, This->reference_key, This->key_size, &stream);
     if (FAILED(hr))
         return S_OK;
-    hr = IDWriteFontFileStream_ReadFileFragment(stream, &font_data, 0, 28, &context);
-    if (SUCCEEDED(hr))
-    {
-        hr = analyze_opentype_font(font_data, numberOfFaces, fontFileType, fontFaceType, isSupportedFontType);
-        IDWriteFontFileStream_ReleaseFileFragment(stream, context);
-    }
+
+    hr = opentype_analyze_font(stream, numberOfFaces, fontFileType, fontFaceType, isSupportedFontType);
+
     /* TODO: Further Analysis */
     IDWriteFontFileStream_Release(stream);
     return S_OK;
