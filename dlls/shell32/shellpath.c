@@ -2097,7 +2097,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             DWORD ret = ExpandEnvironmentStringsW(szSrc, szDest, MAX_PATH);
 
             if (ret > MAX_PATH)
-                hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+                hr = E_NOT_SUFFICIENT_BUFFER;
             else if (ret == 0)
                 hr = HRESULT_FROM_WIN32(GetLastError());
             else

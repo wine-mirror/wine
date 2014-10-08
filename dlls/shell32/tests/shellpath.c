@@ -878,7 +878,7 @@ if (0) { /* crashes */
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
 }
     hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "expected 0x8007007a, got 0x%08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "expected E_NOT_SUFFICIENT_BUFFER, got 0x%08x\n", hr);
 
     hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len + 1);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);

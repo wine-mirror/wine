@@ -247,7 +247,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
                 else
                 {
                     /* should never reach here, but for completeness */
-                    hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+                    hr = E_NOT_SUFFICIENT_BUFFER;
                 }
             }
         }
