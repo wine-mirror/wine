@@ -1821,17 +1821,19 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
         {
-            if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT && check_atl_thunk( rec, context ))
-                goto done;
             if (rec->ExceptionInformation[1] == 0xffffffff && check_invalid_gs( context ))
                 goto done;
             if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
                                                              rec->ExceptionInformation[0] )))
                 goto done;
-            /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
-            if (rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
+            if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+                rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
             {
                 ULONG flags;
+                if (check_atl_thunk( rec, context ))
+                    goto done;
+
+                /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
                 NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
                                            &flags, sizeof(flags), NULL );
                 if (!(flags & MEM_EXECUTE_OPTION_DISABLE))

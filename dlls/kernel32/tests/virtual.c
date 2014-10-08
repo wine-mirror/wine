@@ -1818,7 +1818,6 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if (rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
     {
 
-        todo_wine
         ok( rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ||
             broken(!(flags & MEM_EXECUTE_OPTION_DISABLE) && rec->ExceptionInformation[0] == EXCEPTION_READ_FAULT), /* Windows 2000 */
             "ExceptionInformation[0] is %d instead of %d\n", (DWORD)rec->ExceptionInformation[0], EXCEPTION_EXECUTE_FAULT );
@@ -1971,7 +1970,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
         ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
     else
-        todo_wine
         ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
