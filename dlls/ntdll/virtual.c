@@ -591,6 +591,25 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image 
 
 
 /***********************************************************************
+ *           mprotect_exec
+ *
+ * Wrapper for mprotect, adds PROT_EXEC if forced by force_exec_prot
+ */
+static inline int mprotect_exec( void *base, size_t size, int unix_prot, unsigned int view_protect )
+{
+    if (force_exec_prot && !(view_protect & VPROT_NOEXEC) &&
+        (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
+    {
+        TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
+        if (!mprotect( base, size, unix_prot | PROT_EXEC )) return 0;
+        /* exec + write may legitimately fail, in that case fall back to write only */
+        if (!(unix_prot & PROT_WRITE)) return -1;
+    }
+
+    return mprotect( base, size, unix_prot );
+}
+
+/***********************************************************************
  *           VIRTUAL_SetProt
  *
  * Change the protection of a range of pages.
@@ -624,12 +643,12 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
             p[i] = vprot | (p[i] & VPROT_WRITEWATCH);
             prot = VIRTUAL_GetUnixProt( p[i] );
             if (prot == unix_prot) continue;
-            mprotect( addr, count << page_shift, unix_prot );
+            mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
             addr += count << page_shift;
             unix_prot = prot;
             count = 0;
         }
-        if (count) mprotect( addr, count << page_shift, unix_prot );
+        if (count) mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
         VIRTUAL_DEBUG_DUMP_VIEW( view );
         return TRUE;
     }
@@ -646,18 +665,9 @@ static BOOL VIRTUAL_SetProt( struct file_view *view, /* [in] Pointer to view */
         return TRUE;
     }
 
-    if (force_exec_prot && !(view->protect & VPROT_NOEXEC) &&
-        (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
-    {
-        TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
-        if (!mprotect( base, size, unix_prot | PROT_EXEC )) goto done;
-        /* exec + write may legitimately fail, in that case fall back to write only */
-        if (!(unix_prot & PROT_WRITE)) return FALSE;
-    }
+    if (mprotect_exec( base, size, unix_prot, view->protect )) /* FIXME: last error */
+        return FALSE;
 
-    if (mprotect( base, size, unix_prot )) return FALSE;  /* FIXME: last error */
-
-done:
     memset( p, vprot, size >> page_shift );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;

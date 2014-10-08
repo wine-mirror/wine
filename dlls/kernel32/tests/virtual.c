@@ -2102,7 +2102,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
         ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
     else
-        todo_wine
         ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
     count = 64;
@@ -2113,7 +2112,11 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
     ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
-    ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        todo_wine
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
     /* Now a bit more complicated, the page containing the code is protected with
      * PAGE_GUARD memory protection. */
@@ -2127,7 +2130,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
         ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
     else
-        todo_wine
         ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
