@@ -2116,6 +2116,8 @@ struct wined3d_texture_ops
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
+    void (*texture_prepare_texture)(struct wined3d_texture *texture,
+            struct wined3d_context *context, BOOL srgb);
 };
 
 #define WINED3D_TEXTURE_COND_NP2            0x00000001
@@ -2170,6 +2172,8 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
+void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
+        struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
@@ -2187,6 +2191,10 @@ void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
 
 const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
 
+#define WINED3D_VFLAG_ALLOCATED         0x00000001
+#define WINED3D_VFLAG_SRGB_ALLOCATED    0x00000002
+#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000004
+
 struct wined3d_volume
 {
     struct wined3d_resource resource;
@@ -2203,6 +2211,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
 }
 
+BOOL volume_prepare_system_memory(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         unsigned int level, struct wined3d_volume **volume) DECLSPEC_HIDDEN;
 void wined3d_volume_destroy(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
@@ -2314,8 +2323,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location) D
 void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
 void surface_prepare_rb(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, BOOL multisample) DECLSPEC_HIDDEN;
-void surface_prepare_texture(struct wined3d_surface *surface,
-        struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;

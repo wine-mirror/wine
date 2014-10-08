@@ -141,7 +141,7 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
             {
                 case WINED3D_LOCATION_TEXTURE_RGB:
                 case WINED3D_LOCATION_TEXTURE_SRGB:
-                    surface_prepare_texture(depth_stencil, context, FALSE);
+                    wined3d_texture_prepare_texture(depth_stencil->container, context, FALSE);
 
                     if (format_flags & WINED3DFMT_FLAG_DEPTH)
                     {
@@ -217,7 +217,7 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
             case WINED3D_LOCATION_TEXTURE_RGB:
             case WINED3D_LOCATION_TEXTURE_SRGB:
                 srgb = location == WINED3D_LOCATION_TEXTURE_SRGB;
-                surface_prepare_texture(surface, context, srgb);
+                wined3d_texture_prepare_texture(surface->container, context, srgb);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
                         surface->texture_level);

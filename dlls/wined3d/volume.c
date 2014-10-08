@@ -27,11 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-#define WINED3D_VFLAG_ALLOCATED         0x00000001
-#define WINED3D_VFLAG_SRGB_ALLOCATED    0x00000002
-#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000004
-
-static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
+BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 {
     if (volume->resource.heap_memory)
         return TRUE;
@@ -42,37 +38,6 @@ static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
         return FALSE;
     }
     return TRUE;
-}
-
-/* Context activation is done by the caller. */
-static void wined3d_volume_allocate_texture(struct wined3d_volume *volume,
-        const struct wined3d_context *context, BOOL srgb)
-{
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_format *format = volume->resource.format;
-    void *mem = NULL;
-
-    if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
-            && volume_prepare_system_memory(volume))
-    {
-        TRACE("Enabling GL_UNPACK_CLIENT_STORAGE_APPLE for volume %p\n", volume);
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-        mem = volume->resource.heap_memory;
-        volume->flags |= WINED3D_VFLAG_CLIENT_STORAGE;
-    }
-
-    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level,
-            srgb ? format->glGammaInternal : format->glInternal,
-            volume->resource.width, volume->resource.height, volume->resource.depth,
-            0, format->glFormat, format->glType, mem));
-    checkGLcall("glTexImage3D");
-
-    if (mem)
-    {
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-    }
 }
 
 static void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch,
@@ -405,28 +370,9 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
 /* Context activation is done by the caller. */
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
-    wined3d_texture_bind_and_dirtify(volume->container, context, srgb_mode);
-
-    if (srgb_mode)
-    {
-        if (!(volume->flags & WINED3D_VFLAG_SRGB_ALLOCATED))
-        {
-            wined3d_volume_allocate_texture(volume, context, TRUE);
-            volume->flags |= WINED3D_VFLAG_SRGB_ALLOCATED;
-        }
-
-        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_TEXTURE_SRGB);
-    }
-    else
-    {
-        if (!(volume->flags & WINED3D_VFLAG_ALLOCATED))
-        {
-            wined3d_volume_allocate_texture(volume, context, FALSE);
-            volume->flags |= WINED3D_VFLAG_ALLOCATED;
-        }
-
-        wined3d_volume_load_location(volume, context, WINED3D_LOCATION_TEXTURE_RGB);
-    }
+    wined3d_texture_prepare_texture(volume->container, context, srgb_mode);
+    wined3d_volume_load_location(volume, context,
+            srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
 }
 
 /* Context activation is done by the caller. */

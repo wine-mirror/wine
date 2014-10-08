@@ -749,6 +749,11 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     return wined3d_surface_update_desc(surface, gl_info, mem, pitch);
 }
 
+void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
+{
+    texture->texture_ops->texture_prepare_texture(texture, context, srgb);
+}
+
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
 {
     /* TODO: Implement filters using GL_SGI_generate_mipmaps. */
@@ -812,11 +817,122 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_surface_destroy(surface);
 }
 
+/* Context activation is done by the caller. */
+static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
+{
+    UINT sub_count = texture->level_count * texture->layer_count;
+    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
+    const struct wined3d_format *format = texture->resource.format;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_color_key_conversion *conversion;
+    BOOL converted = FALSE;
+    GLenum internal;
+    UINT i;
+
+    TRACE("texture %p, format %s.\n", texture, debug_d3dformat(format->id));
+
+    if (format->convert)
+    {
+        converted = TRUE;
+    }
+    else if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
+    {
+        converted = TRUE;
+        format = wined3d_get_format(gl_info, conversion->dst_format);
+        TRACE("Using format %s for color key conversion.\n", debug_d3dformat(format->id));
+    }
+
+    wined3d_texture_bind_and_dirtify(texture, context, srgb);
+
+    if (srgb)
+        internal = format->glGammaInternal;
+    else if (texture->resource.usage & WINED3DUSAGE_RENDERTARGET
+            && wined3d_resource_is_offscreen(&texture->resource))
+        internal = format->rtInternal;
+    else
+        internal = format->glInternal;
+
+    if (!internal)
+        FIXME("No GL internal format for format %s.\n", debug_d3dformat(format->id));
+
+    TRACE("internal %#x, format %#x, type %#x.\n", internal, format->glFormat, format->glType);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
+        GLsizei height = surface->pow2Height;
+        GLsizei width = surface->pow2Width;
+        const BYTE *mem = NULL;
+
+        if (surface->flags & alloc_flag)
+            continue;
+
+        if (converted)
+            surface->flags |= SFLAG_CONVERTED;
+        else
+            surface->flags &= ~SFLAG_CONVERTED;
+
+        if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+        {
+            height *= format->height_scale.numerator;
+            height /= format->height_scale.denominator;
+        }
+
+        TRACE("surface %p, target %#x, level %d, width %d, height %d.\n",
+                surface, surface->texture_target, surface->texture_level, width, height);
+
+        if (gl_info->supported[APPLE_CLIENT_STORAGE])
+        {
+            if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
+                    || !surface->resource.heap_memory)
+            {
+                /* In some cases we want to disable client storage.
+                 * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
+                 * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
+                 * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
+                 * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
+                 */
+                surface->flags &= ~SFLAG_CLIENT;
+            }
+            else
+            {
+                surface->flags |= SFLAG_CLIENT;
+                mem = surface->resource.heap_memory;
+
+                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+            }
+        }
+
+        if (format->flags & WINED3DFMT_FLAG_COMPRESSED && mem)
+        {
+            GL_EXTCALL(glCompressedTexImage2DARB(surface->texture_target, surface->texture_level,
+                    internal, width, height, 0, surface->resource.size, mem));
+            checkGLcall("glCompressedTexImage2DARB");
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
+                    internal, width, height, 0, format->glFormat, format->glType, mem);
+            checkGLcall("glTexImage2D");
+        }
+
+        if (mem)
+        {
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+        }
+
+        surface->flags |= alloc_flag;
+    }
+}
+
 static const struct wined3d_texture_ops texture2d_ops =
 {
     texture2d_sub_resource_load,
     texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_cleanup,
+    texture2d_prepare_texture,
 };
 
 static ULONG texture_resource_incref(struct wined3d_resource *resource)
@@ -1145,11 +1261,56 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_volume_destroy(volume);
 }
 
+static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
+{
+    DWORD alloc_flag = srgb ? WINED3D_VFLAG_SRGB_ALLOCATED : WINED3D_VFLAG_ALLOCATED;
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    const struct wined3d_format *format = texture->resource.format;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int i;
+
+    wined3d_texture_bind_and_dirtify(texture, context, srgb);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
+        void *mem = NULL;
+
+        if (volume->flags & alloc_flag)
+            continue;
+
+        if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
+                && volume_prepare_system_memory(volume))
+        {
+            TRACE("Enabling GL_UNPACK_CLIENT_STORAGE_APPLE for volume %p\n", volume);
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+            mem = volume->resource.heap_memory;
+            volume->flags |= WINED3D_VFLAG_CLIENT_STORAGE;
+        }
+
+        GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level,
+                srgb ? format->glGammaInternal : format->glInternal,
+                volume->resource.width, volume->resource.height, volume->resource.depth,
+                0, format->glFormat, format->glType, mem));
+        checkGLcall("glTexImage3D");
+
+        if (mem)
+        {
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
+        }
+
+        volume->flags |= alloc_flag;
+    }
+}
+
 static const struct wined3d_texture_ops texture3d_ops =
 {
     texture3d_sub_resource_load,
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
+    texture3d_prepare_texture,
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,

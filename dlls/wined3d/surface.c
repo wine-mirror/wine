@@ -1697,7 +1697,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
     if (update_w == dst_w && update_h == dst_h)
-        surface_prepare_texture(dst_surface, context, FALSE);
+        wined3d_texture_prepare_texture(dst_surface->container, context, FALSE);
     else
         surface_load_location(dst_surface, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind(dst_surface->container, context, FALSE);
@@ -1715,83 +1715,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     surface_invalidate_location(dst_surface, ~WINED3D_LOCATION_TEXTURE_RGB);
 
     return WINED3D_OK;
-}
-
-/* This call just allocates the texture, the caller is responsible for binding
- * the correct texture. */
-/* Context activation is done by the caller. */
-static void surface_allocate_surface(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format *format, BOOL srgb)
-{
-    BOOL disable_client_storage = FALSE;
-    GLsizei width = surface->pow2Width;
-    GLsizei height = surface->pow2Height;
-    const BYTE *mem = NULL;
-    GLenum internal;
-
-    if (srgb)
-        internal = format->glGammaInternal;
-    else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET
-            && wined3d_resource_is_offscreen(&surface->container->resource))
-        internal = format->rtInternal;
-    else
-        internal = format->glInternal;
-
-    if (!internal)
-        FIXME("No GL internal format for format %s.\n", debug_d3dformat(format->id));
-
-    if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
-    {
-        height *= format->height_scale.numerator;
-        height /= format->height_scale.denominator;
-    }
-
-    TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
-            surface, surface->texture_target, surface->texture_level, debug_d3dformat(format->id),
-            internal, width, height, format->glFormat, format->glType);
-
-    if (gl_info->supported[APPLE_CLIENT_STORAGE])
-    {
-        if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
-                || !surface->resource.heap_memory)
-        {
-            /* In some cases we want to disable client storage.
-             * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
-             * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
-             * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
-             * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
-             */
-            surface->flags &= ~SFLAG_CLIENT;
-        }
-        else
-        {
-            surface->flags |= SFLAG_CLIENT;
-            mem = surface->resource.heap_memory;
-
-            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-            disable_client_storage = TRUE;
-        }
-    }
-
-    if (format->flags & WINED3DFMT_FLAG_COMPRESSED && mem)
-    {
-        GL_EXTCALL(glCompressedTexImage2DARB(surface->texture_target, surface->texture_level,
-                internal, width, height, 0, surface->resource.size, mem));
-        checkGLcall("glCompressedTexImage2DARB");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                internal, width, height, 0, format->glFormat, format->glType, mem);
-        checkGLcall("glTexImage2D");
-    }
-
-    if (disable_client_storage)
-    {
-        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-    }
 }
 
 /* In D3D the depth stencil dimensions have to be greater than or equal to the
@@ -2991,7 +2914,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
     gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
-    surface_prepare_texture(surface, context, srgb);
+    wined3d_texture_prepare_texture(surface->container, context, srgb);
     wined3d_texture_bind_and_dirtify(surface->container, context, srgb);
 
     TRACE("Reading back offscreen render target %p.\n", surface);
@@ -3007,48 +2930,6 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
     checkGLcall("glCopyTexSubImage2D");
 
     context_release(context);
-}
-
-/* Context activation is done by the caller. */
-void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
-{
-    struct wined3d_texture *texture = surface->container;
-    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
-    const struct wined3d_format *format = texture->resource.format;
-    UINT sub_count = texture->level_count * texture->layer_count;
-    const struct wined3d_color_key_conversion *conversion;
-    BOOL converted = FALSE;
-    UINT i;
-
-    TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
-
-    if (format->convert)
-    {
-        converted = TRUE;
-    }
-    else if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
-    {
-        converted = TRUE;
-        format = wined3d_get_format(context->gl_info, conversion->dst_format);
-    }
-
-    wined3d_texture_bind_and_dirtify(texture, context, srgb);
-
-    for (i = 0; i < sub_count; ++i)
-    {
-        struct wined3d_surface *s = surface_from_resource(texture->sub_resources[i]);
-
-        if (s->flags & alloc_flag)
-            continue;
-
-        if (converted)
-            s->flags |= SFLAG_CONVERTED;
-        else
-            s->flags &= ~SFLAG_CONVERTED;
-
-        surface_allocate_surface(s, context->gl_info, format, srgb);
-        s->flags |= alloc_flag;
-    }
 }
 
 void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
@@ -3952,7 +3833,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         switch (location)
         {
             case WINED3D_LOCATION_TEXTURE_RGB:
-                surface_prepare_texture(surface, context, FALSE);
+                wined3d_texture_prepare_texture(surface->container, context, FALSE);
                 break;
             case WINED3D_LOCATION_RB_MULTISAMPLE:
                 surface_prepare_rb(surface, gl_info, TRUE);
@@ -4297,7 +4178,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     /* TODO: Use already acquired context when possible. */
     context = context_acquire(device, NULL);
 
-    surface_prepare_texture(surface, context, srgb);
+    wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
 
     if (texture->color_key_flags & WINEDDSD_CKSRCBLT)
