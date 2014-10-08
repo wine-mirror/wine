@@ -588,11 +588,12 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     /* In some conditions the surface memory must not be freed:
-     * SFLAG_CONVERTED: Converting the data back would take too long
+     * WINED3D_TEXTURE_CONVERTED: Converting the data back would take too long
      * SFLAG_DYNLOCK: Avoid freeing the data for performance
      * SFLAG_CLIENT: OpenGL uses our memory as backup */
-    if (surface->resource.map_count || surface->flags & (SFLAG_CONVERTED | SFLAG_DYNLOCK
-            | SFLAG_CLIENT | SFLAG_PIN_SYSMEM))
+    if (surface->resource.map_count
+            || surface->flags & (SFLAG_DYNLOCK | SFLAG_CLIENT | SFLAG_PIN_SYSMEM)
+            || surface->container->flags & WINED3D_TEXTURE_CONVERTED)
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
@@ -1323,7 +1324,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
     struct wined3d_bo_address data;
 
     /* Only support read back of converted P8 surfaces. */
-    if (surface->flags & SFLAG_CONVERTED && format->id != WINED3DFMT_P8_UINT)
+    if (surface->container->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT)
     {
         ERR("Trying to read back converted surface %p with format %s.\n", surface, debug_d3dformat(format->id));
         return;
@@ -4189,8 +4190,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         format = *wined3d_get_format(gl_info, conversion->dst_format);
 
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
-     * SFLAG_CONVERTED but it isn't set (yet) in all cases it is getting
-     * called. */
+     * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
+     * getting called. */
     if ((format.convert || conversion) && surface->pbo)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
@@ -5285,7 +5286,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     /* We want to avoid invalidating the sysmem location for converted
      * surfaces, since otherwise we'd have to convert the data back when
      * locking them. */
-    if (dst_surface->flags & SFLAG_CONVERTED || dst_surface->container->resource.format->convert
+    if (dst_surface->container->flags & WINED3D_TEXTURE_CONVERTED
+            || dst_surface->container->resource.format->convert
             || wined3d_format_get_color_key_conversion(dst_surface->container, TRUE))
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");

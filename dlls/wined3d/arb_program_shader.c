@@ -7469,7 +7469,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
 
-    if (surface->flags & SFLAG_CONVERTED)
+    if (surface->container->flags & WINED3D_TEXTURE_CONVERTED)
     {
         gl_info->gl_ops.gl.p_glEnable(textype);
         checkGLcall("glEnable(textype)");

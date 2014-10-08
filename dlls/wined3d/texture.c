@@ -765,7 +765,7 @@ void wined3d_texture_force_reload(struct wined3d_texture *texture)
     unsigned int sub_count = texture->level_count * texture->layer_count;
     unsigned int i;
 
-    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED);
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED | WINED3D_TEXTURE_CONVERTED);
     for (i = 0; i < sub_count; ++i)
     {
         texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i],
@@ -850,7 +850,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_color_key_conversion *conversion;
-    BOOL converted = FALSE;
     GLenum internal;
     UINT i;
 
@@ -858,11 +857,11 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     if (format->convert)
     {
-        converted = TRUE;
+        texture->flags |= WINED3D_TEXTURE_CONVERTED;
     }
     else if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
     {
-        converted = TRUE;
+        texture->flags |= WINED3D_TEXTURE_CONVERTED;
         format = wined3d_get_format(gl_info, conversion->dst_format);
         TRACE("Using format %s for color key conversion.\n", debug_d3dformat(format->id));
     }
@@ -889,11 +888,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
         GLsizei width = surface->pow2Width;
         const BYTE *mem = NULL;
 
-        if (converted)
-            surface->flags |= SFLAG_CONVERTED;
-        else
-            surface->flags &= ~SFLAG_CONVERTED;
-
         if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
         {
             height *= format->height_scale.numerator;
@@ -905,13 +899,14 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
         if (gl_info->supported[APPLE_CLIENT_STORAGE])
         {
-            if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
+            if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION)
+                    || texture->flags & WINED3D_TEXTURE_CONVERTED
                     || !surface->resource.heap_memory)
             {
                 /* In some cases we want to disable client storage.
                  * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
                  * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
-                 * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
+                 * WINED3D_TEXTURE_CONVERTED: The conversion destination memory is freed after loading the surface
                  * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
                  */
                 surface->flags &= ~SFLAG_CLIENT;

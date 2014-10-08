@@ -2128,6 +2128,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_RGB_VALID           0x00000010
 #define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000020
 #define WINED3D_TEXTURE_SRGB_VALID          0x00000040
+#define WINED3D_TEXTURE_CONVERTED           0x00000080
 
 struct wined3d_texture
 {
@@ -2345,7 +2346,7 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
-#define SFLAG_CONVERTED         0x00000001 /* Converted for color keying or palettized. */
+#define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
 #define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
 #define SFLAG_NORMCOORD         0x00000008 /* Set if GL texture coordinates are normalized (non-texture rectangle). */
@@ -2355,7 +2356,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_LOST              0x00000080 /* Surface lost flag for ddraw. */
 #define SFLAG_GLCKEY            0x00000100 /* The GL texture was created with a color key. */
 #define SFLAG_CLIENT            0x00000200 /* GL_APPLE_client_storage is used with this surface. */
-#define SFLAG_DIBSECTION        0x00000400 /* Has a DIB section attached for GetDC. */
 
 struct wined3d_sampler
 {
