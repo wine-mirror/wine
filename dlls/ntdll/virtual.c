@@ -693,12 +693,12 @@ static void reset_write_watches( struct file_view *view, void *base, SIZE_T size
         p[i] |= VPROT_WRITEWATCH;
         prot = VIRTUAL_GetUnixProt( p[i] );
         if (prot == unix_prot) continue;
-        mprotect( addr, count << page_shift, unix_prot );
+        mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
         addr += count << page_shift;
         unix_prot = prot;
         count = 0;
     }
-    if (count) mprotect( addr, count << page_shift, unix_prot );
+    if (count) mprotect_exec( addr, count << page_shift, unix_prot, view->protect );
 }
 
 
