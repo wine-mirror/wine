@@ -855,6 +855,12 @@ static void test_CustomFontCollection(void)
     IDWriteFontCollectionLoader collection2 = { &dwritefontcollectionloadervtbl };
     HRESULT hr;
 
+    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection2);

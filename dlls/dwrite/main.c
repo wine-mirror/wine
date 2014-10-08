@@ -491,10 +491,13 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory *i
 static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory *iface,
     IDWriteFontCollectionLoader *loader)
 {
-    int i;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
+    int i;
 
     TRACE("(%p)->(%p)\n", This, loader);
+
+    if (!loader)
+        return E_INVALIDARG;
 
     for (i = 0; i < This->loader_count; i++)
         if (This->loaders[i] == loader)
@@ -527,10 +530,13 @@ static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory 
 static HRESULT WINAPI dwritefactory_UnregisterFontCollectionLoader(IDWriteFactory *iface,
     IDWriteFontCollectionLoader *loader)
 {
-    int i;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
+    int i;
 
     TRACE("(%p)->(%p)\n", This, loader);
+
+    if (!loader)
+        return E_INVALIDARG;
 
     for (i = 0; i < This->loader_count; i++)
         if (This->loaders[i] == loader) break;
