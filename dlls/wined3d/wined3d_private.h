@@ -2116,6 +2116,7 @@ struct wined3d_texture_ops
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
+    void (*texture_sub_resource_invalidate_location)(struct wined3d_resource *sub_resource, DWORD location);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
 };
@@ -2123,8 +2124,10 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_COND_NP2            0x00000001
 #define WINED3D_TEXTURE_POW2_MAT_IDENT      0x00000002
 #define WINED3D_TEXTURE_IS_SRGB             0x00000004
-#define WINED3D_TEXTURE_RGB_VALID           0x00000008
-#define WINED3D_TEXTURE_SRGB_VALID          0x00000010
+#define WINED3D_TEXTURE_RGB_ALLOCATED       0x00000008
+#define WINED3D_TEXTURE_RGB_VALID           0x00000010
+#define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000020
+#define WINED3D_TEXTURE_SRGB_VALID          0x00000040
 
 struct wined3d_texture
 {
@@ -2170,6 +2173,7 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
+void wined3d_texture_force_reload(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
@@ -2191,9 +2195,7 @@ void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
 
 const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
 
-#define WINED3D_VFLAG_ALLOCATED         0x00000001
-#define WINED3D_VFLAG_SRGB_ALLOCATED    0x00000002
-#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000004
+#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000001
 
 struct wined3d_volume
 {
@@ -2354,8 +2356,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_GLCKEY            0x00000100 /* The GL texture was created with a color key. */
 #define SFLAG_CLIENT            0x00000200 /* GL_APPLE_client_storage is used with this surface. */
 #define SFLAG_DIBSECTION        0x00000400 /* Has a DIB section attached for GetDC. */
-#define SFLAG_ALLOCATED         0x00000800 /* A GL texture is allocated for this surface. */
-#define SFLAG_SRGBALLOCATED     0x00001000 /* A sRGB GL texture is allocated for this surface. */
 
 struct wined3d_sampler
 {

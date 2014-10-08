@@ -599,11 +599,6 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
 }
 
-static void surface_force_reload(struct wined3d_surface *surface)
-{
-    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-}
-
 static void surface_release_client_storage(struct wined3d_surface *surface)
 {
     struct wined3d_context *context = context_acquire(surface->resource.device, NULL);
@@ -621,11 +616,9 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
         gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
+    wined3d_texture_force_reload(surface->container);
 
     context_release(context);
-
-    surface_invalidate_location(surface, WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
-    surface_force_reload(surface);
 }
 
 static BOOL surface_use_pbo(const struct wined3d_surface *surface)
@@ -1211,7 +1204,7 @@ static void surface_unload(struct wined3d_resource *resource)
         surface_load_location(surface, surface->resource.map_binding);
         surface_invalidate_location(surface, ~surface->resource.map_binding);
     }
-    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
+    wined3d_texture_force_reload(surface->container);
 
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
@@ -1845,7 +1838,7 @@ void surface_load(struct wined3d_surface *surface, BOOL srgb)
         surface_invalidate_location(surface, ~surface->resource.map_binding);
         /* Switching color keying on / off may change the internal format. */
         if (ck_changed)
-            surface_force_reload(surface);
+            wined3d_texture_force_reload(surface->container);
     }
     else if (!(surface->locations & location))
     {

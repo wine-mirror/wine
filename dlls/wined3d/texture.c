@@ -751,7 +751,26 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
+    DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
+
+    if (texture->flags & alloc_flag)
+        return;
+
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
+    texture->flags |= alloc_flag;
+}
+
+void wined3d_texture_force_reload(struct wined3d_texture *texture)
+{
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    unsigned int i;
+
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED);
+    for (i = 0; i < sub_count; ++i)
+    {
+        texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i],
+                WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
+    }
 }
 
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
@@ -817,11 +836,17 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_surface_destroy(surface);
 }
 
+static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
+{
+    struct wined3d_surface *surface = surface_from_resource(sub_resource);
+
+    surface_invalidate_location(surface, location);
+}
+
 /* Context activation is done by the caller. */
 static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    DWORD alloc_flag = srgb ? SFLAG_SRGBALLOCATED : SFLAG_ALLOCATED;
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_color_key_conversion *conversion;
@@ -863,9 +888,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
         GLsizei height = surface->pow2Height;
         GLsizei width = surface->pow2Width;
         const BYTE *mem = NULL;
-
-        if (surface->flags & alloc_flag)
-            continue;
 
         if (converted)
             surface->flags |= SFLAG_CONVERTED;
@@ -922,8 +944,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
             gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
             checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
         }
-
-        surface->flags |= alloc_flag;
     }
 }
 
@@ -932,6 +952,7 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_sub_resource_load,
     texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_cleanup,
+    texture2d_sub_resource_invalidate_location,
     texture2d_prepare_texture,
 };
 
@@ -1261,9 +1282,15 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_volume_destroy(volume);
 }
 
+static void texture3d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
+{
+    struct wined3d_volume *volume = volume_from_resource(sub_resource);
+
+    wined3d_volume_invalidate_location(volume, location);
+}
+
 static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
-    DWORD alloc_flag = srgb ? WINED3D_VFLAG_SRGB_ALLOCATED : WINED3D_VFLAG_ALLOCATED;
     unsigned int sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -1275,9 +1302,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
     {
         struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
         void *mem = NULL;
-
-        if (volume->flags & alloc_flag)
-            continue;
 
         if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
                 && volume_prepare_system_memory(volume))
@@ -1300,8 +1324,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
             gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
             checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
         }
-
-        volume->flags |= alloc_flag;
     }
 }
 
@@ -1310,6 +1332,7 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_sub_resource_load,
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
+    texture3d_sub_resource_invalidate_location,
     texture3d_prepare_texture,
 };
 

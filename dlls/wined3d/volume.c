@@ -262,9 +262,9 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
         case WINED3D_LOCATION_TEXTURE_RGB:
         case WINED3D_LOCATION_TEXTURE_SRGB:
             if ((location == WINED3D_LOCATION_TEXTURE_RGB
-                    && !(volume->flags & WINED3D_VFLAG_ALLOCATED))
+                    && !(volume->container->flags & WINED3D_TEXTURE_RGB_ALLOCATED))
                     || (location == WINED3D_LOCATION_TEXTURE_SRGB
-                    && !(volume->flags & WINED3D_VFLAG_SRGB_ALLOCATED)))
+                    && !(volume->container->flags & WINED3D_TEXTURE_SRGB_ALLOCATED)))
                 ERR("Trying to load (s)RGB texture without prior allocation.\n");
 
             if (volume->locations & WINED3D_LOCATION_DISCARDED)
@@ -451,8 +451,8 @@ static void volume_unload(struct wined3d_resource *resource)
     }
 
     /* The texture name is managed by the container. */
-    volume->flags &= ~(WINED3D_VFLAG_ALLOCATED | WINED3D_VFLAG_SRGB_ALLOCATED
-            | WINED3D_VFLAG_CLIENT_STORAGE);
+    wined3d_texture_force_reload(volume->container);
+    volume->flags &= ~WINED3D_VFLAG_CLIENT_STORAGE;
 
     resource_unload(resource);
 }
