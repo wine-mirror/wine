@@ -2938,6 +2938,7 @@ static void test_display_formats(void)
 
 static void test_scissor_size(void)
 {
+    struct device_desc device_desc;
     IDirect3D9 *d3d9_ptr;
     unsigned int i;
     static struct {
@@ -2954,7 +2955,6 @@ static void test_scissor_size(void)
 
     for(i=0; i<sizeof(scts)/sizeof(scts[0]); i++) {
         IDirect3DDevice9 *device_ptr = 0;
-        D3DPRESENT_PARAMETERS present_parameters;
         HRESULT hr;
         HWND hwnd = 0;
         RECT scissorrect;
@@ -2968,30 +2968,14 @@ static void test_scissor_size(void)
             scts[i].backy = screen_height;
         }
 
-        ZeroMemory(&present_parameters, sizeof(present_parameters));
-        present_parameters.Windowed = scts[i].window;
-        present_parameters.hDeviceWindow = hwnd;
-        present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-        present_parameters.BackBufferWidth = scts[i].backx;
-        present_parameters.BackBufferHeight = scts[i].backy;
-        present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
-        present_parameters.EnableAutoDepthStencil = TRUE;
-        present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
-
-        hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-        if(FAILED(hr)) {
-            present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
-            hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-            if(FAILED(hr)) {
-                hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-            }
-        }
-        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D_CreateDevice returned: %08x\n", hr);
-
-        if (!device_ptr)
+        device_desc.device_window = hwnd;
+        device_desc.width = scts[i].backx;
+        device_desc.height = scts[i].backy;
+        device_desc.windowed = scts[i].window;
+        if (!(device_ptr = create_device(d3d9_ptr, hwnd, &device_desc)))
         {
+            skip("Failed to create a 3D device, skipping test.\n");
             DestroyWindow(hwnd);
-            skip("Creating the device failed\n");
             goto err_out;
         }
 
@@ -3001,9 +2985,7 @@ static void test_scissor_size(void)
         ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, scts[i].backx, scts[i].backy);
 
         /* check the scissorrect values after a reset */
-        present_parameters.BackBufferWidth = screen_width;
-        present_parameters.BackBufferHeight = screen_height;
-        hr = IDirect3DDevice9_Reset(device_ptr, &present_parameters);
+        hr = reset_device(device_ptr, hwnd, scts[i].window);
         ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
         hr = IDirect3DDevice9_TestCooperativeLevel(device_ptr);
         ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
