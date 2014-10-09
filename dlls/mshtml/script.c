@@ -722,7 +722,180 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 
 }
 
-static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
+typedef struct {
+    BSCallback bsc;
+
+    DWORD size;
+    char *buf;
+    HRESULT hres;
+} ScriptBSC;
+
+static inline ScriptBSC *impl_from_BSCallback(BSCallback *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptBSC, bsc);
+}
+
+static void ScriptBSC_destroy(BSCallback *bsc)
+{
+    ScriptBSC *This = impl_from_BSCallback(bsc);
+
+    heap_free(This->buf);
+    heap_free(This);
+}
+
+static HRESULT ScriptBSC_init_bindinfo(BSCallback *bsc)
+{
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_start_binding(BSCallback *bsc)
+{
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_stop_binding(BSCallback *bsc, HRESULT result)
+{
+    ScriptBSC *This = impl_from_BSCallback(bsc);
+
+    This->hres = result;
+
+    if(FAILED(result)) {
+        FIXME("binding failed %08x\n", result);
+        heap_free(This->buf);
+        This->buf = NULL;
+        This->size = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
+{
+    ScriptBSC *This = impl_from_BSCallback(bsc);
+    DWORD readed;
+    HRESULT hres;
+
+    if(!This->buf) {
+        This->buf = heap_alloc(128);
+        if(!This->buf)
+            return E_OUTOFMEMORY;
+        This->size = 128;
+    }
+
+    do {
+        if(This->bsc.readed >= This->size) {
+	  void *new_buf;
+	  new_buf = heap_realloc(This->buf, This->size << 1);
+	  if(!new_buf)
+	    return E_OUTOFMEMORY;
+            This->size <<= 1;
+            This->buf = new_buf;
+        }
+
+        hres = read_stream(&This->bsc, stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
+    }while(hres == S_OK);
+
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
+{
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_on_response(BSCallback *bsc, DWORD response_code,
+        LPCWSTR response_headers)
+{
+    return S_OK;
+}
+
+static HRESULT ScriptBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
+{
+    return S_FALSE;
+}
+
+static const BSCallbackVtbl ScriptBSCVtbl = {
+    ScriptBSC_destroy,
+    ScriptBSC_init_bindinfo,
+    ScriptBSC_start_binding,
+    ScriptBSC_stop_binding,
+    ScriptBSC_read_data,
+    ScriptBSC_on_progress,
+    ScriptBSC_on_response,
+    ScriptBSC_beginning_transaction
+};
+
+
+static HRESULT bind_script_to_text(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
+{
+    ScriptBSC *bsc;
+    WCHAR *text;
+    HRESULT hres;
+
+    bsc = heap_alloc_zero(sizeof(*bsc));
+    if(!bsc)
+        return E_OUTOFMEMORY;
+
+    init_bscallback(&bsc->bsc, &ScriptBSCVtbl, mon, 0);
+    bsc->hres = E_FAIL;
+
+    hres = start_binding(window, &bsc->bsc, NULL);
+    if(SUCCEEDED(hres))
+        hres = bsc->hres;
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+        return hres;
+    }
+
+    if(!bsc->bsc.readed) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    switch(bsc->bsc.bom) {
+    case BOM_UTF16:
+        if(bsc->bsc.readed % sizeof(WCHAR)) {
+            FIXME("The buffer is not a valid utf16 string\n");
+            hres = E_FAIL;
+            break;
+        }
+
+        text = heap_alloc(bsc->bsc.readed+sizeof(WCHAR));
+        if(!text) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        memcpy(text, bsc->buf, bsc->bsc.readed);
+        text[bsc->bsc.readed/sizeof(WCHAR)] = 0;
+        break;
+
+    case BOM_UTF8:
+    default: {
+        DWORD len;
+
+        len = MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+        text = heap_alloc((len+1)*sizeof(WCHAR));
+        if(!text) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+
+        MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, text, len);
+        text[len] = 0;
+    }
+    }
+
+    IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = text;
+    return S_OK;
+
+}
+
+static void parse_extern_script(ScriptHost *script_host, const WCHAR *src)
 {
     IMoniker *mon;
     WCHAR *text;
@@ -737,7 +910,7 @@ static void parse_extern_script(ScriptHost *script_host, LPCWSTR src)
     if(FAILED(hres))
         return;
 
-    hres = bind_mon_to_wstr(script_host->window, mon, &text);
+    hres = bind_script_to_text(script_host->window, mon, &text);
     IMoniker_Release(mon);
     if(FAILED(hres) || !text)
         return;

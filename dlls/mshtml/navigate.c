@@ -61,17 +61,6 @@ struct nsProtocolStream {
     DWORD buf_size;
 };
 
-struct BSCallbackVtbl {
-    void (*destroy)(BSCallback*);
-    HRESULT (*init_bindinfo)(BSCallback*);
-    HRESULT (*start_binding)(BSCallback*);
-    HRESULT (*stop_binding)(BSCallback*,HRESULT);
-    HRESULT (*read_data)(BSCallback*,IStream*);
-    HRESULT (*on_progress)(BSCallback*,ULONG,LPCWSTR);
-    HRESULT (*on_response)(BSCallback*,DWORD,LPCWSTR);
-    HRESULT (*beginning_transaction)(BSCallback*,WCHAR**);
-};
-
 static inline nsProtocolStream *impl_from_nsIInputStream(nsIInputStream *iface)
 {
     return CONTAINING_RECORD(iface, nsProtocolStream, nsIInputStream_iface);
@@ -614,7 +603,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     BSCServiceProvider_QueryService
 };
 
-static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMoniker *mon, DWORD bindf)
+void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMoniker *mon, DWORD bindf)
 {
     This->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
     This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
@@ -632,7 +621,7 @@ static void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMonik
     This->mon = mon;
 }
 
-static HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DWORD *ret_size)
+HRESULT read_stream(BSCallback *This, IStream *stream, void *buf, DWORD size, DWORD *ret_size)
 {
     DWORD read_size = 0, skip=0;
     BYTE *data = buf;
@@ -827,173 +816,6 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
     if(str)
         IStream_Release(str);
 
-    return S_OK;
-}
-
-typedef struct {
-    BSCallback bsc;
-
-    DWORD size;
-    char *buf;
-    HRESULT hres;
-} BufferBSC;
-
-static inline BufferBSC *BufferBSC_from_BSCallback(BSCallback *iface)
-{
-    return CONTAINING_RECORD(iface, BufferBSC, bsc);
-}
-
-static void BufferBSC_destroy(BSCallback *bsc)
-{
-    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
-
-    heap_free(This->buf);
-    heap_free(This);
-}
-
-static HRESULT BufferBSC_init_bindinfo(BSCallback *bsc)
-{
-    return S_OK;
-}
-
-static HRESULT BufferBSC_start_binding(BSCallback *bsc)
-{
-    return S_OK;
-}
-
-static HRESULT BufferBSC_stop_binding(BSCallback *bsc, HRESULT result)
-{
-    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
-
-    This->hres = result;
-
-    if(FAILED(result)) {
-        heap_free(This->buf);
-        This->buf = NULL;
-        This->size = 0;
-    }
-
-    return S_OK;
-}
-
-static HRESULT BufferBSC_read_data(BSCallback *bsc, IStream *stream)
-{
-    BufferBSC *This = BufferBSC_from_BSCallback(bsc);
-    DWORD readed;
-    HRESULT hres;
-
-    if(!This->buf) {
-        This->buf = heap_alloc(128);
-        if(!This->buf)
-            return E_OUTOFMEMORY;
-        This->size = 128;
-    }
-
-    do {
-        if(This->bsc.readed >= This->size) {
-            This->size <<= 1;
-            This->buf = heap_realloc(This->buf, This->size);
-        }
-
-        hres = read_stream(&This->bsc, stream, This->buf+This->bsc.readed, This->size-This->bsc.readed, &readed);
-    }while(hres == S_OK);
-
-    return S_OK;
-}
-
-static HRESULT BufferBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
-{
-    return S_OK;
-}
-
-static HRESULT BufferBSC_on_response(BSCallback *bsc, DWORD response_code,
-        LPCWSTR response_headers)
-{
-    return S_OK;
-}
-
-static HRESULT BufferBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
-{
-    return S_FALSE;
-}
-
-static const BSCallbackVtbl BufferBSCVtbl = {
-    BufferBSC_destroy,
-    BufferBSC_init_bindinfo,
-    BufferBSC_start_binding,
-    BufferBSC_stop_binding,
-    BufferBSC_read_data,
-    BufferBSC_on_progress,
-    BufferBSC_on_response,
-    BufferBSC_beginning_transaction
-};
-
-
-HRESULT bind_mon_to_wstr(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
-{
-    BufferBSC *bsc;
-    WCHAR *text;
-    HRESULT hres;
-
-    bsc = heap_alloc_zero(sizeof(*bsc));
-    if(!bsc)
-        return E_OUTOFMEMORY;
-
-    init_bscallback(&bsc->bsc, &BufferBSCVtbl, mon, 0);
-    bsc->hres = E_FAIL;
-
-    hres = start_binding(window, &bsc->bsc, NULL);
-    if(SUCCEEDED(hres))
-        hres = bsc->hres;
-    if(FAILED(hres)) {
-        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
-        return hres;
-    }
-
-    if(!bsc->bsc.readed) {
-        *ret = NULL;
-        return S_OK;
-    }
-
-    switch(bsc->bsc.bom) {
-    case BOM_UTF16:
-        if(bsc->bsc.readed % sizeof(WCHAR)) {
-            FIXME("The buffer is not a valid utf16 string\n");
-            hres = E_FAIL;
-            break;
-        }
-
-        text = heap_alloc(bsc->bsc.readed+sizeof(WCHAR));
-        if(!text) {
-            hres = E_OUTOFMEMORY;
-            break;
-        }
-
-        memcpy(text, bsc->buf, bsc->bsc.readed);
-        text[bsc->bsc.readed/sizeof(WCHAR)] = 0;
-        break;
-
-    case BOM_UTF8:
-    default: {
-        DWORD len;
-
-        len = MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
-        text = heap_alloc((len+1)*sizeof(WCHAR));
-        if(!text) {
-            hres = E_OUTOFMEMORY;
-            break;
-        }
-
-        MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, text, len);
-        text[len] = 0;
-    }
-    }
-
-    IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = text;
     return S_OK;
 }
 

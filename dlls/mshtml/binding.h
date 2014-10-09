@@ -102,6 +102,17 @@ struct nsChannelBSC {
     nsProtocolStream *nsstream;
 };
 
+struct BSCallbackVtbl {
+    void (*destroy)(BSCallback*);
+    HRESULT (*init_bindinfo)(BSCallback*);
+    HRESULT (*start_binding)(BSCallback*);
+    HRESULT (*stop_binding)(BSCallback*,HRESULT);
+    HRESULT (*read_data)(BSCallback*,IStream*);
+    HRESULT (*on_progress)(BSCallback*,ULONG,LPCWSTR);
+    HRESULT (*on_response)(BSCallback*,DWORD,LPCWSTR);
+    HRESULT (*beginning_transaction)(BSCallback*,WCHAR**);
+};
+
 typedef struct {
     struct list entry;
     WCHAR *header;
@@ -130,10 +141,13 @@ HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) 
 HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
 HRESULT submit_form(HTMLOuterWindow*,IUri*,nsIInputStream*) DECLSPEC_HIDDEN;
 
+void init_bscallback(BSCallback*,const BSCallbackVtbl*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(HTMLInnerWindow*,IMoniker*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
 IUri *nsuri_get_uri(nsWineURI*) DECLSPEC_HIDDEN;
+
+HRESULT read_stream(BSCallback*,IStream*,void*,DWORD,DWORD*) DECLSPEC_HIDDEN;
 
 HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
 HRESULT create_uri(const WCHAR*,DWORD,IUri**) DECLSPEC_HIDDEN;
@@ -141,5 +155,3 @@ IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
 
 void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;
-
-HRESULT bind_mon_to_wstr(HTMLInnerWindow*,IMoniker*,WCHAR**) DECLSPEC_HIDDEN;
