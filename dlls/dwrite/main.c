@@ -35,6 +35,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
+static IDWriteFactory *shared_factory;
+static void release_shared_factory(IDWriteFactory*);
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 {
     switch (reason)
@@ -44,6 +47,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinstDLL );
         break;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        release_shared_factory(shared_factory);
     }
     return TRUE;
 }
@@ -387,7 +393,7 @@ HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedSt
     return S_OK;
 }
 
-struct dwritefactory{
+struct dwritefactory {
     IDWriteFactory IDWriteFactory_iface;
     LONG ref;
 
@@ -403,6 +409,33 @@ struct dwritefactory{
 static inline struct dwritefactory *impl_from_IDWriteFactory(IDWriteFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct dwritefactory, IDWriteFactory_iface);
+}
+
+static void release_dwritefactory(struct dwritefactory *factory)
+{
+    int i;
+
+    if (factory->localfontfileloader)
+        IDWriteLocalFontFileLoader_Release(factory->localfontfileloader);
+    for (i = 0; i < factory->loader_count; i++)
+        if (factory->loaders[i])
+            IDWriteFontCollectionLoader_Release(factory->loaders[i]);
+    heap_free(factory->loaders);
+    for (i = 0; i < factory->file_loader_count; i++)
+        if (factory->file_loaders[i])
+            IDWriteFontFileLoader_Release(factory->file_loaders[i]);
+    heap_free(factory->file_loaders);
+    if (factory->system_collection)
+        IDWriteFontCollection_Release(factory->system_collection);
+    heap_free(factory);
+}
+
+static void release_shared_factory(IDWriteFactory *iface)
+{
+    struct dwritefactory *factory;
+    if (!iface) return;
+    factory = impl_from_IDWriteFactory(iface);
+    release_dwritefactory(factory);
 }
 
 static HRESULT WINAPI dwritefactory_QueryInterface(IDWriteFactory *iface, REFIID riid, void **obj)
@@ -439,22 +472,8 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory *iface)
 
     TRACE("(%p)->(%d)\n", This, ref);
 
-    if (!ref) {
-        int i;
-        if (This->localfontfileloader)
-            IDWriteLocalFontFileLoader_Release(This->localfontfileloader);
-        for (i = 0; i < This->loader_count; i++)
-            if (This->loaders[i])
-                IDWriteFontCollectionLoader_Release(This->loaders[i]);
-        heap_free(This->loaders);
-        for (i = 0; i < This->file_loader_count; i++)
-            if (This->file_loaders[i])
-                IDWriteFontFileLoader_Release(This->file_loaders[i]);
-        heap_free(This->file_loaders);
-        if (This->system_collection)
-            IDWriteFontCollection_Release(This->system_collection);
-        heap_free(This);
-    }
+    if (!ref)
+        release_dwritefactory(This);
 
     return ref;
 }
@@ -796,27 +815,101 @@ static const struct IDWriteFactoryVtbl dwritefactoryvtbl = {
     dwritefactory_CreateGlyphRunAnalysis
 };
 
-HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **factory)
+static ULONG WINAPI shareddwritefactory_AddRef(IDWriteFactory *iface)
 {
-    struct dwritefactory *This;
+    struct dwritefactory *This = impl_from_IDWriteFactory(iface);
+    TRACE("(%p)\n", This);
+    return 2;
+}
 
-    TRACE("(%d, %s, %p)\n", type, debugstr_guid(riid), factory);
+static ULONG WINAPI shareddwritefactory_Release(IDWriteFactory *iface)
+{
+    struct dwritefactory *This = impl_from_IDWriteFactory(iface);
+    TRACE("(%p)\n", This);
+    return 1;
+}
+
+static const struct IDWriteFactoryVtbl shareddwritefactoryvtbl = {
+    dwritefactory_QueryInterface,
+    shareddwritefactory_AddRef,
+    shareddwritefactory_Release,
+    dwritefactory_GetSystemFontCollection,
+    dwritefactory_CreateCustomFontCollection,
+    dwritefactory_RegisterFontCollectionLoader,
+    dwritefactory_UnregisterFontCollectionLoader,
+    dwritefactory_CreateFontFileReference,
+    dwritefactory_CreateCustomFontFileReference,
+    dwritefactory_CreateFontFace,
+    dwritefactory_CreateRenderingParams,
+    dwritefactory_CreateMonitorRenderingParams,
+    dwritefactory_CreateCustomRenderingParams,
+    dwritefactory_RegisterFontFileLoader,
+    dwritefactory_UnregisterFontFileLoader,
+    dwritefactory_CreateTextFormat,
+    dwritefactory_CreateTypography,
+    dwritefactory_GetGdiInterop,
+    dwritefactory_CreateTextLayout,
+    dwritefactory_CreateGdiCompatibleTextLayout,
+    dwritefactory_CreateEllipsisTrimmingSign,
+    dwritefactory_CreateTextAnalyzer,
+    dwritefactory_CreateNumberSubstitution,
+    dwritefactory_CreateGlyphRunAnalysis
+};
+
+static HRESULT init_dwritefactory(struct dwritefactory *factory, const struct IDWriteFactoryVtbl *vtbl)
+{
+    factory->IDWriteFactory_iface.lpVtbl = vtbl;
+    factory->ref = 1;
+    factory->localfontfileloader = NULL;
+    factory->loader_count = 2;
+    factory->loaders = heap_alloc_zero(sizeof(*factory->loaders) * 2);
+    factory->file_loader_count = 2;
+    factory->file_loaders = heap_alloc_zero(sizeof(*factory->file_loaders) * 2);
+    factory->system_collection = NULL;
+
+    if (!factory->loaders || !factory->file_loaders) {
+        heap_free(factory->loaders);
+        heap_free(factory->file_loaders);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **ret)
+{
+    struct dwritefactory *factory;
+    HRESULT hr;
+
+    TRACE("(%d, %s, %p)\n", type, debugstr_guid(riid), ret);
+
+    *ret = NULL;
 
     if (!IsEqualIID(riid, &IID_IDWriteFactory)) return E_FAIL;
 
-    This = heap_alloc(sizeof(struct dwritefactory));
-    if (!This) return E_OUTOFMEMORY;
+    if (type == DWRITE_FACTORY_TYPE_SHARED && shared_factory) {
+        *ret = (IUnknown*)shared_factory;
+        IDWriteFactory_AddRef(shared_factory);
+        return S_OK;
+    }
 
-    This->IDWriteFactory_iface.lpVtbl = &dwritefactoryvtbl;
-    This->ref = 1;
-    This->localfontfileloader = NULL;
-    This->loader_count = 2;
-    This->loaders = heap_alloc_zero(sizeof(*This->loaders) * 2);
-    This->file_loader_count = 2;
-    This->file_loaders = heap_alloc_zero(sizeof(*This->file_loaders) * 2);
-    This->system_collection = NULL;
+    factory = heap_alloc(sizeof(struct dwritefactory));
+    if (!factory) return E_OUTOFMEMORY;
 
-    *factory = (IUnknown*)&This->IDWriteFactory_iface;
+    hr = init_dwritefactory(factory, type == DWRITE_FACTORY_TYPE_SHARED ? &shareddwritefactoryvtbl : &dwritefactoryvtbl);
+    if (FAILED(hr)) {
+        heap_free(factory);
+        return hr;
+    }
 
+    if (type == DWRITE_FACTORY_TYPE_SHARED)
+        if (InterlockedCompareExchangePointer((void**)&shared_factory, factory, NULL)) {
+            release_shared_factory(&factory->IDWriteFactory_iface);
+            *ret = (IUnknown*)shared_factory;
+            IDWriteFactory_AddRef(shared_factory);
+            return S_OK;
+        }
+
+    *ret = (IUnknown*)&factory->IDWriteFactory_iface;
     return S_OK;
 }

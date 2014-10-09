@@ -31,9 +31,10 @@
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
-    ULONG rc = IUnknown_AddRef(obj);
-    IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
 static IDWriteFactory *factory;
@@ -974,7 +975,7 @@ static void test_FontLoader(void)
         hr = IDWriteFactory_CreateCustomFontFileReference(factory, &font, sizeof(HRSRC), &rloader, &ffile);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+        hr = IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(support == TRUE, "got %i\n", support);
         ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
@@ -1045,6 +1046,51 @@ static void test_CreateFontFileReference(void)
     DeleteFileW(font_name);
 }
 
+static void test_shared_isolated(void)
+{
+    IDWriteFactory *isolated, *isolated2;
+    IDWriteFactory *shared, *shared2;
+    HRESULT hr;
+
+    /* invalid type */
+    shared = NULL;
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED+1, &IID_IDWriteFactory, (IUnknown**)&shared);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(shared != NULL, "got %p\n", shared);
+    IDWriteFactory_Release(shared);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown**)&shared);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown**)&shared2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(shared == shared2, "got %p, and %p\n", shared, shared2);
+
+    IDWriteFactory_Release(shared);
+    IDWriteFactory_Release(shared2);
+
+    /* we got 2 references, released 2 - still same pointer is returned */
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown**)&shared2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(shared == shared2, "got %p, and %p\n", shared, shared2);
+    IDWriteFactory_Release(shared2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&isolated);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&isolated2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(isolated != isolated2, "got %p, and %p\n", isolated, isolated2);
+    IDWriteFactory_Release(isolated2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED+1, &IID_IDWriteFactory, (IUnknown**)&isolated2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(shared != isolated2, "got %p, and %p\n", shared, isolated2);
+
+    IDWriteFactory_Release(isolated);
+    IDWriteFactory_Release(isolated2);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1068,6 +1114,7 @@ START_TEST(font)
     test_CustomFontCollection();
     test_FontLoader();
     test_CreateFontFileReference();
+    test_shared_isolated();
 
     IDWriteFactory_Release(factory);
 }
