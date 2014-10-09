@@ -218,6 +218,27 @@ HRESULT elem_string_attr_setter(HTMLElement *elem, const WCHAR *name, const WCHA
     return S_OK;
 }
 
+HRESULT get_readystate_string(READYSTATE readystate, BSTR *p)
+{
+    static const WCHAR uninitializedW[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
+    static const WCHAR loadingW[] = {'l','o','a','d','i','n','g',0};
+    static const WCHAR loadedW[] = {'l','o','a','d','e','d',0};
+    static const WCHAR interactiveW[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
+    static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
+
+    static const LPCWSTR readystate_strs[] = {
+        uninitializedW,
+        loadingW,
+        loadedW,
+        interactiveW,
+        completeW
+    };
+
+    assert(readystate <= READYSTATE_COMPLETE);
+    *p = SysAllocString(readystate_strs[readystate]);
+    return *p ? S_OK : E_OUTOFMEMORY;
+}
+
 typedef struct
 {
     DispatchEx dispex;
