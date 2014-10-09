@@ -349,7 +349,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         context2 = context_acquire(device, backbuffer);
         context_apply_blit_state(context2, device);
 
-        if (backbuffer->flags & SFLAG_NORMCOORD)
+        if (backbuffer->container->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
         {
             tex_left /= src_w;
             tex_right /= src_w;
