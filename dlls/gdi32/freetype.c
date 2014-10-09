@@ -6189,6 +6189,203 @@ static BOOL check_unicode_tategaki(WCHAR uchar)
     return (orientation ==  1 || orientation == 3);
 }
 
+static unsigned int get_native_glyph_outline(FT_Outline *outline, unsigned int buflen, char *buf)
+{
+    TTPOLYGONHEADER *pph;
+    TTPOLYCURVE *ppc;
+    unsigned int needed = 0, point = 0, contour, first_pt;
+    unsigned int pph_start, cpfx;
+    DWORD type;
+
+    for (contour = 0; contour < outline->n_contours; contour++)
+    {
+        /* Ignore contours containing one point */
+        if (point == outline->contours[contour])
+        {
+            point++;
+            continue;
+        }
+
+        pph_start = needed;
+        pph = (TTPOLYGONHEADER *)(buf + needed);
+        first_pt = point;
+        if (buf)
+        {
+            pph->dwType = TT_POLYGON_TYPE;
+            FTVectorToPOINTFX(&outline->points[point], &pph->pfxStart);
+        }
+        needed += sizeof(*pph);
+        point++;
+        while (point <= outline->contours[contour])
+        {
+            ppc = (TTPOLYCURVE *)(buf + needed);
+            type = outline->tags[point] & FT_Curve_Tag_On ?
+                TT_PRIM_LINE : TT_PRIM_QSPLINE;
+            cpfx = 0;
+            do
+            {
+                if (buf)
+                    FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
+                cpfx++;
+                point++;
+            } while (point <= outline->contours[contour] &&
+                    (outline->tags[point] & FT_Curve_Tag_On) ==
+                    (outline->tags[point-1] & FT_Curve_Tag_On));
+            /* At the end of a contour Windows adds the start point, but
+               only for Beziers */
+            if (point > outline->contours[contour] &&
+               !(outline->tags[point-1] & FT_Curve_Tag_On))
+            {
+                if (buf)
+                    FTVectorToPOINTFX(&outline->points[first_pt], &ppc->apfx[cpfx]);
+                cpfx++;
+            }
+            else if (point <= outline->contours[contour] &&
+                      outline->tags[point] & FT_Curve_Tag_On)
+            {
+                /* add closing pt for bezier */
+                if (buf)
+                    FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
+                cpfx++;
+                point++;
+            }
+            if (buf)
+            {
+                ppc->wType = type;
+                ppc->cpfx = cpfx;
+            }
+            needed += sizeof(*ppc) + (cpfx - 1) * sizeof(POINTFX);
+        }
+        if (buf)
+            pph->cb = needed - pph_start;
+    }
+    return needed;
+}
+
+static unsigned int get_bezier_glyph_outline(FT_Outline *outline, unsigned int buflen, char *buf)
+{
+    /* Convert the quadratic Beziers to cubic Beziers.
+       The parametric eqn for a cubic Bezier is, from PLRM:
+       r(t) = at^3 + bt^2 + ct + r0
+       with the control points:
+       r1 = r0 + c/3
+       r2 = r1 + (c + b)/3
+       r3 = r0 + c + b + a
+
+       A quadratic Bezier has the form:
+       p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
+
+       So equating powers of t leads to:
+       r1 = 2/3 p1 + 1/3 p0
+       r2 = 2/3 p1 + 1/3 p2
+       and of course r0 = p0, r3 = p2
+    */
+    int contour, point = 0, first_pt;
+    TTPOLYGONHEADER *pph;
+    TTPOLYCURVE *ppc;
+    DWORD pph_start, cpfx, type;
+    FT_Vector cubic_control[4];
+    unsigned int needed = 0;
+
+    for (contour = 0; contour < outline->n_contours; contour++)
+    {
+        pph_start = needed;
+        pph = (TTPOLYGONHEADER *)(buf + needed);
+        first_pt = point;
+        if (buf)
+        {
+            pph->dwType = TT_POLYGON_TYPE;
+            FTVectorToPOINTFX(&outline->points[point], &pph->pfxStart);
+        }
+        needed += sizeof(*pph);
+        point++;
+        while (point <= outline->contours[contour])
+        {
+            ppc = (TTPOLYCURVE *)(buf + needed);
+            type = outline->tags[point] & FT_Curve_Tag_On ?
+                TT_PRIM_LINE : TT_PRIM_CSPLINE;
+            cpfx = 0;
+            do
+            {
+                if (type == TT_PRIM_LINE)
+                {
+                    if (buf)
+                        FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
+                    cpfx++;
+                    point++;
+                }
+                else
+                {
+                    /* Unlike QSPLINEs, CSPLINEs always have their endpoint
+                       so cpfx = 3n */
+
+                    /* FIXME: Possible optimization in endpoint calculation
+                       if there are two consecutive curves */
+                    cubic_control[0] = outline->points[point-1];
+                    if (!(outline->tags[point-1] & FT_Curve_Tag_On))
+                    {
+                        cubic_control[0].x += outline->points[point].x + 1;
+                        cubic_control[0].y += outline->points[point].y + 1;
+                        cubic_control[0].x >>= 1;
+                        cubic_control[0].y >>= 1;
+                    }
+                    if (point+1 > outline->contours[contour])
+                        cubic_control[3] = outline->points[first_pt];
+                    else
+                    {
+                        cubic_control[3] = outline->points[point+1];
+                        if (!(outline->tags[point+1] & FT_Curve_Tag_On))
+                        {
+                            cubic_control[3].x += outline->points[point].x + 1;
+                            cubic_control[3].y += outline->points[point].y + 1;
+                            cubic_control[3].x >>= 1;
+                            cubic_control[3].y >>= 1;
+                        }
+                    }
+                    /* r1 = 1/3 p0 + 2/3 p1
+                       r2 = 1/3 p2 + 2/3 p1 */
+                    cubic_control[1].x = (2 * outline->points[point].x + 1) / 3;
+                    cubic_control[1].y = (2 * outline->points[point].y + 1) / 3;
+                    cubic_control[2] = cubic_control[1];
+                    cubic_control[1].x += (cubic_control[0].x + 1) / 3;
+                    cubic_control[1].y += (cubic_control[0].y + 1) / 3;
+                    cubic_control[2].x += (cubic_control[3].x + 1) / 3;
+                    cubic_control[2].y += (cubic_control[3].y + 1) / 3;
+                    if (buf)
+                    {
+                        FTVectorToPOINTFX(&cubic_control[1], &ppc->apfx[cpfx]);
+                        FTVectorToPOINTFX(&cubic_control[2], &ppc->apfx[cpfx+1]);
+                        FTVectorToPOINTFX(&cubic_control[3], &ppc->apfx[cpfx+2]);
+                    }
+                    cpfx += 3;
+                    point++;
+                }
+            } while (point <= outline->contours[contour] &&
+                    (outline->tags[point] & FT_Curve_Tag_On) ==
+                    (outline->tags[point-1] & FT_Curve_Tag_On));
+            /* At the end of a contour Windows adds the start point,
+               but only for Beziers and we've already done that.
+            */
+            if (point <= outline->contours[contour] &&
+               outline->tags[point] & FT_Curve_Tag_On)
+            {
+                /* This is the closing pt of a bezier, but we've already
+                   added it, so just inc point and carry on */
+                point++;
+            }
+            if (buf)
+            {
+                ppc->wType = type;
+                ppc->cpfx = cpfx;
+            }
+            needed += sizeof(*ppc) + (cpfx - 1) * sizeof(POINTFX);
+        }
+        if (buf)
+            pph->cb = needed - pph_start;
+    }
+    return needed;
+}
+
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
@@ -6583,6 +6780,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
 	if(!buf || !buflen) break;
         if (!needed) return GDI_ERROR;  /* empty glyph */
+        if (needed > buflen)
+            return GDI_ERROR;
 
 	switch(ft_face->glyph->format) {
 	case ft_glyph_format_bitmap:
@@ -6634,6 +6833,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
 	if(!buf || !buflen) break;
         if (!needed) return GDI_ERROR;  /* empty glyph */
+        if (needed > buflen)
+            return GDI_ERROR;
 
         max_level = get_max_level( format );
 
@@ -6706,6 +6907,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
             if (!buf || !buflen) break;
             if (!needed) return GDI_ERROR;  /* empty glyph */
+            if (needed > buflen)
+                return GDI_ERROR;
 
             memset(buf, 0, buflen);
             dst = buf;
@@ -6767,6 +6970,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             needed = pitch * height;
 
             if (!buf || !buflen) break;
+            if (needed > buflen)
+                return GDI_ERROR;
 
             memset(buf, 0, buflen);
             dst = buf;
@@ -6863,188 +7068,40 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     case GGO_NATIVE:
       {
-	int contour, point = 0, first_pt;
-	FT_Outline *outline = &ft_face->glyph->outline;
-	TTPOLYGONHEADER *pph;
-	TTPOLYCURVE *ppc;
-	DWORD pph_start, cpfx, type;
+        FT_Outline *outline = &ft_face->glyph->outline;
 
-	if(buflen == 0) buf = NULL;
+        if(buflen == 0) buf = NULL;
 
-	if (needsTransform && buf) {
-		pFT_Outline_Transform(outline, &transMatTategaki);
-	}
+        if (needsTransform && buf)
+            pFT_Outline_Transform(outline, &transMatTategaki);
 
-        for(contour = 0; contour < outline->n_contours; contour++) {
-            /* Ignore contours containing one point */
-            if(point == outline->contours[contour]) {
-                point++;
-                continue;
-            }
+        needed = get_native_glyph_outline(outline, buflen, NULL);
 
-	    pph_start = needed;
-	    pph = (TTPOLYGONHEADER *)((char *)buf + needed);
-	    first_pt = point;
-	    if(buf) {
-	        pph->dwType = TT_POLYGON_TYPE;
-		FTVectorToPOINTFX(&outline->points[point], &pph->pfxStart);
-	    }
-	    needed += sizeof(*pph);
-	    point++;
-	    while(point <= outline->contours[contour]) {
-	        ppc = (TTPOLYCURVE *)((char *)buf + needed);
-		type = (outline->tags[point] & FT_Curve_Tag_On) ?
-		  TT_PRIM_LINE : TT_PRIM_QSPLINE;
-		cpfx = 0;
-		do {
-		    if(buf)
-		        FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
-		    cpfx++;
-		    point++;
-		} while(point <= outline->contours[contour] &&
-			(outline->tags[point] & FT_Curve_Tag_On) ==
-			(outline->tags[point-1] & FT_Curve_Tag_On));
-		/* At the end of a contour Windows adds the start point, but
-		   only for Beziers */
-		if(point > outline->contours[contour] &&
-		   !(outline->tags[point-1] & FT_Curve_Tag_On)) {
-		    if(buf)
-		        FTVectorToPOINTFX(&outline->points[first_pt], &ppc->apfx[cpfx]);
-		    cpfx++;
-		} else if(point <= outline->contours[contour] &&
-			  outline->tags[point] & FT_Curve_Tag_On) {
-		  /* add closing pt for bezier */
-		    if(buf)
-		        FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
-		    cpfx++;
-		    point++;
-		}
-		if(buf) {
-		    ppc->wType = type;
-		    ppc->cpfx = cpfx;
-		}
-		needed += sizeof(*ppc) + (cpfx - 1) * sizeof(POINTFX);
-	    }
-	    if(buf)
-	        pph->cb = needed - pph_start;
-	}
-	break;
+        if (!buf || !buflen)
+            break;
+        if (needed > buflen)
+            return GDI_ERROR;
+
+        get_native_glyph_outline(outline, buflen, buf);
+        break;
       }
     case GGO_BEZIER:
       {
-	/* Convert the quadratic Beziers to cubic Beziers.
-	   The parametric eqn for a cubic Bezier is, from PLRM:
-	   r(t) = at^3 + bt^2 + ct + r0
-	   with the control points:
-	   r1 = r0 + c/3
-	   r2 = r1 + (c + b)/3
-	   r3 = r0 + c + b + a
+        FT_Outline *outline = &ft_face->glyph->outline;
+        if(buflen == 0) buf = NULL;
 
-	   A quadratic Bezier has the form:
-	   p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
-
-	   So equating powers of t leads to:
-	   r1 = 2/3 p1 + 1/3 p0
-	   r2 = 2/3 p1 + 1/3 p2
-	   and of course r0 = p0, r3 = p2
-	*/
-
-	int contour, point = 0, first_pt;
-	FT_Outline *outline = &ft_face->glyph->outline;
-	TTPOLYGONHEADER *pph;
-	TTPOLYCURVE *ppc;
-	DWORD pph_start, cpfx, type;
-	FT_Vector cubic_control[4];
-	if(buflen == 0) buf = NULL;
-
-	if (needsTransform && buf) {
+        if (needsTransform && buf)
 		pFT_Outline_Transform(outline, &transMat);
-	}
 
-        for(contour = 0; contour < outline->n_contours; contour++) {
-	    pph_start = needed;
-	    pph = (TTPOLYGONHEADER *)((char *)buf + needed);
-	    first_pt = point;
-	    if(buf) {
-	        pph->dwType = TT_POLYGON_TYPE;
-		FTVectorToPOINTFX(&outline->points[point], &pph->pfxStart);
-	    }
-	    needed += sizeof(*pph);
-	    point++;
-	    while(point <= outline->contours[contour]) {
-	        ppc = (TTPOLYCURVE *)((char *)buf + needed);
-		type = (outline->tags[point] & FT_Curve_Tag_On) ?
-		  TT_PRIM_LINE : TT_PRIM_CSPLINE;
-		cpfx = 0;
-		do {
-		    if(type == TT_PRIM_LINE) {
-		        if(buf)
-			    FTVectorToPOINTFX(&outline->points[point], &ppc->apfx[cpfx]);
-			cpfx++;
-			point++;
-		    } else {
-		      /* Unlike QSPLINEs, CSPLINEs always have their endpoint
-			 so cpfx = 3n */
+        needed = get_bezier_glyph_outline(outline, buflen, NULL);
 
-		      /* FIXME: Possible optimization in endpoint calculation
-			 if there are two consecutive curves */
-		        cubic_control[0] = outline->points[point-1];
-		        if(!(outline->tags[point-1] & FT_Curve_Tag_On)) {
-			    cubic_control[0].x += outline->points[point].x + 1;
-			    cubic_control[0].y += outline->points[point].y + 1;
-			    cubic_control[0].x >>= 1;
-			    cubic_control[0].y >>= 1;
-			}
-			if(point+1 > outline->contours[contour])
- 			    cubic_control[3] = outline->points[first_pt];
-			else {
-			    cubic_control[3] = outline->points[point+1];
-			    if(!(outline->tags[point+1] & FT_Curve_Tag_On)) {
-			        cubic_control[3].x += outline->points[point].x + 1;
-				cubic_control[3].y += outline->points[point].y + 1;
-				cubic_control[3].x >>= 1;
-				cubic_control[3].y >>= 1;
-			    }
-			}
-			/* r1 = 1/3 p0 + 2/3 p1
-			   r2 = 1/3 p2 + 2/3 p1 */
-		        cubic_control[1].x = (2 * outline->points[point].x + 1) / 3;
-			cubic_control[1].y = (2 * outline->points[point].y + 1) / 3;
-			cubic_control[2] = cubic_control[1];
-			cubic_control[1].x += (cubic_control[0].x + 1) / 3;
-			cubic_control[1].y += (cubic_control[0].y + 1) / 3;
-			cubic_control[2].x += (cubic_control[3].x + 1) / 3;
-			cubic_control[2].y += (cubic_control[3].y + 1) / 3;
-		        if(buf) {
-			    FTVectorToPOINTFX(&cubic_control[1], &ppc->apfx[cpfx]);
-			    FTVectorToPOINTFX(&cubic_control[2], &ppc->apfx[cpfx+1]);
-			    FTVectorToPOINTFX(&cubic_control[3], &ppc->apfx[cpfx+2]);
-			}
-			cpfx += 3;
-			point++;
-		    }
-		} while(point <= outline->contours[contour] &&
-			(outline->tags[point] & FT_Curve_Tag_On) ==
-			(outline->tags[point-1] & FT_Curve_Tag_On));
-		/* At the end of a contour Windows adds the start point,
-		   but only for Beziers and we've already done that.
-		*/
-		if(point <= outline->contours[contour] &&
-		   outline->tags[point] & FT_Curve_Tag_On) {
-		  /* This is the closing pt of a bezier, but we've already
-		     added it, so just inc point and carry on */
-		    point++;
-		}
-		if(buf) {
-		    ppc->wType = type;
-		    ppc->cpfx = cpfx;
-		}
-		needed += sizeof(*ppc) + (cpfx - 1) * sizeof(POINTFX);
-	    }
-	    if(buf)
-	        pph->cb = needed - pph_start;
-	}
-	break;
+        if (!buf || !buflen)
+            break;
+        if (needed > buflen)
+            return GDI_ERROR;
+
+        get_bezier_glyph_outline(outline, buflen, buf);
+        break;
       }
 
     default:
