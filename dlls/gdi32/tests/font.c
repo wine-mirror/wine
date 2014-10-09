@@ -4365,7 +4365,11 @@ static void test_GetGlyphOutline(void)
     SetLastError(0xdeadbeef);
     ret = GetGlyphOutlineW(hdc, ' ', GGO_NATIVE, &gm, 0, NULL, &mat);
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
         ok(ret == 0, "GetGlyphOutlineW should return 0 buffer size for space char\n");
+        ok(gm.gmBlackBoxX == 1, "Expected 1, got %u\n", gm.gmBlackBoxX);
+        ok(gm.gmBlackBoxY == 1, "Expected 1, got %u\n", gm.gmBlackBoxY);
+    }
 
     /* requesting buffer size for space char + error */
     memset(&gm, 0, sizeof(gm));
@@ -4375,7 +4379,15 @@ static void test_GetGlyphOutline(void)
     {
        ok(ret == GDI_ERROR, "GetGlyphOutlineW should return GDI_ERROR\n");
        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+       ok(gm.gmBlackBoxX == 0, "Expected 0, got %u\n", gm.gmBlackBoxX);
+       ok(gm.gmBlackBoxY == 0, "Expected 0, got %u\n", gm.gmBlackBoxY);
     }
+
+    /* test GetGlyphOutline with a buffer too small */
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineA(hdc, 'A', GGO_NATIVE, &gm, sizeof(i), &i, &mat);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        ok(ret == GDI_ERROR, "GetGlyphOutlineW should return an error when the buffer size is too small.\n");
 
     for (i = 0; i < sizeof(fmt) / sizeof(fmt[0]); ++i)
     {
