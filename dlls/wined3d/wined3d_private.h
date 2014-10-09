@@ -2129,6 +2129,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000020
 #define WINED3D_TEXTURE_SRGB_VALID          0x00000040
 #define WINED3D_TEXTURE_CONVERTED           0x00000080
+#define WINED3D_TEXTURE_PIN_SYSMEM          0x00000100
 
 struct wined3d_texture
 {
@@ -2351,11 +2352,10 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
 #define SFLAG_NORMCOORD         0x00000008 /* Set if GL texture coordinates are normalized (non-texture rectangle). */
 #define SFLAG_DYNLOCK           0x00000010 /* Surface is often locked by the application. */
-#define SFLAG_PIN_SYSMEM        0x00000020 /* Keep the surface in sysmem, at the same address. */
+#define SFLAG_CLIENT            0x00000020 /* GL_APPLE_client_storage is used with this surface. */
 #define SFLAG_DCINUSE           0x00000040 /* Set between GetDC and ReleaseDC calls. */
 #define SFLAG_LOST              0x00000080 /* Surface lost flag for ddraw. */
 #define SFLAG_GLCKEY            0x00000100 /* The GL texture was created with a color key. */
-#define SFLAG_CLIENT            0x00000200 /* GL_APPLE_client_storage is used with this surface. */
 
 struct wined3d_sampler
 {

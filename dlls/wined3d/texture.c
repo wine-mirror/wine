@@ -28,19 +28,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
-        UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, struct wined3d_device *device,
-        void *parent, const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
+        UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, DWORD surface_flags,
+        struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,
+        const struct wined3d_resource_ops *resource_ops)
 {
     const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
     HRESULT hr;
 
     TRACE("texture %p, texture_ops %p, layer_count %u, level_count %u, resource_type %s, format %s, "
             "multisample_type %#x, multisample_quality %#x, usage %s, pool %s, width %u, height %u, depth %u, "
-            "device %p, parent %p, parent_ops %p, resource_ops %p.\n",
+            "surface_flags %#x, device %p, parent %p, parent_ops %p, resource_ops %p.\n",
             texture, texture_ops, layer_count, level_count, debug_d3dresourcetype(desc->resource_type),
             debug_d3dformat(desc->format), desc->multisample_type, desc->multisample_quality,
             debug_d3dusage(desc->usage), debug_d3dpool(desc->pool), desc->width, desc->height, desc->depth,
-            device, parent, parent_ops, resource_ops);
+            surface_flags, device, parent, parent_ops, resource_ops);
 
     if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY)) == WINED3DFMT_FLAG_BLOCKS)
     {
@@ -81,6 +82,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->filter_type = (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
     texture->flags = WINED3D_TEXTURE_POW2_MAT_IDENT;
+    if (surface_flags & WINED3D_SURFACE_PIN_SYSMEM)
+        texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
 
     if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
     {
@@ -1053,8 +1056,8 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
         }
     }
 
-    if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels,
-            desc, device, parent, parent_ops, &texture_resource_ops)))
+    if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels, desc,
+            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x\n", hr);
         return hr;
@@ -1178,8 +1181,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         TRACE("Calculated levels = %u.\n", levels);
     }
 
-    if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels,
-            desc, device, parent, parent_ops, &texture_resource_ops)))
+    if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels, desc,
+            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1404,8 +1407,8 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         }
     }
 
-    if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels,
-            desc, device, parent, parent_ops, &texture_resource_ops)))
+    if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels, desc,
+            0, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
