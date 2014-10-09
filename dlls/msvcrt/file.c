@@ -3957,14 +3957,26 @@ int CDECL MSVCRT__fputchar(int c)
  */
 MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
 {
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__fread_nolock(ptr, size, nmemb, file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fread_nolock (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
+{
   MSVCRT_size_t rcnt=size * nmemb;
   MSVCRT_size_t read=0;
   MSVCRT_size_t pread=0;
 
   if(!rcnt)
 	return 0;
-
-  MSVCRT__lock_file(file);
 
   /* first buffered data */
   if(file->_cnt>0) {
@@ -3979,7 +3991,6 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOREAD;
 	} else {
-        MSVCRT__unlock_file(file);
         return 0;
     }
   }
@@ -4028,7 +4039,6 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
     if (i < 1) break;
   }
   read+=pread;
-  MSVCRT__unlock_file(file);
   return read / size;
 }
 

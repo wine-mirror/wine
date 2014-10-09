@@ -832,7 +832,7 @@
 @ cdecl _fputchar(long) MSVCRT__fputchar
 @ stub _fputwc_nolock
 @ cdecl _fputwchar(long) MSVCRT__fputwchar
-@ stub _fread_nolock
+@ cdecl _fread_nolock(ptr long long ptr) MSVCRT__fread_nolock
 @ stub _fread_nolock_s
 @ cdecl _free_locale(ptr) MSVCRT__free_locale
 @ stub _freea
