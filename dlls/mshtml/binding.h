@@ -25,6 +25,12 @@ typedef enum {
     METHOD_POST
 } REQUEST_METHOD;
 
+typedef enum {
+    BOM_NONE,
+    BOM_UTF8,
+    BOM_UTF16
+} binding_bom_t;
+
 typedef struct {
     nsIHttpChannel         nsIHttpChannel_iface;
     nsIUploadChannel       nsIUploadChannel_iface;
@@ -71,7 +77,7 @@ struct BSCallback {
     ULONG readed;
     DWORD bindf;
     BOOL bindinfo_ready;
-    int bom;
+    binding_bom_t bom;
 
     IMoniker *mon;
     IBinding *binding;

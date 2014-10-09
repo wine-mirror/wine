@@ -52,12 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR emptyW[] = {0};
 static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
 
-enum {
-    BOM_NONE,
-    BOM_UTF8,
-    BOM_UTF16
-};
-
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
 
@@ -1203,6 +1197,8 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 break;
             case BOM_UTF16:
                 This->nschannel->charset = heap_strdupA(UTF16_STR);
+            case BOM_NONE:
+                /* FIXME: Get charset from HTTP headers */;
             }
 
             if(!This->nschannel->content_type) {
