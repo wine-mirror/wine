@@ -24,6 +24,7 @@ typedef struct {
     nsIDOMHTMLScriptElement *nsscript;
     BOOL parsed;
     BOOL parse_on_bind;
+    READYSTATE readystate;
 } HTMLScriptElement;
 
 typedef struct {

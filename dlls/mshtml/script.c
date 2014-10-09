@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "activscp.h"
 #include "activdbg.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -701,13 +702,23 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     return ret;
 }
 
-static void parse_text(ScriptHost *script_host, LPCWSTR text)
+static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTATE readystate)
+{
+    script_elem->readystate = readystate;
+
+    if(readystate != READYSTATE_INTERACTIVE)
+        fire_event(script_elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE, script_elem->element.node.nsnode, NULL, NULL);
+}
+
+static void parse_elem_text(ScriptHost *script_host, HTMLScriptElement *script_elem, LPCWSTR text)
 {
     EXCEPINFO excepinfo;
     VARIANT var;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(text));
+
+    set_script_elem_readystate(script_elem, READYSTATE_INTERACTIVE);
 
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
@@ -725,6 +736,9 @@ static void parse_text(ScriptHost *script_host, LPCWSTR text)
 typedef struct {
     BSCallback bsc;
 
+    HTMLScriptElement *script_elem;
+    DWORD scheme;
+
     DWORD size;
     char *buf;
     HRESULT hres;
@@ -739,6 +753,11 @@ static void ScriptBSC_destroy(BSCallback *bsc)
 {
     ScriptBSC *This = impl_from_BSCallback(bsc);
 
+    if(This->script_elem) {
+        IHTMLScriptElement_Release(&This->script_elem->IHTMLScriptElement_iface);
+        This->script_elem = NULL;
+    }
+
     heap_free(This->buf);
     heap_free(This);
 }
@@ -750,6 +769,12 @@ static HRESULT ScriptBSC_init_bindinfo(BSCallback *bsc)
 
 static HRESULT ScriptBSC_start_binding(BSCallback *bsc)
 {
+    ScriptBSC *This = impl_from_BSCallback(bsc);
+
+    /* FIXME: We should find a better to decide if 'loading' state is supposed to be used by the protocol. */
+    if(This->scheme == URL_SCHEME_HTTPS || This->scheme == URL_SCHEME_HTTP)
+        set_script_elem_readystate(This->script_elem, READYSTATE_LOADING);
+
     return S_OK;
 }
 
@@ -759,13 +784,18 @@ static HRESULT ScriptBSC_stop_binding(BSCallback *bsc, HRESULT result)
 
     This->hres = result;
 
-    if(FAILED(result)) {
+    if(SUCCEEDED(result)) {
+        if(This->script_elem->readystate == READYSTATE_LOADING)
+            set_script_elem_readystate(This->script_elem, READYSTATE_LOADED);
+    }else {
         FIXME("binding failed %08x\n", result);
         heap_free(This->buf);
         This->buf = NULL;
         This->size = 0;
     }
 
+    IHTMLScriptElement_Release(&This->script_elem->IHTMLScriptElement_iface);
+    This->script_elem = NULL;
     return S_OK;
 }
 
@@ -826,7 +856,7 @@ static const BSCallbackVtbl ScriptBSCVtbl = {
 };
 
 
-static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, WCHAR **ret)
+static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, HTMLScriptElement *script_elem, WCHAR **ret)
 {
     ScriptBSC *bsc;
     IMoniker *mon;
@@ -846,6 +876,13 @@ static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, WCHAR **r
     init_bscallback(&bsc->bsc, &ScriptBSCVtbl, mon, 0);
     IMoniker_Release(mon);
     bsc->hres = E_FAIL;
+
+    hres = IUri_GetScheme(uri, &bsc->scheme);
+    if(FAILED(hres))
+        bsc->scheme = URL_SCHEME_UNKNOWN;
+
+    IHTMLScriptElement_AddRef(&script_elem->IHTMLScriptElement_iface);
+    bsc->script_elem = script_elem;
 
     hres = start_binding(window, &bsc->bsc, NULL);
     if(SUCCEEDED(hres))
@@ -902,7 +939,7 @@ static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, WCHAR **r
     return S_OK;
 }
 
-static void parse_extern_script(ScriptHost *script_host, const WCHAR *src)
+static void parse_extern_script(ScriptHost *script_host, HTMLScriptElement *script_elem, LPCWSTR src)
 {
     WCHAR *text;
     IUri *uri;
@@ -917,12 +954,12 @@ static void parse_extern_script(ScriptHost *script_host, const WCHAR *src)
     if(FAILED(hres))
         return;
 
-    hres = bind_script_to_text(script_host->window, uri, &text);
+    hres = bind_script_to_text(script_host->window, uri, script_elem, &text);
     IUri_Release(uri);
     if(FAILED(hres) || !text)
         return;
 
-    parse_text(script_host, text);
+    parse_elem_text(script_host, script_elem, text);
 
     heap_free(text);
 }
@@ -940,7 +977,7 @@ static void parse_inline_script(ScriptHost *script_host, HTMLScriptElement *scri
     if(NS_FAILED(nsres)) {
         ERR("GetText failed: %08x\n", nsres);
     }else if(*text) {
-        parse_text(script_host, text);
+        parse_elem_text(script_host, script_elem, text);
     }
 
     nsAString_Finish(&text_str);
@@ -976,12 +1013,14 @@ static void parse_script_elem(ScriptHost *script_host, HTMLScriptElement *script
         ERR("GetSrc failed: %08x\n", nsres);
     }else if(*src) {
         script_elem->parsed = TRUE;
-        parse_extern_script(script_host, src);
+        parse_extern_script(script_host, script_elem, src);
     }else {
         parse_inline_script(script_host, script_elem);
     }
 
     nsAString_Finish(&src_str);
+
+    set_script_elem_readystate(script_elem, READYSTATE_COMPLETE);
 }
 
 static GUID get_default_script_guid(HTMLInnerWindow *window)
