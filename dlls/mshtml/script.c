@@ -826,17 +826,25 @@ static const BSCallbackVtbl ScriptBSCVtbl = {
 };
 
 
-static HRESULT bind_script_to_text(HTMLInnerWindow *window, IMoniker *mon, WCHAR **ret)
+static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, WCHAR **ret)
 {
     ScriptBSC *bsc;
+    IMoniker *mon;
     WCHAR *text;
     HRESULT hres;
 
+    hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
+    if(FAILED(hres))
+        return hres;
+
     bsc = heap_alloc_zero(sizeof(*bsc));
-    if(!bsc)
+    if(!bsc) {
+        IMoniker_Release(mon);
         return E_OUTOFMEMORY;
+    }
 
     init_bscallback(&bsc->bsc, &ScriptBSCVtbl, mon, 0);
+    IMoniker_Release(mon);
     bsc->hres = E_FAIL;
 
     hres = start_binding(window, &bsc->bsc, NULL);
@@ -892,13 +900,12 @@ static HRESULT bind_script_to_text(HTMLInnerWindow *window, IMoniker *mon, WCHAR
 
     *ret = text;
     return S_OK;
-
 }
 
 static void parse_extern_script(ScriptHost *script_host, const WCHAR *src)
 {
-    IMoniker *mon;
     WCHAR *text;
+    IUri *uri;
     HRESULT hres;
 
     static const WCHAR wine_schemaW[] = {'w','i','n','e',':'};
@@ -906,12 +913,12 @@ static void parse_extern_script(ScriptHost *script_host, const WCHAR *src)
     if(strlenW(src) > sizeof(wine_schemaW)/sizeof(WCHAR) && !memcmp(src, wine_schemaW, sizeof(wine_schemaW)))
         src += sizeof(wine_schemaW)/sizeof(WCHAR);
 
-    hres = CreateURLMoniker(NULL, src, &mon);
+    hres = create_uri(src, 0, &uri);
     if(FAILED(hres))
         return;
 
-    hres = bind_script_to_text(script_host->window, mon, &text);
-    IMoniker_Release(mon);
+    hres = bind_script_to_text(script_host->window, uri, &text);
+    IUri_Release(uri);
     if(FAILED(hres) || !text)
         return;
 
