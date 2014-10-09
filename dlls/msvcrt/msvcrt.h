@@ -926,6 +926,7 @@ MSVCRT_ulong* __cdecl MSVCRT___doserrno(void);
 int* __cdecl     MSVCRT__errno(void);
 char* __cdecl    MSVCRT_getenv(const char*);
 MSVCRT_size_t __cdecl MSVCRT__fread_nolock(void*,MSVCRT_size_t,MSVCRT_size_t,MSVCRT_FILE*);
+MSVCRT_size_t __cdecl MSVCRT__fwrite_nolock(const void*,MSVCRT_size_t,MSVCRT_size_t,MSVCRT_FILE*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
 int __cdecl      MSVCRT__fclose_nolock(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);

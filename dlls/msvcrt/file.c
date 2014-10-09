@@ -3707,12 +3707,24 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
  */
 MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
 {
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__fwrite_nolock(ptr, size, nmemb, file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fwrite_nolock (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__fwrite_nolock(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
+{
     MSVCRT_size_t wrcnt=size * nmemb;
     int written = 0;
     if (size == 0)
         return 0;
-
-    MSVCRT__lock_file(file);
 
     while(wrcnt) {
         if(file->_cnt < 0) {
@@ -3761,7 +3773,6 @@ MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_si
         }
     }
 
-    MSVCRT__unlock_file(file);
     return written / size;
 }
 

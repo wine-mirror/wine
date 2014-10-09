@@ -863,7 +863,7 @@
 @ stub _fwprintf_p
 @ stub _fwprintf_p_l
 @ stub _fwprintf_s_l
-@ stub _fwrite_nolock
+@ cdecl _fwrite_nolock(ptr long long ptr) MSVCRT__fwrite_nolock
 @ varargs _fwscanf_l(ptr wstr ptr) MSVCRT__fwscanf_l
 @ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str) MSVCRT__gcvt

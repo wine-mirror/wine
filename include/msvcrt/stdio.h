@@ -128,6 +128,7 @@ int    __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
 size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
+size_t __cdecl _fwrite_nolock(const void*,size_t,size_t,FILE*);
 int    __cdecl _fclose_nolock(FILE*);
 
 void   __cdecl clearerr(FILE*);
