@@ -215,6 +215,14 @@ function test_whitespace_nodes() {
         "t.rows[0].cells[0].childNodes.length = " + t.rows[0].cells[0].childNodes.length);
 }
 
+function test_language_attribute() {
+    document.body.innerHTML = '<div id="did" language="test"></div>';
+    var elem = document.getElementById("did");
+    ok(elem.language === "test", "elem.language = " + elem.language);
+    elem.language = 1;
+    ok(elem.language === "1", "elem.language = " + elem.language);
+}
+
 var globalVar = false;
 
 function runTests() {
@@ -238,6 +246,7 @@ function runTests() {
     test_forin();
     test_customtag();
     test_whitespace_nodes();
+    test_language_attribute();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);

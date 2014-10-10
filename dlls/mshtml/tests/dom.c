@@ -3138,6 +3138,36 @@ static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
     SysFreeString(id);
 }
 
+#define test_elem_language(e,i) _test_elem_language(__LINE__,e,i)
+static void _test_elem_language(unsigned line, IHTMLElement *elem, const char *exlang)
+{
+    BSTR lang = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_language(elem, &lang);
+    ok_(__FILE__,line) (hres == S_OK, "get_language failed: %08x\n", hres);
+
+    if(exlang)
+        ok_(__FILE__,line) (!strcmp_wa(lang, exlang), "unexpected language %s\n", wine_dbgstr_w(lang));
+    else
+        ok_(__FILE__,line) (!lang, "language=%s\n", wine_dbgstr_w(lang));
+
+    SysFreeString(lang);
+}
+
+#define set_elem_language(e,i) _set_elem_language(__LINE__,e,i)
+static void _set_elem_language(unsigned line, IHTMLElement *elem, const char *lang)
+{
+    BSTR str = a2bstr(lang);
+    HRESULT hres;
+
+    hres = IHTMLElement_put_language(elem, str);
+    ok_(__FILE__,line) (hres == S_OK, "get_language failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_elem_language(line, elem, lang);
+}
+
 #define test_elem_put_id(u,i) _test_elem_put_id(__LINE__,u,i)
 static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
 {
@@ -7135,6 +7165,8 @@ static void test_elems(IHTMLDocument2 *doc)
         hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLScriptElement, (void**)&script);
         ok(hres == S_OK, "Could not get IHTMLScriptElement interface: %08x\n", hres);
 
+        test_elem_language(elem, NULL);
+
         if(hres == S_OK)
         {
             VARIANT_BOOL vb;
@@ -7174,6 +7206,9 @@ static void test_elems(IHTMLDocument2 *doc)
         }
 
         IHTMLScriptElement_Release(script);
+
+        set_elem_language(elem, "vbscript");
+        set_elem_language(elem, "xxx");
     }
 
     elem = get_elem_by_id(doc, "in", TRUE);
