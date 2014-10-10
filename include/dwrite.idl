@@ -382,7 +382,11 @@ typedef struct DWRITE_TRIMMING
     UINT32 delimiterCount;
 } DWRITE_TRIMMING;
 
-typedef struct DWRITE_GLYPH_RUN
+cpp_quote("#ifndef __d2d1_h__")
+typedef struct DWRITE_GLYPH_RUN DWRITE_GLYPH_RUN;
+cpp_quote("#endif /* __d2d1_h__ */")
+
+struct DWRITE_GLYPH_RUN
 {
     IDWriteFontFace* fontFace;
     FLOAT fontEmSize;
@@ -392,7 +396,7 @@ typedef struct DWRITE_GLYPH_RUN
     DWRITE_GLYPH_OFFSET const* glyphOffsets;
     BOOL isSideways;
     UINT32 bidiLevel;
-} DWRITE_GLYPH_RUN;
+};
 
 typedef struct DWRITE_GLYPH_RUN_DESCRIPTION
 {

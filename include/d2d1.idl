@@ -37,7 +37,10 @@ interface IDWriteTextLayout;
 interface IWICBitmapSource;
 interface IWICBitmap;
 
+cpp_quote("#ifndef __dwrite_h__")
+/* already defined in dwrite.h but needed for WIDL */
 typedef struct DWRITE_GLYPH_RUN DWRITE_GLYPH_RUN;
+cpp_quote("#endif /* __dwrite_h__ */")
 
 typedef D2D_POINT_2F D2D1_POINT_2F;
 typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
