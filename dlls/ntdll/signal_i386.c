@@ -1830,12 +1830,13 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
                 rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
             {
                 ULONG flags;
-                if (check_atl_thunk( rec, context ))
+                NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                           &flags, sizeof(flags), NULL );
+
+                if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) && check_atl_thunk( rec, context ))
                     goto done;
 
                 /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
-                NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
-                                           &flags, sizeof(flags), NULL );
                 if (!(flags & MEM_EXECUTE_OPTION_DISABLE))
                     rec->ExceptionInformation[0] = EXCEPTION_READ_FAULT;
             }
