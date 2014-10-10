@@ -35,7 +35,7 @@
 #define NUM_THREADS 4
 #define MAPPING_SIZE 0x100000
 
-static HINSTANCE hkernel32;
+static HINSTANCE hkernel32, hntdll;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
@@ -44,6 +44,8 @@ static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
+static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
+static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 
 /* ############################### */
 
@@ -1843,6 +1845,33 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     return ExceptionContinueExecution;
 }
 
+static LONG CALLBACK execute_fault_vec_handler( EXCEPTION_POINTERS *ExceptionInfo )
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    DWORD old_prot;
+    BOOL success;
+
+    trace( "exception: %08x flags:%x addr:%p info[0]:%ld info[1]:%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           rec->ExceptionInformation[0], (void *)rec->ExceptionInformation[1] );
+
+    ok( rec->NumberParameters == 2, "NumberParameters is %d instead of 2\n", rec->NumberParameters );
+    ok( rec->ExceptionCode == STATUS_ACCESS_VIOLATION,
+        "ExceptionCode is %08x instead of STATUS_ACCESS_VIOLATION\n", rec->ExceptionCode );
+
+    if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION)
+        num_execute_fault_calls++;
+
+    if (rec->ExceptionInformation[0] == EXCEPTION_READ_FAULT)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    success = VirtualProtect( (void *)rec->ExceptionInformation[1], 16, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+    ok( old_prot == PAGE_NOACCESS, "wrong old prot %x\n", old_prot );
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
 static inline DWORD send_message_excpt( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     EXCEPTION_REGISTRATION_RECORD frame;
@@ -2020,6 +2049,34 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
     ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    /* The following test shows that on Windows, even a vectored exception handler
+     * cannot intercept internal exceptions thrown by the ATL thunk emulation layer. */
+
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && !(dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+    {
+        if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
+        {
+            PVOID vectored_handler;
+
+            success = VirtualProtect( base, size, PAGE_NOACCESS, &old_prot );
+            ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+            vectored_handler = pRtlAddVectoredExceptionHandler( TRUE, &execute_fault_vec_handler );
+            ok( vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n" );
+
+            num_execute_fault_calls = 0;
+            ret = SendMessageA( hWnd, WM_USER, 0, 0 );
+
+            pRtlRemoveVectoredExceptionHandler( vectored_handler );
+
+            ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+            todo_wine
+            ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+        }
+        else
+            win_skip( "RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n" );
+    }
 
     /* Restore the JMP instruction, set to executable, and then destroy the Window */
 
@@ -3265,15 +3322,18 @@ START_TEST(virtual)
     }
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
+    hntdll    = GetModuleHandleA("ntdll.dll");
+
     pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
     pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
     pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
-    pNtAreMappedFilesTheSame = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
-                                                       "NtAreMappedFilesTheSame" );
-    pNtMapViewOfSection = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtMapViewOfSection");
-    pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtUnmapViewOfSection");
-    pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
+    pNtMapViewOfSection = (void *)GetProcAddress( hntdll, "NtMapViewOfSection" );
+    pNtUnmapViewOfSection = (void *)GetProcAddress( hntdll, "NtUnmapViewOfSection" );
+    pNtCurrentTeb = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
+    pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
+    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
 
     test_shared_memory(FALSE);
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
