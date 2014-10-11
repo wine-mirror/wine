@@ -582,6 +582,9 @@ static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IHTMLFormElement, riid)) {
         TRACE("(%p)->(IID_IHTMLFormElement %p)\n", This, ppv);
         *ppv = &This->IHTMLFormElement_iface;
+    }else if(IsEqualGUID(&DIID_DispHTMLFormElement, riid)) {
+        TRACE("(%p)->(DIID_DispHTMLFormElement %p)\n", This, ppv);
+        *ppv = &This->IHTMLFormElement_iface;
     }
 
     if(*ppv) {

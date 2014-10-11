@@ -381,6 +381,7 @@ static const IID * const form_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLFormElement,
     &IID_IConnectionPointContainer,
+    &DIID_DispHTMLFormElement,
     NULL
 };
 
