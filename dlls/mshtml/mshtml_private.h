@@ -1195,6 +1195,7 @@ static inline void windowref_release(windowref_t *ref)
         heap_free(ref);
 }
 
+UINT cp_from_charset_string(BSTR) DECLSPEC_HIDDEN;
 HDC get_display_dc(void) DECLSPEC_HIDDEN;
 HINSTANCE get_shdoclc(void) DECLSPEC_HIDDEN;
 void set_statustext(HTMLDocumentObj*,INT,LPCWSTR) DECLSPEC_HIDDEN;

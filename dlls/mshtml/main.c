@@ -35,6 +35,7 @@
 #include "optary.h"
 #include "rpcproxy.h"
 #include "shlguid.h"
+#include "mlang.h"
 
 #include "wine/debug.h"
 
@@ -50,6 +51,35 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 static HINSTANCE shdoclc = NULL;
 static HDC display_dc;
 static WCHAR *status_strings[IDS_STATUS_LAST-IDS_STATUS_FIRST+1];
+static IMultiLanguage2 *mlang;
+
+UINT cp_from_charset_string(BSTR charset)
+{
+    MIMECSETINFO info;
+    HRESULT hres;
+
+    if(!mlang) {
+        IMultiLanguage2 *new_mlang;
+
+        hres = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IMultiLanguage2, (void**)&new_mlang);
+        if(FAILED(hres)) {
+            ERR("Could not create CMultiLanguage instance\n");
+            return CP_UTF8;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)&mlang, new_mlang, NULL))
+            IMultiLanguage2_Release(new_mlang);
+    }
+
+    hres = IMultiLanguage2_GetCharsetInfo(mlang, charset, &info);
+    if(FAILED(hres)) {
+        FIXME("GetCharsetInfo failed: %08x\n", hres);
+        return CP_UTF8;
+    }
+
+    return info.uiInternetEncoding;
+}
 
 static void thread_detach(void)
 {
@@ -83,6 +113,8 @@ static void process_detach(void)
         TlsFree(mshtml_tls);
     if(display_dc)
         DeleteObject(display_dc);
+    if(mlang)
+        IMultiLanguage2_Release(mlang);
 
     free_strings();
 }

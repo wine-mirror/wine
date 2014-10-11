@@ -3317,6 +3317,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     WCHAR new_spec[INTERNET_MAX_URL_LENGTH];
     HTMLOuterWindow *window = NULL;
     const char *spec = NULL;
+    UINT cp = CP_UTF8;
     IUri *urlmon_uri;
     nsresult nsres;
     HRESULT hres;
@@ -3343,10 +3344,22 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         }
     }
 
-    if(aOriginCharset && strcasecmp(aOriginCharset, "utf-8"))
-        FIXME("Unsupported charset %s\n", debugstr_a(aOriginCharset));
+    if(aOriginCharset && *aOriginCharset && strncasecmp(aOriginCharset, "utf", 3)) {
+        BSTR charset;
+        int len;
 
-    MultiByteToWideChar(CP_UTF8, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
+        len = MultiByteToWideChar(CP_UTF8, 0, aOriginCharset, -1, NULL, 0);
+        charset = SysAllocStringLen(NULL, len-1);
+        if(!charset)
+            return NS_ERROR_OUT_OF_MEMORY;
+        MultiByteToWideChar(CP_UTF8, 0, aOriginCharset, -1, charset, len);
+
+        cp = cp_from_charset_string(charset);
+
+        SysFreeString(charset);
+    }
+
+    MultiByteToWideChar(cp, 0, spec, -1, new_spec, sizeof(new_spec)/sizeof(WCHAR));
 
     if(base_wine_uri) {
         hres = combine_url(base_wine_uri->uri, new_spec, &urlmon_uri);
