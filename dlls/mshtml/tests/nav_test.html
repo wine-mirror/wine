@@ -34,7 +34,7 @@ function window_navigate_test() {
     var iframe = document.getElementById("testframe");
 
     iframe.onload = function() {
-        iframe.onlod = null;
+        iframe.onload = null;
         var href = iframe.contentWindow.location.href;
 	ok(href === "about:blank", "Unexpected href " + href);
 	next_test();
