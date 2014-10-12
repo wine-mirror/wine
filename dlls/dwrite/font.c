@@ -429,7 +429,7 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace2 *iface, UI
                 continue;
             tablecontext->file_index = i;
 
-            hr = find_font_table(stream, This->data->index, table_tag, table_data, &tablecontext->context, table_size, exists);
+            hr = opentype_get_font_table(stream, This->data->type, This->data->index, table_tag, table_data, &tablecontext->context, table_size, exists);
 
             IDWriteFontFileStream_Release(stream);
         }
@@ -1618,6 +1618,9 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     HRESULT hr = S_OK;
 
     *font_face = NULL;
+
+    if (facetype != DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION && index)
+        return E_INVALIDARG;
 
     This = heap_alloc(sizeof(struct dwrite_fontface));
     if (!This) return E_OUTOFMEMORY;

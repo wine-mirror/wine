@@ -225,48 +225,35 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
     return S_OK;
 }
 
-HRESULT find_font_table(IDWriteFontFileStream *stream, UINT32 font_index, UINT32 tag, const void** table_data, void** table_context, UINT32 *table_size, BOOL* found)
+HRESULT opentype_get_font_table(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE type, UINT32 font_index, UINT32 tag,
+    const void **table_data, void **table_context, UINT32 *table_size, BOOL *found)
 {
-    const CHAR *first_data;
-    void *first_context;
     HRESULT hr;
     TTC_SFNT_V1 *font_header = NULL;
     void *sfnt_context;
     TT_TableRecord *table_record = NULL;
     void *table_record_context;
+    int table_count, table_offset = 0;
     int i;
-    int table_count;
-    int table_offset = 0;
 
     *found = FALSE;
 
-    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&first_data, 0, 4, &first_context);
-    if (SUCCEEDED(hr))
-    {
-        if (DWRITE_MAKE_OPENTYPE_TAG(first_data[0], first_data[1], first_data[2], first_data[3]) == MS_TTCF_TAG)
-        {
-            const TTC_Header_V1 *ttc_header;
-            void * ttc_context;
-            hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&ttc_header, 0, sizeof(*ttc_header), &ttc_context);
-            if (SUCCEEDED(hr))
-            {
-                table_offset = GET_BE_DWORD(ttc_header->OffsetTable[0]);
-                if (font_index >= GET_BE_DWORD(ttc_header->numFonts))
-                    hr = E_INVALIDARG;
-                else
-                    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&font_header, table_offset, sizeof(*font_header), &sfnt_context);
-                IDWriteFontFileStream_ReleaseFileFragment(stream, ttc_context);
-            }
-        }
-        else
-        {
-            if (font_index > 0)
+    if (type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) {
+        const TTC_Header_V1 *ttc_header;
+        void * ttc_context;
+        hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&ttc_header, 0, sizeof(*ttc_header), &ttc_context);
+        if (SUCCEEDED(hr)) {
+            table_offset = GET_BE_DWORD(ttc_header->OffsetTable[0]);
+            if (font_index >= GET_BE_DWORD(ttc_header->numFonts))
                 hr = E_INVALIDARG;
             else
-                hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&font_header, 0, sizeof(*font_header), &sfnt_context);
+                hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&font_header, table_offset, sizeof(*font_header), &sfnt_context);
+            IDWriteFontFileStream_ReleaseFileFragment(stream, ttc_context);
         }
-        IDWriteFontFileStream_ReleaseFileFragment(stream, first_context);
     }
+    else
+        hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&font_header, 0, sizeof(*font_header), &sfnt_context);
+
     if (FAILED(hr))
         return hr;
 

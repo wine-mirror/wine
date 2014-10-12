@@ -982,10 +982,14 @@ static void test_FontLoader(void)
         ok(face == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face);
         ok(count == 1, "got %i\n", count);
 
-        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, 0, &fface);
-        ok(hr == S_OK, "got 0x%08x\n",hr);
+        /* invalid index */
+        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 1, DWRITE_FONT_SIMULATIONS_NONE, &fface);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, DWRITE_FONT_SIMULATIONS_NONE, &fface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IDWriteFontFace_GetGlyphIndices(fface, codePoints, 1, indices);
-        ok(hr == S_OK, "got0x%08x\n",hr);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(indices[0] == 6, "got index %i\n",indices[0]);
         IDWriteFontFace_Release(fface);
         IDWriteFontFile_Release(ffile);
