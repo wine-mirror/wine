@@ -600,10 +600,28 @@ struct unwind_info_x86_64
 
 struct unwind_info_armnt
 {
-    WORD function_length;
-    WORD unknown1 : 7;
-    WORD count : 5;
-    WORD unknown2 : 4;
+    DWORD function_length : 18;
+    DWORD version : 2;
+    DWORD x : 1;
+    DWORD e : 1;
+    DWORD f : 1;
+    DWORD count : 5;
+    DWORD words : 4;
+};
+
+struct unwind_info_ext_armnt
+{
+    WORD excount;
+    BYTE exwords;
+    BYTE reserved;
+};
+
+struct unwind_info_epilogue_armnt
+{
+    DWORD offset : 18;
+    DWORD res : 2;
+    DWORD cond : 4;
+    DWORD index : 8;
 };
 
 #define UWOP_PUSH_NONVOL     0
@@ -725,35 +743,421 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
                 (ULONG)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
 }
 
-static void dump_armnt_unwind_info( const struct runtime_function_armnt *function )
+static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
 {
     const struct unwind_info_armnt *info;
-    if (function->u.s.Flag)
+    const struct unwind_info_ext_armnt *infoex;
+    const struct unwind_info_epilogue_armnt *infoepi;
+    unsigned int rva;
+    WORD i, count = 0, words = 0;
+
+    if (fnc->u.s.Flag)
     {
-        printf( "\nFunction %08x-%08x:\n", function->BeginAddress & ~1,
-                (function->BeginAddress & ~1) + function->u.s.FunctionLength * 2 );
-        printf( "    Flag           %x\n", function->u.s.Flag );
-        printf( "    FunctionLength %x\n", function->u.s.FunctionLength );
-        printf( "    Ret            %x\n", function->u.s.Ret );
-        printf( "    H              %x\n", function->u.s.H );
-        printf( "    Reg            %x\n", function->u.s.Reg );
-        printf( "    R              %x\n", function->u.s.R );
-        printf( "    L              %x\n", function->u.s.L );
-        printf( "    C              %x\n", function->u.s.C );
-        printf( "    StackAdjust    %x\n", function->u.s.StackAdjust );
+        char intregs[32] = {0}, intregspop[32] = {0}, vfpregs[32] = {0};
+        WORD pf = 0, ef = 0, sc = 0;
+
+        printf( "\nFunction %08x-%08x:\n", fnc->BeginAddress & ~1,
+                (fnc->BeginAddress & ~1) + fnc->u.s.FunctionLength * 2 );
+        printf( "    Flag           %x\n", fnc->u.s.Flag );
+        printf( "    FunctionLength %x\n", fnc->u.s.FunctionLength );
+        printf( "    Ret            %x\n", fnc->u.s.Ret );
+        printf( "    H              %x\n", fnc->u.s.H );
+        printf( "    Reg            %x\n", fnc->u.s.Reg );
+        printf( "    R              %x\n", fnc->u.s.R );
+        printf( "    L              %x\n", fnc->u.s.L );
+        printf( "    C              %x\n", fnc->u.s.C );
+        printf( "    StackAdjust    %x\n", fnc->u.s.StackAdjust );
+
+        if (fnc->u.s.StackAdjust >= 0x03f4)
+        {
+            pf = fnc->u.s.StackAdjust & 0x04;
+            ef = fnc->u.s.StackAdjust & 0x08;
+        }
+
+        if (!fnc->u.s.R && !pf)
+        {
+            if (fnc->u.s.Reg)
+            {
+                sprintf(intregs, "r4-r%u", fnc->u.s.Reg + 4);
+                sprintf(intregspop, "r4-r%u", fnc->u.s.Reg + 4);
+            }
+            else
+            {
+                strcpy(intregs, "r4");
+                strcpy(intregspop, "r4");
+            }
+            sc = fnc->u.s.Reg + 1;
+            if (fnc->u.s.C || fnc->u.s.L)
+            {
+                strcat(intregs, ", ");
+                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                    strcat(intregspop, ", ");
+            }
+        }
+        else if (fnc->u.s.R && pf)
+        {
+            if (((~fnc->u.s.StackAdjust) & 3) != 3)
+            {
+                sprintf(intregs, "r%u-r3", (~fnc->u.s.StackAdjust) & 3);
+                sprintf(intregspop, "r%u-r3", (~fnc->u.s.StackAdjust) & 3);
+            }
+            else
+            {
+                sprintf(intregs, "r3");
+                sprintf(intregspop, "r3");
+            }
+            sc = 4 - ((~fnc->u.s.StackAdjust) & 3);
+            if (fnc->u.s.C || fnc->u.s.L)
+            {
+                strcat(intregs, ", ");
+                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                    strcat(intregspop, ", ");
+            }
+        }
+        else if (!fnc->u.s.R && pf)
+        {
+            sprintf(intregs, "r%u-r%u", (~fnc->u.s.StackAdjust) & 3, fnc->u.s.Reg + 4);
+            sprintf(intregspop, "r%u-r%u", (~fnc->u.s.StackAdjust) & 3, fnc->u.s.Reg + 4);
+            sc = fnc->u.s.Reg + 5 - ((~fnc->u.s.StackAdjust) & 3);
+            if (fnc->u.s.C || fnc->u.s.L)
+            {
+                strcat(intregs, ", ");
+                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                    strcat(intregspop, ", ");
+            }
+        }
+        else if (fnc->u.s.R && !pf)
+        {
+            if (!fnc->u.s.C && !fnc->u.s.L)
+            {
+                strcpy(intregs, "none");
+                strcpy(intregspop, "none");
+            }
+        }
+
+        if (fnc->u.s.C && !fnc->u.s.L)
+        {
+            strcat(intregs, "r11");
+            strcat(intregspop, "r11");
+        }
+        else if (fnc->u.s.C && fnc->u.s.L)
+        {
+            strcat(intregs, "r11, lr");
+            if (fnc->u.s.H)
+                strcat(intregspop, "r11");
+            else
+                strcat(intregspop, "r11, pc");
+        }
+        else if (!fnc->u.s.C && fnc->u.s.L)
+        {
+            strcat(intregs, "lr");
+            if (!fnc->u.s.H)
+                strcat(intregspop, "pc");
+        }
+
+        if (fnc->u.s.R)
+        {
+            if (fnc->u.s.Reg)
+                sprintf(vfpregs, "d8-d%u", fnc->u.s.Reg + 8);
+            else
+                strcpy(vfpregs, "d8");
+        }
+        else
+            strcpy(vfpregs, "none");
+
+        if (fnc->u.s.H)
+            printf( "    Unwind Code\tpush {r0-r3}\n" );
+
+        if (fnc->u.s.R || fnc->u.s.L || fnc->u.s.C || pf)
+            printf( "    Unwind Code\tpush {%s}\n", intregs );
+
+        if (fnc->u.s.C && fnc->u.s.R && !fnc->u.s.L && !pf)
+            printf( "    Unwind Code\tmov r11, sp\n" );
+        else if (fnc->u.s.C && (!fnc->u.s.R || fnc->u.s.L || pf))
+        {
+            if (fnc->u.s.StackAdjust >= 0x03f4 && !sc)
+                printf( "    Unwind Code\tadd r11, sp, #<unknown>\n");
+            else if (fnc->u.s.StackAdjust >= 0x03f4)
+                printf( "    Unwind Code\tadd r11, sp, #%d\n", sc * 4 );
+            else
+                printf( "    Unwind Code\tadd r11, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
+        }
+
+        if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
+            printf( "    Unwind Code\tvpush {%s}\n", vfpregs );
+
+        if (fnc->u.s.StackAdjust < 0x03f4 && !pf)
+            printf( "    Unwind Code\tsub sp, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
+
+
+        if (fnc->u.s.StackAdjust < 0x03f4 && !ef)
+            printf( "    Unwind Code\tadd sp, sp, #%d\n", fnc->u.s.StackAdjust * 4 );
+
+        if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
+            printf( "    Unwind Code\tvpop {%s}\n", vfpregs );
+
+        if (fnc->u.s.C || !fnc->u.s.R || ef || (fnc->u.s.L && !fnc->u.s.H))
+            printf( "    Unwind Code\tpop {%s}\n", intregspop );
+
+        if (fnc->u.s.H && !fnc->u.s.L)
+            printf( "    Unwind Code\tadd sp, sp, #16\n" );
+        else if (fnc->u.s.H && fnc->u.s.L)
+            printf( "    Unwind Code\tldr pc, [sp], #20\n" );
+
+        if (fnc->u.s.Ret == 1)
+            printf( "    Unwind Code\tbx <reg>\n" );
+        else if (fnc->u.s.Ret == 2)
+            printf( "    Unwind Code\tb <address>\n" );
+
         return;
     }
 
-    info = RVA( function->u.UnwindData, sizeof(*info) );
+    info = RVA( fnc->u.UnwindData, sizeof(*info) );
+    rva = fnc->u.UnwindData + sizeof(*info);
+    count = info->count;
+    words = info->words;
 
-    printf( "\nFunction %08x-%08x:\n", function->BeginAddress & ~1,
-            (function->BeginAddress & ~1) + info->function_length * 2 );
-    printf( "  unwind info at %08x\n", function->u.UnwindData );
-    printf( "    Flag           %x\n", function->u.s.Flag );
+    printf( "\nFunction %08x-%08x:\n", fnc->BeginAddress & ~1,
+            (fnc->BeginAddress & ~1) + info->function_length * 2 );
+    printf( "  unwind info at %08x\n", fnc->u.UnwindData );
+    printf( "    Flag           %x\n", fnc->u.s.Flag );
     printf( "    FunctionLength %x\n", info->function_length );
-    printf( "    Unknown1       %x\n", info->unknown1 );
-    printf( "    Count          %x\n", info->count );
-    printf( "    Unknown2       %x\n", info->unknown2 );
+    printf( "    Version        %x\n", info->version );
+    printf( "    X              %x\n", info->x );
+    printf( "    E              %x\n", info->e );
+    printf( "    F              %x\n", info->f );
+    printf( "    Count          %x\n", count );
+    printf( "    Words          %x\n", words );
+
+    if (!info->count && !info->words)
+    {
+        infoex = RVA( rva, sizeof(*infoex) );
+        rva = rva + sizeof(*infoex);
+        count = infoex->excount;
+        words = infoex->exwords;
+        printf( "    ExtCount       %x\n", count );
+        printf( "    ExtWords       %x\n", words );
+    }
+
+    if (!info->e)
+    {
+        infoepi = RVA( rva, count * sizeof(*infoepi) );
+        rva = rva + count * sizeof(*infoepi);
+
+        for (i = 0; i < count; i++)
+        {
+            printf( "    Epilogue Scope %x\n", i );
+            printf( "      Offset       %x\n", infoepi[i].offset );
+            printf( "      Reserved     %x\n", infoepi[i].res );
+            printf( "      Condition    %x\n", infoepi[i].cond );
+            printf( "      Index        %x\n", infoepi[i].index );
+        }
+    }
+    else
+        infoepi = NULL;
+
+    if (words)
+    {
+        const unsigned int *codes;
+        BYTE b, *bytes;
+        BOOL inepilogue = FALSE;
+
+        codes = RVA( rva, words * sizeof(*codes) );
+        rva = rva + words * sizeof(*codes);
+        bytes = (BYTE*)codes;
+
+        for (b = 0; b < words * sizeof(*codes); b++)
+        {
+            BYTE code = bytes[b];
+
+            if (info->e && b == count)
+            {
+                printf( "Epilogue:\n" );
+                inepilogue = TRUE;
+            }
+            else if (!info->e && infoepi)
+            {
+                for (i = 0; i < count; i++)
+                    if (b == infoepi[i].index)
+                    {
+                        printf( "Epilogue from Scope %x at %08x:\n", i,
+                                (fnc->BeginAddress & ~1) + infoepi[i].offset * 2 );
+                        inepilogue = TRUE;
+                    }
+            }
+
+            printf( "    Unwind Code %x\t", code );
+
+            if (code == 0x00)
+                printf( "\n" );
+            else if (code <= 0x7f)
+                printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", code * 4 );
+            else if (code <= 0xbf)
+            {
+                WORD excode, f;
+                BOOL first = TRUE;
+                BYTE excodes = bytes[++b];
+
+                excode = (code << 8) | excodes;
+                printf( "%s {", inepilogue ? "pop" : "push" );
+
+                for (f = 0; f <= 12; f++)
+                {
+                    if ((excode >> f) & 1)
+                    {
+                        printf( "%sr%u", first ? "" : ", ", f );
+                        first = FALSE;
+                    }
+                }
+
+                if (excode & 0x2000)
+                    printf( "%s%s", first ? "" : ", ", inepilogue ? "pc" : "lr" );
+
+                printf( "}\n" );
+            }
+            else if (code <= 0xcf)
+                if (inepilogue)
+                    printf( "mov sp, r%u\n", code & 0x0f );
+                else
+                    printf( "mov r%u, sp\n", code & 0x0f );
+            else if (code <= 0xd7)
+                if (inepilogue)
+                    printf( "pop {r4-r%u%s}\n", (code & 0x03) + 4, (code & 0x04) ? ", pc" : "" );
+                else
+                    printf( "push {r4-r%u%s}\n", (code & 0x03) + 4, (code & 0x04) ? ", lr" : "" );
+            else if (code <= 0xdf)
+                if (inepilogue)
+                    printf( "pop {r4-r%u%s}\n", (code & 0x03) + 8, (code & 0x04) ? ", pc" : "" );
+                else
+                    printf( "push {r4-r%u%s}\n", (code & 0x03) + 8, (code & 0x04) ? ", lr" : "" );
+            else if (code <= 0xe7)
+                printf( "%s {d8-d%u}\n", inepilogue ? "vpop" : "vpush", (code & 0x07) + 8 );
+            else if (code <= 0xeb)
+            {
+                WORD excode;
+                BYTE excodes = bytes[++b];
+
+                excode = (code << 8) | excodes;
+                printf( "%s sp, sp, #%u\n", inepilogue ? "addw" : "subw", (excode & 0x03ff) *4 );
+            }
+            else if (code <= 0xed)
+            {
+                WORD excode, f;
+                BOOL first = TRUE;
+                BYTE excodes = bytes[++b];
+
+                excode = (code << 8) | excodes;
+                printf( "%s {", inepilogue ? "pop" : "push" );
+
+                for (f = 0; f < 8; f++)
+                {
+                    if ((excode >> f) & 1)
+                    {
+                        printf( "%sr%u", first ? "" : ", ", f );
+                        first = FALSE;
+                    }
+                }
+
+                if (excode & 0x0100)
+                    printf( "%s%s", first ? "" : ", ", inepilogue ? "pc" : "lr" );
+
+                printf( "}\n" );
+            }
+            else if (code == 0xee)
+                printf( "unknown 16\n" );
+            else if (code == 0xef)
+            {
+                WORD excode;
+                BYTE excodes = bytes[++b];
+
+                if (excodes <= 0x0f)
+                {
+                    excode = (code << 8) | excodes;
+                    if (inepilogue)
+                        printf( "ldr lr, [sp], #%u\n", (excode & 0x0f) * 4 );
+                    else
+                        printf( "unknown 32\n" );
+                }
+                else
+                    printf( "unknown 32\n" );
+            }
+            else if (code <= 0xf4)
+                printf( "unknown\n" );
+            else if (code <= 0xf6)
+            {
+                WORD excode, offset = (code == 0xf6) ? 16 : 0;
+                BYTE excodes = bytes[++b];
+
+                excode = (code << 8) | excodes;
+                printf( "%s {d%u-d%u}\n", inepilogue ? "vpop" : "vpush",
+                        ((excode & 0x00f0) >> 4) + offset, (excode & 0x0f) + offset );
+            }
+            else if (code <= 0xf7)
+            {
+                unsigned int excode;
+                BYTE excodes[2];
+
+                excodes[0] = bytes[++b];
+                excodes[1] = bytes[++b];
+                excode = (code << 16) | (excodes[0] << 8) | excodes[1];
+                printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", (excode & 0xffff) *4 );
+            }
+            else if (code <= 0xf8)
+            {
+                unsigned int excode;
+                BYTE excodes[3];
+
+                excodes[0] = bytes[++b];
+                excodes[1] = bytes[++b];
+                excodes[2] = bytes[++b];
+                excode = (code << 24) | (excodes[0] << 16) | (excodes[1] << 8) | excodes[2];
+                printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", (excode & 0xffffff) * 4 );
+            }
+            else if (code <= 0xf9)
+            {
+                unsigned int excode;
+                BYTE excodes[2];
+
+                excodes[0] = bytes[++b];
+                excodes[1] = bytes[++b];
+                excode = (code << 16) | (excodes[0] << 8) | excodes[1];
+                printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", (excode & 0xffff) *4 );
+            }
+            else if (code <= 0xfa)
+            {
+                unsigned int excode;
+                BYTE excodes[3];
+
+                excodes[0] = bytes[++b];
+                excodes[1] = bytes[++b];
+                excodes[2] = bytes[++b];
+                excode = (code << 24) | (excodes[0] << 16) | (excodes[1] << 8) | excodes[2];
+                printf( "%s sp, sp, #%u\n", inepilogue ? "add" : "sub", (excode & 0xffffff) * 4 );
+            }
+            else if (code <= 0xfc)
+                printf( "nop\n" );
+            else if (code <= 0xfe)
+            {
+                printf( "(end) nop\n" );
+                inepilogue = TRUE;
+            }
+            else
+            {
+                printf( "end\n" );
+                inepilogue = TRUE;
+            }
+        }
+    }
+
+    if (info->x)
+    {
+        const unsigned int *handler;
+
+        handler = RVA( rva, sizeof(*handler) );
+        rva = rva + sizeof(*handler);
+
+        printf( "    handler %08x data at %08x\n", *handler, rva);
+    }
 }
 
 static void dump_dir_exceptions(void)
