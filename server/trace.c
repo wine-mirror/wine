@@ -127,6 +127,8 @@ static void dump_cpu_type( const char *prefix, const cpu_type_t *code )
         CASE(x86);
         CASE(x86_64);
         CASE(POWERPC);
+        CASE(ARM);
+        CASE(ARM64);
         default: fprintf( stderr, "%s%u", prefix, *code ); break;
 #undef CASE
     }
