@@ -395,7 +395,6 @@ struct _script_ctx_t {
 
     jsdisp_t *global;
     jsdisp_t *function_constr;
-    jsdisp_t *activex_constr;
     jsdisp_t *array_constr;
     jsdisp_t *bool_constr;
     jsdisp_t *date_constr;

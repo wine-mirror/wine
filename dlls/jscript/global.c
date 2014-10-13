@@ -249,14 +249,6 @@ static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     return constructor_call(ctx->regexp_constr, flags, argc, argv, r);
 }
 
-static HRESULT JSGlobal_ActiveXObject(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->activex_constr, flags, argc, argv, r);
-}
-
 static HRESULT JSGlobal_VBArray(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -1087,7 +1079,6 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 }
 
 static const builtin_prop_t JSGlobal_props[] = {
-    {ActiveXObjectW,             JSGlobal_ActiveXObject,             PROPF_CONSTR|1},
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR|1},
     {BooleanW,                   JSGlobal_Boolean,                   PROPF_CONSTR|1},
     {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
@@ -1146,10 +1137,6 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
-    hres = create_activex_constr(ctx, &ctx->activex_constr);
-    if(FAILED(hres))
-        return hres;
-
     hres = create_array_constr(ctx, object_prototype, &ctx->array_constr);
     if(FAILED(hres))
         return hres;
@@ -1187,7 +1174,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
-    jsdisp_t *math, *object_prototype;
+    jsdisp_t *math, *object_prototype, *constr;
     HRESULT hres;
 
     if(ctx->global)
@@ -1212,6 +1199,15 @@ HRESULT init_global(script_ctx_t *ctx)
 
     hres = jsdisp_propput_dontenum(ctx->global, MathW, jsval_obj(math));
     jsdisp_release(math);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_activex_constr(ctx, &constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, ActiveXObjectW, jsval_obj(constr));
+    jsdisp_release(constr);
     if(FAILED(hres))
         return hres;
 

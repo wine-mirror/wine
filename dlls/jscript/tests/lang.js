@@ -1450,6 +1450,9 @@ function returnTest() {
 
 ok(returnTest() === undefined, "returnTest = " + returnTest());
 
+ActiveXObject = 1;
+ok(ActiveXObject === 1, "ActiveXObject = " + ActiveXObject);
+
 /* Keep this test in the end of file */
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);
