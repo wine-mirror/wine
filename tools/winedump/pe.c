@@ -790,7 +790,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             if (fnc->u.s.C || fnc->u.s.L)
             {
                 strcat(intregs, ", ");
-                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
                     strcat(intregspop, ", ");
             }
         }
@@ -810,7 +810,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             if (fnc->u.s.C || fnc->u.s.L)
             {
                 strcat(intregs, ", ");
-                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
                     strcat(intregspop, ", ");
             }
         }
@@ -822,7 +822,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             if (fnc->u.s.C || fnc->u.s.L)
             {
                 strcat(intregs, ", ");
-                if (fnc->u.s.C || fnc->u.s.L && !fnc->u.s.H)
+                if (fnc->u.s.C || (fnc->u.s.L && !fnc->u.s.H))
                     strcat(intregspop, ", ");
             }
         }
