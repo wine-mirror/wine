@@ -1264,4 +1264,6 @@ Call ok(getVT(RGB(&h1&, &h100&, &h111&)) = "VT_I4", "getVT(RGB(&h1&, &h100&, &h1
 Call testRGBError(-1, &h1e&, &h3b&, 5)
 Call testRGBError(&h4d&, -2, &h2f&, 5)
 
+Call ok(getVT(Timer) = "VT_R4", "getVT(Timer) = " & getVT(Timer))
+
 Call reportSuccess()

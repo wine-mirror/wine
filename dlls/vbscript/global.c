@@ -130,6 +130,16 @@ static inline HRESULT return_double(VARIANT *res, double val)
     return S_OK;
 }
 
+static inline HRESULT return_float(VARIANT *res, float val)
+{
+    if(res) {
+        V_VT(res) = VT_R4;
+        V_R4(res) = val;
+    }
+
+    return S_OK;
+}
+
 static inline HRESULT return_null(VARIANT *res)
 {
     if(res)
@@ -760,8 +770,13 @@ static HRESULT Global_Rnd(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Timer(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    SYSTEMTIME lt;
+    double sec;
+
+    GetLocalTime(&lt);
+    sec = lt.wHour * 3600 + lt.wMinute * 60 + lt.wSecond + lt.wMilliseconds / 1000.0;
+    return return_float(res, sec);
+
 }
 
 static HRESULT Global_LBound(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
