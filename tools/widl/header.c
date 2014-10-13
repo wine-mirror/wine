@@ -828,6 +828,32 @@ static int is_inherited_method(const type_t *iface, const var_t *func)
   return 0;
 }
 
+static int is_override_method(const type_t *iface, const type_t *child, const var_t *func)
+{
+  if (iface == child)
+    return 0;
+
+  do
+  {
+    const statement_t *stmt;
+    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(child))
+    {
+      const var_t *funccmp = stmt->u.var;
+
+      if (!is_callas(func->attrs))
+      {
+         char inherit_name[256];
+         /* compare full name including property prefix */
+         strcpy(inherit_name, get_name(funccmp));
+         if (!strcmp(inherit_name, get_name(func))) return 1;
+      }
+    }
+  }
+  while ((child = type_iface_get_inherit(child)) && child != iface);
+
+  return 0;
+}
+
 static int is_aggregate_return(const var_t *func)
 {
   enum type_type type = type_get_type(type_function_get_rettype(func->type));
@@ -835,13 +861,23 @@ static int is_aggregate_return(const var_t *func)
          type == TYPE_COCLASS || type == TYPE_INTERFACE;
 }
 
-static void write_method_macro(FILE *header, const type_t *iface, const char *name)
+static char *get_vtbl_entry_name(const type_t *iface, const var_t *func)
+{
+  static char buff[255];
+  if (is_inherited_method(iface, func))
+    sprintf(buff, "%s_%s", iface->name, get_name(func));
+  else
+    sprintf(buff, "%s", get_name(func));
+  return buff;
+}
+
+static void write_method_macro(FILE *header, const type_t *iface, const type_t *child, const char *name)
 {
   const statement_t *stmt;
   int first_iface = 1;
 
   if (type_iface_get_inherit(iface))
-    write_method_macro(header, type_iface_get_inherit(iface), name);
+    write_method_macro(header, type_iface_get_inherit(iface), child, name);
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
@@ -853,8 +889,10 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
       first_iface = 0;
     }
 
-    if (!is_callas(func->attrs) && !is_inherited_method(iface, func) &&
-        !is_aggregate_return(func)) {
+    if (is_override_method(iface, child, func))
+      continue;
+
+    if (!is_callas(func->attrs) && !is_aggregate_return(func)) {
       const var_t *arg;
 
       fprintf(header, "#define %s_%s(This", name, get_name(func));
@@ -863,7 +901,7 @@ static void write_method_macro(FILE *header, const type_t *iface, const char *na
               fprintf(header, ",%s", arg->name);
       fprintf(header, ") ");
 
-      fprintf(header, "(This)->lpVtbl->%s(This", get_name(func));
+      fprintf(header, "(This)->lpVtbl->%s(This", get_vtbl_entry_name(iface, func));
       if (type_get_function_args(func->type))
           LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
               fprintf(header, ",%s", arg->name);
@@ -929,13 +967,13 @@ static void write_cpp_method_def(FILE *header, const type_t *iface)
   }
 }
 
-static void write_inline_wrappers(FILE *header, const type_t *iface, const char *name)
+static void write_inline_wrappers(FILE *header, const type_t *iface, const type_t *child, const char *name)
 {
   const statement_t *stmt;
   int first_iface = 1;
 
   if (type_iface_get_inherit(iface))
-    write_inline_wrappers(header, type_iface_get_inherit(iface), name);
+    write_inline_wrappers(header, type_iface_get_inherit(iface), child, name);
 
   STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
   {
@@ -947,7 +985,10 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const char 
       first_iface = 0;
     }
 
-    if (!is_callas(func->attrs) && !is_inherited_method(iface, func)) {
+    if (is_override_method(iface, child, func))
+      continue;
+
+    if (!is_callas(func->attrs)) {
       const var_t *arg;
 
       fprintf(header, "static FORCEINLINE ");
@@ -960,13 +1001,13 @@ static void write_inline_wrappers(FILE *header, const type_t *iface, const char 
         indent(header, 0);
         fprintf(header, "%sThis->lpVtbl->%s(This",
                 is_void(type_function_get_rettype(func->type)) ? "" : "return ",
-                get_name(func));
+                get_vtbl_entry_name(iface, func));
       } else {
         indent(header, 0);
         write_type_decl_left(header, type_function_get_rettype(func->type));
         fprintf(header, " __ret;\n");
         indent(header, 0);
-        fprintf(header, "return *This->lpVtbl->%s(This,&__ret", get_name(func));
+        fprintf(header, "return *This->lpVtbl->%s(This,&__ret", get_vtbl_entry_name(iface, func));
       }
       if (type_get_function_args(func->type))
           LIST_FOR_EACH_ENTRY( arg, type_get_function_args(func->type), const var_t, entry )
@@ -1188,6 +1229,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
   const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  type_t *type;
 
   if (uuid)
       write_guid(header, dispinterface ? "DIID" : "IID", iface->name, uuid);
@@ -1245,9 +1287,10 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   /* dispinterfaces don't have real functions, so don't write macros for them,
    * only for the interface this interface inherits from, i.e. IDispatch */
   fprintf(header, "#ifndef WIDL_C_INLINE_WRAPPERS\n");
-  write_method_macro(header, dispinterface ? type_iface_get_inherit(iface) : iface, iface->name);
+  type = dispinterface ? type_iface_get_inherit(iface) : iface;
+  write_method_macro(header, type, type, iface->name);
   fprintf(header, "#else\n");
-  write_inline_wrappers(header, dispinterface ? type_iface_get_inherit(iface) : iface, iface->name);
+  write_inline_wrappers(header, type, type, iface->name);
   fprintf(header, "#endif\n");
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
