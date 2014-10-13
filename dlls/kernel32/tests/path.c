@@ -1828,6 +1828,7 @@ static void test_GetFullPathNameA(void)
     char output[MAX_PATH], *filepart;
     DWORD ret;
     int i;
+    UINT acp;
 
     const struct
     {
@@ -1863,6 +1864,27 @@ static void test_GetFullPathNameA(void)
            GetLastError() == ERROR_INVALID_NAME, /* Win7 */
            "[%d] Expected GetLastError() to return 0xdeadbeef, got %u\n",
            i, GetLastError());
+    }
+
+    acp = GetACP();
+    if (acp != 932)
+        skip("Skipping DBCS(Japanese) GetFullPathNameA test in this codepage (%d)\n", acp);
+    else {
+        const struct dbcs_case {
+            const char *input;
+            const char *expected;
+        } testset[] = {
+            { "c:\\a\\\x95\x5c\x97\xa0.txt", "\x95\x5c\x97\xa0.txt" },
+            { "c:\\\x83\x8f\x83\x43\x83\x93\\wine.c", "wine.c" },
+            { "c:\\demo\\\x97\xa0\x95\x5c", "\x97\xa0\x95\x5c" }
+        };
+        for (i = 0; i < sizeof(testset)/sizeof(testset[0]); i++) {
+            ret = GetFullPathNameA(testset[i].input, sizeof(output),
+                                   output, &filepart);
+            ok(ret, "[%d] GetFullPathName error %u\n", i, GetLastError());
+            ok(!lstrcmpA(filepart, testset[i].expected),
+               "[%d] expected %s got %s\n", i, testset[i].expected, filepart);
+        }
     }
 }
 

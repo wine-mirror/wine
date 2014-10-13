@@ -251,12 +251,12 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                LPSTR *lastpart )
 {
     WCHAR *nameW;
-    WCHAR bufferW[MAX_PATH];
+    WCHAR bufferW[MAX_PATH], *lastpartW = NULL;
     DWORD ret;
 
     if (!(nameW = FILE_name_AtoW( name, FALSE ))) return 0;
 
-    ret = GetFullPathNameW( nameW, MAX_PATH, bufferW, NULL);
+    ret = GetFullPathNameW( nameW, MAX_PATH, bufferW, &lastpartW);
 
     if (!ret) return 0;
     if (ret > MAX_PATH)
@@ -267,14 +267,10 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
     ret = copy_filename_WtoA( bufferW, buffer, len );
     if (ret < len && lastpart)
     {
-        LPSTR p = buffer + strlen(buffer) - 1;
-
-        if (*p != '\\')
-        {
-            while ((p > buffer + 2) && (*p != '\\')) p--;
-            *lastpart = p + 1;
-        }
-        else *lastpart = NULL;
+        if (lastpartW)
+            *lastpart = buffer + FILE_name_WtoA( bufferW, lastpartW - bufferW, NULL, 0 );
+        else
+            *lastpart = NULL;
     }
     return ret;
 }
