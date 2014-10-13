@@ -1285,7 +1285,7 @@ static void test_NtQueryKey(void)
     HANDLE key;
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
-    ULONG len;
+    ULONG length, len;
     KEY_NAME_INFORMATION *info = NULL;
     UNICODE_STRING str;
 
@@ -1293,21 +1293,30 @@ static void test_NtQueryKey(void)
     status = pNtOpenKey(&key, KEY_READ, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
-    status = pNtQueryKey(key, KeyNameInformation, NULL, 0, &len);
+    status = pNtQueryKey(key, KeyNameInformation, NULL, 0, &length);
     if (status == STATUS_INVALID_PARAMETER) {
         win_skip("KeyNameInformation is not supported\n");
         pNtClose(key);
         return;
     }
     todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08x\n", status);
+    info = HeapAlloc(GetProcessHeap(), 0, length);
 
-    info = HeapAlloc(GetProcessHeap(), 0, len);
-    status = pNtQueryKey(key, KeyNameInformation, info, len, &len);
+    /* non-zero buffer size, but insufficient */
+    status = pNtQueryKey(key, KeyNameInformation, info, sizeof(*info), &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryKey Failed: 0x%08x\n", status);
+    ok(length == len, "got %d, expected %d\n", len, length);
+    ok(info->NameLength == winetestpath.Length, "got %d, expected %d\n",
+       info->NameLength, winetestpath.Length);
+
+    /* correct buffer size */
+    status = pNtQueryKey(key, KeyNameInformation, info, length, &len);
     ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+    ok(length == len, "got %d, expected %d\n", len, length);
 
     str.Buffer = info->Name;
     str.Length = info->NameLength;
-    todo_wine ok(pRtlCompareUnicodeString(&winetestpath, &str, TRUE) == 0,
+    ok(pRtlCompareUnicodeString(&winetestpath, &str, TRUE) == 0,
        "got %s, expected %s\n",
        wine_dbgstr_wn(str.Buffer, str.Length/sizeof(WCHAR)),
        wine_dbgstr_wn(winetestpath.Buffer, winetestpath.Length/sizeof(WCHAR)));

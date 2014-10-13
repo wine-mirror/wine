@@ -864,10 +864,12 @@ static struct key *create_key_recursive( struct key *key, const struct unicode_s
 static void enum_key( const struct key *key, int index, int info_class,
                       struct enum_key_reply *reply )
 {
+    static const WCHAR backslash[] = { '\\' };
     int i;
     data_size_t len, namelen, classlen;
     data_size_t max_subkey = 0, max_class = 0;
     data_size_t max_value = 0, max_data = 0;
+    const struct key *k;
     char *data;
 
     if (index != -1)  /* -1 means use the specified key directly */
@@ -885,8 +887,14 @@ static void enum_key( const struct key *key, int index, int info_class,
 
     switch(info_class)
     {
-    case KeyBasicInformation:
     case KeyNameInformation:
+        namelen = 0;
+        for (k = key; k != root_key; k = k->parent)
+            namelen += k->namelen + sizeof(backslash);
+        if (!namelen) return;
+        namelen += sizeof(root_name) - sizeof(backslash);
+        /* fall through */
+    case KeyBasicInformation:
         classlen = 0; /* only return the name */
         /* fall through */
     case KeyNodeInformation:
@@ -934,6 +942,21 @@ static void enum_key( const struct key *key, int index, int info_class,
             reply->namelen = namelen;
             memcpy( data, key->name, namelen );
             memcpy( data + namelen, key->class, len - namelen );
+        }
+        else if (info_class == KeyNameInformation)
+        {
+            data_size_t pos = namelen;
+            reply->namelen = namelen;
+            for (k = key; k != root_key; k = k->parent)
+            {
+                pos -= k->namelen;
+                if (pos < len) memcpy( data + namelen, k->name,
+                                       min( k->namelen, len - pos ) );
+                pos -= sizeof(backslash);
+                if (pos < len) memcpy( data + namelen, backslash,
+                                       min( sizeof(backslash), len - pos ) );
+            }
+            memcpy( data, root_name, min( sizeof(root_name) - sizeof(backslash), len ) );
         }
         else
         {
