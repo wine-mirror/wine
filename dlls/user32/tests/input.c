@@ -1890,6 +1890,56 @@ static void test_Input_mouse(void)
     ok(!got_button_down, "unexpected WM_LBUTTONDOWN message\n");
     ok(!got_button_up, "unexpected WM_LBUTTONUP message\n");
 
+    /* click after SetCapture call */
+    SetCapture(button_win);
+    got_button_down = got_button_up = FALSE;
+    simulate_click(FALSE, 50, 50);
+    while (wait_for_message(&msg))
+    {
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_RBUTTONDOWN)
+        {
+            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
+            got_button_down = TRUE;
+        }
+        else if (msg.message == WM_RBUTTONUP)
+        {
+            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
+            got_button_up = TRUE;
+            break;
+        }
+    }
+    ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
+    ok(got_button_up, "expected WM_RBUTTONUP message\n");
+
+    /* click on child window after SetCapture call */
+    hwnd = CreateWindowA("button", "button2", WS_VISIBLE | WS_CHILD,
+            0, 0, 100, 100, button_win, NULL, NULL, NULL);
+    ok(hwnd != 0, "CreateWindow failed\n");
+    got_button_down = got_button_up = FALSE;
+    simulate_click(TRUE, 150, 150);
+    while (wait_for_message(&msg))
+    {
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_LBUTTONDOWN)
+        {
+            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
+            got_button_down = TRUE;
+        }
+        else if (msg.message == WM_LBUTTONUP)
+        {
+            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
+            got_button_up = TRUE;
+            break;
+        }
+    }
+    ok(got_button_down, "expected WM_LBUTTONDOWN message\n");
+    ok(got_button_up, "expected WM_LBUTTONUP message\n");
+    DestroyWindow(hwnd);
+    ok(ReleaseCapture(), "ReleaseCapture failed\n");
+
     CloseHandle(thread_data.start_event);
     CloseHandle(thread_data.end_event);
     DestroyWindow(button_win);
