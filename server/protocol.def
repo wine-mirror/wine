@@ -2156,7 +2156,6 @@ enum message_type
 @REQ(accept_hardware_message)
     unsigned int    hw_id;     /* id of the hardware message */
     int             remove;    /* should we remove the message? */
-    user_handle_t   new_win;   /* new destination window for current message */
 @END
 
 

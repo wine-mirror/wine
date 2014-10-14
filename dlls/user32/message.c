@@ -2266,13 +2266,12 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
  * Tell the server we have passed the message to the app
  * (even though we may end up dropping it later on)
  */
-static void accept_hardware_message( UINT hw_id, BOOL remove, HWND new_hwnd )
+static void accept_hardware_message( UINT hw_id, BOOL remove )
 {
     SERVER_START_REQ( accept_hardware_message )
     {
         req->hw_id   = hw_id;
         req->remove  = remove;
-        req->new_win = wine_server_user_handle( new_hwnd );
         if (wine_server_call( req ))
             FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
     }
@@ -2460,10 +2459,10 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     {
         /* skip this message */
         HOOK_CallHooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
-        accept_hardware_message( hw_id, TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE );
         return FALSE;
     }
-    accept_hardware_message( hw_id, remove, 0 );
+    accept_hardware_message( hw_id, remove );
 
     if ( remove && msg->message == WM_KEYDOWN )
         if (ImmProcessKey(msg->hwnd, GetKeyboardLayout(0), msg->wParam, msg->lParam, 0) )
@@ -2507,7 +2506,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
     if (!msg->hwnd || !WIN_IsCurrentThread( msg->hwnd ))
     {
-        accept_hardware_message( hw_id, TRUE, msg->hwnd );
+        accept_hardware_message( hw_id, TRUE );
         return FALSE;
     }
 
@@ -2596,7 +2595,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
         HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, TRUE );
-        accept_hardware_message( hw_id, TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE );
         return FALSE;
     }
 
@@ -2604,11 +2603,11 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     {
         SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
                       MAKELONG( hittest, msg->message ));
-        accept_hardware_message( hw_id, TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE );
         return FALSE;
     }
 
-    accept_hardware_message( hw_id, remove, 0 );
+    accept_hardware_message( hw_id, remove );
 
     if (!remove || info.hwndCapture)
     {

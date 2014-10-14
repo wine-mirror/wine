@@ -1281,7 +1281,7 @@ static void update_input_key_state( struct desktop *desktop, unsigned char *keys
 
 /* release the hardware message currently being processed by the given thread */
 static void release_hardware_message( struct msg_queue *queue, unsigned int hw_id,
-                                      int remove, user_handle_t new_win )
+                                      int remove )
 {
     struct thread_input *input = queue->input;
     struct message *msg;
@@ -1293,7 +1293,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     if (&msg->entry == &input->msg_list) return;  /* not found */
 
     /* clear the queue bit for that message */
-    if (remove || new_win)
+    if (remove)
     {
         struct message *other;
         int clr_bit;
@@ -1308,32 +1308,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
             }
         }
         if (clr_bit) clear_queue_bits( queue, clr_bit );
-    }
 
-    if (new_win)  /* set the new window */
-    {
-        struct thread *owner = get_window_thread( new_win );
-        if (owner)
-        {
-            msg->win = new_win;
-            if (owner->queue->input != input)
-            {
-                list_remove( &msg->entry );
-                if (merge_message( owner->queue->input, msg ))
-                {
-                    free_message( msg );
-                    release_object( owner );
-                    return;
-                }
-                list_add_tail( &owner->queue->input->msg_list, &msg->entry );
-            }
-            set_queue_bits( owner->queue, get_hardware_msg_bit( msg ));
-            remove = 0;
-            release_object( owner );
-        }
-    }
-    if (remove)
-    {
         update_input_key_state( input->desktop, input->keystate, msg );
         list_remove( &msg->entry );
         free_message( msg );
@@ -1980,7 +1955,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
         if (msg->msg == WM_INPUT && (flags & PM_REMOVE))
-            release_hardware_message( current->queue, data->hw_id, 1, 0 );
+            release_hardware_message( current->queue, data->hw_id, 1 );
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
@@ -2471,7 +2446,7 @@ DECL_HANDLER(reply_message)
 DECL_HANDLER(accept_hardware_message)
 {
     if (current->queue)
-        release_hardware_message( current->queue, req->hw_id, req->remove, req->new_win );
+        release_hardware_message( current->queue, req->hw_id, req->remove );
     else
         set_error( STATUS_ACCESS_DENIED );
 }
