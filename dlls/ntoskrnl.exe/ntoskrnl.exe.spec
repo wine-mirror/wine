@@ -302,7 +302,7 @@
 @ stub InbvSetScrollRegion
 @ stub InbvSetTextColor
 @ stub InbvSolidColorFill
-@ stub InitSafeBootMode
+@ extern InitSafeBootMode
 @ stdcall IoAcquireCancelSpinLock(ptr)
 @ stdcall IoAcquireRemoveLockEx(ptr ptr ptr long long)
 @ stub IoAcquireVpbSpinLock

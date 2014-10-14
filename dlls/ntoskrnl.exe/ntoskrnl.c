@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 BOOLEAN KdDebuggerEnabled = FALSE;
+ULONG InitSafeBootMode = 0;
 
 extern LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
 
