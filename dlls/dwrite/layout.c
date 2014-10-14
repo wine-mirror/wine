@@ -772,6 +772,10 @@ static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout2 *iface, FL
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     TRACE("(%p)->(%.1f)\n", This, maxWidth);
+
+    if (maxWidth < 0.0)
+        return E_INVALIDARG;
+
     This->maxwidth = maxWidth;
     return S_OK;
 }
@@ -780,6 +784,10 @@ static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout2 *iface, F
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     TRACE("(%p)->(%.1f)\n", This, maxHeight);
+
+    if (maxHeight < 0.0)
+        return E_INVALIDARG;
+
     This->maxheight = maxHeight;
     return S_OK;
 }

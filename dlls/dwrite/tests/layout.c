@@ -550,6 +550,7 @@ static void test_fontweight(void)
     IDWriteTextLayout *layout;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_TEXT_RANGE range;
+    FLOAT size;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
@@ -580,6 +581,48 @@ static void test_fontweight(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
     ok(range.length == 6, "got %d\n", range.length);
+
+    size = IDWriteTextLayout_GetMaxWidth(layout);
+    ok(size == 100.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxWidth(layout, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxWidth(layout);
+    ok(size == 0.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxWidth(layout, -1.0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxWidth(layout);
+    ok(size == 0.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxWidth(layout, 100.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxWidth(layout);
+    ok(size == 100.0, "got %.2f\n", size);
+
+    size = IDWriteTextLayout_GetMaxHeight(layout);
+    ok(size == 100.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxHeight(layout, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxHeight(layout);
+    ok(size == 0.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxHeight(layout, -1.0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxHeight(layout);
+    ok(size == 0.0, "got %.2f\n", size);
+
+    hr = IDWriteTextLayout_SetMaxHeight(layout, 100.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = IDWriteTextLayout_GetMaxHeight(layout);
+    ok(size == 100.0, "got %.2f\n", size);
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(fmt2);
