@@ -2071,7 +2071,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
             pRtlRemoveVectoredExceptionHandler( vectored_handler );
 
             ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
-            todo_wine
             ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
         }
         else
