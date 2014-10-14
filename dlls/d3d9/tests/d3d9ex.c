@@ -30,6 +30,14 @@ static HMODULE d3d9_handle = 0;
 
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
 
+struct device_desc
+{
+    HWND device_window;
+    unsigned int width;
+    unsigned int height;
+    BOOL windowed;
+};
+
 static HWND create_window(void)
 {
     WNDCLASSA wc = {0};
@@ -42,7 +50,7 @@ static HWND create_window(void)
             0, 0, 640, 480, 0, 0, 0, 0);
 }
 
-static IDirect3DDevice9Ex *create_device(HWND device_window, HWND focus_window, BOOL windowed)
+static IDirect3DDevice9Ex *create_device(HWND focus_window, const struct device_desc *desc)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9Ex *device;
@@ -52,23 +60,31 @@ static IDirect3DDevice9Ex *create_device(HWND device_window, HWND focus_window, 
     if (FAILED(pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9)))
         return NULL;
 
-    present_parameters.Windowed = windowed;
-    present_parameters.hDeviceWindow = device_window;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
+    if (desc)
+    {
+        present_parameters.BackBufferWidth = desc->width;
+        present_parameters.BackBufferHeight = desc->height;
+        present_parameters.hDeviceWindow = desc->device_window;
+        present_parameters.Windowed = desc->windowed;
+    }
+
     mode.Size = sizeof(mode);
-    mode.Width = 640;
-    mode.Height = 480;
+    mode.Width = present_parameters.BackBufferWidth;
+    mode.Height = present_parameters.BackBufferHeight;
     mode.RefreshRate = 0;
     mode.Format = D3DFMT_A8R8G8B8;
     mode.ScanLineOrdering = 0;
 
-    m = windowed ? NULL : &mode;
+    m = present_parameters.Windowed ? NULL : &mode;
     if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) goto done;
 
@@ -326,7 +342,7 @@ static void test_swapchain_get_displaymode_ex(void)
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping swapchain GetDisplayModeEx tests.\n");
         goto out;
@@ -537,7 +553,7 @@ static void test_user_memory(void)
     D3DCAPS9 caps;
 
     window = create_window();
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -667,7 +683,7 @@ static void test_reset(void)
     UINT mode_count = 0;
 
     window = create_window();
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping test.\n");
         DestroyWindow(window);
@@ -1035,7 +1051,7 @@ static void test_reset_resources(void)
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -1101,7 +1117,7 @@ static void test_vidmem_accounting(void)
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -1148,7 +1164,7 @@ static void test_user_memory_getdc(void)
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    if (!(device = create_device(window, window, TRUE)))
+    if (!(device = create_device(window, NULL)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
@@ -1187,10 +1203,15 @@ static void test_lost_device(void)
     HWND window;
     HRESULT hr;
     BOOL ret;
+    struct device_desc desc;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
-    if (!(device = create_device(window, window, FALSE)))
+    desc.device_window = window;
+    desc.width = 640;
+    desc.height = 480;
+    desc.windowed = FALSE;
+    if (!(device = create_device(window, &desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
