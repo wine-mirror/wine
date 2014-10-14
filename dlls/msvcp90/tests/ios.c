@@ -442,6 +442,7 @@ static void (*__thiscall p_basic_fstream_wchar_vbase_dtor)(basic_fstream_wchar*)
 
 /* istream */
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
+static basic_istream_char* (*__thiscall p_basic_istream_char_read_float)(basic_istream_char*, float*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
 static int                 (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
 static MSVCP_bool          (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
@@ -648,6 +649,8 @@ static BOOL init(void)
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEA_K@Z");
+        SET(p_basic_istream_char_read_float,
+            "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAN@Z");
         SET(p_basic_istream_char_get,
@@ -765,6 +768,8 @@ static BOOL init(void)
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAAAAV01@AA_K@Z");
+        SET(p_basic_istream_char_read_float,
+            "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAAAAV01@AAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAAAAV01@AAN@Z");
         SET(p_basic_istream_char_get,
@@ -881,6 +886,8 @@ static BOOL init(void)
 
         SET(p_basic_istream_char_read_uint64,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AA_K@Z");
+        SET(p_basic_istream_char_read_float,
+            "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAN@Z");
         SET(p_basic_istream_char_get,
@@ -2027,6 +2034,46 @@ static void test_ostream_wchar_print_double(void)
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
 }
 
+static void test_istream_read_float(void)
+{
+    basic_stringstream_char ss;
+    basic_string_char str;
+    const char *test_str;
+    float val, correct_val;
+
+    test_str = "3.14159";
+    call_func2(p_basic_string_char_ctor_cstr, &str, test_str);
+    call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_in, TRUE);
+
+    val = 0;
+    call_func2(p_basic_istream_char_read_float, &ss.base.base1, &val);
+    correct_val = 3.14159;
+    ok(correct_val == val,   "wrong val, expected = %g found %g\n", correct_val, val);
+
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+    call_func1(p_basic_string_char_dtor, &str);
+}
+
+static void test_istream_read_double(void)
+{
+    basic_stringstream_char ss;
+    basic_string_char str;
+    const char *test_str;
+    double val, correct_val;
+
+    test_str = "3.14159";
+    call_func2(p_basic_string_char_ctor_cstr, &str, test_str);
+    call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_in, TRUE);
+
+    val = 0;
+    call_func2(p_basic_istream_char_read_double, &ss.base.base1, &val);
+    correct_val = 3.14159;
+    ok(correct_val == val,   "wrong val, expected = %g found %g\n", correct_val, val);
+
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+    call_func1(p_basic_string_char_dtor, &str);
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -2046,6 +2093,8 @@ START_TEST(ios)
     test_ostream_print_float();
     test_ostream_print_double();
     test_ostream_wchar_print_double();
+    test_istream_read_float();
+    test_istream_read_double();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
