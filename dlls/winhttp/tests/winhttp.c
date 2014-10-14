@@ -876,7 +876,7 @@ static void test_secure_connection(void)
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT, &info, &size );
     ok(ret, "failed to retrieve certificate info %u\n", GetLastError());
 
-    if (!ret)
+    if (ret)
     {
         trace("lpszSubjectInfo %s\n", wine_dbgstr_w(info.lpszSubjectInfo));
         trace("lpszIssuerInfo %s\n", wine_dbgstr_w(info.lpszIssuerInfo));
