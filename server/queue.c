@@ -1379,11 +1379,13 @@ found:
 
 /* find the window that should receive a given hardware message */
 static user_handle_t find_hardware_message_window( struct desktop *desktop, struct thread_input *input,
-                                                   struct message *msg, unsigned int *msg_code )
+                                                   struct message *msg, unsigned int *msg_code,
+                                                   struct thread **thread )
 {
     struct hardware_msg_data *data = msg->data;
     user_handle_t win = 0;
 
+    *thread = NULL;
     *msg_code = msg->msg;
     if (msg->msg == WM_INPUT)
     {
@@ -1397,14 +1399,16 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
             if (*msg_code < WM_SYSKEYDOWN) *msg_code += WM_SYSKEYDOWN - WM_KEYDOWN;
         }
     }
-    else  /* mouse message */
+    else if (!input || !(win = input->capture)) /* mouse message */
     {
-        if (!input || !(win = input->capture))
-        {
-            if (!(win = msg->win) || !is_window_visible( win ) || is_window_transparent( win ))
-                win = window_from_point( desktop, data->x, data->y );
-        }
+        if (is_window_visible( msg->win ) && !is_window_transparent( msg->win )) win = msg->win;
+        else win = shallow_window_from_point( desktop, data->x, data->y );
+
+        *thread = window_thread_from_point( win, data->x, data->y );
     }
+
+    if (!*thread)
+        *thread = get_window_thread( win );
     return win;
 }
 
@@ -1491,8 +1495,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     else input = desktop->foreground_input;
 
-    win = find_hardware_message_window( desktop, input, msg, &msg_code );
-    if (!win || !(thread = get_window_thread(win)))
+    win = find_hardware_message_window( desktop, input, msg, &msg_code, &thread );
+    if (!win || !thread)
     {
         if (input) update_input_key_state( input->desktop, input->keystate, msg );
         free_message( msg );
@@ -1928,8 +1932,8 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         struct hardware_msg_data *data = msg->data;
 
         ptr = list_next( &input->msg_list, ptr );
-        win = find_hardware_message_window( input->desktop, input, msg, &msg_code );
-        if (!win || !(win_thread = get_window_thread( win )))
+        win = find_hardware_message_window( input->desktop, input, msg, &msg_code, &win_thread );
+        if (!win || !win_thread)
         {
             /* no window at all, remove it */
             update_input_key_state( input->desktop, input->keystate, msg );

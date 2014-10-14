@@ -1803,8 +1803,8 @@ static void test_Input_mouse(void)
         }
     }
     ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
-    todo_wine ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
-    todo_wine ok(got_button_up, "expected WM_RBUTTONUP message\n");
+    ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
+    ok(got_button_up, "expected WM_RBUTTONUP message\n");
     DestroyWindow(static_win);
 
     /* click through HTTRANSPARENT top-level window */

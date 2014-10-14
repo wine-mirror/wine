@@ -157,7 +157,8 @@ extern int is_window_visible( user_handle_t window );
 extern int is_window_transparent( user_handle_t window );
 extern int make_window_active( user_handle_t window );
 extern struct thread *get_window_thread( user_handle_t handle );
-extern user_handle_t window_from_point( struct desktop *desktop, int x, int y );
+extern user_handle_t shallow_window_from_point( struct desktop *desktop, int x, int y );
+extern struct thread *window_thread_from_point( user_handle_t scope, int x, int y );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 extern struct window_class *get_window_class( user_handle_t window );
 

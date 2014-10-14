@@ -727,14 +727,38 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
     return 1;
 }
 
-/* find window containing point (in absolute coords) */
-user_handle_t window_from_point( struct desktop *desktop, int x, int y )
+/* get handle of root of top-most window containing point */
+user_handle_t shallow_window_from_point( struct desktop *desktop, int x, int y )
 {
-    struct window *ret;
+    struct window *ptr;
 
     if (!desktop->top_window) return 0;
-    ret = child_window_from_point( desktop->top_window, x, y );
-    return ret->handle;
+
+    LIST_FOR_EACH_ENTRY( ptr, &desktop->top_window->children, struct window, entry )
+    {
+        if (!is_point_in_window( ptr, x, y )) continue;  /* skip it */
+        return ptr->handle;
+    }
+    return desktop->top_window->handle;
+}
+
+/* return thread of top-most window containing point (in absolute coords) */
+struct thread *window_thread_from_point( user_handle_t scope, int x, int y )
+{
+    struct window *win = get_user_object( scope, USER_WINDOW );
+    struct window *ptr;
+
+    if (!win) return NULL;
+
+    for (ptr = win; ptr && !is_desktop_window(ptr); ptr = ptr->parent)
+    {
+        x -= ptr->client_rect.left;
+        y -= ptr->client_rect.top;
+    }
+
+    ptr =  child_window_from_point( win, x, y );
+    if (!ptr->thread) return NULL;
+    return (struct thread *)grab_object( ptr->thread );
 }
 
 /* return list of all windows containing point (in absolute coords) */

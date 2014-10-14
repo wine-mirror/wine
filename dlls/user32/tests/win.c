@@ -7295,7 +7295,7 @@ static void window_from_point_proc(HWND parent)
         DispatchMessageA(&msg);
     }
     ok(got_hittest, "transparent window didn't get WM_NCHITTEST message\n");
-    todo_wine ok(got_click, "button under static window didn't get WM_LBUTTONUP\n");
+    ok(got_click, "button under static window didn't get WM_LBUTTONUP\n");
 
     ret = WaitForSingleObject(end_event, 5000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", ret);
