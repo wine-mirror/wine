@@ -1124,7 +1124,7 @@ __int32 WINAPI _CorExeMain(void)
     if (domain)
     {
         mono_thread_manage();
-        mono_jit_cleanup(domain);
+        mono_runtime_quit();
     }
 
     return exit_code;

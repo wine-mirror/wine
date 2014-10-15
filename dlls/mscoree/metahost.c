@@ -88,7 +88,6 @@ static void (CDECL *mono_free)(void *);
 static MonoImage* (CDECL *mono_image_open)(const char *fname, MonoImageOpenStatus *status);
 MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
 static void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
-void (CDECL *mono_jit_cleanup)(MonoDomain *domain);
 int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
 MonoDomain* (CDECL *mono_jit_init)(const char *file);
 static int (CDECL *mono_jit_set_trace_options)(const char* options);
@@ -100,6 +99,7 @@ static void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc s
 MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
 MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
 void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
+void (CDECL *mono_runtime_quit)(void);
 static void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
 static void (CDECL *mono_set_verbose_level)(DWORD level);
 MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
@@ -197,7 +197,6 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
         LOAD_MONO_FUNCTION(mono_free);
         LOAD_MONO_FUNCTION(mono_image_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
-        LOAD_MONO_FUNCTION(mono_jit_cleanup);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
@@ -209,6 +208,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This)
         LOAD_MONO_FUNCTION(mono_reflection_type_from_name);
         LOAD_MONO_FUNCTION(mono_runtime_invoke);
         LOAD_MONO_FUNCTION(mono_runtime_object_init);
+        LOAD_MONO_FUNCTION(mono_runtime_quit);
         LOAD_MONO_FUNCTION(mono_set_dirs);
         LOAD_MONO_FUNCTION(mono_set_verbose_level);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
