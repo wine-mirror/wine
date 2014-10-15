@@ -2083,6 +2083,11 @@ static const char *debug_expr_op(const struct hlsl_ir_expr *expr)
 
         "sat",
 
+        "pre++",
+        "pre--",
+        "post++",
+        "post--",
+
         "+",
         "-",
         "*",
@@ -2112,11 +2117,6 @@ static const char *debug_expr_op(const struct hlsl_ir_expr *expr)
         "max",
 
         "pow",
-
-        "pre++",
-        "pre--",
-        "post++",
-        "post--",
 
         "lerp",
 
