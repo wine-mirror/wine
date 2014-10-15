@@ -2847,7 +2847,7 @@ done:
     DestroyWindow(focus_window);
 }
 
-static void test_wrong_shader(void)
+static void test_unsupported_shaders(void)
 {
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d;
@@ -6519,7 +6519,7 @@ START_TEST(device)
     test_wndproc_windowed();
     test_depth_stencil_size();
     test_window_style();
-    test_wrong_shader();
+    test_unsupported_shaders();
     test_mode_change();
     test_device_window_reset();
     test_reset_resources();

@@ -5112,7 +5112,7 @@ static void test_pixel_shader_constant(void)
     DestroyWindow(window);
 }
 
-static void test_wrong_shader(void)
+static void test_unsupported_shaders(void)
 {
     static const DWORD vs_3_0[] =
     {
@@ -9425,7 +9425,7 @@ START_TEST(device)
     test_vertex_shader_constant();
     test_get_set_pixel_shader();
     test_pixel_shader_constant();
-    test_wrong_shader();
+    test_unsupported_shaders();
     test_texture_stage_states();
     test_cube_textures();
     test_mipmap_gen();

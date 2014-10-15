@@ -1338,6 +1338,316 @@ done:
     DestroyWindow(window);
 }
 
+static void test_unsupported_shaders(void)
+{
+    static const DWORD simple_vs[] =
+    {
+        0xfffe0101,                             /* vs_1_1               */
+        0x0000001f, 0x80000000, 0x900f0000,     /* dcl_position0 v0     */
+        0x00000001, 0xc00f0000, 0x90e40000,     /* mov oPos, v0         */
+        0x0000ffff,                             /* end                  */
+    };
+    static const DWORD simple_ps[] =
+    {
+        0xffff0101,                             /* ps_1_1               */
+        0x00000001, 0x800f0000, 0x90e40000,     /* mul r0, t0, r0       */
+        0x0000ffff,                             /* end                  */
+    };
+    static const DWORD vs_3_0[] =
+    {
+        0xfffe0300,                             /* vs_3_0               */
+        0x0200001f, 0x80000000, 0x900f0000,     /* dcl_position v0      */
+        0x0200001f, 0x80000000, 0xe00f0000,     /* dcl_position o0      */
+        0x02000001, 0xe00f0000, 0x90e40000,     /* mov o0, v0           */
+        0x0000ffff,                             /* end                  */
+    };
+
+#if 0
+    float4 main(const float4 color : COLOR) : SV_TARGET
+    {
+        float4 o;
+
+        o = color;
+
+        return o;
+    }
+#endif
+    static const DWORD ps_4_0[] =
+    {
+        0x43425844, 0x4da9446f, 0xfbe1f259, 0x3fdb3009, 0x517521fa, 0x00000001, 0x000001ac, 0x00000005,
+        0x00000034, 0x0000008c, 0x000000bc, 0x000000f0, 0x00000130, 0x46454452, 0x00000050, 0x00000000,
+        0x00000000, 0x00000000, 0x0000001c, 0xffff0400, 0x00000100, 0x0000001c, 0x7263694d, 0x666f736f,
+        0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e39322e,
+        0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x00000028, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x4f4c4f43, 0xabab0052, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03001062, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000002, 0x00000000,
+        0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000,
+    };
+#if 0
+    vs_1_1
+    dcl_position v0
+    def c255, 1.0, 1.0, 1.0, 1.0
+    add r0, v0, c255
+    mov oPos, r0
+#endif
+    static const DWORD vs_1_255[] =
+    {
+        0xfffe0101,
+        0x0000001f, 0x80000000, 0x900f0000,
+        0x00000051, 0xa00f00ff, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x00000002, 0x800f0000, 0x90e40000, 0xa0e400ff,
+        0x00000001, 0xc00f0000, 0x80e40000,
+        0x0000ffff
+    };
+#if 0
+    vs_1_1
+    dcl_position v0
+    def c256, 1.0, 1.0, 1.0, 1.0
+    add r0, v0, c256
+    mov oPos, r0
+#endif
+    static const DWORD vs_1_256[] =
+    {
+        0xfffe0101,
+        0x0000001f, 0x80000000, 0x900f0000,
+        0x00000051, 0xa00f0100, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x00000002, 0x800f0000, 0x90e40000, 0xa0e40100,
+        0x00000001, 0xc00f0000, 0x80e40000,
+        0x0000ffff
+    };
+#if 0
+    vs_3_0
+    dcl_position v0
+    dcl_position o0
+    def c256, 1.0, 1.0, 1.0, 1.0
+    add r0, v0, c256
+    mov o0, r0
+#endif
+    static const DWORD vs_3_256[] =
+    {
+        0xfffe0300,
+        0x0200001f, 0x80000000, 0x900f0000,
+        0x0200001f, 0x80000000, 0xe00f0000,
+        0x05000051, 0xa00f0100, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x03000002, 0x800f0000, 0x90e40000, 0xa0e40100,
+        0x02000001, 0xe00f0000, 0x80e40000,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    vs_3_0
+    dcl_position v0
+    dcl_position o0
+    defi i16, 1, 1, 1, 1
+    rep i16
+    add r0, r0, v0
+    endrep
+    mov o0, r0
+#endif
+    static const DWORD vs_3_i16[] =
+    {
+        0xfffe0300,
+        0x0200001f, 0x80000000, 0x900f0000,
+        0x0200001f, 0x80000000, 0xe00f0000,
+        0x05000030, 0xf00f0010, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
+        0x01000026, 0xf0e40010,
+        0x03000002, 0x800f0000, 0x80e40000, 0x90e40000,
+        0x00000027,
+        0x02000001, 0xe00f0000, 0x80e40000,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    vs_3_0
+    dcl_position v0
+    dcl_position o0
+    defb b16, true
+    mov r0, v0
+    if b16
+    add r0, r0, v0
+    endif
+    mov o0, r0
+#endif
+    static const DWORD vs_3_b16[] =
+    {
+        0xfffe0300,
+        0x0200001f, 0x80000000, 0x900f0000,
+        0x0200001f, 0x80000000, 0xe00f0000,
+        0x0200002f, 0xe00f0810, 0x00000001,
+        0x02000001, 0x800f0000, 0x90e40000,
+        0x01000028, 0xe0e40810,
+        0x03000002, 0x800f0000, 0x80e40000, 0x90e40000,
+        0x0000002b,
+        0x02000001, 0xe00f0000, 0x80e40000,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    ps_1_1
+    def c8, 1.0, 1.0, 1.0, 1.0
+    add r0, v0, c8
+#endif
+    static const DWORD ps_1_8[] =
+    {
+        0xffff0101,
+        0x00000051, 0xa00f0008, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x00000002, 0x800f0000, 0x90e40000, 0xa0e40008,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    ps_2_0
+    def c32, 1.0, 1.0, 1.0, 1.0
+    add oC0, v0, c32
+#endif
+    static const DWORD ps_2_32[] =
+    {
+        0xffff0200,
+        0x05000051, 0xa00f0020, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x03000002, 0x800f0000, 0x90e40000, 0xa0e40020,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    ps_3_0
+    dcl_color0 v0
+    def c224, 1.0, 1.0, 1.0, 1.0
+    add oC0, v0, c224
+#endif
+    static const DWORD ps_3_224[] =
+    {
+        0xffff0300,
+        0x0200001f, 0x8000000a, 0x900f0000,
+        0x05000051, 0xa00f00e0, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x03000002, 0x800f0800, 0x90e40000, 0xa0e400e0,
+        0x0000ffff
+    };
+#if 0
+    /* This shader source generates syntax errors with the native shader assembler
+     * due to the constant register index values.
+     * The bytecode was modified by hand to use the intended values. */
+    ps_2_0
+    defb b0, true
+    defi i0, 1, 1, 1, 1
+    rep i0
+    if b0
+    add r0, r0, v0
+    endif
+    endrep
+    mov oC0, r0
+#endif
+    static const DWORD ps_2_0_boolint[] =
+    {
+        0xffff0200,
+        0x0200002f, 0xe00f0800, 0x00000001,
+        0x05000030, 0xf00f0000, 0x00000001, 0x00000001, 0x00000001, 0x00000001,
+        0x01000026, 0xf0e40000,
+        0x01000028, 0xe0e40800,
+        0x03000002, 0x800f0000, 0x80e40000, 0x90e40000,
+        0x0000002b,
+        0x00000027,
+        0x02000001, 0x800f0800, 0x80e40000,
+        0x0000ffff
+    };
+
+    IDirect3DVertexShader9 *vs = NULL;
+    IDirect3DPixelShader9 *ps = NULL;
+    IDirect3DDevice9Ex *device;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9Ex_CreateVertexShader(device, simple_ps, &vs);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, simple_vs, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_4_0, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_3_0, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        if (caps.VertexShaderVersion <= D3DVS_VERSION(1, 1) && caps.MaxVertexShaderConst < 256)
+        {
+            hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_1_255, &vs);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        }
+        else
+        {
+            skip("GPU supports SM2+, skipping SM1 test.\n");
+        }
+
+        skip("This GPU doesn't support SM3, skipping test with shader using unsupported constants.\n");
+    }
+    else
+    {
+        skip("This GPU supports SM3, skipping unsupported shader test.\n");
+
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_1_255, &vs);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        IDirect3DVertexShader9_Release(vs);
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_1_256, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_3_256, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_3_i16, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9Ex_CreateVertexShader(device, vs_3_b16, &vs);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    }
+
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
+    {
+        skip("This GPU doesn't support SM3, skipping test with shader using unsupported constants.\n");
+        goto cleanup;
+    }
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_1_8, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_2_32, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_3_224, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_2_0_boolint, &ps);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    if (ps)
+        IDirect3DPixelShader9_Release(ps);
+
+cleanup:
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -1364,4 +1674,5 @@ START_TEST(d3d9ex)
     test_vidmem_accounting();
     test_user_memory_getdc();
     test_lost_device();
+    test_unsupported_shaders();
 }
