@@ -298,9 +298,6 @@ static UINT CDECL msi_media_get_disk_info(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
     mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
 
-    if (!mi->first_volume)
-        mi->first_volume = strdupW(mi->volume_label);
-
     msiobj_release(&row->hdr);
     return ERROR_SUCCESS;
 }
@@ -673,7 +670,6 @@ void msi_free_media_info(MSIMEDIAINFO *mi)
     msi_free(mi->disk_prompt);
     msi_free(mi->cabinet);
     msi_free(mi->volume_label);
-    msi_free(mi->first_volume);
     msi_free(mi);
 }
 
@@ -718,9 +714,6 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
     msi_free(mi->volume_label);
     mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
     msiobj_release(&row->hdr);
-
-    if (!mi->first_volume)
-        mi->first_volume = strdupW(mi->volume_label);
 
     msi_set_sourcedir_props(package, FALSE);
     source_dir = msi_dup_property(package->db, szSourceDir);
@@ -891,7 +884,7 @@ UINT ready_media( MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi )
         }
     }
     /* check volume matches, change media if not */
-    if (mi->volume_label && mi->disk_id > 1 && strcmpW( mi->first_volume, mi->volume_label ))
+    if (mi->volume_label && mi->disk_id > 1)
     {
         WCHAR *source = msi_dup_property( package->db, szSourceDir );
         BOOL match = source_matches_volume( mi, source );

@@ -154,7 +154,6 @@ typedef struct tagMSIMEDIAINFO
     UINT last_sequence;
     LPWSTR disk_prompt;
     LPWSTR cabinet;
-    LPWSTR first_volume;
     LPWSTR volume_label;
     BOOL is_continuous;
     BOOL is_extracted;
