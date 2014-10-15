@@ -515,7 +515,7 @@
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) MSVCRT__fstat64
 @ cdecl _fstat64i32(long ptr) MSVCRT__fstat64i32
-@ stub _ftell_nolock
+@ cdecl _ftell_nolock(ptr) MSVCRT__ftell_nolock
 @ cdecl -ret64 _ftelli64(ptr) MSVCRT__ftelli64
 @ cdecl -ret64 _ftelli64_nolock(ptr) MSVCRT__ftelli64_nolock
 @ cdecl _ftime32(ptr) MSVCRT__ftime32

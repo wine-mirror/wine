@@ -4298,6 +4298,14 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
 }
 
 /*********************************************************************
+ *		_ftell_nolock (MSVCRT.@)
+ */
+LONG CDECL MSVCRT__ftell_nolock(MSVCRT_FILE* file)
+{
+  return MSVCRT__ftelli64_nolock(file);
+}
+
+/*********************************************************************
  *		fgetpos (MSVCRT.@)
  */
 int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
