@@ -436,42 +436,37 @@ lerr:
     return hr;
 }
 
-
 /******************************************************************************
  * IEnumDMO_fnAddRef
  */
 static ULONG WINAPI IEnumDMO_fnAddRef(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
-    return InterlockedIncrement(&This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, refCount);
+    return refCount;
 }
-
 
 /**************************************************************************
  *  EnumDMO_QueryInterface
  */
-static HRESULT WINAPI IEnumDMO_fnQueryInterface(
-    IEnumDMO* iface,
-    REFIID riid,
-    LPVOID *ppvObj)
+static HRESULT WINAPI IEnumDMO_fnQueryInterface(IEnumDMO* iface, REFIID riid, void **ppvObj)
 {
+    IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObj);
+
     *ppvObj = NULL;
 
     if (IsEqualIID(riid, &IID_IEnumDMO) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObj = iface;
+        IEnumDMO_fnAddRef(iface);
     }
 
-    if(*ppvObj)
-    {
-        IEnumDMO_fnAddRef(*ppvObj);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
+    return *ppvObj ? S_OK : E_NOINTERFACE;
 }
-
 
 /******************************************************************************
  * IEnumDMO_fnRelease
@@ -480,6 +475,8 @@ static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, refCount);
 
     if (!refCount)
     {
@@ -512,7 +509,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
-    TRACE("--> (%p) %d %p %p %p\n", iface, cItemsToFetch, pCLSID, Names, pcItemsFetched);
+    TRACE("(%p)->(%d %p %p %p)\n", This, cItemsToFetch, pCLSID, Names, pcItemsFetched);
 
     if (!pCLSID || !Names || !pcItemsFetched)
         return E_POINTER;
@@ -651,6 +648,7 @@ static HRESULT WINAPI IEnumDMO_fnSkip(IEnumDMO * iface, DWORD cItemsToSkip)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
+    TRACE("(%p)->(%d)\n", This, cItemsToSkip);
     This->index += cItemsToSkip;
 
     return S_OK;
@@ -664,6 +662,7 @@ static HRESULT WINAPI IEnumDMO_fnReset(IEnumDMO * iface)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
+    TRACE("(%p)\n", This);
     This->index = -1;
 
     return S_OK;
@@ -673,13 +672,12 @@ static HRESULT WINAPI IEnumDMO_fnReset(IEnumDMO * iface)
 /******************************************************************************
  * IEnumDMO_fnClone
  */
-static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO * iface, IEnumDMO **ppEnum)
+static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO *iface, IEnumDMO **ppEnum)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
-
-    FIXME("(%p)->() to (%p)->() E_NOTIMPL\n", This, ppEnum);
-
-  return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ppEnum);
+    return IEnumDMO_Constructor(This->guidCategory, This->dwFlags, This->cInTypes, This->pInTypes,
+        This->cOutTypes, This->pOutTypes, ppEnum);
 }
 
 
