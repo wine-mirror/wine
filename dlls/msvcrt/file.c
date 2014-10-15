@@ -4226,14 +4226,25 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
 {
-    __int64 pos;
+    __int64 ret;
 
     MSVCRT__lock_file(file);
+    ret = MSVCRT__ftelli64_nolock(file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_ftelli64_nolock (MSVCRT.@)
+ */
+__int64 CDECL MSVCRT__ftelli64_nolock(MSVCRT_FILE* file)
+{
+    __int64 pos;
+
     pos = _telli64(file->_file);
-    if(pos == -1) {
-        MSVCRT__unlock_file(file);
+    if(pos == -1)
         return -1;
-    }
     if(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))  {
         if(file->_flag & MSVCRT__IOWRT) {
             pos += file->_ptr - file->_base;
@@ -4258,10 +4269,8 @@ __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
         } else {
             char *p;
 
-            if(MSVCRT__lseeki64(file->_file, pos, SEEK_SET) != pos) {
-                MSVCRT__unlock_file(file);
+            if(MSVCRT__lseeki64(file->_file, pos, SEEK_SET) != pos)
                 return -1;
-            }
 
             pos -= file->_bufsiz;
             pos += file->_ptr - file->_base;
@@ -4277,7 +4286,6 @@ __int64 CDECL MSVCRT__ftelli64(MSVCRT_FILE* file)
         }
     }
 
-    MSVCRT__unlock_file(file);
     return pos;
 }
 

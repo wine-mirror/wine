@@ -920,6 +920,7 @@ int __cdecl      MSVCRT_ungetc(int,MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_fgetwc(MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_ungetwc(MSVCRT_wint_t,MSVCRT_FILE*);
 __int64 __cdecl  MSVCRT__ftelli64(MSVCRT_FILE* file);
+__int64 __cdecl  MSVCRT__ftelli64_nolock(MSVCRT_FILE*);
 void __cdecl     MSVCRT__exit(int);
 void __cdecl     MSVCRT_abort(void);
 MSVCRT_ulong* __cdecl MSVCRT___doserrno(void);
