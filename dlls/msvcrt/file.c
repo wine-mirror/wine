@@ -1294,6 +1294,14 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
 }
 
 /*********************************************************************
+ *		_fseek_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fseek_nolock(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
+{
+    return MSVCRT__fseeki64_nolock( file, offset, whence );
+}
+
+/*********************************************************************
  *		_chsize_s (MSVCRT.@)
  */
 int CDECL MSVCRT__chsize_s(int fd, __int64 size)
