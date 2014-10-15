@@ -352,79 +352,88 @@ static BOOL IEnumDMOImpl_Destructor(IEnumDMOImpl* This)
 /**************************************************************************
  *  IEnumDMO_Constructor
  */
-static IEnumDMO * IEnumDMO_Constructor(
+static HRESULT IEnumDMO_Constructor(
     REFGUID guidCategory,
     DWORD dwFlags,
     DWORD cInTypes,
     const DMO_PARTIAL_MEDIATYPE *pInTypes,
     DWORD cOutTypes,
-    const DMO_PARTIAL_MEDIATYPE *pOutTypes)
+    const DMO_PARTIAL_MEDIATYPE *pOutTypes,
+    IEnumDMO **obj)
 {
-    UINT size;
     IEnumDMOImpl* lpedmo;
-    BOOL ret = FALSE;
+    HRESULT hr = S_OK;
+    UINT size;
+
+    *obj = NULL;
 
     lpedmo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumDMOImpl));
+    if (!lpedmo)
+        return E_OUTOFMEMORY;
 
-    if (lpedmo)
+    lpedmo->IEnumDMO_iface.lpVtbl = &edmovt;
+    lpedmo->ref = 1;
+    lpedmo->index = -1;
+    lpedmo->guidCategory = guidCategory;
+    lpedmo->dwFlags = dwFlags;
+
+    if (cInTypes > 0)
     {
-        lpedmo->ref = 1;
-        lpedmo->IEnumDMO_iface.lpVtbl = &edmovt;
-        lpedmo->index = -1;
-	lpedmo->guidCategory = guidCategory;
-	lpedmo->dwFlags = dwFlags;
-
-        if (cInTypes > 0)
+        size = cInTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
+        lpedmo->pInTypes = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!lpedmo->pInTypes)
         {
-            size = cInTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
-            lpedmo->pInTypes = HeapAlloc(GetProcessHeap(), 0, size);
-            if (!lpedmo->pInTypes)
-                goto lerr;
-            memcpy(lpedmo->pInTypes, pInTypes, size);
-            lpedmo->cInTypes = cInTypes;
+            hr = E_OUTOFMEMORY;
+            goto lerr;
         }
-
-        if (cOutTypes > 0)
-        {
-            size = cOutTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
-            lpedmo->pOutTypes = HeapAlloc(GetProcessHeap(), 0, size);
-            if (!lpedmo->pOutTypes)
-                goto lerr;
-            memcpy(lpedmo->pOutTypes, pOutTypes, size);
-            lpedmo->cOutTypes = cOutTypes;
-        }
-
-        /* If not filtering by category enum from media objects root */
-        if (IsEqualGUID(guidCategory, &GUID_NULL))
-        {
-            if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 
-                0, KEY_READ, &lpedmo->hkey))
-                ret = TRUE;
-        }
-        else
-        {
-            WCHAR szguid[64];
-            WCHAR szKey[MAX_PATH];
-
-            wsprintfW(szKey, szCat3Fmt, szDMORootKey, szDMOCategories, 
-                GUIDToString(szguid, guidCategory));
-            if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 
-                0, KEY_READ, &lpedmo->hkey))
-                ret = TRUE;
-        }
-
-lerr:
-        if(!ret)
-        {
-            IEnumDMOImpl_Destructor(lpedmo);
-            HeapFree(GetProcessHeap(),0,lpedmo);
-            lpedmo = NULL;
-        }
+        memcpy(lpedmo->pInTypes, pInTypes, size);
+        lpedmo->cInTypes = cInTypes;
     }
 
-    TRACE("returning %p\n", lpedmo);
+    if (cOutTypes > 0)
+    {
+        size = cOutTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
+        lpedmo->pOutTypes = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!lpedmo->pOutTypes)
+        {
+            hr = E_OUTOFMEMORY;
+            goto lerr;
+        }
+        memcpy(lpedmo->pOutTypes, pOutTypes, size);
+        lpedmo->cOutTypes = cOutTypes;
+    }
 
-    return (IEnumDMO*)lpedmo;
+    /* If not filtering by category enum from media objects root */
+    if (IsEqualGUID(guidCategory, &GUID_NULL))
+    {
+        if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_READ, &lpedmo->hkey))
+            hr = E_FAIL;
+    }
+    else
+    {
+        WCHAR szguid[64];
+        WCHAR szKey[MAX_PATH];
+
+        wsprintfW(szKey, szCat3Fmt, szDMORootKey, szDMOCategories,
+            GUIDToString(szguid, guidCategory));
+        if (!RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &lpedmo->hkey))
+            hr = E_FAIL;
+    }
+
+lerr:
+
+    if (FAILED(hr))
+    {
+        IEnumDMOImpl_Destructor(lpedmo);
+        HeapFree(GetProcessHeap(), 0, lpedmo);
+    }
+    else
+    {
+        TRACE("returning %p\n", lpedmo);
+        *obj = &lpedmo->IEnumDMO_iface;
+    }
+
+    return hr;
 }
 
 
@@ -446,14 +455,13 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
-
     *ppvObj = NULL;
 
-    if(IsEqualIID(riid, &IID_IUnknown))
-        *ppvObj = This;
-    else if(IsEqualIID(riid, &IID_IEnumDMO))
-        *ppvObj = This;
+    if (IsEqualIID(riid, &IID_IEnumDMO) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObj = iface;
+    }
 
     if(*ppvObj)
     {
@@ -689,17 +697,11 @@ HRESULT WINAPI DMOEnum(
     const DMO_PARTIAL_MEDIATYPE *pOutTypes,
     IEnumDMO **ppEnum)
 {
-    HRESULT hres = E_FAIL;
-
     TRACE("guidCategory=%p dwFlags=0x%08x cInTypes=%d cOutTypes=%d\n",
         guidCategory, dwFlags, cInTypes, cOutTypes);
 
-    *ppEnum = IEnumDMO_Constructor(guidCategory, dwFlags, cInTypes,
-        pInTypes, cOutTypes, pOutTypes);
-    if (*ppEnum)
-        hres = S_OK;
-
-    return hres;
+    return IEnumDMO_Constructor(guidCategory, dwFlags, cInTypes,
+        pInTypes, cOutTypes, pOutTypes, ppEnum);
 }
 
 
