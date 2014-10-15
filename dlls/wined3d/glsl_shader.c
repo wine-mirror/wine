@@ -971,7 +971,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare the constants (aka uniforms) */
-    if (shader->limits.constant_float > 0)
+    if (shader->limits->constant_float > 0)
     {
         unsigned max_constantsF;
 
@@ -1025,7 +1025,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 /* Set by driver quirks in directx.c */
                 max_constantsF -= gl_info->reserved_glsl_constants;
 
-                if (max_constantsF < shader->limits.constant_float)
+                if (max_constantsF < shader->limits->constant_float)
                 {
                     static unsigned int once;
 
@@ -1041,18 +1041,18 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 max_constantsF = gl_info->limits.glsl_vs_float_constants;
             }
         }
-        max_constantsF = min(shader->limits.constant_float, max_constantsF);
+        max_constantsF = min(shader->limits->constant_float, max_constantsF);
         shader_addline(buffer, "uniform vec4 %s_c[%u];\n", prefix, max_constantsF);
     }
 
     /* Always declare the full set of constants, the compiler can remove the
      * unused ones because d3d doesn't (yet) support indirect int and bool
      * constant addressing. This avoids problems if the app uses e.g. i0 and i9. */
-    if (shader->limits.constant_int > 0 && reg_maps->integer_constants)
-        shader_addline(buffer, "uniform ivec4 %s_i[%u];\n", prefix, shader->limits.constant_int);
+    if (shader->limits->constant_int > 0 && reg_maps->integer_constants)
+        shader_addline(buffer, "uniform ivec4 %s_i[%u];\n", prefix, shader->limits->constant_int);
 
-    if (shader->limits.constant_bool > 0 && reg_maps->boolean_constants)
-        shader_addline(buffer, "uniform bool %s_b[%u];\n", prefix, shader->limits.constant_bool);
+    if (shader->limits->constant_bool > 0 && reg_maps->boolean_constants)
+        shader_addline(buffer, "uniform bool %s_b[%u];\n", prefix, shader->limits->constant_bool);
 
     for (i = 0; i < WINED3D_MAX_CBS; ++i)
     {
@@ -1062,7 +1062,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare texture samplers */
-    for (i = 0; i < shader->limits.sampler; ++i)
+    for (i = 0; i < shader->limits->sampler; ++i)
     {
         if (reg_maps->sampler_type[i])
         {
@@ -1128,7 +1128,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
          * samplerNP2Fixup stores texture dimensions and is updated through
          * shader_glsl_load_np2fixup_constants when the sampler changes. */
 
-        for (i = 0; i < shader->limits.sampler; ++i)
+        for (i = 0; i < shader->limits->sampler; ++i)
         {
             if (reg_maps->sampler_type[i])
             {
@@ -1170,17 +1170,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
 
         shader_addline(buffer, "uniform vec4 posFixup;\n");
-        shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits.packed_output);
+        shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits->packed_output);
     }
     else if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
     {
-        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits.packed_input);
+        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
     }
     else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
         if (version->major >= 3)
         {
-            UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits.packed_input);
+            UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
             if (use_vs(state))
                 shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
@@ -1221,7 +1221,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
         if (reg_maps->vpos || reg_maps->usesdsy)
         {
-            if (shader->limits.constant_float + extra_constants_needed
+            if (shader->limits->constant_float + extra_constants_needed
                     + 1 < gl_info->limits.glsl_ps_float_constants)
             {
                 shader_addline(buffer, "uniform vec4 ycorrection;\n");
@@ -1250,8 +1250,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare output register temporaries */
-    if (shader->limits.packed_output)
-        shader_addline(buffer, "vec4 %s_out[%u];\n", prefix, shader->limits.packed_output);
+    if (shader->limits->packed_output)
+        shader_addline(buffer, "vec4 %s_out[%u];\n", prefix, shader->limits->packed_output);
 
     /* Declare temporary variables */
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
@@ -4306,7 +4306,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
     if (ps_major < 3)
     {
-        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits.packed_output);
+        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         for (i = 0; map; map >>= 1, ++i)
         {
@@ -4359,10 +4359,10 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     }
     else
     {
-        UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits.packed_input);
+        UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
         shader_addline(buffer, "varying vec4 ps_in[%u];\n", in_count);
-        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits.packed_output);
+        shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
         for (i = 0; map; map >>= 1, ++i)
@@ -5958,9 +5958,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     shader_glsl_validate_link(gl_info, programId);
 
     shader_glsl_init_vs_uniform_locations(gl_info, programId, &entry->vs,
-            vshader ? vshader->limits.constant_float : 0);
+            vshader ? min(vshader->limits->constant_float, gl_info->limits.glsl_vs_float_constants) : 0);
     shader_glsl_init_ps_uniform_locations(gl_info, programId, &entry->ps,
-            pshader ? pshader->limits.constant_float : 0);
+            pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader && pshader->reg_maps.shader_version.major >= 3

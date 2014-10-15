@@ -370,167 +370,80 @@ static void shader_delete_constant_list(struct list *clist)
     list_init(clist);
 }
 
-static void vertexshader_set_limits(struct wined3d_shader *shader)
+static void shader_set_limits(struct wined3d_shader *shader)
 {
-    DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
-            shader->reg_maps.shader_version.minor);
-    struct wined3d_device *device = shader->device;
-    const DWORD vs_uniform_count = device->adapter->d3d_info.limits.vs_uniform_count;
-
-    shader->limits.packed_input = 0;
-
-    switch (shader_version)
+    static const struct limits_entry
     {
-        case WINED3D_SHADER_VERSION(1, 0):
-        case WINED3D_SHADER_VERSION(1, 1):
-            shader->limits.constant_bool = 0;
-            shader->limits.constant_int = 0;
-            shader->limits.packed_output = 12;
-            shader->limits.sampler = 0;
-            /* TODO: vs_1_1 has a minimum of 96 constants. What happens when
-             * a vs_1_1 shader is used on a vs_3_0 capable card that has 256
-             * constants? */
-            shader->limits.constant_float = min(256, vs_uniform_count);
-            break;
-
-        case WINED3D_SHADER_VERSION(2, 0):
-        case WINED3D_SHADER_VERSION(2, 1):
-            shader->limits.constant_bool = 16;
-            shader->limits.constant_int = 16;
-            shader->limits.packed_output = 12;
-            shader->limits.sampler = 0;
-            shader->limits.constant_float = min(256, vs_uniform_count);
-            break;
-
-        case WINED3D_SHADER_VERSION(3, 0):
-            shader->limits.constant_bool = 16;
-            shader->limits.constant_int = 16;
-            shader->limits.packed_output = 12;
-            shader->limits.sampler = 4;
-            /* DX10 cards on Windows advertise a d3d9 constant limit of 256
-             * even though they are capable of supporting much more (GL
-             * drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
-             * wined3d-advertised maximum. Clamp the constant limit for <= 3.0
-             * shaders to 256. */
-            shader->limits.constant_float = min(256, vs_uniform_count);
-            break;
-
-        case WINED3D_SHADER_VERSION(4, 0):
-            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
-            shader->limits.constant_int = 0;
-            shader->limits.constant_float = 0;
-            shader->limits.constant_bool = 0;
-            shader->limits.packed_output = 16;
-            shader->limits.packed_input = 0;
-            break;
-
-        default:
-            shader->limits.constant_bool = 16;
-            shader->limits.constant_int = 16;
-            shader->limits.packed_output = 12;
-            shader->limits.sampler = 0;
-            shader->limits.constant_float = min(256, vs_uniform_count);
-            FIXME("Unrecognized vertex shader version \"%u.%u\".\n",
-                    shader->reg_maps.shader_version.major,
-                    shader->reg_maps.shader_version.minor);
+        unsigned int min_version;
+        unsigned int max_version;
+        struct wined3d_shader_limits limits;
     }
-}
-
-static void geometryshader_set_limits(struct wined3d_shader *shader)
-{
+    vs_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
+        {WINED3D_SHADER_VERSION(1, 0), WINED3D_SHADER_VERSION(1, 1), { 0,  0, 256,  0, 12,  0}},
+        {WINED3D_SHADER_VERSION(2, 0), WINED3D_SHADER_VERSION(2, 1), { 0, 16, 256, 16, 12,  0}},
+        /* DX10 cards on Windows advertise a D3D9 constant limit of 256
+         * even though they are capable of supporting much more (GL
+         * drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
+         * wined3d-advertised maximum. Clamp the constant limit for <= 3.0
+         * shaders to 256. */
+        {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), { 4, 16, 256, 16, 12,  0}},
+        {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0, 16,  0}},
+        {0}
+    },
+    gs_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
+        {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0, 32, 16}},
+        {0}
+    },
+    ps_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
+        {WINED3D_SHADER_VERSION(1, 0), WINED3D_SHADER_VERSION(1, 3), { 4,  0,   8,  0,  0,  0}},
+        {WINED3D_SHADER_VERSION(1, 4), WINED3D_SHADER_VERSION(1, 4), { 6,  0,   8,  0,  0,  0}},
+        {WINED3D_SHADER_VERSION(2, 0), WINED3D_SHADER_VERSION(2, 1), {16, 16,  32, 16,  0,  0}},
+        {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), {16, 16, 224, 16,  0, 12}},
+        {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0,  0, 32}},
+        {0}
+    };
+    const struct limits_entry *limits_array;
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
             shader->reg_maps.shader_version.minor);
+    int i = 0;
 
-    switch (shader_version)
+    switch (shader->reg_maps.shader_version.type)
     {
-        case WINED3D_SHADER_VERSION(4, 0):
-            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
-            shader->limits.constant_int = 0;
-            shader->limits.constant_float = 0;
-            shader->limits.constant_bool = 0;
-            shader->limits.packed_output = 32;
-            shader->limits.packed_input = 16;
-            break;
-
         default:
-            memset(&shader->limits, 0, sizeof(shader->limits));
-            FIXME("Unhandled geometry shader version \"%u.%u\".\n",
-                    shader->reg_maps.shader_version.major,
-                    shader->reg_maps.shader_version.minor);
+            FIXME("Unexpected shader type %u found.\n", shader->reg_maps.shader_version.type);
+            /* Fall-through. */
+        case WINED3D_SHADER_TYPE_VERTEX:
+            limits_array = vs_limits;
+            break;
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            limits_array = gs_limits;
+            break;
+        case WINED3D_SHADER_TYPE_PIXEL:
+            limits_array = ps_limits;
+            break;
     }
-}
 
-static void pixelshader_set_limits(struct wined3d_shader *shader)
-{
-    DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
-            shader->reg_maps.shader_version.minor);
-    const DWORD ps_uniform_count = shader->device->adapter->d3d_info.limits.ps_uniform_count;
-
-    shader->limits.packed_output = 0;
-
-    switch (shader_version)
+    while (limits_array[i].min_version && limits_array[i].min_version <= shader_version)
     {
-        case WINED3D_SHADER_VERSION(1, 0):
-        case WINED3D_SHADER_VERSION(1, 1):
-        case WINED3D_SHADER_VERSION(1, 2):
-        case WINED3D_SHADER_VERSION(1, 3):
-            shader->limits.constant_float = 8;
-            shader->limits.constant_int = 0;
-            shader->limits.constant_bool = 0;
-            shader->limits.sampler = 4;
-            shader->limits.packed_input = 0;
+        if (shader_version <= limits_array[i].max_version)
+        {
+            shader->limits = &limits_array[i].limits;
             break;
-
-        case WINED3D_SHADER_VERSION(1, 4):
-            shader->limits.constant_float = 8;
-            shader->limits.constant_int = 0;
-            shader->limits.constant_bool = 0;
-            shader->limits.sampler = 6;
-            shader->limits.packed_input = 0;
-            break;
-
-        /* FIXME: Temporaries must match D3DPSHADERCAPS2_0.NumTemps. */
-        case WINED3D_SHADER_VERSION(2, 0):
-            shader->limits.constant_float = 32;
-            shader->limits.constant_int = 16;
-            shader->limits.constant_bool = 16;
-            shader->limits.sampler = 16;
-            shader->limits.packed_input = 0;
-            break;
-
-        case WINED3D_SHADER_VERSION(2, 1):
-            shader->limits.constant_float = 32;
-            shader->limits.constant_int = 16;
-            shader->limits.constant_bool = 16;
-            shader->limits.sampler = 16;
-            shader->limits.packed_input = 0;
-            break;
-
-        case WINED3D_SHADER_VERSION(3, 0):
-            shader->limits.constant_float = min(224, ps_uniform_count);
-            shader->limits.constant_int = 16;
-            shader->limits.constant_bool = 16;
-            shader->limits.sampler = 16;
-            shader->limits.packed_input = 12;
-            break;
-
-        case WINED3D_SHADER_VERSION(4, 0):
-            shader->limits.sampler = 16; /* FIXME: 128 resources, 16 sampler states */
-            shader->limits.constant_int = 0;
-            shader->limits.constant_float = 0;
-            shader->limits.constant_bool = 0;
-            shader->limits.packed_input = 32;
-            break;
-
-        default:
-            shader->limits.constant_float = 32;
-            shader->limits.constant_int = 16;
-            shader->limits.constant_bool = 16;
-            shader->limits.sampler = 16;
-            shader->limits.packed_input = 0;
-            FIXME("Unrecognized pixel shader version %u.%u\n",
-                    shader->reg_maps.shader_version.major,
-                    shader->reg_maps.shader_version.minor);
+        }
+        ++i;
+    }
+    if (!shader->limits)
+    {
+        FIXME("Unexpected shader version \"%u.%u\".\n",
+                shader->reg_maps.shader_version.major,
+                shader->reg_maps.shader_version.minor);
+        shader->limits = &limits_array[max(0, i - 1)].limits;
     }
 }
 
@@ -607,7 +520,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             }
             else
             {
-                if (reg->idx[0].offset >= min(shader->limits.constant_float, constf_size))
+                if (reg->idx[0].offset >= min(shader->limits->constant_float, constf_size))
                 {
                     WARN("Shader using float constant %u which is not supported.\n", reg->idx[0].offset);
                     return FALSE;
@@ -620,7 +533,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             break;
 
         case WINED3DSPR_CONSTINT:
-            if (reg->idx[0].offset >= shader->limits.constant_int)
+            if (reg->idx[0].offset >= shader->limits->constant_int)
             {
                 WARN("Shader using integer constant %u which is not supported.\n", reg->idx[0].offset);
                 return FALSE;
@@ -632,7 +545,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             break;
 
         case WINED3DSPR_CONSTBOOL:
-            if (reg->idx[0].offset >= shader->limits.constant_bool)
+            if (reg->idx[0].offset >= shader->limits->constant_bool)
             {
                 WARN("Shader using bool constant %u which is not supported.\n", reg->idx[0].offset);
                 return FALSE;
@@ -691,23 +604,10 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     fe->shader_read_header(fe_data, &ptr, &shader_version);
     reg_maps->shader_version = shader_version;
 
-    switch (reg_maps->shader_version.type)
-    {
-        case WINED3D_SHADER_TYPE_VERTEX:
-            vertexshader_set_limits(shader);
-            break;
-        case WINED3D_SHADER_TYPE_GEOMETRY:
-            geometryshader_set_limits(shader);
-            break;
-        case WINED3D_SHADER_TYPE_PIXEL:
-            pixelshader_set_limits(shader);
-            break;
-        default:
-            FIXME("Unexpected shader type %u found.\n", reg_maps->shader_version.type);
-    }
+    shader_set_limits(shader);
 
     reg_maps->constf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(*reg_maps->constf) * ((min(shader->limits.constant_float, constf_size) + 31) / 32));
+            sizeof(*reg_maps->constf) * ((min(shader->limits->constant_float, constf_size) + 31) / 32));
     if (!reg_maps->constf)
     {
         ERR("Failed to allocate constant map memory.\n");
@@ -2002,11 +1902,11 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
 
     TRACE("shader %p, start_idx %u, src_data %p, count %u.\n", shader, start_idx, src_data, count);
 
-    if (end_idx > shader->limits.constant_float)
+    if (end_idx > shader->limits->constant_float)
     {
         WARN("end_idx %u > float constants limit %u.\n",
-                end_idx, shader->limits.constant_float);
-        end_idx = shader->limits.constant_float;
+                end_idx, shader->limits->constant_float);
+        end_idx = shader->limits->constant_float;
     }
 
     for (i = start_idx; i < end_idx; ++i)
@@ -2169,7 +2069,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (shader->reg_maps.shader_version.major == 1
             && shader->reg_maps.shader_version.minor <= 3)
     {
-        for (i = 0; i < shader->limits.sampler; ++i)
+        for (i = 0; i < shader->limits->sampler; ++i)
         {
             DWORD flags = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
 
@@ -2223,7 +2123,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (shader->reg_maps.shader_version.major == 1
             && shader->reg_maps.shader_version.minor <= 4)
     {
-        for (i = 0; i < shader->limits.sampler; ++i)
+        for (i = 0; i < shader->limits->sampler; ++i)
         {
             const struct wined3d_texture *texture = state->textures[i];
 
@@ -2393,7 +2293,7 @@ void pixelshader_update_samplers(struct wined3d_shader *shader, WORD tex_types)
 
     if (reg_maps->shader_version.major != 1) return;
 
-    for (i = 0; i < shader->limits.sampler; ++i)
+    for (i = 0; i < shader->limits->sampler; ++i)
     {
         /* We don't sample from this sampler. */
         if (!sampler_type[i]) continue;

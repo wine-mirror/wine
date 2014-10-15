@@ -2856,7 +2856,7 @@ struct wined3d_pixel_shader
 struct wined3d_shader
 {
     LONG ref;
-    struct wined3d_shader_limits limits;
+    const struct wined3d_shader_limits *limits;
     DWORD *function;
     UINT functionLength;
     BOOL load_local_constsF;
