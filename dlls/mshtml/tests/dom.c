@@ -1672,6 +1672,20 @@ static void _test_textarea_type(unsigned line, IUnknown *unk)
     SysFreeString(type);
 }
 
+#define get_textarea_form(t) _get_textarea_form(__LINE__,t)
+static IHTMLFormElement *_get_textarea_form(unsigned line, IUnknown *unk)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    IHTMLFormElement *form;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_form(textarea, &form);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
+
+    return form;
+}
+
 #define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
 static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
 {
@@ -7807,12 +7821,35 @@ static void test_elems2(IHTMLDocument2 *doc)
     test_elem_set_innerhtml((IUnknown*)div, "<textarea id=\"ta\"></textarea>");
     elem = get_elem_by_id(doc, "ta", TRUE);
     if(elem) {
+        IHTMLFormElement *form;
+
         test_textarea_value((IUnknown*)elem, NULL);
         test_textarea_put_value((IUnknown*)elem, "test");
         test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
         test_textarea_type((IUnknown*)elem);
+
+        form = get_textarea_form((IUnknown*)elem);
+        ok(!form, "form = %p\n", form);
+
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div, "<form id=\"fid\"><textarea id=\"ta\"></textarea></form>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+    if(elem) {
+        IHTMLFormElement *form;
+
+        elem2 = get_elem_by_id(doc, "fid", TRUE);
+        ok(elem2 != NULL, "elem2 == NULL\n");
+
+        form = get_textarea_form((IUnknown*)elem);
+        ok(form != NULL, "form = NULL\n");
+        ok(iface_cmp((IUnknown*)form, (IUnknown*)elem2), "form != elem2\n");
+
+        IHTMLFormElement_Release(form);
+        IHTMLElement_Release(elem2);
         IHTMLElement_Release(elem);
     }
 
