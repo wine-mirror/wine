@@ -92,7 +92,7 @@ static void test_versioninfo(void)
         return;
     }
 
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORVersion returned %08x\n", hr);
 
     hr =  pGetCORVersion(version, MAX_PATH, &size);
     ok(hr == S_OK,"GetCORVersion returned %08x\n", hr);
@@ -107,12 +107,12 @@ static void test_versioninfo(void)
     path_len = size;
 
     hr = pGetCORSystemDirectory(path, path_len-1 , &size);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
 
     if (0)  /* crashes on <= w2k3 */
     {
         hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
-        ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetCORSystemDirectory returned %08x\n", hr);
     }
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , NULL);
@@ -140,7 +140,7 @@ static void test_versioninfo(void)
     ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, 1, &path_len, version, MAX_PATH, &size);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     /* if one of the buffers is NULL, the other one is still happily filled */
     memset(version, 0, sizeof(version));

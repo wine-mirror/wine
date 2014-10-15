@@ -122,7 +122,7 @@ static void test_enumruntimes(void)
 
         count = 1;
         hr = ICLRRuntimeInfo_GetVersionString(runtime_info, buf, &count);
-        ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetVersionString returned %x\n", hr);
+        ok(hr == E_NOT_SUFFICIENT_BUFFER, "GetVersionString returned %x\n", hr);
         ok(count > 1, "GetVersionString returned count %u\n", count);
 
         count = 0xdeadbeef;

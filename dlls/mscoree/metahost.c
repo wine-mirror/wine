@@ -360,7 +360,7 @@ static HRESULT WINAPI CLRRuntimeInfo_GetVersionString(ICLRRuntimeInfo* iface,
         if (buffer_size >= *pcchBuffer)
             MultiByteToWideChar(CP_UTF8, 0, version, -1, pwzBuffer, buffer_size);
         else
-            hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            hr = E_NOT_SUFFICIENT_BUFFER;
     }
 
     return hr;
@@ -421,7 +421,7 @@ static HRESULT WINAPI CLRRuntimeInfo_GetRuntimeDirectory(ICLRRuntimeInfo* iface,
         if (buffer_size >= size)
             strcpyW(pwzBuffer, system_dir);
         else
-            hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            hr = E_NOT_SUFFICIENT_BUFFER;
     }
 
     return hr;
@@ -1051,7 +1051,7 @@ HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
                 if (buffer_size >= *pcchBuffer)
                     MultiByteToWideChar(CP_UTF8, 0, version, -1, pwzBuffer, buffer_size);
                 else
-                    hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+                    hr = E_NOT_SUFFICIENT_BUFFER;
             }
         }
 
