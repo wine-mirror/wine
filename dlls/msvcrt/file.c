@@ -1246,16 +1246,29 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
  */
 int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
 {
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__fseeki64_nolock(file, offset, whence);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fseeki64_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fseeki64_nolock(MSVCRT_FILE* file, __int64 offset, int whence)
+{
   int ret;
 
-  MSVCRT__lock_file(file);
   /* Flush output if needed */
   if(file->_flag & MSVCRT__IOWRT)
 	msvcrt_flush_buffer(file);
 
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
       whence = SEEK_SET;
-      offset += MSVCRT__ftelli64(file);
+      offset += MSVCRT__ftelli64_nolock(file);
   }
 
   /* Discard buffered input */
@@ -1269,7 +1282,6 @@ int CDECL MSVCRT__fseeki64(MSVCRT_FILE* file, __int64 offset, int whence)
   file->_flag &= ~MSVCRT__IOEOF;
   ret = (MSVCRT__lseeki64(file->_file,offset,whence) == -1)?-1:0;
 
-  MSVCRT__unlock_file(file);
   return ret;
 }
 
