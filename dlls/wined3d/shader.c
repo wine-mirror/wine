@@ -403,7 +403,8 @@ static void shader_set_limits(struct wined3d_shader *shader)
         /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
         {WINED3D_SHADER_VERSION(1, 0), WINED3D_SHADER_VERSION(1, 3), { 4,  0,   8,  0,  0,  0}},
         {WINED3D_SHADER_VERSION(1, 4), WINED3D_SHADER_VERSION(1, 4), { 6,  0,   8,  0,  0,  0}},
-        {WINED3D_SHADER_VERSION(2, 0), WINED3D_SHADER_VERSION(2, 1), {16, 16,  32, 16,  0,  0}},
+        {WINED3D_SHADER_VERSION(2, 0), WINED3D_SHADER_VERSION(2, 0), {16,  0,  32,  0,  0,  0}},
+        {WINED3D_SHADER_VERSION(2, 1), WINED3D_SHADER_VERSION(2, 1), {16, 16,  32, 16,  0,  0}},
         {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), {16, 16, 224, 16,  0, 12}},
         {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0,  0, 32}},
         {0}
