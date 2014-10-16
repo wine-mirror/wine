@@ -835,8 +835,26 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRIC
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont2 *iface, UINT32 value, BOOL *exists)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(0x%08x %p): stub\n", This, value, exists);
-    return E_NOTIMPL;
+    IDWriteFontFace *fontface;
+    UINT16 index;
+    HRESULT hr;
+
+    TRACE("(%p)->(0x%08x %p)\n", This, value, exists);
+
+    *exists = FALSE;
+
+    hr = IDWriteFont2_CreateFontFace(iface, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    index = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &value, 1, &index);
+    IDWriteFontFace_Release(fontface);
+    if (FAILED(hr))
+        return hr;
+
+    *exists = index != 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont2 *iface, IDWriteFontFace **face)

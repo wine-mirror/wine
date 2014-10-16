@@ -218,6 +218,7 @@ static void test_CreateFontFromLOGFONT(void)
     BOOL ret;
     HDC hdc;
     HFONT hfont;
+    BOOL exists;
     int i;
     UINT r;
 
@@ -250,6 +251,16 @@ if (0)
     ok(r, "got %d\n", r);
     DeleteDC(hdc);
     DeleteObject(hfont);
+
+    exists = TRUE;
+    hr = IDWriteFont_HasCharacter(font, 0xd800, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == FALSE, "got %d\n", exists);
+
+    exists = FALSE;
+    hr = IDWriteFont_HasCharacter(font, 0x20, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == TRUE, "got %d\n", exists);
 
     /* now check properties */
     weight = IDWriteFont_GetWeight(font);
