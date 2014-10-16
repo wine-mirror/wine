@@ -20,8 +20,6 @@
 
 #define COBJMACROS
 
-#include "dwrite.h"
-#include "dwrite_2.h"
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -93,7 +91,7 @@ struct dwrite_font {
 
     BOOL is_system;
     IDWriteFontFamily *family;
-    IDWriteFontFace *face;
+    IDWriteFontFace2 *face;
 
     struct dwrite_font_data *data;
 };
@@ -689,7 +687,7 @@ static const IDWriteFontFace2Vtbl dwritefontfacevtbl = {
     dwritefontface2_GetRecommendedRenderingMode
 };
 
-static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace **face)
+static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace2 **face)
 {
     struct dwrite_fontface *This;
 
@@ -722,7 +720,7 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
     This->logfont.lfWeight = font->data->weight;
     strcpyW(This->logfont.lfFaceName, font->data->facename);
 
-    *face = (IDWriteFontFace*)&This->IDWriteFontFace2_iface;
+    *face = &This->IDWriteFontFace2_iface;
 
     return S_OK;
 }
@@ -736,7 +734,7 @@ HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
     return S_OK;
 }
 
-static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace **fontface)
+static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2 **fontface)
 {
     *fontface = NULL;
 
@@ -788,7 +786,7 @@ static ULONG WINAPI dwritefont_Release(IDWriteFont2 *iface)
 
     if (!ref)
     {
-        if (This->face) IDWriteFontFace_Release(This->face);
+        if (This->face) IDWriteFontFace2_Release(This->face);
         if (This->family) IDWriteFontFamily_Release(This->family);
         _free_font_data(This->data);
         heap_free(This);
@@ -868,7 +866,7 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRIC
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont2 *iface, UINT32 value, BOOL *exists)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    IDWriteFontFace *fontface;
+    IDWriteFontFace2 *fontface;
     UINT16 index;
     HRESULT hr;
 
@@ -881,7 +879,7 @@ static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont2 *iface, UINT32 value,
         return hr;
 
     index = 0;
-    hr = IDWriteFontFace_GetGlyphIndices(fontface, &value, 1, &index);
+    hr = IDWriteFontFace2_GetGlyphIndices(fontface, &value, 1, &index);
     if (FAILED(hr))
         return hr;
 
@@ -896,7 +894,7 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont2 *iface, IDWriteFont
 
     TRACE("(%p)->(%p)\n", This, face);
 
-    hr = get_fontface_from_font(This, face);
+    hr = get_fontface_from_font(This, (IDWriteFontFace2**)face);
     if (hr == S_OK)
         IDWriteFontFace_AddRef(*face);
 
@@ -918,8 +916,7 @@ static void WINAPI dwritefont1_GetPanose(IDWriteFont2 *iface, DWRITE_PANOSE *pan
 static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont2 *iface, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    IDWriteFontFace2 *fontface2;
-    IDWriteFontFace *fontface;
+    IDWriteFontFace2 *fontface;
     HRESULT hr;
 
     TRACE("(%p)->(%u %p %p)\n", This, max_count, ranges, count);
@@ -928,11 +925,7 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont2 *iface, UINT32 m
     if (FAILED(hr))
         return hr;
 
-    IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
-    hr = IDWriteFontFace2_GetUnicodeRanges(fontface2, max_count, ranges, count);
-    IDWriteFontFace2_Release(fontface2);
-
-    return hr;
+    return IDWriteFontFace2_GetUnicodeRanges(fontface, max_count, ranges, count);
 }
 
 static HRESULT WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)
@@ -1652,7 +1645,7 @@ HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_ke
     return S_OK;
 }
 
-HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace **font_face)
+HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace2 **font_face)
 {
     int i;
     struct dwrite_fontface *This;
@@ -1706,7 +1699,7 @@ HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facety
     This->data->simulations = sim_flags;
     This->is_system = FALSE;
 
-    *font_face = (IDWriteFontFace*)&This->IDWriteFontFace2_iface;
+    *font_face = &This->IDWriteFontFace2_iface;
 
     return S_OK;
 }

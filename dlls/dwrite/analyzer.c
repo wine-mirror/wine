@@ -21,8 +21,6 @@
 
 #define COBJMACROS
 
-#include "dwrite.h"
-#include "dwrite_2.h"
 #include "dwrite_private.h"
 #include "scripts.h"
 

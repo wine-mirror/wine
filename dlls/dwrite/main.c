@@ -27,8 +27,6 @@
 #include "winuser.h"
 
 #include "initguid.h"
-#include "dwrite.h"
-#include "dwrite_2.h"
 
 #include "dwrite_private.h"
 #include "wine/debug.h"
@@ -609,7 +607,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory *iface,
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
     TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, facetype, files_number, font_files, index, sim_flags, font_face);
-    return font_create_fontface(iface, facetype, files_number, font_files, index, sim_flags, font_face);
+    return font_create_fontface(iface, facetype, files_number, font_files, index, sim_flags, (IDWriteFontFace2**)font_face);
 }
 
 static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory *iface, IDWriteRenderingParams **params)

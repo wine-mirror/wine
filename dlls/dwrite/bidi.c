@@ -48,7 +48,6 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
-#include "dwrite_1.h"
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
