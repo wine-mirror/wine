@@ -377,7 +377,7 @@ void opentype_cmap_get_glyphindex(void *data, UINT32 utf32c, UINT16 *pgi)
         table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
         type = GET_BE_WORD(*table);
         TRACE("table type %i\n", type);
-        /* Break when we find a handled type */
+
         switch (type)
         {
             case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
@@ -389,6 +389,8 @@ void opentype_cmap_get_glyphindex(void *data, UINT32 utf32c, UINT16 *pgi)
             default:
                 TRACE("table type %i unhandled.\n", type);
         }
+
+        if (*pgi) return;
     }
 }
 
