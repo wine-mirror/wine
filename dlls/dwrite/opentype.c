@@ -96,6 +96,12 @@ typedef struct {
     WORD endCode[1];
 } CMAP_SegmentMapping_0;
 
+enum OPENTYPE_CMAP_TABLE_FORMAT
+{
+    OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING = 4,
+    OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE = 12
+};
+
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
 #include "pshpack2.h"
 typedef struct
@@ -301,7 +307,7 @@ static int compare_group(const void *a, const void* b)
     return 0;
 }
 
-static void CMAP4_GetGlyphIndex(CMAP_SegmentMapping_0* format, DWORD utf32c, LPWORD pgi)
+static void CMAP4_GetGlyphIndex(CMAP_SegmentMapping_0* format, UINT32 utf32c, UINT16 *pgi)
 {
     WORD *startCode;
     SHORT *idDelta;
@@ -340,9 +346,9 @@ static void CMAP4_GetGlyphIndex(CMAP_SegmentMapping_0* format, DWORD utf32c, LPW
     }
 }
 
-static void CMAP12_GetGlyphIndex(CMAP_SegmentedCoverage* format, DWORD utf32c, LPWORD pgi)
+static void CMAP12_GetGlyphIndex(CMAP_SegmentedCoverage* format, UINT32 utf32c, UINT16 *pgi)
 {
-    CMAP_SegmentedCoverage_group *group = NULL;
+    CMAP_SegmentedCoverage_group *group;
 
     group = bsearch(&utf32c, format->groups, GET_BE_DWORD(format->nGroups),
                     sizeof(CMAP_SegmentedCoverage_group), compare_group);
@@ -354,17 +360,12 @@ static void CMAP12_GetGlyphIndex(CMAP_SegmentedCoverage* format, DWORD utf32c, L
     }
 }
 
-VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD flags)
+void opentype_cmap_get_glyphindex(void *data, UINT32 utf32c, UINT16 *pgi)
 {
+    CMAP_Header *CMAP_Table = data;
     int i;
-    CMAP_Header *CMAP_Table = NULL;
 
-    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
-        *pgi = 0xffff;
-    else
-        *pgi = 0;
-
-    CMAP_Table = data;
+    *pgi = 0;
 
     for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables); i++)
     {
@@ -376,18 +377,18 @@ VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD fl
 
         table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
         type = GET_BE_WORD(*table);
-        TRACE("Type %i\n", type);
+        TRACE("table type %i\n", type);
         /* Break when we find a handled type */
-        switch(type)
+        switch (type)
         {
-            case 4:
+            case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
                 CMAP4_GetGlyphIndex((CMAP_SegmentMapping_0*) table, utf32c, pgi);
                 break;
-            case 12:
+            case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
                 CMAP12_GetGlyphIndex((CMAP_SegmentedCoverage*) table, utf32c, pgi);
                 break;
             default:
-                TRACE("Type %i unhandled.\n", type);
+                TRACE("table type %i unhandled.\n", type);
         }
     }
 }

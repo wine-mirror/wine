@@ -108,7 +108,7 @@ extern HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE
 /* Opentype font table functions */
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,UINT32*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,BOOL*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_table(IDWriteFontFileStream*,DWRITE_FONT_FACE_TYPE,UINT32,UINT32,const void**,void**,UINT32*,BOOL*) DECLSPEC_HIDDEN;
-extern VOID OpenType_CMAP_GetGlyphIndex(LPVOID data, DWORD utf32c, LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
+extern void opentype_cmap_get_glyphindex(void*,UINT32,UINT16*) DECLSPEC_HIDDEN;
 extern VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style) DECLSPEC_HIDDEN;
 
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*);

@@ -391,9 +391,8 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
         }
 
         for (i = 0; i < count; i++)
-        {
-            OpenType_CMAP_GetGlyphIndex(This->cmap.data, codepoints[i], &glyph_indices[i], 0);
-        }
+            opentype_cmap_get_glyphindex(This->cmap.data, codepoints[i], &glyph_indices[i]);
+
         return S_OK;
     }
 }
