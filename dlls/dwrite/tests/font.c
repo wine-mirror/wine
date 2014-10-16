@@ -21,7 +21,7 @@
 #define COBJMACROS
 
 #include "windows.h"
-#include "dwrite.h"
+#include "dwrite_1.h"
 
 #include "wine/test.h"
 
@@ -35,6 +35,16 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static IDWriteFactory *factory;
@@ -189,6 +199,7 @@ static const struct IDWriteFontFileLoaderVtbl resourcefontfileloadervtbl = {
     resourcefontfileloader_CreateStreamFromKey
 };
 
+static IDWriteFontFileLoader rloader = { &resourcefontfileloadervtbl };
 
 static void test_CreateFontFromLOGFONT(void)
 {
@@ -939,7 +950,6 @@ static void test_FontLoader(void)
     IDWriteFontFileLoader floader = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
-    IDWriteFontFileLoader rloader = { &resourcefontfileloadervtbl };
     IDWriteFontFile *ffile = NULL;
     BOOL support = 1;
     DWRITE_FONT_FILE_TYPE type = 1;
@@ -1117,6 +1127,68 @@ static void test_shared_isolated(void)
     IDWriteFactory_Release(isolated2);
 }
 
+static void test_GetUnicodeRanges(void)
+{
+    DWRITE_UNICODE_RANGE *ranges, r;
+    IDWriteFontFile *ffile = NULL;
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    UINT32 count;
+    HRESULT hr;
+    HRSRC font;
+
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &rloader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    font = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
+    ok(font != NULL, "Failed to find font resource\n");
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, &font, sizeof(HRSRC), &rloader, &ffile);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &ffile, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(ffile);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (hr != S_OK) {
+        win_skip("GetUnicodeRanges() is not supported.\n");
+        return;
+    }
+
+    count = 0;
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 0, NULL, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count > 0, "got %u\n", count);
+
+    count = 1;
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 1, NULL, &count);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(count == 0, "got %u\n", count);
+
+    count = 0;
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 1, &r, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count > 1, "got %u\n", count);
+
+    ranges = heap_alloc(count*sizeof(DWRITE_UNICODE_RANGE));
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, count, ranges, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ranges[0].first = ranges[0].last = 0;
+    hr = IDWriteFontFace1_GetUnicodeRanges(fontface1, 1, ranges, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(ranges[0].first != 0 && ranges[0].last != 0, "got 0x%x-0x%0x\n", ranges[0].first, ranges[0].last);
+
+    heap_free(ranges);
+
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &rloader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFontFace1_Release(fontface1);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1141,6 +1213,7 @@ START_TEST(font)
     test_FontLoader();
     test_CreateFontFileReference();
     test_shared_isolated();
+    test_GetUnicodeRanges();
 
     IDWriteFactory_Release(factory);
 }

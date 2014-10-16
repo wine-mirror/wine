@@ -25,7 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "dwrite.h"
+#include "dwrite_1.h"
 #include "dwrite_private.h"
 
 #include "wine/debug.h"

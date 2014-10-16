@@ -163,6 +163,24 @@ static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection(IDWr
     return CONTAINING_RECORD(iface, struct dwrite_fontcollection, IDWriteFontCollection_iface);
 }
 
+static inline void* get_fontface_cmap(struct dwrite_fontface *fontface)
+{
+    BOOL exists = FALSE;
+    HRESULT hr;
+
+    if (fontface->cmap.data)
+        return fontface->cmap.data;
+
+    hr = IDWriteFontFace2_TryGetFontTable(&fontface->IDWriteFontFace2_iface, MS_CMAP_TAG, (const void**)&fontface->cmap.data,
+        &fontface->cmap.size, &fontface->cmap.context, &exists);
+    if (FAILED(hr) || !exists) {
+        ERR("Font does not have a CMAP table\n");
+        return NULL;
+    }
+
+    return fontface->cmap.data;
+}
+
 static HRESULT _dwritefontfile_GetFontFileStream(IDWriteFontFile *iface, IDWriteFontFileStream **stream)
 {
     HRESULT hr;
@@ -377,21 +395,16 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
     }
     else
     {
-        HRESULT hr;
+        void *data;
+
         TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
-        if (!This->cmap.data)
-        {
-            BOOL exists = FALSE;
-            hr = IDWriteFontFace2_TryGetFontTable(iface, MS_CMAP_TAG, (const void**)&This->cmap.data, &This->cmap.size, &This->cmap.context, &exists);
-            if (FAILED(hr) || !exists)
-            {
-                ERR("Font does not have a CMAP table\n");
-                return E_FAIL;
-            }
-        }
+
+        data = get_fontface_cmap(This);
+        if (!data)
+            return E_FAIL;
 
         for (i = 0; i < count; i++)
-            opentype_cmap_get_glyphindex(This->cmap.data, codepoints[i], &glyph_indices[i]);
+            opentype_cmap_get_glyphindex(data, codepoints[i], &glyph_indices[i]);
 
         return S_OK;
     }
@@ -523,8 +536,14 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace2 *iface, 
     DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, max_count, ranges, count);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p %p)\n", This, max_count, ranges, count);
+
+    *count = 0;
+    if (max_count && !ranges)
+        return E_INVALIDARG;
+
+    return opentype_cmap_get_unicode_ranges(get_fontface_cmap(This), max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace2 *iface)
@@ -907,8 +926,23 @@ static void WINAPI dwritefont1_GetPanose(IDWriteFont2 *iface, DWRITE_PANOSE *pan
 static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont2 *iface, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, max_count, ranges, count);
-    return E_NOTIMPL;
+    IDWriteFontFace2 *fontface2;
+    IDWriteFontFace *fontface;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u %p %p)\n", This, max_count, ranges, count);
+
+    hr = IDWriteFont2_CreateFontFace(iface, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
+    IDWriteFontFace_Release(fontface);
+
+    hr = IDWriteFontFace2_GetUnicodeRanges(fontface2, max_count, ranges, count);
+    IDWriteFontFace2_Release(fontface2);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)

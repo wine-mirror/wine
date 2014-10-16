@@ -20,7 +20,7 @@
 
 #define COBJMACROS
 
-#include "dwrite.h"
+#include "dwrite_1.h"
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -391,6 +391,98 @@ void opentype_cmap_get_glyphindex(void *data, UINT32 utf32c, UINT16 *pgi)
                 TRACE("table type %i unhandled.\n", type);
         }
     }
+}
+
+static UINT32 opentype_cmap_get_unicode_ranges_count(const CMAP_Header *CMAP_Table)
+{
+    UINT32 count = 0;
+    int i;
+
+    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables); i++) {
+        WORD type;
+        WORD *table;
+
+        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+            continue;
+
+        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
+        type = GET_BE_WORD(*table);
+        TRACE("table type %i\n", type);
+
+        switch (type)
+        {
+            case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
+            {
+                CMAP_SegmentMapping_0 *format = (CMAP_SegmentMapping_0*)table;
+                count += GET_BE_WORD(format->segCountX2)/2;
+                break;
+            }
+            case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
+            {
+                CMAP_SegmentedCoverage *format = (CMAP_SegmentedCoverage*)table;
+                count += GET_BE_DWORD(format->nGroups);
+                break;
+            }
+            default:
+                FIXME("table type %i unhandled.\n", type);
+        }
+    }
+
+    return count;
+}
+
+HRESULT opentype_cmap_get_unicode_ranges(void *data, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
+{
+    CMAP_Header *CMAP_Table = data;
+    int i, k = 0;
+
+    if (!CMAP_Table)
+        return E_FAIL;
+
+    *count = opentype_cmap_get_unicode_ranges_count(CMAP_Table);
+
+    for (i = 0; i < GET_BE_WORD(CMAP_Table->numTables) && k < max_count; i++)
+    {
+        WORD type;
+        WORD *table;
+        int j;
+
+        if (GET_BE_WORD(CMAP_Table->tables[i].platformID) != 3)
+            continue;
+
+        table = (WORD*)(((BYTE*)CMAP_Table) + GET_BE_DWORD(CMAP_Table->tables[i].offset));
+        type = GET_BE_WORD(*table);
+        TRACE("table type %i\n", type);
+
+        switch (type)
+        {
+            case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
+            {
+                CMAP_SegmentMapping_0 *format = (CMAP_SegmentMapping_0*)table;
+                UINT16 segment_count = GET_BE_WORD(format->segCountX2)/2;
+                UINT16 *startCode = (WORD*)((BYTE*)format + sizeof(CMAP_SegmentMapping_0) + (sizeof(WORD) * segment_count));
+
+                for (j = 0; j < segment_count && GET_BE_WORD(format->endCode[j]) < 0xffff && k < max_count; j++, k++) {
+                    ranges[k].first = GET_BE_WORD(startCode[j]);
+                    ranges[k].last  = GET_BE_WORD(format->endCode[j]);
+                }
+                break;
+            }
+            case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
+            {
+                CMAP_SegmentedCoverage *format = (CMAP_SegmentedCoverage*)table;
+                for (j = 0; j < GET_BE_DWORD(format->nGroups) && k < max_count; j++, k++) {
+                    ranges[k].first = GET_BE_DWORD(format->groups[j].startCharCode);
+                    ranges[k].last  = GET_BE_DWORD(format->groups[j].endCharCode);
+                }
+                break;
+            }
+            default:
+                FIXME("table type %i unhandled.\n", type);
+        }
+    }
+
+    return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
 VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
