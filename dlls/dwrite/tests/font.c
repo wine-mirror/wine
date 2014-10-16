@@ -657,11 +657,13 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
     /* the fontface refcount is increased here */
-
-    IDWriteFontFace_Release(fontface);
-
     IDWriteFontFace_Release(fontface);
     IDWriteFont_Release(font);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFont, (void**)&font);
+    ok(hr == E_NOINTERFACE || broken(hr == E_NOTIMPL), "got 0x%08x\n", hr);
+
+    IDWriteFontFace_Release(fontface);
     IDWriteGdiInterop_Release(interop);
 }
 
@@ -726,6 +728,7 @@ static void test_system_fontcollection(void)
 {
     IDWriteFontCollection *collection, *coll2;
     IDWriteFontFamily *family;
+    IDWriteFactory *factory2;
     HRESULT hr;
     UINT32 i;
     BOOL ret;
@@ -742,6 +745,14 @@ static void test_system_fontcollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
     IDWriteFontCollection_Release(coll2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_GetSystemFontCollection(factory2, &coll2, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(coll2 != collection, "got %p, was %p\n", coll2, collection);
+    IDWriteFontCollection_Release(coll2);
+    IDWriteFactory_Release(factory2);
 
     i = IDWriteFontCollection_GetFontFamilyCount(collection);
     ok(i, "got %u\n", i);
