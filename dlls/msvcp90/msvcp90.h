@@ -74,13 +74,18 @@ extern MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
 #define BUF_SIZE_CHAR 16
 typedef struct
 {
+#if _MSVCP_VER <= 90
     void *allocator;
+#endif
     union {
         char buf[BUF_SIZE_CHAR];
         char *ptr;
     } data;
     MSVCP_size_t size;
     MSVCP_size_t res;
+#if _MSVCP_VER == 100
+    char allocator;
+#endif
 } basic_string_char;
 
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
@@ -97,13 +102,18 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign(basic_string_char*,
 #define BUF_SIZE_WCHAR 8
 typedef struct
 {
+#if _MSVCP_VER <= 90
     void *allocator;
+#endif
     union {
         wchar_t buf[BUF_SIZE_WCHAR];
         wchar_t *ptr;
     } data;
     MSVCP_size_t size;
     MSVCP_size_t res;
+#if _MSVCP_VER == 100
+    char allocator;
+#endif
 } basic_string_wchar;
 
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
@@ -117,10 +127,10 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar
 
 char* __thiscall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void __thiscall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(void*);
+MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(const void*);
 wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(void*);
+MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(const void*);
 
 typedef struct
 {

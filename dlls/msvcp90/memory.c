@@ -111,7 +111,7 @@ void __thiscall MSVCP_allocator_char_destroy(void *this, char *ptr)
 /* ?max_size@?$allocator@D@std@@QBEIXZ */
 /* ?max_size@?$allocator@D@std@@QEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_max_size, 4)
-MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(void *this)
+MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(const void *this)
 {
     return UINT_MAX/sizeof(char);
 }
@@ -208,7 +208,7 @@ void __thiscall MSVCP_allocator_wchar_destroy(void *this, char *ptr)
 /* ?max_size@?$allocator@_W@std@@QBEIXZ */
 /* ?max_size@?$allocator@_W@std@@QEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_allocator_wchar_max_size, 4)
-MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(void *this)
+MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(const void *this)
 {
     return UINT_MAX/sizeof(wchar_t);
 }

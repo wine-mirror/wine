@@ -29,6 +29,14 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
+#if _MSVCP_VER <= 90
+#define STRING_ALLOCATOR(this) ((this)->allocator)
+#elif _MSVCP_VER == 100
+#define STRING_ALLOCATOR(this) (&(this)->allocator)
+#else
+#define STRING_ALLOCATOR(this) NULL
+#endif
+
 /* size_t_noverify structure */
 typedef struct {
     MSVCP_size_t val;
@@ -546,7 +554,7 @@ void __thiscall basic_string_char_tidy(basic_string_char *this,
 
         if(new_size > 0)
             MSVCP_char_traits_char__Copy_s(this->data.buf, BUF_SIZE_CHAR, ptr, new_size);
-        MSVCP_allocator_char_deallocate(this->allocator, ptr, this->res+1);
+        MSVCP_allocator_char_deallocate(STRING_ALLOCATOR(this), ptr, this->res+1);
     }
 
     this->res = BUF_SIZE_CHAR-1;
@@ -577,9 +585,9 @@ MSVCP_bool __thiscall basic_string_char_grow(
         if(new_res/3 < this->res/2)
             new_res = this->res + this->res/2;
 
-        ptr = MSVCP_allocator_char_allocate(this->allocator, new_res+1);
+        ptr = MSVCP_allocator_char_allocate(STRING_ALLOCATOR(this), new_res+1);
         if(!ptr)
-            ptr = MSVCP_allocator_char_allocate(this->allocator, new_size+1);
+            ptr = MSVCP_allocator_char_allocate(STRING_ALLOCATOR(this), new_size+1);
         else
             new_size = new_res;
         if(!ptr) {
@@ -988,7 +996,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_char_max_size, 4)
 MSVCP_size_t __thiscall basic_string_char_max_size(const basic_string_char *this)
 {
     TRACE("%p\n", this);
-    return MSVCP_allocator_char_max_size(this->allocator)-1;
+    return MSVCP_allocator_char_max_size(STRING_ALLOCATOR(this))-1;
 }
 
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE_NXZ */
@@ -2228,7 +2236,7 @@ void __thiscall basic_string_wchar_tidy(basic_string_wchar *this,
 
         if(new_size > 0)
             MSVCP_char_traits_wchar__Copy_s(this->data.buf, BUF_SIZE_WCHAR, ptr, new_size);
-        MSVCP_allocator_wchar_deallocate(this->allocator, ptr, this->res+1);
+        MSVCP_allocator_wchar_deallocate(STRING_ALLOCATOR(this), ptr, this->res+1);
     }
 
     this->res = BUF_SIZE_WCHAR-1;
@@ -2252,9 +2260,9 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         if(new_res/3 < this->res/2)
             new_res = this->res + this->res/2;
 
-        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res+1);
+        ptr = MSVCP_allocator_wchar_allocate(STRING_ALLOCATOR(this), new_res+1);
         if(!ptr)
-            ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_size+1);
+            ptr = MSVCP_allocator_wchar_allocate(STRING_ALLOCATOR(this), new_size+1);
         else
             new_size = new_res;
         if(!ptr) {
@@ -2733,7 +2741,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_wchar_max_size, 4)
 MSVCP_size_t __thiscall basic_string_wchar_max_size(const basic_string_wchar *this)
 {
     TRACE("%p\n", this);
-    return MSVCP_allocator_wchar_max_size(this->allocator)-1;
+    return MSVCP_allocator_wchar_max_size(STRING_ALLOCATOR(this))-1;
 }
 
 /* ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE_NXZ */
