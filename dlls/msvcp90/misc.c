@@ -478,3 +478,118 @@ critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_t *mtx)
     return &(*mtx)->cs;
 }
 #endif
+
+#if _MSVCP_VER == 100
+typedef struct {
+    const vtable_ptr *vtable;
+} error_category;
+
+typedef struct {
+    error_category base;
+    const char *type;
+} custom_category;
+static custom_category iostream_category;
+
+DEFINE_RTTI_DATA0(error_category, 0, ".?AVerror_category@std@@")
+DEFINE_RTTI_DATA1(iostream_category, 0, &error_category_rtti_base_descriptor, ".?AV_Iostream_error_category@std@@")
+
+extern const vtable_ptr MSVCP_iostream_category_vtable;
+
+static void iostream_category_ctor(custom_category *this)
+{
+    this->base.vtable = &MSVCP_iostream_category_vtable;
+    this->type = "iostream";
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_vector_dtor, 8)
+custom_category* __thiscall custom_category_vector_dtor(custom_category *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            MSVCRT_operator_delete(ptr);
+    } else {
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_name, 4)
+const char* __thiscall custom_category_name(const custom_category *this)
+{
+    return this->type;
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_message, 12)
+basic_string_char* __thiscall custom_category_message(const custom_category *this,
+        basic_string_char *ret, int err)
+{
+    if(err == 1) return MSVCP_basic_string_char_ctor_cstr(ret, "iostream error");
+    return MSVCP_basic_string_char_ctor_cstr(ret, strerror(err));
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_default_error_condition, 12)
+/*error_condition*/void* __thiscall custom_category_default_error_condition(
+        custom_category *this, /*error_condition*/void *ret, int code)
+{
+    FIXME("(%p %p %x) stub\n", this, ret, code);
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_equivalent, 12)
+MSVCP_bool __thiscall custom_category_equivalent(const custom_category *this,
+        int code, const /*error_condition*/void *condition)
+{
+    FIXME("(%p %x %p) stub\n", this, code, condition);
+    return FALSE;
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_equivalent_code, 12)
+MSVCP_bool __thiscall custom_category_equivalent_code(custom_category *this,
+        const /*error_code*/void *code, int condition)
+{
+    FIXME("(%p %p %x) stub\n", this, code, condition);
+    return FALSE;
+}
+
+/* ?iostream_category@std@@YAABVerror_category@1@XZ */
+/* ?iostream_category@std@@YAAEBVerror_category@1@XZ */
+const error_category* __cdecl std_iostream_category(void)
+{
+    TRACE("()\n");
+    return &iostream_category.base;
+}
+
+#ifndef __GNUC__
+void __asm_dummy_vtables(void) {
+#endif
+    __ASM_VTABLE(iostream_category,
+            VTABLE_ADD_FUNC(custom_category_vector_dtor)
+            VTABLE_ADD_FUNC(custom_category_name)
+            VTABLE_ADD_FUNC(custom_category_message)
+            VTABLE_ADD_FUNC(custom_category_default_error_condition)
+            VTABLE_ADD_FUNC(custom_category_equivalent)
+            VTABLE_ADD_FUNC(custom_category_equivalent_code));
+#ifndef __GNUC__
+}
+#endif
+#endif
+
+void init_misc(void *base)
+{
+#ifdef __x86_64__
+#if _MSVCP_VER == 100
+    init_error_category_rtti(base);
+    init_iostream_category_rtti(base);
+#endif
+#endif
+
+#if _MSVCP_VER == 100
+    iostream_category_ctor(&iostream_category);
+#endif
+}

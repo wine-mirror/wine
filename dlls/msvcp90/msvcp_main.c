@@ -127,6 +127,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             init_exception(hinstDLL);
             init_locale(hinstDLL);
             init_io(hinstDLL);
+            init_misc(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;

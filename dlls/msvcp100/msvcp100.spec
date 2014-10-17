@@ -2045,8 +2045,8 @@
 # extern ?intl@?$moneypunct@G$0A@@std@@2_NB
 # extern ?intl@?$moneypunct@_W$00@std@@2_NB
 # extern ?intl@?$moneypunct@_W$0A@@std@@2_NB
-@ stub -arch=win32 ?iostream_category@std@@YAABVerror_category@1@XZ
-@ stub -arch=win64 ?iostream_category@std@@YAAEBVerror_category@1@XZ
+@ cdecl -arch=win32 ?iostream_category@std@@YAABVerror_category@1@XZ() std_iostream_category
+@ cdecl -arch=win64 ?iostream_category@std@@YAAEBVerror_category@1@XZ() std_iostream_category
 @ thiscall -arch=win32 ?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE_N_N@Z(ptr long) basic_istream_char_ipfx
 @ cdecl -arch=win64 ?ipfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA_N_N@Z(ptr long) basic_istream_char_ipfx
 @ thiscall -arch=win32 ?ipfx@?$basic_istream@GU?$char_traits@G@std@@@std@@QAE_N_N@Z(ptr long) basic_istream_wchar_ipfx

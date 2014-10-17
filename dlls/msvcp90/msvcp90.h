@@ -536,6 +536,7 @@ void init_exception(void*);
 void init_locale(void*);
 void init_io(void*);
 void free_io(void);
+void init_misc(void*);
 
 /* class complex<float> */
 typedef struct {
