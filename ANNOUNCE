@@ -1,15 +1,15 @@
-The Wine development release 1.7.28 is now available.
+The Wine development release 1.7.29 is now available.
 
 What's new in this release (see below for details):
-  - Support for conditional compilation in JavaScript.
-  - Bidirectional text support in DirectWrite.
-  - Stubs for DirectPlay Voice support.
+  - Support for shaping and BiDi mirroring in DirectWrite.
+  - Some page fault handling fixes.
+  - A few more C runtime functions.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.7.28.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.28.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.7.29.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.29.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -25,225 +25,270 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.7.28 (total 21):
+Bugs fixed in 1.7.29 (total 44):
 
-  20799  (not a Wine bug) Multiple games using OpenAL freezes/crashes during the startup
-  22469  FileMaker Pro 11: Text is upside down when builtin gdiplus is used
-  22987  Irfan view - "Can't paste image from clipboard !"
-  23667  CDBurnerXP 3.0 desktop shortcut uses a generic wine glass icon
-  25705  Action buttons in Lemmings could not be clicked
-  25715  native dxdiag crashes with builtin quartz
-  26738  Steam crashes using ALSA
-  27978  QuickBooks Premier 2011 crash on start
-  31043  Segfault when trying to run Direct3D or OpenGL apps
-  31378  Built in IE - U-Haul dealer network Point of Sale page unusable
-  31815  Rhapsody 4.0 crashes on startup
-  34923  SolidWorks 2014 installer needs ieframe IWebBrowser2::Refresh2
-  35019  ToDoList 6.9.b12 (MFC app) crashes when deleting a task
-  35121  Multiple applications/games fail to start with WinVer set to 'Windows 7' (FindFirstFileExW needs FIND_FIRST_EX_LARGE_FETCH support)(FotoQuelle Fotosoftware v4.13, QT5)
-  37198  Pale Moon Portable 24.7.x fails on startup, reporting "Couldn't load XPCOM" (needs msvcp110.dll '?_BADOFF@std@@3_JB' also exported for 32-bit arch)
-  37221  biet-o-matic 2.14.12: Crashes when past eBay item number with context menu (right click, past)
-  37290  Baltie educational programming language does not run.
-  37304  Different paper size enumerations between cloned printers
-  37305  ApexDC fails to do file operations (file:FindFirstFileExW)
-  37319  [Ubuntu 12.04][Wine.1.4.x/1.6.x] Steam - can't purchase games due to an invalid SSL cerificate
-  37339  Excel 2010 Cant save or open files with Pivot Tables
+  12202  No pic when installing Indiana Jones demo in fullscreen
+  18440  Touhou Hisoten ~ Scarlet Weather Rhapsody crashes in menu/game select
+  19293  Galactic Civilizations 2 v. 1.0D Digital:Bonus Pack. Program crashes after starting a new game.
+  19296  Multiple apps wrapped with Shrinker 3.5 fail with unexpected guard page fault caused by Wine's ATL thunk check (Uru: Ages beyond Myst, Football Manager 2010 Demo)
+  20444  Doom3 CD version installer fails instead of asking for another CD
+  20720  winebrowser fails when # is in the file name
+  23955  Heroes of Might and Magic V Map editor -- Crashes when an attempt is made to draw the map
+  25716  Native dxdiag+quartz crash with builtin devenum
+  25767  Hegemony Gold rendering artifact: border overlay only shows in upper left corner of screen
+  25796  Firefox 4 crashes at end of webgl conformance test
+  25806  Civilization 2: Freezes early in the game
+  25815  12voip application won't start after installation
+  25837  Dual head changing resolution issue
+  25867  Silhouette Studio: not rendering the GUI properly
+  25919  Heroes of Newerth: annoying static on initialization when using mmdevapi
+  25927  fifa11_demo hangs with builtin msvcr80 when run from batch file
+  26015  Forsaken World - Game client crashes at startup
+  27781  LEGO Harry Potter Year 1-4 crashes with "Failed to create d3d device. Application will now exit. Error = 0x8876086c"
+  28483  Need For Speed Undeground doesn't remember keyboard config
+  28920  Calling batch files with spaces in the name half-works, but shouldn't
+  29817  Multiple applications crash on initialization of audio host APIs using cross-platform 'PortAudio' library (missing 'ksuser.dll')(WSJTX, MAP65, LMMS)
+  31608  wine doesn't detect Logitech rumblepad 2 joystick
+  32830  TurboTax 2012 wants dwmapi.dll.DwmAttachMilContent (Vista/Win7 mode)
+  33034  Many GFWL (Games For Windows Live) 1.x/2.x/3.x games crash or exit silently on startup (DiRT 2/3, GTA IV Steam)
+  33108  Lego Harry Potter (Years 1-4) crashes instantly when trying to load.
+  33425  Last Half of Darkness-Shadows of the Servants demo crashes
+  34479  Multiple apps wrapped with Armadillo software protection scheme fail with unexpected guard page fault caused by Wine's ATL thunk check (Advantage Cooking, Wayne Gould's Sudoku)
+  35323  Final Fantasy XI crashes with page fault before main menu
+  35489  HTC Synchronization Manager 2.4 doesn't run: needs setupapi.dll.CM_Get_Device_Interface_List_SizeW
+  35886  Lotus Notes 9 'cacheset.exe' utility needs KERNEL32.dll.SetSystemFileCacheSize
+  36528  Multiple applications need IDWriteFontFamily::GetFontCount implementation (Behringer x32 Edit, Fractal-Bot)
+  36747  SIV 4.46 Beta-15 crashes on unimplemented function slc.dll.SLGetWindowsInformation
+  36761  Imagelist invisible dragimage
+  36939  Multiple applications need IDWriteFontFamily::GetFont implementation (Molot VST plugin, Behringer x32 Edit, Fractal-Bot)
+  37004  Jupiter crashes on startup
+  37026  Matlab 2009a, 2010 crashes on unimplemented function msvcr80.dll._fread_nolock
+  37081  Mario Forever 5.0.1 hangs on startup (ieframe 'IEnumOLEVERB::Next' always returns 'S_OK' even with no items retrieved)
+  37230  Cannot override window.ActiveXObject()
+  37256  Windows tree view control auto-collapses
+  37314  Linia v6.9.x (surveillance application) installation fails due to msvcp90.locale_ctor_locale_cstr stub
+  37334  Cisco Jabber fails to run, needs ntdsapi.dll.DsBindW
+  37344  SNMPc 7 Network Manager crashes on unimplemented function wsnmp32.dll.SnmpOpen
+  37366  HexEdit Pro 4.0 crashes after opening a file (needs support for IXMLDOMDocumentType::name property)
+  37411  ntdll/tests/reg.c fails / wineserver crashes running ntdll/reg test from winetest
 
 ----------------------------------------------------------------
 
-Changes since 1.7.27:
+Changes since 1.7.28:
 
-Akihiro Sagawa (3):
-      ntdll/tests: Remove duplicated entry.
-      ntdll/tests: Add KeyNameInformation tests.
-      po: Update Japanese translation.
+Akihiro Sagawa (2):
+      kernel32: Fix incorrect lastpart in GetFullPathNameA with DBCS.
+      server: KeyNameInformation returns the full name of the key.
 
-Alexandre Julliard (2):
-      secur32/tests: Update test for the new certificate on winehq.org.
-      kernel32/tests: Fix overlapped status checks for 64-bit.
+Alistair Leslie-Hughes (1):
+      ws2_32: Make SOCKET output consistent.
 
-Alistair Leslie-Hughes (7):
-      dpvoice: Add IDirectPlayVoiceClient Support.
-      dpvoice: Add IDirectPlayVoiceServer support.
-      dpvoice: Add DirectPlay Voice test.
-      dpvoice: Add IDirectPlayVoiceTest stub interface.
-      dpnet: Implement IDirectPlay8Address AddComponent.
-      dpnet: Show SetSP adds a component.
-      dpnet: Implement IDirectPlay8Address Duplicate.
+André Hentschel (11):
+      winhttp/tests: Fix potential crash on BSD.
+      winedump: Update minidump output.
+      setupapi: Add stubs for CM_Get_Device_Interface_List_SizeA/W.
+      slc: Add stub for SLGetWindowsInformation.
+      ntdll: Add support for Win 8.1.
+      winetest: Detect real version values.
+      kernel32/tests: Skip on faked version values.
+      server: Update CPU type dumping.
+      winedump: Improved dumping of exception info on ARM.
+      winedump: Fix compiler warnings.
+      winhttp/tests: Fix typo.
 
-Andreas Fuchs (1):
-      kernel32: Ignore flags on FindFirstFileExW.
+Aric Stewart (1):
+      dwrite: Build non-system font collections as a list of font families.
 
-Andrei Slăvoiu (2):
-      wined3d: Adjust the Intel fallbacks to better reflect reality.
-      wined3d: Pass the capabilities directly to d3d_level_from_gl_info and rename it to d3d_level_from_caps.
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
-André Hentschel (5):
-      d3d10core: Fix out of bounds access (Coverity).
-      dwrite: Check correct variable (Coverity).
-      ntdll: Use a dynamic buffer for change notification data.
-      winegcc: Respect TMPDIR environment variable.
-      winemenubuilder: Respect TMPDIR environment variable.
+Austin English (5):
+      kernel32: Add a stub for GetSystemFileCacheSize.
+      kernel32: Add a stub for SetSystemFileCacheSize.
+      wsnmp32: Add stub for SnmpOpen.
+      ntdsapi: Add stubs for DsBindA/W.
+      systeminfo: Add stub program.
 
-François Gouget (3):
-      dpnet/tests: Add a trailing '\n' to some ok() calls.
-      d2d1: Add a trailing '\n' to a FIXME().
-      Assorted spelling fixes.
+David Heidelberger (1):
+      dbghelp: Implement DW_TAG_const_type in dwarf2_parse_udt_type.
 
-Frédéric Delanoy (2):
-      po: Update French translation.
-      Assorted spelling/grammar fixes.
+François Gouget (2):
+      d2d1: Make the IDWriteTextRenderer methods static.
+      dwrite: Avoid redefining the DWRITE_GLYPH_RUN typedef.
 
-Hans Leidekker (3):
-      wininet/tests: Update test data to match the new certificate on winehq.org.
-      wininet: Protect the request headers array with a critical section.
-      msi: Include the terminating null in the buffer size for decoded stream names.
-
-Hao Peng (1):
-      mshtml: Add IHTMLAnchorElement::search propertyimplementation.
+Hans Leidekker (1):
+      msi: Don't skip the media check for the first volume.
 
 Henri Verbeet (23):
-      d3d8: Get rid of the format switching code in d3d8_device_CopyRects().
-      ddraw: Move the pitch / linear size validation from ddraw_surface_init() to ddraw_surface_create().
-      ddraw: Set user memory in ddraw_surface_create() instead of ddraw_surface_init().
-      wined3d: Replace wined3d_surface_update_desc() with wined3d_texture_update_desc().
-      wined3d: Get rid of SFLAG_DONOTFREE.
-      wined3d: Use wined3d_texture_set_color_key() to manipulate the color-key in surface_blt_special().
-      wined3d: Use a lookup table in d3dfmt_get_conv().
-      wined3d: Get rid of the "use_texturing" parameter to d3dfmt_get_conv().
-      wined3d: Pass a texture to d3dfmt_get_conv().
-      wined3d: Use a more consistent naming for wined3d_conversion_type elements.
-      wined3d: Get rid of the WINED3D_CT_NONE case in d3dfmt_convert_surface().
-      wined3d: Fix the pitch handling in the no-palette WINED3D_CT_P8 case.
-      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_P8.
-      wined3d: Convert to WINED3DFMT_B5G5R5A1_UNORM for WINED3D_CT_CK_B5G6R5.
-      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_CK_B8G8R8.
-      wined3d: Convert to WINED3DFMT_B8G8R8A8_UNORM for WINED3D_CT_CK_B8G8R8X8.
-      wined3d: Just store the wined3d format in color_key_info[].
-      wined3d: Introduce a separate function for WINED3D_CT_P8.
-      wined3d: Introduce a separate function for WINED3D_CT_CK_B5G6R5.
-      wined3d: Introduce a separate function for WINED3D_CT_CK_B5G5R5X1.
-      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8.
-      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8X8.
-      wined3d: Introduce a separate function for WINED3D_CT_CK_B8G8R8A8.
+      d2d1: Implement d2d_d3d_render_target_DrawTextLayout().
+      wined3d: Just use glGammaInternal/rtInternal from the destination format in d3dfmt_get_conv().
+      wined3d: Don't abuse conv_byte_count for color-key conversions.
+      wined3d: Print a FIXME for any unhandled format in d3dfmt_get_conv().
+      wined3d: Don't check for color-keying for WINED3D_CT_P8.
+      ws2_32: Return the needed buffer size for SIO_ADDRESS_LIST_QUERY.
+      ws2_32: Return WSAEINVAL if "out_size" is smaller than the minimum size for SIO_ADDRESS_LIST_QUERY.
+      ws2_32: Return an error if "out_buff" is NULL for SIO_ADDRESS_LIST_QUERY.
+      ws2_32: Simplify some address calculations for SIO_ADDRESS_LIST_QUERY.
+      wined3d: Return the destination format from d3dfmt_get_conv().
+      wined3d: Get rid of d3dfmt_convert_surface().
+      wined3d: Get rid of surface_prepare_texture_internal().
+      wined3d: Move the color key conversion helpers to util.c.
+      wined3d: Handle GL texture allocation in the texture code.
+      wined3d: Track texture allocation per-texture.
+      wined3d: Only prepare the texture in device_update_volume().
+      wined3d: Track format conversion per-texture.
+      wined3d: Track system memory pinning per-texture.
+      wined3d: Track SFLAG_DYNLOCK per-texture.
+      wined3d: Track texture coordinate normalization per-texture.
+      d3d9/tests: Allow a width and height to be passed to create_device().
+      d3d9/tests: Use create_device() in test_scissor_size().
+      d3d8/tests: Allow a width and height to be passed to create_device().
 
-Jacek Caban (40):
-      vbscript: Don't try to convert int to short in return_int.
-      mshtml: Don't share nsform reference with nsnode.
-      mshtml: Don't share nsinput reference with nsnode.
-      mshtml: Don't share nsframe and nsiframe reference with nsnode.
-      mshtml: Don't share nsstyle reference with nsnode.
-      mshtml: Don't share nslink reference with nsnode.
-      mshtml: Don't share nsanchor reference with nsnode.
-      mshtml: Don't share nsselect reference with nsnode.
-      mshtml: Don't share nsoption reference with nsnode.
-      mshtml: Don't share nstextarea reference with nsnode.
-      mshtml: Don't share nstable reference with nsnode.
-      mshtml: Don't share nscell reference with nsnode.
-      mshtml: Don't share nsobject reference with nsnode.
-      ieframe: Added partial Refresh2 implementation.
-      mshtml: Don't share nsimg reference with nsnode.
-      mshtml: Don't share nsscript reference with nsnode.
-      mshtml: Don't share nsrow reference with nsnode.
-      mshtml: Don't share nsbutton reference with nsnode.
-      mshtml: Use UTF-8 encoding in NewURI by default.
-      mshtml: Use proper type for text node in exec_hyperlink.
-      mshtml: Don't assume that nsIDOMHTMLElement inherits from nsIDOMNode in HTMLDocument_createStyleSheet.
-      mshtml: Removed no longer needed assert.
-      jscript: Move parser related declarations to separated header.
-      jscript: Return double from parse_numeric_literal and parse_double_literal.
-      jscript: Added new ccval_t type for CC variable values.
-      jscript: Moved skipping spaces to separated function.
-      jscript: Added conditional compilation @set support.
-      jscript/tests: Added @set tests.
-      jscript: Added support for conditional compilation @if/@elif/@else/@end.
-      jscript: Added tests for @if/@elif/@else/@end.
-      jscript: Implicitly turn CC on for @set instruction.
-      jscript: Implicitly turn CC on for @if instruction.
-      jscript: Added support for '-' CC expression.
-      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmlinput.c.
-      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmloption.c.
-      mshtml: Don't assume that nsIDOMHTML*Element interfaces inherit from nsIDOMHTMLElement in htmlscript.c.
-      mshtml: Don't assume that nsIDOMHTMLScriptElement inherits from nsIDOMHTMLElement in get_script_guid.
-      jscript: Added parser rules for missing expressions.
-      jscript: Added support for '==' CC expression.
-      jscript: Added support for relational CC expressions.
+Iván Matellanes (7):
+      msvcrt: Added _fclose_nolock() implementation.
+      msvcrt: Added _fread_nolock() implementation.
+      msvcrt: Added _fwrite_nolock() implementation.
+      msvcrt: Added _ftelli64_nolock implementation.
+      msvcrt: Added _ftell_nolock implementation.
+      msvcrt: Added _fseeki64_nolock implementation.
+      msvcrt: Added _fseek_nolock implementation.
+
+Jacek Caban (13):
+      ieframe: Fixed tests on updated IE11.
+      ieframe: Return some verbs in IEnumOLEVERB:Next.
+      ieframe: Don't crash if output parameter is NULL in WebBrowser::get_RegisterAsDropTarget.
+      mshtml: Moved BOM enum to binding.h.
+      mshtml: Moved script binding callback to script.c.
+      mshtml: Moved READYSTATE to string conversion to separated function.
+      mshtml: Use IUri for script binding.
+      mshtml: Added support for onreadystatechange event for script elements.
+      mshtml: Added IHTMLScriptElement::get_readyState implementation.
+      mshtml: Added IHTMLElement::language property implementation.
+      mshtml: Use proper codepage in nsIIOService::NewURI.
+      jscript: Don't use builtin property for exposing ActiveXObject constructor.
+      mshtml: Added HTMLTextAreaElement::get_form implementation.
 
 Jactry Zeng (1):
-      riched20: Set editor->reOle to NULL when IRichEditOle is released.
+      mshtml/tests: Fix typo.
 
-Johannes Brandstätter (1):
-      d3d10core: Add support for map_type flags D3D10_MAP_READ, D3D10_MAP_WRITE_NO_OVERWRITE and D3D10_MAP_DISCARD.
-
-Joris van der Wel (1):
-      server: A new function "set_sd_defaults_from_token".
+Julian Rüger (1):
+      po: Update German translation.
 
 Ken Thomases (2):
-      winemac: Don't invalidate the window shadow on every draw if it's merely shaped and not color-keyed or using per-pixel alpha.
-      winemac: Properly ignore attempts to set a window's shape to its current shape.
+      wined3d: Fix subtraction of resource size from used adapter memory.
+      configure: For Mac, link wineloader with -no_pie if it's available.
 
-Lauri Kenttä (1):
-      po: Update Finnish translation.
+Matteo Bruni (9):
+      gdi32: Don't overflow the buffer in GetGlyphOutline.
+      gdi32/tests: Add a test for GetGlyphOutline with an insufficient buffer.
+      wined3d: Fail to create shaders using more than the supported number of constants.
+      d3d9/tests: Add some tests for shaders using more than the maximum number of supported constants.
+      d3d9/tests: Port the unsupported shaders test to D3D9Ex.
+      d3d8/tests: Port the applicable parts of the new unsupported shaders tests to d3d8.
+      wined3d: Don't replicate shader limits values for each shader.
+      wined3d: ps_2_0 shaders don't support int or bool constants.
+      d3dcompiler: Fix tracing of expression operators.
 
-Marcus Meissner (6):
-      dwrite: Use correct variable (Coverity).
-      dwrite: Fixed NULL ptr deref before check (Coverity).
-      dwrite: Avoid NULL ptr dereference (Coverity).
-      wbemprox: Fixed a memory leak in get_sd (Coverity).
-      dwrite: Check correct variable for NULL (Coverity).
-      dxgi: Added missing unlock (Coverity).
+Michael Müller (2):
+      ntdll: Fix handling of page fault if a guard page and write watch is triggered at the same time.
+      ntdll: Wait until builtin dlls are unloaded before releasing the virtual view.
 
-Nikolay Sivov (12):
-      usp10: Use proper type for return value.
-      dwrite: Use proper type for return value.
-      dwrite: Implement itemization by script id using Unicode.org data.
-      include: Update dwrite headers to match SDK 8.1.
-      dwrite: Update to IDWriteTextAnalyzer2.
-      dwrite: Allow underscores in script names.
-      dwrite: Implement GetScriptProperties().
-      dwrite: Implement GetTextComplexity().
-      po: Update Russian translation.
-      dwrite: Implement AnalyzeBidi().
-      usp10: Remove comment that's no longer true.
-      dwrite: Implement CreateNumberSubstitution().
+Michael Stefaniuc (3):
+      comctl32: Correctly handle the ImageList index in BeginDrag().
+      comctl32: Don't start a new ImageList Drag if another one is ongoing.
+      comctl32/tests: Add some ImageList_BeginDrag() tests.
 
-Piotr Caban (4):
-      user32: Return early on child windows in DrawMenuBar.
-      user32/tests: Add initial WindowFromPoint tests.
-      user32/tests: Add cross-process WindowFromPoint tests.
-      user32/tests: Add cross-process mouse click test.
+Nikolay Sivov (44):
+      kernel32/nls: Added support for LOCALE_SOPENTYPELANGUAGETAG.
+      include: Added GetLocaleInfoEx() definition.
+      gameux: Cleanup failure handling when processing main definition element, use better naming.
+      gameux: Use CLSIDFromString() instead of shell32 equivalent.
+      dwrite: Initial implementation of GetGlyphs().
+      dwrite: Mirror characters in case of RTL direction.
+      advpack: Use E_NOT_SUFFICIENT_BUFFER definition.
+      dmsynth: Use E_NOT_SUFFICIENT_BUFFER definition.
+      fusion: Use E_NOT_SUFFICIENT_BUFFER definition.
+      dwrite: Introduce cache to be used by shaping engines.
+      dwrite: Store OpenType language tag in shaping cache.
+      dwrite: Move font table related data to a separate structure.
+      dwrite: Use public macro to define OpenType tags.
+      dwmapi: Added DwmAttachMilContent() and DwmDetachMilContent() stubs.
+      msxml3: Implement 'name' and 'nodeName' properties for doctype node.
+      dwrite: Use E_NOT_SUFFICIENT_BUFFER definition.
+      msi: Use E_NOT_SUFFICIENT_BUFFER definition.
+      propsys: Use E_NOT_SUFFICIENT_BUFFER definition.
+      shell32: Use E_NOT_SUFFICIENT_BUFFER definition.
+      shlwapi: Use E_NOT_SUFFICIENT_BUFFER definition.
+      urlmon: Use E_NOT_SUFFICIENT_BUFFER definition.
+      uxtheme: Use E_NOT_SUFFICIENT_BUFFER definition.
+      dwrite: Pass stream pointer to OpenType parsing code.
+      dwrite: Update to IDWriteTextLayout2.
+      dwrite: Update to IDWriteTextFormat1.
+      widl: Generate method macros/wrappers for overridden methods.
+      dwrite: Added parameter check for registering/unregistering collection loaders.
+      dwrite: Create single shared factory.
+      dwrite: Update to IDWriteFont2.
+      dwrite: Update to IDWriteFontFace2.
+      msdmo: Cleanup IEnumDMO creation code.
+      msdmo: Implement IEnumDMO_Clone(), fix trace messages.
+      dwrite: Refuse to create IDWriteFontFace with invalid collection index.
+      dwrite: Block negative max height/width for layout.
+      mscoree: Use E_NOT_SUFFICIENT_BUFFER definition.
+      dwrite: Added one more test for system font collection.
+      dwrite: Implement HasCharacter().
+      dwrite: Use better integer types for cmap helpers.
+      dwrite: Implement GetUnicodeRanges().
+      dwrite: Hide BiDi helpers.
+      dwrite: Added a helper to get IDWriteFontFace from IDWriteFont.
+      dwrite: Create IDWriteFontFace2 instance for IDWriteFont.
+      dwrite: Return on first found glyph.
+      dwrite: Some tests for IDWriteFontColletion methods.
 
-Qian Hong (5):
-      mshtml: Using UTF-8 as default charset in bind_mon_to_wstr.
-      mshtml: Don't pass NULL string pointer to jscript engine.
-      appwiz.cpl: Fixed typo.
-      winmm: Also initialize sound device thread in mixerGetControlDetails.
-      jscript: Ignore BOM mark in next_token.
+Piotr Caban (7):
+      msvcp90: Added locale_ctor_locale_cstr implementation.
+      oleacc: Fix allocation error handling in ObjectFromLresult.
+      ieframe: Correctly set pfNoRedraw in InPlaceSite_OnInPlaceActivateEx.
+      user32/tests: Add mouse SendInput tests.
+      user32/tests: Add mouse SendInput tests when mouse events are captured.
+      server: Send mouse hardware messages to thread owning top-most window.
+      user32: Don't move mouse hardware messages to other threads queues.
 
-Ralf Habacker (1):
-      wineps.drv: For each printer start page size and source index with the same value.
+Qian Hong (2):
+      mshtml: Add DIID_DispHTMLFormElement support for HTMLFormElement_QI.
+      ntoskrnl.exe: Export InitSafeBootMode.
 
-Sebastian Lackner (8):
-      msvcp110: Export ?_BADOFF@std@@3_JB on both i386 and win64.
-      shlwapi/tests: Add SH*Shared inter-process tests.
-      shlwapi: Fixed swapped argument order in SHLWAPI_DupSharedHandle command.
-      kernel32/tests: Add tests for FindFirstFileExA with FIND_FIRST_EX_LARGE_FETCH flag.
-      kernel32/tests: Add tests for FindFirstFileExA with FIND_FIRST_EX_CASE_SENSITIVE flag.
-      shlwapi/tests: Add test for SHMapHandle.
-      shlwapi: Fix swapped argument order in SHMapHandle.
-      shlwapi: Remove unnecessary internal function SHLWAPI_DupSharedHandle.
+Sebastian Lackner (11):
+      kernel32/tests: Add tests for PAGE_GUARD memory protection.
+      kernel32/tests: Add tests for K32GetModuleInformation.
+      ntdll: Set ldr.EntryPoint for main executable.
+      kernel32/tests: Add tests for DEP combined with guard pages and write watches.
+      ntdll: Avoid recursive exception handler calls when handling guard pages.
+      ntdll: Ensure force_exec_prot is also used for views with write watch permissions.
+      ntdll: reset_write_watches shouldn't remove enforced exec permissions.
+      ntdll: Only check for ATL thunk if allowed by execute option flags.
+      kernel32/tests: Add test to show ATL thunk emulator exceptions are not passed to usermode.
+      ntdll: Improve check_atl_thunk to prevent passing exceptions to the usermode application.
+      server: Fix invalid memory access when copying KeyNameInformation data.
 
 Shuai Meng (1):
-      vbscript: Implemented RGB.
+      vbscript: Implemented Timer.
 
-Stefan Dösinger (1):
-      d3d8: Return the correct value in CreateAdditionalSwapChain.
+Stefan Dösinger (4):
+      d3d9/tests: Don't load user32 functions at runtime.
+      d3d9/tests: Allow a width and height to be passed to create_device() in the d3d9ex tests.
+      d3d9/tests: Port wndproc tests to d3d9ex.
+      d3d9/tests: Port test_window_style to d3d9ex.
 
-Thomas Faber (1):
-      wined3d: Use correct FXCAPS constant in wined3d_get_device_caps.
+Stefan Leichter (1):
+      ksuser: New stub dll.
 
 Vincent Povirk (1):
-      gdiplus: Process a row instead of a column in inner conversion loop.
+      mscoree: Use mono_runtime_quit in shutdown process.
+
+YongHao Hu (3):
+      msvcp90/tests: Add cout<< double test.
+      msvcp90/tests: Add cout<< float test.
+      msvcp90/tests: Add istream::operator>>(float) and double test.
 
 --
 Alexandre Julliard
