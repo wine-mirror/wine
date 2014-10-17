@@ -7719,9 +7719,31 @@ uninstall::
     APPKIT_LIBS="-framework AppKit"
 
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
-    case $host_os in
-      darwin11*) LDEXECFLAGS="-Wl,-macosx_version_min,10.6 $LDEXECFLAGS" ;;
-    esac
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
+$as_echo_n "checking whether the compiler supports -Wl,-no_pie... " >&6; }
+if ${ac_cv_cflags__Wl__no_pie+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-no_pie"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wl__no_pie=yes
+else
+  ac_cv_cflags__Wl__no_pie=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_pie" >&5
+$as_echo "$ac_cv_cflags__Wl__no_pie" >&6; }
+if test "x$ac_cv_cflags__Wl__no_pie" = xyes; then :
+  LDEXECFLAGS="-Wl,-no_pie $LDEXECFLAGS"
+fi
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
                 DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"

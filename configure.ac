@@ -760,9 +760,8 @@ uninstall::
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
-    case $host_os in
-      darwin11*) LDEXECFLAGS="-Wl,-macosx_version_min,10.6 $LDEXECFLAGS" ;;
-    esac
+    WINE_TRY_CFLAGS([-Wl,-no_pie],
+                    [LDEXECFLAGS="-Wl,-no_pie $LDEXECFLAGS"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
         dnl DiskArbitration API is not public on Darwin < 8.0, use it only if header found
