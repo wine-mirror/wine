@@ -950,10 +950,10 @@ static void enum_key( const struct key *key, int index, int info_class,
             for (k = key; k != root_key; k = k->parent)
             {
                 pos -= k->namelen;
-                if (pos < len) memcpy( data + namelen, k->name,
+                if (pos < len) memcpy( data + pos, k->name,
                                        min( k->namelen, len - pos ) );
                 pos -= sizeof(backslash);
-                if (pos < len) memcpy( data + namelen, backslash,
+                if (pos < len) memcpy( data + pos, backslash,
                                        min( sizeof(backslash), len - pos ) );
             }
             memcpy( data, root_name, min( sizeof(root_name) - sizeof(backslash), len ) );
