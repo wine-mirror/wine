@@ -1,7 +1,7 @@
 /*
  *    Font related tests
  *
- * Copyright 2012 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1189,6 +1189,93 @@ static void test_GetUnicodeRanges(void)
     IDWriteFontFace1_Release(fontface1);
 }
 
+static void test_GetFontFromFontFace(void)
+{
+    IDWriteFontFace *fontface, *fontface2;
+    IDWriteFontCollection *collection;
+    IDWriteFont *font, *font2, *font3;
+    IDWriteFontFamily *family;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    font2 = NULL;
+    hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font2);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font2 != font, "got %p, %p\n", font2, font);
+
+    font3 = NULL;
+    hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font3);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font3 != font && font3 != font2, "got %p, %p, %p\n", font3, font2, font);
+}
+
+if (font2) {
+    hr = IDWriteFont_CreateFontFace(font2, &fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fontface2 == fontface, "got %p, %p\n", fontface2, fontface);
+    IDWriteFontFace_Release(fontface2);
+}
+
+if (font3) {
+    hr = IDWriteFont_CreateFontFace(font3, &fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fontface2 == fontface, "got %p, %p\n", fontface2, fontface);
+    IDWriteFontFace_Release(fontface2);
+}
+
+if (font)
+    IDWriteFont_Release(font);
+if (font2)
+    IDWriteFont_Release(font2);
+if (font3)
+    IDWriteFont_Release(font3);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(collection);
+}
+
+static void test_GetFirstMatchingFont(void)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFont *font, *font2;
+    IDWriteFontFamily *family;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font != font2, "got %p, %p\n", font, font2);
+
+    IDWriteFont_Release(font);
+    IDWriteFont_Release(font2);
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(collection);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1214,6 +1301,8 @@ START_TEST(font)
     test_CreateFontFileReference();
     test_shared_isolated();
     test_GetUnicodeRanges();
+    test_GetFontFromFontFace();
+    test_GetFirstMatchingFont();
 
     IDWriteFactory_Release(factory);
 }
