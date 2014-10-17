@@ -1820,8 +1820,11 @@ static HRESULT WINAPI HTMLDocument3_releaseCapture(IHTMLDocument3 *iface)
 static HRESULT WINAPI HTMLDocument3_recalc(IHTMLDocument3 *iface, VARIANT_BOOL fForce)
 {
     HTMLDocument *This = impl_from_IHTMLDocument3(iface);
-    FIXME("(%p)->(%x)\n", This, fForce);
-    return E_NOTIMPL;
+
+    WARN("(%p)->(%x)\n", This, fForce);
+
+    /* Doing nothing here should be fine for us. */
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument3_createTextNode(IHTMLDocument3 *iface, BSTR text,

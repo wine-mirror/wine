@@ -7613,6 +7613,9 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(elem2);
     IHTMLElement_Release(elem);
 
+    hres = IHTMLDocument3_recalc(doc3, VARIANT_TRUE);
+    ok(hres == S_OK, "recalc failed: %08x\n", hres);
+
     IHTMLDocument3_Release(doc3);
 
     elem = get_elem_by_id(doc, "s", TRUE);
