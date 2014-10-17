@@ -151,7 +151,7 @@ void resource_cleanup(struct wined3d_resource *resource)
     if (resource->pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
     {
         TRACE("Decrementing device memory pool by %u.\n", resource->size);
-        adapter_adjust_memory(resource->device->adapter, 0 - resource->size);
+        adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
     }
 
     wined3d_resource_free_sysmem(resource);
