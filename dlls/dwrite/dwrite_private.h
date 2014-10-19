@@ -97,7 +97,8 @@ extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT
 extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_trimmingsign(IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
-extern HRESULT get_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
+extern HRESULT create_gdiinterop(IDWriteFactory*,IDWriteGdiInterop**) DECLSPEC_HIDDEN;
+extern void    release_gdiinterop(IDWriteGdiInterop*) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;

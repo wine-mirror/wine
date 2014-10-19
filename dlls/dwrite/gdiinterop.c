@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 struct gdiinterop {
     IDWriteGdiInterop IDWriteGdiInterop_iface;
-    LONG ref;
+    IDWriteFactory *factory;
 };
 
 struct rendertarget {
@@ -241,7 +241,8 @@ static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop *iface, REFIID
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteGdiInterop))
+    if (IsEqualIID(riid, &IID_IDWriteGdiInterop) ||
+        IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
         IDWriteGdiInterop_AddRef(iface);
@@ -255,23 +256,15 @@ static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop *iface, REFIID
 static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    TRACE("(%p)\n", This);
+    return IDWriteFactory_AddRef(This->factory);
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p)->(%d)\n", This, ref);
-
-    if (!ref)
-    {
-        heap_free(This);
-    }
-    return ref;
+    TRACE("(%p)\n", This);
+    return IDWriteFactory_Release(This->factory);
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
@@ -328,7 +321,7 @@ static const struct IDWriteGdiInteropVtbl gdiinteropvtbl = {
     gdiinterop_CreateBitmapRenderTarget
 };
 
-HRESULT get_gdiinterop(IDWriteGdiInterop **ret)
+HRESULT create_gdiinterop(IDWriteFactory *factory, IDWriteGdiInterop **ret)
 {
     struct gdiinterop *This;
 
@@ -338,8 +331,14 @@ HRESULT get_gdiinterop(IDWriteGdiInterop **ret)
     if (!This) return E_OUTOFMEMORY;
 
     This->IDWriteGdiInterop_iface.lpVtbl = &gdiinteropvtbl;
-    This->ref = 1;
+    This->factory = factory;
 
     *ret= &This->IDWriteGdiInterop_iface;
     return S_OK;
+}
+
+void release_gdiinterop(IDWriteGdiInterop *iface)
+{
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop(iface);
+    heap_free(interop);
 }

@@ -397,6 +397,7 @@ struct dwritefactory {
 
     IDWriteLocalFontFileLoader* localfontfileloader;
     IDWriteFontCollection *system_collection;
+    IDWriteGdiInterop *gdiinterop;
 
     IDWriteFontCollectionLoader **loaders;
     LONG loader_count;
@@ -425,6 +426,8 @@ static void release_dwritefactory(struct dwritefactory *factory)
     heap_free(factory->file_loaders);
     if (factory->system_collection)
         IDWriteFontCollection_Release(factory->system_collection);
+    if (factory->gdiinterop)
+        release_gdiinterop(factory->gdiinterop);
     heap_free(factory);
 }
 
@@ -727,8 +730,21 @@ static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory *iface, IDWr
 static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory *iface, IDWriteGdiInterop **gdi_interop)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
+
     TRACE("(%p)->(%p)\n", This, gdi_interop);
-    return get_gdiinterop(gdi_interop);
+
+    *gdi_interop = NULL;
+
+    if (!This->gdiinterop) {
+        HRESULT hr = create_gdiinterop(iface, &This->gdiinterop);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    *gdi_interop = This->gdiinterop;
+    IDWriteGdiInterop_AddRef(*gdi_interop);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory *iface, WCHAR const* string,
@@ -864,6 +880,7 @@ static HRESULT init_dwritefactory(struct dwritefactory *factory, const struct ID
     factory->file_loader_count = 2;
     factory->file_loaders = heap_alloc_zero(sizeof(*factory->file_loaders) * 2);
     factory->system_collection = NULL;
+    factory->gdiinterop = NULL;
 
     if (!factory->loaders || !factory->file_loaders) {
         heap_free(factory->loaders);

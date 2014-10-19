@@ -509,14 +509,19 @@ if (0) /* crashes on native */
 
 static void test_GetFontFamily(void)
 {
+    IDWriteFontCollection *collection, *collection2;
+    IDWriteFontCollection *syscoll;
     IDWriteFontFamily *family, *family2;
     IDWriteGdiInterop *interop;
-    IDWriteFont *font;
+    IDWriteFont *font, *font2;
     LOGFONTW logfont;
     HRESULT hr;
 
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     EXPECT_HR(hr, S_OK);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
@@ -526,7 +531,11 @@ static void test_GetFontFamily(void)
     lstrcpyW(logfont.lfFaceName, tahomaW);
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-    EXPECT_HR(hr, S_OK);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font2 != font, "got %p, %p\n", font2, font);
 
 if (0) /* crashes on native */
     hr = IDWriteFont_GetFontFamily(font, NULL);
@@ -548,8 +557,32 @@ if (0) /* crashes on native */
     EXPECT_HR(hr, E_NOINTERFACE);
     ok(family2 == NULL, "got %p\n", family2);
 
+    hr = IDWriteFont_GetFontFamily(font2, &family2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(family2 != family, "got %p, %p\n", family2, family);
+
+    collection = NULL;
+    hr = IDWriteFontFamily_GetFontCollection(family, &collection);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    collection2 = NULL;
+    hr = IDWriteFontFamily_GetFontCollection(family2, &collection2);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(collection == collection2, "got %p, %p\n", collection, collection2);
+todo_wine
+    ok(collection == syscoll, "got %p, %p\n", collection, syscoll);
+
+    IDWriteFontCollection_Release(syscoll);
+if (collection2)
+    IDWriteFontCollection_Release(collection2);
+if (collection)
+    IDWriteFontCollection_Release(collection);
+    IDWriteFontFamily_Release(family2);
     IDWriteFontFamily_Release(family);
     IDWriteFont_Release(font);
+    IDWriteFont_Release(font2);
     IDWriteGdiInterop_Release(interop);
 }
 
@@ -1276,6 +1309,110 @@ static void test_GetFirstMatchingFont(void)
     IDWriteFontCollection_Release(collection);
 }
 
+static void test_GetInformationalStrings(void)
+{
+    IDWriteLocalizedStrings *strings, *strings2;
+    IDWriteFontCollection *collection;
+    IDWriteFontFamily *family;
+    IDWriteFont *font;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    exists = TRUE;
+    strings = (void*)0xdeadbeef;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1, &strings, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == FALSE, "got %d\n", exists);
+    ok(strings == NULL, "got %p\n", strings);
+}
+    exists = FALSE;
+    strings = NULL;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == TRUE, "got %d\n", exists);
+}
+
+    exists = TRUE;
+    strings = NULL;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_NONE, &strings, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == FALSE, "got %d\n", exists);
+}
+
+    /* strings instance is not reused */
+    strings2 = NULL;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings2, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(strings2 != strings, "got %p, %p\n", strings2, strings);
+}
+
+if (strings)
+    IDWriteLocalizedStrings_Release(strings);
+if (strings2)
+    IDWriteLocalizedStrings_Release(strings2);
+    IDWriteFont_Release(font);
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(collection);
+}
+
+static void test_GetGdiInterop(void)
+{
+    IDWriteGdiInterop *interop, *interop2;
+    IDWriteFactory *factory2;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    interop = NULL;
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    interop2 = NULL;
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(interop == interop2, "got %p, %p\n", interop, interop2);
+    IDWriteGdiInterop_Release(interop2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* each factory gets its own interop */
+    interop2 = NULL;
+    hr = IDWriteFactory_GetGdiInterop(factory2, &interop2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(interop != interop2, "got %p, %p\n", interop, interop2);
+
+    /* release factory - interop still works */
+    IDWriteFactory_Release(factory2);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop2, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteGdiInterop_Release(interop2);
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1303,6 +1440,8 @@ START_TEST(font)
     test_GetUnicodeRanges();
     test_GetFontFromFontFace();
     test_GetFirstMatchingFont();
+    test_GetInformationalStrings();
+    test_GetGdiInterop();
 
     IDWriteFactory_Release(factory);
 }
