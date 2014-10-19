@@ -749,6 +749,129 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2
     return S_OK;
 }
 
+static HRESULT create_font_base(IDWriteFont **font)
+{
+    struct dwrite_font_data *data;
+    HRESULT ret;
+
+    *font = NULL;
+    data = heap_alloc(sizeof(*data));
+    if (!data) return E_OUTOFMEMORY;
+
+    data->ref = 0;
+    data->face_data = NULL;
+
+    ret = create_font_from_data( data, NULL, font );
+    if (FAILED(ret)) heap_free( data );
+    return ret;
+}
+
+static HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
+{
+    const WCHAR* facename, *familyname;
+    IDWriteLocalizedStrings *name;
+    struct dwrite_font *This;
+    IDWriteFontFamily *family;
+    OUTLINETEXTMETRICW *otm;
+    HRESULT hr;
+    HFONT hfont;
+    HDC hdc;
+    int ret;
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    LPVOID tt_os2 = NULL;
+    LPVOID tt_head = NULL;
+    LPVOID tt_post = NULL;
+    LONG size;
+
+    hr = create_font_base(font);
+    if (FAILED(hr))
+        return hr;
+
+    This = impl_from_IDWriteFont2((IDWriteFont2*)*font);
+
+    hfont = CreateFontIndirectW(logfont);
+    if (!hfont)
+    {
+        heap_free(This->data);
+        heap_free(This);
+        return DWRITE_E_NOFONT;
+    }
+
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    ret = GetOutlineTextMetricsW(hdc, 0, NULL);
+    otm = heap_alloc(ret);
+    if (!otm)
+    {
+        heap_free(This->data);
+        heap_free(This);
+        DeleteDC(hdc);
+        DeleteObject(hfont);
+        return E_OUTOFMEMORY;
+    }
+    otm->otmSize = ret;
+    ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
+
+    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_os2 = heap_alloc(size);
+        GetFontData(hdc, MS_OS2_TAG, 0, tt_os2, size);
+    }
+    size = GetFontData(hdc, MS_HEAD_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_head = heap_alloc(size);
+        GetFontData(hdc, MS_HEAD_TAG, 0, tt_head, size);
+    }
+    size = GetFontData(hdc, MS_POST_TAG, 0, NULL, 0);
+    if (size != GDI_ERROR)
+    {
+        tt_post = heap_alloc(size);
+        GetFontData(hdc, MS_POST_TAG, 0, tt_post, size);
+    }
+
+    get_font_properties(tt_os2, tt_head, tt_post, &This->data->metrics, &This->data->stretch, &This->data->weight, &This->data->style);
+    heap_free(tt_os2);
+    heap_free(tt_head);
+    heap_free(tt_post);
+
+    if (logfont->lfItalic)
+        This->data->style = DWRITE_FONT_STYLE_ITALIC;
+
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+
+    facename = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFaceName);
+    familyname = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFamilyName);
+    TRACE("facename=%s, familyname=%s\n", debugstr_w(facename), debugstr_w(familyname));
+
+    hr = create_localizedstrings(&name);
+    if (FAILED(hr))
+    {
+        heap_free(This);
+        return hr;
+    }
+    add_localizedstring(name, enusW, familyname);
+    hr = create_fontfamily(name, &family);
+
+    heap_free(otm);
+    if (hr != S_OK)
+    {
+        heap_free(This->data);
+        heap_free(This);
+        return hr;
+    }
+
+    This->is_system = TRUE;
+    This->family = family;
+    This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    This->data->facename = heap_strdupW(logfont->lfFaceName);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI dwritefont_QueryInterface(IDWriteFont2 *iface, REFIID riid, void **obj)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
@@ -1400,129 +1523,6 @@ static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFontF
     InterlockedIncrement(&This->data->ref);
 
     *font = (IDWriteFont*)&This->IDWriteFont2_iface;
-
-    return S_OK;
-}
-
-static HRESULT create_font_base(IDWriteFont **font)
-{
-    struct dwrite_font_data *data;
-    HRESULT ret;
-
-    *font = NULL;
-    data = heap_alloc(sizeof(*data));
-    if (!data) return E_OUTOFMEMORY;
-
-    data->ref = 0;
-    data->face_data = NULL;
-
-    ret = create_font_from_data( data, NULL, font );
-    if (FAILED(ret)) heap_free( data );
-    return ret;
-}
-
-HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **font)
-{
-    const WCHAR* facename, *familyname;
-    IDWriteLocalizedStrings *name;
-    struct dwrite_font *This;
-    IDWriteFontFamily *family;
-    OUTLINETEXTMETRICW *otm;
-    HRESULT hr;
-    HFONT hfont;
-    HDC hdc;
-    int ret;
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
-    LPVOID tt_os2 = NULL;
-    LPVOID tt_head = NULL;
-    LPVOID tt_post = NULL;
-    LONG size;
-
-    hr = create_font_base(font);
-    if (FAILED(hr))
-        return hr;
-
-    This = impl_from_IDWriteFont2((IDWriteFont2*)*font);
-
-    hfont = CreateFontIndirectW(logfont);
-    if (!hfont)
-    {
-        heap_free(This->data);
-        heap_free(This);
-        return DWRITE_E_NOFONT;
-    }
-
-    hdc = CreateCompatibleDC(0);
-    SelectObject(hdc, hfont);
-
-    ret = GetOutlineTextMetricsW(hdc, 0, NULL);
-    otm = heap_alloc(ret);
-    if (!otm)
-    {
-        heap_free(This->data);
-        heap_free(This);
-        DeleteDC(hdc);
-        DeleteObject(hfont);
-        return E_OUTOFMEMORY;
-    }
-    otm->otmSize = ret;
-    ret = GetOutlineTextMetricsW(hdc, otm->otmSize, otm);
-
-    size = GetFontData(hdc, MS_OS2_TAG, 0, NULL, 0);
-    if (size != GDI_ERROR)
-    {
-        tt_os2 = heap_alloc(size);
-        GetFontData(hdc, MS_OS2_TAG, 0, tt_os2, size);
-    }
-    size = GetFontData(hdc, MS_HEAD_TAG, 0, NULL, 0);
-    if (size != GDI_ERROR)
-    {
-        tt_head = heap_alloc(size);
-        GetFontData(hdc, MS_HEAD_TAG, 0, tt_head, size);
-    }
-    size = GetFontData(hdc, MS_POST_TAG, 0, NULL, 0);
-    if (size != GDI_ERROR)
-    {
-        tt_post = heap_alloc(size);
-        GetFontData(hdc, MS_POST_TAG, 0, tt_post, size);
-    }
-
-    get_font_properties(tt_os2, tt_head, tt_post, &This->data->metrics, &This->data->stretch, &This->data->weight, &This->data->style);
-    heap_free(tt_os2);
-    heap_free(tt_head);
-    heap_free(tt_post);
-
-    if (logfont->lfItalic)
-        This->data->style = DWRITE_FONT_STYLE_ITALIC;
-
-    DeleteDC(hdc);
-    DeleteObject(hfont);
-
-    facename = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFaceName);
-    familyname = (WCHAR*)((char*)otm + (ptrdiff_t)otm->otmpFamilyName);
-    TRACE("facename=%s, familyname=%s\n", debugstr_w(facename), debugstr_w(familyname));
-
-    hr = create_localizedstrings(&name);
-    if (FAILED(hr))
-    {
-        heap_free(This);
-        return hr;
-    }
-    add_localizedstring(name, enusW, familyname);
-    hr = create_fontfamily(name, &family);
-
-    heap_free(otm);
-    if (hr != S_OK)
-    {
-        heap_free(This->data);
-        heap_free(This);
-        return hr;
-    }
-
-    This->is_system = TRUE;
-    This->family = family;
-    This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    This->data->facename = heap_strdupW(logfont->lfFaceName);
 
     return S_OK;
 }

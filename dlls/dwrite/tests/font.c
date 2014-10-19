@@ -312,8 +312,9 @@ todo_wine {
     logfont.lfWeight = 550;
     lstrcpyW(logfont.lfFaceName, tahomaW);
 
+    font = NULL;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-    EXPECT_HR(hr, S_OK);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     weight = IDWriteFont_GetWeight(font);
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL || broken(weight == DWRITE_FONT_WEIGHT_BOLD) /* win7 w/o SP */,
@@ -329,12 +330,10 @@ todo_wine {
 
     font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine {
-    EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(hr == DWRITE_E_NOFONT, "got 0x%08x\n", hr);
     ok(font == NULL, "got %p\n", font);
-    if(font) IDWriteFont_Release(font);
-}
 
+    /* Try with name 'Tahoma ' */
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
     logfont.lfWidth  = 12;
@@ -343,12 +342,10 @@ todo_wine {
 
     font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine {
-    EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(hr == DWRITE_E_NOFONT, "got 0x%08x\n", hr);
     ok(font == NULL, "got %p\n", font);
-    if(font) IDWriteFont_Release(font);
-}
 
+    /* empty string as a facename */
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
     logfont.lfWidth  = 12;
@@ -356,11 +353,8 @@ todo_wine {
 
     font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
-todo_wine {
-    EXPECT_HR(hr, DWRITE_E_NOFONT);
+    ok(hr == DWRITE_E_NOFONT, "got 0x%08x\n", hr);
     ok(font == NULL, "got %p\n", font);
-    if(font) IDWriteFont_Release(font);
-}
 
     IDWriteGdiInterop_Release(interop);
 }
