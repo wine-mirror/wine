@@ -31,12 +31,15 @@ struct vec3
     float x, y, z;
 };
 
+#define CREATE_DEVICE_FULLSCREEN        0x01
+#define CREATE_DEVICE_NOWINDOWCHANGES   0x02
+
 struct device_desc
 {
     HWND device_window;
     unsigned int width;
     unsigned int height;
-    BOOL windowed;
+    DWORD flags;
 };
 
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
@@ -129,6 +132,7 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window, cons
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9 *device;
+    DWORD behavior_flags = D3DCREATE_HARDWARE_VERTEXPROCESSING;
 
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
@@ -144,18 +148,25 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window, cons
         present_parameters.BackBufferWidth = desc->width;
         present_parameters.BackBufferHeight = desc->height;
         present_parameters.hDeviceWindow = desc->device_window;
-        present_parameters.Windowed = desc->windowed;
+        present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
+        if (desc->flags & CREATE_DEVICE_NOWINDOWCHANGES)
+            behavior_flags |= D3DCREATE_NOWINDOWCHANGES;
     }
 
     if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
 
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
     if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
+
+    behavior_flags ^= (D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 
     if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
 
     return NULL;
 }
@@ -2971,7 +2982,7 @@ static void test_scissor_size(void)
         device_desc.device_window = hwnd;
         device_desc.width = scts[i].backx;
         device_desc.height = scts[i].backy;
-        device_desc.windowed = scts[i].window;
+        device_desc.flags = scts[i].window ? 0 : CREATE_DEVICE_FULLSCREEN;
         if (!(device_ptr = create_device(d3d9_ptr, hwnd, &device_desc)))
         {
             skip("Failed to create a 3D device, skipping test.\n");
@@ -3205,7 +3216,7 @@ static void test_wndproc(void)
     device_desc.device_window = device_window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -3348,7 +3359,7 @@ static void test_wndproc_windowed(void)
     device_desc.device_window = device_window;
     device_desc.width = 640;
     device_desc.height = 480;
-    device_desc.windowed = TRUE;
+    device_desc.flags = 0;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -3634,7 +3645,7 @@ done:
 
 static void test_window_style(void)
 {
-    RECT focus_rect, fullscreen_rect, r;
+    RECT focus_rect, device_rect, fullscreen_rect, r, r2;
     LONG device_style, device_exstyle;
     LONG focus_style, focus_exstyle;
     struct device_desc device_desc;
@@ -3643,86 +3654,115 @@ static void test_window_style(void)
     IDirect3D9 *d3d9;
     HRESULT hr;
     ULONG ref;
+    static const struct
+    {
+        DWORD device_flags;
+        LONG style, exstyle;
+    }
+    tests[] =
+    {
+        {0,                               WS_VISIBLE, WS_EX_TOPMOST},
+        {CREATE_DEVICE_NOWINDOWCHANGES,   0},
+    };
+    unsigned int i;
 
-    focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
-    device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
-
-    device_style = GetWindowLongA(device_window, GWL_STYLE);
-    device_exstyle = GetWindowLongA(device_window, GWL_EXSTYLE);
-    focus_style = GetWindowLongA(focus_window, GWL_STYLE);
-    focus_exstyle = GetWindowLongA(focus_window, GWL_EXSTYLE);
-
     SetRect(&fullscreen_rect, 0, 0, screen_width, screen_height);
-    GetWindowRect(focus_window, &focus_rect);
 
-    device_desc.device_window = device_window;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
-    if (!(device = create_device(d3d9, focus_window, &device_desc)))
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
+        focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+                0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+        device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+                0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+
+        device_style = GetWindowLongA(device_window, GWL_STYLE);
+        device_exstyle = GetWindowLongA(device_window, GWL_EXSTYLE);
+        focus_style = GetWindowLongA(focus_window, GWL_STYLE);
+        focus_exstyle = GetWindowLongA(focus_window, GWL_EXSTYLE);
+
+        GetWindowRect(focus_window, &focus_rect);
+        GetWindowRect(device_window, &device_rect);
+
+        device_desc.device_window = device_window;
+        device_desc.width = screen_width;
+        device_desc.height = screen_height;
+        device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].device_flags;
+        if (!(device = create_device(d3d9, focus_window, &device_desc)))
+        {
+            skip("Failed to create a D3D device, skipping tests.\n");
+            DestroyWindow(device_window);
+            DestroyWindow(focus_window);
+            break;
+        }
+
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style | tests[i].style;
+        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        expected_style = device_exstyle | tests[i].exstyle;
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
+                focus_style, style, i);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
+                focus_exstyle, style, i);
+
+        GetWindowRect(device_window, &r);
+        if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+            todo_wine ok(EqualRect(&r, &device_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
+                    device_rect.left, device_rect.top, device_rect.right, device_rect.bottom,
+                    r.left, r.top, r.right, r.bottom, i);
+        else
+            ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
+                    fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+                    r.left, r.top, r.right, r.bottom, i);
+        GetClientRect(device_window, &r2);
+        todo_wine ok(!EqualRect(&r, &r2), "Client rect and window rect are equal.\n");
+        GetWindowRect(focus_window, &r);
+        ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
+                focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
+                r.left, r.top, r.right, r.bottom, i);
+
+        hr = reset_device(device, device_window, TRUE);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style | tests[i].style;
+        if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+            todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
+        else
+            ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        expected_style = device_exstyle | tests[i].exstyle;
+        if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+            todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
+        else
+            ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                    expected_style, style, i);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
+                focus_style, style, i);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
+                focus_exstyle, style, i);
+
+        ref = IDirect3DDevice9_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+        DestroyWindow(device_window);
+        DestroyWindow(focus_window);
     }
-
-    style = GetWindowLongA(device_window, GWL_STYLE);
-    expected_style = device_style | WS_VISIBLE;
-    todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
-            expected_style, style);
-    style = GetWindowLongA(device_window, GWL_EXSTYLE);
-    expected_style = device_exstyle | WS_EX_TOPMOST;
-    todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
-            expected_style, style);
-
-    style = GetWindowLongA(focus_window, GWL_STYLE);
-    ok(style == focus_style, "Expected focus window style %#x, got %#x.\n",
-            focus_style, style);
-    style = GetWindowLongA(focus_window, GWL_EXSTYLE);
-    ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
-            focus_exstyle, style);
-
-    GetWindowRect(device_window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
-    GetClientRect(device_window, &r);
-    todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
-    GetWindowRect(focus_window, &r);
-    ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
-
-    hr = reset_device(device, device_window, TRUE);
-    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
-
-    style = GetWindowLongA(device_window, GWL_STYLE);
-    expected_style = device_style | WS_VISIBLE;
-    ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
-            expected_style, style);
-    style = GetWindowLongA(device_window, GWL_EXSTYLE);
-    expected_style = device_exstyle | WS_EX_TOPMOST;
-    ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
-            expected_style, style);
-
-    style = GetWindowLongA(focus_window, GWL_STYLE);
-    ok(style == focus_style, "Expected focus window style %#x, got %#x.\n",
-            focus_style, style);
-    style = GetWindowLongA(focus_window, GWL_EXSTYLE);
-    ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
-            focus_exstyle, style);
-
-    ref = IDirect3DDevice9_Release(device);
-    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
-
-done:
     IDirect3D9_Release(d3d9);
-
-    DestroyWindow(device_window);
-    DestroyWindow(focus_window);
 }
 
 static const POINT *expect_pos;
@@ -3868,7 +3908,7 @@ static void test_mode_change(void)
     device_desc.device_window = device_window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -3966,7 +4006,7 @@ static void test_device_window_reset(void)
     device_desc.device_window = NULL;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -4569,7 +4609,7 @@ static void test_occlusion_query_states(void)
     device_desc.device_window = window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -9160,7 +9200,7 @@ static void test_lost_device(void)
     device_desc.device_window = window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d, window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
