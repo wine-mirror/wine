@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
 #define MS_OTTO_TAG DWRITE_MAKE_OPENTYPE_TAG('O','T','T','O')
+#define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -184,6 +185,87 @@ typedef struct
     USHORT usMaxContext;
 } TT_OS2_V2;
 #include "poppack.h"
+
+typedef struct {
+    WORD platformID;
+    WORD encodingID;
+    WORD languageID;
+    WORD nameID;
+    WORD length;
+    WORD offset;
+} TT_NameRecord;
+
+typedef struct {
+    WORD format;
+    WORD count;
+    WORD stringOffset;
+    TT_NameRecord nameRecord[1];
+} TT_NAME_V0;
+
+enum TT_NAME_WINDOWS_ENCODING_ID
+{
+    TT_NAME_WINDOWS_ENCODING_SYMBOL = 0,
+    TT_NAME_WINDOWS_ENCODING_UCS2,
+    TT_NAME_WINDOWS_ENCODING_SJIS,
+    TT_NAME_WINDOWS_ENCODING_PRC,
+    TT_NAME_WINDOWS_ENCODING_BIG5,
+    TT_NAME_WINDOWS_ENCODING_WANSUNG,
+    TT_NAME_WINDOWS_ENCODING_JOHAB,
+    TT_NAME_WINDOWS_ENCODING_RESERVED1,
+    TT_NAME_WINDOWS_ENCODING_RESERVED2,
+    TT_NAME_WINDOWS_ENCODING_RESERVED3,
+    TT_NAME_WINDOWS_ENCODING_UCS4
+};
+
+enum OPENTYPE_STRING_ID
+{
+    OPENTYPE_STRING_COPYRIGHT_NOTICE = 0,
+    OPENTYPE_STRING_FAMILY_NAME,
+    OPENTYPE_STRING_SUBFAMILY_NAME,
+    OPENTYPE_STRING_UNIQUE_IDENTIFIER,
+    OPENTYPE_STRING_FULL_FONTNAME,
+    OPENTYPE_STRING_VERSION_STRING,
+    OPENTYPE_STRING_POSTSCRIPT_FONTNAME,
+    OPENTYPE_STRING_TRADEMARK,
+    OPENTYPE_STRING_MANUFACTURER,
+    OPENTYPE_STRING_DESIGNER,
+    OPENTYPE_STRING_DESCRIPTION,
+    OPENTYPE_STRING_VENDOR_URL,
+    OPENTYPE_STRING_DESIGNER_URL,
+    OPENTYPE_STRING_LICENSE_DESCRIPTION,
+    OPENTYPE_STRING_LICENSE_INFO_URL,
+    OPENTYPE_STRING_RESERVED_ID15,
+    OPENTYPE_STRING_PREFERRED_FAMILY_NAME,
+    OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME,
+    OPENTYPE_STRING_COMPATIBLE_FULLNAME,
+    OPENTYPE_STRING_SAMPLE_TEXT,
+    OPENTYPE_STRING_POSTSCRIPT_CID_NAME,
+    OPENTYPE_STRING_WWS_FAMILY_NAME,
+    OPENTYPE_STRING_WWS_SUBFAMILY_NAME
+};
+
+static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1] =
+{
+    (UINT16)-1, /* DWRITE_INFORMATIONAL_STRING_NONE is not used */
+    OPENTYPE_STRING_COPYRIGHT_NOTICE,
+    OPENTYPE_STRING_VERSION_STRING,
+    OPENTYPE_STRING_TRADEMARK,
+    OPENTYPE_STRING_MANUFACTURER,
+    OPENTYPE_STRING_DESIGNER,
+    OPENTYPE_STRING_DESIGNER_URL,
+    OPENTYPE_STRING_DESCRIPTION,
+    OPENTYPE_STRING_VENDOR_URL,
+    OPENTYPE_STRING_LICENSE_DESCRIPTION,
+    OPENTYPE_STRING_LICENSE_INFO_URL,
+    OPENTYPE_STRING_FAMILY_NAME,
+    OPENTYPE_STRING_SUBFAMILY_NAME,
+    OPENTYPE_STRING_PREFERRED_FAMILY_NAME,
+    OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME,
+    OPENTYPE_STRING_SAMPLE_TEXT,
+    OPENTYPE_STRING_FULL_FONTNAME,
+    OPENTYPE_STRING_POSTSCRIPT_FONTNAME,
+    OPENTYPE_STRING_POSTSCRIPT_CID_NAME
+};
 
 HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
@@ -531,4 +613,126 @@ VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_ME
         metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
         metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
     }
+}
+
+HRESULT opentype_get_font_strings_from_id(IDWriteFontFace2 *fontface, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
+{
+    const void *table_data = NULL;
+    void *name_context = NULL;
+    const TT_NAME_V0 *header;
+    BYTE *storage_area = 0;
+    BOOL exists = FALSE;
+    USHORT count = 0;
+    UINT16 name_id;
+    UINT32 size;
+    HRESULT hr;
+    int i;
+
+    hr = IDWriteFontFace2_TryGetFontTable(fontface, MS_NAME_TAG, &table_data, &size, &name_context, &exists);
+    if (FAILED(hr) || !exists) {
+        FIXME("failed to get NAME table\n");
+        return E_FAIL;
+    }
+
+    hr = create_localizedstrings(strings);
+    if (FAILED(hr)) return hr;
+
+    header = table_data;
+    storage_area = (LPBYTE)table_data + GET_BE_WORD(header->stringOffset);
+    count = GET_BE_WORD(header->count);
+
+    name_id = dwriteid_to_opentypeid[id];
+
+    exists = FALSE;
+    for (i = 0; i < count; i++) {
+        const TT_NameRecord *record = &header->nameRecord[i];
+        USHORT lang_id, length, offset, encoding, platform;
+
+        if (GET_BE_WORD(record->nameID) != name_id)
+            continue;
+
+        exists = TRUE;
+
+        /* Right now only accept unicode and windows encoded fonts */
+        platform = GET_BE_WORD(record->platformID);
+        if (platform != 0 && platform != 3) {
+            FIXME("platform %i not supported\n", platform);
+            continue;
+        }
+
+        lang_id = GET_BE_WORD(record->languageID);
+        length = GET_BE_WORD(record->length);
+        offset = GET_BE_WORD(record->offset);
+        encoding = GET_BE_WORD(record->encodingID);
+
+        if (lang_id < 0x8000) {
+            WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+            WCHAR *name_string;
+            UINT codepage = 0;
+
+            if (platform == 3)
+            {
+                switch (encoding)
+                {
+                    case TT_NAME_WINDOWS_ENCODING_SYMBOL:
+                    case TT_NAME_WINDOWS_ENCODING_UCS2:
+                        break;
+                    case TT_NAME_WINDOWS_ENCODING_SJIS:
+                        codepage = 932;
+                        break;
+                    case TT_NAME_WINDOWS_ENCODING_PRC:
+                        codepage = 936;
+                        break;
+                    case TT_NAME_WINDOWS_ENCODING_BIG5:
+                        codepage = 950;
+                        break;
+                    case TT_NAME_WINDOWS_ENCODING_WANSUNG:
+                        codepage = 20949;
+                        break;
+                    case TT_NAME_WINDOWS_ENCODING_JOHAB:
+                        codepage = 1361;
+                        break;
+                    default:
+                        FIXME("encoding %d not handled.\n", encoding);
+                }
+            }
+
+            if (codepage) {
+                DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
+                name_string = heap_alloc(sizeof(WCHAR) * len);
+                MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, name_string, len);
+            }
+            else {
+                int i;
+
+                length /= sizeof(WCHAR);
+                name_string = heap_strdupnW((LPWSTR)(storage_area + offset), length);
+                for (i = 0; i < length; i++)
+                    name_string[i] = GET_BE_WORD(name_string[i]);
+            }
+
+            if (!LCIDToLocaleName(MAKELCID(lang_id, SORT_DEFAULT), locale, sizeof(locale)/sizeof(WCHAR), 0)) {
+                static const WCHAR enusW[] = {'e','n','-','u','s',0};
+                FIXME("failed to get locale name for lcid=0x%08x\n", MAKELCID(lang_id, SORT_DEFAULT));
+                strcpyW(locale, enusW);
+            }
+
+            TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
+            add_localizedstring(*strings, locale, name_string);
+            heap_free(name_string);
+        }
+        else {
+            FIXME("handle NAME format 1");
+            continue;
+        }
+    }
+
+    IDWriteFontFace2_ReleaseFontTable(fontface, name_context);
+
+    if (!exists) {
+        IDWriteLocalizedStrings_Release(*strings);
+        *strings = NULL;
+    }
+
+    return hr;
 }

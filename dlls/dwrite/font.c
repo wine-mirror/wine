@@ -1,7 +1,8 @@
 /*
  *    Font and collections
  *
- * Copyright 2012 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +48,7 @@ struct dwrite_font_data {
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_METRICS metrics;
+    IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
 
     struct dwrite_fontface_data *face_data;
 
@@ -220,6 +222,11 @@ static VOID _free_font_data(struct dwrite_font_data *data)
     i = InterlockedDecrement(&data->ref);
     if (i > 0)
         return;
+
+    for (i = DWRITE_INFORMATIONAL_STRING_NONE; i < sizeof(data->info_strings)/sizeof(data->info_strings[0]); i++) {
+        if (data->info_strings[i])
+            IDWriteLocalizedStrings_Release(data->info_strings[i]);
+    }
     _free_fontface_data(data->face_data);
     heap_free(data->facename);
     heap_free(data);
@@ -755,11 +762,8 @@ static HRESULT create_font_base(IDWriteFont **font)
     HRESULT ret;
 
     *font = NULL;
-    data = heap_alloc(sizeof(*data));
+    data = heap_alloc_zero(sizeof(*data));
     if (!data) return E_OUTOFMEMORY;
-
-    data->ref = 0;
-    data->face_data = NULL;
 
     ret = create_font_from_data( data, NULL, font );
     if (FAILED(ret)) heap_free( data );
@@ -967,8 +971,35 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,
     DWRITE_INFORMATIONAL_STRING_ID stringid, IDWriteLocalizedStrings **strings, BOOL *exists)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(%d %p %p): stub\n", This, stringid, strings, exists);
-    return E_NOTIMPL;
+    struct dwrite_font_data *data = This->data;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %p %p)\n", This, stringid, strings, exists);
+
+    *exists = FALSE;
+    *strings = NULL;
+
+    if (stringid > DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME || stringid == DWRITE_INFORMATIONAL_STRING_NONE)
+        return S_OK;
+
+    if (!data->info_strings[stringid]) {
+        IDWriteFontFace2 *fontface;
+
+        hr = get_fontface_from_font(This, &fontface);
+        if (FAILED(hr))
+            return hr;
+
+        hr = opentype_get_font_strings_from_id(fontface, stringid, &data->info_strings[stringid]);
+        if (FAILED(hr) || !data->info_strings[stringid])
+            return hr;
+    }
+
+    hr = clone_localizedstring(data->info_strings[stringid], strings);
+    if (FAILED(hr))
+        return hr;
+
+    *exists = TRUE;
+    return hr;
 }
 
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont2 *iface)

@@ -1325,11 +1325,10 @@ static void test_GetInformationalStrings(void)
     exists = TRUE;
     strings = (void*)0xdeadbeef;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1, &strings, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == FALSE, "got %d\n", exists);
     ok(strings == NULL, "got %p\n", strings);
-}
+
     exists = FALSE;
     strings = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
@@ -1337,14 +1336,11 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == TRUE, "got %d\n", exists);
 }
-
     exists = TRUE;
     strings = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_NONE, &strings, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == FALSE, "got %d\n", exists);
-}
 
     /* strings instance is not reused */
     strings2 = NULL;
