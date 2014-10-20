@@ -919,24 +919,38 @@ int CDECL MSVCRT__flushall(void)
  */
 int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
 {
+    int ret;
+
+    if(!file) {
+        msvcrt_flush_all_buffers(MSVCRT__IOWRT);
+        ret = 0;
+    } else {
+        MSVCRT__lock_file(file);
+        ret = MSVCRT__fflush_nolock(file);
+        MSVCRT__unlock_file(file);
+    }
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fflush_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fflush_nolock(MSVCRT_FILE* file)
+{
     if(!file) {
         msvcrt_flush_all_buffers(MSVCRT__IOWRT);
     } else if(file->_flag & MSVCRT__IOWRT) {
         int res;
 
-        MSVCRT__lock_file(file);
         res = msvcrt_flush_buffer(file);
-
         if(!res && (file->_flag & MSVCRT__IOCOMMIT))
             res = MSVCRT__commit(file->_file) ? MSVCRT_EOF : 0;
-        MSVCRT__unlock_file(file);
 
         return res;
     } else if(file->_flag & MSVCRT__IOREAD) {
-        MSVCRT__lock_file(file);
         file->_cnt = 0;
         file->_ptr = file->_base;
-        MSVCRT__unlock_file(file);
 
         return 0;
     }

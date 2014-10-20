@@ -121,6 +121,7 @@ static int (__cdecl *p_flsbuf)(int, FILE*);
 static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 static void** (__cdecl *p__pxcptinfoptrs)(void);
 static void* (__cdecl *p__AdjustPointer)(void*, const void*);
+static int (__cdecl *p_fflush_nolock)(FILE*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -379,6 +380,7 @@ static BOOL init(void)
     SET(p_byteswap_ulong, "_byteswap_ulong");
     SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
     SET(p__AdjustPointer, "__AdjustPointer");
+    SET(p_fflush_nolock, "_fflush_nolock");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1207,16 +1209,22 @@ struct block_file_arg
     FILE *write;
     HANDLE init;
     HANDLE finish;
+    int deadlock_test;
 };
 
 static DWORD WINAPI block_file(void *arg)
 {
     struct block_file_arg *files = arg;
+    int deadlock_test;
 
     p_lock_file(files->read);
     p_lock_file(files->write);
     SetEvent(files->init);
+
     WaitForSingleObject(files->finish, INFINITE);
+    Sleep(200);
+    deadlock_test = InterlockedIncrement(&files->deadlock_test);
+    ok(deadlock_test == 1, "deadlock_test = %d\n", deadlock_test);
     p_unlock_file(files->read);
     p_unlock_file(files->write);
     return 0;
@@ -1250,6 +1258,7 @@ static void test_nonblocking_file_access(void)
     arg.write = filew;
     arg.init = CreateEventW(NULL, FALSE, FALSE, NULL);
     arg.finish = CreateEventW(NULL, FALSE, FALSE, NULL);
+    arg.deadlock_test = 0;
     ok(arg.init != NULL, "CreateEventW failed\n");
     ok(arg.finish != NULL, "CreateEventW failed\n");
     thread = CreateThread(NULL, 0, block_file, (void*)&arg, 0, NULL);
@@ -1276,7 +1285,18 @@ static void test_nonblocking_file_access(void)
     ret = p_flsbuf('a', filew);
     ok(ret=='a', "_flsbuf(filew) returned %d\n", ret);
 
+    ret = p_fflush_nolock(filer);
+    ok(ret==0, "_fflush_nolock(filer) returned %d\n", ret);
+    ret = p_fflush_nolock(filew);
+    ok(ret==0, "_fflush_nolock(filew) returned %d\n", ret);
+
     SetEvent(arg.finish);
+
+    ret = p_fflush_nolock(NULL);
+    ok(ret==0, "_fflush_nolock(NULL) returned %d\n", ret);
+    ret = InterlockedIncrement(&arg.deadlock_test);
+    ok(ret==2, "InterlockedIncrement returned %d\n", ret);
+
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(arg.init);
     CloseHandle(arg.finish);

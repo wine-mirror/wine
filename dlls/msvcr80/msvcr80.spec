@@ -466,7 +466,7 @@
 @ cdecl _fcvt(double long ptr ptr) MSVCRT__fcvt
 @ cdecl _fcvt_s(ptr long double long ptr ptr) MSVCRT__fcvt_s
 @ cdecl _fdopen(long str) MSVCRT__fdopen
-@ stub _fflush_nolock
+@ cdecl _fflush_nolock(ptr) MSVCRT__fflush_nolock
 @ cdecl _fgetchar() MSVCRT__fgetchar
 @ stub _fgetwc_nolock
 @ cdecl _fgetwchar() MSVCRT__fgetwchar

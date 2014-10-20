@@ -931,6 +931,7 @@ MSVCRT_size_t __cdecl MSVCRT__fread_nolock(void*,MSVCRT_size_t,MSVCRT_size_t,MSV
 MSVCRT_size_t __cdecl MSVCRT__fwrite_nolock(const void*,MSVCRT_size_t,MSVCRT_size_t,MSVCRT_FILE*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
 int __cdecl      MSVCRT__fclose_nolock(MSVCRT_FILE*);
+int __cdecl      MSVCRT__fflush_nolock(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);
 MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
 MSVCRT_clock_t __cdecl MSVCRT_clock(void);
