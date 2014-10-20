@@ -1407,6 +1407,43 @@ static void test_GetGdiInterop(void)
     IDWriteGdiInterop_Release(interop);
 }
 
+static void test_CreateFontFaceFromHdc(void)
+{
+    IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
+    HFONT hfont, oldhfont;
+    LOGFONTW logfont;
+    HRESULT hr;
+    HDC hdc;
+
+    interop = NULL;
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, NULL, &fontface);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hfont = CreateFontIndirectW(&logfont);
+    hdc = CreateCompatibleDC(0);
+    oldhfont = SelectObject(hdc, hfont);
+
+    fontface = NULL;
+    hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFace_Release(fontface);
+    DeleteObject(SelectObject(hdc, oldhfont));
+    DeleteDC(hdc);
+
+    IDWriteGdiInterop_Release(interop);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -1436,6 +1473,7 @@ START_TEST(font)
     test_GetFirstMatchingFont();
     test_GetInformationalStrings();
     test_GetGdiInterop();
+    test_CreateFontFaceFromHdc();
 
     IDWriteFactory_Release(factory);
 }
