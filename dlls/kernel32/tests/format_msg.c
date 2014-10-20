@@ -1555,7 +1555,6 @@ static void test_message_from_hmodule(void)
     /* Test HRESULT. It's not documented but in practice _com_error::ErrorMessage relies on this. */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, h, 0x80070005 /* E_ACCESSDENIED */,
                          MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), out, sizeof(out)/sizeof(CHAR), NULL);
-    todo_wine
     ok(ret != 0, "FormatMessageA returned 0\n");
 
     /* Test a message string with an insertion without passing any variadic arguments. */
