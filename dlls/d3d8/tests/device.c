@@ -31,12 +31,14 @@ struct vec3
     float x, y, z;
 };
 
+#define CREATE_DEVICE_FULLSCREEN        0x01
+
 struct device_desc
 {
     HWND device_window;
     unsigned int width;
     unsigned int height;
-    BOOL windowed;
+    DWORD flags;
 };
 
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
@@ -105,7 +107,7 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
         present_parameters.BackBufferWidth = desc->width;
         present_parameters.BackBufferHeight = desc->height;
         present_parameters.hDeviceWindow = desc->device_window;
-        present_parameters.Windowed = desc->windowed;
+        present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
     }
 
     if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
@@ -2265,7 +2267,7 @@ static void test_wndproc(void)
     device_desc.device_window = device_window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -2408,7 +2410,7 @@ static void test_wndproc_windowed(void)
     device_desc.device_window = device_window;
     device_desc.width = 640;
     device_desc.height = 480;
-    device_desc.windowed = TRUE;
+    device_desc.flags = 0;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -2783,7 +2785,7 @@ static void test_window_style(void)
     device_desc.device_window = device_window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -2988,7 +2990,7 @@ static void test_mode_change(void)
     device_desc.device_window = device_window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -3086,7 +3088,7 @@ static void test_device_window_reset(void)
     device_desc.device_window = NULL;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d8, focus_window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -6353,7 +6355,7 @@ static void test_lost_device(void)
     device_desc.device_window = window;
     device_desc.width = screen_width;
     device_desc.height = screen_height;
-    device_desc.windowed = FALSE;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d, window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
