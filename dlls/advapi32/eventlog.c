@@ -997,3 +997,12 @@ ULONG WINAPI EnumerateTraceGuids(PTRACE_GUID_PROPERTIES *propertiesarray,
     FIXME("%p %d %p: stub\n", propertiesarray, arraycount, guidcount);
     return ERROR_INVALID_PARAMETER;
 }
+
+/******************************************************************************
+ * WmiOpenBlock [ADVAPI32.@]
+ */
+NTSTATUS WINAPI WmiOpenBlock(GUID *guid, ULONG access, PVOID *datablock)
+{
+    FIXME("%s %d %p: stub\n", debugstr_guid(guid), access, datablock);
+    return ERROR_SUCCESS;
+}

@@ -806,7 +806,7 @@
 # @ stub WmiMofEnumerateResourcesW
 # @ stub WmiNotificationRegistrationA
 # @ stub WmiNotificationRegistrationW
-@ stub WmiOpenBlock
+@ stdcall WmiOpenBlock(ptr long ptr)
 # @ stub WmiOpenTraceWithCursor
 # @ stub WmiParseTraceEvent
 # @ stub WmiQueryAllDataA
