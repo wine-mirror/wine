@@ -1882,7 +1882,7 @@ static inline DWORD send_message_excpt( HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
     num_guard_page_calls = num_execute_fault_calls = 0;
-    ret = SendMessageA( hWnd, WM_USER, 0, 0 );
+    ret = SendMessageA( hWnd, uMsg, wParam, lParam );
 
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
@@ -1900,14 +1900,18 @@ static LRESULT CALLBACK jmp_test_func( HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 static LRESULT CALLBACK atl_test_func( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
     DWORD arg = (DWORD)hWnd;
-    ok( arg == 0x11223344, "arg is 0x%08x instead of 0x11223344\n", arg );
+    if (uMsg == WM_USER)
+        ok( arg == 0x11223344, "arg is 0x%08x instead of 0x11223344\n", arg );
+    else
+        ok( arg != 0x11223344, "arg is unexpectedly 0x11223344\n" );
     return 43;
 }
 
 static void test_atl_thunk_emulation( ULONG dep_flags )
 {
     static const char code_jmp[] = {0xE9, 0x00, 0x00, 0x00, 0x00};
-    static const char code_atl[] = {0xC7, 0x44, 0x24, 0x04, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
+    static const char code_atl1[] = {0xC7, 0x44, 0x24, 0x04, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
+    static const char code_atl2[] = {0xB9, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
     static const char cls_name[] = "atl_thunk_class";
     DWORD ret, size, old_prot;
     ULONG old_flags = MEM_EXECUTE_OPTION_ENABLE;
@@ -2008,7 +2012,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
 
     /* Now test with a proper ATL thunk instruction. */
 
-    memcpy( base, code_atl, sizeof(code_atl) );
+    memcpy( base, code_atl1, sizeof(code_atl1) );
     *(DWORD *)(base + 9) = (DWORD_PTR)atl_test_func - (DWORD_PTR)(base + 13);
 
     success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
@@ -2076,6 +2080,23 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
         else
             win_skip( "RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n" );
     }
+
+    /* Test alternative ATL thunk instructions. */
+
+    memcpy( base, code_atl2, sizeof(code_atl2) );
+    *(DWORD *)(base + 6) = (DWORD_PTR)atl_test_func - (DWORD_PTR)(base + 10);
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER + 1, 0, 0 );
+    /* FIXME: we don't check the content of the register ECX yet */
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
     /* Restore the JMP instruction, set to executable, and then destroy the Window */
 
@@ -2194,7 +2215,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
 
     /* Now test with a proper ATL thunk instruction. */
 
-    memcpy( base, code_atl, sizeof(code_atl) );
+    memcpy( base, code_atl1, sizeof(code_atl1) );
     *(DWORD *)(base + 9) = (DWORD_PTR)atl_test_func - (DWORD_PTR)(base + 13);
 
     count = 64;

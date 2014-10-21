@@ -1616,12 +1616,22 @@ static inline BOOL check_invalid_gs( CONTEXT *context )
 
 
 #include "pshpack1.h"
-struct atl_thunk
+union atl_thunk
 {
-    DWORD movl;  /* movl this,4(%esp) */
-    DWORD this;
-    BYTE  jmp;   /* jmp func */
-    int   func;
+    struct
+    {
+        DWORD movl;  /* movl this,4(%esp) */
+        DWORD this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t1;
+    struct
+    {
+        BYTE  movl;  /* movl this,ecx */
+        DWORD this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t2;
 };
 #include "poppack.h"
 
@@ -1632,26 +1642,36 @@ struct atl_thunk
  */
 static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    const struct atl_thunk *thunk = (const struct atl_thunk *)rec->ExceptionInformation[1];
-    struct atl_thunk thunk_copy;
-    BOOL ret = FALSE;
+    const union atl_thunk *thunk = (const union atl_thunk *)rec->ExceptionInformation[1];
+    union atl_thunk thunk_copy;
+    SIZE_T thunk_len;
 
-    if (virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) ) != sizeof(*thunk))
-        return FALSE;
+    thunk_len = virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) );
+    if (!thunk_len) return FALSE;
 
-    if (thunk_copy.movl == 0x042444c7 && thunk_copy.jmp == 0xe9)
+    if (thunk_len >= sizeof(thunk_copy.t1) && thunk_copy.t1.movl == 0x042444c7 &&
+                                              thunk_copy.t1.jmp == 0xe9)
     {
         if (virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
-            &thunk_copy.this, sizeof(DWORD) ) == sizeof(DWORD))
+            &thunk_copy.t1.this, sizeof(DWORD) ) == sizeof(DWORD))
         {
-            context->Eip = (DWORD_PTR)(&thunk->func + 1) + thunk_copy.func;
-            TRACE( "emulating ATL thunk at %p, func=%08x arg=%08x\n",
-                   thunk, context->Eip, thunk_copy.this );
-            ret = TRUE;
+            context->Eip = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
+            TRACE( "emulating ATL thunk type 1 at %p, func=%08x arg=%08x\n",
+                   thunk, context->Eip, thunk_copy.t1.this );
+            return TRUE;
         }
     }
+    else if (thunk_len >= sizeof(thunk_copy.t2) && thunk_copy.t2.movl == 0xb9 &&
+                                                   thunk_copy.t2.jmp == 0xe9)
+    {
+        context->Ecx = thunk_copy.t2.this;
+        context->Eip = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
+        TRACE( "emulating ATL thunk type 2 at %p, func=%08x ecx=%08x\n",
+               thunk, context->Eip, context->Ecx );
+        return TRUE;
+    }
 
-    return ret;
+    return FALSE;
 }
 
 
