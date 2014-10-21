@@ -1449,6 +1449,9 @@ typedef enum _DEP_SYSTEM_POLICY_TYPE {
     OptOut = 3
 } DEP_SYSTEM_POLICY_TYPE;
 
+#define PROCESS_DEP_ENABLE 1
+#define PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION 2
+
 /* Event Logging */
 
 #define EVENTLOG_FULL_INFO          0

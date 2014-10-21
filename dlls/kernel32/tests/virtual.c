@@ -46,6 +46,7 @@ static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
 static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
+static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 
 /* ############################### */
 
@@ -1972,6 +1973,44 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
     ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
 
+    /* Check result of GetProcessDEPPolicy */
+    if (!pGetProcessDEPPolicy)
+        win_skip( "GetProcessDEPPolicy not supported\n" );
+    else
+    {
+        BOOL (WINAPI *get_dep_policy)(HANDLE, LPDWORD, PBOOL) = (void *)base;
+        BOOL policy_permanent = 0xdeadbeef;
+        DWORD policy_flags = 0xdeadbeef;
+
+        /* GetProcessDEPPolicy crashes on Windows when a NULL pointer is passed.
+         * Moreover this function has a bug on Windows 8, which has the effect that
+         * policy_permanent is set to the content of the CL register instead of 0,
+         * when the policy is not permanent. To detect that we use an assembler
+         * wrapper to call the function. */
+
+        memcpy( base, code_atl2, sizeof(code_atl2) );
+        *(DWORD *)(base + 6) = (DWORD_PTR)pGetProcessDEPPolicy - (DWORD_PTR)(base + 10);
+
+        success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
+        ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+        success = get_dep_policy( GetCurrentProcess(), &policy_flags, &policy_permanent );
+        todo_wine
+        ok( success, "GetProcessDEPPolicy failed %u\n", GetLastError() );
+
+        ret = 0;
+        if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+            ret |= PROCESS_DEP_ENABLE;
+        if (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION)
+            ret |= PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION;
+
+        todo_wine
+        ok( policy_flags == ret, "expected policy flags %d, got %d\n", ret, policy_flags );
+        todo_wine
+        ok( !policy_permanent || broken(policy_permanent == 0x44),
+            "expected policy permanent FALSE, got %d\n", policy_permanent );
+    }
+
     memcpy( base, code_jmp, sizeof(code_jmp) );
     *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
 
@@ -3424,6 +3463,7 @@ START_TEST(virtual)
     pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
     pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
+    pGetProcessDEPPolicy = (void *)GetProcAddress( hkernel32, "GetProcessDEPPolicy" );
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
     pNtMapViewOfSection = (void *)GetProcAddress( hntdll, "NtMapViewOfSection" );
     pNtUnmapViewOfSection = (void *)GetProcAddress( hntdll, "NtUnmapViewOfSection" );
