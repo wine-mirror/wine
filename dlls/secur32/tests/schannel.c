@@ -533,7 +533,7 @@ static void init_cred(SCHANNEL_CRED *cred)
     cred->aphMappers = NULL;
     cred->cSupportedAlgs = 0;
     cred->palgSupportedAlgs = NULL;
-    cred->grbitEnabledProtocols = SP_PROT_SSL3_CLIENT;
+    cred->grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
     cred->dwMinimumCipherStrength = 0;
     cred->dwMaximumCipherStrength = 0;
     cred->dwSessionLifespan = 0;
@@ -685,7 +685,7 @@ static void test_communication(void)
     ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
     if (status != SEC_E_OK) return;
 
-    test_supported_protocols(&cred_handle, SP_PROT_SSL3_CLIENT);
+    test_supported_protocols(&cred_handle, SP_PROT_TLS1_CLIENT);
 
     /* Initialize the connection */
     init_buffers(&buffers[0], 4, buf_size);
