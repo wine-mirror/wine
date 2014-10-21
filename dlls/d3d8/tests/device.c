@@ -33,6 +33,7 @@ struct vec3
 
 #define CREATE_DEVICE_FULLSCREEN        0x01
 #define CREATE_DEVICE_FPU_PRESERVE      0x02
+#define CREATE_DEVICE_SWVP_ONLY         0x04
 
 struct device_desc
 {
@@ -110,6 +111,8 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
         present_parameters.BackBufferHeight = desc->height;
         present_parameters.hDeviceWindow = desc->device_window;
         present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
+        if (desc->flags & CREATE_DEVICE_SWVP_ONLY)
+            behavior_flags = D3DCREATE_SOFTWARE_VERTEXPROCESSING;
         if (desc->flags & CREATE_DEVICE_FPU_PRESERVE)
             behavior_flags |= D3DCREATE_FPU_PRESERVE;
     }
@@ -123,6 +126,8 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
             behavior_flags, &present_parameters, &device)))
         return device;
 
+    if (desc && desc->flags & CREATE_DEVICE_SWVP_ONLY)
+        return NULL;
     behavior_flags ^= (D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 
     if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
@@ -4758,7 +4763,7 @@ static void test_swvp_buffer(void)
     IDirect3DVertexBuffer8 *buffer;
     static const unsigned int bufsize = 1024;
     D3DVERTEXBUFFER_DESC desc;
-    D3DPRESENT_PARAMETERS present_parameters = {0};
+    struct device_desc device_desc;
     struct
     {
         float x, y, z;
@@ -4769,15 +4774,11 @@ static void test_swvp_buffer(void)
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
 
-    present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = window;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = screen_width;
-    present_parameters.BackBufferHeight = screen_height;
-    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
-    present_parameters.EnableAutoDepthStencil = FALSE;
-    if (FAILED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
+    device_desc.device_window = window;
+    device_desc.width = 640;
+    device_desc.height = 480;
+    device_desc.flags = CREATE_DEVICE_SWVP_ONLY;
+    if (!(device = create_device(d3d8, window, &device_desc)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         IDirect3D8_Release(d3d8);
