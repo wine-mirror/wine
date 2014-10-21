@@ -1648,6 +1648,14 @@ union atl_thunk
         DWORD func;
         WORD  jmp;   /* jmp eax */
     } t4;
+    struct
+    {
+        DWORD inst1; /* pop ecx
+                      * pop eax
+                      * push ecx
+                      * jmp 4(%eax) */
+        WORD  inst2;
+    } t5;
 };
 #include "poppack.h"
 
@@ -1707,6 +1715,26 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
         TRACE( "emulating ATL thunk type 4 at %p, func=%08x eax=%08x ecx=%08x\n",
                thunk, context->Eip, context->Eax, context->Ecx );
         return TRUE;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t5) && thunk_copy.t5.inst1 == 0xff515859 &&
+                                                   thunk_copy.t5.inst2 == 0x0460)
+    {
+        DWORD func, stack[2];
+        if (virtual_uninterrupted_read_memory( (DWORD *)context->Esp,
+            stack, sizeof(stack) ) == sizeof(stack) &&
+            virtual_uninterrupted_read_memory( (DWORD *)stack[1] + 1,
+            &func, sizeof(DWORD) ) == sizeof(DWORD) &&
+            virtual_uninterrupted_write_memory( (DWORD *)context->Esp + 1,
+            &stack[0], sizeof(stack[0]) ) == sizeof(stack[0]))
+        {
+            context->Ecx = stack[0];
+            context->Eax = stack[1];
+            context->Esp = context->Esp + sizeof(DWORD);
+            context->Eip = func;
+            TRACE( "emulating ATL thunk type 5 at %p, func=%08x eax=%08x ecx=%08x esp=%08x\n",
+                   thunk, context->Eip, context->Eax, context->Ecx, context->Esp );
+            return TRUE;
+        }
     }
 
     return FALSE;
