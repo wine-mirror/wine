@@ -32,6 +32,7 @@ struct vec3
 };
 
 #define CREATE_DEVICE_FULLSCREEN        0x01
+#define CREATE_DEVICE_FPU_PRESERVE      0x02
 
 struct device_desc
 {
@@ -92,6 +93,7 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice8 *device;
+    DWORD behavior_flags = D3DCREATE_HARDWARE_VERTEXPROCESSING;
 
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
@@ -108,17 +110,24 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND focus_window, cons
         present_parameters.BackBufferHeight = desc->height;
         present_parameters.hDeviceWindow = desc->device_window;
         present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
+        if (desc->flags & CREATE_DEVICE_FPU_PRESERVE)
+            behavior_flags |= D3DCREATE_FPU_PRESERVE;
     }
 
     if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
 
     present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
     if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
+
+    behavior_flags ^= (D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_SOFTWARE_VERTEXPROCESSING);
 
     if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device))) return device;
+            behavior_flags, &present_parameters, &device)))
+        return device;
 
     return NULL;
 }
@@ -2578,7 +2587,7 @@ static inline WORD get_fpu_cw(void)
 static void test_fpu_setup(void)
 {
 #if defined(D3D8_TEST_SET_FPU_CW) && defined(D3D8_TEST_GET_FPU_CW)
-    D3DPRESENT_PARAMETERS present_parameters;
+    struct device_desc device_desc;
     IDirect3DDevice8 *device;
     D3DDISPLAYMODE d3ddm;
     IDirect3D8 *d3d8;
@@ -2594,21 +2603,18 @@ static void test_fpu_setup(void)
     hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
     ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
 
-    memset(&present_parameters, 0, sizeof(present_parameters));
-    present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = window;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferFormat = d3ddm.Format;
+    device_desc.device_window = window;
+    device_desc.width = 640;
+    device_desc.height = 480;
+    device_desc.flags = 0;
 
     set_fpu_cw(0xf60);
     cw = get_fpu_cw();
     ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
 
-    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    if (FAILED(hr))
+    if (!(device = create_device(d3d8, window, &device_desc)))
     {
-        skip("Failed to create a device, hr %#x.\n", hr);
+        skip("Failed to create a 3D device, skipping test.\n");
         set_fpu_cw(0x37f);
         goto done;
     }
@@ -2624,9 +2630,9 @@ static void test_fpu_setup(void)
     cw = get_fpu_cw();
     ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
 
-    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &present_parameters, &device);
-    ok(SUCCEEDED(hr), "CreateDevice failed, hr %#x.\n", hr);
+    device_desc.flags = CREATE_DEVICE_FPU_PRESERVE;
+    device = create_device(d3d8, window, &device_desc);
+    ok(!!device, "CreateDevice failed.\n");
 
     cw = get_fpu_cw();
     ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
