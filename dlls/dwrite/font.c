@@ -747,7 +747,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2
 
     if (!font->face) {
         HRESULT hr = font->is_system ? create_system_fontface(font, &font->face) :
-            font_create_fontface(NULL, font->data->face_data->type, font->data->face_data->file_count, font->data->face_data->files,
+            font_create_fontface(font->data->face_data->type, font->data->face_data->file_count, font->data->face_data->files,
                                  font->data->face_data->index, font->data->face_data->simulations, &font->face);
         if (FAILED(hr)) return hr;
     }
@@ -1676,7 +1676,7 @@ HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_ke
     return S_OK;
 }
 
-HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace2 **font_face)
+HRESULT font_create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace2 **font_face)
 {
     int i;
     struct dwrite_fontface *This;
