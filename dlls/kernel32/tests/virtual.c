@@ -1995,7 +1995,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
         ok( success, "VirtualProtect failed %u\n", GetLastError() );
 
         success = get_dep_policy( GetCurrentProcess(), &policy_flags, &policy_permanent );
-        todo_wine
         ok( success, "GetProcessDEPPolicy failed %u\n", GetLastError() );
 
         ret = 0;
@@ -2004,9 +2003,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
         if (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION)
             ret |= PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION;
 
-        todo_wine
         ok( policy_flags == ret, "expected policy flags %d, got %d\n", ret, policy_flags );
-        todo_wine
         ok( !policy_permanent || broken(policy_permanent == 0x44),
             "expected policy permanent FALSE, got %d\n", policy_permanent );
     }

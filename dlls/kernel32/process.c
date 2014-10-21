@@ -3942,9 +3942,31 @@ BOOL WINAPI GetNumaAvailableMemoryNode(UCHAR node, PULONGLONG available_bytes)
  */
 BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
 {
-    FIXME("(%p %p %p): stub\n", process, flags, permanent);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status;
+    ULONG dep_flags;
+
+    TRACE("(%p %p %p)\n", process, flags, permanent);
+
+    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                        &dep_flags, sizeof(dep_flags), NULL );
+    if (!status)
+    {
+
+        if (flags)
+        {
+            *flags = 0;
+            if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+                *flags |= PROCESS_DEP_ENABLE;
+            if (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION)
+                *flags |= PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION;
+        }
+
+        if (permanent)
+            *permanent = (dep_flags & MEM_EXECUTE_OPTION_PERMANENT) != 0;
+
+    }
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 /**********************************************************************
