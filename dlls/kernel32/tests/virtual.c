@@ -1912,6 +1912,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     static const char code_jmp[] = {0xE9, 0x00, 0x00, 0x00, 0x00};
     static const char code_atl1[] = {0xC7, 0x44, 0x24, 0x04, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
     static const char code_atl2[] = {0xB9, 0x44, 0x33, 0x22, 0x11, 0xE9, 0x00, 0x00, 0x00, 0x00};
+    static const char code_atl3[] = {0xBA, 0x44, 0x33, 0x22, 0x11, 0xB9, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xE1};
     static const char cls_name[] = "atl_thunk_class";
     DWORD ret, size, old_prot;
     ULONG old_flags = MEM_EXECUTE_OPTION_ENABLE;
@@ -2091,6 +2092,21 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
 
     ret = send_message_excpt( hWnd, WM_USER + 1, 0, 0 );
     /* FIXME: we don't check the content of the register ECX yet */
+    ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
+    ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))
+        ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    else
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+
+    memcpy( base, code_atl3, sizeof(code_atl3) );
+    *(DWORD *)(base + 6) = (DWORD_PTR)atl_test_func;
+
+    success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
+    ok( success, "VirtualProtect failed %u\n", GetLastError() );
+
+    ret = send_message_excpt( hWnd, WM_USER + 1, 0, 0 );
+    /* FIXME: we don't check the content of the registers ECX/EDX yet */
     ok( ret == 43, "call returned wrong result, expected 43, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
     if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && (dep_flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION))

@@ -1632,6 +1632,14 @@ union atl_thunk
         BYTE  jmp;   /* jmp func */
         int   func;
     } t2;
+    struct
+    {
+        BYTE  movl1; /* movl this,edx */
+        DWORD this;
+        BYTE  movl2; /* movl func,ecx */
+        DWORD func;
+        WORD  jmp;   /* jmp ecx */
+    } t3;
 };
 #include "poppack.h"
 
@@ -1668,6 +1676,17 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
         context->Eip = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
         TRACE( "emulating ATL thunk type 2 at %p, func=%08x ecx=%08x\n",
                thunk, context->Eip, context->Ecx );
+        return TRUE;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t3) && thunk_copy.t3.movl1 == 0xba &&
+                                                   thunk_copy.t3.movl2 == 0xb9 &&
+                                                   thunk_copy.t3.jmp == 0xe1ff)
+    {
+        context->Edx = thunk_copy.t3.this;
+        context->Ecx = thunk_copy.t3.func;
+        context->Eip = thunk_copy.t3.func;
+        TRACE( "emulating ATL thunk type 3 at %p, func=%08x ecx=%08x edx=%08x\n",
+               thunk, context->Eip, context->Ecx, context->Edx );
         return TRUE;
     }
 
