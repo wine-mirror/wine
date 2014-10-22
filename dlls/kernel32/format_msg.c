@@ -68,8 +68,6 @@ struct format_args
  * Yes, ANSI strings in win32 resources. Go figure.
  */
 
-static const WCHAR FMTWSTR[] = { '%','s',0 };
-
 /**********************************************************************
  *	load_message    (internal)
  */
