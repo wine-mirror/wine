@@ -675,8 +675,10 @@ if (0)
 static void test_CreateFontFace(void)
 {
     IDWriteFontFace *fontface, *fontface2;
+    IDWriteFontCollection *collection;
     IDWriteGdiInterop *interop;
-    IDWriteFont *font;
+    IDWriteFont *font, *font2;
+    IDWriteFontFamily *family;
     LOGFONTW logfont;
     HRESULT hr;
 
@@ -690,8 +692,14 @@ static void test_CreateFontFace(void)
     logfont.lfItalic = 1;
     lstrcpyW(logfont.lfFaceName, tahomaW);
 
+    font = NULL;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    font2 = NULL;
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font != font2, "got %p, %p\n", font, font2);
 
     hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFontFace, (void**)&fontface);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
@@ -699,14 +707,24 @@ static void test_CreateFontFace(void)
 if (0) /* crashes on native */
     hr = IDWriteFont_CreateFontFace(font, NULL);
 
+    fontface = NULL;
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    fontface2 = NULL;
     hr = IDWriteFont_CreateFontFace(font, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
-    /* the fontface refcount is increased here */
-    IDWriteFontFace_Release(fontface);
+    IDWriteFontFace_Release(fontface2);
+
+    fontface2 = NULL;
+    hr = IDWriteFont_CreateFontFace(font2, &fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
+    IDWriteFontFace_Release(fontface2);
+
+    IDWriteFont_Release(font2);
     IDWriteFont_Release(font);
 
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFont, (void**)&font);
@@ -714,6 +732,41 @@ if (0) /* crashes on native */
 
     IDWriteFontFace_Release(fontface);
     IDWriteGdiInterop_Release(interop);
+
+    /* Create from system collection */
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    font = NULL;
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    font2 = NULL;
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(font != font2, "got %p, %p\n", font, font2);
+
+    fontface = NULL;
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fontface2 = NULL;
+    hr = IDWriteFont_CreateFontFace(font2, &fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFontFace_Release(fontface2);
+    IDWriteFont_Release(font2);
+    IDWriteFont_Release(font);
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(collection);
 }
 
 static void test_GetMetrics(void)
@@ -972,19 +1025,19 @@ static const struct IDWriteFontFileLoaderVtbl dwritefontfileloadervtbl = {
     fontfileloader_CreateStreamFromKey
 };
 
-static void test_FontLoader(void)
+static void test_CreateCustomFontFileReference(void)
 {
     IDWriteFontFileLoader floader = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
-    IDWriteFontFile *ffile = NULL;
-    BOOL support = 1;
-    DWRITE_FONT_FILE_TYPE type = 1;
-    DWRITE_FONT_FACE_TYPE face = 1;
-    UINT32 count = 1;
-    IDWriteFontFace *fface = NULL;
+    IDWriteFontFile *file, *file2;
+    BOOL support;
+    DWRITE_FONT_FILE_TYPE file_type;
+    DWRITE_FONT_FACE_TYPE face_type;
+    UINT32 count;
+    IDWriteFontFace *face, *face2;
     HRESULT hr;
-    HRSRC font;
+    HRSRC fontrsrc;
     UINT32 codePoints[1] = {0xa8};
     UINT16 indices[1];
 
@@ -999,60 +1052,85 @@ static void test_FontLoader(void)
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &rloader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &ffile);
+    file = NULL;
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IDWriteFontFile_Release(ffile);
+    IDWriteFontFile_Release(file);
 
-    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader3, &ffile);
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader3, &file);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IDWriteFontFile_Release(ffile);
 
-    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, NULL, &ffile);
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, NULL, &file);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IDWriteFontFile_Release(ffile);
 
-    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &ffile);
+    file = NULL;
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+
+    file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
+    face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
+    support = TRUE;
+    count = 1;
+    IDWriteFontFile_Analyze(file, &support, &file_type, &face_type, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(support == FALSE, "got %i\n", support);
-    ok(type == DWRITE_FONT_FILE_TYPE_UNKNOWN, "got %i\n", type);
-    ok(face == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face);
+    ok(file_type == DWRITE_FONT_FILE_TYPE_UNKNOWN, "got %i\n", file_type);
+    ok(face_type == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face_type);
     ok(count == 0, "got %i\n", count);
 
-    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &ffile, 0, 0, &fface);
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, 0, &face);
     ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
-    IDWriteFontFile_Release(ffile);
+    IDWriteFontFile_Release(file);
 
-    font = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
-    ok(font != NULL, "Failed to find font resource\n");
-    if (font)
-    {
-        hr = IDWriteFactory_CreateCustomFontFileReference(factory, &font, sizeof(HRSRC), &rloader, &ffile);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+    fontrsrc = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
+    ok(fontrsrc != NULL, "Failed to find font resource\n");
 
-        hr = IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(support == TRUE, "got %i\n", support);
-        ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
-        ok(face == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face);
-        ok(count == 1, "got %i\n", count);
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, &fontrsrc, sizeof(HRSRC), &rloader, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        /* invalid index */
-        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 1, DWRITE_FONT_SIMULATIONS_NONE, &fface);
-        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
+    face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+    support = FALSE;
+    count = 0;
+    hr = IDWriteFontFile_Analyze(file, &support, &file_type, &face_type, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(support == TRUE, "got %i\n", support);
+    ok(file_type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", file_type);
+    ok(face_type == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face_type);
+    ok(count == 1, "got %i\n", count);
 
-        hr = IDWriteFactory_CreateFontFace(factory, face, 1, &ffile, 0, DWRITE_FONT_SIMULATIONS_NONE, &fface);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        hr = IDWriteFontFace_GetGlyphIndices(fface, codePoints, 1, indices);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(indices[0] == 6, "got index %i\n",indices[0]);
-        IDWriteFontFace_Release(fface);
-        IDWriteFontFile_Release(ffile);
-    }
+    /* invalid index */
+    hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file, 1, DWRITE_FONT_SIMULATIONS_NONE, &face);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    /* fontface instances are reused starting with win7 */
+    ok(face == face2 || broken(face != face2), "got %p, %p\n", face, face2);
+    IDWriteFontFace_Release(face2);
+
+    file2 = NULL;
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, &fontrsrc, sizeof(HRSRC), &rloader, &file2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(file != file2, "got %p, %p\n", file, file2);
+
+    hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file2, 0, DWRITE_FONT_SIMULATIONS_NONE, &face2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    /* fontface instances are reused starting with win7 */
+    ok(face == face2 || broken(face != face2), "got %p, %p\n", face, face2);
+    IDWriteFontFace_Release(face2);
+    IDWriteFontFile_Release(file2);
+
+    hr = IDWriteFontFace_GetGlyphIndices(face, codePoints, 1, indices);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(indices[0] == 6, "got index %i\n", indices[0]);
+    IDWriteFontFace_Release(face);
+    IDWriteFontFile_Release(file);
 
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1461,7 +1539,7 @@ START_TEST(font)
     test_system_fontcollection();
     test_ConvertFontFaceToLOGFONT();
     test_CustomFontCollection();
-    test_FontLoader();
+    test_CreateCustomFontFileReference();
     test_CreateFontFileReference();
     test_shared_isolated();
     test_GetUnicodeRanges();
