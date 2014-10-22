@@ -1467,6 +1467,8 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
         case DW_TAG_variable:
         case DW_TAG_imported_declaration:
         case DW_TAG_ptr_to_member_type:
+        case DW_TAG_GNU_template_parameter_pack:
+        case DW_TAG_GNU_formal_parameter_pack:
             /* FIXME: some C++ related stuff */
             break;
         default:
@@ -1967,6 +1969,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         case DW_TAG_template_type_param:
         case DW_TAG_template_value_param:
         case DW_TAG_GNU_call_site:
+        case DW_TAG_GNU_template_parameter_pack:
+        case DW_TAG_GNU_formal_parameter_pack:
             /* FIXME: no support in dbghelp's internals so far */
             break;
         default:
