@@ -859,8 +859,13 @@ todo_wine
 static void test_system_fontcollection(void)
 {
     IDWriteFontCollection *collection, *coll2;
+    IDWriteLocalFontFileLoader *localloader;
     IDWriteFactory *factory, *factory2;
+    IDWriteFontFileLoader *loader;
     IDWriteFontFamily *family;
+    IDWriteFontFace *fontface;
+    IDWriteFontFile *file;
+    IDWriteFont *font;
     HRESULT hr;
     UINT32 i;
     BOOL ret;
@@ -904,6 +909,42 @@ static void test_system_fontcollection(void)
     ok(ret, "got %d\n", ret);
     ok(i != (UINT32)-1, "got %u\n", i);
 
+    /* get back local file loader */
+    hr = IDWriteFontCollection_GetFontFamily(collection, i, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFamily_Release(family);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+
+    i = 1;
+    file = NULL;
+    hr = IDWriteFontFace_GetFiles(fontface, &i, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(file != NULL, "got %p\n", file);
+
+if (file) {
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteLocalFontFileLoader_Release(localloader);
+
+    /* local loader is not registered by default */
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFileLoader_Release(loader);
+}
     ret = TRUE;
     i = 0;
     hr = IDWriteFontCollection_FindFamilyName(collection, blahW, &i, &ret);
