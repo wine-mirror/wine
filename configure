@@ -1180,6 +1180,7 @@ enable_photometadatahandler
 enable_pidgen
 enable_powrprof
 enable_printui
+enable_prntvpt
 enable_propsys
 enable_psapi
 enable_pstorec
@@ -17224,6 +17225,7 @@ wine_fn_config_dll photometadatahandler enable_photometadatahandler
 wine_fn_config_dll pidgen enable_pidgen
 wine_fn_config_dll powrprof enable_powrprof implib
 wine_fn_config_dll printui enable_printui
+wine_fn_config_dll prntvpt enable_prntvpt
 wine_fn_config_dll propsys enable_propsys clean,implib
 wine_fn_config_test dlls/propsys/tests propsys_test
 wine_fn_config_dll psapi enable_psapi implib

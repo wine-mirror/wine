@@ -1,0 +1,4 @@
+MODULE	  = prntvpt.dll
+
+C_SRCS = \
+	main.c
