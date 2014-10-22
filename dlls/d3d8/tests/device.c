@@ -6070,6 +6070,7 @@ static void test_resource_type(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    D3DCAPS8 caps;
 
     window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -6082,6 +6083,9 @@ static void test_resource_type(void)
         DestroyWindow(window);
         return;
     }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateImageSurface(device, 4, 4, D3DFMT_X8R8G8B8, &surface);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
@@ -6130,68 +6134,78 @@ static void test_resource_type(void)
     IDirect3DSurface8_Release(surface);
     IDirect3DTexture8_Release(texture);
 
-    hr = IDirect3DDevice8_CreateCubeTexture(device, 1, 1, 0, D3DFMT_X8R8G8B8,
-            D3DPOOL_SYSTEMMEM, &cube_texture);
-    ok(SUCCEEDED(hr), "Failed to create cube texture, hr %#x.\n", hr);
-    type = IDirect3DCubeTexture8_GetType(cube_texture);
-    ok(type == D3DRTYPE_CUBETEXTURE, "Expected type D3DRTYPE_CUBETEXTURE, got %u.\n", type);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        hr = IDirect3DDevice8_CreateCubeTexture(device, 1, 1, 0, D3DFMT_X8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &cube_texture);
+        ok(SUCCEEDED(hr), "Failed to create cube texture, hr %#x.\n", hr);
+        type = IDirect3DCubeTexture8_GetType(cube_texture);
+        ok(type == D3DRTYPE_CUBETEXTURE, "Expected type D3DRTYPE_CUBETEXTURE, got %u.\n", type);
 
-    hr = IDirect3DCubeTexture8_GetCubeMapSurface(cube_texture,
-            D3DCUBEMAP_FACE_NEGATIVE_X, 0, &surface);
-    ok(SUCCEEDED(hr), "Failed to get cube map surface, hr %#x.\n", hr);
-    hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
-    ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
-    ok(surface_desc.Type == D3DRTYPE_SURFACE, "Expected type D3DRTYPE_SURFACE, got %u.\n",
-            surface_desc.Type);
-    hr = IDirect3DCubeTexture8_GetLevelDesc(cube_texture, 0, &surface_desc);
-    ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
-    ok(surface_desc.Type == D3DRTYPE_SURFACE, "Expected type D3DRTYPE_SURFACE, got %u.\n",
-            surface_desc.Type);
-    IDirect3DSurface8_Release(surface);
-    IDirect3DCubeTexture8_Release(cube_texture);
+        hr = IDirect3DCubeTexture8_GetCubeMapSurface(cube_texture,
+                D3DCUBEMAP_FACE_NEGATIVE_X, 0, &surface);
+        ok(SUCCEEDED(hr), "Failed to get cube map surface, hr %#x.\n", hr);
+        hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+        ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
+        ok(surface_desc.Type == D3DRTYPE_SURFACE, "Expected type D3DRTYPE_SURFACE, got %u.\n",
+                surface_desc.Type);
+        hr = IDirect3DCubeTexture8_GetLevelDesc(cube_texture, 0, &surface_desc);
+        ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
+        ok(surface_desc.Type == D3DRTYPE_SURFACE, "Expected type D3DRTYPE_SURFACE, got %u.\n",
+                surface_desc.Type);
+        IDirect3DSurface8_Release(surface);
+        IDirect3DCubeTexture8_Release(cube_texture);
+    }
+    else
+        skip("Cube maps not supported.\n");
 
-    hr = IDirect3DDevice8_CreateVolumeTexture(device, 2, 4, 8, 4, 0, D3DFMT_X8R8G8B8,
-            D3DPOOL_SYSTEMMEM, &volume_texture);
-    type = IDirect3DVolumeTexture8_GetType(volume_texture);
-    ok(type == D3DRTYPE_VOLUMETEXTURE, "Expected type D3DRTYPE_VOLUMETEXTURE, got %u.\n", type);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP)
+    {
+        hr = IDirect3DDevice8_CreateVolumeTexture(device, 2, 4, 8, 4, 0, D3DFMT_X8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &volume_texture);
+        type = IDirect3DVolumeTexture8_GetType(volume_texture);
+        ok(type == D3DRTYPE_VOLUMETEXTURE, "Expected type D3DRTYPE_VOLUMETEXTURE, got %u.\n", type);
 
-    hr = IDirect3DVolumeTexture8_GetVolumeLevel(volume_texture, 0, &volume);
-    ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
-    /* IDirect3DVolume8 is not an IDirect3DResource8 and has no GetType method. */
-    hr = IDirect3DVolume8_GetDesc(volume, &volume_desc);
-    ok(SUCCEEDED(hr), "Failed to get volume description, hr %#x.\n", hr);
-    ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
-            volume_desc.Type);
-    ok(volume_desc.Width == 2, "Expected width 2, got %u.\n", volume_desc.Width);
-    ok(volume_desc.Height == 4, "Expected height 4, got %u.\n", volume_desc.Height);
-    ok(volume_desc.Depth == 8, "Expected depth 8, got %u.\n", volume_desc.Depth);
-    hr = IDirect3DVolumeTexture8_GetLevelDesc(volume_texture, 0, &volume_desc);
-    ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
-    ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
-            volume_desc.Type);
-    ok(volume_desc.Width == 2, "Expected width 2, got %u.\n", volume_desc.Width);
-    ok(volume_desc.Height == 4, "Expected height 4, got %u.\n", volume_desc.Height);
-    ok(volume_desc.Depth == 8, "Expected depth 8, got %u.\n", volume_desc.Depth);
-    IDirect3DVolume8_Release(volume);
+        hr = IDirect3DVolumeTexture8_GetVolumeLevel(volume_texture, 0, &volume);
+        ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
+        /* IDirect3DVolume8 is not an IDirect3DResource8 and has no GetType method. */
+        hr = IDirect3DVolume8_GetDesc(volume, &volume_desc);
+        ok(SUCCEEDED(hr), "Failed to get volume description, hr %#x.\n", hr);
+        ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
+                volume_desc.Type);
+        ok(volume_desc.Width == 2, "Expected width 2, got %u.\n", volume_desc.Width);
+        ok(volume_desc.Height == 4, "Expected height 4, got %u.\n", volume_desc.Height);
+        ok(volume_desc.Depth == 8, "Expected depth 8, got %u.\n", volume_desc.Depth);
+        hr = IDirect3DVolumeTexture8_GetLevelDesc(volume_texture, 0, &volume_desc);
+        ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
+        ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
+                volume_desc.Type);
+        ok(volume_desc.Width == 2, "Expected width 2, got %u.\n", volume_desc.Width);
+        ok(volume_desc.Height == 4, "Expected height 4, got %u.\n", volume_desc.Height);
+        ok(volume_desc.Depth == 8, "Expected depth 8, got %u.\n", volume_desc.Depth);
+        IDirect3DVolume8_Release(volume);
 
-    hr = IDirect3DVolumeTexture8_GetVolumeLevel(volume_texture, 2, &volume);
-    ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
-    hr = IDirect3DVolume8_GetDesc(volume, &volume_desc);
-    ok(SUCCEEDED(hr), "Failed to get volume description, hr %#x.\n", hr);
-    ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
-            volume_desc.Type);
-    ok(volume_desc.Width == 1, "Expected width 1, got %u.\n", volume_desc.Width);
-    ok(volume_desc.Height == 1, "Expected height 1, got %u.\n", volume_desc.Height);
-    ok(volume_desc.Depth == 2, "Expected depth 2, got %u.\n", volume_desc.Depth);
-    hr = IDirect3DVolumeTexture8_GetLevelDesc(volume_texture, 2, &volume_desc);
-    ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
-    ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
-            volume_desc.Type);
-    ok(volume_desc.Width == 1, "Expected width 1, got %u.\n", volume_desc.Width);
-    ok(volume_desc.Height == 1, "Expected height 1, got %u.\n", volume_desc.Height);
-    ok(volume_desc.Depth == 2, "Expected depth 2, got %u.\n", volume_desc.Depth);
-    IDirect3DVolume8_Release(volume);
-    IDirect3DVolumeTexture8_Release(volume_texture);
+        hr = IDirect3DVolumeTexture8_GetVolumeLevel(volume_texture, 2, &volume);
+        ok(SUCCEEDED(hr), "Failed to get volume level, hr %#x.\n", hr);
+        hr = IDirect3DVolume8_GetDesc(volume, &volume_desc);
+        ok(SUCCEEDED(hr), "Failed to get volume description, hr %#x.\n", hr);
+        ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
+                volume_desc.Type);
+        ok(volume_desc.Width == 1, "Expected width 1, got %u.\n", volume_desc.Width);
+        ok(volume_desc.Height == 1, "Expected height 1, got %u.\n", volume_desc.Height);
+        ok(volume_desc.Depth == 2, "Expected depth 2, got %u.\n", volume_desc.Depth);
+        hr = IDirect3DVolumeTexture8_GetLevelDesc(volume_texture, 2, &volume_desc);
+        ok(SUCCEEDED(hr), "Failed to get level description, hr %#x.\n", hr);
+        ok(volume_desc.Type == D3DRTYPE_VOLUME, "Expected type D3DRTYPE_VOLUME, got %u.\n",
+                volume_desc.Type);
+        ok(volume_desc.Width == 1, "Expected width 1, got %u.\n", volume_desc.Width);
+        ok(volume_desc.Height == 1, "Expected height 1, got %u.\n", volume_desc.Height);
+        ok(volume_desc.Depth == 2, "Expected depth 2, got %u.\n", volume_desc.Depth);
+        IDirect3DVolume8_Release(volume);
+        IDirect3DVolumeTexture8_Release(volume_texture);
+    }
+    else
+        skip("Mipmapped volume maps not supported.\n");
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
