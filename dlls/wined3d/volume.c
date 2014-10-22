@@ -451,7 +451,6 @@ static void volume_unload(struct wined3d_resource *resource)
     }
 
     /* The texture name is managed by the container. */
-    wined3d_texture_force_reload(volume->container);
     volume->flags &= ~WINED3D_VFLAG_CLIENT_STORAGE;
 
     resource_unload(resource);

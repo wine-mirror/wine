@@ -979,6 +979,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
         sub_resource->resource_ops->resource_unload(sub_resource);
     }
 
+    wined3d_texture_force_reload(texture);
     wined3d_texture_unload_gl_texture(texture);
 }
 

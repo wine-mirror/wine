@@ -1207,7 +1207,6 @@ static void surface_unload(struct wined3d_resource *resource)
         surface_load_location(surface, surface->resource.map_binding);
         surface_invalidate_location(surface, ~surface->resource.map_binding);
     }
-    wined3d_texture_force_reload(surface->container);
 
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
