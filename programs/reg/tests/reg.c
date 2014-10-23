@@ -158,6 +158,39 @@ static void test_add(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
     verify_reg(hkey, "expand3", REG_EXPAND_SZ, "", 1, TODO_REG_SIZE);
 
+    /* REG_BINARY */
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin0 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "bin0", REG_BINARY, buffer, 0, 0);
+
+    run_reg_exe("reg add HKEY_CURRENT_USER\\" KEY_BASE " /ve /t REG_BINARY /d deadbeef /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    dword = 0xefbeadde;
+    verify_reg(hkey, "", REG_BINARY, &dword, sizeof(DWORD), TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin1 /f /d 0xDeAdBeEf", &r);
+    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin2 /f /d x01", &r);
+    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin3 /f /d 01x", &r);
+    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin4 /f /d DeAdBeEf0DD", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    /* Remaining nibble prefixed */
+    buffer[0] = 0x0d; buffer[1] = 0xea; buffer[2] = 0xdb;
+    buffer[3] = 0xee; buffer[4] = 0xf0; buffer[5] = 0xdd;
+    /* Remaining nibble suffixed on winXP */
+    buffer[6] = 0xde; buffer[7] = 0xad; buffer[8] = 0xbe;
+    buffer[9] = 0xef; buffer[10] = 0x0d; buffer[11] = 0xd0;
+    size = 6;
+    err = RegQueryValueExA(hkey, "bin4", NULL, &type, (void *) (buffer+12), &size);
+    ok(err == ERROR_SUCCESS, "RegQueryValueEx failed: got %d\n", err);
+    ok(type == REG_BINARY, "got wrong type %u\n", type);
+    todo_wine ok(size == 6, "got wrong size %u\n", size);
+    todo_wine ok(memcmp(buffer, buffer+12, 6) == 0 ||
+        broken(memcmp(buffer+6, buffer+12, 6) == 0 /* WinXP */), "got wrong data\n");
+
     /* REG_DWORD */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_DWORD /f /d 12345678", &r);
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
