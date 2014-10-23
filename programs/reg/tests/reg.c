@@ -246,6 +246,14 @@ static void test_add(void)
     dword = 456;
     verify_reg(hkey, "DWORD_LE", REG_DWORD_LITTLE_ENDIAN, &dword, sizeof(dword), 0);
 
+    /* REG_DWORD_BIG_ENDIAN */
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v DWORD_BE /t REG_DWORD_BIG_ENDIAN /d 456 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    dword = 456;
+    verify_reg(hkey, "DWORD_BE", REG_DWORD_BIG_ENDIAN, &dword, sizeof(dword), TODO_REG_SIZE);
+    /* REG_DWORD_BIG_ENDIAN is broken in every version of windows. It behaves like
+     * an ordinary REG_DWORD - that is little endian. GG */
+
     /* REG_MULTI_SZ */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi0 /t REG_MULTI_SZ /d \"three\\0little\\0strings\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
