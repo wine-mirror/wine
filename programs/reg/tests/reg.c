@@ -136,6 +136,27 @@ static void test_add(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     verify_reg(hkey, "test3", REG_SZ, "", 1, 0);
 
+    /* REG_EXPAND_SZ */
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v expand0 /t REG_EXpand_sz /d \"dead%PATH%beef\" /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "expand0", REG_EXPAND_SZ, "dead%PATH%beef", 15, TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v expand1 /t REG_EXpand_sz /d \"dead^%PATH^%beef\" /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "expand1", REG_EXPAND_SZ, "dead^%PATH^%beef", 17, TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_EXPAND_SZ /v expand2 /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "expand2", REG_EXPAND_SZ, "", 1, TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKEY_CURRENT_USER\\" KEY_BASE " /ve /t REG_EXPAND_SZ /d WineTEST /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "", REG_EXPAND_SZ, "WineTEST", 9, TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_EXPAND_SZ /v expand3 /f /d \"\"", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "expand3", REG_EXPAND_SZ, "", 1, TODO_REG_SIZE);
+
     /* REG_DWORD */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_DWORD /f /d 12345678", &r);
     ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
