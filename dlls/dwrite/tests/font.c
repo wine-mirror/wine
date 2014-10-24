@@ -1521,10 +1521,9 @@ static void test_GetInformationalStrings(void)
     exists = FALSE;
     strings = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == TRUE, "got %d\n", exists);
-}
+
     exists = TRUE;
     strings = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_NONE, &strings, &exists);
@@ -1534,10 +1533,9 @@ todo_wine {
     /* strings instance is not reused */
     strings2 = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings2, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
     ok(strings2 != strings, "got %p, %p\n", strings2, strings);
-}
 
 if (strings)
     IDWriteLocalizedStrings_Release(strings);

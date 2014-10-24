@@ -26,7 +26,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
 #define MS_OTTO_TAG DWRITE_MAKE_OPENTYPE_TAG('O','T','T','O')
-#define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -615,24 +614,18 @@ VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_ME
     }
 }
 
-HRESULT opentype_get_font_strings_from_id(IDWriteFontFace2 *fontface, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
+HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
 {
-    const void *table_data = NULL;
-    void *name_context = NULL;
     const TT_NAME_V0 *header;
     BYTE *storage_area = 0;
-    BOOL exists = FALSE;
     USHORT count = 0;
     UINT16 name_id;
-    UINT32 size;
+    BOOL exists;
     HRESULT hr;
     int i;
 
-    hr = IDWriteFontFace2_TryGetFontTable(fontface, MS_NAME_TAG, &table_data, &size, &name_context, &exists);
-    if (FAILED(hr) || !exists) {
-        FIXME("failed to get NAME table\n");
+    if (!table_data)
         return E_FAIL;
-    }
 
     hr = create_localizedstrings(strings);
     if (FAILED(hr)) return hr;
@@ -726,8 +719,6 @@ HRESULT opentype_get_font_strings_from_id(IDWriteFontFace2 *fontface, DWRITE_INF
             continue;
         }
     }
-
-    IDWriteFontFace2_ReleaseFontTable(fontface, name_context);
 
     if (!exists) {
         IDWriteLocalizedStrings_Release(*strings);

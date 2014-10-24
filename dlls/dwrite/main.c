@@ -361,33 +361,36 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
     return S_OK;
 }
 
-HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings)
-{
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    struct localizedstrings *New;
+HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **ret)
+ {
+    struct localizedstrings *strings, *strings_clone;
     int i;
 
-    *strings = NULL;
+    *ret = NULL;
 
-    New = heap_alloc(sizeof(struct localizedstrings));
-    if (!New) return E_OUTOFMEMORY;
+    if (!iface)
+        return S_FALSE;
 
-    New->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
-    New->ref = 1;
-    New->count = This->count;
-    New->data = heap_alloc(sizeof(struct localizedpair) * New->count);
-    if (!New->data) {
-        heap_free(New);
+    strings = impl_from_IDWriteLocalizedStrings(iface);
+    strings_clone = heap_alloc(sizeof(struct localizedstrings));
+    if (!strings_clone) return E_OUTOFMEMORY;
+
+    strings_clone->IDWriteLocalizedStrings_iface.lpVtbl = &localizedstringsvtbl;
+    strings_clone->ref = 1;
+    strings_clone->count = strings->count;
+    strings_clone->data = heap_alloc(sizeof(struct localizedpair) * strings_clone->count);
+    if (!strings_clone->data) {
+        heap_free(strings_clone);
         return E_OUTOFMEMORY;
     }
-    for (i = 0; i < New->count; i++)
+    for (i = 0; i < strings_clone->count; i++)
     {
-        New->data[i].locale = heap_strdupW(This->data[i].locale);
-        New->data[i].string = heap_strdupW(This->data[i].string);
+        strings_clone->data[i].locale = heap_strdupW(strings->data[i].locale);
+        strings_clone->data[i].string = heap_strdupW(strings->data[i].string);
     }
-    New->alloc = New->count;
+    strings_clone->alloc = strings_clone->count;
 
-    *strings = &New->IDWriteLocalizedStrings_iface;
+    *ret = &strings_clone->IDWriteLocalizedStrings_iface;
 
     return S_OK;
 }

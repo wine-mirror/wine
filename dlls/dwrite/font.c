@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
+#define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
 struct dwrite_fontface_data {
     LONG ref;
@@ -986,14 +987,26 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,
 
     if (!data->info_strings[stringid]) {
         IDWriteFontFace2 *fontface;
+        const void *table_data;
+        BOOL table_exists;
+        void *context;
+        UINT32 size;
 
         hr = get_fontface_from_font(This, &fontface);
         if (FAILED(hr))
             return hr;
 
-        hr = opentype_get_font_strings_from_id(fontface, stringid, &data->info_strings[stringid]);
-        if (FAILED(hr) || !data->info_strings[stringid])
-            return hr;
+        table_exists = FALSE;
+        hr = IDWriteFontFace2_TryGetFontTable(fontface, MS_NAME_TAG, &table_data, &size, &context, &table_exists);
+        if (FAILED(hr) || !table_exists)
+            WARN("no NAME table found.\n");
+
+        if (table_exists) {
+            hr = opentype_get_font_strings_from_id(table_data, stringid, &data->info_strings[stringid]);
+            if (FAILED(hr) || !data->info_strings[stringid])
+                return hr;
+            IDWriteFontFace2_ReleaseFontTable(fontface, context);
+        }
     }
 
     hr = clone_localizedstring(data->info_strings[stringid], strings);
@@ -1001,7 +1014,7 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,
         return hr;
 
     *exists = TRUE;
-    return hr;
+    return S_OK;
 }
 
 static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont2 *iface)
