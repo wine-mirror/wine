@@ -1251,7 +1251,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
                                                     PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
 {
     InterfaceIndexTable *table;
-    ULONG i, size, dns_server_size, dns_suffix_size, total_size, ret = ERROR_NO_DATA;
+    ULONG i, size, dns_server_size = 0, dns_suffix_size, total_size, ret = ERROR_NO_DATA;
 
     TRACE("(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, buflen);
 
@@ -1308,7 +1308,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
                 size = bytes_left -= size;
             }
         }
-        if (!(flags & GAA_FLAG_SKIP_DNS_SERVER) && dns_server_size)
+        if (dns_server_size)
         {
             firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)first_aa + total_size - dns_server_size - dns_suffix_size);
             get_dns_server_addresses(firstDns, &dns_server_size);
