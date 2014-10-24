@@ -577,8 +577,28 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory *i
     IDWriteFontCollectionLoader *loader, void const *key, UINT32 key_size, IDWriteFontCollection **collection)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%p %p %u %p): stub\n", This, loader, key, key_size, collection);
-    return E_NOTIMPL;
+    IDWriteFontFileEnumerator *enumerator;
+    struct collectionloader *found;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p %u %p)\n", This, loader, key, key_size, collection);
+
+    *collection = NULL;
+
+    if (!loader)
+        return E_INVALIDARG;
+
+    found = factory_get_collection_loader(This, loader);
+    if (!found)
+        return E_INVALIDARG;
+
+    hr = IDWriteFontCollectionLoader_CreateEnumeratorFromKey(found->loader, iface, key, key_size, &enumerator);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_font_collection(iface, enumerator, collection);
+    IDWriteFontFileEnumerator_Release(enumerator);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory *iface,
