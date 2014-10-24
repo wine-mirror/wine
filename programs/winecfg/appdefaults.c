@@ -377,19 +377,17 @@ static void on_remove_app_click(HWND dialog)
 {
     HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
     int selection = get_listview_selection(listview);
-    char *section = keypath(""); /* AppDefaults\\whatever.exe\\ */
     LVITEMW item;
 
     item.iItem = selection;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM;
 
-    WINE_TRACE("selection=%d, section=%s\n", selection, section);
-    
+    WINE_TRACE("selection=%d\n", selection);
+
     assert( selection != 0 ); /* user cannot click this button when "default settings" is selected  */
 
-    section[strlen(section)] = '\0'; /* remove last backslash  */
-    set_reg_key(config_key, section, NULL, NULL); /* delete the section  */
+    set_reg_key(config_key, keypath(""), NULL, NULL); /* delete the section  */
     SendMessageW(listview, LVM_GETITEMW, 0, (LPARAM) &item);
     HeapFree (GetProcessHeap(), 0, (void*)item.lParam);
     SendMessageW(listview, LVM_DELETEITEM, selection, 0);
