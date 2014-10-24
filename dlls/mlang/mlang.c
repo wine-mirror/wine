@@ -122,7 +122,13 @@ static const MIME_CP_INFO chinese_simplified_cp[] =
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "gb2312", "gb2312", "gb2312" }
+      "gb2312", "gb2312", "gb2312" },
+      { "Chinese Simplified (GBK)",
+      936, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
+           MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
+           MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
+           MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
+      "gbk", "gbk", "gbk" }
 };
 static const MIME_CP_INFO chinese_traditional_cp[] =
 {
@@ -953,7 +959,7 @@ HRESULT WINAPI ConvertINetMultiByteToUnicode(
             *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, NULL, 0);
         break;
     }
-    
+
     if (!*pcDstSize)
         return E_FAIL;
 
@@ -1344,7 +1350,7 @@ static HRESULT WINAPI MLANGCF_CreateInstance(IClassFactory *iface, IUnknown *pOu
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     HRESULT hres;
     LPUNKNOWN punk;
-    
+
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
     *ppobj = NULL;
@@ -2263,7 +2269,7 @@ static BOOL CALLBACK enum_locales_proc(LPWSTR locale)
     info->wszLocaleName[0] = 0;
     GetLocaleInfoW(info->lcid, LOCALE_SLANGUAGE, info->wszLocaleName, MAX_LOCALE_NAME);
     TRACE("ISO639: %s SLANGUAGE: %s\n", wine_dbgstr_w(info->wszRfc1766), wine_dbgstr_w(info->wszLocaleName));
-    
+
     data->total++;
 
     return TRUE;
@@ -2869,7 +2875,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringToUnicodeEx(
  *
  * PARAMS
  *   see ConvertStringToUnicode
- *   dwFlag 
+ *   dwFlag
  *   lpFallBack if dwFlag contains MLCONVCHARF_USEDEFCHAR, lpFallBack string used
  *              instead unconvertible characters.
  *
