@@ -495,6 +495,20 @@ static struct fileloader *factory_get_file_loader(struct dwritefactory *factory,
     return found;
 }
 
+static struct collectionloader *factory_get_collection_loader(struct dwritefactory *factory, IDWriteFontCollectionLoader *loader)
+{
+    struct collectionloader *entry, *found = NULL;
+
+    LIST_FOR_EACH_ENTRY(entry, &factory->collection_loaders, struct collectionloader, entry) {
+        if (entry->loader == loader) {
+            found = entry;
+            break;
+        }
+    }
+
+    return found;
+}
+
 static HRESULT WINAPI dwritefactory_QueryInterface(IDWriteFactory *iface, REFIID riid, void **obj)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
@@ -575,10 +589,8 @@ static HRESULT WINAPI dwritefactory_RegisterFontCollectionLoader(IDWriteFactory 
     if (!loader)
         return E_INVALIDARG;
 
-    LIST_FOR_EACH_ENTRY(entry, &This->collection_loaders, struct collectionloader, entry) {
-        if (entry->loader == loader)
-            return DWRITE_E_ALREADYREGISTERED;
-    }
+    if (factory_get_collection_loader(This, loader))
+        return DWRITE_E_ALREADYREGISTERED;
 
     entry = heap_alloc(sizeof(*entry));
     if (!entry)
@@ -595,20 +607,14 @@ static HRESULT WINAPI dwritefactory_UnregisterFontCollectionLoader(IDWriteFactor
     IDWriteFontCollectionLoader *loader)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    struct collectionloader *entry, *found = NULL;
+    struct collectionloader *found;
 
     TRACE("(%p)->(%p)\n", This, loader);
 
     if (!loader)
         return E_INVALIDARG;
 
-    LIST_FOR_EACH_ENTRY(entry, &This->collection_loaders, struct collectionloader, entry) {
-        if (entry->loader == loader) {
-            found = entry;
-            break;
-        }
-    }
-
+    found = factory_get_collection_loader(This, loader);
     if (!found)
         return E_INVALIDARG;
 
@@ -784,10 +790,8 @@ static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface
     if (!loader)
         return E_INVALIDARG;
 
-    LIST_FOR_EACH_ENTRY(entry, &This->file_loaders, struct fileloader, entry) {
-        if (entry->loader == loader)
-            return DWRITE_E_ALREADYREGISTERED;
-    }
+    if (factory_get_file_loader(This, loader))
+        return DWRITE_E_ALREADYREGISTERED;
 
     entry = heap_alloc(sizeof(*entry));
     if (!entry)
