@@ -2130,8 +2130,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
             vectored_handler = pRtlAddVectoredExceptionHandler( TRUE, &execute_fault_vec_handler );
             ok( vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n" );
 
-            num_execute_fault_calls = 0;
-            ret = SendMessageA( hWnd, WM_USER, 0, 0 );
+            ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
 
             pRtlRemoveVectoredExceptionHandler( vectored_handler );
 
