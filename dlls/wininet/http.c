@@ -4173,19 +4173,8 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 
         heap_free(session->hostName);
 
-        if(custom_port) {
-            int len;
-            static const WCHAR fmt[] = {'%','s',':','%','u',0};
-            len = lstrlenW(hostName);
-            len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
-            session->hostName = heap_alloc(len*sizeof(WCHAR));
-            sprintfW(session->hostName, fmt, hostName, urlComponents.nPort);
-        }
-        else
-            session->hostName = heap_strdupW(hostName);
+        session->hostName = heap_strdupW(hostName);
         session->hostPort = urlComponents.nPort;
-
-        HTTP_ProcessHeader(request, hostW, session->hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
         heap_free(session->userName);
         session->userName = NULL;
@@ -4201,6 +4190,11 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             server_release(request->server);
             request->server = new_server;
         }
+
+        if (custom_port)
+            HTTP_ProcessHeader(request, hostW, request->server->host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+        else
+            HTTP_ProcessHeader(request, hostW, request->server->name, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
     }
     heap_free(request->path);
     request->path=NULL;
