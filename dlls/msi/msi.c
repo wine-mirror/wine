@@ -1762,10 +1762,6 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
             datakey = patch;
             szProperty = szInstalled;
         }
-        else if (!strcmpW( szProperty, INSTALLPROPERTY_LOCALPACKAGEW ))
-        {
-            datakey = udpatch;
-        }
         else if (!strcmpW( szProperty, INSTALLPROPERTY_UNINSTALLABLEW ) ||
                  !strcmpW( szProperty, INSTALLPROPERTY_PATCHSTATEW ) ||
                  !strcmpW( szProperty, INSTALLPROPERTY_DISPLAYNAMEW ) ||
