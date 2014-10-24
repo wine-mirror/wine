@@ -191,7 +191,7 @@ INT WINAPI EnumProtocolsW(LPINT protocols, LPVOID buffer, LPDWORD buflen)
                 pi[i].dwMessageSize  = wsabuf[i].dwMessageSize;
 
                 memcpy((char *)buffer + string_offset, wsabuf[i].szProtocol, string_size);
-                pi[i].lpProtocol = (WCHAR *)(char *)buffer + string_offset;
+                pi[i].lpProtocol = (WCHAR *)((char *)buffer + string_offset);
                 string_offset += string_size;
             }
             HeapFree(GetProcessHeap(), 0, wsabuf);
