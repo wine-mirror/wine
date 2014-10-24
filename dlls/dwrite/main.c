@@ -398,9 +398,16 @@ struct collectionloader
     IDWriteFontCollectionLoader *loader;
 };
 
+struct fontfacecached
+{
+    struct list entry;
+    IDWriteFontFace *fontface;
+};
+
 struct fileloader
 {
     struct list entry;
+    struct list fontfaces;
     IDWriteFontFileLoader *loader;
 };
 
@@ -408,9 +415,11 @@ struct dwritefactory {
     IDWriteFactory IDWriteFactory_iface;
     LONG ref;
 
-    IDWriteLocalFontFileLoader* localfontfileloader;
     IDWriteFontCollection *system_collection;
     IDWriteGdiInterop *gdiinterop;
+
+    IDWriteLocalFontFileLoader* localfontfileloader;
+    struct list localfontfaces;
 
     struct list collection_loaders;
     struct list file_loaders;
@@ -421,6 +430,24 @@ static inline struct dwritefactory *impl_from_IDWriteFactory(IDWriteFactory *ifa
     return CONTAINING_RECORD(iface, struct dwritefactory, IDWriteFactory_iface);
 }
 
+static void release_fontface_cache(struct list *fontfaces)
+{
+    struct fontfacecached *fontface, *fontface2;
+    LIST_FOR_EACH_ENTRY_SAFE(fontface, fontface2, fontfaces, struct fontfacecached, entry) {
+        list_remove(&fontface->entry);
+        IDWriteFontFace_Release(fontface->fontface);
+        heap_free(fontface);
+    }
+}
+
+static void release_fileloader(struct fileloader *fileloader)
+{
+    list_remove(&fileloader->entry);
+    release_fontface_cache(&fileloader->fontfaces);
+    IDWriteFontFileLoader_Release(fileloader->loader);
+    heap_free(fileloader);
+}
+
 static void release_dwritefactory(struct dwritefactory *factory)
 {
     struct fileloader *fileloader, *fileloader2;
@@ -428,6 +455,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
 
     if (factory->localfontfileloader)
         IDWriteLocalFontFileLoader_Release(factory->localfontfileloader);
+    release_fontface_cache(&factory->localfontfaces);
 
     LIST_FOR_EACH_ENTRY_SAFE(loader, loader2, &factory->collection_loaders, struct collectionloader, entry) {
         list_remove(&loader->entry);
@@ -435,11 +463,8 @@ static void release_dwritefactory(struct dwritefactory *factory)
         heap_free(loader);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(fileloader, fileloader2, &factory->file_loaders, struct fileloader, entry) {
-        list_remove(&fileloader->entry);
-        IDWriteFontFileLoader_Release(fileloader->loader);
-        heap_free(fileloader);
-    }
+    LIST_FOR_EACH_ENTRY_SAFE(fileloader, fileloader2, &factory->file_loaders, struct fileloader, entry)
+        release_fileloader(fileloader);
 
     if (factory->system_collection)
         IDWriteFontCollection_Release(factory->system_collection);
@@ -625,11 +650,93 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
 
 static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory *iface,
     DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files,
-    UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace **font_face)
+    UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace **font_face)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, facetype, files_number, font_files, index, sim_flags, font_face);
-    return font_create_fontface(facetype, files_number, font_files, index, sim_flags, (IDWriteFontFace2**)font_face);
+    IDWriteFontFileLoader *loader;
+    struct fontfacecached *cached;
+    struct list *fontfaces;
+    IDWriteFontFace2 *face;
+    const void *key;
+    UINT32 key_size;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, facetype, files_number, font_files, index, simulations, font_face);
+
+    *font_face = NULL;
+
+    if (facetype != DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION && index)
+        return E_INVALIDARG;
+
+    hr = IDWriteFontFile_GetReferenceKey(*font_files, &key, &key_size);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFontFile_GetLoader(*font_files, &loader);
+    if (FAILED(hr))
+        return hr;
+
+    if (loader == (IDWriteFontFileLoader*)This->localfontfileloader) {
+        fontfaces = &This->localfontfaces;
+        IDWriteFontFileLoader_Release(loader);
+    }
+    else {
+        struct fileloader *fileloader = factory_get_file_loader(This, loader);
+        IDWriteFontFileLoader_Release(loader);
+        if (!fileloader)
+            return E_INVALIDARG;
+        fontfaces = &fileloader->fontfaces;
+    }
+
+    /* search through cache list */
+    LIST_FOR_EACH_ENTRY(cached, fontfaces, struct fontfacecached, entry) {
+        UINT32 cached_key_size, count = 1, cached_face_index;
+        DWRITE_FONT_SIMULATIONS cached_simulations;
+        const void *cached_key;
+        IDWriteFontFile *file;
+
+        cached_face_index = IDWriteFontFace_GetIndex(cached->fontface);
+        cached_simulations = IDWriteFontFace_GetSimulations(cached->fontface);
+
+        /* skip earlier */
+        if (cached_face_index != index || cached_simulations != simulations)
+            continue;
+
+        hr = IDWriteFontFace_GetFiles(cached->fontface, &count, &file);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDWriteFontFile_GetReferenceKey(file, &cached_key, &cached_key_size);
+        IDWriteFontFile_Release(file);
+        if (FAILED(hr))
+            return hr;
+
+        if (cached_key_size == key_size && !memcmp(cached_key, key, key_size)) {
+            TRACE("returning cached fontface %p\n", cached->fontface);
+            *font_face = cached->fontface;
+            IDWriteFontFace_AddRef(*font_face);
+            return S_OK;
+        }
+    }
+
+    hr = create_fontface(facetype, files_number, font_files, index, simulations, &face);
+    if (FAILED(hr))
+        return hr;
+
+    /* new cache entry */
+    cached = heap_alloc(sizeof(*cached));
+    if (!cached) {
+        IDWriteFontFace2_Release(face);
+        return hr;
+    }
+
+    cached->fontface = (IDWriteFontFace*)face;
+    list_add_tail(fontfaces, &cached->entry);
+
+    *font_face = cached->fontface;
+    IDWriteFontFace_AddRef(*font_face);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory *iface, IDWriteRenderingParams **params)
@@ -687,6 +794,7 @@ static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface
         return E_OUTOFMEMORY;
 
     entry->loader = loader;
+    list_init(&entry->fontfaces);
     IDWriteFontFileLoader_AddRef(loader);
     list_add_tail(&This->file_loaders, &entry->entry);
 
@@ -707,10 +815,7 @@ static HRESULT WINAPI dwritefactory_UnregisterFontFileLoader(IDWriteFactory *ifa
     if (!found)
         return E_INVALIDARG;
 
-    IDWriteFontFileLoader_Release(found->loader);
-    list_remove(&found->entry);
-    heap_free(found);
-
+    release_fileloader(found);
     return S_OK;
 }
 
@@ -893,6 +998,7 @@ static void init_dwritefactory(struct dwritefactory *factory, const struct IDWri
 
     list_init(&factory->collection_loaders);
     list_init(&factory->file_loaders);
+    list_init(&factory->localfontfaces);
 }
 
 HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **ret)
