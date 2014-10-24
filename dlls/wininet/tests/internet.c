@@ -1556,6 +1556,12 @@ todo_wine
     sz = strlen(buffer);
     ok(sz > 0, "Expected a connection name\n");
 
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, NULL, sizeof(buffer), 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+
     /* no space for complete string this time */
     buffer[0] = 0;
     flags = 0;
@@ -1566,10 +1572,33 @@ todo_wine
 
     buffer[0] = 0;
     flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, sz / 2, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(sz / 2 - 1 == strlen(buffer), "Expected %u bytes, got %u\n", sz / 2 - 1, lstrlenA(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
     res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
 todo_wine
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
+    ok(strlen(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenA(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, 2, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(strlen(buffer) == 1, "Expected 1 byte, got %u\n", lstrlenA(buffer));
+
+    flags = 0;
+    buffer[0] = 0xDE;
+    res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+todo_wine
     ok(strlen(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenA(buffer));
 }
 
@@ -1623,6 +1652,12 @@ todo_wine
     sz = lstrlenW(buffer);
     ok(sz > 0, "Expected a connection name\n");
 
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, NULL, sizeof(buffer) / sizeof(buffer[0]), 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+
     /* no space for complete string this time */
     buffer[0] = 0;
     flags = 0;
@@ -1633,10 +1668,33 @@ todo_wine
 
     buffer[0] = 0;
     flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, sz / 2, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(sz / 2 - 1 == lstrlenW(buffer), "Expected %u bytes, got %u\n", sz / 2 - 1, lstrlenW(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
     res = pInternetGetConnectedStateExW(&flags, buffer, 1, 0);
 todo_wine
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
     ok(flags, "Expected at least one flag set\n");
+    ok(lstrlenW(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, 2, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(lstrlenW(buffer) == 1, "Expected 1 byte, got %u\n", lstrlenW(buffer));
+
+    buffer[0] = 0xDEAD;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, 1, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+todo_wine
     ok(lstrlenW(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenW(buffer));
 }
 
