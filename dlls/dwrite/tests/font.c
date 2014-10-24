@@ -940,9 +940,9 @@ if (file) {
 
     /* local loader is not registered by default */
     hr = IDWriteFactory_RegisterFontFileLoader(factory, loader);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == DWRITE_E_ALREADYREGISTERED), "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, loader);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "got 0x%08x\n", hr);
     IDWriteFontFileLoader_Release(loader);
 }
     ret = TRUE;
