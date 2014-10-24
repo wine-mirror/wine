@@ -517,6 +517,33 @@ static void test_enum_value(void)
     res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %d\n", res );
 
+    /* test reading the value and data without setting them */
+    val_count = 20;
+    data_count = 20;
+    type = 1234;
+    strcpy( value, "xxxxxxxxxx" );
+    strcpy( data, "xxxxxxxxxx" );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
+    ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
+    ok( data_count == 0, "data_count set to %d instead of 0\n", data_count );
+    ok( type == REG_BINARY, "type %d is not REG_BINARY\n", type );
+    ok( !strcmp( value, "Test" ), "value is '%s' instead of Test\n", value );
+    ok( !strcmp( data, "xxxxxxxxxx" ), "data is '%s' instead of xxxxxxxxxx\n", data );
+
+    val_count = 20;
+    data_count = 20;
+    type = 1234;
+    memcpy( valueW, xxxW, sizeof(xxxW) );
+    memcpy( dataW, xxxW, sizeof(xxxW) );
+    res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
+    ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
+    ok( data_count == 0, "data_count set to %d instead of 0\n", data_count );
+    ok( type == REG_BINARY, "type %d is not REG_BINARY\n", type );
+    ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
+    ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data is not 'xxxxxxxxxx'\n" );
+
     res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (const BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %d\n", res );
 
