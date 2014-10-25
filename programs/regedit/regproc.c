@@ -1180,10 +1180,7 @@ static void export_hkey(FILE *file, HKEY key,
                     lstrcpyW(*line_buf + line_len, start);
                     line_len += len;
 
-                    /* At this point we know wstr is '\0'-terminated
-                     * so we can subtract 1 from the size
-                     */
-                    REGPROC_export_string(line_buf, line_buf_size, &line_len, wstr, val_size1 / sizeof(WCHAR) - 1);
+                    REGPROC_export_string(line_buf, line_buf_size, &line_len, wstr, lstrlenW(wstr));
 
                     REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len + lstrlenW(end));
                     lstrcpyW(*line_buf + line_len, end);
