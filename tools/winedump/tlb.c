@@ -647,7 +647,8 @@ static BOOL dump_msft_custdata(seg_t *seg)
             break;
         default:
             printf(": %x ", n);
-            printf("\\%2.2x \\%2.2x\n", tlb_read_byte(), tlb_read_byte());
+            printf("\\%2.2x ", tlb_read_byte());
+            printf("\\%2.2x\n", tlb_read_byte());
         }
     }
 
