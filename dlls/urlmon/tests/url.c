@@ -764,7 +764,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         }
         IHttpNegotiate2_Release(http_negotiate2);
         ok(hres == E_FAIL, "GetRootSecurityId failed: %08x, expected E_FAIL\n", hres);
-        ok(size == no_callback ? 512 : 13, "size=%d\n", size);
+        ok(size == (no_callback ? 512 : 13), "size=%d\n", size);
 
         if(!no_callback) {
             SET_EXPECT(QueryService_IHttpSecurity);
