@@ -1300,6 +1300,15 @@ BOOL WINAPI ChangeTimerQueueTimer( HANDLE TimerQueue, HANDLE Timer,
 }
 
 /***********************************************************************
+ *           CancelTimerQueueTimer    (KERNEL32.@)
+ */
+BOOL WINAPI CancelTimerQueueTimer(HANDLE queue, HANDLE timer)
+{
+    FIXME("stub: %p %p\n", queue, timer);
+    return FALSE;
+}
+
+/***********************************************************************
  *           DeleteTimerQueueTimer  (KERNEL32.@)
  *
  * Cancels a timer-queue timer.

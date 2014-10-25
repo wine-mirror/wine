@@ -182,7 +182,7 @@
 @ stub CancelDeviceWakeupRequest
 @ stdcall CancelIo(long)
 @ stdcall CancelIoEx(long ptr)
-# @ stub CancelTimerQueueTimer
+@ stdcall CancelTimerQueueTimer(ptr ptr)
 @ stdcall CancelWaitableTimer(long)
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long)
 # @ stub CheckNameLegalDOS8Dot3A
