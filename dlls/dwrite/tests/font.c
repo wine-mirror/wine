@@ -1200,8 +1200,12 @@ static void test_CreateCustomFontFileReference(void)
     IDWriteFontFace_Release(face2);
 
     /* file was created with different factory */
+    face2 = NULL;
     hr = IDWriteFactory_CreateFontFace(factory2, face_type, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face2);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (face2)
+    IDWriteFontFace_Release(face2);
 
     file2 = NULL;
     hr = IDWriteFactory_CreateCustomFontFileReference(factory, &fontrsrc, sizeof(HRSRC), &rloader, &file2);
