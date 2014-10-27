@@ -1815,6 +1815,8 @@ static BOOL create_pattern_brush_bits( dib_brush *brush )
         size -= 4;
     }
 
+    if (!rop_needs_and_mask( brush->rop )) brush->masks.and = NULL;  /* ignore the and mask */
+
     return TRUE;
 }
 
@@ -1861,6 +1863,9 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 
     brush->dib.funcs->create_rop_masks( &brush->dib, hatches[brush->hatch],
                                         &fg_mask, &bg_mask, &brush->masks );
+
+    if (!fg_mask.and && !bg_mask.and) brush->masks.and = NULL;  /* ignore the and mask */
+
     return TRUE;
 }
 
@@ -1878,6 +1883,9 @@ static BOOL create_dither_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOO
     rgb = make_rgb_colorref( pdev->dev.hdc, &pdev->dib, brush->colorref, &got_pixel, &pixel );
 
     brush->dib.funcs->create_dither_masks( &brush->dib, brush->rop, rgb, &brush->masks );
+
+    if (!rop_needs_and_mask( brush->rop )) brush->masks.and = NULL;  /* ignore the and mask */
+
     return TRUE;
 }
 
@@ -2018,7 +2026,6 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
             ERR("Unexpected brush style %d\n", brush->style);
             return FALSE;
         }
-        if (!rop_needs_and_mask( brush->rop )) brush->masks.and = NULL;  /* ignore the and mask */
     }
 
     GetBrushOrgEx(pdev->dev.hdc, &origin);
