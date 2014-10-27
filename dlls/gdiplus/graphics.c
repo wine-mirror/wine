@@ -1779,7 +1779,7 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
     for(i = 1; i < count; i++){
         if((types[i] & PathPointTypePathTypeMask) == PathPointTypeBezier){
             if((i + 2 >= count) || !(types[i + 1] & PathPointTypeBezier)
-                || !(types[i + 1] & PathPointTypeBezier)){
+                || !(types[i + 2] & PathPointTypeBezier)){
                 ERR("Bad bezier points\n");
                 goto end;
             }
