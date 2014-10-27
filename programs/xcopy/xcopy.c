@@ -271,11 +271,9 @@ static BOOL XCOPY_ProcessExcludeFile(WCHAR* filename, WCHAR* endOfName) {
         EXCLUDELIST *thisEntry;
         int length = lstrlenW(buffer);
 
-        /* Strip CRLF */
-        buffer[length-1] = 0x00;
-
         /* If more than CRLF */
         if (length > 1) {
+          buffer[length-1] = 0;  /* strip CRLF */
           thisEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(EXCLUDELIST));
           thisEntry->next = excludeList;
           excludeList = thisEntry;
