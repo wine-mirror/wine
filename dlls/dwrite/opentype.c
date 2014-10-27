@@ -201,6 +201,15 @@ typedef struct {
     TT_NameRecord nameRecord[1];
 } TT_NAME_V0;
 
+enum OPENTYPE_PLATFORM_ID
+{
+    OPENTYPE_PLATFORM_UNICODE = 0,
+    OPENTYPE_PLATFORM_MAC,
+    OPENTYPE_PLATFORM_ISO,
+    OPENTYPE_PLATFORM_WIN,
+    OPENTYPE_PLATFORM_CUSTOM
+};
+
 enum TT_NAME_WINDOWS_ENCODING_ID
 {
     TT_NAME_WINDOWS_ENCODING_SYMBOL = 0,
@@ -214,6 +223,43 @@ enum TT_NAME_WINDOWS_ENCODING_ID
     TT_NAME_WINDOWS_ENCODING_RESERVED2,
     TT_NAME_WINDOWS_ENCODING_RESERVED3,
     TT_NAME_WINDOWS_ENCODING_UCS4
+};
+
+enum TT_NAME_MAC_ENCODING_ID
+{
+    TT_NAME_MAC_ENCODING_ROMAN = 0,
+    TT_NAME_MAC_ENCODING_JAPANESE,
+    TT_NAME_MAC_ENCODING_TRAD_CHINESE,
+    TT_NAME_MAC_ENCODING_KOREAN,
+    TT_NAME_MAC_ENCODING_ARABIC,
+    TT_NAME_MAC_ENCODING_HEBREW,
+    TT_NAME_MAC_ENCODING_GREEK,
+    TT_NAME_MAC_ENCODING_RUSSIAN,
+    TT_NAME_MAC_ENCODING_RSYMBOL,
+    TT_NAME_MAC_ENCODING_DEVANAGARI,
+    TT_NAME_MAC_ENCODING_GURMUKHI,
+    TT_NAME_MAC_ENCODING_GUJARATI,
+    TT_NAME_MAC_ENCODING_ORIYA,
+    TT_NAME_MAC_ENCODING_BENGALI,
+    TT_NAME_MAC_ENCODING_TAMIL,
+    TT_NAME_MAC_ENCODING_TELUGU,
+    TT_NAME_MAC_ENCODING_KANNADA,
+    TT_NAME_MAC_ENCODING_MALAYALAM,
+    TT_NAME_MAC_ENCODING_SINHALESE,
+    TT_NAME_MAC_ENCODING_BURMESE,
+    TT_NAME_MAC_ENCODING_KHMER,
+    TT_NAME_MAC_ENCODING_THAI,
+    TT_NAME_MAC_ENCODING_LAOTIAN,
+    TT_NAME_MAC_ENCODING_GEORGIAN,
+    TT_NAME_MAC_ENCODING_ARMENIAN,
+    TT_NAME_MAC_ENCODING_SIMPL_CHINESE,
+    TT_NAME_MAC_ENCODING_TIBETAN,
+    TT_NAME_MAC_ENCODING_MONGOLIAN,
+    TT_NAME_MAC_ENCODING_GEEZ,
+    TT_NAME_MAC_ENCODING_SLAVIC,
+    TT_NAME_MAC_ENCODING_VIETNAMESE,
+    TT_NAME_MAC_ENCODING_SINDHI,
+    TT_NAME_MAC_ENCODING_UNINTERPRETED
 };
 
 enum OPENTYPE_STRING_ID
@@ -615,6 +661,82 @@ VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_ME
     }
 }
 
+static UINT get_name_record_codepage(enum OPENTYPE_PLATFORM_ID platform, USHORT encoding)
+{
+    UINT codepage = 0;
+
+    switch (platform) {
+    case OPENTYPE_PLATFORM_MAC:
+        switch (encoding)
+        {
+            case TT_NAME_MAC_ENCODING_ROMAN:
+                codepage = 10000;
+                break;
+            case TT_NAME_MAC_ENCODING_JAPANESE:
+                codepage = 10001;
+                break;
+            case TT_NAME_MAC_ENCODING_TRAD_CHINESE:
+                codepage = 10002;
+                break;
+            case TT_NAME_MAC_ENCODING_KOREAN:
+                codepage = 10003;
+                break;
+            case TT_NAME_MAC_ENCODING_ARABIC:
+                codepage = 10004;
+                break;
+            case TT_NAME_MAC_ENCODING_HEBREW:
+                codepage = 10005;
+                break;
+            case TT_NAME_MAC_ENCODING_GREEK:
+                codepage = 10006;
+                break;
+            case TT_NAME_MAC_ENCODING_RUSSIAN:
+                codepage = 10007;
+                break;
+            case TT_NAME_MAC_ENCODING_SIMPL_CHINESE:
+                codepage = 10008;
+                break;
+            case TT_NAME_MAC_ENCODING_THAI:
+                codepage = 10021;
+                break;
+            default:
+                FIXME("encoding %u not handled, platform %d.\n", encoding, platform);
+                break;
+        }
+        break;
+    case OPENTYPE_PLATFORM_WIN:
+        switch (encoding)
+        {
+            case TT_NAME_WINDOWS_ENCODING_SYMBOL:
+            case TT_NAME_WINDOWS_ENCODING_UCS2:
+                break;
+            case TT_NAME_WINDOWS_ENCODING_SJIS:
+                codepage = 932;
+                break;
+            case TT_NAME_WINDOWS_ENCODING_PRC:
+                codepage = 936;
+                break;
+            case TT_NAME_WINDOWS_ENCODING_BIG5:
+                codepage = 950;
+                break;
+            case TT_NAME_WINDOWS_ENCODING_WANSUNG:
+                codepage = 20949;
+                break;
+            case TT_NAME_WINDOWS_ENCODING_JOHAB:
+                codepage = 1361;
+                break;
+            default:
+                FIXME("encoding %u not handled, platform %d.\n", encoding, platform);
+                break;
+        }
+        break;
+    default:
+        FIXME("unknown platform %d\n", platform);
+    }
+
+    return codepage;
+}
+
 HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
 {
     const TT_NAME_V0 *header;
@@ -649,7 +771,10 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
 
         /* Right now only accept unicode and windows encoded fonts */
         platform = GET_BE_WORD(record->platformID);
-        if (platform != 0 && platform != 3) {
+        if (platform != OPENTYPE_PLATFORM_UNICODE &&
+            platform != OPENTYPE_PLATFORM_MAC &&
+            platform != OPENTYPE_PLATFORM_WIN)
+        {
             FIXME("platform %i not supported\n", platform);
             continue;
         }
@@ -662,34 +787,9 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
         if (lang_id < 0x8000) {
             WCHAR locale[LOCALE_NAME_MAX_LENGTH];
             WCHAR *name_string;
-            UINT codepage = 0;
+            UINT codepage;
 
-            if (platform == 3)
-            {
-                switch (encoding)
-                {
-                    case TT_NAME_WINDOWS_ENCODING_SYMBOL:
-                    case TT_NAME_WINDOWS_ENCODING_UCS2:
-                        break;
-                    case TT_NAME_WINDOWS_ENCODING_SJIS:
-                        codepage = 932;
-                        break;
-                    case TT_NAME_WINDOWS_ENCODING_PRC:
-                        codepage = 936;
-                        break;
-                    case TT_NAME_WINDOWS_ENCODING_BIG5:
-                        codepage = 950;
-                        break;
-                    case TT_NAME_WINDOWS_ENCODING_WANSUNG:
-                        codepage = 20949;
-                        break;
-                    case TT_NAME_WINDOWS_ENCODING_JOHAB:
-                        codepage = 1361;
-                        break;
-                    default:
-                        FIXME("encoding %d not handled.\n", encoding);
-                }
-            }
+            codepage = get_name_record_codepage(platform, encoding);
 
             if (codepage) {
                 DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
