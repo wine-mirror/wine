@@ -1416,7 +1416,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if ((info->state.mode != MM_ISOTROPIC) && (info->state.mode != MM_ANISOTROPIC))
 	    break;
         if (!lpScaleWindowExtEx->xNum || !lpScaleWindowExtEx->xDenom || 
-            !lpScaleWindowExtEx->xNum || !lpScaleWindowExtEx->yDenom)
+            !lpScaleWindowExtEx->yNum || !lpScaleWindowExtEx->yDenom)
             break;
         info->state.wndExtX = MulDiv(info->state.wndExtX, lpScaleWindowExtEx->xNum,
                                lpScaleWindowExtEx->xDenom);
