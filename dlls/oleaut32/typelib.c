@@ -9144,7 +9144,7 @@ static DWORD WMSFT_append_arraydesc(ARRAYDESC *desc, WMSFT_TLBFile *file)
         file->arraydesc_seg.data = heap_alloc(file->arraydesc_seg.len);
     else
         file->arraydesc_seg.data = heap_realloc(file->arraydesc_seg.data, file->arraydesc_seg.len);
-    encoded = (DWORD*)((char *)file->arraydesc_seg.data) + offs;
+    encoded = (DWORD*)((char *)file->arraydesc_seg.data + offs);
 
     encoded[0] = WMSFT_append_typedesc(&desc->tdescElem, file, NULL, NULL);
     encoded[1] = desc->cDims | ((desc->cDims * 2 * sizeof(DWORD)) << 16);
