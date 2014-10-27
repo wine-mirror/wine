@@ -1276,13 +1276,21 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
 
     /* Must be zero */
     if(dwReserved)
-	return FALSE;
+        return FALSE;
 
     if (lpdwStatus) {
         WARN("always returning LAN connection.\n");
         *lpdwStatus = INTERNET_CONNECTION_LAN;
     }
-    return LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen) > 0;
+
+    /* When the buffer size is zero LoadStringW fills the buffer with a pointer to
+     * the resource, avoid it as we must not change the buffer in this case */
+    if(lpszConnectionName && dwNameLen) {
+        *lpszConnectionName = '\0';
+        LoadStringW(WININET_hModule, IDS_LANCONNECTION, lpszConnectionName, dwNameLen);
+    }
+
+    return TRUE;
 }
 
 
