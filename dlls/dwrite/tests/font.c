@@ -1651,6 +1651,65 @@ static void test_CreateFontFaceFromHdc(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_GetSimulations(void)
+{
+    DWRITE_FONT_SIMULATIONS simulations;
+    IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    simulations = IDWriteFont_GetSimulations(font);
+todo_wine
+    ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "got %d\n", simulations);
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    simulations = IDWriteFontFace_GetSimulations(fontface);
+todo_wine
+    ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "got %d\n", simulations);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFont_Release(font);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 0;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    simulations = IDWriteFont_GetSimulations(font);
+    ok(simulations == 0, "got %d\n", simulations);
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    simulations = IDWriteFontFace_GetSimulations(fontface);
+    ok(simulations == 0, "got %d\n", simulations);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFont_Release(font);
+
+    IDWriteGdiInterop_Release(interop);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -1678,6 +1737,7 @@ START_TEST(font)
     test_GetInformationalStrings();
     test_GetGdiInterop();
     test_CreateFontFaceFromHdc();
+    test_GetSimulations();
 
     IDWriteFactory_Release(factory);
 }

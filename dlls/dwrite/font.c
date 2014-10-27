@@ -37,7 +37,6 @@ struct dwrite_font_data {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
-    DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_METRICS metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
 
@@ -91,6 +90,7 @@ struct dwrite_font {
     BOOL is_system;
     IDWriteFontFamily *family;
 
+    DWRITE_FONT_SIMULATIONS simulations;
     struct dwrite_font_data *data;
 };
 
@@ -138,7 +138,7 @@ struct dwrite_fontfile {
 static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFontFamily **family);
 static HRESULT create_fontfamily_from_data(struct dwrite_fontfamily_data *data, IDWriteFontCollection *collection, IDWriteFontFamily **family);
 static HRESULT create_font_base(IDWriteFont **font);
-static HRESULT create_font_from_data(struct dwrite_font_data*,IDWriteFontFamily*,IDWriteFont**);
+static HRESULT create_font_from_data(struct dwrite_font_data*,IDWriteFontFamily*,DWRITE_FONT_SIMULATIONS,IDWriteFont**);
 
 static inline struct dwrite_fontface *impl_from_IDWriteFontFace2(IDWriteFontFace2 *iface)
 {
@@ -744,7 +744,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2
 
         hr = font->is_system ? create_system_fontface(font, &face) :
             IDWriteFactory_CreateFontFace(data->factory, data->face_type, 1, &data->file,
-                data->face_index, DWRITE_FONT_SIMULATIONS_NONE, &face);
+                data->face_index, font->simulations, &face);
         if (FAILED(hr))
             return hr;
 
@@ -765,7 +765,7 @@ static HRESULT create_font_base(IDWriteFont **font)
     data = heap_alloc_zero(sizeof(*data));
     if (!data) return E_OUTOFMEMORY;
 
-    ret = create_font_from_data( data, NULL, font );
+    ret = create_font_from_data( data, NULL, DWRITE_FONT_SIMULATIONS_NONE, font );
     if (FAILED(ret)) heap_free( data );
     return ret;
 }
@@ -870,7 +870,7 @@ static HRESULT create_font_from_logfont(const LOGFONTW *logfont, IDWriteFont **f
 
     This->is_system = TRUE;
     This->family = family;
-    This->data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    This->simulations = DWRITE_FONT_SIMULATIONS_NONE;
     This->data->facename = heap_strdupW(logfont->lfFaceName);
 
     return S_OK;
@@ -1016,7 +1016,7 @@ static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont2 *if
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
     TRACE("(%p)\n", This);
-    return This->data->simulations;
+    return This->simulations;
 }
 
 static void WINAPI dwritefont_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRICS *metrics)
@@ -1201,7 +1201,7 @@ static HRESULT WINAPI dwritefontfamily_GetFont(IDWriteFontFamily *iface, UINT32 
     {
         if (index >= This->data->font_count)
             return E_INVALIDARG;
-        return create_font_from_data(This->data->fonts[index], iface, font);
+        return create_font_from_data(This->data->fonts[index], iface, DWRITE_FONT_SIMULATIONS_NONE, font);
     }
     else
         return E_NOTIMPL;
@@ -1247,7 +1247,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
             }
         }
 
-        return found != -1 ? create_font_from_data(This->data->fonts[found], iface, font) : DWRITE_E_NOFONT;
+        return found != -1 ? create_font_from_data(This->data->fonts[found], iface, DWRITE_FONT_SIMULATIONS_NONE, font) : DWRITE_E_NOFONT;
     }
 }
 
@@ -1414,6 +1414,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
     struct dwrite_fontfamily_data *found_family = NULL;
     struct dwrite_font_data *found_font = NULL;
+    DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontFamily *family;
     UINT32 i, j;
     HRESULT hr;
@@ -1443,7 +1444,8 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     if (FAILED(hr))
         return hr;
 
-    hr = create_font_from_data(found_font, family, font);
+    simulations = IDWriteFontFace_GetSimulations(face);
+    hr = create_font_from_data(found_font, family, simulations, font);
     IDWriteFontFamily_Release(family);
     return hr;
 }
@@ -1819,7 +1821,8 @@ static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFon
     return ret;
 }
 
-static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFontFamily *family, IDWriteFont **font)
+static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFontFamily *family, DWRITE_FONT_SIMULATIONS simulations,
+    IDWriteFont **font)
 {
     struct dwrite_font *This;
     *font = NULL;
@@ -1833,6 +1836,7 @@ static HRESULT create_font_from_data(struct dwrite_font_data *data, IDWriteFontF
     if (family)
         IDWriteFontFamily_AddRef(family);
     This->is_system = FALSE;
+    This->simulations = simulations;
     This->data = data;
     InterlockedIncrement(&This->data->ref);
 
