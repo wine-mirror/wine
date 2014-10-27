@@ -562,8 +562,23 @@ typedef struct {
 } complex_double;
 
 #if _MSVCP_VER < 80
-#define memcpy_s( dst, size, src, count ) (memcpy( (dst), (src), (count) ), 0)
-#define memmove_s( dst, size, src, count ) (memmove( (dst), (src), (count) ), 0)
-#define mbstowcs_s( ret, wcs, size, mbs, count ) (mbstowcs( (wcs), (mbs), (count) ), 0)
+static inline int memcpy_wrapper( void *dst, size_t size, const void *src, size_t count )
+{
+    memcpy( dst, src, count );
+    return 0;
+}
+static inline int memmove_wrapper( void *dst, size_t size, const void *src, size_t count )
+{
+    memmove( dst, src, count );
+    return 0;
+}
+static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, const char *mbs, size_t count )
+{
+    mbstowcs( wcs, mbs, count );
+    return 0;
+}
+#define memcpy_s( dst, size, src, count ) memcpy_wrapper( dst, size, src, count )
+#define memmove_s( dst, size, src, count ) memmove_wrapper( dst, size, src, count )
+#define mbstowcs_s( ret, wcs, size, mbs, count ) mbstowcs_wrapper( ret, wcs, size, mbs, count )
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
