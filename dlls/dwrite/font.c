@@ -1233,17 +1233,21 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
     }
     else
     {
-        int i;
-        for (i = 0; i < This->data->font_count; i++)
-        {
-            if (style == This->data->fonts[i]->style &&
-                weight == This->data->fonts[i]->weight &&
-                stretch == This->data->fonts[i]->stretch)
-            {
-                return create_font_from_data(This->data->fonts[i], iface, font);
+        UINT32 min_weight_diff = ~0u;
+        int found = -1, i;
+
+        for (i = 0; i < This->data->font_count; i++) {
+            if (style == This->data->fonts[i]->style && stretch == This->data->fonts[i]->stretch) {
+                DWRITE_FONT_WEIGHT font_weight = This->data->fonts[i]->weight;
+                UINT32 weight_diff = abs(font_weight - weight);
+                if (weight_diff < min_weight_diff) {
+                    min_weight_diff = weight_diff;
+                    found = i;
+                }
             }
         }
-        return DWRITE_E_NOFONT;
+
+        return found != -1 ? create_font_from_data(This->data->fonts[found], iface, font) : DWRITE_E_NOFONT;
     }
 }
 
