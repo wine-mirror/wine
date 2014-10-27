@@ -885,8 +885,7 @@ static void test_system_fontcollection(void)
     ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
     IDWriteFontCollection_Release(coll2);
 
-    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    factory2 = create_factory();
     hr = IDWriteFactory_GetSystemFontCollection(factory2, &coll2, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(coll2 != collection, "got %p, was %p\n", coll2, collection);
@@ -943,6 +942,19 @@ if (file) {
     ok(hr == S_OK || broken(hr == DWRITE_E_ALREADYREGISTERED), "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, loader);
     ok(hr == S_OK || broken(hr == E_INVALIDARG), "got 0x%08x\n", hr);
+
+    /* try with a different factory */
+    factory2 = create_factory();
+    hr = IDWriteFactory_RegisterFontFileLoader(factory2, loader);
+    ok(hr == S_OK || broken(hr == DWRITE_E_ALREADYREGISTERED), "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontFileLoader(factory2, loader);
+    ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory2, loader);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory2, loader);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    IDWriteFactory_Release(factory2);
+
     IDWriteFontFileLoader_Release(loader);
 }
     ret = TRUE;

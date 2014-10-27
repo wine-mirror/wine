@@ -813,6 +813,9 @@ static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface
     if (!loader)
         return E_INVALIDARG;
 
+    if ((IDWriteFontFileLoader*)This->localfontfileloader == loader)
+        return S_OK;
+
     if (factory_get_file_loader(This, loader))
         return DWRITE_E_ALREADYREGISTERED;
 
@@ -837,6 +840,9 @@ static HRESULT WINAPI dwritefactory_UnregisterFontFileLoader(IDWriteFactory *ifa
 
     if (!loader)
         return E_INVALIDARG;
+
+    if ((IDWriteFontFileLoader*)This->localfontfileloader == loader)
+        return S_OK;
 
     found = factory_get_file_loader(This, loader);
     if (!found)
