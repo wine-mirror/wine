@@ -322,7 +322,8 @@ HRESULT opentype_get_font_table(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_
     int table_count, table_offset = 0;
     int i;
 
-    *found = FALSE;
+    if (found) *found = FALSE;
+    if (table_size) *table_size = 0;
 
     if (type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) {
         const TTC_Header_V1 *ttc_header;
@@ -363,8 +364,8 @@ HRESULT opentype_get_font_table(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_
         int length = GET_BE_DWORD(table_record->length);
         IDWriteFontFileStream_ReleaseFileFragment(stream, table_record_context);
 
-        *found = TRUE;
-        *table_size = length;
+        if (found) *found = TRUE;
+        if (table_size) *table_size = length;
         hr = IDWriteFontFileStream_ReadFileFragment(stream, table_data, offset, length, table_context);
     }
 
