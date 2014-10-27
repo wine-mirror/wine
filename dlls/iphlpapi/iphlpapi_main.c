@@ -198,6 +198,15 @@ BOOL WINAPI CancelIPChangeNotify(LPOVERLAPPED overlapped)
 }
 
 
+/******************************************************************
+ *    CancelMibChangeNotify2 (IPHLPAPI.@)
+ */
+DWORD WINAPI CancelMibChangeNotify2(HANDLE handle)
+{
+    FIXME("(handle %p): stub\n", handle);
+    return NO_ERROR;
+}
+
 
 /******************************************************************
  *    CreateIpForwardEntry (IPHLPAPI.@)
