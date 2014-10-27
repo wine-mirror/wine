@@ -1213,6 +1213,17 @@ static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, 
     return clone_localizedstring(This->data->familyname, names);
 }
 
+static inline BOOL is_matching_font_style(DWRITE_FONT_STYLE style, DWRITE_FONT_STYLE font_style)
+{
+    if (style == font_style)
+        return TRUE;
+
+    if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) && font_style == DWRITE_FONT_STYLE_NORMAL)
+        return TRUE;
+
+    return FALSE;
+}
+
 static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
     DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFont **font)
 {
@@ -1237,7 +1248,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
         int found = -1, i;
 
         for (i = 0; i < This->data->font_count; i++) {
-            if (style == This->data->fonts[i]->style && stretch == This->data->fonts[i]->stretch) {
+            if (is_matching_font_style(style, This->data->fonts[i]->style) && stretch == This->data->fonts[i]->stretch) {
                 DWRITE_FONT_WEIGHT font_weight = This->data->fonts[i]->weight;
                 UINT32 weight_diff = abs(font_weight - weight);
                 if (weight_diff < min_weight_diff) {
@@ -1247,7 +1258,19 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
             }
         }
 
-        return found != -1 ? create_font_from_data(This->data->fonts[found], iface, DWRITE_FONT_SIMULATIONS_NONE, font) : DWRITE_E_NOFONT;
+        if (found != -1) {
+            DWRITE_FONT_SIMULATIONS simulations = DWRITE_FONT_SIMULATIONS_NONE;
+
+            if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) &&
+                This->data->fonts[found]->style == DWRITE_FONT_STYLE_ITALIC) {
+                simulations = DWRITE_FONT_SIMULATIONS_OBLIQUE;
+            }
+            return create_font_from_data(This->data->fonts[found], iface, simulations, font);
+        }
+        else {
+            *font = NULL;
+            return DWRITE_E_NOFONT;
+        }
     }
 }
 

@@ -1475,10 +1475,13 @@ if (font3)
 
 static void test_GetFirstMatchingFont(void)
 {
+    DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontCollection *collection;
     IDWriteFont *font, *font2;
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
+    UINT32 index;
+    BOOL exists;
     HRESULT hr;
 
     factory = create_factory();
@@ -1486,7 +1489,13 @@ static void test_GetFirstMatchingFont(void)
     hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    index = ~0;
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(collection, tahomaW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
@@ -1497,6 +1506,15 @@ static void test_GetFirstMatchingFont(void)
         DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(font != font2, "got %p, %p\n", font, font2);
+    IDWriteFont_Release(font);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_ITALIC, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    simulations = IDWriteFont_GetSimulations(font);
+todo_wine
+    ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "%d\n", simulations);
 
     IDWriteFont_Release(font);
     IDWriteFont_Release(font2);
