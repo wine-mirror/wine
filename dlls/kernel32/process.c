@@ -512,12 +512,19 @@ static void set_additional_environment(void)
                                          'P','r','o','f','i','l','e','L','i','s','t',0};
     static const WCHAR profiles_valueW[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
     static const WCHAR all_users_valueW[] = {'A','l','l','U','s','e','r','s','P','r','o','f','i','l','e','\0'};
+    static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
     static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR *profile_dir = NULL, *all_users_dir = NULL;
+    WCHAR buf[MAX_COMPUTERNAME_LENGTH];
     HANDLE hkey;
     DWORD len;
+
+    /* ComputerName */
+    len = sizeof(buf) / sizeof(WCHAR);
+    if (GetComputerNameW( buf, &len ))
+        SetEnvironmentVariableW( computernameW, buf );
 
     /* set the ALLUSERSPROFILE variables */
 
