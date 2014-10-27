@@ -71,8 +71,8 @@ struct dwrite_fontcollection {
     int alloc;
 
     struct dwrite_fontfamily_data **family_data;
-    DWORD data_count;
-    int data_alloc;
+    UINT32 family_count;
+    UINT32 family_alloc;
 };
 
 struct dwrite_fontfamily {
@@ -1304,7 +1304,7 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection *iface)
         for (i = 0; i < This->count; i++)
             heap_free(This->families[i]);
         heap_free(This->families);
-        for (i = 0; i < This->data_count; i++)
+        for (i = 0; i < This->family_count; i++)
             _free_fontfamily_data(This->family_data[i]);
         heap_free(This->family_data);
         heap_free(This);
@@ -1317,8 +1317,8 @@ static UINT32 WINAPI dwritefontcollection_GetFontFamilyCount(IDWriteFontCollecti
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
     TRACE("(%p)\n", This);
-    if (This->data_count)
-        return This->data_count;
+    if (This->family_count)
+        return This->family_count;
     return This->count;
 }
 
@@ -1331,9 +1331,9 @@ static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *
 
     TRACE("(%p)->(%u %p)\n", This, index, family);
 
-    if (This->data_count)
+    if (This->family_count)
     {
-        if (index >= This->data_count)
+        if (index >= This->family_count)
         {
             *family = NULL;
             return E_FAIL;
@@ -1362,8 +1362,8 @@ static HRESULT collection_find_family(struct dwrite_fontcollection *collection, 
 {
     UINT32 i;
 
-    if (collection->data_count) {
-        for (i = 0; i < collection->data_count; i++) {
+    if (collection->family_count) {
+        for (i = 0; i < collection->family_count; i++) {
             IDWriteLocalizedStrings *family_name = collection->family_data[i]->familyname;
             HRESULT hr;
             int j;
@@ -1421,7 +1421,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     if (!face)
         return E_INVALIDARG;
 
-    for (i = 0; i < This->data_count; i++) {
+    for (i = 0; i < This->family_count; i++) {
         struct dwrite_fontfamily_data *family_data = This->family_data[i];
         for (j = 0; j < family_data->font_count; j++) {
             if ((IDWriteFontFace*)family_data->fonts[j]->face == face) {
@@ -1494,21 +1494,21 @@ static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, s
 
 static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collection, struct dwrite_fontfamily_data *family)
 {
-    if (collection->data_alloc < collection->data_count + 1) {
+    if (collection->family_alloc < collection->family_count + 1) {
         struct dwrite_fontfamily_data **new_list;
         UINT32 new_alloc;
 
-        new_alloc = collection->data_alloc * 2;
+        new_alloc = collection->family_alloc * 2;
         new_list = heap_realloc(collection->family_data, sizeof(*new_list) * new_alloc);
         if (!new_list)
             return E_OUTOFMEMORY;
 
-        collection->data_alloc = new_alloc;
+        collection->family_alloc = new_alloc;
         collection->family_data = new_list;
     }
 
-    collection->family_data[collection->data_count] = family;
-    collection->data_count++;
+    collection->family_data[collection->family_count] = family;
+    collection->family_count++;
 
     return S_OK;
 }
@@ -1517,8 +1517,8 @@ static HRESULT init_font_collection(struct dwrite_fontcollection *collection)
 {
     collection->IDWriteFontCollection_iface.lpVtbl = &fontcollectionvtbl;
     collection->ref = 1;
-    collection->data_count = 0;
-    collection->data_alloc = 2;
+    collection->family_count = 0;
+    collection->family_alloc = 2;
     collection->count = 0;
     collection->alloc = 0;
     collection->families = NULL;
@@ -1739,8 +1739,8 @@ HRESULT get_system_fontcollection(IDWriteFontCollection **collection)
         heap_free(This);
         return E_OUTOFMEMORY;
     }
-    This->data_count = 0;
-    This->data_alloc = 2;
+    This->family_count = 0;
+    This->family_alloc = 2;
     This->family_data = heap_alloc(sizeof(*This->family_data)*2);
     if (!This->family_data)
     {
