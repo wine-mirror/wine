@@ -13770,6 +13770,108 @@ static inline strstream* strstream_from_basic_ios(basic_ios_char *ptr)
     return (strstream*)((char*)ptr-strstream_vbtable1[1]);
 }
 
+/* ??$?6MDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@M@0@@Z  */
+/* ??$?6MDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@M@0@@Z  */
+basic_ostream_char* __cdecl basic_ostream_char_print_complex_float(basic_ostream_char *ostr, const complex_float *val)
+{
+    struct {
+        basic_ostringstream_char obj;
+        basic_ios_char vbase;
+    } oss;
+    ios_base *ostringstream_ios_base, *ostream_ios_base;
+    locale loc;
+    basic_string_char str;
+    basic_ostringstream_char_ctor(&oss.obj);
+    ostringstream_ios_base = &oss.vbase.base;
+    ostream_ios_base = &basic_ostream_char_get_basic_ios(ostr)->base;
+    TRACE("(%p %p)\n", ostr, val);
+
+    ios_base_imbue(ostringstream_ios_base, &loc, ostream_ios_base->loc);
+    locale_dtor(&loc);
+    ios_base_precision_set(ostringstream_ios_base, ios_base_precision_get(ostream_ios_base));
+    ios_base_flags_set(ostringstream_ios_base, ios_base_flags_get(ostream_ios_base));
+
+    basic_ostream_char_print_ch(&oss.obj.base, '(');
+    basic_ostream_char_print_float(&oss.obj.base, val->real);
+    basic_ostream_char_print_ch(&oss.obj.base, ',');
+    basic_ostream_char_print_float(&oss.obj.base, val->imag);
+    basic_ostream_char_print_ch(&oss.obj.base, ')');
+
+    basic_ostringstream_char_str_get(&oss.obj, &str);
+    basic_ostringstream_char_dtor(&oss.vbase);
+    basic_ostream_char_print_bstr(ostr, &str);
+    MSVCP_basic_string_char_dtor(&str);
+    return ostr;
+}
+
+/* ??$?6NDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@N@0@@Z */
+/* ??$?6NDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@N@0@@Z */
+basic_ostream_char* __cdecl basic_ostream_char_print_complex_double(basic_ostream_char *ostr, const complex_double *val)
+{
+    struct {
+        basic_ostringstream_char obj;
+        basic_ios_char vbase;
+    } oss;
+    ios_base *ostringstream_ios_base, *ostream_ios_base;
+    locale loc;
+    basic_string_char str;
+    basic_ostringstream_char_ctor(&oss.obj);
+    ostringstream_ios_base = &oss.vbase.base;
+    ostream_ios_base = &basic_ostream_char_get_basic_ios(ostr)->base;
+    TRACE("(%p %p)\n", ostr, val);
+
+    ios_base_imbue(ostringstream_ios_base, &loc, ostream_ios_base->loc);
+    locale_dtor(&loc);
+    ios_base_precision_set(ostringstream_ios_base, ios_base_precision_get(ostream_ios_base));
+    ios_base_flags_set(ostringstream_ios_base, ios_base_flags_get(ostream_ios_base));
+
+    basic_ostream_char_print_ch(&oss.obj.base, '(');
+    basic_ostream_char_print_double(&oss.obj.base, val->real);
+    basic_ostream_char_print_ch(&oss.obj.base, ',');
+    basic_ostream_char_print_double(&oss.obj.base, val->imag);
+    basic_ostream_char_print_ch(&oss.obj.base, ')');
+
+    basic_ostringstream_char_str_get(&oss.obj, &str);
+    basic_ostringstream_char_dtor(&oss.vbase);
+    basic_ostream_char_print_bstr(ostr, &str);
+    MSVCP_basic_string_char_dtor(&str);
+    return ostr;
+}
+
+/* ??$?6odu?$char_traits@d@std@@@std@@yaaav?$basic_ostream@du?$char_traits@d@std@@@0@aav10@abv?$complex@o@0@@Z */
+/* ??$?6ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@O@0@@Z */
+basic_ostream_char* __cdecl basic_ostream_char_print_complex_ldouble(basic_ostream_char *ostr, const complex_double *val)
+{
+    struct {
+        basic_ostringstream_char obj;
+        basic_ios_char vbase;
+    } oss;
+    ios_base *ostringstream_ios_base, *ostream_ios_base;
+    locale loc;
+    basic_string_char str;
+    basic_ostringstream_char_ctor(&oss.obj);
+    ostringstream_ios_base = &oss.vbase.base;
+    ostream_ios_base = &basic_ostream_char_get_basic_ios(ostr)->base;
+    TRACE("(%p %p)\n", ostr, val);
+
+    ios_base_imbue(ostringstream_ios_base, &loc, ostream_ios_base->loc);
+    locale_dtor(&loc);
+    ios_base_precision_set(ostringstream_ios_base, ios_base_precision_get(ostream_ios_base));
+    ios_base_flags_set(ostringstream_ios_base, ios_base_flags_get(ostream_ios_base));
+
+    basic_ostream_char_print_ch(&oss.obj.base, '(');
+    basic_ostream_char_print_ldouble(&oss.obj.base, val->real);
+    basic_ostream_char_print_ch(&oss.obj.base, ',');
+    basic_ostream_char_print_ldouble(&oss.obj.base, val->imag);
+    basic_ostream_char_print_ch(&oss.obj.base, ')');
+
+    basic_ostringstream_char_str_get(&oss.obj, &str);
+    basic_ostringstream_char_dtor(&oss.vbase);
+    basic_ostream_char_print_bstr(ostr, &str);
+    MSVCP_basic_string_char_dtor(&str);
+    return ostr;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

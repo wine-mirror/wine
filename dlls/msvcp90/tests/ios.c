@@ -422,6 +422,19 @@ typedef struct {
     int state;
 } fpos_int;
 
+/* class complex<float> */
+typedef struct {
+    float real;
+    float imag;
+} complex_float;
+
+/* class complex<double> */
+/* class complex<long double> */
+typedef struct {
+    double real;
+    double imag;
+} complex_double;
+
 /* stringstream */
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor)(basic_stringstream_char*);
 static basic_stringstream_char* (*__thiscall p_basic_stringstream_char_ctor_str)(basic_stringstream_char*, const basic_string_char*, int, MSVCP_bool);
@@ -470,6 +483,12 @@ static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_float)(basic_
 static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_double)(basic_ostream_char*, double);
 
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_double)(basic_ostream_wchar*, double);
+
+static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_float)(basic_ostream_char*, complex_float*);
+
+static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_double)(basic_ostream_char*, complex_double*);
+
+static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_ldouble)(basic_ostream_char*, complex_double*);
 
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_short_print_ushort)(basic_ostream_wchar*, unsigned short);
 
@@ -703,6 +722,15 @@ static BOOL init(void)
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QEAAAEAV01@G@Z");
 
+        SET(p_basic_ostream_char_print_complex_float,
+            "??$?6MDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@M@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_double,
+            "??$?6NDU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@N@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_ldouble,
+            "??$?6ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@O@0@@Z");
+
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QEBAHXZ");
         SET(p_ios_base_setf_mask,
@@ -822,6 +850,15 @@ static BOOL init(void)
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAAAAV01@G@Z");
 
+        SET(p_basic_ostream_char_print_complex_float,
+            "??$?6MDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@M@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_double,
+            "??$?6NDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@N@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_ldouble,
+            "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
+
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBAHXZ");
         SET(p_ios_base_setf_mask,
@@ -939,6 +976,15 @@ static BOOL init(void)
 
         SET(p_basic_ostream_short_print_ushort,
             "??6?$basic_ostream@GU?$char_traits@G@std@@@std@@QAEAAV01@G@Z");
+
+        SET(p_basic_ostream_char_print_complex_float,
+            "??$?6MDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@M@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_double,
+            "??$?6NDU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@N@0@@Z");
+
+        SET(p_basic_ostream_char_print_complex_ldouble,
+            "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
 
         SET(p_ios_base_rdstate,
             "?rdstate@ios_base@std@@QBEHXZ");
@@ -2074,6 +2120,66 @@ static void test_istream_read_double(void)
     call_func1(p_basic_string_char_dtor, &str);
 }
 
+static void test_ostream_print_complex_float(void)
+{
+    static const char complex_float_str[] = "(3.14,1.57)";
+
+    basic_stringstream_char ss;
+    basic_string_char pstr;
+    const char *str;
+    complex_float val = {3.14, 1.57};
+
+    call_func1(p_basic_stringstream_char_ctor, &ss);
+    p_basic_ostream_char_print_complex_float(&ss.base.base2, &val);
+
+    call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+    str = call_func1(p_basic_string_char_cstr, &pstr);
+    ok(!strcmp(complex_float_str, str), "str = %s\n", str);
+
+    call_func1(p_basic_string_char_dtor, &pstr);
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+}
+
+static void test_ostream_print_complex_double(void)
+{
+    static const char complex_double_str[] = "(3.14159,1.23459)";
+
+    basic_stringstream_char ss;
+    basic_string_char pstr;
+    const char *str;
+    complex_double val= {3.14159, 1.23459};
+
+    call_func1(p_basic_stringstream_char_ctor, &ss);
+    p_basic_ostream_char_print_complex_double(&ss.base.base2, &val);
+
+    call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+    str = call_func1(p_basic_string_char_cstr, &pstr);
+    ok(!strcmp(complex_double_str, str), "str = %s\n", str);
+
+    call_func1(p_basic_string_char_dtor, &pstr);
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+}
+
+static void test_ostream_print_complex_ldouble(void)
+{
+    static const char complex_double_str[] = "(3.14159,1.23459)";
+
+    basic_stringstream_char ss;
+    basic_string_char pstr;
+    const char *str;
+    complex_double val = {3.14159, 1.23459};
+
+    call_func1(p_basic_stringstream_char_ctor, &ss);
+    p_basic_ostream_char_print_complex_ldouble(&ss.base.base2, &val);
+
+    call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+    str = call_func1(p_basic_string_char_cstr, &pstr);
+    ok(!strcmp(complex_double_str, str), "str = %s\n", str);
+
+    call_func1(p_basic_string_char_dtor, &pstr);
+    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -2095,6 +2201,9 @@ START_TEST(ios)
     test_ostream_wchar_print_double();
     test_istream_read_float();
     test_istream_read_double();
+    test_ostream_print_complex_float();
+    test_ostream_print_complex_double();
+    test_ostream_print_complex_ldouble();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
