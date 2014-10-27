@@ -56,8 +56,8 @@ struct dwrite_fontfamily_data {
     IDWriteLocalizedStrings *familyname;
 
     struct dwrite_font_data **fonts;
-    UINT32  font_count;
-    UINT32  alloc;
+    UINT32 font_count;
+    UINT32 font_alloc;
 };
 
 struct dwrite_fontcollection {
@@ -1440,16 +1440,16 @@ static HRESULT add_family_syscollection(struct dwrite_fontcollection *collection
 
 static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, struct dwrite_font_data *font_data)
 {
-    if (family_data->font_count + 1 >= family_data->alloc) {
+    if (family_data->font_count + 1 >= family_data->font_alloc) {
         struct dwrite_font_data **new_list;
         UINT32 new_alloc;
 
-        new_alloc = family_data->alloc * 2;
+        new_alloc = family_data->font_alloc * 2;
         new_list = heap_realloc(family_data->fonts, sizeof(*family_data->fonts) * new_alloc);
         if (!new_list)
             return E_OUTOFMEMORY;
         family_data->fonts = new_list;
-        family_data->alloc = new_alloc;
+        family_data->font_alloc = new_alloc;
     }
 
     family_data->fonts[family_data->font_count] = font_data;
@@ -1558,15 +1558,15 @@ static HRESULT init_font_data(IDWriteFactory *factory, IDWriteFontFile *file, UI
 
 static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct dwrite_fontfamily_data *data)
 {
-    data->fonts = heap_alloc(sizeof(*data->fonts)*data->alloc);
+    data->ref = 1;
+    data->font_count = 0;
+    data->font_alloc = 2;
+
+    data->fonts = heap_alloc(sizeof(*data->fonts)*data->font_alloc);
     if (!data->fonts) {
         heap_free(data);
         return E_OUTOFMEMORY;
     }
-
-    data->ref = 1;
-    data->font_count = 0;
-    data->alloc = 2;
 
     data->familyname = familyname;
     IDWriteLocalizedStrings_AddRef(familyname);
@@ -1761,7 +1761,7 @@ static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFon
 
     data->ref = 0;
     data->font_count = 0;
-    data->alloc = 2;
+    data->font_alloc = 2;
     data->fonts = heap_alloc(sizeof(*data->fonts) * 2);
     if (!data->fonts)
     {
