@@ -1599,9 +1599,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
               /* initdir does not have to be a directory. If a file is
                * specified, the dir part is taken */
               if( PathIsDirectoryW(tmpBuf)) {
-                  if (tmpBuf[lstrlenW(tmpBuf)-1] != '\\') {
-                     lstrcatW(tmpBuf, szwSlash);
-                  }
+                  PathAddBackslashW( tmpBuf );
                   lstrcatW(tmpBuf, szwStar);
               }
               result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
