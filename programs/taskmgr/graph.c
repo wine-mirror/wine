@@ -265,8 +265,8 @@ static void Graph_DrawMemUsageGraph(HDC hDC, HWND hWnd)
      * So first find out how many bars we can fit
      */
     nBars = ((rcClient.bottom - rcClient.top) - 25) / 3;
-        if (CommitChargeLimit)
-    nBarsUsed = (nBars * (int)((CommitChargeTotal * 100) / CommitChargeLimit)) / 100;
+    if (CommitChargeLimit)
+        nBarsUsed = (nBars * (int)((CommitChargeTotal * 100) / CommitChargeLimit)) / 100;
     nBarsFree = nBars - nBarsUsed;
 
     if (nBarsUsed < 0)     nBarsUsed = 0;
