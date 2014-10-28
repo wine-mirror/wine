@@ -1194,7 +1194,7 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
 
   if (!info->lpRichEditOle)
   {
-    CreateIRichEditOle(info->editor, (VOID**)&info->lpRichEditOle);
+    CreateIRichEditOle(NULL, info->editor, (VOID**)&info->lpRichEditOle);
   }
 
   if (OleCreateDefaultHandler(&CLSID_NULL, NULL, &IID_IOleObject, (void**)&lpObject) == S_OK &&
@@ -4474,7 +4474,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETOLEINTERFACE:
   {
     if (!editor->reOle)
-      if (!CreateIRichEditOle(editor, (LPVOID *)&editor->reOle))
+      if (!CreateIRichEditOle(NULL, editor, (LPVOID *)&editor->reOle))
         return 0;
     *(LPVOID *)lParam = editor->reOle;
     IRichEditOle_AddRef(editor->reOle);
