@@ -1483,6 +1483,18 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromResource(HINSTANCE hInstance,
     return stat;
 }
 
+static inline DWORD blend_argb_no_bkgnd_alpha(DWORD src, DWORD bkgnd)
+{
+    BYTE b = (BYTE)src;
+    BYTE g = (BYTE)(src >> 8);
+    BYTE r = (BYTE)(src >> 16);
+    DWORD alpha  = (BYTE)(src >> 24);
+    return ((b     + ((BYTE)bkgnd         * (255 - alpha) + 127) / 255) |
+            (g     + ((BYTE)(bkgnd >> 8)  * (255 - alpha) + 127) / 255) << 8 |
+            (r     + ((BYTE)(bkgnd >> 16) * (255 - alpha) + 127) / 255) << 16 |
+            (alpha << 24));
+}
+
 GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     HBITMAP* hbmReturn, ARGB background)
 {
@@ -1523,6 +1535,17 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
 
         if (stat == Ok)
             stat = GdipBitmapUnlockBits(bitmap, &lockeddata);
+
+        if (stat == Ok && (background & 0xffffff))
+        {
+            DWORD *ptr;
+            UINT i;
+            for (ptr = (DWORD*)bits, i = 0; i < width * height; ptr++, i++)
+            {
+                if ((*ptr & 0xff000000) == 0xff000000) continue;
+                *ptr = blend_argb_no_bkgnd_alpha(*ptr, background);
+            }
+        }
     }
     else
         stat = GenericError;
