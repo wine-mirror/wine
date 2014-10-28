@@ -1945,28 +1945,20 @@ BOOL WINAPI ImmIsIME(HKL hKL)
 BOOL WINAPI ImmIsUIMessageA(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    BOOL rc = FALSE;
-
     TRACE("(%p, %x, %ld, %ld)\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
             (msg == WM_IME_SETCONTEXT) ||
             (msg == WM_IME_NOTIFY) ||
             (msg == WM_IME_COMPOSITIONFULL) ||
             (msg == WM_IME_SELECT) ||
-            (msg == 0x287 /* FIXME: WM_IME_SYSTEM */) ||
-            (msg == WM_MSIME_RECONVERTOPTIONS) ||
-            (msg == WM_MSIME_MOUSE) ||
-            (msg == WM_MSIME_RECONVERTREQUEST) ||
-            (msg == WM_MSIME_RECONVERT) ||
-            (msg == WM_MSIME_QUERYPOSITION) ||
-            (msg == WM_MSIME_DOCUMENTFEED))
+            (msg == 0x287 /* FIXME: WM_IME_SYSTEM */))
     {
         if (hWndIME)
             SendMessageA(hWndIME, msg, wParam, lParam);
 
-        rc = TRUE;
+        return TRUE;
     }
-    return rc;
+    return FALSE;
 }
 
 /***********************************************************************
@@ -1975,28 +1967,20 @@ BOOL WINAPI ImmIsUIMessageA(
 BOOL WINAPI ImmIsUIMessageW(
   HWND hWndIME, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    BOOL rc = FALSE;
-
     TRACE("(%p, %x, %ld, %ld)\n", hWndIME, msg, wParam, lParam);
     if ((msg >= WM_IME_STARTCOMPOSITION && msg <= WM_IME_KEYLAST) ||
             (msg == WM_IME_SETCONTEXT) ||
             (msg == WM_IME_NOTIFY) ||
             (msg == WM_IME_COMPOSITIONFULL) ||
             (msg == WM_IME_SELECT) ||
-            (msg == 0x287 /* FIXME: WM_IME_SYSTEM */) ||
-            (msg == WM_MSIME_RECONVERTOPTIONS) ||
-            (msg == WM_MSIME_MOUSE) ||
-            (msg == WM_MSIME_RECONVERTREQUEST) ||
-            (msg == WM_MSIME_RECONVERT) ||
-            (msg == WM_MSIME_QUERYPOSITION) ||
-            (msg == WM_MSIME_DOCUMENTFEED))
+            (msg == 0x287 /* FIXME: WM_IME_SYSTEM */))
     {
         if (hWndIME)
             SendMessageW(hWndIME, msg, wParam, lParam);
 
-        rc = TRUE;
+        return TRUE;
     }
-    return rc;
+    return FALSE;
 }
 
 /***********************************************************************

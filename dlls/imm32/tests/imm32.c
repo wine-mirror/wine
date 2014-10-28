@@ -607,6 +607,14 @@ static void test_ImmIsUIMessage(void)
         { 0, FALSE } /* mark the end */
     };
 
+    UINT WM_MSIME_SERVICE = RegisterWindowMessageA("MSIMEService");
+    UINT WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageA("MSIMEReconvertOptions");
+    UINT WM_MSIME_MOUSE = RegisterWindowMessageA("MSIMEMouseOperation");
+    UINT WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageA("MSIMEReconvertRequest");
+    UINT WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
+    UINT WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
+    UINT WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
+
     const struct test *test;
     BOOL ret;
 
@@ -626,6 +634,21 @@ static void test_ImmIsUIMessage(void)
         else
             ok(!msg_spy_find_msg(test->msg), "Windows does not send 0x%x\n", test->msg);
     }
+
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_SERVICE, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_SERVICE\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_RECONVERTOPTIONS, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_RECONVERTOPTIONS\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_MOUSE, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_MOUSE\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_RECONVERTREQUEST, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_RECONVERTREQUEST\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_RECONVERT, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_RECONVERT\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_QUERYPOSITION, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_QUERYPOSITION\n");
+    ret = pImmIsUIMessageA(NULL, WM_MSIME_DOCUMENTFEED, 0, 0);
+    ok(!ret, "ImmIsUIMessageA returned TRUE for WM_MSIME_DOCUMENTFEED\n");
 }
 
 static void test_ImmGetContext(void)
