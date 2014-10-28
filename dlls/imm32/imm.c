@@ -2882,6 +2882,22 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
     else
         return FALSE;
 
+    /* Make sure we are inputting to the correct keyboard */
+    if (data->immKbd->hkl != hKL)
+    {
+        ImmHkl *new_hkl = IMM_GetImmHkl(hKL);
+        if (new_hkl)
+        {
+            data->immKbd->pImeSelect(imc, FALSE);
+            data->immKbd->uSelected--;
+            data->immKbd = new_hkl;
+            data->immKbd->pImeSelect(imc, TRUE);
+            data->immKbd->uSelected++;
+        }
+        else
+            return FALSE;
+    }
+
     if (!data->immKbd->hIME || !data->immKbd->pImeProcessKey)
         return FALSE;
 
