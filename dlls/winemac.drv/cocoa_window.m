@@ -374,6 +374,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         return [[self window] contentView] == self;
     }
 
+    - (BOOL) mouseDownCanMoveWindow
+    {
+        return NO;
+    }
+
     - (void) completeText:(NSString*)text
     {
         macdrv_event* event;
