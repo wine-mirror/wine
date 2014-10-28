@@ -143,17 +143,7 @@ static ULONG WINAPI IRichEditOleImpl_inner_fnRelease(IUnknown *iface)
     TRACE ("%p ref=%u\n", This, ref);
 
     if (!ref)
-    {
-        ITextRangeImpl *txtRge;
-        TRACE ("Destroying %p\n", This);
-        This->txtSel->reOle = NULL;
-        This->editor->reOle = NULL;
-        ITextSelection_Release(&This->txtSel->ITextSelection_iface);
-        IOleClientSite_Release(&This->clientSite->IOleClientSite_iface);
-        LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, entry)
-            txtRge->reOle = NULL;
-        heap_free(This);
-    }
+        DestroyIRichEditOle(&This->IRichEditOle_iface);
     return ref;
 }
 
@@ -2375,6 +2365,21 @@ LRESULT CreateIRichEditOle(IUnknown *outer_unk, ME_TextEditor *editor, LPVOID *p
     return 1;
 }
 
+void DestroyIRichEditOle(IRichEditOle *iface)
+{
+    IRichEditOleImpl *This = impl_from_IRichEditOle(iface);
+    ITextRangeImpl *txtRge;
+
+    TRACE("Destroying %p\n", This);
+    This->txtSel->reOle = NULL;
+    This->editor->reOle = NULL;
+    ITextSelection_Release(&This->txtSel->ITextSelection_iface);
+    IOleClientSite_Release(&This->clientSite->IOleClientSite_iface);
+    LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, entry)
+        txtRge->reOle = NULL;
+    heap_free(This);
+}
+
 static void convert_sizel(const ME_Context *c, const SIZEL* szl, SIZE* sz)
 {
   /* sizel is in .01 millimeters, sz in pixels */
@@ -2577,4 +2582,10 @@ void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src)
     if (dst->poleobj)   IOleObject_AddRef(dst->poleobj);
     if (dst->pstg)      IStorage_AddRef(dst->pstg);
     if (dst->polesite)  IOleClientSite_AddRef(dst->polesite);
+}
+
+void ME_GetITextDocumentInterface(IRichEditOle *iface, LPVOID *ppvObj)
+{
+    IRichEditOleImpl *This = impl_from_IRichEditOle(iface);
+    *ppvObj = &This->ITextDocument_iface;
 }

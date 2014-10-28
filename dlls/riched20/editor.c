@@ -2889,7 +2889,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   ITextHost_Release(editor->texthost);
   if (editor->reOle)
   {
-    IRichEditOle_Release(editor->reOle);
+    DestroyIRichEditOle(editor->reOle);
     editor->reOle = NULL;
   }
   OleUninitialize();
