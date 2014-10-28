@@ -2055,7 +2055,6 @@ static void run_child_process(void)
 static void init_paths(void)
 {
     LPWSTR ptr;
-    WCHAR last;
 
     static const WCHAR dot_manifest[] = {'.','M','a','n','i','f','e','s','t',0};
     static const WCHAR backslash[] = {'\\',0};
@@ -2067,8 +2066,8 @@ static void init_paths(void)
     ptr[1] = 0;
 
     GetCurrentDirectoryW(MAX_PATH, work_dir);
-    last = work_dir[lstrlenW(work_dir) - 1];
-    if (last != '\\' && last != '/')
+    ptr = work_dir + lstrlenW( work_dir ) - 1;
+    if (*ptr != '\\' && *ptr != '/')
         lstrcatW(work_dir, backslash);
     lstrcpyW(work_dir_subdir, work_dir);
     lstrcatW(work_dir_subdir, subdir);
