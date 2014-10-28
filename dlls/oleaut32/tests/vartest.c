@@ -7403,10 +7403,10 @@ static void test_VarPow(void)
     hres = pVarPow(&cy, &right, &result);
     if (hres == S_OK)
     {
-        ok(hres == S_OK && V_VT(&result) == VT_R8,
+        ok(V_VT(&result) == VT_R8,
            "VARPOW: expected coerced hres 0x%X type VT_R8, got hres 0x%X type %s!\n",
            S_OK, hres, vtstr(V_VT(&result)));
-        ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        ok(EQ_DOUBLE(V_R8(&result), 4.0),
            "VARPOW: CY value %f, expected %f\n", V_R8(&result), 4.0);
     }
     else
@@ -7440,10 +7440,10 @@ static void test_VarPow(void)
     hres = pVarPow(&dec, &right, &result);
     if (hres == S_OK)
     {
-        ok(hres == S_OK && V_VT(&result) == VT_R8,
+        ok(V_VT(&result) == VT_R8,
            "VARPOW: expected coerced hres 0x%X type VT_R8, got hres 0x%X type %s!\n",
            S_OK, hres, vtstr(V_VT(&result)));
-        ok(hres == S_OK && EQ_DOUBLE(V_R8(&result), 4.0),
+        ok(EQ_DOUBLE(V_R8(&result), 4.0),
            "VARPOW: DECIMAL value %f, expected %f\n", V_R8(&result), 4.0);
     }
     else
