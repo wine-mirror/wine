@@ -924,10 +924,9 @@ static INT GSUB_apply_LigatureSubst(const OT_LookupTable *look, WORD *glyphs, IN
 static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
-    BOOL done = FALSE;
 
     TRACE("Chaining Contextual Substitution Subtable\n");
-    for (j = 0; j < GET_BE_WORD(look->SubTableCount) && !done; j++)
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
     {
         const GSUB_ChainContextSubstFormat1 *ccsf1;
         int offset;
