@@ -3503,10 +3503,23 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
 {
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__fgetc_nolock(file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fgetc_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fgetc_nolock(MSVCRT_FILE* file)
+{
   unsigned char *i;
   unsigned int j;
 
-  MSVCRT__lock_file(file);
   if (file->_cnt>0) {
     file->_cnt--;
     i = (unsigned char *)file->_ptr++;
@@ -3514,7 +3527,6 @@ int CDECL MSVCRT_fgetc(MSVCRT_FILE* file)
   } else
     j = MSVCRT__filbuf(file);
 
-  MSVCRT__unlock_file(file);
   return j;
 }
 
