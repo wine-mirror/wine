@@ -248,6 +248,7 @@ void ME_DeleteReObject(REOBJECT* reo) DECLSPEC_HIDDEN;
 
 /* editor.c */
 ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
+void ME_DestroyEditor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                          LPARAM lParam, BOOL unicode, HRESULT* phresult) DECLSPEC_HIDDEN;
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode) DECLSPEC_HIDDEN;

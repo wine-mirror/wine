@@ -108,7 +108,7 @@ static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
 
    if (!ref)
    {
-      ITextHost_Release(This->pMyHost);
+      ME_DestroyEditor(This->editor);
       This->csTxtSrv.DebugInfo->Spare[0] = 0;
       DeleteCriticalSection(&This->csTxtSrv);
       CoTaskMemFree(This);
