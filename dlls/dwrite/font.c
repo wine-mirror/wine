@@ -139,6 +139,7 @@ static HRESULT create_fontfamily(IDWriteLocalizedStrings *familyname, IDWriteFon
 static HRESULT create_fontfamily_from_data(struct dwrite_fontfamily_data *data, IDWriteFontCollection *collection, IDWriteFontFamily **family);
 static HRESULT create_font_base(IDWriteFont **font);
 static HRESULT create_font_from_data(struct dwrite_font_data*,IDWriteFontFamily*,DWRITE_FONT_SIMULATIONS,IDWriteFont**);
+static HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**);
 
 static inline struct dwrite_fontface *impl_from_IDWriteFontFace2(IDWriteFontFace2 *iface)
 {
@@ -723,11 +724,65 @@ static HRESULT create_system_fontface(struct dwrite_font *font, IDWriteFontFace 
     return S_OK;
 }
 
+static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE face_type,
+    UINT32 face_index, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight,
+    DWRITE_FONT_STYLE *style)
+{
+    const void *tt_os2 = NULL, *tt_head = NULL, *tt_post = NULL;
+    void *os2_context, *head_context, *post_context;
+
+    opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
+    opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
+    opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
+
+    get_font_properties(tt_os2, tt_head, tt_post, metrics, stretch, weight, style);
+
+    if (tt_os2)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
+    if (tt_head)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
+    if (tt_post)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, post_context);
+}
+
 HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
 {
-    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace2((IDWriteFontFace2*)face);
+    DWRITE_FONT_SIMULATIONS simulations;
+    DWRITE_FONT_FACE_TYPE face_type;
+    IDWriteFontFileStream *stream;
+    DWRITE_FONT_METRICS metrics;
+    DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_STYLE style;
+    DWRITE_FONT_WEIGHT weight;
+    IDWriteFontFile *file = NULL;
+    UINT32 index;
+    HRESULT hr;
 
-    *logfont = fontface->logfont;
+    memset(logfont, 0, sizeof(*logfont));
+
+    index = 1;
+    hr = IDWriteFontFace_GetFiles(face, &index, &file);
+    if (FAILED(hr) || !file)
+        return hr;
+
+    hr = get_filestream_from_file(file, &stream);
+    if (FAILED(hr)) {
+        IDWriteFontFile_Release(file);
+        return hr;
+    }
+
+    index = IDWriteFontFace_GetIndex(face);
+    face_type = IDWriteFontFace_GetType(face);
+    get_font_properties_from_stream(stream, face_type, index, &metrics, &stretch, &weight, &style);
+    IDWriteFontFileStream_Release(stream);
+
+    simulations = IDWriteFontFace_GetSimulations(face);
+
+    logfont->lfCharSet = DEFAULT_CHARSET;
+    logfont->lfWeight = weight;
+    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations | DWRITE_FONT_SIMULATIONS_OBLIQUE);
+    logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
+    /* TODO: set facename */
 
     return S_OK;
 }

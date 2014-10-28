@@ -1013,11 +1013,14 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(logfont.lfHeight == 0, "got %d\n", logfont.lfHeight);
     ok(logfont.lfWidth == 0, "got %d\n", logfont.lfWidth);
+todo_wine
     ok(logfont.lfWeight == FW_NORMAL, "got %d\n", logfont.lfWeight);
     ok(logfont.lfEscapement == 0, "got %d\n", logfont.lfEscapement);
+todo_wine
     ok(logfont.lfItalic == 1, "got %d\n", logfont.lfItalic);
     ok(logfont.lfUnderline == 0, "got %d\n", logfont.lfUnderline);
     ok(logfont.lfStrikeOut == 0, "got %d\n", logfont.lfStrikeOut);
+todo_wine
     ok(!lstrcmpW(logfont.lfFaceName, tahomaW), "got %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
     IDWriteGdiInterop_Release(interop);
