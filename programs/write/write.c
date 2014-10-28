@@ -25,8 +25,7 @@
 #include <windows.h>
 #include "resources.h"
 
-static const WCHAR SZ_BACKSLASH[] = {'\\',0};
-static const WCHAR SZ_WORDPAD[]   = {'w','o','r','d','p','a','d','.','e','x','e',0};
+static const WCHAR SZ_WORDPAD[]   = {'\\','w','o','r','d','p','a','d','.','e','x','e',0};
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdParagraph, int res)
 {
@@ -36,8 +35,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     if (!GetSystemDirectoryW(path, MAX_PATH - 1 - lstrlenW(SZ_WORDPAD)))
 	goto failed;
-    if (path[lstrlenW(path) - 1] != '\\')
-	lstrcatW(path, SZ_BACKSLASH);
     lstrcatW(path, SZ_WORDPAD);
 
     stinf.cb = sizeof(STARTUPINFOW);
