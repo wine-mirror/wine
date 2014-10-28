@@ -827,6 +827,10 @@ static void get_bitmap_sample_size(InterpolationMode interpolation, WrapMode wra
             right = bitmap->width-1;
         if (bottom >= bitmap->height)
             bottom = bitmap->height-1;
+        if (bottom < top || right < left)
+            /* entirely outside image, just sample a pixel so we don't have to
+             * special-case this later */
+            left = top = right = bottom = 0;
     }
     else
     {
