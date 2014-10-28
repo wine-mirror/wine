@@ -1807,6 +1807,7 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
                                         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     ULONG flags = MEM_EXECUTE_OPTION_ENABLE;
+    DWORD err;
 
     trace( "exception: %08x flags:%x addr:%p info[0]:%ld info[1]:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -1821,15 +1822,15 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if (rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
     {
 
-        ok( rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT ||
-            broken(!(flags & MEM_EXECUTE_OPTION_DISABLE) && rec->ExceptionInformation[0] == EXCEPTION_READ_FAULT), /* Windows 2000 */
-            "ExceptionInformation[0] is %d instead of %d\n", (DWORD)rec->ExceptionInformation[0], EXCEPTION_EXECUTE_FAULT );
+        err = IsProcessorFeaturePresent( PF_NX_ENABLED ) ? EXCEPTION_EXECUTE_FAULT : EXCEPTION_READ_FAULT;
+        ok( rec->ExceptionInformation[0] == err, "ExceptionInformation[0] is %d instead of %d\n",
+            (DWORD)rec->ExceptionInformation[0], err );
 
         num_guard_page_calls++;
     }
     else if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION)
     {
-        DWORD err, old_prot;
+        DWORD old_prot;
         BOOL success;
 
         err = (flags & MEM_EXECUTE_OPTION_DISABLE) ? EXCEPTION_EXECUTE_FAULT : EXCEPTION_READ_FAULT;
@@ -1941,11 +1942,11 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     static const char cls_name[] = "atl_thunk_class";
     DWORD ret, size, old_prot;
     ULONG old_flags = MEM_EXECUTE_OPTION_ENABLE;
+    BOOL success, restore_flags = FALSE;
     void *results[64];
     ULONG_PTR count;
     ULONG pagesize;
     WNDCLASSEXA wc;
-    BOOL success;
     char *base;
     HWND hWnd;
 
@@ -1967,6 +1968,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
             return;
         }
         ok( !ret, "NtSetInformationProcess failed with status %08x\n", ret );
+        restore_flags = TRUE;
     }
 
     size = 0x1000;
@@ -2047,8 +2049,17 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
     ok( ret == 42, "call returned wrong result, expected 42, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
-    if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+    if ((dep_flags & MEM_EXECUTE_OPTION_DISABLE) && !IsProcessorFeaturePresent( PF_NX_ENABLED ))
+    {
+        trace( "DEP hardware support is not available\n" );
+        ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+        dep_flags = MEM_EXECUTE_OPTION_ENABLE;
+    }
+    else if (dep_flags & MEM_EXECUTE_OPTION_DISABLE)
+    {
+        trace( "DEP hardware support is available\n" );
         ok( num_execute_fault_calls == 1, "expected one STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
+    }
     else
         ok( num_execute_fault_calls == 0, "expected no STATUS_ACCESS_VIOLATION exception, got %d exceptions\n", num_execute_fault_calls );
 
@@ -2414,7 +2425,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     VirtualFree( base, 0, MEM_FREE );
 
 out:
-    if (old_flags != dep_flags)
+    if (restore_flags)
     {
         ret = NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &old_flags, sizeof(old_flags) );
         ok( !ret, "NtSetInformationProcess failed with status %08x\n", ret );
