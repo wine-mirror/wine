@@ -118,6 +118,7 @@ static int (__cdecl *p_fileno)(FILE*);
 static int (__cdecl *p_feof)(FILE*);
 static int (__cdecl *p_ferror)(FILE*);
 static int (__cdecl *p_flsbuf)(int, FILE*);
+static int (__cdecl *p_filbuf)(FILE*);
 static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 static void** (__cdecl *p__pxcptinfoptrs)(void);
 static void* (__cdecl *p__AdjustPointer)(void*, const void*);
@@ -377,6 +378,7 @@ static BOOL init(void)
     SET(p_feof, "feof");
     SET(p_ferror, "ferror");
     SET(p_flsbuf, "_flsbuf");
+    SET(p_filbuf, "_filbuf");
     SET(p_byteswap_ulong, "_byteswap_ulong");
     SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
     SET(p__AdjustPointer, "__AdjustPointer");
@@ -1284,6 +1286,11 @@ static void test_nonblocking_file_access(void)
     ok(ret==-1, "_flsbuf(filer) returned %d\n", ret);
     ret = p_flsbuf('a', filew);
     ok(ret=='a', "_flsbuf(filew) returned %d\n", ret);
+
+    ret = p_filbuf(filer);
+    ok(ret==-1, "_filbuf(filer) returned %d\n", ret);
+    ret = p_filbuf(filew);
+    ok(ret==-1, "_filbuf(filew) returned %d\n", ret);
 
     ret = p_fflush_nolock(filer);
     ok(ret==0, "_fflush_nolock(filer) returned %d\n", ret);
