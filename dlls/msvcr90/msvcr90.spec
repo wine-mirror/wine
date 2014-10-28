@@ -451,7 +451,7 @@
 @ cdecl _fflush_nolock(ptr) MSVCRT__fflush_nolock
 @ cdecl _fgetc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _fgetchar() MSVCRT__fgetchar
-@ stub _fgetwc_nolock
+@ cdecl _fgetwc_nolock(ptr) MSVCRT__fgetwc_nolock
 @ cdecl _fgetwchar() MSVCRT__fgetwchar
 @ cdecl _filbuf(ptr) MSVCRT__filbuf
 @ cdecl _filelength(long) MSVCRT__filelength

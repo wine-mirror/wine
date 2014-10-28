@@ -196,6 +196,7 @@ unsigned int __cdecl _set_output_format(void);
 
 #ifndef _WSTDIO_DEFINED
 #define _WSTDIO_DEFINED
+wint_t   __cdecl _fgetwc_nolock(FILE*);
 wint_t   __cdecl _fgetwchar(void);
 wint_t   __cdecl _fputwchar(wint_t);
 wchar_t* __cdecl _getws(wchar_t*);

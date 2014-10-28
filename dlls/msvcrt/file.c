@@ -3576,16 +3576,28 @@ char * CDECL MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
 MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
 {
     MSVCRT_wint_t ret;
-    int ch;
 
     MSVCRT__lock_file(file);
+    ret = MSVCRT__fgetwc_nolock(file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fgetwc_nolock (MSVCRT.@)
+ */
+MSVCRT_wint_t CDECL MSVCRT__fgetwc_nolock(MSVCRT_FILE* file)
+{
+    MSVCRT_wint_t ret;
+    int ch;
 
     if((msvcrt_get_ioinfo(file->_file)->exflag & (EF_UTF8 | EF_UTF16))
             || !(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
         char *p;
 
         for(p=(char*)&ret; (MSVCRT_wint_t*)p<&ret+1; p++) {
-            ch = MSVCRT_fgetc(file);
+            ch = MSVCRT__fgetc_nolock(file);
             if(ch == MSVCRT_EOF) {
                 ret = MSVCRT_WEOF;
                 break;
@@ -3596,11 +3608,11 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
         char mbs[MSVCRT_MB_LEN_MAX];
         int len = 0;
 
-        ch = MSVCRT_fgetc(file);
+        ch = MSVCRT__fgetc_nolock(file);
         if(ch != MSVCRT_EOF) {
             mbs[0] = (char)ch;
             if(MSVCRT_isleadbyte((unsigned char)mbs[0])) {
-                ch = MSVCRT_fgetc(file);
+                ch = MSVCRT__fgetc_nolock(file);
                 if(ch != MSVCRT_EOF) {
                     mbs[1] = (char)ch;
                     len = 2;
@@ -3614,7 +3626,6 @@ MSVCRT_wint_t CDECL MSVCRT_fgetwc(MSVCRT_FILE* file)
             ret = MSVCRT_WEOF;
     }
 
-    MSVCRT__unlock_file(file);
     return ret;
 }
 
