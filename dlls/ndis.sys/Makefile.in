@@ -1,0 +1,4 @@
+MODULE    = ndis.sys
+
+C_SRCS = \
+	main.c
