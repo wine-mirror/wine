@@ -1927,3 +1927,12 @@ VOID WINAPI IoStartNextPacket(PDEVICE_OBJECT deviceobject, BOOLEAN cancelable)
 {
     FIXME("(%p %d) stub\n", deviceobject, cancelable);
 }
+
+/*****************************************************
+ *           ObQueryNameString  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObQueryNameString(PVOID object, POBJECT_NAME_INFORMATION name, ULONG maxlength, PULONG returnlength)
+{
+    FIXME("(%p %p %u %p) stub\n", object, name, maxlength, returnlength);
+    return STATUS_NOT_IMPLEMENTED;
+}
