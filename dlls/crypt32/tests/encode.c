@@ -3732,7 +3732,7 @@ static void compareAltNameEntry(const CERT_ALT_NAME_ENTRY *expected,
         case CERT_ALT_NAME_IP_ADDRESS:
             ok(U(*got).IPAddress.cbData == U(*expected).IPAddress.cbData,
                "Unexpected IP address length %d\n", U(*got).IPAddress.cbData);
-            ok(!memcmp(U(*got).IPAddress.pbData, U(*got).IPAddress.pbData,
+            ok(!memcmp(U(*got).IPAddress.pbData, U(*expected).IPAddress.pbData,
                        U(*got).IPAddress.cbData), "Unexpected value\n");
             break;
         }
