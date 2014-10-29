@@ -563,7 +563,7 @@ static HRESULT WINAPI dwritefactory_GetSystemFontCollection(IDWriteFactory *ifac
         FIXME("checking for system font updates not implemented\n");
 
     if (!This->system_collection)
-        hr = get_system_fontcollection(&This->system_collection);
+        hr = get_system_fontcollection(iface, &This->system_collection);
 
     if (SUCCEEDED(hr))
         IDWriteFontCollection_AddRef(This->system_collection);

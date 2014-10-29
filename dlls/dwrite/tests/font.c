@@ -311,6 +311,7 @@ todo_wine {
         weight = IDWriteFont_GetWeight(font);
         ok(weight == weights[i][1],
             "%d: got %d, expected %d\n", i, weight, weights[i][1]);
+
         IDWriteFont_Release(font);
     }
 
@@ -574,21 +575,16 @@ if (0) /* crashes on native */
 
     collection = NULL;
     hr = IDWriteFontFamily_GetFontCollection(family, &collection);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     collection2 = NULL;
     hr = IDWriteFontFamily_GetFontCollection(family2, &collection2);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(collection == collection2, "got %p, %p\n", collection, collection2);
-todo_wine
     ok(collection == syscoll, "got %p, %p\n", collection, syscoll);
 
     IDWriteFontCollection_Release(syscoll);
-if (collection2)
     IDWriteFontCollection_Release(collection2);
-if (collection)
     IDWriteFontCollection_Release(collection);
     IDWriteFontFamily_Release(family2);
     IDWriteFontFamily_Release(family);
@@ -745,7 +741,6 @@ if (0) /* crashes on native */
     fontface2 = NULL;
     hr = IDWriteFont_CreateFontFace(font2, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
     IDWriteFontFace_Release(fontface2);
 
@@ -783,7 +778,6 @@ todo_wine
     fontface2 = NULL;
     hr = IDWriteFont_CreateFontFace(font2, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
 
     IDWriteFontFace_Release(fontface);
@@ -925,10 +919,8 @@ static void test_system_fontcollection(void)
     file = NULL;
     hr = IDWriteFontFace_GetFiles(fontface, &i, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(file != NULL, "got %p\n", file);
 
-if (file) {
     hr = IDWriteFontFile_GetLoader(file, &loader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(file);
@@ -956,7 +948,7 @@ if (file) {
     IDWriteFactory_Release(factory2);
 
     IDWriteFontFileLoader_Release(loader);
-}
+
     ret = TRUE;
     i = 0;
     hr = IDWriteFontCollection_FindFamilyName(collection, blahW, &i, &ret);
@@ -1013,10 +1005,8 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(logfont.lfHeight == 0, "got %d\n", logfont.lfHeight);
     ok(logfont.lfWidth == 0, "got %d\n", logfont.lfWidth);
-todo_wine
     ok(logfont.lfWeight == FW_NORMAL, "got %d\n", logfont.lfWeight);
     ok(logfont.lfEscapement == 0, "got %d\n", logfont.lfEscapement);
-todo_wine
     ok(logfont.lfItalic == 1, "got %d\n", logfont.lfItalic);
     ok(logfont.lfUnderline == 0, "got %d\n", logfont.lfUnderline);
     ok(logfont.lfStrikeOut == 0, "got %d\n", logfont.lfStrikeOut);
@@ -1439,36 +1429,26 @@ static void test_GetFontFromFontFace(void)
 
     font2 = NULL;
     hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font2);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(font2 != font, "got %p, %p\n", font2, font);
 
     font3 = NULL;
     hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font3);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(font3 != font && font3 != font2, "got %p, %p, %p\n", font3, font2, font);
-}
 
-if (font2) {
     hr = IDWriteFont_CreateFontFace(font2, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface2 == fontface, "got %p, %p\n", fontface2, fontface);
     IDWriteFontFace_Release(fontface2);
-}
 
-if (font3) {
     hr = IDWriteFont_CreateFontFace(font3, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface2 == fontface, "got %p, %p\n", fontface2, fontface);
     IDWriteFontFace_Release(fontface2);
-}
 
-if (font)
     IDWriteFont_Release(font);
-if (font2)
     IDWriteFont_Release(font2);
-if (font3)
     IDWriteFont_Release(font3);
     IDWriteFontFace_Release(fontface);
     IDWriteFontFamily_Release(family);
@@ -1555,28 +1535,25 @@ static void test_GetInformationalStrings(void)
     ok(exists == FALSE, "got %d\n", exists);
     ok(strings == NULL, "got %p\n", strings);
 
-    exists = FALSE;
-    strings = NULL;
-    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(exists == TRUE, "got %d\n", exists);
-
     exists = TRUE;
     strings = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_NONE, &strings, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == FALSE, "got %d\n", exists);
 
+    exists = FALSE;
+    strings = NULL;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == TRUE, "got %d\n", exists);
+
     /* strings instance is not reused */
     strings2 = NULL;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings2, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(strings2 != strings, "got %p, %p\n", strings2, strings);
 
-if (strings)
     IDWriteLocalizedStrings_Release(strings);
-if (strings2)
     IDWriteLocalizedStrings_Release(strings2);
     IDWriteFont_Release(font);
     IDWriteFontFamily_Release(family);
