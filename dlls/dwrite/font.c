@@ -1792,7 +1792,7 @@ static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSup
     IDWriteFontFileStream *stream;
     HRESULT hr;
 
-    FIXME("(%p)->(%p, %p, %p, %p): Stub\n", This, isSupportedFontType, fontFileType, fontFaceType, numberOfFaces);
+    TRACE("(%p)->(%p, %p, %p, %p)\n", This, isSupportedFontType, fontFileType, fontFaceType, numberOfFaces);
 
     *isSupportedFontType = FALSE;
     *fontFileType = DWRITE_FONT_FILE_TYPE_UNKNOWN;
