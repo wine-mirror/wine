@@ -793,8 +793,9 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
 
             if (codepage) {
                 DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
-                name_string = heap_alloc(sizeof(WCHAR) * len);
+                name_string = heap_alloc(sizeof(WCHAR) * (len+1));
                 MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, name_string, len);
+                name_string[len] = 0;
             }
             else {
                 int i;
