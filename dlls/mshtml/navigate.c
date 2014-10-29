@@ -801,7 +801,7 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
     }
 
     if(FAILED(hres)) {
-        bscallback->vtbl->stop_binding(bscallback, hres);
+        bscallback->window = NULL;
         return hres;
     }
 
@@ -809,7 +809,7 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
     IBindCtx_Release(bctx);
     if(FAILED(hres)) {
         WARN("BindToStorage failed: %08x\n", hres);
-        bscallback->vtbl->stop_binding(bscallback, hres);
+        bscallback->window = NULL;
         return hres;
     }
 
