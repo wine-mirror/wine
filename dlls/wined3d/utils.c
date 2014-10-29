@@ -2018,7 +2018,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
          */
     }
 
-    if (gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
+    if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
     {
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
