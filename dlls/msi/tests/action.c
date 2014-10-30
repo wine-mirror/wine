@@ -186,7 +186,8 @@ static const char property_dat[] =
     "SERVNAME2\tTestService2\n"
     "SERVDISP\tTestServiceDisp\n"
     "SERVDISP2\tTestServiceDisp2\n"
-    "MSIFASTINSTALL\t1\n";
+    "MSIFASTINSTALL\t1\n"
+    "regdata15\t#x01\n";
 
 static const char environment_dat[] =
     "Environment\tName\tValue\tComponent_\n"
@@ -514,7 +515,11 @@ static const char wrv_registry_dat[] =
     "regdata8\t2\tSOFTWARE\\Wine\\msitest\tValue4\tone[~]two\taugustus\n"
     "regdata9\t2\tSOFTWARE\\Wine\\msitest\tValue5\t[~]one[~]two[~]three\taugustus\n"
     "regdata10\t2\tSOFTWARE\\Wine\\msitest\tValue6\t[~]\taugustus\n"
-    "regdata11\t2\tSOFTWARE\\Wine\\msitest\tValue7\t[~]two\taugustus\n";
+    "regdata11\t2\tSOFTWARE\\Wine\\msitest\tValue7\t[~]two\taugustus\n"
+    "regdata12\t2\tSOFTWARE\\Wine\\msitest\tValue8\t#1\taugustus\n"
+    "regdata13\t2\tSOFTWARE\\Wine\\msitest\tValue9\t#x1\taugustus\n"
+    "regdata14\t2\tSOFTWARE\\Wine\\msitest\tValue10\t#x01\taugustus\n"
+    "regdata15\t2\tSOFTWARE\\Wine\\msitest\tValue11\t[regdata15]\taugustus\n";
 
 static const char cf_directory_dat[] =
     "Directory\tDirectory_Parent\tDefaultDir\n"
@@ -4923,6 +4928,7 @@ static void test_write_registry_values(void)
     HKEY hkey;
     DWORD type, size;
     CHAR path[MAX_PATH];
+    BYTE buf[8];
 
     if (is_process_limited())
     {
@@ -5055,6 +5061,42 @@ static void test_write_registry_values(void)
     ok(size == 5, "Expected 5, got %d\n", size);
     ok(type == REG_MULTI_SZ, "Expected REG_MULTI_SZ, got %d\n", type);
 
+    size = sizeof(buf);
+    type = 0xdeadbeef;
+    memset(buf, 0, size);
+    res = RegQueryValueExA(hkey, "Value8", NULL, &type, buf, &size);
+    ok(res == ERROR_SUCCESS, "got %u\n", res);
+    ok(*(DWORD *)buf == 1, "got %u\n", *(DWORD *)buf);
+    ok(size == 4, "got %u\n", size);
+    ok(type == REG_DWORD, "got %u\n", type);
+
+    size = sizeof(buf);
+    type = 0xdeadbeef;
+    memset(buf, 0, size);
+    res = RegQueryValueExA(hkey, "Value9", NULL, &type, buf, &size);
+    ok(res == ERROR_SUCCESS, "got %u\n", res);
+    ok(buf[0] == 1, "got %u\n", buf[0]);
+    ok(size == 1, "got %u\n", size);
+    ok(type == REG_BINARY, "got %u\n", type);
+
+    size = sizeof(buf);
+    type = 0xdeadbeef;
+    memset(buf, 0, size);
+    res = RegQueryValueExA(hkey, "Value10", NULL, &type, buf, &size);
+    ok(res == ERROR_SUCCESS, "got %u\n", res);
+    ok(buf[0] == 1, "got %u\n", buf[0]);
+    ok(size == 1, "got %u\n", size);
+    ok(type == REG_BINARY, "got %u\n", type);
+
+    size = sizeof(buf);
+    type = 0xdeadbeef;
+    memset(buf, 0, size);
+    res = RegQueryValueExA(hkey, "Value11", NULL, &type, buf, &size);
+    ok(res == ERROR_SUCCESS, "got %u\n", res);
+    ok(buf[0] == 1, "got %u\n", buf[0]);
+    ok(size == 1, "got %u\n", size);
+    ok(type == REG_BINARY, "got %u\n", type);
+
     RegDeleteValueA(hkey, "Value");
     RegDeleteValueA(hkey, "Value1");
     RegDeleteValueA(hkey, "Value2");
@@ -5063,6 +5105,10 @@ static void test_write_registry_values(void)
     RegDeleteValueA(hkey, "Value5");
     RegDeleteValueA(hkey, "Value6");
     RegDeleteValueA(hkey, "Value7");
+    RegDeleteValueA(hkey, "Value8");
+    RegDeleteValueA(hkey, "Value9");
+    RegDeleteValueA(hkey, "Value10");
+    RegDeleteValueA(hkey, "Value11");
     RegCloseKey(hkey);
     RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
 
