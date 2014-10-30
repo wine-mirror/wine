@@ -9152,6 +9152,11 @@ static void test_get_attributes(void)
     hr = IXMLDOMNode_get_attributes(node, &map);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    node2 = (void*)0xdeadbeef;
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("attr"), &node2);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok(node2 == NULL, "got %p\n", node2);
+
     length = -1;
     hr = IXMLDOMNamedNodeMap_get_length(map, &length);
     EXPECT_HR(hr, S_OK);
