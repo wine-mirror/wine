@@ -798,12 +798,12 @@ void WCMD_copy(WCHAR * args) {
 
     /* If parameter is a directory, ensure it ends in \ */
     attributes = GetFileAttributesW(destname);
-    if ((destname[strlenW(destname) - 1] == '\\') ||
+    if (ends_with_backslash( destname ) ||
         ((attributes != INVALID_FILE_ATTRIBUTES) &&
          (attributes & FILE_ATTRIBUTE_DIRECTORY))) {
 
       destisdirectory = TRUE;
-      if (!(destname[strlenW(destname) - 1] == '\\')) strcatW(destname, slashW);
+      if (!ends_with_backslash( destname )) strcatW(destname, slashW);
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(destname));
     }
   }
@@ -880,7 +880,7 @@ void WCMD_copy(WCHAR * args) {
 
     /* If parameter is a directory, ensure it ends in \* */
     attributes = GetFileAttributesW(srcpath);
-    if (srcpath[strlenW(srcpath) - 1] == '\\') {
+    if (ends_with_backslash( srcpath )) {
 
       /* We need to know where the filename part starts, so append * and
          recalculate the full resulting path                              */

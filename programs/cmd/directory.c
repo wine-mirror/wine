@@ -833,13 +833,8 @@ void WCMD_directory (WCHAR *args)
       if ((strchrW(path, '*') == NULL) && (strchrW(path, '%') == NULL)) {
         status = GetFileAttributesW(path);
         if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
-          if (path[strlenW(path)-1] == '\\') {
-            strcatW (path, starW);
-          }
-          else {
-            static const WCHAR slashStarW[]  = {'\\','*','\0'};
-            strcatW (path, slashStarW);
-          }
+          if (!ends_with_backslash( path )) strcatW( path, slashW );
+          strcatW (path, starW);
         }
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as

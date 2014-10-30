@@ -148,6 +148,11 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
     return ret;
 }
 
+static inline BOOL ends_with_backslash( const WCHAR *path )
+{
+    return path[0] && path[strlenW(path) - 1] == '\\';
+}
+
 /* Data structure to hold context when executing batch files */
 
 typedef struct _BATCH_CONTEXT {
