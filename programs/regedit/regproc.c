@@ -267,6 +267,9 @@ static int REGPROC_unescape_string(WCHAR* str)
             case 'n':
                 str[val_idx] = '\n';
                 break;
+            case 'r':
+                str[val_idx] = '\r';
+                break;
             case '0':
                 str[val_idx] = '\0';
                 break;
@@ -961,6 +964,13 @@ static void REGPROC_export_string(WCHAR **line_buf, DWORD *line_buf_size, DWORD 
             REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + str_len + extra);
             (*line_buf)[pos++] = '\\';
             (*line_buf)[pos++] = 'n';
+            break;
+
+        case '\r':
+            extra++;
+            REGPROC_resize_char_buffer(line_buf, line_buf_size, *line_len + str_len + extra);
+            (*line_buf)[pos++] = '\\';
+            (*line_buf)[pos++] = 'r';
             break;
 
         case '\\':
