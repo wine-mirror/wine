@@ -809,7 +809,7 @@ static void strip_spaces(LPWSTR start)
     LPWSTR str = start;
     LPWSTR end;
 
-    while (*str == ' ' && *str != '\0')
+    while (*str == ' ')
         str++;
 
     if (str != start)
@@ -841,13 +841,13 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue, LPWSTR *pszRealm )
         if (!token)
             return TRUE;
         realm = ptr;
-        while (*realm == ' ' && *realm != '\0')
+        while (*realm == ' ')
             realm++;
         if(!strncmpiW(realm, szRealm, ARRAYSIZE(szRealm)) &&
             (realm[ARRAYSIZE(szRealm)] == ' ' || realm[ARRAYSIZE(szRealm)] == '='))
         {
             token++;
-            while (*token == ' ' && *token != '\0')
+            while (*token == ' ')
                 token++;
             if (*token == '\0')
                 return TRUE;
