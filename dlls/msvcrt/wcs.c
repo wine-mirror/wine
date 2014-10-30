@@ -818,6 +818,20 @@ int CDECL MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
 }
 
 /*********************************************************************
+ *		_snprintf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__snprintf_l(char *str, unsigned int count, MSVCRT__locale_t locale,
+    const char *format, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    retval = MSVCRT_vsnprintf_l(str, count, format, locale, valist);
+    __ms_va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
  *		_snprintf_s (MSVCRT.@)
  */
 int CDECL MSVCRT__snprintf_s(char *str, unsigned int len, unsigned int count,
