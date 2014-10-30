@@ -2118,7 +2118,7 @@ static BOOL ME_Copy(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
     hr = OleSetClipboard(dataObj);
     IDataObject_Release(dataObj);
   }
-  return SUCCEEDED(hr) != 0;
+  return SUCCEEDED(hr);
 }
 
 /* helper to send a msg filter notification */
