@@ -4223,7 +4223,7 @@ static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
-    ok(info.dwKeySize == 128 || info.dwKeySize == 256, "dwKeySize = %u\n", info.dwKeySize);
+    ok(info.dwKeySize >= 128 && info.dwKeySize <= 256, "dwKeySize = %u\n", info.dwKeySize);
 
     release_cert_info(&info);
 }
