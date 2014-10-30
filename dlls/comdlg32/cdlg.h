@@ -24,7 +24,7 @@
 #include "dlgs.h"
 
 /* Common dialogs implementation globals */
-#define COMDLG32_Atom	((ATOM)0xa000)	/* MS uses this one to identify props */
+#define COMDLG32_Atom   MAKEINTATOM(0xa000)     /* MS uses this one to identify props */
 
 extern HINSTANCE	COMDLG32_hInstance DECLSPEC_HIDDEN;
 
