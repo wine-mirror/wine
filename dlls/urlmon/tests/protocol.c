@@ -1991,7 +1991,9 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
             memcpy(pv, "gif87a", 6);
         prot_read += *pcbRead = cb;
         return S_OK;
-    }if(prot_state == 4) {
+    }
+
+    if(prot_state == 4) {
         *pcbRead = 0;
         return S_FALSE;
     }
