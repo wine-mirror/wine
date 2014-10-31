@@ -234,7 +234,7 @@ TOOLTIPS_customdraw_fill(const TOOLTIPS_INFO *infoPtr, NMTTCUSTOMDRAW *lpnmttcd,
 static inline DWORD
 TOOLTIPS_notify_customdraw (DWORD dwDrawStage, NMTTCUSTOMDRAW *lpnmttcd)
 {
-    LRESULT result = CDRF_DODEFAULT;
+    LRESULT result;
     lpnmttcd->nmcd.dwDrawStage = dwDrawStage;
 
     TRACE("Notifying stage %d, flags %x, id %x\n", lpnmttcd->nmcd.dwDrawStage,
