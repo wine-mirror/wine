@@ -1136,7 +1136,7 @@ static void test_reg_open_key(void)
         ok(error == ERROR_SUCCESS,
            "Expected RegSetKeySecurity to return success, got error %u\n", error);
 
-        bRet = RegSetKeySecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
+        error = RegSetKeySecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
         ok(error == ERROR_SUCCESS,
            "Expected RegSetKeySecurity to return success, got error %u\n", error);
 
