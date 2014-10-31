@@ -4555,6 +4555,94 @@ struct vertex
     D3DXVECTOR3 normal;
 };
 
+HRESULT WINAPI D3DXCreatePolygon(struct IDirect3DDevice9 *device, float length, UINT sides,
+        struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
+{
+    HRESULT hr;
+    ID3DXMesh *polygon;
+    struct vertex *vertices;
+    WORD (*faces)[3];
+    DWORD (*adjacency_buf)[3];
+    float scale;
+    unsigned int i;
+
+    TRACE("device %p, length %f, sides %u, mesh %p, adjacency %p.\n",
+            device, length, sides, mesh, adjacency);
+
+    if (!device || length < 0.0f || sides < 3 || !mesh)
+        return D3DERR_INVALIDCALL;
+
+    if (FAILED(hr = D3DXCreateMeshFVF(sides, sides + 1, D3DXMESH_MANAGED,
+            D3DFVF_XYZ | D3DFVF_NORMAL, device, &polygon)))
+    {
+        return hr;
+    }
+
+    if (FAILED(hr = polygon->lpVtbl->LockVertexBuffer(polygon, 0, (void **)&vertices)))
+    {
+        polygon->lpVtbl->Release(polygon);
+        return hr;
+    }
+
+    if (FAILED(hr = polygon->lpVtbl->LockIndexBuffer(polygon, 0, (void **)&faces)))
+    {
+        polygon->lpVtbl->UnlockVertexBuffer(polygon);
+        polygon->lpVtbl->Release(polygon);
+        return hr;
+    }
+
+    scale = 0.5f * length / sinf(D3DX_PI / sides);
+
+    vertices[0].position.x = 0.0f;
+    vertices[0].position.y = 0.0f;
+    vertices[0].position.z = 0.0f;
+    vertices[0].normal.x = 0.0f;
+    vertices[0].normal.y = 0.0f;
+    vertices[0].normal.z = 1.0f;
+
+    for (i = 0; i < sides; ++i)
+    {
+        vertices[i + 1].position.x = cosf(2.0f * D3DX_PI * i / sides) * scale;
+        vertices[i + 1].position.y = sinf(2.0f * D3DX_PI * i / sides) * scale;
+        vertices[i + 1].position.z = 0.0f;
+        vertices[i + 1].normal.x = 0.0f;
+        vertices[i + 1].normal.y = 0.0f;
+        vertices[i + 1].normal.z = 1.0f;
+
+        faces[i][0] = 0;
+        faces[i][1] = i + 1;
+        faces[i][2] = i + 2;
+    }
+
+    faces[sides - 1][2] = 1;
+
+    polygon->lpVtbl->UnlockVertexBuffer(polygon);
+    polygon->lpVtbl->UnlockIndexBuffer(polygon);
+
+    if (adjacency)
+    {
+        if (FAILED(hr = D3DXCreateBuffer(sides * sizeof(DWORD) * 3, adjacency)))
+        {
+            polygon->lpVtbl->Release(polygon);
+            return hr;
+        }
+
+        adjacency_buf = ID3DXBuffer_GetBufferPointer(*adjacency);
+        for (i = 0; i < sides; ++i)
+        {
+            adjacency_buf[i][0] = i - 1;
+            adjacency_buf[i][1] = ~0U;
+            adjacency_buf[i][2] = i + 1;
+        }
+        adjacency_buf[0][0] = sides - 1;
+        adjacency_buf[sides - 1][2] = 0;
+    }
+
+    *mesh = polygon;
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXCreateBox(struct IDirect3DDevice9 *device, float width, float height,
         float depth, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
 {

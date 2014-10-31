@@ -76,7 +76,7 @@
 @ stub D3DXCreateNPatchMesh(ptr ptr)
 @ stub D3DXCreatePMeshFromStream(ptr long ptr ptr ptr ptr ptr)
 @ stub D3DXCreatePatchMesh(ptr long long long ptr ptr ptr)
-@ stub D3DXCreatePolygon(ptr long long ptr ptr)
+@ stdcall D3DXCreatePolygon(ptr float long ptr ptr)
 @ stub D3DXCreatePRTBuffer(long long long ptr)
 @ stub D3DXCreatePRTBufferTex(long long long long ptr)
 @ stub D3DXCreatePRTCompBuffer(long long long ptr ptr ptr ptr)

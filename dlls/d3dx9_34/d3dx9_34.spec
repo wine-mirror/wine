@@ -75,7 +75,7 @@
 @ stdcall D3DXCreateNPatchMesh(ptr ptr) d3dx9_36.D3DXCreateNPatchMesh
 @ stdcall D3DXCreatePMeshFromStream(ptr long ptr ptr ptr ptr ptr) d3dx9_36.D3DXCreatePMeshFromStream
 @ stdcall D3DXCreatePatchMesh(ptr long long long ptr ptr ptr) d3dx9_36.D3DXCreatePatchMesh
-@ stdcall D3DXCreatePolygon(ptr long long ptr ptr) d3dx9_36.D3DXCreatePolygon
+@ stdcall D3DXCreatePolygon(ptr float long ptr ptr) d3dx9_36.D3DXCreatePolygon
 @ stdcall D3DXCreatePRTBuffer(long long long ptr) d3dx9_36.D3DXCreatePRTBuffer
 @ stdcall D3DXCreatePRTBufferTex(long long long long ptr) d3dx9_36.D3DXCreatePRTBufferTex
 @ stdcall D3DXCreatePRTCompBuffer(long long long ptr ptr ptr ptr) d3dx9_36.D3DXCreatePRTCompBuffer

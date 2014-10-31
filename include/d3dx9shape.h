@@ -29,6 +29,8 @@ HRESULT WINAPI D3DXCreateBox(struct IDirect3DDevice9 *device, float width, float
         float depth, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency);
 HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1, float radius2,
         float length, UINT slices, UINT stacks, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency);
+HRESULT WINAPI D3DXCreatePolygon(struct IDirect3DDevice9 *device, float length, UINT sides, struct ID3DXMesh **mesh,
+        ID3DXBuffer **adjacency);
 HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, UINT slices,
         UINT stacks, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency);
 HRESULT WINAPI D3DXCreateTeapot(struct IDirect3DDevice9 *device,
