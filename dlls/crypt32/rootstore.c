@@ -489,6 +489,7 @@ static const char * const CRYPT_knownLocations[] = {
  "/usr/share/ca-certificates/ca-bundle.crt",
  "/usr/local/share/certs/",
  "/etc/sfw/openssl/certs",
+ "/etc/security/cacerts",  /* Android */
 };
 
 static const BYTE authenticode[] = {
