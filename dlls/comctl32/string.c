@@ -855,16 +855,15 @@ int WINAPI StrCSpnW(LPCWSTR lpszStr, LPCWSTR lpszMatch)
 BOOL WINAPI IntlStrEqWorkerA(BOOL bCase, LPCSTR lpszStr, LPCSTR lpszComp,
                              int iLen)
 {
-  DWORD dwFlags = LOCALE_USE_CP_ACP;
+  DWORD dwFlags;
   int iRet;
 
   TRACE("(%d,%s,%s,%d)\n", bCase,
         debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
 
   /* FIXME: This flag is undocumented and unknown by our CompareString.
-   *        We need a define for it.
    */
-  dwFlags = 0x10000000;
+  dwFlags = LOCALE_RETURN_GENITIVE_NAMES;
   if (!bCase) dwFlags |= NORM_IGNORECASE;
 
   iRet = CompareStringA(GetThreadLocale(),
@@ -891,9 +890,8 @@ BOOL WINAPI IntlStrEqWorkerW(BOOL bCase, LPCWSTR lpszStr, LPCWSTR lpszComp,
         debugstr_w(lpszStr),debugstr_w(lpszComp), iLen);
 
   /* FIXME: This flag is undocumented and unknown by our CompareString.
-   *        We need a define for it.
    */
-  dwFlags = 0x10000000;
+  dwFlags = LOCALE_RETURN_GENITIVE_NAMES;
   if (!bCase) dwFlags |= NORM_IGNORECASE;
 
   iRet = CompareStringW(GetThreadLocale(),
