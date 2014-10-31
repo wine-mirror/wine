@@ -524,7 +524,7 @@ page_with_custom_default_button_dlg_proc(HWND hdlg, UINT msg, WPARAM wparam, LPA
 
 static void test_custom_default_button(void)
 {
-    HWND hdlg;
+    HWND hdlg, page;
     PROPSHEETPAGEA psp[1];
     PROPSHEETHEADERA psh;
     MSG msg;
@@ -568,7 +568,8 @@ static void test_custom_default_button(void)
 
     /* At this point, the combobox should have keyboard focus, so we press ENTER.
      * Pull the lever, Kronk! */
-    keybd_event(VK_RETURN, 0, 0, 0);
+    page = (HWND)SendMessageW(hdlg, PSM_GETCURRENTPAGEHWND, 0, 0);
+    PostMessageW(GetDlgItem(page, IDC_PS_COMBO1), WM_KEYDOWN, VK_RETURN, 0);
 
     /* Process all the messages in the queue for this thread. */
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
