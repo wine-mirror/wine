@@ -2600,6 +2600,160 @@ end:
     DestroyWindow(wnd);
 }
 
+static BOOL compute_polygon(struct mesh *mesh, float length, unsigned int sides)
+{
+    unsigned int i;
+    float scale;
+
+    if (!new_mesh(mesh, sides + 1, sides))
+        return FALSE;
+
+    scale = 0.5f * length / sinf(D3DX_PI / sides);
+
+    mesh->vertices[0].position.x = 0.0f;
+    mesh->vertices[0].position.y = 0.0f;
+    mesh->vertices[0].position.z = 0.0f;
+    mesh->vertices[0].normal.x = 0.0f;
+    mesh->vertices[0].normal.y = 0.0f;
+    mesh->vertices[0].normal.z = 1.0f;
+
+    for (i = 0; i < sides; ++i)
+    {
+        mesh->vertices[i + 1].position.x = cosf(2.0f * D3DX_PI * i / sides) * scale;
+        mesh->vertices[i + 1].position.y = sinf(2.0f * D3DX_PI * i / sides) * scale;
+        mesh->vertices[i + 1].position.z = 0.0f;
+        mesh->vertices[i + 1].normal.x = 0.0f;
+        mesh->vertices[i + 1].normal.y = 0.0f;
+        mesh->vertices[i + 1].normal.z = 1.0f;
+
+        mesh->faces[i][0] = 0;
+        mesh->faces[i][1] = i + 1;
+        mesh->faces[i][2] = i + 2;
+    }
+
+    mesh->faces[sides - 1][2] = 1;
+
+    return TRUE;
+}
+
+static void test_polygon(IDirect3DDevice9 *device, float length, unsigned int sides)
+{
+    HRESULT hr;
+    ID3DXMesh *polygon;
+    struct mesh mesh;
+    char name[64];
+
+    hr = D3DXCreatePolygon(device, length, sides, &polygon, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create polygon\n");
+        return;
+    }
+
+    if (!compute_polygon(&mesh, length, sides))
+    {
+        skip("Couldn't create mesh\n");
+        polygon->lpVtbl->Release(polygon);
+        return;
+    }
+
+    mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+    sprintf(name, "polygon (%g, %d)", length, sides);
+    compare_mesh(name, polygon, &mesh);
+
+    free_mesh(&mesh);
+
+    polygon->lpVtbl->Release(polygon);
+}
+
+static void D3DXCreatePolygonTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh *polygon;
+    ID3DXBuffer *adjacency;
+    DWORD (*buffer)[3], buffer_size;
+    unsigned int i;
+
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreatePolygon(device, 2.0f, 11, NULL, &adjacency);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+
+    hr = D3DXCreatePolygon(NULL, 2.0f, 11, &polygon, &adjacency);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+
+    hr = D3DXCreatePolygon(device, -2.0f, 11, &polygon, &adjacency);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+
+    polygon = (void *)0xdeadbeef;
+    adjacency = (void *)0xdeadbeef;
+    hr = D3DXCreatePolygon(device, 2.0f, 0, &polygon, &adjacency);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(polygon == (void *)0xdeadbeef, "Polygon was changed to %p\n", polygon);
+    ok(adjacency == (void *)0xdeadbeef, "Adjacency was changed to %p\n", adjacency);
+
+    hr = D3DXCreatePolygon(device, 2.0f, 2, &polygon, &adjacency);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+
+    adjacency = NULL;
+    hr = D3DXCreatePolygon(device, 3.0f, 11, &polygon, &adjacency);
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#x\n", hr);
+
+    buffer_size = ID3DXBuffer_GetBufferSize(adjacency);
+    ok(buffer_size == 33 * sizeof(DWORD), "Wrong adjacency buffer size %u\n", buffer_size);
+
+    buffer = ID3DXBuffer_GetBufferPointer(adjacency);
+    for (i = 0; i < 11; ++i)
+    {
+        ok(buffer[i][0] == (i + 10) % 11, "Wrong adjacency[%d][0] = %u\n", i, buffer[i][0]);
+        ok(buffer[i][1] == ~0U, "Wrong adjacency[%d][1] = %u\n", i, buffer[i][1]);
+        ok(buffer[i][2] == (i + 1) % 11, "Wrong adjacency[%d][2] = %u\n", i, buffer[i][2]);
+    }
+
+    polygon->lpVtbl->Release(polygon);
+    ID3DXBuffer_Release(adjacency);
+
+    test_polygon(device, 2.0f, 3);
+    test_polygon(device, 10.0f, 3);
+    test_polygon(device, 10.0f, 5);
+    test_polygon(device, 10.0f, 10);
+    test_polygon(device, 20.0f, 10);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 struct sincos_table
 {
     float *sin;
@@ -10458,6 +10612,7 @@ START_TEST(mesh)
     D3DXCreateMeshFVFTest();
     D3DXLoadMeshTest();
     D3DXCreateBoxTest();
+    D3DXCreatePolygonTest();
     D3DXCreateSphereTest();
     D3DXCreateCylinderTest();
     D3DXCreateTextTest();
