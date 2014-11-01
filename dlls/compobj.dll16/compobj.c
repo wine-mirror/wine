@@ -668,18 +668,17 @@ HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
 {
 	char	*buf,buf2[80];
 	LONG	buf2len;
-	HRESULT	err;
 	HKEY	xhkey;
 
 	buf = HeapAlloc(GetProcessHeap(),0,strlen(progid)+8);
 	sprintf(buf,"%s\\CLSID",progid);
-	if ((err=RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&xhkey))) {
+	if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&xhkey)) {
 		HeapFree(GetProcessHeap(),0,buf);
                 return CO_E_CLASSSTRING;
 	}
 	HeapFree(GetProcessHeap(),0,buf);
 	buf2len = sizeof(buf2);
-	if ((err=RegQueryValueA(xhkey,NULL,buf2,&buf2len))) {
+	if (RegQueryValueA(xhkey,NULL,buf2,&buf2len)) {
 		RegCloseKey(xhkey);
                 return CO_E_CLASSSTRING;
 	}
