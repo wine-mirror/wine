@@ -75,7 +75,7 @@ static void test_GetPtrAW(void)
         static char dest[MAX_PATH];
         int sourcelen;
         int destsize = MAX_PATH;
-        int count = -1;
+        int count;
 
         sourcelen = strlen(source) + 1;
 
