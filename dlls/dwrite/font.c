@@ -1476,8 +1476,10 @@ HRESULT create_font_collection(IDWriteFactory* factory, IDWriteFontFileEnumerato
             init_font_data(factory, file, i, face_type, font_data);
 
             hr = get_filestream_from_file(file, &stream);
-            if (FAILED(hr))
+            if (FAILED(hr)) {
+                heap_free (font_data);
                 return hr;
+            }
 
             /* get family name from font file */
             name_table = NULL;
