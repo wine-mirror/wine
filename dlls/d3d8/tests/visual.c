@@ -66,7 +66,7 @@ static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
         return 0xdeadbeef;
     }
     hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &surf);
-    if(FAILED(hr) || !tex )  /* This is not a test */
+    if (FAILED(hr))  /* This is not a test */
     {
         trace("Can't get surface from texture, hr=%#08x\n", hr);
         ret = 0xdeadbeee;
