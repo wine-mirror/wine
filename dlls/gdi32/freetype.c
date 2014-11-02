@@ -6937,7 +6937,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             INT x, src_pitch, src_width, src_height, rgb_interval, hmul, vmul;
             INT x_shift, y_shift;
             BOOL rgb;
-            FT_LcdFilter lcdfilter = FT_LCD_FILTER_DEFAULT;
             FT_Render_Mode render_mode =
                 (format == WINE_GGO_HRGB_BITMAP || format == WINE_GGO_HBGR_BITMAP)?
                     FT_RENDER_MODE_LCD: FT_RENDER_MODE_LCD_V;
@@ -6948,20 +6947,17 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 return GDI_ERROR;
             }
 
-            if ( lcdfilter == FT_LCD_FILTER_DEFAULT || lcdfilter == FT_LCD_FILTER_LIGHT )
+            if ( render_mode == FT_RENDER_MODE_LCD)
             {
-                if ( render_mode == FT_RENDER_MODE_LCD)
-                {
-                    gm.gmBlackBoxX += 2;
-                    gm.gmptGlyphOrigin.x -= 1;
-                    left -= (1 << 6);
-                }
-                else
-                {
-                    gm.gmBlackBoxY += 2;
-                    gm.gmptGlyphOrigin.y += 1;
-                    top += (1 << 6);
-                }
+                gm.gmBlackBoxX += 2;
+                gm.gmptGlyphOrigin.x -= 1;
+                left -= (1 << 6);
+            }
+            else
+            {
+                gm.gmBlackBoxY += 2;
+                gm.gmptGlyphOrigin.y += 1;
+                top += (1 << 6);
             }
 
             width  = gm.gmBlackBoxX;
@@ -6981,7 +6977,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 pFT_Outline_Transform (&ft_face->glyph->outline, &transMatTategaki);
 
             if ( pFT_Library_SetLcdFilter )
-                pFT_Library_SetLcdFilter( library, lcdfilter );
+                pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
             pFT_Render_Glyph (ft_face->glyph, render_mode);
 
             src = ft_face->glyph->bitmap.buffer;
