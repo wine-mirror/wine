@@ -1546,7 +1546,7 @@ static void test_reg_query_value(void)
     ret = RegQueryValueA(hkey_main, "subkey", val, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlenA(val) == 0, "Expected val to be untouched, got %s\n", val);
+    ok(!val[0], "Expected val to be untouched, got %s\n", val);
 
     /* try a NULL value and size */
     ret = RegQueryValueA(hkey_main, "subkey", NULL, NULL);
@@ -1559,7 +1559,7 @@ static void test_reg_query_value(void)
     ret = RegQueryValueA(hkey_main, "subkey", val, &size);
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlenA(val) == 0, "Expected val to be untouched, got %s\n", val);
+    ok(!val[0], "Expected val to be untouched, got %s\n", val);
     ok(size == 5, "Expected 5, got %d\n", size);
 
     /* successfully read the value using 'subkey' */
@@ -1588,7 +1588,7 @@ static void test_reg_query_value(void)
     }
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlenW(valW) == 0, "Expected valW to be untouched\n");
+    ok(!valW[0], "Expected valW to be untouched\n");
     ok(size == sizeof(expected), "Got wrong size: %d\n", size);
 
     /* unicode - try size in WCHARS */
@@ -1597,7 +1597,7 @@ static void test_reg_query_value(void)
     ret = RegQueryValueW(subkey, NULL, valW, &size);
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
-    ok(lstrlenW(valW) == 0, "Expected valW to be untouched\n");
+    ok(!valW[0], "Expected valW to be untouched\n");
     ok(size == sizeof(expected), "Got wrong size: %d\n", size);
 
     /* unicode - successfully read the value */
@@ -1764,8 +1764,7 @@ static void test_reg_delete_tree(void)
     ret = RegQueryValueA(subkey, NULL, buffer, &size);
     ok(ret == ERROR_SUCCESS,
         "Default value of subkey is not present\n");
-    ok(!lstrlenA(buffer),
-        "Expected length 0 got length %u(%s)\n", lstrlenA(buffer), buffer);
+    ok(!buffer[0], "Expected length 0 got length %u(%s)\n", lstrlenA(buffer), buffer);
     size = MAX_PATH;
     ok(RegQueryValueA(subkey, "value", buffer, &size),
         "Value is still present\n");
