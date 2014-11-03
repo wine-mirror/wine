@@ -4244,3 +4244,21 @@ UINT WINAPI Migrate10CachedPackagesW(void* a, void* b, void* c, DWORD d)
     FIXME("%p,%p,%p,%08x\n", a, b, c, d);
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ * MsiRemovePatchesA     [MSI.@]
+ */
+UINT WINAPI MsiRemovePatchesA(LPCSTR patchlist, LPCSTR product, INSTALLTYPE type, LPCSTR propertylist)
+{
+    FIXME("(%s %s %d %s\n", debugstr_a(patchlist), debugstr_a(product), type, debugstr_a(propertylist));
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ * MsiRemovePatchesW    [MSI.@]
+ */
+UINT WINAPI MsiRemovePatchesW(LPCWSTR patchlist, LPCWSTR product, INSTALLTYPE type, LPCWSTR propertylist)
+{
+    FIXME("(%s %s %d %s\n", debugstr_w(patchlist), debugstr_w(product), type, debugstr_w(propertylist));
+    return ERROR_SUCCESS;
+}

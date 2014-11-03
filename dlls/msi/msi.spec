@@ -230,8 +230,8 @@
 234 stub MsiDeleteUserDataW
 235 stub Migrate10CachedPackagesA
 236 stdcall Migrate10CachedPackagesW(ptr ptr ptr long)
-237 stub MsiRemovePatchesA
-238 stub MsiRemovePatchesW
+237 stdcall MsiRemovePatchesA(str str long str)
+238 stdcall MsiRemovePatchesW(wstr wstr long wstr)
 239 stdcall MsiApplyMultiplePatchesA(str str str)
 240 stdcall MsiApplyMultiplePatchesW(wstr wstr wstr)
 241 stub MsiExtractPatchXMLDataA
