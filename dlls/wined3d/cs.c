@@ -636,10 +636,15 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
 
     if (op->texture)
     {
+        const struct wined3d_format *new_format = op->texture->resource.format;
+        const struct wined3d_format *old_format = prev ? prev->resource.format : NULL;
+
         if (InterlockedIncrement(&op->texture->resource.bind_count) == 1)
             op->texture->sampler = op->stage;
 
-        if (!prev || op->texture->target != prev->target)
+        if (!prev || op->texture->target != prev->target
+                || !is_same_fixup(new_format->color_fixup, old_format->color_fixup)
+                || (new_format->flags & WINED3DFMT_FLAG_SHADOW) != (old_format->flags & WINED3DFMT_FLAG_SHADOW))
             device_invalidate_state(cs->device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
         if (!prev && op->stage < d3d_info->limits.ffp_blend_stages)
