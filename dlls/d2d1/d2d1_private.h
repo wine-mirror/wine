@@ -86,10 +86,11 @@ struct d2d_gradient
     ID2D1GradientStopCollection ID2D1GradientStopCollection_iface;
     LONG refcount;
 
+    D2D1_GRADIENT_STOP *stops;
     UINT32 stop_count;
 };
 
-void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
+HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma,
         D2D1_EXTEND_MODE extend_mode) DECLSPEC_HIDDEN;
 

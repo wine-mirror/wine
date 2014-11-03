@@ -66,7 +66,10 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        HeapFree(GetProcessHeap(), 0, gradient->stops);
         HeapFree(GetProcessHeap(), 0, gradient);
+    }
 
     return refcount;
 }
@@ -90,7 +93,13 @@ static UINT32 STDMETHODCALLTYPE d2d_gradient_GetGradientStopCount(ID2D1GradientS
 static void STDMETHODCALLTYPE d2d_gradient_GetGradientStops(ID2D1GradientStopCollection *iface,
         D2D1_GRADIENT_STOP *stops, UINT32 stop_count)
 {
-    FIXME("iface %p, stops %p, stop_count %u stub!\n", iface, stops, stop_count);
+    struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
+
+    TRACE("iface %p, stops %p, stop_count %u.\n", iface, stops, stop_count);
+
+    memcpy(stops, gradient->stops, min(gradient->stop_count, stop_count) * sizeof(*stops));
+    if (stop_count > gradient->stop_count)
+        memset(stops, 0, (stop_count - gradient->stop_count) * sizeof(*stops));
 }
 
 static D2D1_GAMMA STDMETHODCALLTYPE d2d_gradient_GetColorInterpolationGamma(ID2D1GradientStopCollection *iface)
@@ -119,7 +128,7 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
     d2d_gradient_GetExtendMode,
 };
 
-void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
+HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode)
 {
     FIXME("Ignoring gradient properties.\n");
@@ -128,6 +137,11 @@ void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_
     gradient->refcount = 1;
 
     gradient->stop_count = stop_count;
+    if (!(gradient->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))
+        return E_OUTOFMEMORY;
+    memcpy(gradient->stops, stops, stop_count * sizeof(*stops));
+
+    return S_OK;
 }
 
 static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
