@@ -1260,7 +1260,73 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Devi
 
 static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_device_set_vertex_shader(device->wined3d_device, NULL);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_vs_sampler(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_vs_resource_view(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_vs_cb(device->wined3d_device, i, NULL);
+    }
+    wined3d_device_set_geometry_shader(device->wined3d_device, NULL);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_gs_sampler(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_gs_resource_view(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_gs_cb(device->wined3d_device, i, NULL);
+    }
+    wined3d_device_set_pixel_shader(device->wined3d_device, NULL);
+    for (i = 0; i < D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_ps_sampler(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_ps_resource_view(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_ps_cb(device->wined3d_device, i, NULL);
+    }
+    for (i = 0; i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_stream_source(device->wined3d_device, i, NULL, 0, 0);
+    }
+    wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN);
+    wined3d_device_set_vertex_declaration(device->wined3d_device, NULL);
+    wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_UNDEFINED);
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        wined3d_device_set_rendertarget_view(device->wined3d_device, i, NULL, FALSE);
+    }
+    wined3d_device_set_depth_stencil_view(device->wined3d_device, NULL);
+    ID3D10Device1_OMSetDepthStencilState(iface, NULL, 0);
+    ID3D10Device1_OMSetBlendState(iface, NULL, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device1_RSSetViewports(iface, 0, NULL);
+    ID3D10Device1_RSSetScissorRects(iface, 0, NULL);
+    ID3D10Device1_RSSetState(iface, NULL);
+    for (i = 0; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        wined3d_device_set_stream_output(device->wined3d_device, i, NULL, 0);
+    }
+    wined3d_device_set_predication(device->wined3d_device, NULL, FALSE);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device1 *iface)
