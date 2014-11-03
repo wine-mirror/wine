@@ -85,6 +85,8 @@ struct d2d_gradient
 {
     ID2D1GradientStopCollection ID2D1GradientStopCollection_iface;
     LONG refcount;
+
+    UINT32 stop_count;
 };
 
 void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,

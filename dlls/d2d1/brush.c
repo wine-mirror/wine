@@ -80,9 +80,11 @@ static void STDMETHODCALLTYPE d2d_gradient_GetFactory(ID2D1GradientStopCollectio
 
 static UINT32 STDMETHODCALLTYPE d2d_gradient_GetGradientStopCount(ID2D1GradientStopCollection *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return gradient->stop_count;
 }
 
 static void STDMETHODCALLTYPE d2d_gradient_GetGradientStops(ID2D1GradientStopCollection *iface,
@@ -124,6 +126,8 @@ void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_
 
     gradient->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
     gradient->refcount = 1;
+
+    gradient->stop_count = stop_count;
 }
 
 static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
