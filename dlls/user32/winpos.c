@@ -131,7 +131,7 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
                     data->rdh.iType    = RDH_RECTANGLES;
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
-                    win_rgn = ExtCreateRegion( NULL, size, data );
+                    win_rgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
                 }
             }
             else size = reply->total_size;
@@ -532,7 +532,7 @@ void map_window_region( HWND from, HWND to, HRGN hrgn )
         rect[i].top    += offset.y;
         rect[i].bottom += offset.y;
     }
-    if ((new_rgn = ExtCreateRegion( NULL, data->rdh.nCount, data )))
+    if ((new_rgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data )))
     {
         CombineRgn( hrgn, new_rgn, 0, RGN_COPY );
         DeleteObject( new_rgn );
@@ -2018,7 +2018,7 @@ static void update_surface_region( HWND hwnd )
                     data->rdh.iType    = RDH_RECTANGLES;
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
-                    region = ExtCreateRegion( NULL, size, data );
+                    region = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
                     OffsetRgn( region, -reply->visible_rect.left, -reply->visible_rect.top );
                 }
             }

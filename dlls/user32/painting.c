@@ -139,7 +139,7 @@ static void update_visible_region( struct dce *dce )
                 data->rdh.iType    = RDH_RECTANGLES;
                 data->rdh.nCount   = reply_size / sizeof(RECT);
                 data->rdh.nRgnSize = reply_size;
-                vis_rgn = ExtCreateRegion( NULL, size, data );
+                vis_rgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
 
                 top_win         = wine_server_ptr_handle( reply->top_win );
                 win_rect.left   = reply->win_rect.left;
@@ -557,7 +557,7 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
                 data->rdh.iType    = RDH_RECTANGLES;
                 data->rdh.nCount   = reply_size / sizeof(RECT);
                 data->rdh.nRgnSize = reply_size;
-                hrgn = ExtCreateRegion( NULL, size, data );
+                hrgn = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
                 if (child) *child = wine_server_ptr_handle( reply->child );
                 *flags = reply->flags;
             }
