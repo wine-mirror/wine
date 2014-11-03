@@ -27,7 +27,7 @@
 #include <d3d9.h>
 
 static HMODULE d3d9_handle = 0;
-static DEVMODEW startup_mode;
+static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
 
@@ -1744,8 +1744,8 @@ static DWORD WINAPI wndproc_thread(void *param)
     BOOL ret;
 
     p->dummy_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, startup_mode.dmPelsWidth,
-            startup_mode.dmPelsHeight, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     p->running_in_foreground = SetForegroundWindow(p->dummy_window);
 
     ret = SetEvent(p->window_created);
@@ -1802,11 +1802,11 @@ static void test_wndproc(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, startup_mode.dmPelsWidth,
-            startup_mode.dmPelsHeight, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, startup_mode.dmPelsWidth,
-            startup_mode.dmPelsHeight, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -1839,8 +1839,8 @@ static void test_wndproc(void)
     expect_messages = messages;
 
     device_desc.device_window = device_window;
-    device_desc.width = startup_mode.dmPelsWidth;
-    device_desc.height = startup_mode.dmPelsHeight;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(focus_window, &device_desc)))
     {
@@ -1944,11 +1944,11 @@ static void test_wndproc_windowed(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, startup_mode.dmPelsWidth,
-            startup_mode.dmPelsHeight, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, startup_mode.dmPelsWidth,
-            startup_mode.dmPelsHeight, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -2143,14 +2143,14 @@ static void test_window_style(void)
     };
     unsigned int i;
 
-    SetRect(&fullscreen_rect, 0, 0, startup_mode.dmPelsWidth, startup_mode.dmPelsHeight);
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].style_flags,
-                0, 0, startup_mode.dmPelsWidth / 2, startup_mode.dmPelsHeight / 2, 0, 0, 0, 0);
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
         device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].style_flags,
-                0, 0, startup_mode.dmPelsWidth / 2, startup_mode.dmPelsHeight / 2, 0, 0, 0, 0);
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
 
         device_style = GetWindowLongA(device_window, GWL_STYLE);
         device_exstyle = GetWindowLongA(device_window, GWL_EXSTYLE);
@@ -2161,8 +2161,8 @@ static void test_window_style(void)
         GetWindowRect(device_window, &device_rect);
 
         device_desc.device_window = device_window;
-        device_desc.width = startup_mode.dmPelsWidth;
-        device_desc.height = startup_mode.dmPelsHeight;
+        device_desc.width = registry_mode.dmPelsWidth;
+        device_desc.height = registry_mode.dmPelsHeight;
         device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].device_flags;
         if (!(device = create_device(focus_window, &device_desc)))
         {
@@ -2233,6 +2233,8 @@ static void test_window_style(void)
 
 START_TEST(d3d9ex)
 {
+    DEVMODEW current_mode;
+
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
     {
@@ -2246,9 +2248,17 @@ START_TEST(d3d9ex)
         return;
     }
 
-    startup_mode.dmSize = sizeof(startup_mode);
-    ok(EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &startup_mode),
-            "Failed to get display mode.\n");
+    memset(&current_mode, 0, sizeof(current_mode));
+    current_mode.dmSize = sizeof(current_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &current_mode), "Failed to get display mode.\n");
+    registry_mode.dmSize = sizeof(registry_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
+    if (current_mode.dmPelsWidth != registry_mode.dmPelsWidth
+            || current_mode.dmPelsHeight != registry_mode.dmPelsHeight)
+    {
+        skip("Current mode does not match registry mode, skipping test.\n");
+        return;
+    }
 
     test_qi_base_to_ex();
     test_qi_ex_to_base();

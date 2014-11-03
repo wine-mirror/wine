@@ -47,8 +47,7 @@ struct device_desc
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
-static INT screen_width;
-static INT screen_height;
+static DEVMODEW registry_mode;
 
 static const DWORD simple_vs[] =
 {
@@ -186,8 +185,8 @@ static HRESULT reset_device(IDirect3DDevice9 *device, HWND device_window, BOOL w
     present_parameters.Windowed = windowed;
     present_parameters.hDeviceWindow = device_window;
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = screen_width;
-    present_parameters.BackBufferHeight = screen_height;
+    present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
+    present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
@@ -2983,8 +2982,8 @@ static void test_scissor_size(void)
 
         if (!scts[i].window)
         {
-            scts[i].backx = screen_width;
-            scts[i].backy = screen_height;
+            scts[i].backx = registry_mode.dmPelsWidth;
+            scts[i].backy = registry_mode.dmPelsHeight;
         }
 
         device_desc.device_window = hwnd;
@@ -3001,7 +3000,10 @@ static void test_scissor_size(void)
         /* Check for the default scissor rect size */
         hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
         ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
-        ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, scts[i].backx, scts[i].backy);
+        ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy
+                && scissorrect.top == 0 && scissorrect.left == 0,
+                "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom,
+                scts[i].backx, scts[i].backy);
 
         /* check the scissorrect values after a reset */
         hr = reset_device(device_ptr, hwnd, scts[i].window);
@@ -3011,7 +3013,10 @@ static void test_scissor_size(void)
 
         hr = IDirect3DDevice9_GetScissorRect(device_ptr, &scissorrect);
         ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
-        ok(scissorrect.right == screen_width && scissorrect.bottom == screen_height && scissorrect.top == 0 && scissorrect.left == 0, "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom, screen_width, screen_height);
+        ok(scissorrect.right == registry_mode.dmPelsWidth && scissorrect.bottom == registry_mode.dmPelsHeight
+                && scissorrect.top == 0 && scissorrect.left == 0,
+                "Scissorrect missmatch (%d, %d) should be (%u, %u)\n", scissorrect.right, scissorrect.bottom,
+                registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
         if(device_ptr) {
             ULONG ref;
@@ -3128,7 +3133,8 @@ static DWORD WINAPI wndproc_thread(void *param)
     BOOL ret;
 
     p->dummy_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     p->running_in_foreground = SetForegroundWindow(p->dummy_window);
 
     ret = SetEvent(p->window_created);
@@ -3187,9 +3193,11 @@ static void test_wndproc(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -3222,8 +3230,8 @@ static void test_wndproc(void)
     expect_messages = messages;
 
     device_desc.device_window = device_window;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
@@ -3332,9 +3340,11 @@ static void test_wndproc_windowed(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+            registry_mode.dmPelsHeight, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -3530,7 +3540,7 @@ static void test_reset_fullscreen(void)
     ok(atom, "Failed to register a new window class. GetLastError:%d\n", GetLastError());
 
     device_window = focus_window = CreateWindowExA(0, wc.lpszClassName, "Test Reset Fullscreen", 0,
-            0, 0, screen_width, screen_height, NULL, NULL, NULL, NULL);
+            0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, NULL, NULL, NULL, NULL);
     ok(device_window != NULL, "Failed to create a window. GetLastError:%d\n", GetLastError());
 
     /*
@@ -3600,7 +3610,8 @@ static void test_fpu_setup(void)
     IDirect3D9 *d3d9;
     WORD cw;
 
-    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_CAPTION, 0, 0,
+            registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, 0, 0, 0, 0);
     ok(!!window, "Failed to create a window.\n");
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
@@ -3673,14 +3684,14 @@ static void test_window_style(void)
 
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
-    SetRect(&fullscreen_rect, 0, 0, screen_width, screen_height);
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-                0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
         device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-                0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
 
         device_style = GetWindowLongA(device_window, GWL_STYLE);
         device_exstyle = GetWindowLongA(device_window, GWL_EXSTYLE);
@@ -3691,8 +3702,8 @@ static void test_window_style(void)
         GetWindowRect(device_window, &device_rect);
 
         device_desc.device_window = device_window;
-        device_desc.width = screen_width;
-        device_desc.height = screen_height;
+        device_desc.width = registry_mode.dmPelsWidth;
+        device_desc.height = registry_mode.dmPelsHeight;
         device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].device_flags;
         if (!(device = create_device(d3d9, focus_window, &device_desc)))
         {
@@ -3901,18 +3912,18 @@ static void test_mode_change(void)
     DWORD ret;
 
     focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+            0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+            0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
 
-    SetRect(&fullscreen_rect, 0, 0, screen_width, screen_height);
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
     GetWindowRect(focus_window, &focus_rect);
 
     device_desc.device_window = device_window;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
@@ -3949,8 +3960,8 @@ static void test_mode_change(void)
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
     hr = IDirect3DSurface9_GetDesc(backbuffer, &desc);
     ok(SUCCEEDED(hr), "Failed to get backbuffer desc, hr %#x.\n", hr);
-    ok(desc.Width == screen_width, "Got unexpected backbuffer width %u.\n", desc.Width);
-    ok(desc.Height == screen_height, "Got unexpected backbuffer height %u.\n", desc.Height);
+    ok(desc.Width == registry_mode.dmPelsWidth, "Got unexpected backbuffer width %u.\n", desc.Width);
+    ok(desc.Height == registry_mode.dmPelsHeight, "Got unexpected backbuffer height %u.\n", desc.Height);
     IDirect3DSurface9_Release(backbuffer);
 
     refcount = IDirect3DDevice9_Release(device);
@@ -3960,8 +3971,8 @@ static void test_mode_change(void)
     devmode.dmSize = sizeof(devmode);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    ok(devmode.dmPelsWidth == screen_width, "Got unexpect width %u.\n", devmode.dmPelsWidth);
-    ok(devmode.dmPelsHeight == screen_height, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
 
 done:
     DestroyWindow(device_window);
@@ -3972,8 +3983,8 @@ done:
     devmode.dmSize = sizeof(devmode);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    ok(devmode.dmPelsWidth == screen_width, "Got unexpect width %u.\n", devmode.dmPelsWidth);
-    ok(devmode.dmPelsHeight == screen_height, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
 }
 
 static void test_device_window_reset(void)
@@ -3992,13 +4003,13 @@ static void test_device_window_reset(void)
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
 
     focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+            0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+            0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
 
-    SetRect(&fullscreen_rect, 0, 0, screen_width, screen_height);
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
     GetWindowRect(device_window, &device_rect);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -4009,8 +4020,8 @@ static void test_device_window_reset(void)
             (LONG_PTR)test_proc, proc);
 
     device_desc.device_window = NULL;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, focus_window, &device_desc)))
     {
@@ -4605,15 +4616,15 @@ static void test_occlusion_query_states(void)
         DWORD dword[2];
     } data;
     BOOL broken_occlusion = FALSE;
-    DWORD expected = screen_width * screen_height;
+    DWORD expected = registry_mode.dmPelsWidth * registry_mode.dmPelsHeight;
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, 0, 0, 0, 0);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     device_desc.device_window = window;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d9, window, &device_desc)))
     {
@@ -9228,8 +9239,8 @@ static void test_lost_device(void)
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     device_desc.device_window = window;
-    device_desc.width = screen_width;
-    device_desc.height = screen_height;
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     if (!(device = create_device(d3d, window, &device_desc)))
     {
@@ -9435,6 +9446,19 @@ START_TEST(device)
 {
     WNDCLASSA wc = {0};
     IDirect3D9 *d3d9;
+    DEVMODEW current_mode;
+
+    memset(&current_mode, 0, sizeof(current_mode));
+    current_mode.dmSize = sizeof(current_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &current_mode), "Failed to get display mode.\n");
+    registry_mode.dmSize = sizeof(registry_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
+    if (registry_mode.dmPelsWidth != current_mode.dmPelsWidth
+            || registry_mode.dmPelsHeight != current_mode.dmPelsHeight)
+    {
+        skip("Current mode does not match registry mode, skipping test.\n");
+        return;
+    }
 
     if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
@@ -9446,9 +9470,6 @@ START_TEST(device)
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
     RegisterClassA(&wc);
-
-    screen_width = GetSystemMetrics(SM_CXSCREEN);
-    screen_height = GetSystemMetrics(SM_CYSCREEN);
 
     test_get_set_vertex_declaration();
     test_get_declaration();
