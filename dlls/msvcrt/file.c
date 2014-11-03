@@ -3755,7 +3755,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
  */
 MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
 {
-    int ret;
+    MSVCRT_size_t ret;
 
     MSVCRT__lock_file(file);
     ret = MSVCRT__fwrite_nolock(ptr, size, nmemb, file);
@@ -4016,7 +4016,7 @@ int CDECL MSVCRT__fputchar(int c)
  */
 MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, MSVCRT_FILE* file)
 {
-    int ret;
+    MSVCRT_size_t ret;
 
     MSVCRT__lock_file(file);
     ret = MSVCRT__fread_nolock(ptr, size, nmemb, file);
