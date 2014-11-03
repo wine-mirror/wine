@@ -1964,7 +1964,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
         sprintfW(selector, selector_formatW, frag);
         nsAString_InitDepend(&selector_str, selector);
         /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
-        nsres = nsIDOMNodeSelector_QuerySelector(window->base.inner_window->doc->nsnode_selector, &selector_str, &nselem);
+        nsres = nsIDOMHTMLDocument_QuerySelector(window->base.inner_window->doc->nsdoc, &selector_str, &nselem);
         nsAString_Finish(&selector_str);
         heap_free(selector);
         if(NS_SUCCEEDED(nsres) && nselem) {

@@ -1179,6 +1179,32 @@ static nsresult NSAPI nsChannel_GetContentDispositionHeader(nsIHttpChannel *ifac
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsChannel_GetLoadInfo(nsIHttpChannel *iface, nsILoadInfo **aLoadInfo)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+
+    TRACE("(%p)->(%p)\n", This, aLoadInfo);
+
+    if(This->load_info)
+        nsISupports_AddRef(This->load_info);
+    *aLoadInfo = This->load_info;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsChannel_SetLoadInfo(nsIHttpChannel *iface, nsILoadInfo *aLoadInfo)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+
+    TRACE("(%p)->(%p)\n", This, aLoadInfo);
+
+    if(This->load_info)
+        nsISupports_Release(This->load_info);
+    This->load_info = aLoadInfo;
+    if(This->load_info)
+        nsISupports_AddRef(This->load_info);
+    return NS_OK;
+}
+
 static nsresult NSAPI nsChannel_GetRequestMethod(nsIHttpChannel *iface, nsACString *aRequestMethod)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
@@ -1284,6 +1310,20 @@ static nsresult NSAPI nsChannel_SetAllowPipelining(nsIHttpChannel *iface, cpp_bo
 
     FIXME("(%p)->(%x)\n", This, aAllowPipelining);
 
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_GetAllowTLS(nsIHttpChannel *iface, cpp_bool *aAllowTLS)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aAllowTLS);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_SetAllowTLS(nsIHttpChannel *iface, cpp_bool aAllowTLS)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%x)\n", This, aAllowTLS);
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1443,6 +1483,8 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_GetContentDispositionFilename,
     nsChannel_SetContentDispositionFilename,
     nsChannel_GetContentDispositionHeader,
+    nsChannel_GetLoadInfo,
+    nsChannel_SetLoadInfo,
     nsChannel_GetRequestMethod,
     nsChannel_SetRequestMethod,
     nsChannel_GetReferrer,
@@ -1452,6 +1494,8 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_VisitRequestHeaders,
     nsChannel_GetAllowPipelining,
     nsChannel_SetAllowPipelining,
+    nsChannel_GetAllowTLS,
+    nsChannel_SetAllowTLS,
     nsChannel_GetRedirectionLimit,
     nsChannel_SetRedirectionLimit,
     nsChannel_GetResponseStatus,
@@ -1605,6 +1649,15 @@ static nsresult NSAPI nsHttpChannelInternal_GetRequestVersion(nsIHttpChannelInte
 }
 
 static nsresult NSAPI nsHttpChannelInternal_GetResponseVersion(nsIHttpChannelInternal *iface, UINT32 *major, UINT32 *minor)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->()\n", This);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_TakeAllSecurityMessages(nsIHttpChannelInternal *iface, void *aMessages)
 {
     nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
 
@@ -1779,6 +1832,7 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetDocumentURI,
     nsHttpChannelInternal_GetRequestVersion,
     nsHttpChannelInternal_GetResponseVersion,
+    nsHttpChannelInternal_TakeAllSecurityMessages,
     nsHttpChannelInternal_SetCookie,
     nsHttpChannelInternal_SetupFallbackChannel,
     nsHttpChannelInternal_GetForceAllowThirdPartyCookie,

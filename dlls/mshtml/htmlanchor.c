@@ -724,7 +724,7 @@ static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, eventid_t eid,
 
     if(eid == EVENTID_CLICK) {
         nsIDOMMouseEvent *mouse_event;
-        UINT16 button;
+        INT16 button;
         nsresult nsres;
 
         TRACE("CLICK\n");

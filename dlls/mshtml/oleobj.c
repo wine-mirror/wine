@@ -229,7 +229,6 @@ void set_document_navigation(HTMLDocumentObj *doc, BOOL doc_can_navigate)
 
 static void load_settings(HTMLDocumentObj *doc)
 {
-    nsIMarkupDocumentViewer *markup_document_viewer;
     nsIContentViewer *content_viewer;
     nsIDocShell *doc_shell;
     HKEY settings_key;
@@ -261,16 +260,13 @@ static void load_settings(HTMLDocumentObj *doc)
 
     nsres = nsIDocShell_GetContentViewer(doc_shell, &content_viewer);
     assert(nsres == NS_OK && content_viewer);
+    nsIDocShell_Release(doc_shell);
 
-    nsres = nsISupports_QueryInterface(content_viewer, &IID_nsIMarkupDocumentViewer, (void**)&markup_document_viewer);
-    nsISupports_Release(content_viewer);
-    assert(nsres == NS_OK);
-
-    nsres = nsIMarkupDocumentViewer_SetFullZoom(markup_document_viewer, (float)val/100000);
+    nsres = nsIContentViewer_SetFullZoom(content_viewer, (float)val/100000);
     if(NS_FAILED(nsres))
         ERR("SetFullZoom failed: %08x\n", nsres);
 
-    nsIDocShell_Release(doc_shell);
+    nsIContentViewer_Release(content_viewer);
 }
 
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)

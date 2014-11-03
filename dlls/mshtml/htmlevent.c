@@ -551,7 +551,7 @@ static HRESULT WINAPI HTMLEventObj_get_keyCode(IHTMLEventObj *iface, LONG *p)
 static HRESULT WINAPI HTMLEventObj_get_button(IHTMLEventObj *iface, LONG *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    UINT16 button = 0;
+    INT16 button = 0;
 
     TRACE("(%p)->(%p)\n", This, p);
 

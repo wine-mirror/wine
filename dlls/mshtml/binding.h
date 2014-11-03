@@ -44,6 +44,7 @@ typedef struct {
     nsILoadGroup *load_group;
     nsIInterfaceRequestor *notif_callback;
     nsISupports *owner;
+    nsILoadInfo *load_info;
     nsLoadFlags load_flags;
     nsIURI *original_uri;
     nsIURI *referrer;

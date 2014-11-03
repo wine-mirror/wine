@@ -527,7 +527,6 @@ static BOOL load_xul(const PRUnichar *gre_path)
     NS_DLSYM(ccref_incr);
     NS_DLSYM(ccref_decr);
     NS_DLSYM(ccref_init);
-    NS_DLSYM(ccref_unmark_if_purple);
     NS_DLSYM(ccp_init);
     NS_DLSYM(describe_cc_node);
     NS_DLSYM(note_cc_edge);
