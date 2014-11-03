@@ -4367,9 +4367,10 @@ static void test_surface_blocks(void)
         {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, FALSE, TRUE,  TRUE },
         {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, FALSE, TRUE,  TRUE },
         {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, FALSE, TRUE,  TRUE },
-        /* ATI2N has 2x2 blocks on all AMD cards and Geforce 7 cards,
+        /* ATI1N and ATI2N have 2x2 blocks on all AMD cards and Geforce 7 cards,
          * which doesn't match the format spec. On newer Nvidia cards
-         * it has the correct 4x4 block size */
+         * they have the correct 4x4 block size */
+        {MAKEFOURCC('A','T','I','1'), "ATI1N",       4, 4, TRUE,  FALSE, FALSE},
         {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, TRUE,  FALSE, FALSE},
         /* Windows drivers generally enforce block-aligned locks for
          * YUY2 and UYVY. The notable exception is the AMD r500 driver
