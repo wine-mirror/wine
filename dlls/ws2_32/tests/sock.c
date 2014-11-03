@@ -67,6 +67,7 @@ static int   (WINAPI *pgetaddrinfo)(LPCSTR,LPCSTR,const struct addrinfo *,struct
 static void  (WINAPI *pFreeAddrInfoW)(PADDRINFOW);
 static int   (WINAPI *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *);
 static PCSTR (WINAPI *pInetNtop)(INT,LPVOID,LPSTR,ULONG);
+static int   (WINAPI *pInetPton)(INT,LPSTR,LPVOID);
 static int   (WINAPI *pWSALookupServiceBeginW)(LPWSAQUERYSETW,DWORD,LPHANDLE);
 static int   (WINAPI *pWSALookupServiceEnd)(HANDLE);
 static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSETW);
@@ -1139,6 +1140,7 @@ static void Init (void)
     pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
     pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
     pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
+    pInetPton = (void *)GetProcAddress(hws2_32, "inet_pton");
     pWSALookupServiceBeginW = (void *)GetProcAddress(hws2_32, "WSALookupServiceBeginW");
     pWSALookupServiceEnd = (void *)GetProcAddress(hws2_32, "WSALookupServiceEnd");
     pWSALookupServiceNextW = (void *)GetProcAddress(hws2_32, "WSALookupServiceNextW");
@@ -3986,6 +3988,117 @@ static void test_addr_to_print(void)
     pdst = NULL;
     pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 18);
     ok(pdst != NULL, "The pointer should be returned (%p)\n", pdst);
+}
+static void test_inet_pton(void)
+{
+    struct TEST_DATA
+    {
+        int family, ret;
+        DWORD err;
+        const char *printable, *collapsed, *raw_data;
+    } tests[] = {
+        {AF_UNSPEC, -1, WSAEFAULT,    /* Test 0 */
+        NULL, NULL, NULL},
+        {AF_INET, -1, WSAEFAULT,
+        NULL, NULL, NULL},
+        {AF_INET6, -1, WSAEFAULT,
+        NULL, NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT,
+        "127.0.0.1", NULL, NULL},
+        {AF_INET, 1, 0,
+        "127.0.0.1", "127.0.0.1",
+        "\x7f\x00\x00\x01"},
+        {AF_INET6, 0, 0,
+        "127.0.0.1", "127.0.0.1", NULL},
+        {AF_INET, 0, 0,
+        "::1/128", NULL, NULL},
+        {AF_INET6, 0, 0,
+        "::1/128", NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT,
+        "broken", NULL, NULL},
+        {AF_INET, 0, 0,
+        "broken", NULL, NULL},
+        {AF_INET6, 0, 0,              /* Test 10 */
+        "broken", NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT,
+        "177.32.45.20", NULL, NULL},
+        {AF_INET, 1, 0,
+        "177.32.45.20", "177.32.45.20",
+        "\xb1\x20\x2d\x14"},
+        {AF_INET6, 0, 0,
+        "177.32.45.20", NULL, NULL},
+        {AF_INET, 0, 0,
+        "2607:f0d0:1002:51::4", NULL, NULL},
+        {AF_INET6, 1, 0,
+        "2607:f0d0:1002:51::4", "2607:f0d0:1002:51::4",
+        "\x26\x07\xf0\xd0\x10\x02\x00\x51\x00\x00\x00\x00\x00\x00\x00\x04"},
+        {AF_INET, 0, 0,
+        "::177.32.45.20", NULL, NULL},
+        {AF_INET6, 1, 0,
+        "::177.32.45.20", "::177.32.45.20",
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xb1\x20\x2d\x14"},
+        {AF_INET, 0, 0,
+        "fe80::0202:b3ff:fe1e:8329", NULL, NULL},
+        {AF_INET6, 1, 0,
+        "fe80::0202:b3ff:fe1e:8329", "fe80::202:b3ff:fe1e:8329",
+        "\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x02\xb3\xff\xfe\x1e\x83\x29"},
+        {AF_INET6, 1, 0,              /* Test 20 */
+        "fe80::202:b3ff:fe1e:8329", "fe80::202:b3ff:fe1e:8329",
+        "\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x02\xb3\xff\xfe\x1e\x83\x29"},
+        {AF_INET, 0, 0,
+        "a", NULL, NULL},
+        {AF_INET, 0, 0,
+        "a.b", NULL, NULL},
+        {AF_INET, 0, 0,
+        "a.b.c",  NULL, NULL},
+        {AF_INET, 0, 0,
+        "a.b.c.d", NULL, NULL},
+        {AF_INET6, 1, 0,
+        "2001:cdba:0000:0000:0000:0000:3257:9652", "2001:cdba::3257:9652",
+        "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET6, 1, 0,
+        "2001:cdba::3257:9652", "2001:cdba::3257:9652",
+        "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET6, 1, 0,
+        "2001:cdba:0:0:0:0:3257:9652", "2001:cdba::3257:9652",
+        "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"}
+    };
+    int i, ret;
+    DWORD err;
+    char buffer[64],str[64];
+    const char *ptr;
+
+    /* InetNtop and InetPton became available in Vista and Win2008 */
+    if (!pInetNtop || !pInetPton)
+    {
+        win_skip("InetNtop and/or InetPton not present, not executing tests\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        WSASetLastError(0xdeadbeef);
+        ret = pInetPton(tests[i].family, (char *)tests[i].printable, buffer);
+        ok (ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        if (tests[i].ret == -1)
+        {
+            err = WSAGetLastError();
+            ok (tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
+        }
+        if (tests[i].ret != 1) continue;
+        ok (memcmp(buffer, tests[i].raw_data,
+            tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,
+            "Test [%d]: Expected binary data differs\n", i);
+
+        /* Test the result from Pton with Ntop */
+        strcpy (str, "deadbeef");
+        ptr = pInetNtop(tests[i].family, buffer, str, sizeof(str));
+        ok (ptr != NULL, "Test [%d]: Failed with NULL\n", i);
+        ok (ptr == str, "Test [%d]: Pointers differ (%p != %p)\n", i, ptr, str);
+        if (!ptr) continue;
+        ok (strcmp(ptr, tests[i].collapsed) == 0, "Test [%d]: Expected '%s', got '%s'\n",
+            i, tests[i].collapsed, ptr);
+    }
 }
 
 static void test_ioctlsocket(void)
@@ -7739,6 +7852,7 @@ START_TEST( sock )
     Init();
 
     test_inet_ntoa();
+    test_inet_pton();
     test_set_getsockopt();
     test_so_reuseaddr();
     test_ip_pktinfo();

@@ -121,3 +121,4 @@
 @ stdcall getaddrinfo(str str ptr ptr) WS_getaddrinfo
 @ stdcall getnameinfo(ptr long ptr long ptr long long) WS_getnameinfo
 @ stdcall inet_ntop(long ptr ptr long) WS_inet_ntop
+@ stdcall inet_pton(long ptr ptr) WS_inet_pton

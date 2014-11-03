@@ -6911,6 +6911,40 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 }
 
 /***********************************************************************
+*              inet_pton                      (WS2_32.@)
+*/
+INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
+{
+#ifdef HAVE_INET_PTON
+    int unixaf, ret;
+
+    TRACE("family %d, addr '%s', buffer (%p)\n", family, addr ? addr : "(null)", buffer);
+
+    if (!addr || !buffer)
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
+    unixaf = convert_af_w2u(family);
+    if (unixaf != AF_INET && unixaf != AF_INET6)
+    {
+        SetLastError(WSAEAFNOSUPPORT);
+        return SOCKET_ERROR;
+    }
+
+    ret = inet_pton(unixaf, addr, buffer);
+    if (ret == -1) SetLastError(wsaErrno());
+    return ret;
+#else
+    FIXME( "not supported on this platform\n" );
+    WSASetLastError( WSAEAFNOSUPPORT );
+    return SOCKET_ERROR;
+#endif
+}
+
+
+/***********************************************************************
  *              WSAStringToAddressA                      (WS2_32.80)
  */
 INT WINAPI WSAStringToAddressA(LPSTR AddressString,
