@@ -430,7 +430,7 @@
 @ stdcall IoRegisterFileSystem(ptr)
 @ stub IoRegisterFsRegistrationChange
 @ stub IoRegisterLastChanceShutdownNotification
-@ stub IoRegisterPlugPlayNotification
+@ stdcall IoRegisterPlugPlayNotification(long long ptr ptr ptr ptr ptr)
 @ stdcall IoRegisterShutdownNotification(ptr)
 @ stdcall IoReleaseCancelSpinLock(ptr)
 @ stub IoReleaseRemoveLockAndWaitEx
