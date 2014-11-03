@@ -104,26 +104,39 @@ static void test_add(void)
 
     run_reg_exe("reg add \\HKCU\\" KEY_BASE "\\keytest0 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest0");
+    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", r);
+
     run_reg_exe("reg add \\\\HKCU\\" KEY_BASE "\\keytest1 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest1");
+    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", r);
+
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest2\\\\ /f", &r);
     todo_wine ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */),
         "got exit code %u\n", r);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest2");
+    todo_wine ok(err == ERROR_FILE_NOT_FOUND || broken(err == ERROR_SUCCESS /* WinXP */),
+        "got exit code %d\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest3\\ /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE "\\keytest3", 0, KEY_READ, &hkey);
     ok(err == ERROR_SUCCESS, "key creation failed, got %d\n", err);
     RegCloseKey(hkey);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest3");
+    ok(err == ERROR_SUCCESS, "got exit code %d\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest4 /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE "\\keytest4", 0, KEY_READ, &hkey);
     ok(err == ERROR_SUCCESS, "key creation failed, got %d\n", err);
     RegCloseKey(hkey);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest4");
+    ok(err == ERROR_SUCCESS, "got exit code %d\n", r);
 
-    err = RegDeleteTreeA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(r == REG_EXIT_SUCCESS, "got exit code %d\n", r);
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(err == ERROR_SUCCESS, "got exit code %d\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
