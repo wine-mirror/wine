@@ -3428,7 +3428,7 @@ int CDECL MSVCRT__fclose_nolock(MSVCRT_FILE* file)
   file->_tmpfname = NULL;
   /* flush stdio buffers */
   if(file->_flag & MSVCRT__IOWRT)
-      MSVCRT_fflush(file);
+      MSVCRT__fflush_nolock(file);
   if(file->_flag & MSVCRT__IOMYBUF)
       MSVCRT_free(file->_base);
 
