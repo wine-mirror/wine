@@ -129,6 +129,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R32G32B32A32_UINT,         32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
     {WINED3DFMT_R16G16B16A16_SNORM,        16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
     /* Vendor-specific formats */
+    {WINED3DFMT_ATI1N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
     {WINED3DFMT_ATI2N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
     {WINED3DFMT_NVDB,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
     {WINED3DFMT_INST,                       0,  0,  0,  0,   0,  0,  0,  0,    0,   0,     0},
@@ -175,6 +176,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_B4G4R4X4_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_R8G8B8A8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_R8G8B8X8_UNORM,     WINED3DFMT_FLAG_GETDC},
+    {WINED3DFMT_ATI1N,              WINED3DFMT_FLAG_BROKEN_PITCH},
     {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_BROKEN_PITCH},
     {WINED3DFMT_R32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_R32G32_FLOAT,       WINED3DFMT_FLAG_FLOAT},
@@ -203,6 +205,7 @@ static const struct wined3d_format_block_info format_block_info[] =
     {WINED3DFMT_DXT3,   4,  4,  16, TRUE},
     {WINED3DFMT_DXT4,   4,  4,  16, TRUE},
     {WINED3DFMT_DXT5,   4,  4,  16, TRUE},
+    {WINED3DFMT_ATI1N,  4,  4,  8,  FALSE},
     {WINED3DFMT_ATI2N,  4,  4,  16, FALSE},
     {WINED3DFMT_YUY2,   2,  1,  4,  FALSE},
     {WINED3DFMT_UYVY,   2,  1,  4,  FALSE},
@@ -1184,6 +1187,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL | WINED3DFMT_FLAG_SHADOW,
             ARB_DEPTH_BUFFER_FLOAT,     convert_s8_uint_d24_float},
     /* Vendor-specific formats */
+    {WINED3DFMT_ATI1N,                  GL_COMPRESSED_RED_RGTC1,          GL_COMPRESSED_RED_RGTC1,                0,
+            GL_RED,                     GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_COMPRESSED,
+            ARB_TEXTURE_COMPRESSION_RGTC, NULL},
     {WINED3DFMT_ATI2N,                  GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, 0,
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
@@ -2020,6 +2028,10 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
 
     if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
     {
+        idx = getFmtIdx(WINED3DFMT_ATI1N);
+        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X);
+
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
@@ -2316,6 +2328,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_S8_UINT_D24_FLOAT);
         FMT_TO_STR(WINED3DFMT_VERTEXDATA);
         FMT_TO_STR(WINED3DFMT_R8G8_SNORM_Cx);
+        FMT_TO_STR(WINED3DFMT_ATI1N);
         FMT_TO_STR(WINED3DFMT_ATI2N);
         FMT_TO_STR(WINED3DFMT_NVDB);
         FMT_TO_STR(WINED3DFMT_NVHU);

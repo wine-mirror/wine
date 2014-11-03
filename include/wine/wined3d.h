@@ -241,6 +241,7 @@ enum wined3d_format_id
     WINED3DFMT_MULTI2_ARGB8                 = WINEMAKEFOURCC('M','E','T','1'),
     WINED3DFMT_G8R8_G8B8                    = WINEMAKEFOURCC('G','R','G','B'),
     WINED3DFMT_R8G8_B8G8                    = WINEMAKEFOURCC('R','G','B','G'),
+    WINED3DFMT_ATI1N                        = WINEMAKEFOURCC('A','T','I','1'),
     WINED3DFMT_ATI2N                        = WINEMAKEFOURCC('A','T','I','2'),
     WINED3DFMT_INST                         = WINEMAKEFOURCC('I','N','S','T'),
     WINED3DFMT_NVDB                         = WINEMAKEFOURCC('N','V','D','B'),
