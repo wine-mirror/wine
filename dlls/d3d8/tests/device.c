@@ -5255,25 +5255,28 @@ static void test_volume_blocks(void)
         unsigned int block_height;
         unsigned int block_depth;
         unsigned int block_size;
-        BOOL broken;
+        unsigned int broken;
         BOOL create_size_checked, core_fmt;
     }
     formats[] =
     {
         /* Scratch volumes enforce DXTn block locks, unlike their surface counterparts.
          * ATI2N and YUV blocks are not enforced on any tested card (r200, gtx 460). */
-        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, 1, 8,  FALSE, TRUE,  TRUE },
-        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
-        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
-        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
-        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
-        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, FALSE, TRUE,  TRUE },
+        {D3DFMT_DXT1,                 "D3DFMT_DXT1", 4, 4, 1, 8,  0, TRUE,  TRUE },
+        {D3DFMT_DXT2,                 "D3DFMT_DXT2", 4, 4, 1, 16, 0, TRUE,  TRUE },
+        {D3DFMT_DXT3,                 "D3DFMT_DXT3", 4, 4, 1, 16, 0, TRUE,  TRUE },
+        {D3DFMT_DXT4,                 "D3DFMT_DXT4", 4, 4, 1, 16, 0, TRUE,  TRUE },
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, 0, TRUE,  TRUE },
+        {D3DFMT_DXT5,                 "D3DFMT_DXT5", 4, 4, 1, 16, 0, TRUE,  TRUE },
         /* ATI2N has 2x2 blocks on all AMD cards and Geforce 7 cards,
          * which doesn't match the format spec. On newer Nvidia cards
-         * it has the correct 4x4 block size */
-        {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, 1, 16, TRUE,  FALSE, FALSE},
-        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, 1, 4,  TRUE,  FALSE, TRUE },
-        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, 1, 4,  TRUE,  FALSE, TRUE },
+         * it has the correct 4x4 block size.
+         * ATI1N volume textures are only supported by AMD GPUs right
+         * now and locking offsets seem just wrong. */
+        {MAKEFOURCC('A','T','I','1'), "ATI1N",       4, 4, 1, 8,  2, FALSE, FALSE},
+        {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, 1, 16, 1, FALSE, FALSE},
+        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, 1, 4,  1, FALSE, TRUE },
+        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, 1, 4,  1, FALSE, TRUE },
     };
     static const struct
     {
@@ -5421,9 +5424,13 @@ static void test_volume_blocks(void)
             ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
 
             base = locked_box.pBits;
-            if (formats[i].broken)
+            if (formats[i].broken == 1)
             {
                 expected_row_pitch = bytes_per_pixel * 24;
+            }
+            else if (formats[i].broken == 2)
+            {
+                expected_row_pitch = 24;
             }
             else
             {
@@ -5459,11 +5466,17 @@ static void test_volume_blocks(void)
             ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#x, j %u.\n", hr, j);
 
             offset = (BYTE *)locked_box.pBits - base;
-            if (formats[i].broken)
+            if (formats[i].broken == 1)
             {
                 expected_offset = box.Front * expected_slice_pitch
                         + box.Top * expected_row_pitch
                         + box.Left * bytes_per_pixel;
+            }
+            else if (formats[i].broken == 2)
+            {
+                expected_offset = box.Front * expected_slice_pitch
+                        + box.Top * expected_row_pitch
+                        + box.Left;
             }
             else
             {
