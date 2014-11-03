@@ -412,5 +412,5 @@ void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *
 {
     FIXME("Ignoring brush properties.\n");
 
-    d2d_brush_init(brush, render_target, brush_desc, (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
+    d2d_brush_init(brush, render_target, brush_desc, (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
 }
