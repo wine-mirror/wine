@@ -5312,7 +5312,7 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
     WCHAR *remove;
 
     /* first do the same as an InstallExecute */
-    rc = ACTION_InstallExecute(package);
+    rc = execute_script(package, SCRIPT_INSTALL);
     if (rc != ERROR_SUCCESS)
         return rc;
 
