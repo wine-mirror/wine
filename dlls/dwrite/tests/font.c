@@ -1126,6 +1126,7 @@ static void test_system_fontcollection(void)
 
 static void test_ConvertFontFaceToLOGFONT(void)
 {
+    DWRITE_FONT_SIMULATIONS sim;
     IDWriteGdiInterop *interop;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
@@ -1154,6 +1155,13 @@ static void test_ConvertFontFaceToLOGFONT(void)
 
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    sim = IDWriteFont_GetSimulations(font);
+    ok(sim == DWRITE_FONT_SIMULATIONS_OBLIQUE, "sim %d\n", sim);
+
+    sim = IDWriteFontFace_GetSimulations(fontface);
+    ok(sim == DWRITE_FONT_SIMULATIONS_OBLIQUE, "sim %d\n", sim);
+
     IDWriteFont_Release(font);
 
 if (0) /* crashes on native */
@@ -1830,7 +1838,6 @@ static void test_GetFirstMatchingFont(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     simulations = IDWriteFont_GetSimulations(font);
-todo_wine
     ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "%d\n", simulations);
 
     IDWriteFont_Release(font);
@@ -2009,12 +2016,10 @@ static void test_GetSimulations(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     simulations = IDWriteFont_GetSimulations(font);
-todo_wine
     ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "got %d\n", simulations);
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     simulations = IDWriteFontFace_GetSimulations(fontface);
-todo_wine
     ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "got %d\n", simulations);
     IDWriteFontFace_Release(fontface);
     IDWriteFont_Release(font);
@@ -2030,11 +2035,12 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     simulations = IDWriteFont_GetSimulations(font);
-    ok(simulations == 0, "got %d\n", simulations);
+    ok(simulations == DWRITE_FONT_SIMULATIONS_NONE, "got %d\n", simulations);
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     simulations = IDWriteFontFace_GetSimulations(fontface);
-    ok(simulations == 0, "got %d\n", simulations);
+todo_wine
+    ok(simulations == DWRITE_FONT_SIMULATIONS_NONE, "got %d\n", simulations);
     IDWriteFontFace_Release(fontface);
     IDWriteFont_Release(font);
 

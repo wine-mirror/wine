@@ -698,7 +698,7 @@ HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
 
     logfont->lfCharSet = DEFAULT_CHARSET;
     logfont->lfWeight = weight;
-    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations | DWRITE_FONT_SIMULATIONS_OBLIQUE);
+    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE);
     logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
     /* TODO: set facename */
 
@@ -1120,7 +1120,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
         DWRITE_FONT_SIMULATIONS simulations = DWRITE_FONT_SIMULATIONS_NONE;
 
         if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) &&
-            This->data->fonts[found]->style == DWRITE_FONT_STYLE_ITALIC) {
+            This->data->fonts[found]->style == DWRITE_FONT_STYLE_NORMAL) {
             simulations = DWRITE_FONT_SIMULATIONS_OBLIQUE;
         }
         return create_font(This->data->fonts[found], iface, simulations, font);
