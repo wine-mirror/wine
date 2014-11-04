@@ -380,8 +380,9 @@ HRESULT WINAPI CoRegisterChannelHook(REFGUID ExtensionGuid, IChannelHook *pChann
 
 typedef enum tagCOWAIT_FLAGS
 {
-    COWAIT_WAITALL   = 0x00000001,
-    COWAIT_ALERTABLE = 0x00000002
+    COWAIT_WAITALL        = 0x00000001,
+    COWAIT_ALERTABLE      = 0x00000002,
+    COWAIT_INPUTAVAILABLE = 0x00000004
 } COWAIT_FLAGS;
 
 HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,LPHANDLE pHandles,LPDWORD lpdwindex);

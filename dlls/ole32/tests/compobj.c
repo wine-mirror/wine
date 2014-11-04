@@ -31,6 +31,7 @@
 #include "objbase.h"
 #include "shlguid.h"
 #include "urlmon.h" /* for CLSID_FileProtocol */
+#include "dde.h"
 
 #include "ctxtcall.h"
 
@@ -2034,6 +2035,7 @@ static void test_CoInitializeEx(void)
     /* Cleanup */
     CoUninitialize();
     OleUninitialize();
+    OleUninitialize();
 }
 
 static void test_OleRegGetMiscStatus(void)
@@ -2086,6 +2088,213 @@ static void test_CoCreateGuid(void)
 
     hr = CoCreateGuid(NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+
+static void CALLBACK apc_test_proc(ULONG_PTR param)
+{
+    /* nothing */
+}
+
+static DWORD CALLBACK release_semaphore_thread( LPVOID arg )
+{
+    HANDLE handle = arg;
+    if (WaitForSingleObject(handle, 200) == WAIT_TIMEOUT)
+        ReleaseSemaphore(handle, 1, NULL);
+    return 0;
+}
+
+static void test_CoWaitForMultipleHandles(void)
+{
+    static const char cls_name[] = "cowait_test_class";
+    HANDLE handles[2], thread;
+    DWORD index, tid;
+    WNDCLASSEXA wc;
+    BOOL success;
+    HRESULT hr;
+    HWND hWnd;
+    MSG msg;
+
+    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
+
+    memset(&wc, 0, sizeof(wc));
+    wc.cbSize        = sizeof(wc);
+    wc.style         = CS_VREDRAW | CS_HREDRAW;
+    wc.hInstance     = GetModuleHandleA(0);
+    wc.hCursor       = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
+    wc.hbrBackground = NULL;
+    wc.lpszClassName = cls_name;
+    wc.lpfnWndProc   = DefWindowProcA;
+    success = RegisterClassExA(&wc) != 0;
+    ok(success, "RegisterClassExA failed %u\n", GetLastError());
+
+    hWnd = CreateWindowExA(0, cls_name, "Test", WS_TILEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(hWnd != 0, "CreateWindowExA failed %u\n", GetLastError());
+    handles[0] = CreateSemaphoreA(NULL, 1, 1, NULL);
+    ok(handles[0] != 0, "CreateSemaphoreA failed %u\n", GetLastError());
+    handles[1] = CreateSemaphoreA(NULL, 1, 1, NULL);
+    ok(handles[1] != 0, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* test without flags */
+
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 0, handles, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    todo_wine
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 0, NULL, &index);
+    todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    todo_wine
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 0, handles, &index);
+    todo_wine
+    ok(hr == RPC_E_NO_SYNC, "expected RPC_E_NO_SYNC, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    todo_wine
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 1, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 1, "expected index 1, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    ReleaseSemaphore(handles[0], 1, NULL);
+    ReleaseSemaphore(handles[1], 1, NULL);
+
+    /* test with COWAIT_WAITALL */
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(COWAIT_WAITALL, 50, 2, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    ReleaseSemaphore(handles[0], 1, NULL);
+    ReleaseSemaphore(handles[1], 1, NULL);
+
+    /* test with COWAIT_ALERTABLE */
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 1, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 2, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 1, "expected index 1, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    success = QueueUserAPC(apc_test_proc, GetCurrentThread(), 0);
+    ok(success, "QueueUserAPC failed %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 2, handles, &index);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == WAIT_IO_COMPLETION, "expected index WAIT_IO_COMPLETION, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    todo_wine
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    /* test with COWAIT_INPUTAVAILABLE (semaphores are still locked) */
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_NOREMOVE);
+    ok(success, "PeekMessageA returned FALSE\n");
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    todo_wine
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_NOREMOVE);
+    ok(success, "PeekMessageA returned FALSE\n");
+    thread = CreateThread(NULL, 0, release_semaphore_thread, handles[1], 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(COWAIT_INPUTAVAILABLE, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING || broken(hr == E_INVALIDARG) || broken(hr == S_OK) /* Win 8 */,
+       "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ReleaseSemaphore(handles[1], 1, NULL);
+    todo_wine
+    ok(index == 0 || broken(index == 1) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success || broken(success && hr == E_INVALIDARG),
+       "CoWaitForMultipleHandles didn't pump any messages\n");
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
+    CloseHandle(handles[0]);
+    CloseHandle(handles[1]);
+    DestroyWindow(hWnd);
+
+    success = UnregisterClassA(cls_name, GetModuleHandleA(0));
+    ok(success, "UnregisterClass failed %u\n", GetLastError());
+
+    CoUninitialize();
 }
 
 static void init_funcs(void)
@@ -2148,4 +2357,5 @@ START_TEST(compobj)
     test_CoInitializeEx();
     test_OleRegGetMiscStatus();
     test_CoCreateGuid();
+    test_CoWaitForMultipleHandles();
 }
