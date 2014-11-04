@@ -2139,32 +2139,24 @@ static void test_CoWaitForMultipleHandles(void)
 
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 0, handles, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-    todo_wine
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
     index = 0xdeadbeef;
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 0, NULL, &index);
-    todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-    todo_wine
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
     index = 0xdeadbeef;
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 0, handles, &index);
-    todo_wine
     ok(hr == RPC_E_NO_SYNC, "expected RPC_E_NO_SYNC, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-    todo_wine
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
     index = 0xdeadbeef;
@@ -2187,7 +2179,6 @@ static void test_CoWaitForMultipleHandles(void)
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
@@ -2209,7 +2200,6 @@ static void test_CoWaitForMultipleHandles(void)
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
@@ -2239,7 +2229,6 @@ static void test_CoWaitForMultipleHandles(void)
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(COWAIT_ALERTABLE, 50, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
@@ -2263,7 +2252,6 @@ static void test_CoWaitForMultipleHandles(void)
     ok(success, "PeekMessageA returned FALSE\n");
     hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
-    todo_wine
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
@@ -2278,7 +2266,6 @@ static void test_CoWaitForMultipleHandles(void)
     ok(hr == RPC_S_CALLPENDING || broken(hr == E_INVALIDARG) || broken(hr == S_OK) /* Win 8 */,
        "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
     ReleaseSemaphore(handles[1], 1, NULL);
-    todo_wine
     ok(index == 0 || broken(index == 1) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success || broken(success && hr == E_INVALIDARG),

@@ -4431,6 +4431,17 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     TRACE("(0x%08x, 0x%08x, %d, %p, %p)\n", dwFlags, dwTimeout, cHandles,
         pHandles, lpdwindex);
 
+    if (!lpdwindex)
+        return E_INVALIDARG;
+
+    *lpdwindex = 0;
+
+    if (!pHandles)
+        return E_INVALIDARG;
+
+    if (!cHandles)
+        return RPC_E_NO_SYNC;
+
     while (TRUE)
     {
         DWORD now = GetTickCount();
