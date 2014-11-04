@@ -85,7 +85,7 @@ struct dwrite_font {
 
     IDWriteFontFamily *family;
 
-    DWRITE_FONT_SIMULATIONS simulations;
+    USHORT simulations;
     struct dwrite_font_data *data;
 };
 
@@ -111,7 +111,7 @@ struct dwrite_fontface {
     UINT32 file_count;
     UINT32 index;
 
-    DWRITE_FONT_SIMULATIONS simulations;
+    USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
 
     struct dwrite_fonttable cmap;
@@ -812,9 +812,53 @@ static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocalizedStrings **names)
 {
+    static const WCHAR boldobliqueW[] = {'B','o','l','d',' ','O','b','l','i','q','u','e',0};
+    static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
+    static const WCHAR boldW[] = {'B','o','l','d',0};
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(%p): stub\n", This, names);
-    return E_NOTIMPL;
+    IDWriteLocalizedStrings *strings;
+    const WCHAR *name;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, names);
+
+    *names = NULL;
+
+    if (This->simulations == DWRITE_FONT_SIMULATIONS_NONE) {
+        BOOL exists;
+        return IDWriteFont2_GetInformationalStrings(iface, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES,
+            names, &exists);
+    }
+
+    switch (This->simulations) {
+    case DWRITE_FONT_SIMULATIONS_BOLD|DWRITE_FONT_SIMULATIONS_OBLIQUE:
+        name = boldobliqueW;
+        break;
+    case DWRITE_FONT_SIMULATIONS_BOLD:
+        name = boldW;
+        break;
+    case DWRITE_FONT_SIMULATIONS_OBLIQUE:
+        name = obliqueW;
+        break;
+    default:
+        ERR("unknown simulations %d\n", This->simulations);
+        return E_FAIL;
+    }
+
+    hr = create_localizedstrings(&strings);
+    if (FAILED(hr)) return hr;
+
+    hr = add_localizedstring(strings, enusW, name);
+    if (FAILED(hr)) {
+        IDWriteLocalizedStrings_Release(strings);
+        return hr;
+    }
+
+    *names = strings;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,

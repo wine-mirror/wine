@@ -2048,6 +2048,64 @@ todo_wine
     IDWriteFactory_Release(factory);
 }
 
+static void test_GetFaceNames(void)
+{
+    static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    IDWriteLocalizedStrings *strings, *strings2;
+    IDWriteGdiInterop *interop;
+    IDWriteFactory *factory;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    WCHAR buffW[255];
+    UINT32 count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_GetFaceNames(font, &strings);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_GetFaceNames(font, &strings2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(strings != strings2, "got %p, %p\n", strings2, strings);
+    IDWriteLocalizedStrings_Release(strings2);
+
+    count = IDWriteLocalizedStrings_GetCount(strings);
+    ok(count == 1, "got %d\n", count);
+
+    /* for simulated faces names are also simulated */
+    buffW[0] = 0;
+    hr = IDWriteLocalizedStrings_GetLocaleName(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+}
+
+    buffW[0] = 0;
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, obliqueW), "got %s\n", wine_dbgstr_w(buffW));
+    IDWriteLocalizedStrings_Release(strings);
+
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2076,6 +2134,7 @@ START_TEST(font)
     test_GetGdiInterop();
     test_CreateFontFaceFromHdc();
     test_GetSimulations();
+    test_GetFaceNames();
 
     IDWriteFactory_Release(factory);
 }
