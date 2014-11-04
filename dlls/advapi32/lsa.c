@@ -118,7 +118,7 @@ NTSTATUS WINAPI LsaAddAccountRights(
     ULONG count)
 {
     FIXME("(%p,%p,%p,0x%08x) stub\n", policy, sid, rights, count);
-    return STATUS_OBJECT_NAME_NOT_FOUND;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
