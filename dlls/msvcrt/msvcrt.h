@@ -921,6 +921,7 @@ int __cdecl      MSVCRT__fputc_nolock(int,MSVCRT_FILE*);
 int __cdecl      MSVCRT_ungetc(int,MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_fgetwc(MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT__fgetwc_nolock(MSVCRT_FILE*);
+MSVCRT_wint_t __cdecl MSVCRT__fputwc_nolock(MSVCRT_wint_t,MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_ungetwc(MSVCRT_wint_t,MSVCRT_FILE*);
 int __cdecl      MSVCRT__fseeki64_nolock(MSVCRT_FILE*,__int64,int);
 __int64 __cdecl  MSVCRT__ftelli64(MSVCRT_FILE* file);
