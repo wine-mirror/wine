@@ -155,7 +155,6 @@ static const WCHAR szVolumeCostList[] = { 'V','o','l','u','m','e','C','o','s','t
 static const WCHAR szVolumeSelectCombo[] = { 'V','o','l','u','m','e','S','e','l','e','c','t','C','o','m','b','o',0 };
 static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
-static const WCHAR szProperty[] = {'P','r','o','p','e','r','t','y',0};
 static const WCHAR szHyperLink[] = {'H','y','p','e','r','L','i','n','k',0};
 
 /* dialog sequencing */

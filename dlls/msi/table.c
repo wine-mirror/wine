@@ -2716,6 +2716,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     string_table *strings;
     UINT ret = ERROR_FUNCTION_FAILED;
     UINT bytes_per_strref;
+    BOOL property_update = FALSE;
 
     TRACE("%p %p\n", db, stg );
 
@@ -2760,6 +2761,8 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
             tables = transform;
         else if (!strcmpW( transform->name, szColumns ) )
             columns = transform;
+        else if (!strcmpW( transform->name, szProperty ))
+            property_update = TRUE;
 
         TRACE("transform contains stream %s\n", debugstr_w(name));
 
@@ -2809,7 +2812,10 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     }
 
     if ( ret == ERROR_SUCCESS )
+    {
         append_storage_to_db( db, stg );
+        if (property_update) msi_clone_properties( db );
+    }
 
 end:
     if ( stgenum )

@@ -7813,10 +7813,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         package->full_reinstall = 1;
     }
 
-    /* properties may have been added by a transform */
-    msi_clone_properties( package->db );
     msi_set_original_database_property( package->db, szPackagePath );
-
     msi_parse_command_line( package, szCommandLine, FALSE );
     msi_adjust_privilege_properties( package );
     msi_set_context( package );

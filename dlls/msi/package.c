@@ -1677,11 +1677,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         }
         index++;
     }
-    if (index)
-    {
-        msi_clone_properties( package->db );
-        msi_adjust_privilege_properties( package );
-    }
+    if (index) msi_adjust_privilege_properties( package );
+
     r = msi_set_original_database_property( package->db, szPackage );
     if (r != ERROR_SUCCESS)
     {
