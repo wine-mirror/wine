@@ -548,6 +548,38 @@ static void test_style5(IHTMLStyle5 *style5)
     hres = IHTMLStyle5_put_minWidth(style5, vdefault);
     ok(hres == S_OK, "put_minWidth failed: %08x\n", hres);
     VariantClear(&vdefault);
+
+    /* maxWidth */
+    hres = IHTMLStyle5_get_maxWidth(style5, &vdefault);
+    ok(hres == S_OK, "get_maxWidth failed: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("200px");
+    hres = IHTMLStyle5_put_maxWidth(style5, v);
+    ok(hres == S_OK, "put_maxWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_get_maxWidth(style5, &v);
+    ok(hres == S_OK, "get_maxWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n",V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "200px"), "expect 200px got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("70%");
+    hres = IHTMLStyle5_put_maxWidth(style5, v);
+    ok(hres == S_OK, "put_maxWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_get_maxWidth(style5, &v);
+    ok(hres == S_OK, "get maxWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "70%"), "expect 70%% got (%s)\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle5_put_maxWidth(style5,vdefault);
+    ok(hres == S_OK, "put_maxWidth failed: %08x\n", hres);
+    VariantClear(&vdefault);
 }
 
 static void test_style6(IHTMLStyle6 *style)
