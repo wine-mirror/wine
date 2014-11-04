@@ -562,7 +562,7 @@ static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
         GUID reg_guid;
 
         key_name_size = sizeof(key_name);
-        if(RegEnumKeyExW(devices_key, i, key_name, &key_name_size, NULL,
+        if(RegEnumKeyExW(devices_key, i++, key_name, &key_name_size, NULL,
                 NULL, NULL, NULL) != ERROR_SUCCESS)
             break;
 
@@ -596,8 +596,6 @@ static BOOL get_deviceid_by_guid(GUID *guid, AudioDeviceID *id, EDataFlow *flow)
         }
 
         RegCloseKey(key);
-
-        ++i;
     }
 
     RegCloseKey(devices_key);
