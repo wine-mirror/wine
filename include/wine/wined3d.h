@@ -1970,7 +1970,6 @@ struct wined3d_shader_signature
 {
     UINT element_count;
     struct wined3d_shader_signature_element *elements;
-    char *string_data;
 };
 
 struct wined3d_parent_ops
