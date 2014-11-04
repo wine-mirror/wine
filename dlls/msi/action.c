@@ -7814,7 +7814,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
 
     /* properties may have been added by a transform */
-    msi_clone_properties( package );
+    msi_clone_properties( package->db );
     msi_set_original_database_property( package->db, szPackagePath );
 
     msi_parse_command_line( package, szCommandLine, FALSE );
