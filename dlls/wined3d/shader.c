@@ -1603,6 +1603,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
 static void shader_cleanup(struct wined3d_shader *shader)
 {
+    HeapFree(GetProcessHeap(), 0, shader->signature_strings);
     shader->device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
     HeapFree(GetProcessHeap(), 0, shader->function);
@@ -2011,11 +2012,41 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
 
     if (output_signature)
     {
+        struct wined3d_shader_signature_element *e;
+        SIZE_T total, len;
+        char *ptr;
+
+        total = 0;
         for (i = 0; i < output_signature->element_count; ++i)
         {
-            struct wined3d_shader_signature_element *e = &output_signature->elements[i];
+            e = &output_signature->elements[i];
+            len = strlen(e->semantic_name);
+            if (len >= ~(SIZE_T)0 - total)
+            {
+                shader_cleanup(shader);
+                return E_OUTOFMEMORY;
+            }
+
+            total += len + 1;
+        }
+
+        if (!(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
+        {
+            shader_cleanup(shader);
+            return E_OUTOFMEMORY;
+        }
+        ptr = shader->signature_strings;
+
+        for (i = 0; i < output_signature->element_count; ++i)
+        {
+            e = &output_signature->elements[i];
             reg_maps->output_registers |= 1 << e->register_idx;
             shader->output_signature[e->register_idx] = *e;
+
+            len = strlen(e->semantic_name);
+            memcpy(ptr, e->semantic_name, len + 1);
+            shader->output_signature[e->register_idx].semantic_name = ptr;
+            ptr += len + 1;
         }
     }
 

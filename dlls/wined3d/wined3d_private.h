@@ -2879,6 +2879,7 @@ struct wined3d_shader
 
     struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
     struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
+    char *signature_strings;
 
     /* Pointer to the parent device */
     struct wined3d_device *device;
