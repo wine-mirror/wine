@@ -325,7 +325,6 @@ struct d3d10_device
 
     struct d3d10_blend_state *blend_state;
     float blend_factor[4];
-    UINT sample_mask;
     struct d3d10_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
     struct d3d10_rasterizer_state *rasterizer_state;
