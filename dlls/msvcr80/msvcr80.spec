@@ -1087,7 +1087,7 @@
 @ cdecl _ungetc_nolock(long ptr) MSVCRT__ungetc_nolock
 @ cdecl _ungetch(long)
 @ stub _ungetch_nolock
-@ stub _ungetwc_nolock
+@ cdecl _ungetwc_nolock(long ptr) MSVCRT__ungetwc_nolock
 @ stub _ungetwch
 @ stub _ungetwch_nolock
 @ cdecl _unlink(str) MSVCRT__unlink

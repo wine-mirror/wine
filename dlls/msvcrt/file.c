@@ -5053,12 +5053,27 @@ int CDECL MSVCRT__ungetc_nolock(int c, MSVCRT_FILE * file)
  */
 MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 {
-    MSVCRT_wchar_t mwc = wc;
+    MSVCRT_wint_t ret;
 
-    if (wc == MSVCRT_WEOF)
-        return MSVCRT_WEOF;
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_WEOF;
 
     MSVCRT__lock_file(file);
+    ret = MSVCRT__ungetwc_nolock(wc, file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *              _ungetwc_nolock (MSVCRT.@)
+ */
+MSVCRT_wint_t CDECL MSVCRT__ungetwc_nolock(MSVCRT_wint_t wc, MSVCRT_FILE * file)
+{
+    MSVCRT_wchar_t mwc = wc;
+
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_WEOF;
+    if (wc == MSVCRT_WEOF)
+        return MSVCRT_WEOF;
 
     if((msvcrt_get_ioinfo(file->_file)->exflag & (EF_UTF8 | EF_UTF16))
             || !(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
@@ -5066,30 +5081,23 @@ MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
         int i;
 
         for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
-            if(pp[i] != MSVCRT_ungetc(pp[i],file)) {
-                MSVCRT__unlock_file(file);
+            if(pp[i] != MSVCRT__ungetc_nolock(pp[i],file))
                 return MSVCRT_WEOF;
-            }
         }
     }else {
         char mbs[MSVCRT_MB_LEN_MAX];
         int len;
 
         len = MSVCRT_wctomb(mbs, mwc);
-        if(len == -1) {
-            MSVCRT__unlock_file(file);
+        if(len == -1)
             return MSVCRT_WEOF;
-        }
 
         for(len--; len>=0; len--) {
-            if(mbs[len] != MSVCRT_ungetc(mbs[len], file)) {
-                MSVCRT__unlock_file(file);
+            if(mbs[len] != MSVCRT__ungetc_nolock(mbs[len], file))
                 return MSVCRT_WEOF;
-            }
         }
     }
 
-    MSVCRT__unlock_file(file);
     return mwc;
 }
 
