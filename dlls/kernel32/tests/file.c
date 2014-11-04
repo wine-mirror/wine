@@ -2562,7 +2562,7 @@ static void test_FindNextFileA(void)
     ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES\n");
 }
 
-static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
+static void test_FindFirstFileExA(FINDEX_INFO_LEVELS level, FINDEX_SEARCH_OPS search_ops, DWORD flags)
 {
     WIN32_FIND_DATAA search_results;
     HANDLE handle;
@@ -2574,12 +2574,15 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
         return;
     }
 
+    trace("Running FindFirstFileExA tests with level=%d, search_ops=%d, flags=%u\n",
+          level, search_ops, flags);
+
     CreateDirectoryA("test-dir", NULL);
     _lclose(_lcreat("test-dir\\file1", 0));
     _lclose(_lcreat("test-dir\\file2", 0));
     CreateDirectoryA("test-dir\\dir1", NULL);
     SetLastError(0xdeadbeef);
-    handle = pFindFirstFileExA("test-dir\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
+    handle = pFindFirstFileExA("test-dir\\*", level, &search_results, search_ops, NULL, flags);
     if (handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("FindFirstFileExA is not implemented\n");
@@ -2590,16 +2593,26 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
         win_skip("FindFirstFileExA flag FIND_FIRST_EX_LARGE_FETCH not supported, skipping test\n");
         goto cleanup;
     }
-    ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
-    ok(strcmp(search_results.cFileName, ".") == 0, "First entry should be '.', is %s\n", search_results.cFileName);
+    if ((level == FindExInfoBasic) && handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("FindFirstFileExA level FindExInfoBasic not supported, skipping test\n");
+        goto cleanup;
+    }
 
 #define CHECK_NAME(fn) (strcmp((fn), "file1") == 0 || strcmp((fn), "file2") == 0 || strcmp((fn), "dir1") == 0)
+#define CHECK_LEVEL(fn) (level != FindExInfoBasic || !(fn)[0])
+
+    ok(handle != INVALID_HANDLE_VALUE, "FindFirstFile failed (err=%u)\n", GetLastError());
+    ok(strcmp(search_results.cFileName, ".") == 0, "First entry should be '.', is %s\n", search_results.cFileName);
+    ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
 
     ok(FindNextFileA(handle, &search_results), "Fetching second file failed\n");
     ok(strcmp(search_results.cFileName, "..") == 0, "Second entry should be '..' is %s\n", search_results.cFileName);
+    ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
 
     ok(FindNextFileA(handle, &search_results), "Fetching third file failed\n");
     ok(CHECK_NAME(search_results.cFileName), "Invalid third entry - %s\n", search_results.cFileName);
+    ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
 
     SetLastError(0xdeadbeef);
     ret = FindNextFileA(handle, &search_results);
@@ -2608,26 +2621,31 @@ static void test_FindFirstFileExA(FINDEX_SEARCH_OPS search_ops, DWORD flags)
         skip("File system supports directory filtering\n");
         /* Results from the previous call are not cleared */
         ok(strcmp(search_results.cFileName, "dir1") == 0, "Third entry should be 'dir1' is %s\n", search_results.cFileName);
+        ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
+
     }
     else
     {
         ok(ret, "Fetching fourth file failed\n");
         ok(CHECK_NAME(search_results.cFileName), "Invalid fourth entry - %s\n", search_results.cFileName);
+        ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
 
         ok(FindNextFileA(handle, &search_results), "Fetching fifth file failed\n");
         ok(CHECK_NAME(search_results.cFileName), "Invalid fifth entry - %s\n", search_results.cFileName);
+        ok(CHECK_LEVEL(search_results.cAlternateFileName), "FindFirstFile unexpectedly returned an alternate filename\n");
 
         ok(FindNextFileA(handle, &search_results) == FALSE, "Fetching sixth file should fail\n");
     }
 
 #undef CHECK_NAME
+#undef CHECK_LEVEL
 
     FindClose( handle );
 
     /* Most Windows systems seem to ignore the FIND_FIRST_EX_CASE_SENSITIVE flag. Unofficial documentation
      * suggests that there are registry keys and that it might depend on the used filesystem. */
     SetLastError(0xdeadbeef);
-    handle = pFindFirstFileExA("TEST-DIR\\*", FindExInfoStandard, &search_results, search_ops, NULL, flags);
+    handle = pFindFirstFileExA("TEST-DIR\\*", level, &search_results, search_ops, NULL, flags);
     if (flags & FIND_FIRST_EX_CASE_SENSITIVE)
     {
         ok(handle != INVALID_HANDLE_VALUE || GetLastError() == ERROR_PATH_NOT_FOUND,
@@ -4192,13 +4210,15 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
-    test_FindFirstFileExA(0, 0);
-    test_FindFirstFileExA(0, FIND_FIRST_EX_CASE_SENSITIVE);
-    test_FindFirstFileExA(0, FIND_FIRST_EX_LARGE_FETCH);
+    test_FindFirstFileExA(FindExInfoStandard, 0, 0);
+    test_FindFirstFileExA(FindExInfoStandard, 0, FIND_FIRST_EX_CASE_SENSITIVE);
+    test_FindFirstFileExA(FindExInfoStandard, 0, FIND_FIRST_EX_LARGE_FETCH);
+    test_FindFirstFileExA(FindExInfoBasic, 0, 0);
     /* FindExLimitToDirectories is ignored if the file system doesn't support directory filtering */
-    test_FindFirstFileExA(FindExSearchLimitToDirectories, 0);
-    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_CASE_SENSITIVE);
-    test_FindFirstFileExA(FindExSearchLimitToDirectories, FIND_FIRST_EX_LARGE_FETCH);
+    test_FindFirstFileExA(FindExInfoStandard, FindExSearchLimitToDirectories, 0);
+    test_FindFirstFileExA(FindExInfoStandard, FindExSearchLimitToDirectories, FIND_FIRST_EX_CASE_SENSITIVE);
+    test_FindFirstFileExA(FindExInfoStandard, FindExSearchLimitToDirectories, FIND_FIRST_EX_LARGE_FETCH);
+    test_FindFirstFileExA(FindExInfoBasic, FindExSearchLimitToDirectories, 0);
     test_LockFile();
     test_file_sharing();
     test_offset_in_overlapped_structure();
