@@ -144,6 +144,8 @@ static const WCHAR attrMarginRight[] =
     {'m','a','r','g','i','n','-','r','i','g','h','t',0};
 static const WCHAR attrMarginTop[] =
     {'m','a','r','g','i','n','-','t','o','p',0};
+static const WCHAR attrMaxHeight[] =
+    {'m','a','x','-','h','e','i','g','h','t',0};
 static const WCHAR attrMaxWidth[] =
     {'m','a','x','-','w','i','d','t','h',0};
 static const WCHAR attrMinHeight[] =
@@ -266,6 +268,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrMarginLeft,           DISPID_IHTMLSTYLE_MARGINLEFT},
     {attrMarginRight,          DISPID_IHTMLSTYLE_MARGINRIGHT},
     {attrMarginTop,            DISPID_IHTMLSTYLE_MARGINTOP},
+    {attrMaxHeight,            DISPID_IHTMLSTYLE5_MAXHEIGHT},
     {attrMaxWidth,             DISPID_IHTMLSTYLE5_MAXWIDTH},
     {attrMinHeight,            DISPID_IHTMLSTYLE4_MINHEIGHT},
     {attrMinWidth,             DISPID_IHTMLSTYLE5_MINWIDTH},
