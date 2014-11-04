@@ -2241,7 +2241,6 @@ static void test_CoWaitForMultipleHandles(void)
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
     ok(index == WAIT_IO_COMPLETION, "expected index WAIT_IO_COMPLETION, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
-    todo_wine
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
     /* test with COWAIT_INPUTAVAILABLE (semaphores are still locked) */
