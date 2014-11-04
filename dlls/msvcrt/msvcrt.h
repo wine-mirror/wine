@@ -917,6 +917,7 @@ void __cdecl     MSVCRT__lock_file(MSVCRT_FILE*);
 void __cdecl     MSVCRT__unlock_file(MSVCRT_FILE*);
 int __cdecl      MSVCRT_fgetc(MSVCRT_FILE*);
 int __cdecl      MSVCRT__fgetc_nolock(MSVCRT_FILE*);
+int __cdecl      MSVCRT__fputc_nolock(int,MSVCRT_FILE*);
 int __cdecl      MSVCRT_ungetc(int,MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_fgetwc(MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT__fgetwc_nolock(MSVCRT_FILE*);

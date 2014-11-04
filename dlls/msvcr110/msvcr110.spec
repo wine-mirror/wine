@@ -1178,6 +1178,7 @@
 @ stub _fprintf_p
 @ stub _fprintf_p_l
 @ stub _fprintf_s_l
+@ cdecl _fputc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _fputchar(long) MSVCRT__fputchar
 @ stub _fputwc_nolock
 @ cdecl _fputwchar(long) MSVCRT__fputwchar

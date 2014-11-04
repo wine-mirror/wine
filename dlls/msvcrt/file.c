@@ -3980,25 +3980,35 @@ int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const MSVCRT_wchar_t *filename,
  */
 int CDECL MSVCRT_fputc(int c, MSVCRT_FILE* file)
 {
+    int ret;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__fputc_nolock(c, file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fputc_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__fputc_nolock(int c, MSVCRT_FILE* file)
+{
   int res;
 
-  MSVCRT__lock_file(file);
   if(file->_cnt>0) {
     *file->_ptr++=c;
     file->_cnt--;
     if (c == '\n')
     {
       res = msvcrt_flush_buffer(file);
-      MSVCRT__unlock_file(file);
       return res ? res : c;
     }
     else {
-      MSVCRT__unlock_file(file);
       return c & 0xff;
     }
   } else {
     res = MSVCRT__flsbuf(c, file);
-    MSVCRT__unlock_file(file);
     return res;
   }
 }
