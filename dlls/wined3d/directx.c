@@ -36,10 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 #define DEFAULT_REFRESH_RATE 0
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof((array)[0]))
-#endif
-
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
  * R3xx, R4xx and R5xx GPUs. */

@@ -52,6 +52,10 @@
 #include "wine/rbtree.h"
 #include "wine/wgl_driver.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 /* Driver quirks */
 #define WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT       0x00000001
 #define WINED3D_QUIRK_SET_TEXCOORD_W            0x00000002

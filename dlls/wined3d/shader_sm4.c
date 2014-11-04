@@ -176,7 +176,12 @@ struct wined3d_sm4_data
 {
     struct wined3d_shader_version shader_version;
     const DWORD *end;
-    const struct wined3d_shader_signature *output_signature;
+
+    struct
+    {
+        enum wined3d_shader_register_type register_type;
+        UINT register_idx;
+    } output_map[MAX_REG_OUTPUT];
 
     struct wined3d_shader_src_param src_param[5];
     struct wined3d_shader_dst_param dst_param[2];
@@ -331,20 +336,6 @@ static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_op
     return NULL;
 }
 
-static void map_sysval(enum wined3d_sysval_semantic sysval, struct wined3d_shader_register *reg)
-{
-    unsigned int i;
-
-    for (i = 0; i < sizeof(sysval_map) / sizeof(*sysval_map); ++i)
-    {
-        if (sysval == sysval_map[i].sysval)
-        {
-            reg->type = sysval_map[i].register_type;
-            reg->idx[0].offset = sysval_map[i].register_idx;
-        }
-    }
-}
-
 static void map_register(const struct wined3d_sm4_data *priv, struct wined3d_shader_register *reg)
 {
     switch (priv->shader_version.type)
@@ -352,23 +343,16 @@ static void map_register(const struct wined3d_sm4_data *priv, struct wined3d_sha
         case WINED3D_SHADER_TYPE_PIXEL:
             if (reg->type == WINED3DSPR_OUTPUT)
             {
-                unsigned int i;
-                const struct wined3d_shader_signature *s = priv->output_signature;
+                unsigned int reg_idx = reg->idx[0].offset;
 
-                if (!s)
+                if (reg_idx >= ARRAY_SIZE(priv->output_map))
                 {
-                    ERR("Shader has no output signature, unable to map register.\n");
+                    ERR("Invalid output index %u.\n", reg_idx);
                     break;
                 }
 
-                for (i = 0; i < s->element_count; ++i)
-                {
-                    if (s->elements[i].register_idx == reg->idx[0].offset)
-                    {
-                        map_sysval(s->elements[i].sysval_semantic, reg);
-                        break;
-                    }
-                }
+                reg->type = priv->output_map[reg_idx].register_type;
+                reg->idx[0].offset = priv->output_map[reg_idx].register_idx;
             }
             break;
 
@@ -399,14 +383,37 @@ static enum wined3d_data_type map_data_type(char t)
 
 static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
-    struct wined3d_sm4_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
-    if (!priv)
+    struct wined3d_sm4_data *priv;
+    unsigned int i, j;
+
+    if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
     {
         ERR("Failed to allocate private data\n");
         return NULL;
     }
 
-    priv->output_signature = output_signature;
+    memset(priv->output_map, 0xff, sizeof(priv->output_map));
+    for (i = 0; i < output_signature->element_count; ++i)
+    {
+        struct wined3d_shader_signature_element *e = &output_signature->elements[i];
+
+        if (e->register_idx >= ARRAY_SIZE(priv->output_map))
+        {
+            WARN("Invalid output index %u.\n", e->register_idx);
+            continue;
+        }
+
+        for (j = 0; j < ARRAY_SIZE(sysval_map); ++j)
+        {
+            if (e->sysval_semantic == sysval_map[j].sysval)
+            {
+                priv->output_map[e->register_idx].register_type = sysval_map[j].register_type;
+                priv->output_map[e->register_idx].register_idx = sysval_map[j].register_idx;
+                break;
+            }
+        }
+    }
+
     list_init(&priv->src_free);
     list_init(&priv->src);
 
