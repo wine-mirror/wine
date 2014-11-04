@@ -2,6 +2,7 @@
  *    Font related tests
  *
  * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,6 +58,152 @@ static IDWriteFactory *create_factory(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     return factory;
 }
+
+struct test_fontenumerator
+{
+    IDWriteFontFileEnumerator IDWriteFontFileEnumerator_iface;
+    LONG ref;
+
+    DWORD index;
+    IDWriteFontFile *font_file;
+};
+
+static inline struct test_fontenumerator *impl_from_IDWriteFontFileEnumerator(IDWriteFontFileEnumerator* iface)
+{
+    return CONTAINING_RECORD(iface, struct test_fontenumerator, IDWriteFontFileEnumerator_iface);
+}
+
+static HRESULT WINAPI singlefontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileEnumerator))
+    {
+        *obj = iface;
+        IDWriteFontFileEnumerator_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI singlefontfileenumerator_AddRef(IDWriteFontFileEnumerator *iface)
+{
+    struct test_fontenumerator *This = impl_from_IDWriteFontFileEnumerator(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI singlefontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
+{
+    struct test_fontenumerator *This = impl_from_IDWriteFontFileEnumerator(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    if (!ref) {
+        IDWriteFontFile_Release(This->font_file);
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI singlefontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **font_file)
+{
+    struct test_fontenumerator *This = impl_from_IDWriteFontFileEnumerator(iface);
+    IDWriteFontFile_AddRef(This->font_file);
+    *font_file = This->font_file;
+    return S_OK;
+}
+
+static HRESULT WINAPI singlefontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
+{
+    struct test_fontenumerator *This = impl_from_IDWriteFontFileEnumerator(iface);
+
+    if (This->index > 1) {
+        *current = FALSE;
+        return S_OK;
+    }
+
+    This->index++;
+    *current = TRUE;
+    return S_OK;
+}
+
+static const struct IDWriteFontFileEnumeratorVtbl singlefontfileenumeratorvtbl =
+{
+    singlefontfileenumerator_QueryInterface,
+    singlefontfileenumerator_AddRef,
+    singlefontfileenumerator_Release,
+    singlefontfileenumerator_MoveNext,
+    singlefontfileenumerator_GetCurrentFontFile
+};
+
+static HRESULT create_enumerator(IDWriteFontFile *font_file, IDWriteFontFileEnumerator **ret)
+{
+    struct test_fontenumerator *enumerator;
+
+    enumerator = heap_alloc(sizeof(struct test_fontenumerator));
+    if (!enumerator)
+        return E_OUTOFMEMORY;
+
+    enumerator->IDWriteFontFileEnumerator_iface.lpVtbl = &singlefontfileenumeratorvtbl;
+    enumerator->ref = 1;
+    enumerator->index = 0;
+    enumerator->font_file = font_file;
+    IDWriteFontFile_AddRef(font_file);
+
+    *ret = &enumerator->IDWriteFontFileEnumerator_iface;
+    return S_OK;
+}
+
+struct test_fontcollectionloader
+{
+    IDWriteFontCollectionLoader IDWriteFontFileCollectionLoader_iface;
+    IDWriteFontFileLoader *loader;
+};
+
+static inline struct test_fontcollectionloader *impl_from_IDWriteFontFileCollectionLoader(IDWriteFontCollectionLoader* iface)
+{
+    return CONTAINING_RECORD(iface, struct test_fontcollectionloader, IDWriteFontFileCollectionLoader_iface);
+}
+
+static HRESULT WINAPI resourcecollectionloader_QueryInterface(IDWriteFontCollectionLoader *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontCollectionLoader))
+    {
+        *obj = iface;
+        IDWriteFontCollectionLoader_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI resourcecollectionloader_AddRef(IDWriteFontCollectionLoader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI resourcecollectionloader_Release(IDWriteFontCollectionLoader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI resourcecollectionloader_CreateEnumeratorFromKey(IDWriteFontCollectionLoader *iface, IDWriteFactory *factory,
+    const void * collectionKey, UINT32  collectionKeySize, IDWriteFontFileEnumerator ** fontFileEnumerator)
+{
+    struct test_fontcollectionloader *This = impl_from_IDWriteFontFileCollectionLoader(iface);
+    IDWriteFontFile *font_file;
+    HRESULT hr;
+
+    IDWriteFactory_CreateCustomFontFileReference(factory, collectionKey, collectionKeySize, This->loader, &font_file);
+
+    hr = create_enumerator(font_file, fontFileEnumerator);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFontFile_Release(font_file);
+    return hr;
+}
+
+static const struct IDWriteFontCollectionLoaderVtbl resourcecollectionloadervtbl = {
+    resourcecollectionloader_QueryInterface,
+    resourcecollectionloader_AddRef,
+    resourcecollectionloader_Release,
+    resourcecollectionloader_CreateEnumeratorFromKey
+};
 
 /* Here is a functional custom font set of interfaces */
 struct test_fontdatastream
@@ -1035,6 +1182,48 @@ todo_wine
     IDWriteFactory_Release(factory);
 }
 
+static HRESULT WINAPI fontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileEnumerator))
+    {
+        *obj = iface;
+        IDWriteFontFileEnumerator_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fontfileenumerator_AddRef(IDWriteFontFileEnumerator *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI fontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI fontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
+{
+    *file = NULL;
+    return E_FAIL;
+}
+
+static HRESULT WINAPI fontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
+{
+    *current = FALSE;
+    return S_OK;
+}
+
+static const struct IDWriteFontFileEnumeratorVtbl dwritefontfileenumeratorvtbl =
+{
+    fontfileenumerator_QueryInterface,
+    fontfileenumerator_AddRef,
+    fontfileenumerator_Release,
+    fontfileenumerator_MoveNext,
+    fontfileenumerator_GetCurrentFontFile,
+};
+
 static HRESULT WINAPI fontcollectionloader_QueryInterface(IDWriteFontCollectionLoader *iface, REFIID riid, void **obj)
 {
     *obj = iface;
@@ -1051,8 +1240,11 @@ static ULONG WINAPI fontcollectionloader_Release(IDWriteFontCollectionLoader *if
     return 1;
 }
 
-static HRESULT WINAPI fontcollectionloader_CreateEnumeratorFromKey(IDWriteFontCollectionLoader *iface, IDWriteFactory * factory, const void * collectionKey, UINT32  collectionKeySize, IDWriteFontFileEnumerator ** fontFileEnumerator)
+static HRESULT WINAPI fontcollectionloader_CreateEnumeratorFromKey(IDWriteFontCollectionLoader *iface, IDWriteFactory *factory, const void *key,
+    UINT32 key_size, IDWriteFontFileEnumerator **ret)
 {
+    static IDWriteFontFileEnumerator enumerator = { &dwritefontfileenumeratorvtbl };
+    *ret = &enumerator;
     return S_OK;
 }
 
@@ -1065,10 +1257,23 @@ static const struct IDWriteFontCollectionLoaderVtbl dwritefontcollectionloadervt
 
 static void test_CustomFontCollection(void)
 {
+    static const WCHAR fontnameW[] = {'w','i','n','e','_','t','e','s','t',0};
     IDWriteFontCollectionLoader collection = { &dwritefontcollectionloadervtbl };
     IDWriteFontCollectionLoader collection2 = { &dwritefontcollectionloadervtbl };
+    IDWriteFontCollectionLoader collection3 = { &dwritefontcollectionloadervtbl };
+    IDWriteFontCollection *font_collection = NULL;
+    static IDWriteFontFileLoader rloader = { &resourcefontfileloadervtbl };
+    struct test_fontcollectionloader resource_collection = { { &resourcecollectionloadervtbl }, &rloader };
+    IDWriteFontFamily *family, *family2, *family3;
+    IDWriteFontFace *idfontface, *idfontface2;
+    IDWriteFontFile *fontfile, *fontfile2;
+    IDWriteLocalizedStrings *string;
+    IDWriteFont *idfont, *idfont2;
     IDWriteFactory *factory;
+    UINT32 index, count;
+    BOOL exists;
     HRESULT hr;
+    HRSRC font;
 
     factory = create_factory();
 
@@ -1085,11 +1290,123 @@ static void test_CustomFontCollection(void)
     hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection);
     ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
 
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &rloader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &resource_collection.IDWriteFontFileCollectionLoader_iface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateCustomFontCollection(factory, &collection3, "Billy", 6, &font_collection);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateCustomFontCollection(factory, &collection, "Billy", 6, &font_collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontCollection_Release(font_collection);
+
+    hr = IDWriteFactory_CreateCustomFontCollection(factory, &collection2, "Billy", 6, &font_collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontCollection_Release(font_collection);
+
+    hr = IDWriteFactory_CreateCustomFontCollection(factory, (IDWriteFontCollectionLoader*)0xdeadbeef, "Billy", 6, &font_collection);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    font = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
+    ok(font != NULL, "Failed to find font resource\n");
+
+    hr = IDWriteFactory_CreateCustomFontCollection(factory, &resource_collection.IDWriteFontFileCollectionLoader_iface,
+        &font, sizeof(HRSRC), &font_collection);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    index = 1;
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(font_collection, fontnameW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(index == 0, "got index %i\n", index);
+    ok(exists, "got exists %i\n", exists);
+
+    count = IDWriteFontCollection_GetFontFamilyCount(font_collection);
+    ok(count == 1, "got %u\n", count);
+
+    family = NULL;
+    hr = IDWriteFontCollection_GetFontFamily(font_collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(family, 1);
+
+    family2 = NULL;
+    hr = IDWriteFontCollection_GetFontFamily(font_collection, 0, &family2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(family2, 1);
+    ok(family != family2, "got %p, %p\n", family, family2);
+
+    hr = IDWriteFontFamily_GetFont(family, 0, &idfont);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(idfont, 1);
+    EXPECT_REF(family, 2);
+    hr = IDWriteFontFamily_GetFont(family, 0, &idfont2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(idfont2, 1);
+    EXPECT_REF(family, 3);
+    ok(idfont != idfont2, "got %p, %p\n", idfont, idfont2);
+    IDWriteFont_Release(idfont2);
+
+    hr = IDWriteFont_GetInformationalStrings(idfont, DWRITE_INFORMATIONAL_STRING_COPYRIGHT_NOTICE, &string, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+    EXPECT_REF(string, 1);
+
+    family3 = NULL;
+    hr = IDWriteFont_GetFontFamily(idfont, &family3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(family, 3);
+    ok(family == family3, "got %p, %p\n", family, family3);
+    IDWriteFontFamily_Release(family3);
+
+    idfontface = NULL;
+    hr = IDWriteFont_CreateFontFace(idfont, &idfontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(idfont, 1);
+
+    idfont2 = NULL;
+    hr = IDWriteFontFamily_GetFont(family2, 0, &idfont2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(idfont2, 1);
+    EXPECT_REF(idfont, 1);
+    ok(idfont2 != idfont, "Font instances shoudl not match\n");
+
+    idfontface2 = NULL;
+    hr = IDWriteFont_CreateFontFace(idfont2, &idfontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(idfontface2 == idfontface, "fontfaces should match\n");
+
+    index = 1;
+    fontfile = NULL;
+    hr = IDWriteFontFace_GetFiles(idfontface, &index, &fontfile);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    index = 1;
+    fontfile2 = NULL;
+    hr = IDWriteFontFace_GetFiles(idfontface2, &index, &fontfile2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fontfile == fontfile2, "fontfiles should match\n");
+
+    IDWriteFont_Release(idfont);
+    IDWriteFont_Release(idfont2);
+    IDWriteFontFile_Release(fontfile);
+    IDWriteFontFile_Release(fontfile2);
+    IDWriteFontFace_Release(idfontface);
+    IDWriteFontFace_Release(idfontface2);
+    IDWriteFontFamily_Release(family2);
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(font_collection);
+
     hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &resource_collection.IDWriteFontFileCollectionLoader_iface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &rloader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IDWriteFactory_Release(factory);
