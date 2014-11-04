@@ -29,11 +29,16 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
     struct d3d10_shader_info *shader_info = ctx;
     HRESULT hr;
 
-    switch(tag)
+    switch (tag)
     {
+        case TAG_ISGN:
+            if (FAILED(hr = shader_parse_signature(data, data_size, shader_info->input_signature)))
+                return hr;
+            break;
+
         case TAG_OSGN:
-            hr = shader_parse_signature(data, data_size, shader_info->output_signature);
-            if (FAILED(hr)) return hr;
+            if (FAILED(hr = shader_parse_signature(data, data_size, shader_info->output_signature)))
+                return hr;
             break;
 
         case TAG_SHDR:
@@ -53,6 +58,7 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     HRESULT hr;
 
     shader_info->shader_code = NULL;
+    memset(shader_info->input_signature, 0, sizeof(*shader_info->input_signature));
     memset(shader_info->output_signature, 0, sizeof(*shader_info->output_signature));
 
     hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_info);
@@ -61,6 +67,7 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     if (FAILED(hr))
     {
         ERR("Failed to parse shader, hr %#x\n", hr);
+        shader_free_signature(shader_info->input_signature);
         shader_free_signature(shader_info->output_signature);
     }
 
@@ -243,22 +250,30 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature input_signature;
     struct d3d10_shader_info shader_info;
+    struct wined3d_shader_desc desc;
     HRESULT hr;
 
     shader->ID3D10VertexShader_iface.lpVtbl = &d3d10_vertex_shader_vtbl;
     shader->refcount = 1;
 
+    shader_info.input_signature = &input_signature;
     shader_info.output_signature = &output_signature;
-    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info);
-    if (FAILED(hr))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = wined3d_shader_create_vs(device->wined3d_device, shader_info.shader_code,
-            &output_signature, shader, &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
+    desc.byte_code = shader_info.shader_code;
+    desc.input_signature = &input_signature;
+    desc.output_signature = &output_signature;
+    desc.max_version = 4;
+
+    hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
+            &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
+    shader_free_signature(&input_signature);
     shader_free_signature(&output_signature);
     if (FAILED(hr))
     {
@@ -391,22 +406,30 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature input_signature;
     struct d3d10_shader_info shader_info;
+    struct wined3d_shader_desc desc;
     HRESULT hr;
 
     shader->ID3D10GeometryShader_iface.lpVtbl = &d3d10_geometry_shader_vtbl;
     shader->refcount = 1;
 
+    shader_info.input_signature = &input_signature;
     shader_info.output_signature = &output_signature;
-    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info);
-    if (FAILED(hr))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = wined3d_shader_create_gs(device->wined3d_device, shader_info.shader_code,
-            &output_signature, shader, &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
+    desc.byte_code = shader_info.shader_code;
+    desc.input_signature = &input_signature;
+    desc.output_signature = &output_signature;
+    desc.max_version = 4;
+
+    hr = wined3d_shader_create_gs(device->wined3d_device, &desc, shader,
+            &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
+    shader_free_signature(&input_signature);
     shader_free_signature(&output_signature);
     if (FAILED(hr))
     {
@@ -554,22 +577,30 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature input_signature;
     struct d3d10_shader_info shader_info;
+    struct wined3d_shader_desc desc;
     HRESULT hr;
 
     shader->ID3D10PixelShader_iface.lpVtbl = &d3d10_pixel_shader_vtbl;
     shader->refcount = 1;
 
+    shader_info.input_signature = &input_signature;
     shader_info.output_signature = &output_signature;
-    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info);
-    if (FAILED(hr))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         return hr;
     }
 
-    hr = wined3d_shader_create_ps(device->wined3d_device, shader_info.shader_code,
-            &output_signature, shader, &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
+    desc.byte_code = shader_info.shader_code;
+    desc.input_signature = &input_signature;
+    desc.output_signature = &output_signature;
+    desc.max_version = 4;
+
+    hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
+            &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
+    shader_free_signature(&input_signature);
     shader_free_signature(&output_signature);
     if (FAILED(hr))
     {

@@ -136,14 +136,20 @@ static const struct wined3d_parent_ops d3d9_vertexshader_wined3d_parent_ops =
 
 HRESULT vertexshader_init(struct d3d9_vertexshader *shader, struct d3d9_device *device, const DWORD *byte_code)
 {
+    struct wined3d_shader_desc desc;
     HRESULT hr;
 
     shader->refcount = 1;
     shader->IDirect3DVertexShader9_iface.lpVtbl = &d3d9_vertexshader_vtbl;
 
+    desc.byte_code = byte_code;
+    desc.input_signature = NULL;
+    desc.output_signature = NULL;
+    desc.max_version = 3;
+
     wined3d_mutex_lock();
-    hr = wined3d_shader_create_vs(device->wined3d_device, byte_code, NULL,
-            shader, &d3d9_vertexshader_wined3d_parent_ops, &shader->wined3d_shader, 3);
+    hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
+            &d3d9_vertexshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -280,14 +286,20 @@ static const struct wined3d_parent_ops d3d9_pixelshader_wined3d_parent_ops =
 
 HRESULT pixelshader_init(struct d3d9_pixelshader *shader, struct d3d9_device *device, const DWORD *byte_code)
 {
+    struct wined3d_shader_desc desc;
     HRESULT hr;
 
     shader->refcount = 1;
     shader->IDirect3DPixelShader9_iface.lpVtbl = &d3d9_pixelshader_vtbl;
 
+    desc.byte_code = byte_code;
+    desc.input_signature = NULL;
+    desc.output_signature = NULL;
+    desc.max_version = 3;
+
     wined3d_mutex_lock();
-    hr = wined3d_shader_create_ps(device->wined3d_device, byte_code, NULL, shader,
-            &d3d9_pixelshader_wined3d_parent_ops, &shader->wined3d_shader, 3);
+    hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
+            &d3d9_pixelshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

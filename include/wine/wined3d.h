@@ -1972,6 +1972,14 @@ struct wined3d_shader_signature
     struct wined3d_shader_signature_element *elements;
 };
 
+struct wined3d_shader_desc
+{
+    const DWORD *byte_code;
+    const struct wined3d_shader_signature *input_signature;
+    const struct wined3d_shader_signature *output_signature;
+    unsigned int max_version;
+};
+
 struct wined3d_parent_ops
 {
     void (__stdcall *wined3d_object_destroyed)(void *parent);
@@ -2411,15 +2419,12 @@ ULONG __cdecl wined3d_sampler_decref(struct wined3d_sampler *sampler);
 void * __cdecl wined3d_sampler_get_parent(const struct wined3d_sampler *sampler);
 ULONG __cdecl wined3d_sampler_incref(struct wined3d_sampler *sampler);
 
-HRESULT __cdecl wined3d_shader_create_gs(struct wined3d_device *device, const DWORD *byte_code,
-        const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
-HRESULT __cdecl wined3d_shader_create_ps(struct wined3d_device *device, const DWORD *byte_code,
-        const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
-HRESULT __cdecl wined3d_shader_create_vs(struct wined3d_device *device, const DWORD *byte_code,
-        const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
+HRESULT __cdecl wined3d_shader_create_gs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+HRESULT __cdecl wined3d_shader_create_ps(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+HRESULT __cdecl wined3d_shader_create_vs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
 ULONG __cdecl wined3d_shader_decref(struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_shader_get_byte_code(const struct wined3d_shader *shader,
         void *byte_code, UINT *byte_code_size);
