@@ -5002,13 +5002,28 @@ int CDECL MSVCRT_printf_s(const char *format, ...)
  */
 int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
+    int ret;
+
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EOF;
+
+    MSVCRT__lock_file(file);
+    ret = MSVCRT__ungetc_nolock(c, file);
+    MSVCRT__unlock_file(file);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_ungetc_nolock (MSVCRT.@)
+ */
+int CDECL MSVCRT__ungetc_nolock(int c, MSVCRT_FILE * file)
+{
     if(!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EOF;
 
     if (c == MSVCRT_EOF || !(file->_flag&MSVCRT__IOREAD ||
                 (file->_flag&MSVCRT__IORW && !(file->_flag&MSVCRT__IOWRT))))
         return MSVCRT_EOF;
 
-    MSVCRT__lock_file(file);
     if((!(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF))
                 && msvcrt_alloc_buffer(file))
             || (!file->_cnt && file->_ptr==file->_base))
@@ -5019,20 +5034,17 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
         if(file->_flag & MSVCRT__IOSTRG) {
             if(*file->_ptr != c) {
                 file->_ptr++;
-                MSVCRT__unlock_file(file);
                 return MSVCRT_EOF;
             }
         }else {
             *file->_ptr = c;
         }
         file->_cnt++;
-        MSVCRT_clearerr(file);
+        file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
         file->_flag |= MSVCRT__IOREAD;
-        MSVCRT__unlock_file(file);
         return c;
     }
 
-    MSVCRT__unlock_file(file);
     return MSVCRT_EOF;
 }
 

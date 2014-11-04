@@ -1084,7 +1084,7 @@
 @ cdecl _ultow_s(long ptr long long) MSVCRT__ultow_s
 @ cdecl _umask(long) MSVCRT__umask
 @ stub _umask_s
-@ stub _ungetc_nolock
+@ cdecl _ungetc_nolock(long ptr) MSVCRT__ungetc_nolock
 @ cdecl _ungetch(long)
 @ stub _ungetch_nolock
 @ stub _ungetwc_nolock
