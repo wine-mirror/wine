@@ -57,6 +57,7 @@ typedef struct
     HANDLE            handle;      /* handle to directory */
     CRITICAL_SECTION  cs;          /* crit section protecting this structure */
     FINDEX_SEARCH_OPS search_op;   /* Flags passed to FindFirst.  */
+    FINDEX_INFO_LEVELS level;      /* Level passed to FindFirst */
     UNICODE_STRING    mask;        /* file mask */
     UNICODE_STRING    path;        /* NT path used to open the directory */
     BOOL              is_root;     /* is directory the root of the drive? */
@@ -1875,7 +1876,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
     }
-    if (level != FindExInfoStandard)
+    if (level != FindExInfoStandard && level != FindExInfoBasic)
     {
         FIXME("info level %d not implemented\n", level );
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1979,6 +1980,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->data_size = 0;
     info->data      = NULL;
     info->search_op = search_op;
+    info->level     = level;
 
     if (device)
     {
@@ -2141,8 +2143,14 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 
         memcpy( data->cFileName, dir_info->FileName, dir_info->FileNameLength );
         data->cFileName[dir_info->FileNameLength/sizeof(WCHAR)] = 0;
-        memcpy( data->cAlternateFileName, dir_info->ShortName, dir_info->ShortNameLength );
-        data->cAlternateFileName[dir_info->ShortNameLength/sizeof(WCHAR)] = 0;
+
+        if (info->level != FindExInfoBasic)
+        {
+            memcpy( data->cAlternateFileName, dir_info->ShortName, dir_info->ShortNameLength );
+            data->cAlternateFileName[dir_info->ShortNameLength/sizeof(WCHAR)] = 0;
+        }
+        else
+            data->cAlternateFileName[0] = 0;
 
         TRACE("returning %s (%s)\n",
               debugstr_w(data->cFileName), debugstr_w(data->cAlternateFileName) );
