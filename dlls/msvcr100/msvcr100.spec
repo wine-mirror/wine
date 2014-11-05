@@ -888,7 +888,7 @@
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected() MSVCRT__get_unexpected
 @ cdecl _get_wpgmptr(ptr)
-@ stub _getc_nolock
+@ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _getch()
 @ stub _getch_nolock
 @ cdecl _getche()

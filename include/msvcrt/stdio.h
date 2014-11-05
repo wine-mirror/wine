@@ -137,6 +137,7 @@ int    __cdecl _fseek_nolock(FILE*,__msvcrt_long,int);
 int    __cdecl _fseeki64_nolock(FILE*,__int64,int);
 __msvcrt_long __cdecl _ftell_nolock(FILE*);
 __int64 __cdecl _ftelli64_nolock(FILE*);
+int    __cdecl _getc_nolock(FILE*);
 int    __cdecl _ungetc_nolock(int,FILE*);
 
 void   __cdecl clearerr(FILE*);
