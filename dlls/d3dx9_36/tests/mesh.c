@@ -2579,24 +2579,17 @@ static void D3DXCreateBoxTest(void)
     hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
     ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
 
-    if (FAILED(hr))
-    {
-        skip("D3DXCreateBox failed\n");
-        goto end;
-    }
-
     buffer = ID3DXBuffer_GetBufferPointer(ppBuffer);
     for(i=0; i<36; i++)
         ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
 
     box->lpVtbl->Release(box);
+    ID3DXBuffer_Release(ppBuffer);
 
     test_box(device, 10.9f, 20.0f, 4.9f);
 
-end:
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
-    if (ppBuffer) ID3DXBuffer_Release(ppBuffer);
     DestroyWindow(wnd);
 }
 
