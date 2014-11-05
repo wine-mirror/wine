@@ -203,11 +203,8 @@ static void release_font_data(struct dwrite_font_data *data)
             IDWriteLocalizedStrings_Release(data->info_strings[i]);
     }
 
-    /* FIXME: factory and file will be always set once system collection is working */
-    if (data->file)
-        IDWriteFontFile_Release(data->file);
-    if (data->factory)
-        IDWriteFactory_Release(data->factory);
+    IDWriteFontFile_Release(data->file);
+    IDWriteFactory_Release(data->factory);
     heap_free(data->facename);
     heap_free(data);
 }
