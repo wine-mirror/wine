@@ -557,6 +557,7 @@
 @ cdecl _getptd()
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr) MSVCRT__getw
+@ cdecl _getwc_nolock(ptr) MSVCRT__fgetwc_nolock
 @ stub _getwch
 @ stub _getwch_nolock
 @ stub _getwche
