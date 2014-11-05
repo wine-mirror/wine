@@ -913,6 +913,7 @@
 @ cdecl _putenv(str)
 @ cdecl _putenv_s(str str)
 @ cdecl _putw(long ptr) MSVCRT__putw
+@ cdecl _putwc_nolock(long ptr) MSVCRT__fputwc_nolock
 @ cdecl _putwch(long) MSVCRT__putwch
 @ stub _putwch_nolock
 @ cdecl _putws(wstr) MSVCRT__putws
