@@ -46,8 +46,6 @@ struct dwrite_font_data {
     IDWriteFontFile *file;
     UINT32 face_index;
 
-    IDWriteFontFace2 *face;
-
     WCHAR *facename;
 };
 
@@ -210,8 +208,6 @@ static void release_font_data(struct dwrite_font_data *data)
         IDWriteFontFile_Release(data->file);
     if (data->factory)
         IDWriteFactory_Release(data->factory);
-    if (data->face)
-        IDWriteFontFace2_Release(data->face);
     heap_free(data->facename);
     heap_free(data);
 }
@@ -707,24 +703,20 @@ HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
 
 static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2 **fontface)
 {
-    HRESULT hr = S_OK;
+    struct dwrite_font_data *data = font->data;
+    IDWriteFontFace *face;
+    HRESULT hr;
 
     *fontface = NULL;
 
-    if (!font->data->face) {
-        struct dwrite_font_data *data = font->data;
-        IDWriteFontFace *face;
+    hr = IDWriteFactory_CreateFontFace(data->factory, data->face_type, 1, &data->file,
+            data->face_index, font->simulations, &face);
+    if (FAILED(hr))
+        return hr;
 
-        hr = IDWriteFactory_CreateFontFace(data->factory, data->face_type, 1, &data->file,
-                data->face_index, font->simulations, &face);
-        if (FAILED(hr))
-            return hr;
+    hr = IDWriteFontFace_QueryInterface(face, &IID_IDWriteFontFace2, (void**)fontface);
+    IDWriteFontFace_Release(face);
 
-        hr = IDWriteFontFace_QueryInterface(face, &IID_IDWriteFontFace2, (void**)&font->data->face);
-        IDWriteFontFace_Release(face);
-    }
-
-    *fontface = font->data->face;
     return hr;
 }
 
@@ -1315,6 +1307,29 @@ static HRESULT WINAPI dwritefontcollection_FindFamilyName(IDWriteFontCollection 
     return collection_find_family(This, name, index, exists);
 }
 
+static BOOL is_same_fontfile(IDWriteFontFile *left, IDWriteFontFile *right)
+{
+    UINT32 left_key_size, right_key_size;
+    const void *left_key, *right_key;
+    HRESULT hr;
+
+    if (left == right)
+        return TRUE;
+
+    hr = IDWriteFontFile_GetReferenceKey(left, &left_key, &left_key_size);
+    if (FAILED(hr))
+        return FALSE;
+
+    hr = IDWriteFontFile_GetReferenceKey(right, &right_key, &right_key_size);
+    if (FAILED(hr))
+        return FALSE;
+
+    if (left_key_size != right_key_size)
+        return FALSE;
+
+    return !memcmp(left_key, right_key, left_key_size);
+}
+
 static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollection *iface, IDWriteFontFace *face, IDWriteFont **font)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
@@ -1322,7 +1337,8 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     struct dwrite_font_data *found_font = NULL;
     DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontFamily *family;
-    UINT32 i, j;
+    UINT32 i, j, face_index;
+    IDWriteFontFile *file;
     HRESULT hr;
 
     TRACE("(%p)->(%p %p)\n", This, face, font);
@@ -1332,11 +1348,19 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     if (!face)
         return E_INVALIDARG;
 
+    i = 1;
+    hr = IDWriteFontFace_GetFiles(face, &i, &file);
+    if (FAILED(hr))
+        return hr;
+    face_index = IDWriteFontFace_GetIndex(face);
+
     for (i = 0; i < This->family_count; i++) {
         struct dwrite_fontfamily_data *family_data = This->family_data[i];
         for (j = 0; j < family_data->font_count; j++) {
-            if ((IDWriteFontFace*)family_data->fonts[j]->face == face) {
-                found_font = family_data->fonts[j];
+            struct dwrite_font_data *font_data = family_data->fonts[j];
+
+            if (face_index == font_data->face_index && is_same_fontfile(file, font_data->file)) {
+                found_font = font_data;
                 found_family = family_data;
                 break;
             }
@@ -1459,7 +1483,6 @@ static HRESULT init_font_data(IDWriteFactory *factory, IDWriteFontFile *file, UI
 
     data->factory = factory;
     data->file = file;
-    data->face = NULL;
     data->face_index = face_index;
     data->face_type = face_type;
     IDWriteFontFile_AddRef(file);

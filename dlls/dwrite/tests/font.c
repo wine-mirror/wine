@@ -2039,7 +2039,6 @@ static void test_GetSimulations(void)
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     simulations = IDWriteFontFace_GetSimulations(fontface);
-todo_wine
     ok(simulations == DWRITE_FONT_SIMULATIONS_NONE, "got %d\n", simulations);
     IDWriteFontFace_Release(fontface);
     IDWriteFont_Release(font);
