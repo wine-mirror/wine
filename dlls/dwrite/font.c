@@ -646,7 +646,8 @@ static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRIT
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
 
-    get_font_properties(tt_os2, tt_head, tt_post, metrics, stretch, weight, style);
+    opentype_get_font_properties(tt_os2, tt_head, stretch, weight, style);
+    opentype_get_font_metrics(tt_os2, tt_head, tt_post, metrics);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
@@ -1489,7 +1490,8 @@ static HRESULT init_font_data(IDWriteFactory *factory, IDWriteFontFile *file, UI
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
 
-    get_font_properties(tt_os2, tt_head, tt_post, &data->metrics, &data->stretch, &data->weight, &data->style);
+    opentype_get_font_properties(tt_os2, tt_head, &data->stretch, &data->weight, &data->style);
+    opentype_get_font_metrics(tt_os2, tt_head, tt_post, &data->metrics);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);

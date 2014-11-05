@@ -858,28 +858,15 @@ HRESULT opentype_cmap_get_unicode_ranges(void *data, UINT32 max_count, DWRITE_UN
     return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
-VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+void opentype_get_font_metrics(const void *os2, const void *head, const void *post, DWRITE_FONT_METRICS *metrics)
 {
     TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
     TT_HEAD *tt_head = (TT_HEAD*)head;
     TT_POST *tt_post = (TT_POST*)post;
 
-    /* default stretch, weight and style to normal */
-    *stretch = DWRITE_FONT_STRETCH_NORMAL;
-    *weight = DWRITE_FONT_WEIGHT_NORMAL;
-    *style = DWRITE_FONT_STYLE_NORMAL;
-
     memset(metrics, 0, sizeof(*metrics));
 
-    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-    if (tt_os2)
-    {
-        if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-            *stretch = GET_BE_WORD(tt_os2->usWidthClass);
-
-        *weight = GET_BE_WORD(tt_os2->usWeightClass);
-        TRACE("stretch=%d, weight=%d\n", *stretch, *weight);
-
+    if (tt_os2) {
         metrics->ascent    = GET_BE_WORD(tt_os2->sTypoAscender);
         metrics->descent   = GET_BE_WORD(tt_os2->sTypoDescender);
         metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
@@ -890,18 +877,37 @@ VOID get_font_properties(LPCVOID os2, LPCVOID head, LPCVOID post, DWRITE_FONT_ME
     }
 
     if (tt_head)
-    {
-        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
         metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
-        if (macStyle & 0x0002)
-            *style = DWRITE_FONT_STYLE_ITALIC;
 
-    }
-
-    if (tt_post)
-    {
+    if (tt_post) {
         metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
         metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
+    }
+}
+
+void opentype_get_font_properties(const void *os2, const void *head, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+{
+    TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
+    TT_HEAD *tt_head = (TT_HEAD*)head;
+
+    /* default stretch, weight and style to normal */
+    *stretch = DWRITE_FONT_STRETCH_NORMAL;
+    *weight = DWRITE_FONT_WEIGHT_NORMAL;
+    *style = DWRITE_FONT_STYLE_NORMAL;
+
+    /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
+    if (tt_os2) {
+        if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+            *stretch = GET_BE_WORD(tt_os2->usWidthClass);
+
+        *weight = GET_BE_WORD(tt_os2->usWeightClass);
+        TRACE("stretch=%d, weight=%d\n", *stretch, *weight);
+    }
+
+    if (tt_head) {
+        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
+        if (macStyle & 0x0002)
+            *style = DWRITE_FONT_STYLE_ITALIC;
     }
 }
 
