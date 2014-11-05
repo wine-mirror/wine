@@ -4542,6 +4542,11 @@ static const struct message WmZOrder[] = {
     { 0 }
 };
 
+static void CALLBACK apc_test_proc(ULONG_PTR param)
+{
+    /* nothing */
+}
+
 static void test_MsgWaitForMultipleObjects(HWND hwnd)
 {
     DWORD ret;
@@ -4583,6 +4588,37 @@ static void test_MsgWaitForMultipleObjects(HWND hwnd)
     ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
     ok(PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
     ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
+
+    /* MWMO_INPUTAVAILABLE should succeed even if the message was already seen */
+    PostMessageA( hwnd, WM_USER, 0, 0 );
+    ok(PeekMessageA( &msg, 0, 0, 0, PM_NOREMOVE ), "PeekMessage should succeed\n");
+    ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
+
+    ret = MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE, MWMO_INPUTAVAILABLE );
+    ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
+
+    ok(PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
+    ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
+
+    /* without MWMO_ALERTABLE the result is never WAIT_IO_COMPLETION */
+    ret = QueueUserAPC( apc_test_proc, GetCurrentThread(), 0 );
+    ok(ret, "QueueUserAPC failed %u\n", GetLastError());
+
+    ret = MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE, 0 );
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
+
+    /* but even with MWMO_ALERTABLE window events are preferred */
+    PostMessageA( hwnd, WM_USER, 0, 0 );
+
+    ret = MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE, MWMO_ALERTABLE );
+    ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
+
+    ok(PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
+    ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
+
+    /* the APC call is still queued */
+    ret = MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_POSTMESSAGE, MWMO_ALERTABLE );
+    ok(ret == WAIT_IO_COMPLETION, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
 }
 
 /* test if we receive the right sequence of messages */
