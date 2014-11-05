@@ -105,12 +105,22 @@ static void address_addcomponents(void)
         hr = IDirectPlay8Address_GetComponentByName(localaddr, NULL, &compguid, &size, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+        size = sizeof(GUID)-1;
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, NULL, &size, &type);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        size = sizeof(GUID);
         hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, NULL, &size, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, NULL, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+        size = sizeof(GUID)-1;
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        size = sizeof(GUID);
         hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, NULL);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
