@@ -1115,7 +1115,7 @@ static void test_IME(void)
 
     if (!GetProcAddress(GetModuleHandleA("user32.dll"), "BroadcastSystemMessageExA"))
     {
-        skip("BroadcastSystemMessageExA not available, skipping IME class test\n");
+        win_skip("BroadcastSystemMessageExA not available, skipping IME class test\n");
         return;
     }
 

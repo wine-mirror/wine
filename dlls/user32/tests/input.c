@@ -1361,7 +1361,7 @@ static void test_GetMouseMovePointsEx(void)
 
     /* Get a valid content for the input struct */
     if(!GetCursorPos(&point)) {
-        skip("GetCursorPos() failed with error %u\n", GetLastError());
+        win_skip("GetCursorPos() failed with error %u\n", GetLastError());
         return;
     }
     memset(&in, 0, sizeof(MOUSEMOVEPOINT));
