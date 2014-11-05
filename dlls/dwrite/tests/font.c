@@ -2051,14 +2051,16 @@ todo_wine
 static void test_GetFaceNames(void)
 {
     static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
+    static const WCHAR enus2W[] = {'e','n','-','U','s',0};
     static const WCHAR enusW[] = {'e','n','-','u','s',0};
     IDWriteLocalizedStrings *strings, *strings2;
     IDWriteGdiInterop *interop;
     IDWriteFactory *factory;
+    UINT32 count, index;
     IDWriteFont *font;
     LOGFONTW logfont;
     WCHAR buffW[255];
-    UINT32 count;
+    BOOL exists;
     HRESULT hr;
 
     factory = create_factory();
@@ -2087,13 +2089,22 @@ static void test_GetFaceNames(void)
     count = IDWriteLocalizedStrings_GetCount(strings);
     ok(count == 1, "got %d\n", count);
 
+    index = 1;
+    exists = FALSE;
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enus2W, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(index == 0 && exists, "got %d, %d\n", index, exists);
+
+    count = 0;
+    hr = IDWriteLocalizedStrings_GetLocaleNameLength(strings, 1, &count);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(count == ~0, "got %d\n", count);
+
     /* for simulated faces names are also simulated */
     buffW[0] = 0;
     hr = IDWriteLocalizedStrings_GetLocaleName(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
-}
 
     buffW[0] = 0;
     hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));

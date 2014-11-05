@@ -256,22 +256,57 @@ static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *i
     WCHAR const *locale_name, UINT32 *index, BOOL *exists)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_w(locale_name), index, exists);
-    return E_NOTIMPL;
+    UINT32 i;
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(locale_name), index, exists);
+
+    *exists = FALSE;
+    *index = ~0;
+
+    for (i = 0; i < This->count; i++) {
+        if (!strcmpiW(This->data[i].locale, locale_name)) {
+            *exists = TRUE;
+            *index = i;
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI localizedstrings_GetLocaleNameLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p)->(%u %p): stub\n", This, index, length);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p)\n", This, index, length);
+
+    if (index >= This->count) {
+        *length = (UINT32)-1;
+        return E_FAIL;
+    }
+
+    *length = strlenW(This->data[index].locale);
+    return S_OK;
 }
 
-static HRESULT WINAPI localizedstrings_GetLocaleName(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *locale_name, UINT32 size)
+static HRESULT WINAPI localizedstrings_GetLocaleName(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-    FIXME("(%p)->(%u %p %u): stub\n", This, index, locale_name, size);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %p %u)\n", This, index, buffer, size);
+
+    if (index >= This->count) {
+        if (buffer) *buffer = 0;
+        return E_FAIL;
+    }
+
+    if (size < strlenW(This->data[index].locale)+1) {
+        if (buffer) *buffer = 0;
+        return E_NOT_SUFFICIENT_BUFFER;
+    }
+
+    strcpyW(buffer, This->data[index].locale);
+    return S_OK;
 }
 
 static HRESULT WINAPI localizedstrings_GetStringLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
