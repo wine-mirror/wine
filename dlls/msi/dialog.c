@@ -2171,7 +2171,7 @@ static void msi_dialog_update_pathedit( msi_dialog *dialog, msi_control *control
 /* FIXME: test when this should fail */
 static BOOL msi_dialog_verify_path( LPWSTR path )
 {
-    if ( !lstrlenW( path ) )
+    if ( !path[0] )
         return FALSE;
 
     if ( PathIsRelativeW( path ) )

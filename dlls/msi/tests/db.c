@@ -4534,7 +4534,7 @@ static void test_update(void)
     size = MAX_PATH;
     r = MsiRecordGetStringA(rec, 1, result, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrlenA(result), "Expected an empty string, got %s\n", result);
+    ok(!result[0], "Expected an empty string, got %s\n", result);
 
     MsiCloseHandle(rec);
 
@@ -4580,7 +4580,7 @@ static void test_update(void)
     size = MAX_PATH;
     r = MsiRecordGetStringA(rec, 1, result, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrlenA(result), "Expected an empty string, got %s\n", result);
+    ok(!result[0], "Expected an empty string, got %s\n", result);
 
     MsiCloseHandle(rec);
 
