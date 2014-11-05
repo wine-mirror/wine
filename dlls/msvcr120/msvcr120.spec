@@ -1598,6 +1598,7 @@
 @ stub _printf_p_l
 @ stub _printf_s_l
 @ cdecl _purecall()
+@ cdecl _putc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _putch(long)
 @ stub _putch_nolock
 @ cdecl _putenv(str)
