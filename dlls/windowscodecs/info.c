@@ -151,7 +151,12 @@ static HRESULT ComponentInfo_GetGuidList(HKEY classkey, LPCWSTR subkeyname,
         return E_INVALIDARG;
 
     ret = RegOpenKeyExW(classkey, subkeyname, 0, KEY_READ, &subkey);
-    if (ret != ERROR_SUCCESS) return HRESULT_FROM_WIN32(ret);
+    if (ret == ERROR_FILE_NOT_FOUND)
+    {
+        *actual_size = 0;
+        return S_OK;
+    }
+    else if (ret != ERROR_SUCCESS) return HRESULT_FROM_WIN32(ret);
 
     if (buffer)
     {
