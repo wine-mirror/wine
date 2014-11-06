@@ -26,6 +26,12 @@
 
 #include "wine/test.h"
 
+#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
+                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
+                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
+
+#define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
+
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
@@ -48,6 +54,7 @@ static inline BOOL heap_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
+static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR blahW[]  = {'B','l','a','h','!',0};
 
@@ -1673,23 +1680,13 @@ if (face2)
     IDWriteFactory_Release(factory);
 }
 
-static void test_CreateFontFileReference(void)
+static void create_testfontfile(const WCHAR *filename)
 {
     DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
-    HRESULT hr;
-    WCHAR font_name[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
-    IDWriteFontFile *ffile = NULL;
-    BOOL support = 1;
-    DWRITE_FONT_FILE_TYPE type = 1;
-    DWRITE_FONT_FACE_TYPE face = 1;
-    UINT32 count = 1;
-    IDWriteFontFace *fface = NULL;
-    IDWriteFactory *factory;
-
-    file = CreateFileW(font_name, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
 
     res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
@@ -1698,13 +1695,30 @@ static void test_CreateFontFileReference(void)
     WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
     ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
     CloseHandle( file );
+}
 
+static void test_CreateFontFileReference(void)
+{
+    HRESULT hr;
+    IDWriteFontFile *ffile = NULL;
+    BOOL support;
+    DWRITE_FONT_FILE_TYPE type;
+    DWRITE_FONT_FACE_TYPE face;
+    UINT32 count;
+    IDWriteFontFace *fface = NULL;
+    IDWriteFactory *factory;
+
+    create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, font_name, NULL, &ffile);
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &ffile);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
-    IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+    support = FALSE;
+    type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
+    face = DWRITE_FONT_FACE_TYPE_CFF;
+    count = 0;
+    hr = IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(support == TRUE, "got %i\n", support);
     ok(type == DWRITE_FONT_FILE_TYPE_TRUETYPE, "got %i\n", type);
@@ -1718,7 +1732,7 @@ static void test_CreateFontFileReference(void)
     IDWriteFontFile_Release(ffile);
     IDWriteFactory_Release(factory);
 
-    DeleteFileW(font_name);
+    DeleteFileW(test_fontfile);
 }
 
 static void test_shared_isolated(void)
@@ -2204,6 +2218,54 @@ static void test_GetFaceNames(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_TryGetFontTable(void)
+{
+    const void *table, *table2;
+    IDWriteFontFace *fontface;
+    void *context, *context2;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    BOOL exists;
+    UINT32 size;
+    HRESULT hr;
+
+    create_testfontfile(test_fontfile);
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, 0, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    exists = FALSE;
+    context = (void*)0xdeadbeef;
+    table = NULL;
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_CMAP_TAG, &table, &size, &context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+    ok(exists == TRUE, "got %d\n", exists);
+todo_wine
+    ok(context == NULL && table != NULL, "cmap: context %p, table %p\n", context, table);
+
+    exists = FALSE;
+    context2 = (void*)0xdeadbeef;
+    table2 = NULL;
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_CMAP_TAG, &table2, &size, &context2, &exists);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+    ok(exists == TRUE, "got %d\n", exists);
+todo_wine
+    ok(context2 == context && table2 == table, "cmap: context2 %p, table2 %p\n", context2, table2);
+
+    IDWriteFontFace_ReleaseFontTable(fontface, context2);
+    IDWriteFontFace_ReleaseFontTable(fontface, context);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFontFile_Release(file);
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2233,6 +2295,7 @@ START_TEST(font)
     test_CreateFontFaceFromHdc();
     test_GetSimulations();
     test_GetFaceNames();
+    test_TryGetFontTable();
 
     IDWriteFactory_Release(factory);
 }
