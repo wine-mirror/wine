@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 #include "htmlscript.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -290,15 +291,19 @@ static HRESULT WINAPI HTMLScriptElement_get_readyState(IHTMLScriptElement *iface
 static HRESULT WINAPI HTMLScriptElement_put_onerror(IHTMLScriptElement *iface, VARIANT v)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+
+    return set_node_event(&This->element.node, EVENTID_ERROR, &v);
 }
 
 static HRESULT WINAPI HTMLScriptElement_get_onerror(IHTMLScriptElement *iface, VARIANT *p)
 {
     HTMLScriptElement *This = impl_from_IHTMLScriptElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_node_event(&This->element.node, EVENTID_ERROR, p);
 }
 
 static HRESULT WINAPI HTMLScriptElement_put_type(IHTMLScriptElement *iface, BSTR v)
