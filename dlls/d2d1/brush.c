@@ -243,7 +243,11 @@ static void STDMETHODCALLTYPE d2d_solid_color_brush_GetTransform(ID2D1SolidColor
 
 static void STDMETHODCALLTYPE d2d_solid_color_brush_SetColor(ID2D1SolidColorBrush *iface, const D2D1_COLOR_F *color)
 {
-    FIXME("iface %p, color %p stub!\n", iface, color);
+    struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
+
+    TRACE("iface %p, color %p.\n", iface, color);
+
+    brush->u.solid.color = *color;
 }
 
 static D2D1_COLOR_F * STDMETHODCALLTYPE d2d_solid_color_brush_GetColor(ID2D1SolidColorBrush *iface, D2D1_COLOR_F *color)
