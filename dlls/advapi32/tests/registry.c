@@ -953,6 +953,11 @@ static void test_reg_open_key(void)
     ok(hkResult != NULL, "hkResult != NULL\n");
     RegCloseKey(hkResult);
 
+    /* trailing slashes */
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test\\\\", &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    RegCloseKey(hkResult);
+
     /* open nonexistent key
     * check that hkResult is set to NULL
     */
@@ -1217,6 +1222,12 @@ static void test_reg_create_key(void)
         RegDeleteKeyA(hkey1, NULL);
         RegCloseKey(hkey1);
     }
+
+    /* trailing backslash characters */
+    ret = RegCreateKeyExA(hkey_main, "Subkey4\\\\", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
+    ok(ret == ERROR_SUCCESS, "RegCreateKeyExA failed with error %d\n", ret);
+    RegDeleteKeyA(hkey1, "");
+    RegCloseKey(hkey1);
 
     /* WOW64 flags - open an existing key */
     hkey1 = NULL;
