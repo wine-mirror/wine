@@ -108,6 +108,15 @@ static void test_add(void)
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     ok(err == ERROR_SUCCESS, "key creation failed, got %d\n", err);
 
+    /* Test empty type */
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v emptyType /t \"\" /d WineTest /f", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
+        "got exit code %u\n", r);
+    if (r == REG_EXIT_SUCCESS)
+        todo_wine verify_reg(hkey, "emptyType", REG_SZ, "", 1, 0);
+    else
+        todo_wine win_skip("broken reg.exe detected\n");
+
     /* Test input key formats */
     run_reg_exe("reg add \\HKCU\\" KEY_BASE "\\keytest0 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
@@ -224,6 +233,10 @@ static void test_add(void)
     todo_wine ok(size == 6, "got wrong size %u\n", size);
     todo_wine ok(memcmp(buffer, buffer+12, 6) == 0 ||
         broken(memcmp(buffer+6, buffer+12, 6) == 0 /* WinXP */), "got wrong data\n");
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin5 /d \"\" /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
+    verify_reg(hkey, "bin5", REG_BINARY, buffer, 0, 0);
 
     /* REG_DWORD */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_DWORD /f /d 12345678", &r);
