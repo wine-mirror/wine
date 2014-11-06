@@ -252,11 +252,11 @@ static void STDMETHODCALLTYPE d2d_solid_color_brush_SetColor(ID2D1SolidColorBrus
 
 static D2D1_COLOR_F * STDMETHODCALLTYPE d2d_solid_color_brush_GetColor(ID2D1SolidColorBrush *iface, D2D1_COLOR_F *color)
 {
-    static const D2D1_COLOR_F black = {0.0f, 0.0f, 0.0f, 1.0f};
+    struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
 
-    FIXME("iface %p, color %p stub!\n", iface, color);
+    TRACE("iface %p, color %p.\n", iface, color);
 
-    *color = black;
+    *color = brush->u.solid.color;
     return color;
 }
 
