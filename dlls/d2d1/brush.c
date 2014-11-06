@@ -149,6 +149,7 @@ static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_ta
 {
     brush->ID2D1Brush_iface.lpVtbl = vtbl;
     brush->refcount = 1;
+    brush->opacity = desc ? desc->opacity : 1.0f;
     brush->type = type;
 }
 
@@ -210,7 +211,11 @@ static void STDMETHODCALLTYPE d2d_solid_color_brush_GetFactory(ID2D1SolidColorBr
 
 static void STDMETHODCALLTYPE d2d_solid_color_brush_SetOpacity(ID2D1SolidColorBrush *iface, float opacity)
 {
-    FIXME("iface %p, opacity %.8e stub!\n", iface, opacity);
+    struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
+
+    TRACE("iface %p, opacity %.8e.\n", iface, opacity);
+
+    brush->opacity = opacity;
 }
 
 static void STDMETHODCALLTYPE d2d_solid_color_brush_SetTransform(ID2D1SolidColorBrush *iface,

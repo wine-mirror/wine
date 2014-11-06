@@ -501,6 +501,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
+    D2D1_COLOR_F color;
     float tmp_x, tmp_y;
     HRESULT hr;
     struct
@@ -558,8 +559,14 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         return;
     }
 
-    buffer_desc.ByteWidth = sizeof(brush_impl->u.solid.color);
-    buffer_data.pSysMem = &brush_impl->u.solid.color;
+    color = brush_impl->u.solid.color;
+    color.r *= brush_impl->opacity;
+    color.g *= brush_impl->opacity;
+    color.b *= brush_impl->opacity;
+    color.a *= brush_impl->opacity;
+
+    buffer_desc.ByteWidth = sizeof(color);
+    buffer_data.pSysMem = &color;
 
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
     {

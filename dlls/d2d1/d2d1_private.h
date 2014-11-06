@@ -107,6 +107,8 @@ struct d2d_brush
     ID2D1Brush ID2D1Brush_iface;
     LONG refcount;
 
+    float opacity;
+
     enum d2d_brush_type type;
     union
     {
