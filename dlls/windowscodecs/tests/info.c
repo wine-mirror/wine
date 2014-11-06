@@ -415,9 +415,7 @@ static void test_reader_info(void)
 
     count = 0xdeadbeef;
     hr = IWICMetadataReaderInfo_GetContainerFormats(reader_info, 0, NULL, &count);
-todo_wine
     ok(hr == S_OK, "GetContainerFormats failed, hr=%x\n", hr);
-todo_wine
     ok(count == 0, "unexpected count %d\n", count);
 
     hr = IWICMetadataReaderInfo_GetPatterns(reader_info, &GUID_ContainerFormatPng,

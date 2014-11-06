@@ -56,6 +56,7 @@ static const WCHAR supportstransparency_valuename[] = {'S','u','p','p','o','r','
 static const WCHAR requiresfullstream_valuename[] = {'R','e','q','u','i','r','e','s','F','u','l','l','S','t','r','e','a','m',0};
 static const WCHAR supportspadding_valuename[] = {'S','u','p','p','o','r','t','s','P','a','d','d','i','n','g',0};
 static const WCHAR fileextensions_valuename[] = {'F','i','l','e','E','x','t','e','n','s','i','o','n','s',0};
+static const WCHAR containers_keyname[] = {'C','o','n','t','a','i','n','e','r','s',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -1635,10 +1636,11 @@ static HRESULT WINAPI MetadataReaderInfo_GetMetadataFormat(IWICMetadataReaderInf
 static HRESULT WINAPI MetadataReaderInfo_GetContainerFormats(IWICMetadataReaderInfo *iface,
     UINT length, GUID *formats, UINT *actual_length)
 {
-    if (!actual_length) return E_INVALIDARG;
+    MetadataReaderInfo *This = impl_from_IWICMetadataReaderInfo(iface);
+    TRACE("(%p,%u,%p,%p)\n", iface, length, formats, actual_length);
 
-    FIXME("(%p,%u,%p,%p): stub\n", iface, length, formats, actual_length);
-    return E_NOTIMPL;
+    return ComponentInfo_GetGuidList(This->classkey, containers_keyname, length,
+        formats, actual_length);
 }
 
 static HRESULT WINAPI MetadataReaderInfo_GetDeviceManufacturer(IWICMetadataReaderInfo *iface,
