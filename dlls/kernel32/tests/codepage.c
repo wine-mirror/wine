@@ -481,6 +481,50 @@ static void test_utf7_encoding(void)
         ok(output[expected_len] == '#', "i=0x%04x: expected output[%i]='#', got output[%i]=%i\n",
            i, expected_len, expected_len, output[expected_len]);
     }
+
+    /* test which one-byte characters are absorbed into surrounding base64 blocks
+     * (Windows always ends the base64 block when it encounters a directly encodable character) */
+    for (i = 0; i <= 0xFFFF; i++)
+    {
+        input[0] = 0x2672;
+        input[1] = i;
+        input[2] = 0x2672;
+        input[3] = 0;
+
+        memset(output, '#', sizeof(output) - 1);
+        output[sizeof(output) - 1] = 0;
+
+        len = WideCharToMultiByte(CP_UTF7, 0, input, 4, output, sizeof(output) - 1, NULL, NULL);
+
+        if (i == '+')
+        {
+            /* '+' is a special case and is encoded as "+-" */
+            expected_len = 13;
+            strcpy(expected, "+JnI-+-+JnI-");
+        }
+        else if (i <= 0x7F && directly_encodable_table[i])
+        {
+            /* encodes directly */
+            expected_len = 12;
+            sprintf(expected, "+JnI-%c+JnI-", i);
+        }
+        else
+        {
+            /* base64-encodes */
+            expected_len = 11;
+            sprintf(expected, "+Jn%c%c%c%cZy-",
+                    base64_encoding_table[8 | ((i & 0xC000) >> 14)],
+                    base64_encoding_table[(i & 0x3F00) >> 8],
+                    base64_encoding_table[(i & 0x00FC) >> 2],
+                    base64_encoding_table[((i & 0x0003) << 4) | 2]);
+        }
+
+        ok(len == expected_len, "i=0x%04x: expected len=%i, got len=%i\n", i, expected_len, len);
+        ok(memcmp(output, expected, expected_len) == 0,
+           "i=0x%04x: expected output='%s', got output='%s'\n", i, expected, output);
+        ok(output[expected_len] == '#', "i=0x%04x: expected output[%i]='#', got output[%i]=%i\n",
+           i, expected_len, expected_len, output[expected_len]);
+    }
 }
 
 static void test_undefined_byte_char(void)
