@@ -696,6 +696,17 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     IEnumCodePage_Release(iEnumCP);
 }
 
+static void test_GetCharsetInfo_alias(IMultiLanguage *ml)
+{
+    WCHAR asciiW[] = {'a','s','c','i','i',0};
+    MIMECSETINFO info;
+    HRESULT hr;
+
+    hr = IMultiLanguage_GetCharsetInfo(ml, asciiW, &info);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(info.wszCharset, asciiW), "got %s\n", wine_dbgstr_w(info.wszCharset));
+}
+
 static void scriptinfo_cmp(SCRIPTINFO *sinfo1, SCRIPTINFO *sinfo2)
 {
     ok(sinfo1->ScriptId == sinfo2->ScriptId, "ScriptId mismatch: %d != %d\n", sinfo1->ScriptId, sinfo2->ScriptId);
@@ -2000,6 +2011,7 @@ START_TEST(mlang)
 
     test_GetNumberOfCodePageInfo((IMultiLanguage2 *)iML);
     test_IMLangConvertCharset(iML);
+    test_GetCharsetInfo_alias(iML);
     IMultiLanguage_Release(iML);
 
 

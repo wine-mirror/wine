@@ -65,6 +65,7 @@ typedef struct
     const char *web_charset;
     const char *header_charset;
     const char *body_charset;
+    const WCHAR *alias;
 } MIME_CP_INFO;
 
 /* These data are based on the codepage info in libs/unicode/cpmap.pl */
@@ -363,6 +364,9 @@ static const MIME_CP_INFO vietnamese_cp[] =
             MIMECONTF_MIME_LATEST,
       "windows-1258", "windows-1258", "windows-1258" }
 };
+
+static const WCHAR asciiW[] = {'a','s','c','i','i',0};
+
 static const MIME_CP_INFO western_cp[] =
 {
     { "IBM EBCDIC (US-Canada)",
@@ -415,7 +419,7 @@ static const MIME_CP_INFO western_cp[] =
       20127, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT | MIMECONTF_EXPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "us-ascii", "us-ascii", "us-ascii" },
+      "us-ascii", "us-ascii", "us-ascii", asciiW },
     { "Western European (ISO)",
       28591, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
@@ -2598,6 +2602,13 @@ static HRESULT WINAPI fnIMultiLanguage3_GetCharsetInfo(
                 pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
                 pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
                 strcpyW(pCharsetInfo->wszCharset, csetW);
+                return S_OK;
+            }
+            if (mlang_data[i].mime_cp_info[n].alias && !lstrcmpiW(Charset, mlang_data[i].mime_cp_info[n].alias))
+            {
+                pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
+                pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
+                strcpyW(pCharsetInfo->wszCharset, mlang_data[i].mime_cp_info[n].alias);
                 return S_OK;
             }
         }
