@@ -1372,6 +1372,7 @@ static void test_reg_close_key(void)
 static void test_reg_delete_key(void)
 {
     DWORD ret;
+    HKEY key;
 
     ret = RegDeleteKeyA(hkey_main, NULL);
 
@@ -1390,6 +1391,15 @@ static void test_reg_delete_key(void)
            ret == ERROR_ACCESS_DENIED ||
            ret == ERROR_BADKEY, /* Win95 */
            "ret=%d\n", ret);
+
+    ret = RegCreateKeyA(hkey_main, "deleteme", &key);
+    ok(ret == ERROR_SUCCESS, "Could not create key, got %d\n", ret);
+    ret = RegDeleteKeyA(key, "");
+    ok(ret == ERROR_SUCCESS, "RegDeleteKeyA failed, got %d\n", ret);
+    RegCloseKey(key);
+    ret = RegOpenKeyA(hkey_main, "deleteme", &key);
+    ok(ret == ERROR_FILE_NOT_FOUND, "Key was not deleted, got %d\n", ret);
+    RegCloseKey(key);
 }
 
 static void test_reg_save_key(void)
