@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <limits.h>
 
 #include "wine/test.h"
@@ -412,6 +413,76 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u\n", GetLastError());
 }
 
+static void test_utf7_encoding(void)
+{
+    WCHAR input[16];
+    char output[16], expected[16];
+    int i, len, expected_len;
+
+    static const BOOL directly_encodable_table[] =
+    {
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, /* 0x00 - 0x0F */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 - 0x1F */
+        1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, /* 0x20 - 0x2F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, /* 0x30 - 0x3F */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x40 - 0x4F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 0x50 - 0x5F */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x60 - 0x6F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0  /* 0x70 - 0x7F */
+    };
+    static const char base64_encoding_table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    if (WideCharToMultiByte(CP_UTF7, 0, foobarW, -1, NULL, 0, NULL, NULL) == 0 &&
+        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        skip("UTF-7 encoding not implemented\n");
+        return;
+    }
+
+    /* test which characters are encoded if surrounded by non-encoded characters */
+    for (i = 0; i <= 0xFFFF; i++)
+    {
+        input[0] = ' ';
+        input[1] = i;
+        input[2] = ' ';
+        input[3] = 0;
+
+        memset(output, '#', sizeof(output) - 1);
+        output[sizeof(output) - 1] = 0;
+
+        len = WideCharToMultiByte(CP_UTF7, 0, input, 4, output, sizeof(output) - 1, NULL, NULL);
+
+        if (i == '+')
+        {
+            /* '+' is a special case and is encoded as "+-" */
+            expected_len = 5;
+            strcpy(expected, " +- ");
+        }
+        else if (i <= 0x7F && directly_encodable_table[i])
+        {
+            /* encodes directly */
+            expected_len = 4;
+            sprintf(expected, " %c ", i);
+        }
+        else
+        {
+            /* base64-encodes */
+            expected_len = 8;
+            sprintf(expected, " +%c%c%c- ",
+                    base64_encoding_table[(i & 0xFC00) >> 10],
+                    base64_encoding_table[(i & 0x03F0) >> 4],
+                    base64_encoding_table[(i & 0x000F) << 2]);
+        }
+
+        ok(len == expected_len, "i=0x%04x: expected len=%i, got len=%i\n", i, expected_len, len);
+        ok(memcmp(output, expected, expected_len) == 0,
+           "i=0x%04x: expected output='%s', got output='%s'\n", i, expected, output);
+        ok(output[expected_len] == '#', "i=0x%04x: expected output[%i]='#', got output[%i]=%i\n",
+           i, expected_len, expected_len, output[expected_len]);
+    }
+}
+
 static void test_undefined_byte_char(void)
 {
     static const struct tag_testset {
@@ -617,6 +688,8 @@ START_TEST(codepage)
     /* WideCharToMultiByte has two code paths, test both here */
     test_string_conversion(NULL);
     test_string_conversion(&bUsedDefaultChar);
+
+    test_utf7_encoding();
 
     test_undefined_byte_char();
     test_threadcp();
