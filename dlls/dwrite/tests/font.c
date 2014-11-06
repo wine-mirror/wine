@@ -957,6 +957,7 @@ static void test_GetMetrics(void)
 {
     IDWriteGdiInterop *interop;
     DWRITE_FONT_METRICS metrics;
+    IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     OUTLINETEXTMETRICW otm;
     IDWriteFont *font;
@@ -1008,6 +1009,26 @@ todo_wine
     ok(metrics.underlineThickness != 0, "underlineThickness %u\n", metrics.underlineThickness);
     ok(metrics.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics.strikethroughPosition);
     ok(metrics.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics.strikethroughThickness);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&metrics, 0, sizeof(metrics));
+    IDWriteFontFace_GetMetrics(fontface, &metrics);
+
+    ok(metrics.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics.designUnitsPerEm);
+    ok(metrics.ascent != 0, "ascent %u\n", metrics.ascent);
+    ok(metrics.descent != 0, "descent %u\n", metrics.descent);
+todo_wine
+    ok(metrics.lineGap == 0, "lineGap %d\n", metrics.lineGap);
+    ok(metrics.capHeight, "capHeight %u\n", metrics.capHeight);
+    ok(metrics.xHeight != 0, "xHeight %u\n", metrics.xHeight);
+    ok(metrics.underlinePosition < 0, "underlinePosition %d\n", metrics.underlinePosition);
+    ok(metrics.underlineThickness != 0, "underlineThickness %u\n", metrics.underlineThickness);
+    ok(metrics.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics.strikethroughPosition);
+    ok(metrics.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics.strikethroughThickness);
+
+    IDWriteFontFace_Release(fontface);
 
     IDWriteFont_Release(font);
     IDWriteGdiInterop_Release(interop);

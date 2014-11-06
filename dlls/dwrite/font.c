@@ -112,6 +112,7 @@ struct dwrite_fontface {
 
     USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
+    DWRITE_FONT_METRICS metrics;
 
     struct dwrite_fonttable cmap;
 };
@@ -313,7 +314,8 @@ static BOOL WINAPI dwritefontface_IsSymbolFont(IDWriteFontFace2 *iface)
 static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FONT_METRICS *metrics)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
+    TRACE("(%p)->(%p)\n", This, metrics);
+    *metrics = This->metrics;
 }
 
 static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace2 *iface)
@@ -615,10 +617,17 @@ static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRIT
 {
     const void *tt_os2 = NULL, *tt_head = NULL, *tt_post = NULL;
     void *os2_context, *head_context, *post_context;
+    DWRITE_FONT_STRETCH fontstretch;
+    DWRITE_FONT_WEIGHT fontweight;
+    DWRITE_FONT_STYLE fontstyle;
 
     opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
+
+    if (!stretch) stretch = &fontstretch;
+    if (!weight) weight = &fontweight;
+    if (!style) style = &fontstyle;
 
     opentype_get_font_properties(tt_os2, tt_head, stretch, weight, style);
     opentype_get_font_metrics(tt_os2, tt_head, tt_post, metrics);
@@ -1930,6 +1939,8 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     fontface->cmap.data = NULL;
     fontface->cmap.context = NULL;
     fontface->cmap.size = 0;
+    fontface->index = index;
+    fontface->simulations = simulations;
 
     for (i = 0; i < fontface->file_count; i++) {
         hr = get_stream_from_file(font_files[i], &fontface->streams[i]);
@@ -1942,8 +1953,7 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
         IDWriteFontFile_AddRef(font_files[i]);
     }
 
-    fontface->index = index;
-    fontface->simulations = simulations;
+    get_font_properties_from_stream(fontface->streams[0], facetype, index, &fontface->metrics, NULL, NULL, NULL);
 
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
