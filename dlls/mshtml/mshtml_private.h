@@ -833,7 +833,14 @@ BOOL nsAString_Init(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 void nsAString_InitDepend(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
+
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;
+
+static inline HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p)
+{
+    V_VT(p) = VT_BSTR;
+    return return_nsstr(nsres, nsstr, &V_BSTR(p));
+}
 
 nsICommandParams *create_nscommand_params(void) DECLSPEC_HIDDEN;
 HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*) DECLSPEC_HIDDEN;

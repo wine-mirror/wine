@@ -288,15 +288,37 @@ static HRESULT WINAPI HTMLTable_get_cellSpacing(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_cellPadding(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString val;
+    HRESULT hres;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    hres = var2str(&v, &val);
+    if(FAILED(hres))
+        return hres;
+
+    nsres = nsIDOMHTMLTableElement_SetCellPadding(This->nstable, &val);
+    nsAString_Finish(&val);
+    if(NS_FAILED(nsres)) {
+        ERR("Set Width(%s) failed, err = %08x\n", debugstr_variant(&v), nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_cellPadding(IHTMLTable *iface, VARIANT *p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&val, NULL);
+    nsres = nsIDOMHTMLTableElement_GetCellPadding(This->nstable, &val);
+    return return_nsstr_variant(nsres, &val, p);
 }
 
 static HRESULT WINAPI HTMLTable_put_background(IHTMLTable *iface, BSTR v)

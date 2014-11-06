@@ -6335,6 +6335,23 @@ static void _test_table_cell_spacing(unsigned line, IHTMLTable *table, const cha
     VariantClear(&v);
 }
 
+#define test_table_cell_padding(a,b) _test_table_cell_padding(__LINE__,a,b)
+static void _test_table_cell_padding(unsigned line, IHTMLTable *table, const char *exstr)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLTable_get_cellPadding(table, &v);
+    ok_(__FILE__,line)(hres == S_OK, "get_cellPadding failed: %08x\n", hres);
+    ok_(__FILE__,line)(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    if(exstr)
+        ok_(__FILE__,line)(!strcmp_wa(V_BSTR(&v), exstr), "cellPadding = %s, expected %s\n", wine_dbgstr_w(V_BSTR(&v)), exstr);
+    else
+        ok_(__FILE__,line)(!V_BSTR(&v), "cellPadding = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+}
+
 static void test_table_modify(IHTMLTable *table)
 {
     IDispatch *disp;
@@ -6437,6 +6454,27 @@ static void test_table_elem(IHTMLElement *elem)
     test_table_cell_spacing(table, "11");
     VariantClear(&v);
 
+    test_table_cell_padding(table, NULL);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 10;
+    hres = IHTMLTable_put_cellPadding(table, v);
+    ok(hres == S_OK, "put_cellPadding = %08x\n", hres);
+    test_table_cell_padding(table, "10");
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("11");
+    hres = IHTMLTable_put_cellPadding(table, v);
+    ok(hres == S_OK, "put_cellPadding = %08x\n", hres);
+    test_table_cell_padding(table, "11");
+    VariantClear(&v);
+
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = 5;
+    hres = IHTMLTable_put_cellPadding(table, v);
+    ok(hres == S_OK, "put_cellPadding = %08x\n", hres);
+    test_table_cell_padding(table, "5");
+
     bstr = a2bstr("left");
     hres = IHTMLTable_put_align(table, bstr);
     ok(hres == S_OK, "set_align failed: %08x\n", hres);
@@ -6530,7 +6568,6 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_width = %08x\n", hres);
     ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
-
 
     bstr = a2bstr("box");
     hres = IHTMLTable_put_frame(table, bstr);
