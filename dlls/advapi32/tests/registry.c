@@ -1219,7 +1219,7 @@ static void test_reg_create_key(void)
         ok(ret == ERROR_BAD_PATHNAME, "expected ERROR_BAD_PATHNAME, got %d\n", ret);
     else {
         ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
-        RegDeleteKeyA(hkey1, NULL);
+        RegDeleteKeyA(hkey1, "");
         RegCloseKey(hkey1);
     }
 
