@@ -858,7 +858,7 @@ HRESULT opentype_cmap_get_unicode_ranges(void *data, UINT32 max_count, DWRITE_UN
     return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
-void opentype_get_font_metrics(const void *os2, const void *head, const void *post, DWRITE_FONT_METRICS *metrics)
+void opentype_get_font_metrics(const void *os2, const void *head, const void *post, DWRITE_FONT_METRICS1 *metrics)
 {
     TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
     TT_HEAD *tt_head = (TT_HEAD*)head;
@@ -874,10 +874,24 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
         metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
         metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
         metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
+        metrics->subscriptPositionX = GET_BE_WORD(tt_os2->ySubscriptXOffset);
+        /* Y offset is stored as positive offset below baseline */
+        metrics->subscriptPositionY = -GET_BE_WORD(tt_os2->ySubscriptYOffset);
+        metrics->subscriptSizeX = GET_BE_WORD(tt_os2->ySubscriptXSize);
+        metrics->subscriptSizeY = GET_BE_WORD(tt_os2->ySubscriptYSize);
+        metrics->superscriptPositionX = GET_BE_WORD(tt_os2->ySuperscriptXOffset);
+        metrics->superscriptPositionY = GET_BE_WORD(tt_os2->ySuperscriptYOffset);
+        metrics->superscriptSizeX = GET_BE_WORD(tt_os2->ySuperscriptXSize);
+        metrics->superscriptSizeY = GET_BE_WORD(tt_os2->ySuperscriptYSize);
     }
 
-    if (tt_head)
+    if (tt_head) {
         metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+        metrics->glyphBoxLeft = GET_BE_WORD(tt_head->xMin);
+        metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
+        metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
+        metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+    }
 
     if (tt_post) {
         metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);

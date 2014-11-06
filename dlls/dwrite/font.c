@@ -37,7 +37,7 @@ struct dwrite_font_data {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
-    DWRITE_FONT_METRICS metrics;
+    DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
 
     /* data needed to create fontface instance */
@@ -112,7 +112,7 @@ struct dwrite_fontface {
 
     USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
-    DWRITE_FONT_METRICS metrics;
+    DWRITE_FONT_METRICS1 metrics;
 
     struct dwrite_fonttable cmap;
 };
@@ -315,7 +315,7 @@ static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FON
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
     TRACE("(%p)->(%p)\n", This, metrics);
-    *metrics = This->metrics;
+    memcpy(metrics, &This->metrics, sizeof(*metrics));
 }
 
 static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace2 *iface)
@@ -433,11 +433,11 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontface1_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FONT_METRICS1 *metrics)
+static void WINAPI dwritefontface1_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FONT_METRICS1 *metrics)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, metrics);
+    *metrics = This->metrics;
 }
 
 static HRESULT WINAPI dwritefontface1_GetGdiCompatibleMetrics(IDWriteFontFace2 *iface, FLOAT em_size, FLOAT pixels_per_dip,
@@ -612,7 +612,7 @@ static const IDWriteFontFace2Vtbl dwritefontfacevtbl = {
 };
 
 static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE face_type,
-    UINT32 face_index, DWRITE_FONT_METRICS *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight,
+    UINT32 face_index, DWRITE_FONT_METRICS1 *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight,
     DWRITE_FONT_STYLE *style)
 {
     const void *tt_os2 = NULL, *tt_head = NULL, *tt_post = NULL;
@@ -645,7 +645,7 @@ HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
     DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFileStream *stream;
-    DWRITE_FONT_METRICS metrics;
+    DWRITE_FONT_METRICS1 metrics;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_WEIGHT weight;
@@ -893,7 +893,7 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRIC
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
 
     TRACE("(%p)->(%p)\n", This, metrics);
-    *metrics = This->data->metrics;
+    memcpy(metrics, &This->data->metrics, sizeof(*metrics));
 }
 
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont2 *iface, UINT32 value, BOOL *exists)
@@ -937,7 +937,8 @@ static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont2 *iface, IDWriteFont
 static void WINAPI dwritefont1_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRICS1 *metrics)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
+    TRACE("(%p)->(%p)\n", This, metrics);
+    *metrics = This->data->metrics;
 }
 
 static void WINAPI dwritefont1_GetPanose(IDWriteFont2 *iface, DWRITE_PANOSE *panose)

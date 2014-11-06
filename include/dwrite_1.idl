@@ -593,7 +593,7 @@ uuid(a71efdb4-9fdb-4838-ad90-cfc3be8c3daf)
 ]
 interface IDWriteFontFace1 : IDWriteFontFace
 {
-    HRESULT GetMetrics(DWRITE_FONT_METRICS1 *metrics);
+    void GetMetrics(DWRITE_FONT_METRICS1 *metrics);
     HRESULT GetGdiCompatibleMetrics(FLOAT em_size,
                                     FLOAT pixels_per_dip,
                                     const DWRITE_MATRIX *transform,

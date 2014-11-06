@@ -960,6 +960,7 @@ static void test_GetMetrics(void)
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     OUTLINETEXTMETRICW otm;
+    IDWriteFont1 *font1;
     IDWriteFont *font;
     LOGFONTW logfont;
     HRESULT hr;
@@ -1027,6 +1028,72 @@ todo_wine
     ok(metrics.underlineThickness != 0, "underlineThickness %u\n", metrics.underlineThickness);
     ok(metrics.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics.strikethroughPosition);
     ok(metrics.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics.strikethroughThickness);
+
+    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
+    if (hr == S_OK) {
+        DWRITE_FONT_METRICS1 metrics1;
+        IDWriteFontFace1 *fontface1;
+
+        memset(&metrics1, 0, sizeof(metrics1));
+        IDWriteFont1_GetMetrics(font1, &metrics1);
+
+        ok(metrics1.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics1.designUnitsPerEm);
+        ok(metrics1.ascent != 0, "ascent %u\n", metrics1.ascent);
+        ok(metrics1.descent != 0, "descent %u\n", metrics1.descent);
+    todo_wine
+        ok(metrics1.lineGap == 0, "lineGap %d\n", metrics1.lineGap);
+        ok(metrics1.capHeight, "capHeight %u\n", metrics1.capHeight);
+        ok(metrics1.xHeight != 0, "xHeight %u\n", metrics1.xHeight);
+        ok(metrics1.underlinePosition < 0, "underlinePosition %d\n", metrics1.underlinePosition);
+        ok(metrics1.underlineThickness != 0, "underlineThickness %u\n", metrics1.underlineThickness);
+        ok(metrics1.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics1.strikethroughPosition);
+        ok(metrics1.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics1.strikethroughThickness);
+        ok(metrics1.glyphBoxLeft < 0, "glyphBoxLeft %d\n", metrics1.glyphBoxLeft);
+        ok(metrics1.glyphBoxTop > 0, "glyphBoxTop %d\n", metrics1.glyphBoxTop);
+        ok(metrics1.glyphBoxRight > 0, "glyphBoxRight %d\n", metrics1.glyphBoxRight);
+        ok(metrics1.glyphBoxBottom < 0, "glyphBoxBottom %d\n", metrics1.glyphBoxBottom);
+        ok(metrics1.subscriptPositionY < 0, "subscriptPositionY %d\n", metrics1.subscriptPositionY);
+        ok(metrics1.subscriptSizeX > 0, "subscriptSizeX %d\n", metrics1.subscriptSizeX);
+        ok(metrics1.subscriptSizeY > 0, "subscriptSizeY %d\n", metrics1.subscriptSizeY);
+        ok(metrics1.superscriptPositionY > 0, "superscriptPositionY %d\n", metrics1.superscriptPositionY);
+        ok(metrics1.superscriptSizeX > 0, "superscriptSizeX %d\n", metrics1.superscriptSizeX);
+        ok(metrics1.superscriptSizeY > 0, "superscriptSizeY %d\n", metrics1.superscriptSizeY);
+        ok(!metrics1.hasTypographicMetrics, "hasTypographicMetrics %d\n", metrics1.hasTypographicMetrics);
+
+        hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        memset(&metrics1, 0, sizeof(metrics1));
+        IDWriteFontFace1_GetMetrics(fontface1, &metrics1);
+
+        ok(metrics1.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics1.designUnitsPerEm);
+        ok(metrics1.ascent != 0, "ascent %u\n", metrics1.ascent);
+        ok(metrics1.descent != 0, "descent %u\n", metrics1.descent);
+    todo_wine
+        ok(metrics1.lineGap == 0, "lineGap %d\n", metrics1.lineGap);
+        ok(metrics1.capHeight, "capHeight %u\n", metrics1.capHeight);
+        ok(metrics1.xHeight != 0, "xHeight %u\n", metrics1.xHeight);
+        ok(metrics1.underlinePosition < 0, "underlinePosition %d\n", metrics1.underlinePosition);
+        ok(metrics1.underlineThickness != 0, "underlineThickness %u\n", metrics1.underlineThickness);
+        ok(metrics1.strikethroughPosition > 0, "strikethroughPosition %d\n", metrics1.strikethroughPosition);
+        ok(metrics1.strikethroughThickness != 0, "strikethroughThickness %u\n", metrics1.strikethroughThickness);
+        ok(metrics1.glyphBoxLeft < 0, "glyphBoxLeft %d\n", metrics1.glyphBoxLeft);
+        ok(metrics1.glyphBoxTop > 0, "glyphBoxTop %d\n", metrics1.glyphBoxTop);
+        ok(metrics1.glyphBoxRight > 0, "glyphBoxRight %d\n", metrics1.glyphBoxRight);
+        ok(metrics1.glyphBoxBottom < 0, "glyphBoxBottom %d\n", metrics1.glyphBoxBottom);
+        ok(metrics1.subscriptPositionY < 0, "subscriptPositionY %d\n", metrics1.subscriptPositionY);
+        ok(metrics1.subscriptSizeX > 0, "subscriptSizeX %d\n", metrics1.subscriptSizeX);
+        ok(metrics1.subscriptSizeY > 0, "subscriptSizeY %d\n", metrics1.subscriptSizeY);
+        ok(metrics1.superscriptPositionY > 0, "superscriptPositionY %d\n", metrics1.superscriptPositionY);
+        ok(metrics1.superscriptSizeX > 0, "superscriptSizeX %d\n", metrics1.superscriptSizeX);
+        ok(metrics1.superscriptSizeY > 0, "superscriptSizeY %d\n", metrics1.superscriptSizeY);
+        ok(!metrics1.hasTypographicMetrics, "hasTypographicMetrics %d\n", metrics1.hasTypographicMetrics);
+
+        IDWriteFontFace1_Release(fontface1);
+        IDWriteFont1_Release(font1);
+    }
+    else
+        win_skip("DWRITE_FONT_METRICS1 is not supported.\n");
 
     IDWriteFontFace_Release(fontface);
 

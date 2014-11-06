@@ -114,7 +114,7 @@ extern HRESULT opentype_get_font_table(IDWriteFontFileStream*,DWRITE_FONT_FACE_T
 extern void opentype_cmap_get_glyphindex(void*,UINT32,UINT16*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_cmap_get_unicode_ranges(void*,UINT32,DWRITE_UNICODE_RANGE*,UINT32*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_properties(const void*,const void*,DWRITE_FONT_STRETCH*,DWRITE_FONT_WEIGHT*,DWRITE_FONT_STYLE*) DECLSPEC_HIDDEN;
-extern void opentype_get_font_metrics(const void*,const void*,const void*,DWRITE_FONT_METRICS*) DECLSPEC_HIDDEN;
+extern void opentype_get_font_metrics(const void*,const void*,const void*,DWRITE_FONT_METRICS1*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_strings_from_id(const void*,DWRITE_INFORMATIONAL_STRING_ID,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
