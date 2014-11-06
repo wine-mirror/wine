@@ -21,6 +21,7 @@
 
 #include "wine/debug.h"
 
+#include <assert.h>
 #include <limits.h>
 #define COBJMACROS
 #include "d2d1.h"
@@ -28,6 +29,12 @@
 #include "initguid.h"
 #endif
 #include "dwrite.h"
+
+enum d2d_brush_type
+{
+    D2D_BRUSH_TYPE_SOLID,
+    D2D_BRUSH_TYPE_LINEAR,
+};
 
 struct d2d_clip_stack
 {
@@ -45,13 +52,14 @@ struct d2d_d3d_render_target
     ID3D10Device *device;
     ID3D10RenderTargetView *view;
     ID3D10StateBlock *stateblock;
+    ID3D10InputLayout *il;
+    unsigned int vb_stride;
+    ID3D10Buffer *vb;
+    ID3D10VertexShader *vs;
+    ID3D10RasterizerState *rs;
+    ID3D10BlendState *bs;
 
-    ID3D10InputLayout *clear_il;
-    unsigned int clear_vb_stride;
-    ID3D10Buffer *clear_vb;
-    ID3D10VertexShader *clear_vs;
-    ID3D10PixelShader *clear_ps;
-    ID3D10RasterizerState *clear_rs;
+    ID3D10PixelShader *rect_solid_ps;
 
     D2D1_SIZE_U pixel_size;
     D2D1_MATRIX_3X2_F transform;
@@ -98,6 +106,15 @@ struct d2d_brush
 {
     ID2D1Brush ID2D1Brush_iface;
     LONG refcount;
+
+    enum d2d_brush_type type;
+    union
+    {
+        struct
+        {
+            D2D1_COLOR_F color;
+        } solid;
+    } u;
 };
 
 void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
@@ -105,6 +122,7 @@ void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *rend
 void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
+struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style
 {

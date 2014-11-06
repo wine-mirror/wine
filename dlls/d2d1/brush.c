@@ -145,10 +145,11 @@ HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *rend
 }
 
 static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
-        const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
+        enum d2d_brush_type type, const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
 {
     brush->ID2D1Brush_iface.lpVtbl = vtbl;
     brush->refcount = 1;
+    brush->type = type;
 }
 
 static inline struct d2d_brush *impl_from_ID2D1SolidColorBrush(ID2D1SolidColorBrush *iface)
@@ -274,7 +275,9 @@ void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *rend
 {
     FIXME("Ignoring brush properties.\n");
 
-    d2d_brush_init(brush, render_target, desc, (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
+    d2d_brush_init(brush, render_target, D2D_BRUSH_TYPE_SOLID, desc,
+            (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
+    brush->u.solid.color = *color;
 }
 
 static inline struct d2d_brush *impl_from_ID2D1LinearGradientBrush(ID2D1LinearGradientBrush *iface)
@@ -430,5 +433,15 @@ void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *
 {
     FIXME("Ignoring brush properties.\n");
 
-    d2d_brush_init(brush, render_target, brush_desc, (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+    d2d_brush_init(brush, render_target, D2D_BRUSH_TYPE_LINEAR, brush_desc,
+            (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+}
+
+struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl
+            || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
 }

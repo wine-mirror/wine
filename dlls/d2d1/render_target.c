@@ -121,6 +121,63 @@ static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
     --stack->count;
 }
 
+static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *vs_cb,
+        ID3D10PixelShader *ps, ID3D10Buffer *ps_cb, BOOL blend)
+{
+    ID3D10Device *device = render_target->device;
+    unsigned int offset;
+    D3D10_VIEWPORT vp;
+    HRESULT hr;
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = render_target->pixel_size.width;
+    vp.Height = render_target->pixel_size.height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+
+    if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
+    {
+        WARN("Failed to capture stateblock, hr %#x.\n", hr);
+        return;
+    }
+
+    ID3D10Device_ClearState(device);
+
+    ID3D10Device_IASetInputLayout(device, render_target->il);
+    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(device, 0, 1, &render_target->vb,
+            &render_target->vb_stride, &offset);
+    ID3D10Device_VSSetConstantBuffers(device, 0, 1, &vs_cb);
+    ID3D10Device_VSSetShader(device, render_target->vs);
+    ID3D10Device_PSSetConstantBuffers(device, 0, 1, &ps_cb);
+    ID3D10Device_PSSetShader(device, ps);
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+    if (render_target->clip_stack.count)
+    {
+        const D2D1_RECT_F *clip_rect;
+        D3D10_RECT scissor_rect;
+
+        clip_rect = &render_target->clip_stack.stack[render_target->clip_stack.count - 1];
+        scissor_rect.left = clip_rect->left + 0.5f;
+        scissor_rect.top = clip_rect->top + 0.5f;
+        scissor_rect.right = clip_rect->right + 0.5f;
+        scissor_rect.bottom = clip_rect->bottom + 0.5f;
+        ID3D10Device_RSSetScissorRects(device, 1, &scissor_rect);
+        ID3D10Device_RSSetState(device, render_target->rs);
+    }
+    ID3D10Device_OMSetRenderTargets(device, 1, &render_target->view, NULL);
+    if (blend)
+        ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+
+    ID3D10Device_Draw(device, 4, 0);
+
+    if (FAILED(hr = render_target->stateblock->lpVtbl->Apply(render_target->stateblock)))
+        WARN("Failed to apply stateblock, hr %#x.\n", hr);
+}
+
 static inline struct d2d_d3d_render_target *impl_from_ID2D1RenderTarget(ID2D1RenderTarget *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_d3d_render_target, ID2D1RenderTarget_iface);
@@ -165,13 +222,14 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
     if (!refcount)
     {
         d2d_clip_stack_cleanup(&render_target->clip_stack);
-        ID3D10RenderTargetView_Release(render_target->view);
-        ID3D10RasterizerState_Release(render_target->clear_rs);
-        ID3D10PixelShader_Release(render_target->clear_ps);
-        ID3D10VertexShader_Release(render_target->clear_vs);
-        ID3D10Buffer_Release(render_target->clear_vb);
-        ID3D10InputLayout_Release(render_target->clear_il);
+        ID3D10PixelShader_Release(render_target->rect_solid_ps);
+        ID3D10BlendState_Release(render_target->bs);
+        ID3D10RasterizerState_Release(render_target->rs);
+        ID3D10VertexShader_Release(render_target->vs);
+        ID3D10Buffer_Release(render_target->vb);
+        ID3D10InputLayout_Release(render_target->il);
         render_target->stateblock->lpVtbl->Release(render_target->stateblock);
+        ID3D10RenderTargetView_Release(render_target->view);
         ID3D10Device_Release(render_target->device);
         HeapFree(GetProcessHeap(), 0, render_target);
     }
@@ -438,7 +496,82 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawRectangle(ID2D1RenderTar
 static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTarget *iface,
         const D2D1_RECT_F *rect, ID2D1Brush *brush)
 {
-    FIXME("iface %p, rect %p, brush %p stub!\n", iface, rect, brush);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Buffer *vs_cb, *ps_cb;
+    float tmp_x, tmp_y;
+    HRESULT hr;
+    struct
+    {
+        float _11, _21, _31, pad0;
+        float _12, _22, _32, pad1;
+    } transform;
+
+    TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
+
+    if (brush_impl->type != D2D_BRUSH_TYPE_SOLID)
+    {
+        FIXME("Unhandled brush type %#x.\n", brush_impl->type);
+        return;
+    }
+
+    /* Translate from clip space to world (D2D rendertarget) space, taking the
+     * dpi and rendertarget transform into account. */
+    tmp_x =  (2.0f * render_target->dpi_x) / (96.0f * render_target->pixel_size.width);
+    tmp_y = -(2.0f * render_target->dpi_y) / (96.0f * render_target->pixel_size.height);
+    transform._11 = render_target->transform._11 * tmp_x;
+    transform._21 = render_target->transform._21 * tmp_x;
+    transform._31 = render_target->transform._31 * tmp_x - 1.0f;
+    transform.pad0 = 0.0f;
+    transform._12 = render_target->transform._12 * tmp_y;
+    transform._22 = render_target->transform._22 * tmp_y;
+    transform._32 = render_target->transform._32 * tmp_y + 1.0f;
+    transform.pad1 = 0.0f;
+
+    /* Translate from world space to object space. */
+    tmp_x = rect->left + (rect->right - rect->left) / 2.0f;
+    tmp_y = rect->top + (rect->bottom - rect->top) / 2.0f;
+    transform._31 += tmp_x * transform._11 + tmp_y * transform._21;
+    transform._32 += tmp_x * transform._12 + tmp_y * transform._22;
+    tmp_x = (rect->right - rect->left) / 2.0f;
+    tmp_y = (rect->bottom - rect->top) / 2.0f;
+    transform._11 *= tmp_x;
+    transform._12 *= tmp_x;
+    transform._21 *= tmp_y;
+    transform._22 *= tmp_y;
+
+    buffer_desc.ByteWidth = sizeof(transform);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = &transform;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vs_cb)))
+    {
+        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        return;
+    }
+
+    buffer_desc.ByteWidth = sizeof(brush_impl->u.solid.color);
+    buffer_data.pSysMem = &brush_impl->u.solid.color;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
+    {
+        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        ID3D10Buffer_Release(vs_cb);
+        return;
+    }
+
+    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, TRUE);
+
+    ID3D10Buffer_Release(ps_cb);
+    ID3D10Buffer_Release(vs_cb);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawRoundedRectangle(ID2D1RenderTarget *iface,
@@ -683,75 +816,47 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
-    unsigned int offset;
-    D3D10_VIEWPORT vp;
-    ID3D10Buffer *cb;
+    ID3D10Buffer *vs_cb, *ps_cb;
     HRESULT hr;
+
+    static float transform[] =
+    {
+        1.0f,  0.0f, 0.0f, 0.0f,
+        0.0f, -1.0f, 0.0f, 0.0f,
+    };
 
     TRACE("iface %p, color %p.\n", iface, color);
 
-    buffer_desc.ByteWidth = sizeof(*color);
+    buffer_desc.ByteWidth = sizeof(transform);
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
 
-    buffer_data.pSysMem = color;
+    buffer_data.pSysMem = transform;
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
-    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &cb)))
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vs_cb)))
     {
         WARN("Failed to create constant buffer, hr %#x.\n", hr);
         return;
     }
 
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = render_target->pixel_size.width;
-    vp.Height = render_target->pixel_size.height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
+    buffer_desc.ByteWidth = sizeof(*color);
+    buffer_data.pSysMem = color;
 
-    if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
     {
-        WARN("Failed to capture stateblock, hr %#x.\n", hr);
-        ID3D10Buffer_Release(cb);
+        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        ID3D10Buffer_Release(vs_cb);
         return;
     }
 
-    ID3D10Device_ClearState(render_target->device);
+    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, FALSE);
 
-    ID3D10Device_IASetInputLayout(render_target->device, render_target->clear_il);
-    ID3D10Device_IASetPrimitiveTopology(render_target->device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    offset = 0;
-    ID3D10Device_IASetVertexBuffers(render_target->device, 0, 1,
-            &render_target->clear_vb, &render_target->clear_vb_stride, &offset);
-    ID3D10Device_VSSetShader(render_target->device, render_target->clear_vs);
-    ID3D10Device_PSSetConstantBuffers(render_target->device, 0, 1, &cb);
-    ID3D10Device_PSSetShader(render_target->device, render_target->clear_ps);
-    ID3D10Device_RSSetViewports(render_target->device, 1, &vp);
-    if (render_target->clip_stack.count)
-    {
-        const D2D1_RECT_F *clip_rect;
-        D3D10_RECT scissor_rect;
-
-        clip_rect = &render_target->clip_stack.stack[render_target->clip_stack.count - 1];
-        scissor_rect.left = clip_rect->left + 0.5f;
-        scissor_rect.top = clip_rect->top + 0.5f;
-        scissor_rect.right = clip_rect->right + 0.5f;
-        scissor_rect.bottom = clip_rect->bottom + 0.5f;
-        ID3D10Device_RSSetScissorRects(render_target->device, 1, &scissor_rect);
-        ID3D10Device_RSSetState(render_target->device, render_target->clear_rs);
-    }
-    ID3D10Device_OMSetRenderTargets(render_target->device, 1, &render_target->view, NULL);
-
-    ID3D10Device_Draw(render_target->device, 4, 0);
-
-    if (FAILED(hr = render_target->stateblock->lpVtbl->Apply(render_target->stateblock)))
-        WARN("Failed to apply stateblock, hr %#x.\n", hr);
-
-    ID3D10Buffer_Release(cb);
+    ID3D10Buffer_Release(ps_cb);
+    ID3D10Buffer_Release(vs_cb);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_BeginDraw(ID2D1RenderTarget *iface)
@@ -1032,35 +1137,34 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     DXGI_SURFACE_DESC surface_desc;
     D3D10_RASTERIZER_DESC rs_desc;
     D3D10_BUFFER_DESC buffer_desc;
+    D3D10_BLEND_DESC blend_desc;
     ID3D10Resource *resource;
     HRESULT hr;
 
-    static const D3D10_INPUT_ELEMENT_DESC clear_il_desc[] =
+    static const D3D10_INPUT_ELEMENT_DESC il_desc[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const DWORD clear_vs_code[] =
+    static const DWORD vs_code[] =
     {
-        /* float4 main(float4 position : POSITION) : SV_POSITION
+        /* float3x2 transform;
+         *
+         * float4 main(float4 position : POSITION) : SV_POSITION
          * {
-         *     return position;
+         *     return float4(mul(position.xyw, transform), position.zw);
          * } */
-        0x43425844, 0x1fa8c27f, 0x52d2f21d, 0xc196fdb7, 0x376f283a, 0x00000001, 0x000001b4, 0x00000005,
-        0x00000034, 0x0000008c, 0x000000c0, 0x000000f4, 0x00000138, 0x46454452, 0x00000050, 0x00000000,
-        0x00000000, 0x00000000, 0x0000001c, 0xfffe0400, 0x00000100, 0x0000001c, 0x7263694d, 0x666f736f,
-        0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e30332e,
-        0x30303239, 0x3336312e, 0xab003438, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x43425844, 0x0add3194, 0x205f74ec, 0xab527fe7, 0xbe6ad704, 0x00000001, 0x00000128, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
         0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
         0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
-        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
-        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
-        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e, 0x54415453, 0x00000074,
-        0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000008c, 0x00010040,
+        0x00000023, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300005f, 0x001010f2, 0x00000000,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x08000010, 0x00102012, 0x00000000, 0x00101346,
+        0x00000000, 0x00208246, 0x00000000, 0x00000000, 0x08000010, 0x00102022, 0x00000000, 0x00101346,
+        0x00000000, 0x00208246, 0x00000000, 0x00000001, 0x05000036, 0x001020c2, 0x00000000, 0x00101ea6,
+        0x00000000, 0x0100003e,
     };
-    static const DWORD clear_ps_code[] =
+    static const DWORD rect_solid_ps_code[] =
     {
         /* float4 color;
          *
@@ -1068,35 +1172,24 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
          * {
          *     return color;
          * } */
-        0x43425844, 0xecd3cc9d, 0x0025bc77, 0x7a333165, 0x5b04c7e4, 0x00000001, 0x0000022c, 0x00000005,
-        0x00000034, 0x00000100, 0x00000134, 0x00000168, 0x000001b0, 0x46454452, 0x000000c4, 0x00000001,
-        0x00000048, 0x00000001, 0x0000001c, 0xffff0400, 0x00000100, 0x00000090, 0x0000003c, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x6f6c4724, 0x736c6162,
-        0xababab00, 0x0000003c, 0x00000001, 0x00000060, 0x00000010, 0x00000000, 0x00000000, 0x00000078,
-        0x00000000, 0x00000010, 0x00000002, 0x00000080, 0x00000000, 0x6f6c6f63, 0xabab0072, 0x00030001,
-        0x00040001, 0x00000000, 0x00000000, 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53,
-        0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e30332e, 0x30303239, 0x3336312e, 0xab003438,
-        0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
-        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001,
-        0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653,
-        0x65677261, 0xabab0074, 0x52444853, 0x00000040, 0x00000040, 0x00000010, 0x04000059, 0x00208e46,
-        0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x06000036, 0x001020f2, 0x00000000,
-        0x00208e46, 0x00000000, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000002, 0x00000000,
-        0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000,
+        0x43425844, 0x88eefcfd, 0x93d6fd47, 0x173c242f, 0x0106d07a, 0x00000001, 0x000000dc, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000040, 0x00000040,
+        0x00000010, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct
     {
         float x, y;
     }
-    clear_quad[] =
+    quad[] =
     {
-        {-1.0f, -1.0f},
         {-1.0f,  1.0f},
-        { 1.0f, -1.0f},
+        {-1.0f, -1.0f},
         { 1.0f,  1.0f},
+        { 1.0f, -1.0f},
     };
     static const D2D1_MATRIX_3X2_F identity =
     {
@@ -1143,43 +1236,36 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
-    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, clear_il_desc,
-            sizeof(clear_il_desc) / sizeof(*clear_il_desc), clear_vs_code, sizeof(clear_vs_code),
-            &render_target->clear_il)))
+    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc,
+            sizeof(il_desc) / sizeof(*il_desc), vs_code, sizeof(vs_code),
+            &render_target->il)))
     {
         WARN("Failed to create clear input layout, hr %#x.\n", hr);
         goto err;
     }
 
-    buffer_desc.ByteWidth = sizeof(clear_quad);
+    buffer_desc.ByteWidth = sizeof(quad);
     buffer_desc.Usage = D3D10_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
 
-    buffer_data.pSysMem = clear_quad;
+    buffer_data.pSysMem = quad;
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
-    render_target->clear_vb_stride = sizeof(*clear_quad);
+    render_target->vb_stride = sizeof(*quad);
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device,
-            &buffer_desc, &buffer_data, &render_target->clear_vb)))
+            &buffer_desc, &buffer_data, &render_target->vb)))
     {
         WARN("Failed to create clear vertex buffer, hr %#x.\n", hr);
         goto err;
     }
 
     if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device,
-            clear_vs_code, sizeof(clear_vs_code), &render_target->clear_vs)))
+            vs_code, sizeof(vs_code), &render_target->vs)))
     {
         WARN("Failed to create clear vertex shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
-            clear_ps_code, sizeof(clear_ps_code), &render_target->clear_ps)))
-    {
-        WARN("Failed to create clear pixel shader, hr %#x.\n", hr);
         goto err;
     }
 
@@ -1193,9 +1279,31 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     rs_desc.ScissorEnable = TRUE;
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
-    if (FAILED(hr = ID3D10Device_CreateRasterizerState(render_target->device, &rs_desc, &render_target->clear_rs)))
+    if (FAILED(hr = ID3D10Device_CreateRasterizerState(render_target->device, &rs_desc, &render_target->rs)))
     {
         WARN("Failed to create clear rasterizer state, hr %#x.\n", hr);
+        goto err;
+    }
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.BlendEnable[0] = TRUE;
+    blend_desc.SrcBlend = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
+    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_ZERO;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_ONE;
+    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
+    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
+    if (FAILED(hr = ID3D10Device_CreateBlendState(render_target->device, &blend_desc, &render_target->bs)))
+    {
+        WARN("Failed to create blend state, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
+            rect_solid_ps_code, sizeof(rect_solid_ps_code), &render_target->rect_solid_ps)))
+    {
+        WARN("Failed to create clear pixel shader, hr %#x.\n", hr);
         goto err;
     }
 
@@ -1228,20 +1336,22 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     return S_OK;
 
 err:
-    if (render_target->view)
-        ID3D10RenderTargetView_Release(render_target->view);
-    if (render_target->clear_rs)
-        ID3D10RasterizerState_Release(render_target->clear_rs);
-    if (render_target->clear_ps)
-        ID3D10PixelShader_Release(render_target->clear_ps);
-    if (render_target->clear_vs)
-        ID3D10VertexShader_Release(render_target->clear_vs);
-    if (render_target->clear_vb)
-        ID3D10Buffer_Release(render_target->clear_vb);
-    if (render_target->clear_il)
-        ID3D10InputLayout_Release(render_target->clear_il);
+    if (render_target->rect_solid_ps)
+        ID3D10PixelShader_Release(render_target->rect_solid_ps);
+    if (render_target->bs)
+        ID3D10BlendState_Release(render_target->bs);
+    if (render_target->rs)
+        ID3D10RasterizerState_Release(render_target->rs);
+    if (render_target->vs)
+        ID3D10VertexShader_Release(render_target->vs);
+    if (render_target->vb)
+        ID3D10Buffer_Release(render_target->vb);
+    if (render_target->il)
+        ID3D10InputLayout_Release(render_target->il);
     if (render_target->stateblock)
         render_target->stateblock->lpVtbl->Release(render_target->stateblock);
+    if (render_target->view)
+        ID3D10RenderTargetView_Release(render_target->view);
     if (render_target->device)
         ID3D10Device_Release(render_target->device);
     return hr;
