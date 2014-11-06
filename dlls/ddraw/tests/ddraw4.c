@@ -2611,7 +2611,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
@@ -2736,7 +2736,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
@@ -2862,7 +2862,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
@@ -2934,13 +2934,13 @@ static void test_coop_level_mode_set(void)
 
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
-    hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
     ok(ddsd.dwWidth == fullscreen_rect.right - fullscreen_rect.left, "Expected surface width %u, got %u.\n",
             fullscreen_rect.right - fullscreen_rect.left, ddsd.dwWidth);
     ok(ddsd.dwHeight == fullscreen_rect.bottom - fullscreen_rect.top, "Expected surface height %u, got %u.\n",
             fullscreen_rect.bottom - fullscreen_rect.top, ddsd.dwHeight);
-    IDirectDrawSurface_Release(primary);
+    IDirectDrawSurface4_Release(primary);
 
     /* The screen restore is a property of DDSCL_EXCLUSIVE  */
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL | DDSCL_FULLSCREEN);
@@ -2958,15 +2958,15 @@ static void test_coop_level_mode_set(void)
 
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
-    hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
     ok(ddsd.dwWidth == s.right - s.left, "Expected surface width %u, got %u.\n",
             s.right - s.left, ddsd.dwWidth);
     ok(ddsd.dwHeight == s.bottom - s.top, "Expected surface height %u, got %u.\n",
             s.bottom - s.top, ddsd.dwHeight);
-    IDirectDrawSurface_Release(primary);
+    IDirectDrawSurface4_Release(primary);
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     /* If the window is changed at the same time, messages are sent to the new window. */
@@ -3009,13 +3009,13 @@ static void test_coop_level_mode_set(void)
 
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
-    hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
     ok(ddsd.dwWidth == fullscreen_rect.right - fullscreen_rect.left, "Expected surface width %u, got %u.\n",
             fullscreen_rect.right - fullscreen_rect.left, ddsd.dwWidth);
     ok(ddsd.dwHeight == fullscreen_rect.bottom - fullscreen_rect.top, "Expected surface height %u, got %u.\n",
             fullscreen_rect.bottom - fullscreen_rect.top, ddsd.dwHeight);
-    IDirectDrawSurface_Release(primary);
+    IDirectDrawSurface4_Release(primary);
 
     ref = IDirectDraw4_Release(ddraw);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);

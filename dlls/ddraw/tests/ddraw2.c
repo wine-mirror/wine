@@ -2424,7 +2424,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
@@ -2682,7 +2682,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
@@ -2786,7 +2786,7 @@ static void test_coop_level_mode_set(void)
             s.bottom - s.top, ddsd.dwHeight);
     IDirectDrawSurface_Release(primary);
 
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
     /* If the window is changed at the same time, messages are sent to the new window. */
