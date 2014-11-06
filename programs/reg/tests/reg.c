@@ -396,6 +396,9 @@ static void test_delete(void)
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     ok(err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+
+    run_reg_exe("reg delete HKCU\\" KEY_BASE " /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
 }
 
 static void test_query(void)
