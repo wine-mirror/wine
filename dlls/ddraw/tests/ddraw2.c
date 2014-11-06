@@ -21,6 +21,8 @@
 #include "wine/test.h"
 #include "d3d.h"
 
+static DEVMODEW registry_mode;
+
 struct create_window_thread_param
 {
     HWND window;
@@ -2195,7 +2197,7 @@ static void test_window_style(void)
 
     style = GetWindowLongA(window, GWL_STYLE);
     exstyle = GetWindowLongA(window, GWL_EXSTYLE);
-    SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
@@ -2341,7 +2343,7 @@ static void test_coop_level_mode_set(void)
     window2 = CreateWindowA("ddraw_test_wndproc_wc2", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, 0, 0, 0, 0);
 
-    SetRect(&fullscreen_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
     SetRect(&s, 0, 0, 640, 480);
 
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
@@ -2854,7 +2856,7 @@ done:
 static void test_coop_level_mode_set_multi(void)
 {
     IDirectDraw2 *ddraw1, *ddraw2;
-    UINT orig_w, orig_h, w, h;
+    UINT w, h;
     HWND window;
     HRESULT hr;
     ULONG ref;
@@ -2863,9 +2865,6 @@ static void test_coop_level_mode_set_multi(void)
             0, 0, 100, 100, 0, 0, 0, 0);
     ddraw1 = create_ddraw();
     ok(!!ddraw1, "Failed to create a ddraw object.\n");
-
-    orig_w = GetSystemMetrics(SM_CXSCREEN);
-    orig_h = GetSystemMetrics(SM_CYSCREEN);
 
     /* With just a single ddraw object, the display mode is restored on
      * release. */
@@ -2886,9 +2885,9 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw1);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     /* When there are multiple ddraw objects, the display mode is restored to
      * the initial mode, before the first SetDisplayMode() call. */
@@ -2911,16 +2910,16 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw2);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     ref = IDirectDraw2_Release(ddraw1);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     /* Regardless of release ordering. */
     ddraw1 = create_ddraw();
@@ -2942,16 +2941,16 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw1);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     ref = IDirectDraw2_Release(ddraw2);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     /* But only for ddraw objects that called SetDisplayMode(). */
     ddraw1 = create_ddraw();
@@ -2973,9 +2972,9 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw2);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     /* If there's a ddraw object that's currently in exclusive mode, it blocks
      * restoring the display mode. */
@@ -3008,9 +3007,9 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw2);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     /* Exclusive mode blocks mode setting on other ddraw objects in general. */
     ddraw1 = create_ddraw();
@@ -3031,16 +3030,16 @@ static void test_coop_level_mode_set_multi(void)
     ref = IDirectDraw2_Release(ddraw1);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     ref = IDirectDraw2_Release(ddraw2);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
     w = GetSystemMetrics(SM_CXSCREEN);
-    ok(w == orig_w, "Got unexpected screen width %u.\n", w);
+    ok(w == registry_mode.dmPelsWidth, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
-    ok(h == orig_h, "Got unexpected screen height %u.\n", h);
+    ok(h == registry_mode.dmPelsHeight, "Got unexpected screen height %u.\n", h);
 
     DestroyWindow(window);
 }
@@ -5293,8 +5292,8 @@ static void test_surface_attachment(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    surface_desc.dwWidth = GetSystemMetrics(SM_CXSCREEN);
-    surface_desc.dwHeight = GetSystemMetrics(SM_CYSCREEN);
+    surface_desc.dwWidth = registry_mode.dmPelsWidth;
+    surface_desc.dwHeight = registry_mode.dmPelsHeight;
     hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
@@ -5302,8 +5301,8 @@ static void test_surface_attachment(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    surface_desc.dwWidth = GetSystemMetrics(SM_CXSCREEN);
-    surface_desc.dwHeight = GetSystemMetrics(SM_CYSCREEN);
+    surface_desc.dwWidth = registry_mode.dmPelsWidth;
+    surface_desc.dwHeight = registry_mode.dmPelsHeight;
     hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface3, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
@@ -6711,6 +6710,7 @@ static void test_surface_desc_lock(void)
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
+    DEVMODEW current_mode;
 
     if (!(ddraw = create_ddraw()))
     {
@@ -6718,6 +6718,18 @@ START_TEST(ddraw2)
         return;
     }
     IDirectDraw2_Release(ddraw);
+
+    memset(&current_mode, 0, sizeof(current_mode));
+    current_mode.dmSize = sizeof(current_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &current_mode), "Failed to get display mode.\n");
+    registry_mode.dmSize = sizeof(registry_mode);
+    ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
+    if (registry_mode.dmPelsWidth != current_mode.dmPelsWidth
+            || registry_mode.dmPelsHeight != current_mode.dmPelsHeight)
+    {
+        skip("Current mode does not match registry mode, skipping test.\n");
+        return;
+    }
 
     test_coop_level_create_device_window();
     test_clipper_blt();
