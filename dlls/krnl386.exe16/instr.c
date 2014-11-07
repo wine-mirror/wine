@@ -194,7 +194,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
             GET_VAL( &sib, BYTE );
             rm = sib & 7;
             ss = sib >> 6;
-            switch(sib >> 3)
+            switch((sib >> 3) & 7)
             {
             case 0: index = context->Eax; break;
             case 1: index = context->Ecx; break;
