@@ -81,7 +81,7 @@ static WCHAR *make_wstr(const char *str)
     WCHAR *ret;
     int len;
 
-    if(!str || strlen(str) == 0)
+    if (!str || !str[0])
         return NULL;
 
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
@@ -2203,7 +2203,7 @@ static void test_SHCreateShellItem(void)
         return;
     }
 
-    if (!lstrlenA(curdirA))
+    if (!curdirA[0])
     {
         win_skip("GetCurrentDirectoryA returned empty string, skipping test_SHCreateShellItem\n");
         return;
@@ -2780,7 +2780,7 @@ static void test_ShellItemCompare(void)
     }
 
     GetCurrentDirectoryW(MAX_PATH, curdirW);
-    if(!lstrlenW(curdirW))
+    if (!curdirW[0])
     {
         skip("Failed to get current directory, skipping.\n");
         return;
@@ -4387,7 +4387,7 @@ static void test_GetUIObject(void)
     }
 
     GetCurrentDirectoryW(MAX_PATH, path);
-    if(!lstrlenW(path))
+    if (!path[0])
     {
         skip("GetCurrentDirectoryW returned an empty string.\n");
         return;
@@ -4989,8 +4989,8 @@ static void test_SHChangeNotify(BOOL test_new_delivery)
 
         exp_data->missing_events = exp_data->notify_count;
         SHChangeNotify(exp_data->signal, SHCNF_PATHA | SHCNF_FLUSH,
-                strlen(exp_data->path_1) > 0 ? exp_data->path_1 : NULL,
-                strlen(exp_data->path_2) > 0 ? exp_data->path_2 : NULL);
+                exp_data->path_1[0] ? exp_data->path_1 : NULL,
+                exp_data->path_2[0] ? exp_data->path_2 : NULL);
         do_events();
         ok(exp_data->missing_events == 0, "%s: Expected wndproc to be called\n", exp_data->id);
 
@@ -5045,7 +5045,7 @@ static void test_SHCreateDefaultContextMenu(void)
     }
 
     GetCurrentDirectoryW(MAX_PATH, path);
-    if(!lstrlenW(path))
+    if (!path[0])
     {
         skip("GetCurrentDirectoryW returned an empty string.\n");
         return;
