@@ -2266,6 +2266,60 @@ todo_wine
     DeleteFileW(test_fontfile);
 }
 
+static void test_ConvertFontToLOGFONT(void)
+{
+    IDWriteFactory *factory, *factory2;
+    IDWriteFontCollection *collection;
+    IDWriteGdiInterop *interop;
+    IDWriteFontFamily *family;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    BOOL system;
+    HRESULT hr;
+
+    factory = create_factory();
+    factory2 = create_factory();
+
+    interop = NULL;
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory2, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, 0, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) { /* crashes on native */
+    IDWriteGdiInterop_ConvertFontToLOGFONT(interop, NULL, NULL, NULL);
+    IDWriteGdiInterop_ConvertFontToLOGFONT(interop, NULL, &logfont, NULL);
+    IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, NULL, &system);
+}
+    system = TRUE;
+    hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, NULL, &logfont, &system);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(!system, "got %d\n", system);
+
+    system = FALSE;
+    memset(&logfont, 0, sizeof(logfont));
+    hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(system, "got %d\n", system);
+    ok(logfont.lfFaceName[0] != 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
+
+    IDWriteFactory_Release(factory2);
+
+    IDWriteFontCollection_Release(collection);
+    IDWriteFontFamily_Release(family);
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2296,6 +2350,7 @@ START_TEST(font)
     test_GetSimulations();
     test_GetFaceNames();
     test_TryGetFontTable();
+    test_ConvertFontToLOGFONT();
 
     IDWriteFactory_Release(factory);
 }

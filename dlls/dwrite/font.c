@@ -31,6 +31,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
+static const IID IID_issystemcollection = {0x14d88047,0x331f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
+
 struct dwrite_font_data {
     LONG ref;
 
@@ -66,6 +68,7 @@ struct dwrite_fontcollection {
     struct dwrite_fontfamily_data **family_data;
     UINT32 family_count;
     UINT32 family_alloc;
+    BOOL   is_system;
 };
 
 struct dwrite_fontfamily {
@@ -1190,6 +1193,12 @@ static HRESULT create_fontfamily(struct dwrite_fontfamily_data *data, IDWriteFon
     return S_OK;
 }
 
+BOOL is_system_collection(IDWriteFontCollection *collection)
+{
+    void *obj;
+    return IDWriteFontCollection_QueryInterface(collection, &IID_issystemcollection, (void**)&obj) == S_OK;
+}
+
 static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
@@ -1204,6 +1213,10 @@ static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection 
     }
 
     *obj = NULL;
+
+    if (This->is_system && IsEqualIID(riid, &IID_issystemcollection))
+        return S_OK;
+
     return E_NOINTERFACE;
 }
 
@@ -1413,12 +1426,13 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
     return S_OK;
 }
 
-static HRESULT init_font_collection(struct dwrite_fontcollection *collection)
+static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BOOL is_system)
 {
     collection->IDWriteFontCollection_iface.lpVtbl = &fontcollectionvtbl;
     collection->ref = 1;
     collection->family_count = 0;
     collection->family_alloc = 2;
+    collection->is_system = is_system;
 
     collection->family_data = heap_alloc(sizeof(*collection->family_data)*2);
     if (!collection->family_data)
@@ -1506,7 +1520,7 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     return S_OK;
 }
 
-HRESULT create_font_collection(IDWriteFactory* factory, IDWriteFontFileEnumerator *enumerator, IDWriteFontCollection **ret)
+HRESULT create_font_collection(IDWriteFactory* factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system, IDWriteFontCollection **ret)
 {
     struct dwrite_fontcollection *collection;
     BOOL current = FALSE;
@@ -1517,7 +1531,7 @@ HRESULT create_font_collection(IDWriteFactory* factory, IDWriteFontFileEnumerato
     collection = heap_alloc(sizeof(struct dwrite_fontcollection));
     if (!collection) return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection);
+    hr = init_font_collection(collection, is_system);
     if (FAILED(hr)) {
         heap_free(collection);
         return hr;
@@ -1765,7 +1779,7 @@ HRESULT get_system_fontcollection(IDWriteFactory *factory, IDWriteFontCollection
         return hr;
 
     TRACE("building system font collection for factory %p\n", factory);
-    hr = create_font_collection(factory, enumerator, collection);
+    hr = create_font_collection(factory, enumerator, TRUE, collection);
     IDWriteFontFileEnumerator_Release(enumerator);
     return hr;
 }

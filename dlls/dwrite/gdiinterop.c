@@ -326,8 +326,54 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,
     IDWriteFont *font, LOGFONTW *logfont, BOOL *is_systemfont)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
-    FIXME("(%p)->(%p %p %p): stub\n", This, font, logfont, is_systemfont);
-    return E_NOTIMPL;
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    DWRITE_FONT_SIMULATIONS simulations;
+    IDWriteFontCollection *collection;
+    IDWriteLocalizedStrings *name;
+    IDWriteFontFamily *family;
+    DWRITE_FONT_STYLE style;
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p %p)\n", This, font, logfont, is_systemfont);
+
+    *is_systemfont = FALSE;
+
+    if (!font)
+        return E_INVALIDARG;
+
+    hr = IDWriteFont_GetFontFamily(font, &family);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFontFamily_GetFontCollection(family, &collection);
+    IDWriteFontFamily_Release(family);
+    if (FAILED(hr))
+        return hr;
+
+    *is_systemfont = is_system_collection(collection);
+    IDWriteFontCollection_Release(collection);
+
+    simulations = IDWriteFont_GetSimulations(font);
+    style = IDWriteFont_GetStyle(font);
+
+    logfont->lfCharSet = DEFAULT_CHARSET;
+    logfont->lfWeight = IDWriteFont_GetWeight(font);
+    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE);
+    logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
+    logfont->lfFaceName[0] = 0;
+
+    exists = FALSE;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &name, &exists);
+    if (FAILED(hr) || !exists)
+        return hr;
+
+    IDWriteLocalizedStrings_FindLocaleName(name, enusW, &index, &exists);
+    IDWriteLocalizedStrings_GetString(name, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
+    IDWriteLocalizedStrings_Release(name);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *iface,

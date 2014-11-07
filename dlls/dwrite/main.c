@@ -631,7 +631,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory *i
     if (FAILED(hr))
         return hr;
 
-    hr = create_font_collection(iface, enumerator, collection);
+    hr = create_font_collection(iface, enumerator, FALSE, collection);
     IDWriteFontFileEnumerator_Release(enumerator);
     return hr;
 }
