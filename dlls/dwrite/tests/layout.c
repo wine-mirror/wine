@@ -1,7 +1,7 @@
 /*
  *    Text layout/format tests
  *
- * Copyright 2012 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -309,7 +309,9 @@ static IDWriteTextRenderer testrenderer = { &testrenderervtbl };
 static void test_CreateTextLayout(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
+    IDWriteTextLayout2 *layout2;
     IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, &layout);
@@ -326,6 +328,42 @@ static void test_CreateTextLayout(void)
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 1000.0, 1000.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
+    if (hr == S_OK) {
+        IDWriteTextLayout1 *layout1;
+        IDWriteTextFormat1 *format1;
+
+        hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextLayout1, (void**)&layout1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout1_Release(layout1);
+
+        hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK)
+        IDWriteTextFormat1_Release(format1);
+
+        hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat1, (void**)&format1);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK)
+        IDWriteTextFormat1_Release(format1);
+
+        IDWriteTextLayout2_Release(layout2);
+    }
+    else
+        win_skip("IDWriteTextLayout2 is not supported.\n");
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
 }
 
 static void test_CreateGdiCompatibleTextLayout(void)

@@ -525,6 +525,7 @@ static HRESULT WINAPI dwritetextlayout_QueryInterface(IDWriteTextLayout2 *iface,
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IDWriteTextLayout2) ||
+        IsEqualIID(riid, &IID_IDWriteTextLayout1) ||
         IsEqualIID(riid, &IID_IDWriteTextLayout) ||
         IsEqualIID(riid, &IID_IDWriteTextFormat) ||
         IsEqualIID(riid, &IID_IUnknown))
