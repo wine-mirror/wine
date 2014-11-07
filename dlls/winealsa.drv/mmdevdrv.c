@@ -1162,7 +1162,7 @@ static DWORD get_channel_mask(unsigned int channels)
 
 static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt)
 {
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2){
+    if(This->dataflow != eCapture && (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2) ){
         WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
         DWORD mask, flag = SPEAKER_FRONT_LEFT;
         UINT i = 0;
