@@ -592,6 +592,59 @@ static void test_utf7_decoding(void)
            "i=0x%02x: expected output=%s, got output=%s\n",
            i, wine_dbgstr_wn(expected, expected_len + 1), wine_dbgstr_wn(output, expected_len + 1));
     }
+
+    /* test which one-byte characters terminate a sequence
+     * also test whether the unfinished byte pair is discarded or not */
+    for (i = 0; i < 256; i++)
+    {
+        sprintf(input, "+B%c+AAA", i);
+
+        memset(output, 0x23, sizeof(output) - sizeof(WCHAR));
+        output[sizeof(output) / sizeof(WCHAR) - 1] = 0;
+
+        len = MultiByteToWideChar(CP_UTF7, 0, input, 8, output, sizeof(output) / sizeof(WCHAR) - 1);
+
+        if (i == '-')
+        {
+            /* explicitly terminates */
+            expected_len = 2;
+            expected[0] = 0;
+            expected[1] = 0;
+        }
+        else if (i <= 0x7F)
+        {
+            if (base64_decoding_table[i] != -1)
+            {
+                /* absorbs the character into the base64 sequence */
+                expected_len = 3;
+                expected[0] = 0x0400 | (base64_decoding_table[i] << 4) | 0x000F;
+                expected[1] = 0x8000;
+                expected[2] = 0;
+            }
+            else
+            {
+                /* implicitly terminates and discards the unfinished byte pair */
+                expected_len = 3;
+                expected[0] = i;
+                expected[1] = 0;
+                expected[2] = 0;
+            }
+        }
+        else
+        {
+            /* implicitly terminates but does not the discard unfinished byte pair */
+            expected_len = 3;
+            expected[0] = i;
+            expected[1] = 0x0400;
+            expected[2] = 0;
+        }
+        expected[expected_len] = 0x2323;
+
+        ok(len == expected_len, "i=0x%02x: expected len=%i, got len=%i\n", i, expected_len, len);
+        ok(memcmp(output, expected, (expected_len + 1) * sizeof(WCHAR)) == 0,
+           "i=0x%02x: expected output=%s, got output=%s\n",
+           i, wine_dbgstr_wn(expected, expected_len + 1), wine_dbgstr_wn(output, expected_len + 1));
+    }
 }
 
 static void test_undefined_byte_char(void)
