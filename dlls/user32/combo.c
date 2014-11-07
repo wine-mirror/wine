@@ -1059,7 +1059,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
        r.bottom = min( r.top + nDroppedHeight, mon_info.rcWork.bottom );
    }
 
-   SetWindowPos( lphc->hWndLBox, HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top,
+   SetWindowPos( lphc->hWndLBox, HWND_TOPMOST, r.left, r.top, r.right - r.left, r.bottom - r.top,
                  SWP_NOACTIVATE | SWP_SHOWWINDOW );
 
 
