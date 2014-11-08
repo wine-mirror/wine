@@ -2407,9 +2407,9 @@ BOOL WINAPI D3DXIntersectTri(const D3DXVECTOR3 *p0, const D3DXVECTOR3 *p1, const
         D3DXVec4Transform(&vec, &vec, &m);
         if ( (vec.x >= 0.0f) && (vec.y >= 0.0f) && (vec.x + vec.y <= 1.0f) && (vec.z >= 0.0f) )
         {
-            *pu = vec.x;
-            *pv = vec.y;
-            *pdist = fabsf( vec.z );
+            if (pu) *pu = vec.x;
+            if (pv) *pv = vec.y;
+            if (pdist) *pdist = fabsf( vec.z );
             return TRUE;
         }
     }

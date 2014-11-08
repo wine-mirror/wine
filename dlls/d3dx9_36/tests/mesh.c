@@ -1104,6 +1104,9 @@ static void D3DXIntersectTriTest(void)
     ok( compare(exp_v,got_v), "Expected v = %f, got %f\n",exp_v,got_v);
     ok( compare(exp_dist,got_dist), "Expected distance = %f, got %f\n",exp_dist,got_dist);
 
+    got_res = D3DXIntersectTri(&vertex[0], &vertex[1], &vertex[2], &position, &ray, NULL, NULL, NULL);
+    ok(got_res == exp_res, "Expected result = %d, got %d\n", exp_res, got_res);
+
 /*Only positive ray is taken in account*/
 
     vertex[0].x = 1.0f; vertex[0].y = 0.0f; vertex[0].z = 0.0f;
@@ -1119,6 +1122,9 @@ static void D3DXIntersectTriTest(void)
     got_res = D3DXIntersectTri(&vertex[0],&vertex[1],&vertex[2],&position,&ray,&got_u,&got_v,&got_dist);
     ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
 
+    got_res = D3DXIntersectTri(&vertex[0], &vertex[1], &vertex[2], &position, &ray, NULL, NULL, NULL);
+    ok(got_res == exp_res, "Expected result = %d, got %d\n", exp_res, got_res);
+
 /*Intersection between ray and triangle in a same plane is considered as empty*/
 
     vertex[0].x = 4.0f; vertex[0].y = 0.0f; vertex[0].z = 0.0f;
@@ -1133,6 +1139,9 @@ static void D3DXIntersectTriTest(void)
 
     got_res = D3DXIntersectTri(&vertex[0],&vertex[1],&vertex[2],&position,&ray,&got_u,&got_v,&got_dist);
     ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
+
+    got_res = D3DXIntersectTri(&vertex[0], &vertex[1], &vertex[2], &position, &ray, NULL, NULL, NULL);
+    ok(got_res == exp_res, "Expected result = %d, got %d\n", exp_res, got_res);
 }
 
 static void D3DXCreateMeshTest(void)
