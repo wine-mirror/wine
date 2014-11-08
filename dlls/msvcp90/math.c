@@ -815,6 +815,15 @@ std_Ctraits * __thiscall std_Ctraits_op_assign( std_Ctraits *this, std_Ctraits *
     return this;
 }
 
+/* ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z -> public: static bool __cdecl std::_Ctraits<float>::_Isnan(float) */
+BOOLEAN __cdecl std_Ctraits_float__Isnan( float x ) { return _isnan(x); }
+
+/* ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z -> public: static bool __cdecl std::_Ctraits<double>::_Isnan(double) */
+BOOLEAN __cdecl std_Ctraits_double__Isnan( double x ) { return _isnan(x); }
+
+/* ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z -> public: static bool __cdecl std::_Ctraits<long double>::_Isnan(long double) */
+BOOLEAN __cdecl std_Ctraits_long_double__Isnan( LDOUBLE x ) { return _isnan(x); }
+
 /* ?atan2@?$_Ctraits@M@std@@SAMMM@Z -> public: static float __cdecl std::_Ctraits<float>::atan2(float,float) */
 float __cdecl std_Ctraits_float_atan2( float y, float x ) { return atan2f( y, x ); }
 

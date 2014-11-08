@@ -2300,9 +2300,9 @@
 @ stub ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z
 @ stub ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z
 @ stub ?_Isinf@?$_Ctraits@O@std@@SA_NO@Z
-@ stub ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z
-@ stub ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z
-@ stub ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z
+@ cdecl ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isnan
+@ cdecl ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isnan
+@ cdecl ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z(double) std_Ctraits_long_double__Isnan
 @ thiscall -arch=win32 ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_streambuf_char__Lock
 @ cdecl -arch=win64 ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_streambuf_char__Lock
 @ thiscall -arch=win32 ?_Lock@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ(ptr) basic_streambuf_wchar__Lock

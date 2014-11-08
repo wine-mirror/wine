@@ -2103,9 +2103,9 @@
 @ stub ?_Isinf@?$_Ctraits@M@std@@SA_NM@Z
 @ stub ?_Isinf@?$_Ctraits@N@std@@SA_NN@Z
 @ stub ?_Isinf@?$_Ctraits@O@std@@SA_NO@Z
-@ stub ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z
-@ stub ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z
-@ stub ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z
+@ cdecl ?_Isnan@?$_Ctraits@M@std@@SA_NM@Z(float) std_Ctraits_float__Isnan
+@ cdecl ?_Isnan@?$_Ctraits@N@std@@SA_NN@Z(double) std_Ctraits_double__Isnan
+@ cdecl ?_Isnan@?$_Ctraits@O@std@@SA_NO@Z(double) std_Ctraits_long_double__Isnan
 @ stub -arch=win32 ?_Loc_atexit@std@@YA_NP6AXXZ@Z
 @ stub -arch=win32 ?_Makpat@?$_Mpunct@D@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub -arch=win64 ?_Makpat@?$_Mpunct@D@std@@AEAAXAEAUpattern@money_base@2@III@Z

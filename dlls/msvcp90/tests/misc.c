@@ -19,12 +19,15 @@
 #include <stdio.h>
 #include <locale.h>
 #include <wctype.h>
+#include <math.h>
 #include <float.h>
 #include <errno.h>
 
 #include <windef.h>
 #include <winbase.h>
 #include "wine/test.h"
+
+typedef double LDOUBLE;  /* long double is just a double */
 
 typedef struct {
     LCID handle;
@@ -109,6 +112,10 @@ static /*basic_ostringstream_char*/void* (__thiscall *p_basic_ostringstream_char
 static void (__thiscall *p_basic_ostringstream_char_dtor)(/*basic_ostringstream_char*/void*);
 static void (__thiscall *p_basic_ostringstream_char_vbase_dtor)(/*basic_ostringstream_char*/void*);
 static void (__thiscall *p_basic_ios_char_dtor)(/*basic_ios_char*/void*);
+
+static BOOL (__cdecl *p_std_Ctraits_float__Isnan)(float);
+static BOOL (__cdecl *p_std_Ctraits_double__Isnan)(double);
+static BOOL (__cdecl *p_std_Ctraits_long_double__Isnan)(LDOUBLE);
 
 static complex_float* (__thiscall *p_complex_float_ctor)(complex_float*, const float*, const float*);
 static complex_float* (__cdecl *p_complex_float_add)(complex_float*, const complex_float*, const complex_float*);
@@ -216,6 +223,11 @@ static BOOL init(void)
     SET(p_wctrans, "wctrans");
     SET(p_towctrans, "towctrans");
     SET(basic_ostringstream_char_vbtable, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@");
+
+    SET(p_std_Ctraits_float__Isnan, "?_Isnan@?$_Ctraits@M@std@@SA_NM@Z");
+    SET(p_std_Ctraits_double__Isnan, "?_Isnan@?$_Ctraits@N@std@@SA_NN@Z");
+    SET(p_std_Ctraits_long_double__Isnan, "?_Isnan@?$_Ctraits@O@std@@SA_NO@Z");
+
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
@@ -688,6 +700,41 @@ static BOOL almost_eq(float f1, float f2)
     return f1 < 0.0001;
 }
 
+static void test_Ctraits_math_functions(void)
+{
+    BYTE ret;
+
+    ret = p_std_Ctraits_float__Isnan(0.0);
+    ok(ret == FALSE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_float__Isnan(0.0 / 0.0);
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_float__Isnan(1.0 / 0.0);
+    ok(ret == FALSE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_float__Isnan(-1.0 / 0.0);
+    ok(ret == FALSE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_float__Isnan(log(-1.0));
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_float__Isnan(sqrt(-1.0));
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_double__Isnan(3.14159 / 0.0);
+    ok(ret == FALSE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_double__Isnan(log(-3.14159));
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_long_double__Isnan(3.14159 / 0.0);
+    ok(ret == FALSE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_long_double__Isnan(sqrt(-3.14159));
+    ok(ret == TRUE, "ret = %d\n", ret);
+}
+
 static void test_complex(void)
 {
     complex_float c1, c2, c3;
@@ -935,6 +982,7 @@ START_TEST(misc)
     test_virtual_call();
     test_virtual_base_dtors();
     test_allocator_char();
+    test_Ctraits_math_functions();
     test_complex();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
