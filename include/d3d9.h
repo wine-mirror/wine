@@ -62,6 +62,8 @@
 #define D3D_SDK_VERSION                         32
 #define D3DADAPTER_DEFAULT                      0
 #define D3DENUM_NO_WHQL_LEVEL                   __MSABI_LONG(0x00000002)
+#define D3DPRESENT_DONOTWAIT                    __MSABI_LONG(1)
+#define D3DPRESENT_LINEAR_CONTENT               __MSABI_LONG(2)
 #define D3DPRESENT_BACK_BUFFERS_MAX             __MSABI_LONG(3)
 #define D3DSGR_NO_CALIBRATION                   __MSABI_LONG(0x00000000)
 #define D3DSGR_CALIBRATE                        __MSABI_LONG(0x00000001)
