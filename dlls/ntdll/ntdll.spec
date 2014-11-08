@@ -415,6 +415,7 @@
 @ cdecl -arch=arm,x86_64 RtlAddFunctionTable(ptr long long)
 @ stdcall RtlAddRefActivationContext(ptr)
 # @ stub RtlAddRefMemoryStream
+@ stdcall RtlAddVectoredContinueHandler(long ptr)
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
 # @ stub RtlAddressInSectionTable
 @ stdcall RtlAdjustPrivilege(long long long ptr)
@@ -819,6 +820,7 @@
 @ stdcall RtlReleaseSRWLockExclusive(ptr)
 @ stdcall RtlReleaseSRWLockShared(ptr)
 @ stub RtlRemoteCall
+@ stdcall RtlRemoveVectoredContinueHandler(ptr)
 @ stdcall RtlRemoveVectoredExceptionHandler(ptr)
 @ stub RtlResetRtlTranslations
 @ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error

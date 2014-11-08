@@ -224,6 +224,26 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 
 
 /*******************************************************************
+ *         RtlAddVectoredContinueHandler   (NTDLL.@)
+ */
+PVOID WINAPI RtlAddVectoredContinueHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
+{
+    FIXME("%u %p stub\n", first, func);
+    return NULL;
+}
+
+
+/*******************************************************************
+ *         RtlRemoveVectoredContinueHandler   (NTDLL.@)
+ */
+ULONG WINAPI RtlRemoveVectoredContinueHandler( PVOID handler )
+{
+    FIXME("%p stub\n", handler);
+    return FALSE;
+}
+
+
+/*******************************************************************
  *         RtlAddVectoredExceptionHandler   (NTDLL.@)
  */
 PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
