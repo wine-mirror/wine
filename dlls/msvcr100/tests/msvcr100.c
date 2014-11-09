@@ -140,6 +140,8 @@ static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const
 static FILE* (__cdecl *p_fopen)(const char*,const char*);
 static int (__cdecl *p_fclose)(FILE*);
 static size_t (__cdecl *p_fread_s)(void*,size_t,size_t,size_t,FILE*);
+static void (__cdecl *p_lock_file)(FILE*);
+static void (__cdecl *p_unlock_file)(FILE*);
 static void* (__cdecl *p__aligned_offset_malloc)(size_t, size_t, size_t);
 static void (__cdecl *p__aligned_free)(void*);
 static size_t (__cdecl *p__aligned_msize)(void*, size_t, size_t);
@@ -178,6 +180,8 @@ static BOOL init(void)
     SET(p_fopen, "fopen");
     SET(p_fclose, "fclose");
     SET(p_fread_s, "fread_s");
+    SET(p_lock_file, "_lock_file");
+    SET(p_unlock_file, "_unlock_file");
     SET(p__aligned_offset_malloc, "_aligned_offset_malloc");
     SET(p__aligned_free, "_aligned_free");
     SET(p__aligned_msize, "_aligned_msize");
@@ -357,11 +361,30 @@ static void test_wmemmove_s(void)
             "Cannot reset invalid parameter handler\n");
 }
 
+struct block_file_arg
+{
+    FILE *test_file;
+    HANDLE init;
+    HANDLE finish;
+};
+
+static DWORD WINAPI block_file(void *arg)
+{
+    struct block_file_arg *files = arg;
+    p_lock_file(files->test_file);
+    SetEvent(files->init);
+    WaitForSingleObject(files->finish, INFINITE);
+    p_unlock_file(files->test_file);
+    return 0;
+}
+
 static void test_fread_s(void)
 {
     static const char test_file[] = "fread_s.tst";
     int ret;
     char buf[10];
+    HANDLE thread;
+    struct block_file_arg arg;
 
     FILE *f = fopen(test_file, "w");
     if(!f) {
@@ -382,6 +405,12 @@ static void test_fread_s(void)
     CHECK_CALLED(invalid_parameter_handler);
 
     f = p_fopen(test_file, "r");
+    arg.test_file = f;
+    arg.init = CreateEventW(NULL, FALSE, FALSE, NULL);
+    arg.finish = CreateEventW(NULL, FALSE, FALSE, NULL);
+    thread = CreateThread(NULL, 0, block_file, (void*)&arg, 0, NULL);
+    WaitForSingleObject(arg.init, INFINITE);
+
     errno = 0xdeadbeef;
     ret = p_fread_s(NULL, sizeof(buf), 0, 1, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
@@ -389,6 +418,9 @@ static void test_fread_s(void)
     ret = p_fread_s(NULL, sizeof(buf), 1, 0, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(errno == 0xdeadbeef, "errno = %d, expected 0xdeadbeef\n", errno);
+
+    SetEvent(arg.finish);
+    WaitForSingleObject(thread, INFINITE);
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
@@ -426,6 +458,9 @@ static void test_fread_s(void)
 
     ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
+    CloseHandle(arg.init);
+    CloseHandle(arg.finish);
+    CloseHandle(thread);
     unlink(test_file);
 }
 

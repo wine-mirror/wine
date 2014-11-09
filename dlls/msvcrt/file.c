@@ -4130,9 +4130,31 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock(void *ptr, MSVCRT_size_t size, MSVCRT_s
 MSVCRT_size_t CDECL MSVCRT_fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
         MSVCRT_size_t count, MSVCRT_FILE *stream)
 {
+    MSVCRT_size_t ret;
+
+    if(!MSVCRT_CHECK_PMT(stream != NULL)) {
+        if(buf && buf_size)
+            memset(buf, 0, buf_size);
+        return 0;
+    }
+    if(!elem_size || !count) return 0;
+
+    MSVCRT__lock_file(stream);
+    ret = MSVCRT__fread_nolock_s(buf, buf_size, elem_size, count, stream);
+    MSVCRT__unlock_file(stream);
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_fread_nolock_s (MSVCR80.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__fread_nolock_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
+        MSVCRT_size_t count, MSVCRT_FILE *stream)
+{
     size_t bytes_left, buf_pos;
 
-    TRACE("(%p %lu %lu %lu %p\n", buf, buf_size, elem_size, count, stream);
+    TRACE("(%p %lu %lu %lu %p)\n", buf, buf_size, elem_size, count, stream);
 
     if(!MSVCRT_CHECK_PMT(stream != NULL)) {
         if(buf && buf_size)
@@ -4154,7 +4176,7 @@ MSVCRT_size_t CDECL MSVCRT_fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_siz
                 return 0;
             }
 
-            MSVCRT_fread((char*)buf+buf_pos, 1, size, stream);
+            MSVCRT__fread_nolock((char*)buf+buf_pos, 1, size, stream);
             buf_pos += size;
             bytes_left -= size;
         }else {

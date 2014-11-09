@@ -128,6 +128,7 @@ int    __cdecl _vsnprintf_s(char*,size_t,size_t,const char*,__ms_va_list);
 int    __cdecl _vsprintf_p_l(char*,size_t,const char*,_locale_t,__ms_va_list);
 
 size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
+size_t __cdecl _fread_nolock_s(void*,size_t,size_t,size_t,FILE*);
 size_t __cdecl _fwrite_nolock(const void*,size_t,size_t,FILE*);
 int    __cdecl _fclose_nolock(FILE*);
 int    __cdecl _fflush_nolock(FILE*);
@@ -156,6 +157,7 @@ int    __cdecl fprintf_s(FILE*,const char*,...);
 int    __cdecl fputc(int,FILE*);
 int    __cdecl fputs(const char*,FILE*);
 size_t __cdecl fread(void*,size_t,size_t,FILE*);
+size_t __cdecl fread_s(void*,size_t,size_t,size_t,FILE*);
 FILE*  __cdecl freopen(const char*,const char*,FILE*);
 int    __cdecl fscanf(FILE*,const char*,...);
 int    __cdecl fscanf_s(FILE*,const char*,...);
