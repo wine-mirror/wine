@@ -313,12 +313,18 @@ int __cdecl _wstat64(const wchar_t*,struct _stat64*);
 
 #ifndef _WSTDIO_DEFINED
 #define _WSTDIO_DEFINED
+wint_t   __cdecl _fgetwc_nolock(FILE*);
 wint_t   __cdecl _fgetwchar(void);
+wint_t   __cdecl _fputwc_nolock(wint_t,FILE*);
 wint_t   __cdecl _fputwchar(wint_t);
+wint_t   __cdecl _getwc_nolock(FILE*);
 wchar_t* __cdecl _getws(wchar_t*);
+wint_t   __cdecl _putwc_nolock(wint_t,FILE*);
 int      __cdecl _putws(const wchar_t*);
 int      __cdecl _snwprintf(wchar_t*,size_t,const wchar_t*,...);
 int      __cdecl _snwprintf_s(wchar_t*,size_t,size_t,const wchar_t*,...);
+int      __cdecl _scwprintf(const wchar_t*,...);
+wint_t   __cdecl _ungetwc_nolock(wint_t,FILE*);
 int      __cdecl _vscwprintf(const wchar_t*,__ms_va_list);
 int      __cdecl _vscwprintf_p_l(const wchar_t*,_locale_t,__ms_va_list);
 int      __cdecl _vsnwprintf(wchar_t*,size_t,const wchar_t*,__ms_va_list);
