@@ -29,12 +29,25 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "controls.h"
 #include "user_private.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
+
+#define IMM_INIT_MAGIC 0x19650412
+static HWND (WINAPI *imm_get_ui_window)(HKL);
+
+/* MSIME messages */
+static UINT WM_MSIME_SERVICE;
+static UINT WM_MSIME_RECONVERTOPTIONS;
+static UINT WM_MSIME_MOUSE;
+static UINT WM_MSIME_RECONVERTREQUEST;
+static UINT WM_MSIME_RECONVERT;
+static UINT WM_MSIME_QUERYPOSITION;
+static UINT WM_MSIME_DOCUMENTFEED;
 
 /* USER signal proc flags and codes */
 /* See UserSignalProc for comments */
@@ -597,10 +610,32 @@ VOID WINAPI LoadLocalFonts(VOID)
 /***********************************************************************
  *		User32InitializeImmEntryTable
  */
-BOOL WINAPI User32InitializeImmEntryTable(LPVOID ptr)
+BOOL WINAPI User32InitializeImmEntryTable(DWORD magic)
 {
-  FIXME("(%p): stub\n", ptr);
-  return TRUE;
+    static const WCHAR imm32_dllW[] = {'i','m','m','3','2','.','d','l','l',0};
+    HMODULE imm32 = GetModuleHandleW(imm32_dllW);
+
+    TRACE("(%x)\n", magic);
+
+    if (!imm32 || magic != IMM_INIT_MAGIC)
+        return FALSE;
+
+    if (imm_get_ui_window)
+        return TRUE;
+
+    WM_MSIME_SERVICE = RegisterWindowMessageA("MSIMEService");
+    WM_MSIME_RECONVERTOPTIONS = RegisterWindowMessageA("MSIMEReconvertOptions");
+    WM_MSIME_MOUSE = RegisterWindowMessageA("MSIMEMouseOperation");
+    WM_MSIME_RECONVERTREQUEST = RegisterWindowMessageA("MSIMEReconvertRequest");
+    WM_MSIME_RECONVERT = RegisterWindowMessageA("MSIMEReconvert");
+    WM_MSIME_QUERYPOSITION = RegisterWindowMessageA("MSIMEQueryPosition");
+    WM_MSIME_DOCUMENTFEED = RegisterWindowMessageA("MSIMEDocumentFeed");
+
+    /* this part is not compatible with native imm32.dll */
+    imm_get_ui_window = (void*)GetProcAddress(imm32, "__wine_get_ui_window");
+    if (!imm_get_ui_window)
+        FIXME("native imm32.dll not supported\n");
+    return TRUE;
 }
 
 /**********************************************************************
@@ -693,4 +728,79 @@ BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG
     FIXME("(%p %08x %u %p %u): stub\n", hwnd, reserved, id, config, size);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
+}
+
+static const WCHAR imeW[] = {'I','M','E',0};
+const struct builtin_class_descr IME_builtin_class =
+{
+    imeW,               /* name */
+    0,                  /* style  */
+    WINPROC_IME,        /* proc */
+    2*sizeof(LONG_PTR), /* extra */
+    IDC_ARROW,          /* cursor */
+    0                   /* brush */
+};
+
+static BOOL is_ime_ui_msg( UINT msg )
+{
+    switch(msg) {
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_COMPOSITION:
+    case WM_IME_SETCONTEXT:
+    case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
+    case WM_IME_COMPOSITIONFULL:
+    case WM_IME_SELECT:
+    case WM_IME_CHAR:
+    case WM_IME_REQUEST:
+    case WM_IME_KEYDOWN:
+    case WM_IME_KEYUP:
+        return TRUE;
+    default:
+        if ((msg == WM_MSIME_RECONVERTOPTIONS) ||
+                (msg == WM_MSIME_SERVICE) ||
+                (msg == WM_MSIME_MOUSE) ||
+                (msg == WM_MSIME_RECONVERTREQUEST) ||
+                (msg == WM_MSIME_RECONVERT) ||
+                (msg == WM_MSIME_QUERYPOSITION) ||
+                (msg == WM_MSIME_DOCUMENTFEED))
+            return TRUE;
+
+        return FALSE;
+    }
+}
+
+LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    HWND uiwnd;
+
+    if (msg==WM_CREATE || msg==WM_NCCREATE)
+        return TRUE;
+
+    if (imm_get_ui_window && is_ime_ui_msg(msg))
+    {
+        if ((uiwnd = imm_get_ui_window(GetKeyboardLayout(0))))
+            return SendMessageA(uiwnd, msg, wParam, lParam);
+        return FALSE;
+    }
+
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+LRESULT WINAPI ImeWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    HWND uiwnd;
+
+    if (msg==WM_CREATE || msg==WM_NCCREATE)
+        return TRUE;
+
+    if (imm_get_ui_window && is_ime_ui_msg(msg))
+    {
+        if ((uiwnd = imm_get_ui_window(GetKeyboardLayout(0))))
+            return SendMessageW(uiwnd, msg, wParam, lParam);
+        return FALSE;
+    }
+
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }

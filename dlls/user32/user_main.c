@@ -322,18 +322,24 @@ static void thread_detach(void)
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
+    static const WCHAR imm32_dllW[] = {'i','m','m','3','2','.','d','l','l',0};
+    static HMODULE imm32_module;
     BOOL ret = TRUE;
+
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
         user32_module = inst;
         ret = process_attach();
+        if(ret)
+            imm32_module = LoadLibraryW(imm32_dllW);
         break;
     case DLL_THREAD_DETACH:
         thread_detach();
         break;
     case DLL_PROCESS_DETACH:
         USER_unload_driver();
+        FreeLibrary(imm32_module);
         DeleteCriticalSection(&user_section);
         break;
     }

@@ -447,6 +447,7 @@ static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **conte
     register_builtin( &MENU_builtin_class );
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
+    register_builtin( &IME_builtin_class );
     return TRUE;
 }
 

@@ -1107,7 +1107,6 @@ static void test_IME(void)
 
     char module_name[MAX_PATH], *ptr;
     MEMORY_BASIC_INFORMATION mbi;
-    HMODULE imm32 = NULL;
     WNDCLASSW wnd_classw;
     WNDCLASSA wnd_class;
     SIZE_T size;
@@ -1119,15 +1118,13 @@ static void test_IME(void)
         return;
     }
 
-    todo_wine ok(GetModuleHandleA("imm32") != 0, "imm32.dll is not loaded\n");
-    if (!GetModuleHandleA("imm32"))
-        imm32 = LoadLibraryA("imm32");
+    ok(GetModuleHandleA("imm32") != 0, "imm32.dll is not loaded\n");
 
     ret = GetClassInfoA(NULL, "IME", &wnd_class);
     ok(ret, "GetClassInfo failed: %d\n", GetLastError());
 
     size = VirtualQuery(wnd_class.lpfnWndProc, &mbi, sizeof(mbi));
-    todo_wine ok(size == sizeof(mbi), "VirtualQuery returned %ld\n", size);
+    ok(size == sizeof(mbi), "VirtualQuery returned %ld\n", size);
     if (size == sizeof(mbi)) {
         size = GetModuleFileNameA(mbi.AllocationBase, module_name, sizeof(module_name));
         ok(size, "GetModuleFileName failed\n");
@@ -1147,9 +1144,7 @@ static void test_IME(void)
     for (ptr = module_name+size-1; ptr > module_name; ptr--)
         if (*ptr == '\\' || *ptr == '/') break;
     if (*ptr == '\\' || *ptr=='/') ptr++;
-    todo_wine ok(!lstrcmpiA(ptr, "user32.dll") || !lstrcmpiA(ptr, "ntdll.dll"), "IME window proc implemented in %s\n", ptr);
-
-    if (imm32) FreeLibrary(imm32);
+    ok(!lstrcmpiA(ptr, "user32.dll") || !lstrcmpiA(ptr, "ntdll.dll"), "IME window proc implemented in %s\n", ptr);
 }
 
 START_TEST(class)

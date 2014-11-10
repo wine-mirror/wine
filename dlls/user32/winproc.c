@@ -75,6 +75,7 @@ static WINDOWPROC winproc_array[MAX_WINPROCS] =
     { MDIClientWndProcA, MDIClientWndProcW },  /* WINPROC_MDICLIENT */
     { ScrollBarWndProcA, ScrollBarWndProcW },  /* WINPROC_SCROLLBAR */
     { StaticWndProcA, StaticWndProcW },        /* WINPROC_STATIC */
+    { ImeWndProcA, ImeWndProcW },              /* WINPROC_IME */
     { NULL, DesktopWndProc },                  /* WINPROC_DESKTOP */
     { NULL, IconTitleWndProc },                /* WINPROC_ICONTITLE */
     { NULL, PopupMenuWndProc },                /* WINPROC_MENU */
