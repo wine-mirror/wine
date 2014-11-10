@@ -844,6 +844,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
     const struct dwritescript_properties *scriptprops;
+    struct scriptshaping_context context;
     struct scriptshaping_cache *cache;
     WCHAR *string;
     BOOL update_cluster;
@@ -924,13 +925,25 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     }
     *actual_glyph_count = g;
 
-    hr = create_scriptshaping_cache(fontface, locale, &cache);
+    hr = create_scriptshaping_cache(fontface, &cache);
     if (FAILED(hr))
         goto done;
 
+    context.cache = cache;
+    context.text = text;
+    context.length = length;
+    context.is_rtl = is_rtl;
+    context.max_glyph_count = max_glyph_count;
+    context.language_tag = DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t');
+    if (locale) {
+        WCHAR tag[5];
+        if (GetLocaleInfoEx(locale, LOCALE_SOPENTYPELANGUAGETAG, tag, sizeof(tag)/sizeof(WCHAR)))
+            context.language_tag = DWRITE_MAKE_OPENTYPE_TAG(tag[0],tag[1],tag[2],tag[3]);
+    }
+
     scriptprops = &dwritescripts_properties[script];
     if (scriptprops->ops && scriptprops->ops->contextual_shaping) {
-        hr = scriptprops->ops->contextual_shaping(cache, is_rtl, string, length, max_glyph_count, clustermap, glyph_indices, actual_glyph_count);
+        hr = scriptprops->ops->contextual_shaping(&context, clustermap, glyph_indices, actual_glyph_count);
         if (FAILED(hr))
             goto done;
     }
@@ -938,9 +951,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     /* FIXME: apply default features */
 
     if (scriptprops->ops && scriptprops->ops->set_text_glyphs_props)
-        hr = scriptprops->ops->set_text_glyphs_props(cache, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+        hr = scriptprops->ops->set_text_glyphs_props(&context, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
     else
-        hr = default_shaping_ops.set_text_glyphs_props(cache, string, length, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+        hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
 
 done:
     release_scriptshaping_cache(cache);

@@ -143,14 +143,26 @@ enum SCRIPT_JUSTIFY
 };
 
 struct scriptshaping_cache;
-extern HRESULT create_scriptshaping_cache(IDWriteFontFace*,const WCHAR*,struct scriptshaping_cache**) DECLSPEC_HIDDEN;
+
+struct scriptshaping_context
+{
+    struct scriptshaping_cache *cache;
+    UINT32 language_tag;
+
+    const WCHAR *text;
+    UINT32 length;
+    BOOL is_rtl;
+
+    UINT32 max_glyph_count;
+};
+
+extern HRESULT create_scriptshaping_cache(IDWriteFontFace*,struct scriptshaping_cache**) DECLSPEC_HIDDEN;
 extern void release_scriptshaping_cache(struct scriptshaping_cache*) DECLSPEC_HIDDEN;
 
 struct scriptshaping_ops
 {
-    HRESULT (*contextual_shaping)(struct scriptshaping_cache *cache, BOOL is_rtl, const WCHAR *text, UINT32 len, UINT32 max_glyph_count,
-                                  UINT16 *clustermap, UINT16 *glyph_indices, UINT32* actual_glyph_count);
-    HRESULT (*set_text_glyphs_props)(struct scriptshaping_cache *cache, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+    HRESULT (*contextual_shaping)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices, UINT32* actual_glyph_count);
+    HRESULT (*set_text_glyphs_props)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props);
 };
 

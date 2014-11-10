@@ -28,10 +28,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 struct scriptshaping_cache
 {
     IDWriteFontFace *fontface;
-    UINT32 language_tag;
 };
 
-HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, const WCHAR *locale, struct scriptshaping_cache **cache)
+HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, struct scriptshaping_cache **cache)
 {
     struct scriptshaping_cache *ret;
 
@@ -41,13 +40,6 @@ HRESULT create_scriptshaping_cache(IDWriteFontFace *fontface, const WCHAR *local
 
     ret->fontface = fontface;
     IDWriteFontFace_AddRef(fontface);
-
-    ret->language_tag = DWRITE_MAKE_OPENTYPE_TAG('d','f','l','t');
-    if (locale) {
-        WCHAR tag[5];
-        if (GetLocaleInfoEx(locale, LOCALE_SOPENTYPELANGUAGETAG, tag, sizeof(tag)/sizeof(WCHAR)))
-            ret->language_tag = DWRITE_MAKE_OPENTYPE_TAG(tag[0],tag[1],tag[2],tag[3]);
-    }
 
     *cache = ret;
 
@@ -122,7 +114,7 @@ static INT32 map_glyph_to_text_pos(const UINT16 *clustermap, UINT32 len, UINT16 
     return k;
 }
 
-static HRESULT default_set_text_glyphs_props(struct scriptshaping_cache *cache, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+static HRESULT default_set_text_glyphs_props(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
 {
     UINT32 i;
@@ -132,36 +124,36 @@ static HRESULT default_set_text_glyphs_props(struct scriptshaping_cache *cache, 
         UINT32 char_count = 0;
         INT32 k;
 
-        k = map_glyph_to_text_pos(clustermap, len, i);
+        k = map_glyph_to_text_pos(clustermap, context->length, i);
         if (k >= 0) {
-            for (; k < len && clustermap[k] == i; k++)
+            for (; k < context->length && clustermap[k] == i; k++)
                 char_index[char_count++] = k;
         }
 
         if (char_count == 0)
             continue;
 
-        if (char_count == 1 && isspaceW(text[char_index[0]])) {
+        if (char_count == 1 && isspaceW(context->text[char_index[0]])) {
             glyph_props[i].justification = SCRIPT_JUSTIFY_BLANK;
-            text_props[char_index[0]].isShapedAlone = text[char_index[0]] == ' ';
+            text_props[char_index[0]].isShapedAlone = context->text[char_index[0]] == ' ';
         }
         else
             glyph_props[i].justification = SCRIPT_JUSTIFY_CHARACTER;
     }
 
     /* FIXME: update properties using GDEF table */
-    shape_update_clusters_from_glyphprop(glyphcount, len, clustermap, glyph_props);
+    shape_update_clusters_from_glyphprop(glyphcount, context->length, clustermap, glyph_props);
 
     return S_OK;
 }
 
-static HRESULT latn_set_text_glyphs_props(struct scriptshaping_cache *cache, const WCHAR *text, UINT32 len, UINT16 *clustermap, UINT16 *glyph_indices,
+static HRESULT latn_set_text_glyphs_props(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
                                      UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
 {
     HRESULT hr;
     UINT32 i;
 
-    hr = default_set_text_glyphs_props(cache, text, len, clustermap, glyph_indices, glyphcount, text_props, glyph_props);
+    hr = default_set_text_glyphs_props(context, clustermap, glyph_indices, glyphcount, text_props, glyph_props);
 
     for (i = 0; i < glyphcount; i++)
         if (glyph_props[i].isZeroWidthSpace)
