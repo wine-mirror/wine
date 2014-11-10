@@ -8448,6 +8448,13 @@ static void CALLBACK callback_count(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWOR
     count++;
 }
 
+static DWORD exception;
+static void CALLBACK callback_exception(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    count++;
+    RaiseException(exception, 0, 0, NULL);
+}
+
 static DWORD WINAPI timer_thread_proc(LPVOID x)
 {
     struct timer_info *info = x;
@@ -8576,6 +8583,41 @@ static void test_timers_no_wnd(void)
        count, TIMER_COUNT_EXPECTED);
     KillTimer(NULL, id);
     /* Note: SetSystemTimer doesn't support a NULL window, see test_timers */
+}
+
+static void test_timers_exception(DWORD code)
+{
+    UINT_PTR id;
+    MSG msg;
+
+    exception = code;
+    id = SetTimer(NULL, 0, 1000, callback_exception);
+    ok(id != 0, "did not get id from SetTimer.\n");
+
+    memset(&msg, 0, sizeof(msg));
+    msg.message = WM_TIMER;
+    msg.wParam = id;
+    msg.lParam = (LPARAM)callback_exception;
+
+    count = 0;
+    DispatchMessageA(&msg);
+    ok(count == 1, "did not get one count as expected (%i).\n", count);
+
+    KillTimer(NULL, id);
+}
+
+static void test_timers_exceptions(void)
+{
+    test_timers_exception(EXCEPTION_ACCESS_VIOLATION);
+    test_timers_exception(EXCEPTION_DATATYPE_MISALIGNMENT);
+    test_timers_exception(EXCEPTION_BREAKPOINT);
+    test_timers_exception(EXCEPTION_SINGLE_STEP);
+    test_timers_exception(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
+    test_timers_exception(EXCEPTION_FLT_DENORMAL_OPERAND);
+    test_timers_exception(EXCEPTION_FLT_DIVIDE_BY_ZERO);
+    test_timers_exception(EXCEPTION_FLT_INEXACT_RESULT);
+    test_timers_exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+    test_timers_exception(0xE000BEEF); /* customer exception */
 }
 
 /* Various win events with arbitrary parameters */
@@ -14619,6 +14661,7 @@ START_TEST(msg)
     test_accelerators();
     test_timers();
     test_timers_no_wnd();
+    test_timers_exceptions();
     if (hCBT_hook) test_set_hook();
     test_DestroyWindow();
     test_DispatchMessage();
