@@ -87,6 +87,16 @@ static const unsigned char dds_volume_map[] = {
 0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x84,0xef,0x7b,0xaa,0xab,0xab,0xab
 };
 
+static const unsigned char png_grayscale[] =
+{
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49,
+    0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00,
+    0x00, 0x00, 0x00, 0x3a, 0x7e, 0x9b, 0x55, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44,
+    0x41, 0x54, 0x08, 0xd7, 0x63, 0xf8, 0x0f, 0x00, 0x01, 0x01, 0x01, 0x00, 0x1b,
+    0xb6, 0xee, 0x56, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42,
+    0x60, 0x82
+};
+
 #define ADMITTED_ERROR 0.0001f
 
 static inline float relative_error(float expected, float got)
@@ -1582,6 +1592,109 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
     ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
+    /* Checking for color key format overrides. */
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_X1R5G5B5, "Returned format %u, expected %u\n", desc.Format, D3DFMT_X1R5G5B5);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_A1R5G5B5, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A1R5G5B5);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_X1R5G5B5, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_X1R5G5B5, "Returned format %u, expected %u\n", desc.Format, D3DFMT_X1R5G5B5);
+        IDirect3DTexture9_Release(texture);
+    }
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_X8R8G8B8);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_X8R8G8B8);
+        IDirect3DTexture9_Release(texture);
+    }
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, png_grayscale, sizeof(png_grayscale),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_L8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_L8);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, png_grayscale, sizeof(png_grayscale),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_A8L8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8L8);
+        IDirect3DTexture9_Release(texture);
+    }
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, png_grayscale, sizeof(png_grayscale),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_L8, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0xff000000, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Format == D3DFMT_L8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_L8);
+        IDirect3DTexture9_Release(texture);
+    }
 }
 
 static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)
