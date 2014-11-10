@@ -302,12 +302,13 @@ HRESULT WINAPI D3DXCheckTextureRequirements(struct IDirect3DDevice9 *device, UIN
 
             /* This format can be used, let's evaluate it.
                Weights chosen quite arbitrarily... */
-            score = 16 - 4 * (curchannels - channels);
+            score = 512 * (curfmt->type == fmt->type);
+            score -= 32 * (curchannels - channels);
 
             for (j = 0; j < 4; j++)
             {
                 int diff = curfmt->bits[j] - fmt->bits[j];
-                score += 16 - (diff < 0 ? -diff * 4 : diff);
+                score -= (diff < 0 ? -diff * 8 : diff) * (j == 0 ? 1 : 2);
             }
 
             if (score > bestscore)
