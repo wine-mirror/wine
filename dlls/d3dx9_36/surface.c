@@ -40,6 +40,7 @@ static const struct
     { &GUID_WICPixelFormat8bppIndexed, D3DFMT_P8 },
     { &GUID_WICPixelFormat1bppIndexed, D3DFMT_P8 },
     { &GUID_WICPixelFormat4bppIndexed, D3DFMT_P8 },
+    { &GUID_WICPixelFormat8bppGray, D3DFMT_L8 },
     { &GUID_WICPixelFormat16bppBGR555, D3DFMT_X1R5G5B5 },
     { &GUID_WICPixelFormat16bppBGR565, D3DFMT_R5G6B5 },
     { &GUID_WICPixelFormat24bppBGR, D3DFMT_R8G8B8 },
