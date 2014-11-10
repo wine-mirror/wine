@@ -1591,7 +1591,7 @@ static void test_dde_aw_transaction( BOOL client_unicode, BOOL server_unicode )
     info.cb = sizeof(info);
     ret = DdeQueryConvInfo(hconv, QID_SYNC, &info);
     ok(ret, "wrong info size %d, DdeQueryConvInfo error %x\n", ret, DdeGetLastError(dde_inst));
-    ok(info.ConvCtxt.iCodePage == client_unicode ? CP_WINUNICODE : CP_WINANSI,
+    ok(info.ConvCtxt.iCodePage == (client_unicode ? CP_WINUNICODE : CP_WINANSI),
        "wrong iCodePage %d\n", info.ConvCtxt.iCodePage);
     ok(!info.hConvPartner, "unexpected info.hConvPartner: %p\n", info.hConvPartner);
 todo_wine {
