@@ -1869,8 +1869,7 @@ static void test_wndproc(void)
             (LONG_PTR)test_proc, proc);
 
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
     ref = IDirect3DDevice9Ex_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
@@ -1897,8 +1896,7 @@ static void test_wndproc(void)
     }
 
     proc = SetWindowLongPtrA(focus_window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
     ref = IDirect3DDevice9Ex_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
@@ -2012,8 +2010,7 @@ static void test_wndproc_windowed(void)
             (LONG_PTR)test_proc, proc);
 
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
     hr = reset_device(device, device_window, TRUE);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
@@ -2050,8 +2047,7 @@ static void test_wndproc_windowed(void)
             (LONG_PTR)test_proc, proc);
 
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
     hr = reset_device(device, focus_window, TRUE);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
@@ -2086,8 +2082,7 @@ static void test_wndproc_windowed(void)
             (LONG_PTR)test_proc, proc);
 
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
     hr = reset_device(device, device_window, TRUE);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
