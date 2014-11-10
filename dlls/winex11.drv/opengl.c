@@ -2742,7 +2742,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                  * point only ATI offers this.
                  */
                 piValues[i] = WGL_SWAP_EXCHANGE_ARB;
-                break;
+                continue;
 
             case WGL_PBUFFER_LARGEST_ARB:
                 curGLXAttr = GLX_LARGEST_PBUFFER;
