@@ -2496,7 +2496,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    if (!lpszUserName || !strlenW(lpszUserName)) {
+    if (!lpszUserName || !lpszUserName[0]) {
         HKEY key;
         WCHAR szPassword[MAX_PATH];
         DWORD len = sizeof(szPassword);
