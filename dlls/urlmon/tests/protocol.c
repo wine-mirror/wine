@@ -2927,7 +2927,7 @@ static void test_protocol_terminate(IInternetProtocol *protocol)
     ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
 
     hres = IInternetProtocol_Read(protocol, buf, 1, &cb);
-    ok(hres == test_abort ? S_OK : S_FALSE, "Read failed: %08x\n", hres);
+    ok(hres == (test_abort ? S_OK : S_FALSE), "Read failed: %08x\n", hres);
 
     hres = IInternetProtocol_Terminate(protocol, 0);
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
