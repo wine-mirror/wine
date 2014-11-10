@@ -3934,7 +3934,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
                 retval = CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
                                           msg->message, msg->wParam, GetTickCount() );
             }
-            __EXCEPT_PAGE_FAULT
+            __EXCEPT_ALL
             {
                 retval = 0;
             }
@@ -4005,7 +4005,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
                 retval = CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,
                                           msg->message, msg->wParam, GetTickCount() );
             }
-            __EXCEPT_PAGE_FAULT
+            __EXCEPT_ALL
             {
                 retval = 0;
             }
