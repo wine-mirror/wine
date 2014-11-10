@@ -145,6 +145,10 @@ typedef XID GLXPbuffer;
 #define GLX_PBUFFER                       0x8023
 #define GLX_PBUFFER_HEIGHT                0x8040
 #define GLX_PBUFFER_WIDTH                 0x8041
+#define GLX_SWAP_METHOD_OML               0x8060
+#define GLX_SWAP_EXCHANGE_OML             0x8061
+#define GLX_SWAP_COPY_OML                 0x8062
+#define GLX_SWAP_UNDEFINED_OML            0x8063
 #define GLX_RGBA_BIT                      0x00000001
 #define GLX_COLOR_INDEX_BIT               0x00000002
 #define GLX_PBUFFER_CLOBBER_MASK          0x08000000
@@ -285,6 +289,7 @@ static BOOL use_render_texture_emulation = TRUE;
 static enum glx_swap_control_method swap_control_method = GLX_SWAP_CONTROL_NONE;
 /* Set when GLX_EXT_swap_control_tear is supported, requires GLX_SWAP_CONTROL_EXT */
 static BOOL has_swap_control_tear = FALSE;
+static BOOL has_swap_method = FALSE;
 
 static CRITICAL_SECTION context_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -878,8 +883,30 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
 
     case WGL_SWAP_METHOD_ARB:
       pop = iWGLAttr[++cur];
-      /* For now we ignore this and just return SWAP_EXCHANGE */
       TRACE("pAttr[%d] = WGL_SWAP_METHOD_ARB: %#x\n", cur, pop);
+      if (has_swap_method)
+      {
+          switch (pop)
+          {
+          case WGL_SWAP_EXCHANGE_ARB:
+              pop = GLX_SWAP_EXCHANGE_OML;
+              break;
+          case WGL_SWAP_COPY_ARB:
+              pop = GLX_SWAP_COPY_OML;
+              break;
+          case WGL_SWAP_UNDEFINED_ARB:
+              pop = GLX_SWAP_UNDEFINED_OML;
+              break;
+          default:
+              ERR("Unexpected swap method %#x.\n", pop);
+              pop = GLX_DONT_CARE;
+          }
+          PUSH2(oGLXAttr, GLX_SWAP_METHOD_OML, pop);
+      }
+      else
+      {
+          WARN("GLX_OML_swap_method not supported, ignoring attribute.\n");
+      }
       break;
 
     case WGL_PBUFFER_LARGEST_ARB:
@@ -2737,11 +2764,30 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                 continue;
 
             case WGL_SWAP_METHOD_ARB:
-                /* For now return SWAP_EXCHANGE_ARB which is the best type of buffer switch available.
-                 * Later on we can also use GLX_OML_swap_method on drivers which support this. At this
-                 * point only ATI offers this.
-                 */
-                piValues[i] = WGL_SWAP_EXCHANGE_ARB;
+                if (has_swap_method)
+                {
+                    hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &tmp);
+                    if (hTest) goto get_error;
+                    switch (tmp)
+                    {
+                    case GLX_SWAP_EXCHANGE_OML:
+                        piValues[i] = WGL_SWAP_EXCHANGE_ARB;
+                        break;
+                    case GLX_SWAP_COPY_OML:
+                        piValues[i] = WGL_SWAP_COPY_ARB;
+                        break;
+                    case GLX_SWAP_UNDEFINED_OML:
+                        piValues[i] = WGL_SWAP_UNDEFINED_ARB;
+                        break;
+                    default:
+                        ERR("Unexpected swap method %x.\n", tmp);
+                    }
+                }
+                else
+                {
+                    WARN("GLX_OML_swap_method not supported, returning WGL_SWAP_EXCHANGE_ARB.\n");
+                    piValues[i] = WGL_SWAP_EXCHANGE_ARB;
+                }
                 continue;
 
             case WGL_PBUFFER_LARGEST_ARB:
@@ -3166,6 +3212,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
         opengl_funcs.ext.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
         opengl_funcs.ext.p_wglFreeMemoryNV = pglXFreeMemoryNV;
     }
+
+    if (has_extension(WineGLInfo.glxExtensions, "GLX_OML_swap_method"))
+        has_swap_method = TRUE;
 
     /* WINE-specific WGL Extensions */
 
