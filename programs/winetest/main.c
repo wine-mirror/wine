@@ -308,6 +308,35 @@ static BOOL is_native_dll( HMODULE module )
     return TRUE;
 }
 
+/*
+ * Windows 8 has a concept of stub DLLs.  When DLLMain is called the user is prompted
+ *  to install that component.  To bypass this check we need to look at the version resource.
+ */
+static BOOL is_stub_dll(const char *filename)
+{
+    DWORD size, ver;
+    BOOL isstub = FALSE;
+    char *p, *data;
+
+    size = GetFileVersionInfoSizeA(filename, &ver);
+    if (!size) return FALSE;
+
+    data = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!data) return FALSE;
+
+    if (GetFileVersionInfoA(filename, ver, size, data))
+    {
+        char buf[256];
+
+        sprintf(buf, "\\StringFileInfo\\%04x%04x\\OriginalFilename", MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), 1200);
+        if (VerQueryValueA(data, buf, (void**)&p, &size))
+            isstub = !lstrcmpiA("wcodstub.dll", p);
+    }
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return isstub;
+}
+
 static void print_version (void)
 {
 #ifdef __i386__
@@ -904,6 +933,17 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
     if (!dll)
     {
         xprintf ("    %s=dll is missing\n", dllname);
+        if (actctx != INVALID_HANDLE_VALUE)
+        {
+            pDeactivateActCtx(0, cookie);
+            pReleaseActCtx(actctx);
+        }
+        return TRUE;
+    }
+    if(is_stub_dll(dllname))
+    {
+        FreeLibrary(dll);
+        xprintf ("    %s=dll is a stub\n", dllname);
         if (actctx != INVALID_HANDLE_VALUE)
         {
             pDeactivateActCtx(0, cookie);
