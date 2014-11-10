@@ -2715,6 +2715,16 @@ int __thiscall codecvt_char_do_length(const codecvt_char *this, const int *state
     return (from_end-from > max ? max : from_end-from);
 }
 
+/* ?length@?$codecvt@DDH@std@@QBEHABHPBD1I@Z */
+/* ?length@?$codecvt@DDH@std@@QEBAHAEBHPEBD1_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char_length, 20)
+int __thiscall codecvt_char_length(const codecvt_char *this, const int *state,
+        const char *from, const char *from_end, MSVCP_size_t max)
+{
+    TRACE("(%p %p %p %p %lu)\n", this, state, from, from_end, max);
+    return call_codecvt_char_do_length(this, state, from, from_end, max);
+}
+
 /* ?id@?$codecvt@_WDH@std@@2V0locale@2@A */
 static locale_id codecvt_wchar_id = {0};
 /* ?id@?$codecvt@GDH@std@@2V0locale@2@A */

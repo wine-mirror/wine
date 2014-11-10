@@ -2,10 +2,10 @@
 @ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAC@Z
 @ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAD@Z(ptr ptr) basic_istream_char_read_ch
 @ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAD@Z(ptr ptr) basic_istream_char_read_ch
-@ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAE@Z
-@ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAE@Z
-@ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAC@Z
-@ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAC@Z
+@ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAE@Z(ptr ptr) basic_istream_char_read_ch
+@ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAE@Z(ptr ptr) basic_istream_char_read_ch
+@ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAC@Z(ptr ptr) basic_istream_char_read_ch
+@ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAC@Z(ptr ptr) basic_istream_char_read_ch
 @ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAD@Z(ptr ptr) basic_istream_char_read_str
 @ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAD@Z(ptr ptr) basic_istream_char_read_str
 @ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAE@Z
@@ -2769,8 +2769,8 @@
 @ cdecl -arch=win64 ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z(ptr ptr ptr ptr) ctype_wchar_do_is
 @ thiscall -arch=win32 ?do_is@?$ctype@G@std@@MBE_NFG@Z(ptr long long) ctype_wchar_do_is_ch
 @ cdecl -arch=win64 ?do_is@?$ctype@G@std@@MEBA_NFG@Z(ptr long long) ctype_wchar_do_is_ch
-@ stub -arch=win32 ?do_length@?$codecvt@DDH@std@@MBEHAAHPBD1I@Z
-@ stub -arch=win64 ?do_length@?$codecvt@DDH@std@@MEBAHAEAHPEBD1_K@Z
+@ thiscall -arch=i386 ?do_length@?$codecvt@DDH@std@@MBEHAAHPBD1I@Z(ptr ptr str str long) codecvt_char_do_length
+@ cdecl -arch=win64 ?do_length@?$codecvt@DDH@std@@MEBAHAEAHPEBD1_K@Z(ptr ptr str str long) codecvt_char_do_length
 @ stub -arch=win32 ?do_length@?$codecvt@GDH@std@@MBEHAAHPBG1I@Z
 @ stub -arch=win64 ?do_length@?$codecvt@GDH@std@@MEBAHAEAHPEBG1_K@Z
 @ thiscall -arch=win32 ?do_max_length@?$codecvt@GDH@std@@MBEHXZ(ptr) codecvt_wchar_do_max_length
@@ -3402,8 +3402,8 @@
 @ cdecl -arch=win64 ?length@?$char_traits@D@std@@SA_KPEBD@Z(ptr) msvcp90.?length@?$char_traits@D@std@@SA_KPEBD@Z
 @ cdecl -arch=win32 ?length@?$char_traits@G@std@@SAIPBG@Z(ptr) msvcp90.?length@?$char_traits@G@std@@SAIPBG@Z
 @ cdecl -arch=win64 ?length@?$char_traits@G@std@@SA_KPEBG@Z(ptr) msvcp90.?length@?$char_traits@G@std@@SA_KPEBG@Z
-@ stub -arch=win32 ?length@?$codecvt@DDH@std@@QBEHAAHPBD1I@Z
-@ stub -arch=win64 ?length@?$codecvt@DDH@std@@QEBAHAEAHPEBD1_K@Z
+@ thiscall -arch=i386 ?length@?$codecvt@DDH@std@@QBEHAAHPBD1I@Z(ptr ptr str str long) codecvt_char_length
+@ cdecl -arch=win64 ?length@?$codecvt@DDH@std@@QEBAHAEAHPEBD1_K@Z(ptr ptr str str long) codecvt_char_length
 @ stub -arch=win32 ?length@?$codecvt@GDH@std@@QBEHAAHPBG1I@Z
 @ stub -arch=win64 ?length@?$codecvt@GDH@std@@QEBAHAEAHPEBG1_K@Z
 @ stub -arch=win32 ?log10@std@@YA?AV?$complex@M@1@ABV21@@Z
