@@ -178,18 +178,26 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window, cons
     return NULL;
 }
 
-static HRESULT reset_device(IDirect3DDevice9 *device, HWND device_window, BOOL windowed)
+static HRESULT reset_device(IDirect3DDevice9 *device, const struct device_desc *desc)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
 
-    present_parameters.Windowed = windowed;
-    present_parameters.hDeviceWindow = device_window;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
-    present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = NULL;
+    present_parameters.Windowed = TRUE;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (desc)
+    {
+        present_parameters.BackBufferWidth = desc->width;
+        present_parameters.BackBufferHeight = desc->height;
+        present_parameters.hDeviceWindow = desc->device_window;
+        present_parameters.Windowed = !(desc->flags & CREATE_DEVICE_FULLSCREEN);
+    }
 
     return IDirect3DDevice9_Reset(device, &present_parameters);
 }
@@ -2960,12 +2968,12 @@ static void test_scissor_size(void)
     IDirect3D9 *d3d9_ptr;
     unsigned int i;
     static struct {
-        int winx; int winy; int backx; int backy; BOOL window;
+        int winx; int winy; int backx; int backy; DWORD flags;
     } scts[] = { /* scissor tests */
-        {800, 600, 640, 480, TRUE},
-        {800, 600, 640, 480, FALSE},
-        {640, 480, 800, 600, TRUE},
-        {640, 480, 800, 600, FALSE},
+        {800, 600, 640, 480, 0},
+        {800, 600, 640, 480, CREATE_DEVICE_FULLSCREEN},
+        {640, 480, 800, 600, 0},
+        {640, 480, 800, 600, CREATE_DEVICE_FULLSCREEN},
     };
 
     d3d9_ptr = Direct3DCreate9(D3D_SDK_VERSION);
@@ -2980,7 +2988,7 @@ static void test_scissor_size(void)
         hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION,
                 0, 0, scts[i].winx, scts[i].winy, 0, 0, 0, 0);
 
-        if (!scts[i].window)
+        if (scts[i].flags & CREATE_DEVICE_FULLSCREEN)
         {
             scts[i].backx = registry_mode.dmPelsWidth;
             scts[i].backy = registry_mode.dmPelsHeight;
@@ -2989,7 +2997,7 @@ static void test_scissor_size(void)
         device_desc.device_window = hwnd;
         device_desc.width = scts[i].backx;
         device_desc.height = scts[i].backy;
-        device_desc.flags = scts[i].window ? 0 : CREATE_DEVICE_FULLSCREEN;
+        device_desc.flags = scts[i].flags;
         if (!(device_ptr = create_device(d3d9_ptr, hwnd, &device_desc)))
         {
             skip("Failed to create a 3D device, skipping test.\n");
@@ -3006,7 +3014,10 @@ static void test_scissor_size(void)
                 scts[i].backx, scts[i].backy);
 
         /* check the scissorrect values after a reset */
-        hr = reset_device(device_ptr, hwnd, scts[i].window);
+        device_desc.width = registry_mode.dmPelsWidth;
+        device_desc.height = registry_mode.dmPelsHeight;
+        device_desc.flags = scts[i].flags;
+        hr = reset_device(device_ptr, &device_desc);
         ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
         hr = IDirect3DDevice9_TestCooperativeLevel(device_ptr);
         ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
@@ -3398,7 +3409,10 @@ static void test_wndproc_windowed(void)
 
     filter_messages = NULL;
 
-    hr = reset_device(device, device_window, FALSE);
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3408,7 +3422,8 @@ static void test_wndproc_windowed(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
-    hr = reset_device(device, device_window, TRUE);
+    device_desc.flags = 0;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3435,7 +3450,8 @@ static void test_wndproc_windowed(void)
 
     filter_messages = NULL;
 
-    hr = reset_device(device, focus_window, FALSE);
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3445,7 +3461,8 @@ static void test_wndproc_windowed(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
-    hr = reset_device(device, focus_window, TRUE);
+    device_desc.flags = 0;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3470,7 +3487,9 @@ static void test_wndproc_windowed(void)
 
     filter_messages = NULL;
 
-    hr = reset_device(device, device_window, FALSE);
+    device_desc.device_window = device_window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3480,7 +3499,8 @@ static void test_wndproc_windowed(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
-    hr = reset_device(device, device_window, TRUE);
+    device_desc.flags = 0;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
@@ -3517,6 +3537,7 @@ static void test_reset_fullscreen(void)
     IDirect3DDevice9 *device = NULL;
     IDirect3D9 *d3d;
     ATOM atom;
+    struct device_desc device_desc;
     static const struct message messages[] =
     {
         {WM_ACTIVATEAPP,    FOCUS_WINDOW},
@@ -3555,7 +3576,11 @@ static void test_reset_fullscreen(void)
      * This will force the window to be shown and will cause the WM_ACTIVATEAPP
      * message to be sent.
      */
-    ok(SUCCEEDED(reset_device(device, device_window, FALSE)), "Failed to reset device.\n");
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
+    device_desc.device_window = device_window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    ok(SUCCEEDED(reset_device(device, &device_desc)), "Failed to reset device.\n");
 
     flush_events();
     ok(expect_messages->message == 0, "Expected to receive message %#x.\n", expect_messages->message);
@@ -3740,7 +3765,8 @@ static void test_window_style(void)
                 focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
                 r.left, r.top, r.right, r.bottom, i);
 
-        hr = reset_device(device, device_window, TRUE);
+        device_desc.flags = 0;
+        hr = reset_device(device, &device_desc);
         ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
         style = GetWindowLongA(device_window, GWL_STYLE);
@@ -4119,7 +4145,8 @@ static void test_device_window_reset(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
-    hr = reset_device(device, device_window, FALSE);
+    device_desc.device_window = device_window;
+    hr = reset_device(device, &device_desc);
     ok(SUCCEEDED(hr), "Failed to reset device.\n");
 
     GetWindowRect(focus_window, &r);
@@ -4193,7 +4220,7 @@ static void test_reset_resources(void)
         IDirect3DSurface9_Release(surface);
     }
 
-    hr = reset_device(device, device_window, TRUE);
+    hr = reset_device(device, NULL);
     ok(SUCCEEDED(hr), "Failed to reset device.\n");
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &rt);
@@ -9342,14 +9369,15 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
 
-    hr = reset_device(device, window, FALSE);
+    hr = reset_device(device, &device_desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = reset_device(device, window, TRUE);
+    device_desc.flags = 0;
+    hr = reset_device(device, &device_desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -9372,7 +9400,8 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = reset_device(device, window, FALSE);
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
