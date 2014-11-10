@@ -143,6 +143,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     IRP irp;
     MDL mdl;
     IO_STACK_LOCATION irpsp;
+    FILE_OBJECT file;
     PDRIVER_DISPATCH dispatch = device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL];
     NTSTATUS status;
     LARGE_INTEGER count;
@@ -153,6 +154,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     memset( &irp, 0x55, sizeof(irp) );
     memset( &irpsp, 0x66, sizeof(irpsp) );
     memset( &mdl, 0x77, sizeof(mdl) );
+    memset( &file, 0x88, sizeof(file) );
 
     irp.RequestorMode = UserMode;
     if ((code & 3) == METHOD_BUFFERED)
@@ -167,6 +169,7 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     irp.UserBuffer = out_buff;
     irp.MdlAddress = &mdl;
     irp.Tail.Overlay.s.u2.CurrentStackLocation = &irpsp;
+    irp.Tail.Overlay.OriginalFileObject = &file;
     irp.UserIosb = NULL;
 
     irpsp.MajorFunction = IRP_MJ_DEVICE_CONTROL;
@@ -182,6 +185,9 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     mdl.StartVa = out_buff;
     mdl.ByteCount = *out_size;
     mdl.ByteOffset = 0;
+
+    file.FsContext = NULL;
+    file.FsContext2 = NULL;
 
     device->CurrentIrp = &irp;
 
