@@ -193,6 +193,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLTextAreaElement) \
     XIID(IHTMLTextContainer) \
     XIID(IHTMLTitleElement) \
+    XIID(IHTMLTxtRange) \
     XIID(IHTMLUniqueName) \
     XIID(IHTMLWindow2) \
     XIID(IHTMLWindow3) \

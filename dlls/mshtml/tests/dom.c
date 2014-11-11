@@ -4827,6 +4827,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     body_range = test_create_body_range(doc);
 
+    test_disp((IUnknown*)body_range, &IID_IHTMLTxtRange, "[object]");
+
     test_range_text(body_range, "test abc 123\r\nit's text");
 
     hres = IHTMLTxtRange_duplicate(body_range, &range);
