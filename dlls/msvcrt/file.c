@@ -988,24 +988,23 @@ int CDECL MSVCRT__fflush_nolock(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT__close(int fd)
 {
-  HANDLE hand;
+  ioinfo *info = get_ioinfo(fd);
   int ret;
 
   LOCK_FILES();
-  hand = msvcrt_fdtoh(fd);
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (!msvcrt_is_valid_fd(fd)) {
+  TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
+  if (!(info->wxflag & WX_OPEN)) {
     ret = -1;
   } else {
+    ret = CloseHandle(info->handle) ? 0 : -1;
     msvcrt_free_fd(fd);
-    ret = CloseHandle(hand) ? 0 : -1;
     if (ret) {
       WARN(":failed-last error (%d)\n",GetLastError());
       msvcrt_set_errno(GetLastError());
     }
   }
   UNLOCK_FILES();
-  TRACE(":ok\n");
+  release_ioinfo(info);
   return ret;
 }
 
