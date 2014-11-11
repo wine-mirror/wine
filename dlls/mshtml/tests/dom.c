@@ -4975,6 +4975,8 @@ static void test_txtrange(IHTMLDocument2 *doc)
     hres = IHTMLDocument2_get_selection(doc, &selection);
     ok(hres == S_OK, "IHTMLDocument2_get_selection failed: %08x\n", hres);
 
+    test_disp((IUnknown*)selection, &IID_IHTMLSelectionObject, "[object]");
+
     hres = IHTMLSelectionObject_createRange(selection, &disp_range);
     ok(hres == S_OK, "IHTMLSelectionObject_createRange failed: %08x\n", hres);
     IHTMLSelectionObject_Release(selection);

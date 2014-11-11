@@ -174,6 +174,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLScreen) \
     XIID(IHTMLScriptElement) \
     XIID(IHTMLSelectElement) \
+    XIID(IHTMLSelectionObject) \
     XIID(IHTMLStorage) \
     XIID(IHTMLStyle) \
     XIID(IHTMLStyle2) \
