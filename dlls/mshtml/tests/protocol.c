@@ -601,6 +601,13 @@ static void test_res_protocol(void)
     test_res_url("/jstest.html");
     test_res_url("/Test/res.html");
     test_res_url("/test/dir/dir2/res.html");
+
+    if(GetProcAddress(LoadLibraryA("urlmon.dll"), "CreateUri")) {
+        test_res_url("/test/dir/dir2/res.html?query_part");
+        test_res_url("/test/dir/dir2/res.html#hash_part");
+    }else {
+        win_skip("IUri not supported\n");
+    }
 }
 
 static void do_test_about_protocol(IClassFactory *factory, DWORD bf)
