@@ -7764,6 +7764,130 @@ static void test_surface_desc_lock(void)
     DestroyWindow(window);
 }
 
+static void fog_interpolation_test(void)
+{
+    HRESULT hr;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    ULONG refcount;
+    HWND window;
+    D3DCOLOR color;
+    static struct
+    {
+        struct vec3 position;
+        D3DCOLOR diffuse;
+        D3DCOLOR specular;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, 0xffff0000, 0xff000000},
+        {{-1.0f,  1.0f, 0.0f}, 0xffff0000, 0xff000000},
+        {{ 1.0f, -1.0f, 1.0f}, 0xffff0000, 0x00000000},
+        {{ 1.0f,  1.0f, 1.0f}, 0xffff0000, 0x00000000},
+    };
+    union
+    {
+        DWORD d;
+        float f;
+    } conv;
+    unsigned int i;
+    static const struct
+    {
+        D3DFOGMODE vfog, tfog;
+        D3DSHADEMODE shade;
+        D3DCOLOR middle_color;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {D3DFOG_NONE, D3DFOG_NONE, D3DSHADE_FLAT,    0x00007f80, FALSE},
+        {D3DFOG_NONE, D3DFOG_NONE, D3DSHADE_GOURAUD, 0x00007f80, FALSE},
+        {D3DFOG_EXP,  D3DFOG_NONE, D3DSHADE_FLAT,    0x00007f80, TRUE},
+        {D3DFOG_EXP,  D3DFOG_NONE, D3DSHADE_GOURAUD, 0x00007f80, TRUE},
+        {D3DFOG_NONE, D3DFOG_EXP,  D3DSHADE_FLAT,    0x0000ea15, FALSE},
+        {D3DFOG_NONE, D3DFOG_EXP,  D3DSHADE_GOURAUD, 0x0000ea15, FALSE},
+        {D3DFOG_EXP,  D3DFOG_EXP,  D3DSHADE_FLAT,    0x0000ea15, FALSE},
+        {D3DFOG_EXP,  D3DFOG_EXP,  D3DSHADE_GOURAUD, 0x0000ea15, FALSE},
+    };
+    D3DDEVICEDESC7 caps;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE))
+        skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping some fog tests\n");
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGCOLOR, 0x0000ff00);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    conv.f = 5.0;
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGDENSITY, conv.d);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_TEXTUREFACTOR, 0x000000ff);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        if(!(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE) && tests[i].tfog)
+            continue;
+
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00808080, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_SHADEMODE, tests[i].shade);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGVERTEXMODE, tests[i].vfog);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGTABLEMODE, tests[i].tfog);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+                D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR, quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 0, 240);
+        ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
+        color = get_surface_color(rt, 320, 240);
+        if (tests[i].todo)
+            todo_wine ok(compare_color(color, tests[i].middle_color, 2),
+                    "Got unexpected color 0x%08x, case %u.\n", color, i);
+        else
+            ok(compare_color(color, tests[i].middle_color, 2),
+                    "Got unexpected color 0x%08x, case %u.\n", color, i);
+        color = get_surface_color(rt, 639, 240);
+        ok(compare_color(color, 0x0000fd02, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -7850,4 +7974,5 @@ START_TEST(ddraw7)
     test_lost_device();
     test_resource_priority();
     test_surface_desc_lock();
+    fog_interpolation_test();
 }
