@@ -380,7 +380,9 @@ static int msvcrt_set_fd(HANDLE hand, int flag, int fd)
   fdinfo->lookahead[0] = '\n';
   fdinfo->lookahead[1] = '\n';
   fdinfo->lookahead[2] = '\n';
-  fdinfo->exflag = 0;
+  if(!(fdinfo->exflag & EF_CRIT_INIT))
+      InitializeCriticalSection(&fdinfo->crit);
+  fdinfo->exflag = EF_CRIT_INIT;
 
   /* locate next free slot */
   if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
@@ -1113,7 +1115,17 @@ void msvcrt_free_io(void)
     MSVCRT__fcloseall();
 
     for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
+    {
+        if(!MSVCRT___pioinfo[i])
+            continue;
+
+        for(j=0; j<MSVCRT_FD_BLOCK_SIZE; j++)
+        {
+            if(MSVCRT___pioinfo[i][j].exflag & EF_CRIT_INIT)
+                DeleteCriticalSection(&MSVCRT___pioinfo[i][j].crit);
+        }
         MSVCRT_free(MSVCRT___pioinfo[i]);
+    }
 
     for(j=0; j<MSVCRT_stream_idx; j++)
     {
