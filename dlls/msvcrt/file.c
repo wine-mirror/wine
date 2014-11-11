@@ -257,6 +257,20 @@ static inline ioinfo* get_ioinfo_nolock(int fd)
     return ret + (fd%MSVCRT_FD_BLOCK_SIZE);
 }
 
+static inline ioinfo* get_ioinfo(int fd)
+{
+    ioinfo *ret = get_ioinfo_nolock(fd);
+    if(ret->exflag & EF_CRIT_INIT)
+        EnterCriticalSection(&ret->crit);
+    return ret;
+}
+
+static inline void release_ioinfo(ioinfo *info)
+{
+    if(info->exflag & EF_CRIT_INIT)
+        LeaveCriticalSection(&info->crit);
+}
+
 static inline MSVCRT_FILE* msvcrt_get_file(int i)
 {
     file_crit *ret;
@@ -858,27 +872,37 @@ int CDECL MSVCRT__wunlink(const MSVCRT_wchar_t *path)
  */
 int CDECL MSVCRT__commit(int fd)
 {
-    HANDLE hand = msvcrt_fdtoh(fd);
+    ioinfo *info = get_ioinfo(fd);
+    int ret;
 
-    TRACE(":fd (%d) handle (%p)\n",fd,hand);
-    if (hand == INVALID_HANDLE_VALUE)
-        return -1;
+    TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
 
-    if (!FlushFileBuffers(hand))
+    if (info->handle == INVALID_HANDLE_VALUE)
+        ret = -1;
+    else if (!FlushFileBuffers(info->handle))
     {
         if (GetLastError() == ERROR_INVALID_HANDLE)
         {
             /* FlushFileBuffers fails for console handles
              * so we ignore this error.
              */
-            return 0;
+            ret = 0;
         }
-        TRACE(":failed-last error (%d)\n",GetLastError());
-        msvcrt_set_errno(GetLastError());
-        return -1;
+        else
+        {
+            TRACE(":failed-last error (%d)\n",GetLastError());
+            msvcrt_set_errno(GetLastError());
+            ret = -1;
+        }
     }
-    TRACE(":ok\n");
-    return 0;
+    else
+    {
+        TRACE(":ok\n");
+        ret = 0;
+    }
+
+    release_ioinfo(info);
+    return ret;
 }
 
 /* flush_all_buffers calls MSVCRT_fflush which calls flush_all_buffers */
