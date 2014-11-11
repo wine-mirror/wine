@@ -465,13 +465,12 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile *iface, DWORD fccType, LO
       This->ppStreams[nStream] != NULL) {
     /* ... so delete it now */
     HeapFree(GetProcessHeap(), 0, This->ppStreams[nStream]);
-
-    if (This->fInfo.dwStreams - nStream > 0)
-      memcpy(This->ppStreams + nStream, This->ppStreams + nStream + 1,
-	     (This->fInfo.dwStreams - nStream) * sizeof(IAVIStreamImpl*));
+    This->fInfo.dwStreams--;
+    if (nStream < This->fInfo.dwStreams)
+      memmove(&This->ppStreams[nStream], &This->ppStreams[nStream + 1],
+             (This->fInfo.dwStreams - nStream) * sizeof(This->ppStreams[0]));
 
     This->ppStreams[This->fInfo.dwStreams] = NULL;
-    This->fInfo.dwStreams--;
     This->fDirty = TRUE;
 
     /* This->fInfo will be updated further when asked for */
