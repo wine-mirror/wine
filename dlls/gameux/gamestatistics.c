@@ -180,7 +180,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
         {
             IXMLDOMElement *categoryElement = NULL;
 
-            if(lstrlenW(stats->categories[i].sName)==0)
+            if(!stats->categories[i].sName[0])
                 continue;
 
             V_VT(&vValue) = VT_INT;
@@ -218,7 +218,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
             {
                 for(j=0; j<MAX_STATS_PER_CATEGORY; ++j)
                 {
-                    if(lstrlenW(stats->categories[i].stats[j].sName)==0)
+                    if(!stats->categories[i].stats[j].sName[0])
                         continue;
 
                     V_VT(&vValue) = VT_INT;
