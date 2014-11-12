@@ -907,7 +907,7 @@ static void test_metadata_png(void)
     IWICMetadataReader *reader;
     GUID containerformat;
     HRESULT hr;
-    UINT count;
+    UINT count=0xdeadbeef;
 
     hr = CoCreateInstance(&CLSID_WICPngDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
