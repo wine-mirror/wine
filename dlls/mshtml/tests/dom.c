@@ -2148,6 +2148,17 @@ static void _test_range_isequal(unsigned line, IHTMLTxtRange *range1, IHTMLTxtRa
     }
 }
 
+#define test_range_paste_html(a,b) _test_range_paste_html(__LINE__,a,b)
+static void _test_range_paste_html(unsigned line, IHTMLTxtRange *range, const char *html)
+{
+    BSTR str = a2bstr(html);
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_pasteHTML(range, str);
+     ok_(__FILE__,line)(hres == S_OK, "pasteHTML failed: %08x\n", hres);
+     SysFreeString(str);
+}
+
 #define test_range_parent(r,t) _test_range_parent(__LINE__,r,t)
 static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t type)
 {
@@ -5049,6 +5060,22 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_text(range, "abc xyz abc 123\r\nit's text");
     test_range_parent(range, ET_BODY);
+
+    test_range_move(range, wordW, 1, 1);
+    test_range_moveend(range, characterW, 12, 12);
+    test_range_text(range, "xyz abc 123");
+
+    test_range_collapse(range, VARIANT_TRUE);
+    test_range_paste_html(range, "<br>paste<br>");
+    test_range_text(range, NULL);
+
+    test_range_moveend(range, characterW, 3, 3);
+    test_range_text(range, "xyz");
+
+    hres = IHTMLTxtRange_moveToElementText(range, body);
+    ok(hres == S_OK, "moveToElementText failed: %08x\n", hres);
+
+    test_range_text(range, "abc \r\npaste\r\nxyz abc 123\r\nit's text");
 
     IHTMLElement_Release(body);
 

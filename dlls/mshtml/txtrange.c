@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -1572,8 +1573,33 @@ static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 static HRESULT WINAPI HTMLTxtRange_pasteHTML(IHTMLTxtRange *iface, BSTR html)
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(html));
-    return E_NOTIMPL;
+    nsIDOMDocumentFragment *doc_frag;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(html));
+
+    nsres = nsIDOMRange_Collapse(This->nsrange, TRUE);
+    assert(nsres == NS_OK);
+
+    nsAString_InitDepend(&nsstr, html);
+    nsres = nsIDOMRange_CreateContextualFragment(This->nsrange, &nsstr, &doc_frag);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("CreateContextualFragment failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMRange_InsertNode(This->nsrange, (nsIDOMNode*)doc_frag);
+    nsIDOMDocumentFragment_Release(doc_frag);
+    if(NS_FAILED(nsres)) {
+        ERR("InsertNode failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMRange_Collapse(This->nsrange, FALSE);
+    assert(nsres == NS_OK);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_moveToElementText(IHTMLTxtRange *iface, IHTMLElement *element)
