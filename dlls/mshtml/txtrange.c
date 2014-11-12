@@ -1579,8 +1579,22 @@ static HRESULT WINAPI HTMLTxtRange_pasteHTML(IHTMLTxtRange *iface, BSTR html)
 static HRESULT WINAPI HTMLTxtRange_moveToElementText(IHTMLTxtRange *iface, IHTMLElement *element)
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
-    FIXME("(%p)->(%p)\n", This, element);
-    return E_NOTIMPL;
+    HTMLElement *elem;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, element);
+
+    elem = unsafe_impl_from_IHTMLElement(element);
+    if(!elem)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMRange_SelectNodeContents(This->nsrange, elem->node.nsnode);
+    if(NS_FAILED(nsres)) {
+        ERR("SelectNodeContents failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_setEndPoint(IHTMLTxtRange *iface, BSTR how,

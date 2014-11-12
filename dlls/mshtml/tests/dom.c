@@ -4823,6 +4823,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange *body_range, *range, *range2;
     IHTMLSelectionObject *selection;
     IDispatch *disp_range;
+    IHTMLElement *body;
     HRESULT hres;
 
     body_range = test_create_body_range(doc);
@@ -5007,6 +5008,16 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_move(range, wordW, 1, 1);
     test_range_moveend(range, characterW, 2, 2);
     test_range_text(range, "ab");
+
+    body = doc_get_body(doc);
+
+    hres = IHTMLTxtRange_moveToElementText(range, body);
+    ok(hres == S_OK, "moveToElementText failed: %08x\n", hres);
+
+    test_range_text(range, "abc xyz abc 123\r\nit's text");
+    test_range_parent(range, ET_BODY);
+
+    IHTMLElement_Release(body);
 
     IHTMLTxtRange_Release(range);
 }
