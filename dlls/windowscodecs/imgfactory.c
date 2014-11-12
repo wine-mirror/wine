@@ -1050,7 +1050,30 @@ start:
     IEnumUnknown_Release(enumreaders);
 
     if (!*reader && !(options & WICMetadataCreationFailUnknown))
-        FIXME("create unknown metadata reader\n");
+    {
+        hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+        if (SUCCEEDED(hr))
+            hr = UnknownMetadataReader_CreateInstance(&IID_IWICMetadataReader, (void**)reader);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICMetadataReader_QueryInterface(*reader, &IID_IWICPersistStream, (void**)&wicpersiststream);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICPersistStream_LoadEx(wicpersiststream, stream, NULL, options & WICPersistOptionsMask);
+
+                IWICPersistStream_Release(wicpersiststream);
+            }
+
+            if (FAILED(hr))
+            {
+                IWICMetadataReader_Release(*reader);
+                *reader = NULL;
+            }
+        }
+    }
 
     if (*reader)
         return S_OK;

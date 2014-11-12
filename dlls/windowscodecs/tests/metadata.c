@@ -876,7 +876,7 @@ static void test_create_reader(void)
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
         &GUID_ContainerFormatWmp, NULL, WICPersistOptionsDefault,
         stream, &reader);
-    todo_wine ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
+    ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
     {
