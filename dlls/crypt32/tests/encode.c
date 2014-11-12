@@ -5762,7 +5762,6 @@ static void test_decodeCTL(DWORD dwEncoding)
     info.SubjectAlgorithm.Parameters.cbData = 0;
     info.ThisUpdate.dwLowDateTime = info.ThisUpdate.dwHighDateTime = 0;
     info.NextUpdate.dwLowDateTime = info.NextUpdate.dwHighDateTime = 0;
-    info.SubjectAlgorithm.pszObjId = oid2;
     info.SubjectAlgorithm.pszObjId = NULL;
     value1.cbData = sizeof(emptySequence);
     value1.pbData = (LPBYTE)emptySequence;
