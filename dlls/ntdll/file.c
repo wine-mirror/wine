@@ -3043,7 +3043,9 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
                                        ULONG inbound_quota, ULONG outbound_quota,
                                        PLARGE_INTEGER timeout)
 {
-    NTSTATUS    status;
+    struct security_descriptor *sd = NULL;
+    struct object_attributes objattr;
+    NTSTATUS status;
 
     TRACE("(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
           handle, access, debugstr_w(attr->ObjectName->Buffer), iosb, sharing, dispo,
@@ -3054,11 +3056,17 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     if (timeout->QuadPart > 0)
         FIXME("Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart));
 
+    objattr.rootdir = wine_server_obj_handle( attr->RootDirectory );
+    objattr.sd_len = 0;
+    objattr.name_len = attr->ObjectName->Length;
+
+    status = NTDLL_create_struct_sd( attr->SecurityDescriptor, &sd, &objattr.sd_len );
+    if (status != STATUS_SUCCESS) return status;
+
     SERVER_START_REQ( create_named_pipe )
     {
         req->access  = access;
         req->attributes = attr->Attributes;
-        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         req->options = options;
         req->sharing = sharing;
         req->flags = 
@@ -3069,12 +3077,15 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
         req->timeout = timeout->QuadPart;
-        wine_server_add_data( req, attr->ObjectName->Buffer,
-                              attr->ObjectName->Length );
+        wine_server_add_data( req, &objattr, sizeof(objattr) );
+        if (objattr.sd_len) wine_server_add_data( req, sd, objattr.sd_len );
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         status = wine_server_call( req );
         if (!status) *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+
+    NTDLL_free_struct_sd( sd );
     return status;
 }
 

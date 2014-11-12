@@ -2960,7 +2960,7 @@ struct accept_hardware_message_request
     struct request_header __header;
     unsigned int    hw_id;
     int             remove;
-    user_handle_t   new_win;
+    char __pad_20[4];
 };
 struct accept_hardware_message_reply
 {
@@ -3146,17 +3146,15 @@ struct create_named_pipe_request
     struct request_header __header;
     unsigned int   access;
     unsigned int   attributes;
-    obj_handle_t   rootdir;
     unsigned int   options;
     unsigned int   sharing;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
-    char __pad_44[4];
     timeout_t      timeout;
     unsigned int   flags;
-    /* VARARG(name,unicode_str); */
-    char __pad_60[4];
+    /* VARARG(objattr,object_attributes); */
+    char __pad_52[4];
 };
 struct create_named_pipe_reply
 {
@@ -5849,6 +5847,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 457
+#define SERVER_PROTOCOL_VERSION 458
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

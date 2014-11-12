@@ -52,6 +52,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "security.h"
 
 enum pipe_state
 {
@@ -689,7 +690,7 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
 }
 
 static struct named_pipe *create_named_pipe( struct directory *root, const struct unicode_str *name,
-                                             unsigned int attr )
+                                             unsigned int attr, const struct security_descriptor *sd )
 {
     struct object *obj;
     struct named_pipe *pipe = NULL;
@@ -954,6 +955,8 @@ DECL_HANDLER(create_named_pipe)
     struct pipe_server *server;
     struct unicode_str name;
     struct directory *root = NULL;
+    const struct object_attributes *objattr = get_req_data();
+    const struct security_descriptor *sd;
 
     if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)) ||
         (!(req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && (req->flags & NAMED_PIPE_MESSAGE_STREAM_READ)))
@@ -963,11 +966,17 @@ DECL_HANDLER(create_named_pipe)
     }
 
     reply->handle = 0;
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+
+    if (!objattr_is_valid( objattr, get_req_data_size() ))
         return;
 
-    pipe = create_named_pipe( root, &name, req->attributes | OBJ_OPENIF );
+    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
+    objattr_get_name( objattr, &name );
+
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
+        return;
+
+    pipe = create_named_pipe( root, &name, req->attributes | OBJ_OPENIF, sd );
 
     if (root) release_object( root );
     if (!pipe) return;
@@ -1007,6 +1016,10 @@ DECL_HANDLER(create_named_pipe)
     {
         reply->handle = alloc_handle( current->process, server, req->access, req->attributes );
         server->pipe->instances++;
+        if (sd) default_set_sd( &server->obj, sd, OWNER_SECURITY_INFORMATION |
+                                                  GROUP_SECURITY_INFORMATION |
+                                                  DACL_SECURITY_INFORMATION |
+                                                  SACL_SECURITY_INFORMATION );
         release_object( server );
     }
 
