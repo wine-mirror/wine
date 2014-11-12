@@ -1794,8 +1794,74 @@ static HRESULT WINAPI MetadataReaderInfo_GetPatterns(IWICMetadataReaderInfo *ifa
 static HRESULT WINAPI MetadataReaderInfo_MatchesPattern(IWICMetadataReaderInfo *iface,
     REFGUID container, IStream *stream, BOOL *matches)
 {
-    FIXME("(%p,%s,%p,%p): stub\n", iface, debugstr_guid(container), stream, matches);
-    return E_NOTIMPL;
+    HRESULT hr;
+    WICMetadataPattern *patterns;
+    UINT pattern_count=0, patterns_size=0;
+    ULONG datasize=0;
+    BYTE *data=NULL;
+    ULONG bytesread;
+    UINT i;
+    LARGE_INTEGER seekpos;
+    ULONG pos;
+
+    TRACE("(%p,%s,%p,%p)\n", iface, debugstr_guid(container), stream, matches);
+
+    hr = MetadataReaderInfo_GetPatterns(iface, container, 0, NULL, &pattern_count, &patterns_size);
+    if (FAILED(hr)) return hr;
+
+    patterns = HeapAlloc(GetProcessHeap(), 0, patterns_size);
+    if (!patterns) return E_OUTOFMEMORY;
+
+    hr = MetadataReaderInfo_GetPatterns(iface, container, patterns_size, patterns, &pattern_count, &patterns_size);
+    if (FAILED(hr)) goto end;
+
+    for (i=0; i<pattern_count; i++)
+    {
+        if (datasize < patterns[i].Length)
+        {
+            HeapFree(GetProcessHeap(), 0, data);
+            datasize = patterns[i].Length;
+            data = HeapAlloc(GetProcessHeap(), 0, patterns[i].Length);
+            if (!data)
+            {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+        }
+
+        seekpos.QuadPart = patterns[i].Position.QuadPart;
+        hr = IStream_Seek(stream, seekpos, STREAM_SEEK_SET, NULL);
+        if (FAILED(hr)) break;
+
+        hr = IStream_Read(stream, data, patterns[i].Length, &bytesread);
+        if (hr == S_FALSE || (hr == S_OK && bytesread != patterns[i].Length)) /* past end of stream */
+            continue;
+        if (FAILED(hr)) break;
+
+        for (pos=0; pos<patterns[i].Length; pos++)
+        {
+            if ((data[pos] & patterns[i].Mask[pos]) != patterns[i].Pattern[pos])
+                break;
+        }
+        if (pos == patterns[i].Length) /* matches pattern */
+        {
+            hr = S_OK;
+            *matches = TRUE;
+            break;
+        }
+    }
+
+    if (i == pattern_count) /* does not match any pattern */
+    {
+        hr = S_OK;
+        *matches = FALSE;
+    }
+
+end:
+    HeapFree(GetProcessHeap(), 0, patterns);
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return hr;
 }
 
 static HRESULT WINAPI MetadataReaderInfo_CreateInstance(IWICMetadataReaderInfo *iface,
