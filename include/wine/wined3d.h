@@ -934,6 +934,12 @@ enum wined3d_display_rotation
 #define WINED3DCREATE_MIXED_VERTEXPROCESSING                    0x00000080
 #define WINED3DCREATE_DISABLE_DRIVER_MANAGEMENT                 0x00000100
 #define WINED3DCREATE_ADAPTERGROUP_DEVICE                       0x00000200
+#define WINED3DCREATE_DISABLE_DRIVER_MANAGEMENT_EX              0x00000400
+#define WINED3DCREATE_NOWINDOWCHANGES                           0x00000800
+#define WINED3DCREATE_DISABLE_PSGP_THREADING                    0x00002000
+#define WINED3DCREATE_ENABLE_PRESENTSTATS                       0x00004000
+#define WINED3DCREATE_DISABLE_PRINTSCREEN                       0x00008000
+#define WINED3DCREATE_SCREENSAVER                               0x10000000
 
 /* VTF defines */
 #define WINED3DDMAPSAMPLER                                      0x100
