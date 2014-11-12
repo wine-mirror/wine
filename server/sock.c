@@ -107,6 +107,7 @@ struct sock
     unsigned int        message;     /* message to send */
     obj_handle_t        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
+    timeout_t           connect_time;/* time the socket was connected */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
     struct async_queue *read_q;      /* queue for asynchronous reads */
     struct async_queue *write_q;     /* queue for asynchronous writes */
@@ -401,6 +402,7 @@ static void sock_poll_event( struct fd *fd, int event )
             /* we got connected */
             sock->state |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
             sock->state &= ~FD_CONNECT;
+            sock->connect_time = current_time;
         }
     }
     else if (sock->state & FD_WINE_LISTENING)
@@ -618,6 +620,7 @@ static void init_sock(struct sock *sock)
     sock->window  = 0;
     sock->message = 0;
     sock->wparam  = 0;
+    sock->connect_time = 0;
     sock->deferred = NULL;
     sock->read_q  = NULL;
     sock->write_q = NULL;
@@ -725,6 +728,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         acceptsock->family  = sock->family;
         acceptsock->window  = sock->window;
         acceptsock->message = sock->message;
+        acceptsock->connect_time = current_time;
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         acceptsock->flags = sock->flags;
         if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
@@ -778,6 +782,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->family  = sock->family;
     acceptsock->wparam  = 0;
     acceptsock->deferred = NULL;
+    acceptsock->connect_time = current_time;
     release_object( acceptsock->fd );
     acceptsock->fd = newfd;
 
