@@ -976,7 +976,7 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
             len = WideCharToMultiByte(CP_ACP, 0, *lplpBuffer, -1,
                                       lpBufferA + pos, info->wLength - pos, NULL, NULL);
             *lplpBuffer = lpBufferA + pos;
-            *puLen = len;
+            if (puLen) *puLen = len;
         }
         return ret;
     }
@@ -1036,7 +1036,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
             len = MultiByteToWideChar(CP_ACP, 0, *lplpBuffer, -1,
                                       lpBufferW + pos, max/sizeof(WCHAR) - pos );
             *lplpBuffer = lpBufferW + pos;
-            *puLen = len;
+            if (puLen) *puLen = len;
         }
         return ret;
     }
