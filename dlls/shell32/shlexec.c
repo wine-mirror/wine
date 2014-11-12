@@ -2097,3 +2097,12 @@ void WINAPI OpenAs_RunDLLW(HWND hwnd, HINSTANCE hinst, LPCWSTR cmdline, int cmds
 {
     FIXME("%p, %p, %s, %d\n", hwnd, hinst, debugstr_w(cmdline), cmdshow);
 }
+
+/*************************************************************************
+ * RegenerateUserEnvironment          [SHELL32.@]
+ */
+BOOL WINAPI RegenerateUserEnvironment(WCHAR *wunknown, BOOL bunknown)
+{
+    FIXME("stub: %p, %d\n", wunknown, bunknown);
+    return FALSE;
+}

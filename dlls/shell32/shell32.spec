@@ -324,7 +324,7 @@
 @ stub RealShellExecuteExA
 @ stub RealShellExecuteExW
 @ stub RealShellExecuteW
-@ stub RegenerateUserEnvironment
+@ stdcall RegenerateUserEnvironment(ptr long)
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SHAddToRecentDocs (long ptr)
 @ stdcall SHAppBarMessage(long ptr)
