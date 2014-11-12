@@ -939,7 +939,6 @@ HRESULT HTMLGenericElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLEleme
 
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*) DECLSPEC_HIDDEN;
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
-void HTMLElement2_Init(HTMLElement*) DECLSPEC_HIDDEN;
 void HTMLElement3_Init(HTMLElement*) DECLSPEC_HIDDEN;
 void HTMLTextContainer_Init(HTMLTextContainer*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void HTMLFrameBase_Init(HTMLFrameBase*,HTMLDocumentNode*,nsIDOMHTMLElement*,dispex_static_data_t*) DECLSPEC_HIDDEN;
