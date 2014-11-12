@@ -773,6 +773,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->hmask   = 0;
     acceptsock->pmask   = 0;
     acceptsock->polling = 0;
+    acceptsock->proto   = sock->proto;
     acceptsock->type    = sock->type;
     acceptsock->family  = sock->family;
     acceptsock->wparam  = 0;
