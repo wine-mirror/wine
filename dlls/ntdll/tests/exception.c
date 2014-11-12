@@ -1695,6 +1695,7 @@ static void test_dynamic_unwind(void)
 
 #endif  /* __x86_64__ */
 
+#if defined(__i386__) || defined(__x86_64__)
 static DWORD outputdebugstring_exceptions;
 
 static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -1787,6 +1788,7 @@ static void test_ripevent(DWORD numexc)
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
+#endif /* defined(__i386__) || defined(__x86_64__) */
 
 START_TEST(exception)
 {
