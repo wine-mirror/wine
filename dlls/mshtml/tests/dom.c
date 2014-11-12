@@ -2695,6 +2695,39 @@ static void _test_select_set_disabled(unsigned line, IHTMLSelectElement *select,
     _test_select_get_disabled(line, select, b);
 }
 
+#define test_elem_dir(u,n) _test_elem_dir(__LINE__,u,n)
+static void _test_elem_dir(unsigned line, IUnknown *unk, const char *exdir)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    BSTR dir;
+    HRESULT hres;
+
+    hres = IHTMLElement2_get_dir(elem, &dir);
+    IHTMLElement2_Release(elem);
+    ok_(__FILE__, line) (hres == S_OK, "get_dir failed: %08x\n", hres);
+    if(exdir)
+        ok_(__FILE__, line) (!strcmp_wa(dir, exdir), "got dir: %s, expected %s\n", wine_dbgstr_w(dir), exdir);
+    else
+        ok_(__FILE__, line) (!dir, "got dir: %s, expected NULL\n", wine_dbgstr_w(dir));
+
+    SysFreeString(dir);
+}
+
+#define set_elem_dir(u,n) _set_elem_dir(__LINE__,u,n)
+static void _set_elem_dir(unsigned line, IUnknown *unk, const char *dira)
+{
+    IHTMLElement2 *elem = _get_elem2_iface(line, unk);
+    BSTR dir = a2bstr(dira);
+    HRESULT hres;
+
+    hres = IHTMLElement2_put_dir(elem, dir);
+    IHTMLElement2_Release(elem);
+    ok_(__FILE__, line) (hres == S_OK, "put_dir failed: %08x\n", hres);
+    SysFreeString(dir);
+
+    _test_elem_dir(line, unk, dira);
+}
+
 #define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
 static LONG _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
@@ -5639,6 +5672,9 @@ static void test_default_body(IHTMLBodyElement *body)
     l = elem_get_scroll_top((IUnknown*)body);
     ok(!l, "scrollTop = %d\n", l);
     elem_get_scroll_left((IUnknown*)body);
+
+    test_elem_dir((IUnknown*)body, NULL);
+    set_elem_dir((IUnknown*)body, "ltr");
 
     /* get_text tests */
     hres = IHTMLBodyElement_get_text(body, &v);

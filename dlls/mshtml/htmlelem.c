@@ -2601,8 +2601,25 @@ static HRESULT WINAPI HTMLElement2_get_oncellchange(IHTMLElement2 *iface, VARIAN
 static HRESULT WINAPI HTMLElement2_put_dir(IHTMLElement2 *iface, BSTR v)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    if(!This->nselem) {
+        FIXME("Unsupported for comment nodes.\n");
+        return S_OK;
+    }
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLElement_SetDir(This->nselem, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("SetDir failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement2_get_dir(IHTMLElement2 *iface, BSTR *p)
