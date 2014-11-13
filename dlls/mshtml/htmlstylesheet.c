@@ -649,11 +649,11 @@ static HRESULT WINAPI HTMLStyleSheet_get_rules(IHTMLStyleSheet *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    /* Gecko has buggy security checks and GetCssRules will fail. We have a correct
-     * implementation and it will work when the bug will be fixed in Gecko. */
     nsres = nsIDOMCSSStyleSheet_GetCssRules(This->nsstylesheet, &nslist);
-    if(NS_FAILED(nsres))
-        WARN("GetCssRules failed: %08x\n", nsres);
+    if(NS_FAILED(nsres)) {
+        ERR("GetCssRules failed: %08x\n", nsres);
+        return E_FAIL;
+    }
 
     *p = HTMLStyleSheetRulesCollection_Create(nslist);
     return S_OK;
