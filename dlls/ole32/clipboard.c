@@ -1133,6 +1133,8 @@ static DWORD get_tymed_from_nonole_cf(UINT cf)
         return TYMED_ENHMF;
     case CF_METAFILEPICT:
         return TYMED_MFPICT;
+    case CF_BITMAP:
+        return TYMED_GDI;
     default:
         FIXME("returning TYMED_NULL for cf %04x\n", cf);
         return TYMED_NULL;
@@ -1310,6 +1312,27 @@ static HRESULT get_stgmed_for_emf(HENHMETAFILE hemf, STGMEDIUM *med)
     return S_OK;
 }
 
+/************************************************************************
+ *                    get_stgmed_for_bitmap
+ *
+ * Returns a stg medium with a bitmap based on the handle
+ */
+static HRESULT get_stgmed_for_bitmap(HBITMAP hbmp, STGMEDIUM *med)
+{
+    HRESULT hr;
+
+    med->pUnkForRelease = NULL;
+    med->tymed = TYMED_NULL;
+
+    hr = dup_bitmap(hbmp, &med->u.hBitmap);
+
+    if (FAILED(hr))
+        return hr;
+
+    med->tymed = TYMED_GDI;
+    return S_OK;
+}
+
 static inline BOOL string_off_equal(const DVTARGETDEVICE *t1, WORD off1, const DVTARGETDEVICE *t2, WORD off2)
 {
     const WCHAR *str1, *str2;
@@ -1401,6 +1424,8 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
         hr = get_stgmed_for_stream(h, med);
     else if(mask & TYMED_ENHMF)
         hr = get_stgmed_for_emf((HENHMETAFILE)h, med);
+    else if(mask & TYMED_GDI)
+        hr = get_stgmed_for_bitmap((HBITMAP)h, med);
     else
     {
         FIXME("Unhandled tymed - mask %x req tymed %x\n", mask, fmt->tymed);
