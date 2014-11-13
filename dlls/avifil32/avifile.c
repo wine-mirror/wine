@@ -1460,7 +1460,7 @@ static DWORD   AVIFILE_ComputeMoviStart(IAVIFileImpl *This)
     dwPos += ((pStream->cbFormat + 1) & ~1U);
     if (pStream->lpHandlerData != NULL && pStream->cbHandlerData > 0)
       dwPos += 2 * sizeof(DWORD) + ((pStream->cbHandlerData + 1) & ~1U);
-    if (lstrlenW(pStream->sInfo.szName) > 0)
+    if (pStream->sInfo.szName[0])
       dwPos += 2 * sizeof(DWORD) + ((lstrlenW(pStream->sInfo.szName) + 1) & ~1U);
   }
 
@@ -2219,7 +2219,7 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
     }
 
     /* ... an optional name for this stream ... */
-    if (lstrlenW(pStream->sInfo.szName) > 0) {
+    if (pStream->sInfo.szName[0]) {
       LPSTR str;
 
       ck.ckid   = ckidSTREAMNAME;
