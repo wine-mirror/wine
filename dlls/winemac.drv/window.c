@@ -72,12 +72,12 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
             if (ex_style & WS_EX_TOOLWINDOW) wf->utility = TRUE;
         }
     }
-    if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = TRUE;
-    else if (style & WS_THICKFRAME)
+    if (style & WS_THICKFRAME)
     {
         wf->shadow = TRUE;
         if (!data->shaped) wf->resizable = TRUE;
     }
+    else if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = TRUE;
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf->shadow = TRUE;
 }
 
