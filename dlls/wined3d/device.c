@@ -4983,6 +4983,11 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
     }
     else if (message == WM_ACTIVATEAPP)
     {
+        UINT i;
+
+        for (i = 0; i < device->swapchain_count; i++)
+            wined3d_swapchain_activate(device->swapchains[i], wparam);
+
         device->device_parent->ops->activate(device->device_parent, wparam);
     }
 

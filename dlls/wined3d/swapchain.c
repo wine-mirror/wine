@@ -1175,3 +1175,9 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
         wined3d_resource_update_draw_binding(&swapchain->back_buffers[i]->resource);
     }
 }
+
+void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate)
+{
+    if (!activate && !(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
+        ShowWindow(swapchain->device_window, SW_MINIMIZE);
+}
