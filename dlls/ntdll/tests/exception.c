@@ -46,6 +46,8 @@ static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
 static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
+static PVOID     (WINAPI *pRtlAddVectoredContinueHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
+static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -1788,6 +1790,48 @@ static void test_ripevent(DWORD numexc)
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
+
+static void test_vectored_continue_handler(void)
+{
+    PVOID handler1, handler2;
+    ULONG ret;
+
+    if (!pRtlAddVectoredContinueHandler || !pRtlRemoveVectoredContinueHandler)
+    {
+        skip("RtlAddVectoredContinueHandler or RtlRemoveVectoredContinueHandler not found\n");
+        return;
+    }
+
+    handler1 = pRtlAddVectoredContinueHandler(TRUE, (void *)0xdeadbeef);
+    todo_wine
+    ok(handler1 != 0, "RtlAddVectoredContinueHandler failed\n");
+
+    handler2 = pRtlAddVectoredContinueHandler(TRUE, (void *)0xdeadbeef);
+    todo_wine
+    ok(handler2 != 0, "RtlAddVectoredContinueHandler failed\n");
+    todo_wine
+    ok(handler1 != handler2, "RtlAddVectoredContinueHandler returned same handler\n");
+
+    if (pRtlRemoveVectoredExceptionHandler)
+    {
+        ret = pRtlRemoveVectoredExceptionHandler(handler1);
+        ok(!ret, "RtlRemoveVectoredExceptionHandler succeeded\n");
+    }
+
+    ret = pRtlRemoveVectoredContinueHandler(handler1);
+    todo_wine
+    ok(ret, "RtlRemoveVectoredContinueHandler failed\n");
+
+    ret = pRtlRemoveVectoredContinueHandler(handler2);
+    todo_wine
+    ok(ret, "RtlRemoveVectoredContinueHandler failed\n");
+
+    ret = pRtlRemoveVectoredContinueHandler(handler1);
+    ok(!ret, "RtlRemoveVectoredContinueHandler succeeded\n");
+
+    ret = pRtlRemoveVectoredContinueHandler((void *)0x11223344);
+    ok(!ret, "RtlRemoveVectoredContinueHandler succeeded\n");
+}
 #endif /* defined(__i386__) || defined(__x86_64__) */
 
 START_TEST(exception)
@@ -1811,6 +1855,10 @@ START_TEST(exception)
                                                                  "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll,
                                                                  "RtlRemoveVectoredExceptionHandler" );
+    pRtlAddVectoredContinueHandler     = (void *)GetProcAddress( hntdll,
+                                                                 "RtlAddVectoredContinueHandler" );
+    pRtlRemoveVectoredContinueHandler  = (void *)GetProcAddress( hntdll,
+                                                                 "RtlRemoveVectoredContinueHandler" );
     pNtQueryInformationProcess         = (void*)GetProcAddress( hntdll,
                                                                  "NtQueryInformationProcess" );
     pNtSetInformationProcess           = (void*)GetProcAddress( hntdll,
@@ -1880,6 +1928,7 @@ START_TEST(exception)
     test_rtlraiseexception();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
+    test_vectored_continue_handler();
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
@@ -1898,6 +1947,7 @@ START_TEST(exception)
 
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
+    test_vectored_continue_handler();
     test_virtual_unwind();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
