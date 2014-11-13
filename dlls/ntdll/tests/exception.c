@@ -1803,13 +1803,10 @@ static void test_vectored_continue_handler(void)
     }
 
     handler1 = pRtlAddVectoredContinueHandler(TRUE, (void *)0xdeadbeef);
-    todo_wine
     ok(handler1 != 0, "RtlAddVectoredContinueHandler failed\n");
 
     handler2 = pRtlAddVectoredContinueHandler(TRUE, (void *)0xdeadbeef);
-    todo_wine
     ok(handler2 != 0, "RtlAddVectoredContinueHandler failed\n");
-    todo_wine
     ok(handler1 != handler2, "RtlAddVectoredContinueHandler returned same handler\n");
 
     if (pRtlRemoveVectoredExceptionHandler)
@@ -1819,11 +1816,9 @@ static void test_vectored_continue_handler(void)
     }
 
     ret = pRtlRemoveVectoredContinueHandler(handler1);
-    todo_wine
     ok(ret, "RtlRemoveVectoredContinueHandler failed\n");
 
     ret = pRtlRemoveVectoredContinueHandler(handler2);
-    todo_wine
     ok(ret, "RtlRemoveVectoredContinueHandler failed\n");
 
     ret = pRtlRemoveVectoredContinueHandler(handler1);

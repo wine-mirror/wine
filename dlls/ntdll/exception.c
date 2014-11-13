@@ -47,7 +47,8 @@ typedef struct
     ULONG                       count;
 } VECTORED_HANDLER;
 
-static struct list vectored_handlers = LIST_INIT(vectored_handlers);
+static struct list vectored_exception_handlers = LIST_INIT(vectored_exception_handlers);
+static struct list vectored_continue_handlers  = LIST_INIT(vectored_continue_handlers);
 
 static RTL_CRITICAL_SECTION vectored_handlers_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -57,6 +58,47 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": vectored_handlers_section") }
 };
 static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
+static VECTORED_HANDLER *add_vectored_handler( struct list *handler_list, ULONG first,
+                                               PVECTORED_EXCEPTION_HANDLER func )
+{
+    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
+    if (handler)
+    {
+        handler->func = RtlEncodePointer( func );
+        handler->count = 1;
+        RtlEnterCriticalSection( &vectored_handlers_section );
+        if (first) list_add_head( handler_list, &handler->entry );
+        else list_add_tail( handler_list, &handler->entry );
+        RtlLeaveCriticalSection( &vectored_handlers_section );
+    }
+    return handler;
+}
+
+
+static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLER *handler )
+{
+    struct list *ptr;
+    ULONG ret = FALSE;
+
+    RtlEnterCriticalSection( &vectored_handlers_section );
+    LIST_FOR_EACH( ptr, handler_list )
+    {
+        VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
+        if (curr_handler == handler)
+        {
+            if (!--curr_handler->count) list_remove( ptr );
+            else handler = NULL;  /* don't free it yet */
+            ret = TRUE;
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &vectored_handlers_section );
+    if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
+    return ret;
+}
+
 
 /**********************************************************************
  *           wait_suspend
@@ -165,7 +207,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     except_ptrs.ContextRecord = context;
 
     RtlEnterCriticalSection( &vectored_handlers_section );
-    ptr = list_head( &vectored_handlers );
+    ptr = list_head( &vectored_exception_handlers );
     while (ptr)
     {
         handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
@@ -181,7 +223,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
         TRACE( "handler at %p returned %x\n", func, ret );
 
         RtlEnterCriticalSection( &vectored_handlers_section );
-        ptr = list_next( &vectored_handlers, ptr );
+        ptr = list_next( &vectored_exception_handlers, ptr );
         if (!--handler->count)  /* removed during execution */
         {
             list_remove( &handler->entry );
@@ -228,8 +270,7 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
  */
 PVOID WINAPI RtlAddVectoredContinueHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
 {
-    FIXME("%u %p stub\n", first, func);
-    return NULL;
+    return add_vectored_handler( &vectored_continue_handlers, first, func );
 }
 
 
@@ -238,8 +279,7 @@ PVOID WINAPI RtlAddVectoredContinueHandler( ULONG first, PVECTORED_EXCEPTION_HAN
  */
 ULONG WINAPI RtlRemoveVectoredContinueHandler( PVOID handler )
 {
-    FIXME("%p stub\n", handler);
-    return FALSE;
+    return remove_vectored_handler( &vectored_continue_handlers, handler );
 }
 
 
@@ -248,17 +288,7 @@ ULONG WINAPI RtlRemoveVectoredContinueHandler( PVOID handler )
  */
 PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
 {
-    VECTORED_HANDLER *handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) );
-    if (handler)
-    {
-        handler->func = RtlEncodePointer( func );
-        handler->count = 1;
-        RtlEnterCriticalSection( &vectored_handlers_section );
-        if (first) list_add_head( &vectored_handlers, &handler->entry );
-        else list_add_tail( &vectored_handlers, &handler->entry );
-        RtlLeaveCriticalSection( &vectored_handlers_section );
-    }
-    return handler;
+    return add_vectored_handler( &vectored_exception_handlers, first, func );
 }
 
 
@@ -267,24 +297,7 @@ PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HA
  */
 ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
 {
-    struct list *ptr;
-    ULONG ret = FALSE;
-
-    RtlEnterCriticalSection( &vectored_handlers_section );
-    LIST_FOR_EACH( ptr, &vectored_handlers )
-    {
-        VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
-        if (curr_handler == handler)
-        {
-            if (!--curr_handler->count) list_remove( ptr );
-            else handler = NULL;  /* don't free it yet */
-            ret = TRUE;
-            break;
-        }
-    }
-    RtlLeaveCriticalSection( &vectored_handlers_section );
-    if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
-    return ret;
+    return remove_vectored_handler( &vectored_exception_handlers, handler );
 }
 
 
