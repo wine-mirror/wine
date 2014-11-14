@@ -567,7 +567,7 @@ static void SetInfoDialogText(HKEY hKey, LPCWSTR lpKeyName, LPCWSTR lpAltMessage
     /* if hKey is null, lpKeyName contains the string we want to check */
     if (hKey == NULL)
     {
-        if ((lpKeyName) && (lstrlenW(lpKeyName) > 0))
+        if (lpKeyName && lpKeyName[0])
             SetWindowTextW(hWndDlgItem, lpKeyName);
         else
             SetWindowTextW(hWndDlgItem, lpAltMessage);
@@ -577,7 +577,7 @@ static void SetInfoDialogText(HKEY hKey, LPCWSTR lpKeyName, LPCWSTR lpAltMessage
         buflen = MAX_STRING_LEN;
 
         if ((RegQueryValueExW(hKey, lpKeyName, 0, 0, (LPBYTE) buf, &buflen) ==
-           ERROR_SUCCESS) && (lstrlenW(buf) > 0))
+           ERROR_SUCCESS) && buf[0])
             SetWindowTextW(hWndDlgItem, buf);
         else
             SetWindowTextW(hWndDlgItem, lpAltMessage);
