@@ -53,14 +53,16 @@ static DWORD (WINAPI *pGetModuleFileNameExW)(HANDLE, HMODULE, LPWSTR, DWORD);
 static BOOL  (WINAPI *pGetModuleInformation)(HANDLE, HMODULE, LPMODULEINFO, DWORD);
 static DWORD (WINAPI *pGetMappedFileNameA)(HANDLE, LPVOID, LPSTR, DWORD);
 static DWORD (WINAPI *pGetMappedFileNameW)(HANDLE, LPVOID, LPWSTR, DWORD);
+static BOOL  (WINAPI *pGetPerformanceInfo)(PPERFORMANCE_INFORMATION, DWORD);
 static DWORD (WINAPI *pGetProcessImageFileNameA)(HANDLE, LPSTR, DWORD);
 static DWORD (WINAPI *pGetProcessImageFileNameW)(HANDLE, LPWSTR, DWORD);
 static BOOL  (WINAPI *pGetProcessMemoryInfo)(HANDLE, PPROCESS_MEMORY_COUNTERS, DWORD);
 static BOOL  (WINAPI *pGetWsChanges)(HANDLE, PPSAPI_WS_WATCH_INFORMATION, DWORD);
 static BOOL  (WINAPI *pInitializeProcessForWsWatch)(HANDLE);
 static BOOL  (WINAPI *pQueryWorkingSet)(HANDLE, PVOID, DWORD);
+static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, ULONG, PVOID, SIZE_T, SIZE_T *);
-      
+
 static BOOL InitFunctionPtrs(HMODULE hpsapi)
 {
     PSAPI_GET_PROC(EmptyWorkingSet);
@@ -77,10 +79,13 @@ static BOOL InitFunctionPtrs(HMODULE hpsapi)
     PSAPI_GET_PROC(InitializeProcessForWsWatch);
     PSAPI_GET_PROC(QueryWorkingSet);
     /* GetProcessImageFileName is not exported on NT4 */
+    pGetPerformanceInfo =
+      (void *)GetProcAddress(hpsapi, "GetPerformanceInfo");
     pGetProcessImageFileNameA =
       (void *)GetProcAddress(hpsapi, "GetProcessImageFileNameA");
     pGetProcessImageFileNameW =
       (void *)GetProcAddress(hpsapi, "GetProcessImageFileNameW");
+    pNtQuerySystemInformation = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQuerySystemInformation");
     pNtQueryVirtualMemory = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryVirtualMemory");
     return TRUE;
 }
@@ -183,6 +188,135 @@ static void test_GetModuleInformation(void)
     ok(ret == 1, "failed with %d\n", GetLastError());
     ok(info.lpBaseOfDll == hMod, "lpBaseOfDll=%p hMod=%p\n", info.lpBaseOfDll, hMod);
 }
+
+static void test_GetPerformanceInfo(void)
+{
+    PERFORMANCE_INFORMATION info;
+    NTSTATUS status;
+    DWORD size;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = pGetPerformanceInfo(&info, sizeof(info)-1);
+    ok(!ret, "GetPerformanceInfo unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_BAD_LENGTH, "expected error=ERROR_BAD_LENGTH but got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetPerformanceInfo(&info, sizeof(info));
+    todo_wine
+    ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
+    todo_wine
+    ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
+
+    if (!pNtQuerySystemInformation)
+        win_skip("NtQuerySystemInformation not found, skipping tests\n");
+    else
+    {
+        char performance_buffer[sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 16]; /* larger on w2k8/win7 */
+        SYSTEM_PERFORMANCE_INFORMATION *sys_performance_info = (SYSTEM_PERFORMANCE_INFORMATION *)performance_buffer;
+        SYSTEM_PROCESS_INFORMATION *sys_process_info = NULL, *spi;
+        SYSTEM_BASIC_INFORMATION sys_basic_info;
+        DWORD process_count, handle_count, thread_count;
+
+        /* compare with values from SYSTEM_PERFORMANCE_INFORMATION */
+        size = 0;
+        status = pNtQuerySystemInformation(SystemPerformanceInformation, sys_performance_info, sizeof(performance_buffer), &size);
+        ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+        ok(size >= sizeof(SYSTEM_PERFORMANCE_INFORMATION), "incorrect length %d\n", size);
+
+        todo_wine
+        ok(info.CommitTotal == sys_performance_info->TotalCommittedPages,
+           "expected info.CommitTotal=%u but got %u\n",
+           sys_performance_info->TotalCommittedPages, (ULONG)info.CommitTotal);
+
+        todo_wine
+        ok(info.CommitLimit == sys_performance_info->TotalCommitLimit,
+           "expected info.CommitLimit=%u but got %u\n",
+           sys_performance_info->TotalCommitLimit, (ULONG)info.CommitLimit);
+
+        todo_wine
+        ok(info.CommitPeak == sys_performance_info->PeakCommitment,
+           "expected info.CommitPeak=%u but got %u\n",
+           sys_performance_info->PeakCommitment, (ULONG)info.CommitPeak);
+
+        todo_wine
+        ok(info.PhysicalAvailable >= max(sys_performance_info->AvailablePages, 25) - 25 &&
+           info.PhysicalAvailable <= sys_performance_info->AvailablePages + 25,
+           "expected approximately info.PhysicalAvailable=%u but got %u\n",
+           sys_performance_info->AvailablePages, (ULONG)info.PhysicalAvailable);
+
+        /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
+
+        todo_wine
+        ok(info.KernelTotal == sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage,
+            "expected info.KernelTotal=%u but got %u\n",
+            sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelTotal);
+
+        todo_wine
+        ok(info.KernelPaged == sys_performance_info->PagedPoolUsage,
+           "expected info.KernelPaged=%u but got %u\n",
+           sys_performance_info->PagedPoolUsage, (ULONG)info.KernelPaged);
+
+        todo_wine
+        ok(info.KernelNonpaged == sys_performance_info->NonPagedPoolUsage,
+           "expected info.KernelNonpaged=%u but got %u\n",
+           sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelNonpaged);
+
+        /* compare with values from SYSTEM_BASIC_INFORMATION */
+        size = 0;
+        status = pNtQuerySystemInformation(SystemBasicInformation, &sys_basic_info, sizeof(sys_basic_info), &size);
+        ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+        ok(size >= sizeof(SYSTEM_BASIC_INFORMATION), "incorrect length %d\n", size);
+
+        todo_wine
+        ok(info.PhysicalTotal == sys_basic_info.MmNumberOfPhysicalPages,
+           "expected info.PhysicalTotal=%u but got %u\n",
+           sys_basic_info.MmNumberOfPhysicalPages, (ULONG)info.PhysicalTotal);
+
+        todo_wine
+        ok(info.PageSize == sys_basic_info.PageSize,
+           "expected info.PageSize=%u but got %u\n",
+           sys_basic_info.PageSize, (ULONG)info.PageSize);
+
+        /* compare with values from SYSTEM_PROCESS_INFORMATION */
+        size = 0;
+        status = pNtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "expected STATUS_LENGTH_MISMATCH, got %08x\n", status);
+        ok(size > 0, "incorrect length %d\n", size);
+        while (status == STATUS_INFO_LENGTH_MISMATCH)
+        {
+            sys_process_info = HeapAlloc(GetProcessHeap(), 0, size);
+            ok(sys_process_info != NULL, "failed to allocate memory\n");
+            status = pNtQuerySystemInformation(SystemProcessInformation, sys_process_info, size, &size);
+            if (status == STATUS_SUCCESS) break;
+            HeapFree(GetProcessHeap(), 0, sys_process_info);
+        }
+        ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+
+        process_count = handle_count = thread_count = 0;
+        for (spi = sys_process_info;; spi = (SYSTEM_PROCESS_INFORMATION *)(((char *)spi) + spi->NextEntryOffset))
+        {
+            process_count++;
+            handle_count += spi->HandleCount;
+            thread_count += spi->dwThreadCount;
+            if (spi->NextEntryOffset == 0) break;
+        }
+        HeapFree(GetProcessHeap(), 0, sys_process_info);
+
+        todo_wine
+        ok(info.HandleCount == handle_count,
+           "expected info.HandleCount=%u but got %u\n", handle_count, info.HandleCount);
+
+        todo_wine
+        ok(info.ProcessCount == process_count,
+           "expected info.ProcessCount=%u but got %u\n", process_count, info.ProcessCount);
+
+        todo_wine
+        ok(info.ThreadCount == thread_count,
+           "expected info.ThreadCount=%u but got %u\n", thread_count, info.ThreadCount);
+    }
+}
+
 
 static void test_GetProcessMemoryInfo(void)
 {
@@ -677,6 +811,7 @@ START_TEST(psapi_main)
 	    test_EnumProcesses();
 	    test_EnumProcessModules();
 	    test_GetModuleInformation();
+            test_GetPerformanceInfo();
 	    test_GetProcessMemoryInfo();
             test_GetMappedFileName();
             test_GetProcessImageFileName();
