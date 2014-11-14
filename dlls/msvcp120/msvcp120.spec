@@ -517,9 +517,9 @@
 @ cdecl -arch=arm ??1ctype_base@std@@UAA@XZ(ptr) ctype_base_dtor
 @ thiscall -arch=i386 ??1ctype_base@std@@UAE@XZ(ptr) ctype_base_dtor
 @ cdecl -arch=win64 ??1ctype_base@std@@UEAA@XZ(ptr) ctype_base_dtor
-@ stub -arch=arm ??1facet@locale@std@@MAA@XZ
-@ stub -arch=i386 ??1facet@locale@std@@MAE@XZ
-@ stub -arch=win64 ??1facet@locale@std@@MEAA@XZ
+@ cdecl -arch=arm ??1facet@locale@std@@MAA@XZ(ptr) locale_facet_dtor
+@ thiscall -arch=i386 ??1facet@locale@std@@MAE@XZ(ptr) locale_facet_dtor
+@ cdecl -arch=win64 ??1facet@locale@std@@MEAA@XZ(ptr) locale_facet_dtor
 @ cdecl -arch=arm ??1ios_base@std@@UAA@XZ(ptr) ios_base_dtor
 @ thiscall -arch=i386 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
 @ cdecl -arch=win64 ??1ios_base@std@@UEAA@XZ(ptr) ios_base_dtor

@@ -214,6 +214,9 @@ static void ostreambuf_iterator_wchar_put(ostreambuf_iterator_wchar *this, wchar
 
 /* ??1facet@locale@std@@UAE@XZ */
 /* ??1facet@locale@std@@UEAA@XZ */
+/* ??1facet@locale@std@@MAA@XZ */
+/* ??1facet@locale@std@@MAE@XZ */
+/* ??1facet@locale@std@@MEAA@XZ */
 DEFINE_THISCALL_WRAPPER(locale_facet_dtor, 4)
 void __thiscall locale_facet_dtor(locale_facet *this)
 {
