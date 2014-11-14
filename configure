@@ -9818,7 +9818,7 @@ This is an error since --with-xxf86vm was requested." "$LINENO" 5 ;;
 esac
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x" -a "x$ac_cv_lib_soname_Xext" != "x"
+                if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x"
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lXrender" >&5
 $as_echo_n "checking for -lXrender... " >&6; }
