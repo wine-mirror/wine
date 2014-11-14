@@ -203,9 +203,7 @@ static void test_GetPerformanceInfo(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetPerformanceInfo(&info, sizeof(info));
-    todo_wine
     ok(ret, "GetPerformanceInfo failed with %d\n", GetLastError());
-    todo_wine
     ok(info.cb == sizeof(PERFORMANCE_INFORMATION), "got %d\n", info.cb);
 
     if (!pNtQuerySystemInformation)
@@ -224,22 +222,18 @@ static void test_GetPerformanceInfo(void)
         ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
         ok(size >= sizeof(SYSTEM_PERFORMANCE_INFORMATION), "incorrect length %d\n", size);
 
-        todo_wine
         ok(info.CommitTotal == sys_performance_info->TotalCommittedPages,
            "expected info.CommitTotal=%u but got %u\n",
            sys_performance_info->TotalCommittedPages, (ULONG)info.CommitTotal);
 
-        todo_wine
         ok(info.CommitLimit == sys_performance_info->TotalCommitLimit,
            "expected info.CommitLimit=%u but got %u\n",
            sys_performance_info->TotalCommitLimit, (ULONG)info.CommitLimit);
 
-        todo_wine
         ok(info.CommitPeak == sys_performance_info->PeakCommitment,
            "expected info.CommitPeak=%u but got %u\n",
            sys_performance_info->PeakCommitment, (ULONG)info.CommitPeak);
 
-        todo_wine
         ok(info.PhysicalAvailable >= max(sys_performance_info->AvailablePages, 25) - 25 &&
            info.PhysicalAvailable <= sys_performance_info->AvailablePages + 25,
            "expected approximately info.PhysicalAvailable=%u but got %u\n",
@@ -247,17 +241,14 @@ static void test_GetPerformanceInfo(void)
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
 
-        todo_wine
         ok(info.KernelTotal == sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage,
             "expected info.KernelTotal=%u but got %u\n",
             sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelTotal);
 
-        todo_wine
         ok(info.KernelPaged == sys_performance_info->PagedPoolUsage,
            "expected info.KernelPaged=%u but got %u\n",
            sys_performance_info->PagedPoolUsage, (ULONG)info.KernelPaged);
 
-        todo_wine
         ok(info.KernelNonpaged == sys_performance_info->NonPagedPoolUsage,
            "expected info.KernelNonpaged=%u but got %u\n",
            sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelNonpaged);
@@ -268,12 +259,10 @@ static void test_GetPerformanceInfo(void)
         ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
         ok(size >= sizeof(SYSTEM_BASIC_INFORMATION), "incorrect length %d\n", size);
 
-        todo_wine
         ok(info.PhysicalTotal == sys_basic_info.MmNumberOfPhysicalPages,
            "expected info.PhysicalTotal=%u but got %u\n",
            sys_basic_info.MmNumberOfPhysicalPages, (ULONG)info.PhysicalTotal);
 
-        todo_wine
         ok(info.PageSize == sys_basic_info.PageSize,
            "expected info.PageSize=%u but got %u\n",
            sys_basic_info.PageSize, (ULONG)info.PageSize);
@@ -303,15 +292,12 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        todo_wine
         ok(info.HandleCount == handle_count,
            "expected info.HandleCount=%u but got %u\n", handle_count, info.HandleCount);
 
-        todo_wine
         ok(info.ProcessCount == process_count,
            "expected info.ProcessCount=%u but got %u\n", process_count, info.ProcessCount);
 
-        todo_wine
         ok(info.ThreadCount == thread_count,
            "expected info.ThreadCount=%u but got %u\n", thread_count, info.ThreadCount);
     }
