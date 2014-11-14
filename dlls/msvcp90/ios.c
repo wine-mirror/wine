@@ -5042,6 +5042,16 @@ void* __thiscall ios_base_op_fail(const ios_base *this)
     return ios_base_fail(this) ? NULL : (void*)this;
 }
 
+/* ??Bios_base@std@@QBA_NXZ */
+/* ??Bios_base@std@@QBE_NXZ */
+/* ??Bios_base@std@@QEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(ios_base_operator_bool, 4)
+MSVCP_bool __thiscall ios_base_operator_bool(const ios_base *this)
+{
+    TRACE("(%p)\n", this);
+    return (this->state & (IOSTATE_failbit|IOSTATE_badbit)) == 0;
+}
+
 /* ?_Addstd@ios_base@std@@SAXPAV12@@Z */
 /* ?_Addstd@ios_base@std@@SAXPEAV12@@Z */
 void CDECL ios_base_Addstd(ios_base *add)

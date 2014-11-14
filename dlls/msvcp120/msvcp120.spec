@@ -913,9 +913,9 @@
 @ cdecl -arch=arm ??Bid@locale@std@@QAAIXZ(ptr) locale_id_operator_size_t
 @ thiscall -arch=i386 ??Bid@locale@std@@QAEIXZ(ptr) locale_id_operator_size_t
 @ cdecl -arch=win64 ??Bid@locale@std@@QEAA_KXZ(ptr) locale_id_operator_size_t
-@ stub -arch=arm ??Bios_base@std@@QBA_NXZ
-@ stub -arch=win32 ??Bios_base@std@@QBE_NXZ
-@ stub -arch=win64 ??Bios_base@std@@QEBA_NXZ
+@ cdecl -arch=arm ??Bios_base@std@@QBA_NXZ(ptr) ios_base_operator_bool
+@ thiscall -arch=i386 ??Bios_base@std@@QBE_NXZ(ptr) ios_base_operator_bool
+@ cdecl -arch=win64 ??Bios_base@std@@QEBA_NXZ(ptr) ios_base_operator_bool
 @ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ios_char_vtable
 @ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ios_short_vtable
 @ extern ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ios_wchar_vtable
