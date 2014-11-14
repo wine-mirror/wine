@@ -210,13 +210,11 @@ UINT ole_private_data_clipboard_format = 0;
 
 static UINT wine_marshal_clipboard_format;
 
-static inline char *dump_fmtetc(FORMATETC *fmt)
+static inline const char *dump_fmtetc(FORMATETC *fmt)
 {
-    static char buf[100];
-
-    snprintf(buf, sizeof(buf), "cf %04x ptd %p aspect %x lindex %d tymed %x",
-             fmt->cfFormat, fmt->ptd, fmt->dwAspect, fmt->lindex, fmt->tymed);
-    return buf;
+    if (!fmt) return "(null)";
+    return wine_dbg_sprintf("cf %04x ptd %p aspect %x lindex %d tymed %x",
+                            fmt->cfFormat, fmt->ptd, fmt->dwAspect, fmt->lindex, fmt->tymed);
 }
 
 /*---------------------------------------------------------------------*
