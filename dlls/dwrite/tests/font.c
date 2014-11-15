@@ -2218,15 +2218,26 @@ static void test_GetFaceNames(void)
     IDWriteFactory_Release(factory);
 }
 
+struct local_refkey
+{
+    FILETIME writetime;
+    WCHAR name[1];
+};
+
 static void test_TryGetFontTable(void)
 {
+    IDWriteLocalFontFileLoader *localloader;
+    WIN32_FILE_ATTRIBUTE_DATA info;
+    const struct local_refkey *key;
+    IDWriteFontFileLoader *loader;
     const void *table, *table2;
     IDWriteFontFace *fontface;
     void *context, *context2;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
-    BOOL exists;
-    UINT32 size;
+    WCHAR buffW[MAX_PATH];
+    BOOL exists, ret;
+    UINT32 size, len;
     HRESULT hr;
 
     create_testfontfile(test_fontfile);
@@ -2235,6 +2246,30 @@ static void test_TryGetFontTable(void)
 
     hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    key = NULL;
+    size = 0;
+    hr = IDWriteFontFile_GetReferenceKey(file, (const void**)&key, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size != 0, "got %u\n", size);
+
+    ret = GetFileAttributesExW(test_fontfile, GetFileExInfoStandard, &info);
+    ok(ret, "got %d\n", ret);
+    ok(!memcmp(&info.ftLastWriteTime, &key->writetime, sizeof(key->writetime)), "got wrong write time\n");
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+    IDWriteFontFileLoader_Release(loader);
+
+    hr = IDWriteLocalFontFileLoader_GetFilePathLengthFromKey(localloader, key, size, &len);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(lstrlenW(key->name) == len, "path length %d\n", len);
+
+    hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, size, buffW, sizeof(buffW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, key->name), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(key->name));
+    IDWriteLocalFontFileLoader_Release(localloader);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, 0, &fontface);
     ok(hr == S_OK, "got 0x%08x\n",hr);

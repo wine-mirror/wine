@@ -1984,6 +1984,12 @@ struct dwrite_localfontfilestream
     HANDLE handle;
 };
 
+struct local_refkey
+{
+    FILETIME writetime;
+    WCHAR name[1];
+};
+
 struct dwrite_localfontfileloader {
     IDWriteLocalFontFileLoader IDWriteLocalFontFileLoader_iface;
     LONG ref;
@@ -2153,16 +2159,16 @@ static ULONG WINAPI localfontfileloader_Release(IDWriteLocalFontFileLoader *ifac
     return ref;
 }
 
-static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFileLoader *iface, const void *key, UINT32 key_size, IDWriteFontFileStream **fontFileStream)
 {
-    HANDLE handle;
     struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
-    const WCHAR *name = (const WCHAR*)fontFileReferenceKey;
+    const struct local_refkey *refkey = key;
+    HANDLE handle;
 
-    TRACE("(%p)->(%p, %i, %p)\n",This, fontFileReferenceKey, fontFileReferenceKeySize, fontFileStream);
+    TRACE("(%p)->(%p, %i, %p)\n", This, key, key_size, fontFileStream);
 
-    TRACE("name: %s\n",debugstr_w(name));
-    handle = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    TRACE("name: %s\n", debugstr_w(refkey->name));
+    handle = CreateFileW(refkey->name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
                          NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (handle == INVALID_HANDLE_VALUE)
@@ -2174,26 +2180,37 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
 static HRESULT WINAPI localfontfileloader_GetFilePathLengthFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, UINT32 *length)
 {
     struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
-    TRACE("(%p)->(%p, %i, %p)\n",This, key, key_size, length);
-    *length = key_size;
+    const struct local_refkey *refkey = key;
+
+    TRACE("(%p)->(%p, %i, %p)\n", This, key, key_size, length);
+
+    *length = strlenW(refkey->name);
     return S_OK;
 }
 
 static HRESULT WINAPI localfontfileloader_GetFilePathFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, WCHAR *path, UINT32 length)
 {
     struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
-    TRACE("(%p)->(%p, %i, %p, %i)\n",This, key, key_size, path, length);
-    if (length < key_size)
+    const struct local_refkey *refkey = key;
+
+    TRACE("(%p)->(%p, %i, %p, %i)\n", This, key, key_size, path, length);
+
+    if (length < strlenW(refkey->name))
         return E_INVALIDARG;
-    lstrcpynW((WCHAR*)key, path, key_size);
+
+    strcpyW(path, refkey->name);
     return S_OK;
 }
 
 static HRESULT WINAPI localfontfileloader_GetLastWriteTimeFromKey(IDWriteLocalFontFileLoader *iface, void const *key, UINT32 key_size, FILETIME *writetime)
 {
     struct dwrite_localfontfileloader *This = impl_from_IDWriteLocalFontFileLoader(iface);
-    FIXME("(%p)->(%p, %i, %p):stub\n",This, key, key_size, writetime);
-    return E_NOTIMPL;
+    const struct local_refkey *refkey = key;
+
+    TRACE("(%p)->(%p, %i, %p)\n", This, key, key_size, writetime);
+
+    *writetime = refkey->writetime;
+    return S_OK;
 }
 
 static const struct IDWriteLocalFontFileLoaderVtbl localfontfileloadervtbl = {
@@ -2216,5 +2233,33 @@ HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface)
     This->IDWriteLocalFontFileLoader_iface.lpVtbl = &localfontfileloadervtbl;
 
     *iface = &This->IDWriteLocalFontFileLoader_iface;
+    return S_OK;
+}
+
+HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **key, UINT32 *size)
+{
+    struct local_refkey *refkey;
+
+    *size = FIELD_OFFSET(struct local_refkey, name) + (strlenW(path)+1)*sizeof(WCHAR);
+    *key = NULL;
+
+    refkey = heap_alloc(*size);
+    if (!refkey)
+        return E_OUTOFMEMORY;
+
+    if (writetime)
+        refkey->writetime = *writetime;
+    else {
+        WIN32_FILE_ATTRIBUTE_DATA info;
+
+        if (GetFileAttributesExW(path, GetFileExInfoStandard, &info))
+            refkey->writetime = info.ftLastWriteTime;
+        else
+            memset(&refkey->writetime, 0, sizeof(refkey->writetime));
+    }
+    strcpyW(refkey->name, path);
+
+    *key = refkey;
+
     return S_OK;
 }
