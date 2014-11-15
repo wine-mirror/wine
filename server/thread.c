@@ -1047,6 +1047,8 @@ int thread_add_inflight_fd( struct thread *thread, int client, int server )
             thread->inflight[i].server = server;
             return i;
         }
+
+    close( server );
     return -1;
 }
 
