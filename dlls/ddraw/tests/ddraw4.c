@@ -2497,7 +2497,7 @@ static HRESULT CALLBACK test_coop_level_mode_set_enum_cb(DDSURFACEDESC2 *surface
 {
     struct test_coop_level_mode_set_enum_param *param = context;
 
-    if (U1(U4(surface_desc)->ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
+    if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
     if (surface_desc->dwWidth == registry_mode.dmPelsWidth
             && surface_desc->dwHeight == registry_mode.dmPelsHeight)
