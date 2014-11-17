@@ -291,7 +291,7 @@ LPSTR WINAPI StrChrA(LPCSTR lpszStr, WORD ch)
  * PARAMS
  *  lpszStr  [I] First string to compare
  *  lpszComp [I] Second string to compare
- *  iLen     [I] Maximum number of chars to compare.
+ *  iLen     [I] Number of chars to compare
  *
  * RETURNS
  *  An integer less than, equal to or greater than 0, indicating that
@@ -323,13 +323,15 @@ static LPSTR COMCTL32_StrStrHelperA(LPCSTR lpszStr, LPCSTR lpszSearch,
                                     INT (WINAPI *pStrCmpFn)(LPCSTR,LPCSTR,INT))
 {
   size_t iLen;
+  LPCSTR end;
 
   if (!lpszStr || !lpszSearch || !*lpszSearch)
     return NULL;
 
   iLen = strlen(lpszSearch);
+  end = lpszStr + strlen(lpszStr);
 
-  while (*lpszStr)
+  while (lpszStr + iLen <= end)
   {
     if (!pStrCmpFn(lpszStr, lpszSearch, iLen))
       return (LPSTR)lpszStr;
@@ -382,6 +384,7 @@ INT WINAPI StrToIntA (LPCSTR lpszStr)
 LPWSTR WINAPI StrStrIW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
 {
   int iLen;
+  LPCWSTR end;
 
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSearch));
 
@@ -389,8 +392,9 @@ LPWSTR WINAPI StrStrIW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
     return NULL;
 
   iLen = strlenW(lpszSearch);
+  end = lpszStr + strlenW(lpszStr);
 
-  while (*lpszStr)
+  while (lpszStr + iLen <= end)
   {
     if (!StrCmpNIW(lpszStr, lpszSearch, iLen))
       return (LPWSTR)lpszStr;
@@ -480,7 +484,7 @@ LPWSTR WINAPI StrChrW(LPCWSTR lpszStr, WCHAR ch)
  * PARAMS
  *  lpszStr  [I] First string to compare
  *  lpszComp [I] Second string to compare
- *  iLen     [I] Maximum number of chars to compare.
+ *  iLen     [I] Number of chars to compare
  *
  * RETURNS
  *  An integer less than, equal to or greater than 0, indicating that
