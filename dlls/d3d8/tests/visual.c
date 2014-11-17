@@ -2104,7 +2104,7 @@ done:
     DestroyWindow(window);
 }
 
-static void alpha_test(void)
+static void test_blend(void)
 {
     IDirect3DSurface8 *backbuffer, *offscreen, *depthstencil;
     IDirect3DTexture8 *offscreenTexture;
@@ -5393,7 +5393,7 @@ START_TEST(visual)
     fog_test();
     z_range_test();
     offscreen_test();
-    alpha_test();
+    test_blend();
     test_scalar_instructions();
     fog_with_shader_test();
     cnd_test();

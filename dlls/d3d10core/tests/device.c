@@ -22,6 +22,11 @@
 #include "wine/test.h"
 #include <limits.h>
 
+struct vec3
+{
+    float x, y, z;
+};
+
 static ULONG get_refcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
@@ -2053,6 +2058,253 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_blend(void)
+{
+    ID3D10RenderTargetView *backbuffer_rtv, *offscreen_rtv;
+    ID3D10BlendState *src_blend, *dst_blend;
+    ID3D10Texture2D *backbuffer, *offscreen;
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10InputLayout *input_layout;
+    D3D10_BUFFER_DESC buffer_desc;
+    D3D10_BLEND_DESC blend_desc;
+    unsigned int stride, offset;
+    IDXGISwapChain *swapchain;
+    ID3D10VertexShader *vs;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    D3D10_VIEWPORT vp;
+    ID3D10Buffer *vb;
+    ULONG refcount;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct vs_out
+        {
+            float4 position : SV_POSITION;
+            float4 color : COLOR;
+        };
+
+        struct vs_out main(float4 position : POSITION, float4 color : COLOR)
+        {
+            struct vs_out o;
+
+            o.position = position;
+            o.color = color;
+
+            return o;
+        }
+#endif
+        0x43425844, 0x5c73b061, 0x5c71125f, 0x3f8b345f, 0xce04b9ab, 0x00000001, 0x00000140, 0x00000003,
+        0x0000002c, 0x0000007c, 0x000000d0, 0x4e475349, 0x00000048, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x4c4f4300, 0xab00524f, 0x4e47534f,
+        0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003, 0x00000000,
+        0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x505f5653,
+        0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040, 0x0000001a,
+        0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2, 0x00000000,
+        0x00101e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        struct vs_out
+        {
+            float4 position : SV_POSITION;
+            float4 color : COLOR;
+        };
+
+        float4 main(struct vs_out i) : SV_TARGET
+        {
+            return i.color;
+        }
+#endif
+        0x43425844, 0xe2087fa6, 0xa35fbd95, 0x8e585b3f, 0x67890f54, 0x00000001, 0x000000f4, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040,
+        0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quads[] =
+    {
+        /* quad1 */
+        {{-1.0f, -1.0f, 0.1f}, 0x4000ff00},
+        {{-1.0f,  0.0f, 0.1f}, 0x4000ff00},
+        {{ 1.0f, -1.0f, 0.1f}, 0x4000ff00},
+        {{ 1.0f,  0.0f, 0.1f}, 0x4000ff00},
+        /* quad2 */
+        {{-1.0f,  0.0f, 0.1f}, 0xc0ff0000},
+        {{-1.0f,  1.0f, 0.1f}, 0xc0ff0000},
+        {{ 1.0f,  0.0f, 0.1f}, 0xc0ff0000},
+        {{ 1.0f,  1.0f, 0.1f}, 0xc0ff0000},
+    };
+    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, 12, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d3d10core_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D10Texture2D, (void **)&backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(quads);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = quads;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &buffer_data, &vb);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)backbuffer, NULL, &backbuffer_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.BlendEnable[0] = TRUE;
+    blend_desc.SrcBlend = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
+    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_INV_SRC_ALPHA;
+    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
+    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+    hr = ID3D10Device_CreateBlendState(device, &blend_desc, &src_blend);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    blend_desc.SrcBlend = D3D10_BLEND_DEST_ALPHA;
+    blend_desc.DestBlend = D3D10_BLEND_INV_DEST_ALPHA;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_DEST_ALPHA;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_INV_DEST_ALPHA;
+
+    hr = ID3D10Device_CreateBlendState(device, &blend_desc, &dst_blend);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &backbuffer_rtv, NULL);
+    ID3D10Device_IASetInputLayout(device, input_layout);
+    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quads);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(device, 0, 1, &vb, &stride, &offset);
+    ID3D10Device_VSSetShader(device, vs);
+    ID3D10Device_PSSetShader(device, ps);
+
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = 640;
+    vp.Height = 480;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+
+    ID3D10Device_ClearRenderTargetView(device, backbuffer_rtv, red);
+
+    ID3D10Device_OMSetBlendState(device, src_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_Draw(device, 4, 0);
+    ID3D10Device_OMSetBlendState(device, dst_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_Draw(device, 4, 4);
+
+    color = get_texture_color(backbuffer, 320, 360);
+    ok(compare_color(color, 0x700040bf, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 320, 120);
+    ok(compare_color(color, 0xa080007f, 1), "Got unexpected color 0x%08x.\n", color);
+
+    texture_desc.Width = 128;
+    texture_desc.Height = 128;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    /* DXGI_FORMAT_B8G8R8X8_UNORM is not supported on all implementations. */
+    if (FAILED(ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &offscreen)))
+    {
+        skip("DXGI_FORMAT_B8G8R8X8_UNORM not supported, skipping tests.\n");
+        goto done;
+    }
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)offscreen, NULL, &offscreen_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &offscreen_rtv, NULL);
+
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = 128;
+    vp.Height = 128;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+
+    ID3D10Device_ClearRenderTargetView(device, offscreen_rtv, red);
+
+    ID3D10Device_OMSetBlendState(device, src_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_Draw(device, 4, 0);
+    ID3D10Device_OMSetBlendState(device, dst_blend, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_Draw(device, 4, 4);
+
+    color = get_texture_color(offscreen, 64, 96) & 0x00ffffff;
+    ok(compare_color(color, 0x00bf4000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(offscreen, 64, 32) & 0x00ffffff;
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D10RenderTargetView_Release(offscreen_rtv);
+    ID3D10Texture2D_Release(offscreen);
+done:
+    ID3D10BlendState_Release(dst_blend);
+    ID3D10BlendState_Release(src_blend);
+    ID3D10PixelShader_Release(ps);
+    ID3D10VertexShader_Release(vs);
+    ID3D10Buffer_Release(vb);
+    ID3D10InputLayout_Release(input_layout);
+    ID3D10RenderTargetView_Release(backbuffer_rtv);
+    ID3D10Texture2D_Release(backbuffer);
+    IDXGISwapChain_Release(swapchain);
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     test_create_texture2d();
@@ -2069,4 +2321,5 @@ START_TEST(device)
     test_device_removed_reason();
     test_scissor();
     test_clear_state();
+    test_blend();
 }

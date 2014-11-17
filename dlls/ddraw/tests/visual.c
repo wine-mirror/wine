@@ -929,7 +929,7 @@ out:
     }
 }
 
-static void alpha_test(IDirect3DDevice7 *device)
+static void test_blend(IDirect3DDevice7 *device)
 {
     HRESULT hr;
     IDirectDrawSurface7 *backbuffer = NULL, *offscreen = NULL;
@@ -3277,7 +3277,7 @@ START_TEST(visual)
     clear_test(Direct3DDevice);
     fog_test(Direct3DDevice);
     offscreen_test(Direct3DDevice);
-    alpha_test(Direct3DDevice);
+    test_blend(Direct3DDevice);
     rhw_zero_test(Direct3DDevice);
     cubemap_test(Direct3DDevice);
 

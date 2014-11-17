@@ -7776,7 +7776,7 @@ done:
     DestroyWindow(window);
 }
 
-static void alpha_test(void)
+static void test_blend(void)
 {
     IDirect3DSurface9 *backbuffer, *offscreen;
     IDirect3DTexture9 *offscreenTexture;
@@ -17003,7 +17003,7 @@ START_TEST(visual)
     maxmip_test();
     offscreen_test();
     ds_size_test();
-    alpha_test();
+    test_blend();
     shademode_test();
     srgbtexture_test();
     release_buffer_test();
