@@ -3091,6 +3091,8 @@ struct message
 {
     UINT message;
     enum message_window window;
+    BOOL check_wparam;
+    WPARAM expect_wparam;
 };
 
 static const struct message *expect_messages;
@@ -3131,7 +3133,15 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
                 break;
         };
 
-        if (hwnd == w && expect_messages->message == message) ++expect_messages;
+        if (hwnd == w && expect_messages->message == message)
+        {
+            if (expect_messages->check_wparam)
+                ok(wparam == expect_messages->expect_wparam,
+                        "Got unexpected wparam %lx for message %x, expected %lx.\n",
+                        wparam, message, expect_messages->expect_wparam);
+
+            ++expect_messages;
+        }
     }
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
@@ -3182,13 +3192,58 @@ static void test_wndproc(void)
     ULONG ref;
     DWORD res, tid;
     HWND tmp;
+    unsigned int i;
+    HRESULT hr;
 
-    static const struct message messages[] =
+    static const struct message create_messages[] =
     {
-        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW},
-        {WM_ACTIVATE,           FOCUS_WINDOW},
-        {WM_SETFOCUS,           FOCUS_WINDOW},
-        {0,                     0},
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
+        /* Do not test wparam here. If device creation succeeds,
+         * wparam is WA_ACTIVE. If device creation fails (testbot)
+         * wparam is set to WA_INACTIVE on some Windows versions. */
+        {WM_ACTIVATE,           FOCUS_WINDOW,   FALSE,  0},
+        {WM_SETFOCUS,           FOCUS_WINDOW,   FALSE,  0},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message focus_loss_messages[] =
+    {
+        /* WM_ACTIVATE (wparam = WA_INACTIVE) is sent on Windows. It is
+         * not reliable on X11 WMs. When the window focus follows the
+         * mouse pointer the message is not sent.
+         * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        /* Windows sends WM_ACTIVATE to the device window, indicating that
+         * SW_SHOWMINIMIZED is used instead of SW_MINIMIZE. Yet afterwards
+         * the foreground and focus window are NULL. On Wine SW_SHOWMINIMIZED
+         * leaves the device window active, breaking re-activation in the
+         * lost device test.
+         * {WM_ACTIVATE,           DEVICE_WINDOW,  TRUE,   0x200000 | WA_ACTIVE}, */
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        /* WM_ACTIVATEAPP is sent to the device window too, but the order is
+         * not deterministic. It may be sent after the focus window handling
+         * or before. */
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message focus_loss_messages_nowc[] =
+    {
+        /* WM_ACTIVATE (wparam = WA_INACTIVE) is sent on Windows. It is
+         * not reliable on X11 WMs. When the window focus follows the
+         * mouse pointer the message is not sent.
+         * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct
+    {
+        DWORD create_flags;
+        const struct message *focus_loss_messages;
+    }
+    tests[] =
+    {
+        {0,                               focus_loss_messages},
+        {CREATE_DEVICE_NOWINDOWCHANGES,   focus_loss_messages_nowc},
     };
 
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
@@ -3203,122 +3258,171 @@ static void test_wndproc(void)
     thread_params.test_finished = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
-    focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
-            registry_mode.dmPelsHeight, 0, 0, 0, 0);
-    device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
-            registry_mode.dmPelsHeight, 0, 0, 0, 0);
-    thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
-    ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
-
-    res = WaitForSingleObject(thread_params.window_created, INFINITE);
-    ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
-
-    proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
-    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
-    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
-
-    trace("device_window %p, focus_window %p, dummy_window %p.\n",
-            device_window, focus_window, thread_params.dummy_window);
-
-    tmp = GetFocus();
-    ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
-    if (thread_params.running_in_foreground)
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        tmp = GetForegroundWindow();
-        ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
-                thread_params.dummy_window, tmp);
-    }
-    else
-        skip("Not running in foreground, skip foreground window test\n");
+        focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
+                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+                registry_mode.dmPelsHeight, 0, 0, 0, 0);
+        device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
+                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
+                registry_mode.dmPelsHeight, 0, 0, 0, 0);
+        thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
+        ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
-    flush_events();
+        res = WaitForSingleObject(thread_params.window_created, INFINITE);
+        ok(res == WAIT_OBJECT_0, "Wait failed (%#x), last error %#x.\n", res, GetLastError());
 
-    expect_messages = messages;
+        proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
+        ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+                (LONG_PTR)test_proc, proc);
+        proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+        ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
+                (LONG_PTR)test_proc, proc);
 
-    device_desc.device_window = device_window;
-    device_desc.width = registry_mode.dmPelsWidth;
-    device_desc.height = registry_mode.dmPelsHeight;
-    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
-    if (!(device = create_device(d3d9, focus_window, &device_desc)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
-    }
+        trace("device_window %p, focus_window %p, dummy_window %p.\n",
+                device_window, focus_window, thread_params.dummy_window);
 
-    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
-            expect_messages->message, expect_messages->window);
-    expect_messages = NULL;
-
-    if (0) /* Disabled until we can make this work in a reliable way on Wine. */
-    {
         tmp = GetFocus();
-        ok(tmp == focus_window, "Expected focus %p, got %p.\n", focus_window, tmp);
-        tmp = GetForegroundWindow();
-        ok(tmp == focus_window, "Expected foreground window %p, got %p.\n", focus_window, tmp);
-    }
-    SetForegroundWindow(focus_window);
-    flush_events();
+        ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
+        if (thread_params.running_in_foreground)
+        {
+            tmp = GetForegroundWindow();
+            ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
+                    thread_params.dummy_window, tmp);
+        }
+        else
+            skip("Not running in foreground, skip foreground window test\n");
 
-    filter_messages = focus_window;
+        flush_events();
 
-    proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
-    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+        expect_messages = create_messages;
 
-    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
+        device_desc.device_window = device_window;
+        device_desc.width = registry_mode.dmPelsWidth;
+        device_desc.height = registry_mode.dmPelsHeight;
+        device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].create_flags;
+        if (!(device = create_device(d3d9, focus_window, &device_desc)))
+        {
+            skip("Failed to create a D3D device, skipping tests.\n");
+            goto done;
+        }
 
-    ref = IDirect3DDevice9_Release(device);
-    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
 
-    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)test_proc, proc);
+        if (0) /* Disabled until we can make this work in a reliable way on Wine. */
+        {
+            tmp = GetFocus();
+            ok(tmp == focus_window, "Expected focus %p, got %p.\n", focus_window, tmp);
+            tmp = GetForegroundWindow();
+            ok(tmp == focus_window, "Expected foreground window %p, got %p.\n", focus_window, tmp);
+        }
+        SetForegroundWindow(focus_window);
+        flush_events();
 
-    device_desc.device_window = focus_window;
-    if (!(device = create_device(d3d9, focus_window, &device_desc)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
-    }
+        proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
+        ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx, i=%u.\n",
+                (LONG_PTR)test_proc, proc, i);
 
-    ref = IDirect3DDevice9_Release(device);
-    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+        proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+        ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, i=%u.\n",
+                (LONG_PTR)test_proc, i);
 
-    device_desc.device_window = device_window;
-    if (!(device = create_device(d3d9, focus_window, &device_desc)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto done;
-    }
+        expect_messages = tests[i].focus_loss_messages;
+        /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
+         * manually changing the focus. It generates the same messages, but the task
+         * bar still shows the previous foreground window as active, and the window has
+         * an inactive titlebar if reactivated with SetForegroundWindow. Reactivating
+         * the device is difficult, see below. */
+        SetForegroundWindow(GetDesktopWindow());
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
+        tmp = GetFocus();
+        ok(tmp != device_window, "The device window is active, i=%u.\n", i);
+        ok(tmp != focus_window, "The focus window is active, i=%u.\n", i);
 
-    proc = SetWindowLongPtrA(focus_window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
-    ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
+        hr = IDirect3DDevice9_TestCooperativeLevel(device);
+        ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
 
-    ref = IDirect3DDevice9_Release(device);
-    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+        /* This is needed on native with D3DCREATE_NOWINDOWCHANGES, and it needs to be
+         * done before the focus window is restored. This makes sense to some extent
+         * because minimizing the window on focus loss is the application's job if this
+         * flag is set. */
+        if (tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+        {
+            ShowWindow(device_window, SW_MINIMIZE);
+            ShowWindow(device_window, SW_RESTORE);
+        }
 
-    proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
-    ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx.\n",
-            (LONG_PTR)DefWindowProcA, proc);
+        /* I have to minimize and restore the focus window, otherwise native d3d9 fails
+         * device::reset with D3DERR_DEVICELOST. This does not happen when the window
+         * restore is triggered by the user. */
+        ShowWindow(focus_window, SW_MINIMIZE);
+        ShowWindow(focus_window, SW_RESTORE);
+        /* Set focus twice to make KDE and fvwm in focus-follows-mouse mode happy. */
+        SetForegroundWindow(focus_window);
+        flush_events();
+        SetForegroundWindow(focus_window);
+        flush_events();
+
+        hr = IDirect3DDevice9_TestCooperativeLevel(device);
+        ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
+
+        /* Releasing a device in lost state breaks follow-up tests on native. */
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, i=%u.\n", hr, i);
+
+        filter_messages = focus_window;
+
+        ref = IDirect3DDevice9_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u, i=%u.\n", ref, i);
+
+        proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+        ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx, i=%u.\n",
+                (LONG_PTR)test_proc, proc, i);
+
+        device_desc.device_window = focus_window;
+        if (!(device = create_device(d3d9, focus_window, &device_desc)))
+        {
+            skip("Failed to create a D3D device, skipping tests.\n");
+            goto done;
+        }
+
+        ref = IDirect3DDevice9_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u, i=%u.\n", ref, i);
+
+        device_desc.device_window = device_window;
+        if (!(device = create_device(d3d9, focus_window, &device_desc)))
+        {
+            skip("Failed to create a D3D device, skipping tests.\n");
+            goto done;
+        }
+
+        proc = SetWindowLongPtrA(focus_window, GWLP_WNDPROC, (LONG_PTR)DefWindowProcA);
+        ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, i=%u.\n",
+                (LONG_PTR)test_proc, i);
+
+        ref = IDirect3DDevice9_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u, i=%u.\n", ref, i);
+
+        proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
+        ok(proc == (LONG_PTR)DefWindowProcA, "Expected wndproc %#lx, got %#lx, i=%u.\n",
+                (LONG_PTR)DefWindowProcA, proc, i);
 
 done:
-    filter_messages = NULL;
-    IDirect3D9_Release(d3d9);
+        filter_messages = NULL;
+        DestroyWindow(device_window);
+        DestroyWindow(focus_window);
+        SetEvent(thread_params.test_finished);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+    }
 
-    SetEvent(thread_params.test_finished);
-    WaitForSingleObject(thread, INFINITE);
+    IDirect3D9_Release(d3d9);
     CloseHandle(thread_params.test_finished);
     CloseHandle(thread_params.window_created);
-    CloseHandle(thread);
-
-    DestroyWindow(device_window);
-    DestroyWindow(focus_window);
     UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
@@ -3540,8 +3644,10 @@ static void test_reset_fullscreen(void)
     struct device_desc device_desc;
     static const struct message messages[] =
     {
-        {WM_ACTIVATEAPP,    FOCUS_WINDOW},
-        {0,                     0},
+        /* Windows usually sends wparam = TRUE, except on the testbot,
+         * where it randomly sends FALSE. Ignore it. */
+        {WM_ACTIVATEAPP,    FOCUS_WINDOW,   FALSE,  0},
+        {0,                 0,              FALSE,  0},
     };
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
