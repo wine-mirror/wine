@@ -3360,7 +3360,7 @@ static void shader_glsl_if(const struct wined3d_shader_instruction *ins)
     struct glsl_src_param src0_param;
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
-    shader_addline(ins->ctx->buffer, "if (%s) {\n", src0_param.param_str);
+    shader_addline(ins->ctx->buffer, "if (bool(%s)) {\n", src0_param.param_str);
 }
 
 static void shader_glsl_ifc(const struct wined3d_shader_instruction *ins)
