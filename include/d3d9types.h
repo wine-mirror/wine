@@ -206,7 +206,6 @@
 #define D3DPRESENTFLAG_NOAUTOROTATE         0x00000020 /* d3d9ex, ignore display rotation */
 #define D3DPRESENTFLAG_UNPRUNEDMODE         0x00000040 /* d3d9ex, specify invalid display modes */
 
-#define D3DPRESENT_BACK_BUFFERS_MAX         __MSABI_LONG(3)
 #define D3DPRESENT_RATE_DEFAULT             0x00000000
 
 /**************************** 
@@ -642,8 +641,6 @@ typedef enum _D3DBACKBUFFER_TYPE {
 
     D3DBACKBUFFER_TYPE_FORCE_DWORD  = 0x7fffffff
 } D3DBACKBUFFER_TYPE;
-
-#define D3DPRESENT_BACK_BUFFER_MAX __MSABI_LONG(3)
 
 typedef enum _D3DBASISTYPE {
    D3DBASIS_BEZIER        = 0,
