@@ -120,21 +120,25 @@ struct file *create_file_for_fd( int fd, unsigned int access, unsigned int shari
     if (fstat( fd, &st ) == -1)
     {
         file_set_error();
+        close( fd );
         return NULL;
     }
 
-    if ((file = alloc_object( &file_ops )))
+    if (!(file = alloc_object( &file_ops )))
     {
-        file->mode = st.st_mode;
-        file->access = default_fd_map_access( &file->obj, access );
-        if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj,
-                                              FILE_SYNCHRONOUS_IO_NONALERT )))
-        {
-            release_object( file );
-            return NULL;
-        }
-        allow_fd_caching( file->fd );
+        close( fd );
+        return NULL;
     }
+
+    file->mode = st.st_mode;
+    file->access = default_fd_map_access( &file->obj, access );
+    if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj,
+                                          FILE_SYNCHRONOUS_IO_NONALERT )))
+    {
+        release_object( file );
+        return NULL;
+    }
+    allow_fd_caching( file->fd );
     return file;
 }
 
