@@ -150,6 +150,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_TEXREG2GB             */ "texreg2gb",
     /* WINED3DSIH_TEXREG2RGB            */ "texreg2rgb",
     /* WINED3DSIH_UDIV                  */ "udiv",
+    /* WINED3DSIH_UGE                   */ "uge",
     /* WINED3DSIH_USHR                  */ "ushr",
     /* WINED3DSIH_UTOF                  */ "utof",
     /* WINED3DSIH_XOR                   */ "xor",
