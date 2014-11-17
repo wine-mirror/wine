@@ -932,6 +932,7 @@ enable_crtdll
 enable_crypt32
 enable_cryptdlg
 enable_cryptdll
+enable_cryptext
 enable_cryptnet
 enable_cryptui
 enable_ctapi32
@@ -16861,6 +16862,7 @@ wine_fn_config_dll crypt32 enable_crypt32 implib,po
 wine_fn_config_test dlls/crypt32/tests crypt32_test
 wine_fn_config_dll cryptdlg enable_cryptdlg po
 wine_fn_config_dll cryptdll enable_cryptdll implib
+wine_fn_config_dll cryptext enable_cryptext
 wine_fn_config_dll cryptnet enable_cryptnet implib
 wine_fn_config_test dlls/cryptnet/tests cryptnet_test
 wine_fn_config_dll cryptui enable_cryptui implib,po
