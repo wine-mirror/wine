@@ -226,9 +226,11 @@ static void STDMETHODCALLTYPE d2d_solid_color_brush_SetTransform(ID2D1SolidColor
 
 static float STDMETHODCALLTYPE d2d_solid_color_brush_GetOpacity(ID2D1SolidColorBrush *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
 
-    return 0.0f;
+    TRACE("iface %p.\n", iface);
+
+    return brush->opacity;
 }
 
 static void STDMETHODCALLTYPE d2d_solid_color_brush_GetTransform(ID2D1SolidColorBrush *iface,
