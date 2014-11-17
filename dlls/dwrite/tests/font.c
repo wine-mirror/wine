@@ -2355,6 +2355,56 @@ if (0) { /* crashes on native */
     IDWriteFactory_Release(factory);
 }
 
+static void test_CreateStreamFromKey(void)
+{
+    IDWriteLocalFontFileLoader *localloader;
+    IDWriteFontFileStream *stream, *stream2;
+    IDWriteFontFileLoader *loader;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    void *key;
+    UINT32 size;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    key = NULL;
+    size = 0;
+    hr = IDWriteFontFile_GetReferenceKey(file, (const void**)&key, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size != 0, "got %u\n", size);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+    IDWriteFontFileLoader_Release(loader);
+
+    hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(stream, 1);
+
+    hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(stream == stream2, "got %p, %p\n", stream, stream2);
+    EXPECT_REF(stream, 2);
+    IDWriteFontFileStream_Release(stream);
+    IDWriteFontFileStream_Release(stream2);
+
+    hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(stream, 1);
+    IDWriteFontFileStream_Release(stream);
+
+    IDWriteLocalFontFileLoader_Release(localloader);
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2386,6 +2436,7 @@ START_TEST(font)
     test_GetFaceNames();
     test_TryGetFontTable();
     test_ConvertFontToLOGFONT();
+    test_CreateStreamFromKey();
 
     IDWriteFactory_Release(factory);
 }
