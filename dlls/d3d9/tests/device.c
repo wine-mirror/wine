@@ -3796,15 +3796,16 @@ static void test_window_style(void)
     IDirect3D9 *d3d9;
     HRESULT hr;
     ULONG ref;
+    BOOL ret;
     static const struct
     {
         DWORD device_flags;
-        LONG style, exstyle;
+        LONG style, focus_loss_style, exstyle;
     }
     tests[] =
     {
-        {0,                               WS_VISIBLE, WS_EX_TOPMOST},
-        {CREATE_DEVICE_NOWINDOWCHANGES,   0},
+        {0,                                 WS_VISIBLE, WS_MINIMIZE,    WS_EX_TOPMOST},
+        {CREATE_DEVICE_NOWINDOWCHANGES,     0,          0,              0},
     };
     unsigned int i;
 
@@ -3898,6 +3899,39 @@ static void test_window_style(void)
         style = GetWindowLongA(focus_window, GWL_EXSTYLE);
         ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
                 focus_exstyle, style, i);
+
+        device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+        ret = SetForegroundWindow(GetDesktopWindow());
+        ok(ret, "Failed to set foreground window.\n");
+
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style | tests[i].focus_loss_style | tests[i].style;
+        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
+                expected_style, style);
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        expected_style = device_exstyle | tests[i].exstyle;
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
+                expected_style, style);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x.\n",
+                focus_style, style);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
+                focus_exstyle, style);
+
+        /* In d3d8 follow-up tests fail on native if the device is destroyed while
+         * lost. This doesn't happen in d3d9 on my test machine but it still seems
+         * like a good idea to reset it first. */
+        ShowWindow(focus_window, SW_MINIMIZE);
+        ShowWindow(focus_window, SW_RESTORE);
+        ret = SetForegroundWindow(focus_window);
+        ok(ret, "Failed to set foreground window.\n");
+        flush_events();
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
         ref = IDirect3DDevice9_Release(device);
         ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);

@@ -2227,24 +2227,27 @@ done:
 static void test_window_style(void)
 {
     RECT focus_rect, device_rect, fullscreen_rect, r, r2;
-    LONG device_style, device_exstyle;
+    LONG device_style, device_exstyle, expected_style;
     LONG focus_style, focus_exstyle;
     struct device_desc device_desc;
     LONG style;
     IDirect3DDevice9Ex *device;
     HRESULT hr;
     ULONG ref;
+    BOOL ret;
     static const struct
     {
         LONG style_flags;
         DWORD device_flags;
+        LONG focus_loss_style;
+        LONG create2_style, create2_exstyle;
     }
     tests[] =
     {
-        {0,             0},
-        {WS_VISIBLE,    0},
-        {0,             CREATE_DEVICE_NOWINDOWCHANGES},
-        {WS_VISIBLE,    CREATE_DEVICE_NOWINDOWCHANGES},
+        {0,             0,                              0,              WS_VISIBLE, WS_EX_TOPMOST},
+        {WS_VISIBLE,    0,                              WS_MINIMIZE,    WS_VISIBLE, WS_EX_TOPMOST},
+        {0,             CREATE_DEVICE_NOWINDOWCHANGES,  0,              0,          0},
+        {WS_VISIBLE,    CREATE_DEVICE_NOWINDOWCHANGES,  0,              0,          0},
     };
     unsigned int i;
 
@@ -2318,6 +2321,78 @@ static void test_window_style(void)
         else
             todo_wine ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
                     device_style, style, i);
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                device_exstyle, style, i);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
+                focus_style, style, i);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
+                focus_exstyle, style, i);
+
+        ref = IDirect3DDevice9Ex_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        if (device_style & WS_VISIBLE)
+            ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                device_style, style, i);
+        else
+            todo_wine ok(style == device_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                    device_style, style, i);
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                device_exstyle, style, i);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
+                focus_style, style, i);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
+                focus_exstyle, style, i);
+
+        /* The second time a device is created on the window the window becomes visible and
+         * topmost if D3DCREATE_NOWINDOWCHANGES is not set. */
+        device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].device_flags;
+        device = create_device(focus_window, &device_desc);
+        ok(!!device, "Failed to create a D3D device.\n");
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style | tests[i].create2_style;
+        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
+        expected_style = device_exstyle | tests[i].create2_exstyle;
+        style = GetWindowLongA(device_window, GWL_EXSTYLE);
+        todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
+
+        style = GetWindowLongA(focus_window, GWL_STYLE);
+        ok(style == focus_style, "Expected focus window style %#x, got %#x, i=%u.\n",
+                focus_style, style, i);
+        style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+        ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x, i=%u.\n",
+                focus_exstyle, style, i);
+        ref = IDirect3DDevice9Ex_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+        DestroyWindow(device_window);
+        DestroyWindow(focus_window);
+        focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].style_flags,
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
+        device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].style_flags,
+                0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
+
+        device_desc.device_window = device_window;
+        device = create_device(focus_window, &device_desc);
+        ok(!!device, "Failed to create a D3D device.\n");
+        ret = SetForegroundWindow(GetDesktopWindow());
+        ok(ret, "Failed to set foreground window.\n");
+
+        style = GetWindowLongA(device_window, GWL_STYLE);
+        expected_style = device_style | tests[i].focus_loss_style;
+        todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
         todo_wine ok(style == device_exstyle, "Expected device window extended style %#x, got %#x, i=%u.\n",
                 device_exstyle, style, i);
