@@ -2136,6 +2136,8 @@ struct message
 {
     UINT message;
     enum message_window window;
+    BOOL check_wparam;
+    WPARAM expect_wparam;
 };
 
 static const struct message *expect_messages;
@@ -2176,7 +2178,15 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
                 break;
         };
 
-        if (hwnd == w && expect_messages->message == message) ++expect_messages;
+        if (hwnd == w && expect_messages->message == message)
+        {
+            if (expect_messages->check_wparam)
+                ok(wparam == expect_messages->expect_wparam,
+                        "Got unexpected wparam %lx for message %x, expected %lx.\n",
+                        wparam, message, expect_messages->expect_wparam);
+
+            ++expect_messages;
+        }
     }
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
@@ -2227,16 +2237,41 @@ static void test_wndproc(void)
     ULONG ref;
     DWORD res, tid;
     HWND tmp;
+    HRESULT hr;
 
-    static const struct message messages[] =
+    static const struct message create_messages[] =
     {
-        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW},
-        {WM_ACTIVATE,           FOCUS_WINDOW},
-        {WM_SETFOCUS,           FOCUS_WINDOW},
-        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW},
-        {WM_MOVE,               DEVICE_WINDOW},
-        {WM_SIZE,               DEVICE_WINDOW},
-        {0,                     0},
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
+        /* Do not test wparam here. If device creation succeeds,
+         * wparam is WA_ACTIVE. If device creation fails (testbot)
+         * wparam is set to WA_INACTIVE on some Windows versions. */
+        {WM_ACTIVATE,           FOCUS_WINDOW,   FALSE,  0},
+        {WM_SETFOCUS,           FOCUS_WINDOW,   FALSE,  0},
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_MOVE,               DEVICE_WINDOW,  FALSE,  0},
+        {WM_SIZE,               DEVICE_WINDOW,  FALSE,  0},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message focus_loss_messages[] =
+    {
+        /* WM_ACTIVATE (wparam = WA_INACTIVE) is sent on Windows. It is
+         * not reliable on X11 WMs. When the window focus follows the
+         * mouse pointer the message is not sent.
+         * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        /* Windows sends WM_ACTIVATE to the device window, indicating that
+         * SW_SHOWMINIMIZED is used instead of SW_MINIMIZE. Yet afterwards
+         * the foreground and focus window are NULL. On Wine SW_SHOWMINIMIZED
+         * leaves the device window active, breaking re-activation in the
+         * lost device test.
+         * {WM_ACTIVATE,           DEVICE_WINDOW,  TRUE,   0x200000 | WA_ACTIVE}, */
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_SIZE,               DEVICE_WINDOW,  TRUE,   SIZE_MINIMIZED},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        /* WM_ACTIVATEAPP is sent to the device window too, but the order is
+         * not deterministic. It may be sent after the focus window handling
+         * or before. */
+        {0,                     0,              FALSE,  0},
     };
 
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
@@ -2286,7 +2321,7 @@ static void test_wndproc(void)
 
     flush_events();
 
-    expect_messages = messages;
+    expect_messages = create_messages;
 
     device_desc.device_window = device_window;
     device_desc.width = registry_mode.dmPelsWidth;
@@ -2312,8 +2347,6 @@ static void test_wndproc(void)
     SetForegroundWindow(focus_window);
     flush_events();
 
-    filter_messages = focus_window;
-
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
             (LONG_PTR)test_proc, proc);
@@ -2321,6 +2354,49 @@ static void test_wndproc(void)
     proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
     ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx.\n", (LONG_PTR)test_proc);
 
+    expect_messages = focus_loss_messages;
+    /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
+     * manually changing the focus. It generates the same messages, but the task
+     * bar still shows the previous foreground window as active, and the window has
+     * an inactive titlebar if reactivated with SetForegroundWindow. Reactivating
+     * the device is difficult, see below. */
+    SetForegroundWindow(GetDesktopWindow());
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    tmp = GetFocus();
+    ok(tmp != device_window, "The device window is active.\n");
+    ok(tmp != focus_window, "The focus window is active.\n");
+
+    /* The Present call is necessary to make native realize the device is lost. */
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device);
+    /* Focus-follows-mouse WMs prematurely reactivate our window. */
+    if (hr == D3DERR_DEVICENOTRESET)
+        todo_wine ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+    else
+        ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+
+    /* I have to minimize and restore the focus window, otherwise native d3d9 fails
+     * device::reset with D3DERR_DEVICELOST. This does not happen when the window
+     * restore is triggered by the user. */
+    ShowWindow(focus_window, SW_MINIMIZE);
+    ShowWindow(focus_window, SW_RESTORE);
+    /* Set focus twice to make KDE and fvwm in focus-follows-mouse mode happy. */
+    SetForegroundWindow(focus_window);
+    flush_events();
+    SetForegroundWindow(focus_window);
+    flush_events();
+
+    hr = IDirect3DDevice8_TestCooperativeLevel(device);
+    ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
+
+    /* Releasing a device in lost state breaks follow-up tests on native. */
+    hr = reset_device(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+
+    filter_messages = focus_window;
     ref = IDirect3DDevice8_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
 
