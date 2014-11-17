@@ -2867,6 +2867,7 @@ static void test_window_style(void)
     IDirect3D8 *d3d8;
     HRESULT hr;
     ULONG ref;
+    BOOL ret;
 
     focus_window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
@@ -2940,6 +2941,36 @@ static void test_window_style(void)
     ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
             focus_exstyle, style);
 
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+    ret = SetForegroundWindow(GetDesktopWindow());
+    ok(ret, "Failed to set foreground window.\n");
+
+    style = GetWindowLongA(device_window, GWL_STYLE);
+    expected_style = device_style | WS_MINIMIZE | WS_VISIBLE;
+    todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x.\n",
+            expected_style, style);
+    style = GetWindowLongA(device_window, GWL_EXSTYLE);
+    expected_style = device_exstyle | WS_EX_TOPMOST;
+    todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x.\n",
+            expected_style, style);
+
+    style = GetWindowLongA(focus_window, GWL_STYLE);
+    ok(style == focus_style, "Expected focus window style %#x, got %#x.\n",
+            focus_style, style);
+    style = GetWindowLongA(focus_window, GWL_EXSTYLE);
+    ok(style == focus_exstyle, "Expected focus window extended style %#x, got %#x.\n",
+            focus_exstyle, style);
+
+    /* Follow-up tests fail on native if the device is destroyed while lost. */
+    ShowWindow(focus_window, SW_MINIMIZE);
+    ShowWindow(focus_window, SW_RESTORE);
+    ret = SetForegroundWindow(focus_window);
+    ok(ret, "Failed to set foreground window.\n");
+    flush_events();
+    hr = reset_device(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
     ref = IDirect3DDevice8_Release(device);
     ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
