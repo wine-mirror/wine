@@ -299,7 +299,11 @@ static struct object *create_console_input( struct thread* renderer, int fd )
 {
     struct console_input *console_input;
 
-    if (!(console_input = alloc_object( &console_input_ops ))) return NULL;
+    if (!(console_input = alloc_object( &console_input_ops )))
+    {
+        if (fd != -1) close( fd );
+        return NULL;
+    }
     console_input->renderer      = renderer;
     console_input->mode          = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
@@ -323,8 +327,9 @@ static struct object *create_console_input( struct thread* renderer, int fd )
 
     if (!console_input->history || (renderer && !console_input->evt) || !console_input->event)
     {
-	release_object( console_input );
-	return NULL;
+        if (fd != -1) close( fd );
+        release_object( console_input );
+        return NULL;
     }
     if (fd != -1) /* bare console */
     {
