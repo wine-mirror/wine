@@ -219,11 +219,16 @@ struct thread *create_thread( int fd, struct process *process )
 
     if (process->is_terminating)
     {
+        close( fd );
         set_error( STATUS_PROCESS_IS_TERMINATING );
         return NULL;
     }
 
-    if (!(thread = alloc_object( &thread_ops ))) return NULL;
+    if (!(thread = alloc_object( &thread_ops )))
+    {
+        close( fd );
+        return NULL;
+    }
 
     init_thread_structure( thread );
 
@@ -236,6 +241,7 @@ struct thread *create_thread( int fd, struct process *process )
 
     if (!(thread->id = alloc_ptid( thread )))
     {
+        close( fd );
         release_object( thread );
         return NULL;
     }
