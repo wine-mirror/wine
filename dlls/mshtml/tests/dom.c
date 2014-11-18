@@ -478,6 +478,20 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(stra, buf);
 }
 
+static BOOL is_prefix_wa(const WCHAR *strw, const char *prefix)
+{
+    int len, prefix_len;
+    CHAR buf[512];
+
+    len = WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL)-1;
+    prefix_len = lstrlenA(prefix);
+    if(len < prefix_len)
+        return FALSE;
+
+    buf[prefix_len] = 0;
+    return !lstrcmpA(buf, prefix);
+}
+
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -2155,8 +2169,8 @@ static void _test_range_paste_html(unsigned line, IHTMLTxtRange *range, const ch
     HRESULT hres;
 
     hres = IHTMLTxtRange_pasteHTML(range, str);
-     ok_(__FILE__,line)(hres == S_OK, "pasteHTML failed: %08x\n", hres);
-     SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "pasteHTML failed: %08x\n", hres);
+    SysFreeString(str);
 }
 
 #define test_range_parent(r,t) _test_range_parent(__LINE__,r,t)
@@ -6911,6 +6925,43 @@ static void test_iframe_elem(IHTMLElement *elem)
     IHTMLDocument2_Release(content_doc);
 }
 
+#define test_stylesheet_csstext(a,b,c) _test_stylesheet_csstext(__LINE__,a,b,c)
+static void _test_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet, const char *exstr, BOOL is_todo)
+{
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLStyleSheet_get_cssText(stylesheet, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_cssText failed: %08x\n", hres);
+    if(!is_todo) {
+        if(exstr)
+            ok_(__FILE__,line)(is_prefix_wa(str, exstr), "cssText = %s\n", wine_dbgstr_w(str));
+        else
+            ok_(__FILE__,line)(!str, "cssText = %s\n", wine_dbgstr_w(str));
+    }else todo_wine {
+        if(exstr)
+            ok_(__FILE__,line)(is_prefix_wa(str, exstr), "cssText = %s\n", wine_dbgstr_w(str));
+        else
+            ok_(__FILE__,line)(!str, "cssText = %s\n", wine_dbgstr_w(str));
+    }
+
+    SysFreeString(str);
+}
+
+#define set_stylesheet_csstext(a,b,c) _set_stylesheet_csstext(__LINE__,a,b,c)
+static void _set_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet, const char *csstext, BOOL is_todo)
+{
+    BSTR str = a2bstr(csstext);
+    HRESULT hres;
+
+    hres = IHTMLStyleSheet_put_cssText(stylesheet, str);
+    if(!is_todo)
+        ok_(__FILE__,line)(hres == S_OK, "put_cssText failed: %08x\n", hres);
+    else
+        todo_wine ok_(__FILE__,line)(hres == S_OK, "put_cssText failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
 static void test_stylesheet(IDispatch *disp)
 {
     IHTMLStyleSheetRulesCollection *col = NULL;
@@ -6935,6 +6986,14 @@ static void test_stylesheet(IDispatch *disp)
     ok(hres == S_OK, "get_href failed: %08x\n", hres);
     ok(href == NULL, "got href != NULL\n");
     SysFreeString(href);
+
+    test_stylesheet_csstext(stylesheet, ".body {", FALSE);
+    set_stylesheet_csstext(stylesheet, ".div { margin-right: 1px; }\n.body { margin-right: 2px; }", TRUE);
+    test_stylesheet_csstext(stylesheet, ".div {", TRUE);
+    set_stylesheet_csstext(stylesheet, "", FALSE);
+    test_stylesheet_csstext(stylesheet, NULL, FALSE);
+    set_stylesheet_csstext(stylesheet, ".div { margin-right: 1px; }", FALSE);
+    test_stylesheet_csstext(stylesheet, ".div {", FALSE);
 
     IHTMLStyleSheet_Release(stylesheet);
 }
