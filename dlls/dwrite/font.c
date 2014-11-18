@@ -179,10 +179,8 @@ static inline void* get_fontface_cmap(struct dwrite_fontface *fontface)
 static void release_font_data(struct dwrite_font_data *data)
 {
     int i;
-    if (!data)
-        return;
-    i = InterlockedDecrement(&data->ref);
-    if (i > 0)
+
+    if (InterlockedDecrement(&data->ref) > 0)
         return;
 
     for (i = DWRITE_INFORMATIONAL_STRING_NONE; i < sizeof(data->info_strings)/sizeof(data->info_strings[0]); i++) {
@@ -196,14 +194,13 @@ static void release_font_data(struct dwrite_font_data *data)
     heap_free(data);
 }
 
-static VOID _free_fontfamily_data(struct dwrite_fontfamily_data *data)
+static void release_fontfamily_data(struct dwrite_fontfamily_data *data)
 {
     int i;
-    if (!data)
+
+    if (InterlockedDecrement(&data->ref) > 0)
         return;
-    i = InterlockedDecrement(&data->ref);
-    if (i > 0)
-        return;
+
     for (i = 0; i < data->font_count; i++)
         release_font_data(data->fonts[i]);
     heap_free(data->fonts);
@@ -1060,7 +1057,7 @@ static ULONG WINAPI dwritefontfamily_Release(IDWriteFontFamily *iface)
     if (!ref)
     {
         IDWriteFontCollection_Release(This->collection);
-        _free_fontfamily_data(This->data);
+        release_fontfamily_data(This->data);
         heap_free(This);
     }
 
@@ -1238,7 +1235,7 @@ static ULONG WINAPI dwritefontcollection_Release(IDWriteFontCollection *iface)
 
     if (!ref) {
         for (i = 0; i < This->family_count; i++)
-            _free_fontfamily_data(This->family_data[i]);
+            release_fontfamily_data(This->family_data[i]);
         heap_free(This->family_data);
         heap_free(This);
     }
