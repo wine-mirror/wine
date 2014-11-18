@@ -63,6 +63,7 @@ static DWORD (WINAPI *pGetLayout)(HDC hdc);
 static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
 
 static BOOL test_lbuttondown_flag;
+static DWORD num_gettext_msgs;
 static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
@@ -793,6 +794,9 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 ShowWindow((HWND)wparam, SW_SHOW);
                 flush_events( FALSE );
             }
+            break;
+        case WM_GETTEXT:
+            num_gettext_msgs++;
             break;
     }
 
@@ -6935,22 +6939,38 @@ static void test_FindWindowEx(void)
     hwnd = CreateWindowExA( 0, "MainWindowClass", "caption", WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
     ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
 
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "" );
     ok( found == NULL, "expected a NULL hwnd\n" );
+    todo_wine
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", NULL );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "caption" );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    todo_wine
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     DestroyWindow( hwnd );
 
     hwnd = CreateWindowExA( 0, "MainWindowClass", NULL, WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
     ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
 
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "" );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    todo_wine
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", NULL );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     DestroyWindow( hwnd );
 
