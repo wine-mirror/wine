@@ -3192,8 +3192,13 @@ static void test_wndproc(void)
     ULONG ref;
     DWORD res, tid;
     HWND tmp;
-    unsigned int i;
+    UINT i, adapter_mode_count;
     HRESULT hr;
+    D3DDISPLAYMODE d3ddm;
+    DWORD d3d_width = 0, d3d_height = 0, user32_width = 0, user32_height = 0;
+    DEVMODEW devmode;
+    LONG change_ret;
+    BOOL ret;
 
     static const struct message create_messages[] =
     {
@@ -3211,6 +3216,9 @@ static void test_wndproc(void)
          * not reliable on X11 WMs. When the window focus follows the
          * mouse pointer the message is not sent.
          * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
+        /* WM_DISPLAYCHANGE is sent to the focus window too, but the order is
+         * not deterministic. */
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         /* Windows sends WM_ACTIVATE to the device window, indicating that
          * SW_SHOWMINIMIZED is used instead of SW_MINIMIZE. Yet afterwards
@@ -3232,6 +3240,7 @@ static void test_wndproc(void)
          * not reliable on X11 WMs. When the window focus follows the
          * mouse pointer the message is not sent.
          * {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_INACTIVE}, */
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
         {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
         {0,                     0,              FALSE,  0},
     };
@@ -3249,6 +3258,55 @@ static void test_wndproc(void)
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
 
+    adapter_mode_count = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8);
+    for (i = 0; i < adapter_mode_count; ++i)
+    {
+        hr = IDirect3D9_EnumAdapterModes(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8, i, &d3ddm);
+        ok(SUCCEEDED(hr), "Failed to enumerate display mode, hr %#x.\n", hr);
+
+        if (d3ddm.Width == registry_mode.dmPelsWidth && d3ddm.Height == registry_mode.dmPelsHeight)
+            continue;
+        /* The r200 driver on Windows XP enumerates modes like 320x200 and 320x240 but
+         * refuses to create a device at these sizes. */
+        if (d3ddm.Width < 640 || d3ddm.Height < 480)
+            continue;
+
+        if (!user32_width)
+        {
+            user32_width = d3ddm.Width;
+            user32_height = d3ddm.Height;
+            continue;
+        }
+
+        /* Make sure the d3d mode is smaller in width or height and at most
+         * equal in the other dimension than the mode passed to
+         * ChangeDisplaySettings. Otherwise Windows shrinks the window to
+         * the ChangeDisplaySettings parameters + 12. */
+        if (d3ddm.Width == user32_width && d3ddm.Height == user32_height)
+            continue;
+        if (d3ddm.Width <= user32_width && d3ddm.Height <= user32_height)
+        {
+            d3d_width = d3ddm.Width;
+            d3d_height = d3ddm.Height;
+            break;
+        }
+        if (user32_width <= d3ddm.Width && user32_height <= d3ddm.Height)
+        {
+            d3d_width = user32_width;
+            d3d_height = user32_height;
+            user32_width = d3ddm.Width;
+            user32_height = d3ddm.Height;
+            break;
+        }
+    }
+
+    if (!d3d_width)
+    {
+        skip("Could not find adequate modes, skipping mode tests.\n");
+        IDirect3D9_Release(d3d9);
+        return;
+    }
+
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d9_test_wndproc_wc";
     ok(RegisterClassA(&wc), "Failed to register window class.\n");
@@ -3258,14 +3316,20 @@ static void test_wndproc(void)
     thread_params.test_finished = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
+        devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+        devmode.dmPelsWidth = user32_width;
+        devmode.dmPelsHeight = user32_height;
+        change_ret = ChangeDisplaySettingsW(&devmode, CDS_FULLSCREEN);
+        ok(change_ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x.\n", change_ret);
+
         focus_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
-                registry_mode.dmPelsHeight, 0, 0, 0, 0);
+                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, user32_width, user32_height, 0, 0, 0, 0);
         device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
-                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
-                registry_mode.dmPelsHeight, 0, 0, 0, 0);
+                WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, user32_width, user32_height, 0, 0, 0, 0);
         thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
         ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -3298,8 +3362,8 @@ static void test_wndproc(void)
         expect_messages = create_messages;
 
         device_desc.device_window = device_window;
-        device_desc.width = registry_mode.dmPelsWidth;
-        device_desc.height = registry_mode.dmPelsHeight;
+        device_desc.width = d3d_width;
+        device_desc.height = d3d_height;
         device_desc.flags = CREATE_DEVICE_FULLSCREEN | tests[i].create_flags;
         if (!(device = create_device(d3d9, focus_window, &device_desc)))
         {
@@ -3329,6 +3393,22 @@ static void test_wndproc(void)
         ok(proc != (LONG_PTR)test_proc, "Expected wndproc != %#lx, i=%u.\n",
                 (LONG_PTR)test_proc, i);
 
+        /* Change the mode while the device is in use and then drop focus. */
+        devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+        devmode.dmPelsWidth = user32_width;
+        devmode.dmPelsHeight = user32_height;
+        change_ret = ChangeDisplaySettingsW(&devmode, CDS_FULLSCREEN);
+        ok(change_ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x, i=%u.\n", change_ret, i);
+
+        /* Wine doesn't (yet) mark the device not reset when the mode is changed, thus the todo_wine.
+         * But sometimes focus-follows-mouse WMs also temporarily drop window focus, which makes
+         * mark the device lost, then not reset, causing the test to succeed for the wrong reason. */
+        hr = IDirect3DDevice9_TestCooperativeLevel(device);
+        if (hr == D3DERR_DEVICENOTRESET)
+            ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
+        else
+            todo_wine ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
+
         expect_messages = tests[i].focus_loss_messages;
         /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
          * manually changing the focus. It generates the same messages, but the task
@@ -3336,7 +3416,7 @@ static void test_wndproc(void)
          * an inactive titlebar if reactivated with SetForegroundWindow. Reactivating
          * the device is difficult, see below. */
         SetForegroundWindow(GetDesktopWindow());
-        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+        todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
         tmp = GetFocus();
@@ -3345,6 +3425,12 @@ static void test_wndproc(void)
 
         hr = IDirect3DDevice9_TestCooperativeLevel(device);
         ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+
+        ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+        ok(ret, "Failed to get display mode.\n");
+        todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+                devmode.dmPelsWidth, devmode.dmPelsHeight);
 
         /* This is needed on native with D3DCREATE_NOWINDOWCHANGES, and it needs to be
          * done before the focus window is restored. This makes sense to some extent
@@ -3370,6 +3456,12 @@ static void test_wndproc(void)
         hr = IDirect3DDevice9_TestCooperativeLevel(device);
         ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
 
+        ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+        ok(ret, "Failed to get display mode.\n");
+        todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+                devmode.dmPelsWidth, devmode.dmPelsHeight);
+
         /* Releasing a device in lost state breaks follow-up tests on native. */
         hr = reset_device(device, &device_desc);
         ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, i=%u.\n", hr, i);
@@ -3378,6 +3470,10 @@ static void test_wndproc(void)
 
         ref = IDirect3DDevice9_Release(device);
         ok(ref == 0, "The device was not properly freed: refcount %u, i=%u.\n", ref, i);
+
+        /* Fix up the mode until Wine's device release behavior is fixed. */
+        change_ret = ChangeDisplaySettingsW(NULL, CDS_FULLSCREEN);
+        ok(change_ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x.\n", change_ret);
 
         proc = GetWindowLongPtrA(focus_window, GWLP_WNDPROC);
         ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx, i=%u.\n",
