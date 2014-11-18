@@ -1973,11 +1973,17 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
 }
 
 /* IDWriteLocalFontFileLoader and its required IDWriteFontFileStream */
+struct local_refkey
+{
+    FILETIME writetime;
+    WCHAR name[1];
+};
+
 struct local_cached_stream
 {
     struct list entry;
     IDWriteFontFileStream *stream;
-    void  *key;
+    struct local_refkey *key;
     UINT32 key_size;
 };
 
@@ -1988,12 +1994,6 @@ struct dwrite_localfontfilestream
 
     struct local_cached_stream *entry;
     HANDLE handle;
-};
-
-struct local_refkey
-{
-    FILETIME writetime;
-    WCHAR name[1];
 };
 
 struct dwrite_localfontfileloader {
@@ -2106,9 +2106,15 @@ static HRESULT WINAPI localfontfilestream_GetFileSize(IDWriteFontFileStream *ifa
 static HRESULT WINAPI localfontfilestream_GetLastWriteTime(IDWriteFontFileStream *iface, UINT64 *last_writetime)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    FIXME("(%p)->(%p): stub\n",This, last_writetime);
-    *last_writetime = 0;
-    return E_NOTIMPL;
+    ULARGE_INTEGER li;
+
+    TRACE("(%p)->(%p)\n", This, last_writetime);
+
+    li.LowPart = This->entry->key->writetime.dwLowDateTime;
+    li.HighPart = This->entry->key->writetime.dwHighDateTime;
+    *last_writetime = li.QuadPart;
+
+    return S_OK;
 }
 
 static const IDWriteFontFileStreamVtbl localfontfilestreamvtbl =

@@ -2362,6 +2362,7 @@ static void test_CreateStreamFromKey(void)
     IDWriteFontFileLoader *loader;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
+    UINT64 writetime;
     void *key;
     UINT32 size;
     HRESULT hr;
@@ -2398,6 +2399,12 @@ static void test_CreateStreamFromKey(void)
     hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(stream, 1);
+
+    writetime = 0;
+    hr = IDWriteFontFileStream_GetLastWriteTime(stream, &writetime);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(writetime != 0, "got %08x%08x\n", (UINT)(writetime >> 32), (UINT)writetime);
+
     IDWriteFontFileStream_Release(stream);
 
     IDWriteLocalFontFileLoader_Release(localloader);
