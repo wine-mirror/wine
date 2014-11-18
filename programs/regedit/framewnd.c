@@ -286,7 +286,7 @@ static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, W
                 BOOL export_branch = FALSE;
                 WCHAR* path = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
                 SendDlgItemMessageW(hdlg, IDC_EXPORT_PATH, WM_SETTEXT, 0, (LPARAM)path);
-                if (path && strlenW(path) > 0)
+                if (path && path[0])
                     export_branch = TRUE;
                 HeapFree(GetProcessHeap(), 0, path);
                 CheckRadioButton(hdlg, IDC_EXPORT_ALL, IDC_EXPORT_SELECTED, export_branch ? IDC_EXPORT_SELECTED : IDC_EXPORT_ALL);
