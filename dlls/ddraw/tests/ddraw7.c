@@ -2270,7 +2270,7 @@ static void test_coop_level_mode_set(void)
     static const struct message exclusive_focus_loss_messages[] =
     {
         {WM_ACTIVATE,           TRUE,   WA_INACTIVE},
-        /*{WM_DISPLAYCHANGE,      FALSE,  0}, Not yet implemented on Wine. */
+        {WM_DISPLAYCHANGE,      FALSE,  0},
         {WM_WINDOWPOSCHANGING,  FALSE,  0},
         /* Like d3d8 and d3d9 ddraw seems to use SW_SHOWMINIMIZED instead of
          * SW_MINIMIZED, causing a recursive window activation that does not
@@ -2426,9 +2426,22 @@ static void test_coop_level_mode_set(void)
     expect_messages = exclusive_focus_loss_messages;
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
-    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "Failed to get display mode.\n");
+    todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+            && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
+            devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     ShowWindow(window, SW_RESTORE);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "Failed to get display mode.\n");
+    todo_wine ok(devmode.dmPelsWidth == param.ddraw_width
+            && devmode.dmPelsHeight == param.ddraw_height, "Got unexpect screen size %ux%u.\n",
+            devmode.dmPelsWidth, devmode.dmPelsHeight);
+
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
     /* Normally the primary should be restored here. Unfortunately this causes the
@@ -2527,6 +2540,9 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
+    devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    devmode.dmPelsWidth = param.user32_width;
+    devmode.dmPelsHeight = param.user32_height;
     change_ret = ChangeDisplaySettingsW(&devmode, CDS_FULLSCREEN);
     ok(change_ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x.\n", change_ret);
 
