@@ -5691,21 +5691,15 @@ static void test_ShowWindow(void)
 
 static void test_gettext(void)
 {
-    WNDCLASSA cls;
-    LPCSTR clsname = "gettexttest";
     HWND hwnd;
     LRESULT r;
 
-    memset( &cls, 0, sizeof cls );
-    cls.lpfnWndProc = DefWindowProcA;
-    cls.lpszClassName = clsname;
-    cls.hInstance = GetModuleHandleA(NULL);
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "caption", WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
 
-    if (!RegisterClassA( &cls )) return;
-
-    hwnd = CreateWindowA( clsname, "test text", WS_OVERLAPPED, 0, 0, 10, 10, 0, NULL, NULL, NULL);
-    ok( hwnd != NULL, "window was null\n");
-
+    /* seems to crash on every modern Windows version */
+    if (0)
+    {
     r = SendMessageA( hwnd, WM_GETTEXT, 0x10, 0x1000);
     ok( r == 0, "settext should return zero\n");
 
@@ -5717,9 +5711,9 @@ static void test_gettext(void)
 
     r = SendMessageA( hwnd, WM_GETTEXT, 0x1000, 0xff000000);
     ok( r == 0, "settext should return zero (%ld)\n", r);
+    }
 
     DestroyWindow(hwnd);
-    UnregisterClassA( clsname, NULL );
 }
 
 
@@ -7987,7 +7981,7 @@ START_TEST(win)
     test_csparentdc();
     test_SetWindowLong();
     test_ShowWindow();
-    if (0) test_gettext(); /* crashes on NT4 */
+    test_gettext();
     test_GetUpdateRect();
     test_Expose();
     test_layered_window();
