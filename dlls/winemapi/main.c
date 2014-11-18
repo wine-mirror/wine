@@ -100,7 +100,7 @@ ULONG WINAPI MAPIResolveName(LHANDLE session, ULONG_PTR uiparam, LPSTR name,
     TRACE("(0x%08lx 0x%08lx %s 0x%08x 0x%08x %p)\n", session, uiparam,
           debugstr_a(name), flags, reserved, recip);
 
-    if (!name || !strlen(name))
+    if (!name || !name[0])
         return MAPI_E_FAILURE;
 
     scode = MAPIAllocateBuffer(sizeof(**recip) + sizeof(smtp) + strlen(name),
