@@ -31,6 +31,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
+static const DWRITE_MATRIX identity =
+{
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f
+};
+
 struct gdiinterop {
     IDWriteGdiInterop IDWriteGdiInterop_iface;
     IDWriteFactory *factory;
@@ -171,8 +178,11 @@ static HRESULT WINAPI rendertarget_GetCurrentTransform(IDWriteBitmapRenderTarget
 static HRESULT WINAPI rendertarget_SetCurrentTransform(IDWriteBitmapRenderTarget *iface, DWRITE_MATRIX const *transform)
 {
     struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
-    FIXME("(%p)->(%p): stub\n", This, transform);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, transform);
+
+    This->m = transform ? *transform : identity;
+    return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_GetSize(IDWriteBitmapRenderTarget *iface, SIZE *size)
@@ -233,9 +243,7 @@ static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWrite
         return hr;
     }
 
-    target->m.m11 = target->m.m22 = 1.0;
-    target->m.m12 = target->m.m21 = 0.0;
-    target->m.dx  = target->m.dy  = 0.0;
+    target->m = identity;
     target->pixels_per_dip = 1.0;
 
     *ret = &target->IDWriteBitmapRenderTarget_iface;

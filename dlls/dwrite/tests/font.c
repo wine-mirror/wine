@@ -666,6 +666,25 @@ if (0) /* crashes on native */
     ok(m.m11 == 1.0 && m.m22 == 1.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
     ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
 
+    memset(&m, 0, sizeof(m));
+    hr = IDWriteBitmapRenderTarget_SetCurrentTransform(target, &m);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&m, 0xcc, sizeof(m));
+    hr = IDWriteBitmapRenderTarget_GetCurrentTransform(target, &m);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(m.m11 == 0.0 && m.m22 == 0.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
+    ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
+
+    hr = IDWriteBitmapRenderTarget_SetCurrentTransform(target, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&m, 0xcc, sizeof(m));
+    hr = IDWriteBitmapRenderTarget_GetCurrentTransform(target, &m);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(m.m11 == 1.0 && m.m22 == 1.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
+    ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
+
     /* pixels per dip */
     pdip = IDWriteBitmapRenderTarget_GetPixelsPerDip(target);
     ok(pdip == 1.0, "got %.2f\n", pdip);
