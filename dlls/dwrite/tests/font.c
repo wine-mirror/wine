@@ -2412,6 +2412,77 @@ static void test_CreateStreamFromKey(void)
     DeleteFileW(test_fontfile);
 }
 
+static void test_ReadFileFragment(void)
+{
+    IDWriteLocalFontFileLoader *localloader;
+    IDWriteFontFileStream *stream;
+    IDWriteFontFileLoader *loader;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    const void *fragment, *fragment2;
+    void *key, *context, *context2;
+    UINT64 filesize;
+    UINT32 size;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    key = NULL;
+    size = 0;
+    hr = IDWriteFontFile_GetReferenceKey(file, (const void**)&key, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size != 0, "got %u\n", size);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+    IDWriteFontFileLoader_Release(loader);
+
+    hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFileStream_GetFileSize(stream, &filesize);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* reading past the end of the stream */
+    fragment = (void*)0xdeadbeef;
+    context = (void*)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, filesize+1, &context);
+todo_wine {
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(context == NULL, "got %p\n", context);
+    ok(fragment == NULL, "got %p\n", fragment);
+}
+    fragment = (void*)0xdeadbeef;
+    context = (void*)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, filesize, &context);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(context == NULL, "got %p\n", context);
+    ok(fragment != NULL, "got %p\n", fragment);
+
+    fragment2 = (void*)0xdeadbeef;
+    context2 = (void*)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment2, 0, filesize, &context2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(context2 == NULL, "got %p\n", context2);
+    ok(fragment == fragment2, "got %p, %p\n", fragment, fragment2);
+}
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context2);
+
+    IDWriteFontFileStream_Release(stream);
+    IDWriteLocalFontFileLoader_Release(localloader);
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2444,6 +2515,7 @@ START_TEST(font)
     test_TryGetFontTable();
     test_ConvertFontToLOGFONT();
     test_CreateStreamFromKey();
+    test_ReadFileFragment();
 
     IDWriteFactory_Release(factory);
 }
