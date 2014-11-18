@@ -7055,7 +7055,6 @@ static void test_FindWindowEx(void)
     num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "" );
     ok( found == NULL, "expected a NULL hwnd\n" );
-    todo_wine
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     num_gettext_msgs = 0;
@@ -7066,7 +7065,6 @@ static void test_FindWindowEx(void)
     num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "caption" );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
-    todo_wine
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     DestroyWindow( hwnd );
@@ -7077,7 +7075,6 @@ static void test_FindWindowEx(void)
     num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "" );
     ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
-    todo_wine
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     num_gettext_msgs = 0;

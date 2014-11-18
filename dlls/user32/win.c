@@ -1941,7 +1941,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
     {
         while (list[i])
         {
-            if (GetWindowTextW( list[i], buffer, len + 1 ))
+            if (InternalGetWindowText( list[i], buffer, len + 1 ))
             {
                 if (!strcmpiW( buffer, title )) break;
             }
