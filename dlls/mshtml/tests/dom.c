@@ -5283,6 +5283,27 @@ static void _test_framebase_put_name(unsigned line, IHTMLElement *elem, const ch
     IHTMLFrameBase_Release(fbase);
 }
 
+#define test_framebase_src(a,b) _test_framebase_src(__LINE__,a,b)
+static void _test_framebase_src(unsigned line, IHTMLElement *elem, const char *src)
+{
+    BSTR str = (void*)0xdeadbeef;
+    IHTMLFrameBase *fbase;
+    HRESULT hres;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFrameBase, (void**)&fbase);
+    ok(hres == S_OK, "Could not get IHTMLFrameBase interface: 0x%08x\n", hres);
+
+    hres = IHTMLFrameBase_get_src(fbase, &str);
+    ok_(__FILE__,line)(hres == S_OK, "IHTMLFrameBase_get_src failed: 0x%08x\n", hres);
+    if(src)
+        ok_(__FILE__,line)(!strcmp_wa(str, src), "src = %s, expected %s\n", wine_dbgstr_w(str), src);
+    else
+        ok_(__FILE__,line)(!str, "src = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLFrameBase_Release(fbase);
+}
+
 #define test_framebase_marginheight(a,b) _test_framebase_marginheight(__LINE__,a,b)
 static void _test_framebase_marginheight(unsigned line, IHTMLFrameBase *framebase, const char *exval)
 {
@@ -6890,6 +6911,7 @@ static void test_iframe_elem(IHTMLElement *elem)
     set_iframe_width(elem, "150px");
     set_iframe_width(elem, "70%");
     test_iframe_width(elem, "70%");
+    test_framebase_src(elem, "about:blank");
 
     str = a2bstr("text/html");
     V_VT(&errv) = VT_ERROR;
@@ -8636,6 +8658,7 @@ static void test_frameset(IHTMLDocument2 *doc)
     test_framebase_put_name(elem, "frame name");
     test_framebase_put_name(elem, NULL);
     test_framebase_put_name(elem, "nm1");
+    test_framebase_src(elem, "about:blank");
     IHTMLElement_Release(elem);
 
     /* get_name with no name attr */

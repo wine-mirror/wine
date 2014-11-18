@@ -157,8 +157,22 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
 static HRESULT WINAPI HTMLFrameBase_get_src(IHTMLFrameBase *iface, BSTR *p)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nsframe && !This->nsiframe) {
+        ERR("No attached frame object\n");
+        return E_UNEXPECTED;
+    }
+
+    nsAString_Init(&nsstr, NULL);
+    if(This->nsframe)
+        nsres = nsIDOMHTMLFrameElement_GetSrc(This->nsframe, &nsstr);
+    else
+        nsres = nsIDOMHTMLIFrameElement_GetSrc(This->nsiframe, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI HTMLFrameBase_put_name(IHTMLFrameBase *iface, BSTR v)
