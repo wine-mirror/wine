@@ -5693,13 +5693,47 @@ static void test_ShowWindow(void)
     ok(!IsWindow(hwnd), "window should not exist\n");
 }
 
+static DWORD CALLBACK gettext_msg_thread( LPVOID arg )
+{
+    HWND hwnd = arg;
+    char buf[32];
+    INT buf_len;
+
+    /* test GetWindowTextA */
+    num_gettext_msgs = 0;
+    memset( buf, 0, sizeof(buf) );
+    buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
+    ok( buf_len != 0, "expected a nonempty window text\n" );
+    ok( !strcmp(buf, "another_caption"), "got wrong window text '%s'\n", buf );
+    ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    return 0;
+}
+
+static DWORD CALLBACK settext_msg_thread( LPVOID arg )
+{
+    HWND hwnd = arg;
+    BOOL success;
+
+    /* test SetWindowTextA */
+    num_settext_msgs = 0;
+    success = SetWindowTextA( hwnd, "thread_caption" );
+    ok( success, "SetWindowTextA failed\n" );
+    ok( num_settext_msgs == 1, "got %u WM_SETTEXT messages\n", num_settext_msgs );
+
+    return 0;
+}
+
 static void test_gettext(void)
 {
+    DWORD tid, num_msgs;
+    HANDLE thread;
     BOOL success;
     char buf[32];
     INT buf_len;
     HWND hwnd;
     LRESULT r;
+    MSG msg;
 
     hwnd = CreateWindowExA( 0, "MainWindowClass", "caption", WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL );
     ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
@@ -5744,6 +5778,42 @@ static void test_gettext(void)
     buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
     ok( buf_len != 0, "expected a nonempty window text\n" );
     ok( !strcmp(buf, "another_caption"), "got wrong window text '%s'\n", buf );
+    ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE ))
+        DispatchMessageA( &msg );
+
+    /* test interthread GetWindowTextA */
+    num_msgs = 0;
+    thread = CreateThread( NULL, 0, gettext_msg_thread, hwnd, 0, &tid );
+    ok(thread != NULL, "CreateThread failed, error %d\n", GetLastError());
+    while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_SENDMESSAGE ) != WAIT_OBJECT_0)
+    {
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE ))
+            DispatchMessageA( &msg );
+        num_msgs++;
+    }
+    CloseHandle( thread );
+    ok( num_msgs == 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
+
+    /* test interthread SetWindowText */
+    num_msgs = 0;
+    thread = CreateThread( NULL, 0, settext_msg_thread, hwnd, 0, &tid );
+    ok(thread != NULL, "CreateThread failed, error %d\n", GetLastError());
+    while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_SENDMESSAGE ) != WAIT_OBJECT_0)
+    {
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE ))
+            DispatchMessageA( &msg );
+        num_msgs++;
+    }
+    CloseHandle( thread );
+    ok( num_msgs == 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
+
+    num_gettext_msgs = 0;
+    memset( buf, 0, sizeof(buf) );
+    buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
+    ok( buf_len != 0, "expected a nonempty window text\n" );
+    ok( !strcmp(buf, "thread_caption"), "got wrong window text '%s'\n", buf );
     ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     /* seems to crash on every modern Windows version */
