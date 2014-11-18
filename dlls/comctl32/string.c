@@ -683,7 +683,7 @@ LPSTR WINAPI StrRStrIA(LPCSTR lpszStr, LPCSTR lpszEnd, LPCSTR lpszSearch)
     ch1 = *lpszSearch;
   iLen = lstrlenA(lpszSearch);
 
-  while (lpszStr <= lpszEnd  && *lpszStr)
+  while (lpszStr + iLen <= lpszEnd && *lpszStr)
   {
     ch2 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | lpszStr[1] : *lpszStr;
     if (!COMCTL32_ChrCmpIA(ch1, ch2))
@@ -716,7 +716,7 @@ LPWSTR WINAPI StrRStrIW(LPCWSTR lpszStr, LPCWSTR lpszEnd, LPCWSTR lpszSearch)
 
   iLen = strlenW(lpszSearch);
 
-  while (lpszStr <= lpszEnd  && *lpszStr)
+  while (lpszStr + iLen <= lpszEnd && *lpszStr)
   {
     if (!COMCTL32_ChrCmpIW(*lpszSearch, *lpszStr))
     {
