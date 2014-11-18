@@ -3416,7 +3416,7 @@ static void test_wndproc(void)
          * an inactive titlebar if reactivated with SetForegroundWindow. Reactivating
          * the device is difficult, see below. */
         SetForegroundWindow(GetDesktopWindow());
-        todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
         tmp = GetFocus();
@@ -3428,7 +3428,7 @@ static void test_wndproc(void)
 
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
-        todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
                 && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 
@@ -3458,7 +3458,7 @@ static void test_wndproc(void)
 
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
-        todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
                 && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
 

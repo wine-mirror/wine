@@ -4862,7 +4862,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
-    flags = WINED3D_LEGACY_DEPTH_BIAS | WINED3D_VIDMEM_ACCOUNTING;
+    flags = WINED3D_LEGACY_DEPTH_BIAS | WINED3D_VIDMEM_ACCOUNTING | WINED3D_RESTORE_MODE_ON_ACTIVATE;
     if (!(ddraw->wined3d = wined3d_create(flags)))
     {
         if (!(ddraw->wined3d = wined3d_create(flags | WINED3D_NO3D)))

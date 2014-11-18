@@ -875,16 +875,14 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
 
     if (!desc->windowed)
     {
-        struct wined3d_display_mode mode;
-
         /* Change the display settings */
-        mode.width = desc->backbuffer_width;
-        mode.height = desc->backbuffer_height;
-        mode.format_id = desc->backbuffer_format;
-        mode.refresh_rate = desc->refresh_rate;
-        mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        swapchain->d3d_mode.width = desc->backbuffer_width;
+        swapchain->d3d_mode.height = desc->backbuffer_height;
+        swapchain->d3d_mode.format_id = desc->backbuffer_format;
+        swapchain->d3d_mode.refresh_rate = desc->refresh_rate;
+        swapchain->d3d_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
 
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, adapter->ordinal, &mode)))
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, adapter->ordinal, &swapchain->d3d_mode)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
             goto err;
@@ -1178,6 +1176,24 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate)
 {
-    if (!activate && !(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
-        ShowWindow(swapchain->device_window, SW_MINIMIZE);
+    if (activate)
+    {
+        if (swapchain->device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
+        {
+            if (FAILED(wined3d_set_adapter_display_mode(swapchain->device->wined3d,
+                    swapchain->device->adapter->ordinal, &swapchain->d3d_mode)))
+                ERR("Failed to set display mode.\n");
+        }
+    }
+    else
+    {
+        if (FAILED(wined3d_set_adapter_display_mode(swapchain->device->wined3d,
+                swapchain->device->adapter->ordinal, NULL)))
+            ERR("Failed to set display mode.\n");
+
+        swapchain->reapply_mode = TRUE;
+
+        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
+            ShowWindow(swapchain->device_window, SW_MINIMIZE);
+    }
 }

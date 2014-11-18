@@ -4322,7 +4322,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
     struct wined3d_display_mode m;
-    BOOL DisplayModeChanged = FALSE;
+    BOOL DisplayModeChanged;
     BOOL update_desc = FALSE;
     UINT backbuffer_width = swapchain_desc->backbuffer_width;
     UINT backbuffer_height = swapchain_desc->backbuffer_height;
@@ -4336,6 +4336,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         ERR("Failed to get the first implicit swapchain.\n");
         return WINED3DERR_INVALIDCALL;
     }
+    DisplayModeChanged = swapchain->reapply_mode;
 
     if (reset_state)
     {
@@ -4602,6 +4603,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
                         swapchain_desc->backbuffer_height,
                         TRUE);
             }
+            swapchain->d3d_mode = m;
         }
         else if (!swapchain->desc.windowed)
         {

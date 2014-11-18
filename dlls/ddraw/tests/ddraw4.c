@@ -2749,19 +2749,19 @@ static void test_coop_level_mode_set(void)
     expect_messages = exclusive_focus_loss_messages;
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
             && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     ShowWindow(window, SW_RESTORE);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    todo_wine ok(devmode.dmPelsWidth == param.ddraw_width
+    ok(devmode.dmPelsWidth == param.ddraw_width
             && devmode.dmPelsHeight == param.ddraw_height, "Got unexpect screen size %ux%u.\n",
             devmode.dmPelsWidth, devmode.dmPelsHeight);
 
@@ -2780,7 +2780,7 @@ static void test_coop_level_mode_set(void)
     hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
     todo_wine ok(screen_size.cx == registry_mode.dmPelsWidth
             && screen_size.cy == registry_mode.dmPelsHeight,
