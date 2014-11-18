@@ -43,9 +43,24 @@ function window_navigate_test() {
     iframe.contentWindow.navigate("about:blank");
 }
 
+function detached_src_test() {
+    var iframe = document.createElement("iframe");
+    var onload_called = false;
+
+    iframe.onload = function() {
+        onload_called = true;
+        next_test();
+    }
+
+    iframe.src = "blank.html";
+    document.body.appendChild(iframe);
+    ok(onload_called === false, "called onload too early?");
+}
+
 var tests = [
     nav_back_test,
     window_navigate_test,
+    detached_src_test,
     function() { external.reportSuccess(); }
 ];
 

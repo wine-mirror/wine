@@ -134,8 +134,21 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     if(!This->content_window || !This->element.node.doc || !This->element.node.doc->basedoc.window) {
-        FIXME("detached element\n");
-        return E_FAIL;
+        nsAString nsstr;
+        nsresult nsres;
+
+        nsAString_InitDepend(&nsstr, v);
+        if(This->nsframe)
+            nsres = nsIDOMHTMLFrameElement_SetSrc(This->nsframe, &nsstr);
+        else
+            nsres = nsIDOMHTMLIFrameElement_SetSrc(This->nsiframe, &nsstr);
+        nsAString_Finish(&nsstr);
+        if(NS_FAILED(nsres)) {
+            ERR("SetSrc failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        return S_OK;
     }
 
     return navigate_url(This->content_window, v, This->element.node.doc->basedoc.window->uri, BINDING_NAVIGATED);
