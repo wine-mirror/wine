@@ -2022,9 +2022,7 @@ static void test_save_load_filemoniker(void)
 
     hr = IMoniker_Save(pMk, pStm, TRUE);
     ok_ole_success(hr, "IMoniker_Save");
-
-    hr = IMoniker_Release(pMk);
-    ok_ole_success(hr, "IMoniker_Release");
+    IMoniker_Release(pMk);
 
     /* overwrite the constants with various values */
     hr = IStream_Seek(pStm, zero_pos, STREAM_SEEK_SET, NULL);
@@ -2055,11 +2053,8 @@ static void test_save_load_filemoniker(void)
     hr = IMoniker_Load(pMk, pStm);
     ok_ole_success(hr, "IMoniker_Load");
 
-    hr = IMoniker_Release(pMk);
-    ok_ole_success(hr, "IMoniker_Release");
-
-    hr = IStream_Release(pStm);
-    ok_ole_success(hr, "IStream_Release");
+    IMoniker_Release(pMk);
+    IStream_Release(pStm);
 }
 
 START_TEST(moniker)
