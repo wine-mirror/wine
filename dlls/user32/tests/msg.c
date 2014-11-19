@@ -4621,9 +4621,21 @@ static void test_MsgWaitForMultipleObjects(HWND hwnd)
     ok(ret == WAIT_IO_COMPLETION, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
 }
 
+static DWORD CALLBACK show_window_thread(LPVOID arg)
+{
+   HWND hwnd = arg;
+
+   /* function will not return if ShowWindow(SW_HIDE) calls SendMessage() */
+   ShowWindow(hwnd, SW_HIDE);
+
+   return 0;
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
+    DWORD tid;
+    HANDLE hthread;
     HWND hwnd, hparent, hchild;
     HWND hchild2, hbutton;
     HMENU hmenu;
@@ -4655,6 +4667,22 @@ static void test_messages(void)
     ShowWindow(hwnd, SW_HIDE);
     flush_events();
     ok_sequence(WmHideOverlappedSeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
+
+    /* test ShowWindow(SW_HIDE) on a hidden window - single threaded */
+    ShowWindow(hwnd, SW_HIDE);
+    flush_events();
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
+
+    if (0)
+    {
+    /* test ShowWindow(SW_HIDE) on a hidden window -  multi-threaded */
+    hthread = CreateThread(NULL, 0, show_window_thread, hwnd, 0, &tid);
+    ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hthread);
+    flush_events();
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
+    }
 
     ShowWindow(hwnd, SW_SHOW);
     flush_events();
