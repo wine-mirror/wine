@@ -3325,7 +3325,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
     else
     {
-        if(!EnumDisplaySettingsW(adapter->DeviceName, ENUM_REGISTRY_SETTINGS, &new_mode))
+        if (!EnumDisplaySettingsW(adapter->DeviceName, ENUM_REGISTRY_SETTINGS, &new_mode))
         {
             ERR("Failed to read mode from registry.\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -3344,7 +3344,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             && (current_mode.dmDisplayFrequency == new_mode.dmDisplayFrequency
             || !(new_mode.dmFields & DM_DISPLAYFREQUENCY))
             && (current_mode.u2.dmDisplayFlags == new_mode.u2.dmDisplayFlags
-            || new_mode.dmFields & DM_DISPLAYFLAGS))
+            || !(new_mode.dmFields & DM_DISPLAYFLAGS)))
     {
         TRACE("Skipping redundant mode setting call.\n");
         return WINED3D_OK;
