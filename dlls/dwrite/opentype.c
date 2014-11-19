@@ -930,6 +930,8 @@ static UINT get_name_record_codepage(enum OPENTYPE_PLATFORM_ID platform, USHORT 
     UINT codepage = 0;
 
     switch (platform) {
+    case OPENTYPE_PLATFORM_UNICODE:
+        break;
     case OPENTYPE_PLATFORM_MAC:
         switch (encoding)
         {
