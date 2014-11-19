@@ -21,9 +21,9 @@
 #include "debugger.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
-
 #ifdef __i386__
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
   /* db_disasm.c */
 extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
