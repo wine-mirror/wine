@@ -67,6 +67,22 @@ static int reg_message(int msg)
     return reg_printfW(formatW, msg_buffer);
 }
 
+static int reg_StrCmpNIW(LPCWSTR str, LPCWSTR comp, int len)
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+    {
+        if (!str[i])
+        {
+            len = i + 1;
+            break;
+        }
+    }
+
+    return CompareStringW(CP_ACP, NORM_IGNORECASE, str, len, comp, len) - CSTR_EQUAL;
+}
+
 static HKEY get_rootkey(LPWSTR key)
 {
     static const WCHAR szHKLM[] = {'H','K','L','M',0};
@@ -80,20 +96,20 @@ static HKEY get_rootkey(LPWSTR key)
     static const WCHAR szHKCC[] = {'H','K','C','C',0};
     static const WCHAR szHKEY_CURRENT_CONFIG[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0};
 
-    if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKLM,4)==CSTR_EQUAL ||
-        CompareStringW(CP_ACP,NORM_IGNORECASE,key,18,szHKEY_LOCAL_MACHINE,18)==CSTR_EQUAL)
+    if (!reg_StrCmpNIW(key, szHKLM, 4) ||
+        !reg_StrCmpNIW(key, szHKEY_LOCAL_MACHINE, 18))
         return HKEY_LOCAL_MACHINE;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCU,4)==CSTR_EQUAL ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CURRENT_USER,17)==CSTR_EQUAL)
+    else if (!reg_StrCmpNIW(key, szHKCU, 4) ||
+             !reg_StrCmpNIW(key, szHKEY_CURRENT_USER, 17))
         return HKEY_CURRENT_USER;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCR,4)==CSTR_EQUAL ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,17,szHKEY_CLASSES_ROOT,17)==CSTR_EQUAL)
+    else if (!reg_StrCmpNIW(key, szHKCR, 4) ||
+             !reg_StrCmpNIW(key, szHKEY_CLASSES_ROOT, 17))
         return HKEY_CLASSES_ROOT;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,3,szHKU,3)==CSTR_EQUAL ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,10,szHKEY_USERS,10)==CSTR_EQUAL)
+    else if (!reg_StrCmpNIW(key, szHKU, 3) ||
+             !reg_StrCmpNIW(key, szHKEY_USERS, 10))
         return HKEY_USERS;
-    else if (CompareStringW(CP_ACP,NORM_IGNORECASE,key,4,szHKCC,4)==CSTR_EQUAL ||
-             CompareStringW(CP_ACP,NORM_IGNORECASE,key,19,szHKEY_CURRENT_CONFIG,19)==CSTR_EQUAL)
+    else if (!reg_StrCmpNIW(key, szHKCC, 4) ||
+             !reg_StrCmpNIW(key, szHKEY_CURRENT_CONFIG, 19))
         return HKEY_CURRENT_CONFIG;
     else return NULL;
 }
