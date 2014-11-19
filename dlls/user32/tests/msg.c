@@ -4673,8 +4673,6 @@ static void test_messages(void)
     flush_events();
     ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
 
-    if (0)
-    {
     /* test ShowWindow(SW_HIDE) on a hidden window -  multi-threaded */
     hthread = CreateThread(NULL, 0, show_window_thread, hwnd, 0, &tid);
     ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
@@ -4682,7 +4680,6 @@ static void test_messages(void)
     CloseHandle(hthread);
     flush_events();
     ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
-    }
 
     ShowWindow(hwnd, SW_SHOW);
     flush_events();

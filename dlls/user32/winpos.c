@@ -1219,6 +1219,9 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
         return show_window( full_handle, cmd );
 
+    if ((cmd == SW_HIDE) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
+        return FALSE;
+
     return SendMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
