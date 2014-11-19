@@ -1207,7 +1207,8 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
         swapchain->reapply_mode = TRUE;
 
-        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
+        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES)
+                && IsWindowVisible(swapchain->device_window))
             ShowWindow(swapchain->device_window, SW_MINIMIZE);
     }
 }

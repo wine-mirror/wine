@@ -3095,7 +3095,7 @@ struct message
     WPARAM expect_wparam;
 };
 
-static const struct message *expect_messages;
+static const struct message *expect_messages, *unexpected_messages;
 static HWND device_window, focus_window;
 
 struct wndproc_thread_param
@@ -3142,6 +3142,13 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
             ++expect_messages;
         }
+    }
+
+    if (unexpected_messages)
+    {
+        const struct message *i;
+        for (i = unexpected_messages; i->message; i++)
+            ok(i->message != message, "Got unexpected message %x on window %p.\n", message, hwnd);
     }
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
@@ -3257,6 +3264,21 @@ static void test_wndproc(void)
         /* We're activating the device window before activating the
          * focus window, so no ACTIVATEAPP message is sent. */
         {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_ACTIVE},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message focus_loss_messages_hidden[] =
+    {
+        {WM_DISPLAYCHANGE,      DEVICE_WINDOW,  FALSE,  0},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message focus_loss_messages_hidden_unexpected[] =
+    {
+        /* KDE randomly does something with the hidden window during the
+         * mode change that sometimes generates a WM_WINDOWPOSCHANGING
+         * message. A WM_WINDOWPOSCHANGED message is not generated, so
+         * just flag WM_WINDOWPOSCHANGED as bad. */
+        {WM_WINDOWPOSCHANGED,   0,              FALSE,  0},
         {0,                     0,              FALSE,  0},
     };
     static const struct
@@ -3481,6 +3503,31 @@ static void test_wndproc(void)
         ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
                 && devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect screen size %ux%u.\n",
                 devmode.dmPelsWidth, devmode.dmPelsHeight);
+
+        hr = reset_device(device, &device_desc);
+        ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+
+        ShowWindow(device_window, SW_HIDE);
+        flush_events();
+
+        expect_messages = focus_loss_messages_hidden;
+        unexpected_messages = focus_loss_messages_hidden_unexpected;
+        SetForegroundWindow(GetDesktopWindow());
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
+        unexpected_messages = NULL;
+
+        ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+        ok(ret, "Failed to get display mode.\n");
+        ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+        ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+
+        ShowWindow(device_window, SW_RESTORE);
+        ShowWindow(focus_window, SW_MINIMIZE);
+        ShowWindow(focus_window, SW_RESTORE);
+        SetForegroundWindow(focus_window);
+        flush_events();
 
         /* Releasing a device in lost state breaks follow-up tests on native. */
         hr = reset_device(device, &device_desc);
