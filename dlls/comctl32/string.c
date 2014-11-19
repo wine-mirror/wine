@@ -674,18 +674,20 @@ LPSTR WINAPI StrRStrIA(LPCSTR lpszStr, LPCSTR lpszEnd, LPCSTR lpszSearch)
   if (!lpszStr || !lpszSearch || !*lpszSearch)
     return NULL;
 
-  if (!lpszEnd)
-    lpszEnd = lpszStr + lstrlenA(lpszStr);
-
   if (IsDBCSLeadByte(*lpszSearch))
-    ch1 = *lpszSearch << 8 | lpszSearch[1];
+    ch1 = *lpszSearch << 8 | (UCHAR)lpszSearch[1];
   else
     ch1 = *lpszSearch;
   iLen = lstrlenA(lpszSearch);
 
+  if (!lpszEnd)
+    lpszEnd = lpszStr + lstrlenA(lpszStr);
+  else /* reproduce the broken behaviour on Windows */
+    lpszEnd += min(iLen - 1, lstrlenA(lpszEnd));
+
   while (lpszStr + iLen <= lpszEnd && *lpszStr)
   {
-    ch2 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | lpszStr[1] : *lpszStr;
+    ch2 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | (UCHAR)lpszStr[1] : *lpszStr;
     if (!COMCTL32_ChrCmpIA(ch1, ch2))
     {
       if (!StrCmpNIA(lpszStr, lpszSearch, iLen))
@@ -711,10 +713,13 @@ LPWSTR WINAPI StrRStrIW(LPCWSTR lpszStr, LPCWSTR lpszEnd, LPCWSTR lpszSearch)
   if (!lpszStr || !lpszSearch || !*lpszSearch)
     return NULL;
 
+  iLen = strlenW(lpszSearch);
+
   if (!lpszEnd)
     lpszEnd = lpszStr + strlenW(lpszStr);
+  else /* reproduce the broken behaviour on Windows */
+    lpszEnd += min(iLen - 1, lstrlenW(lpszEnd));
 
-  iLen = strlenW(lpszSearch);
 
   while (lpszStr + iLen <= lpszEnd && *lpszStr)
   {
