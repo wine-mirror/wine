@@ -320,7 +320,7 @@ static BOOL parseKeyName(LPWSTR lpKeyName, HKEY *hKey, LPWSTR *lpKeyPath)
     *hKey = NULL;
 
     for (i = 0; i < REG_CLASS_NUMBER; i++) {
-        if (CompareStringW(LOCALE_USER_DEFAULT, 0, lpKeyName, len, reg_class_namesW[i], len) == CSTR_EQUAL &&
+        if (CompareStringW(LOCALE_USER_DEFAULT, 0, lpKeyName, len, reg_class_namesW[i], -1) == CSTR_EQUAL &&
             len == lstrlenW(reg_class_namesW[i])) {
             *hKey = reg_class_keys[i];
             break;
