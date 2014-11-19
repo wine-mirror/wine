@@ -1609,12 +1609,12 @@ DECL_HANDLER(create_console_output)
     else fd = -1;
     if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES )))
     {
-        close(fd);
+        if (fd != -1) close( fd );
         return;
     }
     if (console_input_is_bare( console ) ^ (fd != -1))
     {
-        close( fd );
+        if (fd != -1) close( fd );
         release_object( console );
         set_error( STATUS_INVALID_HANDLE );
         return;
