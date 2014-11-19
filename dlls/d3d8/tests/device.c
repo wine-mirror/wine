@@ -2282,6 +2282,14 @@ static void test_wndproc(void)
          * or before. */
         {0,                     0,              FALSE,  0},
     };
+    static const struct message reactivate_messages[] =
+    {
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_MOVE,               DEVICE_WINDOW,  FALSE,  0},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   TRUE},
+        {0,                     0,              FALSE,  0},
+    };
 
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
@@ -2469,13 +2477,17 @@ static void test_wndproc(void)
     /* I have to minimize and restore the focus window, otherwise native d3d9 fails
      * device::reset with D3DERR_DEVICELOST. This does not happen when the window
      * restore is triggered by the user. */
+    expect_messages = reactivate_messages;
     ShowWindow(focus_window, SW_MINIMIZE);
     ShowWindow(focus_window, SW_RESTORE);
     /* Set focus twice to make KDE and fvwm in focus-follows-mouse mode happy. */
     SetForegroundWindow(focus_window);
     flush_events();
     SetForegroundWindow(focus_window);
-    flush_events();
+    flush_events(); /* WM_WINDOWPOSCHANGING etc arrive after SetForegroundWindow returns. */
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+            expect_messages->message, expect_messages->window, i);
+    expect_messages = NULL;
 
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
     ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);

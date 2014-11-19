@@ -3244,15 +3244,30 @@ static void test_wndproc(void)
         {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   FALSE},
         {0,                     0,              FALSE,  0},
     };
+    static const struct message reactivate_messages[] =
+    {
+        {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
+        {WM_MOVE,               DEVICE_WINDOW,  FALSE,  0},
+        {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   TRUE},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message reactivate_messages_nowc[] =
+    {
+        /* We're activating the device window before activating the
+         * focus window, so no ACTIVATEAPP message is sent. */
+        {WM_ACTIVATE,           FOCUS_WINDOW,   TRUE,   WA_ACTIVE},
+        {0,                     0,              FALSE,  0},
+    };
     static const struct
     {
         DWORD create_flags;
-        const struct message *focus_loss_messages;
+        const struct message *focus_loss_messages, *reactivate_messages;
     }
     tests[] =
     {
-        {0,                               focus_loss_messages},
-        {CREATE_DEVICE_NOWINDOWCHANGES,   focus_loss_messages_nowc},
+        {0,                               focus_loss_messages,      reactivate_messages},
+        {CREATE_DEVICE_NOWINDOWCHANGES,   focus_loss_messages_nowc, reactivate_messages_nowc},
     };
 
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
@@ -3441,17 +3456,22 @@ static void test_wndproc(void)
             ShowWindow(device_window, SW_MINIMIZE);
             ShowWindow(device_window, SW_RESTORE);
         }
+        flush_events();
 
         /* I have to minimize and restore the focus window, otherwise native d3d9 fails
          * device::reset with D3DERR_DEVICELOST. This does not happen when the window
          * restore is triggered by the user. */
+        expect_messages = tests[i].reactivate_messages;
         ShowWindow(focus_window, SW_MINIMIZE);
         ShowWindow(focus_window, SW_RESTORE);
         /* Set focus twice to make KDE and fvwm in focus-follows-mouse mode happy. */
         SetForegroundWindow(focus_window);
         flush_events();
         SetForegroundWindow(focus_window);
-        flush_events();
+        flush_events(); /* WM_WINDOWPOSCHANGING etc arrive after SetForegroundWindow returns. */
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+                expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
 
         hr = IDirect3DDevice9_TestCooperativeLevel(device);
         ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);

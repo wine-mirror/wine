@@ -1178,6 +1178,20 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 {
     if (activate)
     {
+        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
+        {
+            /* The d3d versions do not agree on the exact messages here. D3d8 restores
+             * the window but leaves the size untouched, d3d9 sets the size on an
+             * invisible window, generates messages but doesn't change the window
+             * properties. The implementation follows d3d9.
+             *
+             * Guild Wars 1 wants a WINDOWPOSCHANGED message on the device window to
+             * resume drawing after a focus loss. */
+            SetWindowPos(swapchain->device_window, NULL, 0, 0,
+                    swapchain->desc.backbuffer_width, swapchain->desc.backbuffer_height,
+                    SWP_NOACTIVATE | SWP_NOZORDER);
+        }
+
         if (swapchain->device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
         {
             if (FAILED(wined3d_set_adapter_display_mode(swapchain->device->wined3d,
