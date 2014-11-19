@@ -108,7 +108,7 @@ static const rectangle_t empty_rect;  /* all-zero rectangle for empty regions */
 /* add a rectangle to a region */
 static inline rectangle_t *add_rect( struct region *reg )
 {
-    if (reg->num_rects >= reg->size - 1)
+    if (reg->num_rects >= reg->size)
     {
         rectangle_t *new_rect = realloc( reg->rects, 2 * sizeof(rectangle_t) * reg->size );
         if (!new_rect)
