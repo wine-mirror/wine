@@ -625,6 +625,7 @@ LPSTR WINAPI StrRStrIA(LPCSTR lpszStr, LPCSTR lpszEnd, LPCSTR lpszSearch)
  */
 LPWSTR WINAPI StrRStrIW(LPCWSTR lpszStr, LPCWSTR lpszEnd, LPCWSTR lpszSearch)
 {
+  LPWSTR lpszRet = NULL;
   INT iLen;
 
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszSearch));
@@ -632,18 +633,23 @@ LPWSTR WINAPI StrRStrIW(LPCWSTR lpszStr, LPCWSTR lpszEnd, LPCWSTR lpszSearch)
   if (!lpszStr || !lpszSearch || !*lpszSearch)
     return NULL;
 
-  if (!lpszEnd)
-    lpszEnd = lpszStr + strlenW(lpszStr);
-
   iLen = strlenW(lpszSearch);
 
-  while (lpszEnd > lpszStr)
+  if (!lpszEnd)
+    lpszEnd = lpszStr + strlenW(lpszStr);
+  else /* reproduce the broken behaviour on Windows */
+    lpszEnd += min(iLen - 1, lstrlenW(lpszEnd));
+
+  while (lpszStr + iLen <= lpszEnd && *lpszStr)
   {
-    lpszEnd--;
-    if (!StrCmpNIW(lpszEnd, lpszSearch, iLen))
-      return (LPWSTR)lpszEnd;
+    if (!ChrCmpIW(*lpszSearch, *lpszStr))
+    {
+      if (!StrCmpNIW(lpszStr, lpszSearch, iLen))
+        lpszRet = (LPWSTR)lpszStr;
+    }
+    lpszStr++;
   }
-  return NULL;
+  return lpszRet;
 }
 
 /*************************************************************************
