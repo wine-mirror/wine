@@ -3440,6 +3440,54 @@ interface ITransferDestination : IUnknown
                        [out, iid_is(riid)] void **presources);
 }
 
+[
+    uuid(92218cab-ecaa-4335-8133-807fd234c2ee),
+    object,
+    pointer_default(unique)
+]
+interface IAssocHandlerInvoker : IUnknown
+{
+    HRESULT SupportsSelection();
+    HRESULT Invoke();
+}
+
+[
+    uuid(f04061ac-1659-4a3f-a954-775aa57fc083),
+    object,
+    pointer_default(unique)
+]
+interface IAssocHandler : IUnknown
+{
+    HRESULT GetName([out, string] LPWSTR *name);
+    HRESULT GetUIName([out, string] LPWSTR *uiname);
+    HRESULT GetIconLocation([out, string] LPWSTR *path,
+                            [out] int *index);
+    HRESULT IsRecommended();
+    HRESULT MakeDefault([in, string] LPCWSTR description);
+    HRESULT Invoke([in] IDataObject *object);
+    HRESULT CreateInvoker([in] IDataObject *object,
+                          [out] IAssocHandlerInvoker **invoker);
+}
+
+[
+    uuid(973810ae-9599-4b88-9e4d-6ee98c9552da),
+    object,
+    pointer_default(unique)
+]
+interface IEnumAssocHandlers : IUnknown
+{
+    HRESULT Next([in]  ULONG count,
+                 [out, size_is(count), length_is(*fetched)] IAssocHandler **handlers,
+                 [out] ULONG *fetched);
+}
+
+typedef enum ASSOC_FILTER
+{
+    ASSOC_FILTER_NONE = 0,
+    ASSOC_FILTER_RECOMMENDED
+} ASSOC_FILTER;
+cpp_quote("HRESULT WINAPI SHAssocEnumHandlers(PCWSTR extra, ASSOC_FILTER filter, IEnumAssocHandlers **handlersenum);")
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */
