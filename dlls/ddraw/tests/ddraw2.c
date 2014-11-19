@@ -2616,13 +2616,13 @@ static void test_coop_level_mode_set(void)
 
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
-    todo_wine ok(screen_size.cx == registry_mode.dmPelsWidth
+    ok(screen_size.cx == registry_mode.dmPelsWidth
             && screen_size.cy == registry_mode.dmPelsHeight,
             "Expected screen size %ux%u, got %ux%u.\n",
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    todo_wine ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
@@ -2790,7 +2790,7 @@ static void test_coop_level_mode_set(void)
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
             && devmode.dmPelsHeight == registry_mode.dmPelsHeight,
             "Expected resolution %ux%u, got %ux%u.\n",
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight,
@@ -2946,7 +2946,7 @@ static void test_coop_level_mode_set(void)
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
-    todo_wine ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
+    ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth
             && devmode.dmPelsHeight == registry_mode.dmPelsHeight,
             "Expected resolution %ux%u, got %ux%u.\n",
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight,

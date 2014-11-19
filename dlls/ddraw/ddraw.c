@@ -28,9 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static struct wined3d_display_mode original_mode;
 static const struct ddraw *exclusive_ddraw;
-static BOOL restore_mode;
 
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
@@ -684,11 +682,8 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &original_mode)))
-    {
+    if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, NULL)))
         ddraw->flags &= ~DDRAW_RESTORE_MODE;
-        restore_mode = FALSE;
-    }
 
     wined3d_mutex_unlock();
 
@@ -1097,10 +1092,6 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
         return DD_OK;
     }
 
-    if (!restore_mode && FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d,
-            WINED3DADAPTER_DEFAULT, &original_mode, NULL)))
-        ERR("Failed to get current display mode, hr %#x.\n", hr);
-
     switch (bpp)
     {
         case 8:  format = WINED3DFMT_P8_UINT;        break;
@@ -1121,10 +1112,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
      * can't be changed if a surface is locked or some drawing is in progress. */
     /* TODO: Lose the primary surface. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
-    {
         ddraw->flags |= DDRAW_RESTORE_MODE;
-        restore_mode = TRUE;
-    }
 
     wined3d_mutex_unlock();
 
