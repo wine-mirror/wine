@@ -529,10 +529,6 @@ static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i'
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','F','o','n','t','L','i','n','k','\\',
                                     'S','y','s','t','e','m','L','i','n','k',0};
 
-static const WCHAR internal_system_link[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                    'F','o','n','t','L','i','n','k','\\',
-                                    'S','y','s','t','e','m','L','i','n','k',0};
-
 /****************************************
  *   Notes on .fon files
  *
