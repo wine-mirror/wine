@@ -15,7 +15,6 @@ C_SRCS = \
 	htmlcurstyle.c \
 	htmldoc.c \
 	htmlelem.c \
-	htmlelem3.c \
 	htmlelemcol.c \
 	htmlembed.c \
 	htmlevent.c \
