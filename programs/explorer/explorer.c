@@ -639,6 +639,7 @@ static int copy_path_string(LPWSTR target, LPWSTR source)
         while (*source && *source != ',') target[i++] = *source++;
         target[i] = 0;
     }
+    PathRemoveBackslashW(target);
     return i;
 }
 
