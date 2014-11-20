@@ -667,15 +667,20 @@ static HRESULT WINAPI HTMLFrameBase2_get_readyState(IHTMLFrameBase2 *iface, BSTR
 static HRESULT WINAPI HTMLFrameBase2_put_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL v)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase2(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%x) semi-stub\n", This, v);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFrameBase2_get_allowTransparency(IHTMLFrameBase2 *iface, VARIANT_BOOL *p)
 {
     HTMLFrameBase *This = impl_from_IHTMLFrameBase2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p) semi-stub\n", This, p);
+
+    *p = VARIANT_TRUE;
+    return S_OK;
 }
 
 static const IHTMLFrameBase2Vtbl HTMLFrameBase2Vtbl = {
