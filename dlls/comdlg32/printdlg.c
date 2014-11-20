@@ -1798,10 +1798,12 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
     case cmb2: /* Papersize */
       {
 	  DWORD Sel = SendDlgItemMessageA(hDlg, cmb2, CB_GETCURSEL, 0, 0);
-	  if(Sel != CB_ERR)
+	  if(Sel != CB_ERR) {
 	      lpdm->u1.s1.dmPaperSize = SendDlgItemMessageA(hDlg, cmb2,
 							    CB_GETITEMDATA,
 							    Sel, 0);
+	      GetDlgItemTextA(hDlg, cmb2, (char *)lpdm->dmFormName, CCHFORMNAME);
+	  }
       }
       break;
 
@@ -1954,10 +1956,12 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
     case cmb2: /* Papersize */
       {
 	  DWORD Sel = SendDlgItemMessageW(hDlg, cmb2, CB_GETCURSEL, 0, 0);
-	  if(Sel != CB_ERR)
+	  if(Sel != CB_ERR) {
 	      lpdm->u1.s1.dmPaperSize = SendDlgItemMessageW(hDlg, cmb2,
 							    CB_GETITEMDATA,
 							    Sel, 0);
+	      GetDlgItemTextW(hDlg, cmb2, lpdm->dmFormName, CCHFORMNAME);
+	  }
       }
       break;
 
