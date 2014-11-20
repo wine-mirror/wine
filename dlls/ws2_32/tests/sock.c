@@ -4354,7 +4354,11 @@ end:
     if (dst != INVALID_SOCKET)
         closesocket(dst);
     if (hThread != NULL)
+    {
+        dwRet = WaitForSingleObject(hThread, 500);
+        ok(dwRet == WAIT_OBJECT_0, "failed to wait for thread termination: %d\n", GetLastError());
         CloseHandle(hThread);
+    }
     if (ov.hEvent)
         CloseHandle(ov.hEvent);
     HeapFree(GetProcessHeap(), 0, buffer);
