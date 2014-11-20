@@ -911,14 +911,21 @@ DECL_HANDLER(new_process)
     }
 
     /* build the startup info for a new process */
-    if (!(info = alloc_object( &startup_info_ops ))) return;
+    if (!(info = alloc_object( &startup_info_ops )))
+    {
+        close( socket_fd );
+        return;
+    }
     info->exe_file = NULL;
     info->process  = NULL;
     info->data     = NULL;
 
     if (req->exe_file &&
         !(info->exe_file = get_file_obj( current->process, req->exe_file, FILE_READ_DATA )))
+    {
+        close( socket_fd );
         goto done;
+    }
 
     info->data_size = get_req_data_size();
     info->info_size = min( req->info_size, info->data_size );
@@ -929,7 +936,11 @@ DECL_HANDLER(new_process)
         data_size_t env_size = info->data_size - info->info_size;
         data_size_t info_size = min( req->info_size, FIELD_OFFSET( startup_info_t, curdir_len ));
 
-        if (!(info->data = mem_alloc( sizeof(*info->data) + env_size ))) goto done;
+        if (!(info->data = mem_alloc( sizeof(*info->data) + env_size )))
+        {
+            close( socket_fd );
+            goto done;
+        }
         memcpy( info->data, get_req_data(), info_size );
         memset( (char *)info->data + info_size, 0, sizeof(*info->data) - info_size );
         memcpy( info->data + 1, (const char *)get_req_data() + req->info_size, env_size );
@@ -940,7 +951,11 @@ DECL_HANDLER(new_process)
     {
         data_size_t pos = sizeof(*info->data);
 
-        if (!(info->data = memdup( get_req_data(), info->data_size ))) goto done;
+        if (!(info->data = memdup( get_req_data(), info->data_size )))
+        {
+            close( socket_fd );
+            goto done;
+        }
 #define FIXUP_LEN(len) do { (len) = min( (len), info->info_size - pos ); pos += (len); } while(0)
         FIXUP_LEN( info->data->curdir_len );
         FIXUP_LEN( info->data->dllpath_len );
