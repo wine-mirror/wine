@@ -902,7 +902,8 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
         post_data = new_data;
     }
 
-    post_data[data_len] = 0;
+    if(post_data)
+        post_data[data_len] = 0;
     request_data->post_data = post_data;
     request_data->post_data_len = data_len;
     TRACE("post_data = %s\n", debugstr_an(request_data->post_data, request_data->post_data_len));
