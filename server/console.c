@@ -1392,6 +1392,16 @@ DECL_HANDLER(alloc_console)
     int fd;
     int attach = 0;
 
+    if (req->input_fd != -1)
+    {
+        if ((fd = thread_get_inflight_fd( current, req->input_fd )) == -1)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+    }
+    else fd = -1;
+
     switch (req->pid)
     {
     case 0:
@@ -1399,6 +1409,7 @@ DECL_HANDLER(alloc_console)
         renderer = current;
         if (!(process = current->process->parent))
         {
+            if (fd != -1) close( fd );
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
@@ -1415,23 +1426,19 @@ DECL_HANDLER(alloc_console)
     default:
         /* renderer is current, console to be attached to req->pid */
         renderer = current;
-        if (!(process = get_process_from_id( req->pid ))) return;
+        if (!(process = get_process_from_id( req->pid )))
+        {
+            if (fd != -1) close( fd );
+            return;
+        }
     }
 
     if (attach && process->console)
     {
+        if (fd != -1) close( fd );
         set_error( STATUS_ACCESS_DENIED );
         goto the_end;
     }
-    if (req->input_fd != -1)
-    {
-        if ((fd = thread_get_inflight_fd( current, req->input_fd )) == -1)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            goto the_end;
-        }
-    }
-    else fd = -1;
 
     if ((console = (struct console_input*)create_console_input( renderer, fd )))
     {
