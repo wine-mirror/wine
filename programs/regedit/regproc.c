@@ -376,7 +376,6 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
             return ERROR_INVALID_DATA;
         val_data[dwLen-1] = '\0'; /* remove last quotes */
         lpbData = (BYTE*) val_data;
-        dwLen++;  /* include terminating null */
         dwLen = dwLen * sizeof(WCHAR); /* size is in bytes */
     }
     else if (dwParseType == REG_DWORD)  /* Convert the dword types */
