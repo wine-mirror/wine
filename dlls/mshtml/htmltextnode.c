@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 struct HTMLDOMTextNode {
     HTMLDOMNode node;
     IHTMLDOMTextNode IHTMLDOMTextNode_iface;
+    IHTMLDOMTextNode2 IHTMLDOMTextNode2_iface;
 
     nsIDOMText *nstext;
 };
@@ -170,6 +171,112 @@ static const IHTMLDOMTextNodeVtbl HTMLDOMTextNodeVtbl = {
     HTMLDOMTextNode_splitText
 };
 
+static inline HTMLDOMTextNode *impl_from_IHTMLDOMTextNode2(IHTMLDOMTextNode2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMTextNode, IHTMLDOMTextNode2_iface);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_QueryInterface(IHTMLDOMTextNode2 *iface, REFIID riid, void **ppv)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLDOMTextNode2_AddRef(IHTMLDOMTextNode2 *iface)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+
+    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLDOMTextNode2_Release(IHTMLDOMTextNode2 *iface)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+
+    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_GetTypeInfoCount(IHTMLDOMTextNode2 *iface, UINT *pctinfo)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_GetTypeInfo(IHTMLDOMTextNode2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_GetIDsOfNames(IHTMLDOMTextNode2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_Invoke(IHTMLDOMTextNode2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_substringData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count, BSTR *string)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    FIXME("(%p)->(%d %d %p)\n", This, offset, count, string);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_appendData(IHTMLDOMTextNode2 *iface, BSTR string)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(string));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_insertData(IHTMLDOMTextNode2 *iface, LONG offset, BSTR string)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    FIXME("(%p)->(%d %s)\n", This, offset, debugstr_w(string));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_deleteData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    FIXME("(%p)->(%d %d)\n", This, offset, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLDOMTextNode2_replaceData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count, BSTR string)
+{
+    HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
+    FIXME("(%p)->(%d %d %s)\n", This, offset, count, debugstr_w(string));
+    return E_NOTIMPL;
+}
+
+static const IHTMLDOMTextNode2Vtbl HTMLDOMTextNode2Vtbl = {
+    HTMLDOMTextNode2_QueryInterface,
+    HTMLDOMTextNode2_AddRef,
+    HTMLDOMTextNode2_Release,
+    HTMLDOMTextNode2_GetTypeInfoCount,
+    HTMLDOMTextNode2_GetTypeInfo,
+    HTMLDOMTextNode2_GetIDsOfNames,
+    HTMLDOMTextNode2_Invoke,
+    HTMLDOMTextNode2_substringData,
+    HTMLDOMTextNode2_appendData,
+    HTMLDOMTextNode2_insertData,
+    HTMLDOMTextNode2_deleteData,
+    HTMLDOMTextNode2_replaceData
+};
+
 static inline HTMLDOMTextNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDOMTextNode, node);
@@ -179,14 +286,14 @@ static HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
     HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv =  NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
-    if(IsEqualGUID(&IID_IHTMLDOMTextNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMTextNode %p)\n", This, ppv);
+    if(IsEqualGUID(&IID_IHTMLDOMTextNode, riid))
         *ppv = &This->IHTMLDOMTextNode_iface;
-    }else {
+    else if(IsEqualGUID(&IID_IHTMLDOMTextNode2, riid))
+        *ppv = &This->IHTMLDOMTextNode2_iface;
+    else
         return HTMLDOMNode_QI(&This->node, riid, ppv);
-    }
 
     IUnknown_AddRef((IUnknown*)*ppv);
     return S_OK;
@@ -212,6 +319,7 @@ static const tid_t HTMLDOMTextNode_iface_tids[] = {
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
     IHTMLDOMTextNode_tid,
+    IHTMLDOMTextNode2_tid,
     0
 };
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
@@ -232,6 +340,7 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
 
     ret->node.vtbl = &HTMLDOMTextNodeImplVtbl;
     ret->IHTMLDOMTextNode_iface.lpVtbl = &HTMLDOMTextNodeVtbl;
+    ret->IHTMLDOMTextNode2_iface.lpVtbl = &HTMLDOMTextNode2Vtbl;
 
     init_dispex(&ret->node.dispex, (IUnknown*)&ret->IHTMLDOMTextNode_iface,
             &HTMLDOMTextNode_dispex);

@@ -140,6 +140,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLDOMNode) \
     XIID(IHTMLDOMNode2) \
     XIID(IHTMLDOMTextNode) \
+    XIID(IHTMLDOMTextNode2) \
     XIID(IHTMLElement) \
     XIID(IHTMLElement2) \
     XIID(IHTMLElement3) \
