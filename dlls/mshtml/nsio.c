@@ -2076,8 +2076,42 @@ static nsresult NSAPI nsURI_SetSpec(nsIFileURL *iface, const nsACString *aSpec)
 static nsresult NSAPI nsURI_GetPrePath(nsIFileURL *iface, nsACString *aPrePath)
 {
     nsWineURI *This = impl_from_nsIFileURL(iface);
-    FIXME("(%p)->(%p)\n", This, aPrePath);
-    return NS_ERROR_NOT_IMPLEMENTED;
+    IUriBuilder *uri_builder;
+    BSTR display_uri;
+    IUri *uri;
+    int len;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, aPrePath);
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = CreateIUriBuilder(This->uri, 0, 0, &uri_builder);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    hres = IUriBuilder_RemoveProperties(uri_builder, Uri_HAS_PATH|Uri_HAS_QUERY|Uri_HAS_FRAGMENT);
+    if(SUCCEEDED(hres))
+        hres = IUriBuilder_CreateUriSimple(uri_builder, 0, 0, &uri);
+    IUriBuilder_Release(uri_builder);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    hres = IUri_GetDisplayUri(uri, &display_uri);
+    IUri_Release(uri);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    /* Remove trailing slash that may be appended as default path. */
+    len = SysStringLen(display_uri);
+    if(len && display_uri[len-1] == '/')
+        display_uri[len-1] = 0;
+
+    nsres = return_wstr_nsacstr(aPrePath, display_uri, -1);
+    SysFreeString(display_uri);
+    return nsres;
 }
 
 static nsresult NSAPI nsURI_GetScheme(nsIFileURL *iface, nsACString *aScheme)
