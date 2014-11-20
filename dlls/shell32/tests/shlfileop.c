@@ -251,7 +251,7 @@ static void test_get_file_info(void)
     ok(rc == 1, "SHGetFileInfoA(c:\\nonexistent) should return 1, got 0x%x\n", rc);
     if (rc)
     {
-        ok(strcpy(shfi.szDisplayName, "dummy") != 0, "SHGetFileInfoA(c:\\nonexistent) displayname is not set\n");
+        ok(strcmp(shfi.szDisplayName, "dummy"), "SHGetFileInfoA(c:\\nonexistent) displayname is not set\n");
         ok(shfi.iIcon != 0xdeadbeef, "SHGetFileInfoA(c:\\nonexistent) iIcon is not set\n");
     }
 
