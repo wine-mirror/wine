@@ -58,8 +58,6 @@ static const WCHAR idx7W[] = {'$','7',0};
 static const WCHAR idx8W[] = {'$','8',0};
 static const WCHAR idx9W[] = {'$','9',0};
 
-static const WCHAR emptyW[] = {0};
-
 static inline RegExpInstance *regexp_from_vdisp(vdisp_t *vdisp)
 {
     return (RegExpInstance*)vdisp->u.jsdisp;

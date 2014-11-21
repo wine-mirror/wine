@@ -398,11 +398,6 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name
     return hres;
 }
 
-static inline BOOL var_is_null(const VARIANT *v)
-{
-    return V_VT(v) == VT_NULL || (V_VT(v) == VT_DISPATCH && !V_DISPATCH(v));
-}
-
 static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
 {
     IObjectIdentity *identity;
