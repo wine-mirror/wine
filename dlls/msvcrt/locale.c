@@ -659,6 +659,16 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
         MSVCRT_free(locinfo->lconv->mon_grouping);
         MSVCRT_free(locinfo->lconv->positive_sign);
         MSVCRT_free(locinfo->lconv->negative_sign);
+#if _MSVCR_VER >= 120
+        MSVCRT_free(locinfo->lconv->_W_decimal_point);
+        MSVCRT_free(locinfo->lconv->_W_thousands_sep);
+        MSVCRT_free(locinfo->lconv->_W_int_curr_symbol);
+        MSVCRT_free(locinfo->lconv->_W_currency_symbol);
+        MSVCRT_free(locinfo->lconv->_W_mon_decimal_point);
+        MSVCRT_free(locinfo->lconv->_W_mon_thousands_sep);
+        MSVCRT_free(locinfo->lconv->_W_positive_sign);
+        MSVCRT_free(locinfo->lconv->_W_negative_sign);
+#endif
     }
     MSVCRT_free(locinfo->lconv_intl_refcount);
     MSVCRT_free(locinfo->lconv_num_refcount);
@@ -755,6 +765,9 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     LCID lcid[6] = { 0 }, lcid_tmp;
     unsigned short cp[6] = { 0 };
     char buf[256];
+#if _MSVCR_VER >= 120
+    MSVCRT_wchar_t wbuf[256];
+#endif
     int i, ret, size;
 
     TRACE("(%d %s)\n", category, locale);
@@ -1092,6 +1105,63 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             MSVCRT__free_locale(loc);
             return NULL;
         }
+
+#if _MSVCR_VER >= 120
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_int_curr_symbol, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_currency_symbol = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_currency_symbol, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_mon_decimal_point = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_mon_decimal_point, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_mon_thousands_sep = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_mon_thousands_sep, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_positive_sign = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_positive_sign, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_negative_sign = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_negative_sign, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+#endif
+
     } else {
         loc->locinfo->lconv->int_curr_symbol = MSVCRT_malloc(sizeof(char));
         loc->locinfo->lconv->currency_symbol = MSVCRT_malloc(sizeof(char));
@@ -1124,6 +1194,29 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lconv->n_sep_by_space = 127;
         loc->locinfo->lconv->p_sign_posn = 127;
         loc->locinfo->lconv->n_sign_posn = 127;
+
+#if _MSVCR_VER >= 120
+        loc->locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+        loc->locinfo->lconv->_W_currency_symbol = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+        loc->locinfo->lconv->_W_mon_decimal_point = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+        loc->locinfo->lconv->_W_mon_thousands_sep = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+        loc->locinfo->lconv->_W_positive_sign = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+        loc->locinfo->lconv->_W_negative_sign = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+
+        if(!loc->locinfo->lconv->_W_int_curr_symbol || !loc->locinfo->lconv->_W_currency_symbol
+                || !loc->locinfo->lconv->_W_mon_decimal_point || !loc->locinfo->lconv->_W_mon_thousands_sep
+                || !loc->locinfo->lconv->positive_sign || !loc->locinfo->lconv->negative_sign) {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        loc->locinfo->lconv->_W_int_curr_symbol[0] = '\0';
+        loc->locinfo->lconv->_W_currency_symbol[0] = '\0';
+        loc->locinfo->lconv->_W_mon_decimal_point[0] = '\0';
+        loc->locinfo->lconv->_W_mon_thousands_sep[0] = '\0';
+        loc->locinfo->lconv->_W_positive_sign[0] = '\0';
+        loc->locinfo->lconv->_W_negative_sign[0] = '\0';
+#endif
 
         loc->locinfo->lc_category[MSVCRT_LC_MONETARY].locale = MSVCRT__strdup("C");
     }
@@ -1177,6 +1270,27 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             MSVCRT__free_locale(loc);
             return NULL;
         }
+
+#if _MSVCR_VER >= 120
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_decimal_point = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_decimal_point, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        i = GetLocaleInfoW(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND
+                |LOCALE_NOUSEROVERRIDE, wbuf, 256);
+        if(i && (loc->locinfo->lconv->_W_thousands_sep = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
+            memcpy(loc->locinfo->lconv->_W_thousands_sep, wbuf, i * sizeof(MSVCRT_wchar_t));
+        else {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+#endif
+
     } else {
         loc->locinfo->lconv->decimal_point = MSVCRT_malloc(sizeof(char[2]));
         loc->locinfo->lconv->thousands_sep = MSVCRT_malloc(sizeof(char));
@@ -1191,6 +1305,20 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lconv->decimal_point[1] = '\0';
         loc->locinfo->lconv->thousands_sep[0] = '\0';
         loc->locinfo->lconv->grouping[0] = '\0';
+
+#if _MSVCR_VER >= 120
+        loc->locinfo->lconv->_W_decimal_point = MSVCRT_malloc(sizeof(MSVCRT_wchar_t[2]));
+        loc->locinfo->lconv->_W_thousands_sep = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
+
+        if(!loc->locinfo->lconv->_W_decimal_point || !loc->locinfo->lconv->_W_thousands_sep) {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+
+        loc->locinfo->lconv->_W_decimal_point[0] = '.';
+        loc->locinfo->lconv->_W_decimal_point[1] = '\0';
+        loc->locinfo->lconv->_W_thousands_sep[0] = '\0';
+#endif
 
         loc->locinfo->lc_category[MSVCRT_LC_NUMERIC].locale = MSVCRT__strdup("C");
     }
@@ -1357,6 +1485,22 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
                     (void**)&loc->locinfo->lconv->positive_sign);
             swap_pointers((void**)&locinfo->lconv->negative_sign,
                     (void**)&loc->locinfo->lconv->negative_sign);
+
+#if _MSVCR_VER >= 120
+            swap_pointers((void**)&locinfo->lconv->_W_int_curr_symbol,
+                    (void**)&loc->locinfo->lconv->_W_int_curr_symbol);
+            swap_pointers((void**)&locinfo->lconv->_W_currency_symbol,
+                    (void**)&loc->locinfo->lconv->_W_currency_symbol);
+            swap_pointers((void**)&locinfo->lconv->_W_mon_decimal_point,
+                    (void**)&loc->locinfo->lconv->_W_mon_decimal_point);
+            swap_pointers((void**)&locinfo->lconv->_W_mon_thousands_sep,
+                    (void**)&loc->locinfo->lconv->_W_mon_thousands_sep);
+            swap_pointers((void**)&locinfo->lconv->_W_positive_sign,
+                    (void**)&loc->locinfo->lconv->_W_positive_sign);
+            swap_pointers((void**)&locinfo->lconv->_W_negative_sign,
+                    (void**)&loc->locinfo->lconv->_W_negative_sign);
+#endif
+
             locinfo->lconv->int_frac_digits = loc->locinfo->lconv->int_frac_digits;
             locinfo->lconv->frac_digits = loc->locinfo->lconv->frac_digits;
             locinfo->lconv->p_cs_precedes = loc->locinfo->lconv->p_cs_precedes;
@@ -1383,6 +1527,13 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
                     (void**)&loc->locinfo->lconv->thousands_sep);
             swap_pointers((void**)&locinfo->lconv->grouping,
                     (void**)&loc->locinfo->lconv->grouping);
+
+#if _MSVCR_VER >= 120
+            swap_pointers((void**)&locinfo->lconv->_W_decimal_point,
+                    (void**)&loc->locinfo->lconv->_W_decimal_point);
+            swap_pointers((void**)&locinfo->lconv->_W_thousands_sep,
+                    (void**)&loc->locinfo->lconv->_W_thousands_sep);
+#endif
 
             if(category != MSVCRT_LC_ALL)
                 break;

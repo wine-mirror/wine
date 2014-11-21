@@ -17163,6 +17163,7 @@ wine_fn_config_dll msvcr100 enable_msvcr100 implib
 wine_fn_config_test dlls/msvcr100/tests msvcr100_test
 wine_fn_config_dll msvcr110 enable_msvcr110 implib
 wine_fn_config_dll msvcr120 enable_msvcr120 implib
+wine_fn_config_test dlls/msvcr120/tests msvcr120_test
 wine_fn_config_dll msvcr70 enable_msvcr70 implib
 wine_fn_config_dll msvcr71 enable_msvcr71 implib
 wine_fn_config_dll msvcr80 enable_msvcr80 implib

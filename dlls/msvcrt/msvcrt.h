@@ -366,6 +366,16 @@ struct MSVCRT_lconv {
     char n_sep_by_space;
     char p_sign_posn;
     char n_sign_posn;
+#if _MSVCR_VER >= 120
+    MSVCRT_wchar_t* _W_decimal_point;
+    MSVCRT_wchar_t* _W_thousands_sep;
+    MSVCRT_wchar_t* _W_int_curr_symbol;
+    MSVCRT_wchar_t* _W_currency_symbol;
+    MSVCRT_wchar_t* _W_mon_decimal_point;
+    MSVCRT_wchar_t* _W_mon_thousands_sep;
+    MSVCRT_wchar_t* _W_positive_sign;
+    MSVCRT_wchar_t* _W_negative_sign;
+#endif
 };
 
 struct MSVCRT__exception {
