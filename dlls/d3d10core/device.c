@@ -2173,13 +2173,6 @@ static const struct ID3D10MultithreadVtbl d3d10_multithread_vtbl =
     d3d10_multithread_GetMultithreadProtected,
 };
 
-static void STDMETHODCALLTYPE d3d10_subresource_destroyed(void *parent) {}
-
-static const struct wined3d_parent_ops d3d10_subresource_parent_ops =
-{
-    d3d10_subresource_destroyed,
-};
-
 /* IWineDXGIDeviceParent IUnknown methods */
 
 static inline struct d3d10_device *device_from_dxgi_device_parent(IWineDXGIDeviceParent *iface)
