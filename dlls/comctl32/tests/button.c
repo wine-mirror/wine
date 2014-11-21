@@ -427,13 +427,6 @@ static const struct message setcheck_ignored_seq[] =
     { 0 }
 };
 
-static const struct message setcheck_uncheck_seq[] =
-{
-    { BM_SETCHECK, sent },
-    { WM_APP, sent|wparam|lparam, 0, 0 },
-    { 0 }
-};
-
 static const struct message setcheck_static_seq[] =
 {
     { BM_SETCHECK, sent },
