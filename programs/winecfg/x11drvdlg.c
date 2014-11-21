@@ -51,8 +51,6 @@ static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
 static const WCHAR explorerW[] = {'E','x','p','l','o','r','e','r',0};
 static const WCHAR explorer_desktopsW[] = {'E','x','p','l','o','r','e','r','\\',
                                            'D','e','s','k','t','o','p','s',0};
-static const WCHAR x11_driverW[] = {'X','1','1',' ','D','r','i','v','e','r',0};
-static const WCHAR default_resW[] = {'8','0','0','x','6','0','0',0};
 
 
 static BOOL updating_ui;
