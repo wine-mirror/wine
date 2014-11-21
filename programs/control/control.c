@@ -40,7 +40,6 @@ static const WCHAR szP_PRINTERS [] = {'P','R','I','N','T','E','R','S',0};
 static const WCHAR szC_COLOR[] = {'d','e','s','k','.','c','p','l',',',',','2',0};
 static const WCHAR szC_DATETIME[] = {'t','i','m','e','d','a','t','e','.','c','p','l',0};
 static const WCHAR szC_DESKTOP[] = {'d','e','s','k','.','c','p','l',0};
-static const WCHAR szC_FONTS[] = {'m','a','i','n','.','c','p','l',' ','@','3',0};
 static const WCHAR szC_INTERNATIONAL[] = {'i','n','t','l','.','c','p','l',0};
 static const WCHAR szC_KEYBOARD[] = {'m','a','i','n','.','c','p','l',' ','@','1',0};
 static const WCHAR szC_MOUSE[] = {'m','a','i','n','.','c','p','l',0};
