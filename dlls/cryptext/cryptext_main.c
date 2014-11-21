@@ -43,3 +43,21 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ * CryptExtAddPFX (CRYPTEXT.@)
+ */
+HRESULT WINAPI CryptExtAddPFX(LPCSTR filename)
+{
+    FIXME("stub: %s\n", debugstr_a(filename));
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ * CryptExtAddPFXW (CRYPTEXT.@)
+ */
+HRESULT WINAPI CryptExtAddPFXW(LPCWSTR filename)
+{
+    FIXME("stub: %s\n", debugstr_w(filename));
+    return E_NOTIMPL;
+}

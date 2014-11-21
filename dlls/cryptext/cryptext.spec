@@ -6,8 +6,8 @@
 @ stub CryptExtAddCTLW
 @ stub CryptExtAddP7R
 @ stub CryptExtAddP7RW
-@ stub CryptExtAddPFX
-@ stub CryptExtAddPFXW
+@ stdcall CryptExtAddPFX(str)
+@ stdcall CryptExtAddPFXW(wstr)
 @ stub CryptExtAddSPC
 @ stub CryptExtAddSPCW
 @ stub CryptExtOpenCAT
