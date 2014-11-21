@@ -30,13 +30,6 @@ static inline int get_ref(IUnknown *obj)
     return IUnknown_Release(obj);
 }
 
-#define check_ref(obj, exp) _check_ref(__LINE__, obj, exp)
-static inline void _check_ref(unsigned int line, IUnknown *obj, int exp)
-{
-    int ref = get_ref(obj);
-    ok_(__FILE__, line)(exp == ref, "Invalid refcount. Expected %d, got %d\n", exp, ref);
-}
-
 #define check_release(obj, exp) _check_release(__LINE__, obj, exp)
 static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
 {
@@ -606,13 +599,6 @@ static void test_D3DXGetImageInfo(void)
     /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
-}
-
-#define check_pixel_1bpp(lockrect, x, y, color) _check_pixel_1bpp(__LINE__, lockrect, x, y, color)
-static inline void _check_pixel_1bpp(unsigned int line, const D3DLOCKED_RECT *lockrect, int x, int y, BYTE expected_color)
-{
-    BYTE color = ((BYTE*)lockrect->pBits)[x + y * lockrect->Pitch];
-    ok_(__FILE__, line)(color == expected_color, "Got color 0x%02x, expected 0x%02x\n", color, expected_color);
 }
 
 #define check_pixel_2bpp(lockrect, x, y, color) _check_pixel_2bpp(__LINE__, lockrect, x, y, color)
