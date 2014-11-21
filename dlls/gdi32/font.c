@@ -81,16 +81,6 @@ static inline INT height_to_LP( DC *dc, INT height )
     return GDI_ROUND( (double)height * fabs( dc->xformVport2World.eM22 ));
 }
 
-static inline INT INTERNAL_XWSTODS(DC *dc, INT width)
-{
-    POINT pt[2];
-    pt[0].x = pt[0].y = 0;
-    pt[1].x = width;
-    pt[1].y = 0;
-    LPtoDP(dc->hSelf, pt, 2);
-    return pt[1].x - pt[0].x;
-}
-
 static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
 {
     POINT pt[2];
