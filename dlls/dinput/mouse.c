@@ -85,10 +85,7 @@ static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysMouseImpl, base);
 }
-static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysMouseImpl *This)
-{
-    return &This->base.IDirectInputDevice8A_iface;
-}
+
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysMouseImpl *This)
 {
     return &This->base.IDirectInputDevice8W_iface;
