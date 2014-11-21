@@ -147,7 +147,6 @@ DEFINE_EXPECT(OnFocus);
 DEFINE_EXPECT(GetExternal);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
-static const WCHAR emptyW[] = {0};
 
 static VARIANT_BOOL exvb;
 
