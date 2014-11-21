@@ -23,8 +23,6 @@
 
 #include "dwrite_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
-
 struct scriptshaping_cache
 {
     IDWriteFontFace *fontface;

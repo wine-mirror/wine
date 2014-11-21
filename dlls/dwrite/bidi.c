@@ -513,12 +513,6 @@ static inline int get_prev_valid_char_from_run(IsolatedRun *run, int index)
     return index;
 }
 
-static inline int iso_previousChar(IsolatedRun *run, int index)
-{
-    if (index <= 0) return -1;
-    return index--;
-}
-
 static inline void iso_dump_types(const char* header, IsolatedRun *run)
 {
     int i, len = 0;
