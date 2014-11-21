@@ -119,8 +119,15 @@ extern void opentype_get_font_properties(const void*,const void*,DWRITE_FONT_STR
 extern void opentype_get_font_metrics(const void*,const void*,const void*,DWRITE_FONT_METRICS1*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_strings_from_id(const void*,DWRITE_INFORMATIONAL_STRING_ID,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 
+/* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
 extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
+
+/* FreeType integration */
+struct ft_fontface;
+extern BOOL init_freetype(void) DECLSPEC_HIDDEN;
+extern HRESULT alloc_ft_fontface(const void*,UINT32,UINT32,struct ft_fontface**) DECLSPEC_HIDDEN;
+extern void release_ft_fontface(struct ft_fontface*) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

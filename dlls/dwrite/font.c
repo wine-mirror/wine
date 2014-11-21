@@ -119,6 +119,7 @@ struct dwrite_fontface {
     DWRITE_FONT_METRICS1 metrics;
 
     struct dwrite_fonttable cmap;
+    struct ft_fontface *ft;
 };
 
 struct dwrite_fontfile {
@@ -254,6 +255,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace2 *iface)
             if (This->files[i])
                 IDWriteFontFile_Release(This->files[i]);
         }
+        release_ft_fontface(This->ft);
         heap_free(This);
     }
 
@@ -1928,8 +1930,13 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace2 **ret)
 {
     struct dwrite_fontface *fontface;
+    const void *data_ptr;
     HRESULT hr = S_OK;
+    void *context;
+    UINT64 size;
     int i;
+
+    *ret = NULL;
 
     fontface = heap_alloc(sizeof(struct dwrite_fontface));
     if (!fontface)
@@ -1954,6 +1961,7 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     fontface->cmap.size = 0;
     fontface->index = index;
     fontface->simulations = simulations;
+    fontface->ft = NULL;
 
     for (i = 0; i < fontface->file_count; i++) {
         hr = get_stream_from_file(font_files[i], &fontface->streams[i]);
@@ -1968,8 +1976,25 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
 
     get_font_properties_from_stream(fontface->streams[0], facetype, index, &fontface->metrics, NULL, NULL, NULL);
 
+    hr = IDWriteFontFileStream_GetFileSize(fontface->streams[0], &size);
+    if (FAILED(hr))
+        goto fail;
+
+    hr = IDWriteFontFileStream_ReadFileFragment(fontface->streams[0], &data_ptr, 0, size, &context);
+    if (FAILED(hr))
+        goto fail;
+
+    hr = alloc_ft_fontface(data_ptr, size, fontface->index, &fontface->ft);
+    IDWriteFontFileStream_ReleaseFileFragment(fontface->streams[0], context);
+    if (FAILED(hr))
+        goto fail;
+
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
+
+fail:
+    IDWriteFontFace2_Release(&fontface->IDWriteFontFace2_iface);
+    return hr;
 }
 
 /* IDWriteLocalFontFileLoader and its required IDWriteFontFileStream */
