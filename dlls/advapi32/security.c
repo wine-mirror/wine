@@ -187,7 +187,6 @@ static const WCHAR CREATOR_OWNER_SERVER[] = { 'C','R','E','A','T','O','R',' ','O
 static const WCHAR CURRENT_USER[] = { 'C','U','R','R','E','N','T','_','U','S','E','R',0 };
 static const WCHAR DIALUP[] = { 'D','I','A','L','U','P',0 };
 static const WCHAR Digest_Authentication[] = { 'D','i','g','e','s','t',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
-static const WCHAR DOMAIN[] = {'D','O','M','A','I','N',0};
 static const WCHAR Domain_Admins[] = { 'D','o','m','a','i','n',' ','A','d','m','i','n','s',0 };
 static const WCHAR Domain_Computers[] = { 'D','o','m','a','i','n',' ','C','o','m','p','u','t','e','r','s',0 };
 static const WCHAR Domain_Controllers[] = { 'D','o','m','a','i','n',' ','C','o','n','t','r','o','l','l','e','r','s',0 };
@@ -324,12 +323,8 @@ static const WCHAR SDDL_AUTO_INHERITED[]        = {'A','I',0};
  */
 static const WCHAR SDDL_ACCESS_ALLOWED[]        = {'A',0};
 static const WCHAR SDDL_ACCESS_DENIED[]         = {'D',0};
-static const WCHAR SDDL_OBJECT_ACCESS_ALLOWED[] = {'O','A',0};
-static const WCHAR SDDL_OBJECT_ACCESS_DENIED[]  = {'O','D',0};
 static const WCHAR SDDL_AUDIT[]                 = {'A','U',0};
 static const WCHAR SDDL_ALARM[]                 = {'A','L',0};
-static const WCHAR SDDL_OBJECT_AUDIT[]          = {'O','U',0};
-static const WCHAR SDDL_OBJECT_ALARMp[]         = {'O','L',0};
 
 /*
  * ACE flags
