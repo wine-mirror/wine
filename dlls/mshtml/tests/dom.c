@@ -264,6 +264,7 @@ static const IID * const text_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLDOMTextNode,
+    &IID_IHTMLDOMTextNode2,
     NULL
 };
 
@@ -871,6 +872,17 @@ static IHTMLDOMTextNode *_get_text_iface(unsigned line, IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMTextNode, (void**)&text);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMTextNode: %08x\n", hres);
     return text;
+}
+
+#define get_text2_iface(u) _get_text2_iface(__LINE__,u)
+static IHTMLDOMTextNode2 *_get_text2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMTextNode2 *text2;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMTextNode2, (void**)&text2);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMTextNode2: %08x\n", hres);
+    return text2;
 }
 
 #define get_comment_iface(u) _get_comment_iface(__LINE__,u)
@@ -2706,6 +2718,19 @@ static void _set_text_data(unsigned line, IUnknown *unk, const char *data)
     hres = IHTMLDOMTextNode_put_data(text, str);
     ok_(__FILE__,line)(hres == S_OK, "get_data failed: %08x\n", hres);
     IHTMLDOMTextNode_Release(text);
+    SysFreeString(str);
+}
+
+#define text_append_data(a,b) _text_append_data(__LINE__,a,b)
+static void _text_append_data(unsigned line, IUnknown *unk, const char *data)
+{
+    IHTMLDOMTextNode2 *text = _get_text2_iface(line, unk);
+    BSTR str = a2bstr(data);
+    HRESULT hres;
+
+    hres = IHTMLDOMTextNode2_appendData(text, str);
+    ok_(__FILE__,line)(hres == S_OK, "appendData failed: %08x\n", hres);
+    IHTMLDOMTextNode2_Release(text);
     SysFreeString(str);
 }
 
@@ -8155,6 +8180,11 @@ static void test_create_elems(IHTMLDocument2 *doc)
     test_text_data((IUnknown*)node, "abc");
     set_text_data((IUnknown*)node, "test");
     test_text_data((IUnknown*)node, "test");
+    text_append_data((IUnknown*)node, " append");
+    test_text_data((IUnknown*)node, "test append");
+    text_append_data((IUnknown*)node, NULL);
+    test_text_data((IUnknown*)node, "test append");
+    set_text_data((IUnknown*)node, "test");
 
     V_VT(&var) = VT_NULL;
     node2 = test_node_insertbefore((IUnknown*)body, node, &var);

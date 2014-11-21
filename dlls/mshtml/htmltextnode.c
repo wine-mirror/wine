@@ -237,8 +237,20 @@ static HRESULT WINAPI HTMLDOMTextNode2_substringData(IHTMLDOMTextNode2 *iface, L
 static HRESULT WINAPI HTMLDOMTextNode2_appendData(IHTMLDOMTextNode2 *iface, BSTR string)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(string));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(string));
+
+    nsAString_InitDepend(&nsstr, string);
+    nsres = nsIDOMText_AppendData(This->nstext, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres)) {
+        ERR("AppendData failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMTextNode2_insertData(IHTMLDOMTextNode2 *iface, LONG offset, BSTR string)
