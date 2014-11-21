@@ -22,9 +22,9 @@
 #include "debugger.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
-
 #if defined(__x86_64__)
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #define STEP_FLAG 0x00000100 /* single step flag */
 
