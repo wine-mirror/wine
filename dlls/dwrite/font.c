@@ -782,8 +782,16 @@ static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont2 *iface)
 static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    IDWriteFontFace2 *fontface;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = get_fontface_from_font(This, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    return IDWriteFontFace2_IsSymbolFont(fontface);
 }
 
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocalizedStrings **names)
@@ -965,18 +973,34 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont2 *iface, UINT32 m
     return IDWriteFontFace2_GetUnicodeRanges(fontface, max_count, ranges, count);
 }
 
-static HRESULT WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)
+static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    IDWriteFontFace2 *fontface;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = get_fontface_from_font(This, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    return IDWriteFontFace2_IsMonospacedFont(fontface);
 }
 
 static HRESULT WINAPI dwritefont2_IsColorFont(IDWriteFont2 *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    IDWriteFontFace2 *fontface;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = get_fontface_from_font(This, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    return IDWriteFontFace2_IsColorFont(fontface);
 }
 
 static const IDWriteFont2Vtbl dwritefontvtbl = {
