@@ -214,6 +214,16 @@ int WINAPI SysStringLen16(BSTR16 str)
 }
 
 /******************************************************************************
+ * VariantChangeType [OLE2DISP.12]
+ */
+HRESULT WINAPI VariantChangeType16(VARIANTARG *vargDest, VARIANTARG *varSrc, unsigned short flags, VARTYPE vt)
+{
+    FIXME("stub: (%p, %p, %d, %d)\n", vargDest, varSrc, flags, vt);
+    return E_NOTIMPL;
+}
+
+
+/******************************************************************************
  * CreateDispTypeInfo [OLE2DISP.31]
  */
 HRESULT WINAPI CreateDispTypeInfo16(
