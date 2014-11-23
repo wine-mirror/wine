@@ -527,6 +527,7 @@ todo_wine {
 static void test_CreateBitmapRenderTarget(void)
 {
     IDWriteBitmapRenderTarget *target, *target2;
+    IDWriteBitmapRenderTarget1 *target1;
     IDWriteGdiInterop *interop;
     IDWriteFactory *factory;
     HBITMAP hbm, hbm2;
@@ -700,6 +701,30 @@ if (0) /* crashes on native */
 
     pdip = IDWriteBitmapRenderTarget_GetPixelsPerDip(target);
     ok(pdip == 2.0, "got %.2f\n", pdip);
+
+    hr = IDWriteBitmapRenderTarget_QueryInterface(target, &IID_IDWriteBitmapRenderTarget1, (void**)&target1);
+    if (hr == S_OK) {
+        DWRITE_TEXT_ANTIALIAS_MODE mode;
+
+        mode = IDWriteBitmapRenderTarget1_GetTextAntialiasMode(target1);
+        ok(mode == DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE, "got %d\n", mode);
+
+        hr = IDWriteBitmapRenderTarget1_SetTextAntialiasMode(target1, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE+1);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        mode = IDWriteBitmapRenderTarget1_GetTextAntialiasMode(target1);
+        ok(mode == DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE, "got %d\n", mode);
+
+        hr = IDWriteBitmapRenderTarget1_SetTextAntialiasMode(target1, DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        mode = IDWriteBitmapRenderTarget1_GetTextAntialiasMode(target1);
+        ok(mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE, "got %d\n", mode);
+
+        IDWriteBitmapRenderTarget1_Release(target1);
+    }
+    else
+        win_skip("IDWriteBitmapRenderTarget1 is not supported.\n");
 
     IDWriteBitmapRenderTarget_Release(target);
     IDWriteGdiInterop_Release(interop);
