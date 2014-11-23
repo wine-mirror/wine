@@ -618,6 +618,14 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+/* check if we're running under wine */
+static BOOL running_under_wine(void)
+{
+    HMODULE module = GetModuleHandleA( "ntdll.dll" );
+    if (!module) return FALSE;
+    return (GetProcAddress( module, "wine_server_call" ) != NULL);
+}
+
 #ifdef __GNUC__
 void _fpreset(void) {} /* override the mingw fpu init code */
 #endif
@@ -632,7 +640,11 @@ int main( int argc, char **argv )
     winetest_argc = argc;
     winetest_argv = argv;
 
-    if (GetEnvironmentVariableA( "WINETEST_PLATFORM", p, sizeof(p) )) winetest_platform = strdup(p);
+    if (GetEnvironmentVariableA( "WINETEST_PLATFORM", p, sizeof(p) ))
+        winetest_platform = strdup(p);
+    else if (running_under_wine())
+        winetest_platform = "wine";
+
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) report_success = atoi(p);
