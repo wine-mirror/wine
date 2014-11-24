@@ -867,8 +867,8 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
     memset(metrics, 0, sizeof(*metrics));
 
     if (tt_os2) {
-        metrics->ascent    = GET_BE_WORD(tt_os2->sTypoAscender);
-        metrics->descent   = GET_BE_WORD(tt_os2->sTypoDescender);
+        metrics->ascent    = GET_BE_WORD(tt_os2->usWinAscent);
+        metrics->descent   = GET_BE_WORD(tt_os2->usWinDescent);
         metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
         metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
         metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
