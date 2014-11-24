@@ -31,6 +31,7 @@
 #include "ole2.h"
 #include "perhist.h"
 #include "mshtmdid.h"
+#include "mshtmcid.h"
 
 #include "wine/debug.h"
 
@@ -1095,6 +1096,40 @@ static HRESULT WINAPI HTMLDocument_clear(IHTMLDocument2 *iface)
     return S_OK;
 }
 
+static const WCHAR insertorderedlistW[] =
+    {'i','n','s','e','r','t','o','r','d','e','r','e','d','l','i','s','t',0};
+static const WCHAR insertunorderedlistW[] =
+    {'i','n','s','e','r','t','u','n','o','r','d','e','r','e','d','l','i','s','t',0};
+static const WCHAR outdentW[] =
+    {'o','u','t','d','e','n','t',0};
+static const WCHAR respectvisibilityindesignW[] =
+    {'r','e','s','p','e','c','t','v','i','s','i','b','i','l','i','t','y','i','n','d','e','s','i','g','n',0};
+
+static const struct {
+    const WCHAR *name;
+    OLECMDID id;
+}command_names[] = {
+    {insertorderedlistW, IDM_ORDERLIST},
+    {insertunorderedlistW, IDM_UNORDERLIST},
+    {outdentW, IDM_OUTDENT},
+    {respectvisibilityindesignW, IDM_RESPECTVISIBILITY_INDESIGN}
+};
+
+static BOOL cmdid_from_string(const WCHAR *str, OLECMDID *cmdid)
+{
+    int i;
+
+    for(i = 0; i < sizeof(command_names)/sizeof(*command_names); i++) {
+        if(!strcmpiW(command_names[i].name, str)) {
+            *cmdid = command_names[i].id;
+            return TRUE;
+        }
+    }
+
+    FIXME("Unknown command %s\n", debugstr_w(str));
+    return FALSE;
+}
+
 static HRESULT WINAPI HTMLDocument_queryCommandSupported(IHTMLDocument2 *iface, BSTR cmdID,
                                                         VARIANT_BOOL *pfRet)
 {
@@ -1147,8 +1182,28 @@ static HRESULT WINAPI HTMLDocument_execCommand(IHTMLDocument2 *iface, BSTR cmdID
                                 VARIANT_BOOL showUI, VARIANT value, VARIANT_BOOL *pfRet)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%s %x %s %p)\n", This, debugstr_w(cmdID), showUI, debugstr_variant(&value), pfRet);
-    return E_NOTIMPL;
+    OLECMDID cmdid;
+    VARIANT ret;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %s %p)\n", This, debugstr_w(cmdID), showUI, debugstr_variant(&value), pfRet);
+
+    if(!cmdid_from_string(cmdID, &cmdid))
+        return OLECMDERR_E_NOTSUPPORTED;
+
+    V_VT(&ret) = VT_EMPTY;
+    hres = IOleCommandTarget_Exec(&This->IOleCommandTarget_iface, &CGID_MSHTML, cmdid,
+            showUI ? 0 : OLECMDEXECOPT_DONTPROMPTUSER, &value, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(&ret) != VT_EMPTY) {
+        FIXME("Handle ret %s\n", debugstr_variant(&ret));
+        VariantClear(&ret);
+    }
+
+    *pfRet = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_execCommandShowHelp(IHTMLDocument2 *iface, BSTR cmdID,

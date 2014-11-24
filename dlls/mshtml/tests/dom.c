@@ -6005,8 +6005,10 @@ static void test_defaults(IHTMLDocument2 *doc)
     IHTMLElement2 *elem2;
     IHTMLElement *elem;
     IHTMLStyle *style;
+    VARIANT v;
     BSTR str;
     LONG l;
+    VARIANT_BOOL b;
     HRESULT hres;
     IHTMLElementCollection *collection;
 
@@ -6128,6 +6130,22 @@ static void test_defaults(IHTMLDocument2 *doc)
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFiltersCollection, (void**)&body);
     ok(hres == E_NOINTERFACE, "got interface IHTMLFiltersCollection\n");
+
+    str = a2bstr("xxx");
+    b = 100;
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLDocument2_execCommand(doc, str, FALSE, v, &b);
+    ok(hres == OLECMDERR_E_NOTSUPPORTED || hres == E_INVALIDARG,
+       "execCommand failed: %08x, expected OLECMDERR_E_NOTSUPPORTED or E_INVALIDARG\n", hres);
+    SysFreeString(str);
+
+    str = a2bstr("respectvisibilityindesign");
+    b = 100;
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_TRUE;
+    hres = IHTMLDocument2_execCommand(doc, str, FALSE, v, &b);
+    ok(hres == S_OK, "execCommand failed: %08x, expected DRAGDROP_E_NOTREGISTERED\n", hres);
+    SysFreeString(str);
 
     test_default_selection(doc);
     test_doc_title(doc, "");
