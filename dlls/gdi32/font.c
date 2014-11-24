@@ -1660,8 +1660,7 @@ UINT WINAPI GetOutlineTextMetricsW(
         output->otmsStrikeoutPosition    = height_to_LP( dc, output->otmsStrikeoutPosition);
         output->otmsUnderscoreSize       = height_to_LP( dc, output->otmsUnderscoreSize);
         output->otmsUnderscorePosition   = height_to_LP( dc, output->otmsUnderscorePosition);
-#undef WDPTOLP
-#undef HDPTOLP
+
         if(output != lpOTM)
         {
             memcpy(lpOTM, output, cbData);
