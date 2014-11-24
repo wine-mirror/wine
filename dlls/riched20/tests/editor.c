@@ -7379,7 +7379,7 @@ static void test_EM_FINDWORDBREAK_A(void)
         char buf[2];
         buf[0] = delimiter_tests[i].c;
         buf[1] = 0;
-        SendMessageW(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buf);
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buf);
         result = SendMessageA(hwndRichEdit, EM_FINDWORDBREAK, WB_ISDELIMITER, 0);
         if (buf[0] == 0x20)
             todo_wine
