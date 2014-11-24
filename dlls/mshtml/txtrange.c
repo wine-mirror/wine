@@ -1627,8 +1627,74 @@ static HRESULT WINAPI HTMLTxtRange_setEndPoint(IHTMLTxtRange *iface, BSTR how,
         IHTMLTxtRange *SourceRange)
 {
     HTMLTxtRange *This = impl_from_IHTMLTxtRange(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(how), SourceRange);
-    return E_NOTIMPL;
+    HTMLTxtRange *src_range;
+    nsIDOMNode *ref_node;
+    INT32 ref_offset;
+    BOOL set_start;
+    int how_type;
+    INT16 cmp;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(how), SourceRange);
+
+    how_type = string_to_nscmptype(how);
+    if(how_type == -1)
+        return E_INVALIDARG;
+
+    src_range = get_range_object(This->doc, SourceRange);
+    if(!src_range)
+        return E_FAIL;
+
+    switch(how_type) {
+    case NS_START_TO_START:
+    case NS_END_TO_START:
+        nsres = nsIDOMRange_GetStartContainer(src_range->nsrange, &ref_node);
+        assert(nsres == NS_OK);
+
+        nsres = nsIDOMRange_GetStartOffset(src_range->nsrange, &ref_offset);
+        assert(nsres == NS_OK);
+
+        set_start = how_type == NS_START_TO_START;
+        break;
+    case NS_END_TO_END:
+    case NS_START_TO_END:
+        nsres = nsIDOMRange_GetEndContainer(src_range->nsrange, &ref_node);
+        assert(nsres == NS_OK);
+
+        nsres = nsIDOMRange_GetEndOffset(src_range->nsrange, &ref_offset);
+        assert(nsres == NS_OK);
+
+        set_start = how_type == NS_START_TO_END;
+        break;
+    DEFAULT_UNREACHABLE;
+    }
+
+    nsres = nsIDOMRange_ComparePoint(This->nsrange, ref_node, ref_offset, &cmp);
+    assert(nsres == NS_OK);
+
+    if(set_start) {
+        if(cmp <= 0) {
+            nsres = nsIDOMRange_SetStart(This->nsrange, ref_node, ref_offset);
+        }else {
+            nsres = nsIDOMRange_Collapse(This->nsrange, FALSE);
+            assert(nsres == NS_OK);
+
+            nsres = nsIDOMRange_SetEnd(This->nsrange, ref_node, ref_offset);
+        }
+    }else {
+        if(cmp >= 0) {
+            nsres = nsIDOMRange_SetEnd(This->nsrange, ref_node, ref_offset);
+        }else {
+            nsres = nsIDOMRange_Collapse(This->nsrange, TRUE);
+            assert(nsres == NS_OK);
+
+            nsres = nsIDOMRange_SetStart(This->nsrange, ref_node, ref_offset);
+        }
+    }
+    assert(nsres == NS_OK);
+
+    nsIDOMNode_Release(ref_node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTxtRange_compareEndPoints(IHTMLTxtRange *iface, BSTR how,

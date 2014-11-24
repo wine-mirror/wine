@@ -4901,6 +4901,30 @@ static IHTMLTxtRange *test_create_body_range(IHTMLDocument2 *doc)
     return range;
 }
 
+#define range_duplicate(a) _range_duplicate(__LINE__,a)
+static IHTMLTxtRange *_range_duplicate(unsigned line, IHTMLTxtRange *range)
+{
+    IHTMLTxtRange *ret;
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_duplicate(range, &ret);
+    ok_(__FILE__,line)(hres == S_OK, "duplicate failed: %08x\n", hres);
+
+    return ret;
+}
+
+#define test_range_set_end_point(a,b,c,d) _test_range_set_end_point(__LINE__,a,b,c,d)
+static void _test_range_set_end_point(unsigned line, IHTMLTxtRange *range, const char *how,
+        IHTMLTxtRange *ref_range, HRESULT exhres)
+{
+    BSTR str = a2bstr(how);
+    HRESULT hres;
+
+    hres = IHTMLTxtRange_setEndPoint(range, str, ref_range);
+    ok_(__FILE__,line)(hres == exhres, "setEndPoint failed: %08x, expected %08x\n", hres, exhres);
+    SysFreeString(str);
+}
+
 static void test_txtrange(IHTMLDocument2 *doc)
 {
     IHTMLTxtRange *body_range, *range, *range2;
@@ -4915,11 +4939,9 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_text(body_range, "test abc 123\r\nit's text");
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+    range = range_duplicate(body_range);
+    range2 = range_duplicate(body_range);
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range2);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
     test_range_isequal(range, range2, VARIANT_TRUE);
 
     test_range_text(range, "test abc 123\r\nit's text");
@@ -4959,8 +4981,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     IHTMLTxtRange_Release(range);
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+    range = range_duplicate(body_range);
 
     test_range_text(range, "test abc 123\r\nit's text");
     test_range_move(range, characterW, 3, 3);
@@ -4978,8 +4999,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     IHTMLTxtRange_Release(range);
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+    range = range_duplicate(body_range);
 
     test_range_move(range, wordW, 1, 1);
     test_range_moveend(range, characterW, 2, 2);
@@ -5005,8 +5025,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     IHTMLTxtRange_Release(range);
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+    range = range_duplicate(body_range);
 
     test_range_move(range, wordW, 2, 2);
     test_range_moveend(range, characterW, 2, 2);
@@ -5030,8 +5049,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     IHTMLTxtRange_Release(range);
 
-    hres = IHTMLTxtRange_duplicate(body_range, &range);
-    ok(hres == S_OK, "duplicate failed: %08x\n", hres);
+    range = range_duplicate(body_range);
 
     test_range_collapse(range, TRUE);
     test_range_expand(range, wordW, VARIANT_TRUE, "test ");
@@ -5054,7 +5072,6 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_text(range, NULL);
 
     IHTMLTxtRange_Release(range);
-    IHTMLTxtRange_Release(body_range);
 
     hres = IHTMLDocument2_get_selection(doc, &selection);
     ok(hres == S_OK, "IHTMLDocument2_get_selection failed: %08x\n", hres);
@@ -5116,9 +5133,39 @@ static void test_txtrange(IHTMLDocument2 *doc)
 
     test_range_text(range, "abc \r\npaste\r\nxyz abc 123\r\nit's text");
 
-    IHTMLElement_Release(body);
+    test_range_move(range, wordW, 2, 2);
+    test_range_collapse(range, VARIANT_TRUE);
+    test_range_moveend(range, characterW, 5, 5);
+    test_range_text(range, "paste");
+
+    range2 = range_duplicate(range);
+
+    test_range_set_end_point(range, "starttostart", body_range, S_OK);
+    test_range_text(range, "abc \r\npaste");
+
+    test_range_set_end_point(range, "endtoend", body_range, S_OK);
+    test_range_text(range, "abc \r\npaste\r\nxyz abc 123\r\nit's text");
+
+    test_range_set_end_point(range, "starttoend", range2, S_OK);
+    test_range_text(range, "\r\nxyz abc 123\r\nit's text");
+
+    test_range_set_end_point(range, "starttostart", body_range, S_OK);
+    test_range_set_end_point(range, "endtostart", range2, S_OK);
+    test_range_text(range, "abc ");
+
+    test_range_set_end_point(range, "starttoend", body_range, S_OK);
+    test_range_text(range, "paste\r\nxyz abc 123\r\nit's text");
+
+    test_range_set_end_point(range, "EndToStart", body_range, S_OK);
+    test_range_text(range, "abc ");
+
+    test_range_set_end_point(range, "xxx", body_range, E_INVALIDARG);
 
     IHTMLTxtRange_Release(range);
+    IHTMLTxtRange_Release(range2);
+    IHTMLTxtRange_Release(body_range);
+    IHTMLElement_Release(body);
+
 }
 
 static void test_txtrange2(IHTMLDocument2 *doc)
