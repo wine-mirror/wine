@@ -615,8 +615,13 @@ static HRESULT exec_baselinefont3(HTMLDocument *This, DWORD cmdexecopt, VARIANT 
 static HRESULT exec_respectvisibility_indesign(HTMLDocument *This, DWORD cmdexecopt,
         VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x %s %p)\n", This, cmdexecopt, debugstr_variant(in), out);
+
+    /* This is turned on by default in Gecko. */
+    if(!in || V_VT(in) != VT_BOOL || !V_BOOL(in))
+        FIXME("Unsupported argument %s\n", debugstr_variant(in));
+
+    return S_OK;
 }
 
 static HRESULT query_enabled_stub(HTMLDocument *This, OLECMD *cmd)
