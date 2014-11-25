@@ -4626,7 +4626,7 @@ static DWORD CALLBACK show_window_thread(LPVOID arg)
    HWND hwnd = arg;
 
    /* function will not return if ShowWindow(SW_HIDE) calls SendMessage() */
-   ShowWindow(hwnd, SW_HIDE);
+   ok(ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow(SW_HIDE) expected FALSE\n");
 
    return 0;
 }
@@ -4669,7 +4669,7 @@ static void test_messages(void)
     ok_sequence(WmHideOverlappedSeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
 
     /* test ShowWindow(SW_HIDE) on a hidden window - single threaded */
-    ShowWindow(hwnd, SW_HIDE);
+    ok(ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow(SW_HIDE) expected FALSE\n");
     flush_events();
     ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
 
