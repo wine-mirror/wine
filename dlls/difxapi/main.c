@@ -86,3 +86,13 @@ VOID WINAPI DIFXAPISetLogCallbackW(DIFXAPILOGCALLBACK_W cb, VOID *ctx)
 {
     FIXME("(%p, %p) stub\n", cb, ctx);
 }
+
+VOID WINAPI SetDifxLogCallbackA(DIFXLOGCALLBACK_A cb, VOID *ctx)
+{
+    FIXME("(%p, %p) stub\n", cb, ctx);
+}
+
+VOID WINAPI SetDifxLogCallbackW(DIFXLOGCALLBACK_W cb, VOID *ctx)
+{
+    FIXME("(%p, %p) stub\n", cb, ctx);
+}

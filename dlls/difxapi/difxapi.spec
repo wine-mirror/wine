@@ -8,3 +8,5 @@
 @ stdcall DriverPackagePreinstallW(wstr long)
 @ stdcall DriverPackageUninstallA(str long ptr ptr)
 @ stdcall DriverPackageUninstallW(wstr long ptr ptr)
+@ stdcall SetDifxLogCallbackA(ptr ptr)
+@ stdcall SetDifxLogCallbackW(ptr ptr)
