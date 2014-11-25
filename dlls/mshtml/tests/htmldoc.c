@@ -2988,6 +2988,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 144: /* TODO */
         case 178:
         case 179:
+        case 180:
+        case 181:
+        case 182:
             return E_NOTIMPL;
 
         default:
