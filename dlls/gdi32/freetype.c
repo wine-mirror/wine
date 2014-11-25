@@ -4456,7 +4456,7 @@ typedef struct {
 
 static LONG load_VDMX(GdiFont *font, LONG height)
 {
-    WORD hdr[3], tmp;
+    WORD hdr[3];
     VDMX_group group;
     BYTE devXRatio, devYRatio;
     USHORT numRecs, numRatios;
@@ -4464,7 +4464,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     LONG ppem = 0;
     int i;
 
-    result = get_font_data(font, MS_VDMX_TAG, 0, hdr, 6);
+    result = get_font_data(font, MS_VDMX_TAG, 0, hdr, sizeof(hdr));
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
 	return ppem;
@@ -4495,8 +4495,10 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	    devYRatio >= ratio.yStartRatio &&
 	    devYRatio <= ratio.yEndRatio))
 	    {
+		WORD tmp;
+
 		offset = (3 * 2) + (numRatios * 4) + (i * 2);
-		get_font_data(font, MS_VDMX_TAG, offset, &tmp, 2);
+		get_font_data(font, MS_VDMX_TAG, offset, &tmp, sizeof(tmp));
 		offset = GET_BE_WORD(tmp);
 		break;
 	    }
@@ -4504,7 +4506,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 
     if(offset == -1) return 0;
 
-    if(get_font_data(font, MS_VDMX_TAG, offset, &group, 4) != GDI_ERROR) {
+    if(get_font_data(font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
 	WORD *vTable;
