@@ -1058,12 +1058,16 @@ static void test_swapchain(void)
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
-    HWND window;
+    HWND window, window2;
     HRESULT hr;
+    struct device_desc device_desc;
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
     ok(!!window, "Failed to create a window.\n");
+    window2 = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window2, "Failed to create a window.\n");
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, NULL)))
@@ -1176,10 +1180,42 @@ static void test_swapchain(void)
     IDirect3DSwapChain9_Release(swapchain3);
     IDirect3DSwapChain9_Release(swapchain2);
     IDirect3DSwapChain9_Release(swapchain1);
+
+    d3dpp.Windowed = FALSE;
+    d3dpp.hDeviceWindow = window;
+    d3dpp.BackBufferCount = 1;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+    d3dpp.hDeviceWindow = window2;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+
+    device_desc.width = registry_mode.dmPelsWidth;
+    device_desc.height = registry_mode.dmPelsHeight;
+    device_desc.device_window = window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    hr = reset_device(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
+
+    d3dpp.hDeviceWindow = window;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+    d3dpp.hDeviceWindow = window2;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+    d3dpp.Windowed = TRUE;
+    d3dpp.hDeviceWindow = window;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+    d3dpp.hDeviceWindow = window2;
+    hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x\n", hr);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 cleanup:
     IDirect3D9_Release(d3d);
+    DestroyWindow(window2);
     DestroyWindow(window);
 }
 

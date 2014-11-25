@@ -503,10 +503,35 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_CreateAdditionalSwapChain(ID
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_swapchain_desc desc;
     struct d3d9_swapchain *object;
+    UINT i, count;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p.\n",
             iface, present_parameters, swapchain);
+
+    if (!present_parameters->Windowed)
+    {
+        WARN("Trying to create an additional fullscreen swapchain, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    wined3d_mutex_lock();
+    count = wined3d_device_get_swapchain_count(device->wined3d_device);
+    for (i = 0; i < count; ++i)
+    {
+        struct wined3d_swapchain *wined3d_swapchain;
+
+        wined3d_swapchain = wined3d_device_get_swapchain(device->wined3d_device, i);
+        wined3d_swapchain_get_desc(wined3d_swapchain, &desc);
+
+        if (!desc.windowed)
+        {
+            wined3d_mutex_unlock();
+            WARN("Trying to create an additional swapchain in fullscreen mode, returning D3DERR_INVALIDCALL.\n");
+            return D3DERR_INVALIDCALL;
+        }
+    }
+    wined3d_mutex_unlock();
 
     wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
     if (SUCCEEDED(hr = d3d9_swapchain_create(device, &desc, &object)))
