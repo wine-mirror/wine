@@ -2042,7 +2042,8 @@ struct dwrite_localfontfilestream
     LONG ref;
 
     struct local_cached_stream *entry;
-    HANDLE handle;
+    const void *file_ptr;
+    UINT64 size;
 };
 
 struct dwrite_localfontfileloader {
@@ -2100,8 +2101,7 @@ static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
-        if (This->handle != INVALID_HANDLE_VALUE)
-            CloseHandle(This->handle);
+        UnmapViewOfFile(This->file_ptr);
         release_cached_stream(This->entry);
         heap_free(This);
     }
@@ -2112,26 +2112,18 @@ static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
 static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream *iface, void const **fragment_start, UINT64 offset, UINT64 fragment_size, void **fragment_context)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    LARGE_INTEGER distance;
-    DWORD bytes = fragment_size;
-    DWORD read;
 
     TRACE("(%p)->(%p, %s, %s, %p)\n",This, fragment_start,
           wine_dbgstr_longlong(offset), wine_dbgstr_longlong(fragment_size), fragment_context);
 
     *fragment_context = NULL;
-    distance.QuadPart = offset;
-    if (!SetFilePointerEx(This->handle, distance, NULL, FILE_BEGIN))
-        return E_FAIL;
-    *fragment_start = *fragment_context = heap_alloc(bytes);
-    if (!*fragment_context)
-        return E_FAIL;
-    if (!ReadFile(This->handle, *fragment_context, bytes, &read, NULL))
-    {
-        heap_free(*fragment_context);
+
+    if ((offset >= This->size - 1) || (fragment_size > This->size - offset)) {
+        *fragment_start = NULL;
         return E_FAIL;
     }
 
+    *fragment_start = (char*)This->file_ptr + offset;
     return S_OK;
 }
 
@@ -2139,16 +2131,13 @@ static void WINAPI localfontfilestream_ReleaseFileFragment(IDWriteFontFileStream
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
     TRACE("(%p)->(%p)\n", This, fragment_context);
-    heap_free(fragment_context);
 }
 
 static HRESULT WINAPI localfontfilestream_GetFileSize(IDWriteFontFileStream *iface, UINT64 *size)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    LARGE_INTEGER li;
-    TRACE("(%p)->(%p)\n",This, size);
-    GetFileSizeEx(This->handle, &li);
-    *size = li.QuadPart;
+    TRACE("(%p)->(%p)\n", This, size);
+    *size = This->size;
     return S_OK;
 }
 
@@ -2177,15 +2166,17 @@ static const IDWriteFontFileStreamVtbl localfontfilestreamvtbl =
     localfontfilestream_GetLastWriteTime
 };
 
-static HRESULT create_localfontfilestream(HANDLE handle, struct local_cached_stream *entry, IDWriteFontFileStream** iface)
+static HRESULT create_localfontfilestream(const void *file_ptr, UINT64 size, struct local_cached_stream *entry, IDWriteFontFileStream** iface)
 {
     struct dwrite_localfontfilestream *This = heap_alloc(sizeof(struct dwrite_localfontfilestream));
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->ref = 1;
-    This->handle = handle;
     This->IDWriteFontFileStream_iface.lpVtbl = &localfontfilestreamvtbl;
+    This->ref = 1;
+
+    This->file_ptr = file_ptr;
+    This->size = size;
     This->entry = entry;
 
     *iface = &This->IDWriteFontFileStream_iface;
@@ -2244,11 +2235,12 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
     const struct local_refkey *refkey = key;
     struct local_cached_stream *stream;
     IDWriteFontFileStream *filestream;
-    HANDLE handle;
+    HANDLE file, mapping;
+    LARGE_INTEGER size;
+    void *file_ptr;
     HRESULT hr;
 
     TRACE("(%p)->(%p, %i, %p)\n", This, key, key_size, ret);
-
     TRACE("name: %s\n", debugstr_w(refkey->name));
 
     /* search cache first */
@@ -2262,11 +2254,19 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
 
     *ret = NULL;
 
-    handle = CreateFileW(refkey->name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    file = CreateFileW(refkey->name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
                          NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (handle == INVALID_HANDLE_VALUE)
+    if (file == INVALID_HANDLE_VALUE)
         return E_FAIL;
+
+    GetFileSizeEx(file, &size);
+    mapping = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(file);
+    if (!mapping)
+        return E_FAIL;
+
+    file_ptr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(mapping);
 
     stream = heap_alloc(sizeof(*stream));
     if (!stream)
@@ -2274,6 +2274,7 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
 
     stream->key = heap_alloc(key_size);
     if (!stream->key) {
+        UnmapViewOfFile(file_ptr);
         heap_free(stream);
         return E_OUTOFMEMORY;
     }
@@ -2281,8 +2282,9 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
     stream->key_size = key_size;
     memcpy(stream->key, key, key_size);
 
-    hr = create_localfontfilestream(handle, stream, &filestream);
+    hr = create_localfontfilestream(file_ptr, size.QuadPart, stream, &filestream);
     if (FAILED(hr)) {
+        UnmapViewOfFile(file_ptr);
         heap_free(stream->key);
         heap_free(stream);
         return hr;

@@ -2497,16 +2497,14 @@ static void test_ReadFileFragment(void)
     fragment = (void*)0xdeadbeef;
     context = (void*)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, filesize+1, &context);
-todo_wine {
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
     ok(context == NULL, "got %p\n", context);
     ok(fragment == NULL, "got %p\n", fragment);
-}
+
     fragment = (void*)0xdeadbeef;
     context = (void*)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, filesize, &context);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(context == NULL, "got %p\n", context);
     ok(fragment != NULL, "got %p\n", fragment);
 
@@ -2514,12 +2512,20 @@ todo_wine
     context2 = (void*)0xdeadbeef;
     hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment2, 0, filesize, &context2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(context2 == NULL, "got %p\n", context2);
     ok(fragment == fragment2, "got %p, %p\n", fragment, fragment2);
-}
+
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
     IDWriteFontFileStream_ReleaseFileFragment(stream, context2);
+
+    /* fragment is released, try again */
+    fragment = (void*)0xdeadbeef;
+    context = (void*)0xdeadbeef;
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &fragment, 0, filesize, &context);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(context == NULL, "got %p\n", context);
+    ok(fragment == fragment2, "got %p, %p\n", fragment, fragment2);
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
     IDWriteFontFileStream_Release(stream);
     IDWriteLocalFontFileLoader_Release(localloader);
