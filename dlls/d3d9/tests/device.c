@@ -3295,7 +3295,7 @@ static void test_wndproc(void)
     {
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
-        {WM_MOVE,               DEVICE_WINDOW,  FALSE,  0},
+        /* optional WM_MOVE here if size changed */
         {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   TRUE},
         {0,                     0,              FALSE,  0},
     };
