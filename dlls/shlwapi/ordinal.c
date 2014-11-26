@@ -5054,11 +5054,8 @@ INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
         {
             if ((fmt_flags & FDTF_LONGDATE) && (ret < size + 2))
             {
-                if (ret < size + 2)
-                {
-                   lstrcatW(&buf[ret-1], sep1);
-                   ret += 2;
-                }
+                lstrcatW(&buf[ret-1], sep1);
+                ret += 2;
             }
             else
             {
