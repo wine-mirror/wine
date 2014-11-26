@@ -91,14 +91,6 @@ struct dwrite_font {
     struct dwrite_font_data *data;
 };
 
-#define DWRITE_FONTTABLE_MAGIC 0xededfafa
-
-struct dwrite_fonttablecontext {
-    UINT32 magic;
-    void  *context;
-    UINT32 file_index;
-};
-
 struct dwrite_fonttable {
     void  *data;
     void  *context;
@@ -359,45 +351,19 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace2 *iface, UI
     const void **table_data, UINT32 *table_size, void **context, BOOL *exists)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    struct dwrite_fonttablecontext *tablecontext;
-    HRESULT hr = S_OK;
-    int i;
 
     TRACE("(%p)->(%u %p %p %p %p)\n", This, table_tag, table_data, table_size, context, exists);
 
-    tablecontext = heap_alloc(sizeof(struct dwrite_fonttablecontext));
-    if (!tablecontext)
-        return E_OUTOFMEMORY;
-    tablecontext->magic = DWRITE_FONTTABLE_MAGIC;
-
-    *exists = FALSE;
-    for (i = 0; i < This->file_count && !(*exists); i++) {
-        hr = opentype_get_font_table(This->streams[i], This->type, This->index, table_tag, table_data, &tablecontext->context, table_size, exists);
-        tablecontext->file_index = i;
-    }
-    if (FAILED(hr) && !*exists)
-        heap_free(tablecontext);
-    else
-        *context = (void*)tablecontext;
-
-    return hr;
+    return opentype_get_font_table(This->streams[0], This->type, This->index, table_tag, table_data, context, table_size, exists);
 }
 
 static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace2 *iface, void *table_context)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    struct dwrite_fonttablecontext *tablecontext = (struct dwrite_fonttablecontext*)table_context;
 
     TRACE("(%p)->(%p)\n", This, table_context);
 
-    if (tablecontext->magic != DWRITE_FONTTABLE_MAGIC)
-    {
-        TRACE("Invalid table magic\n");
-        return;
-    }
-
-    IDWriteFontFileStream_ReleaseFileFragment(This->streams[tablecontext->file_index], tablecontext->context);
-    heap_free(tablecontext);
+    IDWriteFontFileStream_ReleaseFileFragment(This->streams[0], table_context);
 }
 
 static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface, FLOAT emSize,

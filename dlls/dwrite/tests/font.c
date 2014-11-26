@@ -2324,7 +2324,6 @@ static void test_TryGetFontTable(void)
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_CMAP_TAG, &table, &size, &context, &exists);
     ok(hr == S_OK, "got 0x%08x\n",hr);
     ok(exists == TRUE, "got %d\n", exists);
-todo_wine
     ok(context == NULL && table != NULL, "cmap: context %p, table %p\n", context, table);
 
     exists = FALSE;
@@ -2333,7 +2332,6 @@ todo_wine
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_CMAP_TAG, &table2, &size, &context2, &exists);
     ok(hr == S_OK, "got 0x%08x\n",hr);
     ok(exists == TRUE, "got %d\n", exists);
-todo_wine
     ok(context2 == context && table2 == table, "cmap: context2 %p, table2 %p\n", context2, table2);
 
     IDWriteFontFace_ReleaseFontTable(fontface, context2);
