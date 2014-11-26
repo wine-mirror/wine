@@ -1067,9 +1067,9 @@ static const struct IDWriteFactoryVtbl shareddwritefactoryvtbl = {
     dwritefactory_CreateGlyphRunAnalysis
 };
 
-static void init_dwritefactory(struct dwritefactory *factory, const struct IDWriteFactoryVtbl *vtbl)
+static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYPE type)
 {
-    factory->IDWriteFactory_iface.lpVtbl = vtbl;
+    factory->IDWriteFactory_iface.lpVtbl = type == DWRITE_FACTORY_TYPE_SHARED ? &shareddwritefactoryvtbl : &dwritefactoryvtbl;
     factory->ref = 1;
     factory->localfontfileloader = NULL;
     factory->system_collection = NULL;
@@ -1099,7 +1099,7 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
     factory = heap_alloc(sizeof(struct dwritefactory));
     if (!factory) return E_OUTOFMEMORY;
 
-    init_dwritefactory(factory, type == DWRITE_FACTORY_TYPE_SHARED ? &shareddwritefactoryvtbl : &dwritefactoryvtbl);
+    init_dwritefactory(factory, type);
 
     if (type == DWRITE_FACTORY_TYPE_SHARED)
         if (InterlockedCompareExchangePointer((void**)&shared_factory, factory, NULL)) {
