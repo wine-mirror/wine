@@ -1586,39 +1586,37 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   /* 2. (All platforms) If initdir is not null, then use it */
   if (!handledPath && fodInfos->initdir && *fodInfos->initdir)
   {
-      /* Work out the proper path as supplied one might be relative          */
-      /* (Here because supplying '.' as dir browses to My Computer)          */
-      if (!handledPath) {
-          WCHAR tmpBuf[MAX_PATH];
-          WCHAR tmpBuf2[MAX_PATH];
-          WCHAR *nameBit;
-          DWORD result;
+        /* Work out the proper path as supplied one might be relative          */
+        /* (Here because supplying '.' as dir browses to My Computer)          */
+        WCHAR tmpBuf[MAX_PATH];
+        WCHAR tmpBuf2[MAX_PATH];
+        WCHAR *nameBit;
+        DWORD result;
 
-          lstrcpyW(tmpBuf, fodInfos->initdir);
-          if( PathFileExistsW(tmpBuf) ) {
-              /* initdir does not have to be a directory. If a file is
-               * specified, the dir part is taken */
-              if( PathIsDirectoryW(tmpBuf)) {
-                  PathAddBackslashW( tmpBuf );
-                  lstrcatW(tmpBuf, szwStar);
-              }
-              result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
-              if (result) {
-                 *nameBit = 0x00;
-                 MemFree(fodInfos->initdir);
-                 fodInfos->initdir = MemAlloc((lstrlenW(tmpBuf2) + 1)*sizeof(WCHAR));
-                 lstrcpyW(fodInfos->initdir, tmpBuf2);
-                 handledPath = TRUE;
-                 TRACE("Value in InitDir changed to %s\n", debugstr_w(fodInfos->initdir));
-              }
-          }
-          else if (fodInfos->initdir)
-          {
-                    MemFree(fodInfos->initdir);
-                    fodInfos->initdir = NULL;
-                    TRACE("Value in InitDir is not an existing path, changed to (nil)\n");
-          }
-      }
+        lstrcpyW(tmpBuf, fodInfos->initdir);
+        if (PathFileExistsW(tmpBuf)) {
+            /* initdir does not have to be a directory. If a file is
+             * specified, the dir part is taken */
+            if (PathIsDirectoryW(tmpBuf)) {
+                PathAddBackslashW(tmpBuf);
+                lstrcatW(tmpBuf, szwStar);
+            }
+            result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
+            if (result) {
+                *nameBit = 0x00;
+                MemFree(fodInfos->initdir);
+                fodInfos->initdir = MemAlloc((lstrlenW(tmpBuf2) + 1) * sizeof(WCHAR));
+                lstrcpyW(fodInfos->initdir, tmpBuf2);
+                handledPath = TRUE;
+                TRACE("Value in InitDir changed to %s\n", debugstr_w(fodInfos->initdir));
+            }
+        }
+        else if (fodInfos->initdir)
+        {
+            MemFree(fodInfos->initdir);
+            fodInfos->initdir = NULL;
+            TRACE("Value in InitDir is not an existing path, changed to (nil)\n");
+        }
   }
 
   if (!handledPath && (!fodInfos->initdir || !*fodInfos->initdir))
