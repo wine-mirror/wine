@@ -16820,7 +16820,7 @@ done:
     DestroyWindow(window);
 }
 
-static void fog_interpolation_test(void)
+static void test_fog_interpolation(void)
 {
     HRESULT hr;
     IDirect3DDevice9 *device;
@@ -17036,7 +17036,7 @@ static void test_negative_fixedfunction_fog(void)
          * parameters to 0.0 and 1.0 in the table fog case. */
         {D3DFVF_XYZRHW, tquad,  sizeof(*tquad), &identity, {-1.0f}, {0.0f},
                 D3DFOG_NONE,   D3DFOG_LINEAR, 0x00808000, 0x00ff0000},
-        /* fog_interpolation_test shows that vertex fog evaluates the fog
+        /* test_fog_interpolation shows that vertex fog evaluates the fog
          * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
          * that the abs happens before the fog equation is evaluated. */
         {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     { 0.0f}, {1.0f},
@@ -17226,6 +17226,6 @@ START_TEST(visual)
     stencil_cull_test();
     test_per_stage_constant();
     test_3dc_formats();
-    fog_interpolation_test();
+    test_fog_interpolation();
     test_negative_fixedfunction_fog();
 }
