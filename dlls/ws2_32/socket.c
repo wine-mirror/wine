@@ -4386,27 +4386,36 @@ static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefd
 static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set *exceptfds,
                              const struct pollfd *fds )
 {
+    unsigned int exceptfds_off = (readfds ? readfds->fd_count : 0) + (writefds ? writefds->fd_count : 0);
     unsigned int i, j = 0, k, total = 0;
 
     if (readfds)
     {
         for (i = k = 0; i < readfds->fd_count; i++, j++)
-            if (fds[j].revents) readfds->fd_array[k++] = readfds->fd_array[i];
+        {
+
+            if (fds[j].revents ||
+                    (readfds==writefds &&  (fds[readfds->fd_count+i].revents & POLLOUT) &&
+                     !(fds[readfds->fd_count+i].revents & POLLHUP)) ||
+                    (readfds==exceptfds && fds[exceptfds_off+i].revents))
+                readfds->fd_array[k++] = readfds->fd_array[i];
+        }
         readfds->fd_count = k;
         total += k;
     }
-    if (writefds)
+    if (writefds && writefds!=readfds)
     {
         for (i = k = 0; i < writefds->fd_count; i++, j++)
-            if ((fds[j].revents & POLLOUT) && !(fds[j].revents & POLLHUP))
+            if (((fds[j].revents & POLLOUT) && !(fds[j].revents & POLLHUP)) ||
+                    (writefds==exceptfds && fds[exceptfds_off+i].revents))
                 writefds->fd_array[k++] = writefds->fd_array[i];
         writefds->fd_count = k;
         total += k;
     }
-    if (exceptfds)
+    if (exceptfds && exceptfds!=readfds && exceptfds!=writefds)
     {
-        for (i = k = 0; i < exceptfds->fd_count; i++, j++)
-            if (fds[j].revents) exceptfds->fd_array[k++] = exceptfds->fd_array[i];
+        for (i = k = 0; i < exceptfds->fd_count; i++)
+            if (fds[exceptfds_off+i].revents) exceptfds->fd_array[k++] = exceptfds->fd_array[i];
         exceptfds->fd_count = k;
         total += k;
     }
