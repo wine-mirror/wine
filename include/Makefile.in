@@ -118,6 +118,7 @@ PUBLIC_IDL_H_SRCS = \
 	urlhist.idl \
 	urlmon.idl \
 	vmr9.idl \
+	vss.idl \
 	wbemcli.idl \
 	wbemdisp.idl \
 	wbemprov.idl \
@@ -577,6 +578,7 @@ SRCDIR_INCLUDES = \
 	vmrender.idl \
 	vsstyle.h \
 	vssym32.h \
+	vswriter.h \
 	werapi.h \
 	wfext.h \
 	wia.h \
