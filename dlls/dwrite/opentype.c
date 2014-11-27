@@ -185,6 +185,19 @@ typedef struct
 } TT_OS2_V2;
 #include "poppack.h"
 
+enum OS2_FSSELECTION {
+    OS2_FSSELECTION_ITALIC           = 1 << 0,
+    OS2_FSSELECTION_UNDERSCORE       = 1 << 1,
+    OS2_FSSELECTION_NEGATIVE         = 1 << 2,
+    OS2_FSSELECTION_OUTLINED         = 1 << 3,
+    OS2_FSSELECTION_STRIKEOUT        = 1 << 4,
+    OS2_FSSELECTION_BOLD             = 1 << 5,
+    OS2_FSSELECTION_REGULAR          = 1 << 6,
+    OS2_FSSELECTION_USE_TYPO_METRICS = 1 << 7,
+    OS2_FSSELECTION_WWS              = 1 << 8,
+    OS2_FSSELECTION_OBLIQUE          = 1 << 9
+};
+
 typedef struct {
     WORD platformID;
     WORD encodingID;
@@ -875,8 +888,12 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
     }
 
     if (tt_os2) {
+        USHORT version = GET_BE_WORD(tt_os2->version);
+
         metrics->ascent    = GET_BE_WORD(tt_os2->usWinAscent);
         metrics->descent   = GET_BE_WORD(tt_os2->usWinDescent);
+        /* FIXME: sTypoLineGap should only be used when USE_TYPO_METRICS is set,
+           if not set this value is probably derived from other metrics */
         metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
         metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
         metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
@@ -891,9 +908,20 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
         metrics->superscriptSizeY = GET_BE_WORD(tt_os2->ySuperscriptYSize);
 
         /* version 2 fields */
-        if (tt_os2->version >= 2) {
+        if (version >= 2) {
             metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
             metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
+        }
+
+        /* version 4 fields */
+        if (version >= 4) {
+            if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
+                SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
+                metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
+                metrics->descent = descent < 0 ? -descent : 0;
+                metrics->lineGap = GET_BE_WORD(tt_os2->sTypoLineGap);
+                metrics->hasTypographicMetrics = TRUE;
+            }
         }
     }
 
