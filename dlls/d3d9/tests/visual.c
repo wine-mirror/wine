@@ -16984,33 +16984,69 @@ static void test_negative_fixedfunction_fog(void)
         {{ 1.0f, -1.0f, -0.5f}, 0xffff0000},
         {{ 1.0f,  1.0f, -0.5f}, 0xffff0000},
     };
-    unsigned int i;
     static const struct
     {
-        union
-        {
-            float f;
-            DWORD d;
-        } start, end;
-        D3DFOGMODE vfog;
-        DWORD color;
+        struct vec4 position;
+        D3DCOLOR diffuse;
     }
-    tests[] =
+    tquad[] =
     {
-        /* fog_interpolation_test shows that vertex fog evaluates the fog
-         * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
-         * that the abs happens before the fog equation is evaluated. */
-        {{ 0.0f}, {1.0f}, D3DFOG_LINEAR,    0x00808000},
-        {{-1.0f}, {0.0f}, D3DFOG_LINEAR,    0x0000ff00},
-        {{ 0.0f}, {1.0f}, D3DFOG_EXP,       0x009b6400},
+        {{  0.0f,   0.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{640.0f,   0.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{  0.0f, 480.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{640.0f, 480.0f, -0.5f, 1.0f}, 0xffff0000},
     };
-    static const D3DMATRIX proj_mat =
+    unsigned int i;
+    static const D3DMATRIX zero =
     {{{
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     }}};
+    /* Needed to make AMD drivers happy. Yeah, it is not supposed to
+     * have an effect on RHW draws. */
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    }}};
+    static const struct
+    {
+        DWORD pos_type;
+        const void *quad;
+        size_t stride;
+        const D3DMATRIX *matrix;
+        union
+        {
+            float f;
+            DWORD d;
+        } start, end;
+        D3DFOGMODE vfog, tfog;
+        DWORD color, color_broken;
+    }
+    tests[] =
+    {
+        /* Run the XYZRHW tests first. Depth clamping is broken after RHW draws on the testbot. */
+        {D3DFVF_XYZRHW, tquad,  sizeof(*tquad), &identity, { 0.0f}, {1.0f},
+                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00ff0000, 0x00ff0000},
+        /* r200 GPUs and presumably all d3d8 and older HW clamp the fog
+         * parameters to 0.0 and 1.0 in the table fog case. */
+        {D3DFVF_XYZRHW, tquad,  sizeof(*tquad), &identity, {-1.0f}, {0.0f},
+                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00808000, 0x00ff0000},
+        /* fog_interpolation_test shows that vertex fog evaluates the fog
+         * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
+         * that the abs happens before the fog equation is evaluated. */
+        {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     { 0.0f}, {1.0f},
+                D3DFOG_LINEAR, D3DFOG_NONE,   0x00808000, 0x00808000},
+        {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     {-1.0f}, {0.0f},
+                D3DFOG_LINEAR, D3DFOG_NONE,   0x0000ff00, 0x0000ff00},
+        {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     { 0.0f}, {1.0f},
+                D3DFOG_EXP,    D3DFOG_NONE,   0x009b6400, 0x009b6400},
+    };
+    D3DCAPS9 caps;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -17025,8 +17061,11 @@ static void test_negative_fixedfunction_fog(void)
         return;
     }
 
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
-    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE))
+        skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping some fog tests.\n");
+
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
@@ -17035,29 +17074,40 @@ static void test_negative_fixedfunction_fog(void)
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0x0000ff00);
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &proj_mat);
-    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
+        if (!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE) && tests[i].tfog)
+            continue;
+
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, tests[i].matrix);
+        ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetFVF(device, tests[i].pos_type | D3DFVF_DIFFUSE);
+        ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, tests[i].start.d);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, tests[i].end.d);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, tests[i].vfog);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, tests[i].tfog);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
         hr = IDirect3DDevice9_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, tests[i].quad, tests[i].stride);
         ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, tests[i].color, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
+        ok(color_match(color, tests[i].color, 2) || broken(color_match(color, tests[i].color_broken, 2)),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     }

@@ -8022,33 +8022,61 @@ static void test_negative_fixedfunction_fog(void)
         {{ 1.0f, -1.0f, -0.5f}, 0xffff0000},
         {{ 1.0f,  1.0f, -0.5f}, 0xffff0000},
     };
-    unsigned int i;
-    static const struct
+    static struct
     {
-        union
-        {
-            float f;
-            DWORD d;
-        } start, end;
-        D3DFOGMODE vfog;
-        DWORD color;
+        struct vec4 position;
+        D3DCOLOR diffuse;
     }
-    tests[] =
+    tquad[] =
     {
-        /* fog_interpolation_test shows that vertex fog evaluates the fog
-         * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
-         * that the abs happens before the fog equation is evaluated. */
-        {{ 0.0f}, {1.0f}, D3DFOG_LINEAR,    0x00808000},
-        {{-1.0f}, {0.0f}, D3DFOG_LINEAR,    0x0000ff00},
-        {{ 0.0f}, {1.0f}, D3DFOG_EXP,       0x009b6400},
+        {{  0.0f,   0.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{640.0f,   0.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{  0.0f, 480.0f, -0.5f, 1.0f}, 0xffff0000},
+        {{640.0f, 480.0f, -0.5f, 1.0f}, 0xffff0000},
     };
-    static D3DMATRIX proj_mat =
+    unsigned int i;
+    static D3DMATRIX zero =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
+    static D3DMATRIX identity =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    static const struct
+    {
+        DWORD pos_type;
+        void *quad;
+        D3DMATRIX *matrix;
+        union
+        {
+            float f;
+            DWORD d;
+        } start, end;
+        D3DFOGMODE vfog, tfog;
+        DWORD color, color_broken;
+    }
+    tests[] =
+    {
+        /* Run the XYZRHW tests first. Depth clamping is broken after RHW draws on the testbot. */
+        {D3DFVF_XYZRHW, tquad,  &identity, { 0.0f}, {1.0f}, D3DFOG_NONE,   D3DFOG_LINEAR, 0x00ff0000, 0x00ff0000},
+        /* r200 GPUs and presumably all d3d8 and older HW clamp the fog
+         * parameters to 0.0 and 1.0 in the table fog case. */
+        {D3DFVF_XYZRHW, tquad,  &identity, {-1.0f}, {0.0f}, D3DFOG_NONE,   D3DFOG_LINEAR, 0x00808000, 0x00ff0000},
+        /* fog_interpolation_test shows that vertex fog evaluates the fog
+         * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
+         * that the abs happens before the fog equation is evaluated. */
+        {D3DFVF_XYZ,    quad,   &zero,     { 0.0f}, {1.0f}, D3DFOG_LINEAR, D3DFOG_NONE,   0x00808000, 0x00808000},
+        {D3DFVF_XYZ,    quad,   &zero,     {-1.0f}, {0.0f}, D3DFOG_LINEAR, D3DFOG_NONE,   0x0000ff00, 0x0000ff00},
+        {D3DFVF_XYZ,    quad,   &zero,     { 0.0f}, {1.0f}, D3DFOG_EXP,    D3DFOG_NONE,   0x009b6400, 0x009b6400},
+    };
+    D3DDEVICEDESC7 caps;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -8062,6 +8090,10 @@ static void test_negative_fixedfunction_fog(void)
 
     hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE))
+        skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping some fog tests.\n");
 
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
@@ -8071,29 +8103,38 @@ static void test_negative_fixedfunction_fog(void)
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGCOLOR, 0x0000ff00);
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &proj_mat);
-    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
+        if (!(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE) && tests[i].tfog)
+            continue;
+
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, tests[i].matrix);
+        ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
         hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGSTART, tests[i].start.d);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGEND, tests[i].end.d);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGVERTEXMODE, tests[i].vfog);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGTABLEMODE, tests[i].tfog);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
         hr = IDirect3DDevice7_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
         hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
-                D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, 4, 0);
+                tests[i].pos_type | D3DFVF_DIFFUSE, tests[i].quad, 4, 0);
         hr = IDirect3DDevice7_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = get_surface_color(rt, 0, 240);
-        ok(compare_color(color, tests[i].color, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
+        ok(compare_color(color, tests[i].color, 2) || broken(compare_color(color, tests[i].color_broken, 2)),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
     }
 
     IDirectDrawSurface7_Release(rt);
