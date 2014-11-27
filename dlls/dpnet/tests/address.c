@@ -87,6 +87,7 @@ static void address_addcomponents(void)
         DWORD bufflen = 0;
         DWORD port = 8888;
         WCHAR buffer[256];
+        WCHAR *name = NULL;
 
         /* We can add any Component to the Address interface not just the predefined ones. */
         hr = IDirectPlay8Address_AddComponent(localaddr, UNKNOWN, &IID_Random, sizeof(GUID), DPNA_DATATYPE_GUID);
@@ -175,25 +176,45 @@ static void address_addcomponents(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 100, NULL, &namelen, NULL, &bufflen, &type);
-        todo_wine ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+        ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 1, NULL, &namelen, NULL, &bufflen, NULL);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 100;
+        namelen = 0;
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 1, name, &namelen, buffer, &bufflen, &type);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+
+        namelen = 100;
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 1, NULL, &namelen, NULL, &bufflen, &type);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 100, NULL, NULL, NULL, &bufflen, &type);
-        todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 100, NULL, &namelen, NULL, NULL, &type);
-        todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == DPNERR_INVALIDPOINTER, "got 0x%08x\n", hr);
+
+        bufflen = 0;
+        namelen = 0;
+        type = 0;
+        hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, NULL, &namelen, NULL, &bufflen, &type);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+        ok(namelen == 8, "namelen expected 8 got %d\n", namelen);
+        ok(bufflen == 16, "bufflen expected 16 got %d\n", bufflen);
+        ok(type == DPNA_DATATYPE_GUID, "type expected DPNA_DATATYPE_GUID got %d\n", type);
 
         trace("GetNumComponents=%d\n", components);
         for(i=0; i < components; i++)
         {
-            WCHAR *name;
             void *buffer;
 
             bufflen = 0;
             namelen = 0;
 
             hr = IDirectPlay8Address_GetComponentByIndex(localaddr, i, NULL, &namelen, NULL, &bufflen, &type);
-            todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+            ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
 
             name =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, namelen * sizeof(WCHAR));
             buffer =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufflen);
@@ -258,14 +279,14 @@ static void address_setsp(void)
         ok(components == 1, "components=%d\n", components);
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, NULL, &namelen, NULL, &bufflen, &type);
-        todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
+        ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
 
         name =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, namelen * sizeof(WCHAR));
 
         hr = IDirectPlay8Address_GetComponentByIndex(localaddr, 0, name, &namelen, (void*)&guid, &bufflen, &type);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok(type == DPNA_DATATYPE_GUID, "wrong datatype: %d\n", type);
-        todo_wine ok(IsEqualGUID(&guid, &CLSID_DP8SP_TCPIP), "wrong guid\n");
+        ok(type == DPNA_DATATYPE_GUID, "wrong datatype: %d\n", type);
+        ok(IsEqualGUID(&guid, &CLSID_DP8SP_TCPIP), "wrong guid\n");
 
         HeapFree(GetProcessHeap(), 0, name);
 
