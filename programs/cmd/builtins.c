@@ -3112,7 +3112,7 @@ void WCMD_rename (void)
     if (dotDst && (*(dotDst+1)=='*')) {
       if (dotSrc) strcatW(dest, dotSrc);
     } else if (dotDst) {
-      if (dotDst) strcatW(dest, dotDst);
+      strcatW(dest, dotDst);
     }
 
     WINE_TRACE("Source '%s'\n", wine_dbgstr_w(src));
