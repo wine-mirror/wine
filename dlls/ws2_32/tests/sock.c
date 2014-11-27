@@ -3229,6 +3229,8 @@ static void test_listen(void)
 
 static void test_select(void)
 {
+    static const char tmp_buf[1024];
+
     SOCKET fdRead, fdWrite;
     fd_set readfds, writefds, exceptfds;
     unsigned int maxfd;
@@ -3327,6 +3329,79 @@ static void test_select(void)
     ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
     ok ( WSAGetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", WSAGetLastError());
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
+
+    ok(!tcp_socketpair(&fdRead, &fdWrite), "creating socket pair failed\n");
+    maxfd = fdRead;
+    if(fdWrite > maxfd) maxfd = fdWrite;
+
+    FD_ZERO(&readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(fdRead+1, &readfds, NULL, NULL, &select_timeout);
+    ok(!ret, "select returned %d\n", ret);
+
+    FD_ZERO(&writefds);
+    FD_SET(fdWrite, &writefds);
+    ret = select(fdWrite+1, NULL, &writefds, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
+
+    /* tests for overlapping fd_set pointers */
+    FD_ZERO(&readfds);
+    FD_SET(fdWrite, &readfds);
+    ret = select(fdWrite+1, &readfds, &readfds, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+
+    FD_ZERO(&readfds);
+    FD_SET(fdWrite, &readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
+    ok(ret == 2, "select returned %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+
+    ok(send(fdWrite, "test", 4, 0) == 4, "failed to send data\n");
+    FD_ZERO(&readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(fdRead+1, &readfds, NULL, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+
+    FD_ZERO(&readfds);
+    FD_SET(fdWrite, &readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
+    ok(ret == 2, "select returned %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+
+    while(1) {
+        FD_ZERO(&writefds);
+        FD_SET(fdWrite, &writefds);
+        ret = select(fdWrite+1, NULL, &writefds, NULL, &select_timeout);
+        if(!ret) break;
+        ok(send(fdWrite, tmp_buf, sizeof(tmp_buf), 0) > 0, "failed to send data\n");
+    }
+    FD_ZERO(&readfds);
+    FD_SET(fdWrite, &readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
+    ok(ret == 1, "select returned %d\n", ret);
+    ok(!FD_ISSET(fdWrite, &readfds), "fdWrite socket is in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+
+    ok(send(fdRead, "test", 4, 0) == 4, "failed to send data\n");
+    Sleep(100);
+    FD_ZERO(&readfds);
+    FD_SET(fdWrite, &readfds);
+    FD_SET(fdRead, &readfds);
+    ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
+    ok(ret == 2, "select returned %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+
+    closesocket(fdRead);
+    closesocket(fdWrite);
 }
 
 static DWORD WINAPI AcceptKillThread(void *param)
