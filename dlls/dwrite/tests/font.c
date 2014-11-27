@@ -2433,8 +2433,9 @@ static void test_CreateStreamFromKey(void)
 
     hr = IDWriteLocalFontFileLoader_CreateStreamFromKey(localloader, key, size, &stream2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(stream == stream2, "got %p, %p\n", stream, stream2);
-    EXPECT_REF(stream, 2);
+    ok(stream == stream2 || broken(stream != stream2) /* Win7 SP0 */, "got %p, %p\n", stream, stream2);
+    if (stream == stream2)
+        EXPECT_REF(stream, 2);
     IDWriteFontFileStream_Release(stream);
     IDWriteFontFileStream_Release(stream2);
 
