@@ -1255,6 +1255,7 @@ enable_vcomp100
 enable_vcomp90
 enable_vdmdbg
 enable_version
+enable_vssapi
 enable_wbemdisp
 enable_wbemprox
 enable_webservices
@@ -17356,6 +17357,7 @@ wine_fn_config_test dlls/version/tests version_test
 wine_fn_config_dll vmm.vxd enable_win16
 wine_fn_config_dll vnbt.vxd enable_win16
 wine_fn_config_dll vnetbios.vxd enable_win16
+wine_fn_config_dll vssapi enable_vssapi
 wine_fn_config_dll vtdapi.vxd enable_win16
 wine_fn_config_dll vwin32.vxd enable_win16
 wine_fn_config_dll w32skrnl enable_win16
