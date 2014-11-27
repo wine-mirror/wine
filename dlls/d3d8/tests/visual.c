@@ -5389,6 +5389,7 @@ static void test_negative_fixedfunction_fog(void)
             float f;
             DWORD d;
         } start, end;
+        D3DFOGMODE vfog;
         DWORD color;
     }
     tests[] =
@@ -5396,8 +5397,9 @@ static void test_negative_fixedfunction_fog(void)
         /* fog_interpolation_test shows that vertex fog evaluates the fog
          * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
          * that the abs happens before the fog equation is evaluated. */
-        {{ 0.0f}, {1.0f}, 0x00808000},
-        {{-1.0f}, {0.0f}, 0x0000ff00},
+        {{ 0.0f}, {1.0f}, D3DFOG_LINEAR,    0x00808000},
+        {{-1.0f}, {0.0f}, D3DFOG_LINEAR,    0x0000ff00},
+        {{ 0.0f}, {1.0f}, D3DFOG_EXP,       0x009b6400},
     };
     static const D3DMATRIX proj_mat =
     {{{
@@ -5430,8 +5432,6 @@ static void test_negative_fixedfunction_fog(void)
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGCOLOR, 0x0000ff00);
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &proj_mat);
     ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
 
@@ -5443,6 +5443,8 @@ static void test_negative_fixedfunction_fog(void)
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGSTART, tests[i].start.d);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGEND, tests[i].end.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGVERTEXMODE, tests[i].vfog);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice8_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
