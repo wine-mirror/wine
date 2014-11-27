@@ -727,7 +727,16 @@ BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG
 {
     FIXME("(%p %08x %u %p %u): stub\n", hwnd, reserved, id, config, size);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    return FALSE;
+}
+
+/**********************************************************************
+ * IsTouchWindow [USER32.@]
+ */
+BOOL WINAPI IsTouchWindow( HWND hwnd, PULONG flags )
+{
+    FIXME("(%p %p): stub\n", hwnd, flags);
+    return FALSE;
 }
 
 static const WCHAR imeW[] = {'I','M','E',0};

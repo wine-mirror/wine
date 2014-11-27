@@ -445,6 +445,7 @@
 @ stdcall IsMenu(long)
 @ stdcall IsRectEmpty(ptr)
 # @ stub IsServerSideWindow
+@ stdcall IsTouchWindow(long ptr)
 @ stdcall IsWinEventHookInstalled(long)
 @ stdcall IsWindow(long)
 @ stdcall IsWindowEnabled(long)
