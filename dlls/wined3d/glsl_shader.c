@@ -5006,8 +5006,10 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
             if (settings->ortho_fog)
                 /* Need to undo the [0.0 - 1.0] -> [-1.0 - 1.0] transformation from D3D to GL coordinates. */
                 shader_addline(buffer, "gl_FogFragCoord = gl_Position.z * 0.5 + 0.5;\n");
-            else
+            else if (settings->transformed)
                 shader_addline(buffer, "gl_FogFragCoord = ec_pos.z;\n");
+            else
+                shader_addline(buffer, "gl_FogFragCoord = abs(ec_pos.z);\n");
             break;
 
         default:

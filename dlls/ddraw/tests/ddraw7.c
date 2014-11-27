@@ -8002,6 +8002,104 @@ static void fog_interpolation_test(void)
     DestroyWindow(window);
 }
 
+static void test_negative_fixedfunction_fog(void)
+{
+    HRESULT hr;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    ULONG refcount;
+    HWND window;
+    D3DCOLOR color;
+    static struct
+    {
+        struct vec3 position;
+        D3DCOLOR diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, -0.5f}, 0xffff0000},
+        {{-1.0f,  1.0f, -0.5f}, 0xffff0000},
+        {{ 1.0f, -1.0f, -0.5f}, 0xffff0000},
+        {{ 1.0f,  1.0f, -0.5f}, 0xffff0000},
+    };
+    unsigned int i;
+    static const struct
+    {
+        union
+        {
+            float f;
+            DWORD d;
+        } start, end;
+        DWORD color;
+    }
+    tests[] =
+    {
+        /* fog_interpolation_test shows that vertex fog evaluates the fog
+         * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
+         * that the abs happens before the fog equation is evaluated. */
+        {{ 0.0f}, {1.0f}, 0x00808000},
+        {{-1.0f}, {0.0f}, 0x0000ff00},
+    };
+    static D3DMATRIX proj_mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGCOLOR, 0x0000ff00);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGVERTEXMODE, D3DFOG_LINEAR);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &proj_mat);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGSTART, tests[i].start.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGEND, tests[i].end.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+                D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, 4, 0);
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 0, 240);
+        ok(compare_color(color, tests[i].color, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -8089,4 +8187,5 @@ START_TEST(ddraw7)
     test_resource_priority();
     test_surface_desc_lock();
     fog_interpolation_test();
+    test_negative_fixedfunction_fog();
 }
