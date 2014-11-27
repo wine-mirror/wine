@@ -866,12 +866,18 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
 
     memset(metrics, 0, sizeof(*metrics));
 
+    if (tt_head) {
+        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+        metrics->glyphBoxLeft = GET_BE_WORD(tt_head->xMin);
+        metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
+        metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
+        metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+    }
+
     if (tt_os2) {
         metrics->ascent    = GET_BE_WORD(tt_os2->usWinAscent);
         metrics->descent   = GET_BE_WORD(tt_os2->usWinDescent);
         metrics->lineGap   = GET_BE_WORD(tt_os2->sTypoLineGap);
-        metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
-        metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
         metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
         metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
         metrics->subscriptPositionX = GET_BE_WORD(tt_os2->ySubscriptXOffset);
@@ -883,20 +889,24 @@ void opentype_get_font_metrics(const void *os2, const void *head, const void *po
         metrics->superscriptPositionY = GET_BE_WORD(tt_os2->ySuperscriptYOffset);
         metrics->superscriptSizeX = GET_BE_WORD(tt_os2->ySuperscriptXSize);
         metrics->superscriptSizeY = GET_BE_WORD(tt_os2->ySuperscriptYSize);
-    }
 
-    if (tt_head) {
-        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
-        metrics->glyphBoxLeft = GET_BE_WORD(tt_head->xMin);
-        metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
-        metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
-        metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+        /* version 2 fields */
+        if (tt_os2->version >= 2) {
+            metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
+            metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
+        }
     }
 
     if (tt_post) {
         metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
         metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
     }
+
+    /* estimate missing metrics */
+    if (metrics->xHeight == 0)
+        metrics->xHeight = metrics->designUnitsPerEm / 2;
+    if (metrics->capHeight == 0)
+        metrics->capHeight = metrics->designUnitsPerEm * 7 / 10;
 }
 
 void opentype_get_font_properties(const void *os2, const void *head, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
