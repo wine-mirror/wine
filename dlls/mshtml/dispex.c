@@ -1230,7 +1230,6 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
 
     switch(flags) {
     case DISPATCH_PROPERTYPUT:
-    case DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF:
         if(res)
             V_VT(res) = VT_EMPTY;
         hres = builtin_propput(This, func, dp, caller);
@@ -1421,6 +1420,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
+    if(wFlags == (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF))
+        wFlags = DISPATCH_PROPERTYPUT;
+
     switch(get_dispid_type(id)) {
     case DISPEXPROP_CUSTOM:
         if(!This->data->vtbl || !This->data->vtbl->invoke)
@@ -1453,7 +1455,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_UNKNOWNNAME;
             V_VT(pvarRes) = VT_EMPTY;
             return variant_copy(pvarRes, &prop->var);
-        case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT:
             if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
                || pdp->cNamedArgs > 1) {
