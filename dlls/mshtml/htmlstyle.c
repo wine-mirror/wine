@@ -2915,7 +2915,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         }
 
         if(i == sizeof(style_tbl)/sizeof(*style_tbl))
-            return remove_prop(&This->dispex, strAttributeName, pfSuccess);
+            return remove_attribute(&This->dispex, dispid, pfSuccess);
         style_entry = style_tbl+i;
     }
 

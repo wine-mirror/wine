@@ -1261,41 +1261,75 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     return hres;
 }
 
-HRESULT remove_prop(DispatchEx *This, BSTR name, VARIANT_BOOL *success)
+HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
 {
-    dynamic_prop_t *prop;
-    DISPID id;
-    HRESULT hres;
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_CUSTOM:
+        FIXME("DISPEXPROP_CUSTOM not supported\n");
+        return E_NOTIMPL;
 
-    hres = get_builtin_id(This, name, 0, &id);
-    if(hres == S_OK) {
-        DISPID named_id = DISPID_PROPERTYPUT;
+    case DISPEXPROP_DYNAMIC: {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+
+        prop = This->dynamic_data->props+idx;
+        VariantClear(&prop->var);
+        prop->flags |= DYNPROP_DELETED;
+        *success = VARIANT_TRUE;
+        return S_OK;
+    }
+    case DISPEXPROP_BUILTIN: {
         VARIANT var;
-        DISPPARAMS dp = {&var,&named_id,1,1};
-        EXCEPINFO ei;
+        DISPPARAMS dp = {&var,NULL,1,0};
+        dispex_data_t *data;
+        func_info_t *func;
+        HRESULT hres;
+
+        data = get_dispex_data(This);
+        if(!data)
+            return E_FAIL;
+
+        hres = get_builtin_func(data, id, &func);
+        if(FAILED(hres))
+            return hres;
+
+        /* For builtin functions, we set their value to the original function. */
+        if(func->func_disp_idx != -1) {
+            func_obj_entry_t *entry;
+
+            if(!This->dynamic_data || !This->dynamic_data->func_disps
+                || !This->dynamic_data->func_disps[func->func_disp_idx].func_obj) {
+                *success = VARIANT_FALSE;
+                return S_OK;
+            }
+
+            entry = This->dynamic_data->func_disps + func->func_disp_idx;
+            if(V_VT(&entry->val) == VT_DISPATCH
+                    && V_DISPATCH(&entry->val) == (IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface) {
+                *success = VARIANT_FALSE;
+                return S_OK;
+            }
+
+            VariantClear(&entry->val);
+            V_VT(&entry->val) = VT_DISPATCH;
+            V_DISPATCH(&entry->val) = (IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface;
+            IDispatch_AddRef(V_DISPATCH(&entry->val));
+            *success = VARIANT_TRUE;
+            return S_OK;
+        }
 
         V_VT(&var) = VT_EMPTY;
-        memset(&ei, 0, sizeof(ei));
-        hres = invoke_builtin_prop(This, id, 0, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+        hres = builtin_propput(This, func, &dp, NULL);
         if(FAILED(hres))
             return hres;
 
         *success = VARIANT_TRUE;
         return S_OK;
     }
-
-    hres = get_dynamic_prop(This, name, 0, &prop);
-    if(FAILED(hres)) {
-        if(hres != DISP_E_UNKNOWNNAME)
-            return hres;
-        *success = VARIANT_FALSE;
-        return S_OK;
+    default:
+        assert(0);
+        return E_FAIL;
     }
-
-    VariantClear(&prop->var);
-    prop->flags |= DYNPROP_DELETED;
-    *success = VARIANT_TRUE;
-    return S_OK;
 }
 
 static inline DispatchEx *impl_from_IDispatchEx(IDispatchEx *iface)

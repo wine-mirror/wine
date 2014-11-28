@@ -664,10 +664,21 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
                                                   LONG lFlags, VARIANT_BOOL *pfSuccess)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+    DISPID id;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    return remove_prop(&This->node.dispex, strAttributeName, pfSuccess);
+    hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
+            lFlags&1 ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
+    if(hres == DISP_E_UNKNOWNNAME) {
+        *pfSuccess = VARIANT_FALSE;
+        return S_OK;
+    }
+    if(FAILED(hres))
+        return hres;
+
+    return remove_attribute(&This->node.dispex, id, pfSuccess);
 }
 
 static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
