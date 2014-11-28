@@ -6536,7 +6536,11 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
         }
         context->last_was_pshader = FALSE;
-    } else {
+    }
+    else if (!context->last_was_pshader)
+    {
+        if (device->shader_backend == &arb_program_shader_backend)
+            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
         context->last_was_pshader = TRUE;
     }
 
