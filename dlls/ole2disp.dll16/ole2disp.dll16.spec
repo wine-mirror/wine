@@ -9,7 +9,7 @@
 9 stub VARIANTCLEAR
 10 stub VARIANTCOPY
 11 stub VARIANTCOPYIND
-12 pascal VARIANTCHANGETYPE(ptr ptr long long) VariantChangeType16
+12 pascal VariantChangeType(ptr ptr word word) VariantChangeType16
 13 stub VARIANTTIMETODOSDATETIME
 14 stub DOSDATETIMETOVARIANTTIME
 15 stub SAFEARRAYCREATE
@@ -105,7 +105,7 @@
 105 stub VARBOOLFROMSTR
 106 stub VARBOOLFROMDISP
 107 stub DOINVOKEMETHOD
-108 stub VARIANTCHANGETYPEEX
+108 pascal VariantChangeTypeEx(ptr ptr long word word) VariantChangeTypeEx16
 109 stub SAFEARRAYPTROFINDEX
 110 pascal SetErrorInfo(long ptr) SetErrorInfo16
 111 stub GETERRORINFO

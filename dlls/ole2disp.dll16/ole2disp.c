@@ -260,6 +260,15 @@ HRESULT WINAPI RegisterActiveObject16(
 }
 
 /******************************************************************************
+ * VariantChangeTypeEx [OLE2DISP.108]
+ */
+HRESULT WINAPI VariantChangeTypeEx16(VARIANTARG *dest, const VARIANTARG *src, LCID lcid, USHORT flags, VARTYPE vt)
+{
+        FIXME("stub: %p %p %d %d %d\n", dest, src, lcid, flags, vt);
+        return E_INVALIDARG;
+}
+
+/******************************************************************************
  * SetErrorInfo [OLE2DISP.110]
  */
 HRESULT WINAPI SetErrorInfo16(ULONG dwReserved, IErrorInfo *perrinfo)
