@@ -1053,7 +1053,6 @@ if (0) /* crashes on native */
     ok(metrics.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics.designUnitsPerEm);
     ok(metrics.ascent != 0, "ascent %u\n", metrics.ascent);
     ok(metrics.descent != 0, "descent %u\n", metrics.descent);
-todo_wine
     ok(metrics.lineGap == 0, "lineGap %d\n", metrics.lineGap);
     ok(metrics.capHeight, "capHeight %u\n", metrics.capHeight);
     ok(metrics.xHeight != 0, "xHeight %u\n", metrics.xHeight);
@@ -1071,7 +1070,6 @@ todo_wine
     ok(metrics.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics.designUnitsPerEm);
     ok(metrics.ascent != 0, "ascent %u\n", metrics.ascent);
     ok(metrics.descent != 0, "descent %u\n", metrics.descent);
-todo_wine
     ok(metrics.lineGap == 0, "lineGap %d\n", metrics.lineGap);
     ok(metrics.capHeight, "capHeight %u\n", metrics.capHeight);
     ok(metrics.xHeight != 0, "xHeight %u\n", metrics.xHeight);
@@ -1091,7 +1089,6 @@ todo_wine
         ok(metrics1.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics1.designUnitsPerEm);
         ok(metrics1.ascent != 0, "ascent %u\n", metrics1.ascent);
         ok(metrics1.descent != 0, "descent %u\n", metrics1.descent);
-    todo_wine
         ok(metrics1.lineGap == 0, "lineGap %d\n", metrics1.lineGap);
         ok(metrics1.capHeight, "capHeight %u\n", metrics1.capHeight);
         ok(metrics1.xHeight != 0, "xHeight %u\n", metrics1.xHeight);
@@ -1120,7 +1117,6 @@ todo_wine
         ok(metrics1.designUnitsPerEm != 0, "designUnitsPerEm %u\n", metrics1.designUnitsPerEm);
         ok(metrics1.ascent != 0, "ascent %u\n", metrics1.ascent);
         ok(metrics1.descent != 0, "descent %u\n", metrics1.descent);
-    todo_wine
         ok(metrics1.lineGap == 0, "lineGap %d\n", metrics1.lineGap);
         ok(metrics1.capHeight, "capHeight %u\n", metrics1.capHeight);
         ok(metrics1.xHeight != 0, "xHeight %u\n", metrics1.xHeight);

@@ -28,7 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 #define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
 #define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
-#define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
@@ -584,29 +583,26 @@ static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRIT
     UINT32 face_index, DWRITE_FONT_METRICS1 *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight,
     DWRITE_FONT_STYLE *style)
 {
-    const void *tt_os2 = NULL, *tt_head = NULL, *tt_post = NULL;
-    void *os2_context, *head_context, *post_context;
+    const void *tt_os2 = NULL, *tt_head = NULL;
+    void *os2_context, *head_context;
     DWRITE_FONT_STRETCH fontstretch;
     DWRITE_FONT_WEIGHT fontweight;
     DWRITE_FONT_STYLE fontstyle;
 
     opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
-    opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
 
     if (!stretch) stretch = &fontstretch;
     if (!weight) weight = &fontweight;
     if (!style) style = &fontstyle;
 
     opentype_get_font_properties(tt_os2, tt_head, stretch, weight, style);
-    opentype_get_font_metrics(tt_os2, tt_head, tt_post, metrics);
+    opentype_get_font_metrics(stream, face_type, face_index, metrics);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
     if (tt_head)
         IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
-    if (tt_post)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, post_context);
 }
 
 HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
@@ -1458,8 +1454,8 @@ static HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileSt
 
 static HRESULT init_font_data(IDWriteFactory *factory, IDWriteFontFile *file, UINT32 face_index, DWRITE_FONT_FACE_TYPE face_type, struct dwrite_font_data *data)
 {
-    void *os2_context, *head_context, *post_context;
-    const void *tt_os2 = NULL, *tt_head = NULL, *tt_post = NULL;
+    void *os2_context, *head_context;
+    const void *tt_os2 = NULL, *tt_head = NULL;
     IDWriteFontFileStream *stream;
     HRESULT hr;
 
@@ -1476,17 +1472,14 @@ static HRESULT init_font_data(IDWriteFactory *factory, IDWriteFontFile *file, UI
 
     opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
-    opentype_get_font_table(stream, face_type, face_index, MS_POST_TAG, &tt_post, &post_context, NULL, NULL);
 
     opentype_get_font_properties(tt_os2, tt_head, &data->stretch, &data->weight, &data->style);
-    opentype_get_font_metrics(tt_os2, tt_head, tt_post, &data->metrics);
+    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
     if (tt_head)
         IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
-    if (tt_post)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, post_context);
     IDWriteFontFileStream_Release(stream);
 
     return S_OK;
