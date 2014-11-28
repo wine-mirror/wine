@@ -4540,7 +4540,6 @@ static void test_GetDIBits_scanlines(void)
     ok( ret == 2, "got %d\n", ret );
     ok( !memcmp( data, inverted_bits + 32, 16 * 4 ), "bits differ\n");
     for (i = 16; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );
-    memset( data, 0xaa, sizeof(data) );
 
     DeleteObject( dib );
 
