@@ -16,7 +16,7 @@
 16 stub OLEISRUNNING
 17 stub OLELOCKRUNNING
 18 pascal ReadClassStg(segptr ptr) ReadClassStg16
-19 stub WRITECLASSSTG
+19 pascal WriteClassStg(segptr ptr) WriteClassStg16
 20 stub READCLASSSTM
 21 stub WRITECLASSSTM
 22 stub BINDMONIKER

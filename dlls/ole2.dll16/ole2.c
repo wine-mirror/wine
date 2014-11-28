@@ -346,3 +346,12 @@ VOID WINAPI ReleaseStgMedium16(LPSTGMEDIUM medium)
 {
     FIXME("%p: unimplemented stub!\n", medium);
 }
+
+/***********************************************************************
+ *              WriteClassStg16 (OLE2.19)
+ */
+HRESULT WINAPI WriteClassStg16(IStorage *stg, REFCLSID clsid)
+{
+    FIXME("stub:%p %s\n", stg, debugstr_guid(clsid));
+    return STG_E_MEDIUMFULL;
+}
