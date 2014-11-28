@@ -4535,7 +4535,30 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     if (pActCtx->lpSource && !((pActCtx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID) &&
                                (pActCtx->dwFlags & ACTCTX_FLAG_HMODULE_VALID)))
     {
-        if (!RtlDosPathNameToNtPathName_U(pActCtx->lpSource, &nameW, NULL, NULL))
+        WCHAR *source = NULL;
+        BOOLEAN ret;
+
+        if (pActCtx->dwFlags & ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID &&
+            RtlDetermineDosPathNameType_U(pActCtx->lpSource) == RELATIVE_PATH)
+        {
+            DWORD dir_len, source_len;
+
+            dir_len = strlenW(pActCtx->lpAssemblyDirectory);
+            source_len = strlenW(pActCtx->lpSource);
+            if (!(source = RtlAllocateHeap( GetProcessHeap(), 0, (dir_len+source_len+2)*sizeof(WCHAR))))
+            {
+                status = STATUS_NO_MEMORY;
+                goto error;
+            }
+
+            memcpy(source, pActCtx->lpAssemblyDirectory, dir_len*sizeof(WCHAR));
+            source[dir_len] = '\\';
+            memcpy(source+dir_len+1, pActCtx->lpSource, (source_len+1)*sizeof(WCHAR));
+        }
+
+        ret = RtlDosPathNameToNtPathName_U(source ? source : pActCtx->lpSource, &nameW, NULL, NULL);
+        if (source) RtlFreeHeap( GetProcessHeap(), 0, source );
+        if (!ret)
         {
             status = STATUS_NO_SUCH_FILE;
             goto error;
