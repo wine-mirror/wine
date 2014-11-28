@@ -617,7 +617,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
     hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
-            fdexNameCaseInsensitive | fdexNameEnsure, &dispid);
+            (lFlags&1 ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
     if(FAILED(hres))
         return hres;
 
@@ -626,9 +626,8 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     dispParams.rgdispidNamedArgs = &dispidNamed;
     dispParams.rgvarg = &AttributeValue;
 
-    hres = IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid,
+    return IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid,
             LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYPUT, &dispParams, NULL, &excep, NULL);
-    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttributeName,
