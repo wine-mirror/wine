@@ -1915,7 +1915,7 @@ static void test_func(IDispatchEx *obj)
     V_VT(&var) = VT_I4;
     V_I4(&var) = 100;
     hres = dispex_propput(obj, id, 0, &var, NULL);
-    ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
+    todo_wine ok(hres == E_NOTIMPL, "InvokeEx failed: %08x\n", hres);
 
     hres = dispex_propget(dispex, DISPID_VALUE, &var, NULL);
     ok(hres == E_ACCESSDENIED, "InvokeEx returned: %08x, expected E_ACCESSDENIED\n", hres);

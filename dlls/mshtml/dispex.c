@@ -87,7 +87,7 @@ typedef struct {
 
 typedef struct {
     func_disp_t *func_obj;
-    IDispatch *val;
+    VARIANT val;
 } func_obj_entry_t;
 
 struct dispex_dynamic_data_t {
@@ -833,6 +833,7 @@ static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lc
 static HRESULT get_func_obj_entry(DispatchEx *This, func_info_t *func, func_obj_entry_t **ret)
 {
     dispex_dynamic_data_t *dynamic_data;
+    func_obj_entry_t *entry;
 
     dynamic_data = get_dynamic_data(This);
     if(!dynamic_data)
@@ -844,20 +845,18 @@ static HRESULT get_func_obj_entry(DispatchEx *This, func_info_t *func, func_obj_
             return E_OUTOFMEMORY;
     }
 
-    if(!dynamic_data->func_disps[func->func_disp_idx].func_obj) {
-        func_disp_t *func_obj;
-
-        func_obj = create_func_disp(This, func);
-        if(!func_obj)
+    entry = dynamic_data->func_disps + func->func_disp_idx;
+    if(!entry->func_obj) {
+        entry->func_obj = create_func_disp(This, func);
+        if(!entry->func_obj)
             return E_OUTOFMEMORY;
 
-        dynamic_data->func_disps[func->func_disp_idx].func_obj = func_obj;
-
-        IDispatchEx_AddRef(&func_obj->dispex.IDispatchEx_iface);
-        dynamic_data->func_disps[func->func_disp_idx].val = (IDispatch*)&func_obj->dispex.IDispatchEx_iface;
+        IDispatchEx_AddRef(&entry->func_obj->dispex.IDispatchEx_iface);
+        V_VT(&entry->val) = VT_DISPATCH;
+        V_DISPATCH(&entry->val) = (IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface;
     }
 
-    *ret = dynamic_data->func_disps+func->func_disp_idx;
+    *ret = entry;
     return S_OK;
 }
 
@@ -1131,13 +1130,18 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
            && This->dynamic_data->func_disps[func->func_disp_idx].func_obj) {
             func_obj_entry_t *entry = This->dynamic_data->func_disps + func->func_disp_idx;
 
-            if((IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface != entry->val) {
-                if(!entry->val) {
+            if(V_VT(&entry->val) != VT_DISPATCH) {
+                FIXME("calling %s not supported\n", debugstr_variant(&entry->val));
+                return E_NOTIMPL;
+            }
+
+            if((IDispatch*)&entry->func_obj->dispex.IDispatchEx_iface != V_DISPATCH(&entry->val)) {
+                if(!V_DISPATCH(&entry->val)) {
                     FIXME("Calling null\n");
                     return E_FAIL;
                 }
 
-                hres = invoke_disp_value(This, entry->val, 0, flags, dp, res, ei, NULL);
+                hres = invoke_disp_value(This, V_DISPATCH(&entry->val), 0, flags, dp, res, ei, NULL);
                 break;
             }
         }
@@ -1166,16 +1170,11 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
         if(FAILED(hres))
             return hres;
 
-        V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = entry->val;
-        if(V_DISPATCH(res))
-            IDispatch_AddRef(V_DISPATCH(res));
-        hres = S_OK;
-        break;
+        V_VT(res) = VT_EMPTY;
+        return VariantCopy(res, &entry->val);
     }
     case DISPATCH_PROPERTYPUT: {
         func_obj_entry_t *entry;
-        VARIANT *v;
 
         if(dp->cArgs != 1 || (dp->cNamedArgs == 1 && *dp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
            || dp->cNamedArgs > 1) {
@@ -1183,22 +1182,17 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
             return E_INVALIDARG;
         }
 
-        v = dp->rgvarg;
-        /* FIXME: not exactly right */
-        if(V_VT(v) != VT_DISPATCH)
-            return E_NOTIMPL;
-
+        /*
+         * NOTE: Although we have IDispatchEx tests showing, that it's not allowed to set
+         * function property using InvokeEx, it's possible to do that from jscript.
+         * Native probably uses some undocumented interface in this case, but it should
+         * be fine for us to allow IDispatchEx handle that.
+         */
         hres = get_func_obj_entry(This, func, &entry);
         if(FAILED(hres))
             return hres;
 
-        if(entry->val)
-            IDispatch_Release(entry->val);
-        entry->val = V_DISPATCH(v);
-        if(entry->val)
-            IDispatch_AddRef(entry->val);
-        hres = S_OK;
-        break;
+        return VariantCopy(&entry->val, dp->rgvarg);
     }
     default:
         FIXME("Unimplemented flags %x\n", flags);
@@ -1722,8 +1716,7 @@ void release_dispex(DispatchEx *This)
                 iter->func_obj->obj = NULL;
                 IDispatchEx_Release(&iter->func_obj->dispex.IDispatchEx_iface);
             }
-            if(iter->val)
-                IDispatch_Release(iter->val);
+            VariantClear(&iter->val);
         }
 
         heap_free(This->dynamic_data->func_disps);
