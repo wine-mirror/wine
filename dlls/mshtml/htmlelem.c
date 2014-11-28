@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "ole2.h"
 #include "shlwapi.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -621,6 +622,11 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     if(FAILED(hres))
         return hres;
 
+    if(dispid == DISPID_IHTMLELEMENT_STYLE) {
+        TRACE("Ignoring call on style attribute\n");
+        return S_OK;
+    }
+
     dispParams.cArgs = 1;
     dispParams.cNamedArgs = 1;
     dispParams.rgdispidNamedArgs = &dispidNamed;
@@ -674,6 +680,24 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
     }
     if(FAILED(hres))
         return hres;
+
+    if(id == DISPID_IHTMLELEMENT_STYLE) {
+        IHTMLStyle *style;
+
+        TRACE("Special case: style\n");
+
+        hres = IHTMLElement_get_style(&This->IHTMLElement_iface, &style);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IHTMLStyle_put_cssText(style, NULL);
+        IHTMLStyle_Release(style);
+        if(FAILED(hres))
+            return hres;
+
+        *pfSuccess = VARIANT_TRUE;
+        return S_OK;
+    }
 
     return remove_attribute(&This->node.dispex, id, pfSuccess);
 }
