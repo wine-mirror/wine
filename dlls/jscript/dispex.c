@@ -1346,6 +1346,7 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
         jsdisp_release(jsdisp);
     }else {
         DISPID dispid = DISPID_PROPERTYPUT;
+        DWORD flags = DISPATCH_PROPERTYPUT;
         VARIANT var;
         DISPPARAMS dp  = {&var, &dispid, 1, 1};
         IDispatchEx *dispex;
@@ -1354,17 +1355,20 @@ HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)
         if(FAILED(hres))
             return hres;
 
+        if(V_VT(&var) == VT_DISPATCH)
+            flags |= DISPATCH_PROPERTYPUTREF;
+
         clear_ei(ctx);
         hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ctx->ei.ei,
+            hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, &dp, NULL, &ctx->ei.ei,
                     &ctx->jscaller->IServiceProvider_iface);
             IDispatchEx_Release(dispex);
         }else {
             ULONG err = 0;
 
             TRACE("using IDispatch\n");
-            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, DISPATCH_PROPERTYPUT, &dp, NULL, &ctx->ei.ei, &err);
+            hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, &dp, NULL, &ctx->ei.ei, &err);
         }
 
         VariantClear(&var);

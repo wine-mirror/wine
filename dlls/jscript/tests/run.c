@@ -80,6 +80,8 @@ DEFINE_EXPECT(global_propget_d);
 DEFINE_EXPECT(global_propget_i);
 DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
+DEFINE_EXPECT(global_propputref_d);
+DEFINE_EXPECT(global_propputref_i);
 DEFINE_EXPECT(global_propdelete_d);
 DEFINE_EXPECT(global_nopropdelete_d);
 DEFINE_EXPECT(global_success_d);
@@ -136,6 +138,7 @@ DEFINE_EXPECT(DeleteMemberByDispID_false);
 #define DISPID_GLOBAL_TESTRES       0x1018
 #define DISPID_GLOBAL_TESTNORES     0x1019
 #define DISPID_GLOBAL_DISPEXFUNC    0x101a
+#define DISPID_GLOBAL_TESTPROPPUTREF 0x101b
 
 #define DISPID_GLOBAL_TESTPROPDELETE    0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE  0x2001
@@ -608,6 +611,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTPROPPUT;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "testPropPutRef")) {
+        CHECK_EXPECT(global_propputref_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_TESTPROPPUTREF;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "testPropDelete")) {
         CHECK_EXPECT(global_propdelete_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
@@ -839,6 +848,21 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_I4, "V_VT(pdp->rgvarg)=%d\n", V_VT(pdp->rgvarg));
         ok(V_I4(pdp->rgvarg) == 1, "V_I4(pdp->rgvarg)=%d\n", V_I4(pdp->rgvarg));
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTPROPPUTREF:
+        CHECK_EXPECT(global_propputref_i);
+
+        ok(wFlags == (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pdp->rgdispidNamedArgs[0] == DISPID_PROPERTYPUT, "pdp->rgdispidNamedArgs[0] = %d\n", pdp->rgdispidNamedArgs[0]);
+        ok(!pvarRes, "pvarRes != NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(pdp->rgvarg)=%d\n", V_VT(pdp->rgvarg));
         return S_OK;
 
      case DISPID_GLOBAL_GETVT:
@@ -2049,6 +2073,18 @@ static BOOL run_tests(void)
     CHECK_CALLED(global_propput_d);
     CHECK_CALLED(global_propput_i);
 
+    SET_EXPECT(global_propputref_d);
+    SET_EXPECT(global_propputref_i);
+    parse_script_a("testPropPutRef = new Object();");
+    CHECK_CALLED(global_propputref_d);
+    CHECK_CALLED(global_propputref_i);
+
+    SET_EXPECT(global_propputref_d);
+    SET_EXPECT(global_propputref_i);
+    parse_script_a("testPropPutRef = testObj;");
+    CHECK_CALLED(global_propputref_d);
+    CHECK_CALLED(global_propputref_i);
+
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     parse_script_a("reportSuccess();");
@@ -2186,6 +2222,12 @@ static BOOL run_tests(void)
     parse_script_a("this.testPropGet;");
     CHECK_CALLED(global_propget_d);
     CHECK_CALLED(global_propget_i);
+
+    SET_EXPECT(global_propputref_d);
+    SET_EXPECT(global_propputref_i);
+    parse_script_a("testPropPutRef = nullDisp;");
+    CHECK_CALLED(global_propputref_d);
+    CHECK_CALLED(global_propputref_i);
 
     SET_EXPECT(global_propget_d);
     SET_EXPECT(global_propget_i);
