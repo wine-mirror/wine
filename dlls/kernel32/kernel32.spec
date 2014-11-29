@@ -803,6 +803,7 @@
 @ stdcall K32EnumPageFilesA(ptr ptr)
 @ stdcall K32EnumPageFilesW(ptr ptr)
 @ stdcall K32EnumProcessModules(long ptr long ptr)
+@ stdcall K32EnumProcessModulesEx(long ptr long ptr long)
 @ stdcall K32EnumProcesses(ptr long ptr)
 @ stdcall K32GetDeviceDriverBaseNameA(ptr ptr long)
 @ stdcall K32GetDeviceDriverBaseNameW(ptr ptr long)

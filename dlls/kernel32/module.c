@@ -1247,6 +1247,20 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
 }
 
 /***********************************************************************
+ *           K32EnumProcessModulesEx (KERNEL32.@)
+ *
+ * NOTES
+ *  Returned list is in load order.
+ */
+BOOL WINAPI K32EnumProcessModulesEx(HANDLE process, HMODULE *lphModule,
+                                    DWORD cb, DWORD *needed, DWORD filter)
+{
+    FIXME("(%p, %p, %d, %p, %d) semi-stub\n",
+          process, lphModule, cb, needed, filter);
+    return K32EnumProcessModules(process, lphModule, cb, needed);
+}
+
+/***********************************************************************
  *           K32GetModuleBaseNameW (KERNEL32.@)
  */
 DWORD WINAPI K32GetModuleBaseNameW(HANDLE process, HMODULE module,
