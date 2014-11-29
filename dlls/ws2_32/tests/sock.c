@@ -3358,14 +3358,14 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
     ok(ret == 2, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
-    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
 
     ok(send(fdWrite, "test", 4, 0) == 4, "failed to send data\n");
     FD_ZERO(&readfds);
     FD_SET(fdRead, &readfds);
     ret = select(fdRead+1, &readfds, NULL, NULL, &select_timeout);
     ok(ret == 1, "select returned %d\n", ret);
-    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
 
     FD_ZERO(&readfds);
     FD_SET(fdWrite, &readfds);
@@ -3373,7 +3373,7 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
     ok(ret == 2, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
-    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
 
     while(1) {
         FD_ZERO(&writefds);
@@ -3388,7 +3388,7 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
     ok(ret == 1, "select returned %d\n", ret);
     ok(!FD_ISSET(fdWrite, &readfds), "fdWrite socket is in the set\n");
-    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
 
     ok(send(fdRead, "test", 4, 0) == 4, "failed to send data\n");
     Sleep(100);
@@ -3398,7 +3398,7 @@ static void test_select(void)
     ret = select(maxfd+1, &readfds, &readfds, NULL, &select_timeout);
     ok(ret == 2, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
-    ok(FD_ISSET(fdRead, &readfds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
 
     closesocket(fdRead);
     closesocket(fdWrite);
