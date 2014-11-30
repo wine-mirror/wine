@@ -24,12 +24,6 @@
 #include "d3dx9tex.h"
 #include "resources.h"
 
-static inline int get_ref(IUnknown *obj)
-{
-    IUnknown_AddRef(obj);
-    return IUnknown_Release(obj);
-}
-
 #define check_release(obj, exp) _check_release(__LINE__, obj, exp)
 static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
 {
