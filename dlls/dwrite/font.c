@@ -2228,8 +2228,10 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
     CloseHandle(mapping);
 
     stream = heap_alloc(sizeof(*stream));
-    if (!stream)
+    if (!stream) {
+        UnmapViewOfFile(file_ptr);
         return E_OUTOFMEMORY;
+    }
 
     stream->key = heap_alloc(key_size);
     if (!stream->key) {
