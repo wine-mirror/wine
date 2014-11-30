@@ -451,6 +451,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
         owner = token_get_user( token );
         new_sd.owner_len = security_sid_len( owner );
     }
+    else new_sd.owner_len = 0;
 
     if (set_info & GROUP_SECURITY_INFORMATION && sd->group_len)
     {
@@ -467,6 +468,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
         group = token_get_primary_group( token );
         new_sd.group_len = security_sid_len( group );
     }
+    else new_sd.group_len = 0;
 
     new_sd.control |= SE_SACL_PRESENT;
     sacl = sd_get_sacl( sd, &present );
@@ -479,9 +481,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
         if (obj->sd && present)
             new_sd.sacl_len = obj->sd->sacl_len;
         else
-        {
             new_sd.sacl_len = 0;
-        }
     }
 
     new_sd.control |= SE_DACL_PRESENT;
@@ -499,6 +499,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
             dacl = token_get_default_dacl( token );
             new_sd.dacl_len = dacl->AclSize;
         }
+        else new_sd.dacl_len = 0;
     }
 
     ptr = mem_alloc( sizeof(new_sd) + new_sd.owner_len + new_sd.group_len +
