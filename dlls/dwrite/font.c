@@ -1586,7 +1586,7 @@ HRESULT create_font_collection(IDWriteFactory* factory, IDWriteFontFileEnumerato
             exists = FALSE;
             hr = collection_find_family(collection, buffer, &index, &exists);
             if (exists)
-                hr = fontfamily_add_font(collection->family_data[index], font_data);
+                fontfamily_add_font(collection->family_data[index], font_data);
             else {
                 struct dwrite_fontfamily_data *family_data;
 
