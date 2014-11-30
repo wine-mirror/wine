@@ -845,7 +845,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 {
     const struct dwritescript_properties *scriptprops;
     struct scriptshaping_context context;
-    struct scriptshaping_cache *cache;
+    struct scriptshaping_cache *cache = NULL;
     WCHAR *string;
     BOOL update_cluster;
     UINT32 i, g;
