@@ -331,12 +331,6 @@ static void setdec64(DECIMAL* dec, BYTE scl, BYTE sgn, ULONG hi32, ULONG mid32, 
     S1(U1(*dec)).Lo32 = lo32;
 }
 
-static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
 /* return the string text of a given variant type */
 static char vtstr_buffer[16][256];
 static int vtstr_current=0;
