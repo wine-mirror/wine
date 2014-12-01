@@ -635,6 +635,12 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_Reset(IDirect3DDevice9Ex *if
 
     TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
 
+    if (!device->d3d_parent->extended && device->device_state == D3D9_DEVICE_STATE_LOST)
+    {
+        WARN("App not active, returning D3DERR_DEVICELOST.\n");
+        return D3DERR_DEVICELOST;
+    }
+
     wined3d_mutex_lock();
 
     if (device->vertex_buffer)

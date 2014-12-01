@@ -9751,6 +9751,17 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
+    ret = SetForegroundWindow(GetDesktopWindow());
+    ok(ret, "Failed to set foreground window.\n");
+    hr = reset_device(device, &device_desc);
+    ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+    ret = ShowWindow(window, SW_RESTORE);
+    ok(ret, "Failed to restore window.\n");
+    ret = SetForegroundWindow(window);
+    ok(ret, "Failed to set foreground window.\n");
+    hr = reset_device(device, &device_desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 done:
