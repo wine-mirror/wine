@@ -96,7 +96,6 @@ static int MPEGSplitter_head_check(const BYTE *header)
 }
 
 static const WCHAR wszAudioStream[] = {'A','u','d','i','o',0};
-static const WCHAR wszVideoStream[] = {'V','i','d','e','o',0};
 
 static const DWORD freqs[10] = { 44100, 48000, 32000, 22050, 24000, 16000, 11025, 12000,  8000, 0 };
 

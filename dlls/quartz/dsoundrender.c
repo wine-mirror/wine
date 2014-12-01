@@ -46,7 +46,6 @@ static const REFERENCE_TIME DSoundRenderer_Max_Fill = 150 * 10000;
 static const IBaseFilterVtbl DSoundRender_Vtbl;
 static const IBasicAudioVtbl IBasicAudio_Vtbl;
 static const IReferenceClockVtbl IReferenceClock_Vtbl;
-static const IMediaSeekingVtbl IMediaSeeking_Vtbl;
 static const IAMDirectSoundVtbl IAMDirectSound_Vtbl;
 static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_Vtbl;
 
