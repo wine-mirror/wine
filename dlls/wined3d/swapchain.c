@@ -1176,6 +1176,11 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate)
 {
+    /* This code is not protected by the wined3d mutex, so it may run while
+     * wined3d_device_reset is active. Testing on Windows shows that changing
+     * focus during resets and resetting during focus change events causes
+     * the application to crash with an invalid memory access. */
+
     if (activate)
     {
         if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
