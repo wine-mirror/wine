@@ -100,12 +100,6 @@ static const WCHAR szInstallProperties_fmt[] = {
     '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
     'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
 
-static const WCHAR szInstaller_LocalManaged_fmt[] = {
-    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'I','n','s','t','a','l','l','e','r','\\','M','a','n','a','g','e','d','\\','%','s','\\',
-    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s',0};
-
 static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
     'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
@@ -127,11 +121,6 @@ static const WCHAR szInstaller_Patches[] = {
     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
     'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
     'I','n','s','t','a','l','l','e','r','\\','P','a','t','c','h','e','s',0};
-
-static const WCHAR szInstaller_Components[] = {
-    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'I','n','s','t','a','l','l','e','r','\\','C','o','m','p','o','n','e','n','t','s',0};
 
 static const WCHAR szInstaller_LocalClassesProducts[] = {
     'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
