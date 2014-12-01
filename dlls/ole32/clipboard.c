@@ -194,8 +194,6 @@ static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
  */
 static const WCHAR clipbrd_wndclass[] = {'C','L','I','P','B','R','D','W','N','D','C','L','A','S','S',0};
 
-static const WCHAR wine_marshal_dataobject[] = {'W','i','n','e',' ','m','a','r','s','h','a','l',' ','d','a','t','a','o','b','j','e','c','t',0};
-
 UINT ownerlink_clipboard_format = 0;
 UINT filename_clipboard_format = 0;
 UINT filenameW_clipboard_format = 0;
