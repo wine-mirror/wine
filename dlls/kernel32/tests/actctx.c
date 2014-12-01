@@ -304,8 +304,6 @@ static const WCHAR wndClass2W[] =
     {'w','n','d','C','l','a','s','s','2',0};
 static const WCHAR wndClass3W[] =
     {'w','n','d','C','l','a','s','s','3',0};
-static const WCHAR acr_manifest[] =
-    {'a','c','r','.','m','a','n','i','f','e','s','t',0};
 
 static WCHAR app_dir[MAX_PATH], exe_path[MAX_PATH], work_dir[MAX_PATH], work_dir_subdir[MAX_PATH];
 static WCHAR app_manifest_path[MAX_PATH], manifest_path[MAX_PATH], depmanifest_path[MAX_PATH];

@@ -47,9 +47,7 @@ static BOOL (WINAPI *pSetFileValidData)(HANDLE, LONGLONG);
 static HRESULT (WINAPI *pCopyFile2)(PCWSTR,PCWSTR,COPYFILE2_EXTENDED_PARAMETERS*);
 static HANDLE (WINAPI *pCreateFile2)(LPCWSTR, DWORD, DWORD, DWORD, CREATEFILE2_EXTENDED_PARAMETERS*);
 
-/* keep filename and filenameW the same */
 static const char filename[] = "testfile.xxx";
-static const WCHAR filenameW[] = { 't','e','s','t','f','i','l','e','.','x','x','x',0 };
 static const char sillytext[] =
 "en larvig liten text dx \033 gx hej 84 hej 4484 ! \001\033 bla bl\na.. bla bla."
 "1234 43 4kljf lf &%%%&&&&&& 34 4 34   3############# 33 3 3 3 # 3## 3"
