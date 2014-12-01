@@ -295,6 +295,7 @@ static void test_begindrag(void)
     drag = ImageList_GetDragImage(NULL, NULL);
     ok(ret && drag, "ImageList drag was created\n");
     ImageList_EndDrag();
+    ImageList_Destroy(himl);
 }
 
 static void test_hotspot(void)
