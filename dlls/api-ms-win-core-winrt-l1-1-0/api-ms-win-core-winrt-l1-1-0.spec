@@ -1,0 +1,9 @@
+@ stub RoActivateInstance
+@ stub RoGetActivationFactory
+@ stub RoGetApartmentIdentifier
+@ stdcall RoInitialize(long)
+@ stub RoRegisterActivationFactories
+@ stub RoRegisterForApartmentShutdown
+@ stub RoRevokeActivationFactories
+@ stdcall RoUninitialize()
+@ stub RoUnregisterForApartmentShutdown

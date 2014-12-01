@@ -889,6 +889,7 @@ enable_api_ms_win_core_timezone_l1_1_0
 enable_api_ms_win_core_url_l1_1_0
 enable_api_ms_win_core_util_l1_1_0
 enable_api_ms_win_core_winrt_error_l1_1_0
+enable_api_ms_win_core_winrt_l1_1_0
 enable_api_ms_win_core_winrt_string_l1_1_0
 enable_api_ms_win_downlevel_advapi32_l1_1_0
 enable_api_ms_win_downlevel_advapi32_l2_1_0
@@ -16806,6 +16807,7 @@ wine_fn_config_dll api-ms-win-core-timezone-l1-1-0 enable_api_ms_win_core_timezo
 wine_fn_config_dll api-ms-win-core-url-l1-1-0 enable_api_ms_win_core_url_l1_1_0
 wine_fn_config_dll api-ms-win-core-util-l1-1-0 enable_api_ms_win_core_util_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
+wine_fn_config_dll api-ms-win-core-winrt-l1-1-0 enable_api_ms_win_core_winrt_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-string-l1-1-0 enable_api_ms_win_core_winrt_string_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l1-1-0 enable_api_ms_win_downlevel_advapi32_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l2-1-0 enable_api_ms_win_downlevel_advapi32_l2_1_0
