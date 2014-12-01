@@ -161,6 +161,7 @@ my @dll_groups =
   "api-ms-win-core-processthreads-l1-1-2",
   "api-ms-win-core-fibers-l1-1-1",
   "api-ms-win-core-file-l2-1-0",
+  "api-ms-win-core-localization-l1-2-1",
  ],
  [
   "ole32",
