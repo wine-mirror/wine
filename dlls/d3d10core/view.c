@@ -987,6 +987,7 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
 HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc)
 {
+    struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
     view->ID3D10ShaderResourceView_iface.lpVtbl = &d3d10_shader_resource_view_vtbl;
@@ -1002,7 +1003,14 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
         view->desc = *desc;
     }
 
-    if (FAILED(hr = wined3d_shader_resource_view_create(view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
+    {
+        ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
+        return E_FAIL;
+    }
+
+    if (FAILED(hr = wined3d_shader_resource_view_create(wined3d_resource,
+            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
     {
         WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
         return hr;

@@ -2663,6 +2663,7 @@ struct wined3d_shader_resource_view
 {
     LONG refcount;
 
+    struct wined3d_resource *resource;
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 };
