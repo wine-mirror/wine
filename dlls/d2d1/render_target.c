@@ -826,7 +826,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
     ID3D10Buffer *vs_cb, *ps_cb;
     HRESULT hr;
 
-    static float transform[] =
+    static const float transform[] =
     {
         1.0f,  0.0f, 0.0f, 0.0f,
         0.0f, -1.0f, 0.0f, 0.0f,
