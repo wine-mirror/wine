@@ -1660,8 +1660,8 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
     DWORD ret, type, count;
+    WCHAR *filename;
     HRESULT hr;
-    BYTE *data;
 
     *file = NULL;
 
@@ -1671,17 +1671,30 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
     if (RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, NULL, &count))
         return E_FAIL;
 
-    if (!(data = heap_alloc(count)))
+    if (!(filename = heap_alloc(count)))
         return E_OUTOFMEMORY;
 
-    ret = RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, data, &count);
+    ret = RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, (BYTE*)filename, &count);
     if (ret) {
-        heap_free(data);
+        heap_free(filename);
         return E_FAIL;
     }
 
-    hr = IDWriteFactory_CreateFontFileReference(enumerator->factory, (WCHAR*)data, NULL, file);
-    heap_free(data);
+    /* Fonts installed in 'Fonts' system dir don't get full path in registry font files cache */
+    if (!strchrW(filename, '\\')) {
+        static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
+        WCHAR fullpathW[MAX_PATH];
+
+        GetWindowsDirectoryW(fullpathW, sizeof(fullpathW)/sizeof(WCHAR));
+        strcatW(fullpathW, fontsW);
+        strcatW(fullpathW, filename);
+
+        hr = IDWriteFactory_CreateFontFileReference(enumerator->factory, fullpathW, NULL, file);
+    }
+    else
+        hr = IDWriteFactory_CreateFontFileReference(enumerator->factory, filename, NULL, file);
+
+    heap_free(filename);
     return hr;
 }
 
