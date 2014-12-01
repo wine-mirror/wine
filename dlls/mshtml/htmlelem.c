@@ -606,6 +606,10 @@ static HRESULT WINAPI HTMLElement_Invoke(IHTMLElement *iface, DISPID dispIdMembe
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
+#define ATTRFLAG_CASESENSITIVE  0x0001
+#define ATTRFLAG_ASSTRING       0x0002
+#define ATTRFLAG_EXPANDURL      0x0004
+
 static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttributeName,
                                                VARIANT AttributeValue, LONG lFlags)
 {
@@ -618,7 +622,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
     hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
-            (lFlags&1 ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
+            (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
     if(FAILED(hres))
         return hres;
 
@@ -647,8 +651,11 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
 
     TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
+    if(lFlags & ~(ATTRFLAG_CASESENSITIVE|ATTRFLAG_ASSTRING))
+        FIXME("Unsuported flags %x\n", lFlags);
+
     hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
-            lFlags&1 ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+            lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(AttributeValue) = VT_NULL;
         return S_OK;
@@ -659,8 +666,28 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
         return hres;
     }
 
-    return IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
+    hres = IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
             DISPATCH_PROPERTYGET, &dispParams, AttributeValue, &excep, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    if(lFlags & ATTRFLAG_ASSTRING) {
+        switch(V_VT(AttributeValue)) {
+        case VT_BSTR:
+            break;
+        case VT_DISPATCH:
+            IDispatch_Release(V_DISPATCH(AttributeValue));
+            V_VT(AttributeValue) = VT_BSTR;
+            V_BSTR(AttributeValue) = SysAllocString(NULL);
+            break;
+        default:
+            hres = VariantChangeType(AttributeValue, AttributeValue, 0, VT_BSTR);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strAttributeName,
@@ -673,7 +700,7 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
     hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
-            lFlags&1 ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
+            lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
     if(hres == DISP_E_UNKNOWNNAME) {
         *pfSuccess = VARIANT_FALSE;
         return S_OK;

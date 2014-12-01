@@ -148,12 +148,16 @@ function test_attrs() {
     x = input.getAttribute("style");
     ok(x === s, "getAttribute('style') = " + x);
     ok(s.cssText === "", "s.cssText = " + s.cssText);
+    x = input.getAttribute("style", 2);
+    ok(x === "", "getAttribute('style') = " + x);
 
     input.setAttribute("style", "display: none");
     x = input.getAttribute("style");
     ok(x === s, "getAttribute('style') = " + x);
     ok(s.cssText === "", "s.cssText = " + s.cssText);
     ok(s.display === "", "s.display = " + s.display);
+    x = input.getAttribute("style", 2);
+    ok(x === "", "getAttribute('style') = " + x);
 
     s.display = "none";
     ok(s.cssText != "", "s.cssText = " + s.cssText);
@@ -163,6 +167,8 @@ function test_attrs() {
     ok(x === s, "getAttribute('style') = " + x);
     ok(s.cssText != "", "s.cssText = " + s.cssText);
     ok(s.display === "none", "s.display = " + s.display);
+    x = input.getAttribute("style", 2);
+    ok(x === "", "getAttribute('style') = " + x);
 
     input.setAttribute("style", null);
     x = input.getAttribute("style");
@@ -173,11 +179,15 @@ function test_attrs() {
 
     x = input.getAttribute("fireEvent");
     ok(x === input.fireEvent, "input.getAttribute('fireEvent') = " + x);
+    x = input.getAttribute("fireEvent", 2);
+    ok(x === "", "getAttribute('fireEvent') = " + x);
 
     input.setAttribute("fireEvent", 3);
     ok(input.fireEvent === 3, "input.fireEvent = " + input.fireEvent);
     x = input.getAttribute("fireEvent");
     ok(x === 3, "input.getAttribute('fireEvent') = " + x);
+    x = input.getAttribute("fireEvent", 2);
+    ok(x === "3", "getAttribute('fireEvent') = " + x);
 
     b = input.removeAttribute("style");
     ok(b === true, "removeAttribute('style') failed");
@@ -186,6 +196,8 @@ function test_attrs() {
     ok(x === s, "getAttribute('style') = " + x);
     ok(s.display === "", "s.display = " + s.display);
     ok(s.cssText === "", "s.cssText = " + s.cssText);
+    x = input.getAttribute("style", 2);
+    ok(x === "", "getAttribute('style') = " + x);
     b = input.removeAttribute("style");
     ok(b === true, "removeAttribute('style') failed");
 
