@@ -410,11 +410,6 @@ static const WCHAR szComplete1[] = {
 static const WCHAR szComplete2[] = {
     '<','?','x','m','l',' ',
     'v','e','r','s','i','o','n','=','\'','1','.','0','\'','?','>','\n',
-    '<','o','>','<','/','o','>','\n',0
-};
-static const WCHAR szComplete3[] = {
-    '<','?','x','m','l',' ',
-    'v','e','r','s','i','o','n','=','\'','1','.','0','\'','?','>','\n',
     '<','a','>','<','/','a','>','\n',0
 };
 static const char complete4A[] =
@@ -1368,7 +1363,7 @@ if (0)
 
     /* try to load something else simple and valid */
     b = VARIANT_FALSE;
-    str = SysAllocString( szComplete3 );
+    str = SysAllocString( szComplete2 );
     r = IXMLDOMDocument_loadXML( doc, str, &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");

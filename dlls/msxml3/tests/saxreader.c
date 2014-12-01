@@ -310,13 +310,6 @@ static inline void flush_sequence(struct call_sequence **seg, int sequence_index
     call_seq->count = call_seq->size = 0;
 }
 
-static inline void flush_sequences(struct call_sequence **seq, int n)
-{
-    int i;
-    for (i = 0; i < n; i++)
-        flush_sequence(seq, i);
-}
-
 static const char *get_event_name(CH event)
 {
     return event_names[event];
@@ -2895,7 +2888,7 @@ static void test_mxwriter_handlers(void)
     HRESULT hr;
     int i;
 
-    static const REFIID riids[] =
+    static REFIID riids[] =
     {
         &IID_ISAXContentHandler,
         &IID_ISAXLexicalHandler,
