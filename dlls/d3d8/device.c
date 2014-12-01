@@ -647,6 +647,12 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
 
     TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
 
+    if (device->device_state == D3D8_DEVICE_STATE_LOST)
+    {
+        WARN("App not active, returning D3DERR_DEVICELOST.\n");
+        return D3DERR_DEVICELOST;
+    }
+
     wined3d_mutex_lock();
 
     if (device->vertex_buffer)
