@@ -2346,7 +2346,7 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
 
             len = strlen(e->semantic_name);
             memcpy(ptr, e->semantic_name, len + 1);
-            shader->output_signature[e->register_idx].semantic_name = ptr;
+            shader->input_signature[e->register_idx].semantic_name = ptr;
             ptr += len + 1;
         }
     }
