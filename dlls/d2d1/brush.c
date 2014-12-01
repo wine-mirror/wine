@@ -448,11 +448,184 @@ void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *
             (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
 }
 
+static inline struct d2d_brush *impl_from_ID2D1BitmapBrush(ID2D1BitmapBrush *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_bitmap_brush_QueryInterface(ID2D1BitmapBrush *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1BitmapBrush)
+            || IsEqualGUID(iid, &IID_ID2D1Brush)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1BitmapBrush_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_AddRef(ID2D1BitmapBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+    ULONG refcount = InterlockedIncrement(&brush->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_Release(ID2D1BitmapBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+    ULONG refcount = InterlockedDecrement(&brush->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, brush);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_GetFactory(ID2D1BitmapBrush *iface,
+        ID2D1Factory **factory)
+{
+    FIXME("iface %p, factory %p stub!\n", iface, factory);
+
+    *factory = NULL;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetOpacity(ID2D1BitmapBrush *iface, float opacity)
+{
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+
+    TRACE("iface %p, opacity %.8e.\n", iface, opacity);
+
+    brush->opacity = opacity;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetTransform(ID2D1BitmapBrush *iface,
+        const D2D1_MATRIX_3X2_F *transform)
+{
+    FIXME("iface %p, transform %p stub!\n", iface, transform);
+}
+
+static float STDMETHODCALLTYPE d2d_bitmap_brush_GetOpacity(ID2D1BitmapBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return brush->opacity;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_GetTransform(ID2D1BitmapBrush *iface,
+        D2D1_MATRIX_3X2_F *transform)
+{
+    static const D2D1_MATRIX_3X2_F identity =
+    {
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+    };
+
+    FIXME("iface %p, transform %p stub!\n", iface, transform);
+
+    *transform = identity;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeX(ID2D1BitmapBrush *iface, D2D1_EXTEND_MODE mode)
+{
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeY(ID2D1BitmapBrush *iface, D2D1_EXTEND_MODE mode)
+{
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapBrush *iface,
+        D2D1_BITMAP_INTERPOLATION_MODE mode)
+{
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_SetBitmap(ID2D1BitmapBrush *iface, ID2D1Bitmap *bitmap)
+{
+    FIXME("iface %p, bitmap %p stub!\n", iface, bitmap);
+}
+
+static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetExtendModeX(ID2D1BitmapBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_EXTEND_MODE_CLAMP;
+}
+
+static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetExtendModeY(ID2D1BitmapBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_EXTEND_MODE_CLAMP;
+}
+
+static D2D1_BITMAP_INTERPOLATION_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetInterpolationMode(ID2D1BitmapBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
+}
+
+static void STDMETHODCALLTYPE d2d_bitmap_brush_GetBitmap(ID2D1BitmapBrush *iface, ID2D1Bitmap **bitmap)
+{
+    FIXME("iface %p, bitmap %p stub!\n", iface, bitmap);
+}
+
+static const struct ID2D1BitmapBrushVtbl d2d_bitmap_brush_vtbl =
+{
+    d2d_bitmap_brush_QueryInterface,
+    d2d_bitmap_brush_AddRef,
+    d2d_bitmap_brush_Release,
+    d2d_bitmap_brush_GetFactory,
+    d2d_bitmap_brush_SetOpacity,
+    d2d_bitmap_brush_SetTransform,
+    d2d_bitmap_brush_GetOpacity,
+    d2d_bitmap_brush_GetTransform,
+    d2d_bitmap_brush_SetExtendModeX,
+    d2d_bitmap_brush_SetExtendModeY,
+    d2d_bitmap_brush_SetInterpolationMode,
+    d2d_bitmap_brush_SetBitmap,
+    d2d_bitmap_brush_GetExtendModeX,
+    d2d_bitmap_brush_GetExtendModeY,
+    d2d_bitmap_brush_GetInterpolationMode,
+    d2d_bitmap_brush_GetBitmap,
+};
+
+void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target, const ID2D1Bitmap *bitmap,
+        const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc)
+{
+    FIXME("Ignoring brush properties.\n");
+
+    d2d_brush_init(brush, render_target, D2D_BRUSH_TYPE_BITMAP, brush_desc,
+            (ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
+}
+
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl
-            || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+            || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl
+            || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
 }

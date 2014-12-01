@@ -34,6 +34,7 @@ enum d2d_brush_type
 {
     D2D_BRUSH_TYPE_SOLID,
     D2D_BRUSH_TYPE_LINEAR,
+    D2D_BRUSH_TYPE_BITMAP,
 };
 
 struct d2d_clip_stack
@@ -124,6 +125,9 @@ void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *rend
 void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
+void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+        const ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
+        const D2D1_BRUSH_PROPERTIES *brush_desc) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style
