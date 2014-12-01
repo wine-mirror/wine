@@ -158,6 +158,7 @@ my @dll_groups =
   "api-ms-win-core-timezone-l1-1-0",
   "api-ms-win-core-file-l2-1-1",
   "api-ms-win-core-sysinfo-l1-2-1",
+  "api-ms-win-core-processthreads-l1-1-2",
  ],
  [
   "ole32",

@@ -874,6 +874,7 @@ enable_api_ms_win_core_namedpipe_l1_2_0
 enable_api_ms_win_core_processenvironment_l1_2_0
 enable_api_ms_win_core_processthreads_l1_1_0
 enable_api_ms_win_core_processthreads_l1_1_1
+enable_api_ms_win_core_processthreads_l1_1_2
 enable_api_ms_win_core_profile_l1_1_0
 enable_api_ms_win_core_psapi_l1_1_0
 enable_api_ms_win_core_registry_l1_1_0
@@ -16790,6 +16791,7 @@ wine_fn_config_dll api-ms-win-core-namedpipe-l1-2-0 enable_api_ms_win_core_named
 wine_fn_config_dll api-ms-win-core-processenvironment-l1-2-0 enable_api_ms_win_core_processenvironment_l1_2_0
 wine_fn_config_dll api-ms-win-core-processthreads-l1-1-0 enable_api_ms_win_core_processthreads_l1_1_0
 wine_fn_config_dll api-ms-win-core-processthreads-l1-1-1 enable_api_ms_win_core_processthreads_l1_1_1
+wine_fn_config_dll api-ms-win-core-processthreads-l1-1-2 enable_api_ms_win_core_processthreads_l1_1_2
 wine_fn_config_dll api-ms-win-core-profile-l1-1-0 enable_api_ms_win_core_profile_l1_1_0
 wine_fn_config_dll api-ms-win-core-psapi-l1-1-0 enable_api_ms_win_core_psapi_l1_1_0
 wine_fn_config_dll api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
