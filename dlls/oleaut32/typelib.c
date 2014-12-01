@@ -1726,18 +1726,6 @@ static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(TLBFuncDesc *funcdescs,
     return NULL;
 }
 
-static inline TLBFuncDesc *TLB_get_funcdesc_by_name(TLBFuncDesc *funcdescs,
-        UINT n, const OLECHAR *name)
-{
-    while(n){
-        if(!lstrcmpiW(TLB_get_bstr(funcdescs->Name), name))
-            return funcdescs;
-        ++funcdescs;
-        --n;
-    }
-    return NULL;
-}
-
 static inline TLBVarDesc *TLB_get_vardesc_by_memberid(TLBVarDesc *vardescs,
         UINT n, MEMBERID memid)
 {
@@ -2063,10 +2051,6 @@ static HRESULT TLB_size_instance(ITypeInfoImpl *info, SYSKIND sys,
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
  */
-static inline unsigned int MSFT_Tell(const TLBContext *pcx)
-{
-    return pcx->pos;
-}
 
 static inline void MSFT_Seek(TLBContext *pcx, LONG where)
 {
