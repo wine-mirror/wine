@@ -1098,6 +1098,8 @@ static HRESULT WINAPI HTMLDocument_clear(IHTMLDocument2 *iface)
 
 static const WCHAR fontnameW[] =
     {'f','o','n','t','n','a','m','e',0};
+static const WCHAR indentW[] =
+    {'i','n','d','e','n','t',0};
 static const WCHAR insertorderedlistW[] =
     {'i','n','s','e','r','t','o','r','d','e','r','e','d','l','i','s','t',0};
 static const WCHAR insertunorderedlistW[] =
@@ -1112,6 +1114,7 @@ static const struct {
     OLECMDID id;
 }command_names[] = {
     {fontnameW, IDM_FONTNAME},
+    {indentW, IDM_INDENT},
     {insertorderedlistW, IDM_ORDERLIST},
     {insertunorderedlistW, IDM_UNORDERLIST},
     {outdentW, IDM_OUTDENT},
