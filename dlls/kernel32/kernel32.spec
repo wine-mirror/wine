@@ -264,6 +264,8 @@
 @ stdcall CreateSemaphoreExW(ptr long long wstr long long)
 @ stdcall CreateSemaphoreW(ptr long long wstr)
 @ stdcall CreateSocketHandle()
+@ stdcall CreateSymbolicLinkA(str str long)
+@ stdcall CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateTapePartition(long long long long)
 @ stdcall CreateThread(ptr long ptr long long ptr)
 @ stdcall CreateTimerQueue ()
