@@ -5167,6 +5167,17 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
 }
 
 /***********************************************************************
+ *		WS_compare_routes_by_metric_asc (INTERNAL)
+ *
+ * Comparison function for qsort(), for sorting two routes (struct route)
+ * by metric in ascending order.
+ */
+static int WS_compare_routes_by_metric_asc(const void *left, const void *right)
+{
+    return ((const struct route*)left)->metric - ((const struct route*)right)->metric;
+}
+
+/***********************************************************************
  *		WS_get_local_ips		(INTERNAL)
  *
  * Returns the list of local IP addresses by going through the network
@@ -5180,7 +5191,7 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
  */
 static struct WS_hostent* WS_get_local_ips( char *hostname )
 {
-    int last_metric, numroutes = 0, i, j;
+    int numroutes = 0, i, j;
     DWORD n;
     PIP_ADAPTER_INFO adapters = NULL, k;
     struct WS_hostent *hostlist = NULL;
@@ -5260,30 +5271,15 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     hostlist->h_aliases[0] = NULL; /* NULL-terminate the alias list */
     hostlist->h_addrtype = AF_INET;
     hostlist->h_length = sizeof(struct in_addr); /* = 4 */
-    /* Reorder the entries when placing them in the host list, Windows expects
+    /* Reorder the entries before placing them in the host list. Windows expects
      * the IP list in order from highest priority to lowest (the critical thing
      * is that most applications expect the first IP to be the default route).
      */
-    last_metric = -1;
+    if (numroutes > 1)
+        qsort(route_addrs, numroutes, sizeof(struct route), WS_compare_routes_by_metric_asc);
+
     for (i = 0; i < numroutes; i++)
-    {
-       struct in_addr addr;
-       int metric = 0xFFFF;
-
-       memcpy(&addr, magic_loopback_addr, 4);
-       for (j = 0; j < numroutes; j++)
-       {
-           int this_metric = route_addrs[j].metric;
-
-           if (this_metric > last_metric && this_metric < metric)
-           {
-               addr = route_addrs[j].addr;
-               metric = this_metric;
-           }
-       }
-       last_metric = metric;
-       (*(struct in_addr *) hostlist->h_addr_list[i]) = addr;
-    }
+        (*(struct in_addr *) hostlist->h_addr_list[i]) = route_addrs[i].addr;
 
     /* Cleanup all allocated memory except the address list,
      * the address list is used by the calling app.
