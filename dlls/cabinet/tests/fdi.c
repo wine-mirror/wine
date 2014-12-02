@@ -727,14 +727,12 @@ static void test_FDIIsCabinet(void)
     ZeroMemory(&cabinfo, sizeof(FDICABINETINFO));
     SetLastError(0xdeadbeef);
     ret = FDIIsCabinet(hfdi, 0, &cabinfo);
-todo_wine {
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
     ok(cabinfo.cFiles == 4, "Expected 4, got %d\n", cabinfo.cFiles);
     ok(cabinfo.cFolders == 1, "Expected 1, got %d\n", cabinfo.cFolders);
     ok(cabinfo.setID == 0xbeef, "Expected 0xbeef, got %d\n", cabinfo.setID);
     ok(cabinfo.cbCabinet == 182, "Expected 182, got %d\n", cabinfo.cbCabinet);
-}
     ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
 
     fdi_close(static_fdi_handle);
