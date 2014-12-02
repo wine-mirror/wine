@@ -247,7 +247,10 @@ static const char sss_service_control_dat[] =
     "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
     "s72\tl255\ti2\tL255\tI2\ts72\n"
     "ServiceControl\tServiceControl\n"
-    "ServiceControl\tSpooler\t1\t\t0\tservice_comp";
+    "ServiceControl\tSpooler\t1\t\t1\tservice_comp\n"
+    "ServiceControl2\tSpooler\t2\t\t1\tservice_comp\n"
+    "ServiceControl3\tSpooler\t16\t\t1\tservice_comp\n"
+    "ServiceControl4\tSpooler\t32\t\t1\tservice_comp\n";
 
 static const char sss_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
@@ -260,11 +263,15 @@ static const char sss_install_exec_seq_dat[] =
     "CostFinalize\t\t1000\n"
     "InstallValidate\t\t1400\n"
     "InstallInitialize\t\t1500\n"
+    "StopServices\t\t4000\n"
     "DeleteServices\t\t5000\n"
     "MoveFiles\t\t5100\n"
     "InstallFiles\t\t5200\n"
     "DuplicateFiles\t\t5300\n"
     "StartServices\t\t5400\n"
+    "RegisterProduct\t\t5500\n"
+    "PublishFeatures\t\t5600\n"
+    "PublishProduct\t\t5700\n"
     "InstallFinalize\t\t6000\n";
 
 static const char sds_install_exec_seq_dat[] =
@@ -5310,7 +5317,7 @@ error:
     DeleteFileA(msifile);
 }
 
-static void test_start_services(void)
+static void test_start_stop_services(void)
 {
     UINT r;
     SC_HANDLE scm, service;
@@ -5359,6 +5366,23 @@ static void test_start_services(void)
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+    if (error == ERROR_SUCCESS)
+    {
+        SERVICE_STATUS status;
+
+        scm = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+        service = OpenServiceA(scm, "Spooler", SC_MANAGER_ALL_ACCESS);
+
+        ret = ControlService(service, SERVICE_CONTROL_STOP, &status);
+        ok(ret, "ControlService failed %u\n", GetLastError());
+
+        CloseServiceHandle(service);
+        CloseServiceHandle(scm);
+    }
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
     ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
@@ -5373,9 +5397,6 @@ static void test_start_services(void)
     ok(delete_pf("msitest\\service2.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
-    delete_test_files();
-    DeleteFileA(msifile);
-
     if (error == ERROR_SUCCESS)
     {
         SERVICE_STATUS status;
@@ -5389,6 +5410,9 @@ static void test_start_services(void)
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
     }
+
+    delete_test_files();
+    DeleteFileA(msifile);
 }
 
 static void test_delete_services(void)
@@ -6869,7 +6893,7 @@ START_TEST(action)
     test_write_registry_values();
     test_envvar();
     test_create_remove_folder();
-    test_start_services();
+    test_start_stop_services();
     test_delete_services();
     test_install_services();
     test_self_registration();

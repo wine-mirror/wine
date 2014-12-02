@@ -5952,23 +5952,20 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
+    event = MSI_RecordGetInteger( rec, 3 );
+    deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
+
     comp->Action = msi_get_component_action( package, comp );
-    if (comp->Action != INSTALLSTATE_LOCAL)
+    if (!(comp->Action == INSTALLSTATE_LOCAL && (event & msidbServiceControlEventStart)) &&
+        !(comp->Action == INSTALLSTATE_ABSENT && (event & msidbServiceControlEventUninstallStart)))
     {
-        TRACE("component not scheduled for installation %s\n", debugstr_w(component));
+        TRACE("not starting %s\n", debugstr_w(name));
+        msi_free( name );
         return ERROR_SUCCESS;
     }
 
-    deformat_string(package, MSI_RecordGetString(rec, 2), &name);
     deformat_string(package, MSI_RecordGetString(rec, 4), &args);
-    event = MSI_RecordGetInteger(rec, 3);
     wait = MSI_RecordGetInteger(rec, 5);
-
-    if (!(event & msidbServiceControlEventStart))
-    {
-        r = ERROR_SUCCESS;
-        goto done;
-    }
 
     scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
     if (!scm)
@@ -6159,23 +6156,24 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
     LPCWSTR component;
-    LPWSTR name = NULL, display_name = NULL;
+    WCHAR *name, *display_name = NULL;
     DWORD event, len;
     SC_HANDLE scm;
-
-    event = MSI_RecordGetInteger( rec, 3 );
-    if (!(event & msidbServiceControlEventStop))
-        return ERROR_SUCCESS;
 
     component = MSI_RecordGetString( rec, 6 );
     comp = msi_get_loaded_component( package, component );
     if (!comp)
         return ERROR_SUCCESS;
 
+    event = MSI_RecordGetInteger( rec, 3 );
+    deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
+
     comp->Action = msi_get_component_action( package, comp );
-    if (comp->Action != INSTALLSTATE_ABSENT)
+    if (!(comp->Action == INSTALLSTATE_LOCAL && (event & msidbServiceControlEventStop)) &&
+        !(comp->Action == INSTALLSTATE_ABSENT && (event & msidbServiceControlEventUninstallStop)))
     {
-        TRACE("component not scheduled for removal %s\n", debugstr_w(component));
+        TRACE("not stopping %s\n", debugstr_w(name));
+        msi_free( name );
         return ERROR_SUCCESS;
     }
 
@@ -6195,7 +6193,6 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
     }
     CloseServiceHandle( scm );
 
-    deformat_string( package, MSI_RecordGetString( rec, 2 ), &name );
     stop_service( name );
 
 done:
