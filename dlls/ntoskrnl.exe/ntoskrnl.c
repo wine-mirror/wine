@@ -532,6 +532,43 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG IoControlCode,
 }
 
 
+/**********************************************************
+ *           IoBuildSynchronousFsdRequest  (NTOSKRNL.EXE.@)
+ */
+PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
+                                         PVOID buffer, ULONG length, PLARGE_INTEGER startoffset,
+                                         PKEVENT event, PIO_STATUS_BLOCK iosb)
+{
+    PIRP irp;
+    struct IrpInstance *instance;
+    PIO_STACK_LOCATION irpsp;
+
+    FIXME("(%d %p %p %d %p %p %p) stub\n", majorfunc, device, buffer, length, startoffset, event, iosb);
+
+    irp = IoAllocateIrp( device->StackSize, FALSE );
+    if (irp == NULL)
+        return NULL;
+
+    instance = HeapAlloc( GetProcessHeap(), 0, sizeof(struct IrpInstance) );
+    if (instance == NULL)
+    {
+        IoFreeIrp( irp );
+        return NULL;
+    }
+    instance->irp = irp;
+    list_add_tail( &Irps, &instance->entry );
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MajorFunction = majorfunc;
+    /*irpsp->Parameters.DeviceIoControl.IoControlCode = IoControlCode;*/
+
+    irp->UserIosb = iosb;
+    irp->UserEvent = event;
+    irp->UserBuffer = buffer;
+    return irp;
+}
+
+
 /***********************************************************************
  *           IoCreateDriver   (NTOSKRNL.EXE.@)
  */
@@ -731,9 +768,21 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 {
     FIXME( "stub: %s %x %p %p\n", debugstr_us(name), access, file, device );
 
-    return STATUS_NOT_IMPLEMENTED;
+    *file  = NULL;
+    *device  = NULL;
+
+    return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           IoGetAttachedDevice   (NTOSKRNL.EXE.@)
+ */
+PDEVICE_OBJECT WINAPI IoGetAttachedDevice( PDEVICE_OBJECT device )
+{
+    FIXME( "stub: %p\n", device );
+
+    return device;
+}
 
 /***********************************************************************
  *           IoGetDeviceProperty   (NTOSKRNL.EXE.@)

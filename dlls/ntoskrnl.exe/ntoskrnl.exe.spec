@@ -322,7 +322,7 @@
 @ stub IoBuildAsynchronousFsdRequest
 @ stdcall IoBuildDeviceIoControlRequest(long ptr ptr long ptr long long ptr ptr)
 @ stub IoBuildPartialMdl
-@ stub IoBuildSynchronousFsdRequest
+@ stdcall IoBuildSynchronousFsdRequest(long ptr ptr long ptr ptr ptr)
 @ stdcall IoCallDriver(ptr ptr)
 @ stub IoCancelFileOpen
 @ stub IoCancelIrp
@@ -373,7 +373,7 @@
 @ stdcall IoFreeIrp(ptr)
 @ stdcall IoFreeMdl(ptr)
 @ stub IoFreeWorkItem
-@ stub IoGetAttachedDevice
+@ stdcall IoGetAttachedDevice(ptr)
 @ stub IoGetAttachedDeviceReference
 @ stub IoGetBaseFileSystemDeviceObject
 @ stub IoGetBootDiskInformation
