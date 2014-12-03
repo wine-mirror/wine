@@ -810,7 +810,6 @@ static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
 static const WCHAR Music_PlaylistsW[] = {'M','u','s','i','c','\\','P','l','a','y','l','i','s','t','s','\0'};
 static const WCHAR Music_Sample_MusicW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','M','u','s','i','c','\0'};
 static const WCHAR Music_Sample_PlaylistsW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','P','l','a','y','l','i','s','t','s','\0'};
-static const WCHAR My_DocumentsW[] = {'M','y',' ','D','o','c','u','m','e','n','t','s','\0'};
 static const WCHAR My_MusicW[] = {'M','y',' ','M','u','s','i','c','\0'};
 static const WCHAR My_PicturesW[] = {'M','y',' ','P','i','c','t','u','r','e','s','\0'};
 static const WCHAR My_VideosW[] = {'M','y',' ','V','i','d','e','o','s','\0'};
