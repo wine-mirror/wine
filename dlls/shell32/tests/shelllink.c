@@ -49,8 +49,6 @@ static const GUID _IID_IShellLinkDataList = {
     { 0xb9, 0x2f, 0x00, 0xa0, 0xc9, 0x03, 0x12, 0xe1 }
 };
 
-static const WCHAR notafile[]= { 'C',':','\\','n','o','n','e','x','i','s','t','e','n','t','\\','f','i','l','e',0 };
-
 
 /* For some reason SHILCreateFromPath does not work on Win98 and
  * SHSimpleIDListFromPathA does not work on NT4. But if we call both we

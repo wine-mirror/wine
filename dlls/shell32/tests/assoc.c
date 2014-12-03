@@ -103,7 +103,6 @@ struct assoc_getstring_test
 };
 
 static const WCHAR httpW[] = {'h','t','t','p',0};
-static const WCHAR httpsW[] = {'h','t','t','p','s',0};
 static const WCHAR badW[] = {'b','a','d','b','a','d',0};
 
 static struct assoc_getstring_test getstring_tests[] =
