@@ -421,6 +421,7 @@ static void test_FolderCollection(void)
     IUnknown *unknown;
     IEnumVARIANT *enumvar;
     ULONG count, i;
+    BOOL is_first;
     VARIANT idx;
     static const int vt[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_INT, VT_UINT };
 
@@ -507,7 +508,8 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Path(subfolder, &bstr);
         ok(hr == S_OK, "get_Path error %#x\n", hr);
-        if (i == 1)
+        is_first = !lstrcmpW(bstr, Wine_Folder1);
+        if (is_first)
             ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
@@ -515,7 +517,7 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#x\n", hr);
-        if (i == 1)
+        if (is_first)
             ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
@@ -530,7 +532,7 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Path(subfolder, &bstr);
         ok(hr == S_OK, "get_Path error %#x\n", hr);
-        if (i == 1)
+        if (is_first)
             ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
@@ -538,7 +540,7 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#x\n", hr);
-        if (i == 1)
+        if (is_first)
             ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
@@ -591,11 +593,18 @@ static void test_FolderCollection(void)
     ok(count == 1, "expected 1, got %d\n", count);
     hr = ITaskFolder_get_Path((ITaskFolder *)V_DISPATCH(&var[0]), &bstr);
     ok(hr == S_OK, "get_Path error %#x\n", hr);
-    ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+    is_first = !lstrcmpW(bstr, Wine_Folder1);
+    if (is_first)
+        ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
+    else
+        ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = ITaskFolder_get_Name((ITaskFolder *)V_DISPATCH(&var[0]), &bstr);
     ok(hr == S_OK, "get_Name error %#x\n", hr);
-    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    if (is_first)
+        ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+    else
+        ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
     IDispatch_Release(V_DISPATCH(&var[0]));
 
     memset(var, 0, sizeof(var));
@@ -628,7 +637,8 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Path(subfolder, &bstr);
         ok(hr == S_OK, "get_Path error %#x\n", hr);
-        if (i == 0)
+        is_first = !lstrcmpW(bstr, Wine_Folder1);
+        if (is_first)
             ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
@@ -636,7 +646,7 @@ static void test_FolderCollection(void)
 
         hr = ITaskFolder_get_Name(subfolder, &bstr);
         ok(hr == S_OK, "get_Name error %#x\n", hr);
-        if (i == 0)
+        if (is_first)
             ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
         else
             ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
