@@ -634,26 +634,42 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
             struct wined3d_shader_semantic *semantic = &ins.declaration.semantic;
+            unsigned int reg_idx = semantic->reg.reg.idx[0].offset;
 
             switch (semantic->reg.reg.type)
             {
                 /* Mark input registers used. */
                 case WINED3DSPR_INPUT:
-                    reg_maps->input_registers |= 1 << semantic->reg.reg.idx[0].offset;
-                    shader_signature_from_semantic(&input_signature[semantic->reg.reg.idx[0].offset], semantic);
+                    if (reg_idx >= MAX_REG_INPUT)
+                    {
+                        ERR("Invalid input register index %u.\n", reg_idx);
+                        break;
+                    }
+                    reg_maps->input_registers |= 1 << reg_idx;
+                    shader_signature_from_semantic(&input_signature[reg_idx], semantic);
                     break;
 
                 /* Vertex shader: mark 3.0 output registers used, save token. */
                 case WINED3DSPR_OUTPUT:
-                    reg_maps->output_registers |= 1 << semantic->reg.reg.idx[0].offset;
-                    shader_signature_from_semantic(&output_signature[semantic->reg.reg.idx[0].offset], semantic);
+                    if (reg_idx >= MAX_REG_OUTPUT)
+                    {
+                        ERR("Invalid output register index %u.\n", reg_idx);
+                        break;
+                    }
+                    reg_maps->output_registers |= 1 << reg_idx;
+                    shader_signature_from_semantic(&output_signature[reg_idx], semantic);
                     if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
                     break;
 
                 /* Save sampler usage token. */
                 case WINED3DSPR_SAMPLER:
-                    reg_maps->sampler_type[semantic->reg.reg.idx[0].offset] = semantic->sampler_type;
+                    if (reg_idx >= ARRAY_SIZE(reg_maps->sampler_type))
+                    {
+                        ERR("Invalid sampler index %u.\n", reg_idx);
+                        break;
+                    }
+                    reg_maps->sampler_type[reg_idx] = semantic->sampler_type;
                     break;
 
                 default:
