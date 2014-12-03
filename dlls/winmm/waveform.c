@@ -68,8 +68,8 @@ static const WCHAR muteW[] = {'M','u','t','e',0};
  *   - We must be able to identify bad devices without crashing.
  */
 
-/* buffer size = 100 * 100000 (100 ns) = 1 second */
-#define AC_BUFLEN (100 * 100000)
+/* buffer size = 10 * 100000 (100 ns) = 0.1 seconds */
+#define AC_BUFLEN (10 * 100000)
 #define MAX_DEVICES 256
 #define MAPPER_INDEX 0x3F
 
