@@ -663,6 +663,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     break;
 
                 case WINED3DSPR_SAMPLER:
+                case WINED3DSPR_RESOURCE:
                     if (reg_idx >= ARRAY_SIZE(reg_maps->resource_type))
                     {
                         ERR("Invalid resource index %u.\n", reg_idx);
@@ -1014,6 +1015,52 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
 
             default:
                 TRACE("_unknown_ttype(0x%08x)", semantic->resource_type);
+                break;
+        }
+    }
+    else if (semantic->reg.reg.type == WINED3DSPR_RESOURCE)
+    {
+        TRACE("_resource_");
+        switch (semantic->resource_type)
+        {
+            case WINED3D_SHADER_RESOURCE_BUFFER:
+                TRACE("buffer");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
+                TRACE("texture1d");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
+                TRACE("texture2d");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DMS:
+                TRACE("texture2dms");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
+                TRACE("texture3d");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
+                TRACE("texturecube");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY:
+                TRACE("texture1darray");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
+                TRACE("texture2darray");
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY:
+                TRACE("texture2dmsarray");
+                break;
+
+            default:
+                TRACE("unknown");
                 break;
         }
     }
