@@ -150,9 +150,6 @@ typedef struct _OSSDevice {
 
 static struct list g_devices = LIST_INIT(g_devices);
 
-static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','o','s','s','.','d','r','v',0};
 static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','o','s','s','.','d','r','v','\\','d','e','v','i','c','e','s',0};
