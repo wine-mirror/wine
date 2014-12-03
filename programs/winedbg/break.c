@@ -492,14 +492,6 @@ void break_delete_xpoint(int num)
     bp[num].skipcount = 0;
 }
 
-static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
-                                     const IMAGEHLP_MODULE* wmod_child)
-{
-    return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
-        wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
-        wmod_child->BaseOfImage + wmod_child->ImageSize;
-}
-
 /******************************************************************
  *		break_delete_xpoints_from_module
  *
