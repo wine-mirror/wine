@@ -283,13 +283,13 @@ struct wined3d_settings
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
 
-enum wined3d_sampler_texture_type
+enum wined3d_shader_resource_type
 {
-    WINED3DSTT_UNKNOWN = 0,
-    WINED3DSTT_1D = 1,
-    WINED3DSTT_2D = 2,
-    WINED3DSTT_CUBE = 3,
-    WINED3DSTT_VOLUME = 4,
+    WINED3D_SHADER_RESOURCE_NONE,
+    WINED3D_SHADER_RESOURCE_TEXTURE_1D,
+    WINED3D_SHADER_RESOURCE_TEXTURE_2D,
+    WINED3D_SHADER_RESOURCE_TEXTURE_3D,
+    WINED3D_SHADER_RESOURCE_TEXTURE_CUBE,
 };
 
 #define WINED3D_SHADER_CONST_VS_F           0x00000001
@@ -588,7 +588,7 @@ struct wined3d_shader_reg_maps
     WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
     UINT cb_sizes[WINED3D_MAX_CBS];
 
-    enum wined3d_sampler_texture_type sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
+    enum wined3d_shader_resource_type resource_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
     BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
 
@@ -673,7 +673,7 @@ struct wined3d_shader_semantic
 {
     enum wined3d_decl_usage usage;
     UINT usage_idx;
-    enum wined3d_sampler_texture_type sampler_type;
+    enum wined3d_shader_resource_type resource_type;
     struct wined3d_shader_dst_param reg;
 };
 
@@ -2910,7 +2910,7 @@ struct wined3d_shader
     } u;
 };
 
-void pixelshader_update_samplers(struct wined3d_shader *shader, WORD tex_types) DECLSPEC_HIDDEN;
+void pixelshader_update_resource_types(struct wined3d_shader *shader, WORD tex_types) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         BOOL position_transformed, struct ps_compile_args *args,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

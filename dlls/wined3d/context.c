@@ -2585,14 +2585,14 @@ static void context_map_fixed_function_samplers(struct wined3d_context *context,
 
 static void context_map_psamplers(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const enum wined3d_sampler_texture_type *sampler_type =
-            state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type;
+    const enum wined3d_shader_resource_type *resource_type =
+            state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.resource_type;
     unsigned int i;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
-        if (sampler_type[i] && context->tex_unit_map[i] != i)
+        if (resource_type[i] && context->tex_unit_map[i] != i)
         {
             context_map_stage(context, i, i);
             context_invalidate_state(context, STATE_SAMPLER(i));
@@ -2603,8 +2603,8 @@ static void context_map_psamplers(struct wined3d_context *context, const struct 
 }
 
 static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
-        const enum wined3d_sampler_texture_type *pshader_sampler_tokens,
-        const enum wined3d_sampler_texture_type *vshader_sampler_tokens, DWORD unit)
+        const enum wined3d_shader_resource_type *ps_resource_types,
+        const enum wined3d_shader_resource_type *vs_resource_types, DWORD unit)
 {
     DWORD current_mapping = context->rev_tex_unit_map[unit];
 
@@ -2616,39 +2616,39 @@ static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
     {
         /* Used by a fragment sampler */
 
-        if (!pshader_sampler_tokens)
+        if (!ps_resource_types)
         {
             /* No pixel shader, check fixed function */
             return current_mapping >= MAX_TEXTURES || !(context->fixed_function_usage_map & (1 << current_mapping));
         }
 
         /* Pixel shader, check the shader's sampler map */
-        return !pshader_sampler_tokens[current_mapping];
+        return !ps_resource_types[current_mapping];
     }
 
     /* Used by a vertex sampler */
-    return !vshader_sampler_tokens[current_mapping - MAX_FRAGMENT_SAMPLERS];
+    return !vs_resource_types[current_mapping - MAX_FRAGMENT_SAMPLERS];
 }
 
 static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, const struct wined3d_state *state)
 {
-    const enum wined3d_sampler_texture_type *vshader_sampler_type =
-            state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.sampler_type;
-    const enum wined3d_sampler_texture_type *pshader_sampler_type = NULL;
+    const enum wined3d_shader_resource_type *vs_resource_type =
+            state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.resource_type;
+    const enum wined3d_shader_resource_type *ps_resource_type = NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
 
+    /* Note that we only care if a resource is used or not, not the
+     * resource's specific type. Otherwise we'd need to call
+     * shader_update_samplers() here for 1.x pixelshaders. */
     if (ps)
-    {
-        /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
-         * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_type = state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type;
-    }
+        ps_resource_type = state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.resource_type;
 
-    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
+    for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
+    {
         DWORD vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
-        if (vshader_sampler_type[i])
+        if (vs_resource_type[i])
         {
             if (context->tex_unit_map[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
             {
@@ -2658,7 +2658,7 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
 
             while (start >= 0)
             {
-                if (context_unit_free_for_vs(context, pshader_sampler_type, vshader_sampler_type, start))
+                if (context_unit_free_for_vs(context, ps_resource_type, vs_resource_type, start))
                 {
                     context_map_stage(context, vsampler_idx, start);
                     context_invalidate_state(context, STATE_SAMPLER(vsampler_idx));
@@ -2930,7 +2930,7 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     {
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
-            if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.sampler_type[i])
+            if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.resource_type[i])
                 context_preload_texture(context, state, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
@@ -2939,7 +2939,7 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
-            if (state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.sampler_type[i])
+            if (state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.resource_type[i])
                 context_preload_texture(context, state, i);
         }
     }
