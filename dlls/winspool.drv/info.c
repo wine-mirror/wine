@@ -202,8 +202,6 @@ static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'P','r','i','n','t','e','r','s',0};
 
-static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
-
 static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
                                               'M','i','c','r','o','s','o','f','t','\\',
                                               'W','i','n','d','o','w','s',' ','N','T','\\',
@@ -216,19 +214,12 @@ static const WCHAR user_printers_reg_key[] = { 'S','o','f','t','w','a','r','e','
                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                                'D','e','v','i','c','e','s',0};
 
-static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'W','i','n','d','o','w','s',' ','N','T','\\',
-                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                        'P','o','r','t','s',0};
-
 static const WCHAR WinNT_CV_PrinterPortsW[] = { 'S','o','f','t','w','a','r','e','\\',
                                                 'M','i','c','r','o','s','o','f','t','\\',
                                                 'W','i','n','d','o','w','s',' ','N','T','\\',
                                                 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                                 'P','r','i','n','t','e','r','P','o','r','t','s',0};
 
-static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 static       WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
 static const WCHAR envname_x64W[] =   {'W','i','n','d','o','w','s',' ','x','6','4',0};
 static       WCHAR envname_x86W[] =   {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
@@ -239,8 +230,6 @@ static const WCHAR Version0_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','
 static const WCHAR Version0_SubdirW[] = {'\\','0',0};
 static const WCHAR Version3_RegPathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
 static const WCHAR Version3_SubdirW[] = {'\\','3',0};
-
-static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
 
 static const WCHAR AttributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
 static const WCHAR backslashW[] = {'\\',0};
@@ -264,7 +253,6 @@ static const WCHAR ObjectGUIDW[] = {'O','b','j','e','c','t','G','U','I','D',0};
 static const WCHAR OEM_UrlW[] = {'O','E','M',' ','U','r','l',0};
 static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR PortW[] = {'P','o','r','t',0};
-static const WCHAR bs_Ports_bsW[] = {'\\','P','o','r','t','s','\\',0};
 static const WCHAR Previous_NamesW[] = {'P','r','e','v','i','o','u','s',' ','N','a','m','e','s',0};
 static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i','v','e','r',0};
@@ -278,7 +266,6 @@ static const WCHAR StartTimeW[] = {'S','t','a','r','t','T','i','m','e',0};
 static const WCHAR StatusW[] = {'S','t','a','t','u','s',0};
 static const WCHAR txTimeoutW[] = {'t','x','T','i','m','e','o','u','t',0};
 static const WCHAR UntilTimeW[] = {'U','n','t','i','l','T','i','m','e',0};
-static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
