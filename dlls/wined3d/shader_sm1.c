@@ -646,6 +646,7 @@ static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_se
     {
         semantic->resource_type = resource_type_table[resource_type];
     }
+    semantic->resource_data_type = WINED3D_DATA_FLOAT;
     shader_parse_dst_param(dst_token, NULL, &semantic->reg);
 }
 

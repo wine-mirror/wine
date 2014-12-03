@@ -1066,11 +1066,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         BOOL shadow_sampler, tex_rect;
 
-        if (!reg_maps->resource_type[i])
+        if (!reg_maps->resource_info[i].type)
             continue;
 
         shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1 << i));
-        switch (reg_maps->resource_type[i])
+        switch (reg_maps->resource_info[i].type)
         {
             case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
                 if (shadow_sampler)
@@ -1112,7 +1112,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             default:
                 shader_addline(buffer, "uniform unsupported_sampler %s_sampler%u;\n", prefix, i);
-                FIXME("Unhandled resource type %#x.\n", reg_maps->resource_type[i]);
+                FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[i].type);
                 break;
         }
     }
@@ -1134,10 +1134,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
         for (i = 0; i < shader->limits->sampler; ++i)
         {
-            if (!reg_maps->resource_type[i] || !(ps_args->np2_fixup & (1 << i)))
+            if (!reg_maps->resource_info[i].type || !(ps_args->np2_fixup & (1 << i)))
                 continue;
 
-            if (reg_maps->resource_type[i] != WINED3D_SHADER_RESOURCE_TEXTURE_2D)
+            if (reg_maps->resource_info[i].type != WINED3D_SHADER_RESOURCE_TEXTURE_2D)
             {
                 FIXME("Non-2D texture is flagged for NP2 texcoord fixup.\n");
                 continue;
@@ -1890,7 +1890,7 @@ static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
         DWORD resource_idx, DWORD flags, struct glsl_sample_function *sample_function)
 {
-    enum wined3d_shader_resource_type resource_type = ctx->reg_maps->resource_type[resource_idx];
+    enum wined3d_shader_resource_type resource_type = ctx->reg_maps->resource_info[resource_idx].type;
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     BOOL shadow = ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
             && (((const struct shader_glsl_ctx_priv *)ctx->backend_data)->cur_ps_args->shadow & (1 << resource_idx));
@@ -3468,7 +3468,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
     {
         DWORD flags = (priv->cur_ps_args->tex_transform >> resource_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
                 & WINED3D_PSARGS_TEXTRANSFORM_MASK;
-        enum wined3d_shader_resource_type resource_type = ins->ctx->reg_maps->resource_type[resource_idx];
+        enum wined3d_shader_resource_type resource_type = ins->ctx->reg_maps->resource_info[resource_idx].type;
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
         if (flags & WINED3D_PSARGS_PROJECTED && resource_type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
@@ -3507,7 +3507,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
     else
     {
         if ((ins->flags & WINED3DSI_TEXLD_PROJECT)
-                && ins->ctx->reg_maps->resource_type[resource_idx] != WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
+                && ins->ctx->reg_maps->resource_info[resource_idx].type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
         {
             /* ps 2.0 texldp instruction always divides by the fourth component. */
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;

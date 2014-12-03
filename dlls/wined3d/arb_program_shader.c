@@ -1390,7 +1390,7 @@ static const char *shader_arb_get_modifier(const struct wined3d_shader_instructi
 static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD sampler_idx,
         const char *dst_str, const char *coord_reg, WORD flags, const char *dsx, const char *dsy)
 {
-    enum wined3d_shader_resource_type resource_type = ins->ctx->reg_maps->resource_type[sampler_idx];
+    enum wined3d_shader_resource_type resource_type = ins->ctx->reg_maps->resource_info[sampler_idx].type;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     const char *tex_type;
     BOOL np2_fixup = FALSE;

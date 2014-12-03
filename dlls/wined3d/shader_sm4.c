@@ -185,6 +185,15 @@ enum wined3d_sm4_resource_type
     WINED3D_SM4_RESOURCE_TEXTURE_2DMSARRAY  = 0x9,
 };
 
+enum wined3d_sm4_data_type
+{
+    WINED3D_SM4_DATA_UNORM  = 0x1,
+    WINED3D_SM4_DATA_SNORM  = 0x2,
+    WINED3D_SM4_DATA_INT    = 0x3,
+    WINED3D_SM4_DATA_UINT   = 0x4,
+    WINED3D_SM4_DATA_FLOAT  = 0x5,
+};
+
 struct wined3d_shader_src_param_entry
 {
     struct list entry;
@@ -354,6 +363,16 @@ static const enum wined3d_shader_resource_type resource_type_table[] =
     /* WINED3D_SM4_RESOURCE_TEXTURE_1DARRAY */      WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY,
     /* WINED3D_SM4_RESOURCE_TEXTURE_2DARRAY */      WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY,
     /* WINED3D_SM4_RESOURCE_TEXTURE_2DMSARRAY */    WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY,
+};
+
+static const enum wined3d_data_type data_type_table[] =
+{
+    /* 0 */                         WINED3D_DATA_FLOAT,
+    /* WINED3D_SM4_DATA_UNORM */    WINED3D_DATA_UNORM,
+    /* WINED3D_SM4_DATA_SNORM */    WINED3D_DATA_SNORM,
+    /* WINED3D_SM4_DATA_INT */      WINED3D_DATA_INT,
+    /* WINED3D_SM4_DATA_UINT */     WINED3D_DATA_UINT,
+    /* WINED3D_SM4_DATA_FLOAT */    WINED3D_DATA_FLOAT,
 };
 
 static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
@@ -779,6 +798,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     if (opcode == WINED3D_SM4_OP_DCL_RESOURCE)
     {
         enum wined3d_sm4_resource_type resource_type;
+        enum wined3d_sm4_data_type data_type;
+        DWORD components;
 
         resource_type = (opcode_token & WINED3D_SM4_RESOURCE_TYPE_MASK) >> WINED3D_SM4_RESOURCE_TYPE_SHIFT;
         if (!resource_type || (resource_type >= ARRAY_SIZE(resource_type_table)))
@@ -791,6 +812,21 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             ins->declaration.semantic.resource_type = resource_type_table[resource_type];
         }
         shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_RESOURCE, &ins->declaration.semantic.reg);
+
+        components = *p++;
+        if ((components & 0xfff0) != (components & 0xf) * 0x1110)
+            FIXME("Components (%#x) have different data types.\n", components);
+        data_type = components & 0xf;
+
+        if (!data_type || (data_type >= ARRAY_SIZE(data_type_table)))
+        {
+            FIXME("Unhandled data type %#x.\n", data_type);
+            ins->declaration.semantic.resource_data_type = WINED3D_DATA_FLOAT;
+        }
+        else
+        {
+            ins->declaration.semantic.resource_data_type = data_type_table[data_type];
+        }
     }
     else if (opcode == WINED3D_SM4_OP_DCL_CONSTANT_BUFFER)
     {

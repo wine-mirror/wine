@@ -347,6 +347,8 @@ enum wined3d_data_type
     WINED3D_DATA_RESOURCE,
     WINED3D_DATA_SAMPLER,
     WINED3D_DATA_UINT,
+    WINED3D_DATA_UNORM,
+    WINED3D_DATA_SNORM,
 };
 
 enum wined3d_immconst_type
@@ -574,6 +576,12 @@ struct wined3d_shader_version
     BYTE minor;
 };
 
+struct wined3d_shader_resource_info
+{
+    enum wined3d_shader_resource_type type;
+    enum wined3d_data_type data_type;
+};
+
 #define WINED3D_SHADER_VERSION(major, minor) (((major) << 8) | (minor))
 
 struct wined3d_shader_reg_maps
@@ -593,7 +601,7 @@ struct wined3d_shader_reg_maps
     WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
     UINT cb_sizes[WINED3D_MAX_CBS];
 
-    enum wined3d_shader_resource_type resource_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
+    struct wined3d_shader_resource_info resource_info[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
     BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
 
@@ -679,6 +687,7 @@ struct wined3d_shader_semantic
     enum wined3d_decl_usage usage;
     UINT usage_idx;
     enum wined3d_shader_resource_type resource_type;
+    enum wined3d_data_type resource_data_type;
     struct wined3d_shader_dst_param reg;
 };
 
