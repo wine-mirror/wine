@@ -81,6 +81,27 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(IDirectSoundNotify *iface)
     return ref;
 }
 
+static int notify_compar(const void *l, const void *r)
+{
+    const DSBPOSITIONNOTIFY *left = l;
+    const DSBPOSITIONNOTIFY *right = r;
+
+    /* place DSBPN_OFFSETSTOP at the start of the sorted array */
+    if(left->dwOffset == DSBPN_OFFSETSTOP){
+        if(right->dwOffset != DSBPN_OFFSETSTOP)
+            return -1;
+    }else if(right->dwOffset == DSBPN_OFFSETSTOP)
+        return 1;
+
+    if(left->dwOffset == right->dwOffset)
+        return 0;
+
+    if(left->dwOffset < right->dwOffset)
+        return -1;
+
+    return 1;
+}
+
 static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSoundNotify *iface,
         DWORD howmuch, const DSBPOSITIONNOTIFY *notify)
 {
@@ -113,6 +134,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSou
 	    }
             CopyMemory(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
             This->nrofnotifies = howmuch;
+            qsort(This->notifies, howmuch, sizeof(DSBPOSITIONNOTIFY), notify_compar);
 	} else {
            HeapFree(GetProcessHeap(), 0, This->notifies);
            This->notifies = NULL;

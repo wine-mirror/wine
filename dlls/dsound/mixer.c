@@ -183,48 +183,67 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
  */
 void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len)
 {
-	int			i;
-	DWORD			offset;
-	LPDSBPOSITIONNOTIFY	event;
-	TRACE("(%p,%d)\n",dsb,len);
+    int first, left, right, check;
 
-	if (dsb->nrofnotifies == 0)
-		return;
+    if(dsb->nrofnotifies == 0)
+        return;
 
-	TRACE("(%p) buflen = %d, playpos = %d, len = %d\n",
-		dsb, dsb->buflen, playpos, len);
-	for (i = 0; i < dsb->nrofnotifies ; i++) {
-		event = dsb->notifies + i;
-		offset = event->dwOffset;
-		TRACE("checking %d, position %d, event = %p\n",
-			i, offset, event->hEventNotify);
-		/* DSBPN_OFFSETSTOP has to be the last element. So this is */
-		/* OK. [Inside DirectX, p274] */
-		/* Windows does not seem to enforce this, and some apps rely */
-		/* on that, so we can't stop there. */
-		/*  */
-		/* This also means we can't sort the entries by offset, */
-		/* because DSBPN_OFFSETSTOP == -1 */
-		if (offset == DSBPN_OFFSETSTOP) {
-			if (dsb->state == STATE_STOPPED) {
-				SetEvent(event->hEventNotify);
-				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
-			}
-                        continue;
-		}
-		if ((playpos + len) >= dsb->buflen) {
-			if ((offset < ((playpos + len) % dsb->buflen)) ||
-			    (offset >= playpos)) {
-				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
-				SetEvent(event->hEventNotify);
-			}
-		} else {
-			if ((offset >= playpos) && (offset < (playpos + len))) {
-				TRACE("signalled event %p (%d)\n", event->hEventNotify, i);
-				SetEvent(event->hEventNotify);
-			}
-		}
-	}
+    if(dsb->state == STATE_STOPPED){
+        TRACE("Stopped...\n");
+        /* DSBPN_OFFSETSTOP notifies are always at the start of the sorted array */
+        for(left = 0; left < dsb->nrofnotifies; ++left){
+            if(dsb->notifies[left].dwOffset != DSBPN_OFFSETSTOP)
+                break;
+
+            TRACE("Signalling %p\n", dsb->notifies[left].hEventNotify);
+            SetEvent(dsb->notifies[left].hEventNotify);
+        }
+        return;
+    }
+
+    for(first = 0; first < dsb->nrofnotifies && dsb->notifies[first].dwOffset == DSBPN_OFFSETSTOP; ++first)
+        ;
+
+    if(first == dsb->nrofnotifies)
+        return;
+
+    check = left = first;
+    right = dsb->nrofnotifies - 1;
+
+    /* find leftmost notify that is greater than playpos */
+    while(left != right){
+        check = left + (right - left) / 2;
+        if(dsb->notifies[check].dwOffset < playpos)
+            left = check + 1;
+        else if(dsb->notifies[check].dwOffset > playpos)
+            right = check;
+        else{
+            left = check;
+            break;
+        }
+    }
+
+    TRACE("Not stopped: first notify: %u (%u), range: [%u,%u)\n", first,
+            dsb->notifies[check].dwOffset, playpos, (playpos + len) % dsb->buflen);
+
+    /* send notifications in range */
+    for(check = left; check < dsb->nrofnotifies; ++check){
+        if(dsb->notifies[check].dwOffset >= playpos + len)
+            break;
+
+        TRACE("Signalling %p (%u)\n", dsb->notifies[check].hEventNotify, dsb->notifies[check].dwOffset);
+        SetEvent(dsb->notifies[check].hEventNotify);
+    }
+
+    if(playpos + len > dsb->buflen){
+        for(check = first; check < left; ++check){
+            if(dsb->notifies[check].dwOffset >= (playpos + len) % dsb->buflen)
+                break;
+
+            TRACE("Signalling %p (%u)\n", dsb->notifies[check].hEventNotify, dsb->notifies[check].dwOffset);
+            SetEvent(dsb->notifies[check].hEventNotify);
+        }
+    }
 }
 
 static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
