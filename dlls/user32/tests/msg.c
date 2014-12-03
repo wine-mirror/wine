@@ -1172,51 +1172,6 @@ static const struct message WmDestroyInvisibleChildSeq[] = {
     { WM_NCDESTROY, sent },
     { 0 }
 };
-/* Moving the mouse in nonclient area */
-static const struct message WmMouseMoveInNonClientAreaSeq[] = { /* FIXME: add */
-    { WM_NCHITTEST, sent },
-    { WM_SETCURSOR, sent },
-    { WM_NCMOUSEMOVE, posted },
-    { 0 }
-};
-/* Moving the mouse in client area */
-static const struct message WmMouseMoveInClientAreaSeq[] = { /* FIXME: add */
-    { WM_NCHITTEST, sent },
-    { WM_SETCURSOR, sent },
-    { WM_MOUSEMOVE, posted },
-    { 0 }
-};
-/* Moving by dragging the title bar (after WM_NCHITTEST and WM_SETCURSOR) (outline move) */
-static const struct message WmDragTitleBarSeq[] = { /* FIXME: add */
-    { WM_NCLBUTTONDOWN, sent|wparam, HTCAPTION },
-    { WM_SYSCOMMAND, sent|defwinproc|wparam, SC_MOVE+2 },
-    { WM_GETMINMAXINFO, sent|defwinproc },
-    { WM_ENTERSIZEMOVE, sent|defwinproc },
-    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, 0 },
-    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, 0 },
-    { WM_MOVE, sent|defwinproc },
-    { WM_EXITSIZEMOVE, sent|defwinproc },
-    { 0 }
-};
-/* Sizing by dragging the thick borders (after WM_NCHITTEST and WM_SETCURSOR) (outline move) */
-static const struct message WmDragThickBordersBarSeq[] = { /* FIXME: add */
-    { WM_NCLBUTTONDOWN, sent|wparam, 0xd },
-    { WM_SYSCOMMAND, sent|defwinproc|wparam, 0xf004 },
-    { WM_GETMINMAXINFO, sent|defwinproc },
-    { WM_ENTERSIZEMOVE, sent|defwinproc },
-    { WM_SIZING, sent|defwinproc|wparam, 4}, /* one for each mouse movement */
-    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, 0 },
-    { WM_GETMINMAXINFO, sent|defwinproc },
-    { WM_NCCALCSIZE, sent|defwinproc|wparam, 1 },
-    { WM_NCPAINT, sent|defwinproc|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ERASEBKGND, sent|defwinproc },
-    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, 0 },
-    { WM_MOVE, sent|defwinproc },
-    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
-    { WM_EXITSIZEMOVE, sent|defwinproc },
-    { 0 }
-};
 /* Resizing child window with MoveWindow (32) */
 static const struct message WmResizingChildWithMoveWindowSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE },
@@ -1227,41 +1182,6 @@ static const struct message WmResizingChildWithMoveWindowSeq[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { 0 }
-};
-/* Clicking on inactive button */
-static const struct message WmClickInactiveButtonSeq[] = { /* FIXME: add */
-    { WM_NCHITTEST, sent },
-    { WM_PARENTNOTIFY, sent|parent|wparam, WM_LBUTTONDOWN },
-    { WM_MOUSEACTIVATE, sent },
-    { WM_MOUSEACTIVATE, sent|parent|defwinproc },
-    { WM_SETCURSOR, sent },
-    { WM_SETCURSOR, sent|parent|defwinproc },
-    { WM_LBUTTONDOWN, posted },
-    { WM_KILLFOCUS, posted|parent },
-    { WM_SETFOCUS, posted },
-    { WM_CTLCOLORBTN, posted|parent },
-    { BM_SETSTATE, posted },
-    { WM_CTLCOLORBTN, posted|parent },
-    { WM_LBUTTONUP, posted },
-    { BM_SETSTATE, posted },
-    { WM_CTLCOLORBTN, posted|parent },
-    { WM_COMMAND, posted|parent },
-    { 0 }
-};
-/* Reparenting a button (16/32) */
-/* The last child (button) reparented gets topmost for its new parent. */
-static const struct message WmReparentButtonSeq[] = { /* FIXME: add */
-    { WM_SHOWWINDOW, sent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE },
-    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_ERASEBKGND, sent|parent },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE },
-    { WM_CHILDACTIVATE, sent },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOREDRAW },
-    { WM_MOVE, sent|defwinproc },
-    { WM_SHOWWINDOW, sent|wparam, 1 },
     { 0 }
 };
 /* Creation of a custom dialog (32) */
@@ -1462,35 +1382,6 @@ static const struct message WmModalDialogSeq[] = {
     { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, 0, 0 },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
-    { 0 }
-};
-/* Creation of a modal dialog that is resized inside WM_INITDIALOG (32) */
-static const struct message WmCreateModalDialogResizeSeq[] = { /* FIXME: add */
-    /* (inside dialog proc, handling WM_INITDIALOG) */
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_NCCALCSIZE, sent },
-    { WM_NCACTIVATE, sent|parent|wparam, 0 },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ACTIVATE, sent|parent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent|parent },
-    { WM_NCACTIVATE, sent|wparam, 1 },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
-    { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
-    /* (setting focus) */
-    { WM_SHOWWINDOW, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
-    { WM_NCPAINT, sent },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ERASEBKGND, sent },
-    { WM_CTLCOLORDLG, sent|defwinproc },
-    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
-    { WM_PAINT, sent },
-    /* (bunch of WM_CTLCOLOR* for each control) */
-    { WM_PAINT, sent|parent },
-    { WM_ENTERIDLE, sent|parent|wparam, 0 },
-    { WM_SETCURSOR, sent|parent },
     { 0 }
 };
 /* SetMenu for NonVisible windows with size change*/
@@ -14105,9 +13996,6 @@ static const struct message WmSetFocus_2[] = {
 };
 static const struct message WmSetFocus_3[] = {
     { HCBT_SETFOCUS, hook }, /* child */
-    { 0 }
-};
-static const struct message WmSetFocus_4[] = {
     { 0 }
 };
 
