@@ -36,9 +36,9 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
-
 #if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
+
+WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f

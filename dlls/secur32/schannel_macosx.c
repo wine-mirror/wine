@@ -41,9 +41,9 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(secur32);
-
 #ifdef HAVE_SECURITY_SECURITY_H
+
+WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
 /* Defined in <Security/CipherSuite.h> in the 10.6 SDK or later. */
