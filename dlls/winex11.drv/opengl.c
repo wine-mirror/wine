@@ -272,13 +272,6 @@ static XContext gl_hwnd_context;
 /* X context to associate a struct gl_drawable to a pbuffer hdc */
 static XContext gl_pbuffer_context;
 
-static const struct gdi_dc_funcs glxdrv_funcs;
-
-static inline struct glx_physdev *get_glxdrv_dev( PHYSDEV dev )
-{
-    return (struct glx_physdev *)dev;
-}
-
 static struct list context_list = LIST_INIT( context_list );
 static struct WineGLInfo WineGLInfo = { 0 };
 static struct wgl_pixel_format *pixel_formats;
