@@ -77,7 +77,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 static const WCHAR g_szHttp1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR g_szHttp1_1[] = {'H','T','T','P','/','1','.','1',0};
 static const WCHAR szOK[] = {'O','K',0};
-static const WCHAR szDefaultHeader[] = {'H','T','T','P','/','1','.','0',' ','2','0','0',' ','O','K',0};
 static const WCHAR hostW[] = { 'H','o','s','t',0 };
 static const WCHAR szAuthorization[] = { 'A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
@@ -85,7 +84,6 @@ static const WCHAR szStatus[] = { 'S','t','a','t','u','s',0 };
 static const WCHAR szKeepAlive[] = {'K','e','e','p','-','A','l','i','v','e',0};
 static const WCHAR szGET[] = { 'G','E','T', 0 };
 static const WCHAR szHEAD[] = { 'H','E','A','D', 0 };
-static const WCHAR szCrLf[] = {'\r','\n', 0};
 
 static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
 static const WCHAR szAccept_Charset[] = { 'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0 };
