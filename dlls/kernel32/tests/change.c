@@ -554,9 +554,18 @@ static void test_readdirectorychanges(void)
     ok( r == WAIT_OBJECT_0, "should be ready\n" );
 
     ok( (NTSTATUS)ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
-    ok( ov.InternalHigh == 0x18, "ov.InternalHigh wrong\n");
+    ok( ov.InternalHigh == 0x18 || ov.InternalHigh == 0x12 + 0x18,
+        "ov.InternalHigh wrong %lx\n", ov.InternalHigh);
 
     pfni = (PFILE_NOTIFY_INFORMATION) buffer;
+    if (pfni->NextEntryOffset)  /* we may get a modified event on the parent dir */
+    {
+        ok( pfni->NextEntryOffset == 0x12, "offset wrong %x\n", pfni->NextEntryOffset );
+        ok( pfni->Action == FILE_ACTION_MODIFIED, "action wrong %d\n", pfni->Action );
+        ok( pfni->FileNameLength == 3*sizeof(WCHAR), "len wrong\n" );
+        ok( !memcmp(pfni->FileName,&szGa[1],3*sizeof(WCHAR)), "name wrong\n");
+        pfni = (PFILE_NOTIFY_INFORMATION)((char *)pfni + pfni->NextEntryOffset);
+    }
     ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
     ok( pfni->Action == FILE_ACTION_ADDED, "action wrong\n" );
     ok( pfni->FileNameLength == 6*sizeof(WCHAR), "len wrong\n" );
