@@ -134,6 +134,7 @@ static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT
   STARTUPINFOW si;
   PROCESS_INFORMATION pi;
   MSVCRT_wchar_t fullname[MAX_PATH];
+  DWORD create_flags = CREATE_UNICODE_ENVIRONMENT;
 
   TRACE("%x %s %s %s %d\n", flags, debugstr_w(exe), debugstr_w(cmdline), debugstr_w(env), use_path);
 
@@ -148,9 +149,9 @@ static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
   msvcrt_create_io_inherit_block(&si.cbReserved2, &si.lpReserved2);
+  if (flags == MSVCRT__P_DETACH) create_flags |= DETACHED_PROCESS;
   if (!CreateProcessW(fullname, cmdline, NULL, NULL, TRUE,
-                     flags == MSVCRT__P_DETACH ? DETACHED_PROCESS : 0,
-                     env, NULL, &si, &pi))
+                      create_flags, env, NULL, &si, &pi))
   {
     msvcrt_set_errno(GetLastError());
     MSVCRT_free(si.lpReserved2);
