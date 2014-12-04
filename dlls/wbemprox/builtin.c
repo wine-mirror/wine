@@ -271,6 +271,8 @@ static const WCHAR prop_threadcountW[] =
     {'T','h','r','e','a','d','C','o','u','n','t',0};
 static const WCHAR prop_totalphysicalmemoryW[] =
     {'T','o','t','a','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+static const WCHAR prop_totalvisiblememorysizeW[] =
+    {'T','o','t','a','l','V','i','s','i','b','l','e','M','e','m','o','r','y','S','i','z','e',0};
 static const WCHAR prop_typeW[] =
     {'T','y','p','e',0};
 static const WCHAR prop_uniqueidW[] =
@@ -387,26 +389,27 @@ static const struct column col_networkadapterconfig[] =
 };
 static const struct column col_os[] =
 {
-    { prop_buildnumberW,      CIM_STRING },
-    { prop_captionW,          CIM_STRING },
-    { prop_codesetW,          CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_countrycodeW,      CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_csdversionW,       CIM_STRING },
-    { prop_installdateW,      CIM_DATETIME },
-    { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
-    { prop_localdatetimeW,    CIM_DATETIME|COL_FLAG_DYNAMIC },
-    { prop_localeW,           CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_nameW,             CIM_STRING },
-    { prop_osarchitectureW,   CIM_STRING },
-    { prop_oslanguageW,       CIM_UINT32, VT_I4 },
-    { prop_osproductsuiteW,   CIM_UINT32, VT_I4 },
-    { prop_ostypeW,           CIM_UINT16, VT_I4 },
-    { prop_serialnumberW,     CIM_STRING },
-    { prop_servicepackmajorW, CIM_UINT16, VT_I4 },
-    { prop_servicepackminorW, CIM_UINT16, VT_I4 },
-    { prop_suitemaskW,        CIM_UINT32, VT_I4 },
-    { prop_systemdirectoryW,  CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_versionW,          CIM_STRING }
+    { prop_buildnumberW,            CIM_STRING },
+    { prop_captionW,                CIM_STRING },
+    { prop_codesetW,                CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_countrycodeW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_csdversionW,             CIM_STRING },
+    { prop_installdateW,            CIM_DATETIME },
+    { prop_lastbootuptimeW,         CIM_DATETIME|COL_FLAG_DYNAMIC },
+    { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
+    { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_nameW,                   CIM_STRING },
+    { prop_osarchitectureW,         CIM_STRING },
+    { prop_oslanguageW,             CIM_UINT32, VT_I4 },
+    { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
+    { prop_ostypeW,                 CIM_UINT16, VT_I4 },
+    { prop_serialnumberW,           CIM_STRING },
+    { prop_servicepackmajorW,       CIM_UINT16, VT_I4 },
+    { prop_servicepackminorW,       CIM_UINT16, VT_I4 },
+    { prop_suitemaskW,              CIM_UINT32, VT_I4 },
+    { prop_systemdirectoryW,        CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_totalvisiblememorysizeW, CIM_UINT64 },
+    { prop_versionW,                CIM_STRING }
 };
 static const struct column col_param[] =
 {
@@ -718,6 +721,7 @@ struct record_operatingsystem
     UINT16       servicepackminor;
     UINT32       suitemask;
     const WCHAR *systemdirectory;
+    UINT64       totalvisiblememorysize;
     const WCHAR *version;
 };
 struct record_param
@@ -2147,26 +2151,27 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_operatingsystem *)table->data;
-    rec->buildnumber      = os_buildnumberW;
-    rec->caption          = os_captionW;
-    rec->codeset          = get_codeset();
-    rec->countrycode      = get_countrycode();
-    rec->csdversion       = os_csdversionW;
-    rec->installdate      = os_installdateW;
-    rec->lastbootuptime   = get_lastbootuptime();
-    rec->localdatetime    = get_localdatetime();
-    rec->locale           = get_locale();
-    rec->name             = os_nameW;
-    rec->osarchitecture   = get_osarchitecture();
-    rec->oslanguage       = GetSystemDefaultLangID();
-    rec->osproductsuite   = 2461140; /* Windows XP Professional  */
-    rec->ostype           = 18;      /* WINNT */
-    rec->serialnumber     = os_serialnumberW;
-    rec->servicepackmajor = 3;
-    rec->servicepackminor = 0;
-    rec->suitemask        = 272;     /* Single User + Terminal */
-    rec->systemdirectory  = get_systemdirectory();
-    rec->version          = os_versionW;
+    rec->buildnumber            = os_buildnumberW;
+    rec->caption                = os_captionW;
+    rec->codeset                = get_codeset();
+    rec->countrycode            = get_countrycode();
+    rec->csdversion             = os_csdversionW;
+    rec->installdate            = os_installdateW;
+    rec->lastbootuptime         = get_lastbootuptime();
+    rec->localdatetime          = get_localdatetime();
+    rec->locale                 = get_locale();
+    rec->name                   = os_nameW;
+    rec->osarchitecture         = get_osarchitecture();
+    rec->oslanguage             = GetSystemDefaultLangID();
+    rec->osproductsuite         = 2461140; /* Windows XP Professional  */
+    rec->ostype                 = 18;      /* WINNT */
+    rec->serialnumber           = os_serialnumberW;
+    rec->servicepackmajor       = 3;
+    rec->servicepackminor       = 0;
+    rec->suitemask              = 272;     /* Single User + Terminal */
+    rec->systemdirectory        = get_systemdirectory();
+    rec->totalvisiblememorysize = get_total_physical_memory() / 1024;
+    rec->version                = os_versionW;
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
