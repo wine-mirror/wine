@@ -166,6 +166,7 @@ my @dll_groups =
   "api-ms-win-core-datetime-l1-1-0",
   "api-ms-win-core-datetime-l1-1-1",
   "api-ms-win-core-xstate-l2-1-0",
+  "api-ms-win-core-errorhandling-l1-1-2",
  ],
  [
   "ole32",

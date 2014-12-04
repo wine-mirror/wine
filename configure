@@ -859,6 +859,7 @@ enable_api_ms_win_core_datetime_l1_1_0
 enable_api_ms_win_core_datetime_l1_1_1
 enable_api_ms_win_core_debug_l1_1_1
 enable_api_ms_win_core_errorhandling_l1_1_1
+enable_api_ms_win_core_errorhandling_l1_1_2
 enable_api_ms_win_core_fibers_l1_1_0
 enable_api_ms_win_core_fibers_l1_1_1
 enable_api_ms_win_core_file_l1_2_0
@@ -16785,6 +16786,7 @@ wine_fn_config_dll api-ms-win-core-datetime-l1-1-0 enable_api_ms_win_core_dateti
 wine_fn_config_dll api-ms-win-core-datetime-l1-1-1 enable_api_ms_win_core_datetime_l1_1_1
 wine_fn_config_dll api-ms-win-core-debug-l1-1-1 enable_api_ms_win_core_debug_l1_1_1
 wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-1 enable_api_ms_win_core_errorhandling_l1_1_1
+wine_fn_config_dll api-ms-win-core-errorhandling-l1-1-2 enable_api_ms_win_core_errorhandling_l1_1_2
 wine_fn_config_dll api-ms-win-core-fibers-l1-1-0 enable_api_ms_win_core_fibers_l1_1_0
 wine_fn_config_dll api-ms-win-core-fibers-l1-1-1 enable_api_ms_win_core_fibers_l1_1_1
 wine_fn_config_dll api-ms-win-core-file-l1-2-0 enable_api_ms_win_core_file_l1_2_0
