@@ -97,6 +97,9 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
     LDFC(GetAudioSessionManager);
 #undef LDFC
 
+    /* optional - do not fail if not found */
+    driver->pGetPropValue = (void*)GetProcAddress(driver->module, "GetPropValue");
+
     driver->priority = driver->pGetPriority();
     lstrcpyW(driver->module_name, driver_module);
 

@@ -264,6 +264,25 @@ static HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
     return hr;
 }
 
+static HRESULT set_driver_prop_value(GUID *id, const EDataFlow flow, const PROPERTYKEY *prop)
+{
+    HRESULT hr;
+    PROPVARIANT pv;
+
+    if (!drvs.pGetPropValue)
+        return E_NOTIMPL;
+
+    hr = drvs.pGetPropValue(id, prop, &pv);
+
+    if (SUCCEEDED(hr))
+    {
+        MMDevice_SetPropValue(id, flow, prop, &pv);
+        PropVariantClear(&pv);
+    }
+
+    return hr;
+}
+
 /* Creates or updates the state of a device
  * If GUID is null, a random guid will be assigned
  * and the device will be created
@@ -277,6 +296,10 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
 
     static const PROPERTYKEY deviceinterface_key = {
         {0x233164c8, 0x1b2c, 0x4c7d, {0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67}}, 1
+    };
+
+    static const PROPERTYKEY devicepath_key = {
+        {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
     };
 
     for (i = 0; i < MMDevice_count; ++i)
@@ -337,6 +360,16 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
 
             pv.u.pwszVal = guidstr;
             MMDevice_SetPropValue(id, flow, &deviceinterface_key, &pv);
+
+            set_driver_prop_value(id, flow, &devicepath_key);
+
+            if (FAILED(set_driver_prop_value(id, flow, &PKEY_AudioEndpoint_FormFactor)))
+            {
+                pv.vt = VT_UI4;
+                pv.u.ulVal = (flow == eCapture) ? Microphone : Speakers;
+
+                MMDevice_SetPropValue(id, flow, &PKEY_AudioEndpoint_FormFactor, &pv);
+            }
 
             RegCloseKey(keyprop);
         }
