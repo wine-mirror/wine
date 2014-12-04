@@ -3879,7 +3879,7 @@ static void test_coop_level_activateapp(void)
             WS_MAXIMIZE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
 
     /* Exclusive with window already active. */
-    SetActiveWindow(window);
+    SetForegroundWindow(window);
     activateapp_testdata.received = FALSE;
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
@@ -3888,7 +3888,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     /* Exclusive with window not active. */
-    SetActiveWindow(NULL);
+    SetForegroundWindow(GetDesktopWindow());
     activateapp_testdata.received = FALSE;
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
@@ -3897,30 +3897,26 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     /* Normal with window not active, then exclusive with the same window. */
-    SetActiveWindow(NULL);
+    SetForegroundWindow(GetDesktopWindow());
     activateapp_testdata.received = FALSE;
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
     ok(!activateapp_testdata.received, "Received WM_ACTIVATEAPP when setting DDSCL_NORMAL.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
-    /* Except in the first SetCooperativeLevel call, Windows XP randomly does not send
-     * WM_ACTIVATEAPP. Windows 7 sends the message reliably. Mark the XP behavior broken. */
-    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
-            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     /* Recursive set of DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN. */
-    SetActiveWindow(NULL);
+    SetForegroundWindow(GetDesktopWindow());
     activateapp_testdata.received = FALSE;
     activateapp_testdata.ddraw = ddraw;
     activateapp_testdata.window = window;
     activateapp_testdata.coop_level = DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN;
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
-    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
-            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
@@ -3935,15 +3931,14 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     /* Setting DDSCL_NORMAL with recursive invocation. */
-    SetActiveWindow(NULL);
+    SetForegroundWindow(GetDesktopWindow());
     activateapp_testdata.received = FALSE;
     activateapp_testdata.ddraw = ddraw;
     activateapp_testdata.window = window;
     activateapp_testdata.coop_level = DDSCL_NORMAL;
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
-    ok(activateapp_testdata.received || broken(!activateapp_testdata.received),
-            "Expected WM_ACTIVATEAPP, but did not receive it.\n");
+    ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
 
     /* DDraw is in exlusive mode now. */
     memset(&ddsd, 0, sizeof(ddsd));
