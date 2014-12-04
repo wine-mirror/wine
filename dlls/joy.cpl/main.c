@@ -721,6 +721,9 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
     int direction[2] = {0, 0};
     struct Joystick *joystick = pvRef;
+    DIRAMPFORCE rforce;
+    DICONSTANTFORCE cforce;
+    DIPERIODIC pforce;
 
     if (joystick->effects == NULL)
     {
@@ -744,8 +747,6 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
 
     if (IsEqualGUID(&pdei->guid, &GUID_RampForce))
     {
-        DIRAMPFORCE rforce;
-
         rforce.lStart = 0;
         rforce.lEnd = DI_FFNOMINALMAX;
 
@@ -755,8 +756,6 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
     }
     else if (IsEqualGUID(&pdei->guid, &GUID_ConstantForce))
     {
-        DICONSTANTFORCE cforce;
-
         cforce.lMagnitude = DI_FFNOMINALMAX;
 
         dieffect.cbTypeSpecificParams = sizeof(cforce);
@@ -769,8 +768,6 @@ static BOOL CALLBACK ff_effects_callback(const DIEFFECTINFOW *pdei, void *pvRef)
              IsEqualGUID(&pdei->guid, &GUID_SawtoothUp) ||
              IsEqualGUID(&pdei->guid, &GUID_SawtoothDown))
     {
-        DIPERIODIC pforce;
-
         pforce.dwMagnitude = DI_FFNOMINALMAX;
         pforce.lOffset = 0;
         pforce.dwPhase = 0;
