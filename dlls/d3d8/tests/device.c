@@ -2360,6 +2360,32 @@ static void test_wndproc(void)
         {WM_ACTIVATEAPP,        FOCUS_WINDOW,   TRUE,   TRUE},
         {0,                     0,              FALSE,  0},
     };
+    static const struct message sc_restore_messages[] =
+    {
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
+        {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_RESTORED},
+        {WM_SYSCOMMAND,         FOCUS_WINDOW,   TRUE,   SC_RESTORE},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message sc_minimize_messages[] =
+    {
+        {WM_SYSCOMMAND,         FOCUS_WINDOW,   TRUE,   SC_MINIMIZE},
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
+        {WM_MOVE,               FOCUS_WINDOW,   FALSE,  0},
+        {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_MINIMIZED},
+        {0,                     0,              FALSE,  0},
+    };
+    static const struct message sc_maximize_messages[] =
+    {
+        {WM_SYSCOMMAND,         FOCUS_WINDOW,   TRUE,   SC_MAXIMIZE},
+        {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
+        {WM_MOVE,               FOCUS_WINDOW,   FALSE,  0},
+        {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_MAXIMIZED},
+        {0,                     0,              FALSE,  0},
+    };
 
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
@@ -2581,12 +2607,42 @@ static void test_wndproc(void)
             expect_messages->message, expect_messages->window);
     ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it.\n");
     expect_messages = NULL;
+    flush_events();
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpect width %u.\n", devmode.dmPelsWidth);
     ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpect height %u.\n", devmode.dmPelsHeight);
 
+    /* SW_SHOWMINNOACTIVE is needed to make FVWM happy. SW_SHOWNOACTIVATE is needed to make windows
+     * send SIZE_RESTORED after ShowWindow(SW_SHOWMINNOACTIVE). */
+    ShowWindow(focus_window, SW_SHOWNOACTIVATE);
+    ShowWindow(focus_window, SW_SHOWMINNOACTIVE);
+    flush_events();
+
+    expect_messages = sc_restore_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
+    todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    flush_events();
+
+    expect_messages = sc_minimize_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    flush_events();
+
+    expect_messages = sc_maximize_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    flush_events();
+
+    SetForegroundWindow(GetDesktopWindow());
+    ShowWindow(device_window, SW_MINIMIZE);
     ShowWindow(focus_window, SW_MINIMIZE);
     ShowWindow(focus_window, SW_RESTORE);
     SetForegroundWindow(focus_window);
@@ -2613,6 +2669,9 @@ static void test_wndproc(void)
      * device will show it again. */
     filter_messages = NULL;
     ShowWindow(device_window, SW_HIDE);
+    /* Remove the maximized state from the SYSCOMMAND test while we're not
+     * interfering with a device. */
+    ShowWindow(focus_window, SW_SHOWNORMAL);
     filter_messages = focus_window;
 
     device_desc.device_window = focus_window;
@@ -2637,6 +2696,35 @@ static void test_wndproc(void)
 
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
     ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+
+    expect_messages = sc_restore_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
+    todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    flush_events();
+
+    /* For FVWM. */
+    ShowWindow(focus_window, SW_RESTORE);
+    flush_events();
+
+    expect_messages = sc_minimize_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    /* Needed to make the next test reliably send WM_SIZE(SIZE_MAXIMIZED). Without
+     * this call it sends WM_SIZE(SIZE_RESTORED). */
+    ShowWindow(focus_window, SW_RESTORE);
+    flush_events();
+
+    expect_messages = sc_maximize_messages;
+    SendMessageA(focus_window, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
+            expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
+    SetForegroundWindow(GetDesktopWindow());
+    flush_events();
 
     /* ShowWindow(SW_RESTORE); SetForegroundWindow(desktop); SetForegroundWindow(focus);
      * results in the second SetForegroundWindow call failing and the device not being
