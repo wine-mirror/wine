@@ -1792,7 +1792,7 @@
 @ cdecl _unlock_file(ptr) MSVCRT__unlock_file
 @ cdecl _utime32(str ptr)
 @ cdecl _utime64(str ptr)
-@ stub _vacopy
+@ cdecl _vacopy(ptr ptr) MSVCR120__vacopy
 @ cdecl _vcprintf(str ptr)
 @ stub _vcprintf_l
 @ stub _vcprintf_p

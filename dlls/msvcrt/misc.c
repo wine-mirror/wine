@@ -490,3 +490,11 @@ BOOL CDECL MSVCR110__crtInitializeCriticalSectionEx(
     TRACE("(%p %x %x)\n", cs, spin_count, flags);
     return InitializeCriticalSectionEx(cs, spin_count, flags);
 }
+
+/*********************************************************************
+ * _vacopy (MSVCR120.@)
+ */
+void CDECL MSVCR120__vacopy(__ms_va_list *dest, __ms_va_list src)
+{
+    __ms_va_copy(*dest, src);
+}
