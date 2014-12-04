@@ -2432,6 +2432,30 @@ static void test_coop_level_mode_set(void)
         {WM_SIZE,               TRUE,   SIZE_RESTORED}, /* DefWindowProc. */
         {0,                     FALSE,  0},
     };
+    static const struct message sc_restore_messages[] =
+    {
+        {WM_SYSCOMMAND,         TRUE,   SC_RESTORE},
+        {WM_WINDOWPOSCHANGING,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FALSE,  0},
+        {WM_SIZE,               TRUE,   SIZE_RESTORED},
+        {0,                     FALSE,  0},
+    };
+    static const struct message sc_minimize_messages[] =
+    {
+        {WM_SYSCOMMAND,         TRUE,   SC_MINIMIZE},
+        {WM_WINDOWPOSCHANGING,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FALSE,  0},
+        {WM_SIZE,               TRUE,   SIZE_MINIMIZED},
+        {0,                     FALSE,  0},
+    };
+    static const struct message sc_maximize_messages[] =
+    {
+        {WM_SYSCOMMAND,         TRUE,   SC_MAXIMIZE},
+        {WM_WINDOWPOSCHANGING,  FALSE,  0},
+        {WM_WINDOWPOSCHANGED,   FALSE,  0},
+        {WM_SIZE,               TRUE,   SIZE_MAXIMIZED},
+        {0,                     FALSE,  0},
+    };
 
     static const struct message normal_messages[] =
     {
@@ -2605,6 +2629,24 @@ static void test_coop_level_mode_set(void)
      * GetSurfaceDesc call after the next display mode change to crash on the Windows 8
      * testbot. Another Restore call would presumably avoid the crash, but it also moots
      * the point of the GetSurfaceDesc call. */
+
+    expect_messages = sc_minimize_messages;
+    SendMessageA(window, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
+
+    expect_messages = sc_restore_messages;
+    SendMessageA(window, WM_SYSCOMMAND, SC_RESTORE, 0);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
+
+    expect_messages = sc_maximize_messages;
+    SendMessageA(window, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
