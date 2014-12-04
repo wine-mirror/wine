@@ -4961,7 +4961,7 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
-    if (device->filter_messages)
+    if (device->filter_messages && message != WM_DISPLAYCHANGE)
     {
         TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
                 window, message, wparam, lparam);

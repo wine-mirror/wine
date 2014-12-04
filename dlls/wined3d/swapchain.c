@@ -1176,14 +1176,19 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate)
 {
+    struct wined3d_device *device = swapchain->device;
+    BOOL filter_messages = device->filter_messages;
+
     /* This code is not protected by the wined3d mutex, so it may run while
      * wined3d_device_reset is active. Testing on Windows shows that changing
      * focus during resets and resetting during focus change events causes
      * the application to crash with an invalid memory access. */
 
+    device->filter_messages = !(device->wined3d->flags & WINED3D_FOCUS_MESSAGES);
+
     if (activate)
     {
-        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
+        if (!(device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES))
         {
             /* The d3d versions do not agree on the exact messages here. D3d8 restores
              * the window but leaves the size untouched, d3d9 sets the size on an
@@ -1197,23 +1202,25 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
                     SWP_NOACTIVATE | SWP_NOZORDER);
         }
 
-        if (swapchain->device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
+        if (device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
         {
-            if (FAILED(wined3d_set_adapter_display_mode(swapchain->device->wined3d,
-                    swapchain->device->adapter->ordinal, &swapchain->d3d_mode)))
+            if (FAILED(wined3d_set_adapter_display_mode(device->wined3d,
+                    device->adapter->ordinal, &swapchain->d3d_mode)))
                 ERR("Failed to set display mode.\n");
         }
     }
     else
     {
-        if (FAILED(wined3d_set_adapter_display_mode(swapchain->device->wined3d,
-                swapchain->device->adapter->ordinal, NULL)))
+        if (FAILED(wined3d_set_adapter_display_mode(device->wined3d,
+                device->adapter->ordinal, NULL)))
             ERR("Failed to set display mode.\n");
 
         swapchain->reapply_mode = TRUE;
 
-        if (!(swapchain->device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES)
+        if (!(device->create_parms.flags & WINED3DCREATE_NOWINDOWCHANGES)
                 && IsWindowVisible(swapchain->device_window))
             ShowWindow(swapchain->device_window, SW_MINIMIZE);
     }
+
+    device->filter_messages = filter_messages;
 }

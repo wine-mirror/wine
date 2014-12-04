@@ -1238,6 +1238,7 @@ enum wined3d_display_rotation
 #define WINED3D_VIDMEM_ACCOUNTING                               0x00000004
 #define WINED3D_PRESENT_CONVERSION                              0x00000008
 #define WINED3D_RESTORE_MODE_ON_ACTIVATE                        0x00000010
+#define WINED3D_FOCUS_MESSAGES                                  0x00000020
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 
