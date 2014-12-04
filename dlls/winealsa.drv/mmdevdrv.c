@@ -3823,3 +3823,111 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
 
     return S_OK;
 }
+
+enum AudioDeviceConnectionType {
+    AudioDeviceConnectionType_Unknown = 0,
+    AudioDeviceConnectionType_PCI,
+    AudioDeviceConnectionType_USB
+};
+
+HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
+{
+    static const PROPERTYKEY devicepath_key = { /* undocumented? - {b3f8fa53-0004-438e-9003-51a46e139bfc},2 */
+        {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
+    };
+
+    TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
+
+    if(IsEqualPropertyKey(*prop, devicepath_key))
+    {
+        char name[256], uevent[MAX_PATH];
+        EDataFlow flow;
+        FILE *fuevent;
+        int card, device;
+
+        if(!get_alsa_name_by_guid(guid, name, sizeof(name), &flow))
+        {
+            WARN("Unknown interface %s\n", debugstr_guid(guid));
+            return E_NOINTERFACE;
+        }
+
+        /* only implemented for identifiable devices, i.e. not "default" */
+        if(!sscanf(name, "plughw:%u,%u", &card, &device))
+            return E_NOTIMPL;
+
+        sprintf(uevent, "/sys/class/sound/card%u/device/uevent", card);
+        fuevent = fopen(uevent, "r");
+
+        if(fuevent){
+            enum AudioDeviceConnectionType connection = AudioDeviceConnectionType_Unknown;
+            USHORT vendor_id = 0, product_id = 0;
+            char line[256];
+
+            while (fgets(line, sizeof(line), fuevent)) {
+                char *val;
+                size_t val_len;
+
+                if((val = strchr(line, '='))) {
+                    val[0] = 0;
+                    val++;
+
+                    val_len = strlen(val);
+                    if(val_len > 0 && val[val_len - 1] == '\n') { val[val_len - 1] = 0; }
+
+                    if(!strcmp(line, "PCI_ID")){
+                        connection = AudioDeviceConnectionType_PCI;
+                        if(sscanf(val, "%hX:%hX", &vendor_id, &product_id)<2){
+                            WARN("Unexpected input when reading PCI_ID in uevent file.\n");
+                            connection = AudioDeviceConnectionType_Unknown;
+                            break;
+                        }
+                    }else if(!strcmp(line, "DEVTYPE") && !strcmp(val,"usb_interface"))
+                        connection = AudioDeviceConnectionType_USB;
+                    else if(!strcmp(line, "PRODUCT"))
+                        if(sscanf(val, "%hx/%hx/", &vendor_id, &product_id)<2){
+                            WARN("Unexpected input when reading PRODUCT in uevent file.\n");
+                            connection = AudioDeviceConnectionType_Unknown;
+                            break;
+                        }
+                }
+            }
+
+            fclose(fuevent);
+
+            if(connection == AudioDeviceConnectionType_USB || connection == AudioDeviceConnectionType_PCI){
+                static const WCHAR usbformatW[] = { '{','1','}','.','U','S','B','\\','V','I','D','_',
+                    '%','0','4','X','&','P','I','D','_','%','0','4','X','\\',
+                    '%','u','&','%','0','8','X',0 }; /* "{1}.USB\VID_%04X&PID_%04X\%u&%08X" */
+                static const WCHAR pciformatW[] = { '{','1','}','.','H','D','A','U','D','I','O','\\','F','U','N','C','_','0','1','&',
+                    'V','E','N','_','%','0','4','X','&','D','E','V','_',
+                    '%','0','4','X','\\','%','u','&','%','0','8','X',0 }; /* "{1}.HDAUDIO\FUNC_01&VEN_%04X&DEV_%04X\%u&%08X" */
+                UINT serial_number;
+
+                /* As hardly any audio devices have serial numbers, Windows instead
+                appears to use a persistent random number. We emulate this here
+                by instead using the last 8 hex digits of the GUID. */
+                serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
+
+                out->vt = VT_LPWSTR;
+                out->u.pwszVal = CoTaskMemAlloc(128 * sizeof(WCHAR));
+
+                if(!out->u.pwszVal)
+                    return E_OUTOFMEMORY;
+
+                if(connection == AudioDeviceConnectionType_USB)
+                    sprintfW( out->u.pwszVal, usbformatW, vendor_id, product_id, device, serial_number);
+                else if(connection == AudioDeviceConnectionType_PCI)
+                    sprintfW( out->u.pwszVal, pciformatW, vendor_id, product_id, device, serial_number);
+
+                return S_OK;
+            }
+        }else{
+            WARN("Could not open %s for reading\n", uevent);
+            return E_NOTIMPL;
+        }
+    }
+
+    TRACE("Unimplemented property %s,%u\n", wine_dbgstr_guid(&prop->fmtid), prop->pid);
+
+    return E_NOTIMPL;
+}
