@@ -2120,8 +2120,8 @@ static HRESULT WINAPI localfontfilestream_GetLastWriteTime(IDWriteFontFileStream
 
     TRACE("(%p)->(%p)\n", This, last_writetime);
 
-    li.LowPart = This->entry->key->writetime.dwLowDateTime;
-    li.HighPart = This->entry->key->writetime.dwHighDateTime;
+    li.u.LowPart = This->entry->key->writetime.dwLowDateTime;
+    li.u.HighPart = This->entry->key->writetime.dwHighDateTime;
     *last_writetime = li.QuadPart;
 
     return S_OK;
