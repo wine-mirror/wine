@@ -1196,7 +1196,7 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
             heap_free(name_string);
         }
         else {
-            FIXME("handle NAME format 1");
+            FIXME("handle NAME format 1\n");
             continue;
         }
     }
