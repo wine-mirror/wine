@@ -1081,29 +1081,38 @@ int CDECL MSVCRT__dup(int od)
  */
 int CDECL MSVCRT__eof(int fd)
 {
+  ioinfo *info = get_ioinfo(fd);
   DWORD curpos,endpos;
   LONG hcurpos,hendpos;
-  HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
+  TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
 
-  if (hand == INVALID_HANDLE_VALUE)
+  if (info->handle == INVALID_HANDLE_VALUE)
+  {
+    release_ioinfo(info);
     return -1;
+  }
 
-  if (get_ioinfo_nolock(fd)->wxflag & WX_ATEOF) return TRUE;
+  if (info->wxflag & WX_ATEOF)
+  {
+      release_ioinfo(info);
+      return TRUE;
+  }
 
   /* Otherwise we do it the hard way */
   hcurpos = hendpos = 0;
-  curpos = SetFilePointer(hand, 0, &hcurpos, FILE_CURRENT);
-  endpos = SetFilePointer(hand, 0, &hendpos, FILE_END);
+  curpos = SetFilePointer(info->handle, 0, &hcurpos, FILE_CURRENT);
+  endpos = SetFilePointer(info->handle, 0, &hendpos, FILE_END);
 
   if (curpos == endpos && hcurpos == hendpos)
   {
     /* FIXME: shouldn't WX_ATEOF be set here? */
+    release_ioinfo(info);
     return TRUE;
   }
 
-  SetFilePointer(hand, curpos, &hcurpos, FILE_BEGIN);
+  SetFilePointer(info->handle, curpos, &hcurpos, FILE_BEGIN);
+  release_ioinfo(info);
   return FALSE;
 }
 
