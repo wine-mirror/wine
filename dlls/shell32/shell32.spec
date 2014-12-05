@@ -328,6 +328,7 @@
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SHAddToRecentDocs (long ptr)
 @ stdcall SHAppBarMessage(long ptr)
+@ stdcall SHAssocEnumHandlers(wstr long ptr)
 @ stdcall SHBindToParent(ptr ptr ptr ptr)
 @ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA
 @ stdcall SHBrowseForFolderA(ptr)

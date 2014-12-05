@@ -77,6 +77,17 @@ static inline IQueryAssociationsImpl *impl_from_IQueryAssociations(IQueryAssocia
   return CONTAINING_RECORD(iface, IQueryAssociationsImpl, IQueryAssociations_iface);
 }
 
+struct enumassochandlers
+{
+    IEnumAssocHandlers IEnumAssocHandlers_iface;
+    LONG ref;
+};
+
+static inline struct enumassochandlers *impl_from_IEnumAssocHandlers(IEnumAssocHandlers *iface)
+{
+  return CONTAINING_RECORD(iface, struct enumassochandlers, IEnumAssocHandlers_iface);
+}
+
 /**************************************************************************
  *  IQueryAssociations_QueryInterface
  *
@@ -964,4 +975,83 @@ HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, R
 
     TRACE("returning 0x%x with %p\n", hr, *ppv);
     return hr;
+}
+
+static HRESULT WINAPI enumassochandlers_QueryInterface(IEnumAssocHandlers *iface, REFIID riid, void **obj)
+{
+    struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
+
+    TRACE("(%p %s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IEnumAssocHandlers) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumAssocHandlers_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enumassochandlers_AddRef(IEnumAssocHandlers *iface)
+{
+    struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI enumassochandlers_Release(IEnumAssocHandlers *iface)
+{
+    struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+        SHFree(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI enumassochandlers_Next(IEnumAssocHandlers *iface, ULONG count, IAssocHandler **handlers,
+    ULONG *fetched)
+{
+    struct enumassochandlers *This = impl_from_IEnumAssocHandlers(iface);
+
+    FIXME("(%p)->(%u %p %p): stub\n", This, count, handlers, fetched);
+
+    return E_NOTIMPL;
+}
+
+static const IEnumAssocHandlersVtbl enumassochandlersvtbl = {
+    enumassochandlers_QueryInterface,
+    enumassochandlers_AddRef,
+    enumassochandlers_Release,
+    enumassochandlers_Next
+};
+
+/**************************************************************************
+ * SHAssocEnumHandlers            [SHELL32.@]
+ */
+HRESULT WINAPI SHAssocEnumHandlers(const WCHAR *extra, ASSOC_FILTER filter, IEnumAssocHandlers **enumhandlers)
+{
+    struct enumassochandlers *enumassoc;
+
+    FIXME("(%s %d %p\n): stub", debugstr_w(extra), filter, enumhandlers);
+
+    *enumhandlers = NULL;
+
+    enumassoc = SHAlloc(sizeof(*enumassoc));
+    if (!enumassoc)
+        return E_OUTOFMEMORY;
+
+    enumassoc->IEnumAssocHandlers_iface.lpVtbl = &enumassochandlersvtbl;
+    enumassoc->ref = 1;
+
+    *enumhandlers = &enumassoc->IEnumAssocHandlers_iface;
+    return S_OK;
 }
