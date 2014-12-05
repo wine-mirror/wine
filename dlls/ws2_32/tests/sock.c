@@ -1374,6 +1374,23 @@ todo_wine
 
     closesocket(s);
 
+    /* Test WS_IP_MULTICAST_TTL with 8, 16, 24 and 32 bits values */
+    s = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(s != INVALID_SOCKET, "Failed to create socket\n");
+    size = sizeof(i);
+    for (i = 0; i < 4; i++)
+    {
+        int k, j;
+        const int tests[] = {0xffffff0a, 0xffff000b, 0xff00000c, 0x0000000d};
+        err = setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &tests[i], i + 1);
+        ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
+        err = getsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &k, &size);
+        ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
+        j = i != 3 ? tests[i] & ((1 << (i + 1) * 8) - 1) : tests[i];
+        ok(k == j, "Test [%d] Expected 0x%x, got 0x%x\n", i, j, k);
+    }
+    closesocket(s);
+
     /* test SO_PROTOCOL_INFOA invalid parameters */
     ok(getsockopt(INVALID_SOCKET, SOL_SOCKET, SO_PROTOCOL_INFOA, NULL, NULL),
        "getsockopt should have failed\n");

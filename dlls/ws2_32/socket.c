@@ -5013,6 +5013,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     {
         woptval= *((const INT16 *) optval);
         optval= (char*) &woptval;
+        woptval&= (1 << optlen * 8) - 1;
         optlen=sizeof(int);
     }
     fd = get_sock_fd( s, 0, NULL );
