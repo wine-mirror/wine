@@ -505,9 +505,7 @@ static HRESULT Array_shift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsign
         hres = set_length(jsthis, 0);
         if(FAILED(hres))
             return hres;
-    }
 
-    if(!length) {
         if(r)
             *r = jsval_undefined();
         return S_OK;
