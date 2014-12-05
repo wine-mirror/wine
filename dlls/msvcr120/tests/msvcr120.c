@@ -79,7 +79,7 @@ static BOOL init(void)
     return TRUE;
 }
 
-void test_lconv_helper(const char *locstr)
+static void test_lconv_helper(const char *locstr)
 {
     struct MSVCRT_lconv *lconv;
     char mbs[256];
@@ -133,7 +133,7 @@ void test_lconv_helper(const char *locstr)
         ok(strcmp(mbs, lconv->negative_sign) == 0, "%s: negative_sign\n", locstr);
 }
 
-void test_lconv(void)
+static void test_lconv(void)
 {
     int i;
     const char *locstrs[] =
