@@ -1252,16 +1252,20 @@ void CDECL MSVCRT__unlock_file(MSVCRT_FILE *file)
  */
 int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
 {
+  ioinfo *info = get_ioinfo(fd);
   BOOL ret;
   DWORD cur_locn;
-  HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (hand == INVALID_HANDLE_VALUE)
+  TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
+  if (info->handle == INVALID_HANDLE_VALUE)
+  {
+    release_ioinfo(info);
     return -1;
+  }
 
   if (mode < 0 || mode > 4)
   {
+    release_ioinfo(info);
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
@@ -1274,8 +1278,9 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
         (mode==MSVCRT__LK_NBRLCK)?"_LK_NBRLCK":
                           "UNKNOWN");
 
-  if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == INVALID_SET_FILE_POINTER)
+  if ((cur_locn = SetFilePointer(info->handle, 0L, NULL, SEEK_CUR)) == INVALID_SET_FILE_POINTER)
   {
+    release_ioinfo(info);
     FIXME ("Seek failed\n");
     *MSVCRT__errno() = MSVCRT_EINVAL; /* FIXME */
     return -1;
@@ -1286,16 +1291,17 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
     ret = 1; /* just to satisfy gcc */
     while (nretry--)
     {
-      ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
+      ret = LockFile(info->handle, cur_locn, 0L, nbytes, 0L);
       if (ret) break;
       Sleep(1);
     }
   }
   else if (mode == MSVCRT__LK_UNLCK)
-    ret = UnlockFile(hand, cur_locn, 0L, nbytes, 0L);
+    ret = UnlockFile(info->handle, cur_locn, 0L, nbytes, 0L);
   else
-    ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
+    ret = LockFile(info->handle, cur_locn, 0L, nbytes, 0L);
   /* FIXME - what about error settings? */
+  release_ioinfo(info);
   return ret ? 0 : -1;
 }
 
