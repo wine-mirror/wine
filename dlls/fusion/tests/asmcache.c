@@ -881,6 +881,43 @@ static void test_CreateAssemblyCache(void)
     IAssemblyCache_Release(cache);
 }
 
+static void test_CreateAssemblyCacheItem(void)
+{
+    IAssemblyCache *cache;
+    IAssemblyCacheItem *item;
+    HRESULT hr;
+
+    static const WCHAR wine[] = {'w','i','n','e',0};
+
+    hr = pCreateAssemblyCache(&cache, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, NULL, &item, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IAssemblyCacheItem_Release(item);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, NULL, &item, wine);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IAssemblyCacheItem_Release(item);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 1, (void *)0xdeadbeef, &item, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IAssemblyCacheItem_Release(item);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 1, NULL, &item, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IAssemblyCacheItem_Release(item);
+
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, (void *)0xdeadbeef, &item, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IAssemblyCacheItem_Release(item);
+
+    IAssemblyCache_Release(cache);
+}
+
 static void test_InstallAssembly(void)
 {
     IAssemblyCache *cache;
@@ -1550,6 +1587,7 @@ START_TEST(asmcache)
         return;
 
     test_CreateAssemblyCache();
+    test_CreateAssemblyCacheItem();
     test_InstallAssembly();
     test_QueryAssemblyInfo();
 }
