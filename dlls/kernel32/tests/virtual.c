@@ -1618,7 +1618,7 @@ static void test_guard_page(void)
     /* test behaviour of VirtualLock - first attempt should fail */
     SetLastError( 0xdeadbeef );
     success = VirtualLock( base, size );
-    ok( !success, "VirtualLock unexpectedly succeded\n" );
+    ok( !success, "VirtualLock unexpectedly succeeded\n" );
     todo_wine
     ok( GetLastError() == STATUS_GUARD_PAGE_VIOLATION, "wrong error %u\n", GetLastError() );
 
@@ -1770,7 +1770,7 @@ static void test_guard_page(void)
     /* test behaviour of VirtualLock - first attempt should fail without triggering write watches */
     SetLastError( 0xdeadbeef );
     success = VirtualLock( base, size );
-    ok( !success, "VirtualLock unexpectedly succeded\n" );
+    ok( !success, "VirtualLock unexpectedly succeeded\n" );
     todo_wine
     ok( GetLastError() == STATUS_GUARD_PAGE_VIOLATION, "wrong error %u\n", GetLastError() );
 

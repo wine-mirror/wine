@@ -1513,7 +1513,7 @@ static void test_CustomFontCollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(idfont2, 1);
     EXPECT_REF(idfont, 1);
-    ok(idfont2 != idfont, "Font instances shoudl not match\n");
+    ok(idfont2 != idfont, "Font instances should not match\n");
 
     idfontface2 = NULL;
     hr = IDWriteFont_CreateFontFace(idfont2, &idfontface2);

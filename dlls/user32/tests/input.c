@@ -1863,8 +1863,8 @@ static void test_Input_mouse(void)
     ok(!got_button_down, "unexpected WM_RBUTTONDOWN message\n");
     ok(!got_button_up, "unexpected WM_RBUTTONUP message\n");
 
-    /* click on HTTRANSPARENT top-level window that belongs to ther thread,
-     * threads input queues are attached */
+    /* click on HTTRANSPARENT top-level window that belongs to other thread,
+     * thread input queues are attached */
     thread = CreateThread(NULL, 0, create_static_win, &thread_data, 0, &thread_id);
     ok(thread != NULL, "CreateThread failed\n");
     hittest_no = 0;
