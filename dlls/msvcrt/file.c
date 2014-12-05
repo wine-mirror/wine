@@ -1651,25 +1651,29 @@ int CDECL MSVCRT__fileno(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
 {
+  ioinfo *info = get_ioinfo(fd);
   DWORD dw;
   DWORD type;
   BY_HANDLE_FILE_INFORMATION hfi;
-  HANDLE hand = msvcrt_fdtoh(fd);
 
-  TRACE(":fd (%d) stat (%p)\n",fd,buf);
-  if (hand == INVALID_HANDLE_VALUE)
+  TRACE(":fd (%d) stat (%p)\n", fd, buf);
+  if (info->handle == INVALID_HANDLE_VALUE)
+  {
+    release_ioinfo(info);
     return -1;
+  }
 
   if (!buf)
   {
     WARN(":failed-NULL buf\n");
     msvcrt_set_errno(ERROR_INVALID_PARAMETER);
+    release_ioinfo(info);
     return -1;
   }
 
   memset(&hfi, 0, sizeof(hfi));
   memset(buf, 0, sizeof(struct MSVCRT__stat64));
-  type = GetFileType(hand);
+  type = GetFileType(info->handle);
   if (type == FILE_TYPE_PIPE)
   {
     buf->st_dev = buf->st_rdev = fd;
@@ -1684,10 +1688,11 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
   }
   else /* FILE_TYPE_DISK etc. */
   {
-    if (!GetFileInformationByHandle(hand, &hfi))
+    if (!GetFileInformationByHandle(info->handle, &hfi))
     {
       WARN(":failed-last error (%d)\n",GetLastError());
       msvcrt_set_errno(ERROR_INVALID_PARAMETER);
+      release_ioinfo(info);
       return -1;
     }
     buf->st_mode = S_IFREG | 0444;
@@ -1702,6 +1707,7 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
   }
   TRACE(":dwFileAttributes = 0x%x, mode set to 0x%x\n",hfi.dwFileAttributes,
    buf->st_mode);
+  release_ioinfo(info);
   return 0;
 }
 
