@@ -1180,15 +1180,20 @@ void msvcrt_free_io(void)
  */
 __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 {
-  HANDLE hand = msvcrt_fdtoh(fd);
+  ioinfo *info = get_ioinfo(fd);
   LARGE_INTEGER ofs;
 
-  TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (hand == INVALID_HANDLE_VALUE)
+  TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
+
+  if (info->handle == INVALID_HANDLE_VALUE)
+  {
+    release_ioinfo(info);
     return -1;
+  }
 
   if (whence < 0 || whence > 2)
   {
+    release_ioinfo(info);
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
   }
@@ -1202,14 +1207,16 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
   /* The MoleBox protection scheme expects msvcrt to use SetFilePointer only,
    * so a LARGE_INTEGER offset cannot be passed directly via SetFilePointerEx. */
   ofs.QuadPart = offset;
-  if ((ofs.u.LowPart = SetFilePointer(hand, ofs.u.LowPart, &ofs.u.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
+  if ((ofs.u.LowPart = SetFilePointer(info->handle, ofs.u.LowPart, &ofs.u.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
       GetLastError() == ERROR_SUCCESS)
   {
-    get_ioinfo_nolock(fd)->wxflag &= ~WX_ATEOF;
+    info->wxflag &= ~WX_ATEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
 
+    release_ioinfo(info);
     return ofs.QuadPart;
   }
+  release_ioinfo(info);
   TRACE(":error-last error (%d)\n",GetLastError());
   msvcrt_set_errno(GetLastError());
   return -1;
