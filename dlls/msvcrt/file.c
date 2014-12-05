@@ -1377,18 +1377,17 @@ int CDECL MSVCRT__fseek_nolock(MSVCRT_FILE* file, MSVCRT_long offset, int whence
  */
 int CDECL MSVCRT__chsize_s(int fd, __int64 size)
 {
+    ioinfo *info;
     __int64 cur, pos;
-    HANDLE handle;
     BOOL ret = FALSE;
 
     TRACE("(fd=%d, size=%s)\n", fd, wine_dbgstr_longlong(size));
 
     if (!MSVCRT_CHECK_PMT(size >= 0)) return MSVCRT_EINVAL;
 
-    LOCK_FILES();
 
-    handle = msvcrt_fdtoh(fd);
-    if (handle != INVALID_HANDLE_VALUE)
+    info = get_ioinfo(fd);
+    if (info->handle != INVALID_HANDLE_VALUE)
     {
         /* save the current file pointer */
         cur = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
@@ -1397,7 +1396,7 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
             pos = MSVCRT__lseeki64(fd, size, SEEK_SET);
             if (pos >= 0)
             {
-                ret = SetEndOfFile(handle);
+                ret = SetEndOfFile(info->handle);
                 if (!ret) msvcrt_set_errno(GetLastError());
             }
 
@@ -1406,7 +1405,7 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
         }
     }
 
-    UNLOCK_FILES();
+    release_ioinfo(info);
     return ret ? 0 : *MSVCRT__errno();
 }
 
