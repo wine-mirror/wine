@@ -86,7 +86,7 @@
 @ stdcall SHRegSetUSValueW( wstr wstr long ptr long long) shlwapi.SHRegSetUSValueW
 @ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
 @ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
-@ stub StrCatChainW
+@ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
 @ stdcall StrChrA(str long) shlwapi.StrChrA
 @ stdcall StrChrIA(str long) shlwapi.StrChrIA
 @ stdcall StrChrIW(wstr long) shlwapi.StrChrIW

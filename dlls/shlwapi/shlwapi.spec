@@ -759,6 +759,7 @@
 @ stdcall StrCSpnW (wstr wstr)
 @ stdcall StrCatBuffA (str str long)
 @ stdcall StrCatBuffW (wstr wstr long)
+@ stdcall StrCatChainW (ptr long long wstr)
 @ stdcall StrCatW (ptr wstr)
 @ stdcall StrChrA (str long)
 @ stdcall StrChrIA (str long)
