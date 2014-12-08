@@ -87,6 +87,7 @@ struct dwrite_font {
     IDWriteFontFamily *family;
 
     USHORT simulations;
+    DWRITE_FONT_STYLE style;
     struct dwrite_font_data *data;
 };
 
@@ -738,7 +739,7 @@ static DWRITE_FONT_STYLE WINAPI dwritefont_GetStyle(IDWriteFont2 *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
     TRACE("(%p)\n", This);
-    return This->data->style;
+    return This->style;
 }
 
 static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
@@ -1001,8 +1002,13 @@ static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily *fam
     This->family = family;
     IDWriteFontFamily_AddRef(family);
     This->simulations = simulations;
+    This->style = data->style;
     This->data = data;
     InterlockedIncrement(&This->data->ref);
+
+    /* set oblique style from requested simulation */
+    if ((simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) && data->style == DWRITE_FONT_STYLE_NORMAL)
+        This->style = DWRITE_FONT_STYLE_OBLIQUE;
 
     *font = (IDWriteFont*)&This->IDWriteFont2_iface;
 

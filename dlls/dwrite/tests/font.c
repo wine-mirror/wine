@@ -441,10 +441,10 @@ if (0)
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
 
     style = IDWriteFont_GetStyle(font);
-todo_wine {
     ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+todo_wine
     ok(otm.otmfsSelection == 1, "got 0x%08x\n", otm.otmfsSelection);
-}
+
     ret = IDWriteFont_IsSymbolFont(font);
     ok(!ret, "got %d\n", ret);
 
