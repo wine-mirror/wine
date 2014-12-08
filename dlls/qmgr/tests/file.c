@@ -28,7 +28,6 @@
 #include "bits.h"
 
 /* Globals used by many tests */
-#define NUM_FILES 1
 static const WCHAR test_remoteName[] = {'r','e','m','o','t','e', 0};
 static const WCHAR test_localName[] = {'l','o','c','a','l', 0};
 static WCHAR test_localFile[MAX_PATH];
