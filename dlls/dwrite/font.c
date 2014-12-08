@@ -97,6 +97,11 @@ struct dwrite_fonttable {
     UINT32 size;
 };
 
+#define GLYPH_BLOCK_SHIFT 8
+#define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
+#define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
+#define GLYPH_MAX         65536
+
 struct dwrite_fontface {
     IDWriteFontFace2 IDWriteFontFace2_iface;
     LONG ref;
@@ -111,7 +116,7 @@ struct dwrite_fontface {
     DWRITE_FONT_METRICS1 metrics;
 
     struct dwrite_fonttable cmap;
-    struct ft_fontface *ft;
+    DWRITE_GLYPH_METRICS *glyphs[GLYPH_MAX/GLYPH_BLOCK_SIZE];
 };
 
 struct dwrite_fontfile {
@@ -123,8 +128,6 @@ struct dwrite_fontfile {
     UINT32 key_size;
     IDWriteFontFileStream *stream;
 };
-
-static HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**);
 
 static inline struct dwrite_fontface *impl_from_IDWriteFontFace2(IDWriteFontFace2 *iface)
 {
@@ -149,6 +152,31 @@ static inline struct dwrite_fontfamily *impl_from_IDWriteFontFamily(IDWriteFontF
 static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection(IDWriteFontCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_fontcollection, IDWriteFontCollection_iface);
+}
+
+static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
+{
+    static const DWRITE_GLYPH_METRICS nil;
+    DWRITE_GLYPH_METRICS *block = fontface->glyphs[glyph >> GLYPH_BLOCK_SHIFT];
+
+    if (!block || !memcmp(&block[glyph & GLYPH_BLOCK_MASK], &nil, sizeof(DWRITE_GLYPH_METRICS))) return S_FALSE;
+    memcpy(metrics, &block[glyph & GLYPH_BLOCK_MASK], sizeof(*metrics));
+    return S_OK;
+}
+
+static HRESULT set_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
+{
+    DWRITE_GLYPH_METRICS **block = &fontface->glyphs[glyph >> GLYPH_BLOCK_SHIFT];
+
+    if (!*block) {
+        /* start new block */
+        *block = heap_alloc_zero(sizeof(*metrics) * GLYPH_BLOCK_SIZE);
+        if (!*block)
+            return E_OUTOFMEMORY;
+    }
+
+    memcpy(&(*block)[glyph & GLYPH_BLOCK_MASK], metrics, sizeof(*metrics));
+    return S_OK;
 }
 
 static inline void* get_fontface_cmap(struct dwrite_fontface *fontface)
@@ -247,7 +275,11 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace2 *iface)
             if (This->files[i])
                 IDWriteFontFile_Release(This->files[i]);
         }
-        release_ft_fontface(This->ft);
+
+        for (i = 0; i < sizeof(This->glyphs)/sizeof(This->glyphs[0]); i++)
+            heap_free(This->glyphs[i]);
+
+        freetype_notify_cacheremove(iface);
         heap_free(This);
     }
 
@@ -321,11 +353,34 @@ static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace2 *iface)
 }
 
 static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace2 *iface,
-    UINT16 const *glyph_indices, UINT32 glyph_count, DWRITE_GLYPH_METRICS *metrics, BOOL is_sideways)
+    UINT16 const *glyphs, UINT32 glyph_count, DWRITE_GLYPH_METRICS *ret, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%p %u %p %d): stub\n", This, glyph_indices, glyph_count, metrics, is_sideways);
-    return E_NOTIMPL;
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE("(%p)->(%p %u %p %d)\n", This, glyphs, glyph_count, ret, is_sideways);
+
+    if (!glyphs)
+        return E_INVALIDARG;
+
+    if (is_sideways)
+        FIXME("sideways metrics are not supported.\n");
+
+    for (i = 0; i < glyph_count; i++) {
+        DWRITE_GLYPH_METRICS metrics;
+
+        hr = get_cached_glyph_metrics(This, glyphs[i], &metrics);
+        if (hr != S_OK) {
+            freetype_get_design_glyph_metrics(iface, This->metrics.designUnitsPerEm, glyphs[i], &metrics);
+            hr = set_cached_glyph_metrics(This, glyphs[i], &metrics);
+            if (FAILED(hr))
+                return hr;
+        }
+        ret[i] = metrics;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UINT32 const *codepoints,
@@ -1433,7 +1488,7 @@ static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BO
     return S_OK;
 }
 
-static HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **stream)
+HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **stream)
 {
     IDWriteFontFileLoader *loader;
     const void *key;
@@ -1932,10 +1987,7 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace2 **ret)
 {
     struct dwrite_fontface *fontface;
-    const void *data_ptr;
     HRESULT hr = S_OK;
-    void *context;
-    UINT64 size;
     int i;
 
     *ret = NULL;
@@ -1963,7 +2015,7 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     fontface->cmap.size = 0;
     fontface->index = index;
     fontface->simulations = simulations;
-    fontface->ft = NULL;
+    memset(fontface->glyphs, 0, sizeof(fontface->glyphs));
 
     for (i = 0; i < fontface->file_count; i++) {
         hr = get_stream_from_file(font_files[i], &fontface->streams[i]);
@@ -1978,25 +2030,8 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
 
     get_font_properties_from_stream(fontface->streams[0], facetype, index, &fontface->metrics, NULL, NULL, NULL);
 
-    hr = IDWriteFontFileStream_GetFileSize(fontface->streams[0], &size);
-    if (FAILED(hr))
-        goto fail;
-
-    hr = IDWriteFontFileStream_ReadFileFragment(fontface->streams[0], &data_ptr, 0, size, &context);
-    if (FAILED(hr))
-        goto fail;
-
-    hr = alloc_ft_fontface(data_ptr, size, fontface->index, &fontface->ft);
-    IDWriteFontFileStream_ReleaseFileFragment(fontface->streams[0], context);
-    if (FAILED(hr))
-        goto fail;
-
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
-
-fail:
-    IDWriteFontFace2_Release(&fontface->IDWriteFontFace2_iface);
-    return hr;
 }
 
 /* IDWriteLocalFontFileLoader and its required IDWriteFontFileStream */

@@ -2528,6 +2528,56 @@ static void test_ReadFileFragment(void)
     DeleteFileW(test_fontfile);
 }
 
+static void test_GetDesignGlyphMetrics(void)
+{
+    DWRITE_GLYPH_METRICS metrics[2];
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    UINT16 indices[2];
+    UINT32 codepoint;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file,
+        0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+    IDWriteFontFile_Release(file);
+
+    codepoint = 'A';
+    indices[0] = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &indices[0]);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(indices[0] > 0, "got %u\n", indices[0]);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, NULL, 0, metrics, FALSE);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n",hr);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, NULL, 1, metrics, FALSE);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n",hr);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, indices, 0, metrics, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    /* missing glyphs are ignored */
+    indices[1] = 1;
+    memset(metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, indices, 2, metrics, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+    ok(metrics[0].advanceWidth == 1000, "got %d\n", metrics[0].advanceWidth);
+    ok(metrics[1].advanceWidth == 0, "got %d\n", metrics[1].advanceWidth);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2561,6 +2611,7 @@ START_TEST(font)
     test_ConvertFontToLOGFONT();
     test_CreateStreamFromKey();
     test_ReadFileFragment();
+    test_GetDesignGlyphMetrics();
 
     IDWriteFactory_Release(factory);
 }
