@@ -177,7 +177,6 @@ typedef struct ucontext
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
 #define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
 
-#define VM86_EAX 0 /* the %eax value while vm86_enter is executing */
 #define VIF_FLAG 0x00080000
 #define VIP_FLAG 0x00100000
 

@@ -74,12 +74,8 @@ static RTL_CRITICAL_SECTION TIME_tz_section = { &critsect_debug, -1, 0, 0, 0, 0 
 #define HOURSPERDAY        24
 #define EPOCHWEEKDAY       1  /* Jan 1, 1601 was Monday */
 #define DAYSPERWEEK        7
-#define EPOCHYEAR          1601
-#define DAYSPERNORMALYEAR  365
-#define DAYSPERLEAPYEAR    366
 #define MONSPERYEAR        12
 #define DAYSPERQUADRICENTENNIUM (365 * 400 + 97)
-#define DAYSPERNORMALCENTURY (365 * 100 + 24)
 #define DAYSPERNORMALQUADRENNIUM (365 * 4 + 1)
 
 /* 1601 to 1970 is 369 years plus 89 leap days */
