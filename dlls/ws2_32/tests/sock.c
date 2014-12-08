@@ -1486,9 +1486,9 @@ todo_wine
     }
 
     /* Test SO_BSP_STATE - Present only in >= Win 2008 */
-    s = socket(AF_INET, SOCK_STREAM, 0);
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(s != INVALID_SOCKET, "Failed to create socket\n");
-    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    s2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(s2 != INVALID_SOCKET, "Failed to create socket\n");
 
     SetLastError(0xdeadbeef);
@@ -1571,6 +1571,23 @@ todo_wine
         ok(!err, "Expected 0, got %d\n", err);
         ok(!memcmp(&saddr, csinfoB.cs.LocalAddr.lpSockaddr, size), "Expected matching addresses\n");
         ok(!memcmp(&saddr, csinfoA.cs.RemoteAddr.lpSockaddr, size), "Expected matching addresses\n");
+
+        SetLastError(0xdeadbeef);
+        size = sizeof(CSADDR_INFO);
+        err = getsockopt(s, SOL_SOCKET, SO_BSP_STATE, (char *) &csinfoA, &size);
+        ok(err, "Expected non-zero\n");
+        ok(size == sizeof(CSADDR_INFO), "Got %d\n", size);
+        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %d\n", GetLastError());
+
+        /* At least for IPv4 the size is exactly 56 bytes */
+        size = sizeof(*csinfoA.cs.LocalAddr.lpSockaddr) * 2 + sizeof(csinfoA.cs);
+        err = getsockopt(s, SOL_SOCKET, SO_BSP_STATE, (char *) &csinfoA, &size);
+        ok(!err, "Expected 0, got %d\n", err);
+        size--;
+        SetLastError(0xdeadbeef);
+        err = getsockopt(s, SOL_SOCKET, SO_BSP_STATE, (char *) &csinfoA, &size);
+        ok(err, "Expected non-zero\n");
+        ok(GetLastError() == WSAEFAULT, "Expected 10014, got %d\n", GetLastError());
     }
     else
         ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
