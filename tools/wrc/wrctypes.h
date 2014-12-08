@@ -97,7 +97,7 @@ typedef struct res {
 	unsigned int	allocsize;	/* Allocated datablock size */
 	unsigned int	size;		/* Actual size of data */
 	unsigned int	dataidx;	/* Tag behind the resource-header */
-	char		*data;
+	unsigned char	*data;
 } res_t;
 
 /* Resource strings are slightly more complex because they include '\0' */
