@@ -22,6 +22,6 @@
 @ stub WindowsReplaceString
 @ stub WindowsStringHasEmbeddedNull
 @ stub WindowsSubstring
-@ stub WindowsSubstringwithSpecifiedLength
+@ stub WindowsSubstringWithSpecifiedLength
 @ stub WindowsTrimStringEnd
 @ stub WindowsTrimStringStart
