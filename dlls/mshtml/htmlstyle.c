@@ -935,19 +935,13 @@ static HRESULT WINAPI HTMLStyle_put_fontWeight(IHTMLStyle *iface, BSTR v)
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* fontWeight can only be one of the following */
-    if(!v || strcmpiW(szNormal, v) == 0    || strcmpiW(styleBold, v) == 0    ||
-             strcmpiW(styleBolder, v) == 0 || strcmpiW(styleLighter, v) == 0 ||
-             strcmpiW(style100, v) == 0    || strcmpiW(style200, v) == 0     ||
-             strcmpiW(style300, v) == 0    || strcmpiW(style400, v) == 0     ||
-             strcmpiW(style500, v) == 0    || strcmpiW(style600, v) == 0     ||
-             strcmpiW(style700, v) == 0    || strcmpiW(style800, v) == 0     ||
-             strcmpiW(style900, v) == 0
-             )
-    {
-        return set_nsstyle_attr(This->nsstyle, STYLEID_FONT_WEIGHT, v, 0);
-    }
+    if(v && *v && strcmpiW(szNormal, v) && strcmpiW(styleBold, v) &&  strcmpiW(styleBolder, v)
+            && strcmpiW(styleLighter, v) && strcmpiW(style100, v) && strcmpiW(style200, v)
+            && strcmpiW(style300, v) && strcmpiW(style400, v) && strcmpiW(style500, v) && strcmpiW(style600, v)
+            && strcmpiW(style700, v) && strcmpiW(style800, v) && strcmpiW(style900, v))
+        return E_INVALIDARG;
 
-    return E_INVALIDARG;
+    return set_nsstyle_attr(This->nsstyle, STYLEID_FONT_WEIGHT, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontWeight(IHTMLStyle *iface, BSTR *p)

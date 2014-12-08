@@ -823,6 +823,16 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "900"), "str != style900\n");
     SysFreeString(str);
 
+    str = a2bstr("");
+    hres = IHTMLStyle_put_fontWeight(style, str);
+    ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_fontWeight(style, &str);
+    ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
+    ok(!str, "str != NULL\n");
+    SysFreeString(str);
+
     hres = IHTMLStyle_put_fontWeight(style, sDefault);
     ok(hres == S_OK, "put_fontWeight failed: %08x\n", hres);
     SysFreeString(sDefault);
