@@ -56,6 +56,12 @@
 /* Define to 1 if you have the <Carbon/Carbon.h> header file. */
 #undef HAVE_CARBON_CARBON_H
 
+/* Define to 1 if you have the `cbrt' function. */
+#undef HAVE_CBRT
+
+/* Define to 1 if you have the `cbrtf' function. */
+#undef HAVE_CBRTF
+
 /* Define to 1 if you have the `chsize' function. */
 #undef HAVE_CHSIZE
 
@@ -104,6 +110,12 @@
 
 /* Define to 1 if you have the `epoll_create' function. */
 #undef HAVE_EPOLL_CREATE
+
+/* Define to 1 if you have the `exp2' function. */
+#undef HAVE_EXP2
+
+/* Define to 1 if you have the `exp2f' function. */
+#undef HAVE_EXP2F
 
 /* Define to 1 if you have the `fallocate' function. */
 #undef HAVE_FALLOCATE
@@ -426,8 +438,38 @@
 /* Define to 1 if you have the <linux/videodev.h> header file. */
 #undef HAVE_LINUX_VIDEODEV_H
 
+/* Define to 1 if you have the `llrint' function. */
+#undef HAVE_LLRINT
+
+/* Define to 1 if you have the `llrintf' function. */
+#undef HAVE_LLRINTF
+
+/* Define to 1 if you have the `llround' function. */
+#undef HAVE_LLROUND
+
+/* Define to 1 if you have the `llroundf' function. */
+#undef HAVE_LLROUNDF
+
+/* Define to 1 if you have the `log2' function. */
+#undef HAVE_LOG2
+
+/* Define to 1 if you have the `log2f' function. */
+#undef HAVE_LOG2F
+
 /* Define to 1 if the system has the type `long long'. */
 #undef HAVE_LONG_LONG
+
+/* Define to 1 if you have the `lrint' function. */
+#undef HAVE_LRINT
+
+/* Define to 1 if you have the `lrintf' function. */
+#undef HAVE_LRINTF
+
+/* Define to 1 if you have the `lround' function. */
+#undef HAVE_LROUND
+
+/* Define to 1 if you have the `lroundf' function. */
+#undef HAVE_LROUNDF
 
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
@@ -662,6 +704,18 @@
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
+
+/* Define to 1 if you have the `rint' function. */
+#undef HAVE_RINT
+
+/* Define to 1 if you have the `rintf' function. */
+#undef HAVE_RINTF
+
+/* Define to 1 if you have the `round' function. */
+#undef HAVE_ROUND
+
+/* Define to 1 if you have the `roundf' function. */
+#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
@@ -1082,6 +1136,12 @@
 
 /* Define if you have the timezone variable */
 #undef HAVE_TIMEZONE
+
+/* Define to 1 if you have the `trunc' function. */
+#undef HAVE_TRUNC
+
+/* Define to 1 if you have the `truncf' function. */
+#undef HAVE_TRUNCF
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

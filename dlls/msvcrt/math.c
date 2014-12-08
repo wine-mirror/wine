@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #endif
 
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
+typedef double LDOUBLE;  /* long double is just a double */
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
@@ -2205,3 +2206,323 @@ void __cdecl __libm_sse2_sqrt_precise(void)
 }
 
 #endif  /* __i386__ */
+
+/*********************************************************************
+ *      cbrt (MSVCR120.@)
+ */
+double CDECL MSVCR120_cbrt(double x)
+{
+#ifdef HAVE_CBRT
+    return cbrt(x);
+#else
+    return x < 0 ? -pow(-x, 1.0 / 3.0) : pow(x, 1.0 / 3.0);
+#endif
+}
+
+/*********************************************************************
+ *      cbrtf (MSVCR120.@)
+ */
+float CDECL MSVCR120_cbrtf(float x)
+{
+#ifdef HAVE_CBRTF
+    return cbrtf(x);
+#else
+    return MSVCR120_cbrt(x);
+#endif
+}
+
+/*********************************************************************
+ *      cbrtl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_cbrtl(LDOUBLE x)
+{
+    return MSVCR120_cbrt(x);
+}
+
+/*********************************************************************
+ *      exp2 (MSVCR120.@)
+ */
+double CDECL MSVCR120_exp2(double x)
+{
+#ifdef HAVE_EXP2
+    return exp2(x);
+#else
+    return pow(2, x);
+#endif
+}
+
+/*********************************************************************
+ *      exp2f (MSVCR120.@)
+ */
+float CDECL MSVCR120_exp2f(float x)
+{
+#ifdef HAVE_EXP2F
+    return exp2f(x);
+#else
+    return MSVCR120_exp2(x);
+#endif
+}
+
+/*********************************************************************
+ *      exp2l (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_exp2l(LDOUBLE x)
+{
+    return MSVCR120_exp2(x);
+}
+
+/*********************************************************************
+ *      log2 (MSVCR120.@)
+ */
+double CDECL MSVCR120_log2(double x)
+{
+#ifdef HAVE_LOG2
+    return log2(x);
+#else
+    return log(x) / log(2);
+#endif
+}
+
+/*********************************************************************
+ *      log2f (MSVCR120.@)
+ */
+float CDECL MSVCR120_log2f(float x)
+{
+#ifdef HAVE_LOG2F
+    return log2f(x);
+#else
+    return MSVCR120_log2(x);
+#endif
+}
+
+/*********************************************************************
+ *      log2l (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_log2l(LDOUBLE x)
+{
+    return MSVCR120_log2(x);
+}
+
+/*********************************************************************
+ *      rint (MSVCR120.@)
+ */
+double CDECL MSVCR120_rint(double x)
+{
+#ifdef HAVE_RINT
+    return rint(x);
+#else
+    return x >= 0 ? floor(x + 0.5) : ceil(x - 0.5);
+#endif
+}
+
+/*********************************************************************
+ *      rintf (MSVCR120.@)
+ */
+float CDECL MSVCR120_rintf(float x)
+{
+#ifdef HAVE_RINTF
+    return rintf(x);
+#else
+    return MSVCR120_rint(x);
+#endif
+}
+
+/*********************************************************************
+ *      rintl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_rintl(LDOUBLE x)
+{
+    return MSVCR120_rint(x);
+}
+
+/*********************************************************************
+ *      lrint (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lrint(double x)
+{
+#ifdef HAVE_LRINT
+    return lrint(x);
+#else
+    return MSVCR120_rint(x);
+#endif
+}
+
+/*********************************************************************
+ *      lrintf (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lrintf(float x)
+{
+#ifdef HAVE_LRINTF
+    return lrintf(x);
+#else
+    return MSVCR120_lrint(x);
+#endif
+}
+
+/*********************************************************************
+ *      lrintl (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lrintl(LDOUBLE x)
+{
+    return MSVCR120_lrint(x);
+}
+
+/*********************************************************************
+ *      llrint (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llrint(double x)
+{
+#ifdef HAVE_LLRINT
+    return llrint(x);
+#else
+    return MSVCR120_rint(x);
+#endif
+}
+
+/*********************************************************************
+ *      llrintf (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llrintf(float x)
+{
+#ifdef HAVE_LLRINTF
+    return llrintf(x);
+#else
+    return MSVCR120_llrint(x);
+#endif
+}
+
+/*********************************************************************
+ *      rintl (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llrintl(LDOUBLE x)
+{
+    return MSVCR120_llrint(x);
+}
+
+/*********************************************************************
+ *      round (MSVCR120.@)
+ */
+double CDECL MSVCR120_round(double x)
+{
+#ifdef HAVE_ROUND
+    return round(x);
+#else
+    return MSVCR120_rint(x);
+#endif
+}
+
+/*********************************************************************
+ *      roundf (MSVCR120.@)
+ */
+float CDECL MSVCR120_roundf(float x)
+{
+#ifdef HAVE_ROUNDF
+    return roundf(x);
+#else
+    return MSVCR120_round(x);
+#endif
+}
+
+/*********************************************************************
+ *      roundl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_roundl(LDOUBLE x)
+{
+    return MSVCR120_round(x);
+}
+
+/*********************************************************************
+ *      lround (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lround(double x)
+{
+#ifdef HAVE_LROUND
+    return lround(x);
+#else
+    return MSVCR120_round(x);
+#endif
+}
+
+/*********************************************************************
+ *      lroundf (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lroundf(float x)
+{
+#ifdef HAVE_LROUNDF
+    return lroundf(x);
+#else
+    return MSVCR120_lround(x);
+#endif
+}
+
+/*********************************************************************
+ *      lroundl (MSVCR120.@)
+ */
+MSVCRT_long CDECL MSVCR120_lroundl(LDOUBLE x)
+{
+    return MSVCR120_lround(x);
+}
+
+/*********************************************************************
+ *      llround (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llround(double x)
+{
+#ifdef HAVE_LLROUND
+    return llround(x);
+#else
+    return MSVCR120_round(x);
+#endif
+}
+
+/*********************************************************************
+ *      llroundf (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llroundf(float x)
+{
+#ifdef HAVE_LLROUNDF
+    return llroundf(x);
+#else
+    return MSVCR120_llround(x);
+#endif
+}
+
+/*********************************************************************
+ *      roundl (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCR120_llroundl(LDOUBLE x)
+{
+    return MSVCR120_llround(x);
+}
+
+/*********************************************************************
+ *      trunc (MSVCR120.@)
+ */
+double CDECL MSVCR120_trunc(double x)
+{
+#ifdef HAVE_TRUNC
+    return trunc(x);
+#else
+    return (x > 0) ? floor(x) : ceil(x);
+#endif
+}
+
+/*********************************************************************
+ *      truncf (MSVCR120.@)
+ */
+float CDECL MSVCR120_truncf(float x)
+{
+#ifdef HAVE_TRUNCF
+    return truncf(x);
+#else
+    return MSVCR120_trunc(x);
+#endif
+}
+
+/*********************************************************************
+ *      truncl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_truncl(LDOUBLE x)
+{
+    return MSVCR120_trunc(x);
+}

@@ -2058,9 +2058,9 @@
 @ stub catanhf
 @ stub catanhl
 @ stub catanl
-@ stub cbrt
-@ stub cbrtf
-@ stub cbrtl
+@ cdecl cbrt(double) MSVCR120_cbrt
+@ cdecl cbrtf(float) MSVCR120_cbrtf
+@ cdecl cbrtl(double) MSVCR120_cbrtl
 @ stub ccos
 @ stub ccosf
 @ stub ccosh
@@ -2127,9 +2127,9 @@
 @ stub erfl
 @ cdecl exit(long) MSVCRT_exit
 @ cdecl exp(double) MSVCRT_exp
-@ stub exp2
-@ stub exp2f
-@ stub exp2l
+@ cdecl exp2(double) MSVCR120_exp2
+@ cdecl exp2f(float) MSVCR120_exp2f
+@ cdecl exp2l(double) MSVCR120_exp2l
 @ cdecl -arch=arm,x86_64 expf(float) MSVCRT_expf
 @ stub expm1
 @ stub expm1f
@@ -2245,12 +2245,12 @@
 @ stub lgammal
 @ cdecl -ret64 llabs(int64) MSVCRT_llabs
 @ stub lldiv
-@ stub llrint
-@ stub llrintf
-@ stub llrintl
-@ stub llround
-@ stub llroundf
-@ stub llroundl
+@ cdecl -ret64 llrint(double) MSVCR120_llrint
+@ cdecl -ret64 llrintf(float) MSVCR120_llrintf
+@ cdecl -ret64 llrintl(double) MSVCR120_llrintl
+@ cdecl -ret64 llround(double) MSVCR120_llround
+@ cdecl -ret64 llroundf(float) MSVCR120_llroundf
+@ cdecl -ret64 llroundl(double) MSVCR120_llroundl
 @ cdecl localeconv() MSVCRT_localeconv
 @ cdecl log(double) MSVCRT_log
 @ cdecl -arch=arm,x86_64 logf(float) MSVCRT_logf
@@ -2259,19 +2259,19 @@
 @ stub log1p
 @ stub log1pf
 @ stub log1pl
-@ stub log2
-@ stub log2f
-@ stub log2l
+@ cdecl log2(double) MSVCR120_log2
+@ cdecl log2f(float) MSVCR120_log2f
+@ cdecl log2l(double) MSVCR120_log2l
 @ stub logb
 @ stub logbf
 @ stub logbl
 @ cdecl -arch=i386,x86_64,arm longjmp(ptr long) MSVCRT_longjmp
-@ stub lrint
-@ stub lrintf
-@ stub lrintl
-@ stub lround
-@ stub lroundf
-@ stub lroundl
+@ cdecl lrint(double) MSVCR120_lrint
+@ cdecl lrintf(float) MSVCR120_lrintf
+@ cdecl lrintl(double) MSVCR120_lrintl
+@ cdecl lround(double) MSVCR120_lround
+@ cdecl lroundf(float) MSVCR120_lroundf
+@ cdecl lroundl(double) MSVCR120_lroundl
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
@@ -2330,12 +2330,12 @@
 @ stub remquol
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
-@ stub rint
-@ stub rintf
-@ stub rintl
-@ stub round
-@ stub roundf
-@ stub roundl
+@ cdecl rint(double) MSVCR120_rint
+@ cdecl rintf(float) MSVCR120_rintf
+@ cdecl rintl(double) MSVCR120_rintl
+@ cdecl round(double) MSVCR120_round
+@ cdecl roundf(float) MSVCR120_roundf
+@ cdecl roundl(double) MSVCR120_roundl
 @ stub scalbln
 @ stub scalblnf
 @ stub scalblnl
@@ -2414,9 +2414,9 @@
 @ stub towctrans
 @ cdecl towlower(long) MSVCRT_towlower
 @ cdecl towupper(long) MSVCRT_towupper
-@ stub trunc
-@ stub truncf
-@ stub truncl
+@ cdecl trunc(double) MSVCR120_trunc
+@ cdecl truncf(float) MSVCR120_truncf
+@ cdecl truncl(double) MSVCR120_truncl
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 @ cdecl vfprintf(ptr str ptr) MSVCRT_vfprintf
