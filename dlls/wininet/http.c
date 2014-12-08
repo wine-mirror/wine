@@ -205,7 +205,6 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static DWORD HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
 static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
-static BOOL HTTP_VerifyValidHeader(http_request_t *req, LPCWSTR field);
 static BOOL drain_content(http_request_t*,BOOL);
 
 static CRITICAL_SECTION connection_pool_cs;
@@ -1312,10 +1311,8 @@ static DWORD HTTP_HttpAddRequestHeadersW(http_request_t *request,
         pFieldAndValue = HTTP_InterpretHttpHeader(lpszStart);
         if (pFieldAndValue)
         {
-            res = HTTP_VerifyValidHeader(request, pFieldAndValue[0]);
-            if (res == ERROR_SUCCESS)
-                res = HTTP_ProcessHeader(request, pFieldAndValue[0],
-                    pFieldAndValue[1], dwModifier | HTTP_ADDHDR_FLAG_REQ);
+            res = HTTP_ProcessHeader(request, pFieldAndValue[0],
+                pFieldAndValue[1], dwModifier | HTTP_ADDHDR_FLAG_REQ);
             HTTP_FreeTokens(pFieldAndValue);
         }
 
@@ -6307,21 +6304,6 @@ static BOOL HTTP_DeleteCustomHeader(http_request_t *request, DWORD index)
     return TRUE;
 }
 
-
-/***********************************************************************
- *           HTTP_VerifyValidHeader (internal)
- *
- * Verify the given header is not invalid for the given http request
- *
- */
-static BOOL HTTP_VerifyValidHeader(http_request_t *request, LPCWSTR field)
-{
-    /* Accept-Encoding is stripped from HTTP/1.0 requests. It is invalid */
-    if (!strcmpW(request->version, g_szHttp1_0) && !strcmpiW(field, szAccept_Encoding))
-        return ERROR_HTTP_INVALID_HEADER;
-
-    return ERROR_SUCCESS;
-}
 
 /***********************************************************************
  *          IsHostInProxyBypassList (@)

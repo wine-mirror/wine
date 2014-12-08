@@ -2314,7 +2314,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
-
+        if (strstr(buffer, "/test_accept_encoding_http10"))
+        {
+            if (strstr(buffer, "Accept-Encoding: gzip"))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
         shutdown(c, 2);
         closesocket(c);
         c = -1;
@@ -4169,6 +4175,43 @@ static void test_request_content_length(int port)
     CloseHandle(hCompleteEvent);
 }
 
+static void test_accept_encoding(int port)
+{
+    HINTERNET ses, con, req;
+    BOOL ret;
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, "GET", "/test_accept_encoding_http10", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(req, "Accept-Encoding: gzip\r\n", ~0u, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    ret = HttpSendRequestA(req, NULL,  0, NULL, 0);
+    ok(ret, "HttpSendRequestA failed\n");
+
+    test_status_code(req, 200);
+
+    InternetCloseHandle(req);
+
+    req = HttpOpenRequestA(con, "GET", "/test_accept_encoding_http10", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequestA(req, "Accept-Encoding: gzip", ~0u, NULL, 0);
+    ok(ret, "HttpSendRequestA failed\n");
+
+    test_status_code(req, 200);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -4215,6 +4258,7 @@ static void test_http_connection(void)
     test_successive_HttpSendRequest(si.port);
     test_head_request(si.port);
     test_request_content_length(si.port);
+    test_accept_encoding(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
