@@ -2636,6 +2636,58 @@ static void test_IsMonospacedFont(void)
     IDWriteFontCollection_Release(collection);
 }
 
+static void test_GetDesignGlyphAdvances(void)
+{
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file,
+        0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (hr == S_OK) {
+        UINT32 codepoint;
+        UINT16 index;
+        INT32 advance;
+
+        codepoint = 'A';
+        index = 0;
+        hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &codepoint, 1, &index);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(index > 0, "got %u\n", index);
+
+        advance = 0;
+        hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &index, &advance, FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(advance == 1000, "got %i\n", advance);
+
+        advance = 0;
+        hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &index, &advance, TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(advance == 2048, "got %i\n", advance);
+
+        IDWriteFontFace1_Release(fontface1);
+    }
+    else
+        win_skip("GetDesignGlyphAdvances() is not supported.\n");
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2670,6 +2722,7 @@ START_TEST(font)
     test_CreateStreamFromKey();
     test_ReadFileFragment();
     test_GetDesignGlyphMetrics();
+    test_GetDesignGlyphAdvances();
     test_IsMonospacedFont();
 
     IDWriteFactory_Release(factory);

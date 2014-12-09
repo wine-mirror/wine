@@ -500,11 +500,25 @@ static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace2 *iface)
 }
 
 static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace2 *iface,
-    UINT32 glyph_count, UINT16 const *indices, INT32 *advances, BOOL is_sideways)
+    UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%u %p %p %d): stub\n", This, glyph_count, indices, advances, is_sideways);
-    return E_NOTIMPL;
+    UINT32 i;
+
+    TRACE("(%p)->(%u %p %p %d)\n", This, glyph_count, glyphs, advances, is_sideways);
+
+    for (i = 0; i < glyph_count; i++) {
+        DWRITE_GLYPH_METRICS metrics = { 0 };
+        HRESULT hr;
+
+        hr = IDWriteFontFace2_GetDesignGlyphMetrics(iface, glyphs + i, 1, &metrics, is_sideways);
+        if (FAILED(hr))
+            return hr;
+
+        advances[i] = is_sideways ? metrics.advanceHeight : metrics.advanceWidth;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontFace2 *iface,
