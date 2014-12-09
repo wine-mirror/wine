@@ -29,7 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-#define STEP_FLAG 0x00000100 /* single step flag */
 #define V86_FLAG  0x00020000
 
 #define IS_VM86_MODE(ctx) (ctx->EFlags & V86_FLAG)

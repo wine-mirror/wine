@@ -58,8 +58,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
-#define MAX_PATHNAME_LEN 1024
-
 struct pdb_stream_name
 {
     const char* name;

@@ -76,21 +76,6 @@ typedef struct _UNWIND_INFO
  */
 } UNWIND_INFO, *PUNWIND_INFO;
 
-#define GetUnwindCodeEntry(info, index) \
-    ((info)->UnwindCode[index])
-
-#define GetLanguageSpecificDataPtr(info) \
-    ((PVOID)&GetUnwindCodeEntry((info),((info)->CountOfCodes + 1) & ~1))
-
-#define GetExceptionHandler(base, info) \
-    ((PEXCEPTION_HANDLER)((base) + *(PULONG)GetLanguageSpecificDataPtr(info)))
-
-#define GetChainedFunctionEntry(base, info) \
-    ((PRUNTIME_FUNCTION)((base) + *(PULONG)GetLanguageSpecificDataPtr(info)))
-
-#define GetExceptionDataPtr(info) \
-    ((PVOID)((PULONG)GetLanguageSpecificData(info) + 1)
-
 static BOOL x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx,
                             enum cpu_addr ca, ADDRESS64* addr)
 {
@@ -107,6 +92,8 @@ static BOOL x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx,
     }
 }
 
+#ifdef __x86_64__
+
 enum st_mode {stm_start, stm_64bit, stm_done};
 
 /* indexes in Reserved array */
@@ -118,7 +105,6 @@ enum st_mode {stm_start, stm_64bit, stm_done};
 #define curr_count  (frame->Reserved[__CurrentCount])
 /* #define ??? (frame->Reserved[__]) (unused) */
 
-#ifdef __x86_64__
 union handler_data
 {
     RUNTIME_FUNCTION chain;
