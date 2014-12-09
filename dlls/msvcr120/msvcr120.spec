@@ -1104,7 +1104,7 @@
 @ varargs _cwscanf_s(wstr)
 @ varargs _cwscanf_s_l(wstr ptr)
 @ extern _daylight MSVCRT___daylight
-@ stub _dclass
+@ cdecl _dclass(double) MSVCR120__dclass
 @ cdecl _difftime32(long long) MSVCRT__difftime32
 @ cdecl _difftime64(long long) MSVCRT__difftime64
 @ stub _dosmaperr
@@ -1140,7 +1140,7 @@
 @ cdecl _fcloseall() MSVCRT__fcloseall
 @ cdecl _fcvt(double long ptr ptr) MSVCRT__fcvt
 @ cdecl _fcvt_s(ptr long double long ptr ptr) MSVCRT__fcvt_s
-@ stub _fdclass
+@ cdecl _fdclass(float) MSVCR120__fdclass
 @ cdecl _fdopen(long str) MSVCRT__fdopen
 @ stub _fdpcomp
 @ stub _fdsign
@@ -1389,7 +1389,7 @@
 @ cdecl _j1(double) MSVCRT__j1
 @ cdecl _jn(long double) MSVCRT__jn
 @ cdecl _kbhit()
-@ stub _ldclass
+@ cdecl _ldclass(double) MSVCR120__ldclass
 @ stub _ldpcomp
 @ stub _ldsign
 @ stub _ldtest

@@ -2526,3 +2526,44 @@ LDOUBLE CDECL MSVCR120_truncl(LDOUBLE x)
 {
     return MSVCR120_trunc(x);
 }
+
+/*********************************************************************
+ *      _dclass (MSVCR120.@)
+ */
+short CDECL MSVCR120__dclass(double x)
+{
+    switch (MSVCRT__fpclass(x)) {
+    case MSVCRT__FPCLASS_QNAN:
+    case MSVCRT__FPCLASS_SNAN:
+        return MSVCRT_FP_NAN;
+    case MSVCRT__FPCLASS_NINF:
+    case MSVCRT__FPCLASS_PINF:
+        return MSVCRT_FP_INFINITE;
+    case MSVCRT__FPCLASS_ND:
+    case MSVCRT__FPCLASS_PD:
+        return MSVCRT_FP_SUBNORMAL;
+    case MSVCRT__FPCLASS_NN:
+    case MSVCRT__FPCLASS_PN:
+    default:
+        return MSVCRT_FP_NORMAL;
+    case MSVCRT__FPCLASS_NZ:
+    case MSVCRT__FPCLASS_PZ:
+        return MSVCRT_FP_ZERO;
+    }
+}
+
+/*********************************************************************
+ *      _fdclass (MSVCR120.@)
+ */
+short CDECL MSVCR120__fdclass(float x)
+{
+    return MSVCR120__dclass(x);
+}
+
+/*********************************************************************
+ *      _ldclass (MSVCR120.@)
+ */
+short CDECL MSVCR120__ldclass(LDOUBLE x)
+{
+    return MSVCR120__dclass(x);
+}

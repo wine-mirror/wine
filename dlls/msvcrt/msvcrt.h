@@ -824,6 +824,13 @@ struct MSVCRT__stat64 {
 #define MSVCRT__FPCLASS_PN   0x0100  /* Positive Normal */
 #define MSVCRT__FPCLASS_PINF 0x0200  /* Positive Infinity */
 
+/* fpclassify constants */
+#define MSVCRT_FP_INFINITE   1
+#define MSVCRT_FP_NAN        2
+#define MSVCRT_FP_NORMAL    -1
+#define MSVCRT_FP_SUBNORMAL -2
+#define MSVCRT_FP_ZERO       0
+
 #define MSVCRT__MCW_EM        0x0008001f
 #define MSVCRT__MCW_IC        0x00040000
 #define MSVCRT__MCW_RC        0x00000300
