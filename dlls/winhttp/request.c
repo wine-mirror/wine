@@ -2932,7 +2932,7 @@ static void initialize_request( struct winhttp_request *request )
     request->bytes_read = 0;
     request->error = ERROR_SUCCESS;
     request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM;
-    request->disable_feature = WINHTTP_DISABLE_AUTHENTICATION;
+    request->disable_feature = 0;
     request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
     request->proxy.lpszProxy = NULL;
     request->proxy.lpszProxyBypass = NULL;
