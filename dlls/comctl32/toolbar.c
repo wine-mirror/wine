@@ -5067,8 +5067,6 @@ TOOLBAR_SetHotItem2 (TOOLBAR_INFO *infoPtr, INT nHotItem, LPARAM lParam)
 
     TOOLBAR_SetHotItemEx(infoPtr, nHotItem, lParam);
 
-    GetFocus();
-
     return (nOldHotItem < 0) ? -1 : (LRESULT)nOldHotItem;
 }
 
