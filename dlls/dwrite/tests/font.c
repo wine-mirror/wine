@@ -2578,6 +2578,64 @@ static void test_GetDesignGlyphMetrics(void)
     DeleteFileW(test_fontfile);
 }
 
+static void test_IsMonospacedFont(void)
+{
+    static const WCHAR courierW[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+    IDWriteFontCollection *collection;
+    IDWriteFactory *factory;
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    factory = create_factory();
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(collection, courierW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (exists) {
+        IDWriteFontFamily *family;
+        IDWriteFont1 *font1;
+        IDWriteFont *font;
+
+        hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFontFamily_Release(family);
+
+        hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
+        if (hr == S_OK) {
+            IDWriteFontFace1 *fontface1;
+            IDWriteFontFace *fontface;
+            BOOL is_monospaced;
+
+            is_monospaced = IDWriteFont1_IsMonospacedFont(font1);
+            ok(is_monospaced, "got %d\n", is_monospaced);
+
+            hr = IDWriteFont1_CreateFontFace(font1, &fontface);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            is_monospaced = IDWriteFontFace1_IsMonospacedFont(fontface1);
+            ok(is_monospaced, "got %d\n", is_monospaced);
+            IDWriteFontFace1_Release(fontface1);
+
+            IDWriteFontFace_Release(fontface);
+            IDWriteFont1_Release(font1);
+        }
+        else
+            win_skip("IsMonospacedFont() is not supported.\n");
+    }
+    else
+        skip("Courier New font not found.\n");
+
+    IDWriteFontCollection_Release(collection);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2612,6 +2670,7 @@ START_TEST(font)
     test_CreateStreamFromKey();
     test_ReadFileFragment();
     test_GetDesignGlyphMetrics();
+    test_IsMonospacedFont();
 
     IDWriteFactory_Release(factory);
 }

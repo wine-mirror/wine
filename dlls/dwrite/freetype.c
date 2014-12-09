@@ -67,6 +67,7 @@ MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FTC_Manager_New);
 MAKE_FUNCPTR(FTC_Manager_Done);
+MAKE_FUNCPTR(FTC_Manager_LookupFace);
 MAKE_FUNCPTR(FTC_Manager_LookupSize);
 MAKE_FUNCPTR(FTC_Manager_RemoveFaceID);
 #undef MAKE_FUNCPTR
@@ -135,6 +136,7 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FTC_Manager_New)
     LOAD_FUNCPTR(FTC_Manager_Done)
+    LOAD_FUNCPTR(FTC_Manager_LookupFace)
     LOAD_FUNCPTR(FTC_Manager_LookupSize)
     LOAD_FUNCPTR(FTC_Manager_RemoveFaceID)
 #undef LOAD_FUNCPTR
@@ -210,6 +212,19 @@ HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 uni
     return S_OK;
 }
 
+BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
+{
+    BOOL is_monospaced = FALSE;
+    FT_Face face;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+        is_monospaced = FT_IS_FIXED_WIDTH(face);
+    LeaveCriticalSection(&freetype_cs);
+
+    return is_monospaced;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -228,6 +243,11 @@ void freetype_notify_cacheremove(IDWriteFontFace2 *fontface)
 HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     return E_NOTIMPL;
+}
+
+BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
+{
+    return FALSE;
 }
 
 #endif /* HAVE_FREETYPE */
