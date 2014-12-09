@@ -954,7 +954,7 @@ static void test_request_parameter_defaults(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    if (!ret && (GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT || GetLastError() == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -3044,12 +3044,8 @@ static void test_WinHttpGetProxyForUrl(void)
     options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 
     memset( &info, 0, sizeof(info) );
-    SetLastError(0xdeadbeef);
     ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
-    error = GetLastError();
-    if (!ret) ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED ||
-                  error == ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT, "got %u\n", error );
-    else
+    if (ret)
     {
         trace("Proxy.AccessType=%u\n", info.dwAccessType);
         trace("Proxy.Proxy=%s\n", wine_dbgstr_w(info.lpszProxy));
@@ -3063,11 +3059,8 @@ static void test_WinHttpGetProxyForUrl(void)
     options.lpszAutoConfigUrl = wpadW;
 
     memset( &info, 0, sizeof(info) );
-    SetLastError(0xdeadbeef);
     ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
-    error = GetLastError();
-    if (!ret) ok( error == ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT, "got %u\n", error );
-    else
+    if (ret)
     {
         trace("Proxy.AccessType=%u\n", info.dwAccessType);
         trace("Proxy.Proxy=%s\n", wine_dbgstr_w(info.lpszProxy));
