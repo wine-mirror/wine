@@ -16,16 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include "objbase.h"
+#include "roapi.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winrt);
-
-typedef enum
-{
-    RO_INIT_SINGLETHREADED = 0,
-    RO_INIT_MULTITHREADED  = 1,
-} RO_INIT_TYPE;
 
 /***********************************************************************
  *      RoInitialize (api-ms-win-core-winrt-l1-1-0.@)

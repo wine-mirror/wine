@@ -506,6 +506,7 @@ SRCDIR_INCLUDES = \
 	restartmanager.h \
 	richedit.h \
 	rmxfguid.h \
+	roapi.h \
 	row.idl \
 	rowchg.idl \
 	rowpos.idl \
