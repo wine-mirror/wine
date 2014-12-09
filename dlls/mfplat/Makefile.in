@@ -1,0 +1,4 @@
+MODULE    = mfplat.dll
+
+C_SRCS = \
+	main.c
