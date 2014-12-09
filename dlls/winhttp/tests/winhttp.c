@@ -2870,6 +2870,23 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_Release( req );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &async ) = VT_I4;
+    V_I4( &async ) = 1;
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_WaitForResponse( req, timeout, &succeeded );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_Release( req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     SysFreeString( method );
     SysFreeString( url );
     SysFreeString( username );

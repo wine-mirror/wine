@@ -2993,7 +2993,7 @@ static HRESULT WINAPI winhttp_request_Open(
     path[uc.dwUrlPathLength + uc.dwExtraInfoLength] = 0;
 
     if (!(verb = strdupW( method ))) goto error;
-    if (V_VT( &async ) == VT_BOOL && V_BOOL( &async )) flags |= WINHTTP_FLAG_ASYNC;
+    if (SUCCEEDED( VariantChangeType( &async, &async, 0, VT_BOOL )) && V_BOOL( &async )) flags |= WINHTTP_FLAG_ASYNC;
     if (!(hsession = WinHttpOpen( user_agentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
     {
         err = get_last_error();
