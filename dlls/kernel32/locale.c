@@ -5035,3 +5035,13 @@ INT WINAPI IdnToUnicode(DWORD dwFlags, LPCWSTR lpASCIICharStr, INT cchASCIIChar,
 
     return out;
 }
+
+
+/******************************************************************************
+ *           GetUserPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI GetUserPreferredUILanguages(DWORD flags, PULONG numlangs, PZZWSTR langbuffer, PULONG bufferlen)
+{
+    FIXME( "stub: %u %p %p %p\n", flags, numlangs, langbuffer, bufferlen );
+    return FALSE;
+}

@@ -32,7 +32,7 @@
 @ stdcall GetUserDefaultLangID() kernel32.GetUserDefaultLangID
 @ stdcall GetUserDefaultLocaleName(ptr long) kernel32.GetUserDefaultLocaleName
 @ stdcall GetUserGeoID(long) kernel32.GetUserGeoID
-@ stub GetUserPreferredUILanguages
+@ stdcall GetUserPreferredUILanguages(long ptr ptr ptr) kernel32.GetUserPreferredUILanguages
 @ stdcall IdnToAscii(long wstr long ptr long) kernel32.IdnToAscii
 @ stdcall IdnToUnicode(long wstr long ptr long) kernel32.IdnToUnicode
 @ stdcall IsDBCSLeadByte(long) kernel32.IsDBCSLeadByte
