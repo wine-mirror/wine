@@ -1802,14 +1802,15 @@ static BOOL handle_authorization( request_t *request, DWORD status )
 }
 
 /* set the request content length based on the headers */
-static DWORD set_content_length( request_t *request )
+static DWORD set_content_length( request_t *request, DWORD status )
 {
     WCHAR encoding[20];
-    DWORD buflen;
+    DWORD buflen = sizeof(request->content_length);
 
-    buflen = sizeof(request->content_length);
-    if (!query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
-                        NULL, &request->content_length, &buflen, NULL ))
+    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED)
+        request->content_length = 0;
+    else if (!query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
+                             NULL, &request->content_length, &buflen, NULL ))
         request->content_length = ~0u;
 
     buflen = sizeof(encoding);
@@ -2302,7 +2303,7 @@ static BOOL receive_response( request_t *request, BOOL async )
         query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
         if (!(ret = query_headers( request, query, NULL, &status, &size, NULL ))) break;
 
-        set_content_length( request );
+        set_content_length( request, status );
 
         if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
 
@@ -2329,7 +2330,7 @@ static BOOL receive_response( request_t *request, BOOL async )
         break;
     }
 
-    if (ret) refill_buffer( request, FALSE );
+    if (request->content_length) refill_buffer( request, FALSE );
 
     if (async)
     {
