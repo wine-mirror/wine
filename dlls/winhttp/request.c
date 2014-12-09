@@ -2148,6 +2148,7 @@ static void drain_content( request_t *request )
     DWORD bytes_read;
     char buffer[2048];
 
+    refill_buffer( request, FALSE );
     for (;;)
     {
         if (!read_data( request, buffer, sizeof(buffer), &bytes_read, FALSE ) || !bytes_read) return;
