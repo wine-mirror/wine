@@ -1137,7 +1137,6 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
 #define GET_DWORD(x) (*(const DWORD *)(x))
 #define PUT_BLOCK(x,y) do {if (!advance_array(&output, &allocated, &filled, (x), (y))) return NULL;} while (0)
 #define PUT_WORD(x)  do {WORD w = (x);PUT_BLOCK(&w, 1);} while(0)
-#define PUT_DWORD(x)  do {DWORD w = (x);PUT_BLOCK(&w, 2);} while(0)
     const WORD *tmp, *src = (const WORD *)src_tmpl;
     WORD *output;
     DWORD allocated, filled; /* in WORDs */
