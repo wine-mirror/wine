@@ -40,7 +40,7 @@ static const DWRITE_MATRIX identity =
 
 struct gdiinterop {
     IDWriteGdiInterop IDWriteGdiInterop_iface;
-    IDWriteFactory *factory;
+    IDWriteFactory2 *factory;
 };
 
 struct rendertarget {
@@ -299,14 +299,14 @@ static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory_AddRef(This->factory);
+    return IDWriteFactory2_AddRef(This->factory);
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory_Release(This->factory);
+    return IDWriteFactory2_Release(This->factory);
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
@@ -326,7 +326,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
 
     if (!logfont) return E_INVALIDARG;
 
-    hr = IDWriteFactory_GetSystemFontCollection(This->factory, &collection, FALSE);
+    hr = IDWriteFactory2_GetSystemFontCollection(This->factory, &collection, FALSE);
     if (FAILED(hr)) {
         ERR("failed to get system font collection: 0x%08x.\n", hr);
         return hr;
@@ -465,7 +465,7 @@ static const struct IDWriteGdiInteropVtbl gdiinteropvtbl = {
     gdiinterop_CreateBitmapRenderTarget
 };
 
-HRESULT create_gdiinterop(IDWriteFactory *factory, IDWriteGdiInterop **ret)
+HRESULT create_gdiinterop(IDWriteFactory2 *factory, IDWriteGdiInterop **ret)
 {
     struct gdiinterop *This;
 
