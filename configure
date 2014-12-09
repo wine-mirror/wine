@@ -935,6 +935,7 @@ enable_capi2032
 enable_cards
 enable_cfgmgr32
 enable_clusapi
+enable_combase
 enable_comcat
 enable_comctl32
 enable_comdlg32
@@ -16903,6 +16904,7 @@ wine_fn_config_dll capi2032 enable_capi2032 implib
 wine_fn_config_dll cards enable_cards implib
 wine_fn_config_dll cfgmgr32 enable_cfgmgr32 implib
 wine_fn_config_dll clusapi enable_clusapi implib
+wine_fn_config_dll combase enable_combase
 wine_fn_config_dll comcat enable_comcat
 wine_fn_config_test dlls/comcat/tests comcat_test
 wine_fn_config_dll comctl32 enable_comctl32 implib,po
