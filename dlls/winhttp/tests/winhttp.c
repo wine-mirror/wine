@@ -1812,6 +1812,12 @@ static const char noauthmsg[] =
 "WWW-Authenticate: Basic realm=\"placebo\"\r\n"
 "\r\n";
 
+static const char okauthmsg[] =
+"HTTP/1.1 200 OK\r\n"
+"Server: winetest\r\n"
+"Connection: close\r\n"
+"\r\n";
+
 struct server_info
 {
     HANDLE event;
@@ -1873,7 +1879,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/auth"))
         {
             if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
-                send(c, okmsg, sizeof okmsg - 1, 0);
+                send(c, okauthmsg, sizeof okauthmsg - 1, 0);
             else
                 send(c, noauthmsg, sizeof noauthmsg - 1, 0);
         }
