@@ -255,7 +255,7 @@
 @ stub RoGetMatchingRestrictedErrorInfo
 @ stub RoGetParameterizedTypeInstanceIID
 @ stub RoGetServerActivatableClasses
-@ stub RoInitialize
+@ stdcall RoInitialize(long)
 @ stub RoInspectCapturedStackBackTrace
 @ stub RoInspectThreadErrorInfo
 @ stub RoOriginateError
@@ -272,7 +272,7 @@
 @ stub RoSetErrorReportingFlags
 @ stub RoTransformError
 @ stub RoTransformErrorW
-@ stub RoUninitialize
+@ stdcall RoUninitialize()
 @ stub RoUnregisterForApartmentShutdown
 @ stub SetCleanupFlag
 @ stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo

@@ -204,6 +204,10 @@ my @dll_groups =
   "gdi32",
   "ext-ms-win-gdi-devcaps-l1-1-0",
  ],
+ [
+  "combase",
+  "api-ms-win-core-winrt-l1-1-0",
+ ],
 );
 
 my $update_flags = 0;

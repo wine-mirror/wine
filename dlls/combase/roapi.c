@@ -15,15 +15,16 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include "objbase.h"
 #include "roapi.h"
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winrt);
+WINE_DEFAULT_DEBUG_CHANNEL(combase);
 
 /***********************************************************************
- *      RoInitialize (api-ms-win-core-winrt-l1-1-0.@)
+ *      RoInitialize (combase.@)
  */
 HRESULT WINAPI RoInitialize(RO_INIT_TYPE type)
 {
@@ -38,7 +39,7 @@ HRESULT WINAPI RoInitialize(RO_INIT_TYPE type)
 }
 
 /***********************************************************************
- *      RoUninitialize (api-ms-win-core-winrt-l1-1-0.@)
+ *      RoUninitialize (combase.@)
  */
 void WINAPI RoUninitialize(void)
 {

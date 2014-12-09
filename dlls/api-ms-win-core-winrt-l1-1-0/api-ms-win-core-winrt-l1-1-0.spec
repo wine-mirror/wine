@@ -1,9 +1,9 @@
 @ stub RoActivateInstance
 @ stub RoGetActivationFactory
 @ stub RoGetApartmentIdentifier
-@ stdcall RoInitialize(long)
+@ stdcall RoInitialize(long) combase.RoInitialize
 @ stub RoRegisterActivationFactories
 @ stub RoRegisterForApartmentShutdown
 @ stub RoRevokeActivationFactories
-@ stdcall RoUninitialize()
+@ stdcall RoUninitialize() combase.RoUninitialize
 @ stub RoUnregisterForApartmentShutdown
