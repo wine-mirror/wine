@@ -2314,22 +2314,17 @@ static BOOL receive_response( request_t *request, BOOL async )
             if (!(ret = handle_redirect( request, status ))) break;
 
             /* recurse synchronously */
-            send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE );
-            continue;
+            if ((ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) continue;
         }
         else if (status == HTTP_STATUS_DENIED || status == HTTP_STATUS_PROXY_AUTH_REQ)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_AUTHENTICATION) break;
 
             drain_content( request );
-            if (!handle_authorization( request, status ))
-            {
-                ret = TRUE;
-                break;
-            }
+            if (!handle_authorization( request, status )) break;
+
             /* recurse synchronously */
-            send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE );
-            continue;
+            if ((ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) continue;
         }
         break;
     }
