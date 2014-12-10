@@ -46,6 +46,10 @@ my @dll_groups =
   "msvcp60",
  ],
  [
+  "msvcr120",
+  "msvcr120_app",
+ ],
+ [
   "d3dx9_36",
   "d3dx9_43",
   "d3dx9_42",
