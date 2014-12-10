@@ -5817,14 +5817,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             {
                 /* Undocumented feature: Create sublevels until either the
                  * width or the height is 1. */
-                DWORD min = desc->dwWidth < desc->dwHeight ? desc->dwWidth : desc->dwHeight;
-
-                desc->u2.dwMipMapCount = 0;
-                while (min)
-                {
-                    ++desc->u2.dwMipMapCount;
-                    min >>= 1;
-                }
+                desc->u2.dwMipMapCount = wined3d_log2i(min(desc->dwWidth, desc->dwHeight)) + 1;
             }
         }
         else
