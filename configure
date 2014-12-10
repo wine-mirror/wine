@@ -1097,6 +1097,7 @@ enable_mciqtz32
 enable_mciseq
 enable_mciwave
 enable_mfplat
+enable_mfreadwrite
 enable_mgmtapi
 enable_midimap
 enable_mlang
@@ -17180,6 +17181,7 @@ wine_fn_config_dll mciqtz32 enable_mciqtz32
 wine_fn_config_dll mciseq enable_mciseq
 wine_fn_config_dll mciwave enable_mciwave
 wine_fn_config_dll mfplat enable_mfplat
+wine_fn_config_dll mfreadwrite enable_mfreadwrite
 wine_fn_config_dll mgmtapi enable_mgmtapi
 wine_fn_config_dll midimap enable_midimap
 wine_fn_config_dll mlang enable_mlang clean,implib
