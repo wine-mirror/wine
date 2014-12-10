@@ -47,6 +47,7 @@ PUBLIC_IDL_H_SRCS = \
 	fusion.idl \
 	gameux.idl \
 	hlink.idl \
+	hstring.idl \
 	htiface.idl \
 	htiframe.idl \
 	httprequest.idl \
@@ -618,6 +619,7 @@ SRCDIR_INCLUDES = \
 	winsock.h \
 	winsock2.h \
 	winspool.h \
+	winstring.h \
 	winsvc.h \
 	wintab.h \
 	wintabx.h \
