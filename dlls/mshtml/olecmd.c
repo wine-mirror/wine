@@ -62,6 +62,28 @@ void do_ns_command(HTMLDocument *This, const char *cmd, nsICommandParams *nspara
     nsICommandManager_Release(cmdmgr);
 }
 
+static nsIClipboardCommands *get_clipboard_commands(HTMLDocument *doc)
+{
+    nsIClipboardCommands *clipboard_commands;
+    nsIDocShell *doc_shell;
+    nsresult nsres;
+
+    nsres = get_nsinterface((nsISupports*)doc->window->nswindow, &IID_nsIDocShell, (void**)&doc_shell);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDocShell interface\n");
+        return NULL;
+    }
+
+    nsres = nsIDocShell_QueryInterface(doc_shell, &IID_nsIClipboardCommands, (void**)&clipboard_commands);
+    nsIDocShell_Release(doc_shell);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIClipboardCommands interface\n");
+        return NULL;
+    }
+
+    return clipboard_commands;
+}
+
 /**********************************************************
  * IOleCommandTarget implementation
  */
@@ -569,13 +591,26 @@ static HRESULT query_mshtml_paste(HTMLDocument *This, OLECMD *cmd)
 
 static HRESULT exec_mshtml_paste(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
+    nsIClipboardCommands *clipboard_commands;
+    nsresult nsres;
+
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
     if(This->doc_obj->usermode == EDITMODE)
         return editor_exec_paste(This, cmdexecopt, in, out);
 
-    FIXME("Unimplemented in browse mode\n");
-    return E_NOTIMPL;
+    clipboard_commands = get_clipboard_commands(This);
+    if(!clipboard_commands)
+        return E_UNEXPECTED;
+
+    nsres = nsIClipboardCommands_Paste(clipboard_commands);
+    nsIClipboardCommands_Release(clipboard_commands);
+    if(NS_FAILED(nsres)) {
+        ERR("Paste failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT exec_browsemode(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)

@@ -3548,6 +3548,29 @@ interface nsIHTMLEditor : nsISupports
 
 [
     object,
+    uuid(b8100c90-73be-11d2-92a5-00105a1b0d64),
+    local
+]
+interface nsIClipboardCommands : nsISupports
+{
+    nsresult CanCutSelection(bool *_retval);
+    nsresult CanCopySelection(bool *_retval);
+    nsresult CanCopyLinkLocation(bool *_retval);
+    nsresult CanCopyImageLocation(bool *_retval);
+    nsresult CanCopyImageContents(bool *_retval);
+    nsresult CanPaste(bool *_retval);
+    nsresult CutSelection();
+    nsresult CopySelection();
+    nsresult CopyLinkLocation();
+    nsresult CopyImageLocation();
+    nsresult CopyImageContents();
+    nsresult Paste();
+    nsresult SelectAll();
+    nsresult SelectNone();
+}
+
+[
+    object,
     uuid(edb99640-8378-4106-8673-e701a086eb1c),
     local
 ]
