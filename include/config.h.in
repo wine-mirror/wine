@@ -1281,6 +1281,9 @@
 /* Define to 1 if you have the `_vsnprintf' function. */
 #undef HAVE__VSNPRINTF
 
+/* Define to 1 if you have the `__builtin_clz' built-in function. */
+#undef HAVE___BUILTIN_CLZ
+
 /* Define to 1 if you have the `__res_getservers' function. */
 #undef HAVE___RES_GETSERVERS
 

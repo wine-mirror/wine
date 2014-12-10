@@ -16448,6 +16448,39 @@ done
 
 LIBS="$ac_save_LIBS"
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_clz" >&5
+$as_echo_n "checking for __builtin_clz... " >&6; }
+if ${ac_cv_have___builtin_clz+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+return __builtin_clz(1)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_have___builtin_clz="yes"
+else
+  ac_cv_have___builtin_clz="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have___builtin_clz" >&5
+$as_echo "$ac_cv_have___builtin_clz" >&6; }
+if test "$ac_cv_have___builtin_clz" = "yes"
+then
+
+$as_echo "#define HAVE___BUILTIN_CLZ 1" >>confdefs.h
+
+fi
+
 
 case $host_cpu in
   *i[3456789]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __i386__" >&5

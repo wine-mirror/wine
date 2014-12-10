@@ -3929,8 +3929,12 @@ const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions =
     wined3d_ffp_vertex_program_key_compare,
 };
 
+/* Return the integer base-2 logarithm of x. Undefined for x == 0. */
 UINT wined3d_log2i(UINT32 x)
 {
+#ifdef HAVE___BUILTIN_CLZ
+    return __builtin_clz(x) ^ 0x1f;
+#else
     static const UINT l[] =
     {
         ~0U, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -3953,6 +3957,7 @@ UINT wined3d_log2i(UINT32 x)
     UINT32 i;
 
     return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24 : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
+#endif
 }
 
 const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
