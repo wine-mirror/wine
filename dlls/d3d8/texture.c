@@ -1172,6 +1172,9 @@ HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         surface_flags |= WINED3D_SURFACE_MAPPABLE;
 
+    if (!levels)
+        levels = wined3d_log2i(max(width, height)) + 1;
+
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, surface_flags,
             texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
@@ -1214,6 +1217,9 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         surface_flags |= WINED3D_SURFACE_MAPPABLE;
 
+    if (!levels)
+        levels = wined3d_log2i(edge_length) + 1;
+
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, surface_flags,
             texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
@@ -1251,6 +1257,9 @@ HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *dev
     desc.height = height;
     desc.depth = depth;
     desc.size = 0;
+
+    if (!levels)
+        levels = wined3d_log2i(max(max(width, height), depth)) + 1;
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, 0,
