@@ -28,7 +28,6 @@
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
-#define TABLE_LEN (23)
 
 static const REAL mm_per_inch = 25.4;
 static const REAL point_per_inch = 72.0;
