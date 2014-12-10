@@ -1096,6 +1096,10 @@ static HRESULT WINAPI HTMLDocument_clear(IHTMLDocument2 *iface)
     return S_OK;
 }
 
+static const WCHAR copyW[] =
+    {'c','o','p','y',0};
+static const WCHAR cutW[] =
+    {'c','u','t',0};
 static const WCHAR fontnameW[] =
     {'f','o','n','t','n','a','m','e',0};
 static const WCHAR indentW[] =
@@ -1106,6 +1110,8 @@ static const WCHAR insertunorderedlistW[] =
     {'i','n','s','e','r','t','u','n','o','r','d','e','r','e','d','l','i','s','t',0};
 static const WCHAR outdentW[] =
     {'o','u','t','d','e','n','t',0};
+static const WCHAR pasteW[] =
+    {'p','a','s','t','e',0};
 static const WCHAR respectvisibilityindesignW[] =
     {'r','e','s','p','e','c','t','v','i','s','i','b','i','l','i','t','y','i','n','d','e','s','i','g','n',0};
 
@@ -1113,11 +1119,14 @@ static const struct {
     const WCHAR *name;
     OLECMDID id;
 }command_names[] = {
+    {copyW, IDM_COPY},
+    {cutW, IDM_CUT},
     {fontnameW, IDM_FONTNAME},
     {indentW, IDM_INDENT},
     {insertorderedlistW, IDM_ORDERLIST},
     {insertunorderedlistW, IDM_UNORDERLIST},
     {outdentW, IDM_OUTDENT},
+    {pasteW, IDM_PASTE},
     {respectvisibilityindesignW, IDM_RESPECTVISIBILITY_INDESIGN}
 };
 
