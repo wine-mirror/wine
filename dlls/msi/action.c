@@ -2423,7 +2423,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     sprintfW( buf, fmtW, free.QuadPart / 512 );
                     msi_set_property( package->db, szPrimaryVolumeSpaceAvailable, buf, -1 );
                 }
-                toupperW( primary_folder[0] );
                 msi_set_property( package->db, szPrimaryVolumePath, primary_folder, 2 );
             }
             msi_free( primary_folder );
