@@ -1140,6 +1140,7 @@ enable_msvcm90
 enable_msvcp100
 enable_msvcp110
 enable_msvcp120
+enable_msvcp120_app
 enable_msvcp60
 enable_msvcp70
 enable_msvcp71
@@ -17240,6 +17241,7 @@ wine_fn_config_dll msvcp100 enable_msvcp100
 wine_fn_config_test dlls/msvcp100/tests msvcp100_test
 wine_fn_config_dll msvcp110 enable_msvcp110
 wine_fn_config_dll msvcp120 enable_msvcp120
+wine_fn_config_dll msvcp120_app enable_msvcp120_app
 wine_fn_config_dll msvcp60 enable_msvcp60
 wine_fn_config_test dlls/msvcp60/tests msvcp60_test
 wine_fn_config_dll msvcp70 enable_msvcp70
