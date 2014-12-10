@@ -251,6 +251,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         const D3D10_TEXTURE2D_DESC *desc)
 {
     struct wined3d_resource_desc wined3d_desc;
+    unsigned int levels;
     HRESULT hr;
 
     texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
@@ -300,7 +301,9 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     wined3d_desc.depth = 1;
     wined3d_desc.size = 0;
 
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, desc->MipLevels,
+    levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
+
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, levels,
             0, texture, &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
@@ -308,7 +311,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
             IUnknown_Release(texture->dxgi_surface);
         return hr;
     }
-    texture->desc.MipLevels = wined3d_texture_get_level_count(texture->wined3d_texture);
+    texture->desc.MipLevels = levels;
 
     texture->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(texture->device);
@@ -517,6 +520,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
         const D3D10_TEXTURE3D_DESC *desc)
 {
     struct wined3d_resource_desc wined3d_desc;
+    unsigned int levels;
     HRESULT hr;
 
     texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
@@ -534,13 +538,15 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
     wined3d_desc.depth = desc->Depth;
     wined3d_desc.size = 0;
 
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, desc->MipLevels,
+    levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(max(desc->Width, desc->Height), desc->Depth)) + 1;
+
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, levels,
             0, texture, &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         return hr;
     }
-    texture->desc.MipLevels = wined3d_texture_get_level_count(texture->wined3d_texture);
+    texture->desc.MipLevels = levels;
 
     texture->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(texture->device);
