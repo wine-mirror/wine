@@ -573,13 +573,26 @@ static HRESULT query_mshtml_cut(HTMLDocument *This, OLECMD *cmd)
 
 static HRESULT exec_mshtml_cut(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VARIANT *out)
 {
+    nsIClipboardCommands *clipboard_commands;
+    nsresult nsres;
+
     TRACE("(%p)->(%08x %p %p)\n", This, cmdexecopt, in, out);
 
     if(This->doc_obj->usermode == EDITMODE)
         return editor_exec_cut(This, cmdexecopt, in, out);
 
-    FIXME("Unimplemented in browse mode\n");
-    return E_NOTIMPL;
+    clipboard_commands = get_clipboard_commands(This);
+    if(!clipboard_commands)
+        return E_UNEXPECTED;
+
+    nsres = nsIClipboardCommands_CutSelection(clipboard_commands);
+    nsIClipboardCommands_Release(clipboard_commands);
+    if(NS_FAILED(nsres)) {
+        ERR("Paste failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT query_mshtml_paste(HTMLDocument *This, OLECMD *cmd)
