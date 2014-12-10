@@ -179,7 +179,7 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
 /******************************************************************************
  *           GetTickCount64       (KERNEL32.@)
  */
-ULONGLONG WINAPI GetTickCount64(void)
+ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
 {
     LARGE_INTEGER counter, frequency;
 
@@ -202,7 +202,7 @@ ULONGLONG WINAPI GetTickCount64(void)
  * NOTES
  *  The value returned will wrap around every 2^32 milliseconds.
  */
-DWORD WINAPI GetTickCount(void)
+DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
 {
     return GetTickCount64();
 }
