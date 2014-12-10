@@ -201,7 +201,7 @@ static const event_info_t event_info[] = {
     {loadW,              onloadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_BODY},
     {mousedownW,         onmousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
-        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
     {mousemoveW,         onmousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseoutW,          onmouseoutW,          EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOUT,
