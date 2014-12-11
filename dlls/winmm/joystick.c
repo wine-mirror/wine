@@ -279,11 +279,14 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
 
     if (wID >= MAXJOYSTICK)		return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))		return MMSYSERR_NODRIVER;
-    if (!JOY_Sticks[wID].hCapture)	return JOYERR_NOCANDO;
-
-    KillTimer(JOY_Sticks[wID].hCapture, JOY_Sticks[wID].wTimer);
-    JOY_Sticks[wID].hCapture = 0;
-    JOY_Sticks[wID].wTimer = 0;
+    if (JOY_Sticks[wID].hCapture)
+    {
+        KillTimer(JOY_Sticks[wID].hCapture, JOY_Sticks[wID].wTimer);
+        JOY_Sticks[wID].hCapture = 0;
+        JOY_Sticks[wID].wTimer = 0;
+    }
+    else
+        TRACE("Joystick is not captured, ignoring request.\n");
 
     return JOYERR_NOERROR;
 }
