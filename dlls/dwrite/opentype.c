@@ -591,9 +591,18 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_POSTSCRIP
     OPENTYPE_STRING_POSTSCRIPT_CID_NAME
 };
 
+BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
+{
+    return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
+           (type == DWRITE_FONT_FACE_TYPE_TRUETYPE) ||
+           (type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) ||
+           (type == DWRITE_FONT_FACE_TYPE_RAW_CFF);
+}
+
 HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     /* TODO: Do font validation */
+    DWRITE_FONT_FACE_TYPE face;
     const void *font_data;
     const char* tag;
     void *context;
@@ -604,10 +613,8 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
         return hr;
 
     tag = font_data;
-    *supported = FALSE;
     *file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
-    if (face_type)
-        *face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+    face = DWRITE_FONT_FACE_TYPE_UNKNOWN;
     *font_count = 0;
 
     if (DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]) == MS_TTCF_TAG)
@@ -615,22 +622,24 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
         const TTC_Header_V1 *header = font_data;
         *font_count = GET_BE_DWORD(header->numFonts);
         *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE_COLLECTION;
-        if (face_type)
-            *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION;
-        *supported = TRUE;
+        face = DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION;
     }
     else if (GET_BE_DWORD(*(DWORD*)font_data) == 0x10000)
     {
         *font_count = 1;
         *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
-        if (face_type)
-            *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
-        *supported = TRUE;
+        face = DWRITE_FONT_FACE_TYPE_TRUETYPE;
     }
     else if (DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]) == MS_OTTO_TAG)
     {
         *file_type = DWRITE_FONT_FILE_TYPE_CFF;
+        face = DWRITE_FONT_FACE_TYPE_CFF;
     }
+
+    if (face_type)
+        *face_type = face;
+
+    *supported = is_face_type_supported(face);
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
     return S_OK;

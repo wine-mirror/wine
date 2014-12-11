@@ -726,24 +726,40 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
 }
 
 static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
-    DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files,
+    DWRITE_FONT_FACE_TYPE req_facetype, UINT32 files_number, IDWriteFontFile* const* font_files,
     UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace **font_face)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
+    DWRITE_FONT_FILE_TYPE file_type;
+    DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFileLoader *loader;
     struct fontfacecached *cached;
     struct list *fontfaces;
     IDWriteFontFace2 *face;
+    UINT32 key_size, count;
+    BOOL is_supported;
     const void *key;
-    UINT32 key_size;
     HRESULT hr;
 
-    TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, facetype, files_number, font_files, index, simulations, font_face);
+    TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, req_facetype, files_number, font_files, index, simulations, font_face);
 
     *font_face = NULL;
 
-    if (facetype != DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION && index)
+    if (!is_face_type_supported(req_facetype))
         return E_INVALIDARG;
+
+    if (req_facetype != DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION && index)
+        return E_INVALIDARG;
+
+    /* check actual file/face type */
+    is_supported = FALSE;
+    face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+    hr = IDWriteFontFile_Analyze(*font_files, &is_supported, &file_type, &face_type, &count);
+    if (FAILED(hr))
+        return hr;
+
+    if (!is_supported || (face_type != req_facetype))
+        return E_FAIL;
 
     hr = IDWriteFontFile_GetReferenceKey(*font_files, &key, &key_size);
     if (FAILED(hr))
@@ -796,7 +812,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
         }
     }
 
-    hr = create_fontface(facetype, files_number, font_files, index, simulations, &face);
+    hr = create_fontface(req_facetype, files_number, font_files, index, simulations, &face);
     if (FAILED(hr))
         return hr;
 
