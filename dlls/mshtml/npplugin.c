@@ -639,11 +639,14 @@ static IUnknown *create_activex_object(HTMLInnerWindow *window, nsIDOMHTMLElemen
 static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, INT16 argc, char **argn,
         char **argv, NPSavedData *saved)
 {
+    HTMLPluginContainer *container;
     nsIDOMHTMLElement *nselem;
     HTMLInnerWindow *window;
+    HTMLDOMNode *node;
     IUnknown *obj;
     CLSID clsid;
     NPError err = NPERR_NO_ERROR;
+    HRESULT hres;
 
     TRACE("(%s %p %x %d %p %p %p)\n", debugstr_a(pluginType), instance, mode, argc, argn, argv, saved);
 
@@ -660,22 +663,32 @@ static NPError CDECL NPP_New(NPMIMEType pluginType, NPP instance, UINT16 mode, I
         return NPERR_GENERIC_ERROR;
     }
 
-    obj = create_activex_object(window, nselem, &clsid);
-    if(obj) {
-        PluginHost *host;
-        HRESULT hres;
+    hres = get_node(window->doc, (nsIDOMNode*)nselem, TRUE, &node);
+    nsIDOMHTMLElement_Release(nselem);
+    if(FAILED(hres))
+        return NPERR_GENERIC_ERROR;
 
-        hres = create_plugin_host(window->doc, (nsIDOMElement*)nselem, obj, &clsid, &host);
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_HTMLPluginContainer,
+            (void**)&container);
+    node_release(node);
+    if(FAILED(hres)) {
+        ERR("Not an object element\n");
+        return NPERR_GENERIC_ERROR;
+    }
+
+    obj = create_activex_object(window, container->element.nselem, &clsid);
+    if(obj) {
+        hres = create_plugin_host(window->doc, container, obj, &clsid);
         IUnknown_Release(obj);
         if(SUCCEEDED(hres))
-            instance->pdata = host;
+            instance->pdata = container->plugin_host;
         else
             err = NPERR_GENERIC_ERROR;
     }else {
         err = NPERR_GENERIC_ERROR;
     }
 
-    nsIDOMHTMLElement_Release(nselem);
+    node_release(&container->element.node);
     return err;
 }
 

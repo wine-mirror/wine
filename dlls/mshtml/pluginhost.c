@@ -1634,29 +1634,6 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     PHServiceProvider_QueryService
 };
 
-static HRESULT assoc_element(PluginHost *host, HTMLDocumentNode *doc, nsIDOMElement *nselem)
-{
-    HTMLPluginContainer *container_elem;
-    HTMLDOMNode *node;
-    HRESULT hres;
-
-    hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_HTMLPluginContainer,
-            (void**)&container_elem);
-    node_release(node);
-    if(FAILED(hres)) {
-        ERR("Not an object element\n");
-        return hres;
-    }
-
-    container_elem->plugin_host = host;
-    host->element = container_elem;
-    return S_OK;
-}
-
 void detach_plugin_host(PluginHost *host)
 {
     HRESULT hres;
@@ -1717,10 +1694,11 @@ void detach_plugin_host(PluginHost *host)
     host->doc = NULL;
 }
 
-HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknown *unk, const CLSID *clsid, PluginHost **ret)
+HRESULT create_plugin_host(HTMLDocumentNode *doc, HTMLPluginContainer *container, IUnknown *unk, const CLSID *clsid)
 {
     PluginHost *host;
-    HRESULT hres;
+
+    assert(!container->plugin_host);
 
     host = heap_alloc_zero(sizeof(*host));
     if(!host)
@@ -1737,12 +1715,6 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknow
 
     host->ref = 1;
 
-    hres = assoc_element(host, doc, nselem);
-    if(FAILED(hres)) {
-        heap_free(host);
-        return hres;
-    }
-
     IUnknown_AddRef(unk);
     host->plugin_unk = unk;
     host->clsid = *clsid;
@@ -1750,6 +1722,7 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, nsIDOMElement *nselem, IUnknow
     host->doc = doc;
     list_add_tail(&doc->plugin_hosts, &host->entry);
 
-    *ret = host;
+    container->plugin_host = host;
+    host->element = container;
     return S_OK;
 }
