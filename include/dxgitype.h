@@ -21,6 +21,18 @@
 
 #include "dxgiformat.h"
 
+#ifndef D3DCOLORVALUE_DEFINED
+typedef struct _D3DCOLORVALUE {
+    float r;
+    float g;
+    float b;
+    float a;
+} D3DCOLORVALUE;
+#define D3DCOLORVALUE_DEFINED
+#endif
+
+typedef D3DCOLORVALUE DXGI_RGBA;
+
 typedef struct DXGI_SAMPLE_DESC {
     UINT Count;
     UINT Quality;
