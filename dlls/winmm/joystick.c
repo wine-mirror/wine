@@ -299,7 +299,8 @@ MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
     TRACE("(%p, %04X, %d, %d);\n",  hWnd, wID, wPeriod, bChanged);
 
     if (wID >= MAXJOYSTICK || hWnd == 0) return JOYERR_PARMS;
-    if (wPeriod<JOY_PERIOD_MIN || wPeriod>JOY_PERIOD_MAX) return JOYERR_PARMS;
+    if (wPeriod<JOY_PERIOD_MIN) wPeriod = JOY_PERIOD_MIN;
+    else if(wPeriod>JOY_PERIOD_MAX) wPeriod = JOY_PERIOD_MAX;
     if (!JOY_LoadDriver(wID)) return MMSYSERR_NODRIVER;
 
     if (JOY_Sticks[wID].hCapture || !IsWindow(hWnd))
