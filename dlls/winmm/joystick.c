@@ -325,7 +325,7 @@ MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
 {
     TRACE("(%04X, %d);\n", wID, wThreshold);
 
-    if (wID >= MAXJOYSTICK) return MMSYSERR_INVALPARAM;
+    if (wID >= MAXJOYSTICK || wThreshold > 65535) return MMSYSERR_INVALPARAM;
 
     JOY_Sticks[wID].threshold = wThreshold;
 
