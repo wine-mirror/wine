@@ -511,15 +511,14 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
         hr = ID3DXFont_GetGlyphData(font, 0, &texture, &blackbox, NULL);
         if(SUCCEEDED(hr)) check_release((IUnknown*)texture, 1);
         ok(hr == D3D_OK, "ID3DXFont_GetGlyphData returned %#x, expected %#x\n", hr, D3D_OK);
-
+        }
         hr = ID3DXFont_PreloadCharacters(font, 'b', 'a');
         ok(hr == D3D_OK, "ID3DXFont_PreloadCharacters returned %#x, expected %#x\n", hr, D3D_OK);
         hr = ID3DXFont_PreloadGlyphs(font, 1, 0);
-        ok(hr == D3D_OK, "ID3DXFont_PreloadGlyphs returned %#x, expected %#x\n", hr, D3D_OK);
+        todo_wine ok(hr == D3D_OK, "ID3DXFont_PreloadGlyphs returned %#x, expected %#x\n", hr, D3D_OK);
 
         hr = ID3DXFont_PreloadCharacters(font, 'a', 'a');
         ok(hr == D3D_OK, "ID3DXFont_PreloadCharacters returned %#x, expected %#x\n", hr, D3D_OK);
-        }
 
         for(c = 'b'; c <= 'z'; c++) {
             WORD glyph;
@@ -548,7 +547,7 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
         }
 
         hr = ID3DXFont_PreloadCharacters(font, 'a', 'z');
-        todo_wine ok(hr == D3D_OK, "ID3DXFont_PreloadCharacters returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "ID3DXFont_PreloadCharacters returned %#x, expected %#x\n", hr, D3D_OK);
 
         check_release((IUnknown*)font, 0);
     } else skip("Failed to create a ID3DXFont object\n");

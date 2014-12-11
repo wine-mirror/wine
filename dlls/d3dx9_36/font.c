@@ -155,7 +155,7 @@ static HRESULT WINAPI ID3DXFontImpl_GetGlyphData(ID3DXFont *iface, UINT glyph,
 static HRESULT WINAPI ID3DXFontImpl_PreloadCharacters(ID3DXFont *iface, UINT first, UINT last)
 {
     FIXME("iface %p, first %u, last %u stub!\n", iface, first, last);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI ID3DXFontImpl_PreloadGlyphs(ID3DXFont *iface, UINT first, UINT last)
