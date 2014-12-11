@@ -396,6 +396,7 @@ SRCDIR_INCLUDES = \
 	mciavi.h \
 	mcx.h \
 	mediaerr.h \
+	mferror.h \
 	midles.h \
 	minmax.h \
 	mmddk.h \
