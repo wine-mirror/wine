@@ -219,6 +219,7 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 {
     TRACE("(%d, %p);\n", wID, lpInfo);
 
+    if (!lpInfo) return MMSYSERR_INVALPARAM;
     if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
 
@@ -244,6 +245,7 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
 {
     TRACE("(%d, %p);\n", wID, lpInfo);
 
+    if (!lpInfo) return MMSYSERR_INVALPARAM;
     if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
     if (!JOY_LoadDriver(wID))	return MMSYSERR_NODRIVER;
 
