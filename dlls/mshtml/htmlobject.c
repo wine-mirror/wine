@@ -575,8 +575,29 @@ static HRESULT WINAPI HTMLObjectElement2_namedRecordset(IHTMLObjectElement2 *ifa
 static HRESULT WINAPI HTMLObjectElement2_put_classid(IHTMLObjectElement2 *iface, BSTR v)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    static const WCHAR classidW[] = {'c','l','a','s','s','i','d',0};
+
+    FIXME("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+
+    hres = elem_string_attr_setter(&This->plugin_container.element, classidW, v);
+    if(FAILED(hres))
+        return hres;
+
+    if(This->plugin_container.plugin_host) {
+        FIXME("Host already asociated.\n");
+        return E_NOTIMPL;
+    }
+
+    /*
+     * NOTE:
+     * If the element is not yet in DOM tree, we should embed it as soon as it's added.
+     * However, Gecko for some reason decides not to create NP plugin in this case,
+     * so this won't work.
+     */
+
+    return create_plugin_host(This->plugin_container.element.node.doc, &This->plugin_container);
 }
 
 static HRESULT WINAPI HTMLObjectElement2_get_classid(IHTMLObjectElement2 *iface, BSTR *p)
