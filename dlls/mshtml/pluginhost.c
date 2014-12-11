@@ -182,7 +182,7 @@ static void load_plugin(PluginHost *host)
     FIXME("No IPersistPropertyBag iface\n");
 }
 
-static void activate_plugin(PluginHost *host)
+static void initialize_plugin_object(PluginHost *host)
 {
     IClientSecurity *client_security;
     IQuickActivate *quick_activate;
@@ -191,11 +191,7 @@ static void activate_plugin(PluginHost *host)
     IViewObjectEx *view_obj;
     IDispatchEx *dispex;
     IDispatch *disp;
-    RECT rect;
     HRESULT hres;
-
-    if(!host->plugin_unk)
-        return;
 
     /* Note native calls QI on plugin for an undocumented IID and CLSID_HTMLDocument */
 
@@ -281,6 +277,13 @@ static void activate_plugin(PluginHost *host)
         FIXME("Use IOleCommandTarget\n");
         IOleCommandTarget_Release(cmdtrg);
     }
+}
+
+static void embed_plugin_object(PluginHost *host)
+{
+    IOleObject *ole_obj;
+    RECT rect;
+    HRESULT hres;
 
     hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleObject, (void**)&ole_obj);
     if(FAILED(hres)) {
@@ -288,13 +291,11 @@ static void activate_plugin(PluginHost *host)
         return;
     }
 
-    if(ole_obj) {
-        get_pos_rect(host, &rect);
-        hres = IOleObject_DoVerb(ole_obj, OLEIVERB_INPLACEACTIVATE, NULL, &host->IOleClientSite_iface, 0, host->hwnd, &rect);
-        IOleObject_Release(ole_obj);
-        if(FAILED(hres))
-            WARN("DoVerb failed: %08x\n", hres);
-    }
+    get_pos_rect(host, &rect);
+    hres = IOleObject_DoVerb(ole_obj, OLEIVERB_INPLACEACTIVATE, NULL, &host->IOleClientSite_iface, 0, host->hwnd, &rect);
+    IOleObject_Release(ole_obj);
+    if(FAILED(hres))
+        WARN("DoVerb failed: %08x\n", hres);
 
     if(host->ip_object) {
         HWND hwnd;
@@ -323,7 +324,7 @@ void update_plugin_window(PluginHost *host, HWND hwnd, const RECT *rect)
 
     if(!host->hwnd) {
         host->hwnd = hwnd;
-        activate_plugin(host);
+        embed_plugin_object(host);
     }
 
     if(rect_changed && host->ip_object)
@@ -2103,5 +2104,8 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, HTMLPluginContainer *container
 
     container->plugin_host = host;
     host->element = container;
+
+    initialize_plugin_object(host);
+
     return S_OK;
 }
