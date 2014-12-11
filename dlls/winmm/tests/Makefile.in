@@ -4,6 +4,7 @@ IMPORTS   = winmm user32 advapi32
 C_SRCS = \
 	capture.c \
 	generated.c \
+	joystick.c \
 	mci.c \
 	mcicda.c \
 	midi.c \
