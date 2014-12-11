@@ -22,6 +22,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "mferror.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -35,4 +40,22 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *      MFStartup (mfplat.@)
+ */
+HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
+{
+    FIXME("(%u, %u): stub\n", version, flags);
+    return MF_E_BAD_STARTUP_VERSION;
+}
+
+/***********************************************************************
+ *      MFShutdown (mfplat.@)
+ */
+HRESULT WINAPI MFShutdown(void)
+{
+    FIXME("(): stub\n");
+    return S_OK;
 }

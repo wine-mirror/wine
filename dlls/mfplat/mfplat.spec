@@ -131,8 +131,8 @@
 @ stub MFSerializeMediaTypeToStream
 @ stub MFSerializePresentationDescriptor
 @ stub MFSetSockaddrAny
-@ stub MFShutdown
-@ stub MFStartup
+@ stdcall MFShutdown()
+@ stdcall MFStartup(long long)
 @ stub MFStreamDescriptorProtectMediaType
 @ stub MFTEnum
 @ stub MFTEnumEx
