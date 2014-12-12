@@ -12992,15 +12992,13 @@ static void test_scrollwindowex(void)
 
     ret = ScrollWindowEx(hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
-    todo_wine
     ok(ret == NULLREGION, "got %d\n", ret);
-    ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", TRUE);
     flush_events();
     flush_sequence();
 
     ret = ScrollWindowEx(hwnd, 10, 10, NULL, NULL, NULL, NULL,
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
-    todo_wine
     ok(ret == NULLREGION, "got %d\n", ret);
     ok_sequence(ScrollWindowExSeq, "ScrollWindowEx", TRUE);
     flush_events();
