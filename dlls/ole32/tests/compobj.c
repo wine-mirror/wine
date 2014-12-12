@@ -2110,6 +2110,22 @@ static DWORD CALLBACK release_semaphore_thread( LPVOID arg )
     return 0;
 }
 
+static DWORD CALLBACK send_message_thread(LPVOID arg)
+{
+    HWND hWnd = arg;
+    Sleep(50);
+    SendMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    return 0;
+}
+
+static DWORD CALLBACK post_message_thread(LPVOID arg)
+{
+    HWND hWnd = arg;
+    Sleep(50);
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    return 0;
+}
+
 static void test_CoWaitForMultipleHandles(void)
 {
     static const char cls_name[] = "cowait_test_class";
@@ -2189,6 +2205,32 @@ static void test_CoWaitForMultipleHandles(void)
     ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    /* test PostMessageA/SendMessageA from a different thread */
+
+    index = 0xdeadbeef;
+    thread = CreateThread(NULL, 0, post_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
+    index = 0xdeadbeef;
+    thread = CreateThread(NULL, 0, send_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
 
     ReleaseSemaphore(handles[0], 1, NULL);
     ReleaseSemaphore(handles[1], 1, NULL);
@@ -2271,7 +2313,7 @@ static void test_CoWaitForMultipleHandles(void)
     hr = CoWaitForMultipleHandles(COWAIT_INPUTAVAILABLE, 50, 2, handles, &index);
     ok(hr == RPC_S_CALLPENDING || broken(hr == E_INVALIDARG) || broken(hr == S_OK) /* Win 8 */,
        "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
-    ReleaseSemaphore(handles[1], 1, NULL);
+    if (hr != S_OK) ReleaseSemaphore(handles[1], 1, NULL);
     ok(index == 0 || broken(index == 1) /* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success || broken(success && hr == E_INVALIDARG),
@@ -2279,6 +2321,115 @@ static void test_CoWaitForMultipleHandles(void)
     index = WaitForSingleObject(thread, 200);
     ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(thread);
+
+    /* test behaviour of WM_QUIT (semaphores are still locked) */
+
+    PostMessageA(hWnd, WM_QUIT, 40, 0);
+    memset(&msg, 0, sizeof(msg));
+    success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+    ok(success, "PeekMessageA failed, error %u\n", GetLastError());
+    ok(msg.message == WM_QUIT, "expected msg.message = WM_QUIT, got %u\n", msg.message);
+    ok(msg.wParam == 40, "expected msg.wParam = 40, got %lu\n", msg.wParam);
+    success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+    ok(!success, "PeekMessageA succeeded\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    PostMessageA(hWnd, WM_QUIT, 41, 0);
+    thread = CreateThread(NULL, 0, post_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    todo_wine
+    ok(success || broken(!success) /* Win 2000/XP/8 */, "PeekMessageA failed, error %u\n", GetLastError());
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "PeekMessageA succeeded\n");
+    memset(&msg, 0, sizeof(msg));
+    success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+    todo_wine
+    ok(!success || broken(success) /* Win 2000/XP/8 */, "PeekMessageA succeeded\n");
+    if (success)
+    {
+        ok(msg.message == WM_QUIT, "expected msg.message = WM_QUIT, got %u\n", msg.message);
+        ok(msg.wParam == 41, "expected msg.wParam = 41, got %lu\n", msg.wParam);
+    }
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    PostMessageA(hWnd, WM_QUIT, 42, 0);
+    thread = CreateThread(NULL, 0, send_message_thread, hWnd, 0, &tid);
+    ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+    hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump all WM_DDE_FIRST messages\n");
+    memset(&msg, 0, sizeof(msg));
+    success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+    ok(success, "PeekMessageA failed, error %u\n", GetLastError());
+    ok(msg.message == WM_QUIT, "expected msg.message = WM_QUIT, got %u\n", msg.message);
+    ok(msg.wParam == 42, "expected msg.wParam = 42, got %lu\n", msg.wParam);
+    index = WaitForSingleObject(thread, 200);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
+
+    PostQuitMessage(43);
+    memset(&msg, 0, sizeof(msg));
+    success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+    ok(success || broken(!success) /* Win 8 */, "PeekMessageA failed, error %u\n", GetLastError());
+    if (!success)
+        win_skip("PostQuitMessage didn't queue a WM_QUIT message, skipping tests\n");
+    else
+    {
+        ok(msg.message == WM_QUIT, "expected msg.message = WM_QUIT, got %u\n", msg.message);
+        ok(msg.wParam == 43, "expected msg.wParam = 43, got %lu\n", msg.wParam);
+        success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+        ok(!success, "PeekMessageA succeeded\n");
+
+        index = 0xdeadbeef;
+        PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+        PostQuitMessage(44);
+        thread = CreateThread(NULL, 0, post_message_thread, hWnd, 0, &tid);
+        ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+        hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+        ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+        ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+        success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+        ok(success, "PeekMessageA failed, error %u\n", GetLastError());
+        success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+        todo_wine
+        ok(!success, "PeekMessageA succeeded\n");
+        success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+        todo_wine
+        ok(!success, "CoWaitForMultipleHandles didn't remove WM_QUIT messages\n");
+        index = WaitForSingleObject(thread, 200);
+        ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+        CloseHandle(thread);
+
+        index = 0xdeadbeef;
+        PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+        PostQuitMessage(45);
+        thread = CreateThread(NULL, 0, send_message_thread, hWnd, 0, &tid);
+        ok(thread != NULL, "CreateThread failed, error %u\n", GetLastError());
+        hr = CoWaitForMultipleHandles(0, 100, 2, handles, &index);
+        ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+        ok(index == 0 || broken(index == 0xdeadbeef) /* Win 8 */, "expected index 0, got %u\n", index);
+        success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+        ok(success, "PeekMessageA failed, error %u\n", GetLastError());
+        success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+        todo_wine
+        ok(!success, "PeekMessageA succeeded\n");
+        success = PeekMessageA(&msg, hWnd, WM_QUIT, WM_QUIT, PM_REMOVE);
+        ok(!success, "CoWaitForMultipleHandles didn't remove WM_QUIT messages\n");
+        index = WaitForSingleObject(thread, 200);
+        ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+        CloseHandle(thread);
+    }
 
     CloseHandle(handles[0]);
     CloseHandle(handles[1]);
