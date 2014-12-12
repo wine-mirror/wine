@@ -1925,6 +1925,8 @@ static HRESULT Date_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     switch(flags) {
     case INVOKE_FUNC:
         return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
+    case INVOKE_PROPERTYGET:
+        return dateobj_to_string( (DateInstance*)jsthis->u.jsdisp, r);
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
