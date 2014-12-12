@@ -47,6 +47,7 @@ typedef struct DWRITE_TEXT_METRICS1
     FLOAT heightIncludingTrailingWhitespace;
 } DWRITE_TEXT_METRICS1;
 
+cpp_quote("#ifndef D3DCOLORVALUE_DEFINED")
 typedef struct _D3DCOLORVALUE
 {
     union {
@@ -66,6 +67,8 @@ typedef struct _D3DCOLORVALUE
         FLOAT dvA;
     };
 } D3DCOLORVALUE;
+cpp_quote("#define D3DCOLORVALUE_DEFINED")
+cpp_quote("#endif")
 
 typedef D3DCOLORVALUE DWRITE_COLOR_F;
 
