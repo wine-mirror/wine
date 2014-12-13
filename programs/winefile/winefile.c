@@ -1323,9 +1323,17 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 	if (path)
 	{
-		lstrcpyW(child->path, path);
+		int pathlen = strlenW(path);
+		const WCHAR *npath = path;
 
-		_wsplitpath(path, drv, dir, name, ext);
+		if (path[0] == '"' && path[pathlen - 1] == '"')
+		{
+			npath++;
+			pathlen--;
+		}
+		lstrcpynW(child->path, npath, pathlen + 1);
+
+		_wsplitpath(child->path, drv, dir, name, ext);
 	}
 
 	lstrcpyW(child->filter_pattern, sAsterics);
