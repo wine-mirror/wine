@@ -1945,6 +1945,30 @@ static HRESULT parse_script_expr(const char *expr, VARIANT *res)
     return hres;
 }
 
+static void test_default_value(void)
+{
+    DISPPARAMS dp = {0};
+    IDispatch *disp;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = parse_script_expr("new Date()", &v);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK || broken(hres == 0x8000ffff), "Invoke failed: %08x\n", hres);
+    if(hres == S_OK)
+    {
+        ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    }
+
+    VariantClear(&v);
+    IDispatch_Release(disp);
+}
+
 static void test_script_exprs(void)
 {
     VARIANT v;
@@ -1987,6 +2011,8 @@ static void test_script_exprs(void)
     ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
     CHECK_CALLED(global_success_d);
     CHECK_CALLED(global_success_i);
+
+    test_default_value();
 
     testing_expr = FALSE;
 }
