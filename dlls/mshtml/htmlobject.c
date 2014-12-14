@@ -766,9 +766,9 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
-    IHTMLObjectElement_tid,
     IHTMLObjectElement2_tid,
+    IHTMLObjectElement_tid,
+    HTMLELEMENT_TIDS,
     0
 };
 static dispex_static_data_t HTMLObjectElement_dispex = {

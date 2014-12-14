@@ -3154,12 +3154,12 @@ static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
 };
 
 static const tid_t HTMLStyle_iface_tids[] = {
-    IHTMLStyle_tid,
-    IHTMLStyle2_tid,
-    IHTMLStyle3_tid,
-    IHTMLStyle4_tid,
-    IHTMLStyle5_tid,
     IHTMLStyle6_tid,
+    IHTMLStyle5_tid,
+    IHTMLStyle4_tid,
+    IHTMLStyle3_tid,
+    IHTMLStyle2_tid,
+    IHTMLStyle_tid,
     0
 };
 static dispex_static_data_t HTMLStyle_dispex = {

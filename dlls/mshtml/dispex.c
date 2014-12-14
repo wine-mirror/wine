@@ -230,9 +230,15 @@ static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, const FUN
     func_info_t *info;
     HRESULT hres;
 
-    if(data->func_cnt && data->funcs[data->func_cnt-1].id == desc->memid) {
-        info = data->funcs+data->func_cnt-1;
-    }else {
+    for(info = data->funcs; info < data->funcs+data->func_cnt; info++) {
+        if(info->id == desc->memid) {
+            if(info->tid != tid)
+                return; /* Duplicated in other interface */
+            break;
+        }
+    }
+
+    if(info == data->funcs+data->func_cnt) {
         if(data->func_cnt == *size)
             data->funcs = heap_realloc_zero(data->funcs, (*size <<= 1)*sizeof(func_info_t));
 
@@ -372,22 +378,6 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
 
     data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
     qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
-
-    for(i = 1; i < data->func_cnt && data->funcs[i-1].id != data->funcs[i].id; i++);
-    if(i < data->func_cnt) {
-        unsigned j = i--;
-
-        /* We have at least one duplicated property. This may happen if more than one
-         * interface implements the same property. We have to remove these duplicated
-         * entries. */
-
-        while(j < data->func_cnt) {
-            while(j+1 < data->func_cnt && data->funcs[j+1].id == data->funcs[j].id)
-                j++;
-            data->funcs[i++] = data->funcs[j++];
-        }
-        data->func_cnt = i;
-    }
 
     data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
     for(i=0; i < data->func_cnt; i++)
