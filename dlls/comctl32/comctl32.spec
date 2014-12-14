@@ -88,6 +88,7 @@
 375 stdcall -noname -private StrCSpnIW(wstr wstr)
 376 stdcall -noname -private IntlStrEqWorkerA(long str str long)
 377 stdcall -noname -private IntlStrEqWorkerW(long wstr wstr long)
+381 stdcall -ordinal LoadIconWithScaleDown(ptr wstr long long ptr)
 382 stdcall -noname SmoothScrollWindow(ptr)
 383 stub -noname DoReaderMode
 384 stdcall -noname SetPathWordBreakProc(ptr long)

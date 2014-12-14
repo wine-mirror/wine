@@ -42,6 +42,7 @@ BOOL WINAPI InitCommonControlsEx (const INITCOMMONCONTROLSEX*);
 LANGID WINAPI GetMUILanguage (VOID);
 VOID WINAPI InitMUILanguage (LANGID uiLang);
 
+HRESULT WINAPI LoadIconWithScaleDown(HINSTANCE, PCWSTR, int, int, HICON *);
 
 #define COMCTL32_VERSION                5  /* dll version */
 

@@ -1637,3 +1637,12 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *pTaskConfig, int *pnBu
     if (pfVerificationFlagChecked) *pfVerificationFlagChecked = TRUE;
     return S_OK;
 }
+
+/***********************************************************************
+ * LoadIconWithScaleDown [COMCTL32.@]
+ */
+HRESULT WINAPI LoadIconWithScaleDown(HINSTANCE hinst, PCWSTR name, int cx, int cy, HICON *icon)
+{
+    FIXME("stub: %p %s %d %d %p\n", hinst, wine_dbgstr_w(name), cx, cy, icon);
+    return E_NOTIMPL;
+}
