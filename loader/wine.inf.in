@@ -468,6 +468,7 @@ HKLM,%CurrentVersion%\Uninstall,,16
 HKCU,%CurrentVersion%\Run,,16
 HKLM,%CurrentVersion%\Run,,16
 HKLM,%CurrentVersionNT%,"InstallDate",0x10003,1273299354
+HKLM,%CurrentVersionNT%,"ProductId",,"12345-oem-0000001-54321"
 HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
 HKLM,%CurrentVersionNT%,"RegisteredOwner",2,""
 HKLM,%CurrentVersionNT%,"SystemRoot",,"%10%"
