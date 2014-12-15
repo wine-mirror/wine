@@ -2,4 +2,5 @@ MODULE    = combase.dll
 IMPORTS   = ole32
 
 C_SRCS = \
-	roapi.c
+	roapi.c \
+	string.c

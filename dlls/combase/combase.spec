@@ -289,11 +289,11 @@
 @ stub WdtpInterfacePointer_UserUnmarshal64
 @ stub WindowsCompareStringOrdinal
 @ stub WindowsConcatString
-@ stub WindowsCreateString
-@ stub WindowsCreateStringReference
-@ stub WindowsDeleteString
+@ stdcall WindowsCreateString(ptr long ptr)
+@ stdcall WindowsCreateStringReference(wstr long ptr ptr)
+@ stdcall WindowsDeleteString(ptr)
 @ stub WindowsDeleteStringBuffer
-@ stub WindowsDuplicateString
+@ stdcall WindowsDuplicateString(ptr ptr)
 @ stub WindowsGetStringLen
 @ stub WindowsGetStringRawBuffer
 @ stub WindowsInspectString

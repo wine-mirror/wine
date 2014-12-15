@@ -8,11 +8,11 @@
 @ stub HSTRING_UserUnmarshal64
 @ stub WindowsCompareStringOrdinal
 @ stub WindowsConcatString
-@ stub WindowsCreateString
-@ stub WindowsCreateStringReference
-@ stub WindowsDeleteString
+@ stdcall WindowsCreateString(ptr long ptr) combase.WindowsCreateString
+@ stdcall WindowsCreateStringReference(wstr long ptr ptr) combase.WindowsCreateStringReference
+@ stdcall WindowsDeleteString(ptr) combase.WindowsDeleteString
 @ stub WindowsDeleteStringBuffer
-@ stub WindowsDuplicateString
+@ stdcall WindowsDuplicateString(ptr ptr) combase.WindowsDuplicateString
 @ stub WindowsGetStringLen
 @ stub WindowsGetStringRawBuffer
 @ stub WindowsInspectString

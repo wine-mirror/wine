@@ -16942,6 +16942,7 @@ wine_fn_config_dll cards enable_cards implib
 wine_fn_config_dll cfgmgr32 enable_cfgmgr32 implib
 wine_fn_config_dll clusapi enable_clusapi implib
 wine_fn_config_dll combase enable_combase
+wine_fn_config_test dlls/combase/tests combase_test
 wine_fn_config_dll comcat enable_comcat
 wine_fn_config_test dlls/comcat/tests comcat_test
 wine_fn_config_dll comctl32 enable_comctl32 implib,po

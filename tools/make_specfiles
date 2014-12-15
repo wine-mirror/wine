@@ -215,6 +215,7 @@ my @dll_groups =
  [
   "combase",
   "api-ms-win-core-winrt-l1-1-0",
+  "api-ms-win-core-winrt-string-l1-1-0",
  ],
 );
 
