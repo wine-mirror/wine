@@ -487,7 +487,12 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
     DWORD returned;
 
     mmtime.wType = TIME_BYTES;
-    rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
+    rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime) - 1);
+    ok(rc==MMSYSERR_ERROR,
+       "waveOutGetPosition(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+
+    mmtime.wType = TIME_BYTES;
+    rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime) + 1);
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType != TIME_BYTES && winetest_debug > 1)

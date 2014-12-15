@@ -2981,8 +2981,11 @@ UINT WINAPI waveOutGetPosition(HWAVEOUT hWaveOut, LPMMTIME lpTime,
 {
     TRACE("(%p, %p, %u)\n", hWaveOut, lpTime, uSize);
 
-    if(!uSize || !lpTime || uSize != sizeof(MMTIME))
+    if(!uSize || !lpTime)
         return MMSYSERR_INVALPARAM;
+
+    if(uSize < sizeof(MMTIME))
+        return MMSYSERR_ERROR;
 
     return WINMM_GetPosition((HWAVE)hWaveOut, lpTime);
 }
@@ -3602,8 +3605,11 @@ UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
 {
     TRACE("(%p, %p, %u)\n", hWaveIn, lpTime, uSize);
 
-    if(!uSize || !lpTime || uSize != sizeof(MMTIME))
+    if(!uSize || !lpTime)
         return MMSYSERR_INVALPARAM;
+
+    if(uSize < sizeof(MMTIME))
+        return MMSYSERR_ERROR;
 
     return WINMM_GetPosition((HWAVE)hWaveIn, lpTime);
 }
