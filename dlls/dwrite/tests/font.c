@@ -23,6 +23,8 @@
 
 #include "windows.h"
 #include "dwrite_1.h"
+#include "initguid.h"
+#include "d2d1.h"
 
 #include "wine/test.h"
 
@@ -377,6 +379,86 @@ static const struct IDWriteFontFileLoaderVtbl resourcefontfileloadervtbl = {
 };
 
 static IDWriteFontFileLoader rloader = { &resourcefontfileloadervtbl };
+
+static D2D1_POINT_2F g_startpoints[2];
+static int g_startpoint_count;
+
+static HRESULT WINAPI test_geometrysink_QueryInterface(ID2D1SimplifiedGeometrySink *iface, REFIID riid, void **ret)
+{
+    if (IsEqualIID(riid, &IID_ID2D1SimplifiedGeometrySink) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ret = iface;
+        ID2D1SimplifiedGeometrySink_AddRef(iface);
+        return S_OK;
+    }
+
+    *ret = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_geometrysink_AddRef(ID2D1SimplifiedGeometrySink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_geometrysink_Release(ID2D1SimplifiedGeometrySink *iface)
+{
+    return 1;
+}
+
+static void WINAPI test_geometrysink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
+{
+    ok(mode == D2D1_FILL_MODE_WINDING, "fill mode %d\n", mode);
+}
+
+static void WINAPI test_geometrysink_SetSegmentFlags(ID2D1SimplifiedGeometrySink *iface, D2D1_PATH_SEGMENT flags)
+{
+    ok(0, "unexpected SetSegmentFlags() - flags %d\n", flags);
+}
+
+static void WINAPI test_geometrysink_BeginFigure(ID2D1SimplifiedGeometrySink *iface,
+    D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
+{
+    ok(figureBegin == D2D1_FIGURE_BEGIN_FILLED, "begin figure %d\n", figureBegin);
+    g_startpoints[g_startpoint_count++] = startPoint;
+}
+
+static void WINAPI test_geometrysink_AddLines(ID2D1SimplifiedGeometrySink *iface,
+    const D2D1_POINT_2F *points, UINT32 count)
+{
+}
+
+static void WINAPI test_geometrysink_AddBeziers(ID2D1SimplifiedGeometrySink *iface,
+    const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+}
+
+static void WINAPI test_geometrysink_EndFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_FIGURE_END figureEnd)
+{
+    ok(figureEnd == D2D1_FIGURE_END_CLOSED, "end figure %d\n", figureEnd);
+}
+
+static HRESULT WINAPI test_geometrysink_Close(ID2D1SimplifiedGeometrySink *iface)
+{
+    ok(0, "unexpected Close()\n");
+    return E_NOTIMPL;
+}
+
+static const ID2D1SimplifiedGeometrySinkVtbl test_geometrysink_vtbl = {
+    test_geometrysink_QueryInterface,
+    test_geometrysink_AddRef,
+    test_geometrysink_Release,
+    test_geometrysink_SetFillMode,
+    test_geometrysink_SetSegmentFlags,
+    test_geometrysink_BeginFigure,
+    test_geometrysink_AddLines,
+    test_geometrysink_AddBeziers,
+    test_geometrysink_EndFigure,
+    test_geometrysink_Close
+};
+
+static ID2D1SimplifiedGeometrySink test_geomsink = { &test_geometrysink_vtbl };
 
 static void test_CreateFontFromLOGFONT(void)
 {
@@ -2740,6 +2822,112 @@ static void test_GetDesignGlyphAdvances(void)
     DeleteFileW(test_fontfile);
 }
 
+static void test_GetGlyphRunOutline(void)
+{
+    DWRITE_GLYPH_OFFSET offsets[2];
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    IDWriteFontFace *face;
+    UINT32 codepoint;
+    FLOAT advances[2];
+    UINT16 glyphs[2];
+    HRESULT hr;
+
+    create_testfontfile(test_fontfile);
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    codepoint = 'A';
+    glyphs[0] = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(face, &codepoint, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyphs[0] > 0, "got %u\n", glyphs[0]);
+    glyphs[1] = glyphs[0];
+
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 2048.0, glyphs, advances, offsets, 1, FALSE, FALSE, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 2048.0, NULL, NULL, offsets, 1, FALSE, FALSE, &test_geomsink);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    advances[0] = 1.0;
+    advances[1] = 0.0;
+
+    offsets[0].advanceOffset = 1.0;
+    offsets[0].ascenderOffset = 1.0;
+    offsets[1].advanceOffset = 0.0;
+    offsets[1].ascenderOffset = 0.0;
+
+    /* default advances, no offsets */
+    memset(g_startpoints, 0, sizeof(g_startpoints));
+    g_startpoint_count = 0;
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 2, FALSE, FALSE, &test_geomsink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
+    if (g_startpoint_count == 2) {
+        /* glyph advance of 500 is applied */
+        ok(g_startpoints[0].x == 229.5 && g_startpoints[0].y == -629.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
+        ok(g_startpoints[1].x == 729.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
+    }
+
+    /* default advances, no offsets, RTL */
+    memset(g_startpoints, 0, sizeof(g_startpoints));
+    g_startpoint_count = 0;
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 2, FALSE, TRUE, &test_geomsink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
+    if (g_startpoint_count == 2) {
+        /* advance is -500 now */
+        ok(g_startpoints[0].x == -270.5 && g_startpoints[0].y == -629.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
+        ok(g_startpoints[1].x == -770.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
+    }
+
+    /* default advances, additional offsets */
+    memset(g_startpoints, 0, sizeof(g_startpoints));
+    g_startpoint_count = 0;
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, offsets, 2, FALSE, FALSE, &test_geomsink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
+    if (g_startpoint_count == 2) {
+        /* offsets applied to first contour */
+        ok(g_startpoints[0].x == 230.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
+        ok(g_startpoints[1].x == 729.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
+    }
+
+    /* default advances, additional offsets, RTL */
+    memset(g_startpoints, 0, sizeof(g_startpoints));
+    g_startpoint_count = 0;
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, offsets, 2, FALSE, TRUE, &test_geomsink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
+    if (g_startpoint_count == 2) {
+        ok(g_startpoints[0].x == -271.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
+        ok(g_startpoints[1].x == -770.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
+    }
+
+    /* custom advances and offsets, offset turns total advance value to zero */
+    memset(g_startpoints, 0, sizeof(g_startpoints));
+    g_startpoint_count = 0;
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, advances, offsets, 2, FALSE, FALSE, &test_geomsink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
+    if (g_startpoint_count == 2) {
+        ok(g_startpoints[0].x == 230.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
+        ok(g_startpoints[1].x == 230.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
+    }
+
+    IDWriteFontFace_Release(face);
+    IDWriteFactory_Release(factory);
+
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2776,6 +2964,7 @@ START_TEST(font)
     test_GetDesignGlyphMetrics();
     test_GetDesignGlyphAdvances();
     test_IsMonospacedFont();
+    test_GetGlyphRunOutline();
 
     IDWriteFactory_Release(factory);
 }

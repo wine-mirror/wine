@@ -27,6 +27,7 @@
 #include <ft2build.h>
 #include FT_CACHE_H
 #include FT_FREETYPE_H
+#include FT_OUTLINE_H
 #endif /* HAVE_FT2BUILD_H */
 
 #include "windef.h"
@@ -65,6 +66,7 @@ MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
+MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FTC_Manager_New);
 MAKE_FUNCPTR(FTC_Manager_Done);
 MAKE_FUNCPTR(FTC_Manager_LookupFace);
@@ -134,6 +136,7 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_New_Memory_Face)
+    LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FTC_Manager_New)
     LOAD_FUNCPTR(FTC_Manager_Done)
     LOAD_FUNCPTR(FTC_Manager_LookupFace)
@@ -225,6 +228,153 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
     return is_monospaced;
 }
 
+static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
+{
+    p->x = v->x / 64.0;
+    p->y = v->y / 64.0;
+}
+
+static HRESULT get_outline_data(const FT_Outline *outline, struct glyph_outline **ret)
+{
+    short i, j, contour = 0;
+    D2D1_POINT_2F *points;
+    UINT16 count = 0;
+    UINT8 *tags;
+    HRESULT hr;
+
+    /* we need all curves in cubic format */
+    for (i = 0; i < outline->n_points; i++) {
+        /* control point */
+        if (!(outline->tags[i] & FT_Curve_Tag_On)) {
+            if (!(outline->tags[i] & FT_Curve_Tag_Cubic)) {
+                count++;
+            }
+        }
+        count++;
+    }
+
+    hr = new_glyph_outline(count, ret);
+    if (FAILED(hr))
+        return hr;
+
+    points = (*ret)->points;
+    tags = (*ret)->tags;
+
+    ft_vector_to_d2d_point(outline->points, points);
+    tags[0] = OUTLINE_POINT_START;
+
+    for (i = 1, j = 1; i < outline->n_points; i++, j++) {
+        /* mark start of new contour */
+        if (tags[j-1] & OUTLINE_POINT_END)
+            tags[j] = OUTLINE_POINT_START;
+        else
+            tags[j] = 0;
+
+        if (outline->tags[i] & FT_Curve_Tag_On) {
+            ft_vector_to_d2d_point(outline->points+i, points+j);
+            tags[j] |= OUTLINE_POINT_LINE;
+        }
+        else {
+            /* third order curve */
+            if (outline->tags[i] & FT_Curve_Tag_Cubic) {
+                /* store 3 points, advance 3 points */
+
+                ft_vector_to_d2d_point(outline->points+i,   points+j);
+                ft_vector_to_d2d_point(outline->points+i+1, points+j+1);
+                ft_vector_to_d2d_point(outline->points+i+2, points+j+2);
+
+                i += 2;
+            }
+            else {
+                FT_Vector vec;
+
+                /* Convert the quadratic Beziers to cubic Beziers.
+                   The parametric eqn for a cubic Bezier is, from PLRM:
+                   r(t) = at^3 + bt^2 + ct + r0
+                   with the control points:
+                   r1 = r0 + c/3
+                   r2 = r1 + (c + b)/3
+                   r3 = r0 + c + b + a
+
+                   A quadratic Bezier has the form:
+                   p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
+
+                   So equating powers of t leads to:
+                   r1 = 2/3 p1 + 1/3 p0
+                   r2 = 2/3 p1 + 1/3 p2
+                   and of course r0 = p0, r3 = p2
+                */
+
+                /* r1 */
+                vec.x = 2 * outline->points[i].x + outline->points[i-1].x;
+                vec.y = 2 * outline->points[i].y + outline->points[i-1].y;
+                ft_vector_to_d2d_point(&vec, points+j);
+                points[j].x /= 3.0;
+                points[j].y /= 3.0;
+
+                /* r2 */
+                vec.x = 2 * outline->points[i].x + outline->points[i+1].x;
+                vec.y = 2 * outline->points[i].y + outline->points[i+1].y;
+                ft_vector_to_d2d_point(&vec, points+j+1);
+                points[j+1].x /= 3.0;
+                points[j+1].y /= 3.0;
+
+                /* r3 */
+                ft_vector_to_d2d_point(outline->points+i+1, points+j+2);
+
+                i++;
+            }
+
+            tags[j] = tags[j+1] = tags[j+2] = OUTLINE_POINT_BEZIER;
+            j += 2;
+        }
+
+        /* mark end point */
+        if (i < outline->n_points && outline->contours[contour] == i) {
+            tags[j] |= OUTLINE_POINT_END;
+            contour++;
+        }
+    }
+
+    return S_OK;
+}
+
+HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, struct glyph_outline **ret)
+{
+    FTC_ScalerRec scaler;
+    HRESULT hr = S_OK;
+    FT_Size size;
+
+    scaler.face_id = fontface;
+    scaler.width  = emSize;
+    scaler.height = emSize;
+    scaler.pixel = 1;
+    scaler.x_res = 0;
+    scaler.y_res = 0;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
+         if (pFT_Load_Glyph(size->face, index, FT_LOAD_DEFAULT) == 0) {
+             FT_Outline *outline = &size->face->glyph->outline;
+             FT_Matrix m;
+
+             m.xx = 1.0 * 0x10000;
+             m.xy = 0;
+             m.yx = 0;
+             m.yy = -1.0 * 0x10000; /* flip Y axis */
+
+             pFT_Outline_Transform(outline, &m);
+
+             hr = get_outline_data(outline, ret);
+             if (hr == S_OK)
+                 (*ret)->advance = size->face->glyph->metrics.horiAdvance >> 6;
+         }
+    }
+    LeaveCriticalSection(&freetype_cs);
+
+    return hr;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -248,6 +398,12 @@ HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 uni
 BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
 {
     return FALSE;
+}
+
+HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, struct glyph_outline **ret)
+{
+    *ret = NULL;
+    return E_NOTIMPL;
 }
 
 #endif /* HAVE_FREETYPE */
