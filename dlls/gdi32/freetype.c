@@ -995,7 +995,6 @@ static void DumpSubstList(void)
 	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
 		  debugstr_w(psub->to.name));
     }
-    return;
 }
 
 static LPWSTR strdupW(LPCWSTR p)
@@ -2215,7 +2214,6 @@ static void DumpFontList(void)
             TRACE("\n");
 	}
     }
-    return;
 }
 
 /***********************************************************
@@ -3011,7 +3009,6 @@ static void update_reg_entries(void)
     if(external_key) RegCloseKey(external_key);
     if(win9x_key) RegCloseKey(win9x_key);
     if(winnt_key) RegCloseKey(winnt_key);
-    return;
 }
 
 static void delete_external_font_keys(void)
@@ -4658,7 +4655,6 @@ static void calc_hash(FONT_DESC *pfd)
     }
     hash ^= !pfd->can_use_bitmap;
     pfd->hash = hash;
-    return;
 }
 
 static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
@@ -5839,7 +5835,6 @@ static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
     pt->y.value = vec->y >> 6;
     pt->y.fract = (vec->y & 0x3f) << 10;
     pt->y.fract |= ((pt->y.fract >> 6) | (pt->y.fract >> 12));
-    return;
 }
 
 /***************************************************
