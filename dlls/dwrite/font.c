@@ -515,7 +515,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface,
 
         /* FIXME: cache outlines */
 
-        hr = freetype_get_glyph_outline(iface, emSize, glyphs[g], &outline);
+        hr = freetype_get_glyph_outline(iface, emSize, glyphs[g], This->simulations, &outline);
         if (FAILED(hr))
             return hr;
 

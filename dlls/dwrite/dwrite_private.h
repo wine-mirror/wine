@@ -149,7 +149,7 @@ extern void release_freetype(void) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2*,UINT16,UINT16,DWRITE_GLYPH_METRICS*) DECLSPEC_HIDDEN;
 extern void freetype_notify_cacheremove(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern BOOL freetype_is_monospaced(IDWriteFontFace2*) DECLSPEC_HIDDEN;
-extern HRESULT freetype_get_glyph_outline(IDWriteFontFace2*,FLOAT,UINT16,struct glyph_outline**) DECLSPEC_HIDDEN;
+extern HRESULT freetype_get_glyph_outline(IDWriteFontFace2*,FLOAT,UINT16,USHORT,struct glyph_outline**) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

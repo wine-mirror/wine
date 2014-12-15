@@ -339,7 +339,7 @@ static HRESULT get_outline_data(const FT_Outline *outline, struct glyph_outline 
     return S_OK;
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, struct glyph_outline **ret)
+HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, USHORT simulations, struct glyph_outline **ret)
 {
     FTC_ScalerRec scaler;
     HRESULT hr = S_OK;
@@ -358,10 +358,10 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
              FT_Outline *outline = &size->face->glyph->outline;
              FT_Matrix m;
 
-             m.xx = 1.0 * 0x10000;
-             m.xy = 0;
+             m.xx = 1 << 16;
+             m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
              m.yx = 0;
-             m.yy = -1.0 * 0x10000; /* flip Y axis */
+             m.yy = -(1 << 16); /* flip Y axis */
 
              pFT_Outline_Transform(outline, &m);
 
@@ -400,7 +400,7 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
     return FALSE;
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, struct glyph_outline **ret)
+HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, USHORT simulations, struct glyph_outline **ret)
 {
     *ret = NULL;
     return E_NOTIMPL;
