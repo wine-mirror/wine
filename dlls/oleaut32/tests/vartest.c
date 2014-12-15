@@ -6051,7 +6051,6 @@ static void test_VarAnd(void)
                 else if (leftvt == VT_I4 || rightvt == VT_I4 ||
                     leftvt == VT_UINT || rightvt == VT_UINT ||
                     leftvt == VT_INT || rightvt == VT_INT ||
-                    leftvt == VT_UINT || rightvt == VT_UINT ||
                     leftvt == VT_R4 || rightvt == VT_R4 ||
                     leftvt == VT_R8 || rightvt == VT_R8 ||
                     leftvt == VT_CY || rightvt == VT_CY ||
