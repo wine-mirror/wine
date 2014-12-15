@@ -296,8 +296,9 @@ BOOL WINAPI HeapQueryInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class
 
 BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size)
 {
-    FIXME("%p %d %p %ld\n", heap, infoclass, info, size );
-    return TRUE;
+    NTSTATUS ret = RtlSetHeapInformation( heap, infoclass, info, size );
+    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
+    return !ret;
 }
 
 /*

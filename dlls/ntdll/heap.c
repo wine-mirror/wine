@@ -2252,3 +2252,12 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE heap, HEAP_INFORMATION_CLASS inf
         return STATUS_INVALID_INFO_CLASS;
     }
 }
+
+/***********************************************************************
+ *           RtlSetHeapInformation    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetHeapInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_class, PVOID info, SIZE_T size)
+{
+    FIXME("%p %d %p %ld stub\n", heap, info_class, info, size);
+    return STATUS_SUCCESS;
+}

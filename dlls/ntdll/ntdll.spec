@@ -847,7 +847,7 @@
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
-# @ stub RtlSetHeapInformation
+@ stdcall RtlSetHeapInformation(long long ptr long)
 @ stub RtlSetInformationAcl
 @ stdcall RtlSetIoCompletionCallback(long ptr long)
 @ stdcall RtlSetLastWin32Error(long)
