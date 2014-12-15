@@ -394,7 +394,7 @@ static void on_remove_app_click(HWND dialog)
     item.mask = LVIF_STATE;
     item.state = LVIS_SELECTED | LVIS_FOCUSED;
     item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-    SendMessageW(listview, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    SendMessageW(listview, LVM_SETITEMSTATE, 0, (LPARAM)&item);
 
     SetFocus(listview);
     SendMessageW(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
