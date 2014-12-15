@@ -453,6 +453,7 @@ static void test_style2(IHTMLStyle2 *style2)
 
 static void test_style3(IHTMLStyle3 *style3)
 {
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -471,6 +472,37 @@ static void test_style3(IHTMLStyle3 *style3)
     ok(hres == S_OK, "get_wordWrap failed: %08x\n", hres);
     ok(!strcmp_wa(str, "break-word"), "get_wordWrap returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLStyle3_get_zoom(style3, &v);
+    ok(hres == S_OK, "get_zoom failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(zoom) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(zoom) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("100%");
+    hres = IHTMLStyle3_put_zoom(style3, v);
+    ok(hres == S_OK, "put_zoom failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLStyle3_get_zoom(style3, &v);
+    ok(hres == S_OK, "get_zoom failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(zoom) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "100%"), "V_BSTR(zoom) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 1;
+    hres = IHTMLStyle3_put_zoom(style3, v);
+    ok(hres == S_OK, "put_zoom failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLStyle3_get_zoom(style3, &v);
+    ok(hres == S_OK, "get_zoom failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(zoom) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "1"), "V_BSTR(zoom) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 }
 
 static void test_style4(IHTMLStyle4 *style4)

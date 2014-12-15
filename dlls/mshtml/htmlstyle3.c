@@ -103,26 +103,46 @@ static HRESULT WINAPI HTMLStyle3_get_layoutFlow(IHTMLStyle3 *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
+static const WCHAR zoomW[] = {'z','o','o','m',0};
+
 static HRESULT WINAPI HTMLStyle3_put_zoom(IHTMLStyle3 *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
+    VARIANT *var;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
     /* zoom property is IE CSS extension that is mostly used as a hack to workaround IE bugs.
      * The value is set to 1 then. We can safely ignore setting zoom to 1. */
-    if(V_VT(&v) == VT_I4 && V_I4(&v) == 1)
-        return S_OK;
+    if(V_VT(&v) != VT_I4 || V_I4(&v) != 1)
+        WARN("stub for %s\n", debugstr_variant(&v));
 
-    FIXME("stub for %s\n", debugstr_variant(&v));
-    return E_NOTIMPL;
+    hres = dispex_get_dprop_ref(&This->dispex, zoomW, TRUE, &var);
+    if(FAILED(hres))
+        return hres;
+
+    return VariantChangeType(var, &v, 0, VT_BSTR);
 }
 
 static HRESULT WINAPI HTMLStyle3_get_zoom(IHTMLStyle3 *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    VARIANT *var;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = dispex_get_dprop_ref(&This->dispex, zoomW, FALSE, &var);
+    if(hres == DISP_E_UNKNOWNNAME) {
+        V_VT(p) = VT_BSTR;
+        V_BSTR(p) = NULL;
+        return S_OK;
+    }
+    if(FAILED(hres))
+        return hres;
+
+    return VariantCopy(p, var);
 }
 
 static HRESULT WINAPI HTMLStyle3_put_wordWrap(IHTMLStyle3 *iface, BSTR v)
