@@ -47,6 +47,11 @@ static inline struct hstring_private *impl_from_HSTRING_HEADER(HSTRING_HEADER *h
    return (struct hstring_private *)header;
 }
 
+static inline struct hstring_private *impl_from_HSTRING_BUFFER(HSTRING_BUFFER buffer)
+{
+   return (struct hstring_private *)buffer;
+}
+
 static BOOL alloc_string(UINT32 len, HSTRING *out)
 {
     struct hstring_private *priv;
@@ -142,6 +147,58 @@ HRESULT WINAPI WindowsDuplicateString(HSTRING str, HSTRING *out)
         return WindowsCreateString(priv->buffer, priv->length, out);
     InterlockedIncrement(&priv->refcount);
     *out = str;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      WindowsPreallocateStringBuffer (combase.@)
+ */
+HRESULT WINAPI WindowsPreallocateStringBuffer(UINT32 len, WCHAR **outptr,
+                                              HSTRING_BUFFER *out)
+{
+    struct hstring_private *priv;
+    HSTRING str;
+    if (outptr == NULL || out == NULL)
+        return E_POINTER;
+    if (len == 0)
+    {
+        *outptr = (LPWSTR)empty;
+        *out = NULL;
+        return S_OK;
+    }
+
+    if (!alloc_string(len, &str))
+        return E_OUTOFMEMORY;
+    priv = impl_from_HSTRING(str);
+    *outptr = priv->buffer;
+    *out = (HSTRING_BUFFER)str;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      WindowsDeleteStringBuffer (combase.@)
+ */
+HRESULT WINAPI WindowsDeleteStringBuffer(HSTRING_BUFFER buf)
+{
+    return WindowsDeleteString((HSTRING)buf);
+}
+
+/***********************************************************************
+ *      WindowsPromoteStringBuffer (combase.@)
+ */
+HRESULT WINAPI WindowsPromoteStringBuffer(HSTRING_BUFFER buf, HSTRING *out)
+{
+    struct hstring_private *priv = impl_from_HSTRING_BUFFER(buf);
+    if (out == NULL)
+        return E_POINTER;
+    if (buf == NULL)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    if (priv->buffer[priv->length] != 0 || priv->reference || priv->refcount != 1)
+        return E_INVALIDARG;
+    *out = (HSTRING)buf;
     return S_OK;
 }
 

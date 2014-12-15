@@ -292,14 +292,14 @@
 @ stdcall WindowsCreateString(ptr long ptr)
 @ stdcall WindowsCreateStringReference(wstr long ptr ptr)
 @ stdcall WindowsDeleteString(ptr)
-@ stub WindowsDeleteStringBuffer
+@ stdcall WindowsDeleteStringBuffer(ptr)
 @ stdcall WindowsDuplicateString(ptr ptr)
 @ stdcall WindowsGetStringLen(ptr)
 @ stdcall WindowsGetStringRawBuffer(ptr ptr)
 @ stub WindowsInspectString
 @ stdcall WindowsIsStringEmpty(ptr)
-@ stub WindowsPreallocateStringBuffer
-@ stub WindowsPromoteStringBuffer
+@ stdcall WindowsPreallocateStringBuffer(long ptr ptr)
+@ stdcall WindowsPromoteStringBuffer(ptr ptr)
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr)
 @ stub WindowsSubstring

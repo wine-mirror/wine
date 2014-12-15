@@ -11,14 +11,14 @@
 @ stdcall WindowsCreateString(ptr long ptr) combase.WindowsCreateString
 @ stdcall WindowsCreateStringReference(wstr long ptr ptr) combase.WindowsCreateStringReference
 @ stdcall WindowsDeleteString(ptr) combase.WindowsDeleteString
-@ stub WindowsDeleteStringBuffer
+@ stdcall WindowsDeleteStringBuffer(ptr) combase.WindowsDeleteStringBuffer
 @ stdcall WindowsDuplicateString(ptr ptr) combase.WindowsDuplicateString
 @ stdcall WindowsGetStringLen(ptr) combase.WindowsGetStringLen
 @ stdcall WindowsGetStringRawBuffer(ptr ptr) combase.WindowsGetStringRawBuffer
 @ stub WindowsInspectString
 @ stdcall WindowsIsStringEmpty(ptr) combase.WindowsIsStringEmpty
-@ stub WindowsPreallocateStringBuffer
-@ stub WindowsPromoteStringBuffer
+@ stdcall WindowsPreallocateStringBuffer(long ptr ptr) combase.WindowsPreallocateStringBuffer
+@ stdcall WindowsPromoteStringBuffer(ptr ptr) combase.WindowsPromoteStringBuffer
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr) combase.WindowsStringHasEmbeddedNull
 @ stub WindowsSubstring

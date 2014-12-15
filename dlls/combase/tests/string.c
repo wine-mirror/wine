@@ -30,10 +30,13 @@
 static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsCreateStringReference)(LPCWSTR, UINT32, HSTRING_HEADER *, HSTRING *);
 static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
+static HRESULT (WINAPI *pWindowsDeleteStringBuffer)(HSTRING_BUFFER);
 static HRESULT (WINAPI *pWindowsDuplicateString)(HSTRING, HSTRING *);
 static UINT32  (WINAPI *pWindowsGetStringLen)(HSTRING);
 static LPCWSTR (WINAPI *pWindowsGetStringRawBuffer)(HSTRING, UINT32 *);
 static BOOL    (WINAPI *pWindowsIsStringEmpty)(HSTRING);
+static HRESULT (WINAPI *pWindowsPreallocateStringBuffer)(UINT32, WCHAR **, HSTRING_BUFFER *);
+static HRESULT (WINAPI *pWindowsPromoteStringBuffer)(HSTRING_BUFFER, HSTRING *);
 static HRESULT (WINAPI *pWindowsStringHasEmbeddedNull)(HSTRING, BOOL *);
 
 #define SET(x) p##x = (void*)GetProcAddress(hmod, #x)
@@ -49,10 +52,13 @@ static BOOL init_functions(void)
     SET(WindowsCreateString);
     SET(WindowsCreateStringReference);
     SET(WindowsDeleteString);
+    SET(WindowsDeleteStringBuffer);
     SET(WindowsDuplicateString);
     SET(WindowsGetStringLen);
     SET(WindowsGetStringRawBuffer);
     SET(WindowsIsStringEmpty);
+    SET(WindowsPreallocateStringBuffer);
+    SET(WindowsPromoteStringBuffer);
     SET(WindowsStringHasEmbeddedNull);
     return TRUE;
 }
@@ -181,6 +187,55 @@ static void test_access(void)
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string ref\n");
 }
 
+static void test_string_buffer(void)
+{
+    /* Initialize ptr to NULL to make sure it actually is set in the first
+     * test below. */
+    HSTRING_BUFFER buf = NULL;
+    WCHAR *ptr = NULL;
+    HSTRING str;
+
+    /* Test creation of an empty buffer */
+    ok(pWindowsPreallocateStringBuffer(0, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
+    ok(buf == NULL, "Empty string buffer isn't a null string\n");
+    ok(ptr != NULL, "Empty string didn't return a buffer pointer\n");
+    ok(pWindowsPromoteStringBuffer(buf, &str) == S_OK, "Failed to promote string buffer\n");
+    ok(str == NULL, "Empty string isn't a null string\n");
+    check_string(str, input_empty_string, 0, FALSE);
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteStringBuffer(NULL) == S_OK, "Failed to delete null string buffer\n");
+
+    /* Test creation and deletion of string buffers */
+    ok(pWindowsPreallocateStringBuffer(6, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
+    ok(pWindowsDeleteStringBuffer(buf) == S_OK, "Failed to delete string buffer\n");
+
+    /* Test creation and promotion of string buffers */
+    ok(pWindowsPreallocateStringBuffer(6, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
+    ok(ptr[6] == '\0', "Preallocated string buffer didn't have null termination\n");
+    memcpy(ptr, input_string, 6 * sizeof(*input_string));
+    ok(pWindowsPromoteStringBuffer(buf, NULL) == E_POINTER, "Incorrect error handling\n");
+    ok(pWindowsPromoteStringBuffer(buf, &str) == S_OK, "Failed to promote string buffer\n");
+    check_string(str, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+
+    /* Test error handling in preallocation */
+    ok(pWindowsPreallocateStringBuffer(6, NULL, &buf) == E_POINTER, "Incorrect error handling\n");
+    ok(pWindowsPreallocateStringBuffer(6, &ptr, NULL) == E_POINTER, "Incorrect error handling\n");
+
+    ok(pWindowsPreallocateStringBuffer(6, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
+    ptr[6] = 'a'; /* Overwrite the buffer's null termination, promotion should fail */
+    ok(pWindowsPromoteStringBuffer(buf, &str) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsDeleteStringBuffer(buf) == S_OK, "Failed to delete string buffer\n");
+
+    /* Test strings with trailing null chars */
+    ok(pWindowsPreallocateStringBuffer(7, &ptr, &buf) == S_OK, "Failed to preallocate string buffer\n");
+    memcpy(ptr, input_string, 7 * sizeof(*input_string));
+    ok(pWindowsPromoteStringBuffer(buf, &str) == S_OK, "Failed to promote string buffer\n");
+    check_string(str, input_string, 7, TRUE);
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+}
+
 START_TEST(string)
 {
     if (!init_functions())
@@ -188,4 +243,5 @@ START_TEST(string)
     test_create_delete();
     test_duplicate();
     test_access();
+    test_string_buffer();
 }
