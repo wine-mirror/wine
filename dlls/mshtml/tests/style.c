@@ -2446,6 +2446,21 @@ static void test_body_style(IHTMLStyle *style)
         win_skip("IHTMLStyle_put_listStyle already failed\n");
     }
 
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_styleFloat(style, &str);
+    ok(hres == S_OK, "get_styleFloat failed: %08x\n", hres);
+    ok(!str, "styleFloat = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("left");
+    hres = IHTMLStyle_put_styleFloat(style, str);
+    ok(hres == S_OK, "put_styleFloat failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_styleFloat(style, &str);
+    ok(hres == S_OK, "get_styleFloat failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "left"), "styleFloat = %s\n", wine_dbgstr_w(str));
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {

@@ -110,6 +110,8 @@ static const WCHAR attrDisplay[] =
     {'d','i','s','p','l','a','y',0};
 static const WCHAR attrFilter[] =
     {'f','i','l','e','t','e','r',0};
+static const WCHAR attrFloat[] =
+    {'f','l','o','a','t',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
 static const WCHAR attrFontSize[] =
@@ -251,6 +253,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrDirection,            DISPID_IHTMLSTYLE2_DIRECTION},
     {attrDisplay,              DISPID_IHTMLSTYLE_DISPLAY},
     {attrFilter,               DISPID_IHTMLSTYLE_FILTER},
+    {attrFloat,                DISPID_IHTMLSTYLE_STYLEFLOAT},
     {attrFontFamily,           DISPID_IHTMLSTYLE_FONTFAMILY},
     {attrFontSize,             DISPID_IHTMLSTYLE_FONTSIZE},
     {attrFontStyle,            DISPID_IHTMLSTYLE_FONTSTYLE},
@@ -299,6 +302,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrWordWrap,             DISPID_IHTMLSTYLE3_WORDWRAP},
     {attrZIndex,               DISPID_IHTMLSTYLE_ZINDEX}
 };
+
+C_ASSERT(sizeof(style_tbl)/sizeof(*style_tbl) == STYLEID_MAX_VALUE);
 
 static const WCHAR valLineThrough[] =
     {'l','i','n','e','-','t','h','r','o','u','g','h',0};
@@ -2132,15 +2137,19 @@ static HRESULT WINAPI HTMLStyle_get_height(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_styleFloat(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_FLOAT, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_styleFloat(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_FLOAT, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_clear(IHTMLStyle *iface, BSTR v)
