@@ -33,6 +33,8 @@ struct hstring_private
     LONG   refcount;
 };
 
+static const WCHAR empty[1];
+
 C_ASSERT(sizeof(struct hstring_private) <= sizeof(HSTRING_HEADER));
 
 static inline struct hstring_private *impl_from_HSTRING(HSTRING string)
@@ -141,4 +143,69 @@ HRESULT WINAPI WindowsDuplicateString(HSTRING str, HSTRING *out)
     InterlockedIncrement(&priv->refcount);
     *out = str;
     return S_OK;
+}
+
+/***********************************************************************
+ *      WindowsGetStringLen (combase.@)
+ */
+UINT32 WINAPI WindowsGetStringLen(HSTRING str)
+{
+    struct hstring_private *priv = impl_from_HSTRING(str);
+    if (str == NULL)
+        return 0;
+    return priv->length;
+}
+
+/***********************************************************************
+ *      WindowsGetStringRawBuffer (combase.@)
+ */
+LPCWSTR WINAPI WindowsGetStringRawBuffer(HSTRING str, UINT32 *len)
+{
+    struct hstring_private *priv = impl_from_HSTRING(str);
+    if (str == NULL)
+    {
+        if (len)
+            *len = 0;
+        return empty;
+    }
+    if (len)
+        *len = priv->length;
+    return priv->buffer;
+}
+
+/***********************************************************************
+ *      WindowsStringHasEmbeddedNull (combase.@)
+ */
+HRESULT WINAPI WindowsStringHasEmbeddedNull(HSTRING str, BOOL *out)
+{
+    UINT32 i;
+    struct hstring_private *priv = impl_from_HSTRING(str);
+    if (out == NULL)
+        return E_INVALIDARG;
+    if (str == NULL)
+    {
+        *out = FALSE;
+        return S_OK;
+    }
+    for (i = 0; i < priv->length; i++)
+    {
+        if (priv->buffer[i] == '\0')
+        {
+            *out = TRUE;
+            return S_OK;
+        }
+    }
+    *out = FALSE;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      WindowsIsStringEmpty (combase.@)
+ */
+BOOL WINAPI WindowsIsStringEmpty(HSTRING str)
+{
+    struct hstring_private *priv = impl_from_HSTRING(str);
+    if (str == NULL)
+        return TRUE;
+    return priv->length == 0;
 }
