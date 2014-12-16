@@ -1972,14 +1972,8 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.trimming.delimiter = 0;
     This->format.trimming.delimiterCount = 0;
     This->format.trimmingsign = NULL;
-
-    if (collection)
-    {
-        This->format.collection = collection;
-        IDWriteFontCollection_AddRef(collection);
-    }
-    else
-        ERR("Collection should always be set\n");
+    This->format.collection = collection;
+    IDWriteFontCollection_AddRef(collection);
 
     *format = (IDWriteTextFormat*)&This->IDWriteTextFormat1_iface;
 
