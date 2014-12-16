@@ -921,18 +921,22 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory2 *iface, WCH
     DWRITE_FONT_STRETCH stretch, FLOAT size, WCHAR const *locale, IDWriteTextFormat **format)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
+    IDWriteFontCollection *syscollection = NULL;
+    HRESULT hr;
+
     TRACE("(%p)->(%s %p %d %d %d %f %s %p)\n", This, debugstr_w(family_name), collection, weight, style, stretch,
         size, debugstr_w(locale), format);
 
-    if (!collection)
-    {
-        HRESULT hr = IDWriteFactory2_GetSystemFontCollection(iface, &collection, FALSE);
-        if (hr != S_OK)
+    if (!collection) {
+        hr = IDWriteFactory2_GetSystemFontCollection(iface, &syscollection, FALSE);
+        if (FAILED(hr))
             return hr;
-        /* Our ref count is 1 too many, since we will add ref in create_textformat */
-        IDWriteFontCollection_Release(This->system_collection);
     }
-    return create_textformat(family_name, collection, weight, style, stretch, size, locale, format);
+
+    hr = create_textformat(family_name, collection ? collection : syscollection, weight, style, stretch, size, locale, format);
+    if (syscollection)
+        IDWriteFontCollection_Release(syscollection);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_CreateTypography(IDWriteFactory2 *iface, IDWriteTypography **typography)
