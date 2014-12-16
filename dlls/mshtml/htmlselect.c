@@ -382,6 +382,7 @@ static HRESULT WINAPI HTMLSelectElement_add(IHTMLSelectElement *iface, IHTMLElem
 
     switch(V_VT(&before)) {
     case VT_EMPTY:
+    case VT_ERROR:
         nsres = nsIWritableVariant_SetAsEmpty(nsvariant);
         break;
     case VT_I2:
