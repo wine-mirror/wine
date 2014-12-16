@@ -5518,6 +5518,7 @@ static void test_get_set_vertex_shader(void)
 {
     IDirect3DVertexShader9 *current_shader = NULL;
     IDirect3DVertexShader9 *shader = NULL;
+    const IDirect3DVertexShader9Vtbl *shader_vtbl;
     IDirect3DDevice9 *device;
     ULONG refcount, i;
     IDirect3D9 *d3d;
@@ -5567,6 +5568,16 @@ static void test_get_set_vertex_shader(void)
     ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
     ok(current_shader == shader, "Got unexpected shader %p, expected %p.\n", current_shader, shader);
     IDirect3DVertexShader9_Release(current_shader);
+
+    /* SetVertexShader() with a bogus shader vtbl */
+    shader_vtbl = shader->lpVtbl;
+    shader->lpVtbl = (IDirect3DVertexShader9Vtbl *)0xdeadbeef;
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    shader->lpVtbl = NULL;
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    shader->lpVtbl = shader_vtbl;
 
     IDirect3DVertexShader9_Release(shader);
     refcount = IDirect3DDevice9_Release(device);
@@ -5640,6 +5651,7 @@ static void test_get_set_pixel_shader(void)
 {
     IDirect3DPixelShader9 *current_shader = NULL;
     IDirect3DPixelShader9 *shader = NULL;
+    const IDirect3DPixelShader9Vtbl *shader_vtbl;
     IDirect3DDevice9 *device;
     ULONG refcount, i;
     IDirect3D9 *d3d;
@@ -5689,6 +5701,16 @@ static void test_get_set_pixel_shader(void)
     ok(refcount == i, "Got unexpected refcount %u, expected %u.\n", refcount, i);
     ok(current_shader == shader, "Got unexpected shader %p, expected %p.\n", current_shader, shader);
     IDirect3DPixelShader9_Release(current_shader);
+
+    /* SetPixelShader() with a bogus shader vtbl */
+    shader_vtbl = shader->lpVtbl;
+    shader->lpVtbl = (IDirect3DPixelShader9Vtbl *)0xdeadbeef;
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    shader->lpVtbl = NULL;
+    hr = IDirect3DDevice9_SetPixelShader(device, shader);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+    shader->lpVtbl = shader_vtbl;
 
     IDirect3DPixelShader9_Release(shader);
     refcount = IDirect3DDevice9_Release(device);

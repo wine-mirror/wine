@@ -167,7 +167,8 @@ struct d3d9_vertexshader *unsafe_impl_from_IDirect3DVertexShader9(IDirect3DVerte
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &d3d9_vertexshader_vtbl);
+    if (iface->lpVtbl != &d3d9_vertexshader_vtbl)
+        WARN("Vertex shader %p with the wrong vtbl %p\n", iface, iface->lpVtbl);
 
     return impl_from_IDirect3DVertexShader9(iface);
 }
@@ -317,7 +318,8 @@ struct d3d9_pixelshader *unsafe_impl_from_IDirect3DPixelShader9(IDirect3DPixelSh
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &d3d9_pixelshader_vtbl);
+    if (iface->lpVtbl != &d3d9_pixelshader_vtbl)
+        WARN("Pixel shader %p with the wrong vtbl %p\n", iface, iface->lpVtbl);
 
     return impl_from_IDirect3DPixelShader9(iface);
 }
