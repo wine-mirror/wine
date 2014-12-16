@@ -1737,8 +1737,27 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilterForMoniker(IFilterGraph2 *ifac
         IMoniker *pMoniker, IBindCtx *pCtx, LPCWSTR lpcwstrFilterName, IBaseFilter **ppFilter)
 {
     IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    HRESULT hr;
+    IBaseFilter* pfilter;
 
-    TRACE("(%p/%p)->(%p %p %s %p): stub !!!\n", This, iface, pMoniker, pCtx, debugstr_w(lpcwstrFilterName), ppFilter);
+    TRACE("(%p/%p)->(%p %p %s %p)\n", This, iface, pMoniker, pCtx, debugstr_w(lpcwstrFilterName), ppFilter);
+
+    hr = IMoniker_BindToObject(pMoniker, pCtx, NULL, &IID_IBaseFilter, (void**)&pfilter);
+    if(FAILED(hr)) {
+        WARN("Unable to bind moniker to filter object (%x)\n", hr);
+        return hr;
+    }
+
+    hr = IFilterGraph2_AddFilter(iface, pfilter, lpcwstrFilterName);
+    if (FAILED(hr)) {
+        WARN("Unable to add filter (%x)\n", hr);
+        IBaseFilter_Release(pfilter);
+        return hr;
+    }
+
+    if(ppFilter)
+        *ppFilter = pfilter;
+    else IBaseFilter_Release(pfilter);
 
     return S_OK;
 }
