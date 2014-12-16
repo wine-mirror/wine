@@ -389,6 +389,7 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
     IUri *uri;
     nsresult nsres;
     HRESULT hres;
+    BOOL use_new_window;
 
     TRACE("(%p)->()\n", This);
 
@@ -404,22 +405,21 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 
     nsAString_Init(&target_str, NULL);
     nsres = nsIDOMHTMLFormElement_GetTarget(This->nsform, &target_str);
-    if(NS_SUCCEEDED(nsres)) {
-        BOOL use_new_window;
+    if(NS_SUCCEEDED(nsres))
         window = get_target_window(this_window, &target_str, &use_new_window);
-        if(use_new_window)
-            FIXME("submit to new window is not supported\n");
-    }
-    nsAString_Finish(&target_str);
-    if(!window)
+
+    if(!window && !use_new_window) {
+        nsAString_Finish(&target_str);
         return S_OK;
+    }
 
     /*
      * FIXME: We currently don't use our submit implementation for sub-windows because
      * load_nsuri can't support post data. We should fix it.
      */
-    if(!window->doc_obj || window->doc_obj->basedoc.window != window) {
+    if(window && (!window->doc_obj || window->doc_obj->basedoc.window != window)) {
         nsres = nsIDOMHTMLFormElement_Submit(This->nsform);
+        nsAString_Finish(&target_str);
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
         if(NS_FAILED(nsres)) {
             ERR("Submit failed: %08x\n", nsres);
@@ -442,13 +442,16 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
     }
     nsAString_Finish(&action_uri_str);
     if(SUCCEEDED(hres)) {
-        window->readystate_locked++;
-        hres = submit_form(window, uri, post_stream);
-        window->readystate_locked--;
+        const PRUnichar *target;
+
+        nsAString_GetData(&target_str, &target);
+        hres = submit_form(window, target, uri, post_stream);
         IUri_Release(uri);
     }
 
-    IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    nsAString_Finish(&target_str);
+    if(window)
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     if(post_stream)
         nsIInputStream_Release(post_stream);
     return hres;

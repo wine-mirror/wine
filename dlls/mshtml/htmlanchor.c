@@ -65,7 +65,7 @@ static HRESULT navigate_anchor_window(HTMLAnchorElement *This, const WCHAR *targ
     if(FAILED(hres))
         return hres;
 
-    hres = navigate_new_window(This->element.node.doc->basedoc.window, uri, target, NULL);
+    hres = navigate_new_window(This->element.node.doc->basedoc.window, uri, target, NULL, NULL);
     IUri_Release(uri);
     return hres;
 }

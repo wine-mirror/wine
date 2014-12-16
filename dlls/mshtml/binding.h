@@ -138,9 +138,9 @@ HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOO
 void prepare_for_binding(HTMLDocument*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
 HRESULT load_uri(HTMLOuterWindow*,IUri*,DWORD) DECLSPEC_HIDDEN;
-HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
+HRESULT navigate_new_window(HTMLOuterWindow*,IUri*,const WCHAR*,request_data_t*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 HRESULT navigate_url(HTMLOuterWindow*,const WCHAR*,IUri*,DWORD) DECLSPEC_HIDDEN;
-HRESULT submit_form(HTMLOuterWindow*,IUri*,nsIInputStream*) DECLSPEC_HIDDEN;
+HRESULT submit_form(HTMLOuterWindow*,const WCHAR*,IUri*,nsIInputStream*) DECLSPEC_HIDDEN;
 
 void init_bscallback(BSCallback*,const BSCallbackVtbl*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,BOOL,nsChannelBSC**) DECLSPEC_HIDDEN;

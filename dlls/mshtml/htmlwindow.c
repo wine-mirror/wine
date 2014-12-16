@@ -967,7 +967,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     if(FAILED(hres))
         return hres;
 
-    hres = navigate_new_window(window, uri, name, pomWindowResult);
+    hres = navigate_new_window(window, uri, name, NULL, pomWindowResult);
     IUri_Release(uri);
     return hres;
 }

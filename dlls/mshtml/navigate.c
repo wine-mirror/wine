@@ -2107,7 +2107,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     return hres;
 }
 
-HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *name, IHTMLWindow2 **ret)
+HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *name, request_data_t *request_data, IHTMLWindow2 **ret)
 {
     IWebBrowser2 *web_browser;
     IHTMLWindow2 *new_window;
@@ -2115,7 +2115,12 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
     nsChannelBSC *bsc;
     HRESULT hres;
 
-    hres = create_channelbsc(NULL, NULL, NULL, 0, FALSE, &bsc);
+    if(request_data)
+        hres = create_channelbsc(NULL, request_data->headers,
+                request_data->post_data, request_data->post_data_len, FALSE,
+                &bsc);
+    else
+        hres = create_channelbsc(NULL, NULL, NULL, 0, FALSE, &bsc);
     if(FAILED(hres))
         return hres;
 
@@ -2322,23 +2327,32 @@ static HRESULT translate_uri(HTMLOuterWindow *window, IUri *orig_uri, BSTR *ret_
     return S_OK;
 }
 
-HRESULT submit_form(HTMLOuterWindow *window, IUri *submit_uri, nsIInputStream *post_stream)
+HRESULT submit_form(HTMLOuterWindow *window, const WCHAR *target, IUri *submit_uri, nsIInputStream *post_stream)
 {
     request_data_t request_data = {NULL};
-    BSTR display_uri;
-    IUri *uri;
     HRESULT hres;
 
     hres = read_post_data_stream(post_stream, TRUE, NULL, &request_data);
     if(FAILED(hres))
         return hres;
 
-    hres = translate_uri(window, submit_uri, &display_uri, &uri);
-    if(SUCCEEDED(hres)) {
-        hres = navigate_uri(window, uri, display_uri, &request_data, BINDING_NAVIGATED|BINDING_SUBMIT);
-        IUri_Release(uri);
-        SysFreeString(display_uri);
-    }
+    if(window) {
+        IUri *uri;
+        BSTR display_uri;
+
+        window->readystate_locked++;
+
+        hres = translate_uri(window, submit_uri, &display_uri, &uri);
+        if(SUCCEEDED(hres)) {
+            hres = navigate_uri(window, uri, display_uri, &request_data, BINDING_NAVIGATED|BINDING_SUBMIT);
+            IUri_Release(uri);
+            SysFreeString(display_uri);
+        }
+
+        window->readystate_locked--;
+    }else
+        hres = navigate_new_window(window, submit_uri, target, &request_data, NULL);
+
     release_request_data(&request_data);
     return hres;
 }
