@@ -831,6 +831,7 @@ static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
     INT nResCode;
     appinfo_t *hIC = NULL;
     HINTERNET hFindNext = NULL;
+    LPWSTR lpszSearchPath = NULL;
 
     TRACE("\n");
 
@@ -846,7 +847,20 @@ static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
     if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
-    if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_LIST, NULL,
+    /* split search path into file and path */
+    if (lpszSearchFile)
+    {
+        LPCWSTR name = lpszSearchFile, p;
+        if ((p = strrchrW( name, '\\' ))) name = p + 1;
+        if ((p = strrchrW( name, '/' ))) name = p + 1;
+        if (name != lpszSearchFile)
+        {
+            lpszSearchPath = heap_strndupW(lpszSearchFile, name - lpszSearchFile);
+            lpszSearchFile = name;
+        }
+    }
+
+    if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_LIST, lpszSearchPath,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
         goto lend;
 
@@ -872,6 +886,8 @@ static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
     }
 
 lend:
+    heap_free(lpszSearchPath);
+
     if (lpwfs->lstnSocket != -1)
     {
         closesocket(lpwfs->lstnSocket);
