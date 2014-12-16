@@ -21,6 +21,7 @@ import "oaidl.idl";
 import "propidl.idl";
 
 interface IEnumWIA_DEV_INFO;
+interface IWiaPropertyStorage;
 interface IWiaItem;
 interface IWiaEventCallback;
 
@@ -98,7 +99,34 @@ interface IWiaDevMgr : IUnknown
 ]
 interface IEnumWIA_DEV_INFO : IUnknown
 {
-    /* fill in */
+  HRESULT Next(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)] IWiaPropertyStorage **rgelt,
+    [out] ULONG *pceltFetched
+  );
+
+  HRESULT Skip(
+    [in]  ULONG celt
+  );
+
+  HRESULT Reset();
+
+  HRESULT Clone(
+    [out] IEnumWIA_DEV_INFO **ppIEnum
+  );
+
+  HRESULT GetCount(
+    [out] ULONG *celt
+  );
+}
+
+[
+    object,
+    uuid(98B5E8A0-29CC-491a-AAC0-E6DB4FDCCEB6)
+]
+interface IWiaPropertyStorage : IUnknown
+{
+    /* FIXME: fill in */
 }
 
 [
