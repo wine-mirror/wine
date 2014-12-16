@@ -1206,7 +1206,9 @@ static INT get_registry_locale_info( struct registry_value *registry_value, LPWS
         {
             if (status == STATUS_BUFFER_OVERFLOW && !buffer)
             {
-                ret = (size - info_size) / sizeof(WCHAR) + 1;
+                ret = (size - info_size) / sizeof(WCHAR);
+                if (!ret || ((WCHAR *)&info->Data)[ret-1])
+                    ret++;
             }
             else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
             {
