@@ -946,7 +946,11 @@ static BOOL CUPS_LoadPrinters(void)
         } else {
             BOOL added_driver = FALSE;
 
-            if (!ppd_dir) ppd_dir = get_ppd_dir();
+            if (!ppd_dir && !(ppd_dir = get_ppd_dir()))
+            {
+                HeapFree( GetProcessHeap(), 0, port );
+                break;
+            }
             ppd = get_ppd_filename( ppd_dir, nameW );
             if (get_cups_ppd( dests[i].name, ppd ))
             {
@@ -1098,7 +1102,11 @@ static BOOL update_driver( HANDLE printer )
     queue_name = get_queue_name( printer, &is_cups );
     if (!queue_name) return FALSE;
 
-    ppd_dir = get_ppd_dir();
+    if (!(ppd_dir = get_ppd_dir()))
+    {
+        HeapFree( GetProcessHeap(), 0, queue_name );
+        return FALSE;
+    }
     ppd = get_ppd_filename( ppd_dir, name );
 
 #ifdef SONAME_LIBCUPS
@@ -1224,7 +1232,7 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
                     sep_file[]    = "<sep file?>";
         BOOL added_driver = FALSE;
 
-        if (!ppd_dir) ppd_dir = get_ppd_dir();
+        if (!ppd_dir && !(ppd_dir = get_ppd_dir())) goto end;
         ppd = get_ppd_filename( ppd_dir, devnameW );
         if (get_fallback_ppd( devname, ppd ))
         {
