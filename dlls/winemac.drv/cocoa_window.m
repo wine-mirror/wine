@@ -195,6 +195,8 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
 @property (retain, nonatomic) NSTimer* liveResizeDisplayTimer;
 
+@property (readonly, copy, nonatomic) NSArray* childWineWindows;
+
     - (void) updateColorSpace;
 
     - (BOOL) becameEligibleParentOrChild;
@@ -834,7 +836,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 // Became non-floating.  If parent of floating children, make that
                 // relationship latent.
                 WineWindow* child;
-                for (child in [[[self childWindows] copy] autorelease])
+                for (child in [self childWineWindows])
                 {
                     if (child.floating)
                         [child becameIneligibleChild];
@@ -1012,7 +1014,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) becameIneligibleParentOrChild
     {
-        NSArray* childWindows = [self childWindows];
+        NSArray* childWindows = [self childWineWindows];
 
         [self becameIneligibleChild];
 
@@ -1020,7 +1022,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         {
             WineWindow* child;
 
-            childWindows = [[childWindows copy] autorelease];
             for (child in childWindows)
             {
                 child.latentParentWindow = self;
@@ -1101,7 +1102,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         // Get our child windows and sort them in the reverse of the desired
         // z-order (back-to-front).
-        origChildren = [self childWindows];
+        origChildren = [self childWineWindows];
         children = [[origChildren mutableCopy] autorelease];
         [children sortWithOptions:NSSortStable
                   usingComparator:^NSComparisonResult(id obj1, id obj2){
@@ -1315,7 +1316,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                     [self setContentMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
                 }
 
-                if (equalSizes && [[self childWindows] count])
+                if (equalSizes && [[self childWineWindows] count])
                 {
                     // If we change the window frame such that the origin moves
                     // but the size doesn't change, then Cocoa moves child
@@ -1609,6 +1610,15 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     {
         if (!self.disabled)
             [super toggleFullScreen:sender];
+    }
+
+    - (NSArray*) childWineWindows
+    {
+        NSArray* childWindows = self.childWindows;
+        NSIndexSet* indexes = [childWindows indexesOfObjectsPassingTest:^BOOL(id child, NSUInteger idx, BOOL *stop){
+            return [child isKindOfClass:[WineWindow class]];
+        }];
+        return [childWindows objectsAtIndexes:indexes];
     }
 
     // We normally use the generic/calibrated RGB color space for the window,
