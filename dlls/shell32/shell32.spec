@@ -24,7 +24,7 @@
   25 stdcall -ordinal ILCombine(ptr ptr)
   26 stdcall -noname ILLoadFromStream(ptr ptr)
   27 stdcall -ordinal ILSaveToStream(ptr ptr)
-  28 stdcall -noname SHILCreateFromPath(ptr ptr ptr) SHILCreateFromPathAW
+  28 stdcall SHILCreateFromPath(ptr ptr ptr) SHILCreateFromPathAW
   29 stdcall -noname PathIsRoot(ptr) PathIsRootAW
   30 stdcall -noname PathBuildRoot(ptr long) PathBuildRootAW
   31 stdcall -noname PathFindExtension(ptr) PathFindExtensionAW
