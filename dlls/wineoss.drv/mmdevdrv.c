@@ -117,7 +117,7 @@ struct ACImpl {
 
     BOOL initted, playing;
     UINT64 written_frames, last_pos_frames;
-    UINT32 period_us, period_frames, bufsize_frames, held_frames, tmp_buffer_frames;
+    UINT32 period_us, period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
     UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     BYTE *local_buffer, *tmp_buffer;
@@ -1393,19 +1393,10 @@ static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
 static void oss_write_data(ACImpl *This)
 {
     ssize_t written_bytes;
-    UINT32 written_frames, in_oss_frames, write_limit, max_period;
-    size_t to_write_frames, to_write_bytes;
+    UINT32 written_frames, in_oss_frames, write_limit, max_period, write_offs_frames, new_frames;
+    size_t to_write_frames, to_write_bytes, advanced;
     audio_buf_info bi;
-    BYTE *buf =
-        This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
-
-    if(This->held_frames == 0)
-        return;
-
-    if(This->lcl_offs_frames + This->held_frames > This->bufsize_frames)
-        to_write_frames = This->bufsize_frames - This->lcl_offs_frames;
-    else
-        to_write_frames = This->held_frames;
+    BYTE *buf;
 
     if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
         WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
@@ -1430,8 +1421,37 @@ static void oss_write_data(ACImpl *This)
     if(write_limit == 0)
         return;
 
+    /*        vvvvvv - in_oss_frames
+     * [--xxxxxxxxxx]
+     *       [xxxxxxxxxx--]
+     *        ^^^^^^^^^^ - held_frames
+     *        ^ - lcl_offs_frames
+     */
+    advanced = This->in_oss_frames - in_oss_frames;
+    if(advanced > This->held_frames)
+        advanced = This->held_frames;
+    This->lcl_offs_frames += advanced;
+    This->lcl_offs_frames %= This->bufsize_frames;
+    This->held_frames -= advanced;
+    This->in_oss_frames = in_oss_frames;
+
+
+    if(This->held_frames == This->in_oss_frames)
+        return;
+
+    write_offs_frames = (This->lcl_offs_frames + This->in_oss_frames) % This->bufsize_frames;
+    new_frames = This->held_frames - This->in_oss_frames;
+
+    if(write_offs_frames + new_frames > This->bufsize_frames)
+        to_write_frames = This->bufsize_frames - write_offs_frames;
+    else
+        to_write_frames = new_frames;
+
     to_write_frames = min(to_write_frames, write_limit);
     to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
+
+
+    buf = This->local_buffer + write_offs_frames * This->fmt->nBlockAlign;
 
     if(This->session->mute)
         silence_buffer(This, buf, to_write_frames);
@@ -1444,19 +1464,17 @@ static void oss_write_data(ACImpl *This)
     }
     written_frames = written_bytes / This->fmt->nBlockAlign;
 
-    This->lcl_offs_frames += written_frames;
-    This->lcl_offs_frames %= This->bufsize_frames;
-    This->held_frames -= written_frames;
+    This->in_oss_frames += written_frames;
 
     if(written_frames < to_write_frames){
         /* OSS buffer probably full */
         return;
     }
 
-    if(This->held_frames && written_frames < write_limit){
+    if(new_frames > written_frames && written_frames < write_limit){
         /* wrapped and have some data back at the start to write */
 
-        to_write_frames = min(write_limit - written_frames, This->held_frames);
+        to_write_frames = min(write_limit - written_frames, new_frames - written_frames);
         to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
         if(This->session->mute)
@@ -1468,10 +1486,7 @@ static void oss_write_data(ACImpl *This)
             return;
         }
         written_frames = written_bytes / This->fmt->nBlockAlign;
-
-        This->lcl_offs_frames += written_frames;
-        This->lcl_offs_frames %= This->bufsize_frames;
-        This->held_frames -= written_frames;
+        This->in_oss_frames += written_frames;
     }
 }
 
@@ -1584,6 +1599,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     }
 
     This->playing = FALSE;
+    This->in_oss_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -1621,6 +1637,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     }
     This->held_frames = 0;
     This->lcl_offs_frames = 0;
+    This->in_oss_frames = 0;
 
     LeaveCriticalSection(&This->lock);
 
@@ -2156,7 +2173,6 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    int delay;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
@@ -2166,18 +2182,9 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     EnterCriticalSection(&This->lock);
 
     if(This->dataflow == eRender){
-        if(!This->playing || !This->held_frames ||
-                ioctl(This->fd, SNDCTL_DSP_GETODELAY, &delay) < 0)
-            delay = 0;
-        else
-            delay /= This->fmt->nBlockAlign;
-        if(This->held_frames + delay >= This->written_frames)
+        *pos = This->written_frames - This->held_frames;
+        if(*pos < This->last_pos_frames)
             *pos = This->last_pos_frames;
-        else{
-            *pos = This->written_frames - This->held_frames - delay;
-            if(*pos < This->last_pos_frames)
-                *pos = This->last_pos_frames;
-        }
     }else if(This->dataflow == eCapture){
         audio_buf_info bi;
         UINT32 held;
@@ -2197,6 +2204,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     This->last_pos_frames = *pos;
 
+    TRACE("returning: %s\n", wine_dbgstr_longlong(*pos));
     if(This->share == AUDCLNT_SHAREMODE_SHARED)
         *pos *= This->fmt->nBlockAlign;
 

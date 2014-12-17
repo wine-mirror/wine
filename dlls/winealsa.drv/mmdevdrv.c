@@ -95,9 +95,11 @@ struct ACImpl {
     LONG ref;
 
     snd_pcm_t *pcm_handle;
-    snd_pcm_uframes_t alsa_bufsize_frames, alsa_period_frames;
+    snd_pcm_uframes_t alsa_bufsize_frames, alsa_period_frames, safe_rewind_frames;
     snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
     snd_pcm_format_t alsa_format;
+
+    LARGE_INTEGER last_period_time;
 
     IMMDevice *parent;
     IUnknown *pUnkFTMarshal;
@@ -121,9 +123,10 @@ struct ACImpl {
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
     UINT32 wri_offs_frames; /* where to write fresh data in local_buffer */
     UINT32 hidden_frames;   /* ALSA reserve to ensure continuous rendering */
+    UINT32 data_in_alsa_frames;
 
     HANDLE timer;
-    BYTE *local_buffer, *tmp_buffer, *remapping_buf;
+    BYTE *local_buffer, *tmp_buffer, *remapping_buf, *silence_buf;
     LONG32 getbuf_last; /* <0 when using tmp_buffer */
 
     CRITICAL_SECTION lock;
@@ -1216,6 +1219,18 @@ static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt)
     return S_OK;
 }
 
+static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
+    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            This->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * This->fmt->nBlockAlign);
+    else
+        memset(buffer, 0, frames * This->fmt->nBlockAlign);
+}
+
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
@@ -1395,7 +1410,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     if((err = snd_pcm_sw_params_set_start_threshold(This->pcm_handle,
                     sw_params, 1)) < 0){
-        WARN("Unable set start threshold to 0: %d (%s)\n", err, snd_strerror(err));
+        WARN("Unable set start threshold to 1: %d (%s)\n", err, snd_strerror(err));
         hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
         goto exit;
     }
@@ -1430,6 +1445,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         This->bufsize_frames -= This->bufsize_frames % This->mmdev_period_frames;
     This->hidden_frames = This->alsa_period_frames + This->mmdev_period_frames +
         MulDiv(fmt->nSamplesPerSec, EXTRA_SAFE_RT, 10000000);
+    /* leave no less than about 1.33ms or 256 bytes of data after a rewind */
+    This->safe_rewind_frames = max(256 / fmt->nBlockAlign, MulDiv(133, fmt->nSamplesPerSec, 100000));
 
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
@@ -1438,22 +1455,27 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         FIXME("ALSA buffer time is too small. Expect underruns. (%lu < %u * 1.2)\n",
                 This->alsa_bufsize_frames, This->mmdev_period_frames);
 
+    This->fmt = clone_format(fmt);
+    if(!This->fmt){
+        hr = E_OUTOFMEMORY;
+        goto exit;
+    }
+
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             This->bufsize_frames * fmt->nBlockAlign);
     if(!This->local_buffer){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
-    if (fmt->wBitsPerSample == 8)
-        memset(This->local_buffer, 128, This->bufsize_frames * fmt->nBlockAlign);
-    else
-        memset(This->local_buffer, 0, This->bufsize_frames * fmt->nBlockAlign);
+    silence_buffer(This, This->local_buffer, This->bufsize_frames);
 
-    This->fmt = clone_format(fmt);
-    if(!This->fmt){
+    This->silence_buf = HeapAlloc(GetProcessHeap(), 0,
+            This->alsa_period_frames * This->fmt->nBlockAlign);
+    if(!This->silence_buf){
         hr = E_OUTOFMEMORY;
         goto exit;
     }
+    silence_buffer(This, This->silence_buf, This->alsa_period_frames);
 
     This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
     if(!This->vols){
@@ -1868,7 +1890,7 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
     if(defperiod)
         *defperiod = DefaultPeriod;
     if(minperiod)
-        *minperiod = MinimumPeriod;
+        *minperiod = DefaultPeriod;
 
     return S_OK;
 }
@@ -1950,8 +1972,8 @@ static BYTE *remap_channels(ACImpl *This, BYTE *buf, snd_pcm_uframes_t frames)
     return This->remapping_buf;
 }
 
-static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
-        snd_pcm_uframes_t frames, ACImpl *This, BOOL mute)
+static snd_pcm_sframes_t alsa_write_best_effort(ACImpl *This, BYTE *buf,
+        snd_pcm_uframes_t frames, BOOL mute)
 {
     snd_pcm_sframes_t written;
 
@@ -1965,7 +1987,7 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
 
     buf = remap_channels(This, buf, frames);
 
-    written = snd_pcm_writei(handle, buf, frames);
+    written = snd_pcm_writei(This->pcm_handle, buf, frames);
     if(written < 0){
         int ret;
 
@@ -1976,47 +1998,94 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
         WARN("writei failed, recovering: %ld (%s)\n", written,
                 snd_strerror(written));
 
-        ret = snd_pcm_recover(handle, written, 0);
+        ret = snd_pcm_recover(This->pcm_handle, written, 0);
         if(ret < 0){
             WARN("Could not recover: %d (%s)\n", ret, snd_strerror(ret));
             return ret;
         }
 
-        written = snd_pcm_writei(handle, buf, frames);
+        written = snd_pcm_writei(This->pcm_handle, buf, frames);
     }
 
     return written;
 }
 
-/* The callback and mmdevapi API functions execute concurrently.
- * Shared state & life time after Start:
- * This            constant until _Release
- *->pcm_handle     likewise
- *->fmt            likewise
- *->alsa_format, hidden_frames likewise
- *->local_buffer, bufsize_frames, alsa_bufsize_frames likewise
- *->event          Read Only, even constant until _Release(!)
- *->started        Read Only from cb POV, constant if _Stop kills the cb
+static snd_pcm_sframes_t alsa_write_buffer_wrap(ACImpl *This, BYTE *buf,
+        snd_pcm_uframes_t buflen, snd_pcm_uframes_t offs,
+        snd_pcm_uframes_t to_write)
+{
+    snd_pcm_sframes_t ret = 0;
+
+    while(to_write){
+        snd_pcm_uframes_t chunk;
+        snd_pcm_sframes_t tmp;
+
+        if(offs + to_write > buflen)
+            chunk = buflen - offs;
+        else
+            chunk = to_write;
+
+        tmp = alsa_write_best_effort(This, buf + offs * This->fmt->nBlockAlign, chunk, This->session->mute);
+        if(tmp < 0)
+            return ret;
+        if(!tmp)
+            break;
+
+        ret += tmp;
+        to_write -= tmp;
+        offs += tmp;
+        offs %= buflen;
+    }
+
+    return ret;
+}
+
+static UINT buf_ptr_diff(UINT left, UINT right, UINT bufsize)
+{
+    if(left <= right)
+        return right - left;
+    return bufsize - (left - right);
+}
+
+static UINT data_not_in_alsa(ACImpl *This)
+{
+    UINT32 diff;
+
+    diff = buf_ptr_diff(This->lcl_offs_frames, This->wri_offs_frames, This->bufsize_frames);
+    if(diff)
+        return diff;
+
+    return This->held_frames - This->data_in_alsa_frames;
+}
+/* Here's the buffer setup:
  *
- *->held_frames is the only R/W object.
- *->lcl_offs_frames/wri_offs_frames are written by one side exclusively:
- *  lcl_offs_frames by CaptureClient & write callback
- *  wri_offs_frames by read callback & RenderClient
+ *  vvvvvvvv sent to HW already
+ *          vvvvvvvv in ALSA buffer but rewindable
+ * [dddddddddddddddd] ALSA buffer
+ *         [dddddddddddddddd--------] mmdevapi buffer
+ *          ^^^^^^^^ data_in_alsa_frames
+ *          ^^^^^^^^^^^^^^^^ held_frames
+ *                  ^ lcl_offs_frames
+ *                          ^ wri_offs_frames
+ *
+ * GetCurrentPadding is held_frames
+ *
+ * During period callback, we decrement held_frames, fill ALSA buffer, and move
+ *   lcl_offs forward
+ *
+ * During Stop, we rewind the ALSA buffer
  */
 static void alsa_write_data(ACImpl *This)
 {
-    snd_pcm_sframes_t written, in_alsa;
-    snd_pcm_uframes_t to_write, avail, write_limit, max_period;
+    snd_pcm_sframes_t written;
+    snd_pcm_uframes_t avail, max_copy_frames, data_frames_played;
     int err;
-    BYTE *buf =
-        This->local_buffer + This->lcl_offs_frames * This->fmt->nBlockAlign;
 
     /* this call seems to be required to get an accurate snd_pcm_state() */
     avail = snd_pcm_avail_update(This->pcm_handle);
 
-    if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN ||
-            avail > This->alsa_bufsize_frames){
-        TRACE("XRun state avail %ld, recovering\n", avail);
+    if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN){
+        TRACE("XRun state, recovering\n");
 
         avail = This->alsa_bufsize_frames;
 
@@ -2028,87 +2097,57 @@ static void alsa_write_data(ACImpl *This)
 
         if((err = snd_pcm_prepare(This->pcm_handle)) < 0)
             WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
-    }else
-        TRACE("pad: %ld\n", This->alsa_bufsize_frames - avail);
+    }
 
-    if(This->held_frames == 0)
-        return;
-
-    if(This->lcl_offs_frames + This->held_frames > This->bufsize_frames)
-        to_write = This->bufsize_frames - This->lcl_offs_frames;
-    else
-        to_write = This->held_frames;
-
-    max_period = max(This->mmdev_period_frames, This->alsa_period_frames);
-
-    /* try to keep 3 ALSA periods or 3 MMDevAPI periods in the ALSA buffer and
-     * no more */
-    write_limit = 0;
-    in_alsa = This->alsa_bufsize_frames - avail;
-    while(in_alsa + write_limit < max_period * 3)
-        write_limit += max_period;
-    if(write_limit == 0)
-        return;
-
-    to_write = min(to_write, write_limit);
+    TRACE("avail: %ld\n", avail);
 
     /* Add a lead-in when starting with too few frames to ensure
-     * continuous rendering.  Additional benefit: Force ALSA to start.
-     * GetPosition continues to reflect the speaker position because
-     * snd_pcm_delay includes buffered frames in its total delay
-     * and last_pos_frames prevents moving backwards. */
-    if(!in_alsa && This->held_frames < This->hidden_frames){
-        UINT32 s_frames = This->hidden_frames - This->held_frames;
-        BYTE *silence = HeapAlloc(GetProcessHeap(), 0,
-                s_frames * This->fmt->nBlockAlign);
+     * continuous rendering.  Additional benefit: Force ALSA to start. */
+    if(This->data_in_alsa_frames == 0 && This->held_frames < This->alsa_period_frames)
+        alsa_write_best_effort(This, This->silence_buf, This->alsa_period_frames - This->held_frames, FALSE);
 
-        if(silence){
-            in_alsa = alsa_write_best_effort(This->pcm_handle,
-                silence, s_frames, This, TRUE);
-            TRACE("lead-in %ld\n", in_alsa);
-            HeapFree(GetProcessHeap(), 0, silence);
-            if(in_alsa <= 0)
-                return;
-        }else
-            WARN("Couldn't allocate lead-in, expect underrun\n");
-    }
+    if(This->started)
+        max_copy_frames = data_not_in_alsa(This);
+    else
+        max_copy_frames = 0;
 
-    written = alsa_write_best_effort(This->pcm_handle, buf, to_write, This,
-            This->session->mute);
-    if(written < 0){
-        WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
-        return;
-    }
+    data_frames_played = min(This->data_in_alsa_frames, avail);
+    This->data_in_alsa_frames -= data_frames_played;
 
-    This->lcl_offs_frames += written;
-    This->lcl_offs_frames %= This->bufsize_frames;
-    This->held_frames -= written;
+    if(This->held_frames > data_frames_played){
+        if(This->started)
+            This->held_frames -= data_frames_played;
+    }else
+        This->held_frames = 0;
 
-    if(written < to_write){
-        /* ALSA buffer probably full */
-        return;
-    }
+    while(avail && max_copy_frames){
+        snd_pcm_uframes_t to_write;
 
-    if(This->held_frames && (written < write_limit)){
-        /* wrapped and have some data back at the start to write */
-        written = alsa_write_best_effort(This->pcm_handle, This->local_buffer,
-                min(This->held_frames, write_limit - written), This,
-                This->session->mute);
-        if(written < 0){
-            WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
-            return;
-        }
+        to_write = min(avail, max_copy_frames);
 
+        written = alsa_write_buffer_wrap(This, This->local_buffer,
+                This->bufsize_frames, This->lcl_offs_frames, to_write);
+        if(written <= 0)
+            break;
+
+        avail -= written;
         This->lcl_offs_frames += written;
         This->lcl_offs_frames %= This->bufsize_frames;
-        This->held_frames -= written;
+        This->data_in_alsa_frames += written;
+        max_copy_frames -= written;
     }
+
+    if(This->event)
+        SetEvent(This->event);
 }
 
 static void alsa_read_data(ACImpl *This)
 {
     snd_pcm_sframes_t nread;
     UINT32 pos = This->wri_offs_frames, limit = This->held_frames;
+
+    if(!This->started)
+        goto exit;
 
     /* FIXME: Detect overrun and signal DATA_DISCONTINUITY
      * How to count overrun frames and report them as position increase? */
@@ -2151,6 +2190,10 @@ static void alsa_read_data(ACImpl *This)
     This->wri_offs_frames += nread;
     This->wri_offs_frames %= This->bufsize_frames;
     This->held_frames += nread;
+
+exit:
+    if(This->event)
+        SetEvent(This->event);
 }
 
 static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
@@ -2159,17 +2202,55 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
 
     EnterCriticalSection(&This->lock);
 
-    if(This->started){
-        if(This->dataflow == eRender)
-            alsa_write_data(This);
-        else if(This->dataflow == eCapture)
-            alsa_read_data(This);
-    }
+    QueryPerformanceCounter(&This->last_period_time);
+
+    if(This->dataflow == eRender)
+        alsa_write_data(This);
+    else if(This->dataflow == eCapture)
+        alsa_read_data(This);
 
     LeaveCriticalSection(&This->lock);
+}
 
-    if(This->event)
-        SetEvent(This->event);
+static snd_pcm_uframes_t interp_elapsed_frames(ACImpl *This)
+{
+    LARGE_INTEGER time_freq, current_time, time_diff;
+    QueryPerformanceFrequency(&time_freq);
+    QueryPerformanceCounter(&current_time);
+    time_diff.QuadPart = current_time.QuadPart - This->last_period_time.QuadPart;
+    return MulDiv(time_diff.QuadPart, This->fmt->nSamplesPerSec, time_freq.QuadPart);
+}
+
+static int alsa_rewind_best_effort(ACImpl *This)
+{
+    snd_pcm_uframes_t len, leave;
+
+    /* we can't use snd_pcm_rewindable, some PCM devices crash. so follow
+     * PulseAudio's example and rewind as much data as we believe is in the
+     * buffer, minus 1.33ms for safety. */
+
+    /* amount of data to leave in ALSA buffer */
+    leave = interp_elapsed_frames(This) + This->safe_rewind_frames;
+
+    if(This->held_frames < leave)
+        This->held_frames = 0;
+    else
+        This->held_frames -= leave;
+
+    if(This->data_in_alsa_frames < leave)
+        len = 0;
+    else
+        len = This->data_in_alsa_frames - leave;
+
+    TRACE("rewinding %lu frames, now held %u\n", len, This->held_frames);
+
+    if(len)
+        /* snd_pcm_rewind return value is often broken, assume it succeeded */
+        snd_pcm_rewind(This->pcm_handle, len);
+
+    This->data_in_alsa_frames = 0;
+
+    return len;
 }
 
 static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
@@ -2199,6 +2280,29 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         /* dump any data that might be leftover in the ALSA capture buffer */
         snd_pcm_readi(This->pcm_handle, This->local_buffer,
                 This->bufsize_frames);
+    }else{
+        snd_pcm_sframes_t avail, written;
+        snd_pcm_uframes_t offs;
+
+        avail = snd_pcm_avail_update(This->pcm_handle);
+        avail = min(avail, This->held_frames);
+
+        if(This->wri_offs_frames < This->held_frames)
+            offs = This->bufsize_frames - This->held_frames + This->wri_offs_frames;
+        else
+            offs = This->wri_offs_frames - This->held_frames;
+
+        /* fill it with data */
+        written = alsa_write_buffer_wrap(This, This->local_buffer,
+                This->bufsize_frames, offs, avail);
+
+        if(written > 0){
+            This->lcl_offs_frames = (offs + written) % This->bufsize_frames;
+            This->data_in_alsa_frames = written;
+        }else{
+            This->lcl_offs_frames = offs;
+            This->data_in_alsa_frames = 0;
+        }
     }
 
     if(!This->timer){
@@ -2234,6 +2338,9 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         LeaveCriticalSection(&This->lock);
         return S_FALSE;
     }
+
+    if(This->dataflow == eRender)
+        alsa_rewind_best_effort(This);
 
     This->started = FALSE;
 
@@ -2462,18 +2569,6 @@ static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
     return AudioClient_Release(&This->IAudioClient_iface);
-}
-
-static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
-{
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-            This->fmt->wBitsPerSample == 8)
-        memset(buffer, 128, frames * This->fmt->nBlockAlign);
-    else
-        memset(buffer, 0, frames * This->fmt->nBlockAlign);
 }
 
 static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
@@ -2830,12 +2925,8 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    UINT64 written_frames, position;
-    UINT32 held_frames;
-    int err;
+    UINT64 position;
     snd_pcm_state_t alsa_state;
-    snd_pcm_uframes_t avail_frames;
-    snd_pcm_sframes_t delay_frames;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
@@ -2844,40 +2935,37 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     EnterCriticalSection(&This->lock);
 
-    /* call required to get accurate snd_pcm_state() */
-    avail_frames = snd_pcm_avail_update(This->pcm_handle);
+    /* avail_update required to get accurate snd_pcm_state() */
+    snd_pcm_avail_update(This->pcm_handle);
     alsa_state = snd_pcm_state(This->pcm_handle);
-    written_frames = This->written_frames;
-    held_frames = This->held_frames;
-
-    err = snd_pcm_delay(This->pcm_handle, &delay_frames);
-    if(err < 0){
-        /* old Pulse, shortly after start */
-        WARN("snd_pcm_delay failed in state %u: %d (%s)\n", alsa_state, err, snd_strerror(err));
-    }
 
     if(This->dataflow == eRender){
-        position = written_frames - held_frames; /* maximum */
-        if(!This->started || alsa_state > SND_PCM_STATE_RUNNING)
-            ; /* mmdevapi stopped or ALSA underrun: pretend everything was played */
-        else if(err<0 || delay_frames > position - This->last_pos_frames)
-            /* Pulse bug: past underrun, despite recovery, avail_frames & delay
-             * may be larger than alsa_bufsize_frames, as if cumulating frames. */
-            /* Pulse bug: EIO(-5) shortly after starting: nothing played */
-            position = This->last_pos_frames;
-        else if(delay_frames > 0)
-            position -= delay_frames;
+        position = This->written_frames - This->held_frames;
+
+        if(This->started && alsa_state == SND_PCM_STATE_RUNNING && This->held_frames)
+            /* we should be using snd_pcm_delay here, but it is broken
+             * especially during ALSA device underrun. instead, let's just
+             * interpolate between periods with the system timer. */
+            position += interp_elapsed_frames(This);
+
+        position = min(position, This->written_frames - This->held_frames + This->mmdev_period_frames);
+
+        position = min(position, This->written_frames);
     }else
-        position = written_frames + held_frames;
+        position = This->written_frames + This->held_frames;
 
     /* ensure monotic growth */
-    This->last_pos_frames = position;
+    if(position < This->last_pos_frames)
+        position = This->last_pos_frames;
+    else
+        This->last_pos_frames = position;
+
+    TRACE("frames written: %u, held: %u, state: 0x%x, position: %u\n",
+            (UINT32)(This->written_frames%1000000000), This->held_frames,
+            alsa_state, (UINT32)(position%1000000000));
 
     LeaveCriticalSection(&This->lock);
 
-    TRACE("frames written: %u, held: %u, avail: %ld, delay: %ld state %d, pos: %u\n",
-          (UINT32)(written_frames%1000000000), held_frames,
-          avail_frames, delay_frames, alsa_state, (UINT32)(position%1000000000));
     if(This->share == AUDCLNT_SHAREMODE_SHARED)
         *pos = position * This->fmt->nBlockAlign;
     else

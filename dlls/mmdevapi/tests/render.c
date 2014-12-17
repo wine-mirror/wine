@@ -1020,7 +1020,7 @@ static void test_clock(int share)
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
     ok(pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
     last = pos;
-    if(/*share &&*/ winetest_debug>1) todo_wine
+    if(/*share &&*/ winetest_debug>1)
         ok(pos*1000/freq <= slept*1.1, "Position %u too far after stop %ums\n", (UINT)pos, slept);
 
     hr = IAudioClient_Start(ac); /* #2 */
@@ -1054,7 +1054,7 @@ static void test_clock(int share)
     ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
     /* Prove that Stop must not drop frames (in shared mode). */
     ok(pad ? pos > last : pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
-    if (share && pad > 0 && winetest_debug>1) todo_wine
+    if (share && pad > 0 && winetest_debug>1)
         ok(pos*1000/freq <= slept*1.1, "Position %u too far after playing %ums\n", (UINT)pos, slept);
     /* in exclusive mode, testbot's w7 machines yield pos > sum-pad */
     if(/*share &&*/ winetest_debug>1)
@@ -1133,7 +1133,7 @@ static void test_clock(int share)
     ok(pos >= last, "Position %u vs. last %u\n", (UINT)pos,(UINT)last);
     ok(pcpos > pcpos0, "pcpos should increase\n");
     ok(pos * pwfx->nSamplesPerSec <= sum * freq, "Position %u > written %u\n", (UINT)pos, sum);
-    if (pad > 0 && winetest_debug>1) todo_wine
+    if (pad > 0 && winetest_debug>1)
         ok(pos*1000/freq <= slept*1.1, "Position %u too far after stop %ums\n", (UINT)pos, slept);
     if(winetest_debug>1)
         ok(pos * pwfx->nSamplesPerSec == (sum-pad) * freq,
@@ -1223,7 +1223,7 @@ static void test_clock(int share)
             ok(pos*1000/freq <= slept*1.1, "Position %u too far after %ums\n", (UINT)pos, slept);
             if (pad) /* not in case of underrun */
                 ok((pos-last)*1000/freq >= 90 && 110 >= (pos-last)*1000/freq,
-                   "Position delta %ld not regular\n", (long)(pos-last));
+                   "Position delta %ld not regular: %ld ms\n", (long)(pos-last), (long)((pos-last)*1000/freq));
         }
         last = pos;
 
@@ -1237,7 +1237,7 @@ static void test_clock(int share)
         /* ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE || (hr == S_OK && i==0) without todo_wine */
         ok(hr == S_OK || hr == AUDCLNT_E_BUFFER_TOO_LARGE,
            "GetBuffer large (%u) failed: %08x\n", avail, hr);
-        if(hr == S_OK && i) todo_wine ok(FALSE, "GetBuffer large (%u) at iteration %d\n", avail, i);
+        if(hr == S_OK && i) ok(FALSE, "GetBuffer large (%u) at iteration %d\n", avail, i);
         /* Only the first iteration should allow that large a buffer
          * as prefill was drained during the first 350+100ms sleep.
          * Afterwards, only 100ms of data should find room per iteration. */
