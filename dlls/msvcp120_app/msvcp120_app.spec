@@ -3838,9 +3838,9 @@
 @ stub _Xp_setw
 @ stub _Xp_sqrtx
 @ stub _Xp_subx
-@ stub _Xtime_diff_to_millis
-@ stub _Xtime_diff_to_millis2
-@ cdecl _Xtime_get_ticks() msvcp120._Xtime_get_ticks
+@ cdecl _Xtime_diff_to_millis(ptr) msvcp120._Xtime_diff_to_millis
+@ cdecl _Xtime_diff_to_millis2(ptr ptr) msvcp120._Xtime_diff_to_millis2
+@ cdecl -ret64 _Xtime_get_ticks() msvcp120._Xtime_get_ticks
 # extern _Zero
 @ stub __Wcrtomb_lk
-@ stub xtime_get
+@ cdecl xtime_get(ptr long) msvcp120.xtime_get

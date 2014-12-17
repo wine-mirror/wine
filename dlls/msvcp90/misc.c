@@ -33,6 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 #define SECS_1601_TO_1970 ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
 #define TICKSPERSEC 10000000
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+#define NANOSEC_PER_MILLISEC 1000000
+#define MILLISEC_PER_SEC 1000
 
 struct __Container_proxy;
 
@@ -350,6 +352,15 @@ void __thiscall _Container_base12__Swap_all(
         that->proxy->cont = that;
 }
 
+#if _MSVCP_VER >= 110
+typedef int MSVCRT_long;
+
+/* xtime */
+typedef struct {
+    __time64_t sec;
+    MSVCRT_long nsec;
+} xtime;
+
 /* _Xtime_get_ticks */
 LONGLONG __cdecl _Xtime_get_ticks(void)
 {
@@ -360,6 +371,49 @@ LONGLONG __cdecl _Xtime_get_ticks(void)
     GetSystemTimeAsFileTime(&ft);
     return ((LONGLONG)ft.dwHighDateTime<<32) + ft.dwLowDateTime - TICKS_1601_TO_1970;
 }
+
+/* _xtime_get */
+int __cdecl xtime_get(xtime* t, int unknown)
+{
+    LONGLONG ticks;
+
+    TRACE("(%p)\n", t);
+
+    if(unknown != 1)
+        return 0;
+
+    ticks = _Xtime_get_ticks();
+    t->sec = ticks / TICKSPERSEC;
+    t->nsec = ticks % TICKSPERSEC * 100;
+    return 1;
+}
+
+/* _Xtime_diff_to_millis2 */
+MSVCRT_long __cdecl _Xtime_diff_to_millis2(xtime *t1, xtime *t2)
+{
+    __time64_t diff_sec;
+    MSVCRT_long diff_nsec, ret;
+
+    TRACE("(%p, %p)\n", t1, t2);
+
+    diff_sec = t1->sec - t2->sec;
+    diff_nsec = t1->nsec - t2->nsec;
+    ret = diff_sec * MILLISEC_PER_SEC +
+            (diff_nsec + NANOSEC_PER_MILLISEC - 1) / NANOSEC_PER_MILLISEC;
+    return ret > 0 ? ret : 0;
+}
+
+/* _Xtime_diff_to_millis */
+MSVCRT_long __cdecl _Xtime_diff_to_millis(xtime *t)
+{
+    xtime now;
+
+    TRACE("%p\n", t);
+
+    xtime_get(&now, 1);
+    return _Xtime_diff_to_millis2(t, &now);
+}
+#endif
 
 #if _MSVCP_VER >= 90
 unsigned int __cdecl _Random_device(void)
