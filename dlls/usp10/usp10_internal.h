@@ -169,7 +169,7 @@ typedef struct {
     OUTLINETEXTMETRICW *otm;
     SCRIPT_FONTPROPERTIES sfp;
     BOOL sfnt;
-    CacheGlyphPage *page[0x10];
+    CacheGlyphPage *page[0x11];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
     LPVOID GDEF_Table;
