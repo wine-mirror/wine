@@ -2928,6 +2928,33 @@ static void test_GetGlyphRunOutline(void)
     DeleteFileW(test_fontfile);
 }
 
+static void test_GetEudcFontCollection(void)
+{
+    IDWriteFontCollection *coll, *coll2;
+    IDWriteFactory1 *factory1;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory1, (void**)&factory1);
+    IDWriteFactory_Release(factory);
+    if (hr != S_OK) {
+        win_skip("GetEudcFontCollection() is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFactory1_GetEudcFontCollection(factory1, &coll, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory1_GetEudcFontCollection(factory1, &coll2, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(coll == coll2, "got %p, %p\n", coll, coll2);
+    IDWriteFontCollection_Release(coll);
+    IDWriteFontCollection_Release(coll2);
+
+    IDWriteFactory1_Release(factory1);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2965,6 +2992,7 @@ START_TEST(font)
     test_GetDesignGlyphAdvances();
     test_IsMonospacedFont();
     test_GetGlyphRunOutline();
+    test_GetEudcFontCollection();
 
     IDWriteFactory_Release(factory);
 }

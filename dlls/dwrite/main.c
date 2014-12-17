@@ -453,6 +453,7 @@ struct dwritefactory {
     LONG ref;
 
     IDWriteFontCollection *system_collection;
+    IDWriteFontCollection *eudc_collection;
     IDWriteGdiInterop *gdiinterop;
 
     IDWriteLocalFontFileLoader* localfontfileloader;
@@ -505,6 +506,8 @@ static void release_dwritefactory(struct dwritefactory *factory)
 
     if (factory->system_collection)
         IDWriteFontCollection_Release(factory->system_collection);
+    if (factory->eudc_collection)
+        IDWriteFontCollection_Release(factory->eudc_collection);
     if (factory->gdiinterop)
         release_gdiinterop(factory->gdiinterop);
     heap_free(factory);
@@ -1025,8 +1028,22 @@ static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory2 *ifac
     BOOL check_for_updates)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%p %d): stub\n", This, collection, check_for_updates);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->(%p %d)\n", This, collection, check_for_updates);
+
+    if (check_for_updates)
+        FIXME("checking for eudc updates not implemented\n");
+
+    if (!This->eudc_collection)
+        hr = get_eudc_fontcollection(iface, &This->eudc_collection);
+
+    if (SUCCEEDED(hr))
+        IDWriteFontCollection_AddRef(This->eudc_collection);
+
+    *collection = This->eudc_collection;
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory2 *iface, FLOAT gamma,
@@ -1172,6 +1189,7 @@ static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYP
     factory->ref = 1;
     factory->localfontfileloader = NULL;
     factory->system_collection = NULL;
+    factory->eudc_collection = NULL;
     factory->gdiinterop = NULL;
 
     list_init(&factory->collection_loaders);

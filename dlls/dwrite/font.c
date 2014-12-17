@@ -1968,6 +1968,58 @@ HRESULT get_system_fontcollection(IDWriteFactory2 *factory, IDWriteFontCollectio
     return hr;
 }
 
+static HRESULT WINAPI eudcfontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
+{
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IDWriteFontFileEnumerator) || IsEqualIID(riid, &IID_IUnknown)) {
+        IDWriteFontFileEnumerator_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI eudcfontfileenumerator_AddRef(IDWriteFontFileEnumerator *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI eudcfontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI eudcfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
+{
+    *file = NULL;
+    return E_FAIL;
+}
+
+static HRESULT WINAPI eudcfontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
+{
+    *current = FALSE;
+    return S_OK;
+}
+
+static const struct IDWriteFontFileEnumeratorVtbl eudcfontfileenumeratorvtbl =
+{
+    eudcfontfileenumerator_QueryInterface,
+    eudcfontfileenumerator_AddRef,
+    eudcfontfileenumerator_Release,
+    eudcfontfileenumerator_MoveNext,
+    eudcfontfileenumerator_GetCurrentFontFile
+};
+
+static IDWriteFontFileEnumerator eudc_fontfile_enumerator = { &eudcfontfileenumeratorvtbl };
+
+HRESULT get_eudc_fontcollection(IDWriteFactory2 *factory, IDWriteFontCollection **collection)
+{
+    TRACE("building EUDC font collection for factory %p\n", factory);
+    return create_font_collection(factory, &eudc_fontfile_enumerator, FALSE, collection);
+}
+
 static HRESULT WINAPI dwritefontfile_QueryInterface(IDWriteFontFile *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontfile *This = impl_from_IDWriteFontFile(iface);
