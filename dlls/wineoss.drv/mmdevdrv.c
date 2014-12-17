@@ -1493,19 +1493,10 @@ static void oss_write_data(ACImpl *This)
 static void oss_read_data(ACImpl *This)
 {
     UINT64 pos, readable;
-    audio_buf_info bi;
     ssize_t nread;
-
-    if(ioctl(This->fd, SNDCTL_DSP_GETISPACE, &bi) < 0){
-        WARN("GETISPACE failed: %d (%s)\n", errno, strerror(errno));
-        return;
-    }
 
     pos = (This->held_frames + This->lcl_offs_frames) % This->bufsize_frames;
     readable = (This->bufsize_frames - pos) * This->fmt->nBlockAlign;
-
-    if(bi.bytes < readable)
-        readable = bi.bytes;
 
     nread = read(This->fd, This->local_buffer + pos * This->fmt->nBlockAlign,
             readable);
