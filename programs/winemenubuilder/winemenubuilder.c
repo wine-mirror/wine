@@ -1012,7 +1012,6 @@ static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
     WCHAR *comma;
     WCHAR *executable = NULL;
     int index = 0;
-    char *output_path = NULL;
     HRESULT hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
     extension = strrchrW(szFileName, '.');
@@ -1040,7 +1039,6 @@ static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
 end:
     HeapFree(GetProcessHeap(), 0, icon);
     HeapFree(GetProcessHeap(), 0, executable);
-    HeapFree(GetProcessHeap(), 0, output_path);
     return hr;
 }
 
