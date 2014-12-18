@@ -2106,6 +2106,29 @@ static void test_redirection(void)
         check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_32KEY, is_vista ? 32 : 0 );
         RegCloseKey( key );
     }
+    else
+    {
+        err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0,
+                               KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &key, NULL );
+        ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %u\n", err );
+        check_key_value( key, "Wine\\Winetest", 0, 64 );
+        check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, 64 );
+        dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY );
+        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        check_key_value( key, "Wow6432Node\\Wine\\Winetest", 0, 32 );
+        RegCloseKey( key );
+
+        err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0,
+                               KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &key, NULL );
+        ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %u\n", err );
+        dw = get_key_value( key, "Wine\\Winetest", 0 );
+        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY );
+        todo_wine ok( dw == 32 || broken(dw == 64) /* vista */, "wrong value %u\n", dw );
+        dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY );
+        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        RegCloseKey( key );
+    }
 
     check_key_value( HKEY_LOCAL_MACHINE, "Software\\Wine\\Winetest", 0, ptr_size );
     check_key_value( HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\Winetest", 0, 32 );
