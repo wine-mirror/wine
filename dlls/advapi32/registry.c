@@ -103,7 +103,7 @@ static BOOL is_wow6432node( const UNICODE_STRING *name )
 }
 
 /* open the Wow6432Node subkey of the specified key */
-static HANDLE open_wow6432node( HANDLE key, const UNICODE_STRING *name )
+static HANDLE open_wow6432node( HANDLE key )
 {
     static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
     OBJECT_ATTRIBUTES attr;
@@ -150,7 +150,7 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
             if (force_wow32 && pos)
             {
                 if (is_wow6432node( &str )) force_wow32 = FALSE;
-                else if ((subkey = open_wow6432node( attr->RootDirectory, &str )))
+                else if ((subkey = open_wow6432node( attr->RootDirectory )))
                 {
                     if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
                     attr->RootDirectory = subkey;
@@ -204,7 +204,7 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
         if (force_wow32 && pos)
         {
             if (is_wow6432node( &str )) force_wow32 = FALSE;
-            else if ((subkey = open_wow6432node( attr->RootDirectory, &str )))
+            else if ((subkey = open_wow6432node( attr->RootDirectory )))
             {
                 if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
                 attr->RootDirectory = subkey;
