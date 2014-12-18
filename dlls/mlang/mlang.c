@@ -3064,10 +3064,17 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePage(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    FIXME("(%p)->(%08x %s %u %p %u %p %p %p)\n", This, dwFlags, debugstr_w(lpWideCharStr),
-          cchWideChar, puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
-          pnDetectedCodePages, lpSpecialChar);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%08x %s %p %u %p %p(%u) %s)\n", This, dwFlags, debugstr_w(lpWideCharStr),
+          puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
+          pnDetectedCodePages, pnDetectedCodePages ? *pnDetectedCodePages : 0,
+          debugstr_w(lpSpecialChar));
+
+    if (!puiDetectedCodePages || !pnDetectedCodePages || !*pnDetectedCodePages)
+        return E_INVALIDARG;
+
+    puiDetectedCodePages[0] = CP_UTF8;
+    *pnDetectedCodePages = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePageInIStream(
@@ -3082,10 +3089,17 @@ static HRESULT WINAPI fnIMultiLanguage3_DetectOutboundCodePageInIStream(
 {
     MLang_impl *This = impl_from_IMultiLanguage3( iface );
 
-    FIXME("(%p)->(%08x %p %p %u %p %p %p)\n", This, dwFlags, pStrIn,
+    FIXME("(%p)->(%08x %p %p %u %p %p(%u) %s)\n", This, dwFlags, pStrIn,
           puiPreferredCodePages, nPreferredCodePages, puiDetectedCodePages,
-          pnDetectedCodePages, lpSpecialChar);
-    return E_NOTIMPL;
+          pnDetectedCodePages, pnDetectedCodePages ? *pnDetectedCodePages : 0,
+          debugstr_w(lpSpecialChar));
+
+    if (!puiDetectedCodePages || !pnDetectedCodePages || !*pnDetectedCodePages)
+        return E_INVALIDARG;
+
+    puiDetectedCodePages[0] = CP_UTF8;
+    *pnDetectedCodePages = 1;
+    return S_OK;
 }
 
 static const IMultiLanguage3Vtbl IMultiLanguage3_vtbl =

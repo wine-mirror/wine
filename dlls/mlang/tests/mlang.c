@@ -1984,10 +1984,214 @@ todo_wine
     IMLangConvertCharset_Release(convert);
 }
 
+static const char stream_data[] = "VCARD2.1test;test";
+static ULONG stream_pos;
+
+static HRESULT WINAPI stream_QueryInterface(IStream *iface, REFIID riid, void **obj)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI stream_AddRef(IStream *iface)
+{
+    ok(FALSE, "unexpected call\n");
+    return 2;
+}
+
+static ULONG WINAPI stream_Release(IStream *iface)
+{
+    ok(FALSE, "unexpected call\n");
+    return 1;
+}
+
+static HRESULT WINAPI stream_Read(IStream *iface, void *buf, ULONG len, ULONG *read)
+{
+    ULONG size;
+
+    if (stream_pos == sizeof(stream_data) - 1)
+    {
+        *read = 0;
+        return S_FALSE;
+    }
+    size = min(sizeof(stream_data) - 1 - stream_pos, len);
+    memcpy(buf, stream_data + stream_pos, size);
+    stream_pos += size;
+    *read = size;
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_Write(IStream *iface, const void *buf, ULONG len, ULONG *written)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin,
+    ULARGE_INTEGER *newpos)
+{
+    if (origin == STREAM_SEEK_SET)
+        stream_pos = move.QuadPart;
+    else if (origin == STREAM_SEEK_CUR)
+        stream_pos += move.QuadPart;
+    else if (origin == STREAM_SEEK_END)
+        stream_pos = sizeof(stream_data) - 1 - move.QuadPart;
+
+    if (newpos) newpos->QuadPart = stream_pos;
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_SetSize(IStream *iface, ULARGE_INTEGER newsize)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_CopyTo(IStream *iface, IStream *stream, ULARGE_INTEGER len,
+    ULARGE_INTEGER *read, ULARGE_INTEGER *written)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Commit(IStream *iface, DWORD flags)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Revert(IStream *iface)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_LockRegion(IStream *iface, ULARGE_INTEGER offset,
+    ULARGE_INTEGER len, DWORD locktype)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset,
+    ULARGE_INTEGER len, DWORD locktype)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Stat(IStream *iface, STATSTG *stg, DWORD flag)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Clone(IStream *iface, IStream **stream)
+{
+    ok(FALSE, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl stream_vtbl =
+{
+    stream_QueryInterface,
+    stream_AddRef,
+    stream_Release,
+    stream_Read,
+    stream_Write,
+    stream_Seek,
+    stream_SetSize,
+    stream_CopyTo,
+    stream_Commit,
+    stream_Revert,
+    stream_LockRegion,
+    stream_UnlockRegion,
+    stream_Stat,
+    stream_Clone
+};
+
+static IStream test_stream = { &stream_vtbl };
+
+static void test_DetectOutboundCodePageInIStream(IMultiLanguage3 *ml)
+{
+    HRESULT hr;
+    UINT nb_detected, detected[4];
+    UINT preferred[] = {1250,1251,1252,65001};
+    UINT preferred2[] = {1250,1251,1252};
+
+    nb_detected = 0;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), detected, &nb_detected, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    nb_detected = 1;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), NULL, &nb_detected, NULL);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    nb_detected = 1;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), detected, &nb_detected, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(nb_detected == 1, "got %u\n", nb_detected);
+    ok(detected[0] == 65001, "got %u\n", detected[0]);
+
+    nb_detected = 2;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), detected, &nb_detected, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(nb_detected == 2, "got %u\n", nb_detected);
+    ok(detected[0] == 65001, "got %u\n", detected[0]);
+    todo_wine ok(detected[1] == 65000, "got %u\n", detected[1]);
+
+    nb_detected = 3;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), detected, &nb_detected, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(nb_detected == 3, "got %u\n", nb_detected);
+    ok(detected[0] == 65001, "got %u\n", detected[0]);
+    todo_wine ok(detected[1] == 65000, "got %u\n", detected[1]);
+    todo_wine ok(detected[2] == 1200, "got %u\n", detected[2]);
+
+    nb_detected = 4;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred,
+        sizeof(preferred)/sizeof(preferred[0]), detected, &nb_detected, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(nb_detected == 3, "got %u\n", nb_detected);
+    ok(detected[0] == 65001, "got %u\n", detected[0]);
+    todo_wine ok(detected[1] == 65000, "got %u\n", detected[1]);
+    todo_wine ok(detected[2] == 1200, "got %u\n", detected[2]);
+    ok(detected[3] == 0, "got %u\n", detected[3]);
+
+    nb_detected = 3;
+    memset(detected, 0, sizeof(detected));
+    hr = IMultiLanguage3_DetectOutboundCodePageInIStream(ml,
+        MLDETECTF_PRESERVE_ORDER, &test_stream, preferred2,
+        sizeof(preferred2)/sizeof(preferred2[0]), detected, &nb_detected, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    todo_wine ok(nb_detected == 3, "got %u\n", nb_detected);
+    ok(detected[0] == 65001, "got %u\n", detected[0]);
+    todo_wine ok(detected[1] == 65000, "got %u\n", detected[1]);
+    todo_wine ok(detected[2] == 1200, "got %u\n", detected[2]);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
     IMultiLanguage2 *iML2 = NULL;
+    IMultiLanguage3 *iML3 = NULL;
     IMLangFontLink  *iMLFL = NULL;
     IMLangFontLink2 *iMLFL2 = NULL;
     HRESULT ret;
@@ -2069,6 +2273,15 @@ START_TEST(mlang)
     test_GetFontUnicodeRanges(iMLFL2);
     test_CodePageToScriptID(iMLFL2);
     IMLangFontLink2_Release(iMLFL2);
+
+    trace("IMultiLanguage3\n");
+    ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IMultiLanguage3, (void **)&iML3);
+    if (ret == S_OK)
+    {
+        test_DetectOutboundCodePageInIStream(iML3);
+        IMultiLanguage3_Release(iML3);
+    }
 
     CoUninitialize();
 }
