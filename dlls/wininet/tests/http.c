@@ -2290,6 +2290,28 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else if (strstr(buffer, "Cache-Control: no-cache\r\n")) send(c, okmsg, sizeof(okmsg)-1, 0);
             else send(c, notokmsg, sizeof(notokmsg)-1, 0);
         }
+        if (strstr(buffer, "/test_request_content_length"))
+        {
+            static char msg[] = "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\n\r\n";
+            static int seen_content_length;
+
+            if (!seen_content_length)
+            {
+                if (strstr(buffer, "Content-Length: 0"))
+                {
+                    seen_content_length = 1;
+                    send(c, msg, sizeof msg-1, 0);
+                }
+                else send(c, notokmsg, sizeof notokmsg-1, 0);
+                WaitForSingleObject(hCompleteEvent, 5000);
+            }
+            else
+            {
+                if (strstr(buffer, "Content-Length: 0")) send(c, msg, sizeof msg-1, 0);
+                else send(c, notokmsg, sizeof notokmsg-1, 0);
+                WaitForSingleObject(hCompleteEvent, 5000);
+            }
+        }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
 
@@ -4111,6 +4133,42 @@ static void test_cache_control_verb(int port)
     InternetCloseHandle(session);
 }
 
+static void test_request_content_length(int port)
+{
+    char data[] = {'t','e','s','t'};
+    HINTERNET ses, con, req;
+    BOOL ret;
+
+    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, "POST", "/test_request_content_length", NULL, NULL, NULL,
+                           INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(req, 200);
+
+    SetEvent(hCompleteEvent);
+
+    ret = HttpSendRequestA(req, NULL, 0, data, sizeof(data));
+    ok(ret, "HttpSendRequest failed %u\n", GetLastError());
+    test_status_code(req, 200);
+
+    SetEvent(hCompleteEvent);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+    CloseHandle(hCompleteEvent);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -4156,6 +4214,7 @@ static void test_http_connection(void)
     test_cache_control_verb(si.port);
     test_successive_HttpSendRequest(si.port);
     test_head_request(si.port);
+    test_request_content_length(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
