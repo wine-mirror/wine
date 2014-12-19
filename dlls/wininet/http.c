@@ -424,6 +424,15 @@ static void reset_data_stream(http_request_t *req)
     req->read_chunked = req->read_gzip = FALSE;
 }
 
+static void remove_header( http_request_t *request, const WCHAR *str, BOOL from_request )
+{
+    int index;
+    EnterCriticalSection( &request->headers_section );
+    index = HTTP_GetCustomHeaderIndex( request, str, 0, from_request );
+    if (index != -1) HTTP_DeleteCustomHeader( request, index );
+    LeaveCriticalSection( &request->headers_section );
+}
+
 #ifdef HAVE_ZLIB
 
 typedef struct {
@@ -550,7 +559,7 @@ static void wininet_zfree(voidpf opaque, voidpf address)
 static DWORD init_gzip_stream(http_request_t *req, BOOL is_gzip)
 {
     gzip_stream_t *gzip_stream;
-    int index, zres;
+    int zres;
 
     gzip_stream = heap_alloc_zero(sizeof(gzip_stream_t));
     if(!gzip_stream)
@@ -567,11 +576,7 @@ static DWORD init_gzip_stream(http_request_t *req, BOOL is_gzip)
         return ERROR_OUTOFMEMORY;
     }
 
-    EnterCriticalSection( &req->headers_section );
-    index = HTTP_GetCustomHeaderIndex(req, szContent_Length, 0, FALSE);
-    if(index != -1)
-        HTTP_DeleteCustomHeader(req, index);
-    LeaveCriticalSection( &req->headers_section );
+    remove_header(req, szContent_Length, FALSE);
 
     if(req->read_size) {
         memcpy(gzip_stream->buf, req->read_buf+req->read_pos, req->read_size);
@@ -4107,7 +4112,6 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 {
     http_session_t *session = request->session;
     WCHAR path[INTERNET_MAX_PATH_LENGTH];
-    int index;
 
     if(lpszUrl[0]=='/')
     {
@@ -4214,15 +4218,9 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         }
     }
 
-    EnterCriticalSection( &request->headers_section );
-
     /* Remove custom content-type/length headers on redirects.  */
-    index = HTTP_GetCustomHeaderIndex(request, szContent_Type, 0, TRUE);
-    if (index != -1) HTTP_DeleteCustomHeader(request, index);
-    index = HTTP_GetCustomHeaderIndex(request, szContent_Length, 0, TRUE);
-    if (index != -1) HTTP_DeleteCustomHeader(request, index);
-
-    LeaveCriticalSection( &request->headers_section );
+    remove_header(request, szContent_Type, TRUE);
+    remove_header(request, szContent_Length, TRUE);
 
     return ERROR_SUCCESS;
 }
@@ -5185,8 +5183,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             }
             if (secure_proxy_connect && request->status_code == HTTP_STATUS_OK)
             {
-                int index;
-
                 res = NETCON_secure_connect(request->netconn, request->server);
                 if (res != ERROR_SUCCESS)
                 {
@@ -5194,11 +5190,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     http_release_netconn( request, FALSE );
                     break;
                 }
-                EnterCriticalSection( &request->headers_section );
-                index = HTTP_GetCustomHeaderIndex(request, szProxy_Authorization, 0, TRUE);
-                if (index != -1) HTTP_DeleteCustomHeader(request, index);
-                LeaveCriticalSection( &request->headers_section );
-
+                remove_header(request, szProxy_Authorization, TRUE);
                 destroy_authinfo(request->proxyAuthInfo);
                 request->proxyAuthInfo = NULL;
 
