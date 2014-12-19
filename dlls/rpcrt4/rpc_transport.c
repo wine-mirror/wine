@@ -2321,14 +2321,17 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
                                                const UUID *out_pipe_uuid, ULONG *flow_control_increment,
                                                BOOL authorized)
 {
+    static const WCHAR fmtW[] =
+        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
     BOOL ret;
     RPC_STATUS status;
     RpcPktHdr *hdr;
     BYTE *data_from_server;
     RpcPktHdr pkt_from_server;
     ULONG field1, field3;
-    DWORD bytes_read;
+    DWORD bytes_read, len;
     BYTE buf[20];
+    WCHAR header[sizeof(fmtW) / sizeof(fmtW[0]) + 10];
 
     if (!authorized)
     {
@@ -2344,7 +2347,8 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
 
     TRACE("sending HTTP connect header to server\n");
     prepare_async_request(async_data);
-    ret = HttpSendRequestW(out_request, NULL, 0, hdr, hdr->common.frag_len);
+    len = sprintfW(header, fmtW, hdr->common.frag_len);
+    ret = HttpSendRequestW(out_request, header, len, hdr, hdr->common.frag_len);
     status = wait_async_request(async_data, ret, cancel_event);
     RPCRT4_FreeHeader(hdr);
     if (status != RPC_S_OK) return status;
