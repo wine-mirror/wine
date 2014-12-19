@@ -1532,10 +1532,9 @@ static void test_notifications(LPGUID lpGuid)
     rc = IDirectSoundBuffer_QueryInterface(buf, &IID_IDirectSoundNotify, (void**)&buf_notif);
     ok(rc == DS_OK, "QueryInterface(IID_IDirectSoundNotify): %08x\n", rc);
 
-    /* create notifications at each end of the buffer */
     notifies[0].dwOffset = 0;
     handles[0] = notifies[0].hEventNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
-    notifies[1].dwOffset = bufdesc.dwBufferBytes - 1;
+    notifies[1].dwOffset = bufdesc.dwBufferBytes / 2;
     handles[1] = notifies[1].hEventNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     rc = IDirectSoundNotify_SetNotificationPositions(buf_notif, 2, notifies);
@@ -1550,8 +1549,6 @@ static void test_notifications(LPGUID lpGuid)
     for(cycles = 0; cycles < 6 /* 1.5s */; ++cycles){
         DWORD wait;
 
-        /* since the notifications are on opposite ends of the entire buffer,
-         * they should arrive well-ordered in an alternating sequence. */
         wait = WaitForMultipleObjects(2, handles, FALSE, 1000);
         ok(wait <= WAIT_OBJECT_0 + 1 && wait - WAIT_OBJECT_0 == expect,
            "Got unexpected notification order or timeout: %u\n", wait);

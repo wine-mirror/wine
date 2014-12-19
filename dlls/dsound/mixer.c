@@ -223,16 +223,20 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
         }
     }
 
-    TRACE("Not stopped: first notify: %u (%u), range: [%u,%u)\n", first,
-            dsb->notifies[check].dwOffset, playpos, (playpos + len) % dsb->buflen);
+    TRACE("Not stopped: first notify: %u (%u), left notify: %u (%u), range: [%u,%u)\n",
+            first, dsb->notifies[first].dwOffset,
+            left, dsb->notifies[left].dwOffset,
+            playpos, (playpos + len) % dsb->buflen);
 
     /* send notifications in range */
-    for(check = left; check < dsb->nrofnotifies; ++check){
-        if(dsb->notifies[check].dwOffset >= playpos + len)
-            break;
+    if(dsb->notifies[left].dwOffset >= playpos){
+        for(check = left; check < dsb->nrofnotifies; ++check){
+            if(dsb->notifies[check].dwOffset >= playpos + len)
+                break;
 
-        TRACE("Signalling %p (%u)\n", dsb->notifies[check].hEventNotify, dsb->notifies[check].dwOffset);
-        SetEvent(dsb->notifies[check].hEventNotify);
+            TRACE("Signalling %p (%u)\n", dsb->notifies[check].hEventNotify, dsb->notifies[check].dwOffset);
+            SetEvent(dsb->notifies[check].hEventNotify);
+        }
     }
 
     if(playpos + len > dsb->buflen){
