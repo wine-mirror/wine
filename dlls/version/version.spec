@@ -1,6 +1,8 @@
 @ stdcall GetFileVersionInfoA(str long long ptr)
 @ stdcall GetFileVersionInfoSizeA(str ptr)
 @ stdcall GetFileVersionInfoSizeW(wstr ptr)
+@ stdcall GetFileVersionInfoSizeExA(long str ptr)
+@ stdcall GetFileVersionInfoSizeExW(long wstr ptr)
 @ stdcall GetFileVersionInfoW(wstr long long ptr)
 @ stdcall VerFindFileA(long str str str ptr ptr ptr ptr)
 @ stdcall VerFindFileW(long wstr wstr wstr ptr ptr ptr ptr)

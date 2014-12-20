@@ -1613,3 +1613,23 @@ DWORD WINAPI VerInstallFileW(
     HeapFree( GetProcessHeap(), 0, wcurd );
     return ret;
 }
+
+/******************************************************************************
+ * GetFileVersionInfoSizeExA                    [VERSION.@]
+ */
+DWORD WINAPI GetFileVersionInfoSizeExA(DWORD flags, LPCSTR filename, LPDWORD handle)
+{
+    FIXME("stub: %u %s %p\n", flags, wine_dbgstr_a(filename), handle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ * GetFileVersionInfoSizeExW                     [VERSION.@]
+ */
+DWORD WINAPI GetFileVersionInfoSizeExW(DWORD flags, LPCWSTR filename, LPDWORD handle)
+{
+    FIXME("stub: %u %s %p\n", flags, wine_dbgstr_w(filename), handle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
