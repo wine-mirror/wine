@@ -833,6 +833,11 @@ static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
         : &This->textcont.element.node.event_target;
 }
 
+static BOOL HTMLBodyElement_is_text_edit(HTMLDOMNode *iface)
+{
+    return TRUE;
+}
+
 static const cpc_entry_t HTMLBodyElement_cpc[] = {
     {&DIID_HTMLTextContainerEvents},
     {&IID_IPropertyNotifySink},
@@ -857,7 +862,8 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     NULL,
     NULL,
     HTMLBodyElement_traverse,
-    HTMLBodyElement_unlink
+    HTMLBodyElement_unlink,
+    HTMLBodyElement_is_text_edit
 };
 
 static const tid_t HTMLBodyElement_iface_tids[] = {

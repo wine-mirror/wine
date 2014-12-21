@@ -2538,6 +2538,18 @@ static void _test_elem_contains(unsigned line, IHTMLElement *elem, IHTMLElement 
     ok_(__FILE__,line)(b == exval, "contains returned %x, expected %x\n", b, exval);
 }
 
+#define test_elem_istextedit(a,b) _test_elem_istextedit(__LINE__,a,b)
+static void _test_elem_istextedit(unsigned line, IHTMLElement *elem, VARIANT_BOOL exval)
+{
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    b = 100;
+    hres = IHTMLElement_get_isTextEdit(elem, &b);
+    ok_(__FILE__,line)(hres == S_OK, "isTextEdit failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == exval, "isTextEdit = %x\n", b);
+}
+
 #define get_first_child(n) _get_first_child(__LINE__,n)
 static IHTMLDOMNode *_get_first_child(unsigned line, IUnknown *unk)
 {
@@ -6122,6 +6134,8 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_body_funs(body);
     IHTMLBodyElement_Release(body);
 
+    test_elem_istextedit(elem, VARIANT_TRUE);
+
     hres = IHTMLElement_get_style(elem, &style);
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
@@ -6264,6 +6278,8 @@ static void test_button_elem(IHTMLElement *elem)
 {
     test_button_name(elem, NULL);
     set_button_name(elem, "button name");
+
+    test_elem_istextedit(elem, VARIANT_TRUE);
 }
 
 #define test_tr_possess(e,r,l,i) _test_tr_possess(__LINE__,e,r,l,i)
@@ -7351,6 +7367,7 @@ static void test_elems(IHTMLDocument2 *doc)
     test_plugins_col(doc);
 
     elem = get_doc_elem(doc);
+    test_elem_istextedit(elem, VARIANT_FALSE);
     test_elem_all((IUnknown*)elem, all_types+1, sizeof(all_types)/sizeof(all_types[0])-1);
     IHTMLElement_Release(elem);
 
@@ -7370,6 +7387,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_tabindex((IUnknown*)elem, 0);
         test_elem_set_tabindex((IUnknown*)elem, 1);
         test_elem_filters((IUnknown*)elem);
+        test_elem_istextedit(elem, VARIANT_FALSE);
 
         node = test_node_get_parent((IUnknown*)elem);
         ok(node != NULL, "node == NULL\n");
@@ -7430,6 +7448,7 @@ static void test_elems(IHTMLDocument2 *doc)
 
         test_select_elem(select);
 
+        test_elem_istextedit(elem, VARIANT_FALSE);
         test_elem_title((IUnknown*)select, NULL);
         test_elem_set_title((IUnknown*)select, "Title");
         test_elem_title((IUnknown*)select, "Title");
@@ -7467,6 +7486,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == S_OK, "Could not get IHTMLScriptElement interface: %08x\n", hres);
 
         test_elem_language(elem, NULL);
+        test_elem_istextedit(elem, VARIANT_FALSE);
 
         if(hres == S_OK)
         {
@@ -7530,6 +7550,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_input_get_disabled(input, VARIANT_FALSE);
         test_elem_client_size((IUnknown*)elem);
         test_input_type(input, "text");
+        test_elem_istextedit(elem, VARIANT_TRUE);
 
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_node_put_value_str((IUnknown*)elem, "test");
@@ -8121,6 +8142,8 @@ static void test_elems2(IHTMLDocument2 *doc)
 
         form = get_textarea_form((IUnknown*)elem);
         ok(!form, "form = %p\n", form);
+
+        test_elem_istextedit(elem, VARIANT_TRUE);
 
         IHTMLElement_Release(elem);
     }

@@ -646,6 +646,7 @@ typedef struct {
     HRESULT (*bind_to_tree)(HTMLDOMNode*);
     void (*traverse)(HTMLDOMNode*,nsCycleCollectionTraversalCallback*);
     void (*unlink)(HTMLDOMNode*);
+    BOOL (*is_text_edit)(HTMLDOMNode*);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {

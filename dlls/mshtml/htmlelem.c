@@ -1665,8 +1665,12 @@ static HRESULT WINAPI HTMLElement_get_parentTextEdit(IHTMLElement *iface, IHTMLE
 static HRESULT WINAPI HTMLElement_get_isTextEdit(IHTMLElement *iface, VARIANT_BOOL *p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = This->node.vtbl->is_text_edit && This->node.vtbl->is_text_edit(&This->node)
+        ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)

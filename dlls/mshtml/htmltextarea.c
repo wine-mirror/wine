@@ -437,6 +437,11 @@ static HRESULT HTMLTextAreaElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_
     return IHTMLTextAreaElement_get_disabled(&This->IHTMLTextAreaElement_iface, p);
 }
 
+static BOOL HTMLTextAreaElement_is_text_edit(HTMLDOMNode *iface)
+{
+    return TRUE;
+}
+
 static void HTMLTextAreaElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
@@ -474,7 +479,8 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     NULL,
     NULL,
     HTMLTextAreaElement_traverse,
-    HTMLTextAreaElement_unlink
+    HTMLTextAreaElement_unlink,
+    HTMLTextAreaElement_is_text_edit
 };
 
 static const tid_t HTMLTextAreaElement_iface_tids[] = {

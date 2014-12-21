@@ -1260,6 +1260,32 @@ static HRESULT HTMLInputElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOO
     return IHTMLInputElement_get_disabled(&This->IHTMLInputElement_iface, p);
 }
 
+static BOOL HTMLInputElement_is_text_edit(HTMLDOMNode *iface)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+    const PRUnichar *type;
+    nsAString nsstr;
+    nsresult nsres;
+    BOOL ret = FALSE;
+
+    static const WCHAR buttonW[] = {'b','u','t','t','o','n',0};
+    static const WCHAR hiddenW[] = {'h','i','d','d','e','n',0};
+    static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
+    static const WCHAR resetW[] = {'r','e','s','e','t',0};
+    static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
+    static const WCHAR textW[] = {'t','e','x','t',0};
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &nsstr);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&nsstr, &type);
+        ret = !strcmpW(type, buttonW) || !strcmpW(type, hiddenW) || !strcmpW(type, passwordW)
+            || !strcmpW(type, resetW) || !strcmpW(type, submitW) || !strcmpW(type, textW);
+    }
+    nsAString_Finish(&nsstr);
+    return ret;
+}
+
 static void HTMLInputElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
@@ -1297,7 +1323,8 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     NULL,
     NULL,
     HTMLInputElement_traverse,
-    HTMLInputElement_unlink
+    HTMLInputElement_unlink,
+    HTMLInputElement_is_text_edit
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1764,6 +1791,11 @@ static HRESULT HTMLButtonElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BO
     return IHTMLButtonElement_get_disabled(&This->IHTMLButtonElement_iface, p);
 }
 
+static BOOL HTMLButtonElement_is_text_edit(HTMLDOMNode *iface)
+{
+    return TRUE;
+}
+
 static void HTMLButtonElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
@@ -1801,7 +1833,8 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     NULL,
     NULL,
     HTMLButtonElement_traverse,
-    HTMLButtonElement_unlink
+    HTMLButtonElement_unlink,
+    HTMLButtonElement_is_text_edit
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {
