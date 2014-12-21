@@ -152,8 +152,31 @@ static HRESULT WINAPI HTMLDOMTextNode_get_length(IHTMLDOMTextNode *iface, LONG *
 static HRESULT WINAPI HTMLDOMTextNode_splitText(IHTMLDOMTextNode *iface, LONG offset, IHTMLDOMNode **pRetNode)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    FIXME("(%p)->(%d %p)\n", This, offset, pRetNode);
-    return E_NOTIMPL;
+    HTMLDOMNode *node;
+    nsIDOMText *text;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %p)\n", This, offset, pRetNode);
+
+    nsres = nsIDOMText_SplitText(This->nstext, offset, &text);
+    if(NS_FAILED(nsres)) {
+        ERR("SplitText failed: %x08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(!text) {
+        *pRetNode = NULL;
+        return S_OK;
+    }
+
+    hres = get_node(This->node.doc, (nsIDOMNode*)text, TRUE, &node);
+    nsIDOMText_Release(text);
+    if(FAILED(hres))
+        return hres;
+
+    *pRetNode = &node->IHTMLDOMNode_iface;
+    return S_OK;
 }
 
 static const IHTMLDOMTextNodeVtbl HTMLDOMTextNodeVtbl = {

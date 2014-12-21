@@ -339,6 +339,21 @@ function test_language_attribute() {
     ok(elem.language === "1", "elem.language = " + elem.language);
 }
 
+function test_text_node() {
+    document.body.innerHTML = 'testing text';
+    var text = document.body.childNodes[0], text2;
+    ok(text.data == "testing text", "text.data = " + text.data);
+
+    text2 = text.splitText(7);
+    ok(text.data == "testing", "text.data = " + text.data);
+    ok(text2.data == " text", "text2.data = " + text2.data);
+    ok(text.nextSibling === text2, "text.nextSibling !== text2");
+
+    text2 = text.splitText(0);
+    ok(text.data == "", "text.data = " + text.data);
+    ok(text2.data == "testing", "text2.data = " + text2.data);
+}
+
 var globalVar = false;
 
 function runTests() {
@@ -363,6 +378,7 @@ function runTests() {
     test_customtag();
     test_whitespace_nodes();
     test_language_attribute();
+    test_text_node();
 
     var r = window.execScript("globalVar = true;");
     ok(r === undefined, "execScript returned " + r);
