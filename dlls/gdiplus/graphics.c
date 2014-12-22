@@ -2029,8 +2029,7 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
     }
 
-    if (graphics->hdc &&
-        (GetMapMode(graphics->hdc) != MM_TEXT || GetGraphicsMode(graphics->hdc) != GM_COMPATIBLE))
+    if (graphics->hdc)
     {
         POINT points[2];
 
