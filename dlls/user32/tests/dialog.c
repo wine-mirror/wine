@@ -1357,6 +1357,24 @@ static void test_SaveRestoreFocus(void)
     foundId = GetWindowLongPtrA(GetFocus(), GWLP_ID);
     ok (foundId == 1001, "Second edit box should have gained focus after dialog reactivation. Expected: %d, Found: %ld\n", 1001, foundId);
 
+    /* set focus to the dialog */
+    SetFocus(hDlg);
+
+    foundId = GetWindowLongPtrA(GetFocus(), GWLP_ID);
+    ok (foundId == 1000, "First edit box should have gained focus on dialog focus. Expected: %d, Found: %ld\n", 1000, foundId);
+
+    /* select second tabbable item */
+    SetFocus(GetNextDlgTabItem(hDlg, GetNextDlgTabItem(hDlg, NULL, FALSE), FALSE));
+
+    foundId = GetWindowLongPtrA(GetFocus(), GWLP_ID);
+    ok (foundId == 1001, "Second edit box should have gained focus. Expected: %d, Found: %ld\n", 1001, foundId);
+
+    /* send WM_ACTIVATE message to already active dialog */
+    SendMessageA(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_ACTIVE, 0), 0);
+
+    foundId = GetWindowLongPtrA(GetFocus(), GWLP_ID);
+    ok (foundId == 1001, "Second edit box should have gained focus. Expected: %d, Found: %ld\n", 1001, foundId);
+
     /* disable the 2nd box */
     EnableWindow(GetFocus(), FALSE);
 

@@ -105,9 +105,7 @@ static void DEFDLG_RestoreFocus( HWND hwnd, BOOL justActivate )
         SetFocus( infoPtr->hwndFocus );
     else
         DEFDLG_SetFocus( infoPtr->hwndFocus );
-
-    /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
-       sometimes losing focus when receiving WM_SETFOCUS messages. */
+    infoPtr->hwndFocus = NULL;
 }
 
 
