@@ -661,7 +661,7 @@ static void test_NtQueryLicenseKey(void)
 
     if (!pNtQueryLicenseValue)
     {
-        skip("NtQueryLicenseValue not found, skipping tests\n");
+        win_skip("NtQueryLicenseValue not found, skipping tests\n");
         return;
     }
 

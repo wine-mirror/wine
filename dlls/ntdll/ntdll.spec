@@ -255,6 +255,7 @@
 @ stub NtQueryIntervalProfile
 @ stdcall NtQueryIoCompletion(long long ptr long ptr)
 @ stdcall NtQueryKey (long long ptr long ptr)
+@ stdcall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall NtQueryMultipleValueKey(long ptr long ptr long ptr)
 @ stdcall NtQueryMutant(long long ptr long ptr)
 @ stdcall NtQueryObject(long long long long long)
@@ -1134,6 +1135,7 @@
 @ stub ZwQueryIntervalProfile
 @ stdcall ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
+@ stdcall ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
 @ stdcall ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
 @ stdcall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
