@@ -1708,9 +1708,12 @@ static int futimens( int fd, const struct timespec spec[2] )
 {
     return syscall( __NR_utimensat, fd, NULL, spec, 0 );
 }
-#define UTIME_OMIT ((1 << 30) - 2)
 #define HAVE_FUTIMENS
 #endif  /* __ANDROID__ */
+
+#ifndef UTIME_OMIT
+#define UTIME_OMIT ((1 << 30) - 2)
+#endif
 
 static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_INTEGER *atime )
 {
