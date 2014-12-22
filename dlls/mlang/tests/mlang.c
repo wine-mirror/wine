@@ -487,15 +487,15 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08x\n", ret);
     n = 65536;
     ret = IEnumCodePage_Next(iEnumCP, 0, NULL, &n);
+    ok(ret == S_FALSE || ret == E_FAIL,
+            "IEnumCodePage_Next: expected S_FALSE or E_FAIL, got %08x\n", ret);
     if (ret == S_FALSE)
-        ok(n == 0 && ret == S_FALSE, "IEnumCodePage_Next: expected 0/S_FALSE, got %u/%08x\n", n, ret);
+        ok(n == 0, "IEnumCodePage_Next: expected 0/S_FALSE, got %u/%08x\n", n, ret);
     else if (ret == E_FAIL)
-        ok(n == 65536 && ret == E_FAIL, "IEnumCodePage_Next: expected 65536/E_FAIL, got %u/%08x\n", n, ret);
+        ok(n == 65536, "IEnumCodePage_Next: expected 65536/E_FAIL, got %u/%08x\n", n, ret);
     ret = IEnumCodePage_Next(iEnumCP, 0, NULL, NULL);
-    if (ret == S_FALSE)
-        ok(ret == S_FALSE, "IEnumCodePage_Next: expected S_FALSE, got %08x\n", ret);
-    else if (ret == E_FAIL)
-        ok(n == 65536 && ret == E_FAIL, "IEnumCodePage_Next: expected 65536/E_FAIL, got %u/%08x\n", n, ret);
+    ok(ret == S_FALSE || ret == E_FAIL,
+            "IEnumCodePage_Next: expected S_FALSE or E_FAIL, got %08x\n", ret);
 
     cpinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*cpinfo) * total * 2);
 
