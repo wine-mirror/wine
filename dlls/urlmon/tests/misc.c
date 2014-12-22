@@ -284,7 +284,6 @@ static void test_RegisterFormatEnumerator(void)
     IEnumFORMATETC_Release(format);
     IBindCtx_Release(bctx);
 }
-
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
 static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
@@ -464,17 +463,17 @@ static void test_CoInternetQueryInfo(void)
 }
 
 static const struct {
-    const WCHAR *url;
+    const char *url;
     const char *mime;
     HRESULT hres;
 } mime_tests[] = {
-    {url1, "text/html", S_OK},
-    {url2, "text/html", S_OK},
-    {url3, "text/html", S_OK},
-    {url4, NULL, E_FAIL},
-    {url5, NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
-    {url6, NULL, E_FAIL},
-    {url7, NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
+    {"res://mshtml.dll/blank.htm", "text/html", S_OK},
+    {"index.htm", "text/html", S_OK},
+    {"file://c:\\Index.htm", "text/html", S_OK},
+    {"file://some%20file%2ejpg", NULL, E_FAIL},
+    {"http://www.winehq.org", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
+    {"about:blank", NULL, E_FAIL},
+    {"ftp://winehq.org/file.test", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
 };
 
 static BYTE data1[] = "test data\n";
@@ -711,7 +710,8 @@ static void test_FindMimeFromData(void)
 
     for(i=0; i<sizeof(mime_tests)/sizeof(mime_tests[0]); i++) {
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
+        url = a2w(mime_tests[i].url);
+        hres = pFindMimeFromData(NULL, url, NULL, 0, NULL, 0, &mime, 0);
         if(mime_tests[i].mime) {
             ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
             ok(!strcmp_wa(mime, mime_tests[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
@@ -724,16 +724,17 @@ static void test_FindMimeFromData(void)
         }
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, text_plainW, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, url, NULL, 0, text_plainW, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!strcmp_wa(mime, "text/plain"), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
 
         mime = (LPWSTR)0xf0f0f0f0;
-        hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, app_octet_streamW, 0, &mime, 0);
+        hres = pFindMimeFromData(NULL, url, NULL, 0, app_octet_streamW, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
         ok(!strcmp_wa(mime, "application/octet-stream"), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
+        heap_free(url);
     }
 
     for(i=0; i < sizeof(mime_tests2)/sizeof(mime_tests2[0]); i++) {
