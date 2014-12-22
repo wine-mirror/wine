@@ -17530,6 +17530,7 @@ wine_fn_config_dll shlwapi enable_shlwapi implib,po
 wine_fn_config_test dlls/shlwapi/tests shlwapi_test
 wine_fn_config_dll slbcsp enable_slbcsp
 wine_fn_config_dll slc enable_slc implib
+wine_fn_config_test dlls/slc/tests slc_test
 wine_fn_config_dll snmpapi enable_snmpapi implib
 wine_fn_config_test dlls/snmpapi/tests snmpapi_test
 wine_fn_config_dll softpub enable_softpub
