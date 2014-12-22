@@ -181,7 +181,7 @@ static int pre_exec(void)
     return 1;  /* we have a preloader on x86-64 */
 }
 
-#elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)) && defined(__i386__)
+#elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__))
 
 static int pre_exec(void)
 {
