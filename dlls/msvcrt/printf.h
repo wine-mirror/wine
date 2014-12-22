@@ -398,7 +398,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             p++;
         }
 
-        /* parse the widh */
+        /* parse the width */
         if(*p == '*') {
             p++;
             if(positional_params && (q = FUNC_NAME(pf_parse_int)(p, &i)) && *q=='$')
