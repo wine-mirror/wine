@@ -19,8 +19,11 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 #include "slpublic.h"
@@ -37,9 +40,26 @@ HRESULT WINAPI SLGetWindowsInformation(LPCWSTR name, SLDATATYPE *type, UINT *val
 
 HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue)
 {
-    FIXME("(%s) stub\n", debugstr_w(lpszValueName) );
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+    ULONG type, len;
 
-    return SL_E_RIGHT_NOT_GRANTED;
+    TRACE("(%s)\n", debugstr_w(lpszValueName) );
+
+    if (!lpszValueName || !pdwValue)
+        return E_INVALIDARG;
+    if (!lpszValueName[0])
+        return SL_E_RIGHT_NOT_GRANTED;
+
+    RtlInitUnicodeString( &nameW, lpszValueName );
+    status = NtQueryLicenseValue( &nameW, &type, pdwValue, sizeof(DWORD), &len );
+
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+        return SL_E_VALUE_NOT_FOUND;
+    if ((!status || status == STATUS_BUFFER_TOO_SMALL) && (type != REG_DWORD))
+        return SL_E_DATATYPE_MISMATCHED;
+
+    return status ? E_FAIL : S_OK;
 }
 
 /***********************************************************************

@@ -40,16 +40,13 @@ static void test_SLGetWindowsInformationDWORD(void)
     HRESULT res;
 
     res = SLGetWindowsInformationDWORD(NonexistentLicenseValueW, NULL);
-    todo_wine
     ok(res == E_INVALIDARG, "expected E_INVALIDARG, got %08x\n", res);
 
     res = SLGetWindowsInformationDWORD(NULL, &value);
-    todo_wine
     ok(res == E_INVALIDARG, "expected E_INVALIDARG, got %08x\n", res);
 
     value = 0xdeadbeef;
     res = SLGetWindowsInformationDWORD(NonexistentLicenseValueW, &value);
-    todo_wine
     ok(res == SL_E_VALUE_NOT_FOUND, "expected SL_E_VALUE_NOT_FOUND, got %08x\n", res);
     ok(value == 0xdeadbeef, "expected value = 0xdeadbeef, got %u\n", value);
 
@@ -61,15 +58,12 @@ static void test_SLGetWindowsInformationDWORD(void)
 
     value = 0xdeadbeef;
     res = SLGetWindowsInformationDWORD(KernelMUILanguageAllowedW, &value);
-    todo_wine
     ok(res == SL_E_DATATYPE_MISMATCHED, "expected SL_E_DATATYPE_MISMATCHED, got %08x\n", res);
     ok(value == 0xdeadbeef, "expected value = 0xdeadbeef, got %u\n", value);
 
     value = 0xdeadbeef;
     res = SLGetWindowsInformationDWORD(KernelMUINumberAllowedW, &value);
-    todo_wine
     ok(res == S_OK, "expected S_OK, got %u\n", res);
-    todo_wine
     ok(value != 0xdeadbeef, "expected value != 0xdeadbeef\n");
 }
 
