@@ -115,15 +115,6 @@ typedef struct volume_info_t
 
 #include "poppack.h"
 
-static const IShellLinkAVtbl slvt;
-static const IShellLinkWVtbl slvtw;
-static const IPersistFileVtbl pfvt;
-static const IPersistStreamVtbl psvt;
-static const IShellLinkDataListVtbl dlvt;
-static const IShellExtInitVtbl eivt;
-static const IContextMenuVtbl cmvt;
-static const IObjectWithSiteVtbl owsvt;
-
 /* IShellLink Implementation */
 
 typedef struct
@@ -136,6 +127,7 @@ typedef struct
         IShellExtInit IShellExtInit_iface;
         IContextMenu IContextMenu_iface;
         IObjectWithSite IObjectWithSite_iface;
+        IPropertyStore IPropertyStore_iface;
 
 	LONG            ref;
 
@@ -203,6 +195,11 @@ static inline IShellLinkImpl *impl_from_IContextMenu(IContextMenu *iface)
 static inline IShellLinkImpl *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
     return CONTAINING_RECORD(iface, IShellLinkImpl, IObjectWithSite_iface);
+}
+
+static inline IShellLinkImpl *impl_from_IPropertyStore(IPropertyStore *iface)
+{
+    return CONTAINING_RECORD(iface, IShellLinkImpl, IPropertyStore_iface);
 }
 
 static HRESULT ShellLink_UpdatePath(LPCWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
@@ -1140,48 +1137,6 @@ static const IPersistStreamVtbl psvt =
 	IPersistStream_fnGetSizeMax
 };
 
-/**************************************************************************
- *	  IShellLink_Constructor
- */
-HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
-               REFIID riid, LPVOID *ppv )
-{
-	IShellLinkImpl * sl;
-	HRESULT r;
-
-	TRACE("unkOut=%p riid=%s\n",pUnkOuter, debugstr_guid(riid));
-
-	*ppv = NULL;
-
-	if (pUnkOuter)
-            return CLASS_E_NOAGGREGATION;
-	sl = LocalAlloc(LMEM_ZEROINIT,sizeof(IShellLinkImpl));
-	if (!sl)
-            return E_OUTOFMEMORY;
-
-	sl->ref = 1;
-        sl->IShellLinkA_iface.lpVtbl = &slvt;
-        sl->IShellLinkW_iface.lpVtbl = &slvtw;
-        sl->IPersistFile_iface.lpVtbl = &pfvt;
-        sl->IPersistStream_iface.lpVtbl = &psvt;
-        sl->IShellLinkDataList_iface.lpVtbl = &dlvt;
-        sl->IShellExtInit_iface.lpVtbl = &eivt;
-        sl->IContextMenu_iface.lpVtbl = &cmvt;
-        sl->IObjectWithSite_iface.lpVtbl = &owsvt;
-	sl->iShowCmd = SW_SHOWNORMAL;
-	sl->bDirty = FALSE;
-	sl->iIdOpen = -1;
-	sl->site = NULL;
-	sl->filepath = NULL;
-
-	TRACE("(%p)->()\n",sl);
-
-        r = IShellLinkW_QueryInterface( &sl->IShellLinkW_iface, riid, ppv );
-        IShellLinkW_Release( &sl->IShellLinkW_iface );
-        return r;
-}
-
-
 static BOOL SHELL_ExistsFileW(LPCWSTR path)
 {
     if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(path))
@@ -1626,6 +1581,10 @@ static HRESULT WINAPI IShellLinkW_fnQueryInterface(
     else if(IsEqualIID(riid, &IID_IObjectWithSite))
     {
         *ppvObj = &This->IObjectWithSite_iface;
+    }
+    else if(IsEqualIID(riid, &IID_IPropertyStore))
+    {
+        *ppvObj = &This->IPropertyStore_iface;
     }
 
     if(*ppvObj)
@@ -2600,3 +2559,106 @@ static const IObjectWithSiteVtbl owsvt =
     ShellLink_SetSite,
     ShellLink_GetSite,
 };
+
+static HRESULT WINAPI propertystore_QueryInterface(IPropertyStore *iface, REFIID riid, void **obj)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    return IShellLinkW_QueryInterface(&This->IShellLinkW_iface, riid, obj);
+}
+
+static ULONG WINAPI propertystore_AddRef(IPropertyStore *iface)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    return IShellLinkW_AddRef(&This->IShellLinkW_iface);
+}
+
+static ULONG WINAPI propertystore_Release(IPropertyStore *iface)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    return IShellLinkW_Release(&This->IShellLinkW_iface);
+}
+
+static HRESULT WINAPI propertystore_GetCount(IPropertyStore *iface, DWORD *props)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    FIXME("(%p)->(%p): stub\n", This, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propertystore_GetAt(IPropertyStore *iface, DWORD propid, PROPERTYKEY *key)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    FIXME("(%p)->(%d %p): stub\n", This, propid, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propertystore_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *value)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    FIXME("(%p)->(%p %p): stub\n", This, key, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propertystore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT value)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    FIXME("(%p)->(%p %p): stub\n", This, key, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propertystore_Commit(IPropertyStore *iface)
+{
+    IShellLinkImpl *This = impl_from_IPropertyStore(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const IPropertyStoreVtbl propertystorevtbl = {
+    propertystore_QueryInterface,
+    propertystore_AddRef,
+    propertystore_Release,
+    propertystore_GetCount,
+    propertystore_GetAt,
+    propertystore_GetValue,
+    propertystore_SetValue,
+    propertystore_Commit
+};
+
+HRESULT WINAPI IShellLink_Constructor(IUnknown *outer, REFIID riid, void **obj)
+{
+    IShellLinkImpl * sl;
+    HRESULT r;
+
+    TRACE("outer=%p riid=%s\n", outer, debugstr_guid(riid));
+
+    *obj = NULL;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    sl = LocalAlloc(LMEM_ZEROINIT,sizeof(IShellLinkImpl));
+    if (!sl)
+        return E_OUTOFMEMORY;
+
+    sl->ref = 1;
+    sl->IShellLinkA_iface.lpVtbl = &slvt;
+    sl->IShellLinkW_iface.lpVtbl = &slvtw;
+    sl->IPersistFile_iface.lpVtbl = &pfvt;
+    sl->IPersistStream_iface.lpVtbl = &psvt;
+    sl->IShellLinkDataList_iface.lpVtbl = &dlvt;
+    sl->IShellExtInit_iface.lpVtbl = &eivt;
+    sl->IContextMenu_iface.lpVtbl = &cmvt;
+    sl->IObjectWithSite_iface.lpVtbl = &owsvt;
+    sl->IPropertyStore_iface.lpVtbl = &propertystorevtbl;
+    sl->iShowCmd = SW_SHOWNORMAL;
+    sl->bDirty = FALSE;
+    sl->iIdOpen = -1;
+    sl->site = NULL;
+    sl->filepath = NULL;
+
+    TRACE("(%p)\n", sl);
+
+    r = IShellLinkW_QueryInterface( &sl->IShellLinkW_iface, riid, obj );
+    IShellLinkW_Release( &sl->IShellLinkW_iface );
+    return r;
+}
