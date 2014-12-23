@@ -98,8 +98,16 @@ struct layout_range {
     IDWriteFontCollection *collection;
 };
 
+struct layout_run {
+    struct list entry;
+    DWRITE_GLYPH_RUN_DESCRIPTION descr;
+    DWRITE_SCRIPT_ANALYSIS sa;
+};
+
 struct dwrite_textlayout {
     IDWriteTextLayout2 IDWriteTextLayout2_iface;
+    IDWriteTextAnalysisSink IDWriteTextAnalysisSink_iface;
+    IDWriteTextAnalysisSource IDWriteTextAnalysisSource_iface;
     LONG ref;
 
     WCHAR *str;
@@ -108,6 +116,8 @@ struct dwrite_textlayout {
     FLOAT  maxwidth;
     FLOAT  maxheight;
     struct list ranges;
+    struct list runs;
+    BOOL   recompute;
 };
 
 struct dwrite_textformat {
@@ -145,6 +155,16 @@ static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout2(IDWriteText
     return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextLayout2_iface);
 }
 
+static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSink(IDWriteTextAnalysisSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSink_iface);
+}
+
+static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSource(IDWriteTextAnalysisSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSource_iface);
+}
+
 static inline struct dwrite_textformat *impl_from_IDWriteTextFormat1(IDWriteTextFormat1 *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat1_iface);
@@ -163,6 +183,70 @@ static inline struct dwrite_trimmingsign *impl_from_IDWriteInlineObject(IDWriteI
 static inline struct dwrite_typography *impl_from_IDWriteTypography(IDWriteTypography *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_typography, IDWriteTypography_iface);
+}
+
+static struct layout_run *alloc_layout_run(void)
+{
+    struct layout_run *ret;
+
+    ret = heap_alloc(sizeof(*ret));
+    if (!ret) return NULL;
+
+    ret->descr.localeName = NULL;
+    ret->descr.string = NULL;
+    ret->descr.stringLength = 0;
+    ret->descr.clusterMap = NULL;
+    ret->descr.textPosition = 0;
+
+    return ret;
+}
+
+static void free_layout_runs(struct dwrite_textlayout *layout)
+{
+    struct layout_run *cur, *cur2;
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->runs, struct layout_run, entry) {
+        list_remove(&cur->entry);
+        heap_free(cur);
+    }
+}
+
+static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
+{
+    IDWriteTextAnalyzer *analyzer;
+    struct layout_range *cur;
+    HRESULT hr = S_OK;
+
+    free_layout_runs(layout);
+
+    hr = get_textanalyzer(&analyzer);
+    if (FAILED(hr))
+        return hr;
+
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
+        /* inline objects override actual text in a range */
+        if (cur->object)
+            continue;
+
+        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
+            cur->range.startPosition, cur->range.length, &layout->IDWriteTextAnalysisSink_iface);
+        if (FAILED(hr))
+            break;
+    }
+
+    IDWriteTextAnalyzer_Release(analyzer);
+    return hr;
+}
+
+static HRESULT layout_compute(struct dwrite_textlayout *layout)
+{
+    HRESULT hr;
+
+    if (!layout->recompute)
+        return S_OK;
+
+    hr = layout_compute_runs(layout);
+    layout->recompute = FALSE;
+    return hr;
 }
 
 /* To be used in IDWriteTextLayout methods to validate and fix passed range */
@@ -499,6 +583,7 @@ done:
     if (changed) {
         struct list *next, *i;
 
+        layout->recompute = TRUE;
         i = list_head(ranges);
         while ((next = list_next(ranges, i))) {
             struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, entry);
@@ -557,6 +642,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
 
     if (!ref) {
         free_layout_ranges_list(This);
+        free_layout_runs(This);
         release_format_data(&This->format);
         heap_free(This->str);
         heap_free(This);
@@ -1187,10 +1273,17 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout2 *if
 }
 
 static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *iface,
-    DWRITE_CLUSTER_METRICS *metrics, UINT32 max_count, UINT32* act_count)
+    DWRITE_CLUSTER_METRICS *metrics, UINT32 max_count, UINT32 *count)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p %u %p): stub\n", This, metrics, max_count, act_count);
+    HRESULT hr;
+
+    FIXME("(%p)->(%p %u %p): stub\n", This, metrics, max_count, count);
+
+    hr = layout_compute(This);
+    if (FAILED(hr))
+        return hr;
+
     return E_NOTIMPL;
 }
 
@@ -1405,6 +1498,159 @@ static const IDWriteTextLayout2Vtbl dwritetextlayoutvtbl = {
     dwritetextlayout2_GetFontFallback
 };
 
+static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSink *iface,
+    REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSink) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IDWriteTextAnalysisSink_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dwritetextlayout_sink_AddRef(IDWriteTextAnalysisSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI dwritetextlayout_sink_Release(IDWriteTextAnalysisSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
+{
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+    struct layout_run *run;
+
+    TRACE("%u %u script=%d\n", position, length, sa->script);
+
+    run = alloc_layout_run();
+    if (!run)
+        return E_OUTOFMEMORY;
+
+    run->descr.string = &layout->str[position];
+    run->descr.stringLength = length;
+    run->descr.textPosition = position;
+    run->sa = *sa;
+    list_add_head(&layout->runs, &run->entry);
+    return S_OK;
+}
+
+static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, DWRITE_LINE_BREAKPOINT const* breakpoints)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink *iface, UINT32 position,
+    UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextlayout_sink_SetNumberSubstitution(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, IDWriteNumberSubstitution* substitution)
+{
+    return E_NOTIMPL;
+}
+
+static const IDWriteTextAnalysisSinkVtbl dwritetextlayoutsinkvtbl = {
+    dwritetextlayout_sink_QueryInterface,
+    dwritetextlayout_sink_AddRef,
+    dwritetextlayout_sink_Release,
+    dwritetextlayout_sink_SetScriptAnalysis,
+    dwritetextlayout_sink_SetLineBreakpoints,
+    dwritetextlayout_sink_SetBidiLevel,
+    dwritetextlayout_sink_SetNumberSubstitution
+};
+
+static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysisSource *iface,
+    REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSource) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IDWriteTextAnalysisSource_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dwritetextlayout_source_AddRef(IDWriteTextAnalysisSource *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI dwritetextlayout_source_Release(IDWriteTextAnalysisSource *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnalysisSource *iface,
+    UINT32 position, WCHAR const** text, UINT32* text_len)
+{
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource(iface);
+
+    TRACE("(%p)->(%u %p %p)\n", layout, position, text, text_len);
+
+    if (position < layout->len) {
+        *text = &layout->str[position];
+        *text_len = layout->len - position;
+    }
+    else {
+        *text = NULL;
+        *text_len = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextAnalysisSource *iface,
+    UINT32 position, WCHAR const** text, UINT32* text_len)
+{
+    FIXME("%u %p %p: stub\n", position, text, text_len);
+    return E_NOTIMPL;
+}
+
+static DWRITE_READING_DIRECTION WINAPI dwritetextlayout_source_GetParagraphReadingDirection(IDWriteTextAnalysisSource *iface)
+{
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource(iface);
+    return IDWriteTextLayout2_GetReadingDirection(&layout->IDWriteTextLayout2_iface);
+}
+
+static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisSource *iface,
+    UINT32 position, UINT32* text_len, WCHAR const** locale)
+{
+    FIXME("%u %p %p: stub\n", position, text_len, locale);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetextlayout_source_GetNumberSubstitution(IDWriteTextAnalysisSource *iface,
+    UINT32 position, UINT32* text_len, IDWriteNumberSubstitution **substitution)
+{
+    FIXME("%u %p %p: stub\n", position, text_len, substitution);
+    return E_NOTIMPL;
+}
+
+static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
+    dwritetextlayout_source_QueryInterface,
+    dwritetextlayout_source_AddRef,
+    dwritetextlayout_source_Release,
+    dwritetextlayout_source_GetTextAtPosition,
+    dwritetextlayout_source_GetTextBeforePosition,
+    dwritetextlayout_source_GetParagraphReadingDirection,
+    dwritetextlayout_source_GetLocaleName,
+    dwritetextlayout_source_GetNumberSubstitution
+};
+
 static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
 {
     struct dwrite_textformat *f;
@@ -1467,13 +1713,17 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     if (!This) return E_OUTOFMEMORY;
 
     This->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
+    This->IDWriteTextAnalysisSink_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
+    This->IDWriteTextAnalysisSource_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     This->ref = 1;
     This->str = heap_strdupnW(str, len);
     This->len = len;
     This->maxwidth = maxwidth;
     This->maxheight = maxheight;
+    This->recompute = TRUE;
     layout_format_from_textformat(This, format);
 
+    list_init(&This->runs);
     list_init(&This->ranges);
     range = alloc_layout_range(This, &r);
     if (!range) {
