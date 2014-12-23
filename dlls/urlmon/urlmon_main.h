@@ -76,6 +76,8 @@ WCHAR *get_useragent(void) DECLSPEC_HIDDEN;
 void update_user_agent(WCHAR*) DECLSPEC_HIDDEN;
 void free_session(void) DECLSPEC_HIDDEN;
 
+HRESULT find_mime_from_ext(const WCHAR*,WCHAR**) DECLSPEC_HIDDEN;
+
 HRESULT bind_to_storage(IUri*,IBindCtx*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT bind_to_object(IMoniker*,IUri*,IBindCtx*,REFIID,void**ppv) DECLSPEC_HIDDEN;
 

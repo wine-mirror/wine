@@ -422,7 +422,7 @@ static BOOL application_octet_stream_filter(const BYTE *b, DWORD size)
     return TRUE;
 }
 
-static HRESULT find_mime_from_ext(const WCHAR *ext, WCHAR **ret)
+HRESULT find_mime_from_ext(const WCHAR *ext, WCHAR **ret)
 {
     DWORD res, size;
     WCHAR mime[64];
