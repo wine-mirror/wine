@@ -2449,7 +2449,7 @@ ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
         args[0] = 0;
         if ( This->sArgs )
             lstrcatW( args, This->sArgs );
-        if ( iciex->lpParametersW )
+        if ( iciex->lpParametersW && iciex->lpParametersW[0] )
         {
             static const WCHAR space[] = { ' ', 0 };
             lstrcatW( args, space );
