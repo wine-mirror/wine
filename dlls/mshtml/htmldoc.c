@@ -1669,7 +1669,7 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
     if(lIndex != -1)
         FIXME("Unsupported lIndex %d\n", lIndex);
 
-    if(bstrHref) {
+    if(bstrHref && *bstrHref) {
         FIXME("semi-stub for href %s\n", debugstr_w(bstrHref));
         *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
         return S_OK;
