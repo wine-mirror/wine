@@ -1633,3 +1633,23 @@ DWORD WINAPI GetFileVersionInfoSizeExW(DWORD flags, LPCWSTR filename, LPDWORD ha
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+/******************************************************************************
+ * GetFileVersionInfoExA                     [VERSION.@]
+ */
+BOOL WINAPI GetFileVersionInfoExA(DWORD flags, LPCSTR filename, DWORD handle, DWORD len, LPVOID data)
+{
+    FIXME("stub: %u %s %u %u %p\n", flags, wine_dbgstr_a(filename), handle, len, data);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/******************************************************************************
+ * GetFileVersionInfoExW                     [VERSION.@]
+ */
+BOOL WINAPI GetFileVersionInfoExW(DWORD flags, LPCWSTR filename, DWORD handle, DWORD len, LPVOID data)
+{
+    FIXME("stub: %u %s %u %u %p\n", flags, wine_dbgstr_w(filename), handle, len, data);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
