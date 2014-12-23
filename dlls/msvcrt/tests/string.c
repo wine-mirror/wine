@@ -90,6 +90,7 @@ static size_t (__cdecl *p_mbrlen)(const char*, size_t, mbstate_t*);
 static size_t (__cdecl *p_mbrtowc)(wchar_t*, const char*, size_t, mbstate_t*);
 static int (__cdecl *p__atodbl_l)(_CRT_DOUBLE*,char*,_locale_t);
 static int (__cdecl *p__strnset_s)(char*,size_t,int,size_t);
+static int (__cdecl *p__wcsset_s)(wchar_t*,size_t,wchar_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -2749,6 +2750,40 @@ static void test__strnset_s(void)
     ok(!buf[0] && buf[1]=='c' && buf[2]=='b', "buf = %s\n", buf);
 }
 
+static void test__wcsset_s(void)
+{
+    wchar_t str[10];
+    int r;
+
+    if(!p__wcsset_s) {
+        win_skip("_wcsset_s not available\n");
+        return;
+    }
+
+    r = p__wcsset_s(NULL, 0, 'a');
+    ok(r == EINVAL, "r = %d\n", r);
+
+    str[0] = 'a';
+    r = p__wcsset_s(str, 0, 'a');
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(str[0] == 'a', "str[0] = %d\n", str[0]);
+
+    str[0] = 'a';
+    str[1] = 'b';
+    r = p__wcsset_s(str, 2, 'c');
+    ok(r == EINVAL, "r = %d\n", r);
+    ok(!str[0], "str[0] = %d\n", str[0]);
+    ok(str[1] == 'b', "str[1] = %d\n", str[1]);
+
+    str[0] = 'a';
+    str[1] = 0;
+    str[2] = 'b';
+    r = p__wcsset_s(str, 3, 'c');
+    ok(str[0] == 'c', "str[0] = %d\n", str[0]);
+    ok(str[1] == 0, "str[1] = %d\n", str[1]);
+    ok(str[2] == 'b', "str[2] = %d\n", str[2]);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2797,6 +2832,7 @@ START_TEST(string)
     p_mbsrtowcs = (void*)GetProcAddress(hMsvcrt, "mbsrtowcs");
     p__atodbl_l = (void*)GetProcAddress(hMsvcrt, "_atodbl_l");
     p__strnset_s = (void*)GetProcAddress(hMsvcrt, "_strnset_s");
+    p__wcsset_s = (void*)GetProcAddress(hMsvcrt, "_wcsset_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -2851,4 +2887,5 @@ START_TEST(string)
     test_strncpy();
     test_strxfrm();
     test__strnset_s();
+    test__wcsset_s();
 }

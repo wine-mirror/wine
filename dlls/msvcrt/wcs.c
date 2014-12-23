@@ -185,6 +185,26 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsrev( MSVCRT_wchar_t* str )
 }
 
 /*********************************************************************
+ *              _wcsset_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wcsset_s( MSVCRT_wchar_t *str, MSVCRT_size_t n, MSVCRT_wchar_t c )
+{
+    MSVCRT_wchar_t *p = str;
+
+    if(!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(n)) return MSVCRT_EINVAL;
+
+    while(*p && --n) *p++ = c;
+    if(!n) {
+        str[0] = 0;
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+    return 0;
+}
+
+/*********************************************************************
  *		_wcsset (MSVCRT.@)
  */
 MSVCRT_wchar_t* CDECL MSVCRT__wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
