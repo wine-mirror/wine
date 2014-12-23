@@ -466,10 +466,15 @@ static const struct {
     const char *url;
     const char *mime;
     HRESULT hres;
+    BOOL broken_failure;
+    const char *broken_mime;
 } mime_tests[] = {
     {"res://mshtml.dll/blank.htm", "text/html", S_OK},
     {"index.htm", "text/html", S_OK},
     {"file://c:\\Index.htm", "text/html", S_OK},
+    {"file://c:\\Index.htm?q=test", "text/html", S_OK, TRUE},
+    {"file://c:\\Index.htm#hash_part", "text/html", S_OK, TRUE},
+    {"file://c:\\Index.htm#hash_part.txt", "text/html", S_OK, FALSE, "text/plain"},
     {"file://some%20file%2ejpg", NULL, E_FAIL},
     {"http://www.winehq.org", NULL, __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
     {"about:blank", NULL, E_FAIL},
@@ -713,9 +718,13 @@ static void test_FindMimeFromData(void)
         url = a2w(mime_tests[i].url);
         hres = pFindMimeFromData(NULL, url, NULL, 0, NULL, 0, &mime, 0);
         if(mime_tests[i].mime) {
-            ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-            ok(!strcmp_wa(mime, mime_tests[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
-            CoTaskMemFree(mime);
+            ok(hres == S_OK || broken(mime_tests[i].broken_failure), "[%d] FindMimeFromData failed: %08x\n", i, hres);
+            if(hres == S_OK) {
+                ok(!strcmp_wa(mime, mime_tests[i].mime)
+                   || broken(mime_tests[i].broken_mime && !strcmp_wa(mime, mime_tests[i].broken_mime)),
+                   "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
+                CoTaskMemFree(mime);
+            }
         }else {
             ok(hres == E_FAIL || hres == mime_tests[i].hres,
                "[%d] FindMimeFromData failed: %08x, expected %08x\n",
