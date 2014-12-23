@@ -33,6 +33,7 @@
 #include "winternl.h"
 #include "excpt.h"
 #include "winioctl.h"
+#include "ddk/csq.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntifs.h"
 #include "wine/unicode.h"
@@ -1994,5 +1995,17 @@ NTSTATUS WINAPI IoRegisterPlugPlayNotification(IO_NOTIFICATION_EVENT_CATEGORY ca
                                                PVOID context, PVOID *notification)
 {
     FIXME("(%u %u %p %p %p %p %p) stub\n", category, flags, data, driver, callback, context, notification);
+    return STATUS_SUCCESS;
+}
+
+/*****************************************************
+ *           IoCsqInitialize  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_CSQ_REMOVE_IRP remove_irp,
+                                PIO_CSQ_PEEK_NEXT_IRP peek_irp, PIO_CSQ_ACQUIRE_LOCK acquire_lock,
+                                PIO_CSQ_RELEASE_LOCK release_lock, PIO_CSQ_COMPLETE_CANCELED_IRP complete_irp)
+{
+    FIXME("(%p %p %p %p %p %p %p) stub\n",
+          csq, insert_irp, remove_irp, peek_irp, acquire_lock, release_lock, complete_irp);
     return STATUS_SUCCESS;
 }

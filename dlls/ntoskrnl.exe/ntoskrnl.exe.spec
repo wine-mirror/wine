@@ -348,7 +348,7 @@
 @ stdcall IoCreateSymbolicLink(ptr ptr)
 @ stdcall IoCreateSynchronizationEvent(ptr ptr)
 @ stub IoCreateUnprotectedSymbolicLink
-@ stub IoCsqInitialize
+@ stdcall IoCsqInitialize(ptr ptr ptr ptr ptr ptr ptr)
 @ stub IoCsqInsertIrp
 @ stub IoCsqRemoveIrp
 @ stub IoCsqRemoveNextIrp
