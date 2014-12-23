@@ -1712,8 +1712,24 @@ static nsresult NSAPI nsEmbeddingSiteWindow_GetDimensions(nsIEmbeddingSiteWindow
         UINT32 flags, LONG *x, LONG *y, LONG *cx, LONG *cy)
 {
     NSContainer *This = impl_from_nsIEmbeddingSiteWindow(iface);
-    WARN("(%p)->(%08x %p %p %p %p)\n", This, flags, x, y, cx, cy);
-    return NS_ERROR_NOT_IMPLEMENTED;
+    RECT r;
+
+    TRACE("(%p)->(%x %p %p %p %p)\n", This, flags, x, y, cx, cy);
+
+    if(!GetWindowRect(This->hwnd, &r)) {
+        ERR("GetWindowRect failed\n");
+        return NS_ERROR_FAILURE;
+    }
+
+    if(x)
+        *x = r.left;
+    if(y)
+        *y = r.top;
+    if(cx)
+        *cx = r.right-r.left;
+    if(cy)
+        *cy = r.bottom-r.top;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsEmbeddingSiteWindow_SetFocus(nsIEmbeddingSiteWindow *iface)
