@@ -1018,7 +1018,7 @@ struct task_t {
     LONG target_magic;
     task_proc_t proc;
     task_proc_t destr;
-    struct task_t *next;
+    struct list entry;
 };
 
 typedef struct {
@@ -1028,8 +1028,7 @@ typedef struct {
 
 typedef struct {
     HWND thread_hwnd;
-    task_t *task_queue_head;
-    task_t *task_queue_tail;
+    struct list task_list;
     struct list timer_list;
 } thread_data_t;
 
