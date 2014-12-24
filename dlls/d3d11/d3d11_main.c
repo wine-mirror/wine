@@ -54,3 +54,15 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
             flags, feature_levels, levels, sdk_version, device, feature_level, context);
     return E_OUTOFMEMORY;
 }
+
+HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, const D3D_FEATURE_LEVEL *feature_levels, UINT levels,
+        UINT sdk_version, const DXGI_SWAP_CHAIN_DESC *swapchain_desc, IDXGISwapChain **swapchain,
+        ID3D11Device **device, D3D_FEATURE_LEVEL *feature_level, ID3D11DeviceContext **immediate_context)
+{
+    FIXME("adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %u, "
+            "swapchain_desc %p, swapchain %p, device %p, feature_level %p, immediate_context %p stub!\n",
+            adapter, debug_d3d_driver_type(driver_type), swrast, flags, feature_levels, levels, sdk_version,
+            swapchain_desc, swapchain, device, feature_level, immediate_context);
+    return E_NOTIMPL;
+}
