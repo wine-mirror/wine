@@ -702,12 +702,58 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     return ret;
 }
 
+typedef struct {
+    task_t header;
+    HTMLScriptElement *elem;
+} fire_readystatechange_task_t;
+
+static void fire_readystatechange_proc(task_t *_task)
+{
+    fire_readystatechange_task_t *task = (fire_readystatechange_task_t*)_task;
+
+    if(!task->elem->pending_readystatechange_event)
+        return;
+
+    task->elem->pending_readystatechange_event = FALSE;
+    fire_event(task->elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE, task->elem->element.node.nsnode, NULL, NULL);
+}
+
+static void fire_readystatechange_task_destr(task_t *_task)
+{
+    fire_readystatechange_task_t *task = (fire_readystatechange_task_t*)_task;
+
+    IHTMLScriptElement_Release(&task->elem->IHTMLScriptElement_iface);
+}
+
 static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTATE readystate)
 {
     script_elem->readystate = readystate;
 
-    if(readystate != READYSTATE_INTERACTIVE)
-        fire_event(script_elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE, script_elem->element.node.nsnode, NULL, NULL);
+    if(readystate != READYSTATE_INTERACTIVE) {
+        if(!script_elem->element.node.doc->window->parser_callback_cnt) {
+            fire_readystatechange_task_t *task;
+            HRESULT hres;
+
+            if(script_elem->pending_readystatechange_event)
+                return;
+
+            task = heap_alloc(sizeof(*task));
+            if(!task)
+                return;
+
+            IHTMLScriptElement_AddRef(&script_elem->IHTMLScriptElement_iface);
+            task->elem = script_elem;
+
+            hres = push_task(&task->header, fire_readystatechange_proc, fire_readystatechange_task_destr,
+                    script_elem->element.node.doc->window->task_magic);
+            if(SUCCEEDED(hres))
+                script_elem->pending_readystatechange_event = TRUE;
+        }else {
+            script_elem->pending_readystatechange_event = FALSE;
+            fire_event(script_elem->element.node.doc, EVENTID_READYSTATECHANGE, FALSE,
+                    script_elem->element.node.nsnode, NULL, NULL);
+        }
+    }
 }
 
 static void parse_elem_text(ScriptHost *script_host, HTMLScriptElement *script_elem, LPCWSTR text)
