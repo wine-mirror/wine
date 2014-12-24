@@ -846,6 +846,45 @@ INT WINAPI GetDateFormatA( LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
                                 lpFormat, lpDateStr, cchOut);
 }
 
+/******************************************************************************
+ * GetDateFormatEx [KERNEL32.@]
+ *
+ * Format a date for a given locale.
+ *
+ * PARAMS
+ *  localename [I] Locale to format for
+ *  flags      [I] LOCALE_ and DATE_ flags from "winnls.h"
+ *  date       [I] Date to format
+ *  format     [I] Format string, or NULL to use the locale defaults
+ *  outbuf     [O] Destination for formatted string
+ *  bufsize    [I] Size of outbuf, or 0 to calculate the resulting size
+ *  calendar   [I] Reserved, must be NULL
+ *
+ * See GetDateFormatA for notes.
+ *
+ * RETURNS
+ *  Success: The number of characters written to outbuf, or that would have
+ *           been written if bufsize is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetDateFormatEx(LPCWSTR localename, DWORD flags,
+                           const SYSTEMTIME* date, LPCWSTR format,
+                           LPWSTR outbuf, INT bufsize, LPCWSTR calendar)
+{
+  TRACE("(%s,0x%08x,%p,%s,%p,%d,%s)\n", debugstr_w(localename), flags,
+        date, debugstr_w(format), outbuf, bufsize, debugstr_w(calendar));
+
+  /* Parameter is currently reserved and Windows errors if set */
+  if (calendar != NULL)
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  return NLS_GetDateTimeFormatW(LocaleNameToLCID(localename, 0),
+                                flags | DATE_DATEVARSONLY, date, format,
+                                outbuf, bufsize);
+}
 
 /******************************************************************************
  * GetDateFormatW	[KERNEL32.@]
@@ -911,6 +950,38 @@ INT WINAPI GetTimeFormatA(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
 
   return NLS_GetDateTimeFormatA(lcid, dwFlags|TIME_TIMEVARSONLY, lpTime,
                                 lpFormat, lpTimeStr, cchOut);
+}
+
+/******************************************************************************
+ * GetTimeFormatEx [KERNEL32.@]
+ *
+ * Format a date for a given locale.
+ *
+ * PARAMS
+ *  localename [I] Locale to format for
+ *  flags      [I] LOCALE_ and TIME_ flags from "winnls.h"
+ *  time       [I] Time to format
+ *  format     [I] Formatting overrides
+ *  outbuf     [O] Destination for formatted string
+ *  bufsize    [I] Size of outbuf, or 0 to calculate the resulting size
+ *
+ * See GetTimeFormatA for notes.
+ *
+ * RETURNS
+ *  Success: The number of characters written to outbuf, or that would have
+ *           have been written if bufsize is 0.
+ *  Failure: 0. Use GetLastError() to determine the cause.
+ */
+INT WINAPI GetTimeFormatEx(LPCWSTR localename, DWORD flags,
+                           const SYSTEMTIME* time, LPCWSTR format,
+                           LPWSTR outbuf, INT bufsize)
+{
+  TRACE("(%s,0x%08x,%p,%s,%p,%d)\n", debugstr_w(localename), flags, time,
+        debugstr_w(format), outbuf, bufsize);
+
+  return NLS_GetDateTimeFormatW(LocaleNameToLCID(localename, 0),
+                                flags | TIME_TIMEVARSONLY, time, format,
+                                outbuf, bufsize);
 }
 
 /******************************************************************************
