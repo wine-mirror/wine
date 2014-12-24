@@ -649,7 +649,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     /* Ignore query and hash parts. */
     if((ptr = strchrW(url_file, '?')))
         *ptr = 0;
-    if((ptr = strchrW(url_file, '#')))
+    if(*url_file && (ptr = strchrW(url_file+1, '#')))
         *ptr = 0;
 
     hdll = LoadLibraryExW(url_dll, NULL, LOAD_LIBRARY_AS_DATAFILE);

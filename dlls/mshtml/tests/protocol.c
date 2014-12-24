@@ -606,6 +606,9 @@ static void test_res_protocol(void)
     if(GetProcAddress(LoadLibraryA("urlmon.dll"), "CreateUri")) {
         test_res_url("/test/dir/dir2/res.html?query_part");
         test_res_url("/test/dir/dir2/res.html#hash_part");
+        test_res_url("/#123");
+        test_res_url("/#23/#123");
+        test_res_url("/#123#456");
     }else {
         win_skip("IUri not supported\n");
     }
