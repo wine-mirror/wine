@@ -282,6 +282,11 @@ static HRESULT WINAPI HTMLDocument_get_activeElement(IHTMLDocument2 *iface, IHTM
         return E_FAIL;
     }
 
+    if(!nselem) {
+        *p = NULL;
+        return S_OK;
+    }
+
     hres = get_elem(This->doc_node, nselem, &elem);
     nsIDOMElement_Release(nselem);
     if(FAILED(hres))
