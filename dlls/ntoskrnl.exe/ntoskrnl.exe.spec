@@ -629,7 +629,7 @@
 @ stub KeUpdateRunTime
 @ stub KeUpdateSystemTime
 @ stub KeUserModeCallback
-@ stub KeWaitForMultipleObjects
+@ stdcall KeWaitForMultipleObjects(long ptr long long long long ptr ptr)
 @ stdcall KeWaitForMutexObject(ptr long long long ptr)
 @ stdcall KeWaitForSingleObject(ptr long long long ptr)
 @ stub KiBugCheckData

@@ -1999,6 +1999,19 @@ NTSTATUS WINAPI KeWaitForSingleObject(PVOID Object,
 }
 
 /***********************************************************************
+ *           KeWaitForMultipleObjects   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG Count, PVOID Object[], WAIT_TYPE WaitType,
+                                         KWAIT_REASON WaitReason, KPROCESSOR_MODE WaitMode,
+                                         BOOLEAN Alertable, PLARGE_INTEGER Timeout,
+                                         PKWAIT_BLOCK WaitBlockArray)
+{
+    FIXME( "stub: %u, %p, %d, %d, %d, %d, %p, %p\n", Count, Object, WaitType, WaitReason, WaitMode,
+           Alertable, Timeout, WaitBlockArray );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)
  */
 VOID WINAPI IoRegisterFileSystem(PDEVICE_OBJECT DeviceObject)
