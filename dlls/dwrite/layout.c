@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "dwrite_private.h"
+#include "scripts.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -101,6 +102,7 @@ struct layout_range {
 struct layout_run {
     struct list entry;
     DWRITE_GLYPH_RUN_DESCRIPTION descr;
+    DWRITE_GLYPH_RUN run;
     DWRITE_SCRIPT_ANALYSIS sa;
 };
 
@@ -198,6 +200,18 @@ static struct layout_run *alloc_layout_run(void)
     ret->descr.clusterMap = NULL;
     ret->descr.textPosition = 0;
 
+    ret->run.fontFace = NULL;
+    ret->run.fontEmSize = 0.0;
+    ret->run.glyphCount = 0;
+    ret->run.glyphIndices = NULL;
+    ret->run.glyphAdvances = NULL;
+    ret->run.glyphOffsets = NULL;
+    ret->run.isSideways = FALSE;
+    ret->run.bidiLevel = 0;
+
+    ret->sa.script = Script_Unknown;
+    ret->sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+
     return ret;
 }
 
@@ -227,7 +241,14 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         if (cur->object)
             continue;
 
+        /* initial splitting by script */
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
+            cur->range.startPosition, cur->range.length, &layout->IDWriteTextAnalysisSink_iface);
+        if (FAILED(hr))
+            break;
+
+        /* this splits it further */
+        hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &layout->IDWriteTextAnalysisSource_iface,
             cur->range.startPosition, cur->range.length, &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
@@ -245,6 +266,16 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         return S_OK;
 
     hr = layout_compute_runs(layout);
+
+    if (TRACE_ON(dwrite)) {
+        struct layout_run *cur;
+
+        LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
+            TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->descr.textPosition, cur->descr.textPosition+cur->descr.stringLength-1,
+                cur->descr.stringLength, cur->run.bidiLevel);
+        }
+    }
+
     layout->recompute = FALSE;
     return hr;
 }
@@ -1550,7 +1581,61 @@ static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalys
 static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink *iface, UINT32 position,
     UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
 {
-    return E_NOTIMPL;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+    struct layout_run *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
+        struct layout_run *run, *run2;
+
+        /* FIXME: levels are reported in a natural forward direction, so start loop from a run we ended on */
+        if (position < cur->descr.textPosition || position > cur->descr.textPosition + cur->descr.stringLength)
+            continue;
+
+        /* full hit - just set run level */
+        if (cur->descr.textPosition == position && cur->descr.stringLength == length) {
+            cur->run.bidiLevel = resolvedLevel;
+            break;
+        }
+
+        /* current run is fully covered, move to next one */
+        if (cur->descr.textPosition == position && cur->descr.stringLength < length) {
+            cur->run.bidiLevel = resolvedLevel;
+            position += cur->descr.stringLength;
+            length -= cur->descr.stringLength;
+            continue;
+        }
+
+        /* now starting point is in a run, so it splits it */
+        run = alloc_layout_run();
+        if (!run)
+            return E_OUTOFMEMORY;
+
+        *run = *cur;
+        run->descr.textPosition = position;
+        run->descr.stringLength = cur->descr.stringLength - position + cur->descr.textPosition;
+        run->run.bidiLevel = resolvedLevel;
+        cur->descr.stringLength -= position - cur->descr.textPosition;
+
+        list_add_after(&cur->entry, &run->entry);
+
+        if (position + length == run->descr.textPosition + run->descr.stringLength)
+            break;
+
+        /* split second time */
+        run2 = alloc_layout_run();
+        if (!run2)
+            return E_OUTOFMEMORY;
+
+        *run2 = *cur;
+        run2->descr.textPosition = run->descr.textPosition + run->descr.stringLength;
+        run2->descr.stringLength = cur->descr.textPosition + cur->descr.stringLength - position - length;
+        run->descr.stringLength -= run2->descr.stringLength;
+
+        list_add_after(&run->entry, &run2->entry);
+        break;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_sink_SetNumberSubstitution(IDWriteTextAnalysisSink *iface,
