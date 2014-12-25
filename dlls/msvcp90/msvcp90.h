@@ -352,7 +352,7 @@ typedef struct _ios_base {
     const vtable_ptr *vtable;
 #if _MSVCP_VER >= 100
     MSVCP_size_t DECLSPEC_ALIGN(8) stdstr;
-#else
+#elif _MSVCP_VER >= 71
     MSVCP_size_t stdstr;
 #endif
     IOSB_iostate state;
@@ -363,6 +363,9 @@ typedef struct _ios_base {
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
     locale *loc;
+#if _MSVCP_VER == 70
+    MSVCP_size_t stdstr;
+#endif
 } ios_base;
 
 /* class basic_streambuf<char> */
