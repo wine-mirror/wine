@@ -74,6 +74,9 @@ typedef struct {
     MSVCP_bool wrotesome;
     int state;
     MSVCP_bool close;
+#if _MSVCP_VER == 70
+    locale loc;
+#endif
     FILE *file;
 } basic_filebuf_char;
 
@@ -90,6 +93,9 @@ typedef struct {
     MSVCP_bool wrotesome;
     int state;
     MSVCP_bool close;
+#if _MSVCP_VER == 70
+    locale loc;
+#endif
     FILE *file;
 } basic_filebuf_wchar;
 
