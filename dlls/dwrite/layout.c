@@ -121,7 +121,8 @@ struct dwrite_textlayout {
     struct list runs;
     BOOL   recompute;
 
-    DWRITE_LINE_BREAKPOINT *breakpoints;
+    DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
+    DWRITE_LINE_BREAKPOINT *actual_breakpoints;
 };
 
 struct dwrite_textformat {
@@ -226,6 +227,70 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
     }
 }
 
+/* should only be called for ranges with inline objects */
+static inline DWRITE_BREAK_CONDITION override_break_condition(DWRITE_BREAK_CONDITION existingbreak, DWRITE_BREAK_CONDITION newbreak)
+{
+    switch (existingbreak) {
+    case DWRITE_BREAK_CONDITION_NEUTRAL:
+        return newbreak;
+    case DWRITE_BREAK_CONDITION_CAN_BREAK:
+        return newbreak == DWRITE_BREAK_CONDITION_NEUTRAL ? existingbreak : newbreak;
+    /* let's keep stronger conditions as is */
+    case DWRITE_BREAK_CONDITION_MAY_NOT_BREAK:
+    case DWRITE_BREAK_CONDITION_MUST_BREAK:
+        break;
+    default:
+        ERR("unknown break condition %d\n", existingbreak);
+    }
+
+    return existingbreak;
+}
+
+static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout, const struct layout_range *cur)
+{
+    DWRITE_BREAK_CONDITION before, after;
+    HRESULT hr;
+    UINT32 i;
+
+    hr = IDWriteInlineObject_GetBreakConditions(cur->object, &before, &after);
+    if (FAILED(hr))
+        return hr;
+
+    if (!layout->actual_breakpoints) {
+        layout->actual_breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+        if (!layout->actual_breakpoints)
+            return E_OUTOFMEMORY;
+    }
+    memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+
+    for (i = cur->range.startPosition; i < cur->range.length + cur->range.startPosition; i++) {
+        UINT32 j = i + cur->range.startPosition;
+        if (i == 0) {
+            if (j)
+                layout->actual_breakpoints[j].breakConditionBefore = layout->actual_breakpoints[j-1].breakConditionAfter =
+                    override_break_condition(layout->actual_breakpoints[j-1].breakConditionAfter, before);
+            else
+                layout->actual_breakpoints[j].breakConditionBefore = before;
+
+            layout->actual_breakpoints[j].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+        }
+
+        layout->actual_breakpoints[j].isWhitespace = 0;
+        layout->actual_breakpoints[j].isSoftHyphen = 0;
+
+        if (i == cur->range.length - 1) {
+            layout->actual_breakpoints[j].breakConditionBefore = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+            if (j < layout->len - 1)
+                layout->actual_breakpoints[j].breakConditionAfter = layout->actual_breakpoints[j+1].breakConditionAfter =
+                    override_break_condition(layout->actual_breakpoints[j+1].breakConditionAfter, before);
+            else
+                layout->actual_breakpoints[j].breakConditionAfter = before;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
@@ -240,8 +305,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
     LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
         /* inline objects override actual text in a range */
-        if (cur->object)
+        if (cur->object) {
+            hr = layout_update_breakpoints_range(layout, cur);
+            if (FAILED(hr))
+                return hr;
             continue;
+        }
 
         /* initial splitting by script */
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
@@ -267,24 +336,13 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     if (!layout->recompute)
         return S_OK;
 
-    hr = layout_compute_runs(layout);
-
-    if (TRACE_ON(dwrite)) {
-        struct layout_run *cur;
-
-        LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
-            TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->descr.textPosition, cur->descr.textPosition+cur->descr.stringLength-1,
-                cur->descr.stringLength, cur->run.bidiLevel);
-        }
-    }
-
     /* nominal breakpoints are evaluated only once, because string never changes */
-    if (!layout->breakpoints) {
+    if (!layout->nominal_breakpoints) {
         IDWriteTextAnalyzer *analyzer;
         HRESULT hr;
 
-        layout->breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
-        if (!layout->breakpoints)
+        layout->nominal_breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+        if (!layout->nominal_breakpoints)
             return E_OUTOFMEMORY;
 
         hr = get_textanalyzer(&analyzer);
@@ -294,6 +352,17 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &layout->IDWriteTextAnalysisSource_iface,
             0, layout->len, &layout->IDWriteTextAnalysisSink_iface);
         IDWriteTextAnalyzer_Release(analyzer);
+    }
+
+    hr = layout_compute_runs(layout);
+
+    if (TRACE_ON(dwrite)) {
+        struct layout_run *cur;
+
+        LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
+            TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->descr.textPosition, cur->descr.textPosition+cur->descr.stringLength-1,
+                cur->descr.stringLength, cur->run.bidiLevel);
+        }
     }
 
     layout->recompute = FALSE;
@@ -695,7 +764,8 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
         free_layout_ranges_list(This);
         free_layout_runs(This);
         release_format_data(&This->format);
-        heap_free(This->breakpoints);
+        heap_free(This->nominal_breakpoints);
+        heap_free(This->actual_breakpoints);
         heap_free(This->str);
         heap_free(This);
     }
@@ -1601,7 +1671,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalys
     if (position + length > layout->len)
         return E_FAIL;
 
-    memcpy(&layout->breakpoints[position], breakpoints, length*sizeof(DWRITE_LINE_BREAKPOINT));
+    memcpy(&layout->nominal_breakpoints[position], breakpoints, length*sizeof(DWRITE_LINE_BREAKPOINT));
     return S_OK;
 }
 
@@ -1833,7 +1903,8 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     This->maxwidth = maxwidth;
     This->maxheight = maxheight;
     This->recompute = TRUE;
-    This->breakpoints = NULL;
+    This->nominal_breakpoints = NULL;
+    This->actual_breakpoints = NULL;
     layout_format_from_textformat(This, format);
 
     list_init(&This->runs);
