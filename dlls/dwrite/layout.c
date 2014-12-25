@@ -120,6 +120,8 @@ struct dwrite_textlayout {
     struct list ranges;
     struct list runs;
     BOOL   recompute;
+
+    DWRITE_LINE_BREAKPOINT *breakpoints;
 };
 
 struct dwrite_textformat {
@@ -274,6 +276,24 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
             TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->descr.textPosition, cur->descr.textPosition+cur->descr.stringLength-1,
                 cur->descr.stringLength, cur->run.bidiLevel);
         }
+    }
+
+    /* nominal breakpoints are evaluated only once, because string never changes */
+    if (!layout->breakpoints) {
+        IDWriteTextAnalyzer *analyzer;
+        HRESULT hr;
+
+        layout->breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+        if (!layout->breakpoints)
+            return E_OUTOFMEMORY;
+
+        hr = get_textanalyzer(&analyzer);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &layout->IDWriteTextAnalysisSource_iface,
+            0, layout->len, &layout->IDWriteTextAnalysisSink_iface);
+        IDWriteTextAnalyzer_Release(analyzer);
     }
 
     layout->recompute = FALSE;
@@ -675,6 +695,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
         free_layout_ranges_list(This);
         free_layout_runs(This);
         release_format_data(&This->format);
+        heap_free(This->breakpoints);
         heap_free(This->str);
         heap_free(This);
     }
@@ -1575,7 +1596,13 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
 static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalysisSink *iface,
     UINT32 position, UINT32 length, DWRITE_LINE_BREAKPOINT const* breakpoints)
 {
-    return E_NOTIMPL;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+
+    if (position + length > layout->len)
+        return E_FAIL;
+
+    memcpy(&layout->breakpoints[position], breakpoints, length*sizeof(DWRITE_LINE_BREAKPOINT));
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink *iface, UINT32 position,
@@ -1806,6 +1833,7 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     This->maxwidth = maxwidth;
     This->maxheight = maxheight;
     This->recompute = TRUE;
+    This->breakpoints = NULL;
     layout_format_from_textformat(This, format);
 
     list_init(&This->runs);
