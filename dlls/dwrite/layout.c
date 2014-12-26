@@ -1710,6 +1710,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
         *run = *cur;
         run->descr.textPosition = position;
         run->descr.stringLength = cur->descr.stringLength - position + cur->descr.textPosition;
+        run->descr.string = &layout->str[position];
         run->run.bidiLevel = resolvedLevel;
         cur->descr.stringLength -= position - cur->descr.textPosition;
 
@@ -1726,6 +1727,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
         *run2 = *cur;
         run2->descr.textPosition = run->descr.textPosition + run->descr.stringLength;
         run2->descr.stringLength = cur->descr.textPosition + cur->descr.stringLength - position - length;
+        run2->descr.string = &layout->str[run2->descr.textPosition];
         run->descr.stringLength -= run2->descr.stringLength;
 
         list_add_after(&run->entry, &run2->entry);
