@@ -97,6 +97,7 @@ static const char manifest3[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"1.2.3.4\"  name=\"Wine.Test\" type=\"win32\""
 " publicKeyToken=\"6595b6414666f1df\" />"
+"<description />"
 "<file name=\"testlib.dll\">"
 "<windowClass>wndClass</windowClass>"
 "    <comClass description=\"Test com class\""

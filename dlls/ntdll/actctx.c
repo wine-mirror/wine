@@ -1834,11 +1834,16 @@ static BOOL parse_binding_redirect_elem(xmlbuf_t* xmlbuf)
 
 static BOOL parse_description_elem(xmlbuf_t* xmlbuf)
 {
-    xmlstr_t    elem, content;
-    BOOL        end = FALSE, ret = TRUE;
+    xmlstr_t    elem, content, attr_name, attr_value;
+    BOOL        end = FALSE, ret = TRUE, error = FALSE;
 
-    if (!parse_expect_no_attr(xmlbuf, &end) || end ||
-        !parse_text_content(xmlbuf, &content))
+    while (next_xml_attr(xmlbuf, &attr_name, &attr_value, &error, &end))
+        WARN("unknown attr %s=%s\n", debugstr_xmlstr(&attr_name), debugstr_xmlstr(&attr_value));
+
+    if (error) return FALSE;
+    if (end) return TRUE;
+
+    if (!parse_text_content(xmlbuf, &content))
         return FALSE;
 
     TRACE("Got description %s\n", debugstr_xmlstr(&content));
