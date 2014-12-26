@@ -1833,92 +1833,103 @@ static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
     dwritetextlayout_source_GetNumberSubstitution
 };
 
-static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
+static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
 {
-    struct dwrite_textformat *f;
+    UINT32 len;
+    HRESULT hr;
 
-    memset(&layout->format, 0, sizeof(layout->format));
+    layout->format.weight  = IDWriteTextFormat_GetFontWeight(format);
+    layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
+    layout->format.stretch = IDWriteTextFormat_GetFontStretch(format);
+    layout->format.fontsize= IDWriteTextFormat_GetFontSize(format);
+    layout->format.textalignment = IDWriteTextFormat_GetTextAlignment(format);
+    layout->format.paralign = IDWriteTextFormat_GetParagraphAlignment(format);
+    layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
+    layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
+    layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
+    hr = IDWriteTextFormat_GetLineSpacing(format, &layout->format.spacingmethod,
+        &layout->format.spacing, &layout->format.baseline);
+    if (FAILED(hr))
+        return hr;
 
-    if ((f = unsafe_impl_from_IDWriteTextFormat1((IDWriteTextFormat1*)format)))
-    {
-        layout->format = f->format;
-        layout->format.locale = heap_strdupW(f->format.locale);
-        layout->format.family_name = heap_strdupW(f->format.family_name);
-        if (layout->format.trimmingsign)
-            IDWriteInlineObject_AddRef(layout->format.trimmingsign);
-    }
-    else
-    {
-        UINT32 locale_len, family_len;
+    hr = IDWriteTextFormat_GetTrimming(format, &layout->format.trimming, &layout->format.trimmingsign);
+    if (FAILED(hr))
+        return hr;
 
-        layout->format.weight  = IDWriteTextFormat_GetFontWeight(format);
-        layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
-        layout->format.stretch = IDWriteTextFormat_GetFontStretch(format);
-        layout->format.fontsize= IDWriteTextFormat_GetFontSize(format);
-        layout->format.textalignment = IDWriteTextFormat_GetTextAlignment(format);
-        layout->format.paralign = IDWriteTextFormat_GetParagraphAlignment(format);
-        layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
-        layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
-        layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
-        IDWriteTextFormat_GetLineSpacing(format,
-            &layout->format.spacingmethod,
-            &layout->format.spacing,
-            &layout->format.baseline
-        );
-        IDWriteTextFormat_GetTrimming(format, &layout->format.trimming, &layout->format.trimmingsign);
+    /* locale name and length */
+    len = IDWriteTextFormat_GetLocaleNameLength(format);
+    layout->format.locale = heap_alloc((len+1)*sizeof(WCHAR));
+    if (!layout->format.locale)
+        return E_OUTOFMEMORY;
 
-        /* locale name and length */
-        locale_len = IDWriteTextFormat_GetLocaleNameLength(format);
-        layout->format.locale  = heap_alloc((locale_len+1)*sizeof(WCHAR));
-        IDWriteTextFormat_GetLocaleName(format, layout->format.locale, locale_len+1);
-        layout->format.locale_len = locale_len;
+    hr = IDWriteTextFormat_GetLocaleName(format, layout->format.locale, len+1);
+    if (FAILED(hr))
+        return hr;
+    layout->format.locale_len = len;
 
-        /* font family name and length */
-        family_len = IDWriteTextFormat_GetFontFamilyNameLength(format);
-        layout->format.family_name = heap_alloc((family_len+1)*sizeof(WCHAR));
-        IDWriteTextFormat_GetFontFamilyName(format, layout->format.family_name, family_len+1);
-        layout->format.family_len = family_len;
-    }
+    /* font family name and length */
+    len = IDWriteTextFormat_GetFontFamilyNameLength(format);
+    layout->format.family_name = heap_alloc((len+1)*sizeof(WCHAR));
+    if (!layout->format.family_name)
+        return E_OUTOFMEMORY;
 
-    IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
+    hr = IDWriteTextFormat_GetFontFamilyName(format, layout->format.family_name, len+1);
+    if (FAILED(hr))
+        return hr;
+    layout->format.family_len = len;
+
+    return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **layout)
+HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
 {
-    struct dwrite_textlayout *This;
+    struct dwrite_textlayout *layout;
     struct layout_range *range;
     DWRITE_TEXT_RANGE r = { 0, len };
+    HRESULT hr;
 
-    *layout = NULL;
+    *ret = NULL;
 
-    This = heap_alloc(sizeof(struct dwrite_textlayout));
-    if (!This) return E_OUTOFMEMORY;
+    layout = heap_alloc(sizeof(struct dwrite_textlayout));
+    if (!layout) return E_OUTOFMEMORY;
 
-    This->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
-    This->IDWriteTextAnalysisSink_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
-    This->IDWriteTextAnalysisSource_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
-    This->ref = 1;
-    This->str = heap_strdupnW(str, len);
-    This->len = len;
-    This->maxwidth = maxwidth;
-    This->maxheight = maxheight;
-    This->recompute = TRUE;
-    This->nominal_breakpoints = NULL;
-    This->actual_breakpoints = NULL;
-    layout_format_from_textformat(This, format);
+    layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
+    layout->IDWriteTextAnalysisSink_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
+    layout->IDWriteTextAnalysisSource_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
+    layout->ref = 1;
+    layout->len = len;
+    layout->maxwidth = maxwidth;
+    layout->maxheight = maxheight;
+    layout->recompute = TRUE;
+    layout->nominal_breakpoints = NULL;
+    layout->actual_breakpoints = NULL;
+    list_init(&layout->runs);
+    list_init(&layout->ranges);
+    memset(&layout->format, 0, sizeof(layout->format));
 
-    list_init(&This->runs);
-    list_init(&This->ranges);
-    range = alloc_layout_range(This, &r);
-    if (!range) {
-        IDWriteTextLayout2_Release(&This->IDWriteTextLayout2_iface);
-        return E_OUTOFMEMORY;
+    layout->str = heap_strdupnW(str, len);
+    if (len && !layout->str) {
+        hr = E_OUTOFMEMORY;
+        goto fail;
     }
-    list_add_head(&This->ranges, &range->entry);
 
-    *layout = (IDWriteTextLayout*)&This->IDWriteTextLayout2_iface;
+    hr = layout_format_from_textformat(layout, format);
+    if (FAILED(hr))
+        goto fail;
 
+    range = alloc_layout_range(layout, &r);
+    if (!range) {
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
+    list_add_head(&layout->ranges, &range->entry);
+
+    *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
     return S_OK;
+
+fail:
+    IDWriteTextLayout2_Release(&layout->IDWriteTextLayout2_iface);
+    return hr;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *iface, REFIID riid, void **obj)
