@@ -656,6 +656,7 @@ static const struct olemisc_entry olemisc_values[] =
 
 static const WCHAR xmlW[] = {'?','x','m','l',0};
 static const WCHAR manifestv1W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','1',0};
+static const WCHAR manifestv2W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','2',0};
 static const WCHAR manifestv3W[] = {'u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','a','s','m','.','v','3',0};
 
 static const WCHAR dotManifestW[] = {'.','m','a','n','i','f','e','s','t',0};
@@ -2213,7 +2214,9 @@ static BOOL parse_assembly_elem(xmlbuf_t* xmlbuf, struct actctx_loader* acl,
         }
         else if (xmlstr_cmp(&attr_name, xmlnsW))
         {
-            if (!xmlstr_cmp(&attr_value, manifestv1W) && !xmlstr_cmp(&attr_value, manifestv3W))
+            if (!xmlstr_cmp(&attr_value, manifestv1W) &&
+                !xmlstr_cmp(&attr_value, manifestv2W) &&
+                !xmlstr_cmp(&attr_value, manifestv3W))
             {
                 FIXME("wrong namespace %s\n", debugstr_xmlstr(&attr_value));
                 return FALSE;
