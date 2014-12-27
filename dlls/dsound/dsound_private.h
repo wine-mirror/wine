@@ -53,10 +53,7 @@ typedef struct _DSVOLUMEPAN
     DWORD	dwTotalLeftAmpFactor;
     DWORD	dwTotalRightAmpFactor;
     LONG	lVolume;
-    DWORD	dwVolAmpFactor;
     LONG	lPan;
-    DWORD	dwPanLeftAmpFactor;
-    DWORD	dwPanRightAmpFactor;
 } DSVOLUMEPAN,*PDSVOLUMEPAN;
 
 /*****************************************************************************
