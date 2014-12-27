@@ -30,6 +30,8 @@
 
 #include "wine/list.h"
 
+#define DS_MAX_CHANNELS 2
+
 extern int ds_hel_buflen DECLSPEC_HIDDEN;
 extern int ds_snd_queue_max DECLSPEC_HIDDEN;
 
@@ -50,8 +52,7 @@ extern const normfunc normfunctions[5] DECLSPEC_HIDDEN;
 
 typedef struct _DSVOLUMEPAN
 {
-    DWORD	dwTotalLeftAmpFactor;
-    DWORD	dwTotalRightAmpFactor;
+    DWORD	dwTotalAmpFactor[DS_MAX_CHANNELS];
     LONG	lVolume;
     LONG	lPan;
 } DSVOLUMEPAN,*PDSVOLUMEPAN;

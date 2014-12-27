@@ -570,7 +570,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(IDirectSoundBuffer *iface, LON
 	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
 	DirectSoundDevice *device = This->device;
 	HRESULT hr;
-	float lvol, rvol;
+	float fvol;
+	int i;
 
 	TRACE("(%p,%d)\n", iface, vol);
 
@@ -587,45 +588,34 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(IDirectSoundBuffer *iface, LON
 	/* **** */
 	EnterCriticalSection(&device->mixlock);
 
-	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
-	if(FAILED(hr)){
-		LeaveCriticalSection(&device->mixlock);
-		WARN("GetChannelVolume failed: %08x\n", hr);
-		return hr;
+	for (i = 0; i < DS_MAX_CHANNELS; i++) {
+		if (device->pwfx->nChannels > i){
+			hr = IAudioStreamVolume_GetChannelVolume(device->volume, i, &fvol);
+			if (FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("GetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		} else
+			fvol=1.0f;
+
+		device->volpan.dwTotalAmpFactor[i]=((UINT16)(fvol * (DWORD)0xFFFF));
 	}
-
-	if(device->pwfx->nChannels > 1){
-		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("GetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
-	}else
-		rvol = 1;
-
-	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
-	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
 
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	if (vol != device->volpan.lVolume) {
 		device->volpan.lVolume=vol;
 		DSOUND_RecalcVolPan(&device->volpan);
-		lvol = (float)((DWORD)(device->volpan.dwTotalLeftAmpFactor & 0xFFFF) / (float)0xFFFF);
-		hr = IAudioStreamVolume_SetChannelVolume(device->volume, 0, lvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("SetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
 
-		if(device->pwfx->nChannels > 1){
-			rvol = (float)((DWORD)(device->volpan.dwTotalRightAmpFactor & 0xFFFF) / (float)0xFFFF);
-			hr = IAudioStreamVolume_SetChannelVolume(device->volume, 1, rvol);
-			if(FAILED(hr)){
-				LeaveCriticalSection(&device->mixlock);
-				WARN("SetChannelVolume failed: %08x\n", hr);
-				return hr;
+		for (i = 0; i < DS_MAX_CHANNELS; i++) {
+			if (device->pwfx->nChannels > i){
+				fvol = (float)((DWORD)(device->volpan.dwTotalAmpFactor[i] & 0xFFFF) / (float)0xFFFF);
+				hr = IAudioStreamVolume_SetChannelVolume(device->volume, i, fvol);
+				if (FAILED(hr)){
+					LeaveCriticalSection(&device->mixlock);
+					WARN("SetChannelVolume failed: %08x\n", hr);
+					return hr;
+				}
 			}
 		}
 	}
@@ -640,8 +630,10 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(IDirectSoundBuffer *iface, LON
 {
 	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
 	DirectSoundDevice *device = This->device;
-	float lvol, rvol;
+	float fvol;
 	HRESULT hr;
+	int i;
+
 	TRACE("(%p,%p)\n", iface, vol);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -656,25 +648,19 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(IDirectSoundBuffer *iface, LON
 
 	EnterCriticalSection(&device->mixlock);
 
-	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
-	if(FAILED(hr)){
-		LeaveCriticalSection(&device->mixlock);
-		WARN("GetChannelVolume failed: %08x\n", hr);
-		return hr;
-	}
+	for (i = 0; i < DS_MAX_CHANNELS; i++) {
+		if (device->pwfx->nChannels > i){
+			hr = IAudioStreamVolume_GetChannelVolume(device->volume, i, &fvol);
+			if (FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("GetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		} else
+			fvol = 1;
 
-	if(device->pwfx->nChannels > 1){
-		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("GetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
-	}else
-		rvol = 1;
-
-	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
-	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+		device->volpan.dwTotalAmpFactor[i] = ((UINT16)(fvol * (DWORD)0xFFFF));
+    }
 
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	*vol = device->volpan.lVolume;
@@ -950,8 +936,10 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(IDirectSoundBuffer *iface, LONG p
 {
 	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
 	DirectSoundDevice *device = This->device;
-	float lvol, rvol;
+	float fvol;
 	HRESULT hr;
+	int i;
+
 	TRACE("(%p,%d)\n", iface, pan);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -967,46 +955,34 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(IDirectSoundBuffer *iface, LONG p
 	/* **** */
 	EnterCriticalSection(&device->mixlock);
 
-	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
-	if(FAILED(hr)){
-		LeaveCriticalSection(&device->mixlock);
-		WARN("GetChannelVolume failed: %08x\n", hr);
-		return hr;
+	for (i = 0; i < DS_MAX_CHANNELS; i++) {
+		if (device->pwfx->nChannels > i){
+			hr = IAudioStreamVolume_GetChannelVolume(device->volume, i, &fvol);
+			if (FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("GetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		} else
+			fvol = 1;
+
+		device->volpan.dwTotalAmpFactor[i] = ((UINT16)(fvol * (DWORD)0xFFFF));
 	}
-
-	if(device->pwfx->nChannels > 1){
-		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("GetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
-	}else
-		rvol = 1;
-
-	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
-	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
 
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	if (pan != device->volpan.lPan) {
 		device->volpan.lPan=pan;
 		DSOUND_RecalcVolPan(&device->volpan);
 
-		lvol = (float)((DWORD)(device->volpan.dwTotalLeftAmpFactor & 0xFFFF) / (float)0xFFFF);
-		hr = IAudioStreamVolume_SetChannelVolume(device->volume, 0, lvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("SetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
-
-		if(device->pwfx->nChannels > 1){
-			rvol = (float)((DWORD)(device->volpan.dwTotalRightAmpFactor & 0xFFFF) / (float)0xFFFF);
-			hr = IAudioStreamVolume_SetChannelVolume(device->volume, 1, rvol);
-			if(FAILED(hr)){
-				LeaveCriticalSection(&device->mixlock);
-				WARN("SetChannelVolume failed: %08x\n", hr);
-				return hr;
+		for (i = 0; i < DS_MAX_CHANNELS; i++) {
+			if (device->pwfx->nChannels > i) {
+				fvol = (float)((DWORD)(device->volpan.dwTotalAmpFactor[i] & 0xFFFF) / (float)0xFFFF);
+				hr = IAudioStreamVolume_SetChannelVolume(device->volume, i, fvol);
+				if (FAILED(hr)){
+					LeaveCriticalSection(&device->mixlock);
+					WARN("SetChannelVolume failed: %08x\n", hr);
+					return hr;
+				}
 			}
 		}
 	}
@@ -1021,8 +997,10 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(IDirectSoundBuffer *iface, LONG *
 {
 	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
 	DirectSoundDevice *device = This->device;
-	float lvol, rvol;
+	float fvol;
 	HRESULT hr;
+	int i;
+
 	TRACE("(%p,%p)\n", iface, pan);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -1037,25 +1015,19 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(IDirectSoundBuffer *iface, LONG *
 
 	EnterCriticalSection(&device->mixlock);
 
-	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
-	if(FAILED(hr)){
-		LeaveCriticalSection(&device->mixlock);
-		WARN("GetChannelVolume failed: %08x\n", hr);
-		return hr;
-	}
+	for (i = 0; i < DS_MAX_CHANNELS; i++) {
+		if (device->pwfx->nChannels > i) {
+			hr = IAudioStreamVolume_GetChannelVolume(device->volume, i, &fvol);
+			if (FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("GetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		} else
+			fvol = 1;
 
-	if(device->pwfx->nChannels > 1){
-		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
-		if(FAILED(hr)){
-			LeaveCriticalSection(&device->mixlock);
-			WARN("GetChannelVolume failed: %08x\n", hr);
-			return hr;
-		}
-	}else
-		rvol = 1;
-
-	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
-	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+		device->volpan.dwTotalAmpFactor[i] = ((UINT16)(fvol * (DWORD)0xFFFF));
+    }
 
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	*pan = device->volpan.lPan;

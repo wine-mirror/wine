@@ -54,11 +54,11 @@ void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 
 	/* FIXME: use calculated vol and pan ampfactors */
 	temp = (double) (volpan->lVolume - (volpan->lPan > 0 ? volpan->lPan : 0));
-	volpan->dwTotalLeftAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
+	volpan->dwTotalAmpFactor[0] = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
 	temp = (double) (volpan->lVolume + (volpan->lPan < 0 ? volpan->lPan : 0));
-	volpan->dwTotalRightAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
+	volpan->dwTotalAmpFactor[1] = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
 
-	TRACE("left = %x, right = %x\n", volpan->dwTotalLeftAmpFactor, volpan->dwTotalRightAmpFactor);
+	TRACE("left = %x, right = %x\n", volpan->dwTotalAmpFactor[0], volpan->dwTotalAmpFactor[1]);
 }
 
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
@@ -66,15 +66,15 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
     double left,right;
     TRACE("(%p)\n",volpan);
 
-    TRACE("left=%x, right=%x\n",volpan->dwTotalLeftAmpFactor,volpan->dwTotalRightAmpFactor);
-    if (volpan->dwTotalLeftAmpFactor==0)
+    TRACE("left=%x, right=%x\n",volpan->dwTotalAmpFactor[0],volpan->dwTotalAmpFactor[1]);
+    if (volpan->dwTotalAmpFactor[0]==0)
         left=-10000;
     else
-        left=600 * log(((double)volpan->dwTotalLeftAmpFactor) / 0xffff) / log(2);
-    if (volpan->dwTotalRightAmpFactor==0)
+        left=600 * log(((double)volpan->dwTotalAmpFactor[0]) / 0xffff) / log(2);
+    if (volpan->dwTotalAmpFactor[1]==0)
         right=-10000;
     else
-        right=600 * log(((double)volpan->dwTotalRightAmpFactor) / 0xffff) / log(2);
+        right=600 * log(((double)volpan->dwTotalAmpFactor[1]) / 0xffff) / log(2);
     if (left<right)
         volpan->lVolume=right;
     else
@@ -399,32 +399,30 @@ static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 static void DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT frames)
 {
 	INT	i;
-	float vLeft, vRight;
+	float vols[DS_MAX_CHANNELS];
 	UINT channels = dsb->device->pwfx->nChannels, chan;
 
 	TRACE("(%p,%d)\n",dsb,frames);
-	TRACE("left = %x, right = %x\n", dsb->volpan.dwTotalLeftAmpFactor,
-		dsb->volpan.dwTotalRightAmpFactor);
+	TRACE("left = %x, right = %x\n", dsb->volpan.dwTotalAmpFactor[0],
+		dsb->volpan.dwTotalAmpFactor[1]);
 
 	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
 	    (!(dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) || (dsb->volpan.lVolume == 0)) &&
 	     !(dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		return; /* Nothing to do */
 
-	if (channels != 1 && channels != 2)
+	if (channels > DS_MAX_CHANNELS)
 	{
 		FIXME("There is no support for %u channels\n", channels);
 		return;
 	}
 
-	vLeft = dsb->volpan.dwTotalLeftAmpFactor / ((float)0xFFFF);
-	vRight = dsb->volpan.dwTotalRightAmpFactor / ((float)0xFFFF);
+	for (i = 0; i < channels; ++i)
+		vols[i] = dsb->volpan.dwTotalAmpFactor[i] / ((float)0xFFFF);
+
 	for(i = 0; i < frames; ++i){
 		for(chan = 0; chan < channels; ++chan){
-			if(chan == 0)
-				dsb->device->tmp_buffer[i * channels + chan] *= vLeft;
-			else
-				dsb->device->tmp_buffer[i * channels + chan] *= vRight;
+			dsb->device->tmp_buffer[i * channels + chan] *= vols[chan];
 		}
 	}
 }
