@@ -371,6 +371,9 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
                 MMDevice_SetPropValue(id, flow, &PKEY_AudioEndpoint_FormFactor, &pv);
             }
 
+            if (flow != eCapture)
+                set_driver_prop_value(id, flow, &PKEY_AudioEndpoint_PhysicalSpeakers);
+
             RegCloseKey(keyprop);
         }
         RegCloseKey(key);

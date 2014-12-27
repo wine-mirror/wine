@@ -32,7 +32,10 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 
+#include "propsys.h"
+#include "initguid.h"
 #include "ole2.h"
+#include "propkey.h"
 #include "mmdeviceapi.h"
 #include "devpkey.h"
 #include "mmsystem.h"
@@ -3912,6 +3915,44 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
     return S_OK;
 }
 
+static unsigned int alsa_probe_num_speakers(char *name) {
+    snd_pcm_t *handle;
+    snd_pcm_hw_params_t *params;
+    int err;
+    unsigned int max_channels = 0;
+
+    if ((err = snd_pcm_open(&handle, name, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) < 0) {
+        WARN("The device \"%s\" failed to open: %d (%s).\n",
+                name, err, snd_strerror(err));
+        return 0;
+    }
+
+    params = HeapAlloc(GetProcessHeap(), 0, snd_pcm_hw_params_sizeof());
+    if (!params) {
+        WARN("Out of memory.\n");
+        snd_pcm_close(handle);
+        return 0;
+    }
+
+    if ((err = snd_pcm_hw_params_any(handle, params)) < 0) {
+        WARN("snd_pcm_hw_params_any failed for \"%s\": %d (%s).\n",
+                name, err, snd_strerror(err));
+        goto exit;
+    }
+
+    if ((err = snd_pcm_hw_params_get_channels_max(params,
+                    &max_channels)) < 0){
+        WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
+        goto exit;
+    }
+
+exit:
+    HeapFree(GetProcessHeap(), 0, params);
+    snd_pcm_close(handle);
+
+    return max_channels;
+}
+
 enum AudioDeviceConnectionType {
     AudioDeviceConnectionType_Unknown = 0,
     AudioDeviceConnectionType_PCI,
@@ -3920,24 +3961,26 @@ enum AudioDeviceConnectionType {
 
 HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
 {
+    char name[256];
+    EDataFlow flow;
+
     static const PROPERTYKEY devicepath_key = { /* undocumented? - {b3f8fa53-0004-438e-9003-51a46e139bfc},2 */
         {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
     };
 
     TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
 
+    if(!get_alsa_name_by_guid(guid, name, sizeof(name), &flow))
+    {
+        WARN("Unknown interface %s\n", debugstr_guid(guid));
+        return E_NOINTERFACE;
+    }
+
     if(IsEqualPropertyKey(*prop, devicepath_key))
     {
-        char name[256], uevent[MAX_PATH];
-        EDataFlow flow;
+        char uevent[MAX_PATH];
         FILE *fuevent;
         int card, device;
-
-        if(!get_alsa_name_by_guid(guid, name, sizeof(name), &flow))
-        {
-            WARN("Unknown interface %s\n", debugstr_guid(guid));
-            return E_NOINTERFACE;
-        }
 
         /* only implemented for identifiable devices, i.e. not "default" */
         if(!sscanf(name, "plughw:%u,%u", &card, &device))
@@ -4013,6 +4056,31 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
             WARN("Could not open %s for reading\n", uevent);
             return E_NOTIMPL;
         }
+    } else if (flow != eCapture && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
+        unsigned int num_speakers, card, device;
+        char hwname[255];
+
+        if (sscanf(name, "plughw:%u,%u", &card, &device))
+            sprintf(hwname, "hw:%u,%u", card, device); /* must be hw rather than plughw to work */
+        else
+            strcpy(hwname, name);
+
+        num_speakers = alsa_probe_num_speakers(hwname);
+        if (num_speakers == 0)
+            return E_FAIL;
+
+        out->vt = VT_UI4;
+
+        if (num_speakers >= 6)
+            out->u.ulVal = KSAUDIO_SPEAKER_5POINT1;
+        else if (num_speakers >= 4)
+            out->u.ulVal = KSAUDIO_SPEAKER_QUAD;
+        else if (num_speakers >= 2)
+            out->u.ulVal = KSAUDIO_SPEAKER_STEREO;
+        else if (num_speakers == 1)
+            out->u.ulVal = KSAUDIO_SPEAKER_MONO;
+
+        return S_OK;
     }
 
     TRACE("Unimplemented property %s,%u\n", wine_dbgstr_guid(&prop->fmtid), prop->pid);
