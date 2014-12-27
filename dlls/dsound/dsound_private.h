@@ -152,7 +152,9 @@ struct IDirectSoundBufferImpl
     /* used for frequency conversion (PerfectPitch) */
     ULONG                       freqneeded;
     DWORD                       firstep;
-    float freqAcc, freqAdjust, firgain;
+    float                       firgain;
+    LONG64                      freqAdjustNum,freqAdjustDen;
+    LONG64                      freqAccNum;
     /* used for mixing */
     DWORD                       sec_mixpos;
 
