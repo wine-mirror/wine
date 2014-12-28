@@ -83,7 +83,7 @@ static ULONG WINAPI dpvclient_AddRef(IDirectPlayVoiceClient *iface)
 static ULONG WINAPI dpvclient_Release(IDirectPlayVoiceClient *iface)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
@@ -270,7 +270,7 @@ static ULONG WINAPI dpvtest_AddRef(IDirectPlayVoiceTest *iface)
 static ULONG WINAPI dpvtest_Release(IDirectPlayVoiceTest *iface)
 {
     IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 

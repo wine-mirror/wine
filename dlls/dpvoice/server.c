@@ -68,10 +68,11 @@ static ULONG WINAPI dpvserver_AddRef(IDirectPlayVoiceServer *iface)
 
     return ref;
 }
+
 static ULONG WINAPI dpvserver_Release(IDirectPlayVoiceServer *iface)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
 
