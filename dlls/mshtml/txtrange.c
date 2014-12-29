@@ -59,6 +59,12 @@ typedef struct {
     UINT16 type;
     nsIDOMNode *node;
     UINT32 off;
+} rangepoint_t;
+
+typedef struct {
+    UINT16 type;
+    nsIDOMNode *node;
+    UINT32 off;
     nsAString str;
     const PRUnichar *p;
 } dompos_t;
@@ -126,6 +132,136 @@ static UINT16 get_node_type(nsIDOMNode *node)
         nsIDOMNode_GetNodeType(node, &type);
 
     return type;
+}
+
+static void get_text_node_data(nsIDOMNode *node, nsAString *nsstr, const PRUnichar **str)
+{
+    nsIDOMText *nstext;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_QueryInterface(node, &IID_nsIDOMText, (void**)&nstext);
+    assert(nsres == NS_OK);
+
+    nsAString_Init(nsstr, NULL);
+    nsres = nsIDOMText_GetData(nstext, nsstr);
+    nsIDOMText_Release(nstext);
+    if(NS_FAILED(nsres))
+        ERR("GetData failed: %08x\n", nsres);
+
+    nsAString_GetData(nsstr, str);
+}
+
+static nsIDOMNode *get_child_node(nsIDOMNode *node, UINT32 off)
+{
+    nsIDOMNodeList *node_list;
+    nsIDOMNode *ret = NULL;
+
+    nsIDOMNode_GetChildNodes(node, &node_list);
+    nsIDOMNodeList_Item(node_list, off, &ret);
+    nsIDOMNodeList_Release(node_list);
+
+    return ret;
+}
+
+/* This is very inefficient, but there is no faster way to compute index in
+ * child node list using public API. Gecko has internal nsINode::IndexOf
+ * function that we could consider exporting and use instead. */
+static int get_child_index(nsIDOMNode *parent, nsIDOMNode *child)
+{
+    nsIDOMNodeList *node_list;
+    nsIDOMNode *node;
+    int ret = 0;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_GetChildNodes(parent, &node_list);
+    assert(nsres == NS_OK);
+
+    while(1) {
+        nsres = nsIDOMNodeList_Item(node_list, ret, &node);
+        assert(nsres == NS_OK && node);
+        if(node == child) {
+            nsIDOMNode_Release(node);
+            break;
+        }
+        nsIDOMNode_Release(node);
+        ret++;
+    }
+
+    nsIDOMNodeList_Release(node_list);
+    return ret;
+}
+
+static void init_rangepoint(rangepoint_t *rangepoint, nsIDOMNode *node, UINT32 off)
+{
+    nsIDOMNode_AddRef(node);
+
+    rangepoint->type = get_node_type(node);
+    rangepoint->node = node;
+    rangepoint->off = off;
+}
+
+static inline void free_rangepoint(rangepoint_t *rangepoint)
+{
+    nsIDOMNode_Release(rangepoint->node);
+}
+
+static inline BOOL rangepoint_cmp(const rangepoint_t *point1, const rangepoint_t *point2)
+{
+    return point1->node == point2->node && point1->off == point2->off;
+}
+
+static BOOL rangepoint_next_node(rangepoint_t *iter)
+{
+    nsIDOMNode *node;
+    UINT32 off;
+    nsresult nsres;
+
+    /* Try to move to the child node. */
+    node = get_child_node(iter->node, iter->off);
+    if(node) {
+        free_rangepoint(iter);
+        init_rangepoint(iter, node, 0);
+        nsIDOMNode_Release(node);
+        return TRUE;
+    }
+
+    /* There are no more children in the node. Move to parent. */
+    nsres = nsIDOMNode_GetParentNode(iter->node, &node);
+    assert(nsres == NS_OK);
+    if(!node)
+        return FALSE;
+
+    off = get_child_index(node, iter->node)+1;
+    free_rangepoint(iter);
+    init_rangepoint(iter, node, off);
+    nsIDOMNode_Release(node);
+    return TRUE;
+}
+
+static void get_start_point(HTMLTxtRange *This, rangepoint_t *ret)
+{
+    nsIDOMNode *node;
+    LONG off;
+
+    nsIDOMRange_GetStartContainer(This->nsrange, &node);
+    nsIDOMRange_GetStartOffset(This->nsrange, &off);
+
+    init_rangepoint(ret, node, off);
+
+    nsIDOMNode_Release(node);
+}
+
+static void get_end_point(HTMLTxtRange *This, rangepoint_t *ret)
+{
+    nsIDOMNode *node;
+    LONG off;
+
+    nsIDOMRange_GetEndContainer(This->nsrange, &node);
+    nsIDOMRange_GetEndOffset(This->nsrange, &off);
+
+    init_rangepoint(ret, node, off);
+
+    nsIDOMNode_Release(node);
 }
 
 static BOOL is_elem_tag(nsIDOMNode *node, LPCWSTR istag)
@@ -236,7 +372,7 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
     *d = 0;
 }
 
-static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node)
+static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node, BOOL ignore_text)
 {
 
     switch(get_node_type(node)) {
@@ -244,6 +380,9 @@ static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node)
         nsIDOMText *nstext;
         nsAString data_str;
         const PRUnichar *data;
+
+        if(ignore_text)
+            break;
 
         nsIDOMNode_QueryInterface(node, &IID_nsIDOMText, (void**)&nstext);
 
@@ -272,7 +411,7 @@ static void wstrbuf_append_node_rec(wstrbuf_t *buf, nsIDOMNode *node)
 {
     nsIDOMNode *iter, *tmp;
 
-    wstrbuf_append_node(buf, node);
+    wstrbuf_append_node(buf, node, FALSE);
 
     nsIDOMNode_GetFirstChild(node, &iter);
     while(iter) {
@@ -379,18 +518,6 @@ static nsIDOMNode *prev_node(HTMLTxtRange *This, nsIDOMNode *iter)
     return NULL;
 }
 
-static nsIDOMNode *get_child_node(nsIDOMNode *node, UINT32 off)
-{
-    nsIDOMNodeList *node_list;
-    nsIDOMNode *ret = NULL;
-
-    nsIDOMNode_GetChildNodes(node, &node_list);
-    nsIDOMNodeList_Item(node_list, off, &ret);
-    nsIDOMNodeList_Release(node_list);
-
-    return ret;
-}
-
 static void get_cur_pos(HTMLTxtRange *This, BOOL start, dompos_t *pos)
 {
     nsIDOMNode *node;
@@ -485,8 +612,7 @@ static inline BOOL dompos_cmp(const dompos_t *pos1, const dompos_t *pos2)
 
 static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
 {
-    nsIDOMNode *iter, *tmp;
-    dompos_t start_pos, end_pos;
+    rangepoint_t end_pos, iter;
     cpp_bool collapsed;
 
     nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
@@ -497,42 +623,42 @@ static void range_to_string(HTMLTxtRange *This, wstrbuf_t *buf)
         return;
     }
 
-    get_cur_pos(This, FALSE, &end_pos);
-    get_cur_pos(This, TRUE, &start_pos);
+    get_end_point(This, &end_pos);
+    get_start_point(This, &iter);
 
-    if(start_pos.type == TEXT_NODE) {
-        if(start_pos.node == end_pos.node) {
-            wstrbuf_append_nodetxt(buf, start_pos.p+start_pos.off, end_pos.off-start_pos.off+1);
-            iter = start_pos.node;
-            nsIDOMNode_AddRef(iter);
+    do {
+        if(iter.type == TEXT_NODE) {
+            const PRUnichar *str;
+            nsAString nsstr;
+
+            get_text_node_data(iter.node, &nsstr, &str);
+
+            if(iter.node == end_pos.node) {
+                wstrbuf_append_nodetxt(buf, str+iter.off, end_pos.off-iter.off);
+                nsAString_Finish(&nsstr);
+                break;
+            }
+
+            wstrbuf_append_nodetxt(buf, str+iter.off, strlenW(str+iter.off));
+            nsAString_Finish(&nsstr);
         }else {
-            wstrbuf_append_nodetxt(buf, start_pos.p+start_pos.off, strlenW(start_pos.p+start_pos.off));
-            iter = next_node(start_pos.node);
+            nsIDOMNode *node;
+
+            node = get_child_node(iter.node, iter.off);
+            if(node) {
+                wstrbuf_append_node(buf, node, TRUE);
+                nsIDOMNode_Release(node);
+            }
         }
-    }else {
-        iter = start_pos.node;
-        nsIDOMNode_AddRef(iter);
-    }
 
-    while(iter != end_pos.node) {
-        wstrbuf_append_node(buf, iter);
-        tmp = next_node(iter);
-        nsIDOMNode_Release(iter);
-        iter = tmp;
-    }
+        if(!rangepoint_next_node(&iter)) {
+            ERR("End of document?\n");
+            break;
+        }
+    }while(!rangepoint_cmp(&iter, &end_pos));
 
-    nsIDOMNode_AddRef(end_pos.node);
-
-    if(start_pos.node != end_pos.node) {
-        if(end_pos.type == TEXT_NODE)
-            wstrbuf_append_nodetxt(buf, end_pos.p, end_pos.off+1);
-        else
-            wstrbuf_append_node(buf, end_pos.node);
-    }
-
-    nsIDOMNode_Release(iter);
-    dompos_release(&start_pos);
-    dompos_release(&end_pos);
+    free_rangepoint(&iter);
+    free_rangepoint(&end_pos);
 
     if(buf->len) {
         WCHAR *p;
