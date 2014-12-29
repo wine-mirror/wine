@@ -188,7 +188,10 @@ HRESULT WINAPI DMORegister(
     HKEY hckey = 0;
     HKEY hclskey = 0;
 
-    TRACE("%s\n", debugstr_w(szName));
+    TRACE("%s %s %s\n", debugstr_w(szName), debugstr_guid(clsidDMO), debugstr_guid(guidCategory));
+
+    if (IsEqualGUID(guidCategory, &GUID_NULL))
+        return E_INVALIDARG;
 
     hres = RegCreateKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, NULL,
         REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hrkey, NULL);
@@ -252,46 +255,70 @@ lend:
     return hres;
 }
 
+static HRESULT unregister_dmo_from_category(const WCHAR *dmoW, const WCHAR *catW, HKEY categories)
+{
+    HKEY catkey;
+    LONG ret;
+
+    ret = RegOpenKeyExW(categories, catW, 0, KEY_WRITE, &catkey);
+    if (!ret)
+    {
+        ret = RegDeleteKeyW(catkey, dmoW);
+        RegCloseKey(catkey);
+    }
+
+    return !ret ? S_OK : S_FALSE;
+}
 
 /***************************************************************
  * DMOUnregister (MSDMO.@)
  *
  * Unregister a DirectX Media Object.
  */
-HRESULT WINAPI DMOUnregister(REFCLSID clsidDMO, REFGUID guidCategory)
+HRESULT WINAPI DMOUnregister(REFCLSID dmo, REFGUID category)
 {
-    WCHAR szguid[64];
-    HKEY hrkey = 0;
-    HKEY hckey = 0;
+    HKEY rootkey = 0, categorieskey = 0;
+    WCHAR dmoW[64], catW[64];
+    HRESULT hr = S_FALSE;
     LONG ret;
 
-    GUIDToString(szguid, clsidDMO);
+    TRACE("%s %s\n", debugstr_guid(dmo), debugstr_guid(category));
 
-    TRACE("%s %p\n", debugstr_w(szguid), guidCategory);
+    ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_WRITE, &rootkey);
+    if (ret)
+        return HRESULT_FROM_WIN32(ret);
 
-    ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_WRITE, &hrkey);
-    if (ERROR_SUCCESS != ret)
+    GUIDToString(dmoW, dmo);
+    RegDeleteKeyW(rootkey, dmoW);
+
+    /* open 'Categories' */
+    ret = RegOpenKeyExW(rootkey, szDMOCategories, 0, KEY_WRITE|KEY_ENUMERATE_SUB_KEYS, &categorieskey);
+    RegCloseKey(rootkey);
+    if (ret)
+    {
+        hr = HRESULT_FROM_WIN32(ret);
         goto lend;
+    }
 
-    ret = RegDeleteKeyW(hrkey, szguid);
-    if (ERROR_SUCCESS != ret)
-        goto lend;
+    /* remove from all categories */
+    if (IsEqualGUID(category, &GUID_NULL))
+    {
+        DWORD index = 0, len = sizeof(catW)/sizeof(WCHAR);
 
-    ret = RegOpenKeyExW(hrkey, szDMOCategories, 0, KEY_WRITE, &hckey);
-    if (ERROR_SUCCESS != ret)
-        goto lend;
-
-    ret = RegDeleteKeyW(hckey, szguid);
-    if (ERROR_SUCCESS != ret)
-        goto lend;
+        while (!RegEnumKeyExW(categorieskey, index++, catW, &len, NULL, NULL, NULL, NULL))
+            hr = unregister_dmo_from_category(dmoW, catW, categorieskey);
+    }
+    else
+    {
+        GUIDToString(catW, category);
+        hr = unregister_dmo_from_category(dmoW, catW, categorieskey);
+    }
 
 lend:
-    if (hckey)
-        RegCloseKey(hckey);
-    if (hrkey)
-        RegCloseKey(hrkey);
+    if (categorieskey)
+        RegCloseKey(categorieskey);
 
-    return HRESULT_FROM_WIN32(ret);
+    return hr;
 }
 
 

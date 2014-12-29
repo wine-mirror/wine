@@ -17215,6 +17215,7 @@ wine_fn_config_dll msctf enable_msctf clean
 wine_fn_config_test dlls/msctf/tests msctf_test
 wine_fn_config_dll msdaps enable_msdaps clean
 wine_fn_config_dll msdmo enable_msdmo implib
+wine_fn_config_test dlls/msdmo/tests msdmo_test
 wine_fn_config_dll msftedit enable_msftedit
 wine_fn_config_dll msg711.acm enable_msg711_acm
 wine_fn_config_dll msgsm32.acm enable_msgsm32_acm
