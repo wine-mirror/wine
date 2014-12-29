@@ -238,6 +238,68 @@ static BOOL rangepoint_next_node(rangepoint_t *iter)
     return TRUE;
 }
 
+static UINT32 get_child_count(nsIDOMNode *node)
+{
+    nsIDOMNodeList *node_list;
+    UINT32 ret;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_GetChildNodes(node, &node_list);
+    assert(nsres == NS_OK);
+
+    nsres = nsIDOMNodeList_GetLength(node_list, &ret);
+    nsIDOMNodeList_Release(node_list);
+    assert(nsres == NS_OK);
+
+    return ret;
+}
+
+static UINT32 get_text_length(nsIDOMNode *node)
+{
+    nsIDOMText *nstext;
+    UINT32 ret;
+    nsresult nsres;
+
+    nsres = nsIDOMNode_QueryInterface(node, &IID_nsIDOMText, (void**)&nstext);
+    assert(nsres == NS_OK);
+
+    nsres = nsIDOMText_GetLength(nstext, &ret);
+    nsIDOMText_Release(nstext);
+    assert(nsres == NS_OK);
+
+    return ret;
+}
+
+static BOOL rangepoint_prev_node(rangepoint_t *iter)
+{
+    nsIDOMNode *node;
+    UINT32 off;
+    nsresult nsres;
+
+    /* Try to move to the child node. */
+    if(iter->off) {
+        node = get_child_node(iter->node, iter->off-1);
+        assert(node != NULL);
+
+        off = get_node_type(node) == TEXT_NODE ? get_text_length(node) : get_child_count(node);
+        free_rangepoint(iter);
+        init_rangepoint(iter, node, off);
+        nsIDOMNode_Release(node);
+        return TRUE;
+    }
+
+    /* There are no more children in the node. Move to parent. */
+    nsres = nsIDOMNode_GetParentNode(iter->node, &node);
+    assert(nsres == NS_OK);
+    if(!node)
+        return FALSE;
+
+    off = get_child_index(node, iter->node);
+    free_rangepoint(iter);
+    init_rangepoint(iter, node, off);
+    return TRUE;
+}
+
 static void get_start_point(HTMLTxtRange *This, rangepoint_t *ret)
 {
     nsIDOMNode *node;
@@ -262,6 +324,13 @@ static void get_end_point(HTMLTxtRange *This, rangepoint_t *ret)
     init_rangepoint(ret, node, off);
 
     nsIDOMNode_Release(node);
+}
+
+static void set_start_point(HTMLTxtRange *This, const rangepoint_t *start)
+{
+    nsresult nsres = nsIDOMRange_SetStart(This->nsrange, start->node, start->off);
+    if(NS_FAILED(nsres))
+        ERR("failed: %08x\n", nsres);
 }
 
 static BOOL is_elem_tag(nsIDOMNode *node, LPCWSTR istag)
@@ -691,6 +760,200 @@ HRESULT get_node_text(HTMLDOMNode *node, BSTR *ret)
     if(SUCCEEDED(hres))
         TRACE("ret %s\n", debugstr_w(*ret));
     return hres;
+}
+
+static WCHAR move_next_char(rangepoint_t *iter)
+{
+    rangepoint_t last_space;
+    nsIDOMNode *node;
+    WCHAR cspace = 0;
+    const WCHAR *p;
+
+    do {
+        switch(iter->type) {
+        case TEXT_NODE: {
+            const PRUnichar *str;
+            nsAString nsstr;
+            WCHAR c;
+
+            get_text_node_data(iter->node, &nsstr, &str);
+            p = str+iter->off;
+            if(!*p) {
+                nsAString_Finish(&nsstr);
+                break;
+            }
+
+            c = *p;
+            if(isspaceW(c)) {
+                while(isspaceW(*p))
+                    p++;
+
+                if(cspace)
+                    free_rangepoint(&last_space);
+                else
+                    cspace = ' ';
+
+                iter->off = p-str;
+                c = *p;
+                nsAString_Finish(&nsstr);
+                if(!c) { /* continue to skip spaces */
+                    init_rangepoint(&last_space, iter->node, iter->off);
+                    break;
+                }
+
+                return cspace;
+            }else {
+                nsAString_Finish(&nsstr);
+            }
+
+            /* If we have a non-space char and we're skipping spaces, stop and return the last found space. */
+            if(cspace) {
+                free_rangepoint(iter);
+                *iter = last_space;
+                return cspace;
+            }
+
+            iter->off++;
+            return c;
+        }
+        case ELEMENT_NODE:
+            node = get_child_node(iter->node, iter->off);
+            if(!node)
+                break;
+
+            if(is_elem_tag(node, brW)) {
+                if(cspace) {
+                    nsIDOMNode_Release(node);
+                    free_rangepoint(iter);
+                    *iter = last_space;
+                    return cspace;
+                }
+
+                cspace = '\n';
+                init_rangepoint(&last_space, iter->node, iter->off+1);
+            }else if(is_elem_tag(node, hrW)) {
+                nsIDOMNode_Release(node);
+                if(cspace) {
+                    free_rangepoint(iter);
+                    *iter = last_space;
+                    return cspace;
+                }
+
+                iter->off++;
+                return '\n';
+            }
+
+            nsIDOMNode_Release(node);
+        }
+    }while(rangepoint_next_node(iter));
+
+    return cspace;
+}
+
+static WCHAR move_prev_char(rangepoint_t *iter)
+{
+    rangepoint_t last_space;
+    nsIDOMNode *node;
+    WCHAR cspace = 0;
+    const WCHAR *p;
+
+    do {
+        switch(iter->type) {
+        case TEXT_NODE: {
+            const PRUnichar *str;
+            nsAString nsstr;
+            WCHAR c;
+
+            if(!iter->off)
+                break;
+
+            get_text_node_data(iter->node, &nsstr, &str);
+
+            p = str+iter->off-1;
+            c = *p;
+
+            if(isspaceW(c)) {
+                while(p > str && isspaceW(*(p-1)))
+                    p--;
+
+                if(cspace)
+                    free_rangepoint(&last_space);
+                else
+                    cspace = ' ';
+
+                iter->off = p-str;
+                nsAString_Finish(&nsstr);
+                if(p == str) { /* continue to skip spaces */
+                    init_rangepoint(&last_space, iter->node, iter->off);
+                    break;
+                }
+
+                return cspace;
+            }else {
+                nsAString_Finish(&nsstr);
+            }
+
+            /* If we have a non-space char and we're skipping spaces, stop and return the last found space. */
+            if(cspace) {
+                free_rangepoint(iter);
+                *iter = last_space;
+                return cspace;
+            }
+
+            iter->off--;
+            return c;
+        }
+        case ELEMENT_NODE:
+            if(!iter->off)
+                break;
+
+            node = get_child_node(iter->node, iter->off-1);
+            if(!node)
+                break;
+
+            if(is_elem_tag(node, brW)) {
+                if(cspace)
+                    free_rangepoint(&last_space);
+                cspace = '\n';
+                init_rangepoint(&last_space, iter->node, iter->off-1);
+            }else if(is_elem_tag(node, hrW)) {
+                nsIDOMNode_Release(node);
+                if(cspace) {
+                    free_rangepoint(iter);
+                    *iter = last_space;
+                    return cspace;
+                }
+
+                iter->off--;
+                return '\n';
+            }
+
+            nsIDOMNode_Release(node);
+        }
+    }while(rangepoint_prev_node(iter));
+
+    if(cspace) {
+        free_rangepoint(iter);
+        *iter = last_space;
+        return cspace;
+    }
+
+    return 0;
+}
+
+static LONG move_by_chars(rangepoint_t *iter, LONG cnt)
+{
+    LONG ret = 0;
+
+    if(cnt >= 0) {
+        while(ret < cnt && move_next_char(iter))
+            ret++;
+    }else {
+        while(ret > cnt && move_prev_char(iter))
+            ret--;
+    }
+
+    return ret;
 }
 
 static WCHAR get_pos_char(const dompos_t *pos)
@@ -1593,33 +1856,20 @@ static HRESULT WINAPI HTMLTxtRange_moveStart(IHTMLTxtRange *iface, BSTR Unit,
 
     switch(unit) {
     case RU_CHAR: {
-        dompos_t start_pos, end_pos, new_pos;
-        cpp_bool collapsed;
+        rangepoint_t start;
 
-        get_cur_pos(This, TRUE, &start_pos);
-        get_cur_pos(This, FALSE, &end_pos);
-        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+        get_start_point(This, &start);
 
-        if(Count > 0) {
-            BOOL bounded;
+        *ActualCount = move_by_chars(&start, Count);
 
-            *ActualCount = move_next_chars(Count, &start_pos, collapsed, &end_pos, &bounded, &new_pos);
-            set_range_pos(This, !bounded, &new_pos);
-            if(bounded)
-                IHTMLTxtRange_collapse(&This->IHTMLTxtRange_iface, FALSE);
-        }else {
-            *ActualCount = -move_prev_chars(This, -Count, &start_pos, FALSE, NULL, NULL, &new_pos);
-            set_range_pos(This, TRUE, &new_pos);
-        }
-
-        dompos_release(&start_pos);
-        dompos_release(&end_pos);
-        dompos_release(&new_pos);
+        set_start_point(This, &start);
+        free_rangepoint(&start);
         break;
     }
 
     default:
         FIXME("unimplemented unit %s\n", debugstr_w(Unit));
+        return E_NOTIMPL;
     }
 
     return S_OK;
