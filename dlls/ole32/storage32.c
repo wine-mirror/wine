@@ -6995,10 +6995,8 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
                       This->ownerDirEntry,
                       &chainEntry);
 
-    if (SUCCEEDED(hr))
-    {
+    if (SUCCEEDED(hr) && chainEntry.startingBlock < BLOCK_FIRST_SPECIAL)
       return chainEntry.startingBlock;
-    }
   }
 
   return BLOCK_END_OF_CHAIN;
@@ -7520,11 +7518,8 @@ static ULONG SmallBlockChainStream_GetHeadOfChain(
                       This->ownerDirEntry,
                       &chainEntry);
 
-    if (SUCCEEDED(hr))
-    {
+    if (SUCCEEDED(hr) && chainEntry.startingBlock < BLOCK_FIRST_SPECIAL)
       return chainEntry.startingBlock;
-    }
-
   }
 
   return BLOCK_END_OF_CHAIN;
