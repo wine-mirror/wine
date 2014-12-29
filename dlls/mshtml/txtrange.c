@@ -333,6 +333,13 @@ static void set_start_point(HTMLTxtRange *This, const rangepoint_t *start)
         ERR("failed: %08x\n", nsres);
 }
 
+static void set_end_point(HTMLTxtRange *This, const rangepoint_t *end)
+{
+    nsresult nsres = nsIDOMRange_SetEnd(This->nsrange, end->node, end->off);
+    if(NS_FAILED(nsres))
+        ERR("failed: %08x\n", nsres);
+}
+
 static BOOL is_elem_tag(nsIDOMNode *node, LPCWSTR istag)
 {
     nsIDOMElement *elem;
@@ -956,6 +963,60 @@ static LONG move_by_chars(rangepoint_t *iter, LONG cnt)
     return ret;
 }
 
+static LONG find_prev_space(rangepoint_t *iter, BOOL first_space)
+{
+    rangepoint_t prev;
+    WCHAR c;
+
+    init_rangepoint(&prev, iter->node, iter->off);
+    c = move_prev_char(&prev);
+    if(!c || (first_space && isspaceW(c)))
+        return FALSE;
+
+    do {
+        free_rangepoint(iter);
+        init_rangepoint(iter, prev.node, prev.off);
+        c = move_prev_char(&prev);
+    }while(c && !isspaceW(c));
+
+    free_rangepoint(&prev);
+    return TRUE;
+}
+
+static BOOL find_word_end(rangepoint_t *iter, BOOL is_collapsed)
+{
+    rangepoint_t prev_iter;
+    WCHAR c;
+    BOOL ret = FALSE;
+
+    if(!is_collapsed) {
+        init_rangepoint(&prev_iter, iter->node, iter->off);
+        c = move_prev_char(&prev_iter);
+        free_rangepoint(&prev_iter);
+        if(isspaceW(c))
+            return FALSE;
+    }
+
+    do {
+        init_rangepoint(&prev_iter, iter->node, iter->off);
+        c = move_next_char(iter);
+        if(c == '\n') {
+            free_rangepoint(iter);
+            *iter = prev_iter;
+            return ret;
+        }
+        if(!c) {
+            if(!ret)
+                ret = !rangepoint_cmp(iter, &prev_iter);
+        }else {
+            ret = TRUE;
+        }
+        free_rangepoint(&prev_iter);
+    }while(c && !isspaceW(c));
+
+    return ret;
+}
+
 static WCHAR get_pos_char(const dompos_t *pos)
 {
     switch(pos->type) {
@@ -1273,7 +1334,7 @@ static LONG move_prev_chars(HTMLTxtRange *This, LONG cnt, const dompos_t *pos, B
     return ret;
 }
 
-static LONG find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_space, dompos_t *ret)
+static LONG dompos_find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_space, dompos_t *ret)
 {
     dompos_t iter, tmp;
     WCHAR c;
@@ -1296,45 +1357,6 @@ static LONG find_prev_space(HTMLTxtRange *This, const dompos_t *pos, BOOL first_
 
     *ret = tmp;
     return TRUE;
-}
-
-static int find_word_end(const dompos_t *pos, dompos_t *ret)
-{
-    dompos_t iter, tmp;
-    int cnt = 1;
-    WCHAR c;
-    c = get_pos_char(pos);
-    if(isspaceW(c)) {
-        *ret = *pos;
-        dompos_addref(ret);
-        return 0;
-    }
-
-    c = next_char(pos, &iter);
-    if(!c) {
-        *ret = iter;
-        return 0;
-    }
-    if(c == '\n') {
-        *ret = *pos;
-        dompos_addref(ret);
-        return 0;
-    }
-
-    while(c && !isspaceW(c)) {
-        tmp = iter;
-        c = next_char(&tmp, &iter);
-        if(c == '\n') {
-            dompos_release(&iter);
-            iter = tmp;
-        }else {
-            cnt++;
-            dompos_release(&tmp);
-        }
-    }
-
-    *ret = iter;
-    return cnt;
 }
 
 static LONG move_next_words(LONG cnt, const dompos_t *pos, dompos_t *new_pos)
@@ -1374,7 +1396,7 @@ static LONG move_prev_words(HTMLTxtRange *This, LONG cnt, const dompos_t *pos, d
     dompos_addref(&iter);
 
     while(ret < cnt) {
-        if(!find_prev_space(This, &iter, FALSE, &tmp))
+        if(!dompos_find_prev_space(This, &iter, FALSE, &tmp))
             break;
 
         dompos_release(&iter);
@@ -1712,31 +1734,26 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
 
     switch(unit) {
     case RU_WORD: {
-        dompos_t end_pos, start_pos, new_start_pos, new_end_pos;
-        cpp_bool collapsed;
+        rangepoint_t end, start;
+        cpp_bool is_collapsed;
 
-        nsIDOMRange_GetCollapsed(This->nsrange, &collapsed);
+        get_start_point(This, &start);
+        get_end_point(This, &end);
 
-        get_cur_pos(This, TRUE, &start_pos);
-        get_cur_pos(This, FALSE, &end_pos);
+        nsIDOMRange_GetCollapsed(This->nsrange, &is_collapsed);
 
-        if(find_word_end(&end_pos, &new_end_pos) || collapsed) {
-            set_range_pos(This, FALSE, &new_end_pos);
+        if(find_word_end(&end, is_collapsed)) {
+            set_end_point(This, &end);
             *Success = VARIANT_TRUE;
         }
 
-        if(start_pos.type && (get_pos_char(&end_pos) || !dompos_cmp(&new_end_pos, &end_pos))) {
-            if(find_prev_space(This, &start_pos, TRUE, &new_start_pos)) {
-                set_range_pos(This, TRUE, &new_start_pos);
-                *Success = VARIANT_TRUE;
-            }
-            dompos_release(&new_start_pos);
+        if(find_prev_space(&start, TRUE)) {
+            set_start_point(This, &start);
+            *Success = VARIANT_TRUE;
         }
 
-        dompos_release(&new_end_pos);
-        dompos_release(&end_pos);
-        dompos_release(&start_pos);
-
+        free_rangepoint(&end);
+        free_rangepoint(&start);
         break;
     }
 
