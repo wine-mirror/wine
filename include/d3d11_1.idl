@@ -1,0 +1,179 @@
+/*
+ * Copyright 2014 Jacek Caban for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "dxgi1_2.idl";
+import "d3dcommon.idl";
+import "d3d11.idl";
+
+[
+    uuid(5c1e0d8a-7c23-48f9-8c59-a92958ceff11),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3DDeviceContextState : ID3D11DeviceChild
+{
+}
+
+[
+    uuid(bb2c6faa-b5fb-4082-8e6b-388b8cfa90e1),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11DeviceContext1 : ID3D11DeviceContext
+{
+    void CopySubresourceRegion1(
+            ID3D11Resource *pDstResource,
+            UINT DstSubresource,
+            UINT DstX,
+            UINT DstY,
+            UINT DstZ,
+            ID3D11Resource *pSrcResource,
+            UINT SrcSubresource,
+            const D3D11_BOX *pSrcBox,
+            UINT CopyFlags);
+
+    void UpdateSubresource1(
+            ID3D11Resource *pDstResource,
+            UINT DstSubresource,
+            const D3D11_BOX *pDstBox,
+            const void *pSrcData,
+            UINT SrcRowPitch,
+            UINT SrcDepthPitch,
+            UINT CopyFlags);
+
+    void DiscardResource(ID3D11Resource *pResource);
+
+    void DiscardView(ID3D11View *pResourceView);
+
+    void VSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void HSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void DSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void GSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void PSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void CSSetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer *const *ppConstantBuffers,
+            const UINT *pFirstConstant,
+            const UINT *pNumConstants);
+
+    void VSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void HSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void DSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void GSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void PSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void CSGetConstantBuffers1(
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer **ppConstantBuffers,
+            UINT *pFirstConstant,
+            UINT *pNumConstants);
+
+    void SwapDeviceContextState(
+            ID3DDeviceContextState *pState,
+            ID3DDeviceContextState **ppPreviousState);
+
+    void ClearView(
+            ID3D11View *pView,
+            FLOAT Color[4],
+            const D3D11_RECT *pRect,
+            UINT NumRects);
+
+    void DiscardView1(
+            ID3D11View *pResourceView,
+            const D3D11_RECT *pRects,
+            UINT NumRects);
+}
+
+[
+    uuid(b2daad8b-03d4-4dbf-95eb-32ab4b63d0ab),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3DUserDefinedAnnotation : IUnknown
+{
+    INT BeginEvent(LPCWSTR Name);
+    INT EndEvent();
+    void SetMarker(LPCWSTR Name);
+    BOOL GetStatus();
+}
