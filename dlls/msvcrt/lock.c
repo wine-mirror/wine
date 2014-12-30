@@ -384,10 +384,11 @@ void __thiscall critical_section_lock(critical_section *this)
         NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
     }
 
-    this->unk_active.next = NULL;
-    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q)
-        spin_wait_for_next_cs(&q);
     cs_set_head(this, &q);
+    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q) {
+        spin_wait_for_next_cs(&q);
+        this->unk_active.next = q.next;
+    }
 }
 
 /* ?try_lock@critical_section@Concurrency@@QAE_NXZ */
@@ -406,11 +407,11 @@ MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
 
     memset(&q, 0, sizeof(q));
     if(!InterlockedCompareExchangePointer(&this->tail, &q, NULL)) {
-        this->unk_active.next = NULL;
-        if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q)
-            spin_wait_for_next_cs(&q);
-
         cs_set_head(this, &q);
+        if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q) {
+            spin_wait_for_next_cs(&q);
+            this->unk_active.next = q.next;
+        }
         return TRUE;
     }
     return FALSE;
@@ -437,8 +438,10 @@ void __thiscall critical_section_unlock(critical_section *this)
             break;
 
         next = this->unk_active.next;
-        if(InterlockedCompareExchangePointer(&this->tail, NULL, next) == next)
+        if(InterlockedCompareExchangePointer(&this->tail, NULL, next) == next) {
+            HeapFree(GetProcessHeap(), 0, next);
             return;
+        }
         spin_wait_for_next_cs(next);
 
         this->unk_active.next = next->next;
@@ -491,14 +494,18 @@ MSVCRT_bool __thiscall critical_section_try_lock_for(
         if(status == STATUS_TIMEOUT) {
             if(!InterlockedExchange(&q->free, TRUE))
                 return FALSE;
+            /* A thread has signaled the event and is block waiting. */
+            /* We need to catch the event to wake the thread.        */
+            NtWaitForKeyedEvent(keyed_event, q, 0, NULL);
         }
     }
 
-    this->unk_active.next = NULL;
-    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, q) != q)
-        spin_wait_for_next_cs(q);
-
     cs_set_head(this, q);
+    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, q) != q) {
+        spin_wait_for_next_cs(q);
+        this->unk_active.next = q->next;
+    }
+
     HeapFree(GetProcessHeap(), 0, q);
     return TRUE;
 }
