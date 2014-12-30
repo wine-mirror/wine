@@ -115,6 +115,38 @@ HRESULT get_doc_elem_by_id(HTMLDocumentNode *doc, const WCHAR *id, HTMLElement *
     return hres;
 }
 
+UINT get_document_charset(HTMLDocumentNode *doc)
+{
+    nsAString charset_str;
+    UINT ret = 0;
+    nsresult nsres;
+
+    if(doc->charset)
+        return doc->charset;
+
+    nsAString_Init(&charset_str, NULL);
+    nsres = nsIDOMHTMLDocument_GetCharacterSet(doc->nsdoc, &charset_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *charset;
+
+        nsAString_GetData(&charset_str, &charset);
+
+        if(*charset) {
+            BSTR str = SysAllocString(charset);
+            ret = cp_from_charset_string(str);
+            SysFreeString(str);
+        }
+    }else {
+        ERR("GetCharset failed: %08x\n", nsres);
+    }
+    nsAString_Finish(&charset_str);
+
+    if(!ret)
+        return CP_UTF8;
+
+    return doc->charset = ret;
+}
+
 static inline HTMLDocument *impl_from_IHTMLDocument2(IHTMLDocument2 *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocument, IHTMLDocument2_iface);

@@ -749,6 +749,8 @@ struct HTMLDocumentNode {
 
     BOOL skip_mutation_notif;
 
+    UINT charset;
+
     struct list selection_list;
     struct list range_list;
     struct list plugin_hosts;
@@ -806,6 +808,8 @@ void notif_focus(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 void show_tooltip(HTMLDocumentObj*,DWORD,DWORD,LPCWSTR) DECLSPEC_HIDDEN;
 void hide_tooltip(HTMLDocumentObj*) DECLSPEC_HIDDEN;
 HRESULT get_client_disp_property(IOleClientSite*,DISPID,VARIANT*) DECLSPEC_HIDDEN;
+
+UINT get_document_charset(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**) DECLSPEC_HIDDEN;
 

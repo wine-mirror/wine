@@ -904,6 +904,7 @@ static const BSCallbackVtbl ScriptBSCVtbl = {
 
 static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, HTMLScriptElement *script_elem, WCHAR **ret)
 {
+    UINT cp = CP_UTF8;
     ScriptBSC *bsc;
     IMoniker *mon;
     WCHAR *text;
@@ -961,18 +962,21 @@ static HRESULT bind_script_to_text(HTMLInnerWindow *window, IUri *uri, HTMLScrip
         text[bsc->bsc.readed/sizeof(WCHAR)] = 0;
         break;
 
-    case BOM_UTF8:
-    default: {
+    default:
+        /* FIXME: Try to use charset from HTTP headers first */
+        cp = get_document_charset(window->doc);
+        /* fall through */
+    case BOM_UTF8: {
         DWORD len;
 
-        len = MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
+        len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, NULL, 0);
         text = heap_alloc((len+1)*sizeof(WCHAR));
         if(!text) {
             hres = E_OUTOFMEMORY;
             break;
         }
 
-        MultiByteToWideChar(CP_UTF8, 0, bsc->buf, bsc->bsc.readed, text, len);
+        MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.readed, text, len);
         text[len] = 0;
     }
     }
