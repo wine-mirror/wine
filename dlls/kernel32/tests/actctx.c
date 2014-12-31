@@ -222,6 +222,17 @@ static const char manifest4[] =
 "</dependency>"
 "</assembly>";
 
+static const char manifest5[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\">"
+"</assemblyIdentity>"
+"<dependency>"
+"    <dependentAssembly dependencyType=\"preRequisite\" allowDelayedBinding=\"true\">"
+"        <assemblyIdentity name=\"Missing.Assembly\" version=\"1.0.0.0\" />"
+"    </dependentAssembly>"
+"</dependency>"
+"</assembly>";
+
 static const char testdep_manifest1[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity type=\"win32\" name=\"testdep\" version=\"6.5.4.3\" processorArchitecture=\"" ARCH "\"/>"
@@ -1728,6 +1739,29 @@ static void test_typelib_section(void)
     pReleaseActCtx(handle);
 }
 
+static void test_allowDelayedBinding(void)
+{
+    HANDLE handle;
+
+    if (!create_manifest_file("test5.manifest", manifest5, -1, NULL, NULL)) {
+        skip("Could not create manifest file\n");
+        return;
+    }
+
+    handle = test_create("test5.manifest");
+    if (handle == INVALID_HANDLE_VALUE) {
+        win_skip("allowDelayedBinding attribute is not supported.\n");
+        return;
+    }
+
+    DeleteFileA("test5.manifest");
+    DeleteFileA("testdep.manifest");
+    if (handle != INVALID_HANDLE_VALUE) {
+        test_basic_info(handle, __LINE__);
+        pReleaseActCtx(handle);
+    }
+}
+
 static void test_actctx(void)
 {
     ULONG_PTR cookie;
@@ -1993,6 +2027,7 @@ static void test_actctx(void)
     test_wndclass_section();
     test_dllredirect_section();
     test_typelib_section();
+    test_allowDelayedBinding();
 }
 
 static void test_app_manifest(void)
