@@ -39,6 +39,7 @@
 #if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -480,7 +481,7 @@ BOOL schan_imp_init(void)
     libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
     if (!libgnutls_handle)
     {
-        WARN("Failed to load libgnutls.\n");
+        ERR_(winediag)("Failed to load libgnutls, secure connections will not be available.\n");
         return FALSE;
     }
 
