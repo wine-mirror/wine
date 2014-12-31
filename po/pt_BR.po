@@ -851,7 +851,7 @@ msgstr "O arquivo não existe"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "A seleção contêm um objeto que não é diretório"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -7188,7 +7188,7 @@ msgstr "pressionado"
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "marcado"
 
 #: oleacc.rc:103
 msgctxt "object state"
@@ -7213,27 +7213,27 @@ msgstr "padrão"
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "expandido"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "reduzido"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "ocupado"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "flutuando"
 
 #: oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "em movimento"
 
 #: oleacc.rc:112
 msgctxt "object state"
@@ -7243,12 +7243,12 @@ msgstr "animado"
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "invisível"
 
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "fora da tela"
 
 #: oleacc.rc:115
 msgctxt "object state"
@@ -7263,7 +7263,7 @@ msgstr "movível"
 #: oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr ""
+msgstr "voz própria"
 
 #: oleacc.rc:118
 msgctxt "object state"
@@ -7283,7 +7283,7 @@ msgstr "ligado"
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "percorrido"
 
 #: oleacc.rc:122
 msgctxt "object state"
@@ -7318,7 +7318,7 @@ msgstr "protegido"
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "tem popup"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
