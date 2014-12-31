@@ -146,6 +146,49 @@ static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client
     return S_OK;
 }
 
+static DWORD DSOUND_FindSpeakerConfig(IMMDevice *mmdevice)
+{
+    IPropertyStore *store;
+    HRESULT hr;
+    PROPVARIANT pv;
+    ULONG phys_speakers;
+
+    const DWORD def = DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
+
+    hr = IMMDevice_OpenPropertyStore(mmdevice, STGM_READ, &store);
+    if (FAILED(hr)) {
+        WARN("IMMDevice_OpenPropertyStore failed: %08x\n", hr);
+        return def;
+    }
+
+    hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_PhysicalSpeakers, &pv);
+
+    if (FAILED(hr)) {
+        WARN("IPropertyStore_GetValue failed: %08x\n", hr);
+        IPropertyStore_Release(store);
+        return def;
+    }
+
+    if (pv.vt != VT_UI4) {
+        WARN("PKEY_AudioEndpoint_PhysicalSpeakers is not a ULONG: 0x%x\n", pv.vt);
+        PropVariantClear(&pv);
+        IPropertyStore_Release(store);
+        return def;
+    }
+
+    phys_speakers = pv.u.ulVal;
+
+    PropVariantClear(&pv);
+    IPropertyStore_Release(store);
+
+    if ((phys_speakers & KSAUDIO_SPEAKER_STEREO) == KSAUDIO_SPEAKER_STEREO)
+        return DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
+    else if ((phys_speakers & KSAUDIO_SPEAKER_MONO) == KSAUDIO_SPEAKER_MONO)
+        return DSSPEAKER_MONO;
+
+    return def;
+}
+
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
     UINT prebuf_frames;
@@ -180,6 +223,8 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         WARN("Activate failed: %08x\n", hres);
         return hres;
     }
+
+    device->speaker_config = DSOUND_FindSpeakerConfig(device->mmdevice);
 
     hres = DSOUND_WaveFormat(device, device->client, forcewave, &wfx);
     if (FAILED(hres)) {
