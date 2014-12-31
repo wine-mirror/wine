@@ -386,8 +386,8 @@ static HRESULT WINAPI IDirectSound8Impl_SetSpeakerConfig(IDirectSound8 *iface, D
         return DSERR_UNINITIALIZED;
     }
 
-    This->device->speaker_config = config;
-    WARN("not fully functional\n");
+    /* NOP on Vista and above */
+
     return DS_OK;
 }
 

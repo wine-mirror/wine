@@ -158,10 +158,10 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
     if (rc==DS_OK) {
         rc=IDirectSound_GetSpeakerConfig(dso,&new_speaker_config);
         ok(rc==DS_OK,"IDirectSound_GetSpeakerConfig() failed: %08x\n", rc);
-        if (rc==DS_OK && speaker_config!=new_speaker_config)
+        if (rc==DS_OK && speaker_config!=new_speaker_config && ref_speaker_config!=new_speaker_config)
                trace("IDirectSound_GetSpeakerConfig() failed to set speaker "
-               "config: expected 0x%08x, got 0x%08x\n",
-               speaker_config,new_speaker_config);
+               "config: expected 0x%08x or 0x%08x, got 0x%08x\n",
+               speaker_config,ref_speaker_config,new_speaker_config);
         IDirectSound_SetSpeakerConfig(dso,ref_speaker_config);
     }
 
