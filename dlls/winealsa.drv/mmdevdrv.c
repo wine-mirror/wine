@@ -1830,8 +1830,8 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         goto exit;
     }
 
-    if(max_channels > 2)
-        fmt->Format.nChannels = 2;
+    if(max_channels > 6)
+        fmt->Format.nChannels = 6;
     else
         fmt->Format.nChannels = max_channels;
 
