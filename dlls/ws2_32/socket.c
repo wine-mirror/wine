@@ -7081,6 +7081,12 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         ptrPort = strchr(workBuffer, ':');
         if(ptrPort)
         {
+            /* User may have entered an IPv6 and asked to parse as IPv4 */
+            if(strchr(ptrPort + 1, ':'))
+            {
+                res = WSAEINVAL;
+                break;
+            }
             ((LPSOCKADDR_IN)lpAddress)->sin_port = htons(atoi(ptrPort+1));
             *ptrPort = '\0';
         }
