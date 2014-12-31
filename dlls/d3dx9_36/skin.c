@@ -395,13 +395,13 @@ static HRESULT WINAPI d3dx9_skin_info_ConvertToBlendedMesh(ID3DXSkinInfo *iface,
 }
 
 static HRESULT WINAPI d3dx9_skin_info_ConvertToIndexedBlendedMesh(ID3DXSkinInfo *iface, ID3DXMesh *mesh_in,
-        DWORD options, const DWORD *adjacency_in, DWORD *adjacency_out, DWORD *face_remap,
+        DWORD options, DWORD palette_size, const DWORD *adjacency_in, DWORD *adjacency_out, DWORD *face_remap,
         ID3DXBuffer **vertex_remap, DWORD *max_face_infl, DWORD *num_bone_combinations,
         ID3DXBuffer **bone_combination_table, ID3DXMesh **mesh_out)
 {
-    FIXME("iface %p, mesh_in %p, options %#x, adjacency_in %p, adjacency_out %p, face_remap %p, vertex_remap %p, "
+    FIXME("iface %p, mesh_in %p, options %#x, palette_size %u, adjacency_in %p, adjacency_out %p, face_remap %p, vertex_remap %p, "
             "max_face_infl %p, num_bone_combinations %p, bone_combination_table %p, mesh_out %p stub!\n",
-            iface, mesh_in, options, adjacency_in, adjacency_out, face_remap, vertex_remap,
+            iface, mesh_in, options, palette_size, adjacency_in, adjacency_out, face_remap, vertex_remap,
             max_face_infl, num_bone_combinations, bone_combination_table, mesh_out);
 
     return E_NOTIMPL;
