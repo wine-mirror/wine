@@ -112,6 +112,7 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
         CERT_TRUST_IS_NOT_TIME_VALID |
         CERT_TRUST_IS_UNTRUSTED_ROOT |
         CERT_TRUST_IS_PARTIAL_CHAIN |
+        CERT_TRUST_IS_NOT_SIGNATURE_VALID |
         CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
 
     TRACE("verifying %s\n", debugstr_w(conn->server->name));
@@ -176,6 +177,17 @@ static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTOR
                 conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
             }
             errors &= ~CERT_TRUST_IS_PARTIAL_CHAIN;
+        }
+
+        if(errors & CERT_TRUST_IS_NOT_SIGNATURE_VALID) {
+            WARN("CERT_TRUST_IS_NOT_SIGNATURE_VALID\n");
+            if(!(conn->security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA)) {
+                err = conn->mask_errors && err ? ERROR_INTERNET_SEC_CERT_ERRORS : ERROR_INTERNET_INVALID_CA;
+                if(!conn->mask_errors)
+                    break;
+                conn->security_flags |= _SECURITY_FLAG_CERT_INVALID_CA;
+            }
+            errors &= ~CERT_TRUST_IS_NOT_SIGNATURE_VALID;
         }
 
         if(errors & CERT_TRUST_IS_NOT_VALID_FOR_USAGE) {
