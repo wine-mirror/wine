@@ -286,7 +286,7 @@ HRESULT WINAPI DMOUnregister(REFCLSID dmo, REFGUID category)
 
     ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_WRITE, &rootkey);
     if (ret)
-        return HRESULT_FROM_WIN32(ret);
+        return S_FALSE;
 
     GUIDToString(dmoW, dmo);
     RegDeleteKeyW(rootkey, dmoW);
