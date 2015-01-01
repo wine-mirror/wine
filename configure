@@ -11854,7 +11854,7 @@ $as_echo "#define HAVE_RESOLV 1" >>confdefs.h
     esac
 fi
 
-if test "x$with_lcms2" != "xno"
+if test "x$with_cms" != "xno"
 then
     if ${LCMS2_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :

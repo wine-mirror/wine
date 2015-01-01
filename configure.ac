@@ -1455,7 +1455,7 @@ then
 fi
 
 dnl **** Check for LittleCMS ***
-if test "x$with_lcms2" != "xno"
+if test "x$with_cms" != "xno"
 then
     WINE_PACKAGE_FLAGS(LCMS2,[lcms2],[-llcms2],,,
         [AC_CHECK_HEADERS([lcms2.h])
