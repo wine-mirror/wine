@@ -67,7 +67,8 @@ enum layout_range_attr_kind {
     LAYOUT_RANGE_ATTR_INLINE,
     LAYOUT_RANGE_ATTR_UNDERLINE,
     LAYOUT_RANGE_ATTR_STRIKETHROUGH,
-    LAYOUT_RANGE_ATTR_FONTCOLL
+    LAYOUT_RANGE_ATTR_FONTCOLL,
+    LAYOUT_RANGE_ATTR_LOCALE
 };
 
 struct layout_range_attr_value {
@@ -82,6 +83,7 @@ struct layout_range_attr_value {
         BOOL underline;
         BOOL strikethrough;
         IDWriteFontCollection *collection;
+        const WCHAR *locale;
     } u;
 };
 
@@ -97,6 +99,7 @@ struct layout_range {
     BOOL underline;
     BOOL strikethrough;
     IDWriteFontCollection *collection;
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
 };
 
 struct layout_run {
@@ -402,6 +405,8 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
         return range->strikethrough == value->u.strikethrough;
     case LAYOUT_RANGE_ATTR_FONTCOLL:
         return range->collection == value->u.collection;
+    case LAYOUT_RANGE_ATTR_LOCALE:
+        return strcmpW(range->locale, value->u.locale) == 0;
     default:
         ;
     }
@@ -447,6 +452,7 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range->collection = layout->format.collection;
     if (range->collection)
         IDWriteFontCollection_AddRef(range->collection);
+    strcpyW(range->locale, layout->format.locale);
 
     return range;
 }
@@ -578,6 +584,11 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         dest->collection = value->u.collection;
         if (dest->collection)
             IDWriteFontCollection_AddRef(dest->collection);
+        break;
+    case LAYOUT_RANGE_ATTR_LOCALE:
+        changed = strcmpW(dest->locale, value->u.locale) != 0;
+        if (changed)
+            strcpyW(dest->locale, value->u.locale);
         break;
     default:
         ;
@@ -1127,17 +1138,17 @@ static HRESULT WINAPI dwritetextlayout_SetDrawingEffect(IDWriteTextLayout2 *ifac
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_EFFECT, &value);
 }
 
-static HRESULT WINAPI dwritetextlayout_SetInlineObject(IDWriteTextLayout2 *iface, IDWriteInlineObject *object, DWRITE_TEXT_RANGE r)
+static HRESULT WINAPI dwritetextlayout_SetInlineObject(IDWriteTextLayout2 *iface, IDWriteInlineObject *object, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     struct layout_range_attr_value attr;
 
-    TRACE("(%p)->(%p %s)\n", This, object, debugstr_range(&r));
+    TRACE("(%p)->(%p %s)\n", This, object, debugstr_range(&range));
 
-    if (!validate_text_range(This, &r))
+    if (!validate_text_range(This, &range))
         return S_OK;
 
-    attr.range = r;
+    attr.range = range;
     attr.u.object = object;
 
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_INLINE, &attr);
@@ -1153,8 +1164,20 @@ static HRESULT WINAPI dwritetextlayout_SetTypography(IDWriteTextLayout2 *iface, 
 static HRESULT WINAPI dwritetextlayout_SetLocaleName(IDWriteTextLayout2 *iface, WCHAR const* locale, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%s %s): stub\n", This, debugstr_w(locale), debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value attr;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(locale), debugstr_range(&range));
+
+    if (!locale || strlenW(locale) > LOCALE_NAME_MAX_LENGTH-1)
+        return E_INVALIDARG;
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    attr.range = range;
+    attr.u.locale = locale;
+
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_LOCALE, &attr);
 }
 
 static FLOAT WINAPI dwritetextlayout_GetMaxWidth(IDWriteTextLayout2 *iface)
@@ -1349,19 +1372,44 @@ static HRESULT WINAPI dwritetextlayout_GetTypography(IDWriteTextLayout2 *iface,
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetLocaleNameLength(IDWriteTextLayout2 *iface,
-    UINT32 position, UINT32* length, DWRITE_TEXT_RANGE *range)
+    UINT32 position, UINT32* length, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, length, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, length, r);
+
+    range = get_layout_range_by_pos(This, position);
+    if (!range) {
+        *length = 0;
+        return S_OK;
+    }
+
+    *length = strlenW(range->locale);
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetLocaleName(IDWriteTextLayout2 *iface,
-    UINT32 position, WCHAR* name, UINT32 name_size, DWRITE_TEXT_RANGE *range)
+    UINT32 position, WCHAR* locale, UINT32 length, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%u %p %u %p): stub\n", This, position, name, name_size, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %u %p)\n", This, position, locale, length, r);
+
+    if (length == 0)
+        return E_INVALIDARG;
+
+    locale[0] = 0;
+    range = get_layout_range_by_pos(This, position);
+    if (!range)
+        return E_INVALIDARG;
+
+    if (length < strlenW(range->locale) + 1)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    strcpyW(locale, range->locale);
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
