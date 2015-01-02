@@ -424,7 +424,8 @@ static inline BOOL is_same_layout_attributes(struct layout_range const *left, st
            left->effect == right->effect &&
            left->underline == right->underline &&
            left->strikethrough == right->strikethrough &&
-           left->collection == right->collection;
+           left->collection == right->collection &&
+          !strcmpW(left->locale, right->locale);
 }
 
 static inline BOOL is_same_text_range(const DWRITE_TEXT_RANGE *left, const DWRITE_TEXT_RANGE *right)
