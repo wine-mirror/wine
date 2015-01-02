@@ -614,7 +614,7 @@
 @ stub KeSetKernelStackSwapEnable
 @ stdcall KeSetPriorityThread(ptr long)
 @ stub KeSetProfileIrql
-@ stub KeSetSystemAffinityThread
+@ stdcall KeSetSystemAffinityThread(long)
 @ stub KeSetTargetProcessorDpc
 @ stub KeSetTimeIncrement
 @ stub KeSetTimer
