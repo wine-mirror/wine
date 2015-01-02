@@ -6359,13 +6359,17 @@ SOCKET WINAPI WSAJoinLeaf(
  */
 int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 {
-  int i = set->fd_count;
-
-  TRACE("(%ld,%p(%i))\n", s, set, i);
+  int i = set->fd_count, ret = 0;
 
   while (i--)
-      if (set->fd_array[i] == s) return 1;
-  return 0;
+      if (set->fd_array[i] == s)
+      {
+          ret = 1;
+          break;
+      }
+
+  TRACE("(socket %04lx, fd_set %p, count %i) <- %d", s, set, i, ret);
+  return ret;
 }
 
 /***********************************************************************
