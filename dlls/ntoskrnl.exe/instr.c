@@ -319,9 +319,14 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 TRACE("mov eax,cr0 at 0x%08x, EAX=0x%08x\n", context->Eip,context->Eax );
                 context->Eip += prefixlen+3;
                 return ExceptionContinueExecution;
+            case 0xe0:
+                TRACE("mov eax,cr4 at 0x%08x, EAX=0x%08x\n", context->Eip,context->Eax );
+                context->Eip += prefixlen+3;
+                return ExceptionContinueExecution;
             default:
                 break; /*fallthrough to bad instruction handling */
             }
+            ERR("Unsupported EAX -> CR register, eip+2 is %02x\n", instr[2]);
             break; /*fallthrough to bad instruction handling */
         case 0x20: /* mov crX, eax */
             switch (instr[2])
