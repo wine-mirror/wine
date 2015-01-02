@@ -639,6 +639,9 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     BOOL changed = FALSE;
     DWRITE_TEXT_RANGE r;
 
+    if (!validate_text_range(layout, &value->range))
+        return S_OK;
+
     /* If new range is completely within existing range, split existing range in two */
     if ((outer = find_outer_range(layout, &value->range))) {
 
@@ -1097,9 +1100,6 @@ static HRESULT WINAPI dwritetextlayout_SetFontCollection(IDWriteTextLayout2 *ifa
 
     TRACE("(%p)->(%p %s)\n", This, collection, debugstr_range(&range));
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.collection = collection;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_FONTCOLL, &value);
@@ -1115,12 +1115,8 @@ static HRESULT WINAPI dwritetextlayout_SetFontFamilyName(IDWriteTextLayout2 *ifa
     if (!name)
         return E_INVALIDARG;
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.fontfamily = name;
-
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_FONTFAMILY, &value);
 }
 
@@ -1130,9 +1126,6 @@ static HRESULT WINAPI dwritetextlayout_SetFontWeight(IDWriteTextLayout2 *iface, 
     struct layout_range_attr_value value;
 
     TRACE("(%p)->(%d %s)\n", This, weight, debugstr_range(&range));
-
-    if (!validate_text_range(This, &range))
-        return S_OK;
 
     value.range = range;
     value.u.weight = weight;
@@ -1146,9 +1139,6 @@ static HRESULT WINAPI dwritetextlayout_SetFontStyle(IDWriteTextLayout2 *iface, D
 
     TRACE("(%p)->(%d %s)\n", This, style, debugstr_range(&range));
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.style = style;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STYLE, &value);
@@ -1160,9 +1150,6 @@ static HRESULT WINAPI dwritetextlayout_SetFontStretch(IDWriteTextLayout2 *iface,
     struct layout_range_attr_value value;
 
     TRACE("(%p)->(%d %s)\n", This, stretch, debugstr_range(&range));
-
-    if (!validate_text_range(This, &range))
-        return S_OK;
 
     value.range = range;
     value.u.stretch = stretch;
@@ -1176,9 +1163,6 @@ static HRESULT WINAPI dwritetextlayout_SetFontSize(IDWriteTextLayout2 *iface, FL
 
     TRACE("(%p)->(%.2f %s)\n", This, size, debugstr_range(&range));
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.fontsize = size;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_FONTSIZE, &value);
@@ -1190,9 +1174,6 @@ static HRESULT WINAPI dwritetextlayout_SetUnderline(IDWriteTextLayout2 *iface, B
     struct layout_range_attr_value value;
 
     TRACE("(%p)->(%d %s)\n", This, underline, debugstr_range(&range));
-
-    if (!validate_text_range(This, &range))
-        return S_OK;
 
     value.range = range;
     value.u.underline = underline;
@@ -1206,9 +1187,6 @@ static HRESULT WINAPI dwritetextlayout_SetStrikethrough(IDWriteTextLayout2 *ifac
 
     TRACE("(%p)->(%d %s)\n", This, strikethrough, debugstr_range(&range));
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.underline = strikethrough;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STRIKETHROUGH, &value);
@@ -1220,9 +1198,6 @@ static HRESULT WINAPI dwritetextlayout_SetDrawingEffect(IDWriteTextLayout2 *ifac
     struct layout_range_attr_value value;
 
     TRACE("(%p)->(%p %s)\n", This, effect, debugstr_range(&range));
-
-    if (!validate_text_range(This, &range))
-        return S_OK;
 
     value.range = range;
     value.u.effect = effect;
@@ -1236,12 +1211,8 @@ static HRESULT WINAPI dwritetextlayout_SetInlineObject(IDWriteTextLayout2 *iface
 
     TRACE("(%p)->(%p %s)\n", This, object, debugstr_range(&range));
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.object = object;
-
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_INLINE, &value);
 }
 
@@ -1262,12 +1233,8 @@ static HRESULT WINAPI dwritetextlayout_SetLocaleName(IDWriteTextLayout2 *iface, 
     if (!locale || strlenW(locale) > LOCALE_NAME_MAX_LENGTH-1)
         return E_INVALIDARG;
 
-    if (!validate_text_range(This, &range))
-        return S_OK;
-
     value.range = range;
     value.u.locale = locale;
-
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_LOCALE, &value);
 }
 
