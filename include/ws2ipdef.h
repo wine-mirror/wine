@@ -129,6 +129,12 @@ typedef struct WS(sockaddr_in6)
    ULONG    sin6_scope_id;
 } SOCKADDR_IN6,*PSOCKADDR_IN6, *LPSOCKADDR_IN6;
 
+typedef struct WS(sockaddr_in6_pair)
+{
+    PSOCKADDR_IN6 SourceAddress;
+    PSOCKADDR_IN6 DestinationAddress;
+} SOCKADDR_IN6_PAIR, *PSOCKADDR_IN6_PAIR;
+
 /*
  * Multicast group information
  */

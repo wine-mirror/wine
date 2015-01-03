@@ -280,6 +280,28 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
 
 
 /******************************************************************
+ *    CreateSortedAddressPairs (IPHLPAPI.@)
+ */
+DWORD WINAPI CreateSortedAddressPairs(const PSOCKADDR_IN6 source, DWORD sourcecount,
+                                      const PSOCKADDR_IN6 destination, DWORD destinationcount,
+                                      DWORD sortoptions,
+                                      PSOCKADDR_IN6_PAIR *sortedaddr, DWORD *sortedcount)
+{
+  FIXME("(source %p, sourcecount %d, destination %p, destcount %d, sortoptions %x,"
+        " sortedaddr %p, sortedcount %p): stub\n", source, sourcecount, destination,
+        destinationcount, sortoptions, sortedaddr, sortedcount);
+
+  if (source || sourcecount || !destination || !sortedaddr || !sortedcount || destinationcount > 500)
+    return ERROR_INVALID_PARAMETER;
+
+  /* Returning not supported tells the client we don't have IPv6 support
+   * so applications can fallback to IPv4.
+   */
+  return ERROR_NOT_SUPPORTED;
+}
+
+
+/******************************************************************
  *    DeleteIPAddress (IPHLPAPI.@)
  *
  * Delete an IP address added with AddIPAddress().
