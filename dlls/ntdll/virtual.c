@@ -1729,12 +1729,31 @@ SIZE_T virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_
     {
         if (!(view->protect & VPROT_SYSTEM))
         {
-            void *page = ROUND_ADDR( addr, page_mask );
-            BYTE *p = view->prot + (((const char *)page - (const char *)view->base) >> page_shift);
-
-            while (bytes_written < size && (VIRTUAL_GetUnixProt( *p++ ) & PROT_WRITE))
+            while (bytes_written < size)
             {
-                SIZE_T block_size = min( size, page_size - ((UINT_PTR)addr & page_mask) );
+                void *page = ROUND_ADDR( addr, page_mask );
+                BYTE *p = view->prot + (((const char *)page - (const char *)view->base) >> page_shift);
+                SIZE_T block_size;
+
+                /* If the page is not writeable then check for write watches
+                 * before giving up. This can be done without raising a real
+                 * exception. Similar to virtual_handle_fault. */
+                if (!(VIRTUAL_GetUnixProt( *p ) & PROT_WRITE))
+                {
+                    if (!(view->protect & VPROT_WRITEWATCH))
+                        break;
+
+                    if (*p & VPROT_WRITEWATCH)
+                    {
+                        *p &= ~VPROT_WRITEWATCH;
+                        VIRTUAL_SetProt( view, page, page_size, *p );
+                    }
+                    /* ignore fault if page is writable now */
+                    if (!(VIRTUAL_GetUnixProt( *p ) & PROT_WRITE))
+                        break;
+                }
+
+                block_size = min( size, page_size - ((UINT_PTR)addr & page_mask) );
                 memcpy( addr, buffer, block_size );
 
                 addr   = (void *)((char *)addr + block_size);
