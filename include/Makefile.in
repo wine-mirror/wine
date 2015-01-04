@@ -138,6 +138,7 @@ PUBLIC_IDL_H_SRCS = \
 	wpcapi.idl \
 	wtypes.idl \
 	wuapi.idl \
+	xaudio2.idl \
 	xmllite.idl
 
 IDL_TLB_SRCS = \
