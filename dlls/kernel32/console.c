@@ -3119,24 +3119,25 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
     }
 
     /* convert value from server:
-     * + 0 => INVALID_HANDLE_VALUE
+     * + INVALID_HANDLE_VALUE => TEB: 0, STARTUPINFO: INVALID_HANDLE_VALUE
+     * + 0                    => TEB: 0, STARTUPINFO: INVALID_HANDLE_VALUE
      * + console handle needs to be mapped
      */
-    if (!params->hStdInput)
-        params->hStdInput = INVALID_HANDLE_VALUE;
+    if (!params->hStdInput || params->hStdInput == INVALID_HANDLE_VALUE)
+        params->hStdInput = 0;
     else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
     {
         params->hStdInput = console_handle_map(params->hStdInput);
         save_console_mode(params->hStdInput);
     }
 
-    if (!params->hStdOutput)
-        params->hStdOutput = INVALID_HANDLE_VALUE;
+    if (!params->hStdOutput || params->hStdOutput == INVALID_HANDLE_VALUE)
+        params->hStdOutput = 0;
     else if (VerifyConsoleIoHandle(console_handle_map(params->hStdOutput)))
         params->hStdOutput = console_handle_map(params->hStdOutput);
 
-    if (!params->hStdError)
-        params->hStdError = INVALID_HANDLE_VALUE;
+    if (!params->hStdError || params->hStdError == INVALID_HANDLE_VALUE)
+        params->hStdError = 0;
     else if (VerifyConsoleIoHandle(console_handle_map(params->hStdError)))
         params->hStdError = console_handle_map(params->hStdError);
 

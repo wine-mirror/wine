@@ -57,7 +57,7 @@
           wine_dbgstr_w(expected), wine_dbgstr_w(value)); \
     } while (0)
 
-static HINSTANCE hkernel32;
+static HINSTANCE hkernel32, hntdll;
 static void   (WINAPI *pGetNativeSystemInfo)(LPSYSTEM_INFO);
 static BOOL   (WINAPI *pGetSystemRegistryQuota)(PDWORD, PDWORD);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
@@ -66,6 +66,7 @@ static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static BOOL   (WINAPI *pQueryFullProcessImageNameA)(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD lpdwSize);
 static BOOL   (WINAPI *pQueryFullProcessImageNameW)(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD lpdwSize);
 static DWORD  (WINAPI *pK32GetProcessImageFileNameA)(HANDLE,LPSTR,DWORD);
+static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static HANDLE (WINAPI *pCreateJobObjectW)(LPSECURITY_ATTRIBUTES sa, LPCWSTR name);
 static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
 static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
@@ -208,6 +209,8 @@ static BOOL init(void)
     if ((p = strrchr(exename, '/')) != NULL) exename = p + 1;
 
     hkernel32 = GetModuleHandleA("kernel32");
+    hntdll    = GetModuleHandleA("ntdll.dll");
+
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
     pIsWow64Process = (void *) GetProcAddress(hkernel32, "IsWow64Process");
@@ -216,6 +219,7 @@ static BOOL init(void)
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
+    pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
     pCreateJobObjectW = (void *)GetProcAddress(hkernel32, "CreateJobObjectW");
     pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
@@ -290,6 +294,16 @@ static void     doChild(const char* file, const char* option)
                 siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute,
                 siA.dwFlags, siA.wShowWindow,
                 (DWORD_PTR)siA.hStdInput, (DWORD_PTR)siA.hStdOutput, (DWORD_PTR)siA.hStdError);
+
+    if (pNtCurrentTeb)
+    {
+        RTL_USER_PROCESS_PARAMETERS *params = pNtCurrentTeb()->Peb->ProcessParameters;
+
+        /* check the console handles in the TEB */
+        childPrintf(hFile, "[TEB]\nhStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
+                    (DWORD_PTR)params->hStdInput, (DWORD_PTR)params->hStdOutput,
+                    (DWORD_PTR)params->hStdError);
+    }
 
     /* since GetStartupInfoW is only implemented in win2k,
      * zero out before calling so we can notice the difference
@@ -2642,6 +2656,42 @@ static void test_BreakawayOk(HANDLE job)
     ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 }
 
+void test_StartupNoConsole(void)
+{
+#ifndef _WIN64
+    char                buffer[MAX_PATH];
+    STARTUPINFOA        startup;
+    PROCESS_INFORMATION info;
+    DWORD               code;
+
+    if (!pNtCurrentTeb)
+    {
+        win_skip( "NtCurrentTeb not supported\n" );
+        return;
+    }
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
+                      &info), "CreateProcess\n");
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    ok(GetExitCodeProcess(info.hProcess, &code), "Getting exit code\n");
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("TEB", "hStdInput", 0);
+    okChildInt("TEB", "hStdOutput", 0);
+    okChildInt("TEB", "hStdError", 0);
+    release_memory();
+    DeleteFileA(resfile);
+#endif
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -2690,6 +2740,7 @@ START_TEST(process)
     test_SystemInfo();
     test_RegistryQuota();
     test_DuplicateHandle();
+    test_StartupNoConsole();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
