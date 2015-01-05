@@ -1041,7 +1041,7 @@ HRESULT WINAPI SHAssocEnumHandlers(const WCHAR *extra, ASSOC_FILTER filter, IEnu
 {
     struct enumassochandlers *enumassoc;
 
-    FIXME("(%s %d %p\n): stub", debugstr_w(extra), filter, enumhandlers);
+    FIXME("(%s %d %p): stub\n", debugstr_w(extra), filter, enumhandlers);
 
     *enumhandlers = NULL;
 
