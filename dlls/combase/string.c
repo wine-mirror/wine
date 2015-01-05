@@ -21,9 +21,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "hstring.h"
-#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(combase);
 
 struct hstring_private
 {
