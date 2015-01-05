@@ -2684,6 +2684,7 @@ static void _SHCreateSymbolicLinks(void)
     {
         /* '$HOME' doesn't exist. Create 'My Pictures', 'My Videos' and 'My Music' subdirs
          * in '%USERPROFILE%\\My Documents' or fail silently if they already exist. */
+        pszHome = NULL;
         strcpy(szPersonalTarget, pszPersonal);
         for (i = 0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
             strcpy(szMyStuffTarget, szPersonalTarget);
