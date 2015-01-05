@@ -127,6 +127,64 @@ static void palette_set_mapping( HPALETTE hpal, int *mapping )
 
 
 /***********************************************************************
+ *		X11DRV_PALETTE_ComputeChannelShift
+ *
+ * Calculate conversion parameters for a given color mask
+ */
+static void X11DRV_PALETTE_ComputeChannelShift(unsigned long maskbits, ChannelShift *physical, ChannelShift *to_logical)
+{
+    int i;
+
+    if (maskbits==0)
+    {
+        physical->shift=0;
+        physical->scale=0;
+        physical->max=0;
+        to_logical->shift=0;
+        to_logical->scale=0;
+        to_logical->max=0;
+        return;
+    }
+
+    for(i=0;!(maskbits&1);i++)
+        maskbits >>= 1;
+
+    physical->shift = i;
+    physical->max = maskbits;
+
+    for(i=0;maskbits!=0;i++)
+        maskbits >>= 1;
+    physical->scale = i;
+
+    if (physical->scale>8)
+    {
+        /* On FreeBSD, VNC's default 32bpp mode is bgrabb (ffc00000,3ff800,7ff)!
+         * So we adjust the shifts to also normalize the color fields to
+         * the Win32 standard of 8 bits per color.
+         */
+        to_logical->shift=physical->shift+(physical->scale-8);
+        to_logical->scale=8;
+        to_logical->max=0xff;
+    } else {
+        to_logical->shift=physical->shift;
+        to_logical->scale=physical->scale;
+        to_logical->max=physical->max;
+    }
+}
+
+/***********************************************************************
+ *      X11DRV_PALETTE_ComputeColorShifts
+ *
+ * Calculate conversion parameters for a given color
+ */
+static void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask)
+{
+    X11DRV_PALETTE_ComputeChannelShift(redMask, &shifts->physicalRed, &shifts->logicalRed);
+    X11DRV_PALETTE_ComputeChannelShift(greenMask, &shifts->physicalGreen, &shifts->logicalGreen);
+    X11DRV_PALETTE_ComputeChannelShift(blueMask, &shifts->physicalBlue, &shifts->logicalBlue);
+}
+
+/***********************************************************************
  *           COLOR_Init
  *
  * Initialize color management.
@@ -208,64 +266,6 @@ int X11DRV_PALETTE_Init(void)
     }
 
     return palette_size;
-}
-
-/***********************************************************************
- *		X11DRV_PALETTE_ComputeChannelShift
- *
- * Calculate conversion parameters for a given color mask
- */
-static void X11DRV_PALETTE_ComputeChannelShift(unsigned long maskbits, ChannelShift *physical, ChannelShift *to_logical)
-{
-    int i;
-
-    if (maskbits==0)
-    {
-        physical->shift=0;
-        physical->scale=0;
-        physical->max=0;
-        to_logical->shift=0;
-        to_logical->scale=0;
-        to_logical->max=0;
-        return;
-    }
-
-    for(i=0;!(maskbits&1);i++)
-        maskbits >>= 1;
-
-    physical->shift = i;
-    physical->max = maskbits;
-
-    for(i=0;maskbits!=0;i++)
-        maskbits >>= 1;
-    physical->scale = i;
-
-    if (physical->scale>8)
-    {
-        /* On FreeBSD, VNC's default 32bpp mode is bgrabb (ffc00000,3ff800,7ff)!
-         * So we adjust the shifts to also normalize the color fields to
-         * the Win32 standard of 8 bits per color.
-         */
-        to_logical->shift=physical->shift+(physical->scale-8);
-        to_logical->scale=8;
-        to_logical->max=0xff;
-    } else {
-        to_logical->shift=physical->shift;
-        to_logical->scale=physical->scale;
-        to_logical->max=physical->max;
-    }
-}
-
-/***********************************************************************
- *      X11DRV_PALETTE_ComputeColorShifts
- *
- * Calculate conversion parameters for a given color
- */
-void X11DRV_PALETTE_ComputeColorShifts(ColorShifts *shifts, unsigned long redMask, unsigned long greenMask, unsigned long blueMask)
-{
-    X11DRV_PALETTE_ComputeChannelShift(redMask, &shifts->physicalRed, &shifts->logicalRed);
-    X11DRV_PALETTE_ComputeChannelShift(greenMask, &shifts->physicalGreen, &shifts->logicalGreen);
-    X11DRV_PALETTE_ComputeChannelShift(blueMask, &shifts->physicalBlue, &shifts->logicalBlue);
 }
 
 /***********************************************************************
