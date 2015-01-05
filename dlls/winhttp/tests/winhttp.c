@@ -31,6 +31,7 @@
 
 #include "wine/test.h"
 
+static HANDLE wait_event;
 static const WCHAR test_useragent[] =
     {'W','i','n','e',' ','R','e','g','r','e','s','s','i','o','n',' ','T','e','s','t',0};
 static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
@@ -1901,7 +1902,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /not_modified"))
         {
             send(c, notmodified, sizeof notmodified - 1, 0);
-            Sleep(6000);
+            WaitForSingleObject(wait_event, 5000);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -2248,6 +2249,8 @@ static void test_not_modified(int port)
 
     ret = WinHttpReceiveResponse(request, NULL);
     ok(ret, "WinHttpReceiveResponse failed: %u\n", GetLastError());
+
+    SetEvent(wait_event);
 
     size = sizeof(status);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,
@@ -3272,6 +3275,8 @@ START_TEST (winhttp)
     if (ret != WAIT_OBJECT_0)
         return;
 
+    wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
@@ -3283,6 +3288,8 @@ START_TEST (winhttp)
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, quitW);
+
+    CloseHandle(wait_event);
 
     WaitForSingleObject(thread, 3000);
 }
