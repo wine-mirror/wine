@@ -143,7 +143,18 @@ static ULONG WINAPI IRichEditOleImpl_inner_fnRelease(IUnknown *iface)
     TRACE ("%p ref=%u\n", This, ref);
 
     if (!ref)
-        DestroyIRichEditOle(&This->IRichEditOle_iface);
+    {
+        ITextRangeImpl *txtRge;
+
+        TRACE("Destroying %p\n", This);
+        This->txtSel->reOle = NULL;
+        This->editor->reOle = NULL;
+        ITextSelection_Release(&This->txtSel->ITextSelection_iface);
+        IOleClientSite_Release(&This->clientSite->IOleClientSite_iface);
+        LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, entry)
+            txtRge->reOle = NULL;
+        heap_free(This);
+    }
     return ref;
 }
 
@@ -2363,21 +2374,6 @@ LRESULT CreateIRichEditOle(IUnknown *outer_unk, ME_TextEditor *editor, LPVOID *p
     *ppvObj = &reo->IRichEditOle_iface;
 
     return 1;
-}
-
-void DestroyIRichEditOle(IRichEditOle *iface)
-{
-    IRichEditOleImpl *This = impl_from_IRichEditOle(iface);
-    ITextRangeImpl *txtRge;
-
-    TRACE("Destroying %p\n", This);
-    This->txtSel->reOle = NULL;
-    This->editor->reOle = NULL;
-    ITextSelection_Release(&This->txtSel->ITextSelection_iface);
-    IOleClientSite_Release(&This->clientSite->IOleClientSite_iface);
-    LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, entry)
-        txtRge->reOle = NULL;
-    heap_free(This);
 }
 
 static void convert_sizel(const ME_Context *c, const SIZEL* szl, SIZE* sz)
