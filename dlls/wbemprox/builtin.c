@@ -281,6 +281,8 @@ static const WCHAR prop_varianttypeW[] =
     {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
+static const WCHAR prop_volumenameW[] =
+    {'V','o','l','u','m','e','N','a','m','e',0};
 static const WCHAR prop_volumeserialnumberW[] =
     {'V','o','l','u','m','e','S','e','r','i','a','l','N','u','m','b','e','r',0};
 
@@ -364,6 +366,7 @@ static const struct column col_logicaldisk[] =
     { prop_freespaceW,          CIM_UINT64 },
     { prop_nameW,               CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_sizeW,               CIM_UINT64 },
+    { prop_volumenameW,         CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_volumeserialnumberW, CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_networkadapter[] =
@@ -677,6 +680,7 @@ struct record_logicaldisk
     UINT64       freespace;
     const WCHAR *name;
     UINT64       size;
+    const WCHAR *volumename;
     const WCHAR *volumeserialnumber;
 };
 struct record_networkadapter
@@ -1650,6 +1654,12 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
     return status;
 }
 
+static WCHAR *get_volumename( const WCHAR *root )
+{
+    WCHAR buf[MAX_PATH + 1] = {0};
+    GetVolumeInformationW( root, buf, sizeof(buf)/sizeof(buf[0]), NULL, NULL, NULL, NULL, 0 );
+    return heap_strdupW( buf );
+}
 static WCHAR *get_volumeserialnumber( const WCHAR *root )
 {
     static const WCHAR fmtW[] = {'%','0','8','X',0};
@@ -1692,6 +1702,7 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
             rec->freespace          = get_freespace( root, &size );
             rec->name               = heap_strdupW( device_id );
             rec->size               = size;
+            rec->volumename         = get_volumename( root );
             rec->volumeserialnumber = get_volumeserialnumber( root );
             if (!match_row( table, row, cond, &status ))
             {
