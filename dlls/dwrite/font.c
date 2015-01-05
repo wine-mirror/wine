@@ -451,7 +451,7 @@ HRESULT new_glyph_outline(UINT32 count, struct glyph_outline **ret)
     return S_OK;
 }
 
-void free_glyph_outline(struct glyph_outline *outline)
+static void free_glyph_outline(struct glyph_outline *outline)
 {
     heap_free(outline->points);
     heap_free(outline->tags);

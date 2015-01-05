@@ -142,7 +142,6 @@ struct glyph_outline {
 };
 
 extern HRESULT new_glyph_outline(UINT32,struct glyph_outline**) DECLSPEC_HIDDEN;
-extern void    free_glyph_outline(struct glyph_outline*) DECLSPEC_HIDDEN;
 
 /* FreeType integration */
 extern BOOL init_freetype(void) DECLSPEC_HIDDEN;
