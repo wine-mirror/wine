@@ -591,7 +591,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     desc.depth = 1;
     desc.size = 0;
     if (FAILED(hr = wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
-            NULL, &wined3d_null_parent_ops, &device->logo_texture)))
+            NULL, NULL, &wined3d_null_parent_ops, &device->logo_texture)))
     {
         ERR("Wine logo requested, but failed to create texture, hr %#x.\n", hr);
         goto out;
@@ -3455,9 +3455,9 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
 static HRESULT device_update_volume(struct wined3d_device *device,
         struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
+    struct wined3d_const_bo_address data;
     struct wined3d_map_desc src;
     HRESULT hr;
-    struct wined3d_bo_address data;
     struct wined3d_context *context;
 
     TRACE("device %p, src_volume %p, dst_volume %p.\n",
@@ -4016,7 +4016,7 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     desc.size = 0;
 
     if (FAILED(wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
-            NULL, &wined3d_null_parent_ops, &texture)))
+            NULL, NULL, &wined3d_null_parent_ops, &texture)))
     {
         ERR("Failed to create cursor texture.\n");
         wined3d_surface_unmap(cursor_image);

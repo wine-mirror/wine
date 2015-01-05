@@ -816,6 +816,29 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
+static void wined3d_texture_upload_data(struct wined3d_texture *texture, const struct wined3d_sub_resource_data *data)
+{
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_context *context;
+    unsigned int i;
+
+    context = context_acquire(texture->resource.device, NULL);
+
+    wined3d_texture_prepare_texture(texture, context, FALSE);
+    wined3d_texture_bind(texture, context, FALSE);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        struct wined3d_resource *sub_resource = texture->sub_resources[i];
+
+        texture->texture_ops->texture_sub_resource_upload_data(sub_resource, context, &data[i]);
+        texture->texture_ops->texture_sub_resource_validate_location(sub_resource, WINED3D_LOCATION_TEXTURE_RGB);
+        texture->texture_ops->texture_sub_resource_invalidate_location(sub_resource, ~WINED3D_LOCATION_TEXTURE_RGB);
+    }
+
+    context_release(context);
+}
+
 static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
         struct wined3d_context *context, BOOL srgb)
 {
@@ -844,6 +867,33 @@ static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
     surface_invalidate_location(surface, location);
+}
+
+static void texture2d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)
+{
+    struct wined3d_surface *surface = surface_from_resource(sub_resource);
+
+    surface_validate_location(surface, location);
+}
+
+static void texture2d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
+        const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
+{
+    struct wined3d_surface *surface = surface_from_resource(sub_resource);
+    static const POINT dst_point = {0, 0};
+    struct wined3d_const_bo_address addr;
+    RECT src_rect;
+
+    src_rect.left = 0;
+    src_rect.top = 0;
+    src_rect.right = surface->resource.width;
+    src_rect.bottom = surface->resource.height;
+
+    addr.buffer_object = 0;
+    addr.addr = data->data;
+
+    wined3d_surface_upload_data(surface, context->gl_info, surface->container->resource.format,
+            &src_rect, data->row_pitch, &dst_point, FALSE, &addr);
 }
 
 /* Context activation is done by the caller. */
@@ -951,6 +1001,8 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_cleanup,
     texture2d_sub_resource_invalidate_location,
+    texture2d_sub_resource_validate_location,
+    texture2d_sub_resource_upload_data,
     texture2d_prepare_texture,
 };
 
@@ -1274,6 +1326,30 @@ static void texture3d_sub_resource_invalidate_location(struct wined3d_resource *
     wined3d_volume_invalidate_location(volume, location);
 }
 
+static void texture3d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)
+{
+    struct wined3d_volume *volume = volume_from_resource(sub_resource);
+
+    wined3d_volume_validate_location(volume, location);
+}
+
+static void texture3d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
+        const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
+{
+    struct wined3d_volume *volume = volume_from_resource(sub_resource);
+    struct wined3d_const_bo_address addr;
+    unsigned int row_pitch, slice_pitch;
+
+    wined3d_volume_get_pitch(volume, &row_pitch, &slice_pitch);
+    if (row_pitch != data->row_pitch || slice_pitch != data->slice_pitch)
+        FIXME("Ignoring row/slice pitch (%u/%u).\n", data->row_pitch, data->slice_pitch);
+
+    addr.buffer_object = 0;
+    addr.addr = data->data;
+
+    wined3d_volume_upload_data(volume, context, &addr);
+}
+
 static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
@@ -1318,6 +1394,8 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
     texture3d_sub_resource_invalidate_location,
+    texture3d_sub_resource_validate_location,
+    texture3d_sub_resource_upload_data,
     texture3d_prepare_texture,
 };
 
@@ -1426,14 +1504,14 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 }
 
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD surface_flags, void *parent, const struct wined3d_parent_ops *parent_ops,
-        struct wined3d_texture **texture)
+        UINT level_count, DWORD surface_flags, const struct wined3d_sub_resource_data *data, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     struct wined3d_texture *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, level_count %u, surface_flags %#x, parent %p, parent_ops %p, texture %p.\n",
-            device, desc, level_count, surface_flags, parent, parent_ops, texture);
+    TRACE("device %p, desc %p, level_count %u, surface_flags %#x, data %p, parent %p, parent_ops %p, texture %p.\n",
+            device, desc, level_count, surface_flags, data, parent, parent_ops, texture);
 
     if (!level_count)
     {
@@ -1470,6 +1548,11 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
+
+    /* FIXME: We'd like to avoid ever allocating system memory for the texture
+     * in this case. */
+    if (data)
+        wined3d_texture_upload_data(object, data);
 
     TRACE("Created texture %p.\n", object);
     *texture = object;

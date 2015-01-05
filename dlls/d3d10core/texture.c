@@ -248,7 +248,7 @@ static const struct wined3d_parent_ops d3d10_texture2d_wined3d_parent_ops =
 };
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
-        const D3D10_TEXTURE2D_DESC *desc)
+        const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;
@@ -303,8 +303,9 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
 
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
 
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, levels,
-            0, texture, &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
+            levels, 0, (struct wined3d_sub_resource_data *)data, texture,
+            &d3d10_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         if (texture->dxgi_surface)
@@ -517,7 +518,7 @@ static const struct wined3d_parent_ops d3d10_texture3d_wined3d_parent_ops =
 };
 
 HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
-        const D3D10_TEXTURE3D_DESC *desc)
+        const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;
@@ -540,8 +541,9 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
 
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(max(desc->Width, desc->Height), desc->Depth)) + 1;
 
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc, levels,
-            0, texture, &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
+            levels, 0, (struct wined3d_sub_resource_data *)data, texture,
+            &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         return hr;

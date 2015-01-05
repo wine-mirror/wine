@@ -1469,9 +1469,9 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
-static void surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
-        BOOL srgb, const struct wined3d_bo_address *data)
+        BOOL srgb, const struct wined3d_const_bo_address *data)
 {
     UINT update_w = src_rect->right - src_rect->left;
     UINT update_h = src_rect->bottom - src_rect->top;
@@ -1700,7 +1700,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     surface_get_memory(src_surface, &data, src_surface->locations);
     src_pitch = wined3d_surface_get_pitch(src_surface);
 
-    surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_pitch, dst_point, FALSE, &data);
+    wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
+            src_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
 
     context_invalidate_active_texture(context);
 
@@ -2468,7 +2469,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;
     if (FAILED(wined3d_texture_create(source->resource.device, &desc, 1,
-            WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, &wined3d_null_parent_ops, &ret)))
+            WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, NULL, &wined3d_null_parent_ops, &ret)))
     {
         ERR("Failed to create a destination surface for conversion.\n");
         return NULL;
@@ -4254,7 +4255,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         data.addr = mem;
     }
 
-    surface_upload_data(surface, gl_info, &format, &src_rect, src_pitch, &dst_point, srgb, &data);
+    wined3d_surface_upload_data(surface, gl_info, &format, &src_rect,
+            src_pitch, &dst_point, srgb, wined3d_const_bo_address(&data));
 
     context_release(context);
 

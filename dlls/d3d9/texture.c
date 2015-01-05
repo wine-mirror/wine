@@ -1306,7 +1306,7 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, surface_flags,
-            texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
+            NULL, texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -1356,7 +1356,7 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, surface_flags,
-            texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
+            NULL, texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -1402,7 +1402,7 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
 
     wined3d_mutex_lock();
     hr = wined3d_texture_create(device->wined3d_device, &desc, levels, 0,
-            texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
+            NULL, texture, &d3d9_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

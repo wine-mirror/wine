@@ -948,6 +948,17 @@ struct wined3d_bo_address
     BYTE *addr;
 };
 
+struct wined3d_const_bo_address
+{
+    GLuint buffer_object;
+    const BYTE *addr;
+};
+
+static inline struct wined3d_const_bo_address *wined3d_const_bo_address(struct wined3d_bo_address *data)
+{
+    return (struct wined3d_const_bo_address *)data;
+}
+
 struct wined3d_stream_info_element
 {
     const struct wined3d_format *format;
@@ -2146,6 +2157,9 @@ struct wined3d_texture_ops
             const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
     void (*texture_sub_resource_invalidate_location)(struct wined3d_resource *sub_resource, DWORD location);
+    void (*texture_sub_resource_validate_location)(struct wined3d_resource *sub_resource, DWORD location);
+    void (*texture_sub_resource_upload_data)(struct wined3d_resource *sub_resource,
+            const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
 };
@@ -2250,11 +2264,13 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume) DECLSPEC_HIDDEN
 HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         unsigned int level, struct wined3d_volume **volume) DECLSPEC_HIDDEN;
 void wined3d_volume_destroy(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
+void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch, UINT *slice_pitch) DECLSPEC_HIDDEN;
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
         BOOL srgb_mode) DECLSPEC_HIDDEN;
 void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
+void wined3d_volume_validate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
-        const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
+        const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
 
 struct wined3d_surface_dib
 {
@@ -2372,6 +2388,9 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
         struct wined3d_surface **surface) DECLSPEC_HIDDEN;
 void wined3d_surface_destroy(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_prepare_map_memory(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
+        BOOL srgb, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;

@@ -90,7 +90,7 @@ struct d3d10_texture2d
 };
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
-        const D3D10_TEXTURE2D_DESC *desc) DECLSPEC_HIDDEN;
+        const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *initial_data) DECLSPEC_HIDDEN;
 struct d3d10_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture3D */
@@ -105,7 +105,7 @@ struct d3d10_texture3d
 };
 
 HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
-        const D3D10_TEXTURE3D_DESC *desc) DECLSPEC_HIDDEN;
+        const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
 
 /* ID3D10Buffer */
 struct d3d10_buffer
