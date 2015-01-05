@@ -2573,7 +2573,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
             /* Fall back to hard coded defaults. */
             switch (LOWORD(pwszSubPath)) {
                 case IDS_PERSONAL:
-                    lstrcpyW(wszSubPath, PersonalW);
+                    lstrcpyW(wszSubPath, DocumentsW);
                     break;
                 case IDS_MYMUSIC:
                     lstrcpyW(wszSubPath, My_MusicW);
