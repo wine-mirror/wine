@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret);
+
 HRESULT get_doc_elem_by_id(HTMLDocumentNode *doc, const WCHAR *id, HTMLElement **ret)
 {
     nsIDOMNodeList *nsnode_list;
@@ -4652,7 +4654,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     return S_OK;
 }
 
-HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)
+static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc_frag;
 

@@ -759,7 +759,6 @@ struct HTMLDocumentNode {
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument*,HTMLDocumentObj*,HTMLInnerWindow*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
-HRESULT create_document_fragment(nsIDOMNode*,HTMLDocumentNode*,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 
 HRESULT HTMLOuterWindow_Create(HTMLDocumentObj*,nsIDOMWindow*,HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT update_window_doc(HTMLInnerWindow*) DECLSPEC_HIDDEN;
