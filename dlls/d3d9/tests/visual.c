@@ -6775,8 +6775,6 @@ static void pretransformed_varying_test(void)
     hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         IDirect3DPixelShader9 *shader;
