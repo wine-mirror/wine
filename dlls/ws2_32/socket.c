@@ -3110,7 +3110,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                     addr_size = sizeof(struct sockaddr_in6);
                 else
                 {
-                    FIXME("Family %d is unsupported for SO_BSP_STATE", infow.iAddressFamily);
+                    FIXME("Family %d is unsupported for SO_BSP_STATE\n", infow.iAddressFamily);
                     SetLastError(WSAEAFNOSUPPORT);
                     return SOCKET_ERROR;
                 }
