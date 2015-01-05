@@ -1022,18 +1022,11 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (levels > 1)
+        if (levels != 1)
         {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL.\n");
+            WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning D3DERR_INVALIDCALL.\n");
             return WINED3DERR_INVALIDCALL;
         }
-
-        levels = 1;
-    }
-    else if (!levels)
-    {
-        levels = wined3d_log2i(desc->width) + 1;
-        TRACE("Calculated levels = %u.\n", levels);
     }
 
     if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
@@ -1168,18 +1161,11 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (levels > 1)
+        if (levels != 1)
         {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning WINED3DERR_INVALIDCALL.\n");
+            WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning WINED3DERR_INVALIDCALL.\n");
             return WINED3DERR_INVALIDCALL;
         }
-
-        levels = 1;
-    }
-    else if (!levels)
-    {
-        levels = wined3d_log2i(max(desc->width, desc->height)) + 1;
-        TRACE("Calculated levels = %u.\n", levels);
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels, desc,
@@ -1366,18 +1352,11 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (levels > 1)
+        if (levels != 1)
         {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL.\n");
+            WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning D3DERR_INVALIDCALL.\n");
             return WINED3DERR_INVALIDCALL;
         }
-
-        levels = 1;
-    }
-    else if (!levels)
-    {
-        levels = wined3d_log2i(max(max(desc->width, desc->height), desc->depth)) + 1;
-        TRACE("Calculated levels = %u.\n", levels);
     }
 
     if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
@@ -1455,6 +1434,12 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 
     TRACE("device %p, desc %p, level_count %u, surface_flags %#x, parent %p, parent_ops %p, texture %p.\n",
             device, desc, level_count, surface_flags, parent, parent_ops, texture);
+
+    if (!level_count)
+    {
+        WARN("Invalid level count.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
