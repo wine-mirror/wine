@@ -1201,7 +1201,7 @@ LSTATUS WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 
     /* no need for version check, not implemented on win9x anyway */
 
-    if (data && ((ULONG_PTR)data >> 16) == 0) return ERROR_NOACCESS;
+    if ((data && ((ULONG_PTR)data >> 16) == 0) || (!data && count)) return ERROR_NOACCESS;
 
     if (count && is_string(type))
     {

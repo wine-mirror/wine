@@ -436,6 +436,21 @@ static void test_set_value(void)
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_DWORD, (const BYTE *)1, 1);
     ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
 
+    if (pRegGetValueA) /* avoid a crash on Windows 2000 */
+    {
+        ret = RegSetValueExW(hkey_main, NULL, 0, REG_SZ, NULL, 4);
+        ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
+
+        ret = RegSetValueExW(hkey_main, NULL, 0, REG_SZ, NULL, 0);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+        ret = RegSetValueExW(hkey_main, NULL, 0, REG_DWORD, NULL, 4);
+        ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
+
+        ret = RegSetValueExW(hkey_main, NULL, 0, REG_DWORD, NULL, 0);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    }
+
     /* RegSetKeyValue */
     if (!pRegSetKeyValueW)
         win_skip("RegSetKeyValue() is not supported.\n");
@@ -463,6 +478,12 @@ static void test_set_value(void)
 
         ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, NULL, 0);
         ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, NULL, 4);
+        ok(ret == ERROR_NOACCESS, "got %d\n", ret);
+
+        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_DWORD, NULL, 4);
+        ok(ret == ERROR_NOACCESS, "got %d\n", ret);
 
         RegCloseKey(subkey);
     }
