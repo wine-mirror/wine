@@ -3987,13 +3987,11 @@ void CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *device, 
 static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
         struct wined3d_surface *cursor_image)
 {
+    struct wined3d_sub_resource_data data;
     struct wined3d_resource_desc desc;
     struct wined3d_map_desc map_desc;
     struct wined3d_texture *texture;
-    struct wined3d_surface *surface;
-    BYTE *src_data, *dst_data;
-    unsigned int src_pitch;
-    unsigned int i;
+    HRESULT hr;
 
     if (FAILED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_READONLY)))
     {
@@ -4001,8 +3999,9 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
         return NULL;
     }
 
-    src_pitch = map_desc.row_pitch;
-    src_data = map_desc.data;
+    data.data = map_desc.data;
+    data.row_pitch = map_desc.row_pitch;
+    data.slice_pitch = map_desc.slice_pitch;
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE;
     desc.format = WINED3DFMT_B8G8R8A8_UNORM;
@@ -4015,30 +4014,14 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     desc.depth = 1;
     desc.size = 0;
 
-    if (FAILED(wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
-            NULL, NULL, &wined3d_null_parent_ops, &texture)))
+    hr = wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
+            &data, NULL, &wined3d_null_parent_ops, &texture);
+    wined3d_surface_unmap(cursor_image);
+    if (FAILED(hr))
     {
         ERR("Failed to create cursor texture.\n");
-        wined3d_surface_unmap(cursor_image);
         return NULL;
     }
-
-    surface = surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
-    if (FAILED(wined3d_surface_map(surface, &map_desc, NULL, WINED3D_MAP_DISCARD)))
-    {
-        ERR("Failed to map destination surface.\n");
-        wined3d_texture_decref(texture);
-        wined3d_surface_unmap(cursor_image);
-        return NULL;
-    }
-
-    dst_data = map_desc.data;
-
-    for (i = 0; i < desc.height; ++i)
-        memcpy(&dst_data[map_desc.row_pitch * i], &src_data[src_pitch * i], desc.width * 4);
-
-    wined3d_surface_unmap(surface);
-    wined3d_surface_unmap(cursor_image);
 
     return texture;
 }
