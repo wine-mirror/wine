@@ -1954,7 +1954,7 @@ static void test_default_value(void)
 
     hres = parse_script_expr("new Date()", &v);
     ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
-    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d", V_VT(&v));
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
     disp = V_DISPATCH(&v);
 
     V_VT(&v) = VT_EMPTY;
