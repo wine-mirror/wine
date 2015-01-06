@@ -496,15 +496,23 @@ void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
     WCHAR *begin = strchrW(firstModifier, '$') + 1;
     WCHAR *end   = strchrW(firstModifier, ':');
     WCHAR env[MAX_PATH];
-    WCHAR fullpath[MAX_PATH];
+    DWORD size;
 
     /* Extract the env var */
     memcpy(env, begin, (end-begin) * sizeof(WCHAR));
     env[(end-begin)] = 0x00;
 
-    /* If env var not found, return empty string */
-    if ((GetEnvironmentVariableW(env, fullpath, MAX_PATH) == 0) ||
-        (SearchPathW(fullpath, outputparam, NULL, MAX_PATH, outputparam, NULL) == 0)) {
+    size = GetEnvironmentVariableW(env, NULL, 0);
+    if (size > 0) {
+      WCHAR *fullpath = heap_alloc(size * sizeof(WCHAR));
+      if (!fullpath || (GetEnvironmentVariableW(env, fullpath, size) == 0) ||
+          (SearchPathW(fullpath, outputparam, NULL, MAX_PATH, outputparam, NULL) == 0))
+          size = 0;
+      heap_free(fullpath);
+    }
+
+    if (!size) {
+      /* If env var not found, return empty string */
       finaloutput[0] = 0x00;
       outputparam[0] = 0x00;
       skipFileParsing = TRUE;
