@@ -927,7 +927,7 @@ todo_wine {
 static void test_SetLocaleName(void)
 {
     static const WCHAR strW[] = {'a','b','c','d',0};
-    WCHAR buffW[LOCALE_NAME_MAX_LENGTH+5];
+    WCHAR buffW[LOCALE_NAME_MAX_LENGTH+sizeof(strW)/sizeof(WCHAR)];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
@@ -971,10 +971,8 @@ if (0) /* crashes on native */
 
     /* name is too long */
     lstrcpyW(buffW, strW);
-    while (lstrlenW(buffW) < LOCALE_NAME_MAX_LENGTH) {
+    while (lstrlenW(buffW) <= LOCALE_NAME_MAX_LENGTH)
         lstrcatW(buffW, strW);
-    }
-    lstrcatW(buffW, strW);
 
     range.startPosition = 0;
     range.length = 1;
