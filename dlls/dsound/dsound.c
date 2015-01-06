@@ -619,6 +619,40 @@ void DSOUND_ParseSpeakerConfig(DirectSoundDevice *device)
             device->lfe_channel = -1;
         break;
 
+        case DSSPEAKER_5POINT1_BACK:
+            device->speaker_angles[0] = M_PI/180.0f * -135.0f;
+            device->speaker_angles[1] = M_PI/180.0f *  -45.0f;
+            device->speaker_angles[2] = M_PI/180.0f *    0.0f;
+            device->speaker_angles[3] = M_PI/180.0f *   45.0f;
+            device->speaker_angles[4] = M_PI/180.0f *  135.0f;
+            device->speaker_angles[5] = 9999.0f;
+            device->speaker_num[0] = 4; /* Rear left */
+            device->speaker_num[1] = 0; /* Front left */
+            device->speaker_num[2] = 2; /* Front centre */
+            device->speaker_num[3] = 1; /* Front right */
+            device->speaker_num[4] = 5; /* Rear right */
+            device->speaker_num[5] = 3; /* LFE */
+            device->num_speakers = 6;
+            device->lfe_channel = 3;
+        break;
+
+        case DSSPEAKER_5POINT1_SURROUND:
+            device->speaker_angles[0] = M_PI/180.0f *  -90.0f;
+            device->speaker_angles[1] = M_PI/180.0f *  -30.0f;
+            device->speaker_angles[2] = M_PI/180.0f *    0.0f;
+            device->speaker_angles[3] = M_PI/180.0f *   30.0f;
+            device->speaker_angles[4] = M_PI/180.0f *   90.0f;
+            device->speaker_angles[5] = 9999.0f;
+            device->speaker_num[0] = 4; /* Rear left */
+            device->speaker_num[1] = 0; /* Front left */
+            device->speaker_num[2] = 2; /* Front centre */
+            device->speaker_num[3] = 1; /* Front right */
+            device->speaker_num[4] = 5; /* Rear right */
+            device->speaker_num[5] = 3; /* LFE */
+            device->num_speakers = 6;
+            device->lfe_channel = 3;
+        break;
+
         default:
             WARN("unknown speaker_config %u\n", device->speaker_config);
     }

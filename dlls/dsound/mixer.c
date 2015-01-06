@@ -156,6 +156,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 			dsb->put = put_mono2stereo;
 		else if (ochannels == 4)
 			dsb->put = put_mono2quad;
+		else if (ochannels == 6)
+			dsb->put = put_mono2surround51;
 	}
 	else if (ochannels == 1)
 	{
@@ -166,6 +168,11 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	{
 		dsb->mix_channels = 2;
 		dsb->put = put_stereo2quad;
+	}
+	else if (ichannels == 2 && ochannels == 6)
+	{
+		dsb->mix_channels = 2;
+		dsb->put = put_stereo2surround51;
 	}
 	else
 	{

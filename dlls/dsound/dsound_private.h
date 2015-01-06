@@ -30,7 +30,7 @@
 
 #include "wine/list.h"
 
-#define DS_MAX_CHANNELS 4
+#define DS_MAX_CHANNELS 6
 
 extern int ds_hel_buflen DECLSPEC_HIDDEN;
 extern int ds_snd_queue_max DECLSPEC_HIDDEN;
@@ -181,6 +181,8 @@ float get_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel) DECL
 void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_mono2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void put_mono2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 
 HRESULT IDirectSoundBufferImpl_Create(
     DirectSoundDevice *device,

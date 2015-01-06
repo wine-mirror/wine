@@ -70,6 +70,9 @@ static DWORD speaker_config_to_channel_mask(DWORD speaker_config)
 
         case DSSPEAKER_QUAD:
             return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT;
+
+        case DSSPEAKER_5POINT1_BACK:
+            return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT;
     }
 
     WARN("unknown speaker_config %u\n", speaker_config);
@@ -195,7 +198,11 @@ static DWORD DSOUND_FindSpeakerConfig(IMMDevice *mmdevice)
     PropVariantClear(&pv);
     IPropertyStore_Release(store);
 
-    if ((phys_speakers & KSAUDIO_SPEAKER_QUAD) == KSAUDIO_SPEAKER_QUAD)
+    if ((phys_speakers & KSAUDIO_SPEAKER_5POINT1) == KSAUDIO_SPEAKER_5POINT1)
+        return DSSPEAKER_5POINT1_BACK;
+    else if ((phys_speakers & KSAUDIO_SPEAKER_5POINT1_SURROUND) == KSAUDIO_SPEAKER_5POINT1_SURROUND)
+        return DSSPEAKER_5POINT1_SURROUND;
+    else if ((phys_speakers & KSAUDIO_SPEAKER_QUAD) == KSAUDIO_SPEAKER_QUAD)
         return DSSPEAKER_QUAD;
     else if ((phys_speakers & KSAUDIO_SPEAKER_STEREO) == KSAUDIO_SPEAKER_STEREO)
         return DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);

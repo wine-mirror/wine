@@ -162,7 +162,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	/* panning related stuff */
 	D3DVALUE flAngle, flAngle2;
 	D3DVECTOR vLeft;
-	int i;
+	int i, num_main_speakers;
 	float a, ingain;
 	/* doppler shift related stuff */
 
@@ -311,8 +311,15 @@ if(0)
 	for (i = 0; i < dsb->device->pwfx->nChannels; i++)
 		dsb->volpan.dwTotalAmpFactor[i] = 0;
 
+	num_main_speakers = dsb->device->pwfx->nChannels;
+
+	if (dsb->device->lfe_channel != -1) {
+		dsb->volpan.dwTotalAmpFactor[dsb->device->lfe_channel] = ingain;
+		num_main_speakers--;
+	}
+
 	/* adapted from OpenAL's Alc/panning.c */
-	for (i = 0; i < dsb->device->pwfx->nChannels - 1; i++)
+	for (i = 0; i < num_main_speakers - 1; i++)
 	{
 		if(flAngle >= dsb->device->speaker_angles[i] && flAngle < dsb->device->speaker_angles[i+1])
 		{
