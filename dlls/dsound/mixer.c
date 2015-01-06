@@ -151,12 +151,21 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	else if (ichannels == 1)
 	{
 		dsb->mix_channels = 1;
-		dsb->put = put_mono2stereo;
+
+		if (ochannels == 2)
+			dsb->put = put_mono2stereo;
+		else if (ochannels == 4)
+			dsb->put = put_mono2quad;
 	}
 	else if (ochannels == 1)
 	{
 		dsb->mix_channels = 1;
 		dsb->get = get_mono;
+	}
+	else if (ichannels == 2 && ochannels == 4)
+	{
+		dsb->mix_channels = 2;
+		dsb->put = put_stereo2quad;
 	}
 	else
 	{

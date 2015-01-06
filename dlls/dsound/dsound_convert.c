@@ -165,6 +165,25 @@ void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel
     dsb->put_aux(dsb, pos, 1, value);
 }
 
+void put_mono2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    dsb->put_aux(dsb, pos, 0, value);
+    dsb->put_aux(dsb, pos, 1, value);
+    dsb->put_aux(dsb, pos, 2, value);
+    dsb->put_aux(dsb, pos, 3, value);
+}
+
+void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    if (channel == 0) { /* Left */
+        dsb->put_aux(dsb, pos, 0, value); /* Front left */
+        dsb->put_aux(dsb, pos, 2, value); /* Back left */
+    } else if (channel == 1) { /* Right */
+        dsb->put_aux(dsb, pos, 1, value); /* Front right */
+        dsb->put_aux(dsb, pos, 3, value); /* Back right */
+    }
+}
+
 void mixieee32(float *src, float *dst, unsigned samples)
 {
     TRACE("%p - %p %d\n", src, dst, samples);

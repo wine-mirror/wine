@@ -67,6 +67,9 @@ static DWORD speaker_config_to_channel_mask(DWORD speaker_config)
         case DSSPEAKER_STEREO:
         case DSSPEAKER_HEADPHONE:
             return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+
+        case DSSPEAKER_QUAD:
+            return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT;
     }
 
     WARN("unknown speaker_config %u\n", speaker_config);
@@ -192,7 +195,9 @@ static DWORD DSOUND_FindSpeakerConfig(IMMDevice *mmdevice)
     PropVariantClear(&pv);
     IPropertyStore_Release(store);
 
-    if ((phys_speakers & KSAUDIO_SPEAKER_STEREO) == KSAUDIO_SPEAKER_STEREO)
+    if ((phys_speakers & KSAUDIO_SPEAKER_QUAD) == KSAUDIO_SPEAKER_QUAD)
+        return DSSPEAKER_QUAD;
+    else if ((phys_speakers & KSAUDIO_SPEAKER_STEREO) == KSAUDIO_SPEAKER_STEREO)
         return DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
     else if ((phys_speakers & KSAUDIO_SPEAKER_MONO) == KSAUDIO_SPEAKER_MONO)
         return DSSPEAKER_MONO;
