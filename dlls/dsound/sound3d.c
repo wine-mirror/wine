@@ -114,6 +114,7 @@ static inline D3DVALUE AngleBetweenVectorsRad (const D3DVECTOR *a, const D3DVECT
 
 	cos = product/(la*lb);
 	angle = acos(cos);
+	if (cos < 0.0f) { angle -= M_PI; }
 	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians (%f degrees)\n",  a->x, a->y, a->z, b->x,
 	      b->y, b->z, angle, RadToDeg(angle));
 	return angle;	
@@ -159,8 +160,10 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	D3DVECTOR vDistance;
 	D3DVALUE flDistance = 0;
 	/* panning related stuff */
-	D3DVALUE flAngle;
+	D3DVALUE flAngle, flAngle2;
 	D3DVECTOR vLeft;
+	int i;
+	float a, ingain;
 	/* doppler shift related stuff */
 
 	TRACE("(%p)\n",dsb);
@@ -241,21 +244,35 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		       flAngle, dsb->ds3db_ds3db.dwInsideConeAngle/2, dsb->ds3db_ds3db.dwOutsideConeAngle/2, dsb->ds3db_ds3db.lConeOutsideVolume, lVolume);
 	}
 	dsb->volpan.lVolume = lVolume;
+
+	ingain = pow(2.0, dsb->volpan.lVolume / 600.0) * 0xffff;
+
+	if (dsb->device->pwfx->nChannels == 1)
+	{
+		dsb->volpan.dwTotalAmpFactor[0] = ingain;
+		return;
+	}
 	
 	/* panning */
 	if (dsb->device->ds3dl.vPosition.x == dsb->ds3db_ds3db.vPosition.x &&
 	    dsb->device->ds3dl.vPosition.y == dsb->ds3db_ds3db.vPosition.y &&
 	    dsb->device->ds3dl.vPosition.z == dsb->ds3db_ds3db.vPosition.z) {
-		dsb->volpan.lPan = 0;
 		flAngle = 0.0;
 	}
 	else
 	{
 		vDistance = VectorBetweenTwoPoints(&dsb->device->ds3dl.vPosition, &dsb->ds3db_ds3db.vPosition);
 		vLeft = VectorProduct(&dsb->device->ds3dl.vOrientFront, &dsb->device->ds3dl.vOrientTop);
-		flAngle = AngleBetweenVectorsRad(&vLeft, &vDistance);
-		/* for now, we'll use "linear formula" (which is probably incorrect); if someone has it in book, correct it */
-		dsb->volpan.lPan = 10000*2*flAngle/M_PI - 10000;
+		flAngle = AngleBetweenVectorsRad(&dsb->device->ds3dl.vOrientFront, &vDistance);
+		flAngle2 = AngleBetweenVectorsRad(&vLeft, &vDistance);
+
+		/* AngleBetweenVectorsRad performs a dot product, which gives us the cosine of the angle
+		 * between two vectors. Unfortunately, because cos(theta) = cos(-theta), we've no idea from
+		 * this whether the sound is to our left or to our right. We have to perform another dot
+		 * product, with a vector at right angles to the initial one, to get the correct angle.
+		 * The angle should be between -180 degrees and 180 degrees. */
+		if (flAngle < 0.0f) { flAngle += M_PI; }
+		if (flAngle2 > 0.0f) { flAngle = -flAngle; }
 	}
 	TRACE("panning: Angle = %f rad, lPan = %d\n", flAngle, dsb->volpan.lPan);
 
@@ -290,9 +307,28 @@ if(0)
 		DSOUND_RecalcFormat(dsb);
 	}
 }
-	
-	/* time for remix */
-	DSOUND_RecalcVolPan(&dsb->volpan);
+
+	for (i = 0; i < dsb->device->pwfx->nChannels; i++)
+		dsb->volpan.dwTotalAmpFactor[i] = 0;
+
+	/* adapted from OpenAL's Alc/panning.c */
+	for (i = 0; i < dsb->device->pwfx->nChannels - 1; i++)
+	{
+		if(flAngle >= dsb->device->speaker_angles[i] && flAngle < dsb->device->speaker_angles[i+1])
+		{
+			/* Sound is between speakers i and i+1 */
+			a = (flAngle-dsb->device->speaker_angles[i]) / (dsb->device->speaker_angles[i+1]-dsb->device->speaker_angles[i]);
+			dsb->volpan.dwTotalAmpFactor[dsb->device->speaker_num[i]] = sqrtf(1.0f-a) * ingain;
+			dsb->volpan.dwTotalAmpFactor[dsb->device->speaker_num[i+1]] = sqrtf(a) * ingain;
+			return;
+		}
+	}
+
+	/* Sound is between last and first speakers */
+	if (flAngle < dsb->device->speaker_angles[0]) { flAngle += M_PI*2.0f; }
+	a = (flAngle-dsb->device->speaker_angles[i]) / (M_PI*2.0f + dsb->device->speaker_angles[0]-dsb->device->speaker_angles[i]);
+	dsb->volpan.dwTotalAmpFactor[dsb->device->speaker_num[i]] = sqrtf(1.0f-a) * ingain;
+	dsb->volpan.dwTotalAmpFactor[dsb->device->speaker_num[0]] = sqrtf(a) * ingain;
 }
 
 static void DSOUND_Mix3DBuffer(IDirectSoundBufferImpl *dsb)
