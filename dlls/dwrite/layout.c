@@ -229,6 +229,8 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
     struct layout_run *cur, *cur2;
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->runs, struct layout_run, entry) {
         list_remove(&cur->entry);
+        if (cur->run.fontFace)
+            IDWriteFontFace_Release(cur->run.fontFace);
         heap_free(cur);
     }
 }
@@ -297,11 +299,14 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
     return S_OK;
 }
 
+static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos);
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
-    struct layout_range *cur;
-    HRESULT hr = S_OK;
+    struct layout_range *range;
+    struct layout_run *run;
+    HRESULT hr;
 
     free_layout_runs(layout);
 
@@ -309,10 +314,10 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     if (FAILED(hr))
         return hr;
 
-    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, entry) {
         /* inline objects override actual text in a range */
-        if (cur->object) {
-            hr = layout_update_breakpoints_range(layout, cur);
+        if (range->object) {
+            hr = layout_update_breakpoints_range(layout, range);
             if (FAILED(hr))
                 return hr;
             continue;
@@ -320,15 +325,53 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         /* initial splitting by script */
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            cur->range.startPosition, cur->range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->range.startPosition, range->range.length, &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
 
         /* this splits it further */
         hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            cur->range.startPosition, cur->range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->range.startPosition, range->range.length, &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
+    }
+
+    /* fill run info */
+    LIST_FOR_EACH_ENTRY(run, &layout->runs, struct layout_run, entry) {
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+        BOOL exists = TRUE;
+        UINT32 index;
+
+        range = get_layout_range_by_pos(layout, run->descr.textPosition);
+
+        hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
+        if (FAILED(hr) || !exists) {
+            WARN("[%u,%u]: family %s not found in collection %p\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength,
+                debugstr_w(range->fontfamily), range->collection);
+            continue;
+        }
+
+        hr = IDWriteFontCollection_GetFontFamily(range->collection, index, &family);
+        if (FAILED(hr))
+            continue;
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, range->weight, range->stretch, range->style, &font);
+        IDWriteFontFamily_Release(family);
+        if (FAILED(hr)) {
+            WARN("[%u,%u]: failed to get a matching font\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength);
+            continue;
+        }
+
+        hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+        IDWriteFont_Release(font);
+        if (FAILED(hr))
+            continue;
+
+        run->run.fontEmSize = range->fontsize;
+        run->descr.localeName = range->locale;
+
+        /* FIXME: set glyph indices, cluster map, advances */
     }
 
     IDWriteTextAnalyzer_Release(analyzer);
