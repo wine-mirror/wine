@@ -78,6 +78,10 @@ struct DirectSoundDevice
     CRITICAL_SECTION            mixlock;
     IDirectSoundBufferImpl     *primary;
     DWORD                       speaker_config;
+    float                       speaker_angles[DS_MAX_CHANNELS];
+    int                         speaker_num[DS_MAX_CHANNELS];
+    int                         num_speakers;
+    int                         lfe_channel;
     float *mix_buffer, *tmp_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
 
@@ -199,6 +203,7 @@ HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, void **ppv) DECLSPEC_HIDDE
 HRESULT DSOUND_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 HRESULT DSOUND_Create8(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 HRESULT IDirectSoundImpl_Create(IUnknown *outer_unk, REFIID riid, void **ppv, BOOL has_ds8) DECLSPEC_HIDDEN;
+void DSOUND_ParseSpeakerConfig(DirectSoundDevice *device) DECLSPEC_HIDDEN;
 
 /* primary.c */
 

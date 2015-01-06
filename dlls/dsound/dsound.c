@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
 
 #define COBJMACROS
 #define NONAMELESSSTRUCT
@@ -585,6 +586,31 @@ HRESULT WINAPI DirectSoundCreate8(
     return hr;
 }
 
+void DSOUND_ParseSpeakerConfig(DirectSoundDevice *device)
+{
+    switch (DSSPEAKER_CONFIG(device->speaker_config)) {
+        case DSSPEAKER_MONO:
+            device->speaker_angles[0] = M_PI/180.0f * 0.0f;
+            device->speaker_num[0] = 0;
+            device->num_speakers = 1;
+            device->lfe_channel = -1;
+        break;
+
+        case DSSPEAKER_STEREO:
+        case DSSPEAKER_HEADPHONE:
+            device->speaker_angles[0] = M_PI/180.0f * -90.0f;
+            device->speaker_angles[1] = M_PI/180.0f *  90.0f;
+            device->speaker_num[0] = 0; /* Left */
+            device->speaker_num[1] = 1; /* Right */
+            device->num_speakers = 2;
+            device->lfe_channel = -1;
+        break;
+
+        default:
+            WARN("unknown speaker_config %u\n", device->speaker_config);
+    }
+}
+
 /*******************************************************************************
  *        DirectSoundDevice
  */
@@ -604,6 +630,8 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->priolevel      = DSSCL_NORMAL;
     device->state          = STATE_STOPPED;
     device->speaker_config = DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
+
+    DSOUND_ParseSpeakerConfig(device);
 
     /* 3D listener initial parameters */
     device->ds3dl.dwSize   = sizeof(DS3DLISTENER);

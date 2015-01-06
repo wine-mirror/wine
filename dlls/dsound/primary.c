@@ -58,6 +58,21 @@ static DWORD DSOUND_fraglen(DirectSoundDevice *device)
     return ret;
 }
 
+static DWORD speaker_config_to_channel_mask(DWORD speaker_config)
+{
+    switch (DSSPEAKER_CONFIG(speaker_config)) {
+        case DSSPEAKER_MONO:
+            return SPEAKER_FRONT_LEFT;
+
+        case DSSPEAKER_STEREO:
+        case DSSPEAKER_HEADPHONE:
+            return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+    }
+
+    WARN("unknown speaker_config %u\n", speaker_config);
+    return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+}
+
 static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client,
 				 BOOL forcewave, WAVEFORMATEX **wfx)
 {
@@ -72,15 +87,11 @@ static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client
         if (FAILED(hr))
             return hr;
 
-        if (mixwfe->Format.nChannels > 2) {
-            static int once;
-            if (!once++)
-                FIXME("Limiting channels to 2 due to lack of multichannel support\n");
-
-            mixwfe->Format.nChannels = 2;
+        if (mixwfe->Format.nChannels > device->num_speakers) {
+            mixwfe->Format.nChannels = device->num_speakers;
             mixwfe->Format.nBlockAlign = mixwfe->Format.nChannels * mixwfe->Format.wBitsPerSample / 8;
             mixwfe->Format.nAvgBytesPerSec = mixwfe->Format.nSamplesPerSec * mixwfe->Format.nBlockAlign;
-            mixwfe->dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+            mixwfe->dwChannelMask = speaker_config_to_channel_mask(device->speaker_config);
         }
 
         if (!IsEqualGUID(&mixwfe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
@@ -225,6 +236,8 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
     }
 
     device->speaker_config = DSOUND_FindSpeakerConfig(device->mmdevice);
+
+    DSOUND_ParseSpeakerConfig(device);
 
     hres = DSOUND_WaveFormat(device, device->client, forcewave, &wfx);
     if (FAILED(hres)) {
