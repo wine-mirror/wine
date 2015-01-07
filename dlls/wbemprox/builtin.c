@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winsock2.h"
+#include "ws2tcpip.h"
 #include "initguid.h"
 #include "wbemcli.h"
 #include "wbemprov.h"
@@ -149,6 +150,8 @@ static const WCHAR prop_displaynameW[] =
     {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR prop_diskindexW[] =
     {'D','i','s','k','I','n','d','e','x',0};
+static const WCHAR prop_dnshostnameW[] =
+    {'D','N','S','H','o','s','t','N','a','m','e',0};
 static const WCHAR prop_domainW[] =
     {'D','o','m','a','i','n',0};
 static const WCHAR prop_domainroleW[] =
@@ -389,6 +392,7 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_networkadapterconfig[] =
 {
+    { prop_dnshostnameW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_indexW,              CIM_UINT32|COL_FLAG_KEY, VT_I4 },
     { prop_ipconnectionmetricW, CIM_UINT32, VT_I4 },
     { prop_ipenabledW,          CIM_BOOLEAN },
@@ -705,6 +709,7 @@ struct record_networkadapter
 };
 struct record_networkadapterconfig
 {
+    const WCHAR *dnshostname;
     UINT32       index;
     UINT32       ipconnectionmetric;
     int          ipenabled;
@@ -1829,6 +1834,17 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     return status;
 }
 
+static WCHAR *get_dnshostname( IP_ADAPTER_UNICAST_ADDRESS *addr )
+{
+    const SOCKET_ADDRESS *sa = &addr->Address;
+    WCHAR buf[NI_MAXHOST];
+
+    if (!addr) return NULL;
+    if (GetNameInfoW( sa->lpSockaddr, sa->iSockaddrLength, buf, sizeof(buf)/sizeof(buf[0]), NULL,
+                      0, NI_NAMEREQD )) return NULL;
+    return heap_strdupW( buf );
+}
+
 static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
 {
     struct record_networkadapterconfig *rec;
@@ -1860,6 +1876,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapterconfig *)(table->data + offset);
+        rec->dnshostname        = get_dnshostname( aa->FirstUnicastAddress );
         rec->index              = aa->u.s.IfIndex;
         rec->ipconnectionmetric = 20;
         rec->ipenabled          = -1;
