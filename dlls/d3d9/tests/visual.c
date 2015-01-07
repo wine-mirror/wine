@@ -16798,8 +16798,6 @@ static void test_3dc_formats(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     for (i = 0; i < 4; ++i)
     {
         color = getPixelColor(device, expected_colors[i].position.x, expected_colors[i].position.y);
@@ -16808,6 +16806,8 @@ static void test_3dc_formats(void)
                 expected_colors[i].amd, expected_colors[i].nvidia, color, i);
     }
 
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     IDirect3DTexture9_Release(ati2n_texture);
     IDirect3DTexture9_Release(ati1n_texture);
     refcount = IDirect3DDevice9_Release(device);
