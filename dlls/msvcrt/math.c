@@ -2567,3 +2567,27 @@ short CDECL MSVCR120__ldclass(LDOUBLE x)
 {
     return MSVCR120__dclass(x);
 }
+
+/*********************************************************************
+ *      _dtest (MSVCR120.@)
+ */
+short CDECL MSVCR120__dtest(double *x)
+{
+    return MSVCR120__dclass(*x);
+}
+
+/*********************************************************************
+ *      _fdtest (MSVCR120.@)
+ */
+short CDECL MSVCR120__fdtest(float *x)
+{
+    return MSVCR120__dclass(*x);
+}
+
+/*********************************************************************
+ *      _ldtest (MSVCR120.@)
+ */
+short CDECL MSVCR120__ldtest(LDOUBLE *x)
+{
+    return MSVCR120__dclass(*x);
+}

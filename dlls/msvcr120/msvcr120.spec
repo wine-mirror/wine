@@ -1111,7 +1111,7 @@
 @ stub _dpcomp
 @ stub _dsign
 @ extern _dstbias MSVCRT__dstbias
-@ stub _dtest
+@ cdecl _dtest(ptr) MSVCR120__dtest
 @ cdecl _dup(long) MSVCRT__dup
 @ cdecl _dup2(long long) MSVCRT__dup2
 @ cdecl _dupenv_s(ptr ptr str)
@@ -1144,7 +1144,7 @@
 @ cdecl _fdopen(long str) MSVCRT__fdopen
 @ stub _fdpcomp
 @ stub _fdsign
-@ stub _fdtest
+@ cdecl _fdtest(ptr) MSVCR120__fdtest
 @ cdecl _fflush_nolock(ptr) MSVCRT__fflush_nolock
 @ cdecl _fgetc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _fgetchar() MSVCRT__fgetchar
@@ -1392,7 +1392,7 @@
 @ cdecl _ldclass(double) MSVCR120__ldclass
 @ stub _ldpcomp
 @ stub _ldsign
-@ stub _ldtest
+@ cdecl _ldtest(ptr) MSVCR120__ldtest
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ stub _lfind_s
 @ cdecl -arch=i386  _libm_sse2_acos_precise() __libm_sse2_acos
