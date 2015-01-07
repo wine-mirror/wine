@@ -257,6 +257,8 @@ static const WCHAR prop_startingoffsetW[] =
     {'S','t','a','r','t','i','n','g','O','f','f','s','e','t',0};
 static const WCHAR prop_stateW[] =
     {'S','t','a','t','e',0};
+static const WCHAR prop_statusinfoW[] =
+    {'S','t','a','t','u','s','I','n','f','o',0};
 static const WCHAR prop_strvalueW[] =
     {'S','t','r','i','n','g','V','a','l','u','e',0};
 static const WCHAR prop_suitemaskW[] =
@@ -491,7 +493,8 @@ static const struct column col_service[] =
 static const struct column col_sounddevice[] =
 {
     { prop_nameW,        CIM_STRING },
-    { prop_productnameW, CIM_STRING }
+    { prop_productnameW, CIM_STRING },
+    { prop_statusinfoW,  CIM_UINT16 }
 };
 static const struct column col_stdregprov[] =
 {
@@ -806,6 +809,7 @@ struct record_sounddevice
 {
     const WCHAR *name;
     const WCHAR *productname;
+    UINT16       statusinfo;
 };
 struct record_stdregprov
 {
@@ -885,7 +889,7 @@ static const struct record_qualifier data_qualifier[] =
 };
 static const struct record_sounddevice data_sounddevice[] =
 {
-    { sounddevice_productnameW, sounddevice_productnameW }
+    { sounddevice_productnameW, sounddevice_productnameW, 3 /* enabled */ }
 };
 static const struct record_stdregprov data_stdregprov[] =
 {
