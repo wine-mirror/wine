@@ -32,6 +32,401 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
+struct services
+{
+    ISWbemServices ISWbemServices_iface;
+    LONG refs;
+};
+
+static inline struct services *impl_from_ISWbemServices(
+    ISWbemServices *iface )
+{
+    return CONTAINING_RECORD( iface, struct services, ISWbemServices_iface );
+}
+
+static ULONG WINAPI services_AddRef(
+    ISWbemServices *iface )
+{
+    struct services *services = impl_from_ISWbemServices( iface );
+    return InterlockedIncrement( &services->refs );
+}
+
+static ULONG WINAPI services_Release(
+    ISWbemServices *iface )
+{
+    struct services *services = impl_from_ISWbemServices( iface );
+    LONG refs = InterlockedDecrement( &services->refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", services );
+        heap_free( services );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI services_QueryInterface(
+    ISWbemServices *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct services *services = impl_from_ISWbemServices( iface );
+
+    TRACE( "%p %s %p\n", services, debugstr_guid(riid), ppvObject );
+
+    if (IsEqualGUID( riid, &IID_ISWbemServices ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObject = services;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    ISWbemServices_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI services_GetTypeInfoCount(
+    ISWbemServices *iface,
+    UINT *count )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_GetTypeInfo(
+    ISWbemServices *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_GetIDsOfNames(
+    ISWbemServices *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_Invoke(
+    ISWbemServices *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_Get(
+    ISWbemServices *iface,
+    BSTR strObjectPath,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObject **objWbemObject )
+{
+    FIXME( "%p, %s, %d, %p, %p\n", iface, debugstr_w(strObjectPath), iFlags, objWbemNamedValueSet,
+           objWbemObject );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_GetAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strObjectPath,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_Delete(
+    ISWbemServices *iface,
+    BSTR strObjectPath,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_DeleteAsync(
+    ISWbemServices* This,
+    IDispatch *objWbemSink,
+    BSTR strObjectPath,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_InstancesOf(
+    ISWbemServices *iface,
+    BSTR strClass,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_InstancesOfAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strClass,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_SubclassesOf(
+    ISWbemServices *iface,
+    BSTR strSuperclass,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_SubclassesOfAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strSuperclass,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecQuery(
+    ISWbemServices *iface,
+    BSTR strQuery,
+    BSTR strQueryLanguage,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecQueryAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strQuery,
+    BSTR strQueryLanguage,
+    LONG lFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_AssociatorsOf(
+    ISWbemServices *iface,
+    BSTR strObjectPath,
+    BSTR strAssocClass,
+    BSTR strResultClass,
+    BSTR strResultRole,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredAssocQualifier,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_AssociatorsOfAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strObjectPath,
+    BSTR strAssocClass,
+    BSTR strResultClass,
+    BSTR strResultRole,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredAssocQualifier,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ReferencesTo(
+    ISWbemServices *iface,
+    BSTR strObjectPath,
+    BSTR strResultClass,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ReferencesToAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strObjectPath,
+    BSTR strResultClass,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecNotificationQuery(
+    ISWbemServices *iface,
+    BSTR strQuery,
+    BSTR strQueryLanguage,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemEventSource **objWbemEventSource )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecNotificationQueryAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strQuery,
+    BSTR strQueryLanguage,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecMethod(
+    ISWbemServices *iface,
+    BSTR strObjectPath,
+    BSTR strMethodName,
+    IDispatch *objWbemInParameters,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObject **objWbemOutParameters )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_ExecMethodAsync(
+    ISWbemServices *iface,
+    IDispatch *objWbemSink,
+    BSTR strObjectPath,
+    BSTR strMethodName,
+    IDispatch *objWbemInParameters,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI services_get_Security_(
+        ISWbemServices *iface,
+        ISWbemSecurity **objWbemSecurity )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static const ISWbemServicesVtbl services_vtbl =
+{
+    services_QueryInterface,
+    services_AddRef,
+    services_Release,
+    services_GetTypeInfoCount,
+    services_GetTypeInfo,
+    services_GetIDsOfNames,
+    services_Invoke,
+    services_Get,
+    services_GetAsync,
+    services_Delete,
+    services_DeleteAsync,
+    services_InstancesOf,
+    services_InstancesOfAsync,
+    services_SubclassesOf,
+    services_SubclassesOfAsync,
+    services_ExecQuery,
+    services_ExecQueryAsync,
+    services_AssociatorsOf,
+    services_AssociatorsOfAsync,
+    services_ReferencesTo,
+    services_ReferencesToAsync,
+    services_ExecNotificationQuery,
+    services_ExecNotificationQueryAsync,
+    services_ExecMethod,
+    services_ExecMethodAsync,
+    services_get_Security_
+};
+
+static HRESULT SWbemServices_create( ISWbemServices **obj )
+{
+    struct services *services;
+
+    TRACE( "%p\n", obj );
+
+    if (!(services = heap_alloc( sizeof(*services) ))) return E_OUTOFMEMORY;
+    services->ISWbemServices_iface.lpVtbl = &services_vtbl;
+    services->refs = 1;
+
+    *obj = &services->ISWbemServices_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
+}
+
 struct locator
 {
     ISWbemLocator ISWbemLocator_iface;
@@ -226,7 +621,7 @@ static HRESULT WINAPI locator_ConnectServer(
     FIXME( "%p, %s, %s, %s, %p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strServer),
            debugstr_w(strNamespace), debugstr_w(strUser), strPassword, debugstr_w(strLocale),
            debugstr_w(strAuthority), iSecurityFlags, objWbemNamedValueSet, objWbemServices );
-    return E_NOTIMPL;
+    return SWbemServices_create( objWbemServices );
 }
 
 static HRESULT WINAPI locator_get_Security_(
