@@ -11335,6 +11335,15 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name(basic_ifstream_cha
     return this;
 }
 
+/* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ifstream_char_ctor_name_old, 16)
+basic_ifstream_char* __thiscall basic_ifstream_char_ctor_name_old(basic_ifstream_char *this,
+        const char *name, int mode, MSVCP_bool virt_init)
+{
+    return basic_ifstream_char_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
+}
+
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@PBGHH@Z */
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QEAA@PEBGHH@Z */
 /* ??0?$basic_ifstream@DU?$char_traits@D@std@@@std@@QAE@PB_WHH@Z */
@@ -11586,6 +11595,24 @@ basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_name(basic_ifstream_w
     basic_ifstream_wchar_ctor_name(this, name, mode, prot, virt_init);
     basic_istream_wchar_get_basic_ios(&this->base)->base.vtable = &MSVCP_basic_ifstream_short_vtable;
     return this;
+}
+
+/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_ctor_name_old, 16)
+basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor_name_old(basic_ifstream_wchar *this,
+        const char *name, int mode, MSVCP_bool virt_init)
+{
+    return basic_ifstream_wchar_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
+}
+
+/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ifstream@GU?$char_traits@G@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ifstream_short_ctor_name_old, 16)
+basic_ifstream_wchar* __thiscall basic_ifstream_short_ctor_name_old(basic_ifstream_wchar *this,
+        const char *name, int mode, MSVCP_bool virt_init)
+{
+    return basic_ifstream_short_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
 }
 
 /* ??0?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@QAE@PBGHH@Z */
