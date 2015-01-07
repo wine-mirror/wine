@@ -15991,8 +15991,6 @@ static void volume_dxt5_test(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     for (i = 0; i < 4; i++)
     {
         color = getPixelColor(device, 80 + 160 * i, 240);
@@ -16000,6 +15998,8 @@ static void volume_dxt5_test(void)
                 "Expected color 0x%08x, got 0x%08x, case %u.\n", expected_colors[i], color, i);
     }
 
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     IDirect3DVolumeTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
