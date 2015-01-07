@@ -826,6 +826,9 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
             case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
                       rc = RC_HELP;
                       goto out;
+            case 'V':
+                WINE_FIXME("ignoring /V\n");
+                break;
             default:
                 WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(word));
                 XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), word);
