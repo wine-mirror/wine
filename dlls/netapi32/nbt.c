@@ -560,8 +560,7 @@ static UCHAR NetBTinetResolve(const UCHAR name[NCBNAMSZ],
 
             if ((host = gethostbyname(toLookup)) != NULL)
             {
-                for (i = 0; ret == NRC_GOODRET && host->h_addr_list &&
-                 host->h_addr_list[i]; i++)
+                for (i = 0; host->h_addr_list && host->h_addr_list[i]; i++)
                     ;
                 if (host->h_addr_list && host->h_addr_list[0])
                 {
