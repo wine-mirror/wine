@@ -283,6 +283,8 @@ static const WCHAR prop_varianttypeW[] =
     {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
+static const WCHAR prop_videoprocessorW[] =
+    {'V','i','d','e','o','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR prop_volumenameW[] =
     {'V','o','l','u','m','e','N','a','m','e',0};
 static const WCHAR prop_volumeserialnumberW[] =
@@ -518,7 +520,8 @@ static const struct column col_videocontroller[] =
     { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_videoprocessorW,       CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
 static const WCHAR baseboard_manufacturerW[] =
@@ -834,6 +837,7 @@ struct record_videocontroller
     const WCHAR *device_id;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
+    const WCHAR *videoprocessor;
 };
 #include "poppack.h"
 
@@ -2417,6 +2421,7 @@ done:
     rec->device_id             = videocontroller_deviceidW;
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
+    rec->videoprocessor        = heap_strdupW( name );
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
