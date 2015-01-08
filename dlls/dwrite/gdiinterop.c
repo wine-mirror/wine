@@ -31,13 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-static const DWRITE_MATRIX identity =
-{
-    1.0f, 0.0f,
-    0.0f, 1.0f,
-    0.0f, 0.0f
-};
-
 struct gdiinterop {
     IDWriteGdiInterop IDWriteGdiInterop_iface;
     IDWriteFactory2 *factory;

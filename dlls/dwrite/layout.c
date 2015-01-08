@@ -133,6 +133,12 @@ struct dwrite_textlayout {
 
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
     DWRITE_LINE_BREAKPOINT *actual_breakpoints;
+
+    /* gdi-compatible layout specifics */
+    BOOL   gdicompatible;
+    FLOAT  pixels_per_dip;
+    BOOL   use_gdi_natural;
+    DWRITE_MATRIX transform;
 };
 
 struct dwrite_textformat {
@@ -2097,17 +2103,11 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
+static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
-    struct dwrite_textlayout *layout;
-    struct layout_range *range;
     DWRITE_TEXT_RANGE r = { 0, len };
+    struct layout_range *range;
     HRESULT hr;
-
-    *ret = NULL;
-
-    layout = heap_alloc(sizeof(struct dwrite_textlayout));
-    if (!layout) return E_OUTOFMEMORY;
 
     layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
     layout->IDWriteTextAnalysisSink_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
@@ -2123,6 +2123,11 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     list_init(&layout->ranges);
     memset(&layout->format, 0, sizeof(layout->format));
 
+    layout->gdicompatible = FALSE;
+    layout->pixels_per_dip = 0.0;
+    layout->use_gdi_natural = FALSE;
+    memset(&layout->transform, 0, sizeof(layout->transform));
+
     layout->str = heap_strdupnW(str, len);
     if (len && !layout->str) {
         hr = E_OUTOFMEMORY;
@@ -2134,17 +2139,56 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
         goto fail;
 
     range = alloc_layout_range(layout, &r);
-    if (!range) {
-        hr = E_OUTOFMEMORY;
-        goto fail;
-    }
-    list_add_head(&layout->ranges, &range->entry);
+    if (!range)
+        return E_OUTOFMEMORY;
 
-    *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
+    list_add_head(&layout->ranges, &range->entry);
     return S_OK;
 
 fail:
     IDWriteTextLayout2_Release(&layout->IDWriteTextLayout2_iface);
+    return hr;
+}
+
+HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
+{
+    struct dwrite_textlayout *layout;
+    HRESULT hr;
+
+    *ret = NULL;
+
+    layout = heap_alloc(sizeof(struct dwrite_textlayout));
+    if (!layout) return E_OUTOFMEMORY;
+
+    hr = init_textlayout(str, len, format, maxwidth, maxheight, layout);
+    if (hr == S_OK)
+        *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
+
+    return hr;
+}
+
+HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight,
+    FLOAT pixels_per_dip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
+{
+    struct dwrite_textlayout *layout;
+    HRESULT hr;
+
+    *ret = NULL;
+
+    layout = heap_alloc(sizeof(struct dwrite_textlayout));
+    if (!layout) return E_OUTOFMEMORY;
+
+    hr = init_textlayout(str, len, format, maxwidth, maxheight, layout);
+    if (hr == S_OK) {
+        /* set gdi-specific properties */
+        layout->gdicompatible = TRUE;
+        layout->pixels_per_dip = pixels_per_dip;
+        layout->use_gdi_natural = use_gdi_natural;
+        layout->transform = transform ? *transform : identity;
+
+        *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
+    }
+
     return hr;
 }
 
