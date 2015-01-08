@@ -6368,7 +6368,7 @@ int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
           break;
       }
 
-  TRACE("(socket %04lx, fd_set %p, count %i) <- %d\n", s, set, i, ret);
+  TRACE("(socket %04lx, fd_set %p, count %i) <- %d\n", s, set, set->fd_count, ret);
   return ret;
 }
 
