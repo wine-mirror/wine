@@ -85,16 +85,41 @@
         if (shouldClearToBlack)
         {
             NSOpenGLContext* origContext = [NSOpenGLContext currentContext];
+            const char *gl_version;
+            unsigned int major;
+            GLint draw_framebuffer_binding, draw_buffer;
+            GLboolean scissor_test, color_mask[4];
+            GLfloat clear_color[4];
 
             [self makeCurrentContext];
 
-            glPushAttrib(GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT);
+            gl_version = (const char *)glGetString(GL_VERSION);
+            major = gl_version[0] - '0';
+            /* FIXME: Should check for GL_ARB_framebuffer_object and GL_EXT_framebuffer_object
+             * for older GL versions. */
+            if (major >= 3)
+            {
+                glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_framebuffer_binding);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+            }
+            glGetIntegerv(GL_DRAW_BUFFER, &draw_buffer);
+            scissor_test = glIsEnabled(GL_SCISSOR_TEST);
+            glGetBooleanv(GL_COLOR_WRITEMASK, color_mask);
+            glGetFloatv(GL_COLOR_CLEAR_VALUE, clear_color);
             glDrawBuffer(GL_FRONT_AND_BACK);
             glDisable(GL_SCISSOR_TEST);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             glClearColor(0, 0, 0, 1);
+
             glClear(GL_COLOR_BUFFER_BIT);
-            glPopAttrib();
+
+            glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+            glColorMask(color_mask[0], color_mask[1], color_mask[2], color_mask[3]);
+            if (scissor_test)
+                glEnable(GL_SCISSOR_TEST);
+            glDrawBuffer(draw_buffer);
+            if (major >= 3)
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, draw_framebuffer_binding);
             glFlush();
 
             if (origContext)
