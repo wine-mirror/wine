@@ -1199,7 +1199,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
             indexes = 0;
         }
     }
-    else if (!indexes && pAviSplit->oldindex)
+    else if (pAviSplit->oldindex)
         indexes = pAviSplit->Parser.cStreams;
 
     if (!indexes && pAviSplit->AviHeader.dwFlags & AVIF_MUSTUSEINDEX)
