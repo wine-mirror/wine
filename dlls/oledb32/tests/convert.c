@@ -303,27 +303,21 @@ static void test_canconvert(void)
 
             /* src DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type | DBTYPE_VECTOR, simple_convert[dst_idx].type);
-            expect = FALSE;
-            ok((hr == S_OK && expect == TRUE) ||
-               (hr == S_FALSE && expect == FALSE),
-               "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
-               simple_convert[dst_idx].type, hr, expect ? "" : "not ");
+            ok(hr == S_FALSE,
+               "%04x -> %04x: got %08x expect conversion to not be possible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
+               simple_convert[dst_idx].type, hr);
 
             /* dst DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type, simple_convert[dst_idx].type | DBTYPE_VECTOR);
-            expect = FALSE;
-            ok((hr == S_OK && expect == TRUE) ||
-               (hr == S_FALSE && expect == FALSE),
-               "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type,
-               simple_convert[dst_idx].type | DBTYPE_VECTOR, hr, expect ? "" : "not ");
+            ok(hr == S_FALSE,
+               "%04x -> %04x: got %08x expect conversion to not be possible\n", simple_convert[src_idx].type,
+               simple_convert[dst_idx].type | DBTYPE_VECTOR, hr);
 
             /* src & dst DBTYPE_VECTOR */
             hr = IDataConvert_CanConvert(convert, simple_convert[src_idx].type | DBTYPE_VECTOR, simple_convert[dst_idx].type | DBTYPE_VECTOR);
-            expect = FALSE;
-            ok((hr == S_OK && expect == TRUE) ||
-               (hr == S_FALSE && expect == FALSE),
-               "%04x -> %04x: got %08x expect conversion to be %spossible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
-               simple_convert[dst_idx].type | DBTYPE_VECTOR, hr, expect ? "" : "not ");
+            ok(hr == S_FALSE,
+               "%04x -> %04x: got %08x expect conversion to not be possible\n", simple_convert[src_idx].type | DBTYPE_VECTOR,
+               simple_convert[dst_idx].type | DBTYPE_VECTOR, hr);
 
 
         }
