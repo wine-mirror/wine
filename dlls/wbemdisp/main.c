@@ -23,7 +23,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "objbase.h"
 #include "wbemdisp.h"
 #include "rpcproxy.h"

@@ -23,12 +23,15 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
 #include "objbase.h"
+#include "wbemcli.h"
 #include "wbemdisp.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wbemdisp_private.h"
+#include "wbemdisp_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
@@ -87,6 +90,7 @@ struct services
 {
     ISWbemServices ISWbemServices_iface;
     LONG refs;
+    IWbemServices *services;
 };
 
 static inline struct services *impl_from_ISWbemServices(
@@ -110,6 +114,7 @@ static ULONG WINAPI services_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", services );
+        IWbemServices_Release( services->services );
         heap_free( services );
     }
     return refs;
@@ -494,15 +499,17 @@ static const ISWbemServicesVtbl services_vtbl =
     services_get_Security_
 };
 
-static HRESULT SWbemServices_create( ISWbemServices **obj )
+static HRESULT SWbemServices_create( IWbemServices *wbem_services, ISWbemServices **obj )
 {
     struct services *services;
 
-    TRACE( "%p\n", obj );
+    TRACE( "%p, %p\n", obj, wbem_services );
 
     if (!(services = heap_alloc( sizeof(*services) ))) return E_OUTOFMEMORY;
     services->ISWbemServices_iface.lpVtbl = &services_vtbl;
     services->refs = 1;
+    services->services = wbem_services;
+    IWbemServices_AddRef( services->services );
 
     *obj = &services->ISWbemServices_iface;
     TRACE( "returning iface %p\n", *obj );
@@ -513,6 +520,7 @@ struct locator
 {
     ISWbemLocator ISWbemLocator_iface;
     LONG refs;
+    IWbemLocator *locator;
 };
 
 static inline struct locator *impl_from_ISWbemLocator( ISWbemLocator *iface )
@@ -535,6 +543,7 @@ static ULONG WINAPI locator_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", locator );
+        IWbemLocator_Release( locator->locator );
         heap_free( locator );
     }
     return refs;
@@ -640,6 +649,31 @@ static HRESULT WINAPI locator_Invoke(
     return hr;
 }
 
+static BSTR build_resource_string( BSTR server, BSTR namespace )
+{
+    static const WCHAR defaultW[] = {'r','o','o','t','\\','d','e','f','a','u','l','t',0};
+    ULONG len, len_server = 0, len_namespace = 0;
+    BSTR ret;
+
+    if (server && *server) len_server = strlenW( server );
+    else len_server = 1;
+    if (namespace && *namespace) len_namespace = strlenW( namespace );
+    else len_namespace = sizeof(defaultW) / sizeof(defaultW[0]) - 1;
+
+    if (!(ret = SysAllocStringLen( NULL, 2 + len_server + 1 + len_namespace ))) return NULL;
+
+    ret[0] = ret[1] = '\\';
+    if (server && *server) strcpyW( ret + 2, server );
+    else ret[2] = '.';
+
+    len = len_server + 2;
+    ret[len++] = '\\';
+
+    if (namespace && *namespace) strcpyW( ret + len, namespace );
+    else strcpyW( ret + len, defaultW );
+    return ret;
+}
+
 static HRESULT WINAPI locator_ConnectServer(
     ISWbemLocator *iface,
     BSTR strServer,
@@ -652,10 +686,33 @@ static HRESULT WINAPI locator_ConnectServer(
     IDispatch *objWbemNamedValueSet,
     ISWbemServices **objWbemServices )
 {
-    FIXME( "%p, %s, %s, %s, %p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strServer),
+    struct locator *locator = impl_from_ISWbemLocator( iface );
+    IWbemServices *services;
+    BSTR resource;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %s, %s, %p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strServer),
            debugstr_w(strNamespace), debugstr_w(strUser), strPassword, debugstr_w(strLocale),
            debugstr_w(strAuthority), iSecurityFlags, objWbemNamedValueSet, objWbemServices );
-    return SWbemServices_create( objWbemServices );
+
+    if (objWbemNamedValueSet) FIXME( "context not supported\n" );
+
+    if (!locator->locator)
+    {
+        hr = CoCreateInstance( &CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemLocator,
+                               (void **)&locator->locator );
+        if (hr != S_OK) return hr;
+    }
+
+    if (!(resource = build_resource_string( strServer, strNamespace ))) return E_OUTOFMEMORY;
+    hr = IWbemLocator_ConnectServer( locator->locator, resource, strUser, strPassword, strLocale,
+                                     iSecurityFlags, strAuthority, NULL, &services );
+    SysFreeString( resource );
+    if (hr != S_OK) return hr;
+
+    hr = SWbemServices_create( services, objWbemServices );
+    IWbemServices_Release( services );
+    return hr;
 }
 
 static HRESULT WINAPI locator_get_Security_(
@@ -688,6 +745,7 @@ HRESULT SWbemLocator_create( void **obj )
     if (!(locator = heap_alloc( sizeof(*locator) ))) return E_OUTOFMEMORY;
     locator->ISWbemLocator_iface.lpVtbl = &locator_vtbl;
     locator->refs = 1;
+    locator->locator = NULL;
 
     *obj = &locator->ISWbemLocator_iface;
     TRACE( "returning iface %p\n", *obj );
