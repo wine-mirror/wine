@@ -317,7 +317,7 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
     if (state->render_states[WINED3D_RS_BLENDOPALPHA]
             && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
     {
-        WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparateEXT\n");
+        WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparate.\n");
         return;
     }
 
@@ -327,12 +327,12 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
 
     if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
     {
-        GL_EXTCALL(glBlendEquationSeparateEXT(blend_equation, blend_equation_alpha));
-        checkGLcall("glBlendEquationSeparateEXT");
+        GL_EXTCALL(glBlendEquationSeparate(blend_equation, blend_equation_alpha));
+        checkGLcall("glBlendEquationSeparate");
     }
     else
     {
-        GL_EXTCALL(glBlendEquationEXT(blend_equation));
+        GL_EXTCALL(glBlendEquation(blend_equation));
         checkGLcall("glBlendEquation");
     }
 }
@@ -462,7 +462,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         /* Separate alpha blending requires GL_EXT_blend_function_separate, so make sure it is around */
         if (!context->gl_info->supported[EXT_BLEND_FUNC_SEPARATE])
         {
-            WARN("Unsupported in local OpenGL implementation: glBlendFuncSeparateEXT\n");
+            WARN("Unsupported in local OpenGL implementation: glBlendFuncSeparate.\n");
             return;
         }
 
@@ -486,8 +486,8 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             dstBlendAlpha = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLENDALPHA], rt_format);
         }
 
-        GL_EXTCALL(glBlendFuncSeparateEXT(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
-        checkGLcall("glBlendFuncSeparateEXT");
+        GL_EXTCALL(glBlendFuncSeparate(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
+        checkGLcall("glBlendFuncSeparate");
     }
     else
     {
@@ -504,7 +504,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 
 static void state_blendfactor_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WARN("Unsupported in local OpenGL implementation: glBlendColorEXT\n");
+    WARN("Unsupported in local OpenGL implementation: glBlendColor.\n");
 }
 
 static void state_blendfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -515,7 +515,7 @@ static void state_blendfactor(struct wined3d_context *context, const struct wine
     TRACE("Setting blend factor to %#x.\n", state->render_states[WINED3D_RS_BLENDFACTOR]);
 
     D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_BLENDFACTOR], col);
-    GL_EXTCALL(glBlendColorEXT (col[0],col[1],col[2],col[3]));
+    GL_EXTCALL(glBlendColor(col[0], col[1], col[2], col[3]));
     checkGLcall("glBlendColor");
 }
 

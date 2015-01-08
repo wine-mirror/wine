@@ -2876,6 +2876,10 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 
     /* Newer core functions */
     USE_GL_FUNC(glActiveTexture)            /* OpenGL 1.3 */
+    USE_GL_FUNC(glBlendColor)               /* OpenGL 1.4 */
+    USE_GL_FUNC(glBlendEquation)            /* OpenGL 1.4 */
+    USE_GL_FUNC(glBlendEquationSeparate)    /* OpenGL 2.0 */
+    USE_GL_FUNC(glBlendFuncSeparate)        /* OpenGL 1.4 */
 #undef USE_GL_FUNC
 
 #ifndef USE_WIN32_OPENGL
@@ -2892,6 +2896,10 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
         } while (0)
 
     MAP_GL_FUNCTION(glActiveTexture, glActiveTextureARB);
+    MAP_GL_FUNCTION(glBlendColor, glBlendColorEXT);
+    MAP_GL_FUNCTION(glBlendEquation, glBlendEquationEXT);
+    MAP_GL_FUNCTION(glBlendEquationSeparate, glBlendEquationSeparateEXT);
+    MAP_GL_FUNCTION(glBlendFuncSeparate, glBlendFuncSeparateEXT);
 #undef MAP_GL_FUNCTION
 }
 
