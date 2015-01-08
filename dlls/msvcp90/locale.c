@@ -2394,6 +2394,14 @@ int __cdecl _Mbrtowc(wchar_t *out, const char *in, MSVCP_size_t len, int *state,
     return 1;
 }
 
+static inline wchar_t mb_to_wc(char ch, const _Cvtvec *cvt)
+{
+    int state = 0;
+    wchar_t ret;
+
+    return _Mbrtowc(&ret, &ch, 1, &state, cvt) == 1 ? ret : 0;
+}
+
 /* ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z */
 /* ?_Dowiden@?$ctype@_W@std@@IEBA_WD@Z */
 /* ?_Dowiden@?$ctype@G@std@@IBEGD@Z */
@@ -4167,8 +4175,8 @@ void __thiscall numpunct_wchar__Init(numpunct_wchar *this,
         if(this->grouping)
             memcpy((char*)this->grouping, lc->grouping, len);
 
-        this->dp = lc->decimal_point[0];
-        this->sep = lc->thousands_sep[0];
+        this->dp = mb_to_wc(lc->decimal_point[0], &cvt);
+        this->sep = mb_to_wc(lc->thousands_sep[0], &cvt);
     }
 
     if(!this->false_name || !this->true_name || !this->grouping) {
@@ -4894,14 +4902,6 @@ num_get* num_get_short_use_facet(const locale *loc)
     _Lockit_dtor(&lock);
 
     return obj;
-}
-
-static inline wchar_t mb_to_wc(char ch, const _Cvtvec *cvt)
-{
-    int state = 0;
-    wchar_t ret;
-
-    return _Mbrtowc(&ret, &ch, 1, &state, cvt) == 1 ? ret : 0;
 }
 
 static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator_wchar *first,
