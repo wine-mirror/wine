@@ -32,6 +32,57 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
+enum type_id
+{
+    ISWbemLocator_tid,
+    ISWbemServices_tid,
+    last_tid
+};
+
+static ITypeLib *wbemdisp_typelib;
+static ITypeInfo *wbemdisp_typeinfo[last_tid];
+
+static REFIID wbemdisp_tid_id[] =
+{
+    &IID_ISWbemLocator,
+    &IID_ISWbemServices
+};
+
+static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
+{
+    HRESULT hr;
+
+    if (!wbemdisp_typelib)
+    {
+        ITypeLib *typelib;
+
+        hr = LoadRegTypeLib( &LIBID_WbemScripting, 1, 2, LOCALE_SYSTEM_DEFAULT, &typelib );
+        if (FAILED( hr ))
+        {
+            ERR( "LoadRegTypeLib failed: %08x\n", hr );
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer( (void **)&wbemdisp_typelib, typelib, NULL ))
+            ITypeLib_Release( typelib );
+    }
+    if (!wbemdisp_typeinfo[tid])
+    {
+        ITypeInfo *typeinfo;
+
+        hr = ITypeLib_GetTypeInfoOfGuid( wbemdisp_typelib, wbemdisp_tid_id[tid], &typeinfo );
+        if (FAILED( hr ))
+        {
+            ERR( "GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(wbemdisp_tid_id[tid]), hr );
+            return hr;
+        }
+        if (InterlockedCompareExchangePointer( (void **)(wbemdisp_typeinfo + tid), typeinfo, NULL ))
+            ITypeInfo_Release( typeinfo );
+    }
+    *ret = wbemdisp_typeinfo[tid];
+    ITypeInfo_AddRef( *ret );
+    return S_OK;
+}
+
 struct services
 {
     ISWbemServices ISWbemServices_iface;
@@ -92,8 +143,11 @@ static HRESULT WINAPI services_GetTypeInfoCount(
     ISWbemServices *iface,
     UINT *count )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct services *services = impl_from_ISWbemServices( iface );
+    TRACE( "%p, %p\n", services, count );
+
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI services_GetTypeInfo(
@@ -102,8 +156,10 @@ static HRESULT WINAPI services_GetTypeInfo(
     LCID lcid,
     ITypeInfo **info )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct services *services = impl_from_ISWbemServices( iface );
+    TRACE( "%p, %u, %u, %p\n", services, index, lcid, info );
+
+    return get_typeinfo( ISWbemServices_tid, info );
 }
 
 static HRESULT WINAPI services_GetIDsOfNames(
@@ -114,8 +170,21 @@ static HRESULT WINAPI services_GetIDsOfNames(
     LCID lcid,
     DISPID *dispid )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct services *services = impl_from_ISWbemServices( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %p, %u, %u, %p\n", services, debugstr_guid(riid), names, count, lcid, dispid );
+
+    if (!names || !count || !dispid) return E_INVALIDARG;
+
+    hr = get_typeinfo( ISWbemServices_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI services_Invoke(
@@ -129,8 +198,21 @@ static HRESULT WINAPI services_Invoke(
     EXCEPINFO *excep_info,
     UINT *arg_err )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct services *services = impl_from_ISWbemServices( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", services, member, debugstr_guid(riid),
+           lcid, flags, params, result, excep_info, arg_err );
+
+    hr = get_typeinfo( ISWbemServices_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &services->ISWbemServices_iface, member, flags,
+                               params, result, excep_info, arg_err );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
 }
 
 static HRESULT WINAPI services_Get(
@@ -490,54 +572,6 @@ static HRESULT WINAPI locator_GetTypeInfoCount(
 
     TRACE( "%p, %p\n", locator, count );
     *count = 1;
-    return S_OK;
-}
-
-enum type_id
-{
-    ISWbemLocator_tid,
-    last_tid
-};
-
-static ITypeLib *wbemdisp_typelib;
-static ITypeInfo *wbemdisp_typeinfo[last_tid];
-
-static REFIID wbemdisp_tid_id[] =
-{
-    &IID_ISWbemLocator
-};
-
-static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
-{
-    HRESULT hr;
-
-    if (!wbemdisp_typelib)
-    {
-        ITypeLib *typelib;
-
-        hr = LoadRegTypeLib( &LIBID_WbemScripting, 1, 2, LOCALE_SYSTEM_DEFAULT, &typelib );
-        if (FAILED( hr ))
-        {
-            ERR( "LoadRegTypeLib failed: %08x\n", hr );
-            return hr;
-        }
-        if (InterlockedCompareExchangePointer( (void **)&wbemdisp_typelib, typelib, NULL ))
-            ITypeLib_Release( typelib );
-    }
-    if (!wbemdisp_typeinfo[tid])
-    {
-        ITypeInfo *typeinfo;
-
-        hr = ITypeLib_GetTypeInfoOfGuid( wbemdisp_typelib, wbemdisp_tid_id[tid], &typeinfo );
-        if (FAILED( hr ))
-        {
-            ERR( "GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(wbemdisp_tid_id[tid]), hr );
-            return hr;
-        }
-        if (InterlockedCompareExchangePointer( (void **)(wbemdisp_typeinfo + tid), typeinfo, NULL ))
-            ITypeInfo_Release( typeinfo );
-    }
-    *ret = wbemdisp_typeinfo[tid];
     return S_OK;
 }
 
