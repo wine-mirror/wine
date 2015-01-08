@@ -7294,7 +7294,7 @@ static void upload_palette(const struct wined3d_texture *texture, struct wined3d
     if (!priv->palette_texture)
         gl_info->gl_ops.gl.p_glGenTextures(1, &priv->palette_texture);
 
-    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE1));
+    GL_EXTCALL(glActiveTexture(GL_TEXTURE1));
     gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, priv->palette_texture);
 
     gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);

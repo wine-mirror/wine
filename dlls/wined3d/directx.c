@@ -2873,6 +2873,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(wglGetPixelFormatAttribivARB)
     USE_GL_FUNC(wglSetPixelFormatWINE)
     USE_GL_FUNC(wglSwapIntervalEXT)
+
+    /* Newer core functions */
+    USE_GL_FUNC(glActiveTexture)            /* OpenGL 1.3 */
 #undef USE_GL_FUNC
 
 #ifndef USE_WIN32_OPENGL
@@ -2880,6 +2883,16 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     /* note that we still need the above wglGetProcAddress calls to initialize the table */
     gl_info->gl_ops.ext = ((struct opengl_funcs *)NtCurrentTeb()->glTable)->ext;
 #endif
+
+#define MAP_GL_FUNCTION(core_func, ext_func) \
+        do                                                                            \
+        {                                                                             \
+            if (!gl_info->gl_ops.ext.p_##core_func)                                   \
+                gl_info->gl_ops.ext.p_##core_func = gl_info->gl_ops.ext.p_##ext_func; \
+        } while (0)
+
+    MAP_GL_FUNCTION(glActiveTexture, glActiveTextureARB);
+#undef MAP_GL_FUNCTION
 }
 
 static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
