@@ -112,6 +112,8 @@ struct layout_run {
     DWRITE_SCRIPT_ANALYSIS sa;
     UINT16 *glyphs;
     UINT16 *clustermap;
+    FLOAT  *advances;
+    DWRITE_GLYPH_OFFSET *offsets;
 };
 
 struct dwrite_textlayout {
@@ -225,6 +227,8 @@ static struct layout_run *alloc_layout_run(void)
 
     ret->glyphs = NULL;
     ret->clustermap = NULL;
+    ret->advances = NULL;
+    ret->offsets = NULL;
 
     return ret;
 }
@@ -238,6 +242,8 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
             IDWriteFontFace_Release(cur->run.fontFace);
         heap_free(cur->glyphs);
         heap_free(cur->clustermap);
+        heap_free(cur->advances);
+        heap_free(cur->offsets);
         heap_free(cur);
     }
 }
@@ -413,10 +419,9 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             break;
         }
 
-        heap_free(text_props);
-        heap_free(glyph_props);
-
         if (FAILED(hr)) {
+            heap_free(text_props);
+            heap_free(glyph_props);
             WARN("[%u,%u]: shaping failed 0x%08x\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength, hr);
             continue;
         }
@@ -424,7 +429,25 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphIndices = run->glyphs;
         run->descr.clusterMap = run->clustermap;
 
-        /* FIXME: set advances */
+        run->advances = heap_alloc(run->run.glyphCount*sizeof(FLOAT));
+        run->offsets = heap_alloc(run->run.glyphCount*sizeof(DWRITE_GLYPH_OFFSET));
+        if (!run->advances || !run->offsets)
+            goto memerr;
+
+        /* now set advances and offsets */
+        hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap, text_props,
+            run->descr.stringLength, run->run.glyphIndices, glyph_props, run->run.glyphCount, run->run.fontFace,
+            run->run.fontEmSize, FALSE /* FIXME */, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
+            NULL, NULL, 0, run->advances, run->offsets);
+        heap_free(text_props);
+        heap_free(glyph_props);
+        if (FAILED(hr))
+            WARN("[%u,%u]: failed to get glyph placement info, 0x%08x\n", run->descr.textPosition,
+                run->descr.textPosition+run->descr.stringLength, hr);
+
+        run->run.glyphAdvances = run->advances;
+        run->run.glyphOffsets = run->offsets;
+
         continue;
 
     memerr:
@@ -432,6 +455,10 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         heap_free(glyph_props);
         heap_free(run->clustermap);
         heap_free(run->glyphs);
+        heap_free(run->advances);
+        heap_free(run->offsets);
+        run->advances = NULL;
+        run->offsets = NULL;
         run->clustermap = run->glyphs = NULL;
         hr = E_OUTOFMEMORY;
         break;
