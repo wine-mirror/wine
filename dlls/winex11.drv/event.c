@@ -1124,7 +1124,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if ((data->window_rect.right - data->window_rect.left == cx &&
          data->window_rect.bottom - data->window_rect.top == cy) ||
-        (IsRectEmpty( &data->window_rect ) && event->width == 1 && event->height == 1))
+        IsRectEmpty( &data->window_rect ))
         flags |= SWP_NOSIZE;
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
