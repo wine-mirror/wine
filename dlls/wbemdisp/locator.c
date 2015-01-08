@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "initguid.h"
 #include "objbase.h"
+#include "wmiutils.h"
 #include "wbemcli.h"
 #include "wbemdisp.h"
 
