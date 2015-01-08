@@ -110,6 +110,8 @@ struct layout_run {
     DWRITE_GLYPH_RUN_DESCRIPTION descr;
     DWRITE_GLYPH_RUN run;
     DWRITE_SCRIPT_ANALYSIS sa;
+    UINT16 *glyphs;
+    UINT16 *clustermap;
 };
 
 struct dwrite_textlayout {
@@ -221,6 +223,9 @@ static struct layout_run *alloc_layout_run(void)
     ret->sa.script = Script_Unknown;
     ret->sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
 
+    ret->glyphs = NULL;
+    ret->clustermap = NULL;
+
     return ret;
 }
 
@@ -231,6 +236,8 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
         list_remove(&cur->entry);
         if (cur->run.fontFace)
             IDWriteFontFace_Release(cur->run.fontFace);
+        heap_free(cur->glyphs);
+        heap_free(cur->clustermap);
         heap_free(cur);
     }
 }
@@ -338,10 +345,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
     /* fill run info */
     LIST_FOR_EACH_ENTRY(run, &layout->runs, struct layout_run, entry) {
+        DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props = NULL;
+        DWRITE_SHAPING_TEXT_PROPERTIES *text_props = NULL;
         IDWriteFontFamily *family;
+        UINT32 index, max_count;
         IDWriteFont *font;
         BOOL exists = TRUE;
-        UINT32 index;
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
 
@@ -370,8 +379,62 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         run->run.fontEmSize = range->fontsize;
         run->descr.localeName = range->locale;
+        run->clustermap = heap_alloc(run->descr.stringLength*sizeof(UINT16));
 
-        /* FIXME: set glyph indices, cluster map, advances */
+        max_count = 3*run->descr.stringLength/2 + 16;
+        run->glyphs = heap_alloc(max_count*sizeof(UINT16));
+        if (!run->clustermap || !run->glyphs)
+            goto memerr;
+
+        text_props = heap_alloc(run->descr.stringLength*sizeof(DWRITE_SHAPING_TEXT_PROPERTIES));
+        glyph_props = heap_alloc(max_count*sizeof(DWRITE_SHAPING_GLYPH_PROPERTIES));
+        if (!text_props || !glyph_props)
+            goto memerr;
+
+        while (1) {
+            hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, run->descr.string, run->descr.stringLength,
+                run->run.fontFace, FALSE /* FIXME */, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
+                NULL /* FIXME */, NULL, NULL, 0, max_count, run->clustermap, text_props, run->glyphs, glyph_props,
+                &run->run.glyphCount);
+            if (hr == E_NOT_SUFFICIENT_BUFFER) {
+                heap_free(run->glyphs);
+                heap_free(glyph_props);
+
+                max_count = run->run.glyphCount;
+
+                run->glyphs = heap_alloc(max_count*sizeof(UINT16));
+                glyph_props = heap_alloc(max_count*sizeof(DWRITE_SHAPING_GLYPH_PROPERTIES));
+                if (!run->glyphs || !glyph_props)
+                    goto memerr;
+
+                continue;
+            }
+
+            break;
+        }
+
+        heap_free(text_props);
+        heap_free(glyph_props);
+
+        if (FAILED(hr)) {
+            WARN("[%u,%u]: shaping failed 0x%08x\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength, hr);
+            continue;
+        }
+
+        run->run.glyphIndices = run->glyphs;
+        run->descr.clusterMap = run->clustermap;
+
+        /* FIXME: set advances */
+        continue;
+
+    memerr:
+        heap_free(text_props);
+        heap_free(glyph_props);
+        heap_free(run->clustermap);
+        heap_free(run->glyphs);
+        run->clustermap = run->glyphs = NULL;
+        hr = E_OUTOFMEMORY;
+        break;
     }
 
     IDWriteTextAnalyzer_Release(analyzer);
