@@ -7589,15 +7589,16 @@ ostreambuf_iterator_wchar* __thiscall time_put_wchar_put_format(const time_put *
             ostreambuf_iterator_wchar_put(&dest, *pat++);
         }else if(++pat == pat_end) {
             ostreambuf_iterator_wchar_put(&dest, percent);
-        }else if(!_Wcrtomb(c, *pat, NULL, &this->cvt) || (*c=='#' && pat+1==pat_end)) {
+        }else if(_Wcrtomb(c, *pat, NULL, &this->cvt)!=1 || (*c=='#' && pat+1==pat_end)) {
             ostreambuf_iterator_wchar_put(&dest, percent);
             ostreambuf_iterator_wchar_put(&dest, *pat++);
         }else {
+            pat++;
             if(*c == '#') {
-                if(!_Wcrtomb(c, *pat++, NULL, &this->cvt)) {
+                if(_Wcrtomb(c, *pat++, NULL, &this->cvt) != 1) {
                     ostreambuf_iterator_wchar_put(&dest, percent);
+                    ostreambuf_iterator_wchar_put(&dest, *(pat-2));
                     ostreambuf_iterator_wchar_put(&dest, *(pat-1));
-                    ostreambuf_iterator_wchar_put(&dest, *pat);
                 }else {
                     time_put_wchar_put(this, &dest, dest, base, t, *c, '#');
                 }
