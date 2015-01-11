@@ -1130,11 +1130,11 @@ static int alsa_channel_index(DWORD flag)
     return -1;
 }
 
-static BOOL need_remapping(ACImpl *This, const WAVEFORMATEX *fmt)
+static BOOL need_remapping(ACImpl *This, const WAVEFORMATEX *fmt, int *map)
 {
     unsigned int i;
     for(i = 0; i < fmt->nChannels; ++i){
-        if(This->alsa_channel_map[i] != i)
+        if(map[i] != i)
             return TRUE;
     }
     return FALSE;
@@ -1166,8 +1166,10 @@ static DWORD get_channel_mask(unsigned int channels)
     return 0;
 }
 
-static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt)
+static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt, int *alsa_channels, int *map)
 {
+    BOOL need_remap;
+
     if(This->dataflow != eCapture && (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2) ){
         WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
         DWORD mask, flag = SPEAKER_FRONT_LEFT;
@@ -1179,47 +1181,47 @@ static HRESULT map_channels(ACImpl *This, const WAVEFORMATEX *fmt)
         else
             mask = get_channel_mask(fmt->nChannels);
 
-        This->alsa_channels = 0;
+        *alsa_channels = 0;
 
         while(i < fmt->nChannels && !(flag & SPEAKER_RESERVED)){
             if(mask & flag){
-                This->alsa_channel_map[i] = alsa_channel_index(flag);
+                map[i] = alsa_channel_index(flag);
                 TRACE("Mapping mmdevapi channel %u (0x%x) to ALSA channel %d\n",
-                        i, flag, This->alsa_channel_map[i]);
-                if(This->alsa_channel_map[i] >= This->alsa_channels)
-                    This->alsa_channels = This->alsa_channel_map[i] + 1;
+                        i, flag, map[i]);
+                if(map[i] >= *alsa_channels)
+                    *alsa_channels = map[i] + 1;
                 ++i;
             }
             flag <<= 1;
         }
 
         while(i < fmt->nChannels){
-            This->alsa_channel_map[i] = This->alsa_channels;
+            map[i] = *alsa_channels;
             TRACE("Mapping mmdevapi channel %u to ALSA channel %d\n",
-                    i, This->alsa_channel_map[i]);
-            ++This->alsa_channels;
+                    i, map[i]);
+            ++*alsa_channels;
             ++i;
         }
 
         for(i = 0; i < fmt->nChannels; ++i){
-            if(This->alsa_channel_map[i] == -1){
-                This->alsa_channel_map[i] = This->alsa_channels;
-                ++This->alsa_channels;
+            if(map[i] == -1){
+                map[i] = *alsa_channels;
+                ++*alsa_channels;
                 TRACE("Remapping mmdevapi channel %u to ALSA channel %d\n",
-                        i, This->alsa_channel_map[i]);
+                        i, map[i]);
             }
         }
 
-        This->need_remapping = need_remapping(This, fmt);
-
-        TRACE("need_remapping: %u, alsa_channels: %d\n", This->need_remapping, This->alsa_channels);
+        need_remap = need_remapping(This, fmt, map);
     }else{
-        This->need_remapping = FALSE;
-        This->alsa_channels = fmt->nChannels;
-        TRACE("need_remapping: %u, alsa_channels: %d\n", This->need_remapping, This->alsa_channels);
+        *alsa_channels = fmt->nChannels;
+
+        need_remap = FALSE;
     }
 
-    return S_OK;
+    TRACE("need_remapping: %u, alsa_channels: %d\n", need_remap, *alsa_channels);
+
+    return need_remap ? S_OK : S_FALSE;
 }
 
 static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
@@ -1304,11 +1306,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     dump_fmt(fmt);
 
-    if(FAILED(map_channels(This, fmt))){
-        WARN("map_channels failed\n");
-        hr = AUDCLNT_E_ENDPOINT_CREATE_FAILED;
-        goto exit;
-    }
+    This->need_remapping = map_channels(This, fmt, &This->alsa_channels, This->alsa_channel_map) == S_OK ? TRUE : FALSE;
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
@@ -1623,6 +1621,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     WAVEFORMATEX *closest = NULL;
     unsigned int max = 0, min = 0;
     int err;
+    int alsa_channels, alsa_channel_map[32];
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
 
@@ -1717,12 +1716,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         closest->nChannels = min;
     }
 
-    if(FAILED(map_channels(This, fmt))){
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        WARN("map_channels failed\n");
-        goto exit;
-    }
-    if(This->alsa_channels > max){
+    map_channels(This, fmt, &alsa_channels, alsa_channel_map);
+
+    if(alsa_channels > max){
         hr = S_FALSE;
         closest->nChannels = max;
     }
