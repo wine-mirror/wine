@@ -271,8 +271,15 @@ static HRESULT WINAPI IDirectSound8Impl_GetCaps(IDirectSound8 *iface, DSCAPS *ds
     dscaps->dwMaxHwMixingStaticBuffers     = This->device->drvcaps.dwMaxHwMixingStaticBuffers;
     dscaps->dwMaxHwMixingStreamingBuffers  = This->device->drvcaps.dwMaxHwMixingStreamingBuffers;
     dscaps->dwFreeHwMixingAllBuffers       = This->device->drvcaps.dwFreeHwMixingAllBuffers;
-    dscaps->dwFreeHwMixingStaticBuffers    = This->device->drvcaps.dwFreeHwMixingStaticBuffers;
-    dscaps->dwFreeHwMixingStreamingBuffers = This->device->drvcaps.dwFreeHwMixingStreamingBuffers;
+
+    if (This->device->drvcaps.dwFreeHwMixingAllBuffers > 0) {
+        dscaps->dwFreeHwMixingStaticBuffers    = This->device->drvcaps.dwFreeHwMixingStaticBuffers;
+        dscaps->dwFreeHwMixingStreamingBuffers = This->device->drvcaps.dwFreeHwMixingStreamingBuffers;
+    } else {
+        dscaps->dwFreeHwMixingStaticBuffers    = 0;
+        dscaps->dwFreeHwMixingStreamingBuffers = 0;
+    }
+
     dscaps->dwMaxHw3DAllBuffers            = This->device->drvcaps.dwMaxHw3DAllBuffers;
     dscaps->dwMaxHw3DStaticBuffers         = This->device->drvcaps.dwMaxHw3DStaticBuffers;
     dscaps->dwMaxHw3DStreamingBuffers      = This->device->drvcaps.dwMaxHw3DStreamingBuffers;
@@ -913,9 +920,12 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     device->drvcaps.dwPrimaryBuffers = 1;
     device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-    device->drvcaps.dwMaxHwMixingAllBuffers = 1;
+    device->drvcaps.dwMaxHwMixingAllBuffers = 16;
     device->drvcaps.dwMaxHwMixingStaticBuffers = 1;
     device->drvcaps.dwMaxHwMixingStreamingBuffers = 1;
+    device->drvcaps.dwFreeHwMixingAllBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
+    device->drvcaps.dwFreeHwMixingStaticBuffers = device->drvcaps.dwMaxHwMixingStaticBuffers;
+    device->drvcaps.dwFreeHwMixingStreamingBuffers = device->drvcaps.dwMaxHwMixingStreamingBuffers;
 
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
@@ -975,10 +985,12 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
     }
 
-    if (dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
-            !(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
-        TRACE("LOCHARDWARE is not supported, returning E_NOTIMPL\n");
-        return E_NOTIMPL;
+    if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) &&
+        dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
+        device->drvcaps.dwFreeHwMixingAllBuffers == 0)
+    {
+        WARN("ran out of emulated hardware buffers\n");
+        return DSERR_ALLOCATED;
     }
 
     if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -1062,9 +1074,11 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
 
         hres = IDirectSoundBufferImpl_Create(device, &dsb, dsbd);
-        if (dsb)
+        if (dsb) {
             *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
-        else
+            if (dsbd->dwFlags & DSBCAPS_LOCHARDWARE)
+                device->drvcaps.dwFreeHwMixingAllBuffers--;
+        } else
             WARN("IDirectSoundBufferImpl_Create failed\n");
    }
 

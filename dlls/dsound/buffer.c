@@ -994,6 +994,9 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
     if (ref > 1)
         WARN("Destroying buffer with %u in use interfaces\n", ref - 1);
 
+    if (This->dsbd.dwFlags & DSBCAPS_LOCHARDWARE)
+        This->device->drvcaps.dwFreeHwMixingAllBuffers++;
+
     DirectSoundDevice_RemoveBuffer(This->device, This);
     RtlDeleteResource(&This->lock);
 
