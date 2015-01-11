@@ -966,6 +966,11 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
  */
 BOOL WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
+    if (!pwszKLID)
+    {
+        SetLastError(ERROR_NOACCESS);
+        return FALSE;
+    }
     return USER_Driver->pGetKeyboardLayoutName(pwszKLID);
 }
 

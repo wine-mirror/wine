@@ -1595,6 +1595,14 @@ static void test_keyboard_layout_name(void)
     BOOL ret;
     char klid[KL_NAMELENGTH];
 
+if (0) /* crashes on native system */
+    ret = GetKeyboardLayoutNameA(NULL);
+
+    SetLastError(0xdeadbeef);
+    ret = GetKeyboardLayoutNameW(NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_NOACCESS, "got %d\n", GetLastError());
+
     if (GetKeyboardLayout(0) != (HKL)(ULONG_PTR)0x04090409) return;
 
     klid[0] = 0;
