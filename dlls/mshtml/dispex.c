@@ -345,9 +345,18 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
     }
 
     data = heap_alloc(sizeof(dispex_data_t));
+    if (!data) {
+        ERR("Out of memory\n");
+        return NULL;
+    }
     data->func_cnt = 0;
     data->func_disp_cnt = 0;
     data->funcs = heap_alloc_zero(size*sizeof(func_info_t));
+    if (!data->funcs) {
+        heap_free (data);
+        ERR("Out of memory\n");
+        return NULL;
+    }
     list_add_tail(&dispex_data_list, &data->entry);
 
     while(*tid) {
