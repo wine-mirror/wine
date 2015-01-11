@@ -134,6 +134,9 @@ struct dwrite_textlayout {
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
     DWRITE_LINE_BREAKPOINT *actual_breakpoints;
 
+    DWRITE_CLUSTER_METRICS *clusters;
+    UINT32 clusters_count;
+
     /* gdi-compatible layout specifics */
     BOOL   gdicompatible;
     FLOAT  pixels_per_dip;
@@ -206,6 +209,12 @@ static inline struct dwrite_typography *impl_from_IDWriteTypography(IDWriteTypog
     return CONTAINING_RECORD(iface, struct dwrite_typography, IDWriteTypography_iface);
 }
 
+static inline const char *debugstr_run(const struct layout_run *run)
+{
+    return wine_dbg_sprintf("[%u,%u]", run->descr.textPosition, run->descr.textPosition +
+        run->descr.stringLength);
+}
+
 static struct layout_run *alloc_layout_run(void)
 {
     struct layout_run *ret;
@@ -254,7 +263,7 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
     }
 }
 
-/* should only be called for ranges with inline objects */
+/* Used to resolve break condition by forcing stronger condition over weaker. */
 static inline DWRITE_BREAK_CONDITION override_break_condition(DWRITE_BREAK_CONDITION existingbreak, DWRITE_BREAK_CONDITION newbreak)
 {
     switch (existingbreak) {
@@ -273,6 +282,7 @@ static inline DWRITE_BREAK_CONDITION override_break_condition(DWRITE_BREAK_CONDI
     return existingbreak;
 }
 
+/* Actual breakpoint data gets updated with break condition required by inline object set for range 'cur'. */
 static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout, const struct layout_range *cur)
 {
     DWRITE_BREAK_CONDITION before, after;
@@ -320,14 +330,75 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
 
 static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos);
 
+static void init_cluster_metrics(const struct layout_run *run, DWRITE_CLUSTER_METRICS *metrics)
+{
+    metrics->width = 0.0;
+    metrics->length = 1;
+    metrics->canWrapLineAfter = FALSE;
+    metrics->isWhitespace = FALSE;
+    metrics->isNewline = FALSE;
+    metrics->isSoftHyphen = FALSE;
+    metrics->isRightToLeft = run->run.bidiLevel & 1;
+    metrics->padding = 0;
+}
+
+/*
+
+  All clusters in a 'run' will be added to 'layout' data, starting at index pointed to by 'cluster'.
+  On return 'cluster' is updated to point to next metrics struct to be filled in on next call.
+
+*/
+static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct layout_run *run, UINT32 *cluster)
+{
+    DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[*cluster];
+    UINT16 glyph;
+    UINT32 i;
+
+    glyph = run->descr.clusterMap[0];
+    init_cluster_metrics(run, metrics);
+
+    for (i = 0; i < run->descr.stringLength; i++) {
+        BOOL newcluster = glyph != run->descr.clusterMap[i];
+
+        /* add new cluster on starting glyph change or simply when run is over */
+        if (newcluster || i == run->descr.stringLength - 1) {
+            UINT8 breakcondition;
+            UINT16 j;
+
+            for (j = glyph; j < run->descr.clusterMap[i]; j++)
+                metrics->width += run->run.glyphAdvances[j];
+
+            /* FIXME: also set isWhitespace, isNewline and isSoftHyphen */
+            breakcondition = newcluster ? layout->nominal_breakpoints[i].breakConditionBefore :
+                                          layout->nominal_breakpoints[i].breakConditionAfter;
+            metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
+                                        breakcondition == DWRITE_BREAK_CONDITION_MUST_BREAK;
+
+            /* advance to next cluster */
+            glyph = run->descr.clusterMap[i];
+            *cluster += 1;
+            metrics++;
+            init_cluster_metrics(run, metrics);
+        }
+        else
+            metrics->length++;
+    }
+}
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
     struct layout_range *range;
     struct layout_run *run;
+    UINT32 cluster = 0;
     HRESULT hr;
 
     free_layout_runs(layout);
+    heap_free(layout->clusters);
+    layout->clusters_count = 0;
+    layout->clusters = heap_alloc(layout->len*sizeof(DWRITE_CLUSTER_METRICS));
+    if (!layout->clusters)
+        return E_OUTOFMEMORY;
 
     hr = get_textanalyzer(&analyzer);
     if (FAILED(hr))
@@ -368,8 +439,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
         if (FAILED(hr) || !exists) {
-            WARN("[%u,%u]: family %s not found in collection %p\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength,
-                debugstr_w(range->fontfamily), range->collection);
+            WARN("%s: family %s not found in collection %p\n", debugstr_run(run), debugstr_w(range->fontfamily), range->collection);
             continue;
         }
 
@@ -380,7 +450,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         hr = IDWriteFontFamily_GetFirstMatchingFont(family, range->weight, range->stretch, range->style, &font);
         IDWriteFontFamily_Release(family);
         if (FAILED(hr)) {
-            WARN("[%u,%u]: failed to get a matching font\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength);
+            WARN("%s: failed to get a matching font\n", debugstr_run(run));
             continue;
         }
 
@@ -428,7 +498,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         if (FAILED(hr)) {
             heap_free(text_props);
             heap_free(glyph_props);
-            WARN("[%u,%u]: shaping failed 0x%08x\n", run->descr.textPosition, run->descr.textPosition+run->descr.stringLength, hr);
+            WARN("%s: shaping failed 0x%08x\n", debugstr_run(run), hr);
             continue;
         }
 
@@ -456,11 +526,13 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         heap_free(text_props);
         heap_free(glyph_props);
         if (FAILED(hr))
-            WARN("[%u,%u]: failed to get glyph placement info, 0x%08x\n", run->descr.textPosition,
-                run->descr.textPosition+run->descr.stringLength, hr);
+            WARN("%s: failed to get glyph placement info, 0x%08x\n", debugstr_run(run), hr);
 
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
+
+        /* now set cluster metrics */
+        layout_set_cluster_metrics(layout, run, &cluster);
 
         continue;
 
@@ -477,6 +549,9 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         hr = E_OUTOFMEMORY;
         break;
     }
+
+    if (hr == S_OK)
+        layout->clusters_count = cluster + 1;
 
     IDWriteTextAnalyzer_Release(analyzer);
     return hr;
@@ -1006,6 +1081,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
         release_format_data(&This->format);
         heap_free(This->nominal_breakpoints);
         heap_free(This->actual_breakpoints);
+        heap_free(This->clusters);
         heap_free(This->str);
         heap_free(This);
     }
@@ -2127,6 +2203,8 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->recompute = TRUE;
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
+    layout->clusters_count = 0;
+    layout->clusters = NULL;
     list_init(&layout->runs);
     list_init(&layout->ranges);
     memset(&layout->format, 0, sizeof(layout->format));
@@ -2147,8 +2225,10 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
         goto fail;
 
     range = alloc_layout_range(layout, &r);
-    if (!range)
-        return E_OUTOFMEMORY;
+    if (!range) {
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
 
     list_add_head(&layout->ranges, &range->entry);
     return S_OK;
