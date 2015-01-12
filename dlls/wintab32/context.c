@@ -410,7 +410,7 @@ static UINT WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
             pWTInfoW(wCategory, nIndex, &buf);
 
             /*  Handle system extents here, as we can use user32.dll code to set them */
-            if(wCategory == WTI_DEFSYSCTX && nIndex == 0)
+            if(wCategory == WTI_DEFSYSCTX)
             {
                 buf.lcSysExtX = GetSystemMetrics(SM_CXSCREEN);
                 buf.lcSysExtY = GetSystemMetrics(SM_CYSCREEN);
