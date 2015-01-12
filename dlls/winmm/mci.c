@@ -2054,14 +2054,13 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
  */
 static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
 {
-    DWORD	dwRet = 0;
-
-    if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
+    if (lpParms == NULL)
+        return MCIERR_NULL_PARAMETER_BLOCK;
     FIXME("(%04x) vkey %04X stub\n", dwFlags, lpParms->nVirtKey);
 
-    if (MMSYSERR_NOERROR==dwRet && (dwFlags & MCI_NOTIFY))
+    if (dwFlags & MCI_NOTIFY)
         mciDriverNotify((HWND)lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
-    return dwRet;
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
