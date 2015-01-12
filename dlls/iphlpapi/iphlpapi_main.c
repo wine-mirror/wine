@@ -442,6 +442,20 @@ DWORD WINAPI FlushIpNetTable(DWORD dwIfIndex)
   return ERROR_NOT_SUPPORTED;
 }
 
+/******************************************************************
+ *    FreeMibTable (IPHLPAPI.@)
+ *
+ * Free buffer allocated by network functions
+ *
+ * PARAMS
+ *  ptr     [In] pointer to the buffer to free
+ *
+ */
+void WINAPI FreeMibTable(void *ptr)
+{
+  TRACE("(%p)\n", ptr);
+  HeapFree(GetProcessHeap(), 0, ptr);
+}
 
 /******************************************************************
  *    GetAdapterIndex (IPHLPAPI.@)
