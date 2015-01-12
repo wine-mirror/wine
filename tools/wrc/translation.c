@@ -614,18 +614,16 @@ static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 	if((ver_value1->type == ver_value2->type)) {
 		switch(ver_value1->type) {
 			case val_str:
-				if(!different && ver_value1->key && ver_value2->key)
+				if(ver_value1->key && ver_value2->key)
 					different = compare_string(ver_value1->key, ver_value2->key);
-				else if(!different &&
-					((ver_value1->key && !ver_value2->key) ||
+				else if(((ver_value1->key && !ver_value2->key) ||
 					(!ver_value1->key && ver_value2->key)))
 						different = 1;
 				break;
 			case val_words:
-				if(!different && ver_value1->key && ver_value2->key)
+				if(ver_value1->key && ver_value2->key)
 					different = compare_string(ver_value1->key, ver_value2->key);
-				else if(!different &&
-					((ver_value1->key && !ver_value2->key) ||
+				else if(((ver_value1->key && !ver_value2->key) ||
 					(!ver_value1->key && ver_value2->key)))
 						different = 1;
 				if(!different && ver_value1->value.words && ver_value2->value.words) {
@@ -644,10 +642,9 @@ static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 						different = 1;
 				break;
 			case val_block:
-				if(!different && ver_value1->value.block && ver_value2->value.block)
+				if(ver_value1->value.block && ver_value2->value.block)
 					different = compare_ver_block(ver_value1->value.block, ver_value2->value.block);
-				else if(!different &&
-					((ver_value1->value.block && !ver_value2->value.block) ||
+				else if(((ver_value1->value.block && !ver_value2->value.block) ||
 					(!ver_value1->value.block && ver_value2->value.block)))
 						different = 1;
 				break;
