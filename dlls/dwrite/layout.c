@@ -1704,13 +1704,17 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     HRESULT hr;
 
-    FIXME("(%p)->(%p %u %p): stub\n", This, metrics, max_count, count);
+    TRACE("(%p)->(%p %u %p)\n", This, metrics, max_count, count);
 
     hr = layout_compute(This);
     if (FAILED(hr))
         return hr;
 
-    return E_NOTIMPL;
+    if (metrics)
+        memcpy(metrics, This->clusters, sizeof(DWRITE_CLUSTER_METRICS)*min(max_count, This->clusters_count));
+
+    *count = This->clusters_count;
+    return max_count < This->clusters_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *iface, FLOAT* min_width)
