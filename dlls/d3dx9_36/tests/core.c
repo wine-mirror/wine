@@ -875,6 +875,7 @@ static void test_ID3DXRenderToSurface_device_state(IDirect3DDevice9 *device)
     }
 
     hr = retrieve_device_state(device, &pre_state);
+    ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
 
     hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24X8, &render);
     ok(hr == D3D_OK, "D3DXCreateRenderToSurface returned %#x, expected %#x\n", hr, D3D_OK);
@@ -1100,6 +1101,7 @@ static void test_ID3DXRenderToEnvMap_cube_map(IDirect3DDevice9 *device)
     }
 
     hr = retrieve_device_state(device, &pre_state);
+    ok(SUCCEEDED(hr), "Failed to retrieve device state\n");
 
     hr = D3DXCreateRenderToEnvMap(device, 256, 0, D3DFMT_A8R8G8B8, TRUE, D3DFMT_D24X8, &render);
     ok(hr == D3D_OK, "D3DCreateRenderToEnvMap returned %#x, expected %#x\n", hr, D3D_OK);
