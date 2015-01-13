@@ -413,7 +413,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	BITMAP bmp;
 
         HEADER_PrepareCallbackItems(infoPtr, iItem, HDI_TEXT|HDI_IMAGE);
-	cw = tw = iw = bw = 0;
+        cw = iw = bw = 0;
 	rw = r.right - r.left;
 	rh = r.bottom - r.top;
 
