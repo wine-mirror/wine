@@ -205,6 +205,11 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     scope_chain_t *scope;
     HRESULT hres;
 
+    if(ctx->state == SCRIPTSTATE_UNINITIALIZED || ctx->state == SCRIPTSTATE_CLOSED) {
+        WARN("Script engine state does not allow running code.\n");
+        return E_UNEXPECTED;
+    }
+
     if(!function->func_code) {
         FIXME("no source\n");
         return E_FAIL;
