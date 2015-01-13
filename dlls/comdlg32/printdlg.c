@@ -838,8 +838,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxA(HWND hDlg,
 
     Names = HeapAlloc(GetProcessHeap(),0, NrOfEntries*sizeof(char)*NamesSize);
     Words = HeapAlloc(GetProcessHeap(),0, NrOfEntries*sizeof(WORD));
-    NrOfEntries = DeviceCapabilitiesA(PrinterName, PortName,
-                                      fwCapability_Names, Names, dm);
+    DeviceCapabilitiesA(PrinterName, PortName, fwCapability_Names, Names, dm);
     NrOfEntries = DeviceCapabilitiesA(PrinterName, PortName,
 				      fwCapability_Words, (LPSTR)Words, dm);
 
@@ -949,8 +948,7 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 
     Names = HeapAlloc(GetProcessHeap(),0, NrOfEntries*sizeof(WCHAR)*NamesSize);
     Words = HeapAlloc(GetProcessHeap(),0, NrOfEntries*sizeof(WORD));
-    NrOfEntries = DeviceCapabilitiesW(PrinterName, PortName,
-                                      fwCapability_Names, Names, dm);
+    DeviceCapabilitiesW(PrinterName, PortName, fwCapability_Names, Names, dm);
     NrOfEntries = DeviceCapabilitiesW(PrinterName, PortName,
                                       fwCapability_Words, Words, dm);
 
