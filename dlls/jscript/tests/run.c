@@ -139,6 +139,7 @@ DEFINE_EXPECT(DeleteMemberByDispID_false);
 #define DISPID_GLOBAL_TESTNORES     0x1019
 #define DISPID_GLOBAL_DISPEXFUNC    0x101a
 #define DISPID_GLOBAL_TESTPROPPUTREF 0x101b
+#define DISPID_GLOBAL_GETSCRIPTSTATE 0x101c
 
 #define DISPID_GLOBAL_TESTPROPDELETE    0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE  0x2001
@@ -161,6 +162,7 @@ static const char *test_name = "(null)";
 static IDispatch *script_disp;
 static int invoke_version;
 static IActiveScriptError *script_error;
+static IActiveScript *script_engine;
 static const CLSID *engine_clsid = &CLSID_JScript;
 
 /* Returns true if the user interface is in English. Note that this does not
@@ -756,6 +758,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!strcmp_wa(bstrName, "getScriptState")) {
+        *pid = DISPID_GLOBAL_GETSCRIPTSTATE;
+        return S_OK;
+    }
+
     if(strict_dispid_check && strcmp_wa(bstrName, "t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -1107,6 +1114,18 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         }
 
         return S_OK;
+
+    case DISPID_GLOBAL_GETSCRIPTSTATE: {
+        SCRIPTSTATE state;
+        HRESULT hres;
+
+        hres = IActiveScript_GetScriptState(script_engine, &state);
+        ok(hres == S_OK, "GetScriptState failed: %08x\n", hres);
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = state;
+        return S_OK;
+    }
 
     case DISPID_GLOBAL_PROPARGPUT:
         CHECK_EXPECT(global_propargput_i);
@@ -1908,6 +1927,47 @@ static void test_isvisible(BOOL global_members)
     IActiveScriptParse_Release(parser);
 }
 
+static void test_start(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR str;
+    HRESULT hres;
+
+    script_engine = engine = create_script();
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, testW, SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    str = a2bstr("ok(getScriptState() === 5, \"getScriptState = \" + getScriptState());\n"
+                 "reportSuccess();");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
+    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+    script_engine = NULL;
+}
+
 static HRESULT parse_script_expr(const char *expr, VARIANT *res, IActiveScript **engine_ret)
 {
     IActiveScriptParse *parser;
@@ -2380,6 +2440,7 @@ static BOOL run_tests(void)
 
     test_isvisible(FALSE);
     test_isvisible(TRUE);
+    test_start();
 
     parse_script_af(0, "test.testThis2(this);");
     parse_script_af(0, "(function () { test.testThis2(this); })();");
