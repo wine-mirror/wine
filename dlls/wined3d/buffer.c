@@ -105,8 +105,8 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_g
 {
     if(!This->buffer_object) return;
 
-    GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
-    checkGLcall("glDeleteBuffersARB");
+    GL_EXTCALL(glDeleteBuffers(1, &This->buffer_object));
+    checkGLcall("glDeleteBuffers");
     This->buffer_object = 0;
 
     if(This->query)
@@ -140,7 +140,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
      * to be verified to check if the rhw and color values are in the correct
      * format. */
 
-    GL_EXTCALL(glGenBuffersARB(1, &This->buffer_object));
+    GL_EXTCALL(glGenBuffers(1, &This->buffer_object));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (!This->buffer_object || error != GL_NO_ERROR)
     {
@@ -150,7 +150,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         context_invalidate_state(context, STATE_INDEXBUFFER);
-    GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -181,11 +181,11 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
      * calling glBufferSubData on updates. Upload the actual data in case
      * we're not double buffering, so we can release the heap mem afterwards
      */
-    GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, This->resource.heap_memory, gl_usage));
+    GL_EXTCALL(glBufferData(This->buffer_type_hint, This->resource.size, This->resource.heap_memory, gl_usage));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
-        ERR("glBufferDataARB failed with error %s (%#x)\n", debug_glerror(error), error);
+        ERR("glBufferData failed with error %s (%#x)\n", debug_glerror(error), error);
         goto fail;
     }
 
@@ -500,8 +500,8 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, struct wined3d_context *con
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         context_invalidate_state(context, STATE_INDEXBUFFER);
 
-    GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-    GL_EXTCALL(glGetBufferSubDataARB(This->buffer_type_hint, 0, This->resource.size, This->resource.heap_memory));
+    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
+    GL_EXTCALL(glGetBufferSubData(This->buffer_type_hint, 0, This->resource.size, This->resource.heap_memory));
     This->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
 
     return This->resource.heap_memory;
@@ -589,8 +589,8 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
 
     if (flags & WINED3D_MAP_DISCARD)
     {
-        GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, NULL, This->buffer_object_usage));
-        checkGLcall("glBufferDataARB\n");
+        GL_EXTCALL(glBufferData(This->buffer_type_hint, This->resource.size, NULL, This->buffer_object_usage));
+        checkGLcall("glBufferData");
         return;
     }
 
@@ -654,8 +654,8 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
 
     /* This potentially invalidates the element array buffer binding, but the
      * caller always takes care of this. */
-    GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-    checkGLcall("glBindBufferARB");
+    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
+    checkGLcall("glBindBuffer");
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
         GLbitfield mapflags;
@@ -679,8 +679,8 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
                 syncflags |= WINED3D_MAP_NOOVERWRITE;
             buffer_sync_apple(This, syncflags, gl_info);
         }
-        map = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_WRITE_ONLY_ARB));
-        checkGLcall("glMapBufferARB");
+        map = GL_EXTCALL(glMapBuffer(This->buffer_type_hint, GL_WRITE_ONLY));
+        checkGLcall("glMapBuffer");
     }
     if (!map)
     {
@@ -707,8 +707,8 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
             checkGLcall("glFlushMappedBufferRangeAPPLE");
         }
     }
-    GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
-    checkGLcall("glUnmapBufferARB");
+    GL_EXTCALL(glUnmapBuffer(This->buffer_type_hint));
+    checkGLcall("glUnmapBuffer");
 }
 
 void buffer_mark_used(struct wined3d_buffer *buffer)
@@ -913,10 +913,10 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
             }
         }
 
-        GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
-        checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(buffer->buffer_type_hint, start, len, data + start));
-        checkGLcall("glBufferSubDataARB");
+        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+        checkGLcall("glBindBuffer");
+        GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint, start, len, data + start));
+        checkGLcall("glBufferSubData");
     }
 
     HeapFree(GetProcessHeap(), 0, data);
@@ -979,7 +979,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
                 if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
                     context_invalidate_state(context, STATE_INDEXBUFFER);
-                GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
+                GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
@@ -992,17 +992,17 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 {
                     if (buffer->flags & WINED3D_BUFFER_APPLESYNC)
                         buffer_sync_apple(buffer, flags, gl_info);
-                    buffer->map_ptr = GL_EXTCALL(glMapBufferARB(buffer->buffer_type_hint,
-                            GL_READ_WRITE_ARB));
-                    checkGLcall("glMapBufferARB");
+                    buffer->map_ptr = GL_EXTCALL(glMapBuffer(buffer->buffer_type_hint,
+                            GL_READ_WRITE));
+                    checkGLcall("glMapBuffer");
                 }
 
                 if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
                 {
                     WARN("Pointer %p is not %u byte aligned.\n", buffer->map_ptr, RESOURCE_ALIGNMENT);
 
-                    GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
-                    checkGLcall("glUnmapBufferARB");
+                    GL_EXTCALL(glUnmapBuffer(buffer->buffer_type_hint));
+                    checkGLcall("glUnmapBuffer");
                     buffer->map_ptr = NULL;
 
                     if (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)
@@ -1078,7 +1078,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 
         if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
             context_invalidate_state(context, STATE_INDEXBUFFER);
-        GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
+        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
@@ -1099,7 +1099,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
             }
         }
 
-        GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
+        GL_EXTCALL(glUnmapBuffer(buffer->buffer_type_hint));
         if (wined3d_settings.strict_draw_ordering)
             gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);

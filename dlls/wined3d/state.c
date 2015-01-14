@@ -3366,8 +3366,8 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
 
             if (*curVBO != e->data.buffer_object)
             {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-                checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+                checkGLcall("glBindBuffer");
                 *curVBO = e->data.buffer_object;
             }
 
@@ -4100,8 +4100,8 @@ static void load_numbered_arrays(struct wined3d_context *context,
         {
             if (curVBO != stream_info->elements[i].data.buffer_object)
             {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, stream_info->elements[i].data.buffer_object));
-                checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, stream_info->elements[i].data.buffer_object));
+                checkGLcall("glBindBuffer");
                 curVBO = stream_info->elements[i].data.buffer_object;
             }
             /* Use the VBO to find out if a vertex buffer exists, not the vb
@@ -4271,8 +4271,8 @@ static void load_vertex_data(struct wined3d_context *context,
 
             if (curVBO != e->data.buffer_object)
             {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-                checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+                checkGLcall("glBindBuffer");
                 curVBO = e->data.buffer_object;
             }
 
@@ -4327,8 +4327,8 @@ static void load_vertex_data(struct wined3d_context *context,
 
         if (curVBO != e->data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            checkGLcall("glBindBuffer");
             curVBO = e->data.buffer_object;
         }
 
@@ -4349,8 +4349,8 @@ static void load_vertex_data(struct wined3d_context *context,
 
         if (curVBO != e->data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            checkGLcall("glBindBuffer");
             curVBO = e->data.buffer_object;
         }
 
@@ -4376,8 +4376,8 @@ static void load_vertex_data(struct wined3d_context *context,
 
         if (curVBO != e->data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            checkGLcall("glBindBuffer");
             curVBO = e->data.buffer_object;
         }
 
@@ -4411,8 +4411,8 @@ static void load_vertex_data(struct wined3d_context *context,
 
             if (curVBO != e->data.buffer_object)
             {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->data.buffer_object));
-                checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+                checkGLcall("glBindBuffer");
                 curVBO = e->data.buffer_object;
             }
 
@@ -4850,12 +4850,12 @@ static void indexbuffer(struct wined3d_context *context, const struct wined3d_st
 
     if (!state->index_buffer || !stream_info->all_vbo)
     {
-        GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
+        GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     }
     else
     {
         struct wined3d_buffer *ib = state->index_buffer;
-        GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ib->buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib->buffer_object));
     }
 }
 

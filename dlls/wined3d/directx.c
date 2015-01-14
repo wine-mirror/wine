@@ -570,15 +570,15 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
     checkGLcall("Specifying the PBO test texture");
 
-    GL_EXTCALL(glGenBuffersARB(1, &pbo));
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo));
-    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
+    GL_EXTCALL(glGenBuffers(1, &pbo));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo));
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeof(pattern), pattern, GL_STREAM_DRAW));
     checkGLcall("Specifying the PBO test pbo");
 
     gl_info->gl_ops.gl.p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
     checkGLcall("Loading the PBO test texture");
 
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
 
     gl_info->gl_ops.gl.p_glFinish(); /* just to be sure */
 
@@ -587,7 +587,7 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     checkGLcall("Reading back the PBO test texture");
 
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &texture);
-    GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
+    GL_EXTCALL(glDeleteBuffers(1, &pbo));
     checkGLcall("PBO test cleanup");
 
     if (memcmp(check, pattern, sizeof(check)))
@@ -2876,10 +2876,18 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 
     /* Newer core functions */
     USE_GL_FUNC(glActiveTexture)            /* OpenGL 1.3 */
+    USE_GL_FUNC(glBindBuffer)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBlendColor)               /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquation)            /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquationSeparate)    /* OpenGL 2.0 */
     USE_GL_FUNC(glBlendFuncSeparate)        /* OpenGL 1.4 */
+    USE_GL_FUNC(glBufferData)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glBufferSubData)            /* OpenGL 1.5 */
+    USE_GL_FUNC(glDeleteBuffers)            /* OpenGL 1.5 */
+    USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
+    USE_GL_FUNC(glMapBuffer)                /* OpenGL 1.5 */
+    USE_GL_FUNC(glUnmapBuffer)              /* OpenGL 1.5 */
 #undef USE_GL_FUNC
 
 #ifndef USE_WIN32_OPENGL
@@ -2896,10 +2904,18 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
         } while (0)
 
     MAP_GL_FUNCTION(glActiveTexture, glActiveTextureARB);
+    MAP_GL_FUNCTION(glBindBuffer, glBindBufferARB);
     MAP_GL_FUNCTION(glBlendColor, glBlendColorEXT);
     MAP_GL_FUNCTION(glBlendEquation, glBlendEquationEXT);
     MAP_GL_FUNCTION(glBlendEquationSeparate, glBlendEquationSeparateEXT);
     MAP_GL_FUNCTION(glBlendFuncSeparate, glBlendFuncSeparateEXT);
+    MAP_GL_FUNCTION(glBufferData, glBufferDataARB);
+    MAP_GL_FUNCTION(glBufferSubData, glBufferSubDataARB);
+    MAP_GL_FUNCTION(glDeleteBuffers, glDeleteBuffersARB);
+    MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
+    MAP_GL_FUNCTION(glGetBufferSubData, glGetBufferSubDataARB);
+    MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
+    MAP_GL_FUNCTION(glUnmapBuffer, glUnmapBufferARB);
 #undef MAP_GL_FUNCTION
 }
 

@@ -59,7 +59,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
         if (surface->pbo)
         {
             TRACE("Deleting PBO %u.\n", surface->pbo);
-            GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
+            GL_EXTCALL(glDeleteBuffers(1, &surface->pbo));
         }
 
         if (surface->rb_multisample)
@@ -522,22 +522,22 @@ static void surface_prepare_buffer(struct wined3d_surface *surface)
     context = context_acquire(surface->resource.device, NULL);
     gl_info = context->gl_info;
 
-    GL_EXTCALL(glGenBuffersARB(1, &surface->pbo));
+    GL_EXTCALL(glGenBuffers(1, &surface->pbo));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (!surface->pbo || error != GL_NO_ERROR)
         ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
 
     TRACE("Binding PBO %u.\n", surface->pbo);
 
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-    checkGLcall("glBindBufferARB");
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+    checkGLcall("glBindBuffer");
 
-    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->resource.size + 4,
-            NULL, GL_STREAM_DRAW_ARB));
-    checkGLcall("glBufferDataARB");
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, surface->resource.size + 4,
+            NULL, GL_STREAM_DRAW));
+    checkGLcall("glBufferData");
 
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-    checkGLcall("glBindBufferARB");
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    checkGLcall("glBindBuffer");
 
     context_release(context);
 }
@@ -733,10 +733,10 @@ static void surface_unmap(struct wined3d_surface *surface)
             context = context_acquire(device, NULL);
             gl_info = context->gl_info;
 
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-            checkGLcall("glUnmapBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("glUnmapBuffer");
             context_release(context);
             break;
 
@@ -1152,8 +1152,8 @@ HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *sur
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
-    checkGLcall("glDeleteBuffersARB(1, &surface->pbo)");
+    GL_EXTCALL(glDeleteBuffers(1, &surface->pbo));
+    checkGLcall("glDeleteBuffers(1, &surface->pbo)");
 
     surface->pbo = 0;
     surface_invalidate_location(surface, WINED3D_LOCATION_BUFFER);
@@ -1340,12 +1340,12 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
         if (data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+            checkGLcall("glBindBuffer");
             GL_EXTCALL(glGetCompressedTexImageARB(surface->texture_target, surface->texture_level, NULL));
             checkGLcall("glGetCompressedTexImageARB");
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+            checkGLcall("glBindBuffer");
         }
         else
         {
@@ -1380,15 +1380,15 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
         if (data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+            checkGLcall("glBindBuffer");
 
             gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
                     gl_format, gl_type, NULL);
             checkGLcall("glGetTexImage");
 
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+            checkGLcall("glBindBuffer");
         }
         else
         {
@@ -1494,8 +1494,8 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, data->buffer_object));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, data->buffer_object));
+        checkGLcall("glBindBuffer");
     }
 
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
@@ -1561,8 +1561,8 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
     }
 
     if (wined3d_settings.strict_draw_ordering)
@@ -2665,9 +2665,9 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             context = context_acquire(device, NULL);
             gl_info = context->gl_info;
 
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-            base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("map PBO");
 
             context_release(context);
@@ -2839,8 +2839,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
     if (data.buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+        checkGLcall("glBindBuffer");
     }
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
@@ -2868,8 +2868,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
         if (data.buffer_object)
         {
-            mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-            checkGLcall("glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB)");
+            mem = GL_EXTCALL(glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE));
+            checkGLcall("glMapBuffer");
         }
         else
             mem = data.addr;
@@ -2887,14 +2887,14 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
         HeapFree(GetProcessHeap(), 0, row);
 
         if (data.buffer_object)
-            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_PACK_BUFFER_ARB));
+            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_PACK_BUFFER));
     }
 
 error:
     if (data.buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0)");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
     }
 
     context_release(context);
@@ -4004,9 +4004,9 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     {
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, dst.buffer_object));
-        GL_EXTCALL(glBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0, size, src.addr));
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
+        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("Upload PBO");
         context_release(context);
         return;
@@ -4015,9 +4015,9 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     {
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, src.buffer_object));
-        GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_PACK_BUFFER_ARB, 0, size, dst.addr));
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
+        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
         checkGLcall("Download PBO");
         context_release(context);
         return;

@@ -3019,7 +3019,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         e->data.addr += (ULONG_PTR)buffer_get_sysmem(buffer, context);
         if (buffer->buffer_object)
         {
-            GL_EXTCALL(glDeleteBuffersARB(1, &buffer->buffer_object));
+            GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
             buffer->buffer_object = 0;
         }
         if (e->data.addr)

@@ -105,8 +105,8 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, data->buffer_object));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, data->buffer_object));
+        checkGLcall("glBindBuffer");
     }
 
     GL_EXTCALL(glTexSubImage3DEXT(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
@@ -116,8 +116,8 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
     }
 
     HeapFree(GetProcessHeap(), 0, converted_mem);
@@ -153,8 +153,8 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data->buffer_object));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data->buffer_object));
+        checkGLcall("glBindBuffer");
     }
 
     gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_3D, volume->texture_level,
@@ -163,8 +163,8 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 
     if (data->buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
     }
 
 }
@@ -383,10 +383,10 @@ static void wined3d_volume_prepare_pbo(struct wined3d_volume *volume, struct win
     if (volume->pbo)
         return;
 
-    GL_EXTCALL(glGenBuffersARB(1, &volume->pbo));
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, volume->pbo));
-    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, volume->resource.size, NULL, GL_STREAM_DRAW_ARB));
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    GL_EXTCALL(glGenBuffers(1, &volume->pbo));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, volume->pbo));
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, volume->resource.size, NULL, GL_STREAM_DRAW));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
     checkGLcall("Create PBO");
 
     TRACE("Created PBO %u for volume %p.\n", volume->pbo, volume);
@@ -398,8 +398,8 @@ static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Deleting PBO %u belonging to volume %p.\n", volume->pbo, volume);
-    GL_EXTCALL(glDeleteBuffersARB(1, &volume->pbo));
-    checkGLcall("glDeleteBuffersARB");
+    GL_EXTCALL(glDeleteBuffers(1, &volume->pbo));
+    checkGLcall("glDeleteBuffers");
     volume->pbo = 0;
     context_release(context);
 }
@@ -587,22 +587,22 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
         else
             wined3d_volume_load_location(volume, context, WINED3D_LOCATION_BUFFER);
 
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, volume->pbo));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, volume->pbo));
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
             GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
             mapflags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
-            base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER_ARB,
+            base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
                     0, volume->resource.size, mapflags));
         }
         else
         {
             GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
-            base_memory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, access));
+            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access));
         }
 
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("Map PBO");
 
         context_release(context);
@@ -704,9 +704,9 @@ HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
         struct wined3d_context *context = context_acquire(device, NULL);
         const struct wined3d_gl_info *gl_info = context->gl_info;
 
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, volume->pbo));
-        GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, volume->pbo));
+        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("Unmap PBO");
 
         context_release(context);
