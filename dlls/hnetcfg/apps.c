@@ -148,6 +148,18 @@ HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
     return S_OK;
 }
 
+void release_typelib(void)
+{
+    unsigned i;
+
+    for (i = 0; i < sizeof(typeinfo)/sizeof(*typeinfo); i++)
+        if (typeinfo[i])
+            ITypeInfo_Release(typeinfo[i]);
+
+    if (typelib)
+        ITypeLib_Release(typelib);
+}
+
 static HRESULT WINAPI fw_app_GetTypeInfo(
     INetFwAuthorizedApplication *iface,
     UINT iTInfo,
