@@ -72,6 +72,13 @@ typedef struct tagCallbackData
     UINT dpidSize;
 } CallbackData, *lpCallbackData;
 
+struct provider_data
+{
+    int call_count;
+    GUID *guid_ptr[10];
+    GUID guid_data[10];
+    BOOL ret_value;
+};
 
 static LPSTR get_temp_buffer(void)
 {
@@ -747,6 +754,113 @@ static void test_DirectPlayCreate(void)
     if ( hr == DP_OK )
         IDirectPlayX_Release( pDP );
 
+}
+
+static BOOL CALLBACK callback_providersA(GUID* guid, char *name, DWORD major, DWORD minor, void *arg)
+{
+    struct provider_data *prov = arg;
+
+    if (!prov) return TRUE;
+
+    if (prov->call_count < sizeof(prov->guid_data) / sizeof(prov->guid_data[0]))
+    {
+        prov->guid_ptr[prov->call_count] = guid;
+        prov->guid_data[prov->call_count] = *guid;
+
+        prov->call_count++;
+    }
+
+    if (prov->ret_value) /* Only trace when looping all providers */
+        trace("Provider #%d '%s' (%d.%d)\n", prov->call_count, name, major, minor);
+    return prov->ret_value;
+}
+
+static BOOL CALLBACK callback_providersW(GUID* guid, WCHAR *name, DWORD major, DWORD minor, void *arg)
+{
+    struct provider_data *prov = arg;
+
+    if (!prov) return TRUE;
+
+    if (prov->call_count < sizeof(prov->guid_data) / sizeof(prov->guid_data[0]))
+    {
+        prov->guid_ptr[prov->call_count] = guid;
+        prov->guid_data[prov->call_count] = *guid;
+
+        prov->call_count++;
+    }
+
+    return prov->ret_value;
+}
+
+static void test_EnumerateProviders(void)
+{
+    HRESULT hr;
+    int i;
+    struct provider_data arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.ret_value = TRUE;
+
+    hr = DirectPlayEnumerateA(callback_providersA, NULL);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateA failed\n");
+
+    SetLastError(0xdeadbeef);
+    hr = DirectPlayEnumerateA(NULL, &arg);
+    ok(FAILED(hr), "DirectPlayEnumerateA expected to fail\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hr = DirectPlayEnumerateA(NULL, NULL);
+    ok(FAILED(hr), "DirectPlayEnumerateA expected to fail\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+
+    hr = DirectPlayEnumerateA(callback_providersA, &arg);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateA failed\n");
+    ok(arg.call_count > 0, "Expected at least one valid provider\n");
+    trace("Found %d providers\n", arg.call_count);
+
+    /* The returned GUID values must have persisted after enumeration (bug 37185) */
+    for(i = 0; i < arg.call_count; i++)
+    {
+        ok(IsEqualGUID(arg.guid_ptr[i], &arg.guid_data[i]), "#%d Expected equal GUID values\n", i);
+    }
+
+    memset(&arg, 0, sizeof(arg));
+    arg.ret_value = FALSE;
+    hr = DirectPlayEnumerateA(callback_providersA, &arg);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateA failed\n");
+    ok(arg.call_count == 1, "Expected 1, got %d\n", arg.call_count);
+
+    hr = DirectPlayEnumerateW(callback_providersW, NULL);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateW failed\n");
+
+    SetLastError(0xdeadbeef);
+    hr = DirectPlayEnumerateW(NULL, &arg);
+    ok(FAILED(hr), "DirectPlayEnumerateW expected to fail\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hr = DirectPlayEnumerateW(NULL, NULL);
+    ok(FAILED(hr), "DirectPlayEnumerateW expected to fail\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got 0x%x\n", GetLastError());
+
+    memset(&arg, 0, sizeof(arg));
+    arg.ret_value = TRUE;
+    hr = DirectPlayEnumerateW(callback_providersW, &arg);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateW failed\n");
+    ok(arg.call_count > 0, "Expected at least one valid provider\n");
+
+    /* The returned GUID values must have persisted after enumeration (bug 37185) */
+    for(i = 0; i < arg.call_count; i++)
+    {
+        ok(IsEqualGUID(arg.guid_ptr[i], &arg.guid_data[i]), "#%d Expected equal GUID values\n", i);
+    }
+
+    memset(&arg, 0, sizeof(arg));
+    arg.ret_value = FALSE;
+    hr = DirectPlayEnumerateW(callback_providersW, &arg);
+    ok(SUCCEEDED(hr), "DirectPlayEnumerateW failed\n");
+    ok(arg.call_count == 1, "Expected 1, got %d\n", arg.call_count);
 }
 
 /* EnumConnections */
@@ -6544,6 +6658,7 @@ START_TEST(dplayx)
 
     test_COM();
     test_COM_dplobby();
+    test_EnumerateProviders();
 
     if (!winetest_interactive)
     {
