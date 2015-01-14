@@ -130,10 +130,12 @@ static void test_ParseDisplayName(void)
 
                     if (enumvar)
                     {
-                        VARIANT var;
+                        VARIANT var, res;
                         ULONG fetched;
                         IDispatch *dispatch = NULL;
                         DISPID dispid;
+                        DISPPARAMS params;
+                        UINT arg_err;
 
                         fetched = 0xdeadbeef;
                         hr = IEnumVARIANT_Next( enumvar, 0, &var, &fetched );
@@ -183,6 +185,42 @@ static void test_ParseDisplayName(void)
                         ok( hr == S_OK, "got %x\n", hr );
                         ok( dispid == 0x1800001 || dispid == 0x10b /* win2k */, "got %x\n", dispid );
 
+                        if (dispid == 0x1800001) /* crashes on win2k */
+                        {
+                            V_VT( &res ) = VT_ERROR;
+                            V_BSTR( &res ) = (BSTR)0xdeadbeef;
+                            params.rgvarg = (VARIANTARG *)0xdeadbeef;
+                            params.rgdispidNamedArgs = (DISPID *)0xdeadbeef;
+                            params.cArgs = params.cNamedArgs = 0xdeadbeef;
+                            arg_err = 0xdeadbeef;
+                            hr = IDispatch_Invoke( dispatch, DISPID_UNKNOWN, &IID_NULL, english,
+                                                   DISPATCH_METHOD|DISPATCH_PROPERTYGET,
+                                                   &params, &res, NULL, &arg_err );
+                            ok( hr == DISP_E_MEMBERNOTFOUND || hr == S_OK /* winxp */, "got %x\n", hr );
+                            ok( params.rgvarg == (VARIANTARG *)0xdeadbeef, "got %p\n", params.rgvarg );
+                            ok( params.rgdispidNamedArgs == (DISPID *)0xdeadbeef, "got %p\n", params.rgdispidNamedArgs );
+                            ok( params.cArgs == 0xdeadbeef, "got %u\n", params.cArgs );
+                            ok( params.cNamedArgs == 0xdeadbeef, "got %u\n", params.cNamedArgs );
+                            ok( V_VT( &res ) == VT_ERROR, "got %u\n", V_VT( &res ) );
+                            ok( V_ERROR( &res ) == 0xdeadbeef, "got %u\n", V_VT( &res ) );
+                            ok( arg_err == 0xdeadbeef, "got %u\n", arg_err );
+                            if (hr == S_OK) VariantClear( &res );
+                        }
+
+                        V_VT( &res ) = VT_ERROR;
+                        V_BSTR( &res ) = (BSTR)0xdeadbeef;
+                        memset( &params, 0, sizeof(params) );
+                        hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, english,
+                                               DISPATCH_METHOD|DISPATCH_PROPERTYGET,
+                                               &params, &res, NULL, NULL );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( params.rgvarg == NULL, "got %p\n", params.rgvarg );
+                        ok( params.rgdispidNamedArgs == NULL, "got %p\n", params.rgdispidNamedArgs );
+                        ok( !params.cArgs, "got %u\n", params.cArgs );
+                        ok( !params.cNamedArgs, "got %u\n", params.cNamedArgs );
+                        ok( V_VT( &res ) == VT_BSTR, "got %u\n", V_VT( &res ) );
+                        ok( V_BSTR( &res ) != (BSTR)0xdeadbeef, "got %u\n", V_VT( &res ) );
+                        VariantClear( &res );
                         VariantClear( &var );
 
                         fetched = 0xdeadbeef;

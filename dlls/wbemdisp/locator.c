@@ -270,6 +270,16 @@ static HRESULT WINAPI object_GetIDsOfNames(
     return S_OK;
 }
 
+static BSTR get_member_name( struct object *object, DISPID dispid )
+{
+    UINT i;
+    for (i = 0; i < object->nb_members; i++)
+    {
+        if (object->members[i].dispid == dispid) return object->members[i].name;
+    }
+    return NULL;
+}
+
 static HRESULT WINAPI object_Invoke(
     ISWbemObject *iface,
     DISPID member,
@@ -282,20 +292,21 @@ static HRESULT WINAPI object_Invoke(
     UINT *arg_err )
 {
     struct object *object = impl_from_ISWbemObject( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
+    BSTR name;
 
-    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", object, member, debugstr_guid(riid),
+    TRACE( "%p, %x, %s, %u, %x, %p, %p, %p, %p\n", object, member, debugstr_guid(riid),
            lcid, flags, params, result, excep_info, arg_err );
 
-    hr = get_typeinfo( ISWbemObject_tid, &typeinfo );
-    if (SUCCEEDED(hr))
+    if (flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
     {
-        hr = ITypeInfo_Invoke( typeinfo, &object->ISWbemObject_iface, member, flags,
-                               params, result, excep_info, arg_err );
-        ITypeInfo_Release( typeinfo );
+        FIXME( "flags %x not supported\n", flags );
+        return E_NOTIMPL;
     }
-    return hr;
+    if (!(name = get_member_name( object, member )))
+        return DISP_E_MEMBERNOTFOUND;
+
+    memset( params, 0, sizeof(*params) );
+    return IWbemClassObject_Get( object->object, name, 0, result, NULL, NULL );
 }
 
 static HRESULT WINAPI object_Put_(
