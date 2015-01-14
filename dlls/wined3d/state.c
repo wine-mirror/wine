@@ -1600,11 +1600,12 @@ static void state_colorwrite(struct wined3d_context *context, const struct wined
 
 static void set_color_mask(const struct wined3d_gl_info *gl_info, UINT index, DWORD mask)
 {
-    GL_EXTCALL(glColorMaskIndexedEXT(index,
+    GL_EXTCALL(glColorMaski(index,
             mask & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
             mask & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
             mask & WINED3DCOLORWRITEENABLE_BLUE ? GL_TRUE : GL_FALSE,
             mask & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE));
+    checkGLcall("glColorMaski");
 }
 
 static void state_colorwrite0(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

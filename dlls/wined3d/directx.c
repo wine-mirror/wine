@@ -2883,6 +2883,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glBlendFuncSeparate)        /* OpenGL 1.4 */
     USE_GL_FUNC(glBufferData)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBufferSubData)            /* OpenGL 1.5 */
+    USE_GL_FUNC(glColorMaski)               /* OpenGL 3.0 */
     USE_GL_FUNC(glDeleteBuffers)            /* OpenGL 1.5 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
@@ -2911,6 +2912,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glBlendFuncSeparate, glBlendFuncSeparateEXT);
     MAP_GL_FUNCTION(glBufferData, glBufferDataARB);
     MAP_GL_FUNCTION(glBufferSubData, glBufferSubDataARB);
+    MAP_GL_FUNCTION(glColorMaski, glColorMaskIndexedEXT);
     MAP_GL_FUNCTION(glDeleteBuffers, glDeleteBuffersARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
     MAP_GL_FUNCTION(glGetBufferSubData, glGetBufferSubDataARB);
