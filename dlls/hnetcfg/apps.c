@@ -144,6 +144,7 @@ HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
             ITypeInfo_Release( info );
     }
     *ret = typeinfo[tid];
+    ITypeInfo_AddRef(typeinfo[tid]);
     return S_OK;
 }
 
