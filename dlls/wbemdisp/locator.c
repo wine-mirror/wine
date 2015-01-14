@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
+static HRESULT EnumVARIANT_create( ISWbemObjectSet *, IEnumVARIANT ** );
+
 enum type_id
 {
     ISWbemLocator_tid,
@@ -401,8 +403,11 @@ static HRESULT WINAPI objectset_get__NewEnum(
     ISWbemObjectSet *iface,
     IUnknown **pUnk )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct objectset *objectset = impl_from_ISWbemObjectSet( iface );
+
+    TRACE( "%p, %p\n", objectset, pUnk );
+
+    return EnumVARIANT_create( iface, (IEnumVARIANT **)pUnk );
 }
 
 static HRESULT WINAPI objectset_Item(
@@ -420,12 +425,20 @@ static HRESULT WINAPI objectset_get_Count(
     LONG *iCount )
 {
     struct objectset *objectset = impl_from_ISWbemObjectSet( iface );
+    LONG count = 0, total = 0;
 
     TRACE( "%p, %p\n", objectset, iCount );
 
-    *iCount = 0;
+    while (IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, 1 ) == S_OK) count++;
+
     IEnumWbemClassObject_Reset( objectset->objectenum );
-    while (!IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, 1 )) (*iCount)++;
+    while (IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, 1 ) == S_OK) total++;
+
+    count = total - count;
+    IEnumWbemClassObject_Reset( objectset->objectenum );
+    while (count--) IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, 1 );
+
+    *iCount = total;
     return S_OK;
 }
 
@@ -475,6 +488,141 @@ static HRESULT SWbemObjectSet_create( IEnumWbemClassObject *wbem_objectenum, ISW
     IEnumWbemClassObject_AddRef( objectset->objectenum );
 
     *obj = &objectset->ISWbemObjectSet_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
+}
+
+struct enumvar
+{
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG refs;
+    ISWbemObjectSet *objectset;
+};
+
+static inline struct enumvar *impl_from_IEnumVARIANT(
+    IEnumVARIANT *iface )
+{
+    return CONTAINING_RECORD( iface, struct enumvar, IEnumVARIANT_iface );
+}
+
+static ULONG WINAPI enumvar_AddRef(
+    IEnumVARIANT *iface )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+    return InterlockedIncrement( &enumvar->refs );
+}
+
+static ULONG WINAPI enumvar_Release(
+    IEnumVARIANT *iface )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+    LONG refs = InterlockedDecrement( &enumvar->refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", enumvar );
+        ISWbemObjectSet_Release( enumvar->objectset );
+        heap_free( enumvar );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI enumvar_QueryInterface(
+    IEnumVARIANT *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+
+    TRACE( "%p %s %p\n", enumvar, debugstr_guid(riid), ppvObject );
+
+    if (IsEqualGUID( riid, &IID_IEnumVARIANT ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObject = enumvar;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    IEnumVARIANT_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI enumvar_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
+    IWbemClassObject *obj;
+    ULONG count = 0;
+
+    TRACE( "%p, %u, %p, %p\n", iface, celt, var, fetched );
+
+    if (celt) IEnumWbemClassObject_Next( objectset->objectenum, WBEM_INFINITE, 1, &obj, &count );
+    if (count)
+    {
+        ISWbemObject *sobj;
+        HRESULT hr;
+
+        hr = SWbemObject_create( obj, &sobj );
+        IWbemClassObject_Release( obj );
+        if (FAILED( hr )) return hr;
+
+        V_VT( var ) = VT_DISPATCH;
+        V_DISPATCH( var ) = (IDispatch *)sobj;
+    }
+    if (fetched) *fetched = count;
+    return (count < celt) ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI enumvar_Skip( IEnumVARIANT *iface, ULONG celt )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
+
+    TRACE( "%p, %u\n", iface, celt );
+
+    return IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, celt );
+}
+
+static HRESULT WINAPI enumvar_Reset( IEnumVARIANT *iface )
+{
+    struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
+    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
+
+    TRACE( "%p\n", iface );
+
+    return IEnumWbemClassObject_Reset( objectset->objectenum );
+}
+
+static HRESULT WINAPI enumvar_Clone( IEnumVARIANT *iface, IEnumVARIANT **penum )
+{
+    FIXME( "%p, %p\n", iface, penum );
+    return E_NOTIMPL;
+}
+
+static const struct IEnumVARIANTVtbl enumvar_vtbl =
+{
+    enumvar_QueryInterface,
+    enumvar_AddRef,
+    enumvar_Release,
+    enumvar_Next,
+    enumvar_Skip,
+    enumvar_Reset,
+    enumvar_Clone
+};
+
+static HRESULT EnumVARIANT_create( ISWbemObjectSet *objectset, IEnumVARIANT **obj )
+{
+    struct enumvar *enumvar;
+
+    if (!(enumvar = heap_alloc( sizeof(*enumvar) ))) return E_OUTOFMEMORY;
+    enumvar->IEnumVARIANT_iface.lpVtbl = &enumvar_vtbl;
+    enumvar->refs = 1;
+    enumvar->objectset = objectset;
+    ISWbemObjectSet_AddRef( enumvar->objectset );
+
+    *obj = &enumvar->IEnumVARIANT_iface;
     TRACE( "returning iface %p\n", *obj );
     return S_OK;
 }

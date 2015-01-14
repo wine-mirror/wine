@@ -29,6 +29,7 @@ DEFINE_GUID(CLSID_WINMGMTS,0x172bddf8,0xceea,0x11d1,0x8b,0x05,0x00,0x60,0x08,0x0
 
 static void test_ParseDisplayName(void)
 {
+    static const WCHAR biosW[] = {'W','i','n','3','2','_','B','i','o','s',0};
     static const WCHAR name1[] =
         {'w','i','n','m','g','m','t','s',':',0};
     static const WCHAR name2[] =
@@ -88,6 +89,74 @@ static void test_ParseDisplayName(void)
             if (obj) IUnknown_Release( obj );
             IMoniker_Release( moniker );
         }
+    }
+
+    str = SysAllocString( name1 );
+    eaten = 0xdeadbeef;
+    moniker = NULL;
+    hr = IParseDisplayName_ParseDisplayName( displayname, NULL, str, &eaten, &moniker );
+    SysFreeString( str );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( eaten == lstrlenW(name1), "got %u\n", eaten );
+    if (moniker)
+    {
+        ISWbemServices *services = NULL;
+
+        hr = IMoniker_BindToObject( moniker, ctx, NULL, &IID_IUnknown, (void **)&services );
+        ok( hr == S_OK, "got %x\n", hr );
+        if (services)
+        {
+            ISWbemObjectSet *objectset = NULL;
+
+            str = SysAllocString( biosW );
+            hr = ISWbemServices_InstancesOf( services, str, 0, NULL, &objectset );
+            SysFreeString( str );
+            ok( hr == S_OK, "got %x\n", hr );
+            if (objectset)
+            {
+                hr = ISWbemObjectSet_get__NewEnum( objectset, &obj );
+                ok( hr == S_OK, "got %x\n", hr );
+                if (obj)
+                {
+                    IEnumVARIANT *enumvar = NULL;
+
+                    hr = IUnknown_QueryInterface( obj, &IID_IEnumVARIANT, (void **)&enumvar );
+                    ok( hr == S_OK, "got %x\n", hr );
+
+                    if (enumvar)
+                    {
+                        VARIANT var;
+                        ULONG fetched;
+
+                        fetched = 0xdeadbeef;
+                        hr = IEnumVARIANT_Next( enumvar, 0, &var, &fetched );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( !fetched, "got %u\n", fetched );
+
+                        fetched = 0xdeadbeef;
+                        V_VT( &var ) = VT_ERROR;
+                        V_ERROR( &var ) = 0xdeadbeef;
+                        hr = IEnumVARIANT_Next( enumvar, 1, &var, &fetched );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( fetched == 1, "got %u\n", fetched );
+                        ok( V_VT( &var ) == VT_DISPATCH, "got %u\n", V_VT( &var ) );
+                        ok( V_DISPATCH( &var ) != (IDispatch *)0xdeadbeef, "got %u\n", V_VT( &var ) );
+                        VariantClear( &var );
+
+                        fetched = 0xdeadbeef;
+                        hr = IEnumVARIANT_Next( enumvar, 1, &var, &fetched );
+                        ok( hr == S_FALSE, "got %x\n", hr );
+                        ok( !fetched, "got %u\n", fetched );
+
+                        IEnumVARIANT_Release( enumvar );
+                    }
+                    IUnknown_Release( obj );
+                }
+                ISWbemObjectSet_Release( objectset );
+            }
+            IUnknown_Release( services );
+        }
+        IMoniker_Release( moniker );
     }
 
     IBindCtx_Release( ctx );
