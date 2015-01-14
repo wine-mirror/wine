@@ -2758,6 +2758,18 @@ static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
     return S_OK;
 }
 
+void release_typelib(void)
+{
+    unsigned i;
+
+    for (i = 0; i < sizeof(winhttp_typeinfo)/sizeof(*winhttp_typeinfo); i++)
+        if (winhttp_typeinfo[i])
+            ITypeInfo_Release(winhttp_typeinfo[i]);
+
+    if (winhttp_typelib)
+        ITypeLib_Release(winhttp_typelib);
+}
+
 static HRESULT WINAPI winhttp_request_GetTypeInfo(
     IWinHttpRequest *iface,
     UINT index,

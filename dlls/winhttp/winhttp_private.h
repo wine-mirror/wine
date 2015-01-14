@@ -283,6 +283,7 @@ BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HID
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
+void release_typelib( void ) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc( SIZE_T size )
 {
