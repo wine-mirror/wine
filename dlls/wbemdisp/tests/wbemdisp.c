@@ -26,10 +26,14 @@
 #include "wine/test.h"
 
 DEFINE_GUID(CLSID_WINMGMTS,0x172bddf8,0xceea,0x11d1,0x8b,0x05,0x00,0x60,0x08,0x06,0xd9,0xb6);
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static void test_ParseDisplayName(void)
 {
     static const WCHAR biosW[] = {'W','i','n','3','2','_','B','i','o','s',0};
+    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
+    static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
+    static const WCHAR nosuchW[] = {'N','o','S','u','c','h',0};
     static const WCHAR name1[] =
         {'w','i','n','m','g','m','t','s',':',0};
     static const WCHAR name2[] =
@@ -54,12 +58,13 @@ static void test_ParseDisplayName(void)
         { name3, S_OK, &IID_ISWbemObject, sizeof(name3)/sizeof(name3[0]) - 1 },
         { name4, S_OK, &IID_ISWbemObject, sizeof(name4)/sizeof(name4[0]) - 1 }
     };
+    LCID english = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
     IParseDisplayName *displayname;
     IBindCtx *ctx;
     IMoniker *moniker;
     IUnknown *obj;
     BSTR str;
-    ULONG i, eaten;
+    ULONG i, eaten, count;
     HRESULT hr;
 
     hr = CoCreateInstance( &CLSID_WINMGMTS, NULL, CLSCTX_INPROC_SERVER, &IID_IParseDisplayName, (void **)&displayname );
@@ -127,6 +132,8 @@ static void test_ParseDisplayName(void)
                     {
                         VARIANT var;
                         ULONG fetched;
+                        IDispatch *dispatch = NULL;
+                        DISPID dispid;
 
                         fetched = 0xdeadbeef;
                         hr = IEnumVARIANT_Next( enumvar, 0, &var, &fetched );
@@ -141,6 +148,41 @@ static void test_ParseDisplayName(void)
                         ok( fetched == 1, "got %u\n", fetched );
                         ok( V_VT( &var ) == VT_DISPATCH, "got %u\n", V_VT( &var ) );
                         ok( V_DISPATCH( &var ) != (IDispatch *)0xdeadbeef, "got %u\n", V_VT( &var ) );
+
+                        dispatch = V_DISPATCH( &var );
+                        count = 0;
+                        hr = IDispatch_GetTypeInfoCount( dispatch, &count );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( count == 1, "got %u\n", count );
+
+                        str = SysAllocString( manufacturerW );
+                        dispid = 0xdeadbeef;
+                        hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
+                        SysFreeString( str );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( dispid == 0x1800001 || dispid == 0x10b /* win2k */, "got %x\n", dispid );
+
+                        str = SysAllocString( versionW );
+                        dispid = 0xdeadbeef;
+                        hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
+                        SysFreeString( str );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( dispid == 0x1800002 || dispid == 0x119 /* win2k */, "got %x\n", dispid );
+
+                        str = SysAllocString( nosuchW );
+                        dispid = 0xdeadbeef;
+                        hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
+                        SysFreeString( str );
+                        ok( hr == DISP_E_UNKNOWNNAME, "got %x\n", hr );
+                        ok( dispid == DISPID_UNKNOWN, "got %x\n", dispid );
+
+                        str = SysAllocString( manufacturerW );
+                        dispid = 0xdeadbeef;
+                        hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
+                        SysFreeString( str );
+                        ok( hr == S_OK, "got %x\n", hr );
+                        ok( dispid == 0x1800001 || dispid == 0x10b /* win2k */, "got %x\n", dispid );
+
                         VariantClear( &var );
 
                         fetched = 0xdeadbeef;

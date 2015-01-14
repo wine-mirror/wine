@@ -93,11 +93,22 @@ static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
     return S_OK;
 }
 
+#define DISPID_BASE 0x1800000
+
+struct member
+{
+    BSTR name;
+    DISPID dispid;
+};
+
 struct object
 {
     ISWbemObject ISWbemObject_iface;
     LONG refs;
     IWbemClassObject *object;
+    struct member *members;
+    UINT nb_members;
+    DISPID last_dispid;
 };
 
 static inline struct object *impl_from_ISWbemObject(
@@ -120,8 +131,12 @@ static ULONG WINAPI object_Release(
     LONG refs = InterlockedDecrement( &object->refs );
     if (!refs)
     {
+        UINT i;
+
         TRACE( "destroying %p\n", object );
         IWbemClassObject_Release( object->object );
+        for (i = 0; i < object->nb_members; i++) SysFreeString( object->members[i].name );
+        heap_free( object->members );
         heap_free( object );
     }
     return refs;
@@ -169,9 +184,63 @@ static HRESULT WINAPI object_GetTypeInfo(
     ITypeInfo **info )
 {
     struct object *object = impl_from_ISWbemObject( iface );
-    TRACE( "%p, %u, %u, %p\n", object, index, lcid, info );
+    FIXME( "%p, %u, %u, %p\n", object, index, lcid, info );
+    return E_NOTIMPL;
+}
 
-    return get_typeinfo( ISWbemObject_tid, info );
+#define DISPID_BASE 0x1800000
+
+static HRESULT init_members( struct object *object )
+{
+    LONG bound, i;
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    if (object->members) return S_OK;
+
+    hr = IWbemClassObject_GetNames( object->object, NULL, 0, NULL, &sa );
+    if (FAILED( hr )) return hr;
+    hr = SafeArrayGetUBound( sa, 1, &bound );
+    if (FAILED( hr ))
+    {
+        SafeArrayDestroy( sa );
+        return hr;
+    }
+    if (!(object->members = heap_alloc( sizeof(struct member) * (bound + 1) )))
+    {
+        SafeArrayDestroy( sa );
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i <= bound; i++)
+    {
+        hr = SafeArrayGetElement( sa, &i, &object->members[i].name );
+        if (FAILED( hr ))
+        {
+            for (i--; i >= 0; i--) SysFreeString( object->members[i].name );
+            SafeArrayDestroy( sa );
+            heap_free( object->members );
+            object->members = NULL;
+            return E_OUTOFMEMORY;
+        }
+        object->members[i].dispid = 0;
+    }
+    object->nb_members = bound + 1;
+    SafeArrayDestroy( sa );
+    return S_OK;
+}
+
+static DISPID get_member_dispid( struct object *object, const WCHAR *name )
+{
+    UINT i;
+    for (i = 0; i < object->nb_members; i++)
+    {
+        if (!strcmpiW( object->members[i].name, name ))
+        {
+            if (!object->members[i].dispid) object->members[i].dispid = ++object->last_dispid;
+            return object->members[i].dispid;
+        }
+    }
+    return DISPID_UNKNOWN;
 }
 
 static HRESULT WINAPI object_GetIDsOfNames(
@@ -183,20 +252,22 @@ static HRESULT WINAPI object_GetIDsOfNames(
     DISPID *dispid )
 {
     struct object *object = impl_from_ISWbemObject( iface );
-    ITypeInfo *typeinfo;
     HRESULT hr;
+    UINT i;
 
     TRACE( "%p, %s, %p, %u, %u, %p\n", object, debugstr_guid(riid), names, count, lcid, dispid );
 
     if (!names || !count || !dispid) return E_INVALIDARG;
 
-    hr = get_typeinfo( ISWbemObject_tid, &typeinfo );
-    if (SUCCEEDED(hr))
+    hr = init_members( object );
+    if (FAILED( hr )) return hr;
+
+    for (i = 0; i < count; i++)
     {
-        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
-        ITypeInfo_Release( typeinfo );
+        if ((dispid[i] = get_member_dispid( object, names[i] )) == DISPID_UNKNOWN) break;
     }
-    return hr;
+    if (i != count) return DISP_E_UNKNOWNNAME;
+    return S_OK;
 }
 
 static HRESULT WINAPI object_Invoke(
@@ -260,6 +331,9 @@ static HRESULT SWbemObject_create( IWbemClassObject *wbem_object, ISWbemObject *
     object->refs = 1;
     object->object = wbem_object;
     IWbemClassObject_AddRef( object->object );
+    object->members = NULL;
+    object->nb_members = 0;
+    object->last_dispid = DISPID_BASE;
 
     *obj = &object->ISWbemObject_iface;
     TRACE( "returning iface %p\n", *obj );
