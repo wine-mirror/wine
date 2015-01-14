@@ -2754,6 +2754,7 @@ static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
             ITypeInfo_Release( typeinfo );
     }
     *ret = winhttp_typeinfo[tid];
+    ITypeInfo_AddRef(winhttp_typeinfo[tid]);
     return S_OK;
 }
 
