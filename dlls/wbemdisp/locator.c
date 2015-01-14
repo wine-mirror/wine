@@ -671,6 +671,18 @@ static HRESULT WINAPI services_DeleteAsync(
     return E_NOTIMPL;
 }
 
+static BSTR build_query_string( const WCHAR *class )
+{
+    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
+    UINT len = strlenW(class) + sizeof(selectW) / sizeof(selectW[0]);
+    BSTR ret;
+
+    if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
+    strcpyW( ret, selectW );
+    strcatW( ret, class );
+    return ret;
+}
+
 static HRESULT WINAPI services_InstancesOf(
     ISWbemServices *iface,
     BSTR strClass,
@@ -678,8 +690,22 @@ static HRESULT WINAPI services_InstancesOf(
     IDispatch *objWbemNamedValueSet,
     ISWbemObjectSet **objWbemObjectSet )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    static const WCHAR wqlW[] = {'W','Q','L',0};
+    BSTR query, wql = SysAllocString( wqlW );
+    HRESULT hr;
+
+    TRACE( "%p, %s, %x, %p, %p\n", iface, debugstr_w(strClass), iFlags, objWbemNamedValueSet,
+           objWbemObjectSet );
+
+    if (!(query = build_query_string( strClass )))
+    {
+        SysFreeString( wql );
+        return E_OUTOFMEMORY;
+    }
+    hr = ISWbemServices_ExecQuery( iface, query, wql, iFlags, objWbemNamedValueSet, objWbemObjectSet );
+    SysFreeString( wql );
+    SysFreeString( query );
+    return hr;
 }
 
 static HRESULT WINAPI services_InstancesOfAsync(
