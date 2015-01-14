@@ -785,7 +785,17 @@ static const struct drawcall_entry draw_seq[] = {
     { DRAW_LAST_KIND }
 };
 
-static void test_draw_sequence(void)
+static const struct drawcall_entry draw_seq2[] = {
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_LAST_KIND }
+};
+
+static void test_Draw(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     static const WCHAR ruW[] = {'r','u',0};
@@ -831,9 +841,20 @@ static void test_draw_sequence(void)
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", TRUE);
+    IDWriteTextLayout_Release(layout);
+
+    /* with reduced width DrawGlyphRun() is called for every line */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 5.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
+
+    IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
-    IDWriteTextLayout_Release(layout);
 }
 
 static void test_typography(void)
@@ -1010,7 +1031,7 @@ START_TEST(layout)
     test_CreateEllipsisTrimmingSign();
     test_fontweight();
     test_SetInlineObject();
-    test_draw_sequence();
+    test_Draw();
     test_typography();
     test_GetClusterMetrics();
     test_SetLocaleName();
