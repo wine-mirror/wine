@@ -40,6 +40,7 @@ RANLIB          = @RANLIB@
 STRIP           = @STRIP@
 LN_S            = @LN_S@
 TOOLSDIR        = @TOOLSDIR@
+LD              = @LD@
 LDFLAGS         = @LDFLAGS@
 DLLFLAGS        = @DLLFLAGS@
 PRELINK         = @PRELINK@

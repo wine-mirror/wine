@@ -16,6 +16,7 @@ winegcc_EXTRADEFS = \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"$(CPPBIN)\"" \
 	-DCXX="\"$(CXX)\"" \
+	-DLD="\"$(LD)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
 winegcc$(EXEEXT): winegcc.o utils.o

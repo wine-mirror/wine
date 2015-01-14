@@ -1034,6 +1034,8 @@ static void build(struct options* opts)
     /* run winebuild to generate the .spec.o file */
     spec_args = get_winebuild_args( opts );
     strarray_add( spec_args, strmake( "--cc-cmd=%s", build_tool_name( opts, "gcc", CC )));
+    strarray_add( spec_args, strmake( "--ld-cmd=%s", build_tool_name( opts, "ld", LD )));
+
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
