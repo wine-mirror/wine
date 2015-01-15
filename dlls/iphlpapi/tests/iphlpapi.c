@@ -1118,12 +1118,20 @@ static void testGetAdaptersInfo(void)
     if (apiReturn == ERROR_NO_DATA)
       ; /* no adapter's, that's okay */
     else if (apiReturn == ERROR_BUFFER_OVERFLOW) {
-      PIP_ADAPTER_INFO buf = HeapAlloc(GetProcessHeap(), 0, len);
+      PIP_ADAPTER_INFO ptr, buf = HeapAlloc(GetProcessHeap(), 0, len);
 
       apiReturn = pGetAdaptersInfo(buf, &len);
       ok(apiReturn == NO_ERROR,
        "GetAdaptersInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
        apiReturn);
+      ptr = buf;
+      while (ptr) {
+        ok(ptr->IpAddressList.IpAddress.String[0], "A valid IP must be present\n");
+        ok(ptr->IpAddressList.IpMask.String[0], "A valid mask must be present\n");
+        trace("Adapter '%s', IP %s, Mask %s\n", ptr->AdapterName,
+              ptr->IpAddressList.IpAddress.String, ptr->IpAddressList.IpMask.String);
+        ptr = ptr->Next;
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
