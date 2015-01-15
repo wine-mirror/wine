@@ -69,7 +69,7 @@ static void test_COM(void)
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     refcount = IPersistStream_AddRef(ps);
     ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
-    refcount = IPersistStream_Release(ps);
+    IPersistStream_Release(ps);
 
     hr = IDirectMusicObject_QueryInterface(dmo, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
