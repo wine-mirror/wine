@@ -3604,24 +3604,92 @@ void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_sta
     }
 }
 
-static void sampler(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static enum wined3d_texture_address wined3d_texture_address_mode(const struct wined3d_texture *texture,
+        enum wined3d_texture_address t)
 {
-    DWORD sampler = state_id - STATE_SAMPLER(0);
-    DWORD mapped_stage = context->tex_unit_map[sampler];
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    union {
+    if (t < WINED3D_TADDRESS_WRAP || t > WINED3D_TADDRESS_MIRROR_ONCE)
+    {
+        FIXME("Unrecognized or unsupported texture address mode %#x.\n", t);
+        return WINED3D_TADDRESS_WRAP;
+    }
+
+    /* Cubemaps are always set to clamp, regardless of the sampler state. */
+    if (texture->target == GL_TEXTURE_CUBE_MAP_ARB || ((texture->flags & WINED3D_TEXTURE_COND_NP2)
+            && t == WINED3D_TADDRESS_WRAP))
+        return WINED3D_TADDRESS_CLAMP;
+
+    return t;
+}
+
+static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
+        const struct wined3d_gl_info *gl_info, const DWORD *sampler_states, const struct wined3d_texture *texture)
+{
+    union
+    {
         float f;
         DWORD d;
-    } tmpvalue;
+    } lod_bias;
 
-    TRACE("Sampler: %d\n", sampler);
-    /* Enabling and disabling texture dimensions is done by texture stage state / pixel shader setup, this function
-     * only has to bind textures and set the per texture states
-     */
+    desc->address_u = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_U]);
+    desc->address_v = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_V]);
+    desc->address_w = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_W]);
+    D3DCOLORTOGLFLOAT4(sampler_states[WINED3D_SAMP_BORDER_COLOR], desc->border_color);
+    if (sampler_states[WINED3D_SAMP_MAG_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MAG_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MAG_FILTER]);
+    desc->mag_filter = min(max(sampler_states[WINED3D_SAMP_MAG_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR);
+    if (sampler_states[WINED3D_SAMP_MIN_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MIN_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MIN_FILTER]);
+    desc->min_filter = min(max(sampler_states[WINED3D_SAMP_MIN_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR);
+    if (sampler_states[WINED3D_SAMP_MIP_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MIP_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MIP_FILTER]);
+    desc->mip_filter = min(max(sampler_states[WINED3D_SAMP_MIP_FILTER], WINED3D_TEXF_NONE), WINED3D_TEXF_LINEAR);
+    lod_bias.d = sampler_states[WINED3D_SAMP_MIPMAP_LOD_BIAS];
+    desc->lod_bias = lod_bias.f;
+    desc->min_lod = -1000.0f;
+    desc->max_lod = 1000.0f;
+    desc->max_anisotropy = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
+    if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
+                && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC
+                && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
+            || (texture->flags & WINED3D_TEXTURE_COND_NP2))
+        desc->max_anisotropy = 1;
+    desc->compare = texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW;
+    desc->comparison_func = WINED3D_CMP_LESSEQUAL;
+    desc->srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
+
+    if (!(texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING))
+    {
+        desc->mag_filter = WINED3D_TEXF_POINT;
+        desc->min_filter = WINED3D_TEXF_POINT;
+        desc->mip_filter = WINED3D_TEXF_NONE;
+    }
+
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+    {
+        desc->mip_filter = WINED3D_TEXF_NONE;
+        if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+            desc->min_filter = WINED3D_TEXF_POINT;
+    }
+}
+
+/* Enabling and disabling texture dimensions is done by texture stage state /
+ * pixel shader setup, this function only has to bind textures and set the per
+ * texture states. */
+static void sampler(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    DWORD sampler_idx = state_id - STATE_SAMPLER(0);
+    DWORD mapped_stage = context->tex_unit_map[sampler_idx];
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    TRACE("Sampler %u.\n", sampler_idx);
+
 
     if (mapped_stage == WINED3D_UNMAPPED_STAGE)
     {
-        TRACE("No sampler mapped to stage %d. Returning.\n", sampler);
+        TRACE("No sampler mapped to stage %u. Returning.\n", sampler_idx);
         return;
     }
 
@@ -3631,25 +3699,41 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     }
     context_active_texture(context, gl_info, mapped_stage);
 
-    if (state->textures[sampler])
+    if (state->textures[sampler_idx])
     {
-        struct wined3d_texture *texture = state->textures[sampler];
-        BOOL srgb = state->sampler_states[sampler][WINED3D_SAMP_SRGB_TEXTURE];
+        struct wined3d_texture *texture = state->textures[sampler_idx];
+        BOOL srgb = state->sampler_states[sampler_idx][WINED3D_SAMP_SRGB_TEXTURE];
+        const DWORD *sampler_states = state->sampler_states[sampler_idx];
+        struct wined3d_sampler_desc desc;
+        struct gl_texture *gl_tex;
+        unsigned int base_level;
 
+        wined3d_sampler_desc_from_sampler_states(&desc, gl_info, sampler_states, texture);
         wined3d_texture_bind(texture, context, srgb);
-        wined3d_texture_apply_state_changes(texture, state->sampler_states[sampler], gl_info);
+        wined3d_texture_apply_sampler_desc(texture, &desc, gl_info);
 
-        if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+            base_level = 0;
+        else if (desc.mip_filter == WINED3D_TEXF_NONE)
+            base_level = texture->lod;
+        else
+            base_level = min(max(sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL],
+                    texture->lod), texture->level_count - 1);
+
+        gl_tex = wined3d_texture_get_gl_texture(texture, texture->flags & WINED3D_TEXTURE_IS_SRGB);
+        if (base_level != gl_tex->base_level)
         {
-            tmpvalue.d = state->sampler_states[sampler][WINED3D_SAMP_MIPMAP_LOD_BIAS];
-            gl_info->gl_ops.gl.p_glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
-                      GL_TEXTURE_LOD_BIAS_EXT, tmpvalue.f);
-            checkGLcall("glTexEnvf(GL_TEXTURE_LOD_BIAS_EXT, ...)");
+            /* Note that WINED3D_SAMP_MAX_MIP_LEVEL specifies the largest mipmap
+             * (default 0), while GL_TEXTURE_MAX_LEVEL specifies the smallest
+             * mimap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
+             * corresponds to GL_TEXTURE_BASE_LEVEL. */
+            gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
+            gl_tex->base_level = base_level;
         }
 
-        if (!use_ps(state) && sampler < context->lowest_disabled_stage)
+        if (!use_ps(state) && sampler_idx < context->lowest_disabled_stage)
         {
-            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)
+            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler_idx)
             {
                 /* If color keying is enabled update the alpha test, it
                  * depends on the existence of a color key in stage 0. */
@@ -3663,10 +3747,10 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     }
     else
     {
-        if (sampler < context->lowest_disabled_stage)
+        if (sampler_idx < context->lowest_disabled_stage)
         {
             /* TODO: What should I do with pixel shaders here ??? */
-            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)
+            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler_idx)
             {
                 /* If color keying is enabled update the alpha test, it
                  * depends on the existence of a color key in stage 0. */

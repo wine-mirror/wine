@@ -85,17 +85,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     if (surface_flags & WINED3D_SURFACE_PIN_SYSMEM)
         texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
 
-    if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        texture->min_mip_lookup = minMipLookup;
-        texture->mag_lookup = magLookup;
-    }
-    else
-    {
-        texture->min_mip_lookup = minMipLookup_noFilter;
-        texture->mag_lookup = magLookup_noFilter;
-    }
-
     return WINED3D_OK;
 }
 
@@ -301,187 +290,106 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
     wined3d_texture_bind(texture, context, srgb);
 }
 
-/* Context activation is done by the caller. */
-static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
-        enum wined3d_texture_address d3d_wrap, GLenum param, BOOL cond_np2)
-{
-    GLint gl_wrap;
-
-    if (d3d_wrap < WINED3D_TADDRESS_WRAP || d3d_wrap > WINED3D_TADDRESS_MIRROR_ONCE)
-    {
-        FIXME("Unrecognized or unsupported texture address mode %#x.\n", d3d_wrap);
-        return;
-    }
-
-    /* Cubemaps are always set to clamp, regardless of the sampler state. */
-    if (target == GL_TEXTURE_CUBE_MAP_ARB
-            || (cond_np2 && d3d_wrap == WINED3D_TADDRESS_WRAP))
-        gl_wrap = GL_CLAMP_TO_EDGE;
-    else
-        gl_wrap = gl_info->wrap_lookup[d3d_wrap - WINED3D_TADDRESS_WRAP];
-
-    TRACE("Setting param %#x to %#x for target %#x.\n", param, gl_wrap, target);
-    gl_info->gl_ops.gl.p_glTexParameteri(target, param, gl_wrap);
-    checkGLcall("glTexParameteri(target, param, gl_wrap)");
-}
-
 /* Context activation is done by the caller (state handler). */
-void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
-        const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1],
-        const struct wined3d_gl_info *gl_info)
+/* This function relies on the correct texture being bound and loaded. */
+void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
+        const struct wined3d_sampler_desc *sampler_desc, const struct wined3d_gl_info *gl_info)
 {
-    BOOL cond_np2 = texture->flags & WINED3D_TEXTURE_COND_NP2;
     GLenum target = texture->target;
     struct gl_texture *gl_tex;
-    float border_color[4];
     DWORD state;
-    DWORD aniso;
 
-    TRACE("texture %p, sampler_states %p.\n", texture, sampler_states);
+    TRACE("texture %p, sampler_desc %p, gl_info %p.\n", texture, sampler_desc, gl_info);
 
     gl_tex = wined3d_texture_get_gl_texture(texture, texture->flags & WINED3D_TEXTURE_IS_SRGB);
 
-    /* This function relies on the correct texture being bound and loaded. */
-
-    if (sampler_states[WINED3D_SAMP_ADDRESS_U] != gl_tex->sampler_desc.address_u)
+    state = sampler_desc->address_u;
+    if (state != gl_tex->sampler_desc.address_u)
     {
-        state = sampler_states[WINED3D_SAMP_ADDRESS_U];
-        apply_wrap(gl_info, target, state, GL_TEXTURE_WRAP_S, cond_np2);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S,
+                gl_info->wrap_lookup[state - WINED3D_TADDRESS_WRAP]);
         gl_tex->sampler_desc.address_u = state;
     }
 
-    if (sampler_states[WINED3D_SAMP_ADDRESS_V] != gl_tex->sampler_desc.address_v)
+    state = sampler_desc->address_v;
+    if (state != gl_tex->sampler_desc.address_v)
     {
-        state = sampler_states[WINED3D_SAMP_ADDRESS_V];
-        apply_wrap(gl_info, target, state, GL_TEXTURE_WRAP_T, cond_np2);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T,
+                gl_info->wrap_lookup[state - WINED3D_TADDRESS_WRAP]);
         gl_tex->sampler_desc.address_v = state;
     }
 
-    if (sampler_states[WINED3D_SAMP_ADDRESS_W] != gl_tex->sampler_desc.address_w)
+    state = sampler_desc->address_w;
+    if (state != gl_tex->sampler_desc.address_w)
     {
-        state = sampler_states[WINED3D_SAMP_ADDRESS_W];
-        apply_wrap(gl_info, target, state, GL_TEXTURE_WRAP_R, cond_np2);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R,
+                gl_info->wrap_lookup[state - WINED3D_TADDRESS_WRAP]);
         gl_tex->sampler_desc.address_w = state;
     }
 
-    D3DCOLORTOGLFLOAT4(sampler_states[WINED3D_SAMP_BORDER_COLOR], border_color);
-    if (memcmp(gl_tex->sampler_desc.border_color, border_color, sizeof(gl_tex->sampler_desc.border_color)))
+    if (memcmp(gl_tex->sampler_desc.border_color, sampler_desc->border_color,
+            sizeof(gl_tex->sampler_desc.border_color)))
     {
-        TRACE("Setting border color for %#x to {%.8e, %.8e, %.8e, %.8e}.\n",
-                target, border_color[0], border_color[1], border_color[2], border_color[3]);
-        gl_info->gl_ops.gl.p_glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, &border_color[0]);
-        checkGLcall("glTexParameterfv(..., GL_TEXTURE_BORDER_COLOR, ...)");
-        memcpy(gl_tex->sampler_desc.border_color, border_color, sizeof(gl_tex->sampler_desc.border_color));
+        gl_info->gl_ops.gl.p_glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, &sampler_desc->border_color[0]);
+        memcpy(gl_tex->sampler_desc.border_color, sampler_desc->border_color,
+                sizeof(gl_tex->sampler_desc.border_color));
     }
 
-    if (sampler_states[WINED3D_SAMP_MAG_FILTER] != gl_tex->sampler_desc.mag_filter)
+    state = sampler_desc->mag_filter;
+    if (state != gl_tex->sampler_desc.mag_filter)
     {
-        GLint gl_value;
-
-        state = sampler_states[WINED3D_SAMP_MAG_FILTER];
-        if (state > WINED3D_TEXF_ANISOTROPIC)
-            FIXME("Unrecognized or unsupported MAGFILTER* value %d.\n", state);
-
-        gl_value = wined3d_gl_mag_filter(texture->mag_lookup,
-                min(max(state, WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR));
-        TRACE("ValueMAG=%#x setting MAGFILTER to %#x.\n", state, gl_value);
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, gl_value);
-
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, wined3d_gl_mag_filter(state));
         gl_tex->sampler_desc.mag_filter = state;
     }
 
-    if (sampler_states[WINED3D_SAMP_MIN_FILTER] != gl_tex->sampler_desc.min_filter
-            || sampler_states[WINED3D_SAMP_MIP_FILTER] != gl_tex->sampler_desc.mip_filter
-            || sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL] != gl_tex->base_level)
+    if (sampler_desc->min_filter != gl_tex->sampler_desc.min_filter
+            || sampler_desc->mip_filter != gl_tex->sampler_desc.mip_filter)
     {
-        GLint gl_value;
-
-        gl_tex->sampler_desc.mip_filter = sampler_states[WINED3D_SAMP_MIP_FILTER];
-        gl_tex->sampler_desc.min_filter = sampler_states[WINED3D_SAMP_MIN_FILTER];
-        gl_tex->base_level = sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL];
-
-        if (gl_tex->sampler_desc.min_filter > WINED3D_TEXF_ANISOTROPIC
-                || gl_tex->sampler_desc.mip_filter > WINED3D_TEXF_ANISOTROPIC)
-            FIXME("Unrecognized or unsupported MIN_FILTER value %#x MIP_FILTER value %#x.\n",
-                    gl_tex->sampler_desc.min_filter, gl_tex->sampler_desc.mip_filter);
-
-        gl_value = wined3d_gl_min_mip_filter(texture->min_mip_lookup,
-                min(max(sampler_states[WINED3D_SAMP_MIN_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR),
-                min(max(sampler_states[WINED3D_SAMP_MIP_FILTER], WINED3D_TEXF_NONE), WINED3D_TEXF_LINEAR));
-
-        TRACE("ValueMIN=%#x, ValueMIP=%#x, setting MINFILTER to %#x.\n",
-              sampler_states[WINED3D_SAMP_MIN_FILTER],
-              sampler_states[WINED3D_SAMP_MIP_FILTER], gl_value);
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, gl_value);
-        checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
-
-        if (!cond_np2)
-        {
-            if (gl_tex->sampler_desc.mip_filter == WINED3D_TEXF_NONE)
-                gl_value = texture->lod;
-            else if (gl_tex->base_level >= texture->level_count)
-                gl_value = texture->level_count - 1;
-            else if (gl_tex->base_level < texture->lod)
-                /* texture->lod is already clamped in the setter. */
-                gl_value = texture->lod;
-            else
-                gl_value = gl_tex->base_level;
-
-            /* Note that WINED3D_SAMP_MAX_MIP_LEVEL specifies the largest mipmap
-             * (default 0), while GL_TEXTURE_MAX_LEVEL specifies the smallest
-             * mimap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
-             * corresponds to GL_TEXTURE_BASE_LEVEL. */
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, gl_value);
-        }
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
+                wined3d_gl_min_mip_filter(sampler_desc->min_filter, sampler_desc->mip_filter));
+        gl_tex->sampler_desc.min_filter = sampler_desc->min_filter;
+        gl_tex->sampler_desc.mip_filter = sampler_desc->mip_filter;
     }
 
-    if ((gl_tex->sampler_desc.mag_filter != WINED3D_TEXF_ANISOTROPIC
-            && gl_tex->sampler_desc.min_filter != WINED3D_TEXF_ANISOTROPIC
-            && gl_tex->sampler_desc.mip_filter != WINED3D_TEXF_ANISOTROPIC)
-            || cond_np2)
-        aniso = 1;
-    else
-        aniso = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
-
-    if (gl_tex->sampler_desc.max_anisotropy != aniso)
+    state = sampler_desc->max_anisotropy;
+    if (state != gl_tex->sampler_desc.max_anisotropy)
     {
         if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
-        {
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-            checkGLcall("glTexParameteri(GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso)");
-        }
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, state);
         else
-        {
             WARN("Anisotropic filtering not supported.\n");
-        }
-        gl_tex->sampler_desc.max_anisotropy = aniso;
+        gl_tex->sampler_desc.max_anisotropy = state;
     }
 
     /* These should always be the same unless EXT_texture_sRGB_decode is supported. */
-    if (!sampler_states[WINED3D_SAMP_SRGB_TEXTURE] != !gl_tex->sampler_desc.srgb_decode)
+    if (!sampler_desc->srgb_decode != !gl_tex->sampler_desc.srgb_decode)
     {
         gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
-                sampler_states[WINED3D_SAMP_SRGB_TEXTURE] ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
-        checkGLcall("glTexParameteri(GL_TEXTURE_SRGB_DECODE_EXT)");
-        gl_tex->sampler_desc.srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
+                sampler_desc->srgb_decode ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
+        gl_tex->sampler_desc.srgb_decode = sampler_desc->srgb_decode;
     }
 
-    if (!(texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
-            != !gl_tex->sampler_desc.compare)
+    if (!sampler_desc->compare != !gl_tex->sampler_desc.compare)
     {
-        if (texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
+        if (sampler_desc->compare)
         {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB)");
-            gl_tex->sampler_desc.compare = TRUE;
         }
         else
         {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE)");
-            gl_tex->sampler_desc.compare = FALSE;
         }
+        gl_tex->sampler_desc.compare = sampler_desc->compare;
+    }
+
+    checkGLcall("Texture parameter application");
+
+    if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
+    {
+        gl_info->gl_ops.gl.p_glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
+                GL_TEXTURE_LOD_BIAS_EXT, sampler_desc->lod_bias);
+        checkGLcall("glTexEnvf(GL_TEXTURE_LOD_BIAS_EXT, ...)");
     }
 }
 
@@ -1238,7 +1146,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         texture->pow2_matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_2D;
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
-        texture->min_mip_lookup = minMipLookup_noFilter;
     }
     else if (gl_info->supported[ARB_TEXTURE_RECTANGLE]
             && (desc->width != pow2_width || desc->height != pow2_height))
@@ -1250,11 +1157,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         texture->target = GL_TEXTURE_RECTANGLE_ARB;
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
         texture->flags &= ~(WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS);
-
-        if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
-            texture->min_mip_lookup = minMipLookup_noMip;
-        else
-            texture->min_mip_lookup = minMipLookup_noFilter;
     }
     else
     {

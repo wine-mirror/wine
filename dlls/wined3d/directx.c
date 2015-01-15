@@ -247,32 +247,10 @@ const struct min_lookup minMipLookup[] =
     {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* LINEAR */
 };
 
-const struct min_lookup minMipLookup_noFilter[] =
-{
-    /* NONE         POINT                       LINEAR */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* POINT */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* LINEAR */
-};
-
-const struct min_lookup minMipLookup_noMip[] =
-{
-    /* NONE         POINT                       LINEAR */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* POINT */
-    {{GL_LINEAR,    GL_LINEAR,                  GL_LINEAR }},               /* LINEAR */
-};
-
 const GLenum magLookup[] =
 {
     /* NONE     POINT       LINEAR */
     GL_NEAREST, GL_NEAREST, GL_LINEAR,
-};
-
-const GLenum magLookup_noFilter[] =
-{
-    /* NONE     POINT       LINEAR */
-    GL_NEAREST, GL_NEAREST, GL_NEAREST,
 };
 
 struct wined3d_caps_gl_ctx

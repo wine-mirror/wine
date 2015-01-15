@@ -186,20 +186,19 @@ struct min_lookup
 };
 
 extern const struct min_lookup minMipLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const struct min_lookup minMipLookup_noFilter[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const struct min_lookup minMipLookup_noMip[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const GLenum magLookup_noFilter[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 
-static inline GLenum wined3d_gl_mag_filter(const GLenum mag_lookup[], enum wined3d_texture_filter_type mag_filter)
+GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f) DECLSPEC_HIDDEN;
+
+static inline GLenum wined3d_gl_mag_filter(enum wined3d_texture_filter_type mag_filter)
 {
-    return mag_lookup[mag_filter];
+    return magLookup[mag_filter];
 }
 
-static inline GLenum wined3d_gl_min_mip_filter(const struct min_lookup min_mip_lookup[],
-        enum wined3d_texture_filter_type min_filter, enum wined3d_texture_filter_type mip_filter)
+static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type min_filter,
+        enum wined3d_texture_filter_type mip_filter)
 {
-    return min_mip_lookup[min_filter].mip[mip_filter];
+    return minMipLookup[min_filter].mip[mip_filter];
 }
 
 /* float_16_to_32() and float_32_to_16() (see implementation in
@@ -2175,8 +2174,6 @@ struct wined3d_texture
     enum wined3d_texture_filter_type filter_type;
     DWORD sampler;
     DWORD flags;
-    const struct min_lookup *min_mip_lookup;
-    const GLenum *mag_lookup;
     GLenum target;
 
     /* Color keys for DDraw */
@@ -2198,9 +2195,8 @@ static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_t
     return srgb ? &texture->texture_srgb : &texture->texture_rgb;
 }
 
-void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
-        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
+        const struct wined3d_sampler_desc *sampler_desc, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void wined3d_texture_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
