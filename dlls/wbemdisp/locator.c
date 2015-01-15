@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
-static HRESULT EnumVARIANT_create( ISWbemObjectSet *, IEnumVARIANT ** );
+static HRESULT EnumVARIANT_create( IEnumWbemClassObject *, IEnumVARIANT ** );
 
 enum type_id
 {
@@ -489,10 +489,17 @@ static HRESULT WINAPI objectset_get__NewEnum(
     IUnknown **pUnk )
 {
     struct objectset *objectset = impl_from_ISWbemObjectSet( iface );
+    IEnumWbemClassObject *objectenum;
+    HRESULT hr;
 
     TRACE( "%p, %p\n", objectset, pUnk );
 
-    return EnumVARIANT_create( iface, (IEnumVARIANT **)pUnk );
+    hr = IEnumWbemClassObject_Clone( objectset->objectenum, &objectenum );
+    if (FAILED( hr )) return hr;
+
+    hr = EnumVARIANT_create( objectenum, (IEnumVARIANT **)pUnk );
+    IEnumWbemClassObject_Release( objectenum );
+    return hr;
 }
 
 static HRESULT WINAPI objectset_Item(
@@ -581,7 +588,7 @@ struct enumvar
 {
     IEnumVARIANT IEnumVARIANT_iface;
     LONG refs;
-    ISWbemObjectSet *objectset;
+    IEnumWbemClassObject *objectenum;
 };
 
 static inline struct enumvar *impl_from_IEnumVARIANT(
@@ -605,7 +612,7 @@ static ULONG WINAPI enumvar_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", enumvar );
-        ISWbemObjectSet_Release( enumvar->objectset );
+        IEnumWbemClassObject_Release( enumvar->objectenum );
         heap_free( enumvar );
     }
     return refs;
@@ -637,13 +644,12 @@ static HRESULT WINAPI enumvar_QueryInterface(
 static HRESULT WINAPI enumvar_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched )
 {
     struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
-    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
     IWbemClassObject *obj;
     ULONG count = 0;
 
     TRACE( "%p, %u, %p, %p\n", iface, celt, var, fetched );
 
-    if (celt) IEnumWbemClassObject_Next( objectset->objectenum, WBEM_INFINITE, 1, &obj, &count );
+    if (celt) IEnumWbemClassObject_Next( enumvar->objectenum, WBEM_INFINITE, 1, &obj, &count );
     if (count)
     {
         ISWbemObject *sobj;
@@ -663,21 +669,19 @@ static HRESULT WINAPI enumvar_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *va
 static HRESULT WINAPI enumvar_Skip( IEnumVARIANT *iface, ULONG celt )
 {
     struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
-    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
 
     TRACE( "%p, %u\n", iface, celt );
 
-    return IEnumWbemClassObject_Skip( objectset->objectenum, WBEM_INFINITE, celt );
+    return IEnumWbemClassObject_Skip( enumvar->objectenum, WBEM_INFINITE, celt );
 }
 
 static HRESULT WINAPI enumvar_Reset( IEnumVARIANT *iface )
 {
     struct enumvar *enumvar = impl_from_IEnumVARIANT( iface );
-    struct objectset *objectset = impl_from_ISWbemObjectSet( enumvar->objectset );
 
     TRACE( "%p\n", iface );
 
-    return IEnumWbemClassObject_Reset( objectset->objectenum );
+    return IEnumWbemClassObject_Reset( enumvar->objectenum );
 }
 
 static HRESULT WINAPI enumvar_Clone( IEnumVARIANT *iface, IEnumVARIANT **penum )
@@ -697,15 +701,15 @@ static const struct IEnumVARIANTVtbl enumvar_vtbl =
     enumvar_Clone
 };
 
-static HRESULT EnumVARIANT_create( ISWbemObjectSet *objectset, IEnumVARIANT **obj )
+static HRESULT EnumVARIANT_create( IEnumWbemClassObject *objectenum, IEnumVARIANT **obj )
 {
     struct enumvar *enumvar;
 
     if (!(enumvar = heap_alloc( sizeof(*enumvar) ))) return E_OUTOFMEMORY;
     enumvar->IEnumVARIANT_iface.lpVtbl = &enumvar_vtbl;
     enumvar->refs = 1;
-    enumvar->objectset = objectset;
-    ISWbemObjectSet_AddRef( enumvar->objectset );
+    enumvar->objectenum = objectenum;
+    IEnumWbemClassObject_AddRef( enumvar->objectenum );
 
     *obj = &enumvar->IEnumVARIANT_iface;
     TRACE( "returning iface %p\n", *obj );
