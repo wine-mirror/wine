@@ -286,7 +286,7 @@ ULONG WINAPI RtlRemoveVectoredContinueHandler( PVOID handler )
 /*******************************************************************
  *         RtlAddVectoredExceptionHandler   (NTDLL.@)
  */
-PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
+PVOID WINAPI DECLSPEC_HOTPATCH RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )
 {
     return add_vectored_handler( &vectored_exception_handlers, first, func );
 }
