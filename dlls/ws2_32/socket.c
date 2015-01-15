@@ -2985,7 +2985,10 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
                 /* The buffer was too small */
                 SetLastError(WSAEFAULT);
             else
+            {
                 res = 0;
+                TRACE("=> %s\n", debugstr_sockaddr(name));
+            }
         }
         else
             SetLastError(wsaErrno());
