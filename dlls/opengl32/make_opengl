@@ -250,20 +250,25 @@ sub GenerateThunk($$$$)
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
         my $type = $func_ref->[1]->[$i]->[0];
         my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
-        $ret .= ConvertType($type) . " $name";
+        my ($base_type, $type_specifier, $name_specifier) = ($type, $type, $name);
+        if ($type =~ /(.*) (.*)/) {
+            $base_type = $2;
+        } elsif ($type =~ /(.*)(\[.*)/) {
+            $base_type = $1;
+            $type_specifier = $1;
+            $name_specifier = $name . $2
+        }
+        $ret .= ConvertType($type_specifier) . " $name_specifier";
         $call_arg .= $name;
-        if ($type =~ /\*/) {
+        if ($type =~ /\*/ || $type =~ /\[/) {
             $trace_arg .= "%p";
             $trace_call_arg .= $name;
-        } elsif (defined $debug_conv{$type}) {
-            if ($debug_conv{$type} =~ /(.*),(.*)/)
-            {
+        } elsif (defined $debug_conv{$base_type}) {
+            if ($debug_conv{$base_type} =~ /(.*),(.*)/) {
                 $trace_arg .= $1;
                 $trace_call_arg .= sprintf $2, $name;
-            }
-            else
-            {
-                $trace_arg .= $debug_conv{$type};
+            } else {
+                $trace_arg .= $debug_conv{$base_type};
                 $trace_call_arg .= $name;
             }
         }
@@ -328,7 +333,14 @@ sub generate_null_func($$)
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
         my $type = $func_ref->[1]->[$i]->[0];
         my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
-        $ret .= ConvertType($type) . " $name";
+        my $base_type;
+        if ($type =~ /(.*)(\[.*)/) {
+            $base_type = $1;
+            $name .= $2;
+        } else {
+            $base_type = $type;
+        }
+        $ret .= ConvertType($base_type) . " $name";
         $ret .= "," if ($i+1 < @{$func_ref->[1]});
         $ret .= " ";
     }
@@ -619,6 +631,8 @@ sub parse_variable($)
                 my @n = @{$v};
                 $pnamebefore = $n[0];
                 $pnameafter = $n[1] if (@n > 0);
+            } elsif ($v eq 'const ') {
+                $pnamebefore = $v;
             } else {
                 $pnameafter = $v;
             }
