@@ -248,7 +248,7 @@ static void test_COM(void)
     ok(hr == S_OK, "QueryInterface for IID_IDirectMusic failed: %08x\n", hr);
     refcount = IDirectMusic_AddRef(dm);
     ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
-    refcount = IDirectMusic_Release(dm);
+    IDirectMusic_Release(dm);
 
     hr = IDirectMusic8_QueryInterface(dm8, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
