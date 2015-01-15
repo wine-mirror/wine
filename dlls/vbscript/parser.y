@@ -246,10 +246,10 @@ Step_opt
 
 IfStatement
     : tIF Expression tTHEN tNL StatementsNl_opt ElseIfs_opt Else_opt tEND tIF
-                                            { $$ = new_if_statement(ctx, $2, $5, $6, $7); CHECK_ERROR; }
-    | tIF Expression tTHEN Statement        { $$ = new_if_statement(ctx, $2, $4, NULL, NULL); CHECK_ERROR; }
+                                               { $$ = new_if_statement(ctx, $2, $5, $6, $7); CHECK_ERROR; }
+    | tIF Expression tTHEN Statement EndIf_opt { $$ = new_if_statement(ctx, $2, $4, NULL, NULL); CHECK_ERROR; }
     | tIF Expression tTHEN Statement tELSE Statement EndIf_opt
-                                            { $$ = new_if_statement(ctx, $2, $4, NULL, $6); CHECK_ERROR; }
+                                               { $$ = new_if_statement(ctx, $2, $4, NULL, $6); CHECK_ERROR; }
 
 EndIf_opt
     : /* empty */
