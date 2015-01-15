@@ -25,6 +25,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winuser.h>
+#include <exdisp.h>
 
 #include <atlbase.h>
 #include <mshtml.h>
@@ -757,8 +758,104 @@ static void test_ax_win(void)
     todo_wine ok(wndproc[0] != wndproc[1], "expected different proc!\n");
 }
 
+static ATOM register_class(void)
+{
+    WNDCLASSA wndclassA;
+
+    wndclassA.style = 0;
+    wndclassA.lpfnWndProc = DefWindowProcA;
+    wndclassA.cbClsExtra = 0;
+    wndclassA.cbWndExtra = 0;
+    wndclassA.hInstance = GetModuleHandleA(NULL);
+    wndclassA.hIcon = NULL;
+    wndclassA.hCursor = LoadCursorA(NULL, (LPSTR)IDC_ARROW);
+    wndclassA.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    wndclassA.lpszMenuName = NULL;
+    wndclassA.lpszClassName = "WineAtlTestClass";
+
+    return RegisterClassA(&wndclassA);
+}
+
+static HWND create_container_window(void)
+{
+    return CreateWindowA("WineAtlTestClass", "Wine ATL Test Window", 0,
+                              CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                              CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+}
+
+static void test_AtlAxAttachControl(void)
+{
+    HWND hwnd;
+    HRESULT hr;
+    IUnknown *control, *container;
+    LONG val;
+
+    hr = AtlAxAttachControl(NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    container = (IUnknown *)0xdeadbeef;
+    hr = AtlAxAttachControl(NULL, NULL, &container);
+    ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(container == (IUnknown *)0xdeadbeef,
+       "Expected the output container pointer to be untouched, got %p\n", container);
+
+    hwnd = create_container_window();
+    hr = AtlAxAttachControl(NULL, hwnd, NULL);
+    ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
+    DestroyWindow(hwnd);
+
+    hwnd = create_container_window();
+    container = (IUnknown *)0xdeadbeef;
+    hr = AtlAxAttachControl(NULL, hwnd, &container);
+    ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(container == (IUnknown *)0xdeadbeef, "returned %p\n", container);
+    DestroyWindow(hwnd);
+
+    hr = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IOleObject, (void **)&control);
+    ok(hr == S_OK, "Expected CoCreateInstance to return S_OK, got 0x%08x\n", hr);
+
+    if (FAILED(hr))
+    {
+        skip("Couldn't obtain a test IOleObject instance\n");
+        return;
+    }
+
+    hr = AtlAxAttachControl(control, NULL, NULL);
+    ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
+
+    container = NULL;
+    hr = AtlAxAttachControl(control, NULL, &container);
+    ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
+    ok(container != NULL, "got %p\n", container);
+    IUnknown_Release(container);
+
+    hwnd = create_container_window();
+    SetWindowLongW(hwnd, GWLP_USERDATA, 0xdeadbeef);
+    hr = AtlAxAttachControl(control, hwnd, NULL);
+    ok(hr == S_OK, "Expected AtlAxAttachControl to return S_OK, got 0x%08x\n", hr);
+    val = GetWindowLongW(hwnd, GWLP_USERDATA);
+    ok(val == 0xdeadbeef, "returned %08x\n", val);
+    DestroyWindow(hwnd);
+
+    hwnd = create_container_window();
+    SetWindowLongW(hwnd, GWLP_USERDATA, 0xdeadbeef);
+    container = NULL;
+    hr = AtlAxAttachControl(control, hwnd, &container);
+    ok(hr == S_OK, "Expected AtlAxAttachControl to return S_OK, got 0x%08x\n", hr);
+    ok(container != NULL, "Expected not NULL!\n");
+    val = GetWindowLongW(hwnd, GWLP_USERDATA);
+    todo_wine ok(val == 0xdeadbeef, "Expected unchanged, returned %08x\n", val);
+    DestroyWindow(hwnd);
+
+    IUnknown_Release(control);
+}
+
 START_TEST(atl)
 {
+    if (!register_class())
+        return;
+
     CoInitialize(NULL);
 
     test_winmodule();
@@ -767,6 +864,7 @@ START_TEST(atl)
     test_cp();
     test_source_iface();
     test_ax_win();
+    test_AtlAxAttachControl();
 
     CoUninitialize();
 }
