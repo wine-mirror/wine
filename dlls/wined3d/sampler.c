@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Henri Verbeet for CodeWeavers
+ * Copyright 2012, 2015 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,22 +52,25 @@ void * CDECL wined3d_sampler_get_parent(const struct wined3d_sampler *sampler)
     return sampler->parent;
 }
 
-static void wined3d_sampler_init(struct wined3d_sampler *sampler, void *parent)
+static void wined3d_sampler_init(struct wined3d_sampler *sampler,
+        const struct wined3d_sampler_desc *desc, void *parent)
 {
     sampler->refcount = 1;
     sampler->parent = parent;
+    sampler->desc = *desc;
 }
 
-HRESULT CDECL wined3d_sampler_create(void *parent, struct wined3d_sampler **sampler)
+HRESULT CDECL wined3d_sampler_create(const struct wined3d_sampler_desc *desc,
+        void *parent, struct wined3d_sampler **sampler)
 {
     struct wined3d_sampler *object;
 
-    TRACE("parent %p, sampler %p.\n", parent, sampler);
+    TRACE("desc %p, parent %p, sampler %p.\n", desc, parent, sampler);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_sampler_init(object, parent);
+    wined3d_sampler_init(object, desc, parent);
 
     TRACE("Created sampler %p.\n", object);
     *sampler = object;

@@ -24,6 +24,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+#define D3D10_FILTER_MIP_MASK       0x01
+#define D3D10_FILTER_MAG_MASK       0x04
+#define D3D10_FILTER_MIN_MASK       0x10
+#define D3D10_FILTER_ANISO_MASK     0x40
+#define D3D10_FILTER_COMPARE_MASK   0x80
+
 static inline struct d3d10_blend_state *impl_from_ID3D10BlendState(ID3D10BlendState *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d10_blend_state, ID3D10BlendState_iface);
@@ -590,16 +596,68 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
     d3d10_sampler_state_GetDesc,
 };
 
+static enum wined3d_texture_address wined3d_texture_address_from_d3d10core(enum D3D10_TEXTURE_ADDRESS_MODE t)
+{
+    return (enum wined3d_texture_address)t;
+}
+
+static enum wined3d_texture_filter_type wined3d_texture_filter_mip_from_d3d10core(enum D3D10_FILTER f)
+{
+    if (f & D3D10_FILTER_MIP_MASK)
+        return WINED3D_TEXF_LINEAR;
+    return WINED3D_TEXF_POINT;
+}
+
+static enum wined3d_texture_filter_type wined3d_texture_filter_mag_from_d3d10core(enum D3D10_FILTER f)
+{
+    if (f & D3D10_FILTER_MAG_MASK)
+        return WINED3D_TEXF_LINEAR;
+    return WINED3D_TEXF_POINT;
+}
+
+static enum wined3d_texture_filter_type wined3d_texture_filter_min_from_d3d10core(enum D3D10_FILTER f)
+{
+    if (f & D3D10_FILTER_MIN_MASK)
+        return WINED3D_TEXF_LINEAR;
+    return WINED3D_TEXF_POINT;
+}
+
+static BOOL wined3d_texture_compare_from_d3d10core(enum D3D10_FILTER f)
+{
+    return f & D3D10_FILTER_COMPARE_MASK;
+}
+
+static enum wined3d_cmp_func wined3d_cmp_func_from_d3d10core(D3D10_COMPARISON_FUNC f)
+{
+    return (enum wined3d_cmp_func)f;
+}
+
 HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10_device *device,
         const D3D10_SAMPLER_DESC *desc)
 {
+    struct wined3d_sampler_desc wined3d_desc;
     HRESULT hr;
 
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
     state->desc = *desc;
 
-    if (FAILED(hr = wined3d_sampler_create(state, &state->wined3d_sampler)))
+    wined3d_desc.address_u = wined3d_texture_address_from_d3d10core(desc->AddressU);
+    wined3d_desc.address_v = wined3d_texture_address_from_d3d10core(desc->AddressV);
+    wined3d_desc.address_w = wined3d_texture_address_from_d3d10core(desc->AddressW);
+    memcpy(wined3d_desc.border_color, desc->BorderColor, sizeof(wined3d_desc.border_color));
+    wined3d_desc.mag_filter = wined3d_texture_filter_mag_from_d3d10core(desc->Filter);
+    wined3d_desc.min_filter = wined3d_texture_filter_min_from_d3d10core(desc->Filter);
+    wined3d_desc.mip_filter = wined3d_texture_filter_mip_from_d3d10core(desc->Filter);
+    wined3d_desc.lod_bias = desc->MipLODBias;
+    wined3d_desc.min_lod = desc->MinLOD;
+    wined3d_desc.max_lod = desc->MaxLOD;
+    wined3d_desc.max_anisotropy = desc->Filter & D3D10_FILTER_ANISO_MASK ? desc->MaxAnisotropy : 1;
+    wined3d_desc.compare = wined3d_texture_compare_from_d3d10core(desc->Filter);
+    wined3d_desc.comparison_func = wined3d_cmp_func_from_d3d10core(desc->ComparisonFunc);
+    wined3d_desc.srgb_decode = FALSE;
+
+    if (FAILED(hr = wined3d_sampler_create(&wined3d_desc, state, &state->wined3d_sampler)))
     {
         WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
         return hr;

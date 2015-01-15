@@ -1976,6 +1976,24 @@ struct wined3d_rendertarget_view_desc
     } u;
 };
 
+struct wined3d_sampler_desc
+{
+    enum wined3d_texture_address address_u;
+    enum wined3d_texture_address address_v;
+    enum wined3d_texture_address address_w;
+    float border_color[4];
+    enum wined3d_texture_filter_type mag_filter;
+    enum wined3d_texture_filter_type min_filter;
+    enum wined3d_texture_filter_type mip_filter;
+    float lod_bias;
+    float min_lod;
+    float max_lod;
+    unsigned int max_anisotropy;
+    BOOL compare;
+    enum wined3d_cmp_func comparison_func;
+    BOOL srgb_decode;
+};
+
 struct wined3d_shader_signature_element
 {
     const char *semantic_name;
@@ -2434,7 +2452,8 @@ void * __cdecl wined3d_rendertarget_view_get_sub_resource_parent(const struct wi
 ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view);
 void __cdecl wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent);
 
-HRESULT __cdecl wined3d_sampler_create(void *parent, struct wined3d_sampler **sampler);
+HRESULT __cdecl wined3d_sampler_create(const struct wined3d_sampler_desc *desc,
+        void *parent, struct wined3d_sampler **sampler);
 ULONG __cdecl wined3d_sampler_decref(struct wined3d_sampler *sampler);
 void * __cdecl wined3d_sampler_get_parent(const struct wined3d_sampler *sampler);
 ULONG __cdecl wined3d_sampler_incref(struct wined3d_sampler *sampler);

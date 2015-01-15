@@ -2409,6 +2409,7 @@ struct wined3d_sampler
 {
     LONG refcount;
     void *parent;
+    struct wined3d_sampler_desc desc;
 };
 
 struct wined3d_vertex_declaration_element
