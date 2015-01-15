@@ -2127,26 +2127,11 @@ void wined3d_resource_update_draw_binding(struct wined3d_resource *resource) DEC
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 16
 
-enum wined3d_texture_state
-{
-    WINED3DTEXSTA_ADDRESSU       = 0,
-    WINED3DTEXSTA_ADDRESSV       = 1,
-    WINED3DTEXSTA_ADDRESSW       = 2,
-    WINED3DTEXSTA_BORDERCOLOR    = 3,
-    WINED3DTEXSTA_MAGFILTER      = 4,
-    WINED3DTEXSTA_MINFILTER      = 5,
-    WINED3DTEXSTA_MIPFILTER      = 6,
-    WINED3DTEXSTA_MAXMIPLEVEL    = 7,
-    WINED3DTEXSTA_MAXANISOTROPY  = 8,
-    WINED3DTEXSTA_SRGBTEXTURE    = 9,
-    WINED3DTEXSTA_SHADOW         = 10,
-    MAX_WINETEXTURESTATES        = 11,
-};
-
 struct gl_texture
 {
-    DWORD                   states[MAX_WINETEXTURESTATES];
-    GLuint                  name;
+    struct wined3d_sampler_desc sampler_desc;
+    unsigned int base_level;
+    GLuint name;
 };
 
 struct wined3d_texture_ops
