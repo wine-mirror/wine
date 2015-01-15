@@ -47,6 +47,7 @@ static void test_release_object(void)
     IDirectMusicLoader8* loader = NULL;
 
     hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8, (void**)&loader);
+    ok(hr == S_OK, "Couldn't create Loader %08x\n", hr);
 
     hr = IDirectMusicLoader_ReleaseObject(loader, NULL);
     ok(hr == E_POINTER, "Expected E_POINTER, received %#x\n", hr);
