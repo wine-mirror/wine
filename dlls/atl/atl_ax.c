@@ -55,6 +55,8 @@ typedef struct IOCS {
     BOOL fActive, fInPlace, fWindowless;
 } IOCS;
 
+static const WCHAR wine_atl_iocsW[] = {'_','_','W','I','N','E','_','A','T','L','_','I','O','C','S','\0'};
+
 /**********************************************************************
  * AtlAxWin class window procedure
  */
@@ -150,7 +152,7 @@ static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
     if ( This->hWnd )
     {
         SetWindowLongPtrW( This->hWnd, GWLP_WNDPROC, (ULONG_PTR) This->OrigWndProc );
-        SetWindowLongPtrW( This->hWnd, GWLP_USERDATA, 0 );
+        RemovePropW( This->hWnd, wine_atl_iocsW);
         This->hWnd = NULL;
     }
     if ( This->control )
@@ -906,7 +908,7 @@ static LRESULT IOCS_OnWndProc( IOCS *This, HWND hWnd, UINT uMsg, WPARAM wParam, 
 
 static LRESULT CALLBACK AtlHost_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
 {
-    IOCS *This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    IOCS *This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
     return IOCS_OnWndProc( This, hWnd, wMsg, wParam, lParam );
 }
 
@@ -915,7 +917,7 @@ static HRESULT IOCS_Attach( IOCS *This, HWND hWnd, IUnknown *pUnkControl ) /* su
     This->hWnd = hWnd;
     IUnknown_QueryInterface( pUnkControl, &IID_IOleObject, (void**)&This->control );
     IOleObject_SetClientSite( This->control, &This->IOleClientSite_iface );
-    SetWindowLongPtrW( hWnd, GWLP_USERDATA, (ULONG_PTR) This );
+    SetPropW( hWnd, wine_atl_iocsW, This );
     This->OrigWndProc = (WNDPROC)SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (ULONG_PTR) AtlHost_wndproc );
 
     return S_OK;
@@ -1328,7 +1330,7 @@ HRESULT WINAPI AtlAxGetHost(HWND hWnd, IUnknown **host)
 
     *host = NULL;
 
-    This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
     if ( !This )
     {
         WARN("No container attached to %p\n", hWnd );
@@ -1350,7 +1352,7 @@ HRESULT WINAPI AtlAxGetControl(HWND hWnd, IUnknown **pUnk)
 
     *pUnk = NULL;
 
-    This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
     if ( !This || !This->control )
     {
         WARN("No control attached to %p\n", hWnd );
