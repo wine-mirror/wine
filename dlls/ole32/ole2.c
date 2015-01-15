@@ -231,7 +231,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
 /******************************************************************************
  *		OleUninitialize	[OLE32.@]
  */
-void WINAPI OleUninitialize(void)
+void WINAPI DECLSPEC_HOTPATCH OleUninitialize(void)
 {
   TRACE("()\n");
 

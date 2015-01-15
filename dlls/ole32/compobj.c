@@ -1948,7 +1948,7 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
  * SEE ALSO
  *   CoInitializeEx
  */
-void WINAPI CoUninitialize(void)
+void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 {
   struct oletls * info = COM_CurrentInfo();
   LONG lCOMRefCnt;
