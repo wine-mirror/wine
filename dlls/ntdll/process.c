@@ -403,10 +403,13 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         break;
 
     case ProcessWow64Information:
-        len = sizeof(DWORD);
-        if (ProcessInformationLength == len)
+        len = sizeof(ULONG_PTR);
+        if (ProcessInformationLength != len) ret = STATUS_INFO_LENGTH_MISMATCH;
+        else if (!ProcessInformation) ret = STATUS_ACCESS_VIOLATION;
+        else if(!ProcessHandle) ret = STATUS_INVALID_HANDLE;
+        else
         {
-            DWORD val = 0;
+            ULONG_PTR val = 0;
 
             if (ProcessHandle == GetCurrentProcess()) val = is_wow64;
             else if (server_cpus & (1 << CPU_x86_64))
@@ -418,9 +421,8 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 }
                 SERVER_END_REQ;
             }
-            *(DWORD *)ProcessInformation = val;
+            *(ULONG_PTR *)ProcessInformation = val;
         }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case ProcessImageFileName:
         /* FIXME: this will return a DOS path. Windows returns an NT path. Changing this would require also changing kernel32.QueryFullProcessImageName.
