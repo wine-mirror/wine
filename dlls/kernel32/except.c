@@ -461,7 +461,7 @@ LONG WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 /***********************************************************************
  *            SetUnhandledExceptionFilter   (KERNEL32.@)
  */
-LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI DECLSPEC_HOTPATCH SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
     LPTOP_LEVEL_EXCEPTION_FILTER old = top_filter;
