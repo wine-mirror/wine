@@ -1920,6 +1920,8 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
             context_invalidate_state(context, STATE_SAMPLER(sampler));
         }
     }
+    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+        GL_EXTCALL(glBindSampler(0, 0));
     context_active_texture(context, gl_info, 0);
 
     sampler = context->rev_tex_unit_map[0];

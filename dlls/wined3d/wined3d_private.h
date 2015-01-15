@@ -1994,6 +1994,7 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
+    struct wine_rb_tree samplers;
 
     /* Render Target Support */
     struct wined3d_fb_state fb;
@@ -2388,9 +2389,12 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 
 struct wined3d_sampler
 {
+    struct wine_rb_entry entry;
     LONG refcount;
+    struct wined3d_device *device;
     void *parent;
     struct wined3d_sampler_desc desc;
+    GLuint name;
 };
 
 struct wined3d_vertex_declaration_element

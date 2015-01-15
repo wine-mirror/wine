@@ -194,7 +194,7 @@
 @ cdecl wined3d_rendertarget_view_incref(ptr)
 @ cdecl wined3d_rendertarget_view_set_parent(ptr ptr)
 
-@ cdecl wined3d_sampler_create(ptr ptr ptr)
+@ cdecl wined3d_sampler_create(ptr ptr ptr ptr)
 @ cdecl wined3d_sampler_decref(ptr)
 @ cdecl wined3d_sampler_get_parent(ptr)
 @ cdecl wined3d_sampler_incref(ptr)

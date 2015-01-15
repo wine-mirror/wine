@@ -135,6 +135,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS          },
     {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE              },
     {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX          },
+    {"GL_ARB_sampler_objects",              ARB_SAMPLER_OBJECTS           },
     {"GL_ARB_shader_bit_encoding",          ARB_SHADER_BIT_ENCODING       },
     {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS            },
     {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD        },
@@ -2517,6 +2518,21 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glPointParameterfvARB)
     /* GL_ARB_provoking_vertex */
     USE_GL_FUNC(glProvokingVertex)
+    /* GL_ARB_sampler_objects */
+    USE_GL_FUNC(glGenSamplers)
+    USE_GL_FUNC(glDeleteSamplers)
+    USE_GL_FUNC(glIsSampler)
+    USE_GL_FUNC(glBindSampler)
+    USE_GL_FUNC(glSamplerParameteri)
+    USE_GL_FUNC(glSamplerParameterf)
+    USE_GL_FUNC(glSamplerParameteriv)
+    USE_GL_FUNC(glSamplerParameterfv)
+    USE_GL_FUNC(glSamplerParameterIiv)
+    USE_GL_FUNC(glSamplerParameterIuiv)
+    USE_GL_FUNC(glGetSamplerParameteriv)
+    USE_GL_FUNC(glGetSamplerParameterfv)
+    USE_GL_FUNC(glGetSamplerParameterIiv)
+    USE_GL_FUNC(glGetSamplerParameterIuiv)
     /* GL_ARB_shader_objects */
     USE_GL_FUNC(glAttachObjectARB)
     USE_GL_FUNC(glBindAttribLocationARB)

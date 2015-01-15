@@ -234,7 +234,7 @@ static void state_zwritenable(struct wined3d_context *context, const struct wine
     }
 }
 
-static GLenum gl_compare_func(enum wined3d_cmp_func f)
+GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f)
 {
     switch (f)
     {
@@ -262,7 +262,7 @@ static GLenum gl_compare_func(enum wined3d_cmp_func f)
 
 static void state_zfunc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    GLenum depth_func = gl_compare_func(state->render_states[WINED3D_RS_ZFUNC]);
+    GLenum depth_func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ZFUNC]);
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (!depth_func) return;
@@ -566,7 +566,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
     else
     {
         ref = ((float)state->render_states[WINED3D_RS_ALPHAREF]) / 255.0f;
-        glParm = gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC]);
+        glParm = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC]);
     }
     if (glParm)
     {
@@ -835,9 +835,9 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
 
     onesided_enable = state->render_states[WINED3D_RS_STENCILENABLE];
     twosided_enable = state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE];
-    if (!(func = gl_compare_func(state->render_states[WINED3D_RS_STENCILFUNC])))
+    if (!(func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_STENCILFUNC])))
         func = GL_ALWAYS;
-    if (!(func_ccw = gl_compare_func(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
+    if (!(func_ccw = wined3d_gl_compare_func(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
         func_ccw = GL_ALWAYS;
     ref = state->render_states[WINED3D_RS_STENCILREF];
     mask = state->render_states[WINED3D_RS_STENCILMASK];
@@ -3709,8 +3709,42 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         unsigned int base_level;
 
         wined3d_sampler_desc_from_sampler_states(&desc, gl_info, sampler_states, texture);
+
         wined3d_texture_bind(texture, context, srgb);
-        wined3d_texture_apply_sampler_desc(texture, &desc, gl_info);
+        if (!gl_info->supported[ARB_SAMPLER_OBJECTS])
+        {
+            wined3d_texture_apply_sampler_desc(texture, &desc, gl_info);
+        }
+        else
+        {
+            struct wined3d_device *device = context->swapchain->device;
+            struct wined3d_sampler *sampler;
+            struct wine_rb_entry *entry;
+
+            if ((entry = wine_rb_get(&device->samplers, &desc)))
+            {
+                sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
+            }
+            else
+            {
+                if (FAILED(wined3d_sampler_create(device, &desc, NULL, &sampler)))
+                {
+                    ERR("Failed to create sampler.\n");
+                    sampler = NULL;
+                }
+                else
+                {
+                    if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
+                        ERR("Failed to insert sampler.\n");
+                }
+            }
+
+            if (sampler)
+            {
+                GL_EXTCALL(glBindSampler(sampler_idx, sampler->name));
+                checkGLcall("glBindSampler");
+            }
+        }
 
         if (texture->flags & WINED3D_TEXTURE_COND_NP2)
             base_level = 0;
