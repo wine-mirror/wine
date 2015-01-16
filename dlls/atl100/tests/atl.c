@@ -44,6 +44,25 @@ static const GUID CATID_CatTest2 =
     {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x46}};
 #define CATID_CATTEST2_STR "178fc163-0000-0000-0000-000000000246"
 
+static const WCHAR emptyW[] = {'\0'};
+static const WCHAR randomW[] = {'r','a','n','d','o','m','\0'};
+static const WCHAR progid1W[] = {'S','h','e','l','l','.','E','x','p','l','o','r','e','r','.','2','\0'};
+static const WCHAR clsid1W[] = {'{','8','8','5','6','f','9','6','1','-','3','4','0','a','-',
+                                '1','1','d','0','-','a','9','6','b','-',
+                                '0','0','c','0','4','f','d','7','0','5','a','2','}','\0'};
+static const WCHAR url1W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q',
+                              '.','o','r','g','/','t','e','s','t','s','/','w','i','n','e','h','q','_',
+                              's','n','a','p','s','h','o','t','/','\0'};
+static const WCHAR mshtml1W[] = {'m','s','h','t','m','l',':','<','h','t','m','l','>','<','b','o','d','y','>',
+                                 't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
+static const WCHAR mshtml2W[] = {'M','S','H','T','M','L',':','<','h','t','m','l','>','<','b','o','d','y','>',
+                                 't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
+static const WCHAR mshtml3W[] = {'<','h','t','m','l','>','<','b','o','d','y','>', 't','e','s','t',
+                                 '<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
+static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/','\0'};
+static const WCHAR html_fileW[] = {'t','e','s','t','.','h','t','m','l','\0'};
+static const char html_str[] = "<html><body>test</body><html>";
+
 static BOOL is_process_limited(void)
 {
     static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE) = NULL;
@@ -601,24 +620,6 @@ static void test_ax_win(void)
     WCHAR file_uri1W[MAX_PATH], pathW[MAX_PATH];
     WNDCLASSEXW wcex;
     static HMODULE hinstance = 0;
-    static const WCHAR emptyW[] = {'\0'};
-    static const WCHAR randomW[] = {'r','a','n','d','o','m','\0'};
-    static const WCHAR progid1W[] = {'S','h','e','l','l','.','E','x','p','l','o','r','e','r','.','2','\0'};
-    static const WCHAR clsid1W[] = {'{','8','8','5','6','f','9','6','1','-','3','4','0','a','-',
-                                    '1','1','d','0','-','a','9','6','b','-',
-                                    '0','0','c','0','4','f','d','7','0','5','a','2','}','\0'};
-    static const WCHAR url1W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q',
-                                  '.','o','r','g','/','t','e','s','t','s','/','w','i','n','e','h','q','_',
-                                  's','n','a','p','s','h','o','t','/','\0'};
-    static const WCHAR mshtml1W[] = {'m','s','h','t','m','l',':','<','h','t','m','l','>','<','b','o','d','y','>',
-                                     't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-    static const WCHAR mshtml2W[] = {'M','S','H','T','M','L',':','<','h','t','m','l','>','<','b','o','d','y','>',
-                                     't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-    static const WCHAR mshtml3W[] = {'<','h','t','m','l','>','<','b','o','d','y','>', 't','e','s','t',
-                                     '<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-    static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/','\0'};
-    static const WCHAR html_fileW[] = {'t','e','s','t','.','h','t','m','l','\0'};
-    static const char html_str[] = "<html><body>test</body><html>";
     static const WCHAR cls_names[][16] =
     {
         {'A','t','l','A','x','W','i','n','1','0','0',0},
@@ -851,6 +852,159 @@ static void test_AtlAxAttachControl(void)
     IUnknown_Release(control);
 }
 
+static void test_AtlAxCreateControl(void)
+{
+    HWND hwnd;
+    IUnknown *control, *container;
+    HRESULT hr;
+    DWORD ret, ret_size;
+    HANDLE hfile;
+    WCHAR file_uri1W[MAX_PATH], pathW[MAX_PATH];
+
+    container = NULL;
+    control = (IUnknown *)0xdeadbeef;
+    hr = AtlAxCreateControlEx(NULL, NULL, NULL, &container, &control, NULL, NULL);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(container != NULL, "returned %p\n", container);
+    ok(!control, "returned %p\n", control);
+
+    container = NULL;
+    control = (IUnknown *)0xdeadbeef;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(NULL, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(container != NULL, "returned %p!\n", container);
+    ok(!control, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = (IUnknown *)0xdeadbeef;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(emptyW, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(container != NULL, "returned %p!\n", container);
+    ok(!control, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = (IUnknown *)0xdeadbeef;
+    control = (IUnknown *)0xdeadbeef;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(randomW, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+    ok(!container, "returned %p!\n", container);
+    ok(!control, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(progid1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(clsid1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(url1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(mshtml1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(mshtml2W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    container = (IUnknown *)0xdeadbeef;
+    control = (IUnknown *)0xdeadbeef;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(mshtml3W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+    ok(!container, "returned %p!\n", container);
+    ok(!control, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    ret = GetTempPathW(MAX_PATH, pathW);
+    ok(ret, "GetTempPath failed!\n");
+    lstrcatW(pathW, html_fileW);
+    hfile = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create file\n");
+    ret = WriteFile(hfile, html_str, sizeof(html_str), &ret_size, NULL);
+    ok(ret, "WriteFile failed\n");
+    CloseHandle(hfile);
+
+    /* test C:// scheme */
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(pathW, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    /* test file:// scheme */
+    lstrcpyW(file_uri1W, fileW);
+    lstrcatW(file_uri1W, pathW);
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(file_uri1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+
+    /* test file:// scheme on non-existent file. */
+    ret = DeleteFileW(pathW);
+    ok(ret, "DeleteFile failed!\n");
+    container = NULL;
+    control = NULL;
+    hwnd = create_container_window();
+    ok(hwnd != NULL, "create window failed!\n");
+    hr = AtlAxCreateControlEx(file_uri1W, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container != NULL, "returned %p!\n", container);
+    ok(control != NULL, "returned %p\n", control);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(atl)
 {
     if (!register_class())
@@ -865,6 +1019,7 @@ START_TEST(atl)
     test_source_iface();
     test_ax_win();
     test_AtlAxAttachControl();
+    test_AtlAxCreateControl();
 
     CoUninitialize();
 }
