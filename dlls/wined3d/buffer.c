@@ -1057,9 +1057,12 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         BOOL swvp = device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING;
         if (flags & WINED3D_MAP_DISCARD && !swvp)
         {
-            buffer->ignore_discard = TRUE;
-            wined3d_resource_allocate_sysmem(&buffer->resource);
-            wined3d_cs_emit_buffer_swap_mem(device->cs, buffer, buffer->resource.map_heap_memory);
+            if (buffer->resource.access_fence)
+            {
+                buffer->ignore_discard = TRUE;
+                wined3d_resource_allocate_sysmem(&buffer->resource);
+                wined3d_cs_emit_buffer_swap_mem(device->cs, buffer, buffer->resource.map_heap_memory);
+            }
         }
         else if(!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_READONLY)) && !buffer->ignore_discard)
         {
