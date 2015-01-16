@@ -3769,6 +3769,7 @@ static void test_font_height_scaling(void)
 
     hdc = CreateCompatibleDC(0);
     status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
 
     status = GdipGetDpiY(graphics, &dpi);
     expect(Ok, status);
