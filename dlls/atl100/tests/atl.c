@@ -643,8 +643,8 @@ static void test_ax_win(void)
         ok(hwnd != NULL, "CreateWindow failed!\n");
         control = (IUnknown *)0xdeadbeef;
         res = AtlAxGetControl(hwnd, &control);
-        todo_wine ok(res == E_FAIL, "Expected E_FAIL, returned %08x\n", res);
-        todo_wine ok(!control, "returned %p\n", control);
+        ok(res == E_FAIL, "Expected E_FAIL, returned %08x\n", res);
+        ok(!control, "returned %p\n", control);
         if (control) IUnknown_Release(control);
         DestroyWindow(hwnd);
 
@@ -652,8 +652,8 @@ static void test_ax_win(void)
         ok(hwnd != NULL, "CreateWindow failed!\n");
         control = (IUnknown *)0xdeadbeef;
         res = AtlAxGetControl(hwnd, &control);
-        todo_wine ok(res == E_FAIL, "Expected E_FAIL, returned %08x\n", res);
-        todo_wine ok(!control, "returned %p\n", control);
+        ok(res == E_FAIL, "Expected E_FAIL, returned %08x\n", res);
+        ok(!control, "returned %p\n", control);
         if (control) IUnknown_Release(control);
         DestroyWindow(hwnd);
 
