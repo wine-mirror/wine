@@ -1737,15 +1737,17 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
  */
 static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 {
-    HBRUSH hPrevBrush = 0;
+    HBRUSH hPrevBrush = 0, brush = GetSysColorBrush( COLOR_MENU );
     RECT rect;
+    POPUPMENU *menu = MENU_GetMenu( hmenu );
 
     TRACE("wnd=%p dc=%p menu=%p\n", hwnd, hdc, hmenu);
 
     GetClientRect( hwnd, &rect );
 
-    if((hPrevBrush = SelectObject( hdc, GetSysColorBrush(COLOR_MENU) ))
-        && (SelectObject( hdc, get_menu_font(FALSE))))
+    if (menu && menu->hbrBack) brush = menu->hbrBack;
+    if ((hPrevBrush = SelectObject( hdc, brush ))
+        && SelectObject( hdc, get_menu_font(FALSE) ))
     {
 	HPEN hPrevPen;
 
@@ -1754,7 +1756,6 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	hPrevPen = SelectObject( hdc, GetStockObject( NULL_PEN ) );
 	if( hPrevPen )
 	{
-	    POPUPMENU *menu;
 	    BOOL flat_menu = FALSE;
 
 	    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
@@ -1763,7 +1764,7 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	    else
 		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
 
-            if( (menu = MENU_GetMenu( hmenu )))
+            if (menu)
             {
                 TRACE("hmenu %p Style %08x\n", hmenu, menu->dwStyle);
                 /* draw menu items */
