@@ -51,8 +51,9 @@ extern struct opengl_funcs null_opengl_funcs;
 
 enum wgl_handle_type
 {
-    HANDLE_CONTEXT = 0 << 12,
-    HANDLE_PBUFFER = 1 << 12,
+    HANDLE_PBUFFER = 0 << 12,
+    HANDLE_CONTEXT = 1 << 12,
+    HANDLE_CONTEXT_V3 = 3 << 12,
     HANDLE_TYPE_MASK = 15 << 12
 };
 
@@ -270,8 +271,24 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
     {
         if ((context = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context) )))
         {
+            enum wgl_handle_type type = HANDLE_CONTEXT;
+
+            if (attribs)
+            {
+                while (*attribs)
+                {
+                    if (attribs[0] == WGL_CONTEXT_MAJOR_VERSION_ARB)
+                    {
+                        if (attribs[1] >= 3)
+                            type = HANDLE_CONTEXT_V3;
+                        break;
+                    }
+                    attribs += 2;
+                }
+            }
+
             context->drv_ctx = drv_ctx;
-            if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
+            if (!(ret = alloc_handle( type, funcs, context )))
                 HeapFree( GetProcessHeap(), 0, context );
         }
         if (!ret) funcs->wgl.p_wglDeleteContext( drv_ctx );
