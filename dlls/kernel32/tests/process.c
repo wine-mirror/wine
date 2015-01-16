@@ -1863,6 +1863,62 @@ static void test_Handles(void)
     SetStdHandle( STD_ERROR_HANDLE, handle );
 }
 
+static void test_IsWow64Process(void)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    DWORD ret;
+    BOOL is_wow64;
+    static char cmdline[] = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
+    static char cmdline_wow64[] = "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
+
+    if (!pIsWow64Process)
+    {
+        skip("IsWow64Process is not available\n");
+        return;
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    ret = CreateProcessA(NULL, cmdline_wow64, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    if (ret)
+    {
+        trace("Created process %s\n", cmdline_wow64);
+        is_wow64 = FALSE;
+        ret = pIsWow64Process(pi.hProcess, &is_wow64);
+        ok(ret, "IsWow64Process failed.\n");
+        ok(is_wow64, "is_wow64 returned FALSE.\n");
+
+        ret = TerminateProcess(pi.hProcess, 0);
+        ok(ret, "TerminateProcess error\n");
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    if (ret)
+    {
+        trace("Created process %s\n", cmdline);
+        is_wow64 = TRUE;
+        ret = pIsWow64Process(pi.hProcess, &is_wow64);
+        ok(ret, "IsWow64Process failed.\n");
+        ok(!is_wow64, "is_wow64 returned TRUE.\n");
+
+        ret = TerminateProcess(pi.hProcess, 0);
+        ok(ret, "TerminateProcess error\n");
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+}
+
 static void test_SystemInfo(void)
 {
     SYSTEM_INFO si, nsi;
@@ -2089,6 +2145,7 @@ START_TEST(process)
     test_QueryFullProcessImageNameA();
     test_QueryFullProcessImageNameW();
     test_Handles();
+    test_IsWow64Process();
     test_SystemInfo();
     test_RegistryQuota();
     test_DuplicateHandle();

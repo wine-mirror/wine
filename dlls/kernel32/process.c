@@ -3755,7 +3755,7 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  */
 BOOL WINAPI IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
 {
-    ULONG pbi;
+    ULONG_PTR pbi;
     NTSTATUS status;
 
     status = NtQueryInformationProcess( hProcess, ProcessWow64Information, &pbi, sizeof(pbi), NULL );
