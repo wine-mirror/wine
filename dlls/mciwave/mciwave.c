@@ -1118,7 +1118,7 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
 
     TRACE("Recording (normalized) from byte=%u for %u bytes\n", wmw->dwPosition, end - wmw->dwPosition);
 
-    dwRet = waveInStart(wmw->hWave);
+    waveInStart(wmw->hWave);
 
     if (hEvent) SetEvent(hEvent);
 
