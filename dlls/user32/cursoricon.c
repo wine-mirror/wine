@@ -1165,7 +1165,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
 
     cursor = alloc_icon_handle( TRUE, header.num_steps );
     if (!cursor) return 0;
-    frames = HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD)*header.num_frames );
+    frames = HeapAlloc( GetProcessHeap(), 0, sizeof(*frames) * header.num_frames );
     if (!frames)
     {
         free_icon_handle( cursor );
