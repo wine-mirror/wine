@@ -2588,30 +2588,6 @@ static const WCHAR *get_root_key( MSIPACKAGE *package, INT root, HKEY *root_key 
     return ret;
 }
 
-static WCHAR *get_keypath( MSICOMPONENT *comp, HKEY root, const WCHAR *path )
-{
-    static const WCHAR prefixW[] = {'S','O','F','T','W','A','R','E','\\'};
-    static const UINT len = sizeof(prefixW) / sizeof(prefixW[0]);
-
-    if ((is_64bit || is_wow64) &&
-        !(comp->Attributes & msidbComponentAttributes64bit) &&
-        root == HKEY_LOCAL_MACHINE && !strncmpiW( path, prefixW, len ))
-    {
-        UINT size;
-        WCHAR *path_32node;
-
-        size = (strlenW( path ) + strlenW( szWow6432Node ) + 2) * sizeof(WCHAR);
-        if (!(path_32node = msi_alloc( size ))) return NULL;
-
-        memcpy( path_32node, path, len * sizeof(WCHAR) );
-        strcpyW( path_32node + len, szWow6432Node );
-        strcatW( path_32node, szBackSlash );
-        strcatW( path_32node, path + len );
-        return path_32node;
-    }
-    return strdupW( path );
-}
-
 static inline REGSAM get_registry_view( const MSICOMPONENT *comp )
 {
     REGSAM view = 0;
@@ -2627,9 +2603,7 @@ static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BO
     HKEY hkey, ret = NULL;
     LONG res;
 
-    if (comp)
-        access |= get_registry_view( comp );
-    else if (is_wow64) access |= KEY_WOW64_64KEY;
+    access |= get_registry_view( comp );
 
     if (!(subkey = strdupW( path ))) return NULL;
     p = subkey;
@@ -2952,20 +2926,20 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     return rc;
 }
 
-static void delete_key( HKEY root, const WCHAR *path )
+static void delete_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
 {
     REGSAM access = 0;
     WCHAR *subkey, *p;
     HKEY hkey;
     LONG res;
 
-    if (is_wow64) access |= KEY_WOW64_64KEY;
+    access |= get_registry_view( comp );
 
     if (!(subkey = strdupW( path ))) return;
     for (;;)
     {
         if ((p = strrchrW( subkey, '\\' ))) *p = 0;
-        hkey = open_key( NULL, root, subkey, FALSE );
+        hkey = open_key( comp, root, subkey, FALSE );
         if (!hkey) break;
         if (p && p[1])
             res = RegDeleteKeyExW( hkey, p + 1, access, 0 );
@@ -2982,13 +2956,13 @@ static void delete_key( HKEY root, const WCHAR *path )
     msi_free( subkey );
 }
 
-static void delete_value( HKEY root, const WCHAR *path, const WCHAR *value )
+static void delete_value( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, const WCHAR *value )
 {
     LONG res;
     HKEY hkey;
     DWORD num_subkeys, num_values;
 
-    if ((hkey = open_key( NULL, root, path, FALSE )))
+    if ((hkey = open_key( comp, root, path, FALSE )))
     {
         if ((res = RegDeleteValueW( hkey, value )))
             TRACE("failed to delete value %s (%d)\n", debugstr_w(value), res);
@@ -2999,20 +2973,20 @@ static void delete_value( HKEY root, const WCHAR *path, const WCHAR *value )
         if (!res && !num_subkeys && !num_values)
         {
             TRACE("removing empty key %s\n", debugstr_w(path));
-            delete_key( root, path );
+            delete_key( comp, root, path );
         }
     }
 }
 
-static void delete_tree( HKEY root, const WCHAR *path )
+static void delete_tree( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
 {
     LONG res;
     HKEY hkey;
 
-    if (!(hkey = open_key( NULL, root, path, FALSE ))) return;
+    if (!(hkey = open_key( comp, root, path, FALSE ))) return;
     res = RegDeleteTreeW( hkey, NULL );
     if (res) TRACE("failed to delete subtree of %s (%d)\n", debugstr_w(path), res);
-    delete_key( root, path );
+    delete_key( comp, root, path );
     RegCloseKey( hkey );
 }
 
@@ -3020,7 +2994,7 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
 {
     MSIPACKAGE *package = param;
     LPCWSTR component, name, key_str, root_key_str;
-    LPWSTR deformated_key, deformated_name, ui_key_str, keypath;
+    LPWSTR deformated_key, deformated_name, ui_key_str;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
     BOOL delete_key = FALSE;
@@ -3069,11 +3043,9 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
 
     deformat_string( package, name, &deformated_name );
 
-    keypath = get_keypath( comp, hkey_root, deformated_key );
+    if (delete_key) delete_tree( comp, hkey_root, deformated_key );
+    else delete_value( comp, hkey_root, deformated_key, deformated_name );
     msi_free( deformated_key );
-    if (delete_key) delete_tree( hkey_root, keypath );
-    else delete_value( hkey_root, keypath, deformated_name );
-    msi_free( keypath );
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, ui_key_str );
@@ -3090,7 +3062,7 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
 {
     MSIPACKAGE *package = param;
     LPCWSTR component, name, key_str, root_key_str;
-    LPWSTR deformated_key, deformated_name, ui_key_str, keypath;
+    LPWSTR deformated_key, deformated_name, ui_key_str;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
     BOOL delete_key = FALSE;
@@ -3134,11 +3106,9 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
 
     deformat_string( package, name, &deformated_name );
 
-    keypath = get_keypath( comp, hkey_root, deformated_key );
+    if (delete_key) delete_tree( comp, hkey_root, deformated_key );
+    else delete_value( comp, hkey_root, deformated_key, deformated_name );
     msi_free( deformated_key );
-    if (delete_key) delete_tree( hkey_root, keypath );
-    else delete_value( hkey_root, keypath, deformated_name );
-    msi_free( keypath );
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, ui_key_str );
