@@ -5669,7 +5669,7 @@ static void test_mixed_package(void)
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT,
                         "CLSID\\{8dfef911-6885-41eb-b280-8f0304728e8b}\\InProcServer32",
                         0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    todo_wine ok(res == ERROR_SUCCESS, "can't open 32-bit CLSID key, got %d\n", res);
+    ok(res == ERROR_SUCCESS, "can't open 32-bit CLSID key, got %d\n", res);
     if (res == ERROR_SUCCESS) {
         size = sizeof(value);
         res = RegQueryValueExA(hkey, "", NULL, NULL, (LPBYTE)value, &size);
@@ -5732,7 +5732,7 @@ static void test_mixed_package(void)
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT,
                         "CLSID\\{8dfef911-6885-41eb-b280-8f0304728e8b}\\InProcServer32",
                         0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    todo_wine ok(res == ERROR_SUCCESS, "can't open 32-bit CLSID key, got %d\n", res);
+    ok(res == ERROR_SUCCESS, "can't open 32-bit CLSID key, got %d\n", res);
     if (res == ERROR_SUCCESS) {
         size = sizeof(value);
         res = RegQueryValueExA(hkey, "", NULL, NULL, (LPBYTE)value, &size);

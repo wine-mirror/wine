@@ -2612,14 +2612,24 @@ static WCHAR *get_keypath( MSICOMPONENT *comp, HKEY root, const WCHAR *path )
     return strdupW( path );
 }
 
-static HKEY open_key( HKEY root, const WCHAR *path, BOOL create )
+static inline REGSAM get_registry_view( const MSICOMPONENT *comp )
+{
+    REGSAM view = 0;
+    if (is_wow64 || is_64bit)
+        view |= (comp->Attributes & msidbComponentAttributes64bit) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY;
+    return view;
+}
+
+static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BOOL create )
 {
     REGSAM access = KEY_ALL_ACCESS;
     WCHAR *subkey, *p, *q;
     HKEY hkey, ret = NULL;
     LONG res;
 
-    if (is_wow64) access |= KEY_WOW64_64KEY;
+    if (comp)
+        access |= get_registry_view( comp );
+    else if (is_wow64) access |= KEY_WOW64_64KEY;
 
     if (!(subkey = strdupW( path ))) return NULL;
     p = subkey;
@@ -2636,7 +2646,7 @@ static HKEY open_key( HKEY root, const WCHAR *path, BOOL create )
     }
     if (q && q[1])
     {
-        ret = open_key( hkey, q + 1, create );
+        ret = open_key( comp, hkey, q + 1, create );
         RegCloseKey( hkey );
     }
     else ret = hkey;
@@ -2817,7 +2827,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     BYTE *new_value, *old_value = NULL;
     HKEY  root_key, hkey;
     DWORD type, old_type, new_size, old_size = 0;
-    LPWSTR deformated, uikey, keypath;
+    LPWSTR deformated, uikey;
     const WCHAR *szRoot, *component, *name, *key, *str;
     MSICOMPONENT *comp;
     MSIRECORD * uirow;
@@ -2861,15 +2871,14 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     strcpyW(uikey,szRoot);
     strcatW(uikey,deformated);
 
-    keypath = get_keypath( comp, root_key, deformated );
-    msi_free( deformated );
-    if (!(hkey = open_key( root_key, keypath, TRUE )))
+    if (!(hkey = open_key( comp, root_key, deformated, TRUE )))
     {
-        ERR("Could not create key %s\n", debugstr_w(keypath));
+        ERR("Could not create key %s\n", debugstr_w(deformated));
         msi_free(uikey);
-        msi_free(keypath);
+        msi_free(deformated);
         return ERROR_FUNCTION_FAILED;
     }
+    msi_free( deformated );
     str = msi_record_get_string( row, 5, NULL );
     len = deformat_string( package, str, &deformated );
     new_value = parse_value( package, deformated, len, &type, &new_size );
@@ -2922,7 +2931,6 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     msi_free(old_value);
     msi_free(deformated);
     msi_free(uikey);
-    msi_free(keypath);
 
     return ERROR_SUCCESS;
 }
@@ -2957,7 +2965,7 @@ static void delete_key( HKEY root, const WCHAR *path )
     for (;;)
     {
         if ((p = strrchrW( subkey, '\\' ))) *p = 0;
-        hkey = open_key( root, subkey, FALSE );
+        hkey = open_key( NULL, root, subkey, FALSE );
         if (!hkey) break;
         if (p && p[1])
             res = RegDeleteKeyExW( hkey, p + 1, access, 0 );
@@ -2980,7 +2988,7 @@ static void delete_value( HKEY root, const WCHAR *path, const WCHAR *value )
     HKEY hkey;
     DWORD num_subkeys, num_values;
 
-    if ((hkey = open_key( root, path, FALSE )))
+    if ((hkey = open_key( NULL, root, path, FALSE )))
     {
         if ((res = RegDeleteValueW( hkey, value )))
             TRACE("failed to delete value %s (%d)\n", debugstr_w(value), res);
@@ -3001,7 +3009,7 @@ static void delete_tree( HKEY root, const WCHAR *path )
     LONG res;
     HKEY hkey;
 
-    if (!(hkey = open_key( root, path, FALSE ))) return;
+    if (!(hkey = open_key( NULL, root, path, FALSE ))) return;
     res = RegDeleteTreeW( hkey, NULL );
     if (res) TRACE("failed to delete subtree of %s (%d)\n", debugstr_w(path), res);
     delete_key( root, path );
