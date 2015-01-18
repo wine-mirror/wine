@@ -2142,12 +2142,10 @@ static void test_redirection(void)
         err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0,
                                KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &key, NULL );
         ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %u\n", err );
-        dw = get_key_value( key, "Wine\\Winetest", 0 );
-        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        check_key_value( key, "Wine\\Winetest", 0, 32 );
         dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY );
-        todo_wine ok( dw == 32 || broken(dw == 64) /* vista */, "wrong value %u\n", dw );
-        dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY );
-        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        ok( dw == 32 || broken(dw == 64) /* vista */, "wrong value %u\n", dw );
+        check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
         RegCloseKey( key );
     }
 

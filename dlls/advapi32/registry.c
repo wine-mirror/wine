@@ -127,12 +127,12 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 {
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+    HANDLE subkey, root = attr->RootDirectory;
 
-    if (!force_wow32) status = NtCreateKey( (HANDLE *)retkey, access, attr, 0, class, options, dispos );
+    if (!force_wow32) status = NtCreateKey( &subkey, access, attr, 0, class, options, dispos );
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        HANDLE subkey, root = attr->RootDirectory;
         WCHAR *buffer = attr->ObjectName->Buffer;
         DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
         UNICODE_STRING str;
@@ -160,7 +160,7 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
             if (i == len)
             {
                 attr->Attributes = attrs;
-                status = NtCreateKey( (PHANDLE)retkey, access, attr, 0, class, options, dispos );
+                status = NtCreateKey( &subkey, access, attr, 0, class, options, dispos );
             }
             else
             {
@@ -177,6 +177,13 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
             while (i < len && buffer[i] != '\\') i++;
         }
     }
+    attr->RootDirectory = subkey;
+    if (force_wow32 && (subkey = open_wow6432node( attr->RootDirectory )))
+    {
+        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+        attr->RootDirectory = subkey;
+    }
+    *retkey = attr->RootDirectory;
     return status;
 }
 
@@ -214,7 +221,7 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
         if (i == len)
         {
             attr->Attributes = attrs;
-            status = NtOpenKey( (PHANDLE)retkey, access, attr );
+            status = NtOpenKey( &subkey, access, attr );
         }
         else
         {
@@ -223,12 +230,18 @@ static NTSTATUS open_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *a
         }
         if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
         if (status) return status;
-        if (i == len) break;
         attr->RootDirectory = subkey;
+        if (i == len) break;
         while (i < len && buffer[i] == '\\') i++;
         pos = i;
         while (i < len && buffer[i] != '\\') i++;
     }
+    if (force_wow32 && (subkey = open_wow6432node( attr->RootDirectory )))
+    {
+        if (attr->RootDirectory != root) NtClose( attr->RootDirectory );
+        attr->RootDirectory = subkey;
+    }
+    *retkey = attr->RootDirectory;
     return status;
 }
 
