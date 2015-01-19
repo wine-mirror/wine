@@ -1736,9 +1736,8 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         }
         else
         {
-          if ((dwState & B_PROCESSING_OCT) && ((*lpszStr == '8') || (*lpszStr == '9'))) {
-            return DISP_E_TYPEMISMATCH;
-          }
+          if ((dwState & B_PROCESSING_OCT) && ((*lpszStr == '8') || (*lpszStr == '9')))
+            break;
 
           if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
             pNumprs->nPwr10--; /* Count decimal points in nPwr10 */

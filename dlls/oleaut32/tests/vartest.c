@@ -1383,11 +1383,9 @@ static void test_VarParseNumFromStr(void)
 
   /* VB oct char bigger than 7 */
   CONVERT("&o128", NUMPRS_HEX_OCT);
-  todo_wine {
   EXPECT(2,NUMPRS_HEX_OCT,0x40,4,3,0);
   EXPECTRGB(0,1);
   EXPECTRGB(1,2);
-  }
   EXPECTRGB(3,FAILDIG);
 
   /** NUMPRS_PARENS **/
