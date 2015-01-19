@@ -2957,6 +2957,74 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     }
 }
 
+static void context_bind_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_shader_sampler_map_entry *entry;
+    struct wined3d_shader_resource_view *view;
+    struct wined3d_sampler *sampler;
+    struct wined3d_texture *texture;
+    struct wined3d_shader *shader;
+    unsigned int i, j, count;
+
+    static const struct
+    {
+        enum wined3d_shader_type type;
+        unsigned int base_idx;
+        unsigned int count;
+    }
+    shader_types[] =
+    {
+        {WINED3D_SHADER_TYPE_PIXEL,     0,                      MAX_FRAGMENT_SAMPLERS},
+        {WINED3D_SHADER_TYPE_VERTEX,    MAX_FRAGMENT_SAMPLERS,  MAX_VERTEX_SAMPLERS},
+    };
+
+    for (i = 0; i < ARRAY_SIZE(shader_types); ++i)
+    {
+        if (!(shader = state->shader[shader_types[i].type]))
+            continue;
+
+        count = shader->reg_maps.sampler_map.count;
+        if (count > shader_types[i].count)
+        {
+            FIXME("Shader %p needs %u samplers, but only %u are supported.\n",
+                    shader, count, shader_types[i].count);
+            count = shader_types[i].count;
+        }
+
+        for (j = 0; j < count; ++j)
+        {
+            entry = &shader->reg_maps.sampler_map.entries[j];
+
+            if (!(view = state->shader_resource_view[shader_types[i].type][entry->resource_idx]))
+            {
+                WARN("No resource view bound at index %u, %u.\n", shader_types[i].type, entry->resource_idx);
+                continue;
+            }
+
+            if (view->resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                FIXME("Buffer shader resources not supported.\n");
+                continue;
+            }
+
+            if (!(sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
+            {
+                WARN("No sampler object bound at index %u, %u.\n", shader_types[i].type, entry->sampler_idx);
+                continue;
+            }
+
+            texture = wined3d_texture_from_resource(view->resource);
+            wined3d_texture_load(texture, context, FALSE);
+            context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
+            wined3d_texture_bind(texture, context, FALSE);
+
+            GL_EXTCALL(glBindSampler(shader_types[i].base_idx + entry->bind_idx, sampler->name));
+            checkGLcall("glBindSampler");
+        }
+    }
+}
+
 /* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
@@ -3028,6 +3096,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     {
         device->shader_backend->shader_load_constants(device->shader_priv, context, state);
         context->constant_update_mask = 0;
+    }
+
+    if (context->update_shader_resource_bindings)
+    {
+        context_bind_shader_resources(context, state);
+        context->update_shader_resource_bindings = 0;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)

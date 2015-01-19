@@ -704,6 +704,7 @@ static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, cons
     const struct wined3d_cs_set_shader_resource_view *op = data;
 
     cs->state.shader_resource_view[op->type][op->view_idx] = op->view;
+    device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
@@ -725,6 +726,7 @@ static void wined3d_cs_exec_set_sampler(struct wined3d_cs *cs, const void *data)
     const struct wined3d_cs_set_sampler *op = data;
 
     cs->state.sampler[op->type][op->sampler_idx] = op->sampler;
+    device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
@@ -747,6 +749,7 @@ static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
 
     cs->state.shader[op->type] = op->shader;
     device_invalidate_state(cs->device, STATE_SHADER(op->type));
+    device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type type, struct wined3d_shader *shader)

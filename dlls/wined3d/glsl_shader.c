@@ -1058,59 +1058,68 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare texture samplers */
-    for (i = 0; i < shader->limits->sampler; ++i)
+    for (i = 0; i < reg_maps->sampler_map.count; ++i)
     {
+        struct wined3d_shader_sampler_map_entry *entry;
         BOOL shadow_sampler, tex_rect;
+        const char *sampler_type;
 
-        if (!reg_maps->resource_info[i].type)
+        entry = &reg_maps->sampler_map.entries[i];
+
+        if (entry->resource_idx >= ARRAY_SIZE(reg_maps->resource_info))
+        {
+            ERR("Invalid resource index %u.\n", entry->resource_idx);
             continue;
+        }
 
-        shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1 << i));
-        switch (reg_maps->resource_info[i].type)
+        shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1 << entry->sampler_idx));
+        switch (reg_maps->resource_info[entry->resource_idx].type)
         {
             case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
                 if (shadow_sampler)
-                    shader_addline(buffer, "uniform sampler1DShadow %s_sampler%u;\n", prefix, i);
+                    sampler_type = "sampler1DShadow";
                 else
-                    shader_addline(buffer, "uniform sampler1D %s_sampler%u;\n", prefix, i);
+                    sampler_type = "sampler1D";
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
-                tex_rect = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->np2_fixup & (1 << i));
-                tex_rect = tex_rect && gl_info->supported[ARB_TEXTURE_RECTANGLE];
+                tex_rect = version->type == WINED3D_SHADER_TYPE_PIXEL
+                        && (ps_args->np2_fixup & (1 << entry->resource_idx))
+                        && gl_info->supported[ARB_TEXTURE_RECTANGLE];
                 if (shadow_sampler)
                 {
                     if (tex_rect)
-                        shader_addline(buffer, "uniform sampler2DRectShadow %s_sampler%u;\n", prefix, i);
+                        sampler_type = "sampler2DRectShadow";
                     else
-                        shader_addline(buffer, "uniform sampler2DShadow %s_sampler%u;\n", prefix, i);
+                        sampler_type = "sampler2DShadow";
                 }
                 else
                 {
                     if (tex_rect)
-                        shader_addline(buffer, "uniform sampler2DRect %s_sampler%u;\n", prefix, i);
+                        sampler_type = "sampler2DRect";
                     else
-                        shader_addline(buffer, "uniform sampler2D %s_sampler%u;\n", prefix, i);
+                        sampler_type = "sampler2D";
                 }
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
                 if (shadow_sampler)
                     FIXME("Unsupported 3D shadow sampler.\n");
-                shader_addline(buffer, "uniform sampler3D %s_sampler%u;\n", prefix, i);
+                sampler_type = "sampler3D";
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
                 if (shadow_sampler)
                     FIXME("Unsupported Cube shadow sampler.\n");
-                shader_addline(buffer, "uniform samplerCube %s_sampler%u;\n", prefix, i);
+                sampler_type = "samplerCube";
                 break;
 
             default:
-                shader_addline(buffer, "uniform unsupported_sampler %s_sampler%u;\n", prefix, i);
+                sampler_type = "unsupported_sampler";
                 FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[i].type);
                 break;
         }
+        shader_addline(buffer, "uniform %s %s_sampler%u;\n", sampler_type, prefix, entry->bind_idx);
     }
 
     /* Declare uniforms for NP2 texcoord fixup:
@@ -3609,6 +3618,37 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     }
     shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, lod_param.param_str,
             "%s", coord_param.param_str);
+}
+
+static unsigned int shader_glsl_find_sampler(const struct wined3d_shader_sampler_map *sampler_map,
+        unsigned int resource_idx, unsigned int sampler_idx)
+{
+    struct wined3d_shader_sampler_map_entry *entries = sampler_map->entries;
+    unsigned int i;
+
+    for (i = 0; i < sampler_map->count; ++i)
+    {
+        if (entries[i].resource_idx == resource_idx && entries[i].sampler_idx == sampler_idx)
+            return entries[i].bind_idx;
+    }
+
+    ERR("No GLSL sampler found for resource %u / sampler %u.\n", resource_idx, sampler_idx);
+
+    return ~0u;
+}
+
+static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
+{
+    struct glsl_sample_function sample_function;
+    struct glsl_src_param coord_param;
+    unsigned int sampler_idx;
+
+    shader_glsl_get_sample_function(ins->ctx, ins->src[1].reg.idx[0].offset, 0, &sample_function);
+    shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
+    sampler_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
+            ins->src[1].reg.idx[0].offset, ins->src[2].reg.idx[0].offset);
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+            NULL, NULL, NULL, "%s", coord_param.param_str);
 }
 
 static void shader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
@@ -6736,7 +6776,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_RET                   */ shader_glsl_ret,
     /* WINED3DSIH_ROUND_NI              */ shader_glsl_map2gl,
     /* WINED3DSIH_RSQ                   */ shader_glsl_scalar_op,
-    /* WINED3DSIH_SAMPLE                */ NULL,
+    /* WINED3DSIH_SAMPLE                */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_GRAD           */ NULL,
     /* WINED3DSIH_SAMPLE_LOD            */ NULL,
     /* WINED3DSIH_SETP                  */ NULL,

@@ -570,6 +570,51 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
     return TRUE;
 }
 
+static void shader_record_sample(struct wined3d_shader_reg_maps *reg_maps,
+        unsigned int resource_idx, unsigned int sampler_idx, unsigned int bind_idx)
+{
+    struct wined3d_shader_sampler_map_entry *entries, *entry;
+    struct wined3d_shader_sampler_map *map;
+    unsigned int i;
+
+    map = &reg_maps->sampler_map;
+    entries = map->entries;
+    for (i = 0; i < map->count; ++i)
+    {
+        if (entries[i].resource_idx == resource_idx && entries[i].sampler_idx == sampler_idx)
+            return;
+    }
+
+    if (!map->size)
+    {
+        if (!(entries = HeapAlloc(GetProcessHeap(), 0, sizeof(*entries) * 4)))
+        {
+            ERR("Failed to allocate sampler map entries.\n");
+            return;
+        }
+        map->size = 4;
+        map->entries = entries;
+    }
+    else if (map->count == map->size)
+    {
+        size_t new_size = map->size * 2;
+
+        if (sizeof(*entries) * new_size <= sizeof(*entries) * map->size
+                || !(entries = HeapReAlloc(GetProcessHeap(), 0, entries, sizeof(*entries) * new_size)))
+        {
+            ERR("Failed to resize sampler map entries.\n");
+            return;
+        }
+        map->size = new_size;
+        map->entries = entries;
+    }
+
+    entry = &entries[map->count++];
+    entry->resource_idx = resource_idx;
+    entry->sampler_idx = sampler_idx;
+    entry->bind_idx = bind_idx;
+}
+
 static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HANDLER instr, unsigned int param)
 {
     switch (instr)
@@ -663,6 +708,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     break;
 
                 case WINED3DSPR_SAMPLER:
+                    shader_record_sample(reg_maps, reg_idx, reg_idx, reg_idx);
                 case WINED3DSPR_RESOURCE:
                     if (reg_idx >= ARRAY_SIZE(reg_maps->resource_info))
                     {
@@ -903,6 +949,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     TRACE("Setting fake 2D resource for 1.x pixelshader.\n");
                     reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
                     reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_FLOAT;
+                    shader_record_sample(reg_maps, reg_idx, reg_idx, reg_idx);
 
                     /* texbem is only valid with < 1.4 pixel shaders */
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
@@ -939,7 +986,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             }
             else if (ins.handler_idx == WINED3DSIH_ENDLOOP
                     || ins.handler_idx == WINED3DSIH_ENDREP)
+            {
                 --cur_loop_depth;
+            }
+            else if (ins.handler_idx == WINED3DSIH_SAMPLE
+                    || ins.handler_idx == WINED3DSIH_SAMPLE_GRAD
+                    || ins.handler_idx == WINED3DSIH_SAMPLE_LOD)
+            {
+                shader_record_sample(reg_maps, ins.src[1].reg.idx[0].offset,
+                        ins.src[2].reg.idx[0].offset, reg_maps->sampler_map.count);
+            }
 
             if (ins.predicate)
                 if (!shader_record_register_usage(shader, reg_maps, &ins.predicate->reg,

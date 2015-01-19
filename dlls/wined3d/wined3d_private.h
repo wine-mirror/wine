@@ -581,6 +581,20 @@ struct wined3d_shader_resource_info
     enum wined3d_data_type data_type;
 };
 
+struct wined3d_shader_sampler_map_entry
+{
+    unsigned int resource_idx;
+    unsigned int sampler_idx;
+    unsigned int bind_idx;
+};
+
+struct wined3d_shader_sampler_map
+{
+    struct wined3d_shader_sampler_map_entry *entries;
+    size_t size;
+    size_t count;
+};
+
 #define WINED3D_SHADER_VERSION(major, minor) (((major) << 8) | (minor))
 
 struct wined3d_shader_reg_maps
@@ -601,6 +615,7 @@ struct wined3d_shader_reg_maps
     UINT cb_sizes[WINED3D_MAX_CBS];
 
     struct wined3d_shader_resource_info resource_info[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
+    struct wined3d_shader_sampler_map sampler_map;
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
     BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
 
@@ -1002,7 +1017,10 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 #define STATE_CONSTANT_BUFFER(a) (STATE_SHADER(WINED3D_SHADER_TYPE_COUNT) + (a))
 #define STATE_IS_CONSTANT_BUFFER(a) ((a) >= STATE_CONSTANT_BUFFER(0) && (a) < STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COUNT))
 
-#define STATE_TRANSFORM(a) (STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COUNT) + (a) - 1)
+#define STATE_SHADER_RESOURCE_BINDING (STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COUNT))
+#define STATE_IS_SHADER_RESOURCE_BINDING(a) ((a) == STATE_SHADER_RESOURCE_BINDING)
+
+#define STATE_TRANSFORM(a) (STATE_SHADER_RESOURCE_BINDING + (a))
 #define STATE_IS_TRANSFORM(a) ((a) >= STATE_TRANSFORM(1) && (a) <= STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)))
 
 #define STATE_STREAMSRC (STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)) + 1)
@@ -1141,7 +1159,8 @@ struct wined3d_context
     DWORD needs_set : 1;
     DWORD hdc_is_private : 1;
     DWORD hdc_has_format : 1;           /* only meaningful if hdc_is_private */
-    DWORD padding : 16;
+    DWORD update_shader_resource_bindings : 1;
+    DWORD padding : 15;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
