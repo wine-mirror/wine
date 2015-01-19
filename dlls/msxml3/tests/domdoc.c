@@ -4903,7 +4903,6 @@ static void test_xmlTypes(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
 
-    pNextChild = (void*)0xdeadbeef;
     hr = IXMLDOMDocument_get_nextSibling(doc, NULL);
     ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
