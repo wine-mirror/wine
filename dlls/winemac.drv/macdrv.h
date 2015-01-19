@@ -47,7 +47,9 @@ extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
 
 static inline CGRect cgrect_from_rect(RECT rect)
 {
-    return CGRectMake(rect.left, rect.top, max(0, rect.right - rect.left), max(0, rect.bottom - rect.top));
+    if (rect.left >= rect.right || rect.top >= rect.bottom)
+        return CGRectMake(rect.left, rect.top, 0, 0);
+    return CGRectMake(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
 static inline RECT rect_from_cgrect(CGRect cgrect)
