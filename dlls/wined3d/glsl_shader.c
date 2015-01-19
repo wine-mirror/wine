@@ -1191,14 +1191,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
             if (use_vs(state))
-                shader_addline(buffer, "varying vec4 %s_in[%u];\n", prefix, in_count);
-            else
-                /* TODO: Write a replacement shader for the fixed function
-                 * vertex pipeline, so this isn't needed. For fixed function
-                 * vertex processing + 3.0 pixel shader we need a separate
-                 * function in the pixel shader that reads the fixed function
-                 * color into the packed input registers. */
-                shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
+                shader_addline(buffer, "varying vec4 %s_link[%u];\n", prefix, in_count);
+            shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
         }
 
         for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
@@ -4154,7 +4148,16 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         semantic_idx = input_signature[i].semantic_idx;
         shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
 
-        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
+        if (vertexprocessing == vertexshader)
+        {
+            if (!strcmp(semantic_name, "SV_POSITION"))
+                shader_addline(buffer, "ps_in[%u]%s = vpos%s;\n",
+                        shader->u.ps.input_reg_map[i], reg_mask, reg_mask);
+            else
+                shader_addline(buffer, "ps_in[%u]%s = ps_link[%u]%s;\n",
+                        shader->u.ps.input_reg_map[i], reg_mask, shader->u.ps.input_reg_map[i], reg_mask);
+        }
+        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
             if (semantic_idx < 8 && vertexprocessing == pretransformed)
                 shader_addline(buffer, "ps_in[%u]%s = gl_TexCoord[%u]%s;\n",
@@ -4276,7 +4279,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
         else if (in_idx == in_count + 1)
             sprintf(destination, "gl_FrontSecondaryColor");
         else
-            sprintf(destination, "ps_in[%u]", in_idx);
+            sprintf(destination, "ps_link[%u]", in_idx);
 
         semantic_name_in = input_signature[i].semantic_name;
         semantic_idx_in = input_signature[i].semantic_idx;
@@ -4322,7 +4325,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
         else if (i == in_count + 1)
             sprintf(destination, "gl_FrontSecondaryColor");
         else
-            sprintf(destination, "ps_in[%u]", i);
+            sprintf(destination, "ps_link[%u]", i);
 
         if (size == 1) shader_addline(buffer, "%s.%s = 0.0;\n", destination, reg_mask);
         else shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination, reg_mask, size);
@@ -4406,7 +4409,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     {
         UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(buffer, "varying vec4 ps_in[%u];\n", in_count);
+        shader_addline(buffer, "varying vec4 ps_link[%u];\n", in_count);
         shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
@@ -4517,7 +4520,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
     /* Pack 3.0 inputs */
-    if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
+    if (reg_maps->shader_version.major >= 3)
         shader_glsl_input_pack(shader, buffer, shader->input_signature, reg_maps, args->vp_mode);
 
     /* Base Shader Body */

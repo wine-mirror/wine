@@ -2506,6 +2506,9 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
             memcpy(ptr, e->semantic_name, len + 1);
             shader->input_signature[e->register_idx].semantic_name = ptr;
             ptr += len + 1;
+
+            if (!strcmp(e->semantic_name, "SV_POSITION"))
+                shader->reg_maps.vpos = 1;
         }
     }
 
