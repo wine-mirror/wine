@@ -2024,6 +2024,14 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
 
     face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags );
     family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
+    if (strlenW(family->FamilyName) >= LF_FACESIZE)
+    {
+        ERR("Ignoring %s because name is too long\n", debugstr_w(family->FamilyName));
+        release_face( face );
+        release_family( family );
+        return;
+    }
+
     if (insert_face_in_family_list( face, family ))
     {
         if (flags & ADDFONT_ADD_TO_CACHE)
