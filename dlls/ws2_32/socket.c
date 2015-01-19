@@ -5628,7 +5628,11 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     const char *node;
 
     *res = NULL;
-    if (!nodename && !servname) return WSAHOST_NOT_FOUND;
+    if (!nodename && !servname)
+    {
+        SetLastError(WSAHOST_NOT_FOUND);
+        return WSAHOST_NOT_FOUND;
+    }
 
     if (!nodename)
         node = NULL;
@@ -5749,6 +5753,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     } else
         result = convert_eai_u2w(result);
 
+    SetLastError(result);
     return result;
 
 outofmem:
