@@ -11085,6 +11085,7 @@ static void test_xmlns_attribute(void)
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = _bstr_("urn:schemas-microsoft-com:datatypes");
     hr = IXMLDOMAttribute_put_nodeValue(pAttribute, v);
+    ok(hr == S_OK, "ret %08x\n", hr );
 
     hr = IXMLDOMElement_setAttributeNode(root, pAttribute, NULL);
     ok(hr == S_OK, "ret %08x\n", hr );
