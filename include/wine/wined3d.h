@@ -1246,6 +1246,12 @@ enum wined3d_display_rotation
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 
+#define WINED3D_CKEY_COLORSPACE                                 0x00000001
+#define WINED3D_CKEY_DST_BLT                                    0x00000002
+#define WINED3D_CKEY_DST_OVERLAY                                0x00000004
+#define WINED3D_CKEY_SRC_BLT                                    0x00000008
+#define WINED3D_CKEY_SRC_OVERLAY                                0x00000010
+
 /* dwDDFX */
 /* arithmetic stretching along y axis */
 #define WINEDDBLTFX_ARITHSTRETCHY                               0x00000001
@@ -1295,35 +1301,6 @@ enum wined3d_display_rotation
 #define WINEDDBLT_DEPTHFILL                                     0x02000000
 #define WINEDDBLT_DONOTWAIT                                     0x08000000
 #define WINEDDBLT_ALPHATEST                                     0x80000000
-
-/* DDSURFACEDESC.dwFlags */
-#define WINEDDSD_CAPS                                           0x00000001
-#define WINEDDSD_HEIGHT                                         0x00000002
-#define WINEDDSD_WIDTH                                          0x00000004
-#define WINEDDSD_PITCH                                          0x00000008
-#define WINEDDSD_BACKBUFFERCOUNT                                0x00000020
-#define WINEDDSD_ZBUFFERBITDEPTH                                0x00000040
-#define WINEDDSD_ALPHABITDEPTH                                  0x00000080
-#define WINEDDSD_LPSURFACE                                      0x00000800
-#define WINEDDSD_PIXELFORMAT                                    0x00001000
-#define WINEDDSD_CKDESTOVERLAY                                  0x00002000
-#define WINEDDSD_CKDESTBLT                                      0x00004000
-#define WINEDDSD_CKSRCOVERLAY                                   0x00008000
-#define WINEDDSD_CKSRCBLT                                       0x00010000
-#define WINEDDSD_MIPMAPCOUNT                                    0x00020000
-#define WINEDDSD_REFRESHRATE                                    0x00040000
-#define WINEDDSD_LINEARSIZE                                     0x00080000
-#define WINEDDSD_TEXTURESTAGE                                   0x00100000
-#define WINEDDSD_FVF                                            0x00200000
-#define WINEDDSD_SRCVBHANDLE                                    0x00400000
-#define WINEDDSD_ALL                                            0x007ff9ee
-
-/* Set/Get Colour Key Flags */
-#define WINEDDCKEY_COLORSPACE                                   0x00000001 /* Struct is single colour space */
-#define WINEDDCKEY_DESTBLT                                      0x00000002 /* To be used as dest for blt */
-#define WINEDDCKEY_DESTOVERLAY                                  0x00000004 /* To be used as dest for CK overlays */
-#define WINEDDCKEY_SRCBLT                                       0x00000008 /* To be used as src for blt */
-#define WINEDDCKEY_SRCOVERLAY                                   0x00000010 /* To be used as src for CK overlays */
 
 /* dwFlags for GetBltStatus */
 #define WINEDDGBS_CANBLT                                        0x00000001

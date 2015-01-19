@@ -1821,11 +1821,11 @@ void surface_load(struct wined3d_surface *surface, BOOL srgb)
     if (surface->resource.pool == WINED3D_POOL_SCRATCH)
         ERR("Not supported on scratch surfaces.\n");
 
-    ck_changed = !(surface->flags & SFLAG_GLCKEY) != !(surface->container->color_key_flags & WINEDDSD_CKSRCBLT);
+    ck_changed = !(surface->flags & SFLAG_GLCKEY) != !(surface->container->color_key_flags & WINED3D_CKEY_SRC_BLT);
 
     /* Reload if either the texture and sysmem have different ideas about the
      * color key, or the actual key values changed. */
-    if (ck_changed || ((surface->container->color_key_flags & WINEDDSD_CKSRCBLT)
+    if (ck_changed || ((surface->container->color_key_flags & WINED3D_CKEY_SRC_BLT)
             && (surface->gl_color_key.color_space_low_value
             != surface->container->src_blt_color_key.color_space_low_value
             || surface->gl_color_key.color_space_high_value
@@ -3685,12 +3685,12 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         else if (flags & WINEDDBLT_KEYSRCOVERRIDE)
         {
             /* Use color key from DDBltFx */
-            wined3d_texture_set_color_key(src_surface->container, WINEDDSD_CKSRCBLT, &DDBltFx->ddckSrcColorkey);
+            wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT, &DDBltFx->ddckSrcColorkey);
         }
         else
         {
             /* Do not use color key */
-            wined3d_texture_set_color_key(src_surface->container, WINEDDSD_CKSRCBLT, NULL);
+            wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT, NULL);
         }
 
         surface_blt_to_drawable(device, filter,
@@ -3698,8 +3698,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
                 src_surface, src_rect, dst_surface, dst_rect);
 
         /* Restore the color key parameters */
-        wined3d_texture_set_color_key(src_surface->container, WINEDDSD_CKSRCBLT,
-                (old_color_key_flags & WINEDDSD_CKSRCBLT) ? &old_blt_key : NULL);
+        wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT,
+                (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
 
         surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
         surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
@@ -4178,7 +4178,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
 
-    if (texture->color_key_flags & WINEDDSD_CKSRCBLT)
+    if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
     {
         surface->flags |= SFLAG_GLCKEY;
         surface->gl_color_key = texture->src_blt_color_key;

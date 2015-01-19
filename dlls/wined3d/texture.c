@@ -557,7 +557,7 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
 {
     TRACE("texture %p, flags %#x, color_key %p.\n", texture, flags, color_key);
 
-    if (flags & WINEDDCKEY_COLORSPACE)
+    if (flags & WINED3D_CKEY_COLORSPACE)
     {
         FIXME("Unhandled flags %#x.\n", flags);
         return WINED3DERR_INVALIDCALL;
@@ -565,47 +565,47 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
 
     if (color_key)
     {
-        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        switch (flags & ~WINED3D_CKEY_COLORSPACE)
         {
-            case WINEDDCKEY_DESTBLT:
+            case WINED3D_CKEY_DST_BLT:
                 texture->dst_blt_color_key = *color_key;
-                texture->color_key_flags |= WINEDDSD_CKDESTBLT;
+                texture->color_key_flags |= WINED3D_CKEY_DST_BLT;
                 break;
 
-            case WINEDDCKEY_DESTOVERLAY:
+            case WINED3D_CKEY_DST_OVERLAY:
                 texture->dst_overlay_color_key = *color_key;
-                texture->color_key_flags |= WINEDDSD_CKDESTOVERLAY;
+                texture->color_key_flags |= WINED3D_CKEY_DST_OVERLAY;
                 break;
 
-            case WINEDDCKEY_SRCOVERLAY:
-                texture->src_overlay_color_key = *color_key;
-                texture->color_key_flags |= WINEDDSD_CKSRCOVERLAY;
-                break;
-
-            case WINEDDCKEY_SRCBLT:
+            case WINED3D_CKEY_SRC_BLT:
                 texture->src_blt_color_key = *color_key;
-                texture->color_key_flags |= WINEDDSD_CKSRCBLT;
+                texture->color_key_flags |= WINED3D_CKEY_SRC_BLT;
+                break;
+
+            case WINED3D_CKEY_SRC_OVERLAY:
+                texture->src_overlay_color_key = *color_key;
+                texture->color_key_flags |= WINED3D_CKEY_SRC_OVERLAY;
                 break;
         }
     }
     else
     {
-        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        switch (flags & ~WINED3D_CKEY_COLORSPACE)
         {
-            case WINEDDCKEY_DESTBLT:
-                texture->color_key_flags &= ~WINEDDSD_CKDESTBLT;
+            case WINED3D_CKEY_DST_BLT:
+                texture->color_key_flags &= ~WINED3D_CKEY_DST_BLT;
                 break;
 
-            case WINEDDCKEY_DESTOVERLAY:
-                texture->color_key_flags &= ~WINEDDSD_CKDESTOVERLAY;
+            case WINED3D_CKEY_DST_OVERLAY:
+                texture->color_key_flags &= ~WINED3D_CKEY_DST_OVERLAY;
                 break;
 
-            case WINEDDCKEY_SRCOVERLAY:
-                texture->color_key_flags &= ~WINEDDSD_CKSRCOVERLAY;
+            case WINED3D_CKEY_SRC_BLT:
+                texture->color_key_flags &= ~WINED3D_CKEY_SRC_BLT;
                 break;
 
-            case WINEDDCKEY_SRCBLT:
-                texture->color_key_flags &= ~WINEDDSD_CKSRCBLT;
+            case WINED3D_CKEY_SRC_OVERLAY:
+                texture->color_key_flags &= ~WINED3D_CKEY_SRC_OVERLAY;
                 break;
         }
     }

@@ -535,7 +535,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
      * WINED3D_RS_COLORKEYENABLE state(which is d3d <= 3 only). The texture
      * function will call alpha in case it finds some texture + colorkeyenable
      * combination which needs extra care. */
-    if (state->textures[0] && (state->textures[0]->color_key_flags & WINEDDSD_CKSRCBLT))
+    if (state->textures[0] && (state->textures[0]->color_key_flags & WINED3D_CKEY_SRC_BLT))
         enable_ckey = TRUE;
 
     if (enable_ckey || context->last_was_ckey)
@@ -3214,7 +3214,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            if (texture->color_key_flags & WINEDDSD_CKSRCBLT && !texture->resource.format->alpha_size)
+            if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT && !texture->resource.format->alpha_size)
             {
                 /* Color keying needs to pass alpha values from the texture through to have the alpha test work
                  * properly. On the other hand applications can still use texture combiners apparently. This code
