@@ -1032,9 +1032,8 @@ err_out:
 static void device_free_sampler(struct wine_rb_entry *entry, void *context)
 {
     struct wined3d_sampler *sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
-    struct wined3d_device *device = context;
 
-    wine_rb_remove(&device->samplers, &sampler->desc);
+    wined3d_sampler_decref(sampler);
 }
 
 HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
@@ -1071,7 +1070,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         resource->resource_ops->resource_unload(resource);
     }
 
-    wine_rb_for_each_entry(&device->samplers, device_free_sampler, device);
+    wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
     /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
      * private data, it might contain opengl pointers
@@ -4632,6 +4631,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->exStyle = exStyle;
     }
 
+    wine_rb_clear(&device->samplers, device_free_sampler, NULL);
+
     if (reset_state)
     {
         TRACE("Resetting stateblock.\n");
@@ -4676,8 +4677,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     swapchain_update_render_to_fbo(swapchain);
     swapchain_update_draw_bindings(swapchain);
-
-    wine_rb_for_each_entry(&device->samplers, device_free_sampler, device);
 
     if (reset_state && device->d3d_initialized)
         hr = create_primary_opengl_context(device, swapchain);
