@@ -382,6 +382,7 @@ static void test_CLSIDFromProgID(void)
 
         clsid = CLSID_NULL;
         hr = CLSIDFromProgID(progidW, &clsid);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         /* it returns generated CLSID here */
         ok(!IsEqualCLSID(&clsid, &CLSID_non_existent) && !IsEqualCLSID(&clsid, &CLSID_NULL),
                  "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
@@ -1158,6 +1159,7 @@ static void test_CoGetPSClsid(void)
         ok(!res, "RegCreateKeyEx returned %d\n", res);
         res = RegCreateKeyExA(hkey, "ProxyStubClsid32",
                               0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey_psclsid, NULL);
+        ok(!res, "RegCreateKeyEx returned %d\n", res);
         res = RegSetValueExA(hkey_psclsid, NULL, 0, REG_SZ, (const BYTE *)clsidA, strlen(clsidA)+1);
         ok(!res, "RegSetValueEx returned %d\n", res);
         RegCloseKey(hkey_psclsid);
