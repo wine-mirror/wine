@@ -326,7 +326,7 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_QueryResourceResidency,
     dxgi_device_SetGPUThreadPriority,
     dxgi_device_GetGPUThreadPriority,
-    /* IWineDXGIAdapter methods */
+    /* IWineDXGIDevice methods */
     dxgi_device_create_surface,
     dxgi_device_create_swapchain,
 };
