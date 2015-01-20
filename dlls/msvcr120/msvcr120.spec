@@ -1819,8 +1819,8 @@
 @ stub _vprintf_s_l
 @ cdecl _vscprintf(str ptr) MSVCRT__vscprintf
 @ stub _vscprintf_l
-@ stub _vscprintf_p
-@ stub _vscprintf_p_l
+@ cdecl _vscprintf_p(str ptr) MSVCRT__vscprintf_p
+@ cdecl _vscprintf_p_l(str ptr ptr) MSVCRT__vscprintf_p_l
 @ cdecl _vscwprintf(wstr ptr) MSVCRT__vscwprintf
 @ cdecl _vscwprintf_l(wstr ptr ptr) MSVCRT__vscwprintf_l
 @ cdecl _vscwprintf_p(wstr ptr) MSVCRT__vscwprintf_p

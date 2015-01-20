@@ -1059,7 +1059,7 @@
 @ cdecl _utime(str ptr)
 @ cdecl _vscprintf(str ptr) MSVCRT__vscprintf
 # stub _vscprintf_l(str ptr ptr)
-# stub _vscprintf_p_l(str ptr ptr)
+@ cdecl _vscprintf_p_l(str ptr ptr) MSVCRT__vscprintf_p_l
 @ cdecl _vscwprintf(wstr ptr) MSVCRT__vscwprintf
 @ cdecl _vscwprintf_l(wstr ptr ptr) MSVCRT__vscwprintf_l
 @ cdecl _vscwprintf_p_l(wstr ptr ptr) MSVCRT__vscwprintf_p_l

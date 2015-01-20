@@ -825,6 +825,42 @@ int CDECL MSVCRT__vscprintf( const char *format, __ms_va_list valist )
 }
 
 /*********************************************************************
+ *		_vscprintf_p_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__vscprintf_p_l(const char *format,
+        MSVCRT__locale_t locale, __ms_va_list args)
+{
+    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    struct _str_ctx_a puts_ctx = {INT_MAX, NULL};
+    int ret;
+
+    memset(args_ctx, 0, sizeof(args_ctx));
+
+    ret = create_positional_ctx_a(args_ctx, format, args);
+    if(ret < 0)  {
+        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return ret;
+    } else if(ret == 0) {
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, FALSE, TRUE,
+                arg_clbk_valist, NULL, &args);
+    } else {
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, TRUE, TRUE,
+                arg_clbk_positional, args_ctx, NULL);
+    }
+
+    return ret;
+}
+
+/*********************************************************************
+ *		_vscprintf_p (MSVCR80.@)
+ */
+int CDECL MSVCRT__vscprintf_p(const char *format, __ms_va_list argptr)
+{
+    return MSVCRT__vscprintf_p_l(format, NULL, argptr);
+}
+
+/*********************************************************************
  *		_snprintf (MSVCRT.@)
  */
 int CDECL MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
