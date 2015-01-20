@@ -89,7 +89,7 @@ static BOOL RpcReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD 
 {
     struct rpcThreadArgs rpcargs;
     HANDLE thread;
-    DWORD threadId;
+    DWORD threadId, ret;
 
     rpcargs.returnValue = 0;
     rpcargs.lastError = GetLastError();
@@ -102,7 +102,8 @@ static BOOL RpcReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD 
 
     thread = CreateThread(NULL, 0, rpcThreadMain, (void *)&rpcargs, 0, &threadId);
     ok(thread != NULL, "CreateThread failed. %d\n", GetLastError());
-    ok(WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed with %d.\n", GetLastError());
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed with %d.\n", GetLastError());
     CloseHandle(thread);
 
     SetLastError(rpcargs.lastError);
