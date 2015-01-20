@@ -4533,6 +4533,7 @@ static void test_messages(void)
     MSG msg;
     LRESULT res;
     POINT pos;
+    BOOL ret;
 
     flush_sequence();
 
@@ -4819,7 +4820,8 @@ static void test_messages(void)
 
     flush_events();
     flush_sequence();
-    ok(DrawMenuBar(hwnd), "DrawMenuBar failed: %d\n", GetLastError());
+    ret = DrawMenuBar(hwnd);
+    ok(ret, "DrawMenuBar failed: %d\n", GetLastError());
     flush_events();
     ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar", FALSE);
     ok(SetCursorPos(pos.x, pos.y), "SetCursorPos failed\n");
@@ -4831,7 +4833,8 @@ static void test_messages(void)
     ok(hwnd != 0, "Failed to create custom dialog window\n");
     flush_events();
     flush_sequence();
-    ok(DrawMenuBar(hwnd), "DrawMenuBar failed: %d\n", GetLastError());
+    ret = DrawMenuBar(hwnd);
+    ok(ret, "DrawMenuBar failed: %d\n", GetLastError());
     flush_events();
     ok_sequence(WmEmptySeq, "DrawMenuBar for a child window", FALSE);
 
