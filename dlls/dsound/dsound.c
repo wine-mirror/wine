@@ -119,6 +119,537 @@ static void _dump_DSBCAPS(DWORD xmask) {
             TRACE("%s ",flags[i].name);
 }
 
+/*******************************************************************************
+ *        DirectSoundDevice
+ */
+static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
+{
+    DirectSoundDevice * device;
+    TRACE("(%p)\n", ppDevice);
+
+    /* Allocate memory */
+    device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DirectSoundDevice));
+    if (device == NULL) {
+        WARN("out of memory\n");
+        return DSERR_OUTOFMEMORY;
+    }
+
+    device->ref            = 1;
+    device->priolevel      = DSSCL_NORMAL;
+    device->state          = STATE_STOPPED;
+    device->speaker_config = DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
+
+    DSOUND_ParseSpeakerConfig(device);
+
+    /* 3D listener initial parameters */
+    device->ds3dl.dwSize   = sizeof(DS3DLISTENER);
+    device->ds3dl.vPosition.x = 0.0;
+    device->ds3dl.vPosition.y = 0.0;
+    device->ds3dl.vPosition.z = 0.0;
+    device->ds3dl.vVelocity.x = 0.0;
+    device->ds3dl.vVelocity.y = 0.0;
+    device->ds3dl.vVelocity.z = 0.0;
+    device->ds3dl.vOrientFront.x = 0.0;
+    device->ds3dl.vOrientFront.y = 0.0;
+    device->ds3dl.vOrientFront.z = 1.0;
+    device->ds3dl.vOrientTop.x = 0.0;
+    device->ds3dl.vOrientTop.y = 1.0;
+    device->ds3dl.vOrientTop.z = 0.0;
+    device->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
+    device->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
+    device->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
+
+    device->prebuf = ds_snd_queue_max;
+    device->guid = GUID_NULL;
+
+    /* Set default wave format (may need it for waveOutOpen) */
+    device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
+    device->primary_pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
+    if (!device->pwfx || !device->primary_pwfx) {
+        WARN("out of memory\n");
+        HeapFree(GetProcessHeap(),0,device->primary_pwfx);
+        HeapFree(GetProcessHeap(),0,device->pwfx);
+        HeapFree(GetProcessHeap(),0,device);
+        return DSERR_OUTOFMEMORY;
+    }
+
+    device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
+    device->pwfx->nSamplesPerSec = 22050;
+    device->pwfx->wBitsPerSample = 8;
+    device->pwfx->nChannels = 2;
+    device->pwfx->nBlockAlign = device->pwfx->wBitsPerSample * device->pwfx->nChannels / 8;
+    device->pwfx->nAvgBytesPerSec = device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign;
+    device->pwfx->cbSize = 0;
+    memcpy(device->primary_pwfx, device->pwfx, sizeof(*device->pwfx));
+
+    InitializeCriticalSection(&(device->mixlock));
+    device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
+
+    RtlInitializeResource(&(device->buffer_list_lock));
+
+   *ppDevice = device;
+
+    return DS_OK;
+}
+
+static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
+{
+    ULONG ref = InterlockedIncrement(&(device->ref));
+    TRACE("(%p) ref was %d\n", device, ref - 1);
+    return ref;
+}
+
+ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
+{
+    HRESULT hr;
+    ULONG ref = InterlockedDecrement(&(device->ref));
+    TRACE("(%p) ref was %u\n", device, ref + 1);
+    if (!ref) {
+        int i;
+
+        SetEvent(device->sleepev);
+        if (device->thread) {
+            WaitForSingleObject(device->thread, INFINITE);
+            CloseHandle(device->thread);
+        }
+        CloseHandle(device->sleepev);
+
+        EnterCriticalSection(&DSOUND_renderers_lock);
+        list_remove(&device->entry);
+        LeaveCriticalSection(&DSOUND_renderers_lock);
+
+        /* It is allowed to release this object even when buffers are playing */
+        if (device->buffers) {
+            WARN("%d secondary buffers not released\n", device->nrofbuffers);
+            for( i=0;i<device->nrofbuffers;i++)
+                secondarybuffer_destroy(device->buffers[i]);
+        }
+
+        hr = DSOUND_PrimaryDestroy(device);
+        if (hr != DS_OK)
+            WARN("DSOUND_PrimaryDestroy failed\n");
+
+        if(device->client)
+            IAudioClient_Release(device->client);
+        if(device->render)
+            IAudioRenderClient_Release(device->render);
+        if(device->clock)
+            IAudioClock_Release(device->clock);
+        if(device->volume)
+            IAudioStreamVolume_Release(device->volume);
+
+        HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
+        HeapFree(GetProcessHeap(), 0, device->mix_buffer);
+        HeapFree(GetProcessHeap(), 0, device->buffer);
+        RtlDeleteResource(&device->buffer_list_lock);
+        device->mixlock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&device->mixlock);
+        HeapFree(GetProcessHeap(),0,device);
+        TRACE("(%p) released\n", device);
+    }
+    return ref;
+}
+
+BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
+        DWORD depth, WORD channels)
+{
+    WAVEFORMATEX fmt, *junk;
+    HRESULT hr;
+
+    fmt.wFormatTag = WAVE_FORMAT_PCM;
+    fmt.nChannels = channels;
+    fmt.nSamplesPerSec = rate;
+    fmt.wBitsPerSample = depth;
+    fmt.nBlockAlign = (channels * depth) / 8;
+    fmt.nAvgBytesPerSec = rate * fmt.nBlockAlign;
+    fmt.cbSize = 0;
+
+    hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED, &fmt, &junk);
+    if(SUCCEEDED(hr))
+        CoTaskMemFree(junk);
+
+    return hr == S_OK;
+}
+
+HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcGUID)
+{
+    HRESULT hr = DS_OK;
+    GUID devGUID;
+    DirectSoundDevice *device;
+    IMMDevice *mmdevice;
+
+    TRACE("(%p,%s)\n",ppDevice,debugstr_guid(lpcGUID));
+
+    if (*ppDevice != NULL) {
+        WARN("already initialized\n");
+        return DSERR_ALREADYINITIALIZED;
+    }
+
+    /* Default device? */
+    if (!lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL))
+        lpcGUID = &DSDEVID_DefaultPlayback;
+
+    if(IsEqualGUID(lpcGUID, &DSDEVID_DefaultCapture) ||
+            IsEqualGUID(lpcGUID, &DSDEVID_DefaultVoiceCapture))
+        return DSERR_NODRIVER;
+
+    if (GetDeviceID(lpcGUID, &devGUID) != DS_OK) {
+        WARN("invalid parameter: lpcGUID\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    hr = get_mmdevice(eRender, &devGUID, &mmdevice);
+    if(FAILED(hr))
+        return hr;
+
+    EnterCriticalSection(&DSOUND_renderers_lock);
+
+    LIST_FOR_EACH_ENTRY(device, &DSOUND_renderers, DirectSoundDevice, entry){
+        if(IsEqualGUID(&device->guid, &devGUID)){
+            IMMDevice_Release(mmdevice);
+            DirectSoundDevice_AddRef(device);
+            *ppDevice = device;
+            LeaveCriticalSection(&DSOUND_renderers_lock);
+            return DS_OK;
+        }
+    }
+
+    hr = DirectSoundDevice_Create(&device);
+    if(FAILED(hr)){
+        WARN("DirectSoundDevice_Create failed\n");
+        IMMDevice_Release(mmdevice);
+        LeaveCriticalSection(&DSOUND_renderers_lock);
+        return hr;
+    }
+
+    device->mmdevice = mmdevice;
+    device->guid = devGUID;
+    device->sleepev = CreateEventW(0, 0, 0, 0);
+
+    hr = DSOUND_ReopenDevice(device, FALSE);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, device);
+        LeaveCriticalSection(&DSOUND_renderers_lock);
+        IMMDevice_Release(mmdevice);
+        WARN("DSOUND_ReopenDevice failed: %08x\n", hr);
+        return hr;
+    }
+
+    ZeroMemory(&device->drvcaps, sizeof(device->drvcaps));
+
+    if(DSOUND_check_supported(device->client, 11025, 8, 1) ||
+            DSOUND_check_supported(device->client, 22050, 8, 1) ||
+            DSOUND_check_supported(device->client, 44100, 8, 1) ||
+            DSOUND_check_supported(device->client, 48000, 8, 1) ||
+            DSOUND_check_supported(device->client, 96000, 8, 1))
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYMONO;
+
+    if(DSOUND_check_supported(device->client, 11025, 16, 1) ||
+            DSOUND_check_supported(device->client, 22050, 16, 1) ||
+            DSOUND_check_supported(device->client, 44100, 16, 1) ||
+            DSOUND_check_supported(device->client, 48000, 16, 1) ||
+            DSOUND_check_supported(device->client, 96000, 16, 1))
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYMONO;
+
+    if(DSOUND_check_supported(device->client, 11025, 8, 2) ||
+            DSOUND_check_supported(device->client, 22050, 8, 2) ||
+            DSOUND_check_supported(device->client, 44100, 8, 2) ||
+            DSOUND_check_supported(device->client, 48000, 8, 2) ||
+            DSOUND_check_supported(device->client, 96000, 8, 2))
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO;
+
+    if(DSOUND_check_supported(device->client, 11025, 16, 2) ||
+            DSOUND_check_supported(device->client, 22050, 16, 2) ||
+            DSOUND_check_supported(device->client, 44100, 16, 2) ||
+            DSOUND_check_supported(device->client, 48000, 16, 2) ||
+            DSOUND_check_supported(device->client, 96000, 16, 2))
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
+
+    /* the dsound mixer supports all of the following */
+    device->drvcaps.dwFlags |= DSCAPS_SECONDARY8BIT | DSCAPS_SECONDARY16BIT;
+    device->drvcaps.dwFlags |= DSCAPS_SECONDARYMONO | DSCAPS_SECONDARYSTEREO;
+    device->drvcaps.dwFlags |= DSCAPS_CONTINUOUSRATE;
+
+    device->drvcaps.dwPrimaryBuffers = 1;
+    device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+    device->drvcaps.dwMaxHwMixingAllBuffers = 16;
+    device->drvcaps.dwMaxHwMixingStaticBuffers = 1;
+    device->drvcaps.dwMaxHwMixingStreamingBuffers = 1;
+    device->drvcaps.dwFreeHwMixingAllBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
+    device->drvcaps.dwFreeHwMixingStaticBuffers = device->drvcaps.dwMaxHwMixingStaticBuffers;
+    device->drvcaps.dwFreeHwMixingStreamingBuffers = device->drvcaps.dwMaxHwMixingStreamingBuffers;
+
+    ZeroMemory(&device->volpan, sizeof(device->volpan));
+
+    hr = DSOUND_PrimaryCreate(device);
+    if (hr == DS_OK) {
+        device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
+        SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
+    } else
+        WARN("DSOUND_PrimaryCreate failed: %08x\n", hr);
+
+    *ppDevice = device;
+    list_add_tail(&DSOUND_renderers, &device->entry);
+
+    LeaveCriticalSection(&DSOUND_renderers_lock);
+
+    return hr;
+}
+
+HRESULT DirectSoundDevice_CreateSoundBuffer(
+    DirectSoundDevice * device,
+    LPCDSBUFFERDESC dsbd,
+    LPLPDIRECTSOUNDBUFFER ppdsb,
+    LPUNKNOWN lpunk,
+    BOOL from8)
+{
+    HRESULT hres = DS_OK;
+    TRACE("(%p,%p,%p,%p)\n",device,dsbd,ppdsb,lpunk);
+
+    if (device == NULL) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (dsbd == NULL) {
+        WARN("invalid parameter: dsbd == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (dsbd->dwSize != sizeof(DSBUFFERDESC) &&
+        dsbd->dwSize != sizeof(DSBUFFERDESC1)) {
+        WARN("invalid parameter: dsbd\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (ppdsb == NULL) {
+        WARN("invalid parameter: ppdsb == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+    *ppdsb = NULL;
+
+    if (TRACE_ON(dsound)) {
+        TRACE("(structsize=%d)\n",dsbd->dwSize);
+        TRACE("(flags=0x%08x:\n",dsbd->dwFlags);
+        _dump_DSBCAPS(dsbd->dwFlags);
+        TRACE(")\n");
+        TRACE("(bufferbytes=%d)\n",dsbd->dwBufferBytes);
+        TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
+    }
+
+    if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) &&
+        dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
+        device->drvcaps.dwFreeHwMixingAllBuffers == 0)
+    {
+        WARN("ran out of emulated hardware buffers\n");
+        return DSERR_ALLOCATED;
+    }
+
+    if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
+        if (dsbd->lpwfxFormat != NULL) {
+            WARN("invalid parameter: dsbd->lpwfxFormat must be NULL for "
+                 "primary buffer\n");
+            return DSERR_INVALIDPARAM;
+        }
+
+        if (device->primary) {
+            WARN("Primary Buffer already created\n");
+            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
+            *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
+        } else {
+            hres = primarybuffer_create(device, &device->primary, dsbd);
+            if (device->primary) {
+                *ppdsb = (IDirectSoundBuffer*)&device->primary->IDirectSoundBuffer8_iface;
+                device->primary->dsbd.dwFlags &= ~(DSBCAPS_LOCHARDWARE | DSBCAPS_LOCSOFTWARE);
+                device->primary->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
+            } else
+                WARN("primarybuffer_create() failed\n");
+        }
+    } else {
+        IDirectSoundBufferImpl * dsb;
+        WAVEFORMATEXTENSIBLE *pwfxe;
+
+        if (dsbd->lpwfxFormat == NULL) {
+            WARN("invalid parameter: dsbd->lpwfxFormat can't be NULL for "
+                 "secondary buffer\n");
+            return DSERR_INVALIDPARAM;
+        }
+        pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
+
+        if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        {
+            /* check if cbSize is at least 22 bytes */
+            if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
+            {
+                WARN("Too small a cbSize %u\n", pwfxe->Format.cbSize);
+                return DSERR_INVALIDPARAM;
+            }
+
+            /* cbSize should be 22 bytes, with one possible exception */
+            if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)) &&
+                !((IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) || IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) &&
+                pwfxe->Format.cbSize == sizeof(WAVEFORMATEXTENSIBLE)))
+            {
+                WARN("Too big a cbSize %u\n", pwfxe->Format.cbSize);
+                return DSERR_CONTROLUNAVAIL;
+            }
+
+            if ((!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) && (!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
+            {
+                if (!IsEqualGUID(&pwfxe->SubFormat, &GUID_NULL))
+                    FIXME("SubFormat %s not supported right now.\n", debugstr_guid(&pwfxe->SubFormat));
+                return DSERR_INVALIDPARAM;
+            }
+            if (pwfxe->Samples.wValidBitsPerSample > dsbd->lpwfxFormat->wBitsPerSample)
+            {
+                WARN("Samples.wValidBitsPerSample(%d) > Format.wBitsPerSample (%d)\n", pwfxe->Samples.wValidBitsPerSample, pwfxe->Format.wBitsPerSample);
+                return DSERR_INVALIDPARAM;
+            }
+            if (pwfxe->Samples.wValidBitsPerSample && pwfxe->Samples.wValidBitsPerSample < dsbd->lpwfxFormat->wBitsPerSample)
+            {
+                FIXME("Non-packed formats not supported right now: %d/%d\n", pwfxe->Samples.wValidBitsPerSample, dsbd->lpwfxFormat->wBitsPerSample);
+                return DSERR_CONTROLUNAVAIL;
+            }
+        }
+
+        TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"
+              "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+              dsbd->lpwfxFormat->wFormatTag, dsbd->lpwfxFormat->nChannels,
+              dsbd->lpwfxFormat->nSamplesPerSec,
+              dsbd->lpwfxFormat->nAvgBytesPerSec,
+              dsbd->lpwfxFormat->nBlockAlign,
+              dsbd->lpwfxFormat->wBitsPerSample, dsbd->lpwfxFormat->cbSize);
+
+        if (from8 && (dsbd->dwFlags & DSBCAPS_CTRL3D) && (dsbd->lpwfxFormat->nChannels != 1)) {
+            WARN("invalid parameter: 3D buffer format must be mono\n");
+            return DSERR_INVALIDPARAM;
+        }
+
+        hres = IDirectSoundBufferImpl_Create(device, &dsb, dsbd);
+        if (dsb) {
+            *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
+            if (dsbd->dwFlags & DSBCAPS_LOCHARDWARE)
+                device->drvcaps.dwFreeHwMixingAllBuffers--;
+        } else
+            WARN("IDirectSoundBufferImpl_Create failed\n");
+   }
+
+   return hres;
+}
+
+HRESULT DirectSoundDevice_DuplicateSoundBuffer(
+    DirectSoundDevice * device,
+    LPDIRECTSOUNDBUFFER psb,
+    LPLPDIRECTSOUNDBUFFER ppdsb)
+{
+    HRESULT hres = DS_OK;
+    IDirectSoundBufferImpl* dsb;
+    TRACE("(%p,%p,%p)\n",device,psb,ppdsb);
+
+    if (device == NULL) {
+        WARN("not initialized\n");
+        return DSERR_UNINITIALIZED;
+    }
+
+    if (psb == NULL) {
+        WARN("invalid parameter: psb == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (ppdsb == NULL) {
+        WARN("invalid parameter: ppdsb == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    /* make sure we have a secondary buffer */
+    if (psb == (IDirectSoundBuffer *)&device->primary->IDirectSoundBuffer8_iface) {
+        WARN("trying to duplicate primary buffer\n");
+        *ppdsb = NULL;
+        return DSERR_INVALIDCALL;
+    }
+
+    /* duplicate the actual buffer implementation */
+    hres = IDirectSoundBufferImpl_Duplicate(device, &dsb, (IDirectSoundBufferImpl*)psb);
+    if (hres == DS_OK)
+        *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
+    else
+        WARN("IDirectSoundBufferImpl_Duplicate failed\n");
+
+    return hres;
+}
+
+/*
+ * Add secondary buffer to buffer list.
+ * Gets exclusive access to buffer for writing.
+ */
+HRESULT DirectSoundDevice_AddBuffer(
+    DirectSoundDevice * device,
+    IDirectSoundBufferImpl * pDSB)
+{
+    IDirectSoundBufferImpl **newbuffers;
+    HRESULT hr = DS_OK;
+
+    TRACE("(%p, %p)\n", device, pDSB);
+
+    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
+
+    if (device->buffers)
+        newbuffers = HeapReAlloc(GetProcessHeap(),0,device->buffers,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
+    else
+        newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
+
+    if (newbuffers) {
+        device->buffers = newbuffers;
+        device->buffers[device->nrofbuffers] = pDSB;
+        device->nrofbuffers++;
+        TRACE("buffer count is now %d\n", device->nrofbuffers);
+    } else {
+        ERR("out of memory for buffer list! Current buffer count is %d\n", device->nrofbuffers);
+        hr = DSERR_OUTOFMEMORY;
+    }
+
+    RtlReleaseResource(&(device->buffer_list_lock));
+
+    return hr;
+}
+
+/*
+ * Remove secondary buffer from buffer list.
+ * Gets exclusive access to buffer for writing.
+ */
+void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBufferImpl * pDSB)
+{
+    int i;
+
+    TRACE("(%p, %p)\n", device, pDSB);
+
+    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
+
+    if (device->nrofbuffers == 1) {
+        assert(device->buffers[0] == pDSB);
+        HeapFree(GetProcessHeap(), 0, device->buffers);
+        device->buffers = NULL;
+    } else {
+        for (i = 0; i < device->nrofbuffers; i++) {
+            if (device->buffers[i] == pDSB) {
+                /* Put the last buffer of the list in the (now empty) position */
+                device->buffers[i] = device->buffers[device->nrofbuffers - 1];
+                break;
+            }
+        }
+    }
+    device->nrofbuffers--;
+    TRACE("buffer count is now %d\n", device->nrofbuffers);
+
+    RtlReleaseResource(&(device->buffer_list_lock));
+}
+
+/*******************************************************************************
+ *      IUnknown Implementation for DirectSound
+ */
+
 static void directsound_destroy(IDirectSoundImpl *This)
 {
     if (This->device)
@@ -127,9 +658,6 @@ static void directsound_destroy(IDirectSoundImpl *This)
     TRACE("(%p) released\n", This);
 }
 
-/*******************************************************************************
- *      IUnknown Implementation for DirectSound
- */
 static inline IDirectSoundImpl *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, IDirectSoundImpl, IUnknown_inner);
@@ -663,531 +1191,4 @@ void DSOUND_ParseSpeakerConfig(DirectSoundDevice *device)
         default:
             WARN("unknown speaker_config %u\n", device->speaker_config);
     }
-}
-
-/*******************************************************************************
- *        DirectSoundDevice
- */
-static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
-{
-    DirectSoundDevice * device;
-    TRACE("(%p)\n", ppDevice);
-
-    /* Allocate memory */
-    device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DirectSoundDevice));
-    if (device == NULL) {
-        WARN("out of memory\n");
-        return DSERR_OUTOFMEMORY;
-    }
-
-    device->ref            = 1;
-    device->priolevel      = DSSCL_NORMAL;
-    device->state          = STATE_STOPPED;
-    device->speaker_config = DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
-
-    DSOUND_ParseSpeakerConfig(device);
-
-    /* 3D listener initial parameters */
-    device->ds3dl.dwSize   = sizeof(DS3DLISTENER);
-    device->ds3dl.vPosition.x = 0.0;
-    device->ds3dl.vPosition.y = 0.0;
-    device->ds3dl.vPosition.z = 0.0;
-    device->ds3dl.vVelocity.x = 0.0;
-    device->ds3dl.vVelocity.y = 0.0;
-    device->ds3dl.vVelocity.z = 0.0;
-    device->ds3dl.vOrientFront.x = 0.0;
-    device->ds3dl.vOrientFront.y = 0.0;
-    device->ds3dl.vOrientFront.z = 1.0;
-    device->ds3dl.vOrientTop.x = 0.0;
-    device->ds3dl.vOrientTop.y = 1.0;
-    device->ds3dl.vOrientTop.z = 0.0;
-    device->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
-    device->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
-    device->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
-
-    device->prebuf = ds_snd_queue_max;
-    device->guid = GUID_NULL;
-
-    /* Set default wave format (may need it for waveOutOpen) */
-    device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
-    device->primary_pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
-    if (!device->pwfx || !device->primary_pwfx) {
-        WARN("out of memory\n");
-        HeapFree(GetProcessHeap(),0,device->primary_pwfx);
-        HeapFree(GetProcessHeap(),0,device->pwfx);
-        HeapFree(GetProcessHeap(),0,device);
-        return DSERR_OUTOFMEMORY;
-    }
-
-    device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
-    device->pwfx->nSamplesPerSec = 22050;
-    device->pwfx->wBitsPerSample = 8;
-    device->pwfx->nChannels = 2;
-    device->pwfx->nBlockAlign = device->pwfx->wBitsPerSample * device->pwfx->nChannels / 8;
-    device->pwfx->nAvgBytesPerSec = device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign;
-    device->pwfx->cbSize = 0;
-    memcpy(device->primary_pwfx, device->pwfx, sizeof(*device->pwfx));
-
-    InitializeCriticalSection(&(device->mixlock));
-    device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
-
-    RtlInitializeResource(&(device->buffer_list_lock));
-
-   *ppDevice = device;
-
-    return DS_OK;
-}
-
-static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
-{
-    ULONG ref = InterlockedIncrement(&(device->ref));
-    TRACE("(%p) ref was %d\n", device, ref - 1);
-    return ref;
-}
-
-ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
-{
-    HRESULT hr;
-    ULONG ref = InterlockedDecrement(&(device->ref));
-    TRACE("(%p) ref was %u\n", device, ref + 1);
-    if (!ref) {
-        int i;
-
-        SetEvent(device->sleepev);
-        if (device->thread) {
-            WaitForSingleObject(device->thread, INFINITE);
-            CloseHandle(device->thread);
-        }
-        CloseHandle(device->sleepev);
-
-        EnterCriticalSection(&DSOUND_renderers_lock);
-        list_remove(&device->entry);
-        LeaveCriticalSection(&DSOUND_renderers_lock);
-
-        /* It is allowed to release this object even when buffers are playing */
-        if (device->buffers) {
-            WARN("%d secondary buffers not released\n", device->nrofbuffers);
-            for( i=0;i<device->nrofbuffers;i++)
-                secondarybuffer_destroy(device->buffers[i]);
-        }
-
-        hr = DSOUND_PrimaryDestroy(device);
-        if (hr != DS_OK)
-            WARN("DSOUND_PrimaryDestroy failed\n");
-
-        if(device->client)
-            IAudioClient_Release(device->client);
-        if(device->render)
-            IAudioRenderClient_Release(device->render);
-        if(device->clock)
-            IAudioClock_Release(device->clock);
-        if(device->volume)
-            IAudioStreamVolume_Release(device->volume);
-
-        HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
-        HeapFree(GetProcessHeap(), 0, device->mix_buffer);
-        HeapFree(GetProcessHeap(), 0, device->buffer);
-        RtlDeleteResource(&device->buffer_list_lock);
-        device->mixlock.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&device->mixlock);
-        HeapFree(GetProcessHeap(),0,device);
-        TRACE("(%p) released\n", device);
-    }
-    return ref;
-}
-
-BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
-        DWORD depth, WORD channels)
-{
-    WAVEFORMATEX fmt, *junk;
-    HRESULT hr;
-
-    fmt.wFormatTag = WAVE_FORMAT_PCM;
-    fmt.nChannels = channels;
-    fmt.nSamplesPerSec = rate;
-    fmt.wBitsPerSample = depth;
-    fmt.nBlockAlign = (channels * depth) / 8;
-    fmt.nAvgBytesPerSec = rate * fmt.nBlockAlign;
-    fmt.cbSize = 0;
-
-    hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED, &fmt, &junk);
-    if(SUCCEEDED(hr))
-        CoTaskMemFree(junk);
-
-    return hr == S_OK;
-}
-
-HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcGUID)
-{
-    HRESULT hr = DS_OK;
-    GUID devGUID;
-    DirectSoundDevice *device;
-    IMMDevice *mmdevice;
-
-    TRACE("(%p,%s)\n",ppDevice,debugstr_guid(lpcGUID));
-
-    if (*ppDevice != NULL) {
-        WARN("already initialized\n");
-        return DSERR_ALREADYINITIALIZED;
-    }
-
-    /* Default device? */
-    if (!lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL))
-        lpcGUID = &DSDEVID_DefaultPlayback;
-
-    if(IsEqualGUID(lpcGUID, &DSDEVID_DefaultCapture) ||
-            IsEqualGUID(lpcGUID, &DSDEVID_DefaultVoiceCapture))
-        return DSERR_NODRIVER;
-
-    if (GetDeviceID(lpcGUID, &devGUID) != DS_OK) {
-        WARN("invalid parameter: lpcGUID\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    hr = get_mmdevice(eRender, &devGUID, &mmdevice);
-    if(FAILED(hr))
-        return hr;
-
-    EnterCriticalSection(&DSOUND_renderers_lock);
-
-    LIST_FOR_EACH_ENTRY(device, &DSOUND_renderers, DirectSoundDevice, entry){
-        if(IsEqualGUID(&device->guid, &devGUID)){
-            IMMDevice_Release(mmdevice);
-            DirectSoundDevice_AddRef(device);
-            *ppDevice = device;
-            LeaveCriticalSection(&DSOUND_renderers_lock);
-            return DS_OK;
-        }
-    }
-
-    hr = DirectSoundDevice_Create(&device);
-    if(FAILED(hr)){
-        WARN("DirectSoundDevice_Create failed\n");
-        IMMDevice_Release(mmdevice);
-        LeaveCriticalSection(&DSOUND_renderers_lock);
-        return hr;
-    }
-
-    device->mmdevice = mmdevice;
-    device->guid = devGUID;
-    device->sleepev = CreateEventW(0, 0, 0, 0);
-
-    hr = DSOUND_ReopenDevice(device, FALSE);
-    if (FAILED(hr))
-    {
-        HeapFree(GetProcessHeap(), 0, device);
-        LeaveCriticalSection(&DSOUND_renderers_lock);
-        IMMDevice_Release(mmdevice);
-        WARN("DSOUND_ReopenDevice failed: %08x\n", hr);
-        return hr;
-    }
-
-    ZeroMemory(&device->drvcaps, sizeof(device->drvcaps));
-
-    if(DSOUND_check_supported(device->client, 11025, 8, 1) ||
-            DSOUND_check_supported(device->client, 22050, 8, 1) ||
-            DSOUND_check_supported(device->client, 44100, 8, 1) ||
-            DSOUND_check_supported(device->client, 48000, 8, 1) ||
-            DSOUND_check_supported(device->client, 96000, 8, 1))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYMONO;
-
-    if(DSOUND_check_supported(device->client, 11025, 16, 1) ||
-            DSOUND_check_supported(device->client, 22050, 16, 1) ||
-            DSOUND_check_supported(device->client, 44100, 16, 1) ||
-            DSOUND_check_supported(device->client, 48000, 16, 1) ||
-            DSOUND_check_supported(device->client, 96000, 16, 1))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYMONO;
-
-    if(DSOUND_check_supported(device->client, 11025, 8, 2) ||
-            DSOUND_check_supported(device->client, 22050, 8, 2) ||
-            DSOUND_check_supported(device->client, 44100, 8, 2) ||
-            DSOUND_check_supported(device->client, 48000, 8, 2) ||
-            DSOUND_check_supported(device->client, 96000, 8, 2))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT | DSCAPS_PRIMARYSTEREO;
-
-    if(DSOUND_check_supported(device->client, 11025, 16, 2) ||
-            DSOUND_check_supported(device->client, 22050, 16, 2) ||
-            DSOUND_check_supported(device->client, 44100, 16, 2) ||
-            DSOUND_check_supported(device->client, 48000, 16, 2) ||
-            DSOUND_check_supported(device->client, 96000, 16, 2))
-        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
-
-    /* the dsound mixer supports all of the following */
-    device->drvcaps.dwFlags |= DSCAPS_SECONDARY8BIT | DSCAPS_SECONDARY16BIT;
-    device->drvcaps.dwFlags |= DSCAPS_SECONDARYMONO | DSCAPS_SECONDARYSTEREO;
-    device->drvcaps.dwFlags |= DSCAPS_CONTINUOUSRATE;
-
-    device->drvcaps.dwPrimaryBuffers = 1;
-    device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
-    device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-    device->drvcaps.dwMaxHwMixingAllBuffers = 16;
-    device->drvcaps.dwMaxHwMixingStaticBuffers = 1;
-    device->drvcaps.dwMaxHwMixingStreamingBuffers = 1;
-    device->drvcaps.dwFreeHwMixingAllBuffers = device->drvcaps.dwMaxHwMixingAllBuffers;
-    device->drvcaps.dwFreeHwMixingStaticBuffers = device->drvcaps.dwMaxHwMixingStaticBuffers;
-    device->drvcaps.dwFreeHwMixingStreamingBuffers = device->drvcaps.dwMaxHwMixingStreamingBuffers;
-
-    ZeroMemory(&device->volpan, sizeof(device->volpan));
-
-    hr = DSOUND_PrimaryCreate(device);
-    if (hr == DS_OK) {
-        device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
-        SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
-    } else
-        WARN("DSOUND_PrimaryCreate failed: %08x\n", hr);
-
-    *ppDevice = device;
-    list_add_tail(&DSOUND_renderers, &device->entry);
-
-    LeaveCriticalSection(&DSOUND_renderers_lock);
-
-    return hr;
-}
-
-HRESULT DirectSoundDevice_CreateSoundBuffer(
-    DirectSoundDevice * device,
-    LPCDSBUFFERDESC dsbd,
-    LPLPDIRECTSOUNDBUFFER ppdsb,
-    LPUNKNOWN lpunk,
-    BOOL from8)
-{
-    HRESULT hres = DS_OK;
-    TRACE("(%p,%p,%p,%p)\n",device,dsbd,ppdsb,lpunk);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (dsbd == NULL) {
-        WARN("invalid parameter: dsbd == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (dsbd->dwSize != sizeof(DSBUFFERDESC) &&
-        dsbd->dwSize != sizeof(DSBUFFERDESC1)) {
-        WARN("invalid parameter: dsbd\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppdsb == NULL) {
-        WARN("invalid parameter: ppdsb == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-    *ppdsb = NULL;
-
-    if (TRACE_ON(dsound)) {
-        TRACE("(structsize=%d)\n",dsbd->dwSize);
-        TRACE("(flags=0x%08x:\n",dsbd->dwFlags);
-        _dump_DSBCAPS(dsbd->dwFlags);
-        TRACE(")\n");
-        TRACE("(bufferbytes=%d)\n",dsbd->dwBufferBytes);
-        TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
-    }
-
-    if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) &&
-        dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
-        device->drvcaps.dwFreeHwMixingAllBuffers == 0)
-    {
-        WARN("ran out of emulated hardware buffers\n");
-        return DSERR_ALLOCATED;
-    }
-
-    if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
-        if (dsbd->lpwfxFormat != NULL) {
-            WARN("invalid parameter: dsbd->lpwfxFormat must be NULL for "
-                 "primary buffer\n");
-            return DSERR_INVALIDPARAM;
-        }
-
-        if (device->primary) {
-            WARN("Primary Buffer already created\n");
-            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
-            *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
-        } else {
-            hres = primarybuffer_create(device, &device->primary, dsbd);
-            if (device->primary) {
-                *ppdsb = (IDirectSoundBuffer*)&device->primary->IDirectSoundBuffer8_iface;
-                device->primary->dsbd.dwFlags &= ~(DSBCAPS_LOCHARDWARE | DSBCAPS_LOCSOFTWARE);
-                device->primary->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
-            } else
-                WARN("primarybuffer_create() failed\n");
-        }
-    } else {
-        IDirectSoundBufferImpl * dsb;
-        WAVEFORMATEXTENSIBLE *pwfxe;
-
-        if (dsbd->lpwfxFormat == NULL) {
-            WARN("invalid parameter: dsbd->lpwfxFormat can't be NULL for "
-                 "secondary buffer\n");
-            return DSERR_INVALIDPARAM;
-        }
-        pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
-
-        if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        {
-            /* check if cbSize is at least 22 bytes */
-            if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
-            {
-                WARN("Too small a cbSize %u\n", pwfxe->Format.cbSize);
-                return DSERR_INVALIDPARAM;
-            }
-
-            /* cbSize should be 22 bytes, with one possible exception */
-            if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)) &&
-                !((IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) || IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) &&
-                pwfxe->Format.cbSize == sizeof(WAVEFORMATEXTENSIBLE)))
-            {
-                WARN("Too big a cbSize %u\n", pwfxe->Format.cbSize);
-                return DSERR_CONTROLUNAVAIL;
-            }
-
-            if ((!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) && (!IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
-            {
-                if (!IsEqualGUID(&pwfxe->SubFormat, &GUID_NULL))
-                    FIXME("SubFormat %s not supported right now.\n", debugstr_guid(&pwfxe->SubFormat));
-                return DSERR_INVALIDPARAM;
-            }
-            if (pwfxe->Samples.wValidBitsPerSample > dsbd->lpwfxFormat->wBitsPerSample)
-            {
-                WARN("Samples.wValidBitsPerSample(%d) > Format.wBitsPerSample (%d)\n", pwfxe->Samples.wValidBitsPerSample, pwfxe->Format.wBitsPerSample);
-                return DSERR_INVALIDPARAM;
-            }
-            if (pwfxe->Samples.wValidBitsPerSample && pwfxe->Samples.wValidBitsPerSample < dsbd->lpwfxFormat->wBitsPerSample)
-            {
-                FIXME("Non-packed formats not supported right now: %d/%d\n", pwfxe->Samples.wValidBitsPerSample, dsbd->lpwfxFormat->wBitsPerSample);
-                return DSERR_CONTROLUNAVAIL;
-            }
-        }
-
-        TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"
-              "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-              dsbd->lpwfxFormat->wFormatTag, dsbd->lpwfxFormat->nChannels,
-              dsbd->lpwfxFormat->nSamplesPerSec,
-              dsbd->lpwfxFormat->nAvgBytesPerSec,
-              dsbd->lpwfxFormat->nBlockAlign,
-              dsbd->lpwfxFormat->wBitsPerSample, dsbd->lpwfxFormat->cbSize);
-
-        if (from8 && (dsbd->dwFlags & DSBCAPS_CTRL3D) && (dsbd->lpwfxFormat->nChannels != 1)) {
-            WARN("invalid parameter: 3D buffer format must be mono\n");
-            return DSERR_INVALIDPARAM;
-        }
-
-        hres = IDirectSoundBufferImpl_Create(device, &dsb, dsbd);
-        if (dsb) {
-            *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
-            if (dsbd->dwFlags & DSBCAPS_LOCHARDWARE)
-                device->drvcaps.dwFreeHwMixingAllBuffers--;
-        } else
-            WARN("IDirectSoundBufferImpl_Create failed\n");
-   }
-
-   return hres;
-}
-
-HRESULT DirectSoundDevice_DuplicateSoundBuffer(
-    DirectSoundDevice * device,
-    LPDIRECTSOUNDBUFFER psb,
-    LPLPDIRECTSOUNDBUFFER ppdsb)
-{
-    HRESULT hres = DS_OK;
-    IDirectSoundBufferImpl* dsb;
-    TRACE("(%p,%p,%p)\n",device,psb,ppdsb);
-
-    if (device == NULL) {
-        WARN("not initialized\n");
-        return DSERR_UNINITIALIZED;
-    }
-
-    if (psb == NULL) {
-        WARN("invalid parameter: psb == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    if (ppdsb == NULL) {
-        WARN("invalid parameter: ppdsb == NULL\n");
-        return DSERR_INVALIDPARAM;
-    }
-
-    /* make sure we have a secondary buffer */
-    if (psb == (IDirectSoundBuffer *)&device->primary->IDirectSoundBuffer8_iface) {
-        WARN("trying to duplicate primary buffer\n");
-        *ppdsb = NULL;
-        return DSERR_INVALIDCALL;
-    }
-
-    /* duplicate the actual buffer implementation */
-    hres = IDirectSoundBufferImpl_Duplicate(device, &dsb, (IDirectSoundBufferImpl*)psb);
-    if (hres == DS_OK)
-        *ppdsb = (IDirectSoundBuffer*)&dsb->IDirectSoundBuffer8_iface;
-    else
-        WARN("IDirectSoundBufferImpl_Duplicate failed\n");
-
-    return hres;
-}
-
-/*
- * Add secondary buffer to buffer list.
- * Gets exclusive access to buffer for writing.
- */
-HRESULT DirectSoundDevice_AddBuffer(
-    DirectSoundDevice * device,
-    IDirectSoundBufferImpl * pDSB)
-{
-    IDirectSoundBufferImpl **newbuffers;
-    HRESULT hr = DS_OK;
-
-    TRACE("(%p, %p)\n", device, pDSB);
-
-    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
-
-    if (device->buffers)
-        newbuffers = HeapReAlloc(GetProcessHeap(),0,device->buffers,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
-    else
-        newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(device->nrofbuffers+1));
-
-    if (newbuffers) {
-        device->buffers = newbuffers;
-        device->buffers[device->nrofbuffers] = pDSB;
-        device->nrofbuffers++;
-        TRACE("buffer count is now %d\n", device->nrofbuffers);
-    } else {
-        ERR("out of memory for buffer list! Current buffer count is %d\n", device->nrofbuffers);
-        hr = DSERR_OUTOFMEMORY;
-    }
-
-    RtlReleaseResource(&(device->buffer_list_lock));
-
-    return hr;
-}
-
-/*
- * Remove secondary buffer from buffer list.
- * Gets exclusive access to buffer for writing.
- */
-void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBufferImpl * pDSB)
-{
-    int i;
-
-    TRACE("(%p, %p)\n", device, pDSB);
-
-    RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
-
-    if (device->nrofbuffers == 1) {
-        assert(device->buffers[0] == pDSB);
-        HeapFree(GetProcessHeap(), 0, device->buffers);
-        device->buffers = NULL;
-    } else {
-        for (i = 0; i < device->nrofbuffers; i++) {
-            if (device->buffers[i] == pDSB) {
-                /* Put the last buffer of the list in the (now empty) position */
-                device->buffers[i] = device->buffers[device->nrofbuffers - 1];
-                break;
-            }
-        }
-    }
-    device->nrofbuffers--;
-    TRACE("buffer count is now %d\n", device->nrofbuffers);
-
-    RtlReleaseResource(&(device->buffer_list_lock));
 }

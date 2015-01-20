@@ -111,24 +111,10 @@ typedef struct BufferMemory
     struct list buffers;
 } BufferMemory;
 
-ULONG DirectSoundDevice_Release(DirectSoundDevice * device) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_Initialize(
-    DirectSoundDevice ** ppDevice,
-    LPCGUID lpcGUID) DECLSPEC_HIDDEN;
 HRESULT DirectSoundDevice_AddBuffer(
     DirectSoundDevice * device,
     IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
 void DirectSoundDevice_RemoveBuffer(DirectSoundDevice * device, IDirectSoundBufferImpl * pDSB) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_CreateSoundBuffer(
-    DirectSoundDevice * device,
-    LPCDSBUFFERDESC dsbd,
-    LPLPDIRECTSOUNDBUFFER ppdsb,
-    LPUNKNOWN lpunk,
-    BOOL from8) DECLSPEC_HIDDEN;
-HRESULT DirectSoundDevice_DuplicateSoundBuffer(
-    DirectSoundDevice * device,
-    LPDIRECTSOUNDBUFFER psb,
-    LPLPDIRECTSOUNDBUFFER ppdsb) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure
