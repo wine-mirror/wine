@@ -60,9 +60,9 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
                 }
                 else
                 {
-                    GL_EXTCALL(glDrawElementsInstancedARB(primitive_type, count, idxtype,
+                    GL_EXTCALL(glDrawElementsInstanced(primitive_type, count, idxtype,
                             (const char *)idx_data + (idx_size * start_idx), instance_count));
-                    checkGLcall("glDrawElementsInstancedARB");
+                    checkGLcall("glDrawElementsInstanced");
                 }
             }
         }
