@@ -885,9 +885,9 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
         if (format->flags & WINED3DFMT_FLAG_COMPRESSED && mem)
         {
-            GL_EXTCALL(glCompressedTexImage2DARB(surface->texture_target, surface->texture_level,
+            GL_EXTCALL(glCompressedTexImage2D(surface->texture_target, surface->texture_level,
                     internal, width, height, 0, surface->resource.size, mem));
-            checkGLcall("glCompressedTexImage2DARB");
+            checkGLcall("glCompressedTexImage2D");
         }
         else
         {

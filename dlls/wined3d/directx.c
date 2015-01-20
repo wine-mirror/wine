@@ -2878,9 +2878,14 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glBufferData)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBufferSubData)            /* OpenGL 1.5 */
     USE_GL_FUNC(glColorMaski)               /* OpenGL 3.0 */
+    USE_GL_FUNC(glCompressedTexImage2D)     /* OpenGL 1.3 */
+    USE_GL_FUNC(glCompressedTexImage3D)     /* OpenGL 1.3 */
+    USE_GL_FUNC(glCompressedTexSubImage2D)  /* OpenGL 1.3 */
+    USE_GL_FUNC(glCompressedTexSubImage3D)  /* OpenGL 1.3 */
     USE_GL_FUNC(glDeleteBuffers)            /* OpenGL 1.5 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
+    USE_GL_FUNC(glGetCompressedTexImage)    /* OpenGL 1.3 */
     USE_GL_FUNC(glMapBuffer)                /* OpenGL 1.5 */
     USE_GL_FUNC(glUnmapBuffer)              /* OpenGL 1.5 */
 #undef USE_GL_FUNC
@@ -2907,9 +2912,14 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glBufferData, glBufferDataARB);
     MAP_GL_FUNCTION(glBufferSubData, glBufferSubDataARB);
     MAP_GL_FUNCTION(glColorMaski, glColorMaskIndexedEXT);
+    MAP_GL_FUNCTION(glCompressedTexImage2D, glCompressedTexImage2DARB);
+    MAP_GL_FUNCTION(glCompressedTexImage3D, glCompressedTexImage3DARB);
+    MAP_GL_FUNCTION(glCompressedTexSubImage2D, glCompressedTexSubImage2DARB);
+    MAP_GL_FUNCTION(glCompressedTexSubImage3D, glCompressedTexSubImage3DARB);
     MAP_GL_FUNCTION(glDeleteBuffers, glDeleteBuffersARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
     MAP_GL_FUNCTION(glGetBufferSubData, glGetBufferSubDataARB);
+    MAP_GL_FUNCTION(glGetCompressedTexImage, glGetCompressedTexImageARB);
     MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
     MAP_GL_FUNCTION(glUnmapBuffer, glUnmapBufferARB);
 #undef MAP_GL_FUNCTION
