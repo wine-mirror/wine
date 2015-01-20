@@ -2848,9 +2848,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glVertexWeighthNV)
     USE_GL_FUNC(glVertexWeighthvNV)
     /* GL_NV_point_sprite */
-    USE_GL_FUNC(glPointParameteri)
     USE_GL_FUNC(glPointParameteriNV)
-    USE_GL_FUNC(glPointParameteriv)
     USE_GL_FUNC(glPointParameterivNV)
     /* GL_NV_register_combiners */
     USE_GL_FUNC(glCombinerInputNV)
@@ -2889,6 +2887,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
     USE_GL_FUNC(glGetCompressedTexImage)    /* OpenGL 1.3 */
     USE_GL_FUNC(glMapBuffer)                /* OpenGL 1.5 */
+    USE_GL_FUNC(glPointParameteri)          /* OpenGL 1.4 */
+    USE_GL_FUNC(glPointParameteriv)         /* OpenGL 1.4 */
     USE_GL_FUNC(glUnmapBuffer)              /* OpenGL 1.5 */
 #undef USE_GL_FUNC
 
@@ -3253,8 +3253,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     if (!gl_info->supported[NV_POINT_SPRITE] && gl_version >= MAKEDWORD_VERSION(1, 4))
     {
         TRACE("GL CORE: GL_NV_point_sprite support.\n");
-        gl_info->gl_ops.ext.p_glPointParameterivNV = gl_info->gl_ops.ext.p_glPointParameteriv;
-        gl_info->gl_ops.ext.p_glPointParameteriNV = gl_info->gl_ops.ext.p_glPointParameteri;
         gl_info->supported[NV_POINT_SPRITE] = TRUE;
     }
 
