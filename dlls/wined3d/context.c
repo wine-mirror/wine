@@ -2082,7 +2082,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, DWORD rt
 
             if (gl_info->supported[ARB_DRAW_BUFFERS])
             {
-                GL_EXTCALL(glDrawBuffersARB(i, context->draw_buffers));
+                GL_EXTCALL(glDrawBuffers(i, context->draw_buffers));
                 checkGLcall("glDrawBuffers()");
             }
             else
