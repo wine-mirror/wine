@@ -199,7 +199,7 @@ static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
     return ref;
 }
 
-ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
+static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 {
     HRESULT hr;
     ULONG ref = InterlockedDecrement(&(device->ref));
@@ -271,7 +271,7 @@ BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
     return hr == S_OK;
 }
 
-HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcGUID)
+static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcGUID)
 {
     HRESULT hr = DS_OK;
     GUID devGUID;
@@ -398,7 +398,7 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     return hr;
 }
 
-HRESULT DirectSoundDevice_CreateSoundBuffer(
+static HRESULT DirectSoundDevice_CreateSoundBuffer(
     DirectSoundDevice * device,
     LPCDSBUFFERDESC dsbd,
     LPLPDIRECTSOUNDBUFFER ppdsb,
@@ -539,7 +539,7 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
    return hres;
 }
 
-HRESULT DirectSoundDevice_DuplicateSoundBuffer(
+static HRESULT DirectSoundDevice_DuplicateSoundBuffer(
     DirectSoundDevice * device,
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb)
