@@ -4276,6 +4276,8 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = &This->IHTMLAttributeCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLAttributeCollection, riid)) {

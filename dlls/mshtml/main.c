@@ -545,6 +545,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_ICustomDoc);
     X(IID_IDispatch);
     X(IID_IDispatchEx);
+    X(IID_IDispatchJS);
+    X(IID_UndocumentedScriptIface);
     X(IID_IEnumConnections);
     X(IID_IEnumVARIANT);
     X(IID_IHlinkTarget);

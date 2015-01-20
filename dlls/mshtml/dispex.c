@@ -649,8 +649,9 @@ static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void
 {
     func_disp_t *This = impl_from_IUnknown(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IUnknown_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
@@ -1669,26 +1670,16 @@ static IDispatchExVtbl DispatchExVtbl = {
 
 BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
 {
-    static const IID IID_UndocumentedScriptIface =
-        {0x719c3050,0xf9d3,0x11cf,{0xa4,0x93,0x00,0x40,0x05,0x23,0xa8,0xa0}};
-    static const IID IID_IDispatchJS =
-        {0x719c3050,0xf9d3,0x11cf,{0xa4,0x93,0x00,0x40,0x05,0x23,0xa8,0xa6}};
-
-    if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+    if(IsEqualGUID(&IID_IDispatch, riid))
         *ppv = &This->IDispatchEx_iface;
-    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
+    else if(IsEqualGUID(&IID_IDispatchEx, riid))
         *ppv = &This->IDispatchEx_iface;
-    }else if(IsEqualGUID(&IID_IDispatchJS, riid)) {
-        TRACE("(%p)->(IID_IDispatchJS %p) returning NULL\n", This, ppv);
+    else if(IsEqualGUID(&IID_IDispatchJS, riid))
         *ppv = NULL;
-    }else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid)) {
-        TRACE("(%p)->(IID_UndocumentedScriptIface %p) returning NULL\n", This, ppv);
+    else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid))
         *ppv = NULL;
-    }else {
+    else
         return FALSE;
-    }
 
     if(*ppv)
         IUnknown_AddRef((IUnknown*)*ppv);
