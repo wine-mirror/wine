@@ -4279,7 +4279,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     break;
 
                 case WINED3DFMT_R8G8B8A8_UINT:
-                    GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
+                    GL_EXTCALL(glVertexAttrib4ubvARB(i, ptr));
                     break;
                 case WINED3DFMT_B8G8R8A8_UNORM:
                     if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
