@@ -265,6 +265,14 @@ static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *if
     return S_OK;
 }
 
+static DWRITE_SCRIPT_ANALYSIS g_sa;
+static HRESULT WINAPI analysissink_SetScriptAnalysis2(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
+{
+    g_sa = *sa;
+    return S_OK;
+}
+
 #define BREAKPOINT_COUNT 20
 static DWRITE_LINE_BREAKPOINT g_actual_bp[BREAKPOINT_COUNT];
 
@@ -310,7 +318,18 @@ static IDWriteTextAnalysisSinkVtbl analysissinkvtbl = {
     analysissink_SetNumberSubstitution
 };
 
+static IDWriteTextAnalysisSinkVtbl analysissinkvtbl2 = {
+    analysissink_QueryInterface,
+    analysissink_AddRef,
+    analysissink_Release,
+    analysissink_SetScriptAnalysis2,
+    analysissink_SetLineBreakpoints,
+    analysissink_SetBidiLevel,
+    analysissink_SetNumberSubstitution
+};
+
 static IDWriteTextAnalysisSink analysissink = { &analysissinkvtbl };
+static IDWriteTextAnalysisSink analysissink2 = { &analysissinkvtbl2 };
 
 static HRESULT WINAPI analysissource_QueryInterface(IDWriteTextAnalysisSource *iface,
     REFIID riid, void **obj)
@@ -836,6 +855,22 @@ static void init_expected_sa(struct call_sequence **seq, const struct sa_test *t
     add_call(seq, 0, &end_of_sequence);
 }
 
+static void get_script_analysis(const WCHAR *str, DWRITE_SCRIPT_ANALYSIS *sa)
+{
+    IDWriteTextAnalyzer *analyzer;
+    HRESULT hr;
+
+    g_source = str;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    *sa = g_sa;
+}
+
 static void test_AnalyzeScript(void)
 {
     const struct sa_test *ptr = sa_tests;
@@ -1174,6 +1209,88 @@ if (0) {
     IDWriteFontFace_Release(fontface);
 }
 
+static BOOL has_feature(const DWRITE_FONT_FEATURE_TAG *tags, UINT32 count, DWRITE_FONT_FEATURE_TAG feature)
+{
+    UINT32 i;
+
+    for (i = 0; i < count; i++)
+        if (tags[i] == feature) return TRUE;
+    return FALSE;
+}
+
+static void test_GetTypographicFeatures(void)
+{
+    static const WCHAR localeW[] = {'c','a','d','a','b','r','a',0};
+    static const WCHAR arabicW[] = {0x064a,0x064f,0x0633,0};
+    static const WCHAR abcW[] = {'a','b','c',0};
+    DWRITE_FONT_FEATURE_TAG tags[20];
+    IDWriteTextAnalyzer2 *analyzer2;
+    IDWriteTextAnalyzer *analyzer;
+    IDWriteFontFace *fontface;
+    DWRITE_SCRIPT_ANALYSIS sa;
+    UINT32 count;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer2, (void**)&analyzer2);
+    IDWriteTextAnalyzer_Release(analyzer);
+    if (hr != S_OK) {
+        win_skip("GetTypographicFeatures() is not supported.\n");
+        return;
+    }
+
+    fontface = create_fontface();
+
+    get_script_analysis(abcW, &sa);
+    count = 0;
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, 0, &count, NULL);
+todo_wine {
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count > 0, "got %u\n", count);
+}
+    /* invalid locale name is ignored */
+    get_script_analysis(abcW, &sa);
+    count = 0;
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, localeW, 0, &count, NULL);
+todo_wine {
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count > 0, "got %u\n", count);
+}
+    /* both GSUB and GPOS features are reported */
+    get_script_analysis(arabicW, &sa);
+    memset(tags, 0, sizeof(tags));
+    count = 0;
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count > 0, "got %u\n", count);
+    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES);
+    ok(ret, "expected 'calt' feature\n");
+    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING);
+    ok(ret, "expected 'mkmk' feature\n");
+}
+    get_script_analysis(abcW, &sa);
+    memset(tags, 0, sizeof(tags));
+    count = 0;
+    hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count > 0, "got %u\n", count);
+    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_GLYPH_COMPOSITION_DECOMPOSITION);
+    ok(ret, "expected 'ccmp' feature\n");
+    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING);
+    ok(ret, "expected 'mkmk' feature\n");
+}
+    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES);
+    ok(!ret, "unexpected 'calt' feature\n");
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteTextAnalyzer2_Release(analyzer2);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -1195,6 +1312,7 @@ START_TEST(analyzer)
     test_GetTextComplexity();
     test_GetGlyphs();
     test_numbersubstitution();
+    test_GetTypographicFeatures();
 
     IDWriteFactory_Release(factory);
 }
