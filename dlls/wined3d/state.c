@@ -860,7 +860,15 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
         gl_info->gl_ops.gl.p_glEnable(GL_STENCIL_TEST);
         checkGLcall("glEnable GL_STENCIL_TEST");
 
-        if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        if (gl_info->supported[WINED3D_GL_VERSION_2_0])
+        {
+            GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
+            GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
+            GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func_ccw, ref, mask));
+            GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail_ccw, depthFail_ccw, stencilPass_ccw));
+            checkGLcall("setting two sided stencil state");
+        }
+        else if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             /* Apply back first, then front. This function calls glActiveStencilFaceEXT,
              * which has an effect on the code below too. If we apply the front face
@@ -881,7 +889,9 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
             checkGLcall("glStencilOpSeparateATI(GL_FRONT, ...)");
             GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail_ccw, depthFail_ccw, stencilPass_ccw));
             checkGLcall("glStencilOpSeparateATI(GL_BACK, ...)");
-        } else {
+        }
+        else
+        {
             ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
         }
     }
