@@ -1578,6 +1578,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     str = SysAllocString(aW);
     hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
@@ -1730,6 +1731,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     str = SysAllocString(aW);
     hr = ITextStream_Write(stream, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     SysFreeString(str);
     ITextStream_Release(stream);
 
