@@ -1807,20 +1807,23 @@ static DWORD set_content_length( request_t *request, DWORD status )
     WCHAR encoding[20];
     DWORD buflen = sizeof(request->content_length);
 
-    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED)
+    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !strcmpW( request->verb, headW ))
         request->content_length = 0;
-    else if (!query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
-                             NULL, &request->content_length, &buflen, NULL ))
-        request->content_length = ~0u;
-
-    buflen = sizeof(encoding);
-    if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
-        !strcmpiW( encoding, chunkedW ))
+    else
     {
-        request->content_length = ~0u;
-        request->read_chunked = TRUE;
-        request->read_chunked_size = ~0u;
-        request->read_chunked_eof = FALSE;
+        if (!query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
+                            NULL, &request->content_length, &buflen, NULL ))
+            request->content_length = ~0u;
+
+        buflen = sizeof(encoding);
+        if (query_headers( request, WINHTTP_QUERY_TRANSFER_ENCODING, NULL, encoding, &buflen, NULL ) &&
+            !strcmpiW( encoding, chunkedW ))
+        {
+            request->content_length = ~0u;
+            request->read_chunked = TRUE;
+            request->read_chunked_size = ~0u;
+            request->read_chunked_eof = FALSE;
+        }
     }
     request->content_read = 0;
     return request->content_length;
@@ -1969,6 +1972,7 @@ static DWORD get_available_data( request_t *request )
 /* check if we have reached the end of the data to read */
 static BOOL end_of_read_data( request_t *request )
 {
+    if (!request->content_length) return TRUE;
     if (request->read_chunked) return request->read_chunked_eof;
     if (request->content_length == ~0u) return FALSE;
     return (request->content_length == request->content_read);
@@ -2394,8 +2398,11 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
 
 static BOOL query_data_available( request_t *request, DWORD *available, BOOL async )
 {
-    DWORD count = get_available_data( request );
+    DWORD count = 0;
 
+    if (end_of_read_data( request )) goto done;
+
+    count = get_available_data( request );
     if (!request->read_chunked)
         count += netconn_query_data_available( &request->netconn );
     if (!count)
@@ -2406,6 +2413,7 @@ static BOOL query_data_available( request_t *request, DWORD *available, BOOL asy
             count += netconn_query_data_available( &request->netconn );
     }
 
+done:
     if (async) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
     TRACE("%u bytes available\n", count);
     if (available) *available = count;

@@ -1818,6 +1818,11 @@ static const char okauthmsg[] =
 "Connection: close\r\n"
 "\r\n";
 
+static const char headmsg[] =
+"HTTP/1.1 200 OK\r\n"
+"Content-Length: 100\r\n"
+"\r\n";
+
 struct server_info
 {
     HANDLE event;
@@ -1902,6 +1907,11 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /not_modified"))
         {
             send(c, notmodified, sizeof notmodified - 1, 0);
+            continue;
+        }
+        if (strstr(buffer, "HEAD /head"))
+        {
+            send(c, headmsg, sizeof headmsg - 1, 0);
             continue;
         }
         if (strstr(buffer, "GET /quit"))
@@ -2216,6 +2226,65 @@ static void test_no_content(int port)
        "expected ERROR_INVALID_HANDLE, got 0x%08x\n", GetLastError());
     ok(size == 12345, "expected 12345, got %u\n", size);
 
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_head_request(int port)
+{
+    static const WCHAR verbW[] = {'H','E','A','D',0};
+    static const WCHAR headW[] = {'/','h','e','a','d',0};
+    HINTERNET ses, con, req;
+    char buf[128];
+    DWORD size, len, count, status;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, verbW, headW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &status, &size, NULL);
+    ok(ret, "failed to get status code %u\n", GetLastError());
+    ok(status == 200, "got %u\n", status);
+
+    len = 0xdeadbeef;
+    size = sizeof(len);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &len, &size, 0);
+    ok(ret, "failed to get content-length header %u\n", GetLastError());
+    ok(len == 100, "got %u\n", len);
+
+    count = 0xdeadbeef;
+    ret = WinHttpQueryDataAvailable(req, &count);
+    ok(ret, "failed to query data available %u\n", GetLastError());
+    ok(!count, "got %u\n", count);
+
+    len = sizeof(buf);
+    count = 0xdeadbeef;
+    ret = WinHttpReadData(req, buf, len, &count);
+    ok(ret, "failed to read data %u\n", GetLastError());
+    ok(!count, "got %u\n", count);
+
+    count = 0xdeadbeef;
+    ret = WinHttpQueryDataAvailable(req, &count);
+    ok(ret, "failed to query data available %u\n", GetLastError());
+    ok(!count, "got %u\n", count);
+
+    WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
 }
@@ -3278,6 +3347,7 @@ START_TEST (winhttp)
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
     test_no_content(si.port);
+    test_head_request(si.port);
     test_not_modified(si.port);
     test_basic_authentication(si.port);
     test_bad_header(si.port);
