@@ -3781,12 +3781,24 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
     if(!(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
         msvcrt_alloc_buffer(file);
     }
+
     if(!(file->_flag & MSVCRT__IOWRT)) {
-        if(file->_flag & MSVCRT__IORW)
-            file->_flag |= MSVCRT__IOWRT;
-        else
+        if(!(file->_flag & MSVCRT__IORW)) {
+            file->_flag |= MSVCRT__IOERR;
             return MSVCRT_EOF;
+        }
+        file->_flag |= MSVCRT__IOWRT;
     }
+    if(file->_flag & MSVCRT__IOREAD) {
+        if(!(file->_flag & MSVCRT__IOEOF)) {
+            file->_flag |= MSVCRT__IOERR;
+            return MSVCRT_EOF;
+        }
+        file->_cnt = 0;
+        file->_ptr = file->_base;
+        file->_flag &= ~(MSVCRT__IOREAD | MSVCRT__IOEOF);
+    }
+
     if(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)) {
         int res = 0;
 
