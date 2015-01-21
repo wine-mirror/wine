@@ -98,6 +98,13 @@ static UINT process_error_mode;
         ret = STATUS_INVALID_INFO_CLASS; \
         break
 
+ULONG_PTR get_system_affinity_mask(void)
+{
+    ULONG num_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
+    if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
+    return ((ULONG_PTR)1 << num_cpus) - 1;
+}
+
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.@]
 *  ZwQueryInformationProcess		[NTDLL.@]
@@ -145,7 +152,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     case ProcessBasicInformation:
         {
             PROCESS_BASIC_INFORMATION pbi;
-            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
 
             if (ProcessInformationLength >= sizeof(PROCESS_BASIC_INFORMATION))
             {
@@ -389,7 +396,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         len = sizeof(ULONG_PTR);
         if (ProcessInformationLength == len)
         {
-            const ULONG_PTR system_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR system_mask = get_system_affinity_mask();
 
             SERVER_START_REQ(get_process_info)
             {
@@ -487,8 +494,11 @@ NTSTATUS WINAPI NtSetInformationProcess(
         process_error_mode = *(UINT *)ProcessInformation;
         break;
     case ProcessAffinityMask:
+    {
+        const ULONG_PTR system_mask = get_system_affinity_mask();
+
         if (ProcessInformationLength != sizeof(DWORD_PTR)) return STATUS_INVALID_PARAMETER;
-        if (*(PDWORD_PTR)ProcessInformation & ~(((DWORD_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1))
+        if (*(PDWORD_PTR)ProcessInformation & ~system_mask)
             return STATUS_INVALID_PARAMETER;
         if (!*(PDWORD_PTR)ProcessInformation)
             return STATUS_INVALID_PARAMETER;
@@ -501,6 +511,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
         }
         SERVER_END_REQ;
         break;
+    }
     case ProcessPriorityClass:
         if (ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS))
             return STATUS_INVALID_PARAMETER;

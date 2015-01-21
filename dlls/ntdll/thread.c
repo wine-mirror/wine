@@ -900,7 +900,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadBasicInformation:
         {
             THREAD_BASIC_INFORMATION info;
-            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
 
             SERVER_START_REQ( get_thread_info )
             {
@@ -927,7 +927,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     case ThreadAffinityMask:
         {
-            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
             ULONG_PTR affinity = 0;
 
             SERVER_START_REQ( get_thread_info )
@@ -1170,7 +1170,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     case ThreadAffinityMask:
         {
-            const ULONG_PTR affinity_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
             ULONG_PTR req_aff;
 
             if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
