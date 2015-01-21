@@ -176,6 +176,8 @@ static const WCHAR prop_idW[] =
     {'I','D',0};
 static const WCHAR prop_identificationcodeW[] =
     {'I','d','e','n','t','i','f','i','c','a','t','i','o','n','C','o','d','e',0};
+static const WCHAR prop_identifyingnumberW[] =
+    {'I','d','e','n','t','i','f','y','i','n','g','N','u','m','b','e','r',0};
 static const WCHAR prop_indexW[] =
     {'I','n','d','e','x',0};
 static const WCHAR prop_installdateW[] =
@@ -338,7 +340,8 @@ static const struct column col_compsys[] =
 };
 static const struct column col_compsysproduct[] =
 {
-    { prop_uuidW,    CIM_STRING }
+    { prop_identifyingnumberW,  CIM_STRING|COL_FLAG_KEY },
+    { prop_uuidW,               CIM_STRING }
 };
 static const struct column col_datafile[] =
 {
@@ -571,6 +574,8 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
+static const WCHAR compsysproduct_identifyingnumberW[] =
+    {'0',0};
 static const WCHAR compsysproduct_uuidW[] =
     {'0','0','0','0','0','0','0','0','-','0','0','0','0','-','0','0','0','0','-','0','0','0','0','-',
      '0','0','0','0','0','0','0','0','0','0','0','0',0};
@@ -662,6 +667,7 @@ struct record_computersystem
 };
 struct record_computersystemproduct
 {
+    const WCHAR *identifyingnumber;
     const WCHAR *uuid;
 };
 struct record_datafile
@@ -872,7 +878,7 @@ static const struct record_bios data_bios[] =
 };
 static const struct record_computersystemproduct data_compsysproduct[] =
 {
-    { compsysproduct_uuidW }
+    { compsysproduct_identifyingnumberW, compsysproduct_uuidW }
 };
 static const struct record_param data_param[] =
 {
