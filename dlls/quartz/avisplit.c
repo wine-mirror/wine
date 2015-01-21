@@ -260,8 +260,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
 
         if (rtSampleStart != rtSampleStop)
         {
-            hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
-
+            IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
             hr = IAsyncReader_Request(pin->pReader, sample, streamnumber);
 
             if (FAILED(hr))
@@ -338,7 +337,7 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
     }
     rtstart = (double)(start - pin->pin.pin.tStart) / pin->pin.pin.dRate;
     rtstop = (double)(stop - pin->pin.pin.tStart) / pin->pin.pin.dRate;
-    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    IMediaSample_SetMediaTime(sample, &start, &stop);
     IMediaSample_SetTime(sample, &rtstart, &rtstop);
     IMediaSample_SetMediaTime(sample, &start, &stop);
 

@@ -117,7 +117,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
         if (rtSampleStop > pin->rtStop)
             rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(pin->rtStop), pin->cbAlign));
 
-        hr = IMediaSample_SetTime(newsample, &rtSampleStart, &rtSampleStop);
+        IMediaSample_SetTime(newsample, &rtSampleStart, &rtSampleStop);
 
         pin->rtCurrent = pin->rtNext;
         pin->rtNext = rtSampleStop;
@@ -290,7 +290,7 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     amt.cbFormat = chunk.cb;
     amt.pbFormat = CoTaskMemAlloc(amt.cbFormat);
     amt.pUnk = NULL;
-    hr = IAsyncReader_SyncRead(This->pReader, pos, amt.cbFormat, amt.pbFormat);
+    IAsyncReader_SyncRead(This->pReader, pos, amt.cbFormat, amt.pbFormat);
     amt.subtype = MEDIATYPE_Audio;
     amt.subtype.Data1 = ((WAVEFORMATEX*)amt.pbFormat)->wFormatTag;
 
@@ -376,7 +376,7 @@ static HRESULT WAVEParser_first_request(LPVOID iface)
         if (rtSampleStop > pin->rtStop)
             rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(pin->rtStop), pin->cbAlign));
 
-        hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
+        IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
 
         pin->rtCurrent = pin->rtNext;
         pin->rtNext = rtSampleStop;

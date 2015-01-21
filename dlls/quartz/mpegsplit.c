@@ -708,8 +708,7 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
         if (rtSampleStop > pin->rtStop)
             rtSampleStop = MEDIATIME_FROM_BYTES(ALIGNUP(BYTES_FROM_MEDIATIME(pin->rtStop), pin->cbAlign));
 
-        hr = IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
-
+        IMediaSample_SetTime(sample, &rtSampleStart, &rtSampleStop);
         IMediaSample_SetPreroll(sample, FALSE);
         IMediaSample_SetDiscontinuity(sample, TRUE);
         IMediaSample_SetSyncPoint(sample, 1);
