@@ -97,10 +97,10 @@
 101 stub MsiProcessAdvertiseScriptA
 102 stub MsiProcessAdvertiseScriptW
 103 stdcall MsiProcessMessage(long long long)
-104 stub MsiProvideComponentA
+104 stdcall MsiProvideComponentA(str str str long ptr ptr)
 105 stdcall MsiProvideComponentFromDescriptorA(str ptr ptr ptr)
 106 stdcall MsiProvideComponentFromDescriptorW(wstr ptr ptr ptr)
-107 stub MsiProvideComponentW
+107 stdcall MsiProvideComponentW(wstr wstr wstr long ptr ptr)
 108 stdcall MsiProvideQualifiedComponentA(str str long ptr ptr)
 109 stdcall MsiProvideQualifiedComponentW(wstr wstr long ptr ptr)
 110 stdcall MsiQueryFeatureStateA(str str)
