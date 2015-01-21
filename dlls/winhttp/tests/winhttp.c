@@ -31,7 +31,6 @@
 
 #include "wine/test.h"
 
-static HANDLE wait_event;
 static const WCHAR test_useragent[] =
     {'W','i','n','e',' ','R','e','g','r','e','s','s','i','o','n',' ','T','e','s','t',0};
 static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
@@ -1830,7 +1829,7 @@ struct server_info
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
-    int r, c, i, on;
+    int r, c = -1, i, on;
     SOCKET s;
     struct sockaddr_in sa;
     char buffer[0x100];
@@ -1859,7 +1858,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     SetEvent(si->event);
     do
     {
-        c = accept(s, NULL, NULL);
+        if (c == -1) c = accept(s, NULL, NULL);
 
         memset(buffer, 0, sizeof buffer);
         for(i = 0; i < sizeof buffer - 1; i++)
@@ -1898,11 +1897,12 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /no_content"))
         {
             send(c, nocontentmsg, sizeof nocontentmsg - 1, 0);
+            continue;
         }
         if (strstr(buffer, "GET /not_modified"))
         {
             send(c, notmodified, sizeof notmodified - 1, 0);
-            WaitForSingleObject(wait_event, 5000);
+            continue;
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -1912,6 +1912,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         shutdown(c, 2);
         closesocket(c);
+        c = -1;
 
     } while (!last_request);
 
@@ -2249,8 +2250,6 @@ static void test_not_modified(int port)
 
     ret = WinHttpReceiveResponse(request, NULL);
     ok(ret, "WinHttpReceiveResponse failed: %u\n", GetLastError());
-
-    SetEvent(wait_event);
 
     size = sizeof(status);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,
@@ -3275,8 +3274,6 @@ START_TEST (winhttp)
     if (ret != WAIT_OBJECT_0)
         return;
 
-    wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
@@ -3288,8 +3285,6 @@ START_TEST (winhttp)
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, quitW);
-
-    CloseHandle(wait_event);
 
     WaitForSingleObject(thread, 3000);
 }
