@@ -113,6 +113,7 @@ START_TEST(rpcapi)
 
     version = 0;
     hr = SchRpcHighestVersion(&version);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     ok(version == 0x10002 /* vista */ || version == 0x10003 /* win7 */ || version == 0x10004 /* win8 */,
        "wrong version %#x\n", version);
 
