@@ -700,6 +700,19 @@ static void test_communication(void)
     buffers[1].cBuffers = 1;
     buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
     buffers[0].pBuffers[0].cbBuffer = 1;
+    memset(buffers[1].pBuffers[0].pvBuffer, 0xfa, buf_size);
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+todo_wine
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+todo_wine
+    ok(buffers[0].pBuffers[0].cbBuffer == 0, "Output buffer size was not set to 0.\n");
+
+    buffers[1].cBuffers = 1;
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[0].pBuffers[0].cbBuffer = 1;
+    memset(buffers[1].pBuffers[0].pvBuffer, 0, buf_size);
     status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
@@ -707,6 +720,7 @@ static void test_communication(void)
 todo_wine
     ok(buffers[0].pBuffers[0].cbBuffer == 0, "Output buffer size was not set to 0.\n");
 
+    buffers[0].pBuffers[0].cbBuffer = 0;
     status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
             ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
             0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
