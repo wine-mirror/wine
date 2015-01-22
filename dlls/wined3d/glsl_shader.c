@@ -96,8 +96,8 @@ struct shader_glsl_priv {
     struct constant_heap vconst_heap;
     struct constant_heap pconst_heap;
     unsigned char *stack;
-    GLhandleARB depth_blt_program_full[tex_type_count];
-    GLhandleARB depth_blt_program_masked[tex_type_count];
+    GLuint depth_blt_program_full[tex_type_count];
+    GLuint depth_blt_program_masked[tex_type_count];
     UINT next_constant_version;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -110,7 +110,7 @@ struct shader_glsl_priv {
 struct glsl_vs_program
 {
     struct list shader_entry;
-    GLhandleARB id;
+    GLuint id;
     GLenum vertex_color_clamp;
     GLint *uniform_f_locations;
     GLint uniform_i_locations[MAX_CONST_I];
@@ -121,13 +121,13 @@ struct glsl_vs_program
 struct glsl_gs_program
 {
     struct list shader_entry;
-    GLhandleARB id;
+    GLuint id;
 };
 
 struct glsl_ps_program
 {
     struct list shader_entry;
-    GLhandleARB id;
+    GLuint id;
     GLint *uniform_f_locations;
     GLint uniform_i_locations[MAX_CONST_I];
     GLint uniform_b_locations[MAX_CONST_B];
@@ -149,16 +149,16 @@ struct glsl_shader_prog_link
     struct glsl_vs_program vs;
     struct glsl_gs_program gs;
     struct glsl_ps_program ps;
-    GLhandleARB programId;
+    GLuint id;
     DWORD constant_update_mask;
     UINT constant_version;
 };
 
 struct glsl_program_key
 {
-    GLhandleARB vs_id;
-    GLhandleARB gs_id;
-    GLhandleARB ps_id;
+    GLuint vs_id;
+    GLuint gs_id;
+    GLuint ps_id;
 };
 
 struct shader_glsl_ctx_priv {
@@ -176,18 +176,18 @@ struct glsl_ps_compiled_shader
 {
     struct ps_compile_args          args;
     struct ps_np2fixup_info         np2fixup;
-    GLhandleARB                     prgId;
+    GLuint                          id;
 };
 
 struct glsl_vs_compiled_shader
 {
     struct vs_compile_args          args;
-    GLhandleARB                     prgId;
+    GLuint                          id;
 };
 
 struct glsl_gs_compiled_shader
 {
-    GLhandleARB id;
+    GLuint id;
 };
 
 struct glsl_shader_private
@@ -204,14 +204,14 @@ struct glsl_shader_private
 struct glsl_ffp_vertex_shader
 {
     struct wined3d_ffp_vs_desc desc;
-    GLhandleARB id;
+    GLuint id;
     struct list linked_programs;
 };
 
 struct glsl_ffp_fragment_shader
 {
     struct ffp_frag_desc entry;
-    GLhandleARB id;
+    GLuint id;
     struct list linked_programs;
 };
 
@@ -226,9 +226,9 @@ static const char *debug_gl_shader_type(GLenum type)
     switch (type)
     {
 #define WINED3D_TO_STR(u) case u: return #u
-        WINED3D_TO_STR(GL_VERTEX_SHADER_ARB);
-        WINED3D_TO_STR(GL_GEOMETRY_SHADER_ARB);
-        WINED3D_TO_STR(GL_FRAGMENT_SHADER_ARB);
+        WINED3D_TO_STR(GL_VERTEX_SHADER);
+        WINED3D_TO_STR(GL_GEOMETRY_SHADER);
+        WINED3D_TO_STR(GL_FRAGMENT_SHADER);
 #undef WINED3D_TO_STR
         default:
             return wine_dbg_sprintf("UNKNOWN(%#x)", type);
@@ -285,80 +285,84 @@ static char *get_info_log_line(char **ptr)
 }
 
 /* Context activation is done by the caller. */
-static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleARB obj)
+static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program)
 {
-    int infologLength = 0;
-    char *infoLog;
+    int length = 0;
+    char *log;
 
     if (!WARN_ON(d3d_shader) && !FIXME_ON(d3d_shader))
         return;
 
-    GL_EXTCALL(glGetObjectParameterivARB(obj,
-               GL_OBJECT_INFO_LOG_LENGTH_ARB,
-               &infologLength));
+    if (program)
+        GL_EXTCALL(glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length));
+    else
+        GL_EXTCALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 
     /* A size of 1 is just a null-terminated string, so the log should be bigger than
      * that if there are errors. */
-    if (infologLength > 1)
+    if (length > 1)
     {
         char *ptr, *line;
 
-        infoLog = HeapAlloc(GetProcessHeap(), 0, infologLength);
+        log = HeapAlloc(GetProcessHeap(), 0, length);
         /* The info log is supposed to be zero-terminated, but at least some
          * versions of fglrx don't terminate the string properly. The reported
          * length does include the terminator, so explicitly set it to zero
          * here. */
-        infoLog[infologLength - 1] = 0;
-        GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
+        log[length - 1] = 0;
+        if (program)
+            GL_EXTCALL(glGetProgramInfoLog(id, length, NULL, log));
+        else
+            GL_EXTCALL(glGetShaderInfoLog(id, length, NULL, log));
 
-        ptr = infoLog;
+        ptr = log;
         if (gl_info->quirks & WINED3D_QUIRK_INFO_LOG_SPAM)
         {
-            WARN("Info log received from GLSL shader #%u:\n", obj);
+            WARN("Info log received from GLSL shader #%u:\n", id);
             while ((line = get_info_log_line(&ptr))) WARN("    %s\n", line);
         }
         else
         {
-            FIXME("Info log received from GLSL shader #%u:\n", obj);
+            FIXME("Info log received from GLSL shader #%u:\n", id);
             while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
         }
-        HeapFree(GetProcessHeap(), 0, infoLog);
+        HeapFree(GetProcessHeap(), 0, log);
     }
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLhandleARB shader, const char *src)
+static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLuint shader, const char *src)
 {
     TRACE("Compiling shader object %u.\n", shader);
-    GL_EXTCALL(glShaderSourceARB(shader, 1, &src, NULL));
-    checkGLcall("glShaderSourceARB");
-    GL_EXTCALL(glCompileShaderARB(shader));
-    checkGLcall("glCompileShaderARB");
-    print_glsl_info_log(gl_info, shader);
+    GL_EXTCALL(glShaderSource(shader, 1, &src, NULL));
+    checkGLcall("glShaderSource");
+    GL_EXTCALL(glCompileShader(shader));
+    checkGLcall("glCompileShader");
+    print_glsl_info_log(gl_info, shader, FALSE);
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLhandleARB program)
+static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLuint program)
 {
-    GLint i, object_count, source_size = -1;
-    GLhandleARB *objects;
+    GLint i, shader_count, source_size = -1;
+    GLuint *shaders;
     char *source = NULL;
 
-    GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_ATTACHED_OBJECTS_ARB, &object_count));
-    objects = HeapAlloc(GetProcessHeap(), 0, object_count * sizeof(*objects));
-    if (!objects)
+    GL_EXTCALL(glGetProgramiv(program, GL_ATTACHED_SHADERS, &shader_count));
+    shaders = HeapAlloc(GetProcessHeap(), 0, shader_count * sizeof(*shaders));
+    if (!shaders)
     {
-        ERR("Failed to allocate object array memory.\n");
+        ERR("Failed to allocate shader array memory.\n");
         return;
     }
 
-    GL_EXTCALL(glGetAttachedObjectsARB(program, object_count, NULL, objects));
-    for (i = 0; i < object_count; ++i)
+    GL_EXTCALL(glGetAttachedShaders(program, shader_count, NULL, shaders));
+    for (i = 0; i < shader_count; ++i)
     {
         char *ptr, *line;
         GLint tmp;
 
-        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_SHADER_SOURCE_LENGTH_ARB, &tmp));
+        GL_EXTCALL(glGetShaderiv(shaders[i], GL_SHADER_SOURCE_LENGTH, &tmp));
 
         if (source_size < tmp)
         {
@@ -368,53 +372,50 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
             if (!source)
             {
                 ERR("Failed to allocate %d bytes for shader source.\n", tmp);
-                HeapFree(GetProcessHeap(), 0, objects);
+                HeapFree(GetProcessHeap(), 0, shaders);
                 return;
             }
             source_size = tmp;
         }
 
-        FIXME("Object %u:\n", objects[i]);
-        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_SUBTYPE_ARB, &tmp));
-        FIXME("    GL_OBJECT_SUBTYPE_ARB: %s.\n", debug_gl_shader_type(tmp));
-        GL_EXTCALL(glGetObjectParameterivARB(objects[i], GL_OBJECT_COMPILE_STATUS_ARB, &tmp));
-        FIXME("    GL_OBJECT_COMPILE_STATUS_ARB: %d.\n", tmp);
+        FIXME("Shader %u:\n", shaders[i]);
+        GL_EXTCALL(glGetShaderiv(shaders[i], GL_SHADER_TYPE, &tmp));
+        FIXME("    GL_SHADER_TYPE: %s.\n", debug_gl_shader_type(tmp));
+        GL_EXTCALL(glGetShaderiv(shaders[i], GL_COMPILE_STATUS, &tmp));
+        FIXME("    GL_COMPILE_STATUS: %d.\n", tmp);
         FIXME("\n");
 
         ptr = source;
-        GL_EXTCALL(glGetShaderSourceARB(objects[i], source_size, NULL, source));
+        GL_EXTCALL(glGetShaderSource(shaders[i], source_size, NULL, source));
         while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
         FIXME("\n");
     }
 
     HeapFree(GetProcessHeap(), 0, source);
-    HeapFree(GetProcessHeap(), 0, objects);
+    HeapFree(GetProcessHeap(), 0, shaders);
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLhandleARB program)
+static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program)
 {
     GLint tmp;
 
-    if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader)) return;
+    if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader))
+        return;
 
-    GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_TYPE_ARB, &tmp));
-    if (tmp == GL_PROGRAM_OBJECT_ARB)
+    GL_EXTCALL(glGetProgramiv(program, GL_LINK_STATUS, &tmp));
+    if (!tmp)
     {
-        GL_EXTCALL(glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &tmp));
-        if (!tmp)
-        {
-            FIXME("Program %u link status invalid.\n", program);
-            shader_glsl_dump_program_source(gl_info, program);
-        }
+        FIXME("Program %u link status invalid.\n", program);
+        shader_glsl_dump_program_source(gl_info, program);
     }
 
-    print_glsl_info_log(gl_info, program);
+    print_glsl_info_log(gl_info, program, TRUE);
 }
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
-        const DWORD *tex_unit_map, GLhandleARB program_id)
+        const DWORD *tex_unit_map, GLuint program_id)
 {
     unsigned int mapped_unit;
     char sampler_name[20];
@@ -441,7 +442,7 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
         for (j = 0; j < sampler_info[i].count; ++j)
         {
             snprintf(sampler_name, sizeof(sampler_name), "%s_sampler%u", prefix, j);
-            name_loc = GL_EXTCALL(glGetUniformLocationARB(program_id, sampler_name));
+            name_loc = GL_EXTCALL(glGetUniformLocation(program_id, sampler_name));
             if (name_loc == -1)
                 continue;
 
@@ -453,10 +454,10 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
             }
 
             TRACE("Loading sampler %s on unit %u.\n", sampler_name, mapped_unit);
-            GL_EXTCALL(glUniform1iARB(name_loc, mapped_unit));
+            GL_EXTCALL(glUniform1i(name_loc, mapped_unit));
         }
     }
-    checkGLcall("glUniform1iARB");
+    checkGLcall("glUniform1i");
 }
 
 /* Context activation is done by the caller. */
@@ -529,7 +530,7 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
         }
     }
     if (start <= end)
-        GL_EXTCALL(glUniform4fvARB(constant_locations[start], end - start + 1, &constants[start * 4]));
+        GL_EXTCALL(glUniform4fv(constant_locations[start], end - start + 1, &constants[start * 4]));
     checkGLcall("walk_constant_heap()");
 }
 
@@ -545,7 +546,7 @@ static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
     clamped_constant[2] = data[2] < -1.0f ? -1.0f : data[2] > 1.0f ? 1.0f : data[2];
     clamped_constant[3] = data[3] < -1.0f ? -1.0f : data[3] > 1.0f ? 1.0f : data[3];
 
-    GL_EXTCALL(glUniform4fvARB(location, 1, clamped_constant));
+    GL_EXTCALL(glUniform4fv(location, 1, clamped_constant));
 }
 
 /* Context activation is done by the caller. */
@@ -629,9 +630,9 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
     /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
     LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
-        GL_EXTCALL(glUniform4fvARB(constant_locations[lconst->idx], 1, (const GLfloat *)lconst->value));
+        GL_EXTCALL(glUniform4fv(constant_locations[lconst->idx], 1, (const GLfloat *)lconst->value));
     }
-    checkGLcall("glUniform4fvARB()");
+    checkGLcall("glUniform4fv()");
 }
 
 /* Context activation is done by the caller. */
@@ -646,7 +647,7 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
         if (!(constants_set & 1)) continue;
 
         /* We found this uniform name in the program - go ahead and send the data */
-        GL_EXTCALL(glUniform4ivARB(locations[i], 1, &constants[i*4]));
+        GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i * 4]));
     }
 
     /* Load immediate constants */
@@ -658,10 +659,10 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
         const GLint *values = (const GLint *)lconst->value;
 
         /* We found this uniform name in the program - go ahead and send the data */
-        GL_EXTCALL(glUniform4ivARB(locations[idx], 1, values));
+        GL_EXTCALL(glUniform4iv(locations[idx], 1, values));
         ptr = list_next(&shader->constantsI, ptr);
     }
-    checkGLcall("glUniform4ivARB()");
+    checkGLcall("glUniform4iv()");
 }
 
 /* Context activation is done by the caller. */
@@ -675,7 +676,7 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
     {
         if (!(constants_set & 1)) continue;
 
-        GL_EXTCALL(glUniform1ivARB(locations[i], 1, &constants[i]));
+        GL_EXTCALL(glUniform1iv(locations[i], 1, &constants[i]));
     }
 
     /* Load immediate constants */
@@ -686,10 +687,10 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
         unsigned int idx = lconst->idx;
         const GLint *values = (const GLint *)lconst->value;
 
-        GL_EXTCALL(glUniform1ivARB(locations[idx], 1, values));
+        GL_EXTCALL(glUniform1iv(locations[idx], 1, values));
         ptr = list_next(&shader->constantsB, ptr);
     }
-    checkGLcall("glUniform1ivARB()");
+    checkGLcall("glUniform1iv()");
 }
 
 static void reset_program_constant_version(struct wine_rb_entry *entry, void *context)
@@ -729,7 +730,7 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
         }
     }
 
-    GL_EXTCALL(glUniform4fvARB(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, np2fixup_constants));
+    GL_EXTCALL(glUniform4fv(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, np2fixup_constants));
 }
 
 /* Context activation is done by the caller (state handler). */
@@ -770,8 +771,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     if (update_mask & WINED3D_SHADER_CONST_VS_POS_FIXUP)
     {
         shader_get_position_fixup(context, state, position_fixup);
-        GL_EXTCALL(glUniform4fvARB(prog->vs.pos_fixup_location, 1, position_fixup));
-        checkGLcall("glUniform4fvARB");
+        GL_EXTCALL(glUniform4fv(prog->vs.pos_fixup_location, 1, position_fixup));
+        checkGLcall("glUniform4fv");
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
@@ -793,14 +794,14 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
             if (prog->ps.bumpenv_mat_location[i] == -1)
                 continue;
 
-            GL_EXTCALL(glUniformMatrix2fvARB(prog->ps.bumpenv_mat_location[i], 1, 0,
+            GL_EXTCALL(glUniformMatrix2fv(prog->ps.bumpenv_mat_location[i], 1, 0,
                     (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]));
 
             if (prog->ps.bumpenv_lum_scale_location[i] != -1)
             {
-                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_scale_location[i], 1,
+                GL_EXTCALL(glUniform1fv(prog->ps.bumpenv_lum_scale_location[i], 1,
                         (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE]));
-                GL_EXTCALL(glUniform1fvARB(prog->ps.bumpenv_lum_offset_location[i], 1,
+                GL_EXTCALL(glUniform1fv(prog->ps.bumpenv_lum_offset_location[i], 1,
                         (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET]));
             }
         }
@@ -821,7 +822,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
             correction_params[0] = (float) context->current_rt->resource.height;
             correction_params[1] = -1.0f;
         }
-        GL_EXTCALL(glUniform4fvARB(prog->ps.ycorrection_location, 1, correction_params));
+        GL_EXTCALL(glUniform4fv(prog->ps.ycorrection_location, 1, correction_params));
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
@@ -834,13 +835,13 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         if (prog->ps.tex_factor_location != -1)
         {
             D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
-            GL_EXTCALL(glUniform4fvARB(prog->ps.tex_factor_location, 1, col));
+            GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, col));
         }
 
         if (state->render_states[WINED3D_RS_SPECULARENABLE])
-            GL_EXTCALL(glUniform4fARB(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
+            GL_EXTCALL(glUniform4f(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
         else
-            GL_EXTCALL(glUniform4fARB(prog->ps.specular_enable_location, 0.0f, 0.0f, 0.0f, 0.0f));
+            GL_EXTCALL(glUniform4f(prog->ps.specular_enable_location, 0.0f, 0.0f, 0.0f, 0.0f));
 
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
@@ -848,7 +849,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 continue;
 
             D3DCOLORTOGLFLOAT4(state->texture_states[i][WINED3D_TSS_CONSTANT], col);
-            GL_EXTCALL(glUniform4fvARB(prog->ps.tss_constant_location[i], 1, col));
+            GL_EXTCALL(glUniform4fv(prog->ps.tss_constant_location[i], 1, col));
         }
 
         checkGLcall("fixed function uniforms");
@@ -4205,7 +4206,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_glsl_priv *priv,
-        GLhandleARB vs_id, GLhandleARB gs_id, GLhandleARB ps_id)
+        GLuint vs_id, GLuint gs_id, GLuint ps_id)
 {
     struct wine_rb_entry *entry;
     struct glsl_program_key key;
@@ -4229,7 +4230,7 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     key.ps_id = entry->ps.id;
     wine_rb_remove(&priv->program_lookup, &key);
 
-    GL_EXTCALL(glDeleteObjectARB(entry->programId));
+    GL_EXTCALL(glDeleteProgram(entry->id));
     if (entry->vs.id)
         list_remove(&entry->vs.shader_entry);
     if (entry->gs.id)
@@ -4335,11 +4336,11 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
 }
 
 /* Context activation is done by the caller. */
-static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer *buffer,
+static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
         const struct wined3d_gl_info *gl_info)
 {
-    GLhandleARB ret = 0;
+    GLuint ret = 0;
     DWORD ps_major = ps ? ps->reg_maps.shader_version.major : 0;
     unsigned int i;
     const char *semantic_name;
@@ -4438,8 +4439,8 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
         shader_addline(buffer, "}\n");
     }
 
-    ret = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
-    checkGLcall("glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB)");
+    ret = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
+    checkGLcall("glCreateShader(GL_VERTEX_SHADER)");
     shader_glsl_compile(gl_info, ret, buffer->buffer);
 
     return ret;
@@ -4495,7 +4496,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     struct shader_glsl_ctx_priv priv_ctx;
 
     /* Create the hw GLSL shader object and assign it as the shader->prgId */
-    GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+    GLuint shader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
@@ -4542,11 +4543,10 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     shader_addline(buffer, "}\n");
 
-    TRACE("Compiling shader object %u\n", shader_obj);
-    shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
+    TRACE("Compiling shader object %u.\n", shader_id);
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
 
-    /* Store the shader object */
-    return shader_obj;
+    return shader_id;
 }
 
 /* Context activation is done by the caller. */
@@ -4560,7 +4560,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     struct shader_glsl_ctx_priv priv_ctx;
 
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
-    GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+    GLuint shader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
 
     shader_addline(buffer, "#version 120\n");
 
@@ -4617,23 +4617,23 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     shader_addline(buffer, "}\n");
 
-    TRACE("Compiling shader object %u\n", shader_obj);
-    shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
+    TRACE("Compiling shader object %u.\n", shader_id);
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
 
-    return shader_obj;
+    return shader_id;
 }
 
 /* Context activation is done by the caller. */
-static GLhandleARB shader_glsl_generate_geometry_shader(const struct wined3d_context *context,
+static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, const struct wined3d_shader *shader)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const DWORD *function = shader->function;
     struct shader_glsl_ctx_priv priv_ctx;
-    GLhandleARB shader_id;
+    GLuint shader_id;
 
-    shader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_GEOMETRY_SHADER_ARB));
+    shader_id = GL_EXTCALL(glCreateShader(GL_GEOMETRY_SHADER));
 
     shader_addline(buffer, "#version 120\n");
 
@@ -4657,7 +4657,7 @@ static GLhandleARB shader_glsl_generate_geometry_shader(const struct wined3d_con
     return shader_id;
 }
 
-static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
+static GLuint find_glsl_pshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
@@ -4666,7 +4666,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
     struct ps_np2fixup_info *np2fixup;
     UINT i;
     DWORD new_size;
-    GLhandleARB ret;
+    GLuint ret;
 
     if (!shader->backend_data)
     {
@@ -4690,7 +4690,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
         {
             if (args->np2_fixup)
                 *np2fixup_info = &gl_shaders[i].np2fixup;
-            return gl_shaders[i].prgId;
+            return gl_shaders[i].id;
         }
     }
 
@@ -4727,7 +4727,7 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_pshader(context, buffer, shader, args, np2fixup);
-    gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
 }
@@ -4739,7 +4739,7 @@ static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const str
     return stored->fog_src == new->fog_src;
 }
 
-static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
+static GLuint find_glsl_vshader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct vs_compile_args *args)
 {
@@ -4748,7 +4748,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
     DWORD use_map = context->stream_info.use_map;
     struct glsl_vs_compiled_shader *gl_shaders, *new_array;
     struct glsl_shader_private *shader_data;
-    GLhandleARB ret;
+    GLuint ret;
 
     if (!shader->backend_data)
     {
@@ -4769,7 +4769,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
     for (i = 0; i < shader_data->num_gl_shaders; ++i)
     {
         if (vs_args_equal(&gl_shaders[i].args, args, use_map))
-            return gl_shaders[i].prgId;
+            return gl_shaders[i].id;
     }
 
     TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
@@ -4800,17 +4800,17 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 
     shader_buffer_clear(buffer);
     ret = shader_glsl_generate_vshader(context, buffer, shader, args);
-    gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
 }
 
-static GLhandleARB find_glsl_geometry_shader(const struct wined3d_context *context,
+static GLuint find_glsl_geometry_shader(const struct wined3d_context *context,
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader)
 {
     struct glsl_gs_compiled_shader *gl_shaders;
     struct glsl_shader_private *shader_data;
-    GLhandleARB ret;
+    GLuint ret;
 
     if (!shader->backend_data)
     {
@@ -4961,10 +4961,10 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_shader_buffer *buffer
 }
 
 /* Context activation is done by the caller. */
-static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffer *buffer,
+static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffer *buffer,
         const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info)
 {
-    GLhandleARB shader_obj;
+    GLuint shader_obj;
     unsigned int i;
 
     shader_buffer_clear(buffer);
@@ -5073,7 +5073,7 @@ static GLhandleARB shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_
 
     shader_addline(buffer, "}\n");
 
-    shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+    shader_obj = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
     shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
 
     return shader_obj;
@@ -5334,7 +5334,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     const char *final_combiner_src = "ret";
     UINT lowest_disabled_stage;
-    GLhandleARB shader_obj;
+    GLuint shader_id;
     DWORD arg0, arg1, arg2;
     unsigned int stage;
 
@@ -5674,9 +5674,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
     shader_addline(buffer, "}\n");
 
-    shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-    shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
-    return shader_obj;
+    shader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
+    return shader_id;
 }
 
 static struct glsl_ffp_vertex_shader *shader_glsl_find_ffp_vertex_shader(struct shader_glsl_priv *priv,
@@ -5722,83 +5722,83 @@ static struct glsl_ffp_fragment_shader *shader_glsl_find_ffp_fragment_shader(str
 
 
 static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *gl_info,
-        GLhandleARB program_id, struct glsl_vs_program *vs, unsigned int vs_c_count)
+        GLuint program_id, struct glsl_vs_program *vs, unsigned int vs_c_count)
 {
     unsigned int i;
     char name[32];
 
     vs->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLhandleARB) * gl_info->limits.glsl_vs_float_constants);
+            sizeof(GLuint) * gl_info->limits.glsl_vs_float_constants);
     for (i = 0; i < vs_c_count; ++i)
     {
         snprintf(name, sizeof(name), "vs_c[%u]", i);
-        vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
     memset(&vs->uniform_f_locations[vs_c_count], 0xff,
-            (gl_info->limits.glsl_vs_float_constants - vs_c_count) * sizeof(GLhandleARB));
+            (gl_info->limits.glsl_vs_float_constants - vs_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
         snprintf(name, sizeof(name), "vs_i[%u]", i);
-        vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
 
     for (i = 0; i < MAX_CONST_B; ++i)
     {
         snprintf(name, sizeof(name), "vs_b[%u]", i);
-        vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
 
-    vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "posFixup"));
+    vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "posFixup"));
 }
 
 static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *gl_info,
-        GLhandleARB program_id, struct glsl_ps_program *ps, unsigned int ps_c_count)
+        GLuint program_id, struct glsl_ps_program *ps, unsigned int ps_c_count)
 {
     unsigned int i;
     char name[32];
 
     ps->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLhandleARB) * gl_info->limits.glsl_ps_float_constants);
+            sizeof(GLuint) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < ps_c_count; ++i)
     {
         snprintf(name, sizeof(name), "ps_c[%u]", i);
-        ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
     memset(&ps->uniform_f_locations[ps_c_count], 0xff,
-            (gl_info->limits.glsl_ps_float_constants - ps_c_count) * sizeof(GLhandleARB));
+            (gl_info->limits.glsl_ps_float_constants - ps_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
         snprintf(name, sizeof(name), "ps_i[%u]", i);
-        ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
 
     for (i = 0; i < MAX_CONST_B; ++i)
     {
         snprintf(name, sizeof(name), "ps_b[%u]", i);
-        ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         snprintf(name, sizeof(name), "bumpenv_mat%u", i);
-        ps->bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
         snprintf(name, sizeof(name), "bumpenv_lum_scale%u", i);
-        ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
         snprintf(name, sizeof(name), "bumpenv_lum_offset%u", i);
-        ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
         snprintf(name, sizeof(name), "tss_const%u", i);
-        ps->tss_constant_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        ps->tss_constant_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
     }
 
-    ps->tex_factor_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "tex_factor"));
-    ps->specular_enable_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "specular_enable"));
-    ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ps_samplerNP2Fixup"));
-    ps->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ycorrection"));
+    ps->tex_factor_location = GL_EXTCALL(glGetUniformLocation(program_id, "tex_factor"));
+    ps->specular_enable_location = GL_EXTCALL(glGetUniformLocation(program_id, "specular_enable"));
+    ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "ps_samplerNP2Fixup"));
+    ps->ycorrection_location = GL_EXTCALL(glGetUniformLocation(program_id, "ycorrection"));
 }
 
-static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info, GLhandleARB program_id,
+static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info, GLuint program_id,
         const struct wined3d_shader_reg_maps *reg_maps, unsigned int base, unsigned int count)
 {
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
@@ -5828,12 +5828,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     struct wined3d_shader *vshader = NULL;
     struct wined3d_shader *gshader = NULL;
     struct wined3d_shader *pshader = NULL;
-    GLhandleARB programId                  = 0;
-    GLhandleARB reorder_shader_id          = 0;
+    GLuint program_id = 0;
+    GLuint reorder_shader_id = 0;
     unsigned int i;
-    GLhandleARB vs_id = 0;
-    GLhandleARB gs_id = 0;
-    GLhandleARB ps_id = 0;
+    GLuint vs_id = 0;
+    GLuint gs_id = 0;
+    GLuint ps_id = 0;
     struct list *ps_list, *vs_list;
 
     if (!(context->shader_update_mask & (1 << WINED3D_SHADER_TYPE_VERTEX)))
@@ -5911,12 +5911,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 
     /* If we get to this point, then no matching program exists, so we create one */
-    programId = GL_EXTCALL(glCreateProgramObjectARB());
-    TRACE("Created new GLSL shader program %u\n", programId);
+    program_id = GL_EXTCALL(glCreateProgram());
+    TRACE("Created new GLSL shader program %u.\n", program_id);
 
     /* Create the entry */
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
-    entry->programId = programId;
+    entry->id = program_id;
     entry->vs.id = vs_id;
     entry->gs.id = gs_id;
     entry->ps.id = ps_id;
@@ -5931,9 +5931,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     /* Attach GLSL vshader */
     if (vs_id)
     {
-        TRACE("Attaching GLSL shader object %u to program %u.\n", vs_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, vs_id));
-        checkGLcall("glAttachObjectARB");
+        TRACE("Attaching GLSL shader object %u to program %u.\n", vs_id, program_id);
+        GL_EXTCALL(glAttachShader(program_id, vs_id));
+        checkGLcall("glAttachShader");
 
         list_add_head(vs_list, &entry->vs.shader_entry);
     }
@@ -5944,13 +5944,13 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         char tmp_name[10];
 
         reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
-        TRACE("Attaching GLSL shader object %u to program %u\n", reorder_shader_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, reorder_shader_id));
-        checkGLcall("glAttachObjectARB");
+        TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
+        GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
+        checkGLcall("glAttachShader");
         /* Flag the reorder function for deletion, then it will be freed automatically when the program
          * is destroyed
          */
-        GL_EXTCALL(glDeleteObjectARB(reorder_shader_id));
+        GL_EXTCALL(glDeleteShader(reorder_shader_id));
 
         /* Bind vertex attributes to a corresponding index number to match
          * the same index numbers as ARB_vertex_programs (makes loading
@@ -5966,26 +5966,26 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             if (!(map & 1)) continue;
 
             snprintf(tmp_name, sizeof(tmp_name), "vs_in%u", i);
-            GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
+            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name));
         }
-        checkGLcall("glBindAttribLocationARB");
+        checkGLcall("glBindAttribLocation");
     }
 
     if (gshader)
     {
-        TRACE("Attaching GLSL geometry shader object %u to program %u.\n", gs_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, gs_id));
-        checkGLcall("glAttachObjectARB");
+        TRACE("Attaching GLSL geometry shader object %u to program %u.\n", gs_id, program_id);
+        GL_EXTCALL(glAttachShader(program_id, gs_id));
+        checkGLcall("glAttachShader");
 
         TRACE("input type %s, output type %s, vertices out %u.\n",
                 debug_d3dprimitivetype(gshader->u.gs.input_type),
                 debug_d3dprimitivetype(gshader->u.gs.output_type),
                 gshader->u.gs.vertices_out);
-        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_INPUT_TYPE_ARB,
+        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_INPUT_TYPE_ARB,
                 gl_primitive_type_from_d3d(gshader->u.gs.input_type)));
-        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_OUTPUT_TYPE_ARB,
+        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_OUTPUT_TYPE_ARB,
                 gl_primitive_type_from_d3d(gshader->u.gs.output_type)));
-        GL_EXTCALL(glProgramParameteriARB(programId, GL_GEOMETRY_VERTICES_OUT_ARB,
+        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_VERTICES_OUT_ARB,
                 gshader->u.gs.vertices_out));
         checkGLcall("glProgramParameteriARB");
 
@@ -5995,28 +5995,28 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     /* Attach GLSL pshader */
     if (ps_id)
     {
-        TRACE("Attaching GLSL shader object %u to program %u.\n", ps_id, programId);
-        GL_EXTCALL(glAttachObjectARB(programId, ps_id));
-        checkGLcall("glAttachObjectARB");
+        TRACE("Attaching GLSL shader object %u to program %u.\n", ps_id, program_id);
+        GL_EXTCALL(glAttachShader(program_id, ps_id));
+        checkGLcall("glAttachShader");
 
         list_add_head(ps_list, &entry->ps.shader_entry);
     }
 
     /* Link the program */
-    TRACE("Linking GLSL shader program %u\n", programId);
-    GL_EXTCALL(glLinkProgramARB(programId));
-    shader_glsl_validate_link(gl_info, programId);
+    TRACE("Linking GLSL shader program %u.\n", program_id);
+    GL_EXTCALL(glLinkProgram(program_id));
+    shader_glsl_validate_link(gl_info, program_id);
 
-    shader_glsl_init_vs_uniform_locations(gl_info, programId, &entry->vs,
+    shader_glsl_init_vs_uniform_locations(gl_info, program_id, &entry->vs,
             vshader ? min(vshader->limits->constant_float, gl_info->limits.glsl_vs_float_constants) : 0);
-    shader_glsl_init_ps_uniform_locations(gl_info, programId, &entry->ps,
+    shader_glsl_init_ps_uniform_locations(gl_info, program_id, &entry->ps,
             pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader && pshader->reg_maps.shader_version.major >= 3
             && pshader->u.ps.declared_in_count > vec4_varyings(3, gl_info))
     {
-        TRACE("Shader %d needs vertex color clamping disabled\n", programId);
+        TRACE("Shader %d needs vertex color clamping disabled.\n", program_id);
         entry->vs.vertex_color_clamp = GL_FALSE;
     }
     else
@@ -6025,8 +6025,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 
     /* Set the shader to allow uniform loading on it */
-    GL_EXTCALL(glUseProgramObjectARB(programId));
-    checkGLcall("glUseProgramObjectARB(programId)");
+    GL_EXTCALL(glUseProgram(program_id));
+    checkGLcall("glUseProgram");
 
     /* Load the vertex and pixel samplers now. The function that finds the mappings makes sure
      * that it stays the same for each vertexshader-pixelshader pair(=linked glsl program). If
@@ -6035,7 +6035,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
      * supports enough samplers to allow the max number of vertex samplers with all possible
      * fixed function fragment processing setups. So once the program is linked these samplers
      * won't change. */
-    shader_glsl_load_samplers(gl_info, context->tex_unit_map, programId);
+    shader_glsl_load_samplers(gl_info, context->tex_unit_map, program_id);
 
     entry->constant_update_mask = 0;
     if (vshader)
@@ -6047,12 +6047,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_B;
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
 
-        shader_glsl_init_uniform_block_bindings(gl_info, programId, &vshader->reg_maps,
+        shader_glsl_init_uniform_block_bindings(gl_info, program_id, &vshader->reg_maps,
                 0, gl_info->limits.vertex_uniform_blocks);
     }
 
     if (gshader)
-        shader_glsl_init_uniform_block_bindings(gl_info, programId, &gshader->reg_maps,
+        shader_glsl_init_uniform_block_bindings(gl_info, program_id, &gshader->reg_maps,
                 gl_info->limits.vertex_uniform_blocks, gl_info->limits.geometry_uniform_blocks);
 
     if (ps_id)
@@ -6067,7 +6067,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             if (entry->ps.ycorrection_location != -1)
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
 
-            shader_glsl_init_uniform_block_bindings(gl_info, programId, &pshader->reg_maps,
+            shader_glsl_init_uniform_block_bindings(gl_info, program_id, &pshader->reg_maps,
                     gl_info->limits.vertex_uniform_blocks + gl_info->limits.geometry_uniform_blocks,
                     gl_info->limits.fragment_uniform_blocks);
         }
@@ -6091,10 +6091,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 }
 
 /* Context activation is done by the caller. */
-static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum tex_types tex_type, BOOL masked)
+static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum tex_types tex_type, BOOL masked)
 {
-    GLhandleARB program_id;
-    GLhandleARB vshader_id, pshader_id;
+    GLuint program_id;
+    GLuint vshader_id, pshader_id;
     const char *blt_pshader;
 
     static const char blt_vshader[] =
@@ -6179,24 +6179,24 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
         return 0;
     }
 
-    vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+    vshader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
     shader_glsl_compile(gl_info, vshader_id, blt_vshader);
 
-    pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+    pshader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
     shader_glsl_compile(gl_info, pshader_id, blt_pshader);
 
-    program_id = GL_EXTCALL(glCreateProgramObjectARB());
-    GL_EXTCALL(glAttachObjectARB(program_id, vshader_id));
-    GL_EXTCALL(glAttachObjectARB(program_id, pshader_id));
-    GL_EXTCALL(glLinkProgramARB(program_id));
+    program_id = GL_EXTCALL(glCreateProgram());
+    GL_EXTCALL(glAttachShader(program_id, vshader_id));
+    GL_EXTCALL(glAttachShader(program_id, pshader_id));
+    GL_EXTCALL(glLinkProgram(program_id));
 
     shader_glsl_validate_link(gl_info, program_id);
 
     /* Once linked we can mark the shaders for deletion. They will be deleted once the program
      * is destroyed
      */
-    GL_EXTCALL(glDeleteObjectARB(vshader_id));
-    GL_EXTCALL(glDeleteObjectARB(pshader_id));
+    GL_EXTCALL(glDeleteShader(vshader_id));
+    GL_EXTCALL(glDeleteShader(pshader_id));
     return program_id;
 }
 
@@ -6207,7 +6207,7 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
     struct glsl_context_data *ctx_data = context->shader_backend_data;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
-    GLhandleARB program_id = 0, prev_id = 0;
+    GLuint program_id = 0, prev_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
 
     priv->vertex_pipe->vp_enable(gl_info, !use_vs(state));
@@ -6215,7 +6215,7 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
 
     if (ctx_data->glsl_program)
     {
-        prev_id = ctx_data->glsl_program->programId;
+        prev_id = ctx_data->glsl_program->id;
         old_vertex_color_clamp = ctx_data->glsl_program->vs.vertex_color_clamp;
     }
     else
@@ -6228,7 +6228,7 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
 
     if (ctx_data->glsl_program)
     {
-        program_id = ctx_data->glsl_program->programId;
+        program_id = ctx_data->glsl_program->id;
         current_vertex_color_clamp = ctx_data->glsl_program->vs.vertex_color_clamp;
     }
     else
@@ -6254,8 +6254,8 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
 
     if (prev_id != program_id)
     {
-        GL_EXTCALL(glUseProgramObjectARB(program_id));
-        checkGLcall("glUseProgramObjectARB");
+        GL_EXTCALL(glUseProgram(program_id));
+        checkGLcall("glUseProgram");
 
         if (program_id)
             context->constant_update_mask |= ctx_data->glsl_program->constant_update_mask;
@@ -6280,8 +6280,8 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
     struct shader_glsl_priv *priv = shader_priv;
 
     shader_glsl_invalidate_current_program(context);
-    GL_EXTCALL(glUseProgramObjectARB(0));
-    checkGLcall("glUseProgramObjectARB");
+    GL_EXTCALL(glUseProgram(0));
+    checkGLcall("glUseProgram");
 
     priv->vertex_pipe->vp_enable(gl_info, FALSE);
     priv->fragment_pipe->enable_extension(gl_info, FALSE);
@@ -6299,26 +6299,26 @@ static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d
 {
     BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
     struct shader_glsl_priv *priv = shader_priv;
-    GLhandleARB *blt_program;
+    GLuint *blt_program;
     GLint loc;
 
     blt_program = masked ? &priv->depth_blt_program_masked[tex_type] : &priv->depth_blt_program_full[tex_type];
     if (!*blt_program)
     {
         *blt_program = create_glsl_blt_shader(gl_info, tex_type, masked);
-        loc = GL_EXTCALL(glGetUniformLocationARB(*blt_program, "sampler"));
-        GL_EXTCALL(glUseProgramObjectARB(*blt_program));
-        GL_EXTCALL(glUniform1iARB(loc, 0));
+        loc = GL_EXTCALL(glGetUniformLocation(*blt_program, "sampler"));
+        GL_EXTCALL(glUseProgram(*blt_program));
+        GL_EXTCALL(glUniform1i(loc, 0));
     }
     else
     {
-        GL_EXTCALL(glUseProgramObjectARB(*blt_program));
+        GL_EXTCALL(glUseProgram(*blt_program));
     }
 
     if (masked)
     {
-        loc = GL_EXTCALL(glGetUniformLocationARB(*blt_program, "mask"));
-        GL_EXTCALL(glUniform4fARB(loc, 0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy));
+        loc = GL_EXTCALL(glGetUniformLocation(*blt_program, "mask"));
+        GL_EXTCALL(glUniform4f(loc, 0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy));
     }
 }
 
@@ -6326,13 +6326,13 @@ static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d
 static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
 {
     const struct glsl_context_data *ctx_data = context_get_current()->shader_backend_data;
-    GLhandleARB program_id;
+    GLuint program_id;
 
-    program_id = ctx_data->glsl_program ? ctx_data->glsl_program->programId : 0;
+    program_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
     if (program_id) TRACE("Using GLSL program %u\n", program_id);
 
-    GL_EXTCALL(glUseProgramObjectARB(program_id));
-    checkGLcall("glUseProgramObjectARB");
+    GL_EXTCALL(glUseProgram(program_id));
+    checkGLcall("glUseProgram");
 }
 
 static void shader_glsl_invalidate_contexts_program(struct wined3d_device *device,
@@ -6386,9 +6386,9 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
 
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
-                    TRACE("Deleting pixel shader %u.\n", gl_shaders[i].prgId);
-                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
-                    checkGLcall("glDeleteObjectARB");
+                    TRACE("Deleting pixel shader %u.\n", gl_shaders[i].id);
+                    GL_EXTCALL(glDeleteShader(gl_shaders[i].id));
+                    checkGLcall("glDeleteShader");
                 }
                 HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.ps);
 
@@ -6408,9 +6408,9 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
 
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
-                    TRACE("Deleting vertex shader %u.\n", gl_shaders[i].prgId);
-                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].prgId));
-                    checkGLcall("glDeleteObjectARB");
+                    TRACE("Deleting vertex shader %u.\n", gl_shaders[i].id);
+                    GL_EXTCALL(glDeleteShader(gl_shaders[i].id));
+                    checkGLcall("glDeleteShader");
                 }
                 HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.vs);
 
@@ -6431,8 +6431,8 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 for (i = 0; i < shader_data->num_gl_shaders; ++i)
                 {
                     TRACE("Deleting geometry shader %u.\n", gl_shaders[i].id);
-                    GL_EXTCALL(glDeleteObjectARB(gl_shaders[i].id));
-                    checkGLcall("glDeleteObjectARB");
+                    GL_EXTCALL(glDeleteShader(gl_shaders[i].id));
+                    checkGLcall("glDeleteShader");
                 }
                 HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.gs);
 
@@ -6602,11 +6602,11 @@ static void shader_glsl_free(struct wined3d_device *device)
     {
         if (priv->depth_blt_program_full[i])
         {
-            GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_program_full[i]));
+            GL_EXTCALL(glDeleteProgram(priv->depth_blt_program_full[i]));
         }
         if (priv->depth_blt_program_masked[i])
         {
-            GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_program_masked[i]));
+            GL_EXTCALL(glDeleteProgram(priv->depth_blt_program_masked[i]));
         }
     }
 
@@ -6923,7 +6923,7 @@ static void shader_glsl_free_ffp_vertex_shader(struct wine_rb_entry *entry, void
     {
         delete_glsl_program_entry(ctx->priv, ctx->gl_info, program);
     }
-    ctx->gl_info->gl_ops.ext.p_glDeleteObjectARB(shader->id);
+    ctx->gl_info->gl_ops.ext.p_glDeleteShader(shader->id);
     HeapFree(GetProcessHeap(), 0, shader);
 }
 
@@ -7195,7 +7195,7 @@ static void shader_glsl_free_ffp_fragment_shader(struct wine_rb_entry *entry, vo
     {
         delete_glsl_program_entry(ctx->priv, ctx->gl_info, program);
     }
-    ctx->gl_info->gl_ops.ext.p_glDeleteObjectARB(shader->id);
+    ctx->gl_info->gl_ops.ext.p_glDeleteShader(shader->id);
     HeapFree(GetProcessHeap(), 0, shader);
 }
 
