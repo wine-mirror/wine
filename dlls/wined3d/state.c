@@ -4297,7 +4297,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     break;
 
                 case WINED3DFMT_R16G16_SINT:
-                    GL_EXTCALL(glVertexAttrib4svARB(i, (const GLshort *)ptr));
+                    GL_EXTCALL(glVertexAttrib2svARB(i, (const GLshort *)ptr));
                     break;
                 case WINED3DFMT_R16G16B16A16_SINT:
                     GL_EXTCALL(glVertexAttrib4svARB(i, (const GLshort *)ptr));

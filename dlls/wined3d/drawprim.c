@@ -377,7 +377,7 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
             break;
 
         case WINED3DFMT_R16G16_SINT:
-            GL_EXTCALL(glVertexAttrib4svARB(index, ptr));
+            GL_EXTCALL(glVertexAttrib2svARB(index, ptr));
             break;
         case WINED3DFMT_R16G16B16A16_SINT:
             GL_EXTCALL(glVertexAttrib4svARB(index, ptr));
