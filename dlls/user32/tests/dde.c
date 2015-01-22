@@ -776,7 +776,6 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
         else if (msg_index == 10)
         {
             DWORD rsize = 0;
-            size = 0;
 
             size = DdeGetData(hdata, NULL, 0, 0);
             ok(size == 17, "DdeGetData should have returned 17 not %d\n", size);
