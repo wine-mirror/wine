@@ -240,6 +240,8 @@ static const WCHAR prop_processidW[] =
     {'P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processoridW[] =
     {'P','r','o','c','e','s','s','o','r','I','d',0};
+static const WCHAR prop_processortypeW[] =
+    {'P','r','o','c','e','s','s','o','r','T','y','p','e',0};
 static const WCHAR prop_productW[] =
     {'P','r','o','d','u','c','t',0};
 static const WCHAR prop_productnameW[] =
@@ -481,6 +483,7 @@ static const struct column col_processor[] =
     { prop_numcoresW,             CIM_UINT32, VT_I4 },
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_processortypeW,        CIM_UINT16, VT_I4 },
     { prop_uniqueidW,             CIM_STRING }
 };
 static const struct column col_qualifier[] =
@@ -809,6 +812,7 @@ struct record_processor
     UINT32       num_cores;
     UINT32       num_logical_processors;
     const WCHAR *processor_id;
+    UINT16       processortype;
     const WCHAR *unique_id;
 };
 struct record_qualifier
@@ -2121,6 +2125,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->num_cores              = num_cores;
         rec->num_logical_processors = num_logical_processors;
         rec->processor_id           = heap_strdupW( processor_id );
+        rec->processortype          = 3; /* central processor */
         rec->unique_id              = NULL;
         if (!match_row( table, i, cond, &status ))
         {
