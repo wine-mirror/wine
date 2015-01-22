@@ -366,6 +366,7 @@ static const struct column col_diskdrive[] =
     { prop_manufacturerW,  CIM_STRING },
     { prop_mediatypeW,     CIM_STRING },
     { prop_modelW,         CIM_STRING },
+    { prop_pnpdeviceidW,   CIM_STRING },
     { prop_serialnumberW,  CIM_STRING },
     { prop_sizeW,          CIM_UINT64 }
 };
@@ -595,6 +596,8 @@ static const WCHAR diskdrive_mediatype_removableW[] =
     {'R','e','m','o','v','a','b','l','e',' ','m','e','d','i','a',0};
 static const WCHAR diskdrive_modelW[] =
     {'W','i','n','e',' ','D','i','s','k',' ','D','r','i','v','e',0};
+static const WCHAR diskdrive_pnpdeviceidW[] =
+    {'I','D','E','\\','D','i','s','k','\\','V','E','N','_','W','I','N','E',0};
 static const WCHAR diskdrive_serialW[] =
     {'W','I','N','E','H','D','I','S','K',0};
 static const WCHAR networkadapter_pnpdeviceidW[]=
@@ -695,6 +698,7 @@ struct record_diskdrive
     const WCHAR *manufacturer;
     const WCHAR *mediatype;
     const WCHAR *model;
+    const WCHAR *pnpdevice_id;
     const WCHAR *serialnumber;
     UINT64       size;
 };
@@ -1621,6 +1625,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             else
                 rec->mediatype = diskdrive_mediatype_removableW;
             rec->model         = diskdrive_modelW;
+            rec->pnpdevice_id  = diskdrive_pnpdeviceidW;
             rec->serialnumber  = diskdrive_serialW;
             get_freespace( root, &size );
             rec->size          = size;
