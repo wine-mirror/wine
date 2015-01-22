@@ -546,6 +546,12 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
     return E_NOTIMPL;
 }
 
+static HRESULT exec_optical_zoom(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
+    return E_NOTIMPL;
+}
+
 static HRESULT query_mshtml_copy(HTMLDocument *This, OLECMD *cmd)
 {
     FIXME("(%p)\n", This);
@@ -695,7 +701,7 @@ static HRESULT query_enabled_stub(HTMLDocument *This, OLECMD *cmd)
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
-} exec_table[OLECMDID_GETPRINTTEMPLATE+1] = {
+} exec_table[] = {
     {0},
     { OLECMDF_SUPPORTED,                  exec_open                 }, /* OLECMDID_OPEN */
     { OLECMDF_SUPPORTED,                  exec_new                  }, /* OLECMDID_NEW */
@@ -735,7 +741,9 @@ static const struct {
     { OLECMDF_SUPPORTED,                  exec_close                }, /* OLECMDID_CLOSE */
     {0},{0},{0},
     { OLECMDF_SUPPORTED,                  exec_set_print_template   }, /* OLECMDID_SETPRINTTEMPLATE */
-    { OLECMDF_SUPPORTED,                  exec_get_print_template   }  /* OLECMDID_GETPRINTTEMPLATE */
+    { OLECMDF_SUPPORTED,                  exec_get_print_template   }, /* OLECMDID_GETPRINTTEMPLATE */
+    {0},{0},{0},{0},{0},{0},{0},{0},{0},{0},
+    { 0, /* not reported as supported */  exec_optical_zoom         }  /* OLECMDID_OPTICAL_ZOOM */
 };
 
 static const cmdtable_t base_cmds[] = {
@@ -874,7 +882,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
     HTMLDocument *This = impl_from_IOleCommandTarget(iface);
 
     if(!pguidCmdGroup) {
-        if(nCmdID<OLECMDID_OPEN || nCmdID>OLECMDID_GETPRINTTEMPLATE || !exec_table[nCmdID].func) {
+        if(nCmdID < OLECMDID_OPEN || nCmdID >= sizeof(exec_table)/sizeof(*exec_table) || !exec_table[nCmdID].func) {
             WARN("Unsupported cmdID = %d\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
         }
