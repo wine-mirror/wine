@@ -4157,10 +4157,10 @@ static inline void unload_numbered_array(struct wined3d_context *context, int i)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-    checkGLcall("glDisableVertexAttribArrayARB(reg)");
+    GL_EXTCALL(glDisableVertexAttribArray(i));
+    checkGLcall("glDisableVertexAttribArray");
     if (gl_info->supported[ARB_INSTANCED_ARRAYS])
-        GL_EXTCALL(glVertexAttribDivisorARB(i, 0));
+        GL_EXTCALL(glVertexAttribDivisor(i, 0));
 
     context->numbered_array_mask &= ~(1 << i);
 }
@@ -4196,7 +4196,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
             if (context->numbered_array_mask & (1 << i))
                 unload_numbered_array(context, i);
             if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.input_registers & (1 << i))
-                GL_EXTCALL(glVertexAttrib4fARB(i, 0.0f, 0.0f, 0.0f, 0.0f));
+                GL_EXTCALL(glVertexAttrib4f(i, 0.0f, 0.0f, 0.0f, 0.0f));
             continue;
         }
 
@@ -4216,11 +4216,11 @@ static void load_numbered_arrays(struct wined3d_context *context,
                 continue;
             }
 
-            GL_EXTCALL(glVertexAttribDivisorARB(i, 1));
+            GL_EXTCALL(glVertexAttribDivisor(i, 1));
         }
         else if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {
-            GL_EXTCALL(glVertexAttribDivisorARB(i, 0));
+            GL_EXTCALL(glVertexAttribDivisor(i, 0));
         }
 
         TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, stream_info->elements[i].data.buffer_object);
@@ -4237,7 +4237,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
              * pointer. vb can point to a user pointer data blob. In that case
              * curVBO will be 0. If there is a vertex buffer but no vbo we
              * won't be load converted attributes anyway. */
-            GL_EXTCALL(glVertexAttribPointerARB(i, stream_info->elements[i].format->gl_vtx_format,
+            GL_EXTCALL(glVertexAttribPointer(i, stream_info->elements[i].format->gl_vtx_format,
                     stream_info->elements[i].format->gl_vtx_type,
                     stream_info->elements[i].format->gl_normalized,
                     stream_info->elements[i].stride, stream_info->elements[i].data.addr
@@ -4245,14 +4245,14 @@ static void load_numbered_arrays(struct wined3d_context *context,
 
             if (!(context->numbered_array_mask & (1 << i)))
             {
-                GL_EXTCALL(glEnableVertexAttribArrayARB(i));
+                GL_EXTCALL(glEnableVertexAttribArray(i));
                 context->numbered_array_mask |= (1 << i);
             }
         }
         else
         {
             /* Stride = 0 means always the same values.
-             * glVertexAttribPointerARB doesn't do that. Instead disable the
+             * glVertexAttribPointer doesn't do that. Instead disable the
              * pointer and set up the attribute statically. But we have to
              * figure out the system memory address. */
             const BYTE *ptr = stream_info->elements[i].data.addr;
@@ -4266,20 +4266,20 @@ static void load_numbered_arrays(struct wined3d_context *context,
             switch (stream_info->elements[i].format->id)
             {
                 case WINED3DFMT_R32_FLOAT:
-                    GL_EXTCALL(glVertexAttrib1fvARB(i, (const GLfloat *)ptr));
+                    GL_EXTCALL(glVertexAttrib1fv(i, (const GLfloat *)ptr));
                     break;
                 case WINED3DFMT_R32G32_FLOAT:
-                    GL_EXTCALL(glVertexAttrib2fvARB(i, (const GLfloat *)ptr));
+                    GL_EXTCALL(glVertexAttrib2fv(i, (const GLfloat *)ptr));
                     break;
                 case WINED3DFMT_R32G32B32_FLOAT:
-                    GL_EXTCALL(glVertexAttrib3fvARB(i, (const GLfloat *)ptr));
+                    GL_EXTCALL(glVertexAttrib3fv(i, (const GLfloat *)ptr));
                     break;
                 case WINED3DFMT_R32G32B32A32_FLOAT:
-                    GL_EXTCALL(glVertexAttrib4fvARB(i, (const GLfloat *)ptr));
+                    GL_EXTCALL(glVertexAttrib4fv(i, (const GLfloat *)ptr));
                     break;
 
                 case WINED3DFMT_R8G8B8A8_UINT:
-                    GL_EXTCALL(glVertexAttrib4ubvARB(i, ptr));
+                    GL_EXTCALL(glVertexAttrib4ubv(i, ptr));
                     break;
                 case WINED3DFMT_B8G8R8A8_UNORM:
                     if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
@@ -4288,38 +4288,38 @@ static void load_numbered_arrays(struct wined3d_context *context,
                         DWORD c = *src & 0xff00ff00;
                         c |= (*src & 0xff0000) >> 16;
                         c |= (*src & 0xff) << 16;
-                        GL_EXTCALL(glVertexAttrib4NubvARB(i, (GLubyte *)&c));
+                        GL_EXTCALL(glVertexAttrib4Nubv(i, (GLubyte *)&c));
                         break;
                     }
                     /* else fallthrough */
                 case WINED3DFMT_R8G8B8A8_UNORM:
-                    GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
+                    GL_EXTCALL(glVertexAttrib4Nubv(i, ptr));
                     break;
 
                 case WINED3DFMT_R16G16_SINT:
-                    GL_EXTCALL(glVertexAttrib2svARB(i, (const GLshort *)ptr));
+                    GL_EXTCALL(glVertexAttrib2sv(i, (const GLshort *)ptr));
                     break;
                 case WINED3DFMT_R16G16B16A16_SINT:
-                    GL_EXTCALL(glVertexAttrib4svARB(i, (const GLshort *)ptr));
+                    GL_EXTCALL(glVertexAttrib4sv(i, (const GLshort *)ptr));
                     break;
 
                 case WINED3DFMT_R16G16_SNORM:
                 {
                     const GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
-                    GL_EXTCALL(glVertexAttrib4NsvARB(i, s));
+                    GL_EXTCALL(glVertexAttrib4Nsv(i, s));
                     break;
                 }
                 case WINED3DFMT_R16G16_UNORM:
                 {
                     const GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
-                    GL_EXTCALL(glVertexAttrib4NusvARB(i, s));
+                    GL_EXTCALL(glVertexAttrib4Nusv(i, s));
                     break;
                 }
                 case WINED3DFMT_R16G16B16A16_SNORM:
-                    GL_EXTCALL(glVertexAttrib4NsvARB(i, (const GLshort *)ptr));
+                    GL_EXTCALL(glVertexAttrib4Nsv(i, (const GLshort *)ptr));
                     break;
                 case WINED3DFMT_R16G16B16A16_UNORM:
-                    GL_EXTCALL(glVertexAttrib4NusvARB(i, (const GLushort *)ptr));
+                    GL_EXTCALL(glVertexAttrib4Nusv(i, (const GLushort *)ptr));
                     break;
 
                 case WINED3DFMT_R10G10B10A2_UINT:
@@ -4341,7 +4341,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     {
                         float x = float_16_to_32(((const unsigned short *)ptr) + 0);
                         float y = float_16_to_32(((const unsigned short *)ptr) + 1);
-                        GL_EXTCALL(glVertexAttrib2fARB(i, x, y));
+                        GL_EXTCALL(glVertexAttrib2f(i, x, y));
                     }
                     break;
                 case WINED3DFMT_R16G16B16A16_FLOAT:
@@ -4356,7 +4356,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
                         float y = float_16_to_32(((const unsigned short *)ptr) + 1);
                         float z = float_16_to_32(((const unsigned short *)ptr) + 2);
                         float w = float_16_to_32(((const unsigned short *)ptr) + 3);
-                        GL_EXTCALL(glVertexAttrib4fARB(i, x, y, z, w));
+                        GL_EXTCALL(glVertexAttrib4f(i, x, y, z, w));
                     }
                     break;
 

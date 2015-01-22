@@ -2881,8 +2881,10 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glCompressedTexSubImage2D)  /* OpenGL 1.3 */
     USE_GL_FUNC(glCompressedTexSubImage3D)  /* OpenGL 1.3 */
     USE_GL_FUNC(glDeleteBuffers)            /* OpenGL 1.5 */
+    USE_GL_FUNC(glDisableVertexAttribArray) /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawBuffers)              /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawElementsInstanced)    /* OpenGL 3.1 */
+    USE_GL_FUNC(glEnableVertexAttribArray)  /* OpenGL 2.0 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
     USE_GL_FUNC(glGetCompressedTexImage)    /* OpenGL 1.3 */
@@ -2892,6 +2894,21 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glStencilFuncSeparate)      /* OpenGL 2.0 */
     USE_GL_FUNC(glStencilOpSeparate)        /* OpenGL 2.0 */
     USE_GL_FUNC(glUnmapBuffer)              /* OpenGL 1.5 */
+    USE_GL_FUNC(glVertexAttrib1f)           /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib1fv)          /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib2f)           /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib2fv)          /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib3f)           /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib3fv)          /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4f)           /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4fv)          /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4Nsv)         /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4Nubv)        /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4Nusv)        /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4sv)          /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4ubv)         /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttribDivisor)      /* OpenGL 3.3 */
+    USE_GL_FUNC(glVertexAttribPointer)      /* OpenGL 2.0 */
 #undef USE_GL_FUNC
 
 #ifndef USE_WIN32_OPENGL
@@ -2921,13 +2938,30 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glCompressedTexSubImage2D, glCompressedTexSubImage2DARB);
     MAP_GL_FUNCTION(glCompressedTexSubImage3D, glCompressedTexSubImage3DARB);
     MAP_GL_FUNCTION(glDeleteBuffers, glDeleteBuffersARB);
+    MAP_GL_FUNCTION(glDisableVertexAttribArray, glDisableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glDrawBuffers, glDrawBuffersARB);
     MAP_GL_FUNCTION(glDrawElementsInstanced, glDrawElementsInstancedARB);
+    MAP_GL_FUNCTION(glEnableVertexAttribArray, glEnableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
     MAP_GL_FUNCTION(glGetBufferSubData, glGetBufferSubDataARB);
     MAP_GL_FUNCTION(glGetCompressedTexImage, glGetCompressedTexImageARB);
     MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
     MAP_GL_FUNCTION(glUnmapBuffer, glUnmapBufferARB);
+    MAP_GL_FUNCTION(glVertexAttrib1f, glVertexAttrib1fARB);
+    MAP_GL_FUNCTION(glVertexAttrib1fv, glVertexAttrib1fvARB);
+    MAP_GL_FUNCTION(glVertexAttrib2f, glVertexAttrib2fARB);
+    MAP_GL_FUNCTION(glVertexAttrib2fv, glVertexAttrib2fvARB);
+    MAP_GL_FUNCTION(glVertexAttrib3f, glVertexAttrib3fARB);
+    MAP_GL_FUNCTION(glVertexAttrib3fv, glVertexAttrib3fvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4f, glVertexAttrib4fARB);
+    MAP_GL_FUNCTION(glVertexAttrib4fv, glVertexAttrib4fvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4Nsv, glVertexAttrib4NsvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4Nubv, glVertexAttrib4NubvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4Nusv, glVertexAttrib4NusvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4sv, glVertexAttrib4svARB);
+    MAP_GL_FUNCTION(glVertexAttrib4ubv, glVertexAttrib4ubvARB);
+    MAP_GL_FUNCTION(glVertexAttribDivisor, glVertexAttribDivisorARB);
+    MAP_GL_FUNCTION(glVertexAttribPointer, glVertexAttribPointerARB);
 #undef MAP_GL_FUNCTION
 }
 
