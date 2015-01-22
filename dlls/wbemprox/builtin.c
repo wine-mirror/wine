@@ -311,7 +311,8 @@ static const struct column col_baseboard[] =
     { prop_nameW,          CIM_STRING },
     { prop_productW,       CIM_STRING },
     { prop_serialnumberW,  CIM_STRING },
-    { prop_tagW,           CIM_STRING|COL_FLAG_KEY }
+    { prop_tagW,           CIM_STRING|COL_FLAG_KEY },
+    { prop_versionW,       CIM_STRING }
 };
 static const struct column col_bios[] =
 {
@@ -552,6 +553,8 @@ static const WCHAR baseboard_serialnumberW[] =
     {'N','o','n','e',0};
 static const WCHAR baseboard_tagW[] =
     {'B','a','s','e',' ','B','o','a','r','d',0};
+static const WCHAR baseboard_versionW[] =
+    {'1','.','0',0};
 static const WCHAR bios_descriptionW[] =
     {'D','e','f','a','u','l','t',' ','S','y','s','t','e','m',' ','B','I','O','S',0};
 static const WCHAR bios_manufacturerW[] =
@@ -644,6 +647,7 @@ struct record_baseboard
     const WCHAR *product;
     const WCHAR *serialnumber;
     const WCHAR *tag;
+    const WCHAR *version;
 };
 struct record_bios
 {
@@ -881,7 +885,7 @@ struct record_videocontroller
 
 static const struct record_baseboard data_baseboard[] =
 {
-    { baseboard_manufacturerW, baseboard_tagW, baseboard_tagW, baseboard_tagW, baseboard_serialnumberW, baseboard_tagW }
+    { baseboard_manufacturerW, baseboard_tagW, baseboard_tagW, baseboard_tagW, baseboard_serialnumberW, baseboard_versionW }
 };
 static const struct record_bios data_bios[] =
 {
