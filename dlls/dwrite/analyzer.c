@@ -962,17 +962,51 @@ done:
     return hr;
 }
 
+static inline FLOAT get_scaled_advance_width(INT32 advance, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
+{
+    return (FLOAT)advance * emSize / (FLOAT)metrics->designUnitsPerEm;
+}
+
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
-    UINT32 text_len, UINT16 const* glyph_indices, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
-    UINT32 glyph_count, IDWriteFontFace * font_face, FLOAT fontEmSize, BOOL is_sideways, BOOL is_rtl,
+    UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
+    UINT32 glyph_count, IDWriteFontFace *fontface, FLOAT emSize, BOOL is_sideways, BOOL is_rtl,
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
-    UINT32 const* feature_range_len, UINT32 feature_ranges, FLOAT* glyph_advances, DWRITE_GLYPH_OFFSET* glyph_offsets)
+    UINT32 const* feature_range_len, UINT32 feature_ranges, FLOAT *advances, DWRITE_GLYPH_OFFSET *offsets)
 {
-    FIXME("(%s %p %p %u %p %p %u %p %f %d %d %p %s %p %p %u %p %p): stub\n", debugstr_w(text),
-        clustermap, props, text_len, glyph_indices, glyph_props, glyph_count, font_face, fontEmSize, is_sideways,
-        is_rtl, analysis, debugstr_w(locale), features, feature_range_len, feature_ranges, glyph_advances, glyph_offsets);
-    return E_NOTIMPL;
+    DWRITE_FONT_METRICS metrics;
+    IDWriteFontFace1 *fontface1;
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %p %s %p %p %u %p %p)\n", debugstr_w(text),
+        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
+        is_rtl, analysis, debugstr_w(locale), features, feature_range_len, feature_ranges, advances, offsets);
+
+    if (glyph_count == 0)
+        return S_OK;
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (FAILED(hr)) {
+        WARN("failed to get IDWriteFontFace1.\n");
+        return hr;
+    }
+
+    IDWriteFontFace_GetMetrics(fontface, &metrics);
+    for (i = 0; i < glyph_count; i++) {
+        INT32 a;
+
+        hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &glyphs[i], &a, is_sideways);
+        if (FAILED(hr))
+            a = 0;
+
+        advances[i] = get_scaled_advance_width(a, emSize, &metrics);
+        offsets[i].advanceOffset = 0.0;
+        offsets[i].ascenderOffset = 0.0;
+    }
+
+    /* FIXME: actually apply features */
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,

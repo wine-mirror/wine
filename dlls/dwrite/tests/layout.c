@@ -921,10 +921,10 @@ static void test_GetClusterMetrics(void)
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
-todo_wine {
+todo_wine
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(count == 4, "got %u\n", count);
-}
+
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &trimm);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
