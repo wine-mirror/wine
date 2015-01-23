@@ -606,16 +606,18 @@ void msvcrt_init_io(void)
 /* INTERNAL: Flush stdio file buffer */
 static int msvcrt_flush_buffer(MSVCRT_FILE* file)
 {
-  if(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)) {
+    if((file->_flag & (MSVCRT__IOREAD|MSVCRT__IOWRT)) == MSVCRT__IOWRT &&
+            file->_flag & (MSVCRT__IOMYBUF|MSVCRT__USERBUF)) {
         int cnt=file->_ptr-file->_base;
         if(cnt>0 && MSVCRT__write(file->_file, file->_base, cnt) != cnt) {
             file->_flag |= MSVCRT__IOERR;
             return MSVCRT_EOF;
         }
-        file->_ptr=file->_base;
-        file->_cnt=0;
-  }
-  return 0;
+    }
+
+    file->_ptr=file->_base;
+    file->_cnt=0;
+    return 0;
 }
 
 /*********************************************************************
@@ -964,23 +966,17 @@ int CDECL MSVCRT_fflush(MSVCRT_FILE* file)
  */
 int CDECL MSVCRT__fflush_nolock(MSVCRT_FILE* file)
 {
+    int res;
+
     if(!file) {
         msvcrt_flush_all_buffers(MSVCRT__IOWRT);
-    } else if(file->_flag & MSVCRT__IOWRT) {
-        int res;
-
-        res = msvcrt_flush_buffer(file);
-        if(!res && (file->_flag & MSVCRT__IOCOMMIT))
-            res = MSVCRT__commit(file->_file) ? MSVCRT_EOF : 0;
-
-        return res;
-    } else if(file->_flag & MSVCRT__IOREAD) {
-        file->_cnt = 0;
-        file->_ptr = file->_base;
-
         return 0;
     }
-    return 0;
+
+    res = msvcrt_flush_buffer(file);
+    if(!res && (file->_flag & MSVCRT__IOCOMMIT))
+        res = MSVCRT__commit(file->_file) ? MSVCRT_EOF : 0;
+    return res;
 }
 
 /*********************************************************************
@@ -1333,18 +1329,13 @@ int CDECL MSVCRT__fseeki64_nolock(MSVCRT_FILE* file, __int64 offset, int whence)
 {
   int ret;
 
-  /* Flush output if needed */
-  if(file->_flag & MSVCRT__IOWRT)
-	msvcrt_flush_buffer(file);
-
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
       whence = SEEK_SET;
       offset += MSVCRT__ftelli64_nolock(file);
   }
 
-  /* Discard buffered input */
-  file->_cnt = 0;
-  file->_ptr = file->_base;
+  /* Flush output if needed */
+  msvcrt_flush_buffer(file);
   /* Reset direction of i/o */
   if(file->_flag & MSVCRT__IORW) {
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
@@ -4369,14 +4360,8 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
   int ret;
 
   MSVCRT__lock_file(file);
-  /* Note that all this has been lifted 'as is' from fseek */
-  if(file->_flag & MSVCRT__IOWRT)
-	msvcrt_flush_buffer(file);
+  msvcrt_flush_buffer(file);
 
-  /* Discard buffered input */
-  file->_cnt = 0;
-  file->_ptr = file->_base;
-  
   /* Reset direction of i/o */
   if(file->_flag & MSVCRT__IORW) {
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
