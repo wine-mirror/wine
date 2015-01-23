@@ -699,7 +699,7 @@
 @ stub _iswlower_l
 @ stub _iswprint_l
 @ stub _iswpunct_l
-@ stub _iswspace_l
+@ cdecl _iswspace_l(long ptr) MSVCRT__iswspace_l
 @ stub _iswupper_l
 @ stub _iswxdigit_l
 @ cdecl _isxdigit_l(long ptr) MSVCRT__isxdigit_l
