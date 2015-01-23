@@ -34,6 +34,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+#ifndef HAVE_FINITEF
+#define finitef(x) isfinite(x)
+#endif
+
+#ifndef HAVE_ISNANF
+#ifdef HAVE_ISNAN
+#define isnanf(x) isnan(x)
+#else
+#define isnanf(x) 0
+#endif
+#endif
+
 #ifndef signbit
 #define signbit(x) 0
 #endif

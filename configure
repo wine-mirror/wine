@@ -14671,6 +14671,7 @@ for ac_func in \
 	dlopen \
 	epoll_create \
 	ffs \
+	finitef \
 	fnmatch \
 	fork \
 	fpclass \
@@ -14687,6 +14688,7 @@ for ac_func in \
 	gettimeofday \
 	getuid \
 	if_nameindex \
+	isnanf \
 	kqueue \
 	lstat \
 	memmove \

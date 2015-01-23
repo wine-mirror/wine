@@ -123,6 +123,9 @@
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
 
+/* Define to 1 if you have the `finitef' function. */
+#undef HAVE_FINITEF
+
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
@@ -278,6 +281,9 @@
 
 /* Define to 1 if you have the `isnan' function. */
 #undef HAVE_ISNAN
+
+/* Define to 1 if you have the `isnanf' function. */
+#undef HAVE_ISNANF
 
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
