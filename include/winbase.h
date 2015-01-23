@@ -2008,6 +2008,7 @@ WINBASEAPI HANDLE      WINAPI GetStdHandle(DWORD);
 WINBASEAPI UINT        WINAPI GetSystemDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetSystemDirectoryW(LPWSTR,UINT);
 #define                       GetSystemDirectory WINELIB_NAME_AW(GetSystemDirectory)
+WINBASEAPI UINT        WINAPI GetSystemFirmwareTable(DWORD,DWORD,PVOID,DWORD);
 WINBASEAPI VOID        WINAPI GetSystemInfo(LPSYSTEM_INFO);
 WINBASEAPI BOOL        WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 WINBASEAPI BOOL        WINAPI GetSystemRegistryQuota(PDWORD,PDWORD);

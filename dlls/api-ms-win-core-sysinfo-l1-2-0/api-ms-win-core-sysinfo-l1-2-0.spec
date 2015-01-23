@@ -9,7 +9,7 @@
 @ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
 @ stdcall GetSystemDirectoryA(ptr long) kernel32.GetSystemDirectoryA
 @ stdcall GetSystemDirectoryW(ptr long) kernel32.GetSystemDirectoryW
-@ stub GetSystemFirmwareTable
+@ stdcall GetSystemFirmwareTable(long long ptr long) kernel32.GetSystemFirmwareTable
 @ stdcall GetSystemInfo(ptr) kernel32.GetSystemInfo
 @ stdcall GetSystemTime(ptr) kernel32.GetSystemTime
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
