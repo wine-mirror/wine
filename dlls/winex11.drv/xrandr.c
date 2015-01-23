@@ -163,7 +163,7 @@ static LONG xrandr10_set_current_mode( int mode )
 
     root = DefaultRootWindow( gdi_display );
     sc = pXRRGetScreenInfo (gdi_display, root);
-    size = pXRRConfigCurrentConfiguration (sc, &rot);
+    pXRRConfigCurrentConfiguration (sc, &rot);
     mode = mode % xrandr_mode_count;
 
     TRACE("Changing Resolution to %dx%d @%d Hz\n",
