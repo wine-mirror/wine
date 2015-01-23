@@ -2783,7 +2783,7 @@ static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 /* A few optimizations for gcc */
 
-#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || defined(__x86_64__)) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || (defined(__x86_64__) && !defined(__APPLE__))) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 
 static FORCEINLINE DWORD WINAPI GetLastError(void)
 {

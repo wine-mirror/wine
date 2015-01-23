@@ -607,7 +607,7 @@ __ASM_STDCALL_FUNC( GetCurrentThreadId, 0, ".byte 0x64\n\tmovl 0x24,%eax\n\tret"
 /* HANDLE WINAPI GetProcessHeap(void) */
 __ASM_STDCALL_FUNC( GetProcessHeap, 0, ".byte 0x64\n\tmovl 0x30,%eax\n\tmovl 0x18(%eax),%eax\n\tret");
 
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) && !defined(__APPLE__)
 
 /***********************************************************************
  *		SetLastError (KERNEL32.@)
