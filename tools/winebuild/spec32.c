@@ -426,8 +426,8 @@ static void output_asm_constructor( const char *constructor )
     {
         /* Mach-O doesn't have an init section */
         output( "\n\t.mod_init_func\n" );
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t.long %s\n", asm_name(constructor) );
+        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(constructor) );
     }
     else
     {
