@@ -6641,7 +6641,7 @@ static void test_exec_optical_zoom(IHTMLDocument2 *doc, int factor)
     SET_EXPECT(GetOverrideKeyPath);
     hres = IOleCommandTarget_Exec(cmdtrg, NULL, OLECMDID_OPTICAL_ZOOM,
             OLECMDEXECOPT_DODEFAULT, &v, NULL);
-    todo_wine ok(hres == S_OK || broken(hres == OLECMDERR_E_NOTSUPPORTED) /* IE6 */, "Exec failed: %08x\n", hres);
+    ok(hres == S_OK || broken(hres == OLECMDERR_E_NOTSUPPORTED) /* IE6 */, "Exec failed: %08x\n", hres);
     CLEAR_CALLED(GetOverrideKeyPath);
 
     IOleCommandTarget_Release(cmdtrg);

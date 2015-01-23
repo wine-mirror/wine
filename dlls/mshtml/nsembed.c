@@ -1149,6 +1149,28 @@ BOOL is_gecko_path(const char *path)
     return ret;
 }
 
+void set_viewer_zoom(NSContainer *nscontainer, float factor)
+{
+    nsIContentViewer *content_viewer;
+    nsIDocShell *doc_shell;
+    nsresult nsres;
+
+    TRACE("Setting to %f\n", factor);
+
+    nsres = get_nsinterface((nsISupports*)nscontainer->navigation, &IID_nsIDocShell, (void**)&doc_shell);
+    assert(nsres == NS_OK);
+
+    nsres = nsIDocShell_GetContentViewer(doc_shell, &content_viewer);
+    assert(nsres == NS_OK && content_viewer);
+    nsIDocShell_Release(doc_shell);
+
+    nsres = nsIContentViewer_SetFullZoom(content_viewer, factor);
+    if(NS_FAILED(nsres))
+        ERR("SetFullZoom failed: %08x\n", nsres);
+
+    nsIContentViewer_Release(content_viewer);
+}
+
 struct nsWeakReference {
     nsIWeakReference nsIWeakReference_iface;
 

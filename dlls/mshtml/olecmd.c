@@ -548,8 +548,15 @@ static HRESULT exec_get_print_template(HTMLDocument *This, DWORD nCmdexecopt, VA
 
 static HRESULT exec_optical_zoom(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d %s %p)\n", This, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
+
+    if(!pvaIn || V_VT(pvaIn) != VT_I4) {
+        FIXME("Unsupported argument %s\n", debugstr_variant(pvaIn));
+        return E_NOTIMPL;
+    }
+
+    set_viewer_zoom(This->doc_obj->nscontainer, (float)V_I4(pvaIn)/100);
+    return S_OK;
 }
 
 static HRESULT query_mshtml_copy(HTMLDocument *This, OLECMD *cmd)
