@@ -613,6 +613,9 @@ static int msvcrt_flush_buffer(MSVCRT_FILE* file)
             file->_flag |= MSVCRT__IOERR;
             return MSVCRT_EOF;
         }
+
+        if(file->_flag & MSVCRT__IORW)
+            file->_flag &= ~MSVCRT__IOWRT;
     }
 
     file->_ptr=file->_base;
@@ -3797,6 +3800,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
             res = msvcrt_flush_buffer(file);
             if(res)
                 return res;
+            file->_flag |= MSVCRT__IOWRT;
             file->_cnt=file->_bufsiz;
         }
         *file->_ptr++ = c;
