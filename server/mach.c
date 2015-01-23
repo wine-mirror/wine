@@ -48,6 +48,7 @@
 #include <mach/mach.h>
 #include <mach/mach_error.h>
 #include <mach/thread_act.h>
+#include <mach/mach_vm.h>
 #include <servers/bootstrap.h>
 
 static mach_port_t server_mach_port;
@@ -277,9 +278,10 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 {
     kern_return_t ret;
     mach_msg_type_number_t bytes_read;
-    vm_offset_t offset, data;
-    vm_address_t aligned_address;
-    vm_size_t aligned_size;
+    mach_vm_offset_t offset;
+    vm_offset_t data;
+    mach_vm_address_t aligned_address;
+    mach_vm_size_t aligned_size;
     unsigned int page_size = get_page_size();
     mach_port_t process_port = get_process_port( process );
 
@@ -288,7 +290,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    if ((vm_address_t)ptr != ptr)
+    if ((mach_vm_address_t)ptr != ptr)
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
@@ -301,15 +303,15 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
     }
 
     offset = ptr % page_size;
-    aligned_address = (vm_address_t)(ptr - offset);
+    aligned_address = (mach_vm_address_t)(ptr - offset);
     aligned_size = (size + offset + page_size - 1) / page_size * page_size;
 
-    ret = vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
+    ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
     if (ret != KERN_SUCCESS) mach_set_error( ret );
     else
     {
         memcpy( dest, (char *)data + offset, size );
-        vm_deallocate( mach_task_self(), data, bytes_read );
+        mach_vm_deallocate( mach_task_self(), data, bytes_read );
     }
     task_resume( process_port );
     return (ret == KERN_SUCCESS);
@@ -319,11 +321,12 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     kern_return_t ret;
-    vm_address_t aligned_address, region_address;
-    vm_size_t aligned_size, region_size;
+    mach_vm_address_t aligned_address, region_address;
+    mach_vm_size_t aligned_size, region_size;
     mach_msg_type_number_t info_size, bytes_read;
-    vm_offset_t offset, task_mem = 0;
-    struct vm_region_basic_info info;
+    mach_vm_offset_t offset;
+    vm_offset_t task_mem = 0;
+    struct vm_region_basic_info_64 info;
     mach_port_t dummy;
     unsigned int page_size = get_page_size();
     mach_port_t process_port = get_process_port( process );
@@ -333,14 +336,14 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    if ((vm_address_t)ptr != ptr)
+    if ((mach_vm_address_t)ptr != ptr)
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
 
     offset = ptr % page_size;
-    aligned_address = (vm_address_t)(ptr - offset);
+    aligned_address = (mach_vm_address_t)(ptr - offset);
     aligned_size = (size + offset + page_size - 1) / page_size * page_size;
 
     if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
@@ -349,7 +352,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         return 0;
     }
 
-    ret = vm_read( process_port, aligned_address, aligned_size, &task_mem, &bytes_read );
+    ret = mach_vm_read( process_port, aligned_address, aligned_size, &task_mem, &bytes_read );
     if (ret != KERN_SUCCESS)
     {
         mach_set_error( ret );
@@ -357,7 +360,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
     }
     region_address = aligned_address;
     info_size = sizeof(info);
-    ret = vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO,
+    ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
                      (vm_region_info_t)&info, &info_size, &dummy );
     if (ret != KERN_SUCCESS)
     {
@@ -371,7 +374,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         set_error( ERROR_ACCESS_DENIED );
         goto failed;
     }
-    ret = vm_protect( process_port, aligned_address, aligned_size, 0, VM_PROT_READ | VM_PROT_WRITE );
+    ret = mach_vm_protect( process_port, aligned_address, aligned_size, 0, VM_PROT_READ | VM_PROT_WRITE );
     if (ret != KERN_SUCCESS)
     {
         mach_set_error( ret );
@@ -385,19 +388,19 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
 
     memcpy( (char*)task_mem + offset, src, size );
 
-    ret = vm_write( process_port, aligned_address, task_mem, bytes_read );
+    ret = mach_vm_write( process_port, aligned_address, task_mem, bytes_read );
     if (ret != KERN_SUCCESS) mach_set_error( ret );
     else
     {
-        vm_deallocate( mach_task_self(), task_mem, bytes_read );
+        mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
         /* restore protection */
-        vm_protect( process_port, aligned_address, aligned_size, 0, info.protection );
+        mach_vm_protect( process_port, aligned_address, aligned_size, 0, info.protection );
         task_resume( process_port );
         return 1;
     }
 
 failed:
-    if (task_mem) vm_deallocate( mach_task_self(), task_mem, bytes_read );
+    if (task_mem) mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
     task_resume( process_port );
     return 0;
 }
@@ -427,11 +430,11 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 
     if ((ret = task_suspend( process_port )) == KERN_SUCCESS)
     {
-        vm_offset_t offset = process->ldt_copy % page_size;
-        vm_address_t aligned_address = (vm_address_t)(process->ldt_copy - offset);
-        vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
+        mach_vm_offset_t offset = process->ldt_copy % page_size;
+        mach_vm_address_t aligned_address = (mach_vm_address_t)(process->ldt_copy - offset);
+        mach_vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
 
-        ret = vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
+        ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
         if (ret != KERN_SUCCESS) mach_set_error( ret );
         else
         {
@@ -439,7 +442,7 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
             memcpy( base, ldt + entry, sizeof(int) );
             memcpy( limit, ldt + entry + 8192, sizeof(int) );
             memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
-            vm_deallocate( mach_task_self(), data, bytes_read );
+            mach_vm_deallocate( mach_task_self(), data, bytes_read );
         }
         task_resume( process_port );
     }
