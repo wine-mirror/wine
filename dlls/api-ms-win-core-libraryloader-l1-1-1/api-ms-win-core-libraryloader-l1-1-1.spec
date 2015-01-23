@@ -1,7 +1,7 @@
 @ stub AddDllDirectory
 @ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
-@ stub EnumResourceLanguagesExA
-@ stub EnumResourceLanguagesExW
+@ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernel32.EnumResourceLanguagesExA
+@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernel32.EnumResourceLanguagesExW
 @ stub EnumResourceNamesExA
 @ stub EnumResourceNamesExW
 @ stub EnumResourceTypesExA

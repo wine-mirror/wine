@@ -437,10 +437,11 @@ done:
 
 
 /**********************************************************************
- *	EnumResourceLanguagesA	(KERNEL32.@)
+ *	EnumResourceLanguagesExA	(KERNEL32.@)
  */
-BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
-                                    ENUMRESLANGPROCA lpfun, LONG_PTR lparam )
+BOOL WINAPI EnumResourceLanguagesExA( HMODULE hmod, LPCSTR type, LPCSTR name,
+                                      ENUMRESLANGPROCA lpfun, LONG_PTR lparam,
+                                      DWORD flags, LANGID lang )
 {
     int i;
     BOOL ret = FALSE;
@@ -450,7 +451,15 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
     const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
 
-    TRACE( "%p %s %s %p %lx\n", hmod, debugstr_a(type), debugstr_a(name), lpfun, lparam );
+    TRACE( "%p %s %s %p %lx %x %d\n", hmod, debugstr_a(type), debugstr_a(name),
+           lpfun, lparam, flags, lang );
+
+    if (flags & (RESOURCE_ENUM_MUI | RESOURCE_ENUM_MUI_SYSTEM | RESOURCE_ENUM_VALIDATE))
+        FIXME( "unimplemented flags: %x\n", flags );
+
+    if (!flags) flags = RESOURCE_ENUM_LN | RESOURCE_ENUM_MUI;
+
+    if (!(flags & RESOURCE_ENUM_LN)) return ret;
 
     if (!hmod) hmod = GetModuleHandleA( NULL );
     typeW.Buffer = nameW.Buffer = NULL;
@@ -489,10 +498,21 @@ done:
 
 
 /**********************************************************************
- *	EnumResourceLanguagesW	(KERNEL32.@)
+ *	EnumResourceLanguagesA	(KERNEL32.@)
  */
-BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
-                                    ENUMRESLANGPROCW lpfun, LONG_PTR lparam )
+BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
+                                    ENUMRESLANGPROCA lpfun, LONG_PTR lparam )
+{
+    return EnumResourceLanguagesExA( hmod, type, name, lpfun, lparam, 0, 0 );
+}
+
+
+/**********************************************************************
+ *	EnumResourceLanguagesExW	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceLanguagesExW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
+                                      ENUMRESLANGPROCW lpfun, LONG_PTR lparam,
+                                      DWORD flags, LANGID lang )
 {
     int i;
     BOOL ret = FALSE;
@@ -502,7 +522,15 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
     const IMAGE_RESOURCE_DIRECTORY *basedir, *resdir;
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
 
-    TRACE( "%p %s %s %p %lx\n", hmod, debugstr_w(type), debugstr_w(name), lpfun, lparam );
+    TRACE( "%p %s %s %p %lx %x %d\n", hmod, debugstr_w(type), debugstr_w(name),
+           lpfun, lparam, flags, lang );
+
+    if (flags & (RESOURCE_ENUM_MUI | RESOURCE_ENUM_MUI_SYSTEM | RESOURCE_ENUM_VALIDATE))
+        FIXME( "unimplemented flags: %x\n", flags );
+
+    if (!flags) flags = RESOURCE_ENUM_LN | RESOURCE_ENUM_MUI;
+
+    if (!(flags & RESOURCE_ENUM_LN)) return ret;
 
     if (!hmod) hmod = GetModuleHandleW( NULL );
     typeW.Buffer = nameW.Buffer = NULL;
@@ -537,6 +565,16 @@ done:
     if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
+}
+
+
+/**********************************************************************
+ *	EnumResourceLanguagesW	(KERNEL32.@)
+ */
+BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
+                                    ENUMRESLANGPROCW lpfun, LONG_PTR lparam )
+{
+    return EnumResourceLanguagesExW( hmod, type, name, lpfun, lparam, 0, 0 );
 }
 
 
