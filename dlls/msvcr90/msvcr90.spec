@@ -675,7 +675,7 @@
 @ stub _iswgraph_l
 @ stub _iswlower_l
 @ stub _iswprint_l
-@ stub _iswpunct_l
+@ cdecl _iswpunct_l(long ptr) MSVCRT__iswpunct_l
 @ cdecl _iswspace_l(long ptr) MSVCRT__iswspace_l
 @ stub _iswupper_l
 @ stub _iswxdigit_l
