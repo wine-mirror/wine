@@ -289,10 +289,11 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
         }
     }
     /* Mach-o File with Endian set to Big Endian or Little Endian */
-    else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
+    else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe ||
+             header.macho.magic == 0xfeedfacf || header.macho.magic == 0xcffaedfe)
     {
         if ((header.macho.cputype >> 24) == 1) info->flags |= BINARY_FLAG_64BIT;
-        if (header.macho.magic == 0xcefaedfe)
+        if (header.macho.magic == 0xcefaedfe || header.macho.magic == 0xcffaedfe)
         {
             header.macho.filetype = RtlUlongByteSwap( header.macho.filetype );
             header.macho.cputype = RtlUlongByteSwap( header.macho.cputype );
