@@ -284,7 +284,7 @@ then
 else
   test "$srcdir" = . || AC_MSG_ERROR([Maintainer mode cannot work out of tree.])
   AC_CHECK_PROGS(FONTFORGE, fontforge, false)
-  AC_CHECK_PROGS(RSVG, rsvg, false)
+  AC_CHECK_PROGS(RSVG, rsvg-convert rsvg, false)
   AC_CHECK_PROGS(CONVERT, convert, false)
   AC_CHECK_PROGS(ICOTOOL, icotool, false)
   test "$FONTFORGE" != "false" || AC_MSG_ERROR([You need fontforge to rebuild fonts in maintainer mode.])

@@ -141,7 +141,12 @@ sub svg_element_start
 }
 
 # Render the SVG image
-shell $rsvg, $svgFileName, $renderedSVGFileName;
+my @rsvgCmd;
+push(@rsvgCmd, $rsvg);
+push(@rsvgCmd, $svgFileName);
+push(@rsvgCmd, "-o") if ($rsvg eq "rsvg-convert");
+push(@rsvgCmd, $renderedSVGFileName);
+shell @rsvgCmd;
 
 # Render the images in the SVG
 my $parser = new XML::Parser(
