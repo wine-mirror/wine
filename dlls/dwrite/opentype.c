@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
+#define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
+#define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -235,6 +237,51 @@ typedef struct {
     WORD stringOffset;
     TT_NameRecord nameRecord[1];
 } TT_NAME_V0;
+
+typedef struct {
+    CHAR FeatureTag[4];
+    WORD Feature;
+} OT_FeatureRecord;
+
+typedef struct {
+    WORD FeatureCount;
+    OT_FeatureRecord FeatureRecord[1];
+} OT_FeatureList;
+
+typedef struct {
+    WORD LookupOrder; /* Reserved */
+    WORD ReqFeatureIndex;
+    WORD FeatureCount;
+    WORD FeatureIndex[1];
+} OT_LangSys;
+
+typedef struct {
+    CHAR LangSysTag[4];
+    WORD LangSys;
+} OT_LangSysRecord;
+
+typedef struct {
+    WORD DefaultLangSys;
+    WORD LangSysCount;
+    OT_LangSysRecord LangSysRecord[1];
+} OT_Script;
+
+typedef struct {
+    CHAR ScriptTag[4];
+    WORD Script;
+} OT_ScriptRecord;
+
+typedef struct {
+    WORD ScriptCount;
+    OT_ScriptRecord ScriptRecord[1];
+} OT_ScriptList;
+
+typedef struct {
+    DWORD version;
+    WORD ScriptList;
+    WORD FeatureList;
+    WORD LookupList;
+} GPOS_GSUB_Header;
 
 enum OPENTYPE_PLATFORM_ID
 {
@@ -1216,4 +1263,88 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
     }
 
     return hr;
+}
+
+static inline const OT_Script *opentype_get_script(const OT_ScriptList *scriptlist, UINT32 scripttag)
+{
+    UINT16 j;
+
+    for (j = 0; j < GET_BE_WORD(scriptlist->ScriptCount); j++) {
+        const char *tag = scriptlist->ScriptRecord[j].ScriptTag;
+        if (scripttag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
+            return (OT_Script*)((BYTE*)scriptlist + GET_BE_WORD(scriptlist->ScriptRecord[j].Script));
+    }
+
+    return NULL;
+}
+
+static inline const OT_LangSys *opentype_get_langsys(const OT_Script *script, UINT32 languagetag)
+{
+    UINT16 j;
+
+    for (j = 0; j < GET_BE_WORD(script->LangSysCount); j++) {
+        const char *tag = script->LangSysRecord[j].LangSysTag;
+        if (languagetag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
+            return (OT_LangSys*)((BYTE*)script + GET_BE_WORD(script->LangSysRecord[j].LangSys));
+    }
+
+    return NULL;
+}
+
+static void opentype_add_font_features(const GPOS_GSUB_Header *header, const OT_LangSys *langsys,
+    UINT32 max_tagcount, UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
+{
+    const OT_FeatureList *features = (const OT_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
+    UINT16 j;
+
+    for (j = 0; j < GET_BE_WORD(langsys->FeatureCount); j++) {
+        const OT_FeatureRecord *feature = &features->FeatureRecord[langsys->FeatureIndex[j]];
+        const char *tag = feature->FeatureTag;
+
+        if (*count < max_tagcount)
+            tags[*count] = DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]);
+
+        (*count)++;
+    }
+}
+
+HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scripttag, UINT32 languagetag, UINT32 max_tagcount,
+    UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
+{
+    UINT32 tables[2] = { MS_GSUB_TAG, MS_GPOS_TAG };
+    HRESULT hr;
+    UINT8 i;
+
+    *count = 0;
+    for (i = 0; i < sizeof(tables)/sizeof(tables[0]); i++) {
+        const OT_ScriptList *scriptlist;
+        const GPOS_GSUB_Header *header;
+        const OT_Script *script;
+        const void *ptr;
+        void *context;
+        UINT32 size;
+        BOOL exists;
+
+        exists = FALSE;
+        hr = IDWriteFontFace_TryGetFontTable(fontface, tables[i], &ptr, &size, &context, &exists);
+        if (FAILED(hr))
+            return hr;
+
+        if (!exists)
+            continue;
+
+        header = (const GPOS_GSUB_Header*)ptr;
+        scriptlist = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+
+        script = opentype_get_script(scriptlist, scripttag);
+        if (script) {
+            const OT_LangSys *langsys = opentype_get_langsys(script, languagetag);
+            if (langsys)
+                opentype_add_font_features(header, langsys, max_tagcount, count, tags);
+        }
+
+        IDWriteFontFace_ReleaseFontTable(fontface, context);
+    }
+
+    return *count > max_tagcount ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }

@@ -1299,8 +1299,8 @@ todo_wine {
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
     ok(count > 0, "got %u\n", count);
     ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES);
     ok(ret, "expected 'calt' feature\n");
@@ -1311,8 +1311,8 @@ todo_wine {
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, sizeof(tags)/sizeof(tags[0]), &count, tags);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
     ok(count > 0, "got %u\n", count);
     ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_GLYPH_COMPOSITION_DECOMPOSITION);
     ok(ret, "expected 'ccmp' feature\n");
