@@ -1407,8 +1407,8 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
            fde, fde->length, *handler, *handler_data, info.ip, code_end );
     execute_cfa_instructions( ptr, end, ip, &info );
-    apply_frame_state( context, &info.state );
     *frame = context->Rsp;
+    apply_frame_state( context, &info.state );
 
     TRACE( "next function rip=%016lx\n", context->Rip );
     TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
@@ -3214,6 +3214,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         }
         else  /* hack: call builtin handlers registered in the tib list */
         {
+            DWORD64 backup_frame = dispatch.EstablisherFrame;
             while ((ULONG64)teb_frame < new_context.Rsp && (ULONG64)teb_frame < (ULONG64)end_frame)
             {
                 TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
@@ -3222,10 +3223,10 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 teb_frame = __wine_pop_frame( teb_frame );
             }
             if ((ULONG64)teb_frame == (ULONG64)end_frame && (ULONG64)end_frame < new_context.Rsp) break;
-            dispatch.EstablisherFrame = new_context.Rsp;
+            dispatch.EstablisherFrame = backup_frame;
         }
 
-        if (context->Rsp == (ULONG64)end_frame) break;
+        if (dispatch.EstablisherFrame == (ULONG64)end_frame) break;
         *context = new_context;
     }
 
