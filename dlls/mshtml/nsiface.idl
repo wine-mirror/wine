@@ -2731,6 +2731,27 @@ interface nsIDirectoryServiceProvider2 : nsIDirectoryServiceProvider
 ]
 interface nsIProtocolHandler : nsISupports
 {
+    const unsigned long URI_STD = 0;
+    const unsigned long URI_NORELATIVE = (1<<0);
+    const unsigned long URI_NOAUTH = (1<<1);
+    const unsigned long ALLOWS_PROXY = (1<<2);
+    const unsigned long ALLOWS_PROXY_HTTP = (1<<3);
+    const unsigned long URI_INHERITS_SECURITY_CONTEXT = (1<<4);
+    const unsigned long URI_FORBIDS_AUTOMATIC_DOCUMENT_REPLACEMENT = (1<<5);
+    const unsigned long URI_LOADABLE_BY_ANYONE = (1<<6);
+    const unsigned long URI_DANGEROUS_TO_LOAD = (1<<7);
+    const unsigned long URI_IS_UI_RESOURCE = (1<<8);
+    const unsigned long URI_IS_LOCAL_FILE = (1<<9);
+    const unsigned long URI_LOADABLE_BY_SUBSUMERS = (1<<10);
+    const unsigned long URI_DOES_NOT_RETURN_DATA = (1<<11);
+    const unsigned long URI_IS_LOCAL_RESOURCE = (1<<12);
+    const unsigned long URI_OPENING_EXECUTES_SCRIPT = (1<<13);
+    const unsigned long URI_NON_PERSISTABLE = (1<<14);
+    const unsigned long URI_FORBIDS_COOKIE_ACCESS = (1<<15);
+    const unsigned long URI_CROSS_ORIGIN_NEEDS_WEBAPPS_PERM = (1<<16);
+    const unsigned long URI_SYNC_LOAD_IS_OK = (1<<17);
+    const unsigned long URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT = (1<<18);
+
     nsresult GetScheme(nsACString *aScheme);
     nsresult GetDefaultPort(int32_t *aDefaultPort);
     nsresult GetProtocolFlags(uint32_t *aProtocolFlags);
