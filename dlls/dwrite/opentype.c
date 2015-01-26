@@ -1194,6 +1194,14 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
     if (FAILED(hr)) return hr;
 
     header = table_data;
+
+    switch (header->format) {
+    case 0:
+        break;
+    default:
+        FIXME("unsupported NAME format %d\n", header->format);
+    }
+
     storage_area = (LPBYTE)table_data + GET_BE_WORD(header->stringOffset);
     count = GET_BE_WORD(header->count);
 
@@ -1218,6 +1226,12 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
             FIXME("platform %i not supported\n", platform);
             continue;
         }
+
+        /* Skip such entries for now, as it's not clear which locale is implied when
+           unicode platform is used. Also fonts tend to duplicate those strings as
+           WIN platform entries. */
+        if (platform == OPENTYPE_PLATFORM_UNICODE)
+            continue;
 
         lang_id = GET_BE_WORD(record->languageID);
         length = GET_BE_WORD(record->length);

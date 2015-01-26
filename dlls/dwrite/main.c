@@ -383,14 +383,32 @@ HRESULT create_localizedstrings(IDWriteLocalizedStrings **strings)
 HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale, const WCHAR *string)
 {
     struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    UINT32 i;
+
+    /* make sure there's no duplicates */
+    for (i = 0; i < This->count; i++)
+        if (!strcmpW(This->data[i].locale, locale))
+            return S_OK;
 
     if (This->count == This->alloc) {
+        void *ptr;
+
+        ptr = heap_realloc(This->data, 2*This->alloc*sizeof(struct localizedpair));
+        if (!ptr)
+            return E_OUTOFMEMORY;
+
         This->alloc *= 2;
-        This->data = heap_realloc(This->data, This->alloc*sizeof(struct localizedpair));
+        This->data = ptr;
     }
 
     This->data[This->count].locale = heap_strdupW(locale);
     This->data[This->count].string = heap_strdupW(string);
+    if (!This->data[This->count].locale || !This->data[This->count].string) {
+        heap_free(This->data[This->count].locale);
+        heap_free(This->data[This->count].string);
+        return E_OUTOFMEMORY;
+    }
+
     This->count++;
 
     return S_OK;
