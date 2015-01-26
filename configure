@@ -7949,10 +7949,38 @@ done
     fi
     if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
     then
-        QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+                ac_save_LIBS="$LIBS"
+        LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the QuickTime framework" >&5
+$as_echo_n "checking for the QuickTime framework... " >&6; }
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <QuickTime/ImageCompression.h>
+int
+main ()
+{
+CodecManagerVersion(NULL);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                        QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
 
-        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
-    else
+                        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                        ac_cv_header_QuickTime_ImageCompression_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+        LIBS="$ac_save_LIBS"
+    fi
+    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"
+    then
         as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported."
     fi
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"

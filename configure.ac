@@ -813,9 +813,20 @@ uninstall::
     fi
     if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
     then
-        AC_SUBST(QUICKTIME_LIBS,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
-        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
-    else
+        dnl Make sure we can actually use the QuickTime framework
+        ac_save_LIBS="$LIBS"
+        LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
+        AC_MSG_CHECKING([for the QuickTime framework])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QuickTime/ImageCompression.h>]],[[CodecManagerVersion(NULL);]])],
+                       [AC_MSG_RESULT([yes])
+                        AC_SUBST(QUICKTIME_LIBS,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
+                        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}],
+                       [AC_MSG_RESULT([no])
+                        ac_cv_header_QuickTime_ImageCompression_h=no])
+        LIBS="$ac_save_LIBS"
+    fi
+    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"
+    then
         WINE_NOTICE([QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
     fi
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
