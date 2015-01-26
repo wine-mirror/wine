@@ -131,6 +131,7 @@ static Cursor create_cursor( HANDLE handle );
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
 static BOOL xinput2_available;
+static BOOL broken_rawevents;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(XIFreeDeviceInfo);
 MAKE_FUNCPTR(XIQueryDevice);
@@ -1579,7 +1580,15 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     if (!hwnd)
     {
         struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (thread_data->warp_serial && (long)(event->serial - thread_data->warp_serial) < 0) return;
+        if (thread_data->warp_serial)
+        {
+            if ((long)(event->serial - thread_data->warp_serial) < 0)
+            {
+                TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, event->serial );
+                return;
+            }
+            thread_data->warp_serial = 0;  /* we caught up now */
+        }
     }
 
     send_mouse_input( hwnd, event->window, event->state, &input );
@@ -1669,7 +1678,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
         break;
     }
 
-    if (thread_data->warp_serial)
+    if (broken_rawevents && thread_data->warp_serial)
     {
         if ((long)(xev->serial - thread_data->warp_serial) < 0)
         {
@@ -1716,6 +1725,12 @@ void X11DRV_XInput2_Init(void)
 #undef LOAD_FUNCPTR
 
     xinput2_available = XQueryExtension( gdi_display, "XInputExtension", &xinput2_opcode, &event, &error );
+
+    /* Until version 1.10.4 rawinput was broken in XOrg, see
+     * https://bugs.freedesktop.org/show_bug.cgi?id=30068 */
+    broken_rawevents  = strstr(XServerVendor( gdi_display ), "X.Org") &&
+                        XVendorRelease( gdi_display ) < 11004000;
+
 #else
     TRACE( "X Input 2 support not compiled in.\n" );
 #endif
