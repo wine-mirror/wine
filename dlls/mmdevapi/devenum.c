@@ -372,7 +372,17 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
             }
 
             if (flow != eCapture)
-                set_driver_prop_value(id, flow, &PKEY_AudioEndpoint_PhysicalSpeakers);
+            {
+                PROPVARIANT pv2;
+
+                PropVariantInit(&pv2);
+
+                /* make read-write by not overwriting if already set */
+                if (FAILED(MMDevice_GetPropValue(id, flow, &PKEY_AudioEndpoint_PhysicalSpeakers, &pv2)) || pv2.vt != VT_UI4)
+                    set_driver_prop_value(id, flow, &PKEY_AudioEndpoint_PhysicalSpeakers);
+
+                PropVariantClear(&pv2);
+            }
 
             RegCloseKey(keyprop);
         }
