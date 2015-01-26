@@ -3137,7 +3137,7 @@ struct message
 
 static const struct message *expect_messages;
 static HWND device_window, focus_window;
-static BOOL windowposchanged_received;
+static LONG windowposchanged_received, syscommand_received;
 
 struct wndproc_thread_param
 {
@@ -3190,7 +3190,9 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
      * message. A WM_WINDOWPOSCHANGED message is not generated, so
      * just flag WM_WINDOWPOSCHANGED as bad. */
     if (message == WM_WINDOWPOSCHANGED)
-        windowposchanged_received = TRUE;
+        InterlockedIncrement(&windowposchanged_received);
+    else if (message == WM_SYSCOMMAND)
+        InterlockedIncrement(&syscommand_received);
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
@@ -3330,6 +3332,11 @@ static void test_wndproc(void)
     };
     static const struct message sc_restore_messages[] =
     {
+        /* WM_SYSCOMMAND is delivered only once, after d3d has already
+         * processed it. Our wndproc has no way to prevent d3d from
+         * handling the message. The second DefWindowProc call done by
+         * our wndproc doesn't do any changes to the window because it
+         * is already restored due to d3d's handling. */
         {WM_WINDOWPOSCHANGING,  FOCUS_WINDOW,   FALSE,  0},
         {WM_WINDOWPOSCHANGED,   FOCUS_WINDOW,   FALSE,  0},
         {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_RESTORED},
@@ -3585,7 +3592,7 @@ static void test_wndproc(void)
         flush_events();
 
         expect_messages = focus_loss_messages_hidden;
-        windowposchanged_received = FALSE;
+        windowposchanged_received = 0;
         SetForegroundWindow(GetDesktopWindow());
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
@@ -3604,10 +3611,12 @@ static void test_wndproc(void)
         ShowWindow(focus_window, SW_SHOWMINNOACTIVE);
         flush_events();
 
+        syscommand_received = 0;
         expect_messages = sc_restore_messages;
         SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        ok(syscommand_received == 1, "Got unexpected number of WM_SYSCOMMAND messages: %d.\n", syscommand_received);
         expect_messages = NULL;
         flush_events();
 
@@ -3671,7 +3680,7 @@ static void test_wndproc(void)
         flush_events();
 
         expect_messages = focus_loss_messages_filtered;
-        windowposchanged_received = FALSE;
+        windowposchanged_received = 0;
         SetForegroundWindow(GetDesktopWindow());
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
@@ -3688,10 +3697,12 @@ static void test_wndproc(void)
         if (tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES)
             ShowWindow(focus_window, SW_MINIMIZE);
 
+        syscommand_received = 0;
         expect_messages = sc_restore_messages;
         SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        ok(syscommand_received == 1, "Got unexpected number of WM_SYSCOMMAND messages: %d.\n", syscommand_received);
         expect_messages = NULL;
         flush_events();
 
@@ -3721,7 +3732,7 @@ static void test_wndproc(void)
         flush_events();
 
         expect_messages = reactivate_messages_filtered;
-        windowposchanged_received = FALSE;
+        windowposchanged_received = 0;
         SetForegroundWindow(focus_window);
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
