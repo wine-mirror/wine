@@ -167,8 +167,26 @@ static NTSTATUS init_driver( HMODULE module, UNICODE_STRING *keyname )
     return status;
 }
 
+/* call the driver unload function */
+static void unload_driver( HMODULE module, DRIVER_OBJECT *driver_obj )
+{
+    if (driver_obj->DriverUnload)
+    {
+        if (WINE_TRACE_ON(relay))
+            WINE_DPRINTF( "%04x:Call driver unload %p (obj=%p)\n", GetCurrentThreadId(),
+                          driver_obj->DriverUnload, driver_obj );
+
+        driver_obj->DriverUnload( driver_obj );
+
+        if (WINE_TRACE_ON(relay))
+            WINE_DPRINTF( "%04x:Ret  driver unload %p (obj=%p)\n", GetCurrentThreadId(),
+                          driver_obj->DriverUnload, driver_obj );
+    }
+    FreeLibrary( module );
+}
+
 /* load the .sys module for a device driver */
-static BOOL load_driver(void)
+static HMODULE load_driver(void)
 {
     static const WCHAR driversW[] = {'\\','d','r','i','v','e','r','s','\\',0};
     static const WCHAR systemrootW[] = {'\\','S','y','s','t','e','m','R','o','o','t','\\',0};
@@ -249,10 +267,10 @@ static BOOL load_driver(void)
 
     module = load_driver_module( str );
     HeapFree( GetProcessHeap(), 0, path );
-    if (!module) return FALSE;
+    if (!module) return NULL;
 
     init_driver( module, &keypath );
-    return TRUE;
+    return module;
 }
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
@@ -287,6 +305,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
     SERVICE_STATUS status;
+    HMODULE driver_module;
 
     WINE_TRACE( "starting service %s\n", wine_dbgstr_w(driver_name) );
 
@@ -305,13 +324,15 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     status.dwWaitHint                = 10000;
     SetServiceStatus( service_handle, &status );
 
-    if (load_driver())
+    driver_module = load_driver();
+    if (driver_module)
     {
         status.dwCurrentState     = SERVICE_RUNNING;
         status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
         SetServiceStatus( service_handle, &status );
 
         wine_ntoskrnl_main_loop( stop_event );
+        unload_driver( driver_module, &driver_obj );
     }
     else WINE_ERR( "driver %s failed to load\n", wine_dbgstr_w(driver_name) );
 
