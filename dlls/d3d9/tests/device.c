@@ -3606,7 +3606,7 @@ static void test_wndproc(void)
 
         expect_messages = sc_restore_messages;
         SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
-        todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
         flush_events();
@@ -3690,7 +3690,7 @@ static void test_wndproc(void)
 
         expect_messages = sc_restore_messages;
         SendMessageA(focus_window, WM_SYSCOMMAND, SC_RESTORE, 0);
-        todo_wine ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
+        ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
         flush_events();

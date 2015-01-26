@@ -5018,6 +5018,16 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
 
         device->device_parent->ops->activate(device->device_parent, wparam);
     }
+    else if (message == WM_SYSCOMMAND)
+    {
+        if (wparam == SC_RESTORE && device->wined3d->flags & WINED3D_HANDLE_RESTORE)
+        {
+            if (unicode)
+                DefWindowProcW(window, message, wparam, lparam);
+            else
+                DefWindowProcA(window, message, wparam, lparam);
+        }
+    }
 
     if (unicode)
         return CallWindowProcW(proc, window, message, wparam, lparam);
