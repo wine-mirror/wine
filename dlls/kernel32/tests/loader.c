@@ -2548,7 +2548,7 @@ static void test_ResolveDelayLoadedAPI(void)
 
     if (!pResolveDelayLoadedAPI)
     {
-        todo_wine win_skip("ResolveDelayLoadedAPI is not available\n");
+        win_skip("ResolveDelayLoadedAPI is not available\n");
         return;
     }
 
