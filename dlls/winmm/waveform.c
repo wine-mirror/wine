@@ -122,6 +122,7 @@ struct _WINMM_MMDevice {
     WAVEOUTCAPSW out_caps; /* must not be modified outside of WINMM_InitMMDevices*/
     WAVEINCAPSW in_caps; /* must not be modified outside of WINMM_InitMMDevices*/
     WCHAR *dev_id;
+    EDataFlow dataflow;
 
     ISimpleAudioVolume *volume;
 
@@ -510,6 +511,7 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
 {
     HRESULT hr;
 
+    dev->dataflow = flow;
     if(flow == eRender){
         dev->out_caps.wMid = 0xFF;
         dev->out_caps.wPid = 0xFF;
@@ -3749,15 +3751,20 @@ UINT WINAPI mixerGetDevCapsW(UINT_PTR uDeviceID, LPMIXERCAPSW lpCaps, UINT uSize
         return MMSYSERR_NOERROR;
 
     if(uDeviceID >= g_outmmdevices_count + g_inmmdevices_count)
+        mmdevice = WINMM_GetMixerMMDevice((HMIXEROBJ)uDeviceID,
+                MIXER_OBJECTF_MIXER, NULL);
+    else if(uDeviceID < g_outmmdevices_count)
+        mmdevice = read_map(g_out_map, uDeviceID);
+    else
+        mmdevice = read_map(g_in_map, uDeviceID - g_outmmdevices_count);
+
+    if(!mmdevice)
         return MMSYSERR_BADDEVICEID;
 
-    if(uDeviceID < g_outmmdevices_count){
-        mmdevice = read_map(g_out_map, uDeviceID);
+    if(mmdevice->dataflow == eRender)
         memcpy(caps.szPname, mmdevice->out_caps.szPname, sizeof(caps.szPname));
-    }else{
-        mmdevice = read_map(g_in_map, uDeviceID - g_outmmdevices_count);
+    else
         memcpy(caps.szPname, mmdevice->in_caps.szPname, sizeof(caps.szPname));
-    }
 
     caps.wMid = 0xFF;
     caps.wPid = 0xFF;

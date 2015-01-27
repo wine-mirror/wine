@@ -395,6 +395,14 @@ static void mixer_test_deviceA(int device)
     ok(rc==MMSYSERR_NOERROR,
        "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
+        MIXERCAPSA capsA2;
+
+        rc=mixerGetDevCapsA((UINT_PTR)mix,&capsA2,sizeof(capsA2));
+        ok(rc==MMSYSERR_NOERROR,
+           "mixerGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        ok(!strcmp(capsA2.szPname, capsA.szPname), "Got wrong device caps\n");
+
         for (d=0;d<capsA.cDestinations;d++) {
             MIXERLINEA mixerlineA;
             mixerlineA.cbStruct = 0;
@@ -771,6 +779,14 @@ static void mixer_test_deviceW(int device)
     ok(rc==MMSYSERR_NOERROR,
        "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
     if (rc==MMSYSERR_NOERROR) {
+        MIXERCAPSW capsW2;
+
+        rc=mixerGetDevCapsW((UINT_PTR)mix,&capsW2,sizeof(capsW2));
+        ok(rc==MMSYSERR_NOERROR,
+           "mixerGetDevCapsW: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        ok(!lstrcmpW(capsW2.szPname, capsW.szPname), "Got wrong device caps\n");
+
         for (d=0;d<capsW.cDestinations;d++) {
             MIXERLINEW mixerlineW;
             mixerlineW.cbStruct = 0;
