@@ -128,7 +128,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
 %type <expression> ConstExpression NumericLiteralExpression
 %type <member> MemberExpression
-%type <expression> Arguments_opt ArgumentList_opt Step_opt ExpressionList
+%type <expression> Arguments_opt ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> OptionExplicit_opt DoType
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
@@ -279,11 +279,16 @@ CaseClausules
 
 Arguments_opt
     : EmptyBrackets_opt             { $$ = NULL; }
-    | '(' ExpressionList ')'        { $$ = $2; }
+    | '(' ArgumentList ')'          { $$ = $2; }
 
 ArgumentList_opt
     : EmptyBrackets_opt             { $$ = NULL; }
-    | ExpressionList                { $$ = $1; }
+    | ArgumentList                  { $$ = $1; }
+
+ArgumentList
+    : Expression                    { $$ = $1; }
+    | Expression ',' ArgumentList   { $1->next = $3; $$ = $1; }
+    | ',' ArgumentList              { $$ = new_expression(ctx, EXPR_NOARG, 0); CHECK_ERROR; $$->next = $2; }
 
 EmptyBrackets_opt
     : /* empty */
