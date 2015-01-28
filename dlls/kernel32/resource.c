@@ -1545,7 +1545,8 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         int delta = section_size - (sec->SizeOfRawData + (-sec->SizeOfRawData) % PeFileAlignment);
         int rva_delta = virtual_section_size -
             (sec->Misc.VirtualSize + (-sec->Misc.VirtualSize) % PeSectionAlignment);
-        BOOL rsrc_is_last = sec->PointerToRawData + sec->SizeOfRawData == old_size;
+        /* when new section is added it could end past current mapping size */
+        BOOL rsrc_is_last = sec->PointerToRawData + sec->SizeOfRawData >= old_size;
 	/* align .rsrc size when possible */
         DWORD mapping_size = rsrc_is_last ? sec->PointerToRawData + section_size : old_size + delta;
 
