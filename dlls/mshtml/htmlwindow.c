@@ -932,6 +932,8 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     IUri *uri;
     HRESULT hres;
 
+    static const WCHAR _selfW[] = {'_','s','e','l','f',0};
+
     TRACE("(%p)->(%s %s %s %x %p)\n", This, debugstr_w(url), debugstr_w(name),
           debugstr_w(features), replace, pomWindowResult);
 
@@ -939,6 +941,23 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
+        if(!strcmpW(name, _selfW)) {
+            if((features && *features) || replace)
+                FIXME("Unsupported arguments for _self target\n");
+
+            hres = IHTMLWindow2_navigate(&This->IHTMLWindow2_iface, url);
+            if(FAILED(hres))
+                return hres;
+
+            if(pomWindowResult) {
+                FIXME("Returning this window for _self target\n");
+                *pomWindowResult = &This->IHTMLWindow2_iface;
+                IHTMLWindow2_AddRef(*pomWindowResult);
+            }
+
+            return S_OK;
+        }
+
         FIXME("Unsupported name %s\n", debugstr_w(name));
         return E_NOTIMPL;
     }
