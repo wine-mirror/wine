@@ -2122,22 +2122,83 @@ static void test_istream_read_double(void)
 
 static void test_ostream_print_complex_float(void)
 {
-    static const char complex_float_str[] = "(3.14,1.57)";
-
     basic_stringstream_char ss;
     basic_string_char pstr;
     const char *str;
-    complex_float val = {3.14, 1.57};
+    locale lcl, retlcl;
+    int i;
+    struct _test_print_complex_float {
+        complex_float val;
+        const char    *lcl;
+        streamsize    prec;  /* set to -1 for default */
+        IOSB_fmtflags fmtfl; /* FMTFLAG_scientific, FMTFLAG_fixed */
+        const char    *str;
+    } tests[] = {
+        /* simple cases */
+        { {0.123,-4.5}, NULL, -1, 0, "(0.123,-4.5)" },
+        { {0.123,-4.5}, NULL,  6, 0, "(0.123,-4.5)" },
+        { {0.123,-4.5}, NULL,  0, 0, "(0.123,-4.5)" },
 
-    call_func1(p_basic_stringstream_char_ctor, &ss);
-    p_basic_ostream_char_print_complex_float(&ss.base.base2, &val);
+        /*{ fixed format */
+        { {0.123,-4.6}, NULL,  0, FMTFLAG_fixed, "(0,-5)" },
+        { {0.123,-4.6}, NULL, -1, FMTFLAG_fixed, "(0.123000,-4.600000)" },
+        { {0.123,-4.6}, NULL,  6, FMTFLAG_fixed, "(0.123000,-4.600000)" },
 
-    call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
-    str = call_func1(p_basic_string_char_cstr, &pstr);
-    ok(!strcmp(complex_float_str, str), "str = %s\n", str);
+        /*{ scientific format */
+        { {123456.789,-4.5678}, NULL,    -1, FMTFLAG_scientific, "(1.234568e+005,-4.567800e+000)"    },
+        { {123456.789,-4.5678}, NULL,     0, FMTFLAG_scientific, "(1.234568e+005,-4.567800e+000)"    },
+        { {123456.789,-4.5678}, NULL,     9, FMTFLAG_scientific, "(1.234567891e+005,-4.567800045e+000)" },
+        { {123456.789,-4.5678}, "German", 9, FMTFLAG_scientific, "(1,234567891e+005,-4,567800045e+000)" },
 
-    call_func1(p_basic_string_char_dtor, &pstr);
-    call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        /*{ different locales */
+        { {0.123,-4.5}, "C",       -1, 0, "(0.123,-4.5)" },
+        { {0.123,-4.5}, "English", -1, 0, "(0.123,-4.5)" },
+        { {0.123,-4.5}, "German",  -1, 0, "(0,123,-4,5)" },
+
+        { {123456.789,-4.5678}, "C",       -1, 0, "(123457,-4.5678)"  },
+        { {123456.789,-4.5678}, "English", -1, 0, "(123,457,-4.5678)" },
+        { {123456.789,-4.5678}, "German",  -1, 0, "(123.457,-4,5678)" },
+
+        /*{ signs and exponents */
+        { { 1.0e-9,-4.1e-3}, NULL, -1, 0, "(1e-009,-0.0041)"                   },
+        { { 1.0e-9,-4.1e-3}, NULL,  9, 0, "(9.99999972e-010,-0.00410000002)"   },
+        { {-1.0e9,-4.1e-3},  NULL, -1, 0, "(-1e+009,-0.0041)"                  },
+        { {-1.0e9,-4.1e-3},  NULL,  9, 0, "(-1e+009,-0.00410000002)"           },
+
+        { { 1.0e-9,0}, NULL, 0, FMTFLAG_fixed, "(0,0)"                         },
+        { { 1.0e-9,0}, NULL, 6, FMTFLAG_fixed, "(0.000000,0.000000)"           },
+        { { 1.0e-9,0}, NULL, 9, FMTFLAG_fixed, "(0.000000001,0.000000000)"     },
+        { {-1.0e9, 0}, NULL, 0, FMTFLAG_fixed, "(-1000000000,0)"        },
+        { {-1.0e9, 0}, NULL, 6, FMTFLAG_fixed, "(-1000000000.000000,0.000000)" },
+
+        { {-1.23456789e9,2.3456789e9},  NULL, 0, 0,             "(-1.23457e+009,2.34568e+009)"           },
+        { {-1.23456789e9,2.3456789e9},  NULL, 0, FMTFLAG_fixed, "(-1234567936,2345678848)"               },
+        { {-1.23456789e9,2.3456789e9},  NULL, 6, FMTFLAG_fixed, "(-1234567936.000000,2345678848.000000)" },
+        { {-1.23456789e-9,2.3456789e9}, NULL, 6, FMTFLAG_fixed, "(-0.000000,2345678848.000000)"          },
+        { {-1.23456789e-9,2.3456789e9}, NULL, 9, FMTFLAG_fixed, "(-0.000000001,2345678848.000000000)"    }
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        call_func1(p_basic_stringstream_char_ctor, &ss);
+
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_char_imbue, &ss.basic_ios, &retlcl, &lcl);
+        }
+
+        /* set format and precision only if specified, so we can try defaults */
+        if(tests[i].fmtfl)
+            call_func3(p_ios_base_setf_mask, &ss.basic_ios.base, tests[i].fmtfl, FMTFLAG_floatfield);
+        if(tests[i].prec != -1)
+            call_func2(p_ios_base_precision_set, &ss.basic_ios.base, tests[i].prec);
+        p_basic_ostream_char_print_complex_float(&ss.base.base2, &tests[i].val);
+
+        call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+        str = call_func1(p_basic_string_char_cstr, &pstr);
+        ok(!strcmp(str, tests[i].str), "test %d fail, str = %s\n", i+1, str);
+        call_func1(p_basic_string_char_dtor, &pstr);
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+    }
 }
 
 static void test_ostream_print_complex_double(void)
