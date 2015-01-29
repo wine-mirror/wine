@@ -1585,6 +1585,7 @@ int macdrv_err_on;
         WineWindow* window = (WineWindow*)[theEvent window];
         NSEventType type = [theEvent type];
         WineWindow* windowBroughtForward = nil;
+        BOOL process = FALSE;
 
         if ([window isKindOfClass:[WineWindow class]] &&
             type == NSLeftMouseDown &&
@@ -1622,7 +1623,6 @@ int macdrv_err_on;
         {
             BOOL pressed = (type == NSLeftMouseDown || type == NSRightMouseDown || type == NSOtherMouseDown);
             CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
-            BOOL process;
 
             if (clippingCursor)
                 [self clipCursorLocation:&pt];
@@ -1689,12 +1689,13 @@ int macdrv_err_on;
 
                 macdrv_release_event(event);
             }
-            else if (windowBroughtForward)
-            {
-                [[windowBroughtForward ancestorWineWindow] postBroughtForwardEvent];
-                if (![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
-                    [self windowGotFocus:windowBroughtForward];
-            }
+        }
+
+        if (!process && windowBroughtForward)
+        {
+            [[windowBroughtForward ancestorWineWindow] postBroughtForwardEvent];
+            if (![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
+                [self windowGotFocus:windowBroughtForward];
         }
 
         // Since mouse button events deliver absolute cursor position, the
