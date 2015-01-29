@@ -1587,7 +1587,6 @@ int macdrv_err_on;
         BOOL broughtWindowForward = FALSE;
 
         if ([window isKindOfClass:[WineWindow class]] &&
-            !window.disabled && !window.noActivate &&
             type == NSLeftMouseDown &&
             (([theEvent modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
         {
@@ -1693,7 +1692,7 @@ int macdrv_err_on;
             else if (broughtWindowForward)
             {
                 [[window ancestorWineWindow] postBroughtForwardEvent];
-                if (![window isKeyWindow])
+                if (![window isKeyWindow] && !window.disabled && !window.noActivate)
                     [self windowGotFocus:window];
             }
         }
