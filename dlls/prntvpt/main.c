@@ -41,3 +41,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
     return TRUE;
 }
+
+
+HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
+{
+    FIXME("stub:%s %p\n", debugstr_w(printer), version);
+    return E_NOTIMPL;
+}

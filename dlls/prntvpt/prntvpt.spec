@@ -1,4 +1,4 @@
-1  stub PTQuerySchemaVersionSupport
+1  stdcall PTQuerySchemaVersionSupport(wstr ptr)
 2  stub PTOpenProvider
 3  stub PTOpenProviderEx
 4  stub PTCloseProvider
