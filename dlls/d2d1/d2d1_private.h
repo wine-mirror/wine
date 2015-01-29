@@ -109,6 +109,7 @@ struct d2d_brush
     LONG refcount;
 
     float opacity;
+    D2D1_MATRIX_3X2_F transform;
 
     enum d2d_brush_type type;
     union

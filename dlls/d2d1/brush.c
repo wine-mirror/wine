@@ -147,9 +147,17 @@ HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *rend
 static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
         enum d2d_brush_type type, const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
 {
+    static const D2D1_MATRIX_3X2_F identity =
+    {
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+    };
+
     brush->ID2D1Brush_iface.lpVtbl = vtbl;
     brush->refcount = 1;
     brush->opacity = desc ? desc->opacity : 1.0f;
+    brush->transform = desc ? desc->transform : identity;
     brush->type = type;
 }
 
@@ -532,16 +540,11 @@ static float STDMETHODCALLTYPE d2d_bitmap_brush_GetOpacity(ID2D1BitmapBrush *ifa
 static void STDMETHODCALLTYPE d2d_bitmap_brush_GetTransform(ID2D1BitmapBrush *iface,
         D2D1_MATRIX_3X2_F *transform)
 {
-    static const D2D1_MATRIX_3X2_F identity =
-    {
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        0.0f, 0.0f,
-    };
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
 
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    TRACE("iface %p, transform %p.\n", iface, transform);
 
-    *transform = identity;
+    *transform = brush->transform;
 }
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeX(ID2D1BitmapBrush *iface, D2D1_EXTEND_MODE mode)
