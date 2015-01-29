@@ -162,6 +162,12 @@ static void free_handle_ptr( struct wgl_handle *ptr )
     LeaveCriticalSection( &wgl_section );
 }
 
+static inline enum wgl_handle_type get_current_context_type(void)
+{
+    if (!NtCurrentTeb()->glCurrentRC) return HANDLE_CONTEXT;
+    return (LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK) >> 12;
+}
+
 /***********************************************************************
  *		wglCopyContext (OPENGL32.@)
  */
@@ -684,6 +690,30 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext, size_t len )
 {
+    if (!list)
+    {
+        const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+        const char *gl_ext;
+        unsigned int i;
+        GLint extensions_count;
+
+        if (!funcs->ext.p_glGetStringi)
+        {
+            void **func_ptr = (void **)&funcs->ext.p_glGetStringi;
+
+            *func_ptr = funcs->wgl.p_wglGetProcAddress("glGetStringi");
+        }
+
+        glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
+        for (i = 0; i < extensions_count; ++i)
+        {
+            gl_ext = (const char *)funcs->ext.p_glGetStringi(GL_EXTENSIONS, i);
+            if (!strncmp(gl_ext, ext, len) && !gl_ext[len])
+                return TRUE;
+        }
+        return FALSE;
+    }
+
     while (list)
     {
         while (*list == ' ') list++;
@@ -701,15 +731,21 @@ static int compar(const void *elt_a, const void *elt_b) {
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported(const char* extension)
 {
+    enum wgl_handle_type type = get_current_context_type();
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const char *gl_ext_string = (const char*)glGetString(GL_EXTENSIONS);
+    const char *gl_ext_string = NULL;
     size_t len;
 
     TRACE("Checking for extension '%s'\n", extension);
 
-    if(!gl_ext_string) {
-        ERR("No OpenGL extensions found, check if your OpenGL setup is correct!\n");
-        return FALSE;
+    if (type == HANDLE_CONTEXT)
+    {
+        gl_ext_string = (const char*)glGetString(GL_EXTENSIONS);
+        if (!gl_ext_string)
+        {
+            ERR("No OpenGL extensions found, check if your OpenGL setup is correct!\n");
+            return FALSE;
+        }
     }
 
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
