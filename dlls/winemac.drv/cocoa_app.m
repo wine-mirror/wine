@@ -1584,7 +1584,7 @@ int macdrv_err_on;
     {
         WineWindow* window = (WineWindow*)[theEvent window];
         NSEventType type = [theEvent type];
-        BOOL broughtWindowForward = FALSE;
+        WineWindow* windowBroughtForward = nil;
 
         if ([window isKindOfClass:[WineWindow class]] &&
             type == NSLeftMouseDown &&
@@ -1592,7 +1592,7 @@ int macdrv_err_on;
         {
             NSWindowButton windowButton;
 
-            broughtWindowForward = TRUE;
+            windowBroughtForward = window;
 
             /* Any left-click on our window anyplace other than the close or
                minimize buttons will bring it forward. */
@@ -1606,7 +1606,7 @@ int macdrv_err_on;
                     NSPoint point = [button convertPoint:[theEvent locationInWindow] fromView:nil];
                     if ([button mouse:point inRect:[button bounds]])
                     {
-                        broughtWindowForward = FALSE;
+                        windowBroughtForward = nil;
                         break;
                     }
                 }
@@ -1689,11 +1689,11 @@ int macdrv_err_on;
 
                 macdrv_release_event(event);
             }
-            else if (broughtWindowForward)
+            else if (windowBroughtForward)
             {
-                [[window ancestorWineWindow] postBroughtForwardEvent];
-                if (![window isKeyWindow] && !window.disabled && !window.noActivate)
-                    [self windowGotFocus:window];
+                [[windowBroughtForward ancestorWineWindow] postBroughtForwardEvent];
+                if (![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
+                    [self windowGotFocus:windowBroughtForward];
             }
         }
 
