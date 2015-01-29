@@ -504,8 +504,8 @@ void context_alloc_occlusion_query(struct wined3d_context *context, struct wined
     {
         if (gl_info->supported[ARB_OCCLUSION_QUERY])
         {
-            GL_EXTCALL(glGenQueriesARB(1, &query->id));
-            checkGLcall("glGenQueriesARB");
+            GL_EXTCALL(glGenQueries(1, &query->id));
+            checkGLcall("glGenQueries");
 
             TRACE("Allocated occlusion query %u in context %p.\n", query->id, context);
         }
@@ -625,8 +625,8 @@ void context_alloc_timestamp_query(struct wined3d_context *context, struct wined
     }
     else
     {
-        GL_EXTCALL(glGenQueriesARB(1, &query->id));
-        checkGLcall("glGenQueriesARB");
+        GL_EXTCALL(glGenQueries(1, &query->id));
+        checkGLcall("glGenQueries");
 
         TRACE("Allocated timestamp query %u in context %p.\n", query->id, context);
     }
@@ -980,14 +980,14 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     LIST_FOR_EACH_ENTRY(timestamp_query, &context->timestamp_queries, struct wined3d_timestamp_query, entry)
     {
         if (context->valid)
-            GL_EXTCALL(glDeleteQueriesARB(1, &timestamp_query->id));
+            GL_EXTCALL(glDeleteQueries(1, &timestamp_query->id));
         timestamp_query->context = NULL;
     }
 
     LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
     {
         if (context->valid && gl_info->supported[ARB_OCCLUSION_QUERY])
-            GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
+            GL_EXTCALL(glDeleteQueries(1, &occlusion_query->id));
         occlusion_query->context = NULL;
     }
 
@@ -1025,10 +1025,10 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         }
 
         if (gl_info->supported[ARB_TIMER_QUERY])
-            GL_EXTCALL(glDeleteQueriesARB(context->free_timestamp_query_count, context->free_timestamp_queries));
+            GL_EXTCALL(glDeleteQueries(context->free_timestamp_query_count, context->free_timestamp_queries));
 
         if (gl_info->supported[ARB_OCCLUSION_QUERY])
-            GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
+            GL_EXTCALL(glDeleteQueries(context->free_occlusion_query_count, context->free_occlusion_queries));
 
         if (gl_info->supported[ARB_SYNC])
         {

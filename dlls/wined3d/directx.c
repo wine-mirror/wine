@@ -2869,6 +2869,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     /* Newer core functions */
     USE_GL_FUNC(glActiveTexture)            /* OpenGL 1.3 */
     USE_GL_FUNC(glAttachShader)             /* OpenGL 2.0 */
+    USE_GL_FUNC(glBeginQuery)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBindAttribLocation)       /* OpenGL 2.0 */
     USE_GL_FUNC(glBindBuffer)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBlendColor)               /* OpenGL 1.4 */
@@ -2887,13 +2888,16 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glCreateShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glDeleteBuffers)            /* OpenGL 1.5 */
     USE_GL_FUNC(glDeleteProgram)            /* OpenGL 2.0 */
+    USE_GL_FUNC(glDeleteQueries)            /* OpenGL 1.5 */
     USE_GL_FUNC(glDeleteShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glDetachShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glDisableVertexAttribArray) /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawBuffers)              /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawElementsInstanced)    /* OpenGL 3.1 */
     USE_GL_FUNC(glEnableVertexAttribArray)  /* OpenGL 2.0 */
+    USE_GL_FUNC(glEndQuery)                 /* OpenGL 1.5 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glGenQueries)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGetActiveUniform)         /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttachedShaders)       /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttribLocation)        /* OpenGL 2.0 */
@@ -2901,6 +2905,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetCompressedTexImage)    /* OpenGL 1.3 */
     USE_GL_FUNC(glGetProgramInfoLog)        /* OpenGL 2.0 */
     USE_GL_FUNC(glGetProgramiv)             /* OpenGL 2.0 */
+    USE_GL_FUNC(glGetQueryiv)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glGetQueryObjectuiv)        /* OpenGL 1.5 */
     USE_GL_FUNC(glGetShaderInfoLog)         /* OpenGL 2.0 */
     USE_GL_FUNC(glGetShaderiv)              /* OpenGL 2.0 */
     USE_GL_FUNC(glGetShaderSource)          /* OpenGL 2.0 */
@@ -2974,6 +2980,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 
     MAP_GL_FUNCTION(glActiveTexture, glActiveTextureARB);
     MAP_GL_FUNCTION(glAttachShader, glAttachObjectARB);
+    MAP_GL_FUNCTION(glBeginQuery, glBeginQueryARB);
     MAP_GL_FUNCTION(glBindAttribLocation, glBindAttribLocationARB);
     MAP_GL_FUNCTION(glBindBuffer, glBindBufferARB);
     MAP_GL_FUNCTION(glBlendColor, glBlendColorEXT);
@@ -2992,13 +2999,16 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glCreateShader, glCreateShaderObjectARB);
     MAP_GL_FUNCTION(glDeleteBuffers, glDeleteBuffersARB);
     MAP_GL_FUNCTION(glDeleteProgram, glDeleteObjectARB);
+    MAP_GL_FUNCTION(glDeleteQueries, glDeleteQueriesARB);
     MAP_GL_FUNCTION(glDeleteShader, glDeleteObjectARB);
     MAP_GL_FUNCTION(glDetachShader, glDetachObjectARB);
     MAP_GL_FUNCTION(glDisableVertexAttribArray, glDisableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glDrawBuffers, glDrawBuffersARB);
     MAP_GL_FUNCTION(glDrawElementsInstanced, glDrawElementsInstancedARB);
     MAP_GL_FUNCTION(glEnableVertexAttribArray, glEnableVertexAttribArrayARB);
+    MAP_GL_FUNCTION(glEndQuery, glEndQueryARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
+    MAP_GL_FUNCTION(glGenQueries, glGenQueriesARB);
     MAP_GL_FUNCTION(glGetActiveUniform, glGetActiveUniformARB);
     MAP_GL_FUNCTION(glGetAttachedShaders, glGetAttachedObjectsARB);
     MAP_GL_FUNCTION(glGetAttribLocation, glGetAttribLocationARB);
@@ -3006,6 +3016,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glGetCompressedTexImage, glGetCompressedTexImageARB);
     MAP_GL_FUNCTION(glGetProgramInfoLog, glGetInfoLogARB);
     MAP_GL_FUNCTION(glGetProgramiv, glGetObjectParameterivARB);
+    MAP_GL_FUNCTION(glGetQueryiv, glGetQueryivARB);
+    MAP_GL_FUNCTION(glGetQueryObjectuiv, glGetQueryObjectuivARB);
     MAP_GL_FUNCTION(glGetShaderInfoLog, glGetInfoLogARB);
     MAP_GL_FUNCTION(glGetShaderiv, glGetObjectParameterivARB);
     MAP_GL_FUNCTION(glGetShaderSource, glGetShaderSourceARB);
@@ -3492,7 +3504,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     {
         GLint counter_bits;
 
-        GL_EXTCALL(glGetQueryivARB(GL_SAMPLES_PASSED_ARB, GL_QUERY_COUNTER_BITS_ARB, &counter_bits));
+        GL_EXTCALL(glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &counter_bits));
         TRACE("Occlusion query counter has %d bits.\n", counter_bits);
         if (!counter_bits)
             gl_info->supported[ARB_OCCLUSION_QUERY] = FALSE;
@@ -3501,7 +3513,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     {
         GLint counter_bits;
 
-        GL_EXTCALL(glGetQueryivARB(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS_ARB, &counter_bits));
+        GL_EXTCALL(glGetQueryiv(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS, &counter_bits));
         TRACE("Timestamp query counter has %d bits.\n", counter_bits);
         if (!counter_bits)
             gl_info->supported[ARB_TIMER_QUERY] = FALSE;
