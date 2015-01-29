@@ -470,7 +470,7 @@ void OnMainThread(dispatch_block_t block)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
     WineEventQueue* queue = [threadDict objectForKey:WineEventQueueThreadDictionaryKey];
-    dispatch_semaphore_t semaphore;
+    dispatch_semaphore_t semaphore = NULL;
     __block BOOL finished;
 
     if (!queue)
