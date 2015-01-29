@@ -359,7 +359,11 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetOpacity(ID2D1LinearGr
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetTransform(ID2D1LinearGradientBrush *iface,
         const D2D1_MATRIX_3X2_F *transform)
 {
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    brush->transform = *transform;
 }
 
 static float STDMETHODCALLTYPE d2d_linear_gradient_brush_GetOpacity(ID2D1LinearGradientBrush *iface)
