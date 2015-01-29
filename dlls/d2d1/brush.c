@@ -244,16 +244,11 @@ static float STDMETHODCALLTYPE d2d_solid_color_brush_GetOpacity(ID2D1SolidColorB
 static void STDMETHODCALLTYPE d2d_solid_color_brush_GetTransform(ID2D1SolidColorBrush *iface,
         D2D1_MATRIX_3X2_F *transform)
 {
-    static const D2D1_MATRIX_3X2_F identity =
-    {
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        0.0f, 0.0f,
-    };
+    struct d2d_brush *brush = impl_from_ID2D1SolidColorBrush(iface);
 
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    TRACE("iface %p, transform %p.\n", iface, transform);
 
-    *transform = identity;
+    *transform = brush->transform;
 }
 
 static void STDMETHODCALLTYPE d2d_solid_color_brush_SetColor(ID2D1SolidColorBrush *iface, const D2D1_COLOR_F *color)
