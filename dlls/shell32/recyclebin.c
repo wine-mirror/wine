@@ -423,7 +423,7 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
 
     if (grfFlags & SHCONTF_NONFOLDERS)
     {
-        if (FAILED(ret = TRASH_EnumItems(&pidls, &pidls_count)))
+        if (FAILED(ret = TRASH_EnumItems(NULL, &pidls, &pidls_count)))
             goto failed;
         for (i=0; i<pidls_count; i++)
             if (!AddToEnumList(list, pidls[i]))
@@ -863,9 +863,8 @@ HRESULT WINAPI SHQueryRecycleBinW(LPCWSTR pszRootPath, LPSHQUERYRBINFO pSHQueryR
     HRESULT hr;
 
     TRACE("(%s, %p)\n", debugstr_w(pszRootPath), pSHQueryRBInfo);
-    FIXME("Ignoring pszRootPath=%s\n",debugstr_w(pszRootPath));
 
-    hr = TRASH_EnumItems(&apidl,&cidl);
+    hr = TRASH_EnumItems(pszRootPath, &apidl, &cidl);
     if (FAILED(hr))
         return hr;
     pSHQueryRBInfo->i64NumItems = cidl;
@@ -900,9 +899,8 @@ HRESULT WINAPI SHEmptyRecycleBinW(HWND hwnd, LPCWSTR pszRootPath, DWORD dwFlags)
     HRESULT ret;
 
     TRACE("(%p, %s, 0x%08x)\n", hwnd, debugstr_w(pszRootPath) , dwFlags);
-    FIXME("Ignoring pszRootPath=%s\n",debugstr_w(pszRootPath));
 
-    ret = TRASH_EnumItems(&apidl,&cidl);
+    ret = TRASH_EnumItems(pszRootPath, &apidl, &cidl);
     if (FAILED(ret))
         return ret;
 

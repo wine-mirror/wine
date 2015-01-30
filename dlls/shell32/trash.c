@@ -100,7 +100,7 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
     return (status == noErr);
 }
 
-HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count)
+HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
 {
     FIXME("stub!\n");
     return E_NOTIMPL;
@@ -577,12 +577,15 @@ failed:
     return NULL;
 }
 
-HRESULT TRASH_EnumItems(LPITEMIDLIST **pidls, int *count)
+HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
 {
     int ti_count;
     int pos=0, i;
     HRESULT err = E_OUTOFMEMORY;
     HDPA tinfs;
+
+    if(path)
+        FIXME("Ignoring path = %s\n", debugstr_w(path));
     
     if (!TRASH_EnsureInitialized()) return E_FAIL;
     tinfs = enum_bucket_trashinfos(home_trash, &ti_count);
