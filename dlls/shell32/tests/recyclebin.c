@@ -70,12 +70,9 @@ static void test_query_recyclebin(void)
     ok(GetTempFileNameA(temp_path, "trash", 0, buf), "GetTempFileName failed\n");
     buf[strlen(buf) + 1] = '\0';
     hr = pSHQueryRecycleBinA(buf,&info1);
-    if(hr != S_OK) todo_wine ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
-    else {
-        ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
-        ok(info1.i64Size!=0xdeadbeef,"i64Size not set\n");
-        ok(info1.i64NumItems!=0xdeadbeef,"i64NumItems not set\n");
-    }
+    ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
+    ok(info1.i64Size!=0xdeadbeef,"i64Size not set\n");
+    ok(info1.i64NumItems!=0xdeadbeef,"i64NumItems not set\n");
     /*create and send a file to the recycle bin*/
     file = CreateFileA(buf,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,0,NULL);
     ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n",buf);
@@ -90,12 +87,9 @@ static void test_query_recyclebin(void)
     shfo.lpszProgressTitle = NULL;
     ok(!pSHFileOperationA(&shfo), "Deletion was not successful\n");
     hr = pSHQueryRecycleBinA(buf,&info2);
-    if(hr != S_OK) todo_wine ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
-    else {
-        ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
-        ok(info2.i64Size==info1.i64Size+written,"Expected recycle bin to have 0x%s bytes\n",str_from_int64(info1.i64Size+written));
-        ok(info2.i64NumItems==info1.i64NumItems+1,"Expected recycle bin to have 0x%s items\n",str_from_int64(info1.i64NumItems+1));
-    }
+    ok(hr == S_OK, "SHQueryRecycleBinA failed with error 0x%x\n", hr);
+    ok(info2.i64Size==info1.i64Size+written,"Expected recycle bin to have 0x%s bytes\n",str_from_int64(info1.i64Size+written));
+    ok(info2.i64NumItems==info1.i64NumItems+1,"Expected recycle bin to have 0x%s items\n",str_from_int64(info1.i64NumItems+1));
 }
 
 

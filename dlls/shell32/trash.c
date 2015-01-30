@@ -60,6 +60,55 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(trash);
 
+/*
+ * The item ID of a trashed element is built as follows:
+ *  NUL byte                    - in most PIDLs the first byte is the type so we keep it constant
+ *  WIN32_FIND_DATAW structure  - with data about original file attributes
+ *  bucket name                 - currently only an empty string meaning the home bucket is supported
+ *  trash file name             - a NUL-terminated string
+ */
+static HRESULT TRASH_CreateSimplePIDL(LPCSTR filename, const WIN32_FIND_DATAW *data, LPITEMIDLIST *pidlOut)
+{
+    LPITEMIDLIST pidl = SHAlloc(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1+2);
+    *pidlOut = NULL;
+    if (pidl == NULL)
+        return E_OUTOFMEMORY;
+    pidl->mkid.cb = (USHORT)(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1);
+    pidl->mkid.abID[0] = 0;
+    memcpy(pidl->mkid.abID+1, data, sizeof(WIN32_FIND_DATAW));
+    pidl->mkid.abID[1+sizeof(WIN32_FIND_DATAW)] = 0;
+    lstrcpyA((LPSTR)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1), filename);
+    *(USHORT *)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1) = 0;
+    *pidlOut = pidl;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      TRASH_UnpackItemID [Internal]
+ *
+ * DESCRIPTION:
+ * Extract the information stored in an Item ID. The WIN32_FIND_DATA contains
+ * the information about the original file. The data->ftLastAccessTime contains
+ * the deletion time
+ *
+ * PARAMETER(S):
+ * [I] id : the ID of the item
+ * [O] data : the WIN32_FIND_DATA of the original file. Can be NULL is not needed
+ */
+HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data)
+{
+    if (id->cb < 2+1+sizeof(WIN32_FIND_DATAW)+2)
+        return E_INVALIDARG;
+    if (id->abID[0] != 0 || id->abID[1+sizeof(WIN32_FIND_DATAW)] != 0)
+        return E_INVALIDARG;
+    if (memchr(id->abID+1+sizeof(WIN32_FIND_DATAW)+1, 0, id->cb-(2+1+sizeof(WIN32_FIND_DATAW)+1)) == NULL)
+        return E_INVALIDARG;
+
+    if (data != NULL)
+        *data = *(const WIN32_FIND_DATAW *)(id->abID+1);
+    return S_OK;
+}
+
 #ifdef HAVE_CORESERVICES_CORESERVICES_H
 
 BOOL TRASH_CanTrashFile(LPCWSTR wszPath)
@@ -100,16 +149,125 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
     return (status == noErr);
 }
 
-HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
+/* TODO:
+ *  - set file deletion time
+ *  - set original file location
+ */
+HRESULT TRASH_GetDetails(const char *trash_path, const char *name, WIN32_FIND_DATAW *data)
 {
-    FIXME("stub!\n");
-    return E_NOTIMPL;
+    static int once;
+
+    int trash_path_length = lstrlenA(trash_path);
+    int name_length = lstrlenA(name);
+    char *path = SHAlloc(trash_path_length+1+name_length+1);
+    struct stat stats;
+    int ret;
+
+    if(!once++) FIXME("semi-stub\n");
+
+    if(!path) return E_OUTOFMEMORY;
+    memcpy(path, trash_path, trash_path_length);
+    path[trash_path_length] = '/';
+    memcpy(path+trash_path_length+1, name, name_length+1);
+
+    ret = lstat(path, &stats);
+    HeapFree(GetProcessHeap(), 0, path);
+    if(ret == -1) return S_FALSE;
+    memset(data, 0, sizeof(*data));
+    data->nFileSizeHigh = stats.st_size>>32;
+    data->nFileSizeLow = stats.st_size & 0xffffffff;
+    RtlSecondsSince1970ToTime(stats.st_mtime, (LARGE_INTEGER*)&data->ftLastWriteTime);
+
+    if(!MultiByteToWideChar(CP_UNIXCP, 0, name, -1, data->cFileName, MAX_PATH))
+        return S_FALSE;
+    return S_OK;
 }
 
-HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data)
+HRESULT TRASH_EnumItems(const WCHAR *path, LPITEMIDLIST **pidls, int *count)
 {
-    FIXME("stub!\n");
-    return E_NOTIMPL;
+    WCHAR volume_path[MAX_PATH];
+    char *unix_path, trash_path[MAX_PATH];
+    FSCatalogInfo catalog_info;
+    OSStatus status;
+    FSRef ref;
+    struct dirent *entry;
+    DIR *dir;
+    LPITEMIDLIST *ret;
+    int i=0, ret_size=8;
+    HRESULT hr;
+
+    TRACE("(%s %p %p)\n", debugstr_w(path), pidls, count);
+
+    if(!path) {
+        FIXME("All trashes enumeration not supported\n");
+        volume_path[0] = 'C';
+        volume_path[1] = ':';
+        volume_path[2] = 0;
+    } else {
+        if(!GetVolumePathNameW(path, volume_path, MAX_PATH))
+            return E_FAIL;
+    }
+
+    if(!(unix_path = wine_get_unix_file_name(volume_path)))
+        return E_OUTOFMEMORY;
+
+    status = FSPathMakeRef((UInt8*)unix_path, &ref, NULL);
+    HeapFree(GetProcessHeap(), 0, unix_path);
+    if(status != noErr) return E_FAIL;
+    status = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalog_info, NULL, NULL, NULL);
+    if(status != noErr) return E_FAIL;
+    status = FSFindFolder(catalog_info.volume, kTrashFolderType, kCreateFolder, &ref);
+    if(status != noErr) return E_FAIL;
+    status = FSRefMakePath(&ref, (UInt8*)trash_path, MAX_PATH);
+    if(status != noErr) return E_FAIL;
+
+    if(!(dir = opendir(trash_path))) return E_FAIL;
+    ret = HeapAlloc(GetProcessHeap(), 0, ret_size * sizeof(*ret));
+    if(!ret) {
+        closedir(dir);
+        return E_OUTOFMEMORY;
+    }
+    while((entry = readdir(dir))) {
+        WIN32_FIND_DATAW data;
+
+        if(!lstrcmpA(entry->d_name, ".") || !lstrcmpA(entry->d_name, ".." )
+                || !lstrcmpA(entry->d_name, ".DS_Store"))
+            continue;
+
+        if(i == ret_size) {
+            LPITEMIDLIST *resized;
+            ret_size *= 2;
+            resized = HeapReAlloc(GetProcessHeap(), 0, ret, ret_size * sizeof(*ret));
+            if(!resized) hr = E_OUTOFMEMORY;
+            else ret = resized;
+        }
+
+        if(SUCCEEDED(hr)) {
+            hr = TRASH_GetDetails(trash_path, entry->d_name, &data);
+            if(hr == S_FALSE) continue;
+        }
+        if(SUCCEEDED(hr))
+            hr = TRASH_CreateSimplePIDL(entry->d_name, &data, ret+i);
+        if(FAILED(hr)) {
+            while(i>0) SHFree(ret+(--i));
+            HeapFree(GetProcessHeap(), 0, ret);
+            closedir(dir);
+            return hr;
+        }
+        i++;
+    }
+    closedir(dir);
+
+    *pidls = SHAlloc(sizeof(**pidls) * i);
+    if(!*pidls) {
+        while(i>0) SHFree(ret+(--i));
+        HeapFree(GetProcessHeap(), 0, ret);
+        return E_OUTOFMEMORY;
+    }
+    *count = i;
+    for(i--; i>=0; i--) (*pidls)[i] = ret[i];
+    HeapFree(GetProcessHeap(), 0, ret);
+    return S_OK;
 }
 
 HRESULT TRASH_RestoreItem(LPCITEMIDLIST pidl)
@@ -386,55 +544,6 @@ BOOL TRASH_TrashFile(LPCWSTR wszPath)
     result = TRASH_MoveFileToBucket(home_trash, unix_path);
     HeapFree(GetProcessHeap(), 0, unix_path);
     return result;
-}
-
-/*
- * The item ID of a trashed element is built as follows:
- *  NUL byte                    - in most PIDLs the first byte is the type so we keep it constant
- *  WIN32_FIND_DATAW structure  - with data about original file attributes
- *  bucket name                 - currently only an empty string meaning the home bucket is supported
- *  trash file name             - a NUL-terminated string
- */
-static HRESULT TRASH_CreateSimplePIDL(LPCSTR filename, const WIN32_FIND_DATAW *data, LPITEMIDLIST *pidlOut)
-{
-    LPITEMIDLIST pidl = SHAlloc(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1+2);
-    *pidlOut = NULL;
-    if (pidl == NULL)
-        return E_OUTOFMEMORY;
-    pidl->mkid.cb = (USHORT)(2+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1);
-    pidl->mkid.abID[0] = 0;
-    memcpy(pidl->mkid.abID+1, data, sizeof(WIN32_FIND_DATAW));
-    pidl->mkid.abID[1+sizeof(WIN32_FIND_DATAW)] = 0;
-    lstrcpyA((LPSTR)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1), filename);
-    *(USHORT *)(pidl->mkid.abID+1+sizeof(WIN32_FIND_DATAW)+1+lstrlenA(filename)+1) = 0;
-    *pidlOut = pidl;
-    return S_OK;
-}
-
-/***********************************************************************
- *      TRASH_UnpackItemID [Internal]
- *
- * DESCRIPTION:
- * Extract the information stored in an Item ID. The WIN32_FIND_DATA contains
- * the information about the original file. The data->ftLastAccessTime contains
- * the deletion time
- *
- * PARAMETER(S):
- * [I] id : the ID of the item
- * [O] data : the WIN32_FIND_DATA of the original file. Can be NULL is not needed
- */                 
-HRESULT TRASH_UnpackItemID(LPCSHITEMID id, WIN32_FIND_DATAW *data)
-{
-    if (id->cb < 2+1+sizeof(WIN32_FIND_DATAW)+2)
-        return E_INVALIDARG;
-    if (id->abID[0] != 0 || id->abID[1+sizeof(WIN32_FIND_DATAW)] != 0)
-        return E_INVALIDARG;
-    if (memchr(id->abID+1+sizeof(WIN32_FIND_DATAW)+1, 0, id->cb-(2+1+sizeof(WIN32_FIND_DATAW)+1)) == NULL)
-        return E_INVALIDARG;
-
-    if (data != NULL)
-        *data = *(const WIN32_FIND_DATAW *)(id->abID+1);
-    return S_OK;
 }
 
 static HRESULT TRASH_GetDetails(const TRASH_BUCKET *bucket, LPCSTR filename, WIN32_FIND_DATAW *data)
