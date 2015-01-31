@@ -1319,7 +1319,7 @@ static void test_playWaveTypeMpegvideo(void)
 
     err = mciSendStringA("status mysound mode", buf, sizeof(buf), NULL);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
-    todo_wine ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
+    ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
 
     status_parm.dwItem = MCI_STATUS_MODE;
     err = mciSendCommandA(wDeviceID, MCI_STATUS,
