@@ -1295,6 +1295,44 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(0xDEADF00D==intbuf[0] && 0xABADCAFE==intbuf[2],"DWORD buffer corruption\n");
 }
 
+static void test_playWaveTypeMpegvideo(void)
+{
+    MCIERROR err;
+    MCIDEVICEID wDeviceID;
+    MCI_PLAY_PARMS play_parm;
+    MCI_STATUS_PARMS status_parm;
+    char buf[1024];
+    memset(buf, 0, sizeof(buf));
+
+    err = mciSendStringA("open tempfile.wav type MPEGVideo alias mysound", NULL, 0, NULL);
+    ok(err==ok_saved,"mci open tempfile.wav type MPEGVideo returned %s\n", dbg_mcierr(err));
+    if(err) {
+        skip("Cannot open tempfile.wav type MPEGVideo for playing (%s), skipping\n", dbg_mcierr(err));
+        return;
+    }
+
+    wDeviceID = mciGetDeviceIDA("mysound");
+    ok(wDeviceID == 1, "mciGetDeviceIDA mysound returned %u, expected 1\n", wDeviceID);
+
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, 0, (DWORD_PTR)&play_parm);
+    ok(!err,"mciCommand play returned %s\n", dbg_mcierr(err));
+
+    err = mciSendStringA("status mysound mode", buf, sizeof(buf), NULL);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
+    todo_wine ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
+
+    status_parm.dwItem = MCI_STATUS_MODE;
+    err = mciSendCommandA(wDeviceID, MCI_STATUS,
+                          MCI_STATUS_ITEM,
+                          (DWORD_PTR)&status_parm);
+    ok(!err,"mciCommand status mode returned %s\n", dbg_mcierr(err));
+    ok(status_parm.dwReturn == MCI_MODE_PLAY,
+       "mciCommand status mode: %u\n", (DWORD)status_parm.dwReturn);
+
+    err = mciSendStringA("close mysound", NULL, 0, NULL);
+    ok(!err,"mci close returned %s\n", dbg_mcierr(err));
+}
+
 START_TEST(mci)
 {
     char curdir[MAX_PATH], tmpdir[MAX_PATH];
@@ -1314,6 +1352,7 @@ START_TEST(mci)
         test_playWAVE(hwnd);
         test_asyncWAVE(hwnd);
         test_AutoOpenWAVE(hwnd);
+        test_playWaveTypeMpegvideo();
     }else
         skip("No output devices available, skipping all output tests\n");
     /* Win9X hangs when exiting with something still open. */
