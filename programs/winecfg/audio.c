@@ -45,6 +45,7 @@
 
 #include "ole2.h"
 #include "initguid.h"
+#include "propkey.h"
 #include "devpkey.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
@@ -58,6 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 struct DeviceInfo {
     WCHAR *id;
     PROPVARIANT name;
+    int speaker_config;
 };
 
 static WCHAR g_drv_keyW[256] = {'S','o','f','t','w','a','r','e','\\',
@@ -71,10 +73,25 @@ static const WCHAR reg_vin_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c
 static UINT num_render_devs, num_capture_devs;
 static struct DeviceInfo *render_devs, *capture_devs;
 
+static const struct
+{
+    int text_id;
+    DWORD speaker_mask;
+} speaker_configs[] =
+{
+    { IDS_AUDIO_SPEAKER_5POINT1, KSAUDIO_SPEAKER_5POINT1 },
+    { IDS_AUDIO_SPEAKER_QUAD, KSAUDIO_SPEAKER_QUAD },
+    { IDS_AUDIO_SPEAKER_STEREO, KSAUDIO_SPEAKER_STEREO },
+    { IDS_AUDIO_SPEAKER_MONO, KSAUDIO_SPEAKER_MONO },
+    { 0, 0 }
+};
+
 static BOOL load_device(IMMDevice *dev, struct DeviceInfo *info)
 {
     IPropertyStore *ps;
     HRESULT hr;
+    PROPVARIANT pv;
+    UINT i;
 
     hr = IMMDevice_GetId(dev, &info->id);
     if(FAILED(hr)){
@@ -93,12 +110,35 @@ static BOOL load_device(IMMDevice *dev, struct DeviceInfo *info)
 
     hr = IPropertyStore_GetValue(ps,
             (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &info->name);
-    IPropertyStore_Release(ps);
     if(FAILED(hr)){
         CoTaskMemFree(info->id);
         info->id = NULL;
+        IPropertyStore_Release(ps);
         return FALSE;
     }
+
+    PropVariantInit(&pv);
+
+    hr = IPropertyStore_GetValue(ps,
+            &PKEY_AudioEndpoint_PhysicalSpeakers, &pv);
+
+    info->speaker_config = 0;
+    if(SUCCEEDED(hr) && pv.vt == VT_UI4){
+        i = 0;
+        while (speaker_configs[i].text_id != 0) {
+            if ((speaker_configs[i].speaker_mask & pv.u.ulVal) == speaker_configs[i].speaker_mask) {
+                info->speaker_config = i;
+                break;
+            }
+            i++;
+        }
+    }
+
+    /* fallback to stereo */
+    if(info->speaker_config == 0)
+        info->speaker_config = 2;
+
+    IPropertyStore_Release(ps);
 
     return TRUE;
 }
@@ -185,6 +225,7 @@ static void initAudioDlg (HWND hDlg)
     IMMDeviceEnumerator *devenum;
     BOOL have_driver = FALSE;
     HRESULT hr;
+    UINT i;
 
     WINE_TRACE("\n");
 
@@ -229,14 +270,30 @@ static void initAudioDlg (HWND hDlg)
             0, (LPARAM)sysdefault_str);
     SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETCURSEL, 0, 0);
 
+    i = 0;
+    while (speaker_configs[i].text_id != 0) {
+        WCHAR speaker_str[256];
+
+        LoadStringW(GetModuleHandleW(NULL), speaker_configs[i].text_id,
+            speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+
+        SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_ADDSTRING,
+            0, (LPARAM)speaker_str);
+
+        i++;
+    }
+
     if(have_driver){
         WCHAR *reg_out_dev, *reg_vout_dev, *reg_in_dev, *reg_vin_dev;
-        UINT i;
+        BOOL default_dev_found = FALSE;
 
         reg_out_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_out_nameW, NULL);
         reg_vout_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_vout_nameW, NULL);
         reg_in_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_in_nameW, NULL);
         reg_vin_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_vin_nameW, NULL);
+
+        SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, i, 0);
+        SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[i].speaker_config, 0);
 
         for(i = 0; i < num_render_devs; ++i){
             if(!render_devs[i].id)
@@ -246,8 +303,16 @@ static void initAudioDlg (HWND hDlg)
                     0, (LPARAM)render_devs[i].name.u.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
-            if(reg_out_dev && !lstrcmpW(render_devs[i].id, reg_out_dev))
+
+            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_ADDSTRING,
+                    0, (LPARAM)render_devs[i].name.u.pwszVal);
+
+            if(reg_out_dev && !lstrcmpW(render_devs[i].id, reg_out_dev)){
                 SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
+                SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, i, 0);
+                SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[i].speaker_config, 0);
+                default_dev_found = TRUE;
+            }
 
             SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_ADDSTRING,
                     0, (LPARAM)render_devs[i].name.u.pwszVal);
@@ -255,6 +320,11 @@ static void initAudioDlg (HWND hDlg)
                     i + 1, (LPARAM)&render_devs[i]);
             if(reg_vout_dev && !lstrcmpW(render_devs[i].id, reg_vout_dev))
                 SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
+        }
+
+        if(!default_dev_found && num_render_devs > 0){
+            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, 0, 0);
+            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[0].speaker_config, 0);
         }
 
         for(i = 0; i < num_capture_devs; ++i){
@@ -317,6 +387,56 @@ static void test_sound(void)
     }
 }
 
+static void apply_speaker_configs(void)
+{
+    UINT i;
+    IMMDeviceEnumerator *devenum;
+    IMMDevice *dev;
+    IPropertyStore *ps;
+    PROPVARIANT pv;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
+
+    if(FAILED(hr)){
+        ERR("Unable to create MMDeviceEnumerator: 0x%08x\n", hr);
+        return;
+    }
+
+    PropVariantInit(&pv);
+    pv.vt = VT_UI4;
+
+    for (i = 0; i < num_render_devs; i++) {
+        hr = IMMDeviceEnumerator_GetDevice(devenum, render_devs[i].id, &dev);
+
+        if(FAILED(hr)){
+            WARN("Could not get MMDevice for %s: 0x%08x\n", wine_dbgstr_w(render_devs[i].id), hr);
+            continue;
+        }
+
+        hr = IMMDevice_OpenPropertyStore(dev, STGM_WRITE, &ps);
+
+        if(FAILED(hr)){
+            WARN("Could not open property store for %s: 0x%08x\n", wine_dbgstr_w(render_devs[i].id), hr);
+            IMMDevice_Release(dev);
+            continue;
+        }
+
+        pv.u.ulVal = speaker_configs[render_devs[i].speaker_config].speaker_mask;
+
+        hr = IPropertyStore_SetValue(ps, &PKEY_AudioEndpoint_PhysicalSpeakers, &pv);
+
+        if (FAILED(hr))
+            WARN("IPropertyStore_SetValue failed for %s: 0x%08x\n", wine_dbgstr_w(render_devs[i].id), hr);
+
+        IPropertyStore_Release(ps);
+        IMMDevice_Release(dev);
+    }
+
+    IMMDeviceEnumerator_Release(devenum);
+}
+
 INT_PTR CALLBACK
 AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -350,6 +470,30 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
               }
               break;
+          case IDC_SPEAKERCONFIG_DEVICE:
+              if(HIWORD(wParam) == CBN_SELCHANGE){
+                  UINT idx;
+
+                  idx = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_GETCURSEL, 0, 0);
+
+                  if(idx < num_render_devs){
+                      SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[idx].speaker_config, 0);
+                  }
+              }
+              break;
+          case IDC_SPEAKERCONFIG_SPEAKERS:
+              if(HIWORD(wParam) == CBN_SELCHANGE){
+                  UINT dev, idx;
+
+                  idx = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_GETCURSEL, 0, 0);
+                  dev = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_GETCURSEL, 0, 0);
+
+                  if(dev < num_render_devs){
+                      render_devs[dev].speaker_config = idx;
+                      SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
+                  }
+              }
+              break;
         }
         break;
 
@@ -363,6 +507,7 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, FALSE);
               break;
             case PSN_APPLY:
+              apply_speaker_configs();
               apply();
               SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
               break;

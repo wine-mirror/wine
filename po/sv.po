@@ -47,8 +47,8 @@ msgstr "&Supportinformation"
 msgid "&Modify..."
 msgstr "&Ändra..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:194
-#: winecfg.rc:231 wordpad.rc:248
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:198
+#: winecfg.rc:235 wordpad.rc:248
 msgid "&Remove"
 msgstr "Ta &bort"
 
@@ -67,7 +67,7 @@ msgstr "Supportinformation"
 #: oleview.rc:175 progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158
 #: progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258
 #: regedit.rc:271 regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442
-#: taskmgr.rc:517 winecfg.rc:208 winecfg.rc:218 wineconsole.rc:134
+#: taskmgr.rc:517 winecfg.rc:212 winecfg.rc:222 wineconsole.rc:134
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:71
 #: winemine.rc:81 winemine.rc:95 wordpad.rc:207 wordpad.rc:218 wordpad.rc:236
 #: wordpad.rc:249
@@ -150,7 +150,7 @@ msgstr "&Installera"
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
 #: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
-#: winecfg.rc:209 winecfg.rc:219 wineconsole.rc:135 winefile.rc:132
+#: winecfg.rc:213 winecfg.rc:223 wineconsole.rc:135 winefile.rc:132
 #: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:208
 #: wordpad.rc:219 wordpad.rc:237 wordpad.rc:250
 msgid "Cancel"
@@ -539,7 +539,7 @@ msgstr "&Typsnitt:"
 msgid "Font St&yle:"
 msgstr "Typsnittss&til:"
 
-#: comdlg32.rc:258 comdlg32.rc:435 winecfg.rc:283
+#: comdlg32.rc:258 comdlg32.rc:435 winecfg.rc:292
 msgid "&Size:"
 msgstr "&Storlek:"
 
@@ -555,7 +555,7 @@ msgstr "&Genomstruken"
 msgid "&Underline"
 msgstr "&Understruken"
 
-#: comdlg32.rc:268 winecfg.rc:281
+#: comdlg32.rc:268 winecfg.rc:290
 msgid "&Color:"
 msgstr "&Färg:"
 
@@ -722,7 +722,7 @@ msgstr "&från:"
 msgid "&to:"
 msgstr "&till:"
 
-#: comdlg32.rc:415 winecfg.rc:289
+#: comdlg32.rc:415 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "St&orlek:"
 
@@ -2202,7 +2202,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Filnamn:"
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:298
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:307
 msgid "B&rowse..."
 msgstr "B&läddra..."
 
@@ -3430,7 +3430,7 @@ msgstr "Hög"
 msgid "Joysticks"
 msgstr "Joysticks"
 
-#: joy.rc:39 winecfg.rc:207
+#: joy.rc:39 winecfg.rc:211
 msgid "&Disable"
 msgstr "&Inaktivera"
 
@@ -6714,7 +6714,7 @@ msgstr "Hyperlänk"
 msgid "Hyperlink Information"
 msgstr "Länkinformation"
 
-#: mshtml.rc:43 winecfg.rc:239
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Typ:"
 
@@ -7526,7 +7526,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:177
+#: sane.rc:34 wineps.rc:49 winecfg.rc:181
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -8053,7 +8053,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Öppna:"
 
-#: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:237
+#: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:133
 msgid "&Browse..."
 msgstr "&Bläddra..."
@@ -8098,7 +8098,7 @@ msgstr "Ursprunglig plats"
 msgid "Date deleted"
 msgstr "Borttagningsdatum"
 
-#: shell32.rc:156 winecfg.rc:95 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:99 winefile.rc:100
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Skrivbord"
@@ -9497,7 +9497,7 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:292 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:301 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "T&ypsnitt..."
 
@@ -12799,7 +12799,7 @@ msgstr "Wine"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Wine-inställningarna i %s uppdateras, var god vänta..."
 
-#: winecfg.rc:135
+#: winecfg.rc:139
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -12811,23 +12811,23 @@ msgstr ""
 "publicerad av Free Software Foundation, antingen version 2.1 eller (om du så "
 "vill) någon senare version."
 
-#: winecfg.rc:137
+#: winecfg.rc:141
 msgid "Windows registration information"
 msgstr "Registreringsinformation för Windows"
 
-#: winecfg.rc:138
+#: winecfg.rc:142
 msgid "&Owner:"
 msgstr "Ägare:"
 
-#: winecfg.rc:140
+#: winecfg.rc:144
 msgid "Organi&zation:"
 msgstr "Organisation:"
 
-#: winecfg.rc:148
+#: winecfg.rc:152
 msgid "Application settings"
 msgstr "Programinställningar"
 
-#: winecfg.rc:149
+#: winecfg.rc:153
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -12838,55 +12838,55 @@ msgstr ""
 "inställningar i de flikarna också, antingen systemövergripande eller per "
 "program."
 
-#: winecfg.rc:153
+#: winecfg.rc:157
 msgid "&Add application..."
 msgstr "&Lägg till program..."
 
-#: winecfg.rc:154
+#: winecfg.rc:158
 msgid "&Remove application"
 msgstr "&Ta bort program"
 
-#: winecfg.rc:155
+#: winecfg.rc:159
 msgid "&Windows Version:"
 msgstr "&Windows-version:"
 
-#: winecfg.rc:163
+#: winecfg.rc:167
 msgid "Window settings"
 msgstr "Fönsterinställningar"
 
-#: winecfg.rc:164
+#: winecfg.rc:168
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Fånga &musen automatiskt i fullskärmsfönster"
 
-#: winecfg.rc:165
+#: winecfg.rc:169
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Tillåt fönsterhanteraren att &dekorera fönstren"
 
-#: winecfg.rc:166
+#: winecfg.rc:170
 msgid "Allow the &window manager to control the windows"
 msgstr "Tillåt &fönsterhanteraren att styra fönstren"
 
-#: winecfg.rc:167
+#: winecfg.rc:171
 msgid "&Emulate a virtual desktop"
 msgstr "Emulera ett virtuellt skriv&bord"
 
-#: winecfg.rc:169
+#: winecfg.rc:173
 msgid "Desktop &size:"
 msgstr "Storlek på &skrivbord:"
 
-#: winecfg.rc:174
+#: winecfg.rc:178
 msgid "Screen resolution"
 msgstr "Skärm&upplösning"
 
-#: winecfg.rc:178
+#: winecfg.rc:182
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Denna exempeltext använder 10-punkters Tahoma"
 
-#: winecfg.rc:185
+#: winecfg.rc:189
 msgid "DLL overrides"
 msgstr "DLL-åsidosättningar"
 
-#: winecfg.rc:186
+#: winecfg.rc:190
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -12896,55 +12896,55 @@ msgstr ""
 "(tillhandahålls av Wine) eller ursprungliga (tagna från Windows eller "
 "tillhandahålls av programmet)."
 
-#: winecfg.rc:188
+#: winecfg.rc:192
 msgid "&New override for library:"
 msgstr "&Ny åsidosättning för bibliotek:"
 
-#: winecfg.rc:190 wordpad.rc:247
+#: winecfg.rc:194 wordpad.rc:247
 msgid "&Add"
 msgstr "Lägg &till"
 
-#: winecfg.rc:191
+#: winecfg.rc:195
 msgid "Existing &overrides:"
 msgstr "Befintliga &åsidosättningar:"
 
-#: winecfg.rc:193
+#: winecfg.rc:197
 msgid "&Edit..."
 msgstr "R&edigera..."
 
-#: winecfg.rc:199
+#: winecfg.rc:203
 msgid "Edit Override"
 msgstr "Redigera åsidosättning"
 
-#: winecfg.rc:202
+#: winecfg.rc:206
 msgid "Load order"
 msgstr "Inläsningsordning"
 
-#: winecfg.rc:203
+#: winecfg.rc:207
 msgid "&Builtin (Wine)"
 msgstr "&Inbyggd (Wine)"
 
-#: winecfg.rc:204
+#: winecfg.rc:208
 msgid "&Native (Windows)"
 msgstr "&Ursprunglig (Windows)"
 
-#: winecfg.rc:205
+#: winecfg.rc:209
 msgid "Bui&ltin then Native"
 msgstr "Inb&yggd sedan Ursprunglig"
 
-#: winecfg.rc:206
+#: winecfg.rc:210
 msgid "Nati&ve then Builtin"
 msgstr "Urs&prunglig sedan Inbyggd"
 
-#: winecfg.rc:214
+#: winecfg.rc:218
 msgid "Select Drive Letter"
 msgstr "Välj enhetsbokstav"
 
-#: winecfg.rc:226
+#: winecfg.rc:230
 msgid "Drive configuration"
 msgstr "Enhetskonfiguration"
 
-#: winecfg.rc:227
+#: winecfg.rc:231
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
@@ -12952,95 +12952,111 @@ msgstr ""
 "Misslyckades med att ansluta till monteringshanteraren. "
 "Enhetskonfigurationen kan inte redigeras."
 
-#: winecfg.rc:230
+#: winecfg.rc:234
 msgid "&Add..."
 msgstr "&Lägg till..."
 
-#: winecfg.rc:232
+#: winecfg.rc:236
 msgid "Auto&detect"
 msgstr "Upptäck aut&omatiskt"
 
-#: winecfg.rc:235
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "&Sökväg:"
 
-#: winecfg.rc:242 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:38
 msgid "Show &Advanced"
 msgstr "Visa &avancerat"
 
-#: winecfg.rc:243
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "E&nhet:"
 
-#: winecfg.rc:245
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "&Bläddra..."
 
-#: winecfg.rc:247
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "&Etikett:"
 
-#: winecfg.rc:249
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "S&erienr:"
 
-#: winecfg.rc:252
+#: winecfg.rc:256
 msgid "Show &dot files"
 msgstr "Visa &punktfiler"
 
-#: winecfg.rc:259
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr ""
 
-#: winecfg.rc:261
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr ""
 
-#: winecfg.rc:262
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr ""
 
-#: winecfg.rc:263
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr ""
 
-#: winecfg.rc:264
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr ""
 
-#: winecfg.rc:265
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr ""
 
-#: winecfg.rc:270
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "&Testa ljud"
 
-#: winecfg.rc:277
+#: winecfg.rc:275
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Speaker configuration"
+msgstr "Konfiguration av Wine"
+
+#: winecfg.rc:276
+#, fuzzy
+#| msgid "De&vice:"
+msgid "Device:"
+msgstr "E&nhet:"
+
+#: winecfg.rc:278
+msgid "Speakers:"
+msgstr ""
+
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Utseende"
 
-#: winecfg.rc:278
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Tema:"
 
-#: winecfg.rc:280
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Installera tema..."
 
-#: winecfg.rc:285
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "Ob&jekt:"
 
-#: winecfg.rc:287
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "Fä&rg:"
 
-#: winecfg.rc:293
+#: winecfg.rc:302
 msgid "Folders"
 msgstr "Mappar"
 
-#: winecfg.rc:296
+#: winecfg.rc:305
 msgid "&Link to:"
 msgstr "&Länka till:"
 
@@ -13119,6 +13135,24 @@ msgstr "Ljudtest misslyckades!"
 #: winecfg.rc:88
 msgid "(System default)"
 msgstr "(Systemstandard)"
+
+#: winecfg.rc:89
+msgid "5.1 Surround"
+msgstr ""
+
+#: winecfg.rc:90
+#, fuzzy
+#| msgid "graphic"
+msgid "Quadraphonic"
+msgstr "grafik"
+
+#: winecfg.rc:91
+msgid "Stereo"
+msgstr ""
+
+#: winecfg.rc:92
+msgid "Mono"
+msgstr ""
 
 #: winecfg.rc:54
 msgid ""
@@ -13233,127 +13267,127 @@ msgstr ""
 "\n"
 "Kom ihåg att klicka på ‘Lägg till’ i fliken Enheter för att skapa en!\n"
 
-#: winecfg.rc:93
+#: winecfg.rc:97
 msgid "Controls Background"
 msgstr "Bakgrund i kontroller"
 
-#: winecfg.rc:94
+#: winecfg.rc:98
 msgid "Controls Text"
 msgstr "Text i kontroller"
 
-#: winecfg.rc:96
+#: winecfg.rc:100
 msgid "Menu Background"
 msgstr "Menybakgrund"
 
-#: winecfg.rc:97
+#: winecfg.rc:101
 msgid "Menu Text"
 msgstr "Menytext"
 
-#: winecfg.rc:98
+#: winecfg.rc:102
 msgid "Scrollbar"
 msgstr "Rullningslist"
 
-#: winecfg.rc:99
+#: winecfg.rc:103
 msgid "Selection Background"
 msgstr "Bakgrund för markering"
 
-#: winecfg.rc:100
+#: winecfg.rc:104
 msgid "Selection Text"
 msgstr "Text för markering"
 
-#: winecfg.rc:101
+#: winecfg.rc:105
 msgid "Tooltip Background"
 msgstr "Bakgrund för verktygstips"
 
-#: winecfg.rc:102
+#: winecfg.rc:106
 msgid "Tooltip Text"
 msgstr "Text för verktygstips"
 
-#: winecfg.rc:103
+#: winecfg.rc:107
 msgid "Window Background"
 msgstr "Fönsterbakgrund"
 
-#: winecfg.rc:104
+#: winecfg.rc:108
 msgid "Window Text"
 msgstr "Fönstertext"
 
-#: winecfg.rc:105
+#: winecfg.rc:109
 msgid "Active Title Bar"
 msgstr "Aktiv titellist"
 
-#: winecfg.rc:106
+#: winecfg.rc:110
 msgid "Active Title Text"
 msgstr "Aktiv titeltext"
 
-#: winecfg.rc:107
+#: winecfg.rc:111
 msgid "Inactive Title Bar"
 msgstr "Inaktiv titellist"
 
-#: winecfg.rc:108
+#: winecfg.rc:112
 msgid "Inactive Title Text"
 msgstr "Inaktiv titeltext"
 
-#: winecfg.rc:109
+#: winecfg.rc:113
 msgid "Message Box Text"
 msgstr "Text i meddelandefönster"
 
-#: winecfg.rc:110
+#: winecfg.rc:114
 msgid "Application Workspace"
 msgstr "Arbetsyta i program"
 
-#: winecfg.rc:111
+#: winecfg.rc:115
 msgid "Window Frame"
 msgstr "Fönsterram"
 
-#: winecfg.rc:112
+#: winecfg.rc:116
 msgid "Active Border"
 msgstr "Aktiv kant"
 
-#: winecfg.rc:113
+#: winecfg.rc:117
 msgid "Inactive Border"
 msgstr "Inaktiv kant"
 
-#: winecfg.rc:114
+#: winecfg.rc:118
 msgid "Controls Shadow"
 msgstr "Skugga i kontroller"
 
-#: winecfg.rc:115
+#: winecfg.rc:119
 msgid "Gray Text"
 msgstr "Grå text"
 
-#: winecfg.rc:116
+#: winecfg.rc:120
 msgid "Controls Highlight"
 msgstr "Markering i kontroller"
 
-#: winecfg.rc:117
+#: winecfg.rc:121
 msgid "Controls Dark Shadow"
 msgstr "Mörk skugga i kontroller"
 
-#: winecfg.rc:118
+#: winecfg.rc:122
 msgid "Controls Light"
 msgstr "Ljus i kontroller"
 
-#: winecfg.rc:119
+#: winecfg.rc:123
 msgid "Controls Alternate Background"
 msgstr "Alternativ bakgrund i kontroller"
 
-#: winecfg.rc:120
+#: winecfg.rc:124
 msgid "Hot Tracked Item"
 msgstr "Hovrat föremål"
 
-#: winecfg.rc:121
+#: winecfg.rc:125
 msgid "Active Title Bar Gradient"
 msgstr "Gradient för aktiv titellist"
 
-#: winecfg.rc:122
+#: winecfg.rc:126
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient för inaktiv titellist"
 
-#: winecfg.rc:123
+#: winecfg.rc:127
 msgid "Menu Highlight"
 msgstr "Menymarkering"
 
-#: winecfg.rc:124
+#: winecfg.rc:128
 msgid "Menu Bar"
 msgstr "Menyrad"
 
