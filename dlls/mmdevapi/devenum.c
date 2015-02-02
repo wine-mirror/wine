@@ -1469,8 +1469,17 @@ static HRESULT WINAPI MMDevPropStore_SetValue(IPropertyStore *iface, REFPROPERTY
 
 static HRESULT WINAPI MMDevPropStore_Commit(IPropertyStore *iface)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    MMDevPropStore *This = impl_from_IPropertyStore(iface);
+    TRACE("(%p)\n", iface);
+
+    if (This->access != STGM_WRITE
+        && This->access != STGM_READWRITE)
+        return STG_E_ACCESSDENIED;
+
+    /* Does nothing - for mmdevapi, the propstore values are written on SetValue,
+     * not on Commit. */
+
+    return S_OK;
 }
 
 static const IPropertyStoreVtbl MMDevPropVtbl =
