@@ -165,7 +165,7 @@ static void free_handle_ptr( struct wgl_handle *ptr )
 static inline enum wgl_handle_type get_current_context_type(void)
 {
     if (!NtCurrentTeb()->glCurrentRC) return HANDLE_CONTEXT;
-    return (LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK) >> 12;
+    return LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK;
 }
 
 /***********************************************************************
