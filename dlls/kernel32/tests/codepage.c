@@ -805,13 +805,6 @@ static void test_utf7_decoding(void)
         }
     };
 
-    if (MultiByteToWideChar(CP_UTF7, 0, "foobar", -1, NULL, 0) == 0 &&
-        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("UTF-7 decoding not implemented\n");
-        return;
-    }
-
     /* test which one-byte characters remove stray + signs */
     for (i = 0; i < 256; i++)
     {

@@ -1956,6 +1956,131 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD fla
 
 
 /***********************************************************************
+ *              utf7_write_w
+ *
+ * Helper for utf7_mbstowcs
+ *
+ * RETURNS
+ *   TRUE on success, FALSE on error
+ */
+static inline BOOL utf7_write_w(WCHAR *dst, int dstlen, int *index, WCHAR character)
+{
+    if (dstlen > 0)
+    {
+        if (*index >= dstlen)
+            return FALSE;
+
+        dst[*index] = character;
+    }
+
+    (*index)++;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              utf7_mbstowcs
+ *
+ * UTF-7 to UTF-16 string conversion, helper for MultiByteToWideChar
+ *
+ * RETURNS
+ *   On success, the number of characters written
+ *   On dst buffer overflow, -1
+ */
+static int utf7_mbstowcs(const char *src, int srclen, WCHAR *dst, int dstlen)
+{
+    static const signed char base64_decoding_table[] =
+    {
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00-0x0F */
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10-0x1F */
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, /* 0x20-0x2F */
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, /* 0x30-0x3F */
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, /* 0x40-0x4F */
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, /* 0x50-0x5F */
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, /* 0x60-0x6F */
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1  /* 0x70-0x7F */
+    };
+
+    const char *source_end = src + srclen;
+    int dest_index = 0;
+
+    DWORD byte_pair = 0;
+    short offset = 0;
+
+    while (src < source_end)
+    {
+        if (*src == '+')
+        {
+            src++;
+            if (src >= source_end)
+                break;
+
+            if (*src == '-')
+            {
+                /* just a plus sign escaped as +- */
+                if (!utf7_write_w(dst, dstlen, &dest_index, '+'))
+                    return -1;
+                src++;
+                continue;
+            }
+
+            do
+            {
+                signed char sextet = *src;
+                if (sextet == '-')
+                {
+                    /* skip over the dash and end base64 decoding
+                     * the current, unfinished byte pair is discarded */
+                    src++;
+                    offset = 0;
+                    break;
+                }
+                if (sextet < 0)
+                {
+                    /* the next character of src is < 0 and therefore not part of a base64 sequence
+                     * the current, unfinished byte pair is NOT discarded in this case
+                     * this is probably a bug in Windows */
+                    break;
+                }
+
+                sextet = base64_decoding_table[sextet];
+                if (sextet == -1)
+                {
+                    /* -1 means that the next character of src is not part of a base64 sequence
+                     * in other words, all sextets in this base64 sequence have been processed
+                     * the current, unfinished byte pair is discarded */
+                    offset = 0;
+                    break;
+                }
+
+                byte_pair = (byte_pair << 6) | sextet;
+                offset += 6;
+
+                if (offset >= 16)
+                {
+                    /* this byte pair is done */
+                    if (!utf7_write_w(dst, dstlen, &dest_index, (byte_pair >> (offset - 16)) & 0xFFFF))
+                        return -1;
+                    offset -= 16;
+                }
+
+                src++;
+            }
+            while (src < source_end);
+        }
+        else
+        {
+            /* we have to convert to unsigned char in case *src < 0 */
+            if (!utf7_write_w(dst, dstlen, &dest_index, (unsigned char)*src))
+                return -1;
+            src++;
+        }
+    }
+
+    return dest_index;
+}
+
+/***********************************************************************
  *              MultiByteToWideChar   (KERNEL32.@)
  *
  * Convert a multibyte character string into a Unicode string.
@@ -2008,9 +2133,8 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
             SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
-        FIXME("UTF-7 not supported\n");
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
+        ret = utf7_mbstowcs( src, srclen, dst, dstlen );
+        break;
     case CP_UNIXCP:
         if (unix_cptable)
         {
