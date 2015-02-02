@@ -59,6 +59,8 @@ typedef WCHAR PRUnichar;
 #define uint32_t UINT32
 #define uint64_t UINT64
 
+#define char16_t PRUnichar
+
 typedef uint64_t DOMTimeStamp;
 typedef uint32_t nsLoadFlags;
 typedef int64_t PRTime;
@@ -150,7 +152,6 @@ typedef nsISupports nsINode;
 typedef nsISupports nsIStyleSheet;
 typedef nsISupports nsIStyleRule;
 typedef nsISupports nsIDOMUserDataHandler;
-typedef nsISupports nsIDocShellLoadInfo;
 typedef nsISupports nsISHEntry;
 typedef nsISupports nsIPresShell;
 typedef nsISupports nsIDocumentCharsetInfo;
@@ -381,6 +382,24 @@ interface nsIInputStream : nsISupports
             uint32_t aCount, uint32_t *aWriteCount),
             void *aClosure, uint32_t aCount, uint32_t *_retval);
     nsresult IsNonBlocking(bool *_retval);
+}
+
+[
+    object,
+    uuid(8429d350-1040-4661-8b71-f2a6ba455980),
+    local
+]
+interface nsISeekableStream : nsISupports
+{
+    enum {
+        NS_SEEK_SET = 0,
+        NS_SEEK_CUR = 1,
+        NS_SEEK_END = 2
+    };
+
+    nsresult Seek(int32_t whence, int64_t offset);
+    nsresult Tell(int64_t *_retval);
+    nsresult SetEOF();
 }
 
 [
@@ -3689,6 +3708,44 @@ interface nsIContentViewer : nsISupports
     nsresult ResumePainting();
     nsresult EmulateMedium(const nsAString *aMediaType);
     nsresult StopEmulatingMedium();
+}
+
+[
+    object,
+    uuid(c8d3b1e1-565a-427e-9d68-b109910ce9b7),
+    local
+]
+interface nsIDocShellLoadInfo : nsISupports
+{
+    typedef int nsDocShellInfoLoadType;
+
+    nsresult GetReferrer(nsIURI **aReferrer);
+    nsresult SetReferrer(nsIURI *aReferrer);
+    nsresult GetOwner(nsISupports **aOwner);
+    nsresult SetOwner(nsISupports *aOwner);
+    nsresult GetInheritOwner(bool *aInheritOwner);
+    nsresult SetInheritOwner(bool aInheritOwner);
+    nsresult GetOwnerIsExplicit(bool *aOwnerIsExplicit);
+    nsresult SetOwnerIsExplicit(bool aOwnerIsExplicit);
+    nsresult GetLoadType(nsDocShellInfoLoadType *aLoadType);
+    nsresult SetLoadType(nsDocShellInfoLoadType aLoadType);
+    nsresult GetSHEntry(nsISHEntry **aSHEntry);
+    nsresult SetSHEntry(nsISHEntry *aSHEntry);
+    nsresult GetTarget(char16_t **aTarget);
+    nsresult SetTarget(const char16_t * aTarget);
+    nsresult GetPostDataStream(nsIInputStream **aPostDataStream);
+    nsresult SetPostDataStream(nsIInputStream *aPostDataStream);
+    nsresult GetHeadersStream(nsIInputStream * *aHeadersStream);
+    nsresult SetHeadersStream(nsIInputStream *aHeadersStream);
+    nsresult GetSendReferrer(bool *aSendReferrer);
+    nsresult SetSendReferrer(bool aSendReferrer);
+    nsresult GetIsSrcdocLoad(bool *aIsSrcdocLoad);
+    nsresult GetSrcdocData(nsAString *aSrcdocData);
+    nsresult SetSrcdocData(const nsAString *aSrcdocData);
+    nsresult GetSourceDocShell(nsIDocShell * *aSourceDocShell);
+    nsresult SetSourceDocShell(nsIDocShell *aSourceDocShell);
+    nsresult GetBaseURI(nsIURI **aBaseURI);
+    nsresult SetBaseURI(nsIURI *aBaseURI);
 }
 
 [

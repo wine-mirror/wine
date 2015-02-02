@@ -384,14 +384,15 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 {
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     HTMLOuterWindow *window = NULL, *this_window = NULL;
+    nsAString action_uri_str, target_str, method_str;
     nsIInputStream *post_stream;
-    nsAString action_uri_str, target_str;
+    BOOL is_post_submit = FALSE;
     IUri *uri;
     nsresult nsres;
     HRESULT hres;
     BOOL use_new_window;
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)\n", This);
 
     if(This->element.node.doc) {
         HTMLDocumentNode *doc = This->element.node.doc;
@@ -413,11 +414,23 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
         return S_OK;
     }
 
+    nsAString_Init(&method_str, NULL);
+    nsres = nsIDOMHTMLFormElement_GetMethod(This->nsform, &method_str);
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *method;
+
+        static const PRUnichar postW[] = {'p','o','s','t',0};
+
+        nsAString_GetData(&method_str, &method);
+        TRACE("method is %s\n", debugstr_w(method));
+        is_post_submit = !strcmpiW(method, postW);
+    }
+    nsAString_Finish(&method_str);
+
     /*
-     * FIXME: We currently don't use our submit implementation for sub-windows because
-     * load_nsuri can't support post data. We should fix it.
+     * FIXME: We currently use our submit implementation for POST submit. We should always use it.
      */
-    if(window && (!window->doc_obj || window->doc_obj->basedoc.window != window)) {
+    if(window && !is_post_submit) {
         nsres = nsIDOMHTMLFormElement_Submit(This->nsform);
         nsAString_Finish(&target_str);
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);

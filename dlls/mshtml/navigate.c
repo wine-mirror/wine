@@ -213,6 +213,8 @@ static nsProtocolStream *create_nsprotocol_stream(void)
 
 static void release_request_data(request_data_t *request_data)
 {
+    if(request_data->post_stream)
+        nsIInputStream_Release(request_data->post_stream);
     heap_free(request_data->headers);
     if(request_data->post_data)
         GlobalFree(request_data->post_data);
@@ -822,6 +824,7 @@ HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBi
 static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_headers, struct list *headers_list,
         request_data_t *request_data)
 {
+    nsISeekableStream *seekable_stream;
     UINT64 available = 0;
     UINT32 data_len = 0;
     char *data, *post_data;
@@ -906,6 +909,17 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
         post_data[data_len] = 0;
     request_data->post_data = post_data;
     request_data->post_data_len = data_len;
+
+    nsres = nsIInputStream_QueryInterface(stream, &IID_nsISeekableStream, (void**)&seekable_stream);
+    assert(nsres == NS_OK);
+
+    nsres = nsISeekableStream_Seek(seekable_stream, NS_SEEK_SET, 0);
+    assert(nsres == NS_OK);
+
+    nsISeekableStream_Release(seekable_stream);
+
+    nsIInputStream_AddRef(stream);
+    request_data->post_stream = stream;
     TRACE("post_data = %s\n", debugstr_an(request_data->post_data, request_data->post_data_len));
     return S_OK;
 }
@@ -2267,7 +2281,7 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     if(FAILED(hres))
         return hres;
 
-    hres = load_nsuri(window, nsuri, NULL, LOAD_FLAGS_NONE);
+    hres = load_nsuri(window, nsuri, request_data ? request_data->post_stream : NULL, NULL, LOAD_FLAGS_NONE);
     nsISupports_Release((nsISupports*)nsuri);
     return hres;
 }

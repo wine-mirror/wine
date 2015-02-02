@@ -57,6 +57,7 @@ typedef struct {
 } nsChannel;
 
 typedef struct {
+    nsIInputStream *post_stream;
     WCHAR *headers;
     HGLOBAL post_data;
     ULONG post_data_len;
@@ -133,7 +134,7 @@ HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**) DECLSPEC_
 nsresult on_start_uri_open(NSContainer*,nsIURI*,cpp_bool*) DECLSPEC_HIDDEN;
 HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLSPEC_HIDDEN;
 HRESULT create_doc_uri(HTMLOuterWindow*,IUri*,nsWineURI**) DECLSPEC_HIDDEN;
-HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
+HRESULT load_nsuri(HTMLOuterWindow*,nsWineURI*,nsIInputStream*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLOuterWindow*,IMoniker*,IUri*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
 void prepare_for_binding(HTMLDocument*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLOuterWindow*,IUri*,DWORD,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;

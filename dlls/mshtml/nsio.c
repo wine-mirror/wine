@@ -268,8 +268,10 @@ static nsresult before_async_open(nsChannel *channel, NSContainer *container, BO
     return NS_OK;
 }
 
-HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc, DWORD flags)
+HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post_stream,
+        nsChannelBSC *channelbsc, DWORD flags)
 {
+    nsIDocShellLoadInfo *load_info = NULL;
     nsIWebNavigation *web_navigation;
     nsIDocShell *doc_shell;
     HTMLDocumentNode *doc;
@@ -288,14 +290,27 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsChannelBSC *channe
         return E_FAIL;
     }
 
+    if(post_stream) {
+        nsres = nsIDocShell_CreateLoadInfo(doc_shell, &load_info);
+        if(NS_FAILED(nsres)) {
+            nsIDocShell_Release(doc_shell);
+            return E_FAIL;
+        }
+
+        nsres = nsIDocShellLoadInfo_SetPostDataStream(load_info, post_stream);
+        assert(nsres == NS_OK);
+    }
+
     uri->channel_bsc = channelbsc;
     doc = window->base.inner_window->doc;
     doc->skip_mutation_notif = TRUE;
-    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)&uri->nsIFileURL_iface, NULL, flags, FALSE);
+    nsres = nsIDocShell_LoadURI(doc_shell, (nsIURI*)&uri->nsIFileURL_iface, load_info, flags, FALSE);
     if(doc == window->base.inner_window->doc)
         doc->skip_mutation_notif = FALSE;
     uri->channel_bsc = NULL;
     nsIDocShell_Release(doc_shell);
+    if(load_info)
+        nsIDocShellLoadInfo_Release(load_info);
     if(NS_FAILED(nsres)) {
         WARN("LoadURI failed: %08x\n", nsres);
         return E_FAIL;
