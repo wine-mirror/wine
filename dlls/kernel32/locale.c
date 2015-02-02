@@ -2050,6 +2050,127 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
 
 /***********************************************************************
+ *              utf7_can_directly_encode
+ *
+ * Helper for utf7_wcstombs
+ */
+static inline BOOL utf7_can_directly_encode(WCHAR codepoint)
+{
+    static const BOOL directly_encodable_table[] =
+    {
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, /* 0x00 - 0x0F */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 - 0x1F */
+        1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, /* 0x20 - 0x2F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, /* 0x30 - 0x3F */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x40 - 0x4F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 0x50 - 0x5F */
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x60 - 0x6F */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1                 /* 0x70 - 0x7A */
+    };
+
+    return codepoint <= 0x7A ? directly_encodable_table[codepoint] : FALSE;
+}
+
+/***********************************************************************
+ *              utf7_write_c
+ *
+ * Helper for utf7_wcstombs
+ *
+ * RETURNS
+ *   TRUE on success, FALSE on error
+ */
+static inline BOOL utf7_write_c(char *dst, int dstlen, int *index, char character)
+{
+    if (dstlen > 0)
+    {
+        if (*index >= dstlen)
+            return FALSE;
+
+        dst[*index] = character;
+    }
+
+    (*index)++;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              utf7_wcstombs
+ *
+ * UTF-16 to UTF-7 string conversion, helper for WideCharToMultiByte
+ *
+ * RETURNS
+ *   On success, the number of characters written
+ *   On dst buffer overflow, -1
+ */
+static int utf7_wcstombs(const WCHAR *src, int srclen, char *dst, int dstlen)
+{
+    static const char base64_encoding_table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    const WCHAR *source_end = src + srclen;
+    int dest_index = 0;
+
+    while (src < source_end)
+    {
+        if (*src == '+')
+        {
+            if (!utf7_write_c(dst, dstlen, &dest_index, '+'))
+                return -1;
+            if (!utf7_write_c(dst, dstlen, &dest_index, '-'))
+                return -1;
+            src++;
+        }
+        else if (utf7_can_directly_encode(*src))
+        {
+            if (!utf7_write_c(dst, dstlen, &dest_index, *src))
+                return -1;
+            src++;
+        }
+        else
+        {
+            unsigned int offset = 0;
+            DWORD byte_pair = 0;
+
+            if (!utf7_write_c(dst, dstlen, &dest_index, '+'))
+                return -1;
+
+            while (src < source_end && !utf7_can_directly_encode(*src))
+            {
+                byte_pair = (byte_pair << 16) | *src;
+                offset += 16;
+                while (offset >= 6)
+                {
+                    if (!utf7_write_c(dst, dstlen, &dest_index, base64_encoding_table[(byte_pair >> (offset - 6)) & 0x3F]))
+                        return -1;
+                    offset -= 6;
+                }
+                src++;
+            }
+
+            if (offset)
+            {
+                /* Windows won't create a padded base64 character if there's not room for the - sign too
+                 * this is probably a bug in Windows */
+                if (dstlen > 0 && dest_index + 1 >= dstlen)
+                    return -1;
+
+                byte_pair <<= (6 - offset);
+                if (!utf7_write_c(dst, dstlen, &dest_index, base64_encoding_table[byte_pair & 0x3F]))
+                    return -1;
+            }
+
+            /* Windows always explicitly terminates the base64 sequence
+               even though RFC 2152 (page 3, rule 2) does not require this */
+            if (!utf7_write_c(dst, dstlen, &dest_index, '-'))
+                return -1;
+        }
+    }
+
+    return dest_index;
+}
+
+/***********************************************************************
  *              WideCharToMultiByte   (KERNEL32.@)
  *
  * Convert a Unicode character string into a multibyte string.
@@ -2116,9 +2237,8 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
             SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
-        FIXME("UTF-7 not supported\n");
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
+        ret = utf7_wcstombs( src, srclen, dst, dstlen );
+        break;
     case CP_UNIXCP:
         if (unix_cptable)
         {
