@@ -181,13 +181,14 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		case DS3DMODE_NORMAL:
 			TRACE("Normal 3D processing mode\n");
 			/* we need to calculate distance between buffer and listener*/
-			vDistance = VectorBetweenTwoPoints(&dsb->ds3db_ds3db.vPosition, &dsb->device->ds3dl.vPosition);
+			vDistance = VectorBetweenTwoPoints(&dsb->device->ds3dl.vPosition, &dsb->ds3db_ds3db.vPosition);
 			flDistance = VectorMagnitude (&vDistance);
 			break;
 		case DS3DMODE_HEADRELATIVE:
 			TRACE("Head-relative 3D processing mode\n");
 			/* distance between buffer and listener is same as buffer's position */
-			flDistance = VectorMagnitude (&dsb->ds3db_ds3db.vPosition);
+			vDistance = dsb->ds3db_ds3db.vPosition;
+			flDistance = VectorMagnitude (&vDistance);
 			break;
 	}
 	
@@ -220,8 +221,14 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	}
 	else
 	{
+		D3DVECTOR vDistanceInv;
+
+		vDistanceInv.x = -vDistance.x;
+		vDistanceInv.y = -vDistance.y;
+		vDistanceInv.z = -vDistance.z;
+
 		/* calculate angle */
-		flAngle = AngleBetweenVectorsDeg(&dsb->ds3db_ds3db.vConeOrientation, &vDistance);
+		flAngle = AngleBetweenVectorsDeg(&dsb->ds3db_ds3db.vConeOrientation, &vDistanceInv);
 		/* if by any chance it happens that OutsideConeAngle = InsideConeAngle (that means that conning has no effect) */
 		if (dsb->ds3db_ds3db.dwInsideConeAngle != dsb->ds3db_ds3db.dwOutsideConeAngle)
 		{
@@ -254,14 +261,10 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	}
 	
 	/* panning */
-	if (dsb->device->ds3dl.vPosition.x == dsb->ds3db_ds3db.vPosition.x &&
-	    dsb->device->ds3dl.vPosition.y == dsb->ds3db_ds3db.vPosition.y &&
-	    dsb->device->ds3dl.vPosition.z == dsb->ds3db_ds3db.vPosition.z) {
+	if (vDistance.x == 0.0f && vDistance.y == 0.0f && vDistance.z == 0.0f)
 		flAngle = 0.0;
-	}
 	else
 	{
-		vDistance = VectorBetweenTwoPoints(&dsb->device->ds3dl.vPosition, &dsb->ds3db_ds3db.vPosition);
 		vLeft = VectorProduct(&dsb->device->ds3dl.vOrientFront, &dsb->device->ds3dl.vOrientTop);
 		flAngle = AngleBetweenVectorsRad(&dsb->device->ds3dl.vOrientFront, &vDistance);
 		flAngle2 = AngleBetweenVectorsRad(&vLeft, &vDistance);
