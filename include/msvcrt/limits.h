@@ -4,7 +4,7 @@
 #include <crtdefs.h>
 
 #define CHAR_BIT 8
-#define MB_LEN_MAX 2
+#define MB_LEN_MAX 5
 
 #define SCHAR_MIN (-0x80)
 #define SCHAR_MAX   0x7f

@@ -1474,7 +1474,7 @@ int CDECL MSVCRT__wctomb_l(char *dst, MSVCRT_wchar_t ch, MSVCRT__locale_t locale
 {
     int len;
 
-    MSVCRT__wctomb_s_l(&len, dst, dst ? 6 : 0, ch, locale);
+    MSVCRT__wctomb_s_l(&len, dst, dst ? MSVCRT_MB_LEN_MAX : 0, ch, locale);
     return len;
 }
 
