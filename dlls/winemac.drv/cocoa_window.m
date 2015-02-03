@@ -265,6 +265,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
                 context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
                 CGContextSetBlendMode(context, kCGBlendModeCopy);
+                CGContextSetInterpolationQuality(context, kCGInterpolationNone);
 
                 for (i = 0; i < count; i++)
                 {
