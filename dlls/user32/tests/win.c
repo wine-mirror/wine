@@ -7979,6 +7979,67 @@ static void test_smresult(void)
     CloseHandle(data.thread_replied);
 }
 
+static void test_GetMessagePos(void)
+{
+    HWND button;
+    DWORD pos;
+    MSG msg;
+
+    button = CreateWindowExA(0, "button", "button", WS_VISIBLE,
+            100, 100, 100, 100, 0, 0, 0, NULL);
+    ok(button != 0, "CreateWindowExA failed\n");
+
+    SetCursorPos(120, 140);
+    flush_events(TRUE);
+    pos = GetMessagePos();
+    ok(pos == MAKELONG(120, 140), "pos = %08x\n", pos);
+
+    SetCursorPos(340, 320);
+    pos = GetMessagePos();
+    ok(pos == MAKELONG(120, 140), "pos = %08x\n", pos);
+
+    SendMessageW(button, WM_APP, 0, 0);
+    pos = GetMessagePos();
+    ok(pos == MAKELONG(120, 140), "pos = %08x\n", pos);
+
+    PostMessageA(button, WM_APP, 0, 0);
+    GetMessageA(&msg, button, 0, 0);
+    ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+
+    PostMessageA(button, WM_APP, 0, 0);
+    SetCursorPos(350, 330);
+    GetMessageA(&msg, button, 0, 0);
+    ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+
+    PostMessageA(button, WM_APP, 0, 0);
+    SetCursorPos(320, 340);
+    PostMessageA(button, WM_APP+1, 0, 0);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+    GetMessageA(&msg, button, 0, 0);
+    ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(350, 330), "pos = %08x\n", pos);
+    GetMessageA(&msg, button, 0, 0);
+    ok(msg.message == WM_APP+1, "msg.message = %x\n", msg.message);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(320, 340), "pos = %08x\n", pos);
+
+    SetTimer(button, 1, 250, NULL);
+    SetCursorPos(330, 350);
+    GetMessageA(&msg, button, 0, 0);
+    ok(msg.message == WM_TIMER, "msg.message = %x\n", msg.message);
+    pos = GetMessagePos();
+    todo_wine ok(pos == MAKELONG(330, 350), "pos = %08x\n", pos);
+    KillTimer(button, 1);
+
+    DestroyWindow(button);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -8110,6 +8171,7 @@ START_TEST(win)
     test_update_region();
     test_window_without_child_style();
     test_smresult();
+    test_GetMessagePos();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
