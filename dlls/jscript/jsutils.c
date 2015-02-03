@@ -288,6 +288,9 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
     case VT_INT:
         *r = jsval_number(V_INT(var));
         return S_OK;
+    case VT_UI4:
+        *r = jsval_number(V_UI4(var));
+        return S_OK;
     case VT_UNKNOWN:
         if(V_UNKNOWN(var)) {
             IDispatch *disp;
