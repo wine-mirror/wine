@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-10-04 10:00+0300\n"
+"PO-Revision-Date: 2015-02-03 19:00+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -13098,20 +13098,16 @@ msgid "&Test Sound"
 msgstr "&Testuoti garsą"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "„Wine“ konfigūravimas"
+msgstr "Garsiakalbių konfigūravimas"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "Įtai&sas:"
+msgstr "Įtaisas:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Garsiakalbiai:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13219,21 +13215,19 @@ msgstr "(Sistemos numatytasis)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Erdvinis 5.1"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "grafika"
+msgstr "Kvadrofoninis"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Stereofoninis"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Monofoninis"
 
 #: winecfg.rc:54
 msgid ""
