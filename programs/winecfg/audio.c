@@ -122,7 +122,7 @@ static BOOL load_device(IMMDevice *dev, struct DeviceInfo *info)
     hr = IPropertyStore_GetValue(ps,
             &PKEY_AudioEndpoint_PhysicalSpeakers, &pv);
 
-    info->speaker_config = 0;
+    info->speaker_config = -1;
     if(SUCCEEDED(hr) && pv.vt == VT_UI4){
         i = 0;
         while (speaker_configs[i].text_id != 0) {
@@ -135,7 +135,7 @@ static BOOL load_device(IMMDevice *dev, struct DeviceInfo *info)
     }
 
     /* fallback to stereo */
-    if(info->speaker_config == 0)
+    if(info->speaker_config == -1)
         info->speaker_config = 2;
 
     IPropertyStore_Release(ps);
