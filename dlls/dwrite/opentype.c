@@ -950,7 +950,7 @@ HRESULT opentype_cmap_get_unicode_ranges(void *data, UINT32 max_count, DWRITE_UN
 }
 
 void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
-    DWRITE_FONT_METRICS1 *metrics)
+    DWRITE_FONT_METRICS1 *metrics, DWRITE_CARET_METRICS *caret)
 {
     void *os2_context, *head_context, *post_context, *hhea_context;
     const TT_OS2_V2 *tt_os2;
@@ -971,6 +971,19 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
         metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
         metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
         metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+    }
+
+    if (caret) {
+        if (tt_hhea) {
+            caret->slopeRise = GET_BE_WORD(tt_hhea->caretSlopeRise);
+            caret->slopeRun = GET_BE_WORD(tt_hhea->caretSlopeRun);
+            caret->offset = GET_BE_WORD(tt_hhea->caretOffset);
+        }
+        else {
+            caret->slopeRise = 0;
+            caret->slopeRun = 0;
+            caret->offset = 0;
+        }
     }
 
     if (tt_os2) {
@@ -1040,10 +1053,15 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
         IDWriteFontFileStream_ReleaseFileFragment(stream, hhea_context);
 }
 
-void opentype_get_font_properties(const void *os2, const void *head, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE type, UINT32 index,
+    DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
 {
-    TT_OS2_V2 *tt_os2 = (TT_OS2_V2*)os2;
-    TT_HEAD *tt_head = (TT_HEAD*)head;
+    void *os2_context, *head_context;
+    const TT_OS2_V2 *tt_os2;
+    const TT_HEAD *tt_head;
+
+    opentype_get_font_table(stream, type, index, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
+    opentype_get_font_table(stream, type, index, MS_HEAD_TAG, (const void**)&tt_head, &head_context, NULL, NULL);
 
     /* default stretch, weight and style to normal */
     *stretch = DWRITE_FONT_STRETCH_NORMAL;
@@ -1064,6 +1082,11 @@ void opentype_get_font_properties(const void *os2, const void *head, DWRITE_FONT
         if (macStyle & 0x0002)
             *style = DWRITE_FONT_STYLE_ITALIC;
     }
+
+    if (tt_os2)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
+    if (tt_head)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
 }
 
 static UINT get_name_record_codepage(enum OPENTYPE_PLATFORM_ID platform, USHORT encoding)

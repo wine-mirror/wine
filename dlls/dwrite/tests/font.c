@@ -2074,18 +2074,14 @@ static void test_GetFontFromFontFace(void)
     IDWriteFactory_Release(factory);
 }
 
-static void test_GetFirstMatchingFont(void)
+static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STYLE style)
 {
-    DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontCollection *collection;
-    IDWriteFont *font, *font2;
     IDWriteFontFamily *family;
-    IDWriteFactory *factory;
+    IDWriteFont *font;
     UINT32 index;
     BOOL exists;
     HRESULT hr;
-
-    factory = create_factory();
 
     hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2100,26 +2096,31 @@ static void test_GetFirstMatchingFont(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+        DWRITE_FONT_STRETCH_NORMAL, style, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    return font;
+}
+
+static void test_GetFirstMatchingFont(void)
+{
+    DWRITE_FONT_SIMULATIONS simulations;
+    IDWriteFont *font, *font2;
+    IDWriteFactory *factory;
+
+    factory = create_factory();
+
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+    font2 = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
     ok(font != font2, "got %p, %p\n", font, font2);
     IDWriteFont_Release(font);
+    IDWriteFont_Release(font2);
 
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_ITALIC, &font);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_ITALIC);
     simulations = IDWriteFont_GetSimulations(font);
     ok(simulations == DWRITE_FONT_SIMULATIONS_OBLIQUE, "%d\n", simulations);
-
     IDWriteFont_Release(font);
-    IDWriteFont_Release(font2);
-    IDWriteFontFamily_Release(family);
-    IDWriteFontCollection_Release(collection);
+
     IDWriteFactory_Release(factory);
 }
 
@@ -2955,6 +2956,81 @@ static void test_GetEudcFontCollection(void)
     IDWriteFactory1_Release(factory1);
 }
 
+static void test_GetCaretMetrics(void)
+{
+    DWRITE_FONT_METRICS1 metrics;
+    IDWriteFontFace1 *fontface1;
+    DWRITE_CARET_METRICS caret;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    IDWriteFont *font;
+    HRESULT hr;
+
+    create_testfontfile(test_fontfile);
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (hr != S_OK) {
+        win_skip("GetCaretMetrics() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        DeleteFileW(test_fontfile);
+        return;
+    }
+
+    memset(&caret, 0xcc, sizeof(caret));
+    IDWriteFontFace1_GetCaretMetrics(fontface1, &caret);
+    ok(caret.slopeRise == 1, "got %d\n", caret.slopeRise);
+    ok(caret.slopeRun == 0, "got %d\n", caret.slopeRun);
+    ok(caret.offset == 0, "got %d\n", caret.offset);
+    IDWriteFontFace1_Release(fontface1);
+
+    /* now with Tahoma Normal */
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFace_Release(fontface);
+
+    memset(&caret, 0xcc, sizeof(caret));
+    IDWriteFontFace1_GetCaretMetrics(fontface1, &caret);
+    ok(caret.slopeRise == 1, "got %d\n", caret.slopeRise);
+    ok(caret.slopeRun == 0, "got %d\n", caret.slopeRun);
+    ok(caret.offset == 0, "got %d\n", caret.offset);
+    IDWriteFontFace1_Release(fontface1);
+
+    /* simulated italic */
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_ITALIC);
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFace_Release(fontface);
+
+    IDWriteFontFace1_GetMetrics(fontface1, &metrics);
+
+    memset(&caret, 0xcc, sizeof(caret));
+    IDWriteFontFace1_GetCaretMetrics(fontface1, &caret);
+    ok(caret.slopeRise == metrics.designUnitsPerEm, "got %d\n", caret.slopeRise);
+    ok(caret.slopeRun > 0, "got %d\n", caret.slopeRun);
+    ok(caret.offset == 0, "got %d\n", caret.offset);
+    IDWriteFontFace1_Release(fontface1);
+
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -2993,6 +3069,7 @@ START_TEST(font)
     test_IsMonospacedFont();
     test_GetGlyphRunOutline();
     test_GetEudcFontCollection();
+    test_GetCaretMetrics();
 
     IDWriteFactory_Release(factory);
 }

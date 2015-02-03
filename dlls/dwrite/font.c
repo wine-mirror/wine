@@ -114,6 +114,7 @@ struct dwrite_fontface {
     USHORT simulations;
     DWRITE_FONT_FACE_TYPE type;
     DWRITE_FONT_METRICS1 metrics;
+    DWRITE_CARET_METRICS caret;
 
     struct dwrite_fonttable cmap;
     DWRITE_GLYPH_METRICS *glyphs[GLYPH_MAX/GLYPH_BLOCK_SIZE];
@@ -597,7 +598,8 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleMetrics(IDWriteFontFace2 *
 static void WINAPI dwritefontface1_GetCaretMetrics(IDWriteFontFace2 *iface, DWRITE_CARET_METRICS *metrics)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
+    TRACE("(%p)->(%p)\n", This, metrics);
+    *metrics = This->caret;
 }
 
 static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace2 *iface, UINT32 max_count,
@@ -771,38 +773,11 @@ static const IDWriteFontFace2Vtbl dwritefontfacevtbl = {
     dwritefontface2_GetRecommendedRenderingMode
 };
 
-static void get_font_properties_from_stream(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE face_type,
-    UINT32 face_index, DWRITE_FONT_METRICS1 *metrics, DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight,
-    DWRITE_FONT_STYLE *style)
-{
-    const void *tt_os2 = NULL, *tt_head = NULL;
-    void *os2_context, *head_context;
-    DWRITE_FONT_STRETCH fontstretch;
-    DWRITE_FONT_WEIGHT fontweight;
-    DWRITE_FONT_STYLE fontstyle;
-
-    opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
-
-    if (!stretch) stretch = &fontstretch;
-    if (!weight) weight = &fontweight;
-    if (!style) style = &fontstyle;
-
-    opentype_get_font_properties(tt_os2, tt_head, stretch, weight, style);
-    opentype_get_font_metrics(stream, face_type, face_index, metrics);
-
-    if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
-    if (tt_head)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
-}
-
 HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
 {
     DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFileStream *stream;
-    DWRITE_FONT_METRICS1 metrics;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_WEIGHT weight;
@@ -825,7 +800,7 @@ HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
 
     index = IDWriteFontFace_GetIndex(face);
     face_type = IDWriteFontFace_GetType(face);
-    get_font_properties_from_stream(stream, face_type, index, &metrics, &stretch, &weight, &style);
+    opentype_get_font_properties(stream, face_type, index, &stretch, &weight, &style);
     IDWriteFontFileStream_Release(stream);
 
     simulations = IDWriteFontFace_GetSimulations(face);
@@ -1670,8 +1645,8 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
     opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
     opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
 
-    opentype_get_font_properties(tt_os2, tt_head, &data->stretch, &data->weight, &data->style);
-    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics);
+    opentype_get_font_properties(stream, face_type, face_index, &data->stretch, &data->weight, &data->style);
+    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics, NULL);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
@@ -2216,7 +2191,14 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
         IDWriteFontFile_AddRef(font_files[i]);
     }
 
-    get_font_properties_from_stream(fontface->streams[0], facetype, index, &fontface->metrics, NULL, NULL, NULL);
+    opentype_get_font_metrics(fontface->streams[0], facetype, index, &fontface->metrics, &fontface->caret);
+    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
+        /* TODO: test what happens if caret is already slanted */
+        if (fontface->caret.slopeRise == 1) {
+            fontface->caret.slopeRise = fontface->metrics.designUnitsPerEm;
+            fontface->caret.slopeRun = fontface->caret.slopeRise / 3;
+        }
+    }
 
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
