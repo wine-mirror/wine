@@ -13092,20 +13092,16 @@ msgid "&Test Sound"
 msgstr "&Проверить звук"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Настройка Wine"
+msgstr "Конфигурация каналов"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "У&стройство:"
+msgstr "Устройство:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Каналы:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13201,7 +13197,7 @@ msgstr "Выбранный драйвер: %s"
 
 #: winecfg.rc:85
 msgid "(None)"
-msgstr "(Нет)"
+msgstr "(нет)"
 
 #: winecfg.rc:86
 msgid "Audio test failed!"
@@ -13209,25 +13205,23 @@ msgstr "Сбой при тесте звуковой системы!"
 
 #: winecfg.rc:88
 msgid "(System default)"
-msgstr "(По умолчанию)"
+msgstr "(по умолчанию)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Объёмное звучание 5.1"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "изображение"
+msgstr "Квадрофония"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Стерео"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Моно"
 
 #: winecfg.rc:54
 msgid ""
