@@ -556,8 +556,17 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleMetrics(IDWriteFontFace2 *i
     DWRITE_MATRIX const *transform, DWRITE_FONT_METRICS *metrics)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%f %f %p %p): stub\n", This, emSize, pixels_per_dip, transform, metrics);
-    return E_NOTIMPL;
+    DWRITE_FONT_METRICS1 metrics1;
+    HRESULT hr;
+
+    TRACE("(%p)->(%.2f %.2f %p %p)\n", This, emSize, pixels_per_dip, transform, metrics);
+
+    hr = IDWriteFontFace2_GetGdiCompatibleMetrics(iface, emSize, pixels_per_dip, transform, &metrics1);
+    if (FAILED(hr))
+        return hr;
+
+    memcpy(metrics, &metrics1, sizeof(*metrics));
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFace2 *iface, FLOAT emSize, FLOAT pixels_per_dip,
