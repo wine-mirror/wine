@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-10-02 23:14+0900\n"
+"PO-Revision-Date: 2015-02-05 00:17+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
@@ -13076,20 +13076,16 @@ msgid "&Test Sound"
 msgstr "音をテスト(&T)"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Wine 設定"
+msgstr "スピーカー 設定"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "デバイス(&V):"
+msgstr "デバイス:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "スピーカー:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13197,21 +13193,19 @@ msgstr "(システム デフォルト)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 サラウンド"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "画像"
+msgstr "4 チャンネル ステレオ"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "ステレオ"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "モノラル"
 
 #: winecfg.rc:54
 msgid ""
