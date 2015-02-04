@@ -96,7 +96,7 @@
 @ stub SdbOpenApphelpInformation
 @ stub SdbOpenApphelpInformationByID
 @ stub SdbOpenApphelpResourceFile
-@ stub SdbOpenDatabase
+@ stdcall SdbOpenDatabase(wstr long)
 @ stub SdbOpenDbFromGuid
 @ stub SdbOpenLocalDatabase
 @ stub SdbPackAppCompatData

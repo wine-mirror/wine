@@ -83,10 +83,16 @@ BOOL WINAPI ShimFlushCache( HWND hwnd, HINSTANCE instance, LPCSTR cmdline, int c
     return TRUE;
 }
 
-
 HSDB WINAPI SdbInitDatabase(DWORD flags, LPCWSTR path)
 {
     FIXME("stub: %08x %s\n", flags, debugstr_w(path));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+PDB WINAPI SdbOpenDatabase(LPCWSTR path, PATH_TYPE type)
+{
+    FIXME("stub: %s %08x\n", debugstr_w(path), type);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
