@@ -129,14 +129,6 @@ static HRESULT JSGlobal_Array(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return constructor_call(ctx->array_constr, flags, argc, argv, r);
 }
 
-static HRESULT JSGlobal_Boolean(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->bool_constr, flags, argc, argv, r);
-}
-
 static HRESULT JSGlobal_Date(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -1080,7 +1072,6 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 
 static const builtin_prop_t JSGlobal_props[] = {
     {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR|1},
-    {BooleanW,                   JSGlobal_Boolean,                   PROPF_CONSTR|1},
     {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
     {DateW,                      JSGlobal_Date,                      PROPF_CONSTR|7},
     {EnumeratorW,                JSGlobal_Enumerator,                PROPF_METHOD|7},
@@ -1203,6 +1194,10 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     hres = create_activex_constr(ctx, &constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, BooleanW, jsval_obj(ctx->bool_constr));
     if(FAILED(hres))
         return hres;
 
