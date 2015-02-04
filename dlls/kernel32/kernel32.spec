@@ -286,8 +286,8 @@
 @ stdcall CreateFileMappingA(long ptr long long long str)
 # @ stub CreateFileMappingNumaA
 # @ stub CreateFileMappingNumaW
-# @ stub CreateFileTransactedA
-# @ stub CreateFileTransactedW
+@ stdcall CreateHardLinkTransactedA(str str ptr ptr)
+@ stdcall CreateHardLinkTransactedW(wstr wstr ptr ptr)
 @ stdcall CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long)
 @ stdcall CreateHardLinkA(str str ptr)

@@ -1972,3 +1972,23 @@ BOOL WINAPI CreateSymbolicLinkA(LPCSTR link, LPCSTR target, DWORD flags)
     FIXME("(%s %s %d): stub\n", debugstr_a(link), debugstr_a(target), flags);
     return TRUE;
 }
+
+/*************************************************************************
+ *           CreateHardLinkTransactedA   (KERNEL32.@)
+ */
+BOOL WINAPI CreateHardLinkTransactedA(LPCSTR link, LPCSTR target, LPSECURITY_ATTRIBUTES sa, HANDLE transaction)
+{
+    FIXME("(%s %s %p %p): stub\n", debugstr_a(link), debugstr_a(target), sa, transaction);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/*************************************************************************
+ *           CreateHardLinkTransactedW   (KERNEL32.@)
+ */
+BOOL WINAPI CreateHardLinkTransactedW(LPCWSTR link, LPCWSTR target, LPSECURITY_ATTRIBUTES sa, HANDLE transaction)
+{
+    FIXME("(%s %s %p %p): stub\n", debugstr_w(link), debugstr_w(target), sa, transaction);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
