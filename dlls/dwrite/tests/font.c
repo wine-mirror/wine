@@ -2099,6 +2099,8 @@ static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STY
         DWRITE_FONT_STRETCH_NORMAL, style, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    IDWriteFontFamily_Release(family);
+    IDWriteFontCollection_Release(collection);
     return font;
 }
 
