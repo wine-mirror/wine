@@ -1503,6 +1503,24 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     return r;
 }
 
+UINT WINAPI MsiEnumClientsExA(LPCSTR component, LPCSTR usersid, DWORD ctx, DWORD index,
+                              CHAR installed_product[GUID_SIZE],
+                              MSIINSTALLCONTEXT *installed_ctx, LPSTR sid, LPDWORD sid_len)
+{
+    FIXME("%s, %s, %u, %u, %p, %p, %p, %p\n", debugstr_a(component), debugstr_a(usersid),
+          ctx, index, installed_product, installed_ctx, sid, sid_len);
+    return ERROR_ACCESS_DENIED;
+}
+
+UINT WINAPI MsiEnumClientsExW(LPCWSTR component, LPCWSTR usersid, DWORD ctx, DWORD index,
+                              WCHAR installed_product[GUID_SIZE],
+                              MSIINSTALLCONTEXT *installed_ctx, LPWSTR sid, LPDWORD sid_len)
+{
+    FIXME("%s, %s, %u, %u, %p, %p, %p, %p\n", debugstr_w(component), debugstr_w(usersid),
+          ctx, index, installed_product, installed_ctx, sid, sid_len);
+    return ERROR_ACCESS_DENIED;
+}
+
 static UINT MSI_EnumComponentQualifiers( LPCWSTR szComponent, DWORD iIndex,
                 awstring *lpQualBuf, LPDWORD pcchQual,
                 awstring *lpAppBuf, LPDWORD pcchAppBuf )

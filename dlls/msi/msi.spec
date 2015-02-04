@@ -284,8 +284,8 @@
 288 stub MsiSetOfflineContextW
 289 stdcall MsiEnumComponentsExA(str long long ptr ptr ptr ptr)
 290 stdcall MsiEnumComponentsExW(wstr long long ptr ptr ptr ptr)
-291 stub MsiEnumClientsExA
-292 stub MsiEnumClientsExW
+291 stdcall MsiEnumClientsExA(str str long long ptr ptr ptr ptr)
+292 stdcall MsiEnumClientsExW(wstr wstr long long ptr ptr ptr ptr)
 293 stub MsiGetComponentPathExA
 294 stub MsiGetComponentPathExW
 295 stub QueryInstanceCount
