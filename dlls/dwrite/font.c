@@ -1424,40 +1424,33 @@ static HRESULT WINAPI dwritefontcollection_GetFontFamily(IDWriteFontCollection *
     return create_fontfamily(This->family_data[index], iface, family);
 }
 
-static HRESULT collection_find_family(struct dwrite_fontcollection *collection, const WCHAR *name, UINT32 *index, BOOL *exists)
+static UINT32 collection_find_family(struct dwrite_fontcollection *collection, const WCHAR *name)
 {
     UINT32 i;
 
-    if (collection->family_count) {
-        for (i = 0; i < collection->family_count; i++) {
-            IDWriteLocalizedStrings *family_name = collection->family_data[i]->familyname;
-            HRESULT hr;
-            int j;
+    for (i = 0; i < collection->family_count; i++) {
+        IDWriteLocalizedStrings *family_name = collection->family_data[i]->familyname;
+        HRESULT hr;
+        int j;
 
-            for (j = 0; j < IDWriteLocalizedStrings_GetCount(family_name); j++) {
-                WCHAR buffer[255];
-                hr = IDWriteLocalizedStrings_GetString(family_name, j, buffer, 255);
-                if (SUCCEEDED(hr)) {
-                    if (!strcmpW(buffer, name)) {
-                        *index = i;
-                        *exists = TRUE;
-                        return S_OK;
-                    }
-                }
-            }
+        for (j = 0; j < IDWriteLocalizedStrings_GetCount(family_name); j++) {
+            WCHAR buffer[255];
+            hr = IDWriteLocalizedStrings_GetString(family_name, j, buffer, 255);
+            if (SUCCEEDED(hr) && !strcmpW(buffer, name))
+                return i;
         }
-        *index = (UINT32)-1;
-        *exists = FALSE;
     }
 
-    return S_OK;
+    return ~0u;
 }
 
 static HRESULT WINAPI dwritefontcollection_FindFamilyName(IDWriteFontCollection *iface, const WCHAR *name, UINT32 *index, BOOL *exists)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(name), index, exists);
-    return collection_find_family(This, name, index, exists);
+    *index = collection_find_family(This, name);
+    *exists = *index != ~0u;
+    return S_OK;
 }
 
 static BOOL is_same_fontfile(IDWriteFontFile *left, IDWriteFontFile *right)
@@ -1728,7 +1721,6 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             IDWriteFontFileStream *stream;
             WCHAR buffer[255];
             UINT32 index;
-            BOOL exists;
 
             /* alloc and init new font data structure */
             font_data = heap_alloc_zero(sizeof(struct dwrite_font_data));
@@ -1755,9 +1747,8 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             buffer[0] = 0;
             IDWriteLocalizedStrings_GetString(family_name, 0, buffer, sizeof(buffer)/sizeof(WCHAR));
 
-            exists = FALSE;
-            hr = collection_find_family(collection, buffer, &index, &exists);
-            if (exists)
+            index = collection_find_family(collection, buffer);
+            if (index != ~0u)
                 fontfamily_add_font(collection->family_data[index], font_data);
             else {
                 struct dwrite_fontfamily_data *family_data;
