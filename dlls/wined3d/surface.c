@@ -3482,7 +3482,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
          * other cases pixels that should be masked away have alpha set to 0. */
         if (src_surface->resource.format->id == WINED3DFMT_P8_UINT)
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
-                    (float)src_surface->container->src_blt_color_key.color_space_low_value / 256.0f);
+                    (float)src_surface->container->src_blt_color_key.color_space_low_value / 255.0f);
         else
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
         checkGLcall("glAlphaFunc");
