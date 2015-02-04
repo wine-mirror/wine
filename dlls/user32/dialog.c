@@ -704,10 +704,10 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                 /* By returning TRUE, app has requested a default focus assignment.
                  * WM_INITDIALOG may have changed the tab order, so find the first
                  * tabstop control again. */
-                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
-                if (!dlgInfo->hwndFocus) dlgInfo->hwndFocus = GetNextDlgGroupItem( hwnd, 0, FALSE );
-                if( dlgInfo->hwndFocus )
-                    SetFocus( dlgInfo->hwndFocus );
+                focus = GetNextDlgTabItem( hwnd, 0, FALSE );
+                if (!focus) focus = GetNextDlgGroupItem( hwnd, 0, FALSE );
+                if (focus)
+                    SetFocus( focus );
             }
         }
 
