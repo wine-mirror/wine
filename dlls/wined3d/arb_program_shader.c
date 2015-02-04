@@ -7255,7 +7255,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 
     /* The alpha-component contains the palette index */
     if(textype == GL_TEXTURE_RECTANGLE_ARB)
-        shader_addline(&buffer, "TXP index, fragment.texcoord[0], texture[0], RECT;\n");
+        shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], RECT;\n");
     else
         shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], 2D;\n");
 
