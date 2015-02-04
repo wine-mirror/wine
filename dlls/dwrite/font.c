@@ -1551,7 +1551,6 @@ static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, s
     }
 
     family_data->fonts[family_data->font_count] = font_data;
-    InterlockedIncrement(&font_data->ref);
     family_data->font_count++;
     return S_OK;
 }
@@ -1617,17 +1616,25 @@ HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **
     return hr;
 }
 
-static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, UINT32 face_index, DWRITE_FONT_FACE_TYPE face_type, struct dwrite_font_data *data)
+static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, UINT32 face_index, DWRITE_FONT_FACE_TYPE face_type,
+    IDWriteFontFileStream **stream, struct dwrite_font_data **ret)
 {
     void *os2_context, *head_context;
     const void *tt_os2 = NULL, *tt_head = NULL;
-    IDWriteFontFileStream *stream;
+    struct dwrite_font_data *data;
     HRESULT hr;
 
-    hr = get_filestream_from_file(file, &stream);
-    if (FAILED(hr))
-        return hr;
+    data = heap_alloc_zero(sizeof(*data));
+    if (!data)
+        return E_OUTOFMEMORY;
 
+    hr = get_filestream_from_file(file, stream);
+    if (FAILED(hr)) {
+        heap_free(data);
+        return hr;
+    }
+
+    data->ref = 1;
     data->factory = factory;
     data->file = file;
     data->face_index = face_index;
@@ -1635,23 +1642,29 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
     IDWriteFontFile_AddRef(file);
     IDWriteFactory2_AddRef(factory);
 
-    opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
+    opentype_get_font_table(*stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
+    opentype_get_font_table(*stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
 
-    opentype_get_font_properties(stream, face_type, face_index, &data->stretch, &data->weight, &data->style);
-    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics, NULL);
+    opentype_get_font_properties(*stream, face_type, face_index, &data->stretch, &data->weight, &data->style);
+    opentype_get_font_metrics(*stream, face_type, face_index, &data->metrics, NULL);
 
     if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
+        IDWriteFontFileStream_ReleaseFileFragment(*stream, os2_context);
     if (tt_head)
-        IDWriteFontFileStream_ReleaseFileFragment(stream, head_context);
-    IDWriteFontFileStream_Release(stream);
+        IDWriteFontFileStream_ReleaseFileFragment(*stream, head_context);
 
+    *ret = data;
     return S_OK;
 }
 
-static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct dwrite_fontfamily_data *data)
+static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct dwrite_fontfamily_data **ret)
 {
+    struct dwrite_fontfamily_data *data;
+
+    data = heap_alloc(sizeof(*data));
+    if (!data)
+        return E_OUTOFMEMORY;
+
     data->ref = 1;
     data->font_count = 0;
     data->font_alloc = 2;
@@ -1665,6 +1678,7 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     data->familyname = familyname;
     IDWriteLocalizedStrings_AddRef(familyname);
 
+    *ret = data;
     return S_OK;
 }
 
@@ -1672,7 +1686,7 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
 {
     struct dwrite_fontcollection *collection;
     BOOL current = FALSE;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     *ret = NULL;
 
@@ -1689,7 +1703,7 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
 
     TRACE("building font collection:\n");
 
-    while (1) {
+    while (hr == S_OK) {
         DWRITE_FONT_FACE_TYPE face_type;
         DWRITE_FONT_FILE_TYPE file_type;
         IDWriteFontFile *file;
@@ -1723,24 +1737,22 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             UINT32 index;
 
             /* alloc and init new font data structure */
-            font_data = heap_alloc_zero(sizeof(struct dwrite_font_data));
-            init_font_data(factory, file, i, face_type, font_data);
-
-            hr = get_filestream_from_file(file, &stream);
-            if (FAILED(hr)) {
-                heap_free (font_data);
-                return hr;
-            }
+            hr = init_font_data(factory, file, i, face_type, &stream, &font_data);
+            if (FAILED(hr))
+                break;
 
             /* get family name from font file */
             name_table = NULL;
             opentype_get_font_table(stream, face_type, i, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
-            if (name_table)
+            if (name_table) {
                 hr = opentype_get_font_strings_from_id(name_table, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &family_name);
+                IDWriteFontFileStream_ReleaseFileFragment(stream, name_context);
+            }
             IDWriteFontFileStream_Release(stream);
 
             if (FAILED(hr) || !family_name) {
                 WARN("unable to get family name from font\n");
+                release_font_data(font_data);
                 continue;
             }
 
@@ -1749,26 +1761,33 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
 
             index = collection_find_family(collection, buffer);
             if (index != ~0u)
-                fontfamily_add_font(collection->family_data[index], font_data);
+                hr = fontfamily_add_font(collection->family_data[index], font_data);
             else {
                 struct dwrite_fontfamily_data *family_data;
 
                 /* create and init new family */
-                family_data = heap_alloc(sizeof(*family_data));
-                init_fontfamily_data(family_name, family_data);
+                hr = init_fontfamily_data(family_name, &family_data);
+                if (hr == S_OK) {
+                    /* add font to family, family - to collection */
+                    hr = fontfamily_add_font(family_data, font_data);
+                    if (hr == S_OK)
+                        hr = fontcollection_add_family(collection, family_data);
 
-                /* add font to family, family - to collection */
-                fontfamily_add_font(family_data, font_data);
-                fontcollection_add_family(collection, family_data);
+                    if (FAILED(hr))
+                        release_fontfamily_data(family_data);
+                }
             }
 
             IDWriteLocalizedStrings_Release(family_name);
+
+            if (FAILED(hr))
+                break;
         }
 
         IDWriteFontFile_Release(file);
     };
 
-    return S_OK;
+    return hr;
 }
 
 struct system_fontfile_enumerator
