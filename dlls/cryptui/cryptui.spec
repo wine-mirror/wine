@@ -3,7 +3,7 @@
 3 stub CryptUIDlgFreeCAContext
 4 stub CryptUIDlgSelectCA
 5 stdcall CryptUIDlgSelectCertificateA(ptr)
-6 stub CryptUIDlgSelectCertificateFromStore
+6 stdcall CryptUIDlgSelectCertificateFromStore(ptr ptr wstr wstr long long ptr)
 7 stdcall CryptUIDlgSelectCertificateW(ptr)
 8 stdcall CryptUIDlgSelectStoreA(ptr)
 9 stdcall CryptUIDlgSelectStoreW(ptr)

@@ -7049,3 +7049,11 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateA(PCCRYPTUI_SELECTCERTIFICATE_S
     FIXME("%p: stub\n", pcsc);
     return NULL;
 }
+
+PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(HCERTSTORE hCertStore, HWND hwnd, LPCWSTR pwszTitle,
+                                                           LPCWSTR pwszDisplayString, DWORD dwDontUseColumn,
+                                                           DWORD dwFlags, void *pvReserved)
+{
+    FIXME("%p %p %s %s %d %d %p: stub\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
+    return NULL;
+}
