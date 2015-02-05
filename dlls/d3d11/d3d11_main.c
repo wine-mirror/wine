@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 static const char *debug_d3d_driver_type(D3D_DRIVER_TYPE driver_type)
 {
-    switch(driver_type)
+    switch (driver_type)
     {
 #define D3D11_TO_STR(x) case x: return #x
         D3D11_TO_STR(D3D_DRIVER_TYPE_UNKNOWN);
@@ -46,11 +46,11 @@ static const char *debug_d3d_driver_type(D3D_DRIVER_TYPE driver_type)
 }
 
 HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
-                                 const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version,
-                                 ID3D11Device **device, D3D_FEATURE_LEVEL *feature_level, ID3D11DeviceContext **context)
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device,
+        D3D_FEATURE_LEVEL *feature_level, ID3D11DeviceContext **context)
 {
-    FIXME("stub: adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %u, "
-          "device %p, feature_level %p, context %p\n", adapter, debug_d3d_driver_type(driver_type), swrast,
-          flags, feature_levels, levels, sdk_version, device, feature_level, context);
+    FIXME("adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %u, "
+            "device %p, feature_level %p, context %p stub!\n", adapter, debug_d3d_driver_type(driver_type), swrast,
+            flags, feature_levels, levels, sdk_version, device, feature_level, context);
     return E_OUTOFMEMORY;
 }
