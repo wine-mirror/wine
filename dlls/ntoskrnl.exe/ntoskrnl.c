@@ -2031,3 +2031,17 @@ PLIST_ENTRY WINAPI ExInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK loc
     FIXME("(%p %p) stub\n", head, lock);
     return NULL;
 }
+
+/***********************************************************************
+ *           ExfInterlockedRemoveHeadList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( ExfInterlockedRemoveHeadList )
+PLIST_ENTRY WINAPI __regs_ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
+#else
+PLIST_ENTRY WINAPI ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
+#endif
+{
+    FIXME("(%p %p) stub\n", head, lock);
+    return ExInterlockedRemoveHeadList( head, lock );
+}

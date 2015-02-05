@@ -22,7 +22,7 @@
 @ stub ExfInterlockedInsertTailList
 @ stub ExfInterlockedPopEntryList
 @ stub ExfInterlockedPushEntryList
-@ stub ExfInterlockedRemoveHeadList
+@ stdcall -norelay ExfInterlockedRemoveHeadList(ptr ptr)
 @ stub ExfReleasePushLock
 @ stub Exfi386InterlockedDecrementLong
 @ stub Exfi386InterlockedExchangeUlong
