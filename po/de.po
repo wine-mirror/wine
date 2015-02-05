@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-10-06 21:51+0200\n"
+"PO-Revision-Date: 2015-02-05 22:22+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -13175,20 +13175,16 @@ msgid "&Test Sound"
 msgstr "Sound &testen"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Wine-Konfiguration"
+msgstr "Lautsprecher-Konfiguration"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "Ge&rät:"
+msgstr "Gerät:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Lautsprecher:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13288,29 +13284,27 @@ msgstr "(Kein)"
 
 #: winecfg.rc:86
 msgid "Audio test failed!"
-msgstr "Festplattenreset fehlgeschlagen!"
+msgstr "Audiotest fehlgeschlagen!"
 
 #: winecfg.rc:88
 msgid "(System default)"
-msgstr "(System Standard)"
+msgstr "(Systemstandard)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 Surround"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "Grafik"
+msgstr "Quadrofon"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
