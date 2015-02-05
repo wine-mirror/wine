@@ -49,7 +49,7 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
                                  const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version,
                                  ID3D11Device **device, D3D_FEATURE_LEVEL *feature_level, ID3D11DeviceContext **context)
 {
-    FIXME("stub: adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %d, "
+    FIXME("stub: adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %u, "
           "device %p, feature_level %p, context %p\n", adapter, debug_d3d_driver_type(driver_type), swrast,
           flags, feature_levels, levels, sdk_version, device, feature_level, context);
     return E_OUTOFMEMORY;
