@@ -2022,3 +2022,12 @@ NTSTATUS WINAPI IoCsqInitialize(PIO_CSQ csq, PIO_CSQ_INSERT_IRP insert_irp, PIO_
           csq, insert_irp, remove_irp, peek_irp, acquire_lock, release_lock, complete_irp);
     return STATUS_SUCCESS;
 }
+
+/*****************************************************
+ *           ExInterlockedRemoveHeadList  (NTOSKRNL.EXE.@)
+ */
+PLIST_ENTRY WINAPI ExInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lock)
+{
+    FIXME("(%p %p) stub\n", head, lock);
+    return NULL;
+}

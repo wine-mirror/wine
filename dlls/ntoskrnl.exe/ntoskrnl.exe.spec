@@ -153,7 +153,7 @@
 @ stub ExInterlockedInsertTailList
 @ stub ExInterlockedPopEntryList
 @ stub ExInterlockedPushEntryList
-@ stub ExInterlockedRemoveHeadList
+@ stdcall ExInterlockedRemoveHeadList(ptr ptr)
 @ stub ExIsProcessorFeaturePresent
 @ stub ExIsResourceAcquiredExclusiveLite
 @ stub ExIsResourceAcquiredSharedLite
