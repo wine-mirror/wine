@@ -75,7 +75,7 @@ static void create_testfontfile(const WCHAR *filename)
     HRSRC res;
     void *ptr;
     file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, error %d\n", GetLastError());
 
     res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
     ok( res != 0, "couldn't find resource\n" );
@@ -2994,8 +2994,10 @@ static void test_GetCaretMetrics(void)
     ok(caret.slopeRun == 0, "got %d\n", caret.slopeRun);
     ok(caret.offset == 0, "got %d\n", caret.offset);
     IDWriteFontFace1_Release(fontface1);
+    IDWriteFactory_Release(factory);
 
     /* now with Tahoma Normal */
+    factory = create_factory();
     font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3029,6 +3031,32 @@ static void test_GetCaretMetrics(void)
     ok(caret.offset == 0, "got %d\n", caret.offset);
     IDWriteFontFace1_Release(fontface1);
 
+    IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
+}
+
+static void test_GetGlyphCount(void)
+{
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFontFile *file;
+    HRESULT hr;
+    UINT16 count;
+
+    create_testfontfile(test_fontfile);
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    count = IDWriteFontFace_GetGlyphCount(fontface);
+    ok(count == 7, "got %u\n", count);
+
+    IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
     DeleteFileW(test_fontfile);
 }
@@ -3072,6 +3100,7 @@ START_TEST(font)
     test_GetGlyphRunOutline();
     test_GetEudcFontCollection();
     test_GetCaretMetrics();
+    test_GetGlyphCount();
 
     IDWriteFactory_Release(factory);
 }

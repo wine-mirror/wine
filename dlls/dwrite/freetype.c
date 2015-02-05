@@ -375,6 +375,19 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
     return hr;
 }
 
+UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
+{
+    UINT16 count = 0;
+    FT_Face face;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+        count = face->num_glyphs;
+    LeaveCriticalSection(&freetype_cs);
+
+    return count;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -404,6 +417,11 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
 {
     *ret = NULL;
     return E_NOTIMPL;
+}
+
+UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
+{
+    return 0;
 }
 
 #endif /* HAVE_FREETYPE */
