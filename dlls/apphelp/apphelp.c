@@ -106,3 +106,8 @@ TAGID WINAPI SdbGetFirstChild(PDB pdb, TAGID parent)
     FIXME("stub: %p %d\n", pdb, parent);
     return TAGID_NULL;
 }
+
+void WINAPI SdbCloseDatabase(PDB pdb)
+{
+    FIXME("stub: %p\n", pdb);
+}

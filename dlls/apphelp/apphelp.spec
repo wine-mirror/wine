@@ -22,7 +22,7 @@
 @ stub SdbApphelpNotifyExSdbApphelpNotifyEx
 @ stub SdbBuildCompatEnvVariables
 @ stub SdbCloseApphelpInformation
-@ stub SdbCloseDatabase
+@ stdcall SdbCloseDatabase(ptr)
 @ stub SdbCloseDatabaseWrite
 @ stub SdbCloseLocalDatabase
 @ stub SdbCommitIndexes
