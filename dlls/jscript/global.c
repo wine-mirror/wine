@@ -121,30 +121,6 @@ static HRESULT constructor_call(jsdisp_t *constr, WORD flags, unsigned argc, jsv
     return S_OK;
 }
 
-static HRESULT JSGlobal_Array(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->array_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_Date(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->date_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_Error(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->error_constr, flags, argc, argv, r);
-}
-
 static HRESULT JSGlobal_EvalError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -199,54 +175,6 @@ static HRESULT JSGlobal_URIError(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     TRACE("\n");
 
     return constructor_call(ctx->uri_error_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_Function(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->function_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_Number(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->number_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_Object(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->object_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_String(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->string_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_RegExp(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->regexp_constr, flags, argc, argv, r);
-}
-
-static HRESULT JSGlobal_VBArray(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    TRACE("\n");
-
-    return constructor_call(ctx->vbarray_constr, flags, argc, argv, r);
 }
 
 static HRESULT JSGlobal_Enumerator(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -1071,29 +999,20 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 }
 
 static const builtin_prop_t JSGlobal_props[] = {
-    {ArrayW,                     JSGlobal_Array,                     PROPF_CONSTR|1},
     {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
-    {DateW,                      JSGlobal_Date,                      PROPF_CONSTR|7},
     {EnumeratorW,                JSGlobal_Enumerator,                PROPF_METHOD|7},
-    {ErrorW,                     JSGlobal_Error,                     PROPF_CONSTR|1},
     {EvalErrorW,                 JSGlobal_EvalError,                 PROPF_CONSTR|1},
-    {FunctionW,                  JSGlobal_Function,                  PROPF_CONSTR|1},
     {_GetObjectW,                JSGlobal_GetObject,                 PROPF_METHOD|2},
-    {NumberW,                    JSGlobal_Number,                    PROPF_CONSTR|1},
-    {ObjectW,                    JSGlobal_Object,                    PROPF_CONSTR|1},
     {RangeErrorW,                JSGlobal_RangeError,                PROPF_CONSTR|1},
     {ReferenceErrorW,            JSGlobal_ReferenceError,            PROPF_CONSTR|1},
-    {RegExpW,                    JSGlobal_RegExp,                    PROPF_CONSTR|2},
     {RegExpErrorW,               JSGlobal_RegExpError,               PROPF_CONSTR|1},
     {ScriptEngineW,              JSGlobal_ScriptEngine,              PROPF_METHOD},
     {ScriptEngineBuildVersionW,  JSGlobal_ScriptEngineBuildVersion,  PROPF_METHOD},
     {ScriptEngineMajorVersionW,  JSGlobal_ScriptEngineMajorVersion,  PROPF_METHOD},
     {ScriptEngineMinorVersionW,  JSGlobal_ScriptEngineMinorVersion,  PROPF_METHOD},
-    {StringW,                    JSGlobal_String,                    PROPF_CONSTR|1},
     {SyntaxErrorW,               JSGlobal_SyntaxError,               PROPF_CONSTR|1},
     {TypeErrorW,                 JSGlobal_TypeError,                 PROPF_CONSTR|1},
     {URIErrorW,                  JSGlobal_URIError,                  PROPF_CONSTR|1},
-    {VBArrayW,                   JSGlobal_VBArray,                   PROPF_CONSTR|1},
     {decodeURIW,                 JSGlobal_decodeURI,                 PROPF_METHOD|1},
     {decodeURIComponentW,        JSGlobal_decodeURIComponent,        PROPF_METHOD|1},
     {encodeURIW,                 JSGlobal_encodeURI,                 PROPF_METHOD|1},
@@ -1124,7 +1043,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_propput_dontenum(ctx->global, FunctionW, jsval_obj(ctx->function_constr));
+    if(FAILED(hres))
+        return hres;
+
     hres = create_object_constr(ctx, object_prototype, &ctx->object_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, ObjectW, jsval_obj(ctx->object_constr));
     if(FAILED(hres))
         return hres;
 
@@ -1132,7 +1059,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_propput_dontenum(ctx->global, ArrayW, jsval_obj(ctx->array_constr));
+    if(FAILED(hres))
+        return hres;
+
     hres = create_bool_constr(ctx, object_prototype, &ctx->bool_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, BooleanW, jsval_obj(ctx->bool_constr));
     if(FAILED(hres))
         return hres;
 
@@ -1140,7 +1075,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_propput_dontenum(ctx->global, DateW, jsval_obj(ctx->date_constr));
+    if(FAILED(hres))
+        return hres;
+
     hres = init_error_constr(ctx, object_prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, ErrorW, jsval_obj(ctx->error_constr));
     if(FAILED(hres))
         return hres;
 
@@ -1148,7 +1091,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_propput_dontenum(ctx->global, NumberW, jsval_obj(ctx->number_constr));
+    if(FAILED(hres))
+        return hres;
+
     hres = create_regexp_constr(ctx, object_prototype, &ctx->regexp_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, RegExpW, jsval_obj(ctx->regexp_constr));
     if(FAILED(hres))
         return hres;
 
@@ -1156,7 +1107,15 @@ static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_propput_dontenum(ctx->global, StringW, jsval_obj(ctx->string_constr));
+    if(FAILED(hres))
+        return hres;
+
     hres = create_vbarray_constr(ctx, object_prototype, &ctx->vbarray_constr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_propput_dontenum(ctx->global, VBArrayW, jsval_obj(ctx->vbarray_constr));
     if(FAILED(hres))
         return hres;
 
@@ -1171,16 +1130,16 @@ HRESULT init_global(script_ctx_t *ctx)
     if(ctx->global)
         return S_OK;
 
+    hres = create_dispex(ctx, &JSGlobal_info, NULL, &ctx->global);
+    if(FAILED(hres))
+        return hres;
+
     hres = create_object_prototype(ctx, &object_prototype);
     if(FAILED(hres))
         return hres;
 
     hres = init_constructors(ctx, object_prototype);
     jsdisp_release(object_prototype);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_dispex(ctx, &JSGlobal_info, NULL, &ctx->global);
     if(FAILED(hres))
         return hres;
 
@@ -1194,10 +1153,6 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     hres = create_activex_constr(ctx, &constr);
-    if(FAILED(hres))
-        return hres;
-
-    hres = jsdisp_propput_dontenum(ctx->global, BooleanW, jsval_obj(ctx->bool_constr));
     if(FAILED(hres))
         return hres;
 
