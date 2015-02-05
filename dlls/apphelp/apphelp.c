@@ -34,6 +34,10 @@ typedef enum _PATH_TYPE {
 /* FIXME: don't know where to place that typedef */
 typedef HANDLE PDB;
 typedef HANDLE HSDB;
+typedef DWORD TAGID;
+
+/* FIXME: don't know where to place that define */
+#define TAGID_NULL 0x0
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -95,4 +99,10 @@ PDB WINAPI SdbOpenDatabase(LPCWSTR path, PATH_TYPE type)
     FIXME("stub: %s %08x\n", debugstr_w(path), type);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
+}
+
+TAGID WINAPI SdbGetFirstChild(PDB pdb, TAGID parent)
+{
+    FIXME("stub: %p %d\n", pdb, parent);
+    return TAGID_NULL;
 }

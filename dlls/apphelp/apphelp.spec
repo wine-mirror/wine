@@ -62,7 +62,7 @@
 @ stub SdbGetFileImageType
 @ stub SdbGetFileImageTypeEx
 @ stub SdbGetFileInfo
-@ stub SdbGetFirstChild
+@ stdcall SdbGetFirstChild(ptr long)
 @ stub SdbGetIndex
 @ stub SdbGetItemFromItemRef
 @ stub SdbGetLayerName
