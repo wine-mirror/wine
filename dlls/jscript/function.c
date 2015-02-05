@@ -362,23 +362,20 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
     return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, r);
 }
 
-static HRESULT Function_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
+static HRESULT Function_get_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
     FunctionInstance *This = function_from_vdisp(jsthis);
 
     TRACE("%p %d\n", This, This->length);
 
-    switch(flags) {
-    case DISPATCH_PROPERTYGET:
-        *r = jsval_number(This->length);
-        break;
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-
+    *r = jsval_number(This->length);
     return S_OK;
+}
+
+static HRESULT Function_set_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -537,56 +534,34 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 
     function = (FunctionInstance*)jsthis->u.jsdisp;
 
-    switch(flags) {
-    case DISPATCH_METHOD:
-        assert(function->value_proc != NULL);
-        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
-
-    case DISPATCH_PROPERTYGET: {
-        HRESULT hres;
-        jsstr_t *str;
-
-        hres = function_to_string(function, &str);
-        if(FAILED(hres))
-            return hres;
-
-        *r = jsval_string(str);
-        break;
-    }
-
-    case DISPATCH_CONSTRUCT:
-        assert(function->value_proc != NULL);
-        return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
-
-    default:
-        FIXME("not implemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
+    assert(function->value_proc != NULL);
+    return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
 }
 
-static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-        unsigned argc, jsval_t *argv, jsval_t *r)
+HRESULT Function_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
     FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
-    HRESULT hres = S_OK;
+    jsstr_t *str;
+    HRESULT hres;
 
     TRACE("\n");
 
-    switch(flags) {
-    case DISPATCH_PROPERTYGET: {
-        *r = function->arguments ? jsval_obj(jsdisp_addref(function->arguments)) : jsval_null();
-        break;
-    }
-    case DISPATCH_PROPERTYPUT:
-        break;
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        hres = E_NOTIMPL;
-    }
+    hres = function_to_string(function, &str);
+    if(FAILED(hres))
+        return hres;
 
-    return hres;
+    *r = jsval_string(str);
+    return S_OK;
+}
+
+static HRESULT Function_get_arguments(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+{
+    FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
+
+    TRACE("\n");
+
+    *r = function->arguments ? jsval_obj(jsdisp_addref(function->arguments)) : jsval_null();
+    return S_OK;
 }
 
 static void Function_destructor(jsdisp_t *dispex)
@@ -602,15 +577,15 @@ static void Function_destructor(jsdisp_t *dispex)
 
 static const builtin_prop_t Function_props[] = {
     {applyW,                 Function_apply,                 PROPF_METHOD|2},
-    {argumentsW,             Function_arguments,             0},
+    {argumentsW,             NULL, 0,                        Function_get_arguments, builtin_set_const},
     {callW,                  Function_call,                  PROPF_METHOD|1},
-    {lengthW,                Function_length,                0},
+    {lengthW,                NULL, 0,                        Function_get_length,    Function_set_length},
     {toStringW,              Function_toString,              PROPF_METHOD}
 };
 
 static const builtin_info_t Function_info = {
     JSCLASS_FUNCTION,
-    {NULL, Function_value, 0},
+    DEFAULT_FUNCTION_VALUE,
     sizeof(Function_props)/sizeof(*Function_props),
     Function_props,
     Function_destructor,
@@ -618,13 +593,13 @@ static const builtin_info_t Function_info = {
 };
 
 static const builtin_prop_t FunctionInst_props[] = {
-    {argumentsW,             Function_arguments,             0},
-    {lengthW,                Function_length,                0}
+    {argumentsW,             NULL, 0,                        Function_get_arguments, builtin_set_const},
+    {lengthW,                NULL, 0,                        Function_get_length,    Function_set_length}
 };
 
 static const builtin_info_t FunctionInst_info = {
     JSCLASS_FUNCTION,
-    {NULL, Function_value, 0},
+    DEFAULT_FUNCTION_VALUE,
     sizeof(FunctionInst_props)/sizeof(*FunctionInst_props),
     FunctionInst_props,
     Function_destructor,

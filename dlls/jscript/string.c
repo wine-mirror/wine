@@ -106,24 +106,20 @@ static HRESULT get_string_flat_val(script_ctx_t *ctx, vdisp_t *jsthis, jsstr_t *
     return E_OUTOFMEMORY;
 }
 
-static HRESULT String_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
+static HRESULT String_get_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
+    StringInstance *string = string_from_vdisp(jsthis);
+
     TRACE("%p\n", jsthis);
 
-    switch(flags) {
-    case DISPATCH_PROPERTYGET: {
-        StringInstance *string = string_from_vdisp(jsthis);
-
-        *r = jsval_number(jsstr_length(string->str));
-        break;
-    }
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-
+    *r = jsval_number(jsstr_length(string->str));
     return S_OK;
+}
+
+static HRESULT String_set_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
 }
 
 static HRESULT stringobj_to_string(vdisp_t *jsthis, jsval_t *r)
@@ -1471,25 +1467,13 @@ static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return E_NOTIMPL;
 }
 
-static HRESULT String_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
+static HRESULT String_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
     StringInstance *This = string_from_vdisp(jsthis);
 
     TRACE("\n");
 
-    switch(flags) {
-    case INVOKE_FUNC:
-        return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
-    case DISPATCH_PROPERTYGET: {
-        *r = jsval_string(jsstr_addref(This->str));
-        break;
-    }
-    default:
-        FIXME("flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-
+    *r = jsval_string(jsstr_addref(This->str));
     return S_OK;
 }
 
@@ -1544,7 +1528,7 @@ static const builtin_prop_t String_props[] = {
     {indexOfW,               String_indexOf,               PROPF_METHOD|2},
     {italicsW,               String_italics,               PROPF_METHOD},
     {lastIndexOfW,           String_lastIndexOf,           PROPF_METHOD|2},
-    {lengthW,                String_length,                0},
+    {lengthW,                NULL,0,                       String_get_length, String_set_length},
     {linkW,                  String_link,                  PROPF_METHOD|1},
     {localeCompareW,         String_localeCompare,         PROPF_METHOD|1},
     {matchW,                 String_match,                 PROPF_METHOD|1},
@@ -1568,7 +1552,7 @@ static const builtin_prop_t String_props[] = {
 
 static const builtin_info_t String_info = {
     JSCLASS_STRING,
-    {NULL, String_value, 0},
+    {NULL, NULL,0, String_get_value},
     sizeof(String_props)/sizeof(*String_props),
     String_props,
     String_destructor,
@@ -1576,12 +1560,12 @@ static const builtin_info_t String_info = {
 };
 
 static const builtin_prop_t StringInst_props[] = {
-    {lengthW,                String_length,                0}
+    {lengthW,                NULL,0,                       String_get_length, String_set_length}
 };
 
 static const builtin_info_t StringInst_info = {
     JSCLASS_STRING,
-    {NULL, String_value, 0},
+    {NULL, NULL,0, String_get_value},
     sizeof(StringInst_props)/sizeof(*StringInst_props),
     StringInst_props,
     String_destructor,
@@ -1699,7 +1683,7 @@ static const builtin_prop_t StringConstr_props[] = {
 
 static const builtin_info_t StringConstr_info = {
     JSCLASS_FUNCTION,
-    {NULL, Function_value, 0},
+    DEFAULT_FUNCTION_VALUE,
     sizeof(StringConstr_props)/sizeof(*StringConstr_props),
     StringConstr_props,
     NULL,

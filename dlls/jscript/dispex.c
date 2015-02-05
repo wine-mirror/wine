@@ -420,8 +420,16 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(prop->u.p->flags & PROPF_METHOD) {
+        if(prop->u.p->getter) {
+            vdisp_t vthis;
+
+            set_jsdisp(&vthis, This);
+            hres = prop->u.p->getter(This->ctx, &vthis, r);
+            vdisp_release(&vthis);
+        }else {
             jsdisp_t *obj;
+
+            assert(prop->u.p->invoke != NULL);
             hres = create_builtin_function(This->ctx, prop->u.p->invoke, prop->u.p->name, NULL,
                     prop->u.p->flags, NULL, &obj);
             if(FAILED(hres))
@@ -432,12 +440,6 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
 
             jsdisp_addref(obj);
             *r = jsval_obj(obj);
-        }else {
-            vdisp_t vthis;
-
-            set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYGET, 0, NULL, r);
-            vdisp_release(&vthis);
         }
         break;
     case PROP_PROTREF:
@@ -472,13 +474,17 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(!(prop->flags & PROPF_METHOD)) {
+        if(prop->u.p->setter) {
             vdisp_t vthis;
 
             set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, DISPATCH_PROPERTYPUT, 1, &val, NULL);
+            hres = prop->u.p->setter(This->ctx, &vthis, val);
             vdisp_release(&vthis);
             return hres;
+        }
+        if(prop->u.p->setter) {
+            FIXME("getter with no setter\n");
+            return E_FAIL;
         }
         /* fall through */
     case PROP_PROTREF:
@@ -507,6 +513,12 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
     if(This->builtin_info->on_put)
         This->builtin_info->on_put(This, prop->name);
 
+    return S_OK;
+}
+
+HRESULT builtin_set_const(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+{
+    TRACE("%p %s\n", jsthis, debugstr_jsval(value));
     return S_OK;
 }
 
@@ -907,7 +919,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
         jsdisp_addref(prototype);
 
     dispex->prop_cnt = 1;
-    if(builtin_info->value_prop.invoke) {
+    if(builtin_info->value_prop.invoke || builtin_info->value_prop.getter) {
         dispex->props[0].type = PROP_BUILTIN;
         dispex->props[0].u.p = &builtin_info->value_prop;
     }else {
@@ -1057,10 +1069,17 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
 {
     HRESULT hres;
 
+    assert(!(flags & ~(DISPATCH_METHOD|DISPATCH_CONSTRUCT)));
+
     if(is_class(jsfunc, JSCLASS_FUNCTION)) {
         hres = Function_invoke(jsfunc, jsthis, flags, argc, argv, r);
     }else {
         vdisp_t vdisp;
+
+        if(!jsfunc->builtin_info->value_prop.invoke) {
+            WARN("Not a function\n");
+            return throw_type_error(jsfunc->ctx, JS_E_FUNCTION_EXPECTED, NULL);
+        }
 
         set_disp(&vdisp, jsthis);
         hres = jsfunc->builtin_info->value_prop.invoke(jsfunc->ctx, &vdisp, flags, argc, argv, r);
@@ -1190,13 +1209,10 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     unsigned i;
     HRESULT hres;
 
+    assert(!(flags & ~(DISPATCH_METHOD|DISPATCH_CONSTRUCT)));
+
     jsdisp = iface_to_jsdisp((IUnknown*)disp);
     if(jsdisp) {
-        if(flags & DISPATCH_PROPERTYPUT) {
-            FIXME("disp_call(propput) on builtin object\n");
-            return E_FAIL;
-        }
-
         hres = jsdisp_call_value(jsdisp, jsthis, flags, argc, argv, r);
         jsdisp_release(jsdisp);
         return hres;
