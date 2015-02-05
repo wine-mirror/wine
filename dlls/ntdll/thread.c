@@ -189,9 +189,9 @@ done:
 #include <mach/mach.h>
 #include <mach/mach_error.h>
 
-static ULONG get_dyld_image_info_addr(void)
+static ULONG64 get_dyld_image_info_addr(void)
 {
-    ULONG ret = 0;
+    ULONG64 ret = 0;
 #ifdef TASK_DYLD_INFO
     struct task_dyld_info dyld_info;
     mach_msg_type_number_t size = TASK_DYLD_INFO_COUNT;
@@ -219,6 +219,9 @@ HANDLE thread_init(void)
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
     static struct debug_info debug_info;  /* debug info for initial thread */
+#ifdef __APPLE__
+    ULONG64 dyld_image_info;
+#endif
 
     virtual_init();
 
@@ -263,7 +266,18 @@ HANDLE thread_init(void)
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
 #ifdef __APPLE__
-    peb->Reserved[0] = get_dyld_image_info_addr();
+    dyld_image_info = get_dyld_image_info_addr();
+#ifdef __LP64__
+#ifdef WORDS_BIGENDIAN
+    peb->Reserved[1] = dyld_image_info & 0xFFFFFFFF;
+    peb->Reserved[0] = dyld_image_info >> 32;
+#else
+    peb->Reserved[0] = dyld_image_info & 0xFFFFFFFF;
+    peb->Reserved[1] = dyld_image_info >> 32;
+#endif
+#else
+    peb->Reserved[0] = dyld_image_info & 0xFFFFFFFF;
+#endif
 #endif
 
     /* allocate and initialize the initial TEB */
