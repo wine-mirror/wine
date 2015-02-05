@@ -550,3 +550,12 @@ void WINAPI InstallReg_RunDLL(HWND hwnd, HINSTANCE handle, LPCSTR cmdline, INT s
 {
     FIXME("(%p %p %s %x)\n", hwnd, handle, debugstr_a(cmdline), show);
 }
+
+/******************************************************************
+ * DoFileDownload (SHDOCVW.@)
+ */
+BOOL WINAPI DoFileDownload(LPWSTR filename)
+{
+    FIXME("(%s) stub\n", debugstr_w(filename));
+    return FALSE;
+}

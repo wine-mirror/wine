@@ -111,7 +111,7 @@
 @ stdcall -private DllUnregisterServer()
 @ stub DoAddToFavDlg
 @ stub DoAddToFavDlgW
-@ stub DoFileDownload
+@ stdcall DoFileDownload(wstr)
 @ stub DoFileDownloadEx
 @ stub DoOrganizeFavDlg
 @ stub DoOrganizeFavDlgW
