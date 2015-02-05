@@ -13060,20 +13060,16 @@ msgid "&Test Sound"
 msgstr "&Testiääni"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Winen asetukset"
+msgstr "Kaiutinasetukset"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "Lai&te:"
+msgstr "Laite:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Kaiuttimet:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13181,21 +13177,19 @@ msgstr "(Järjestelmän oletus)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 Surround"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "kuva"
+msgstr "Neliääninen"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
