@@ -49,3 +49,13 @@ HANDLE WINAPI CreateTransaction(LPSECURITY_ATTRIBUTES pattr, LPGUID pguid, DWORD
 
     return (HANDLE) 1;
 }
+
+/***********************************************************************
+ * Rollback Transaction (ktmw32.@)
+ */
+BOOL WINAPI RollbackTransaction(HANDLE transaction)
+{
+    FIXME("stub: %p\n", transaction);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return FALSE;
+}

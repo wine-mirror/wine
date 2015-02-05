@@ -35,7 +35,7 @@
 @ stub RenameTransactionManager
 @ stub RollbackComplete
 @ stub RollbackEnlistment
-@ stub RollbackTransaction
+@ stdcall RollbackTransaction(ptr)
 @ stub RollbackTransactionAsync
 @ stub RollforwardTransactionManager
 @ stub SetEnlistmentRecoveryInformation
