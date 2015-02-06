@@ -10500,6 +10500,10 @@ static void test_quit_message(void)
     flush_events();
     PostQuitMessage(0xbeef);
 
+    msg.message = 0;
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_QS_SENDMESSAGE);
+    ok(!ret, "got %x message\n", msg.message);
+
     ret = PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE);
     ok(ret, "PeekMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);

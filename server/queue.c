@@ -2384,9 +2384,8 @@ DECL_HANDLER(get_message)
         get_posted_message( queue, get_win, WM_HOTKEY, WM_HOTKEY, req->flags, reply ))
         return;
 
-    /* only check for quit messages if not posted messages pending.
-     * note: the quit message isn't filtered */
-    if (get_quit_message( queue, req->flags, reply ))
+    /* only check for quit messages if not posted messages pending */
+    if ((filter & QS_POSTMESSAGE) && get_quit_message( queue, req->flags, reply ))
         return;
 
     /* then check for any raw hardware message */
