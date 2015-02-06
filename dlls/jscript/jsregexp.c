@@ -256,7 +256,7 @@ static HRESULT RegExp_get_source(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r
     return S_OK;
 }
 
-static HRESULT RegExp_set_source(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT RegExp_set_source(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -268,7 +268,7 @@ static HRESULT RegExp_get_global(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_set_global(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT RegExp_set_global(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -280,7 +280,7 @@ static HRESULT RegExp_get_ignoreCase(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_set_ignoreCase(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT RegExp_set_ignoreCase(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -292,7 +292,7 @@ static HRESULT RegExp_get_multiline(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_set_multiline(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT RegExp_set_multiline(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -322,9 +322,9 @@ static HRESULT RegExp_get_lastIndex(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t
     return jsval_copy(regexp->last_index_val, r);
 }
 
-static HRESULT RegExp_set_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT RegExp_set_lastIndex(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
-    RegExpInstance *regexp = regexp_from_vdisp(jsthis);
+    RegExpInstance *regexp = regexp_from_jsdisp(jsthis);
     HRESULT hres;
 
     TRACE("\n");

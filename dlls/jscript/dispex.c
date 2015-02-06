@@ -470,14 +470,9 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(prop->u.p->setter) {
-            vdisp_t vthis;
+        if(prop->u.p->setter)
+            return prop->u.p->setter(This->ctx, This, val);
 
-            set_jsdisp(&vthis, This);
-            hres = prop->u.p->setter(This->ctx, &vthis, val);
-            vdisp_release(&vthis);
-            return hres;
-        }
         if(prop->u.p->setter) {
             FIXME("getter with no setter\n");
             return E_FAIL;
@@ -512,7 +507,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val, IServi
     return S_OK;
 }
 
-HRESULT builtin_set_const(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+HRESULT builtin_set_const(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     TRACE("%p %s\n", jsthis, debugstr_jsval(value));
     return S_OK;

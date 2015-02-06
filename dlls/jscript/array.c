@@ -126,9 +126,9 @@ static HRESULT Array_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
     return S_OK;
 }
 
-static HRESULT Array_set_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT Array_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
-    ArrayInstance *This = array_from_vdisp(jsthis);
+    ArrayInstance *This = array_from_jsdisp(jsthis);
     DOUBLE len = -1;
     DWORD i;
     HRESULT hres;

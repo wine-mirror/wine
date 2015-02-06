@@ -375,7 +375,7 @@ static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t 
     return S_OK;
 }
 
-static HRESULT Function_set_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t value)
+static HRESULT Function_set_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
 {
     FIXME("\n");
     return E_NOTIMPL;
