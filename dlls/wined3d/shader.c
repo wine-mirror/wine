@@ -690,6 +690,9 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         ERR("Invalid input register index %u.\n", reg_idx);
                         break;
                     }
+                    if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL && shader_version.major == 3
+                            && semantic->usage == WINED3D_DECL_USAGE_POSITION && !semantic->usage_idx)
+                        return WINED3DERR_INVALIDCALL;
                     reg_maps->input_registers |= 1 << reg_idx;
                     shader_signature_from_semantic(&input_signature[reg_idx], semantic);
                     break;
