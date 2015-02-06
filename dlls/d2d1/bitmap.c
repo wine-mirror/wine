@@ -88,10 +88,11 @@ static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_bitmap_GetSize(ID2D1Bitmap *iface, D2
 
 static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_bitmap_GetPixelSize(ID2D1Bitmap *iface, D2D1_SIZE_U *pixel_size)
 {
-    FIXME("iface %p, pixel_size %p stub!\n", iface, pixel_size);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
 
-    pixel_size->width = 0;
-    pixel_size->height = 0;
+    TRACE("iface %p, pixel_size %p.\n", iface, pixel_size);
+
+    *pixel_size = bitmap->pixel_size;
     return pixel_size;
 }
 
@@ -158,4 +159,6 @@ void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *sr
 
     bitmap->ID2D1Bitmap_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
+
+    bitmap->pixel_size = size;
 }
