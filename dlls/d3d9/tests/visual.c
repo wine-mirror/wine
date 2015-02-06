@@ -17116,6 +17116,217 @@ static void test_negative_fixedfunction_fog(void)
     DestroyWindow(window);
 }
 
+static void test_position_index(void)
+{
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 1},
+        D3DDECL_END()
+    };
+    /* Declaring (and using) a position1 output semantic in a VS fails at draw time on AMD
+     * but works on Nvidia.
+     * MSDN is not consistent on this point. */
+    static const DWORD vs_code[] =
+    {
+        0xfffe0300,                          /* vs_3_0           */
+        0x0200001f, 0x80000000, 0x900f0000,  /* dcl_position0 v0 */
+        0x0200001f, 0x80010000, 0x900f0001,  /* dcl_position1 v1 */
+        0x0200001f, 0x80000000, 0xe00f0000,  /* dcl_position0 o0 */
+        0x0200001f, 0x80010000, 0xe00f0001,  /* dcl_position1 o1 */
+        0x0200001f, 0x80000005, 0xe00f0002,  /* dcl_texcoord0 o2 */
+        0x02000001, 0xe00f0000, 0x90e40000,  /* mov o0, v0       */
+        0x02000001, 0xe00f0001, 0x90e40001,  /* mov o1, v1       */
+        0x02000001, 0xe00f0002, 0x90e40001,  /* mov o2, v1       */
+        0x0000ffff                           /* end              */
+    };
+    static const DWORD vs_code_2[] =
+    {
+        0xfffe0300,                          /* vs_3_0           */
+        0x0200001f, 0x80000000, 0x900f0000,  /* dcl_position0 v0 */
+        0x0200001f, 0x80010000, 0x900f0001,  /* dcl_position1 v1 */
+        0x0200001f, 0x80000000, 0xe00f0000,  /* dcl_position0 o0 */
+        0x0200001f, 0x80000005, 0xe00f0002,  /* dcl_texcoord0 o2 */
+        0x02000001, 0xe00f0000, 0x90e40000,  /* mov o0, v0       */
+        0x02000001, 0xe00f0002, 0x90e40001,  /* mov o2, v1       */
+        0x0000ffff                           /* end              */
+    };
+    static const DWORD ps_code[] =
+    {
+        0xffff0300,                          /* ps_3_0           */
+        0x0200001f, 0x80010000, 0x900f0000,  /* dcl_position1 v0 */
+        0x02000001, 0x800f0800, 0x90e40000,  /* mov oC0, v0      */
+        0x0000ffff                           /* end              */
+    };
+    static const DWORD ps_code_2[] =
+    {
+        0xffff0300,                          /* ps_3_0           */
+        0x0200001f, 0x80000005, 0x900f0000,  /* dcl_texcoord0 v0 */
+        0x02000001, 0x800f0800, 0x90e40000,  /* mov oC0, v0      */
+        0x0000ffff                           /* end              */
+    };
+    /* This one is considered invalid by the native shader assembler. */
+    static const DWORD ps_code_bad[] =
+    {
+        0xffff0300,                          /* ps_3_0           */
+        0x0200001f, 0x80000000, 0x900f0000,  /* dcl_position0 v0 */
+        0x02000001, 0x800f0800, 0x90e40000,  /* mov oC0, v0      */
+        0x0000ffff                           /* end              */
+    };
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 position1;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    };
+    static const struct
+    {
+        struct vec2 position;
+        D3DCOLOR expected_color;
+        D3DCOLOR broken_color;
+    }
+    expected_colors[] =
+    {
+        {{ 80, 240}, 0x00df2000, 0x00ff00ff},
+        {{240, 240}, 0x009f6000, 0x00ff00ff},
+        {{400, 240}, 0x00609f00, 0x00ff00ff},
+        {{560, 240}, 0x0020df00, 0x00ff00ff},
+    };
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DVertexShader9 *vs, *vs2;
+    IDirect3DPixelShader9 *ps, *ps2;
+    D3DCAPS9 caps;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    unsigned int i;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0)
+            || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
+    {
+        skip("Shader model 3.0 unsupported, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vs);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_code_2, &vs2);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, vs);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code_bad, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "CreatePixelShader returned hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code_2, &ps2);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff00ff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(expected_colors[0]); ++i)
+    {
+        color = getPixelColor(device, expected_colors[i].position.x, expected_colors[i].position.y);
+        ok (color_match(color, expected_colors[i].expected_color, 1)
+                || broken(color_match(color, expected_colors[i].broken_color, 1)),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
+    }
+
+    hr = IDirect3DDevice9_SetPixelShader(device, ps2);
+    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff00ff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(expected_colors[0]); ++i)
+    {
+        color = getPixelColor(device, expected_colors[i].position.x, expected_colors[i].position.y);
+        ok (color_match(color, expected_colors[i].expected_color, 1)
+                || broken(color_match(color, expected_colors[i].broken_color, 1)),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
+    }
+
+    hr = IDirect3DDevice9_SetVertexShader(device, vs2);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff00ff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(expected_colors[0]); ++i)
+    {
+        color = getPixelColor(device, expected_colors[i].position.x, expected_colors[i].position.y);
+        ok (color_match(color, expected_colors[i].expected_color, 1),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    IDirect3DPixelShader9_Release(ps2);
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DVertexShader9_Release(vs2);
+    IDirect3DVertexShader9_Release(vs);
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -17226,4 +17437,5 @@ START_TEST(visual)
     test_3dc_formats();
     test_fog_interpolation();
     test_negative_fixedfunction_fog();
+    test_position_index();
 }
