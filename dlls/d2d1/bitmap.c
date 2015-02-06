@@ -79,10 +79,12 @@ static void STDMETHODCALLTYPE d2d_bitmap_GetFactory(ID2D1Bitmap *iface, ID2D1Fac
 
 static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_bitmap_GetSize(ID2D1Bitmap *iface, D2D1_SIZE_F *size)
 {
-    FIXME("iface %p, size %p stub!\n", iface, size);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
 
-    size->width = 0.0f;
-    size->height = 0.0f;
+    TRACE("iface %p, size %p.\n", iface, size);
+
+    size->width = bitmap->pixel_size.width / (bitmap->dpi_x / 96.0f);
+    size->height = bitmap->pixel_size.height / (bitmap->dpi_y / 96.0f);
     return size;
 }
 
