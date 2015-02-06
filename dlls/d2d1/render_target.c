@@ -709,8 +709,62 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawBitmap(ID2D1RenderTarget
         ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity,
         D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode, const D2D1_RECT_F *src_rect)
 {
-    FIXME("iface %p, bitmap %p, dst_rect %p, opacity %.8e, interpolation_mode %#x, src_rect %p stub!\n",
+    D2D1_BITMAP_BRUSH_PROPERTIES bitmap_brush_desc;
+    D2D1_BRUSH_PROPERTIES brush_desc;
+    ID2D1BitmapBrush *brush;
+    D2D1_RECT_F s, d;
+    HRESULT hr;
+
+    TRACE("iface %p, bitmap %p, dst_rect %p, opacity %.8e, interpolation_mode %#x, src_rect %p.\n",
             iface, bitmap, dst_rect, opacity, interpolation_mode, src_rect);
+
+    if (src_rect)
+    {
+        s = *src_rect;
+    }
+    else
+    {
+        D2D1_SIZE_F size;
+
+        size = ID2D1Bitmap_GetSize(bitmap);
+        s.left = 0.0f;
+        s.top = 0.0f;
+        s.right = size.width;
+        s.bottom = size.height;
+    }
+
+    if (dst_rect)
+    {
+        d = *dst_rect;
+    }
+    else
+    {
+        d.left = 0.0f;
+        d.top = 0.0f;
+        d.right = s.right - s.left;
+        d.bottom = s.bottom - s.top;
+    }
+
+    bitmap_brush_desc.extendModeX = D2D1_EXTEND_MODE_CLAMP;
+    bitmap_brush_desc.extendModeY = D2D1_EXTEND_MODE_CLAMP;
+    bitmap_brush_desc.interpolationMode = interpolation_mode;
+
+    brush_desc.opacity = opacity;
+    brush_desc.transform._11 = (d.right - d.left) / (s.right - s.left);
+    brush_desc.transform._21 = 0.0f;
+    brush_desc.transform._31 = d.left;
+    brush_desc.transform._12 = 0.0f;
+    brush_desc.transform._22 = (d.bottom - d.top) / (s.bottom - s.top);
+    brush_desc.transform._32 = d.top;
+
+    if (FAILED(hr = ID2D1RenderTarget_CreateBitmapBrush(iface, bitmap, &bitmap_brush_desc, &brush_desc, &brush)))
+    {
+        ERR("Failed to create bitmap brush, hr %#x.\n", hr);
+        return;
+    }
+
+    ID2D1RenderTarget_FillRectangle(iface, &d, (ID2D1Brush *)brush);
+    ID2D1BitmapBrush_Release(brush);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *iface,
