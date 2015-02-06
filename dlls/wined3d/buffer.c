@@ -266,7 +266,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
 #define WINED3D_BUFFER_FIXUP_XYZRHW     0x02
 
 static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
-        UINT attrib_idx, DWORD fixup_flags, DWORD *stride_this_run)
+        const struct wined3d_state *state, UINT attrib_idx, DWORD fixup_flags, DWORD *stride_this_run)
 {
     const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
     enum wined3d_format_id format;
@@ -276,7 +276,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
      * there, on nonexistent attribs the vbo is 0.
      */
     if (!(si->use_map & (1 << attrib_idx))
-            || attrib->data.buffer_object != This->buffer_object)
+            || state->streams[attrib->stream_idx].buffer != This)
         return FALSE;
 
     format = attrib->format->id;
@@ -304,7 +304,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
 }
 
 static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
-        DWORD fixup_flags)
+        const struct wined3d_state *state, DWORD fixup_flags)
 {
     UINT stride_this_run = 0;
     BOOL ret = FALSE;
@@ -378,31 +378,31 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
      * texcoord needs no conversion while a FLOAT4 positiont needs one
      */
 
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_POSITION,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_POSITION,
             fixup_flags, &stride_this_run) || ret;
     fixup_flags &= ~WINED3D_BUFFER_FIXUP_XYZRHW;
 
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_NORMAL,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_NORMAL,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_DIFFUSE,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_DIFFUSE,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_SPECULAR,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_SPECULAR,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD0,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD0,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD1,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD1,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD2,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD2,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD3,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD3,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD4,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD4,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD5,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD5,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD6,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD6,
             fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, WINED3D_FFP_TEXCOORD7,
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD7,
             fixup_flags, &stride_this_run) || ret;
 
     if (!stride_this_run && This->conversion_map)
@@ -767,7 +767,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
                 fixup_flags |= WINED3D_BUFFER_FIXUP_XYZRHW;
         }
 
-        decl_changed = buffer_find_decl(buffer, &context->stream_info, fixup_flags);
+        decl_changed = buffer_find_decl(buffer, &context->stream_info, state, fixup_flags);
         buffer->flags |= WINED3D_BUFFER_HASDESC;
     }
 
