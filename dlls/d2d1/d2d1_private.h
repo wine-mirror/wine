@@ -154,6 +154,8 @@ struct d2d_bitmap
     LONG refcount;
 
     D2D1_SIZE_U pixel_size;
+    float dpi_x;
+    float dpi_y;
 };
 
 void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *src_data,

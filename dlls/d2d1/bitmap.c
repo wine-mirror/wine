@@ -107,10 +107,12 @@ static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_bitmap_GetPixelFormat(ID2D1Bitm
 
 static void STDMETHODCALLTYPE d2d_bitmap_GetDpi(ID2D1Bitmap *iface, float *dpi_x, float *dpi_y)
 {
-    FIXME("iface %p, dpi_x %p, dpi_y %p stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
 
-    *dpi_x = 96.0f;
-    *dpi_y = 96.0f;
+    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
+
+    *dpi_x = bitmap->dpi_x;
+    *dpi_y = bitmap->dpi_y;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromBitmap(ID2D1Bitmap *iface,
@@ -161,4 +163,12 @@ void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *sr
     bitmap->refcount = 1;
 
     bitmap->pixel_size = size;
+    bitmap->dpi_x = desc->dpiX;
+    bitmap->dpi_y = desc->dpiY;
+
+    if (bitmap->dpi_x == 0.0f && bitmap->dpi_y == 0.0f)
+    {
+        bitmap->dpi_x = 96.0f;
+        bitmap->dpi_y = 96.0f;
+    }
 }
