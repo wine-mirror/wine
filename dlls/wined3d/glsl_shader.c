@@ -4377,7 +4377,7 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
                     shader_addline(buffer, "gl_FrontSecondaryColor%s = vs_out[%u]%s;\n",
                             reg_mask, i, reg_mask);
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
             {
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, i, reg_mask);
@@ -4419,9 +4419,10 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
             if (!(map & 1)) continue;
 
             semantic_name = output_signature[i].semantic_name;
+            semantic_idx = output_signature[i].semantic_idx;
             shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask);
 
-            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
+            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
             {
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, i, reg_mask);
