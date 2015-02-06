@@ -61,6 +61,7 @@ struct d2d_d3d_render_target
     ID3D10BlendState *bs;
 
     ID3D10PixelShader *rect_solid_ps;
+    ID3D10PixelShader *rect_bitmap_ps;
 
     D2D1_SIZE_U pixel_size;
     D2D1_MATRIX_3X2_F transform;
@@ -118,6 +119,11 @@ struct d2d_brush
         {
             D2D1_COLOR_F color;
         } solid;
+        struct
+        {
+            struct d2d_bitmap *bitmap;
+            ID3D10SamplerState *sampler_state;
+        } bitmap;
     } u;
 };
 
@@ -126,9 +132,10 @@ void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *rend
 void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
-void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
-        const ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
+HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
+        ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc) DECLSPEC_HIDDEN;
+void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style
@@ -153,12 +160,14 @@ struct d2d_bitmap
     ID2D1Bitmap ID2D1Bitmap_iface;
     LONG refcount;
 
+    ID3D10ShaderResourceView *view;
     D2D1_SIZE_U pixel_size;
     float dpi_x;
     float dpi_y;
 };
 
-void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *src_data,
-        UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc) DECLSPEC_HIDDEN;
+HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target *render_target,
+        D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc) DECLSPEC_HIDDEN;
+struct d2d_bitmap *unsafe_impl_from_ID2D1Bitmap(ID2D1Bitmap *iface) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D2D1_PRIVATE_H */

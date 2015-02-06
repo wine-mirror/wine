@@ -65,7 +65,10 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap *iface)
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        ID3D10ShaderResourceView_Release(bitmap->view);
         HeapFree(GetProcessHeap(), 0, bitmap);
+    }
 
     return refcount;
 }
@@ -156,13 +159,47 @@ static const struct ID2D1BitmapVtbl d2d_bitmap_vtbl =
     d2d_bitmap_CopyFromMemory,
 };
 
-void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *src_data,
-        UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc)
+HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target *render_target,
+        D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc)
 {
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Texture2D *texture;
+    HRESULT hr;
+
     FIXME("Ignoring bitmap properties.\n");
 
     bitmap->ID2D1Bitmap_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
+
+    texture_desc.Width = size.width;
+    texture_desc.Height = size.height;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = desc->pixelFormat.format;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = src_data;
+    resource_data.SysMemPitch = pitch;
+
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(render_target->device, &texture_desc, &resource_data, &texture)))
+    {
+        ERR("Failed to create texture, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = ID3D10Device_CreateShaderResourceView(render_target->device, (ID3D10Resource *)texture, NULL, &bitmap->view);
+    ID3D10Texture2D_Release(texture);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create view, hr %#x.\n", hr);
+        return hr;
+    }
 
     bitmap->pixel_size = size;
     bitmap->dpi_x = desc->dpiX;
@@ -173,4 +210,14 @@ void d2d_bitmap_init(struct d2d_bitmap *bitmap, D2D1_SIZE_U size, const void *sr
         bitmap->dpi_x = 96.0f;
         bitmap->dpi_y = 96.0f;
     }
+
+    return S_OK;
+}
+
+struct d2d_bitmap *unsafe_impl_from_ID2D1Bitmap(ID2D1Bitmap *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d2d_bitmap_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_bitmap, ID2D1Bitmap_iface);
 }

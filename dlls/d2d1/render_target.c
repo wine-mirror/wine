@@ -122,7 +122,7 @@ static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
 }
 
 static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *vs_cb,
-        ID3D10PixelShader *ps, ID3D10Buffer *ps_cb, BOOL blend)
+        ID3D10PixelShader *ps, ID3D10Buffer *ps_cb, struct d2d_brush *brush)
 {
     ID3D10Device *device = render_target->device;
     unsigned int offset;
@@ -169,8 +169,11 @@ static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *
         ID3D10Device_RSSetState(device, render_target->rs);
     }
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->view, NULL);
-    if (blend)
+    if (brush)
+    {
         ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+        d2d_brush_bind_resources(brush, device);
+    }
 
     ID3D10Device_Draw(device, 4, 0);
 
@@ -222,6 +225,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
     if (!refcount)
     {
         d2d_clip_stack_cleanup(&render_target->clip_stack);
+        ID3D10PixelShader_Release(render_target->rect_bitmap_ps);
         ID3D10PixelShader_Release(render_target->rect_solid_ps);
         ID3D10BlendState_Release(render_target->bs);
         ID3D10RasterizerState_Release(render_target->rs);
@@ -247,7 +251,9 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetFactory(ID2D1RenderTarget
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderTarget *iface,
         D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_bitmap *object;
+    HRESULT hr;
 
     TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
             iface, size.width, size.height, src_data, pitch, desc, bitmap);
@@ -255,7 +261,12 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_bitmap_init(object, size, src_data, pitch, desc);
+    if (FAILED(hr = d2d_bitmap_init(object, render_target, size, src_data, pitch, desc)))
+    {
+        WARN("Failed to initialize bitmap, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     TRACE("Created bitmap %p.\n", object);
     *bitmap = &object->ID2D1Bitmap_iface;
@@ -364,7 +375,9 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
         ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1BitmapBrush **brush)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_brush *object;
+    HRESULT hr;
 
     TRACE("iface %p, bitmap %p, bitmap_brush_desc %p, brush_desc %p, brush %p.\n",
             iface, bitmap, bitmap_brush_desc, brush_desc, brush);
@@ -372,7 +385,12 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_bitmap_brush_init(object, iface, bitmap, bitmap_brush_desc, brush_desc);
+    if (FAILED(hr = d2d_bitmap_brush_init(object, render_target, bitmap, bitmap_brush_desc, brush_desc)))
+    {
+        WARN("Failed to initialize brush, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     TRACE("Created brush %p.\n", object);
     *brush = (ID2D1BitmapBrush *)&object->ID2D1Brush_iface;
@@ -511,6 +529,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
+    ID3D10PixelShader *ps;
     D2D1_COLOR_F color;
     float tmp_x, tmp_y;
     HRESULT hr;
@@ -518,11 +537,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     {
         float _11, _21, _31, pad0;
         float _12, _22, _32, pad1;
-    } transform;
+    } transform, transform_inverse;
 
     TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
 
-    if (brush_impl->type != D2D_BRUSH_TYPE_SOLID)
+    if (brush_impl->type != D2D_BRUSH_TYPE_SOLID
+            && brush_impl->type != D2D_BRUSH_TYPE_BITMAP)
     {
         FIXME("Unhandled brush type %#x.\n", brush_impl->type);
         return;
@@ -569,14 +589,55 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         return;
     }
 
-    color = brush_impl->u.solid.color;
-    color.r *= brush_impl->opacity;
-    color.g *= brush_impl->opacity;
-    color.b *= brush_impl->opacity;
-    color.a *= brush_impl->opacity;
+    if (brush_impl->type == D2D_BRUSH_TYPE_BITMAP)
+    {
+        struct d2d_bitmap *bitmap = brush_impl->u.bitmap.bitmap;
+        float rt_scale, rt_bitmap_scale, d;
 
-    buffer_desc.ByteWidth = sizeof(color);
-    buffer_data.pSysMem = &color;
+        ps = render_target->rect_bitmap_ps;
+
+        /* Scale for bitmap size and dpi. */
+        rt_scale = render_target->dpi_x / 96.0f;
+        rt_bitmap_scale = bitmap->pixel_size.width * (bitmap->dpi_x / 96.0f) * rt_scale;
+        transform._11 = brush_impl->transform._11 * rt_bitmap_scale;
+        transform._21 = brush_impl->transform._21 * rt_bitmap_scale;
+        transform._31 = brush_impl->transform._31 * rt_scale;
+        rt_scale = render_target->dpi_y / 96.0f;
+        rt_bitmap_scale = bitmap->pixel_size.height * (bitmap->dpi_y / 96.0f) * rt_scale;
+        transform._12 = brush_impl->transform._12 * rt_bitmap_scale;
+        transform._22 = brush_impl->transform._22 * rt_bitmap_scale;
+        transform._32 = brush_impl->transform._32 * rt_scale;
+
+        /* Invert the matrix. (Because the matrix is applied to the sampling
+         * coordinates. I.e., to scale the bitmap by 2 we need to divide the
+         * coordinates by 2.) */
+        d = transform._11 * transform._22 - transform._21 * transform._22;
+        if (d != 0.0f)
+        {
+            transform_inverse._11 = transform._22 / d;
+            transform_inverse._21 = -transform._21 / d;
+            transform_inverse._31 = (transform._21 * transform._32 - transform._31 * transform._22) / d;
+            transform_inverse._12 = -transform._12 / d;
+            transform_inverse._22 = transform._11 / d;
+            transform_inverse._32 = -(transform._11 * transform._32 - transform._31 * transform._12) / d;
+        }
+
+        buffer_desc.ByteWidth = sizeof(transform_inverse);
+        buffer_data.pSysMem = &transform_inverse;
+    }
+    else
+    {
+        ps = render_target->rect_solid_ps;
+
+        color = brush_impl->u.solid.color;
+        color.r *= brush_impl->opacity;
+        color.g *= brush_impl->opacity;
+        color.b *= brush_impl->opacity;
+        color.a *= brush_impl->opacity;
+
+        buffer_desc.ByteWidth = sizeof(color);
+        buffer_data.pSysMem = &color;
+    }
 
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
     {
@@ -585,7 +646,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         return;
     }
 
-    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, TRUE);
+    d2d_draw(render_target, vs_cb, ps, ps_cb, brush_impl);
 
     ID3D10Buffer_Release(ps_cb);
     ID3D10Buffer_Release(vs_cb);
@@ -870,7 +931,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         return;
     }
 
-    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, FALSE);
+    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, NULL);
 
     ID3D10Buffer_Release(ps_cb);
     ID3D10Buffer_Release(vs_cb);
@@ -1197,6 +1258,32 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0x00000010, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
         0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD rect_bitmap_ps_code[] =
+    {
+#if 0
+        float3x2 transform;
+        SamplerState s;
+        Texture2D t;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            return t.Sample(s, mul(float3(position.xy, 1.0), transform));
+        }
+#endif
+        0x43425844, 0x20fce5be, 0x138fa37f, 0x9554f03f, 0x3dbe9c02, 0x00000001, 0x00000184, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000e8, 0x00000040,
+        0x0000003a, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300005a, 0x00106000, 0x00000000,
+        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x05000036, 0x00100032, 0x00000000,
+        0x00101046, 0x00000000, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x3f800000, 0x08000010,
+        0x00100012, 0x00000001, 0x00100246, 0x00000000, 0x00208246, 0x00000000, 0x00000000, 0x08000010,
+        0x00100022, 0x00000001, 0x00100246, 0x00000000, 0x00208246, 0x00000000, 0x00000001, 0x09000045,
+        0x001020f2, 0x00000000, 0x00100046, 0x00000001, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
+        0x0100003e,
+    };
     static const struct
     {
         float x, y;
@@ -1320,7 +1407,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
             rect_solid_ps_code, sizeof(rect_solid_ps_code), &render_target->rect_solid_ps)))
     {
-        WARN("Failed to create clear pixel shader, hr %#x.\n", hr);
+        WARN("Failed to create pixel shader, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
+            rect_bitmap_ps_code, sizeof(rect_bitmap_ps_code), &render_target->rect_bitmap_ps)))
+    {
+        WARN("Failed to create pixel shader, hr %#x.\n", hr);
         goto err;
     }
 
@@ -1353,6 +1447,8 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     return S_OK;
 
 err:
+    if (render_target->rect_bitmap_ps)
+        ID3D10PixelShader_Release(render_target->rect_bitmap_ps);
     if (render_target->rect_solid_ps)
         ID3D10PixelShader_Release(render_target->rect_solid_ps);
     if (render_target->bs)
