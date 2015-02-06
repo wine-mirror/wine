@@ -207,7 +207,7 @@ static HRESULT Object_isPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return E_NOTIMPL;
 }
 
-static HRESULT Object_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Object_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     jsstr_t *ret;
 

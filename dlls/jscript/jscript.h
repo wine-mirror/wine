@@ -187,7 +187,7 @@ static inline jsdisp_t *get_jsdisp(vdisp_t *vdisp)
 }
 
 typedef HRESULT (*builtin_invoke_t)(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*);
-typedef HRESULT (*builtin_getter_t)(script_ctx_t*,vdisp_t*,jsval_t*);
+typedef HRESULT (*builtin_getter_t)(script_ctx_t*,jsdisp_t*,jsval_t*);
 typedef HRESULT (*builtin_setter_t)(script_ctx_t*,vdisp_t*,jsval_t);
 
 HRESULT builtin_set_const(script_ctx_t*,vdisp_t*,jsval_t) DECLSPEC_HIDDEN;
@@ -296,7 +296,7 @@ HRESULT create_builtin_constructor(script_ctx_t*,builtin_invoke_t,const WCHAR*,c
 HRESULT Function_invoke(jsdisp_t*,IDispatch*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 HRESULT Function_value(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
-HRESULT Function_get_value(script_ctx_t*,vdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT Function_get_value(script_ctx_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 #define DEFAULT_FUNCTION_VALUE {NULL, Function_value,0, Function_get_value}
 
 HRESULT throw_eval_error(script_ctx_t*,HRESULT,const WCHAR*) DECLSPEC_HIDDEN;

@@ -43,9 +43,14 @@ typedef struct {
     jsdisp_t *var_obj;
 } ArgumentsInstance;
 
+static inline FunctionInstance *function_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, FunctionInstance, dispex);
+}
+
 static inline FunctionInstance *function_from_vdisp(vdisp_t *vdisp)
 {
-    return (FunctionInstance*)vdisp->u.jsdisp;
+    return function_from_jsdisp(vdisp->u.jsdisp);
 }
 
 static inline FunctionInstance *function_this(vdisp_t *jsthis)
@@ -362,13 +367,11 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
     return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, r);
 }
 
-static HRESULT Function_get_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    FunctionInstance *This = function_from_vdisp(jsthis);
+    TRACE("%p\n", jsthis);
 
-    TRACE("%p %d\n", This, This->length);
-
-    *r = jsval_number(This->length);
+    *r = jsval_number(function_from_jsdisp(jsthis)->length);
     return S_OK;
 }
 
@@ -538,15 +541,14 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     return invoke_value_proc(ctx, function, NULL, flags, argc, argv, r);
 }
 
-HRESULT Function_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+HRESULT Function_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
     jsstr_t *str;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = function_to_string(function, &str);
+    hres = function_to_string(function_from_jsdisp(jsthis), &str);
     if(FAILED(hres))
         return hres;
 
@@ -554,9 +556,9 @@ HRESULT Function_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
     return S_OK;
 }
 
-static HRESULT Function_get_arguments(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Function_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
+    FunctionInstance *function = function_from_jsdisp(jsthis);
 
     TRACE("\n");
 

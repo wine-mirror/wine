@@ -94,9 +94,14 @@ static const WCHAR setYearW[] = {'s','e','t','Y','e','a','r',0};
 static const WCHAR UTCW[] = {'U','T','C',0};
 static const WCHAR parseW[] = {'p','a','r','s','e',0};
 
+static inline DateInstance *date_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, DateInstance, dispex);
+}
+
 static inline DateInstance *date_this(vdisp_t *jsthis)
 {
-    return is_vclass(jsthis, JSCLASS_DATE) ? (DateInstance*)jsthis->u.jsdisp : NULL;
+    return is_vclass(jsthis, JSCLASS_DATE) ? date_from_jsdisp(jsthis->u.jsdisp) : NULL;
 }
 
 /*ECMA-262 3rd Edition    15.9.1.2 */
@@ -1917,11 +1922,11 @@ static HRESULT Date_setYear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Date_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Date_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
 
-    return dateobj_to_string((DateInstance*)jsthis->u.jsdisp, r);
+    return dateobj_to_string(date_from_jsdisp(jsthis), r);
 }
 
 static const builtin_prop_t Date_props[] = {

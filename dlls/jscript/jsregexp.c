@@ -58,9 +58,14 @@ static const WCHAR idx7W[] = {'$','7',0};
 static const WCHAR idx8W[] = {'$','8',0};
 static const WCHAR idx9W[] = {'$','9',0};
 
+static inline RegExpInstance *regexp_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, RegExpInstance, dispex);
+}
+
 static inline RegExpInstance *regexp_from_vdisp(vdisp_t *vdisp)
 {
-    return (RegExpInstance*)vdisp->u.jsdisp;
+    return regexp_from_jsdisp(vdisp->u.jsdisp);
 }
 
 static void set_last_index(RegExpInstance *This, DWORD last_index)
@@ -243,13 +248,11 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *jsstr,
     return S_OK;
 }
 
-static HRESULT RegExp_get_source(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExp_get_source(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    RegExpInstance *This = regexp_from_vdisp(jsthis);
-
     TRACE("\n");
 
-    *r = jsval_string(jsstr_addref(This->str));
+    *r = jsval_string(jsstr_addref(regexp_from_jsdisp(jsthis)->str));
     return S_OK;
 }
 
@@ -259,7 +262,7 @@ static HRESULT RegExp_set_source(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t val
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_get_global(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExp_get_global(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -271,7 +274,7 @@ static HRESULT RegExp_set_global(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t val
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_get_ignoreCase(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExp_get_ignoreCase(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -283,7 +286,7 @@ static HRESULT RegExp_set_ignoreCase(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t
     return E_NOTIMPL;
 }
 
-static HRESULT RegExp_get_multiline(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExp_get_multiline(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -310,9 +313,9 @@ static INT index_from_val(script_ctx_t *ctx, jsval_t v)
     return is_int32(n) ? n : 0;
 }
 
-static HRESULT RegExp_get_lastIndex(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExp_get_lastIndex(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    RegExpInstance *regexp = regexp_from_vdisp(jsthis);
+    RegExpInstance *regexp = regexp_from_jsdisp(jsthis);
 
     TRACE("\n");
 
@@ -854,61 +857,61 @@ static HRESULT global_idx(script_ctx_t *ctx, DWORD idx, jsval_t *r)
     return S_OK;
 }
 
-static HRESULT RegExpConstr_get_idx1(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx1(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 0, r);
 }
 
-static HRESULT RegExpConstr_get_idx2(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx2(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 1, r);
 }
 
-static HRESULT RegExpConstr_get_idx3(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx3(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 2, r);
 }
 
-static HRESULT RegExpConstr_get_idx4(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx4(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 3, r);
 }
 
-static HRESULT RegExpConstr_get_idx5(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx5(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 4, r);
 }
 
-static HRESULT RegExpConstr_get_idx6(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx6(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 5, r);
 }
 
-static HRESULT RegExpConstr_get_idx7(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx7(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 6, r);
 }
 
-static HRESULT RegExpConstr_get_idx8(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx8(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 7, r);
 }
 
-static HRESULT RegExpConstr_get_idx9(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_idx9(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("\n");
     return global_idx(ctx, 8, r);
 }
 
-static HRESULT RegExpConstr_get_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_leftContext(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     jsstr_t *ret;
 
@@ -922,7 +925,7 @@ static HRESULT RegExpConstr_get_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, 
     return S_OK;
 }
 
-static HRESULT RegExpConstr_get_rightContext(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT RegExpConstr_get_rightContext(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     jsstr_t *ret;
 

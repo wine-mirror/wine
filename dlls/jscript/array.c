@@ -49,9 +49,14 @@ static const WCHAR unshiftW[] = {'u','n','s','h','i','f','t',0};
 
 static const WCHAR default_separatorW[] = {',',0};
 
+static inline ArrayInstance *array_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, ArrayInstance, dispex);
+}
+
 static inline ArrayInstance *array_from_vdisp(vdisp_t *vdisp)
 {
-    return (ArrayInstance*)vdisp->u.jsdisp;
+    return array_from_jsdisp(vdisp->u.jsdisp);
 }
 
 static inline ArrayInstance *array_this(vdisp_t *jsthis)
@@ -113,13 +118,11 @@ static WCHAR *idx_to_str(DWORD idx, WCHAR *ptr)
     return ptr+1;
 }
 
-static HRESULT Array_get_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Array_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    ArrayInstance *This = array_from_vdisp(jsthis);
+    TRACE("%p\n", jsthis);
 
-    TRACE("%p %d\n", This, This->length);
-
-    *r = jsval_number(This->length);
+    *r = jsval_number(array_from_jsdisp(jsthis)->length);
     return S_OK;
 }
 
@@ -995,11 +998,13 @@ static HRESULT Array_unshift(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT Array_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Array_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
+    ArrayInstance *array = array_from_jsdisp(jsthis);
+
     TRACE("\n");
 
-    return array_join(ctx, jsthis->u.jsdisp, array_from_vdisp(jsthis)->length, default_separatorW, r);
+    return array_join(ctx, &array->dispex, array->length, default_separatorW, r);
 }
 
 static void Array_destructor(jsdisp_t *dispex)

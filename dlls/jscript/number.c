@@ -44,9 +44,14 @@ static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 #define NUMBER_TOSTRING_BUF_SIZE 64
 #define NUMBER_DTOA_SIZE 18
 
+static inline NumberInstance *number_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, NumberInstance, dispex);
+}
+
 static inline NumberInstance *number_from_vdisp(vdisp_t *vdisp)
 {
-    return (NumberInstance*)vdisp->u.jsdisp;
+    return number_from_jsdisp(vdisp->u.jsdisp);
 }
 
 static inline NumberInstance *number_this(vdisp_t *jsthis)
@@ -500,9 +505,9 @@ static HRESULT Number_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return S_OK;
 }
 
-static HRESULT Number_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT Number_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    NumberInstance *number = number_from_vdisp(jsthis);
+    NumberInstance *number = number_from_jsdisp(jsthis);
 
     TRACE("(%p)\n", number);
 

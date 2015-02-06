@@ -68,9 +68,14 @@ static const WCHAR toLocaleUpperCaseW[] = {'t','o','L','o','c','a','l','e','U','
 static const WCHAR localeCompareW[] = {'l','o','c','a','l','e','C','o','m','p','a','r','e',0};
 static const WCHAR fromCharCodeW[] = {'f','r','o','m','C','h','a','r','C','o','d','e',0};
 
+static inline StringInstance *string_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, StringInstance, dispex);
+}
+
 static inline StringInstance *string_from_vdisp(vdisp_t *vdisp)
 {
-    return (StringInstance*)vdisp->u.jsdisp;
+    return string_from_jsdisp(vdisp->u.jsdisp);
 }
 
 static inline StringInstance *string_this(vdisp_t *jsthis)
@@ -106,9 +111,9 @@ static HRESULT get_string_flat_val(script_ctx_t *ctx, vdisp_t *jsthis, jsstr_t *
     return E_OUTOFMEMORY;
 }
 
-static HRESULT String_get_length(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT String_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    StringInstance *string = string_from_vdisp(jsthis);
+    StringInstance *string = (StringInstance*)jsthis;
 
     TRACE("%p\n", jsthis);
 
@@ -1467,9 +1472,9 @@ static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return E_NOTIMPL;
 }
 
-static HRESULT String_get_value(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+static HRESULT String_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    StringInstance *This = string_from_vdisp(jsthis);
+    StringInstance *This = (StringInstance*)jsthis;
 
     TRACE("\n");
 

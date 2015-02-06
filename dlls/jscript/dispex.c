@@ -421,11 +421,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
     switch(prop->type) {
     case PROP_BUILTIN:
         if(prop->u.p->getter) {
-            vdisp_t vthis;
-
-            set_jsdisp(&vthis, This);
-            hres = prop->u.p->getter(This->ctx, &vthis, r);
-            vdisp_release(&vthis);
+            hres = prop->u.p->getter(This->ctx, This, r);
         }else {
             jsdisp_t *obj;
 
