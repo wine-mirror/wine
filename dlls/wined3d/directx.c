@@ -2920,6 +2920,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glShaderSource)             /* OpenGL 2.0 */
     USE_GL_FUNC(glStencilFuncSeparate)      /* OpenGL 2.0 */
     USE_GL_FUNC(glStencilOpSeparate)        /* OpenGL 2.0 */
+    USE_GL_FUNC(glTexImage3D)               /* OpenGL 1.2 */
+    USE_GL_FUNC(glTexSubImage3D)            /* OpenGL 1.2 */
     USE_GL_FUNC(glUniform1f)                /* OpenGL 2.0 */
     USE_GL_FUNC(glUniform1fv)               /* OpenGL 2.0 */
     USE_GL_FUNC(glUniform1i)                /* OpenGL 2.0 */
@@ -3027,6 +3029,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glLinkProgram, glLinkProgramARB);
     MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
     MAP_GL_FUNCTION_CAST(glShaderSource, glShaderSourceARB);
+    MAP_GL_FUNCTION_CAST(glTexImage3D, glTexImage3DEXT);
+    MAP_GL_FUNCTION(glTexSubImage3D, glTexSubImage3DEXT);
     MAP_GL_FUNCTION(glUniform1f, glUniform1fARB);
     MAP_GL_FUNCTION(glUniform1fv, glUniform1fvARB);
     MAP_GL_FUNCTION(glUniform1i, glUniform1iARB);
@@ -3384,8 +3388,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     if (!gl_info->supported[EXT_TEXTURE3D] && gl_version >= MAKEDWORD_VERSION(1, 2))
     {
         TRACE("GL CORE: GL_EXT_texture3D support.\n");
-        gl_info->gl_ops.ext.p_glTexImage3DEXT = (void *)gl_info->gl_ops.ext.p_glTexImage3D;
-        gl_info->gl_ops.ext.p_glTexSubImage3DEXT = gl_info->gl_ops.ext.p_glTexSubImage3D;
         gl_info->supported[EXT_TEXTURE3D] = TRUE;
     }
 

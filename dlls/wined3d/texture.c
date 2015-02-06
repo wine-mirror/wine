@@ -1277,7 +1277,7 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
             volume->flags |= WINED3D_VFLAG_CLIENT_STORAGE;
         }
 
-        GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, volume->texture_level,
+        GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
                 srgb ? format->glGammaInternal : format->glInternal,
                 volume->resource.width, volume->resource.height, volume->resource.depth,
                 0, format->glFormat, format->glType, mem));

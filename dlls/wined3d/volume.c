@@ -109,7 +109,7 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
         checkGLcall("glBindBuffer");
     }
 
-    GL_EXTCALL(glTexSubImage3DEXT(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
+    GL_EXTCALL(glTexSubImage3D(GL_TEXTURE_3D, volume->texture_level, 0, 0, 0,
             width, height, depth,
             format->glFormat, format->glType, mem));
     checkGLcall("glTexSubImage3D");
