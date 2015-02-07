@@ -390,7 +390,7 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
     IUri *uri;
     nsresult nsres;
     HRESULT hres;
-    BOOL use_new_window;
+    BOOL use_new_window = FALSE;
 
     TRACE("(%p)\n", This);
 
