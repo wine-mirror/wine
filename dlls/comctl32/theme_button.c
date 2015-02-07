@@ -31,6 +31,10 @@
 #include "vssym32.h"
 #include "comctl32.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(theme_button);
+
 #define BUTTON_TYPE 0x0f /* bit mask for the available button types */
 
 /* These are indices into a states array to determine the theme state for a given theme part. */
@@ -179,10 +183,23 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     static const int states[] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
 
     RECT bgRect, textRect, contentRect;
-    HFONT font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
-    HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
     int state = states[ drawState ];
     WCHAR *text = get_button_text(hwnd);
+    LOGFONTW lf;
+    HFONT font, hPrevFont = NULL;
+    BOOL created_font = FALSE;
+
+    HRESULT hr = GetThemeFont(theme, hDC, BP_GROUPBOX, state, TMT_FONT, &lf);
+    if (SUCCEEDED(hr)) {
+        font = CreateFontIndirectW(&lf);
+        if (!font)
+            TRACE("Failed to create font\n");
+        else {
+            hPrevFont = SelectObject(hDC, font);
+            created_font = TRUE;
+        }
+    } else
+        font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
 
     GetClientRect(hwnd, &bgRect);
     textRect = bgRect;
@@ -216,6 +233,7 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
         HeapFree(GetProcessHeap(), 0, text);
     }
 
+    if (created_font) DeleteObject(font);
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
