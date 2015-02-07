@@ -1,15 +1,16 @@
-The Wine development release 1.7.35 is now available.
+The Wine development release 1.7.36 is now available.
 
 What's new in this release (see below for details):
-  - Beginnings of support for OpenGL core contexts.
-  - Initial support for glyph placement in DirectWrite.
-  - Some more WBEM objects.
+  - Some preliminary 64-bit support for Mac OS X.
+  - Support for configuring speakers in Winecfg.
+  - Improved support for Mac OS X Trash folder.
+  - Support for typographic features in DirectWrite.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.7.35.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.35.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.7.36.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.36.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -25,285 +26,202 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.7.35 (total 56):
+Bugs fixed in 1.7.36 (total 44):
 
-   4374  Multiplayer crashes Heroes 4
-   4409  Screen corruption in Evernote 1.1
-   5776  3DMark 2001: Nature Test (#4) renders incorrectly around 40th second
-  13014  ProntoEdit NG 2.1.8 doesn't show Gallery (missing ODBC provider/notice about missing provider)
-  14522  Spellforce has bad quality ground textures
-  16526  Angels Online doesn't update (FtpFindFirstFile needs to support subdirectory and wildcard search)
-  19723  NordicBet Poker-client fails to install
-  19724  elevated demo has a terrible performance
-  20490  Tower crashes when rendering 3d-objects
-  21767  Multiple applications storing AxHostWindow instance pointer in GWLP_USERDATA crash on startup (Wine uses GWLP_USERDATA to store IOCS)(JLC's Internet TV, Anime Studio Pro 10.x)
-  23208  MS Money 2000: shows wrong/huge total amounts in accounts section of main page
-  24861  Evil Genius (GOG version): Crashes randomly on autosave
-  24967  Oxygen AVCHD player crashes when failling opening a .mov & .mts source
-  26202  SoulSeek crashes
-  26272  Unity3D 3.x/4.x - Can't create a project
-  27814  Die by the Sword: menus don't drawn unless mouse is moving
-  28951  Nitro PDF Reader crashes in Preferences->Commenting menu
-  30017  iWin Games Manager can't display html pages (without native ie)
-  30520  Zona crash when play video files with mplayer
-  31181  Unity3D first run internet registration fails
-  31438  [EA Origin]Unable to download game since the new version
-  32125  RebelBetting exits silently with wine-mono
-  32166  RebelBetting (.NET app): "Serious error" when selecting a listing
-  32205  YoukuDesktop error in initializing
-  33494  It's not possible to use tempfile module in python
-  33776  Multiple 64-bit applications and UPlay games fail in 64-bit WINEPREFIX with WinVer set to 'Windows Vista/7' (incorrect WoW64 info buffer size usage in IsWow64Process, NtQueryInformationProcess)
-  33976  Spin Tires needs native quartz for launching
-  34217  MS XPSEP GUI installer fails with .NET Framework 3.0 installed prior (custom action 'EPUpdateInstallAction' dubbed 'Hotfix for Windows XP KB971276-v3' fails)
-  35244  Blood Bowl: Legendary Edition crashes in full-screen mode when shaders enabled
-  35270  Slingplayer 1.5 installer fails in a WOW64 prefix
-  35391  xcopy doesn't support /v (Samsung Magician Software 4.2)
-  35527  RebelBetting: maximised window is not fully drawn
-  35894  TSM Casin crashes on start in jscript
-  36009  secur32/schannel test fails with WINEDEBUG=warn+heap
-  36368  MicrosoftFixit50588 tool raises a vbscript parsing error (single-line 'If...Then' with trailing 'End If')
-  36767  iexplore http://whatsmyuseragent.com crashes in jscript
-  36964  Unity3D crashes on startup license activation window (has workaround)
-  37017  KEY_WOW64_32KEY doesn't work properly after opening HKLM\Software key.
-  37023  winhttp: HEAD-requests are not handled correctly (Marvel Heroes 2015 launcher)
-  37113  Cannot move (drag n drop) objects in Illustrator CS6 using the selection tool (V)
-  37185  DirectPlayCreate fails to create instance in the game "Swing"
-  37537  Tages v5.x DRM driver needs 'irp.Tail.Overlay.OriginalFileObject' initialized with stub file object
-  37748  Stranded II shows text/icons in wrong colors
-  37807  Anno 2070: digit group separators are displayed incorrectly
-  37810  Accordance 11 crashes on startup.
-  37866  Multiple .NET applications fail due to wbemdisp:services_InstancesOf stub (PaintRibbon 1.x)
-  37874  Copy-pastie in implementation of VarFormatNumber
-  37882  user32.GetKeyboardLayoutNameW can't handle NULL out parameter, causing crash in custom application
-  37891  Firefox 35.0 installer crashes ('INetFwAuthorizedApplication::IpVersion' property accessors are stubs)
-  37898  QQ6.7 crashes due to unimpl msvcr100._vscprintf_p
-  37907  The Incredible Adventures of Van Helsing (64-bit, Steam) crashes on startup (loading of frames from .ani cursors causes heap corruption)
-  37912  Shadowgrounds - rendering issues
-  37924  VBA71 : unimplemented function msi.dll.MsiProvideComponentA
-  37931  Dead Space 2 (Steam) crashes on start
-  37933  Texture Packer Application crashes on launch
-  37943  Falco 6 Contabilità crashes
+  11117  Youtube Downloader crashes on unimplemented shdocvw.DoFileDownload
+  14448  Spectaculator: menu icons do not show properly when not fullscreen
+  16373  Adobe Reader 8.1 can't open "Beyond Adobe Reader"
+  17271  Office 2003/2007 help does not work
+  18357  MyHeritage Family tree builder crashes in the begining of the installtion (NSIS installer)
+  21327  Weird behaviour with Alt+Tab and wine fullscreen applications
+  24331  NI Circuit Design Suite 10.1.1 fails to install
+  24384  Program Error - My Heritage Family Tree Builder
+  27558  EA Origin: application starts in Polish instead of English
+  28142  GODS-Lands of Infinity: NPCs have multiple shadows
+  29289  Sharepod crash
+  29655  Adobe Reader 9.5.0 fails to open document restricted by remote server (Adobe LifeCycle Rights Management security)
+  30016  iWin Games Manager installer crashes on unimplemented function oleaut32.dll.OleSavePictureFile
+  30261  Imperial Glory - Creating multi-player game causes crash
+  30344  Windows 8 consumer preview setup crashes due to unimplemented function msi.dll.MsiEnumClientsExW
+  30432  UpdateResource doesn't update Resource Table virtual address
+  30823  mono program incorrectly writing Chinese characters to console with Wine mono
+  32229  Windows Live Essentials 2012 web installer crashes (CreateHardLinkTransactedW and DeleteFileTransactedW missing)
+  32297  dwChannelMask, nAvgBytesPerSec and nBlockAlign handled incorrectly by mmdevapi drivers in IsFormatSupported.
+  32524  mmdevdrv assertion failure on FarCry3 loading screen
+  32943  GOG.com Uru Complete Chronicles crashes after intro videos
+  34603  Trainsimulator 2014 crash at start/fails to start
+  34806  Brothers in Arms Road to Hill 30 demo: Clicking sounds in audio
+  35755  UltraISO 'ISODrive.sys' crashes on unimplemented function ntoskrnl.exe.ExfInterlockedRemoveHeadList
+  35893  sdb2xml (.NET 2.0 app) crashes on unimplemented function apphelp.dll.SdbOpenDatabase
+  36466  Add WScript.Echo support for VBScripts and JScripts
+  36684  fRo game ( Ragnarok ) : loop bug while installing
+  36882  Certain Touhou Games (10, 14, 14.3) run at 20 FPS rather than 60
+  37012  Evernote 5.5.x crashes when accessing the Market tab
+  37250  PDFXChange Editor 5.5 build 309.0 crashes on unimplemented function cryptui.dll.CryptUIDlgSelectCertificateFromStore when trying to sign a document
+  37272  CheatEngine 6.4 fails after remote process 'breakin', reporting 'Debugger Crash:Access violation (Last location:41)'
+  37691  Problems with internal windows in IDA (Qt)
+  37749  Parts of .ogg files played in Touhou Danmakufu ph3 (Wine 1.7.33) are skipped
+  37872  Multiple applications need support for IHTMLWindow2::open '_self' window name (CompeGPS)
+  37880  Watchtower Library 2010 crashes on startup
+  37895  PostgreSQL 9.3 VBScript based post-install steps fail due to parser errors (optional parameter between other parameters, pair of empty commas)
+  37940  Invalid file buffering behavior causes data corruption
+  37941  msvcr100.dll lacks two functions: iswpunc_l and iswspace_l needed for Dragon Naturally Speaking
+  37951  ASUS PC Link needs KERNEL32.dll.GetSystemFirmwareTable
+  37953  stack overwrite in msvcrt functions
+  37970  prntvpt.dll.PTQuerySchemaVersionSupport not implemented (Photoshop CS6 crashes)
+  37987  Medieval 2: Total War crashes with built-in msvcp71
+  38017  sdb2xml (.NET 2.0 app) crashes on unimplemented function apphelp.dll.SdbGetFirstChild
+  38018  Windows Live Essentials 2012 web installer crashes on unimplemented function ktmw32.dll.RollbackTransaction
 
 ----------------------------------------------------------------
 
-Changes since 1.7.34:
+Changes since 1.7.35:
 
 Akihiro Sagawa (3):
-      advapi32: Fix HKLM\Software handling when opening with KEY_WOW64_32KEY.
-      msi: Open 32-bit component registry keys with KEY_WOW64_32KEY flag.
-      msi: Remove 32-bit component registry keys with KEY_WOW64_32KEY flag.
-
-Alistair Leslie-Hughes (1):
-      dplay: Add missing defines.
+      winmm/tests: Add MPEGVideo driver tests using a wave audio file.
+      mciqtz32: "status mode" returns resource strings.
+      po: Update Japanese translation.
 
 Andrew Eikum (1):
-      wined3d: Fix spec file entry for wined3d_texture_create.
+      winmm: Allow HMIXEROBJ handles in place of device IDs in mixerGetDevCaps.
 
-André Hentschel (3):
-      kernel32/tests: Don't test function directly when reporting GetLastError().
-      user32/tests: Don't test function directly when reporting GetLastError().
-      odbc32: Add winediag message when no drivers could be found.
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
-Aric Stewart (1):
-      gdi32: Do not install fonts with a family name that is too long.
+Austin English (18):
+      include: Add minimal ntdef.h.
+      kernel32: Add GetSystemFirmwareTable stub.
+      include/ddk: Add KWAIT_BLOCK struct to ntddk.h.
+      kernel32: Sync spec file with windowss 7.
+      prntvpt: Add a stub for PTQuerySchemaVersionSupport.
+      msi: Add stubs for MsiEnumClientsExA/W.
+      evr: Add stub dll.
+      include: Add hidusage.h.
+      kernel32: Add CreateHardLinkTransactedA/W stubs.
+      oleaut32: Add a stub for OleSavePictureFile.
+      ntoskrnl.exe: Add a stub for ExInterlockedRemoveHeadList.
+      shdocvw: Add DoFileDownload stub.
+      apphelp: Add a stub for SdbOpenDatabase.
+      cryptui: Add CryptUIDlgSelectCertificateFromStore stub.
+      ktmw32: Add a stub for RollbackTransaction.
+      apphelp: Add a stub for SdbGetFirstChild.
+      apphelp: Add a stub for SdbCloseDatabase.
+      ntoskrnl.exe: Add ExfInterlockedRemoveHeadList stub.
 
-Austin English (1):
-      iphlpapi: Add FreeMibTable implementation.
+Charles Davis (4):
+      configure: Check that we can link to QuickTime.framework before using it.
+      winemac.drv: Always initialize a closure-captured object pointer.
+      ntdll: Support 64-bit Mac OS.
+      dbghelp: Support 64-bit dyld_all_image_infos structures, too.
 
-Axel Davy (2):
-      d3d8/tests: Fix volume_dxt5_test getPixelColor check.
-      d3d8/tests: Fix test_3dc_formats getPixelColor check.
+Daniel Scharrer (1):
+      kernel32: Add stub implementation for EnumResourceLanguagesEx.
 
-Bruno Jesus (9):
-      ws2_32: Ensure recv functions set last error to zero when they succeed.
-      ws2_32: Prefer SetLastError over WSASetLastError.
-      rsaenh: Don't reset the salt length after setting a salt for Base and Strong providers.
-      ws2_32: Trace getpeername() result.
-      iphlpapi: Set 0.0.0.0 as the IP and mask of disconnected interfaces.
-      oleaut32: Fix copy & paste issue in VarFormatNumber.
-      dplayx: Cache GUID values so they persist after enumeration.
-      user32: Allocate memory based on HICON instead of DWORD to fix 64 bit problems.
-      ws2_32: getaddrinfo must SetLastError on success or failure.
+Henri Verbeet (11):
+      d2d1: Implement d2d_bitmap_brush_GetTransform().
+      d2d1: Implement d2d_linear_gradient_brush_GetTransform().
+      d2d1: Implement d2d_solid_color_brush_GetTransform().
+      d2d1: Implement d2d_bitmap_brush_SetTransform().
+      d2d1: Implement d2d_linear_gradient_brush_SetTransform().
+      d2d1: Implement d2d_solid_color_brush_SetTransform().
+      d2d1: Implement d2d_bitmap_GetPixelSize().
+      d2d1: Implement d2d_bitmap_GetDpi().
+      d2d1: Implement d2d_bitmap_GetSize().
+      d2d1: Implement bitmap brush support for d2d_d3d_render_target_FillRectangle().
+      d2d1: Implement d2d_d3d_render_target_DrawBitmap().
 
-Changhui Liu (1):
-      gdiplus: Fix get_graphics_bounds when window origin point changed.
+Jacek Caban (14):
+      mshtml: Added URI_ flags declaration and improved debug traces.
+      mshtml: Added support for _self target in IHTMLWindow2::open.
+      vbscript: Allow omitting optional function parameters in call expressions.
+      wscript: Added IHost::Echo implementation.
+      mshtml: Use our submit implementation for all windows, but only for POST method.
+      mshtml: Added IHTMLDocument2::ondblclick property implementation.
+      jscript: Added support for VT_UI4 variants.
+      jscript: Don't use builtin property for exposing Boolean constructor.
+      jscript: Don't use builtin property for a few more constructors.
+      jscript: Don't use builtin property for *Error constructors.
+      jscript: Use separated functions for implementing builtin call, get and set operation.
+      jscript: Pass 'this' as jsdisp_t to getters.
+      jscript: Pass 'this' as jsdisp_t to setters.
+      jscript: Fixed handling VT_VARIANT|VY_BYREF types.
 
-Charles Davis (5):
-      winebuild: Make emitting mod_*_func sections on Mac OS respect the pointer size.
-      kernel32: Recognize 64-bit Mach-O modules, too.
-      kernel32: Don't use %gs on 64-bit Mac OS.
-      server: Use mach_vm_* functions instead of the old vm_* functions.
-      msvcrt: Support 64-bit platforms that don't have finitef or isnanf.
+Josh DuBois (2):
+      buildimage: Fix typo in conditional.
+      buildimage: Allow use of rsvg-convert as alternative to rsvg.
 
-Erich Hoover (1):
-      winex11.drv: Update the check for broken nVidia RandR to test for the number of resolutions instead of the number of modes.
+Julian Rüger (1):
+      po: Update German translation.
 
-François Gouget (3):
-      dsound: Make DSOUND_FindSpeakerConfig() static.
-      dsound: Reorder the interfaces to remove the need for forward declarations.
-      dsound: Make some DirectSoundDevice_*() functions static.
+Ken Thomases (6):
+      winemac: When Cocoa brings a window forward, tell Wine even if it's disabled or no-activate.
+      winemac: Track which window was brought forward by Cocoa separately from the window receiving the click event.
+      winemac: Tell Wine that Cocoa brought a window forward even if a window is being dragged.
+      opengl32: Fix get_current_context_type() to not shift the type bits down.
+      winemac: Prevent interpolation of the window surface image when it's blitted to the actual window.
+      winemac: Raise full-screen windows in front of the status items in the Mac menu bar.
 
-Gerald Pfeifer (1):
-      makefiles: Support building with non-default LD.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Hans Leidekker (12):
-      wbemdisp: Implement ISWbemServices::InstancesOf.
-      wbemdisp: Implement ISWbemObjectSet::get__NewEnum.
-      wbemdisp: Implement ISwbemObject::GetIDsOfNames.
-      wbemdisp: Implement ISWbemObject::Invoke.
-      wbemdisp: Reimplement ISWbemObjectSet::get__NewEnum on top of IEnumWbemClassObject::Clone.
-      kernel32: Retrieve the system affinity mask from ntdll.
-      ntdll: Fix calculation of process and thread affinity masks on systems with a large number of processors.
-      winhttp/tests: Keep the connection alive in a couple of tests.
-      winhttp: Don't try to read data after a HEAD request.
-      wbemprox: Implement Win32_ComputerSystemProduct.IdentifyingNumber.
-      wbemprox: Implement Win32_BaseBoard.Product.
-      msi: Add a partial implementation of MsiProvideComponent.
+Mark Harmstone (6):
+      mmdevapi: Allow PKEY_AudioEndpoint_PhysicalSpeakers to be overridden.
+      dsound: Fix 3D positioning bug with head-relative buffers.
+      mmdevapi: Do nothing on property store Commit.
+      winecfg: Add speaker config controls to audio tab.
+      winecfg: Fix bug causing 5.1 speakers to appear as stereo.
+      include: Add standard effect GUIDs to dsound.h.
 
-Hao Peng (3):
-      wbemprox: Implement Win32_Processor.ProcessorType.
-      wbemprox: Implement Win32_DiskDrive.PNPDeviceID.
-      wbemprox: Implement Win32_BaseBoard.Version.
+Matteo Bruni (2):
+      opengl32: Don't use deprecated functions for extension checking purposes on core profile contexts.
+      wined3d: Use the core version of the asynchronous queries functions.
 
-Henri Verbeet (10):
-      wined3d: Introduce struct wined3d_sampler_desc.
-      wined3d: Store a struct wined3d_sampler_desc in struct gl_texture.
-      wined3d: Replace wined3d_texture_apply_state_changes() with wined3d_texture_apply_sampler_desc().
-      wined3d: Create GL sampler objects for wined3d sampler objects.
-      wined3d: Merge shader_glsl_load_vsamplers() and shader_glsl_load_psamplers().
-      wined3d: Implement WINED3DSIH_SAMPLE in the GLSL shader backend.
-      wined3d: Handle the SM4 SV_POSITION pixel shader input semantic in the GLSL shader backend.
-      d3d10core/tests: Add a basic texturing test.
-      wined3d: Use the same flags for wined3d_texture_set_color_key() and the "color_key_flags" field it sets.
-      wined3d: Properly cleanup samplers on wined3d_device_reset() / wined3d_device_uninit_3d().
+Nikolay Sivov (13):
+      dwrite: Initial implementation of GetTypographicFeatures().
+      dwrite: Make sure we don't have duplicates in locale/value pairs for font names.
+      kernel32/tests: Make loader tests independent from each other.
+      kernel32/tests: Remove todo_wine that doesn't work anymore.
+      kernel32: Fix writing resource section as a last section in UpdateResource().
+      kernel32/tests: Remove a couple of duplicated constants.
+      dwrite: Forward GetGdiCompatibleMetrics() to newer call.
+      dwrite: Implement GetCaretMetrics().
+      po: Update Russian translation.
+      dwrite: Simplify collection_find_family().
+      dwrite: Improve error handling during font collection creation.
+      dwrite/tests: Fix couple of leaks when creating test font instance.
+      dwrite: Implement GetGlyphCount().
 
-Huw D. M. Davies (2):
-      user32/tests: Add tests for setting and getting the background brush.
-      user32: Actually use the menu's background brush.
+Orion Poplawski (1):
+      msvcrt: Bump MSVCRT_MB_LEN_MAX to 5 and use it in MSVCRT__wctomb_l for default buffer lengthSet MB_LEN_MAX to 5 to match MSVCRT_MB_LEN_MAX.
 
-Jacek Caban (8):
-      activscp.idl: Added SCRIPT_E_* error codes.
-      jscript: Don't allow function execution if script engine is not in started state.
-      jscript: Added more SCRIPTSTATE_STARTED tests.
-      mshtml: Removed TRACEs from dispex_query_interface.
-      secur32/tests: Don't call InitializeSecurityContext on an uninitialized buffer.
-      mshtml: Improved IOleCommandTarget::QueryStatus implementation.
-      mshtml: Added OLECMDID_OPTICAL_ZOOM tests and stub.
-      mshtml: Added Exec(OLECMDID_OPTICAL_ZOOM) implementation.
-
-Ken Thomases (1):
-      winemac: Fix conversion of empty RECT to an empty CGRect.
-
-Marcus Meissner (2):
-      combase: Reorder checks (Coverity).
-      mshtml: Check for failed allocs (Coverity).
-
-Mark Harmstone (4):
-      winealsa: Do not destroy remapping info on IsFormatSupported.
-      dsound: Degrade speaker config if too many channels.
-      dsound: Pretend we have hardware buffers.
-      xaudio2_7: Add stub DLL.
-
-Matteo Bruni (14):
-      wined3d: Use the core version of the gl*Buffer* functions.
-      wined3d: Use the core glColorMaski function.
-      opengl32: Update to GL 4.5.
-      opengl32: Store the OpenGL context version in the handle value.
-      dxgi: Fix a comment typo.
-      wined3d: Use the core gl*CompressedTex* functions.
-      wined3d: Use the core version of glDrawBuffers.
-      wined3d: Use the core version of glDrawElementsInstanced.
-      wined3d: Always use the core version of the glPointParameteri function.
-      wined3d: Add separate stencil state setup via GL 2.0+ core functions.
-      wined3d: Don't normalize R8G8B8A8_UINT attributes.
-      wined3d: Properly initialize the last two components of R16G16_SINT attributes.
-      wined3d: Use the core version of GL vertex attribute functions where possible.
-      wined3d: Use the core version of the shader object functions.
-
-Michael Müller (1):
-      shlwapi: Correctly treat '.' when enumerating files in PathIsDirectoryEmptyW.
-
-Michael Stefaniuc (40):
-      strmbase: Remove an unused variable (PVS-Studio).
-      winmm: Remove an unused variable (PVS-Studio).
-      wintab32: Remove an always TRUE conditional expression (PVS-Studio).
-      wrc: Remove some more always-true conditions.
-      comctl32: Remove an unused variable assigment (PVS-Studio).
-      comdlg32: Remove unused variable assigments (PVS-Studio).
-      d3drm: Remove an unused assignment (PVS-Studio).
-      d3dx9_36/tests: Actually test retrieve_device_state calls (PVS-Studio).
-      devenum: Use the return value of __wine_register_resources (PVS-Studio).
-      dmband/tests: Remove an unused assigment (PVS-Studio).
-      dmcompos/tests: Remove an unused assigment (PVS-Studio).
-      dmime/tests: Remove unused assigments (PVS-Studio).
-      dmloader/tests: Test the return of CoCreateInstance (PVS-Studio).
-      dmscript/tests: Remove an unused assigment (PVS-Studio).
-      dmstyle/tests: Remove unused assigments (PVS-Studio).
-      dmusic/tests: Remove an unused assigment (PVS-Studio).
-      dswave/tests: Remove an unused assigment (PVS-Studio).
-      gdiplus/tests: Actually test a GdipCreateFromHDC call (PVS-Studio).
-      mstask/tests: Remove an unused assignment (PVS-Studio).
-      mciwave: Remove an unused assigment (PVS-Studio).
-      ole32/tests: Actually test some return codes (PVS-Studio).
-      ole32/tests: Remove unused assignments (PVS-Studio).
-      ole32: Return the buffer pointer when WdtpInterfacePointer_UserMarshal fails.
-      msxml3/tests: Remove an unused assignment (PVS-Studio).
-      msxml3/tests: Actually test the return values (PVS-Studio).
-      ntdll/tests: Remove unused assigments (PVS-Studio).
-      oleaut32/tests: Uncomment and fix a test (PVS-Studio).
-      oleaut32: Just stop instead of erroring out on 8 or 9 in octal numbers.
-      oleaut32: Remove an unused assignment (PVS-Studio).
-      qedit: Remove an unused and wrong assignment (PVS-Studio).
-      quartz: Remove some unused assignments (PVS-Studio).
-      scrrun/tests: Actually test the return values (PVS-Studio).
-      schedsvc/tests: Actually test a return value (PVS-Studio).
-      strmbase: Remove an unused assignment (PVS-Studio).
-      strmbase: Handle the failure of CoCreateInstance (PVS-Studio).
-      user32/tests: Remove an unused assignment (PVS-Studio).
-      usp10: Remove an unused assignment (PVS-Studio).
-      winex11.drv: Remove an unused assignment (PVS-Studio).
-      wininet: Remove an unused assignment (PVS-Studio).
-      wintrust/tests: Remove an unused assignment (PVS-Studio).
-
-Nikolay Sivov (14):
-      user32: Handle NULL argument in GetKeyboardLayoutNameW().
-      winhttp: Fix typeinfo refcount in GetTypeInfo().
-      winhttp: Release typeinfos and typelib on dll unload.
-      hnetcfg: Return NET_FW_IP_VERSION_ANY as ipVersion property value.
-      hnetcfg: Fix refcount of returned ITypeInfo pointer.
-      scrrun: Fix refcount on GetTypeInfo().
-      vbscript: Support 'End If' for single line If statements.
-      dwrite: Initial support of cluster metrics computation.
-      dwrite: Implement GetClusterMetrics().
-      dwrite/tests: Additional test for Draw().
-      hnetcfg: Release typeinfos and typelib on dll unload.
-      msxml3: Remove child node in one place in node_insert_before().
-      dwrite/tests: Basic test for GetTypographicFeatures().
-      dwrite: Initial implementation of GetGlyphPlacements().
-
-Piotr Caban (3):
-      ole32: Only change DoDragDrop return value on IDropTarget::Drop failure.
-      msvcrt: Add _vscprintf_p implementation.
-      msvcrt: Drop read buffer in _flsbuf.
-
-Qian Hong (10):
-      atl100/tests: Added more tests for class AtlAxWin100 and AtlAxWinLic100.
-      atl100/tests: Added tests for AtlAxAttachControl.
-      atl: Don't conflict GWLP_USERDATA with user applications.
-      ntdll: Fixed buffer size checking for ProcessWow64Information on 64bit in NtQueryInformationProcess.
-      kernel32: Make SetUnhandledExceptionFilter hotpatchable.
-      ntdll: Make RtlAddVectoredExceptionHandler hotpatchable.
-      ole32: Make CoUninitialize and OleUninitialize hotpatchable.
-      kernel32: Fixed buffer size on 64bit in IsWow64Process.
-      atl: Improved content type handling of AtlAxCreateControlEx.
-      atl100/tests: Added tests for AtlAxCreateControlEx.
+Piotr Caban (11):
+      msvcrt: Handle read buffer flushing in msvcrt_flush_buffer helper.
+      msvcrt: Reset write direction after flush on read/write stream.
+      msvcrt: Add _iswspace_l implementation.
+      msvcrt: Add _iswpunct_l implementation.
+      shell32: Create trash test file in temp directory.
+      shell32: Handle TRASH_EnumItems failures correctly.
+      shell32: Pass trash path to TRASH_EnumItems.
+      shell32: Add partial support for Mac trash enumeration.
+      msvcp71: Added basic_string<char>::insert(iterator, char*, char*) implementation.
+      user32/tests: Added GetMessagePos tests.
+      user32: Only use DIALOGINFO->hwndFocus to store last focus of inactive windows.
 
 Sebastian Lackner (2):
-      wininet: Fix handling of subdirectory in FtpFindFirstFile.
-      ntoskrnl: Initialize irp.Tail.Overlay.OriginalFileObject with stub file object.
+      dbghelp: Don't fill KdHelp structure for usermode applications.
+      slc/tests: Add tests for SLGetWindowsInformationDWORD.
 
-Vincent Povirk (1):
-      xmllite: Length is optional in IXmlReader::GetQualifiedName.
+Stefan Dösinger (7):
+      wined3d: Pass WM_SYSCOMMAND(SC_RESTORE) to DefWindowProc.
+      d3d/tests: Show that WM_SYSCOMMAND(SC_RESTORE) is delivered only once.
+      wined3d: Fix the color keyed P8 alpha ref value.
+      wined3d: Don't use TXP for rectangle P8 textures.
+      d3d11: Print UINT sdk_version with %u.
+      d3d11: Switch to d3d-style formatting.
+      wined3d: Check the d3d buffer to find converted attributes.
+
+YongHao Hu (1):
+      msvcp90/tests: Add more tests to ostream_print_complex_float.
 
 --
 Alexandre Julliard
