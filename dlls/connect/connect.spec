@@ -1,0 +1,15 @@
+@ stub AddConnectionOptionListEntries
+@ stub CreateVPNConnection
+@ stub DllCanUnloadNow
+@ stub DllGetClassObject
+@ stub GetInternetConnected
+@ stub GetNetworkConnected
+@ stub GetVPNConnected
+@ stub HrIsInternetConnected
+@ stub HrIsInternetConnectedGUID
+@ stub IsInternetConnected
+@ stub IsInternetConnectedGUID
+@ stub IsUniqueConnectionName
+@ stub RegisterPageWithPage
+@ stub UnregisterPage
+@ stub UnregisterPagesLink

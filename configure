@@ -942,6 +942,7 @@ enable_comctl32
 enable_comdlg32
 enable_compstui
 enable_comsvcs
+enable_connect
 enable_credui
 enable_crtdll
 enable_crypt32
@@ -17080,6 +17081,7 @@ wine_fn_config_dll commdlg.dll16 enable_win16
 wine_fn_config_dll compobj.dll16 enable_win16
 wine_fn_config_dll compstui enable_compstui implib
 wine_fn_config_dll comsvcs enable_comsvcs implib
+wine_fn_config_dll connect enable_connect
 wine_fn_config_dll credui enable_credui implib,po
 wine_fn_config_test dlls/credui/tests credui_test
 wine_fn_config_dll crtdll enable_crtdll implib
