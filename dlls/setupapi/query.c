@@ -125,8 +125,13 @@ BOOL WINAPI SetupGetInfInformationA(LPCVOID InfSpec, DWORD SearchControl,
 
     if (InfSpec && SearchControl >= INFINFO_INF_NAME_IS_ABSOLUTE)
     {
-        len = lstrlenA(InfSpec) + 1;
+        len = MultiByteToWideChar(CP_ACP, 0, InfSpec, -1, NULL, 0);
         inf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!inf)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
         MultiByteToWideChar(CP_ACP, 0, InfSpec, -1, inf, len);
     }
 
