@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-04-02 17:53+0300\n"
+"PO-Revision-Date: 2015-02-08 13:50+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -13174,20 +13174,16 @@ msgid "&Test Sound"
 msgstr "&Тест звуку"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Параметри Wine"
+msgstr "Налаштування динаміків"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "&Привід:"
+msgstr "&Пристрій:"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Канали:"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13295,21 +13291,19 @@ msgstr "(Типовий системний)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Багатоканальний 5.1"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "графіка"
+msgstr "Квадрофонічний"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Стерео"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Моно"
 
 #: winecfg.rc:54
 msgid ""
