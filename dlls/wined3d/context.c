@@ -437,7 +437,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
      * GL contexts requirements. */
-    glReadBuffer(GL_NONE);
+    gl_info->gl_ops.gl.p_glReadBuffer(GL_NONE);
     context_set_draw_buffer(context, GL_NONE);
     if (target != GL_FRAMEBUFFER)
     {
