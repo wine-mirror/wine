@@ -95,14 +95,14 @@ enum complex_fixup
 #include <pshpack2.h>
 struct color_fixup_desc
 {
-    unsigned x_sign_fixup : 1;
-    unsigned x_source : 3;
-    unsigned y_sign_fixup : 1;
-    unsigned y_source : 3;
-    unsigned z_sign_fixup : 1;
-    unsigned z_source : 3;
-    unsigned w_sign_fixup : 1;
-    unsigned w_source : 3;
+    unsigned short x_sign_fixup : 1;
+    unsigned short x_source : 3;
+    unsigned short y_sign_fixup : 1;
+    unsigned short y_source : 3;
+    unsigned short z_sign_fixup : 1;
+    unsigned short z_source : 3;
+    unsigned short w_sign_fixup : 1;
+    unsigned short w_source : 3;
 };
 #include <poppack.h>
 
