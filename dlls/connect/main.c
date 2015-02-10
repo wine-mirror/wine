@@ -22,6 +22,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(connect);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -35,4 +38,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI IsInternetConnected(void)
+{
+    FIXME("stub, faking success!\n");
+    return S_OK;
 }

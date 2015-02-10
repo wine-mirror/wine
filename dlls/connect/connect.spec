@@ -7,7 +7,7 @@
 @ stub GetVPNConnected
 @ stub HrIsInternetConnected
 @ stub HrIsInternetConnectedGUID
-@ stub IsInternetConnected
+@ stdcall IsInternetConnected()
 @ stub IsInternetConnectedGUID
 @ stub IsUniqueConnectionName
 @ stub RegisterPageWithPage
