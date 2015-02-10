@@ -1949,3 +1949,13 @@ RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Op
     }
     return RPC_S_OK;
 }
+
+/***********************************************************************
+ *             I_RpcBindingInqLocalClientPID (RPCRT4.@)
+ */
+
+RPC_STATUS WINAPI I_RpcBindingInqLocalClientPID(RPC_BINDING_HANDLE ClientBinding, ULONG *ClientPID)
+{
+    FIXME("%p %p: stub\n", ClientBinding, ClientPID);
+    return RPC_S_INVALID_BINDING;
+}

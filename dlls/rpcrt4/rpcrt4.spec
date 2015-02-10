@@ -29,7 +29,7 @@
 @ stub I_RpcBindingInqDynamicEndPoint
 @ stub I_RpcBindingInqDynamicEndPointA
 @ stub I_RpcBindingInqDynamicEndPointW
-@ stub I_RpcBindingInqLocalClientPID # wxp
+@ stdcall I_RpcBindingInqLocalClientPID(ptr ptr)
 @ stub I_RpcBindingInqSecurityContext
 @ stdcall I_RpcBindingInqTransportType(ptr ptr)
 @ stub I_RpcBindingInqWireIdForSnego
