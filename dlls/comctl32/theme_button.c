@@ -47,7 +47,7 @@ typedef enum
 	STATE_DEFAULTED
 } ButtonState;
 
-typedef void (*pfThemedPaint)(HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtFlags);
+typedef void (*pfThemedPaint)(HTHEME theme, HWND hwnd, HDC hdc, ButtonState drawState, UINT dtFlags, BOOL focused);
 
 static UINT get_drawtext_flags(DWORD style, DWORD ex_style)
 {
@@ -100,7 +100,7 @@ static inline WCHAR *get_button_text(HWND hwnd)
     return text;
 }
 
-static void PB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags)
+static void PB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
 {
     static const int states[] = { PBS_NORMAL, PBS_DISABLED, PBS_HOT, PBS_PRESSED, PBS_DEFAULTED };
 
@@ -125,7 +125,7 @@ static void PB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
-static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags)
+static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
 {
     static const int cb_states[3][5] =
     {
@@ -143,8 +143,7 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     static const int cb_size = 13;
 
     RECT bgRect, textRect;
-    HFONT font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
-    HFONT hPrevFont = font ? SelectObject(hDC, font) : NULL;
+    HFONT font, hPrevFont = NULL;
     LRESULT checkState = SendMessageW(hwnd, BM_GETCHECK, 0, 0);
     DWORD dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     int part = ((dwStyle & BUTTON_TYPE) == BS_RADIOBUTTON) || ((dwStyle & BUTTON_TYPE) == BS_AUTORADIOBUTTON)
@@ -154,6 +153,21 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
               ? cb_states[ checkState ][ drawState ]
               : rb_states[ checkState ][ drawState ];
     WCHAR *text = get_button_text(hwnd);
+    LOGFONTW lf;
+    BOOL created_font = FALSE;
+
+    HRESULT hr = GetThemeFont(theme, hDC, part, state, TMT_FONT, &lf);
+    if (SUCCEEDED(hr)) {
+        font = CreateFontIndirectW(&lf);
+        if (!font)
+            TRACE("Failed to create font\n");
+        else {
+            TRACE("font = %s\n", debugstr_w(lf.lfFaceName));
+            hPrevFont = SelectObject(hDC, font);
+            created_font = TRUE;
+        }
+    } else
+        font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
 
     GetClientRect(hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
@@ -172,13 +186,29 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     if (text)
     {
         DrawThemeText(theme, hDC, part, state, text, lstrlenW(text), dtFlags, 0, &textRect);
+
+        if (focused)
+        {
+            RECT focusRect;
+
+            focusRect = textRect;
+
+            DrawTextW(hDC, text, lstrlenW(text), &focusRect, dtFlags | DT_CALCRECT);
+
+            if (focusRect.right < textRect.right) focusRect.right++;
+            focusRect.bottom = textRect.bottom;
+
+            DrawFocusRect( hDC, &focusRect );
+        }
+
         HeapFree(GetProcessHeap(), 0, text);
     }
 
+    if (created_font) DeleteObject(font);
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
-static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags)
+static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UINT dtFlags, BOOL focused)
 {
     static const int states[] = { GBS_NORMAL, GBS_DISABLED, GBS_NORMAL, GBS_NORMAL, GBS_NORMAL };
 
@@ -281,7 +311,7 @@ static BOOL BUTTON_Paint(HTHEME theme, HWND hwnd, HDC hParamDC)
     else drawState = STATE_DISABLED;
 
     hDC = hParamDC ? hParamDC : BeginPaint(hwnd, &ps);
-    paint(theme, hwnd, hDC, drawState, dtFlags);
+    paint(theme, hwnd, hDC, drawState, dtFlags, state & BST_FOCUS);
     if (!hParamDC) EndPaint(hwnd, &ps);
     return TRUE;
 }
