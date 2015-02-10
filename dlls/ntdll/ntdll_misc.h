@@ -169,7 +169,7 @@ extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_
 extern void virtual_clear_thread_stack(void) DECLSPEC_HIDDEN;
 extern BOOL virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
 extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack ) DECLSPEC_HIDDEN;
 extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
 extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
 extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;

@@ -1521,7 +1521,7 @@ void virtual_clear_thread_stack(void)
 /***********************************************************************
  *           virtual_handle_fault
  */
-NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
+NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
 {
     struct file_view *view;
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
@@ -1542,7 +1542,7 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err )
             /* ignore fault if page is writable now */
             if (VIRTUAL_GetUnixProt( *vprot ) & PROT_WRITE) ret = STATUS_SUCCESS;
         }
-        if (*vprot & VPROT_GUARD)
+        if (!on_signal_stack && (*vprot & VPROT_GUARD))
         {
             VIRTUAL_SetProt( view, page, page_size, *vprot & ~VPROT_GUARD );
             ret = STATUS_GUARD_PAGE_VIOLATION;

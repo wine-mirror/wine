@@ -1907,7 +1907,7 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
             if (rec->ExceptionInformation[1] == 0xffffffff && check_invalid_gs( context ))
                 goto done;
             if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0] )))
+                                                             rec->ExceptionInformation[0], FALSE )))
                 goto done;
             if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
                 rec->ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
@@ -2045,6 +2045,15 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     EXCEPTION_RECORD *rec;
     ucontext_t *context = sigcontext;
     void *stack = init_handler( sigcontext, &fs, &gs );
+
+    /* check for exceptions on the signal stack caused by write watches */
+    if (get_trap_code(context) == TRAP_x86_PAGEFLT &&
+        (char *)stack >= (char *)get_signal_stack() &&
+        (char *)stack < (char *)get_signal_stack() + signal_stack_size &&
+        !virtual_handle_fault( siginfo->si_addr, (get_error_code(context) >> 1) & 0x09, TRUE ))
+    {
+        return;
+    }
 
     /* check for page fault inside the thread stack */
     if (get_trap_code(context) == TRAP_x86_PAGEFLT &&

@@ -326,7 +326,7 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         if (rec->NumberParameters == 2)
         {
             if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0] )))
+                                                             rec->ExceptionInformation[0], FALSE )))
                 goto done;
         }
         break;
