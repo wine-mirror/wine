@@ -2843,7 +2843,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
     }
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, surface->resource.width);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH,
+            wined3d_surface_get_pitch(surface) / surface->resource.format->byte_count);
     checkGLcall("glPixelStorei");
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
