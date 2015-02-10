@@ -166,8 +166,8 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
     bgRect.right = bgRect.left + cb_size;
     textRect.left = bgRect.right + 6;
 
-    if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
-        DrawThemeParentBackground(hwnd, hDC, NULL);
+    DrawThemeParentBackground(hwnd, hDC, NULL);
+
     DrawThemeBackground(theme, hDC, part, state, &bgRect, NULL);
     if (text)
     {
