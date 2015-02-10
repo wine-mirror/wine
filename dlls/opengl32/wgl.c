@@ -687,27 +687,42 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
+void WINAPI glGetIntegerv(GLenum pname, GLint *data)
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    TRACE("(%d, %p)\n", pname, data);
+    funcs->gl.p_glGetIntegerv(pname, data);
+}
+
+const GLubyte * WINAPI glGetStringi(GLenum name, GLuint index)
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    TRACE("(%d, %d)\n", name, index);
+    if (!funcs->ext.p_glGetStringi)
+    {
+        void **func_ptr = (void **)&funcs->ext.p_glGetStringi;
+
+        *func_ptr = funcs->wgl.p_wglGetProcAddress("glGetStringi");
+    }
+
+    return funcs->ext.p_glGetStringi(name, index);
+}
+
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext, size_t len )
 {
     if (!list)
     {
-        const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
         const char *gl_ext;
         unsigned int i;
         GLint extensions_count;
 
-        if (!funcs->ext.p_glGetStringi)
-        {
-            void **func_ptr = (void **)&funcs->ext.p_glGetStringi;
-
-            *func_ptr = funcs->wgl.p_wglGetProcAddress("glGetStringi");
-        }
-
         glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
         for (i = 0; i < extensions_count; ++i)
         {
-            gl_ext = (const char *)funcs->ext.p_glGetStringi(GL_EXTENSIONS, i);
+            gl_ext = (const char *)glGetStringi(GL_EXTENSIONS, i);
             if (!strncmp(gl_ext, ext, len) && !gl_ext[len])
                 return TRUE;
         }

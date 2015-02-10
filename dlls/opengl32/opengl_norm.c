@@ -948,15 +948,6 @@ void WINAPI glGetFloatv( GLenum pname, GLfloat* data ) {
 }
 
 /***********************************************************************
- *              glGetIntegerv (OPENGL32.@)
- */
-void WINAPI glGetIntegerv( GLenum pname, GLint* data ) {
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %p)\n", pname, data );
-  funcs->gl.p_glGetIntegerv( pname, data );
-}
-
-/***********************************************************************
  *              glGetLightfv (OPENGL32.@)
  */
 void WINAPI glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) {

@@ -236,6 +236,7 @@ sub GenerateThunk($$$$)
     my $trace_arg = "";
 
     return "" if $name eq "glDebugEntry";
+    return "" if $name eq "glGetIntegerv";
     return "" if $name eq "glGetString";
     return "" if $func_ref->[2] && $func_ref->[2]->[0] =~ /WGL_/;
 
@@ -285,6 +286,7 @@ sub GenerateThunk($$$$)
         }
     }
     $ret .= 'void ' if (!@{$func_ref->[1]});
+    return "$ret) DECLSPEC_HIDDEN;\n" if $name eq "glGetStringi";
     $ret .= ") {\n";
     $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
     if ($func_ref->[0] ne "void" && $gen_thread_safe) {
@@ -951,7 +953,11 @@ my $count = keys %ext_functions;
 print EXT "const int extension_registry_size = $count;\n";
 foreach (sort keys %ext_functions) {
     my $string = GenerateThunk($_, $ext_functions{$_}, 0, "ext");
-    print EXT "\nstatic $string" if $string;
+    if ($string =~ /DECLSPEC_HIDDEN/) {
+        print EXT "\n$string";
+    } else {
+        print EXT "\nstatic $string" if $string;
+    }
 }
 
 # Then the table giving the string <-> function correspondence */

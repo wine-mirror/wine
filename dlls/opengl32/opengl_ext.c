@@ -5014,11 +5014,7 @@ static void WINAPI glGetSharpenTexFuncSGIS( GLenum target, GLfloat* points ) {
   funcs->ext.p_glGetSharpenTexFuncSGIS( target, points );
 }
 
-static const GLubyte* WINAPI glGetStringi( GLenum name, GLuint index ) {
-  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d)\n", name, index );
-  return funcs->ext.p_glGetStringi( name, index );
-}
+const GLubyte* WINAPI glGetStringi( GLenum name, GLuint index ) DECLSPEC_HIDDEN;
 
 static GLuint WINAPI glGetSubroutineIndex( GLuint program, GLenum shadertype, const GLchar* name ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
