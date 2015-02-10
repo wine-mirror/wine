@@ -118,7 +118,7 @@
 @ stdcall D3DXDebugMute(long) d3dx9_36.D3DXDebugMute
 @ stdcall D3DXDeclaratorFromFVF(long ptr) d3dx9_36.D3DXDeclaratorFromFVF
 @ stdcall D3DXDisassembleEffect(ptr long ptr) d3dx9_36.D3DXDisassembleEffect
-@ stdcall D3DXDisassembleShader(ptr long ptr ptr) d3dx9_36.D3DXDisassembleShader
+@ stdcall D3DXDisassembleShader(ptr long str ptr) d3dx9_36.D3DXDisassembleShader
 @ stdcall D3DXFileCreate(ptr) d3dx9_36.D3DXFileCreate
 @ stdcall D3DXFillCubeTexture(ptr ptr ptr) d3dx9_36.D3DXFillCubeTexture
 @ stdcall D3DXFillCubeTextureTX(ptr ptr) d3dx9_36.D3DXFillCubeTextureTX

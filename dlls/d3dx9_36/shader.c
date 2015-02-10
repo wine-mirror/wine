@@ -2126,3 +2126,9 @@ HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **sample
 
     return D3D_OK;
 }
+
+HRESULT WINAPI D3DXDisassembleShader(const DWORD *shader, BOOL colorcode, const char *comments, ID3DXBuffer **disassembly)
+{
+   FIXME("%p %d %s %p: stub\n", shader, colorcode, debugstr_a(comments), disassembly);
+   return E_OUTOFMEMORY;
+}
