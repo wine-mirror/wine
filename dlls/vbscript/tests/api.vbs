@@ -282,6 +282,64 @@ Call ok(x = 2, "InStr returned " & x)
 x = InStr(2.6, "abcd", "bc")
 Call ok(x = 0, "InStr returned " & x)
 
+
+x = InStrRev("bcabcd", "bc")
+Call ok(x = 4, "InStrRev returned " & x)
+Call ok(getVT(x) = "VT_I4*", "getVT(InStrRev) returned " & getVT(x))
+
+x = InStrRev("bcabcd", "bc", 6)
+Call ok(x = 4, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bcx")
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 3)
+Call ok(x = 2, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 2)
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "b", 2)
+Call ok(x = 2, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 5)
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 15)
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = "abcd"
+x = InStrRev(x, "bc")
+Call ok(x = 2, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 1.3)
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 2.3)
+Call ok(x = 0, "InStrRev returned " & x)
+
+x = InStrRev("abcd", "bc", 2.6)
+Call ok(x = 2, "InStrRev returned " & x)
+
+x = InStrRev("1234", 34)
+Call ok(x = 3, "InStrRev returned " & x)
+
+x = InStrRev(1234, 34)
+Call ok(x = 3, "InStrRev returned " & x)
+
+Sub testInStrRevError(arg1, arg2, arg3, error_num)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = InStrRev(arg1, arg2, arg3)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+call testInStrRevError("abcd", null, 2, 94)
+call testInStrRevError(null, "abcd", 2, 94)
+call testInStrRevError("abcd", "abcd", null, 94)
+
 Sub TestMid(str, start, len, ex)
     x = Mid(str, start, len)
     Call ok(x = ex, "Mid(" & str & ", " & start & ", " & len & ") = " & x & " expected " & ex)
