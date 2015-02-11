@@ -330,7 +330,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
         {
-            if (sock_get_error() == WSAEINPROGRESS) {
+            if (sock_get_error() == WSAEINPROGRESS || sock_get_error() == WSAEWOULDBLOCK) {
                 struct pollfd pfd;
                 int res;
 
