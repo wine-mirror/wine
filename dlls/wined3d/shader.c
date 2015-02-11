@@ -111,6 +111,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_NE                    */ "ne",
     /* WINED3DSIH_NOP                   */ "nop",
     /* WINED3DSIH_NRM                   */ "nrm",
+    /* WINED3DSIH_OR                    */ "or",
     /* WINED3DSIH_PHASE                 */ "phase",
     /* WINED3DSIH_POW                   */ "pow",
     /* WINED3DSIH_RCP                   */ "rcp",
