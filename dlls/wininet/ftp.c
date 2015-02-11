@@ -1274,7 +1274,8 @@ static void FTPFILE_AsyncQueryDataAvailableProc(task_header_t *task)
 static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     ftp_file_t *file = (ftp_file_t*) hdr;
-    int retval, unread = 0;
+    ULONG unread = 0;
+    int retval;
 
     TRACE("(%p %p %x %lx)\n", file, available, flags, ctx);
 
