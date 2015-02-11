@@ -2245,23 +2245,32 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
 
     TRACE("%s\n", debugstr_w(display_uri));
 
-    if(window->doc_obj && window->doc_obj->webbrowser && window == window->doc_obj->basedoc.window) {
+    if(window->doc_obj && window->doc_obj->webbrowser) {
         DWORD post_data_len = request_data ? request_data->post_data_len : 0;
         void *post_data = post_data_len ? request_data->post_data : NULL;
         const WCHAR *headers = request_data ? request_data->headers : NULL;
 
         if(!(flags & BINDING_REFRESH)) {
+            BSTR frame_name = NULL;
             BOOL cancel = FALSE;
 
+            if(window != window->doc_obj->basedoc.window) {
+                hres = IHTMLWindow2_get_name(&window->base.IHTMLWindow2_iface, &frame_name);
+                if(FAILED(hres))
+                    return hres;
+            }
+
             hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, display_uri, 0x40,
-                    NULL, post_data, post_data_len ? post_data_len+1 : 0, headers, TRUE, &cancel);
+                    frame_name, post_data, post_data_len ? post_data_len+1 : 0, headers, TRUE, &cancel);
+            SysFreeString(frame_name);
             if(SUCCEEDED(hres) && cancel) {
                 TRACE("Navigation canceled\n");
                 return S_OK;
             }
         }
 
-        return super_navigate(window, uri, flags, headers, post_data, post_data_len);
+        if(window == window->doc_obj->basedoc.window)
+            return super_navigate(window, uri, flags, headers, post_data, post_data_len);
     }
 
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
