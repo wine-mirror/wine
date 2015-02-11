@@ -1090,8 +1090,8 @@
 @ stub -arch=win64 ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@AEBV?$complex@N@0@@Z
 @ stub -arch=win32 ??6std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@ABV?$complex@O@0@@Z
 @ stub -arch=win64 ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@AEBV?$complex@O@0@@Z
-@ cdecl -arch=win32 ??6std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@G@Z(ptr long) basic_ostream_short_print_ushort
-@ cdecl -arch=win64 ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@G@Z(ptr long) basic_ostream_short_print_ushort
+@ cdecl -arch=win32 ??6std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@G@Z(ptr long) basic_ostream_short_print_ushort_global
+@ cdecl -arch=win64 ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@G@Z(ptr long) basic_ostream_short_print_ushort_global
 @ cdecl -arch=win32 ??6std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@PBG@Z(ptr ptr) basic_ostream_wchar_print_str
 @ cdecl -arch=win64 ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@PEBG@Z(ptr ptr) basic_ostream_wchar_print_str
 @ cdecl -arch=win32 ??6std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@0@AAV10@ABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(ptr ptr) basic_ostream_wchar_print_bstr

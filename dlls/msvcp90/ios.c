@@ -7129,6 +7129,14 @@ basic_ostream_wchar* __thiscall basic_ostream_short_print_ushort(basic_ostream_w
                 basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(this))->loc));
 }
 
+/* ??6std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@0@AAV10@G@Z */
+/* ??6std@@YAAEAV?$basic_ostream@GU?$char_traits@G@std@@@0@AEAV10@G@Z */
+basic_ostream_wchar* __cdecl basic_ostream_short_print_ushort_global(basic_ostream_wchar *ostr, unsigned short val)
+{
+    return basic_ostream_print_ushort(ostr, val, num_put_short_use_facet(
+                basic_ios_wchar_rdbuf_get(basic_ostream_wchar_get_basic_ios(ostr))->loc));
+}
+
 static basic_ostream_wchar* basic_ostream_print_int(basic_ostream_wchar *this, int val, const num_put *numput)
 {
     basic_ios_wchar *base = basic_ostream_wchar_get_basic_ios(this);
