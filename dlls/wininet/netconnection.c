@@ -1047,13 +1047,13 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     char b;
 
     mode = 1;
-    if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
+    if(ioctlsocket(netconn->socket, FIONBIO, &mode))
         return FALSE;
 
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK);
 
     mode = 0;
-    if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
+    if(ioctlsocket(netconn->socket, FIONBIO, &mode))
         return FALSE;
 
     return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
