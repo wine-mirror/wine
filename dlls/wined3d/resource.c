@@ -81,7 +81,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     const struct wined3d *d3d = device->wined3d;
 
     resource_check_usage(usage);
-    if (pool != WINED3D_POOL_SCRATCH)
+    if (pool != WINED3D_POOL_SCRATCH && type != WINED3D_RTYPE_BUFFER)
     {
         if ((usage & WINED3DUSAGE_RENDERTARGET) && !(format->flags & WINED3DFMT_FLAG_RENDERTARGET))
         {
