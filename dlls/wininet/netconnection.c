@@ -62,12 +62,14 @@
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
+#include <errno.h>
+#endif
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include <assert.h>
 
 #include "wine/library.h"
@@ -456,6 +458,9 @@ int sock_get_error(void)
         case EFAULT:            return WSAEFAULT;
         case EINVAL:            return WSAEINVAL;
         case EMFILE:            return WSAEMFILE;
+#if EAGAIN != EWOULDBLOCK
+        case EAGAIN:
+#endif
         case EWOULDBLOCK:       return WSAEWOULDBLOCK;
         case EINPROGRESS:       return WSAEINPROGRESS;
         case EALREADY:          return WSAEALREADY;
@@ -516,7 +521,7 @@ int sock_send(int fd, const void *msg, size_t len, int flags)
     {
         ret = send(fd, msg, len, flags);
     }
-    while(ret == -1 && errno == EINTR);
+    while(ret == -1 && sock_get_error() == WSAEINTR);
     return ret;
 }
 
@@ -527,7 +532,7 @@ int sock_recv(int fd, void *msg, size_t len, int flags)
     {
         ret = recv(fd, msg, len, flags);
     }
-    while(ret == -1 && errno == EINTR);
+    while(ret == -1 && sock_get_error() == WSAEINTR);
     return ret;
 }
 
@@ -824,7 +829,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
     size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, tmp_mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
     if(size < 0) {
         if(!buf_len) {
-            if(errno == EAGAIN || errno == EWOULDBLOCK) {
+            if(sock_get_error() == WSAEWOULDBLOCK) {
                 TRACE("would block\n");
                 return WSAEWOULDBLOCK;
             }
@@ -864,7 +869,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
             set_socket_blocking(conn->socket, mode);
             size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
             if(size < 1) {
-                if(size < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                if(size < 0 && sock_get_error() == WSAEWOULDBLOCK) {
                     TRACE("would block\n");
 
                     /* FIXME: Optimize extra_buf usage. */
@@ -1035,7 +1040,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     BYTE b;
 
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
-    return len == 1 || (len == -1 && errno == EWOULDBLOCK);
+    return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
 #elif defined(__MINGW32__) || defined(_MSC_VER)
     ULONG mode;
     int len;
@@ -1051,7 +1056,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
         return FALSE;
 
-    return len == 1 || (len == -1 && errno == WSAEWOULDBLOCK);
+    return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
 #else
     FIXME("not supported on this platform\n");
     return TRUE;
