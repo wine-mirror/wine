@@ -1465,8 +1465,8 @@
 @ stub SetVDMCurrentDirectories
 @ stdcall SetVolumeLabelA(str str)
 @ stdcall SetVolumeLabelW(wstr wstr)
-@ stub SetVolumeMountPointA
-@ stub SetVolumeMountPointW
+@ stdcall SetVolumeMountPointA(str str)
+@ stdcall SetVolumeMountPointW(wstr wstr)
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 # @ stub SetXStateFeaturesMask

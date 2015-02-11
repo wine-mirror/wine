@@ -2167,3 +2167,23 @@ BOOL WINAPI DeleteVolumeMountPointW(LPCWSTR mountpoint)
     FIXME("(%s), stub!\n", debugstr_w(mountpoint));
     return FALSE;
 }
+
+/***********************************************************************
+ *           SetVolumeMountPointA (KERNEL32.@)
+ */
+BOOL WINAPI SetVolumeMountPointA(LPCSTR path, LPCSTR volume)
+{
+    FIXME("(%s, %s), stub!\n", debugstr_a(path), debugstr_a(volume));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           SetVolumeMountPointW (KERNEL32.@)
+ */
+BOOL WINAPI SetVolumeMountPointW(LPCWSTR path, LPCWSTR volume)
+{
+    FIXME("(%s, %s), stub!\n", debugstr_w(path), debugstr_w(volume));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
