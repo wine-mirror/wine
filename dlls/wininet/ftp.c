@@ -1239,7 +1239,7 @@ static DWORD FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD s
     res = sock_send(lpwh->nDataSocket, buffer, size, 0);
 
     *written = res>0 ? res : 0;
-    return res >= 0 ? ERROR_SUCCESS : sock_get_error(errno);
+    return res >= 0 ? ERROR_SUCCESS : sock_get_error();
 }
 
 static void FTP_ReceiveRequestData(ftp_file_t *file, BOOL first_notif)

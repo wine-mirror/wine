@@ -328,7 +328,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
         {
-            if (sock_get_error(errno) == WSAEINPROGRESS) {
+            if (sock_get_error() == WSAEINPROGRESS) {
                 struct pollfd pfd;
                 int res;
 
@@ -442,10 +442,12 @@ void NETCON_unload(void)
 }
 
 /* translate a unix error code into a winsock one */
-int sock_get_error( int err )
+int sock_get_error(void)
 {
-#if !defined(__MINGW32__) && !defined (_MSC_VER)
-    switch (err)
+#if defined(__MINGW32__) || defined(_MSC_VER)
+    return WSAGetLastError();
+#else
+    switch (errno)
     {
         case EINTR:             return WSAEINTR;
         case EBADF:             return WSAEBADF;
@@ -502,10 +504,9 @@ int sock_get_error( int err )
 #ifdef EREMOTE
         case EREMOTE:           return WSAEREMOTE;
 #endif
-    default: errno=err; perror("sock_set_error"); return WSAEFAULT;
+    default: perror("sock_get_error"); return WSAEFAULT;
     }
 #endif
-    return err;
 }
 
 int sock_send(int fd, const void *msg, size_t len, int flags)
@@ -771,9 +772,7 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
     if(!connection->secure)
     {
 	*sent = sock_send(connection->socket, msg, len, flags);
-	if (*sent == -1)
-	    return sock_get_error(errno);
-        return ERROR_SUCCESS;
+        return *sent == -1 ? sock_get_error() : ERROR_SUCCESS;
     }
     else
     {
@@ -948,7 +947,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
 
         set_socket_blocking(connection->socket, mode);
 	*recvd = sock_recv(connection->socket, buf, len, flags);
-	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
+	return *recvd == -1 ? sock_get_error() :  ERROR_SUCCESS;
     }
     else
     {
@@ -1103,8 +1102,8 @@ DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value)
                         sizeof(tv));
     if (result == -1)
     {
-        WARN("setsockopt failed (%s)\n", strerror(errno));
-        return sock_get_error(errno);
+        WARN("setsockopt failed\n");
+        return sock_get_error();
     }
     return ERROR_SUCCESS;
 }
