@@ -325,6 +325,48 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    const struct wined3d_private_data *stored_data;
+    DWORD size_in;
+    HRESULT hr;
+
+    if (!data_size)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&dxgi_cs);
+    if (!(stored_data = wined3d_private_store_get_private_data(store, guid)))
+    {
+        hr = DXGI_ERROR_NOT_FOUND;
+        *data_size = 0;
+        goto done;
+    }
+
+    size_in = *data_size;
+    *data_size = stored_data->size;
+    if (!data)
+    {
+        hr = S_OK;
+        goto done;
+    }
+    if (size_in < stored_data->size)
+    {
+        hr = DXGI_ERROR_MORE_DATA;
+        goto done;
+    }
+
+    if (stored_data->flags & WINED3DSPD_IUNKNOWN)
+        IUnknown_AddRef(stored_data->content.object);
+    memcpy(data, stored_data->content.data, stored_data->size);
+    hr = S_OK;
+
+done:
+    LeaveCriticalSection(&dxgi_cs);
+
+    return hr;
+}
+
 HRESULT dxgi_set_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT data_size, const void *data)
 {
