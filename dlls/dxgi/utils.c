@@ -324,3 +324,31 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
             return WINED3DFMT_UNKNOWN;
     }
 }
+
+HRESULT dxgi_set_private_data(struct wined3d_private_store *store,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct wined3d_private_data *entry;
+    HRESULT hr;
+
+    if (!data)
+    {
+        EnterCriticalSection(&dxgi_cs);
+        if (!(entry = wined3d_private_store_get_private_data(store, guid)))
+        {
+            LeaveCriticalSection(&dxgi_cs);
+            return S_FALSE;
+        }
+
+        wined3d_private_store_free_private_data(store, entry);
+        LeaveCriticalSection(&dxgi_cs);
+
+        return S_OK;
+    }
+
+    EnterCriticalSection(&dxgi_cs);
+    hr = wined3d_private_store_set_private_data(store, guid, data, data_size, 0);
+    LeaveCriticalSection(&dxgi_cs);
+
+    return hr;
+}

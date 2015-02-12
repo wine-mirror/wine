@@ -621,13 +621,13 @@ static void test_private_data(void)
      * NULL interface is not considered a clear but as setting an interface pointer that
      * happens to be NULL. */
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, ~0U, NULL);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, ~0U, NULL);
-    todo_wine ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -662,13 +662,13 @@ static void test_private_data(void)
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     size = sizeof(data);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, size, data);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = get_refcount((IUnknown *)test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, 42, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, 42, NULL);
-    todo_wine ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);

@@ -84,6 +84,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
         wined3d_device_decref(This->wined3d_device);
         LeaveCriticalSection(&dxgi_cs);
         IDXGIFactory1_Release(This->factory);
+        wined3d_private_store_cleanup(&This->private_store);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -95,9 +96,11 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
 static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IWineDXGIDevice *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_set_private_data(&device->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IWineDXGIDevice *iface,
@@ -357,6 +360,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;
     device->refcount = 1;
+    wined3d_private_store_init(&device->private_store);
 
     layer_base = device + 1;
 
@@ -364,6 +368,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
             device, &IID_IUnknown, (void **)&device->child_layer)))
     {
         WARN("Failed to create device, returning %#x.\n", hr);
+        wined3d_private_store_cleanup(&device->private_store);
         return hr;
     }
 
@@ -372,6 +377,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     {
         ERR("DXGI device should implement IWineD3DDeviceParent.\n");
         IUnknown_Release(device->child_layer);
+        wined3d_private_store_cleanup(&device->private_store);
         return hr;
     }
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
@@ -386,6 +392,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         if (SUCCEEDED(hr))
             hr = E_FAIL;
         IUnknown_Release(device->child_layer);
+        wined3d_private_store_cleanup(&device->private_store);
         return hr;
     }
 
@@ -397,6 +404,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     {
         WARN("Failed to create a wined3d device, returning %#x.\n", hr);
         IUnknown_Release(device->child_layer);
+        wined3d_private_store_cleanup(&device->private_store);
         return hr;
     }
 
@@ -409,6 +417,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         ERR("Failed to initialize 3D, hr %#x.\n", hr);
         wined3d_device_decref(device->wined3d_device);
         IUnknown_Release(device->child_layer);
+        wined3d_private_store_cleanup(&device->private_store);
         return hr;
     }
 
