@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-03 19:00+0300\n"
+"PO-Revision-Date: 2015-02-20 19:22+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2732,11 +2732,6 @@ msgstr ""
 "Ar tikrai norite pašalinti šį liudijimą?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
@@ -13220,15 +13215,15 @@ msgstr "(Sistemos numatytasis)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr "Erdvinis 5.1"
+msgstr "Erdviniai 5.1"
 
 #: winecfg.rc:90
 msgid "Quadraphonic"
-msgstr "Kvadrofoninis"
+msgstr "Kvadrofoniniai"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr "Stereofoninis"
+msgstr "Stereofoniniai"
 
 #: winecfg.rc:92
 msgid "Mono"
