@@ -15449,6 +15449,8 @@ static void zenable_test(void)
     HRESULT hr;
     UINT x, y;
     UINT i, j;
+    UINT test;
+    IDirect3DSurface9 *ds;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -15460,34 +15462,66 @@ static void zenable_test(void)
         goto done;
     }
 
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &ds);
+    ok(SUCCEEDED(hr), "Failed to get depth stencil surface, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
-    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, tquad, sizeof(*tquad));
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    for (i = 0; i < 4; ++i)
+    for (test = 0; test < 2; ++test)
     {
-        for (j = 0; j < 4; ++j)
+        /* The Windows 8 testbot (WARP) appears to clip with
+         * ZENABLE = D3DZB_TRUE and no depth buffer set. */
+        static const D3DCOLOR expected_broken[] =
         {
-            x = 80 * ((2 * j) + 1);
-            y = 60 * ((2 * i) + 1);
-            color = getPixelColor(device, x, y);
-            ok(color_match(color, 0x0000ff00, 1),
-                    "Expected color 0x0000ff00 at %u, %u, got 0x%08x.\n", x, y, color);
+            0x00ff0000, 0x0000ff00, 0x0000ff00, 0x00ff0000,
+            0x00ff0000, 0x0000ff00, 0x0000ff00, 0x00ff0000,
+            0x00ff0000, 0x0000ff00, 0x0000ff00, 0x00ff0000,
+            0x00ff0000, 0x0000ff00, 0x0000ff00, 0x00ff0000,
+        };
+
+        if (!test)
+        {
+            hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+            ok(SUCCEEDED(hr), "Failed to set depth stencil surface, hr %#x.\n", hr);
         }
+        else
+        {
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+            ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+            ok(SUCCEEDED(hr), "Failed to set depth stencil surface, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 0.0f, 0);
+            ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+        }
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+        ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, tquad, sizeof(*tquad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        for (i = 0; i < 4; ++i)
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                x = 80 * ((2 * j) + 1);
+                y = 60 * ((2 * i) + 1);
+                color = getPixelColor(device, x, y);
+                ok(color_match(color, 0x0000ff00, 1)
+                        || broken(color_match(color, expected_broken[i * 4 + j], 1) && !test),
+                        "Expected color 0x0000ff00 at %u, %u, got 0x%08x, test %u.\n",
+                        x, y, color, test);
+            }
+        }
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
