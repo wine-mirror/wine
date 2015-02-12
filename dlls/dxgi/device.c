@@ -106,9 +106,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateData(IWineDXGIDevice *ifa
 static HRESULT STDMETHODCALLTYPE dxgi_device_SetPrivateDataInterface(IWineDXGIDevice *iface,
         REFGUID guid, const IUnknown *object)
 {
-    FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
+
+    return dxgi_set_private_data_interface(&device->private_store, guid, object);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetPrivateData(IWineDXGIDevice *iface,

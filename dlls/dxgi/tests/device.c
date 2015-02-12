@@ -623,14 +623,14 @@ static void test_private_data(void)
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, 0, NULL);
     ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, ~0U, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, ~0U, NULL);
     ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     size = sizeof(ptr) * 2;
     ptr = (IUnknown *)0xdeadbeef;
     hr = IDXGIDevice_GetPrivateData(device, &dxgi_private_data_test_guid, &size, &ptr);
@@ -641,25 +641,25 @@ static void test_private_data(void)
     refcount = get_refcount((IUnknown *)test_object);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount = refcount + 1;
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount--;
     refcount = get_refcount((IUnknown *)test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     size = sizeof(data);
     hr = IDXGIDevice_SetPrivateData(device, &dxgi_private_data_test_guid, size, data);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -672,7 +672,7 @@ static void test_private_data(void)
 
     hr = IDXGIDevice_SetPrivateDataInterface(device, &dxgi_private_data_test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount++;
     size = 2 * sizeof(ptr);
     ptr = NULL;
@@ -696,7 +696,7 @@ static void test_private_data(void)
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     todo_wine ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     size = 1;
     hr = IDXGIDevice_GetPrivateData(device, &dxgi_private_data_test_guid, &size, &ptr);

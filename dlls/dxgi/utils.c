@@ -352,3 +352,19 @@ HRESULT dxgi_set_private_data(struct wined3d_private_store *store,
 
     return hr;
 }
+
+HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
+        REFGUID guid, const IUnknown *object)
+{
+    HRESULT hr;
+
+    if (!object)
+        return dxgi_set_private_data(store, guid, sizeof(object), &object);
+
+    EnterCriticalSection(&dxgi_cs);
+    hr = wined3d_private_store_set_private_data(store,
+            guid, object, sizeof(object), WINED3DSPD_IUNKNOWN);
+    LeaveCriticalSection(&dxgi_cs);
+
+    return hr;
+}
