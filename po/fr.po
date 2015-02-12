@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-10-02 10:04+0100\n"
+"PO-Revision-Date: 2015-02-12 14:55+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -853,7 +853,7 @@ msgstr "Le fichier n'existe pas"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "La sélection contient un objet non-dossier"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -13250,20 +13250,16 @@ msgid "&Test Sound"
 msgstr "&Tester le son"
 
 #: winecfg.rc:275
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Configuration de Wine"
+msgstr "Configuration des haut-parleurs"
 
 #: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
 msgid "Device:"
-msgstr "&Périphérique :"
+msgstr "Périphérique :"
 
 #: winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Haut-parleurs :"
 
 #: winecfg.rc:286
 msgid "Appearance"
@@ -13371,21 +13367,19 @@ msgstr "(Valeur par défaut du système)"
 
 #: winecfg.rc:89
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Ambiophonique 5.1"
 
 #: winecfg.rc:90
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "image"
+msgstr "Quadraphonique"
 
 #: winecfg.rc:91
 msgid "Stereo"
-msgstr ""
+msgstr "Stéréo"
 
 #: winecfg.rc:92
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
