@@ -2573,6 +2573,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
                       szaddr, strlen(szaddr)+1);
 
+    init_winsock();
     nsocket = socket(AF_INET,SOCK_STREAM,0);
     if (nsocket == -1)
     {
@@ -2932,6 +2933,7 @@ static BOOL FTP_InitListenSocket(ftp_session_t *lpwfs)
 
     TRACE("\n");
 
+    init_winsock();
     lpwfs->lstnSocket = socket(PF_INET, SOCK_STREAM, 0);
     if (lpwfs->lstnSocket == -1)
     {

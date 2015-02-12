@@ -478,6 +478,8 @@ BOOL init_urlcache(void) DECLSPEC_HIDDEN;
 void free_urlcache(void) DECLSPEC_HIDDEN;
 void free_cookie(void) DECLSPEC_HIDDEN;
 
+void init_winsock(void) DECLSPEC_HIDDEN;
+
 #define MAX_REPLY_LEN	 	0x5B4
 
 /* Used for debugging - maybe need to be shared in the Wine debugging code ? */

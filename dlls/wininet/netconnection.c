@@ -27,6 +27,10 @@
 #define NONAMELESSUNION
 
 #if defined(__MINGW32__) || defined (_MSC_VER)
+#define USE_WINSOCK
+#endif
+
+#ifdef USE_WINSOCK
 #include <ws2tcpip.h>
 #endif
 
@@ -62,7 +66,7 @@
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
-#if !defined(__MINGW32__) && !defined(_MSC_VER)
+#ifndef USE_WINSOCK
 #include <errno.h>
 #endif
 
@@ -317,10 +321,38 @@ static BOOL ensure_cred_handle(void)
     return TRUE;
 }
 
+#ifdef USE_WINSOCK
+static BOOL winsock_loaded = FALSE;
+
+static BOOL WINAPI winsock_startup(INIT_ONCE *once, void *param, void **context)
+{
+    WSADATA wsa_data;
+    DWORD res;
+
+    res = WSAStartup(MAKEWORD(1,1), &wsa_data);
+    if(res == ERROR_SUCCESS)
+        winsock_loaded = TRUE;
+    else
+        ERR("WSAStartup failed: %u\n", res);
+    return TRUE;
+}
+#endif
+
+void init_winsock(void)
+{
+#ifdef USE_WINSOCK
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, winsock_startup, NULL, NULL);
+#endif
+}
+
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
     int result;
     ULONG flag;
+    DWORD res;
+
+    init_winsock();
 
     assert(server->addr_len);
     result = netconn->socket = socket(server->addr.ss_family, SOCK_STREAM, 0);
@@ -330,7 +362,8 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
         {
-            if (sock_get_error() == WSAEINPROGRESS || sock_get_error() == WSAEWOULDBLOCK) {
+            res = sock_get_error();
+            if (res == WSAEINPROGRESS || res == WSAEWOULDBLOCK) {
                 struct pollfd pfd;
                 int res;
 
@@ -441,12 +474,16 @@ void NETCON_unload(void)
     if(have_compat_cred_handle)
         FreeCredentialsHandle(&compat_cred_handle);
     DeleteCriticalSection(&init_sechandle_cs);
+
+#ifdef USE_WINSOCK
+    WSACleanup();
+#endif
 }
 
 /* translate a unix error code into a winsock one */
 int sock_get_error(void)
 {
-#if defined(__MINGW32__) || defined(_MSC_VER)
+#ifdef USE_WINSOCK
     return WSAGetLastError();
 #else
     switch (errno)
@@ -538,7 +575,7 @@ int sock_recv(int fd, void *msg, size_t len, int flags)
 
 static void set_socket_blocking(int socket, blocking_mode_t mode)
 {
-#if defined(__MINGW32__) || defined (_MSC_VER)
+#ifdef USE_WINSOCK
     ULONG arg = mode == BLOCKING_DISALLOW;
     ioctlsocket(socket, FIONBIO, &arg);
 #endif
@@ -1041,7 +1078,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
 
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
     return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
-#elif defined(__MINGW32__) || defined(_MSC_VER)
+#elif defined(USE_WINSOCK)
     ULONG mode;
     int len;
     char b;

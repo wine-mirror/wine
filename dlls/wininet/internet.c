@@ -3477,6 +3477,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
 
       if (!GetAddress(hostW, port, (struct sockaddr *)&saddr, &sa_len))
           goto End;
+      init_winsock();
       fd = socket(saddr.ss_family, SOCK_STREAM, 0);
       if (fd != -1)
       {
