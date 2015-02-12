@@ -17327,6 +17327,127 @@ done:
     DestroyWindow(window);
 }
 
+static void test_table_fog_zw(void)
+{
+    HRESULT hr;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    D3DCOLOR color;
+    D3DCAPS9 caps;
+    static struct
+    {
+        struct vec4 position;
+        D3DCOLOR diffuse;
+    }
+    quad[] =
+    {
+        {{  0.0f,   0.0f, 0.0f, 0.0f}, 0xffff0000},
+        {{640.0f,   0.0f, 0.0f, 0.0f}, 0xffff0000},
+        {{  0.0f, 480.0f, 0.0f, 0.0f}, 0xffff0000},
+        {{640.0f, 480.0f, 0.0f, 0.0f}, 0xffff0000},
+    };
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    }}};
+    static const struct
+    {
+        float z, w;
+        D3DZBUFFERTYPE z_test;
+        D3DCOLOR color;
+    }
+    tests[] =
+    {
+        {0.7f,  0.0f, D3DZB_TRUE,  0x004cb200},
+        {0.7f,  0.0f, D3DZB_FALSE, 0x004cb200},
+        {0.7f,  0.3f, D3DZB_TRUE,  0x004cb200},
+        {0.7f,  0.3f, D3DZB_FALSE, 0x004cb200},
+        {0.7f,  3.0f, D3DZB_TRUE,  0x004cb200},
+        {0.7f,  3.0f, D3DZB_FALSE, 0x004cb200},
+        {0.3f,  0.0f, D3DZB_TRUE,  0x00b24c00},
+        {0.3f,  0.0f, D3DZB_FALSE, 0x00b24c00},
+    };
+    unsigned int i;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+        0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE))
+    {
+        skip("D3DPRASTERCAPS_FOGTABLE not supported, skipping POSITIONT table fog test.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0x0000ff00);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    /* Work around an AMD Windows driver bug. Needs a proj matrix applied redundantly. */
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &identity);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x000000ff, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+        quad[0].position.z = tests[i].z;
+        quad[1].position.z = tests[i].z;
+        quad[2].position.z = tests[i].z;
+        quad[3].position.z = tests[i].z;
+        quad[0].position.w = tests[i].w;
+        quad[1].position.w = tests[i].w;
+        quad[2].position.w = tests[i].w;
+        quad[3].position.w = tests[i].w;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, tests[i].z_test);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = getPixelColor(device, 320, 240);
+        ok(color_match(color, tests[i].color, 2),
+                "Got unexpected color 0x%08x, expected 0x%08x, case %u.\n", color, tests[i].color, i);
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+    }
+
+done:
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -17438,4 +17559,5 @@ START_TEST(visual)
     test_fog_interpolation();
     test_negative_fixedfunction_fog();
     test_position_index();
+    test_table_fog_zw();
 }
