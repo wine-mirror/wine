@@ -519,7 +519,7 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
 {
     struct d3d10_stateblock *object;
 
-    FIXME("device %p, mask %p, stateblock %p stub!\n", device, mask, stateblock);
+    TRACE("device %p, mask %p, stateblock %p.\n", device, mask, stateblock);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
