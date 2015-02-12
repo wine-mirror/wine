@@ -30,7 +30,7 @@
 30 stub CryptUIWizBuildCTL
 31 stub CryptUIWizCertRequest
 32 stub CryptUIWizCreateCertRequestNoDS
-33 stub CryptUIWizDigitalSign
+33 stdcall CryptUIWizDigitalSign(long long wstr ptr ptr)
 34 stdcall CryptUIWizExport(long ptr wstr ptr ptr)
 35 stub CryptUIWizFreeCertRequestNoDS
 36 stub CryptUIWizFreeDigitalSignContext

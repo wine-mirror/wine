@@ -7057,3 +7057,10 @@ PCCERT_CONTEXT WINAPI CryptUIDlgSelectCertificateFromStore(HCERTSTORE hCertStore
     FIXME("%p %p %s %s %d %d %p: stub\n", hCertStore, hwnd, debugstr_w(pwszTitle), debugstr_w(pwszDisplayString), dwDontUseColumn, dwFlags, pvReserved);
     return NULL;
 }
+
+BOOL WINAPI CryptUIWizDigitalSign(DWORD flags, HWND parent, LPCWSTR title, PCCRYPTUI_WIZ_DIGITAL_SIGN_INFO info,
+                                  PCCRYPTUI_WIZ_DIGITAL_SIGN_CONTEXT *context)
+{
+    FIXME("%d %p %s %p %p: stub\n", flags, parent, debugstr_w(title), info, context);
+    return FALSE;
+}
