@@ -171,6 +171,36 @@ static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
 #ifdef B460800
     case B460800:	sbr->BaudRate = 460800;	break;
 #endif
+#ifdef B500000
+    case B500000:	sbr->BaudRate = 500000; break;
+#endif
+#ifdef B921600
+    case B921600:	sbr->BaudRate = 921600; break;
+#endif
+#ifdef B1000000
+    case B1000000:	sbr->BaudRate = 1000000; break;
+#endif
+#ifdef B1152000
+    case B1152000:	sbr->BaudRate = 1152000; break;
+#endif
+#ifdef B1500000
+    case B1500000:	sbr->BaudRate = 1500000; break;
+#endif
+#ifdef B2000000
+    case B2000000:	sbr->BaudRate = 2000000; break;
+#endif
+#ifdef B2500000
+    case B2500000:	sbr->BaudRate = 2500000; break;
+#endif
+#ifdef B3000000
+    case B3000000:	sbr->BaudRate = 3000000; break;
+#endif
+#ifdef B3500000
+    case B3500000:	sbr->BaudRate = 3500000; break;
+#endif
+#ifdef B4000000
+    case B4000000:	sbr->BaudRate = 4000000; break;
+#endif
     default:
         ERR("unknown speed %x\n", speed);
         return STATUS_INVALID_PARAMETER;
@@ -477,6 +507,36 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
 #endif
 #ifdef B460800
     case 460800: cfsetospeed( &port, B460800 ); break;
+#endif
+#ifdef B500000
+    case 500000: cfsetospeed( &port, B500000 ); break;
+#endif
+#ifdef B921600
+    case 921600: cfsetospeed( &port, B921600 ); break;
+#endif
+#ifdef B1000000
+    case 1000000: cfsetospeed( &port, B1000000 ); break;
+#endif
+#ifdef B1152000
+    case 1152000: cfsetospeed( &port, B1152000 ); break;
+#endif
+#ifdef B1500000
+    case 1500000: cfsetospeed( &port, B1500000 ); break;
+#endif
+#ifdef B2000000
+    case 2000000: cfsetospeed( &port, B2000000 ); break;
+#endif
+#ifdef B2500000
+    case 2500000: cfsetospeed( &port, B2500000 ); break;
+#endif
+#ifdef B3000000
+    case 3000000: cfsetospeed( &port, B3000000 ); break;
+#endif
+#ifdef B3500000
+    case 3500000: cfsetospeed( &port, B3500000 ); break;
+#endif
+#ifdef B4000000
+    case 4000000: cfsetospeed( &port, B4000000 ); break;
 #endif
     default:
 #if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
