@@ -103,7 +103,6 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
 {
     enum wined3d_depth_buffer_type zenable = state->render_states[WINED3D_RS_ZENABLE];
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    static UINT once;
 
     /* No z test without depth stencil buffers */
     if (!state->fb->depth_stencil)
@@ -132,21 +131,8 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
             break;
     }
 
-    if (context->gl_info->supported[ARB_DEPTH_CLAMP])
-    {
-        if (!zenable && context->stream_info.position_transformed)
-        {
-            gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_CLAMP);
-            checkGLcall("glEnable(GL_DEPTH_CLAMP)");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_CLAMP);
-            checkGLcall("glDisable(GL_DEPTH_CLAMP)");
-        }
-    }
-    else if (!zenable && !once++)
-        FIXME("Z buffer disabled, but ARB_depth_clamp isn't supported.\n");
+    if (context->last_was_rhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
+        transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
 
 static void state_cullmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4105,12 +4091,16 @@ void transform_projection(struct wined3d_context *context, const struct wined3d_
         double y_offset = context->render_offscreen
                 ? ((63.0 / 64.0) - (2.0 * y) - h) / h
                 : ((63.0 / 64.0) - (2.0 * y) - h) / -h;
+        enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
+                state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
+        double z_scale = zenable ? 2.0f : 0.0f;
+        double z_offset = zenable ? -1.0f : 0.0f;
         const GLdouble projection[] =
         {
-             x_scale,      0.0,  0.0, 0.0,
-                 0.0,  y_scale,  0.0, 0.0,
-                 0.0,      0.0,  2.0, 0.0,
-            x_offset, y_offset, -1.0, 1.0,
+             x_scale,      0.0,  0.0,      0.0,
+                 0.0,  y_scale,  0.0,      0.0,
+                 0.0,      0.0,  z_scale,  0.0,
+            x_offset, y_offset,  z_offset, 1.0,
         };
 
         gl_info->gl_ops.gl.p_glLoadMatrixd(projection);
@@ -4775,9 +4765,6 @@ void vertexdeclaration(struct wined3d_context *context, const struct wined3d_sta
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.minor <= 3)
             context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
     }
-
-    if (transformed != wasrhw && !isStateDirty(context, STATE_RENDER(WINED3D_RS_ZENABLE)))
-        state_zenable(context, state, STATE_RENDER(WINED3D_RS_ZENABLE));
 }
 
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
