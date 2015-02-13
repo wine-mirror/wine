@@ -83,6 +83,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory1 *iface)
         EnterCriticalSection(&dxgi_cs);
         wined3d_decref(factory->wined3d);
         LeaveCriticalSection(&dxgi_cs);
+        wined3d_private_store_cleanup(&factory->private_store);
         HeapFree(GetProcessHeap(), 0, factory);
     }
 
@@ -92,9 +93,11 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory1 *iface)
 static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_set_private_data(&factory->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory1 *iface,
@@ -284,12 +287,14 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 
     factory->IDXGIFactory1_iface.lpVtbl = &dxgi_factory_vtbl;
     factory->refcount = 1;
+    wined3d_private_store_init(&factory->private_store);
 
     EnterCriticalSection(&dxgi_cs);
     factory->wined3d = wined3d_create(0);
     if (!factory->wined3d)
     {
         LeaveCriticalSection(&dxgi_cs);
+        wined3d_private_store_cleanup(&factory->private_store);
         return DXGI_ERROR_UNSUPPORTED;
     }
 
@@ -346,6 +351,7 @@ fail:
     EnterCriticalSection(&dxgi_cs);
     wined3d_decref(factory->wined3d);
     LeaveCriticalSection(&dxgi_cs);
+    wined3d_private_store_cleanup(&factory->private_store);
     return hr;
 }
 

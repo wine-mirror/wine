@@ -88,6 +88,7 @@ struct dxgi_factory
 {
     IDXGIFactory1 IDXGIFactory1_iface;
     LONG refcount;
+    struct wined3d_private_store private_store;
     struct wined3d *wined3d;
     UINT adapter_count;
     IDXGIAdapter1 **adapters;
