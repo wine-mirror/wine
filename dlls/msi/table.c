@@ -107,7 +107,7 @@ static inline UINT bytes_per_column( MSIDATABASE *db, const MSICOLUMNINFO *col, 
         return 2;
 
     if( (col->type & 0xff) != 4 )
-        ERR("Invalid column size!\n");
+        ERR("Invalid column size %u\n", col->type & 0xff);
 
     return 4;
 }
@@ -951,7 +951,7 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
     UINT size, offset, old_count;
     UINT n;
 
-    table = find_cached_table( db, name );
+    if (!(table = find_cached_table( db, name ))) return;
     old_count = table->col_count;
     msi_free_colinfo( table->colinfo, table->col_count );
     msi_free( table->colinfo );
@@ -2574,6 +2574,12 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
              */
             sz = 2;
             num_cols = mask >> 8;
+            if (num_cols > tv->num_cols)
+            {
+                ERR("excess columns in transform: %u > %u\n", num_cols, tv->num_cols);
+                break;
+            }
+
             for (i = 0; i < num_cols; i++)
             {
                 if( (tv->columns[i].type & MSITYPE_STRING) &&
@@ -2631,7 +2637,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
 
                 /*
                  * Native msi seems writes nul into the Number (2nd) column of
-                 * the _Columns table, only when the columns are from a new table
+                 * the _Columns table when there are new columns
                  */
                 if ( number == MSI_NULL_INTEGER )
                 {
@@ -2682,7 +2688,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                     WARN("failed to insert row %u\n", r);
             }
 
-            if (number != MSI_NULL_INTEGER && !strcmpW( name, szColumns ))
+            if (!strcmpW( name, szColumns ))
                 msi_update_table_columns( db, table );
 
             msiobj_release( &rec->hdr );
