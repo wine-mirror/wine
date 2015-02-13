@@ -83,7 +83,7 @@ static STREAM *create_stream(MSISTREAMSVIEW *sv, LPCWSTR name, BOOL encoded, ISt
         name = decoded;
     }
 
-    stream->str_index = msi_addstringW(sv->db->strings, name, -1, 1, StringNonPersistent);
+    stream->str_index = msi_add_string(sv->db->strings, name, -1, StringNonPersistent);
     stream->stream = stm;
     return stream;
 }
