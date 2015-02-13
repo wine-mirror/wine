@@ -430,7 +430,6 @@ void INTERNET_SetLastError(DWORD dwError) DECLSPEC_HIDDEN;
 DWORD INTERNET_GetLastError(void) DECLSPEC_HIDDEN;
 DWORD INTERNET_AsyncCall(task_header_t*) DECLSPEC_HIDDEN;
 LPSTR INTERNET_GetResponseBuffer(void) DECLSPEC_HIDDEN;
-LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen) DECLSPEC_HIDDEN;
 
 VOID SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,

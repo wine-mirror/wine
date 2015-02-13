@@ -51,6 +51,12 @@
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #include <time.h>
 #include <assert.h>
 
@@ -69,6 +75,8 @@
 #include "internet.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
+
+#define RESPONSE_TIMEOUT        30
 
 typedef struct _ftp_session_t ftp_session_t;
 
@@ -2660,6 +2668,57 @@ lend:
     return bSuccess;
 }
 
+/***********************************************************************
+ *           FTP_GetNextLine  (internal)
+ *
+ * Parse next line in directory string listing
+ *
+ * RETURNS
+ *   Pointer to beginning of next line
+ *   NULL on failure
+ *
+ */
+
+static LPSTR FTP_GetNextLine(INT nSocket, LPDWORD dwLen)
+{
+    struct pollfd pfd;
+    INT nRecv = 0;
+    LPSTR lpszBuffer = INTERNET_GetResponseBuffer();
+
+    TRACE("\n");
+
+    pfd.fd = nSocket;
+    pfd.events = POLLIN;
+
+    while (nRecv < MAX_REPLY_LEN)
+    {
+        if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
+        {
+            if (sock_recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
+            {
+                INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
+                return NULL;
+            }
+
+            if (lpszBuffer[nRecv] == '\n')
+            {
+                lpszBuffer[nRecv] = '\0';
+                *dwLen = nRecv - 1;
+                TRACE(":%d %s\n", nRecv, lpszBuffer);
+                return lpszBuffer;
+            }
+            if (lpszBuffer[nRecv] != '\r')
+                nRecv++;
+        }
+	else
+	{
+            INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
+            return NULL;
+        }
+    }
+
+    return NULL;
+}
 
 /***********************************************************************
  *           FTP_SendCommandA (internal)
@@ -2759,7 +2818,7 @@ INT FTP_ReceiveResponse(ftp_session_t *lpwfs, DWORD_PTR dwContext)
 
     while(1)
     {
-	if (!INTERNET_GetNextLine(lpwfs->sndSocket, &nRecv))
+	if (!FTP_GetNextLine(lpwfs->sndSocket, &nRecv))
 	    goto lerror;
 
         if (nRecv >= 3)
@@ -3619,7 +3678,7 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
     
     lpfp->lpszName = NULL;
     do {
-        if(!(pszLine = INTERNET_GetNextLine(nSocket, &nBufLen)))
+        if(!(pszLine = FTP_GetNextLine(nSocket, &nBufLen)))
             return FALSE;
     
         pszToken = strtok(pszLine, szSpace);
