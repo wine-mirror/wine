@@ -346,6 +346,14 @@ void init_winsock(void)
 #endif
 }
 
+static void set_socket_blocking(int socket, blocking_mode_t mode)
+{
+#ifdef USE_WINSOCK
+    ULONG arg = mode == BLOCKING_DISALLOW;
+    ioctlsocket(socket, FIONBIO, &arg);
+#endif
+}
+
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
 {
     int result;
@@ -357,8 +365,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
     assert(server->addr_len);
     result = netconn->socket = socket(server->addr.ss_family, SOCK_STREAM, 0);
     if(result != -1) {
-        flag = 1;
-        ioctlsocket(netconn->socket, FIONBIO, &flag);
+        set_socket_blocking(netconn->socket, BLOCKING_DISALLOW);
         result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
         {
@@ -391,8 +398,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
             netconn->socket = -1;
         }
         else {
-            flag = 0;
-            ioctlsocket(netconn->socket, FIONBIO, &flag);
+            set_socket_blocking(netconn->socket, BLOCKING_ALLOW);
         }
     }
     if(result == -1)
@@ -571,14 +577,6 @@ int sock_recv(int fd, void *msg, size_t len, int flags)
     }
     while(ret == -1 && sock_get_error() == WSAEINTR);
     return ret;
-}
-
-static void set_socket_blocking(int socket, blocking_mode_t mode)
-{
-#ifdef USE_WINSOCK
-    ULONG arg = mode == BLOCKING_DISALLOW;
-    ioctlsocket(socket, FIONBIO, &arg);
-#endif
 }
 
 static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode)
@@ -1079,19 +1077,12 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
     return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
 #elif defined(USE_WINSOCK)
-    ULONG mode;
     int len;
     char b;
 
-    mode = 1;
-    if(ioctlsocket(netconn->socket, FIONBIO, &mode))
-        return FALSE;
-
+    set_socket_blocking(netconn->socket, BLOCKING_DISALLOW);
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK);
-
-    mode = 0;
-    if(ioctlsocket(netconn->socket, FIONBIO, &mode))
-        return FALSE;
+    set_socket_blocking(netconn->socket, BLOCKING_ALLOW);
 
     return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
 #else
