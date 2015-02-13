@@ -160,6 +160,8 @@ static const WCHAR prop_domainroleW[] =
     {'D','o','m','a','i','n','R','o','l','e',0};
 static const WCHAR prop_driveW[] =
     {'D','r','i','v','e',0};
+static const WCHAR prop_driverversionW[] =
+    {'D','r','i','v','e','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_drivetypeW[] =
     {'D','r','i','v','e','T','y','p','e',0};
 static const WCHAR prop_familyW[] =
@@ -542,6 +544,7 @@ static const struct column col_videocontroller[] =
     { prop_currentverticalresW,   CIM_UINT32, VT_I4 },
     { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
+    { prop_driverversionW,        CIM_STRING },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_videoprocessorW,       CIM_STRING|COL_FLAG_DYNAMIC }
@@ -637,6 +640,8 @@ static const WCHAR videocontroller_dactypeW[] =
     {'I','n','t','e','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
 static const WCHAR videocontroller_deviceidW[] =
     {'V','i','d','e','o','C','o','n','t','r','o','l','l','e','r','1',0};
+static const WCHAR videocontroller_driverversionW[] =
+    {'1','.','0',0};
 
 #include "pshpack1.h"
 struct record_baseboard
@@ -877,6 +882,7 @@ struct record_videocontroller
     UINT32       current_verticalres;
     const WCHAR *description;
     const WCHAR *device_id;
+    const WCHAR *driverversion;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
     const WCHAR *videoprocessor;
@@ -2479,6 +2485,7 @@ done:
     rec->current_verticalres   = vres;
     rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
+    rec->driverversion         = videocontroller_driverversionW;
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
     rec->videoprocessor        = heap_strdupW( name );
