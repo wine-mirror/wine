@@ -27,36 +27,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#include <ws2tcpip.h>
-#endif
+#include "ws2tcpip.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
 #include <time.h>
 #include <assert.h>
 
@@ -1286,13 +1262,9 @@ static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
 
     TRACE("(%p %p %x %lx)\n", file, available, flags, ctx);
 
-#ifdef FIONREAD
     retval = ioctlsocket(file->nDataSocket, FIONREAD, &unread);
     if (!retval)
         TRACE("%d bytes of queued, but unread data\n", unread);
-#else
-    FIXME("FIONREAD not available\n");
-#endif
 
     *available = unread;
 
@@ -2394,11 +2366,11 @@ static void FTPSESSION_CloseConnection(object_header_t *hdr)
     if (lpwfs->download_in_progress != NULL)
         lpwfs->download_in_progress->session_deleted = TRUE;
 
-     if (lpwfs->sndSocket != -1)
-         closesocket(lpwfs->sndSocket);
+    if (lpwfs->sndSocket != -1)
+        closesocket(lpwfs->sndSocket);
 
-     if (lpwfs->lstnSocket != -1)
-         closesocket(lpwfs->lstnSocket);
+    if (lpwfs->lstnSocket != -1)
+        closesocket(lpwfs->lstnSocket);
 
     if (lpwfs->pasvSocket != -1)
         closesocket(lpwfs->pasvSocket);
@@ -2681,18 +2653,19 @@ lend:
 
 static LPSTR FTP_GetNextLine(INT nSocket, LPDWORD dwLen)
 {
-    struct pollfd pfd;
+    struct timeval tv = {RESPONSE_TIMEOUT,0};
+    FD_SET set;
     INT nRecv = 0;
     LPSTR lpszBuffer = INTERNET_GetResponseBuffer();
 
     TRACE("\n");
 
-    pfd.fd = nSocket;
-    pfd.events = POLLIN;
+    FD_ZERO(&set);
+    FD_SET(nSocket, &set);
 
     while (nRecv < MAX_REPLY_LEN)
     {
-        if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
+        if (select(nSocket+1, &set, NULL, NULL, &tv) > 0)
         {
             if (sock_recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
             {
@@ -2992,7 +2965,7 @@ static BOOL FTP_InitListenSocket(ftp_session_t *lpwfs)
     TRACE("\n");
 
     init_winsock();
-    lpwfs->lstnSocket = socket(PF_INET, SOCK_STREAM, 0);
+    lpwfs->lstnSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (lpwfs->lstnSocket == -1)
     {
         TRACE("Unable to create listening socket\n");
@@ -3135,10 +3108,10 @@ static BOOL FTP_SendPort(ftp_session_t *lpwfs)
     TRACE("\n");
 
     sprintfW(szIPAddress, szIPFormat,
-	 lpwfs->lstnSocketAddress.sin_addr.s_addr&0x000000FF,
-        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0x0000FF00)>>8,
-        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0x00FF0000)>>16,
-        (lpwfs->lstnSocketAddress.sin_addr.s_addr&0xFF000000)>>24,
+	 lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x000000FF,
+        (lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x0000FF00)>>8,
+        (lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0x00FF0000)>>16,
+        (lpwfs->lstnSocketAddress.sin_addr.S_un.S_addr&0xFF000000)>>24,
         lpwfs->lstnSocketAddress.sin_port & 0xFF,
         (lpwfs->lstnSocketAddress.sin_port & 0xFF00)>>8);
 
@@ -3211,7 +3184,7 @@ static BOOL FTP_DoPassive(ftp_session_t *lpwfs)
 		f[i] = f[i] & 0xff;
 
 	    dataSocketAddress = lpwfs->socketAddress;
-	    pAddr = (char *)&(dataSocketAddress.sin_addr.s_addr);
+	    pAddr = (char *)&(dataSocketAddress.sin_addr.S_un.S_addr);
 	    pPort = (char *)&(dataSocketAddress.sin_port);
             pAddr[0] = f[0];
             pAddr[1] = f[1];
@@ -3274,7 +3247,7 @@ static BOOL FTP_SendPortOrPasv(ftp_session_t *lpwfs)
 static BOOL FTP_GetDataSocket(ftp_session_t *lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
-    socklen_t addrlen = sizeof(struct sockaddr);
+    socklen_t addrlen = sizeof(saddr);
 
     TRACE("\n");
     if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)

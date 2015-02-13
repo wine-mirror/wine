@@ -26,28 +26,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
 
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#include <ws2tcpip.h>
-#endif
+#include "ws2tcpip.h"
 
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <assert.h>
 
 #ifdef HAVE_CORESERVICES_CORESERVICES_H
@@ -3475,7 +3461,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
       {
           if (connect(fd, (struct sockaddr *)&saddr, sa_len) == 0)
               rc = TRUE;
-          close(fd);
+          closesocket(fd);
       }
   }
   else

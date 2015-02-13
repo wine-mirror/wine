@@ -22,12 +22,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#include <ws2tcpip.h>
-#endif
+#include "ws2tcpip.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -43,20 +38,6 @@
 #include "internet.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
-
-#ifndef HAVE_GETADDRINFO
-
-/* critical section to protect non-reentrant gethostbyname() */
-static CRITICAL_SECTION cs_gethostbyname;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &cs_gethostbyname,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": cs_gethostbyname") }
-};
-static CRITICAL_SECTION cs_gethostbyname = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-#endif
 
 #define TIME_STRING_LEN  30
 
@@ -147,16 +128,11 @@ time_t ConvertTimeString(LPCWSTR asctime)
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct sockaddr *psa, socklen_t *sa_len)
 {
+    struct addrinfo *res, hints;
     WCHAR *found;
     char *name;
     int len, sz;
-#ifdef HAVE_GETADDRINFO
-    struct addrinfo *res, hints;
     int ret;
-#else
-    struct hostent *phe;
-    struct sockaddr_in *sin = (struct sockaddr_in *)psa;
-#endif
 
     TRACE("%s\n", debugstr_w(lpszServerName));
 
@@ -176,8 +152,7 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, name, sz, NULL, NULL );
     name[sz] = 0;
 
-#ifdef HAVE_GETADDRINFO
-    memset( &hints, 0, sizeof(struct addrinfo) );
+    memset( &hints, 0, sizeof(hints) );
     /* Prefer IPv4 to IPv6 addresses, since some servers do not listen on
      * their IPv6 addresses even though they have IPv6 addresses in the DNS.
      */
@@ -186,14 +161,14 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     ret = getaddrinfo( name, NULL, &hints, &res );
     if (ret != 0)
     {
-        TRACE("failed to get IPv4 address of %s (%s), retrying with IPv6\n", debugstr_w(lpszServerName), gai_strerror(ret));
+        TRACE("failed to get IPv4 address of %s, retrying with IPv6\n", debugstr_w(lpszServerName));
         hints.ai_family = AF_INET6;
         ret = getaddrinfo( name, NULL, &hints, &res );
     }
     heap_free( name );
     if (ret != 0)
     {
-        TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
+        TRACE("failed to get address of %s\n", debugstr_w(lpszServerName));
         return FALSE;
     }
     if (*sa_len < res->ai_addrlen)
@@ -216,31 +191,6 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     }
 
     freeaddrinfo( res );
-#else
-    EnterCriticalSection( &cs_gethostbyname );
-    phe = gethostbyname(name);
-    heap_free( name );
-
-    if (NULL == phe)
-    {
-        TRACE("failed to get address of %s (%d)\n", debugstr_w(lpszServerName), h_errno);
-        LeaveCriticalSection( &cs_gethostbyname );
-        return FALSE;
-    }
-    if (*sa_len < sizeof(struct sockaddr_in))
-    {
-        WARN("address too small\n");
-        LeaveCriticalSection( &cs_gethostbyname );
-        return FALSE;
-    }
-    *sa_len = sizeof(struct sockaddr_in);
-    memset(sin,0,sizeof(struct sockaddr_in));
-    memcpy((char *)&sin->sin_addr, phe->h_addr, phe->h_length);
-    sin->sin_family = phe->h_addrtype;
-    sin->sin_port = htons(nServerPort);
-
-    LeaveCriticalSection( &cs_gethostbyname );
-#endif
     return TRUE;
 }
 

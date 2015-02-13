@@ -28,31 +28,19 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
 
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#include <ws2tcpip.h>
-#endif
-
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <time.h>
-#include <assert.h>
 #ifdef HAVE_ZLIB
+#  define Z_SOLO
 #  include <zlib.h>
 #endif
 
+#include "ws2tcpip.h"
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"

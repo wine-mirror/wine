@@ -1,5 +1,5 @@
 /*
- * Wininet - networking layer. Uses unix sockets.
+ * Wininet - networking layer
  *
  * Copyright 2002 TransGaming Technologies Inc.
  * Copyright 2013 Jacek Caban for CodeWeavers
@@ -21,55 +21,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #define NONAMELESSUNION
 
-#if defined(__MINGW32__) || defined (_MSC_VER)
-#define USE_WINSOCK
-#endif
+#include "ws2tcpip.h"
 
-#ifdef USE_WINSOCK
-#include <ws2tcpip.h>
-#endif
-
-#include <sys/types.h>
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_FILIO_H
-# include <sys/filio.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
 #include <time.h>
-#ifdef HAVE_NETDB_H
-# include <netdb.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_TCP_H
-# include <netinet/tcp.h>
-#endif
-#ifndef USE_WINSOCK
-#include <errno.h>
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,25 +41,7 @@
 #include "wine/debug.h"
 #include "internet.h"
 
-/* To avoid conflicts with the Unix socket headers. we only need it for
- * the error codes anyway. */
-#define USE_WS_PREFIX
-#include "winsock2.h"
-
-#define RESPONSE_TIMEOUT        30            /* FROM internet.c */
-
-#ifdef MSG_DONTWAIT
-#define WINE_MSG_DONTWAIT MSG_DONTWAIT
-#else
-#define WINE_MSG_DONTWAIT 0
-#endif
-
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
-
-/* FIXME!!!!!!
- *    This should use winsock - To use winsock the functions will have to change a bit
- *        as they are designed for unix sockets.
- */
 
 static DWORD netconn_verify_cert(netconn_t *conn, PCCERT_CONTEXT cert, HCERTSTORE store)
 {
@@ -321,7 +259,6 @@ static BOOL ensure_cred_handle(void)
     return TRUE;
 }
 
-#ifdef USE_WINSOCK
 static BOOL winsock_loaded = FALSE;
 
 static BOOL WINAPI winsock_startup(INIT_ONCE *once, void *param, void **context)
@@ -336,22 +273,17 @@ static BOOL WINAPI winsock_startup(INIT_ONCE *once, void *param, void **context)
         ERR("WSAStartup failed: %u\n", res);
     return TRUE;
 }
-#endif
 
 void init_winsock(void)
 {
-#ifdef USE_WINSOCK
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     InitOnceExecuteOnce(&init_once, winsock_startup, NULL, NULL);
-#endif
 }
 
 static void set_socket_blocking(int socket, blocking_mode_t mode)
 {
-#ifdef USE_WINSOCK
     ULONG arg = mode == BLOCKING_DISALLOW;
     ioctlsocket(socket, FIONBIO, &arg);
-#endif
 }
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
@@ -371,25 +303,21 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         {
             res = sock_get_error();
             if (res == WSAEINPROGRESS || res == WSAEWOULDBLOCK) {
-                struct pollfd pfd;
+                FD_SET set;
                 int res;
+                socklen_t len = sizeof(res);
+                TIMEVAL timeout_timeval = {0, timeout*1000};
 
-                pfd.fd = netconn->socket;
-                pfd.events = POLLOUT;
-                res = poll(&pfd, 1, timeout);
-                if (!res)
-                {
+                FD_ZERO(&set);
+                FD_SET(netconn->socket, &set);
+                res = select(netconn->socket+1, NULL, &set, NULL, &timeout_timeval);
+                if(!res || res == SOCKET_ERROR) {
                     closesocket(netconn->socket);
                     netconn->socket = -1;
                     return ERROR_INTERNET_CANNOT_CONNECT;
                 }
-                else if (res > 0)
-                {
-                    int err;
-                    socklen_t len = sizeof(err);
-                    if (!getsockopt(netconn->socket, SOL_SOCKET, SO_ERROR, (void *)&err, &len) && !err)
-                        result = 0;
-                }
+                if (!getsockopt(netconn->socket, SOL_SOCKET, SO_ERROR, (void *)&res, &len) && !res)
+                    result = 0;
             }
         }
         if(result == -1)
@@ -404,12 +332,10 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
     if(result == -1)
         return ERROR_INTERNET_CANNOT_CONNECT;
 
-#ifdef TCP_NODELAY
     flag = 1;
     result = setsockopt(netconn->socket, IPPROTO_TCP, TCP_NODELAY, (void*)&flag, sizeof(flag));
     if(result < 0)
         WARN("setsockopt(TCP_NODELAY) failed\n");
-#endif
 
     return ERROR_SUCCESS;
 }
@@ -480,81 +406,13 @@ void NETCON_unload(void)
     if(have_compat_cred_handle)
         FreeCredentialsHandle(&compat_cred_handle);
     DeleteCriticalSection(&init_sechandle_cs);
-
-#ifdef USE_WINSOCK
     WSACleanup();
-#endif
 }
 
 /* translate a unix error code into a winsock one */
 int sock_get_error(void)
 {
-#ifdef USE_WINSOCK
     return WSAGetLastError();
-#else
-    switch (errno)
-    {
-        case EINTR:             return WSAEINTR;
-        case EBADF:             return WSAEBADF;
-        case EPERM:
-        case EACCES:            return WSAEACCES;
-        case EFAULT:            return WSAEFAULT;
-        case EINVAL:            return WSAEINVAL;
-        case EMFILE:            return WSAEMFILE;
-#if EAGAIN != EWOULDBLOCK
-        case EAGAIN:
-#endif
-        case EWOULDBLOCK:       return WSAEWOULDBLOCK;
-        case EINPROGRESS:       return WSAEINPROGRESS;
-        case EALREADY:          return WSAEALREADY;
-        case ENOTSOCK:          return WSAENOTSOCK;
-        case EDESTADDRREQ:      return WSAEDESTADDRREQ;
-        case EMSGSIZE:          return WSAEMSGSIZE;
-        case EPROTOTYPE:        return WSAEPROTOTYPE;
-        case ENOPROTOOPT:       return WSAENOPROTOOPT;
-        case EPROTONOSUPPORT:   return WSAEPROTONOSUPPORT;
-        case ESOCKTNOSUPPORT:   return WSAESOCKTNOSUPPORT;
-        case EOPNOTSUPP:        return WSAEOPNOTSUPP;
-        case EPFNOSUPPORT:      return WSAEPFNOSUPPORT;
-        case EAFNOSUPPORT:      return WSAEAFNOSUPPORT;
-        case EADDRINUSE:        return WSAEADDRINUSE;
-        case EADDRNOTAVAIL:     return WSAEADDRNOTAVAIL;
-        case ENETDOWN:          return WSAENETDOWN;
-        case ENETUNREACH:       return WSAENETUNREACH;
-        case ENETRESET:         return WSAENETRESET;
-        case ECONNABORTED:      return WSAECONNABORTED;
-        case EPIPE:
-        case ECONNRESET:        return WSAECONNRESET;
-        case ENOBUFS:           return WSAENOBUFS;
-        case EISCONN:           return WSAEISCONN;
-        case ENOTCONN:          return WSAENOTCONN;
-        case ESHUTDOWN:         return WSAESHUTDOWN;
-        case ETOOMANYREFS:      return WSAETOOMANYREFS;
-        case ETIMEDOUT:         return WSAETIMEDOUT;
-        case ECONNREFUSED:      return WSAECONNREFUSED;
-        case ELOOP:             return WSAELOOP;
-        case ENAMETOOLONG:      return WSAENAMETOOLONG;
-        case EHOSTDOWN:         return WSAEHOSTDOWN;
-        case EHOSTUNREACH:      return WSAEHOSTUNREACH;
-        case ENOTEMPTY:         return WSAENOTEMPTY;
-#ifdef EPROCLIM
-        case EPROCLIM:          return WSAEPROCLIM;
-#endif
-#ifdef EUSERS
-        case EUSERS:            return WSAEUSERS;
-#endif
-#ifdef EDQUOT
-        case EDQUOT:            return WSAEDQUOT;
-#endif
-#ifdef ESTALE
-        case ESTALE:            return WSAESTALE;
-#endif
-#ifdef EREMOTE
-        case EREMOTE:           return WSAEREMOTE;
-#endif
-    default: perror("sock_get_error"); return WSAEFAULT;
-    }
-#endif
 }
 
 int sock_send(int fd, const void *msg, size_t len, int flags)
@@ -861,7 +719,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
 
     tmp_mode = buf_len ? BLOCKING_DISALLOW : mode;
     set_socket_blocking(conn->socket, tmp_mode);
-    size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, tmp_mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
+    size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, 0);
     if(size < 0) {
         if(!buf_len) {
             if(sock_get_error() == WSAEWOULDBLOCK) {
@@ -902,7 +760,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
             assert(buf_len < ssl_buf_size);
 
             set_socket_blocking(conn->socket, mode);
-            size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
+            size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, 0);
             if(size < 1) {
                 if(size < 0 && sock_get_error() == WSAEWOULDBLOCK) {
                     TRACE("would block\n");
@@ -974,16 +832,8 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
     {
         int flags = 0;
 
-        switch(mode) {
-        case BLOCKING_ALLOW:
-            break;
-        case BLOCKING_DISALLOW:
-            flags = WINE_MSG_DONTWAIT;
-            break;
-        case BLOCKING_WAITALL:
+        if(mode == BLOCKING_WAITALL)
             flags = MSG_WAITALL;
-            break;
-        }
 
         set_socket_blocking(connection->socket, mode);
 	*recvd = sock_recv(connection->socket, buf, len, flags);
@@ -1051,7 +901,6 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 
     if(!connection->secure)
     {
-#ifdef FIONREAD
         ULONG unread;
         int retval = ioctlsocket(connection->socket, FIONREAD, &unread);
         if (!retval)
@@ -1059,7 +908,6 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
             TRACE("%d bytes of queued, but unread data\n", unread);
             *available += unread;
         }
-#endif
     }
     else
     {
@@ -1070,13 +918,6 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 
 BOOL NETCON_is_alive(netconn_t *netconn)
 {
-#ifdef MSG_DONTWAIT
-    ssize_t len;
-    BYTE b;
-
-    len = sock_recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
-    return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
-#elif defined(USE_WINSOCK)
     int len;
     char b;
 
@@ -1085,10 +926,6 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     set_socket_blocking(netconn->socket, BLOCKING_ALLOW);
 
     return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
-#else
-    FIXME("not supported on this platform\n");
-    return TRUE;
-#endif
 }
 
 LPCVOID NETCON_GetCert(netconn_t *connection)
