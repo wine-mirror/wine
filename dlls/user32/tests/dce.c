@@ -348,6 +348,7 @@ static void test_begin_paint(void)
     HDC old_hdc, hdc;
     RECT rect, parent_rect;
     PAINTSTRUCT ps;
+    COLORREF cr;
 
     /* cache DC */
 
@@ -427,6 +428,8 @@ static void test_begin_paint(void)
     RedrawWindow( hwnd_parentdc, NULL, 0, RDW_INVALIDATE );
     hdc = BeginPaint( hwnd_parentdc, &ps );
     GetClipBox( hdc, &rect );
+    cr = SetPixel( hdc, 10, 10, RGB(255, 0, 0) );
+    ok( cr != -1, "error drawing outside of window client area\n" );
     EndPaint( hwnd_parentdc, &ps );
     GetClientRect( hwnd_parent, &parent_rect );
 
@@ -434,6 +437,10 @@ static void test_begin_paint(void)
     ok( rect.top == parent_rect.top, "rect.top = %d, expected %d\n", rect.top, parent_rect.top );
     todo_wine ok( rect.right == parent_rect.right, "rect.right = %d, expected %d\n", rect.right, parent_rect.right );
     todo_wine ok( rect.bottom == parent_rect.bottom, "rect.bottom = %d, expected %d\n", rect.bottom, parent_rect.bottom );
+
+    hdc = GetDC( hwnd_parent );
+    todo_wine ok( GetPixel( hdc, 10, 10 ) == cr, "error drawing outside of window client area\n" );
+    ReleaseDC( hwnd_parent, hdc );
 }
 
 /* test ScrollWindow with window DCs */
