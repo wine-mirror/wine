@@ -34,7 +34,6 @@
 #include <ws2tcpip.h>
 #endif
 
-#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2586,7 +2585,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 
     if (connect(nsocket, (struct sockaddr *)&socketAddr, sock_namelen) < 0)
     {
-	ERR("Unable to connect (%s)\n", strerror(errno));
+	ERR("Unable to connect (%d)\n", sock_get_error());
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
 	closesocket(nsocket);
     }
