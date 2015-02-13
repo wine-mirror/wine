@@ -129,6 +129,7 @@ struct dxgi_adapter
     IDXGIAdapter1 IDXGIAdapter1_iface;
     struct dxgi_factory *parent;
     LONG refcount;
+    struct wined3d_private_store private_store;
     UINT ordinal;
     IDXGIOutput *output;
 };
