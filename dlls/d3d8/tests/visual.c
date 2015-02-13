@@ -5458,26 +5458,30 @@ static void test_negative_fixedfunction_fog(void)
             DWORD d;
         } start, end;
         D3DFOGMODE vfog, tfog;
-        DWORD color, color_broken;
+        DWORD color, color_broken, color_broken2;
     }
     tests[] =
     {
-        /* Run the XYZRHW tests first. Depth clamping is broken after RHW draws on the testbot. */
+        /* Run the XYZRHW tests first. Depth clamping is broken after RHW draws on the testbot.
+         *
+         * Geforce8+ GPUs on Windows abs() table fog, everything else does not. */
         {D3DFVF_XYZRHW, tquad,  sizeof(*tquad), &identity, { 0.0f}, {1.0f},
-                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00ff0000, 0x00ff0000},
+                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00ff0000, 0x00808000, 0x00808000},
         /* r200 GPUs and presumably all d3d8 and older HW clamp the fog
          * parameters to 0.0 and 1.0 in the table fog case. */
         {D3DFVF_XYZRHW, tquad,  sizeof(*tquad), &identity, {-1.0f}, {0.0f},
-                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00808000, 0x00ff0000},
+                D3DFOG_NONE,   D3DFOG_LINEAR, 0x00808000, 0x00ff0000, 0x0000ff00},
         /* test_fog_interpolation shows that vertex fog evaluates the fog
          * equation in the vertex pipeline. Start = -1.0 && end = 0.0 shows
-         * that the abs happens before the fog equation is evaluated. */
+         * that the abs happens before the fog equation is evaluated.
+         *
+         * Vertex fog abs() behavior is the same on all GPUs. */
         {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     { 0.0f}, {1.0f},
-                D3DFOG_LINEAR, D3DFOG_NONE,   0x00808000, 0x00808000},
+                D3DFOG_LINEAR, D3DFOG_NONE,   0x00808000, 0x00808000, 0x00808000},
         {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     {-1.0f}, {0.0f},
-                D3DFOG_LINEAR, D3DFOG_NONE,   0x0000ff00, 0x0000ff00},
+                D3DFOG_LINEAR, D3DFOG_NONE,   0x0000ff00, 0x0000ff00, 0x0000ff00},
         {D3DFVF_XYZ,    quad,   sizeof(*quad),  &zero,     { 0.0f}, {1.0f},
-                D3DFOG_EXP,    D3DFOG_NONE,   0x009b6400, 0x009b6400},
+                D3DFOG_EXP,    D3DFOG_NONE,   0x009b6400, 0x009b6400, 0x009b6400},
     };
     D3DCAPS8 caps;
 
@@ -5539,7 +5543,8 @@ static void test_negative_fixedfunction_fog(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, tests[i].color, 2) || broken(color_match(color, tests[i].color_broken, 2)),
+        ok(color_match(color, tests[i].color, 2) || broken(color_match(color, tests[i].color_broken, 2))
+                || broken(color_match(color, tests[i].color_broken2, 2)),
                 "Got unexpected color 0x%08x, case %u.\n", color, i);
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
