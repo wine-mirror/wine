@@ -1141,6 +1141,8 @@ static const WCHAR cutW[] =
     {'c','u','t',0};
 static const WCHAR fontnameW[] =
     {'f','o','n','t','n','a','m','e',0};
+static const WCHAR fontsizeW[] =
+    {'f','o','n','t','s','i','z','e',0};
 static const WCHAR indentW[] =
     {'i','n','d','e','n','t',0};
 static const WCHAR insertorderedlistW[] =
@@ -1161,6 +1163,7 @@ static const struct {
     {copyW, IDM_COPY},
     {cutW, IDM_CUT},
     {fontnameW, IDM_FONTNAME},
+    {fontsizeW, IDM_FONTSIZE},
     {indentW, IDM_INDENT},
     {insertorderedlistW, IDM_ORDERLIST},
     {insertunorderedlistW, IDM_UNORDERLIST},
