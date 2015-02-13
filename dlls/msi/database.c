@@ -54,35 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 #define IS_INTMSIDBOPEN(x)      (((ULONG_PTR)(x) >> 16) == 0)
 
-typedef struct tagMSITRANSFORM {
-    struct list entry;
-    IStorage *stg;
-} MSITRANSFORM;
-
-UINT msi_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
-{
-    HRESULT r;
-    WCHAR decoded[MAX_STREAM_NAME_LEN + 1];
-
-    decode_streamname( stname, decoded );
-    TRACE("%s -> %s\n", debugstr_w(stname), debugstr_w(decoded));
-
-    r = IStorage_OpenStream( db->storage, stname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
-    if (FAILED( r ))
-    {
-        MSITRANSFORM *transform;
-
-        LIST_FOR_EACH_ENTRY( transform, &db->transforms, MSITRANSFORM, entry )
-        {
-            r = IStorage_OpenStream( transform->stg, stname, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
-            if (SUCCEEDED( r ))
-                break;
-        }
-    }
-
-    return SUCCEEDED(r) ? ERROR_SUCCESS : ERROR_FUNCTION_FAILED;
-}
-
 static void free_transforms( MSIDATABASE *db )
 {
     while( !list_empty( &db->transforms ) )
@@ -92,6 +63,16 @@ static void free_transforms( MSIDATABASE *db )
         IStorage_Release( t->stg );
         msi_free( t );
     }
+}
+
+static void free_streams( MSIDATABASE *db )
+{
+    UINT i;
+    for (i = 0; i < db->num_streams; i++)
+    {
+        if (db->streams[i].stream) IStream_Release( db->streams[i].stream );
+    }
+    msi_free( db->streams );
 }
 
 void append_storage_to_db( MSIDATABASE *db, IStorage *stg )
@@ -109,6 +90,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
     MSIDATABASE *db = (MSIDATABASE *) arg;
 
     msi_free(db->path);
+    free_streams( db );
     free_cached_tables( db );
     free_transforms( db );
     if (db->strings) msi_destroy_stringtable( db->strings );
