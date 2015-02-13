@@ -181,9 +181,6 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
         goto done;
     }
 
-    encname = encode_streamname(FALSE, name);
-    msi_destroy_stream(sv->db, encname);
-
     r = write_stream_data(sv->db->storage, name, data, count, FALSE);
     if (r != ERROR_SUCCESS)
     {
@@ -195,6 +192,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     if (!stream)
         goto done;
 
+    encname = encode_streamname(FALSE, name);
     hr = IStorage_OpenStream(sv->db->storage, encname, 0,
                              STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream->stream);
     if (FAILED(hr))
