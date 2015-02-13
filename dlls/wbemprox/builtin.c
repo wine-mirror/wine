@@ -39,6 +39,8 @@
 #include "winioctl.h"
 #include "winsvc.h"
 #include "winver.h"
+#include "sddl.h"
+#include "ntsecapi.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -89,11 +91,15 @@ static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_processor2W[] =
     {'C','I','M','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_sidW[] =
+    {'W','i','n','3','2','_','S','I','D',0};
 static const WCHAR class_sounddeviceW[] =
     {'W','i','n','3','2','_','S','o','u','n','d','D','e','v','i','c','e',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
+static const WCHAR prop_accountnameW[] =
+    {'A','c','c','o','u','n','t','N','a','m','e',0};
 static const WCHAR prop_acceptpauseW[] =
     {'A','c','c','e','p','t','P','a','u','s','e',0};
 static const WCHAR prop_acceptstopW[] =
@@ -110,6 +116,8 @@ static const WCHAR prop_addresswidthW[] =
     {'A','d','d','r','e','s','s','W','i','d','t','h',0};
 static const WCHAR prop_availabilityW[] =
     {'A','v','a','i','l','a','b','i','l','i','t','y',0};
+static const WCHAR prop_binaryrepresentationW[] =
+    {'B','i','n','a','r','y','R','e','p','r','e','s','e','n','t','a','t','i','o','n',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
@@ -248,6 +256,8 @@ static const WCHAR prop_productW[] =
     {'P','r','o','d','u','c','t',0};
 static const WCHAR prop_productnameW[] =
     {'P','r','o','d','u','c','t','N','a','m','e',0};
+static const WCHAR prop_referenceddomainnameW[] =
+    {'R','e','f','e','r','e','n','c','e','d','D','o','m','a','i','n','N','a','m','e',0};
 static const WCHAR prop_releasedateW[] =
     {'R','e','l','e','a','s','e','D','a','t','e',0};
 static const WCHAR prop_serialnumberW[] =
@@ -262,6 +272,10 @@ static const WCHAR prop_smbiosbiosversionW[] =
     {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
 static const WCHAR prop_startmodeW[] =
     {'S','t','a','r','t','M','o','d','e',0};
+static const WCHAR prop_sidW[] =
+    {'S','I','D',0};
+static const WCHAR prop_sidlengthW[] =
+    {'S','i','d','L','e','n','g','t','h',0};
 static const WCHAR prop_sizeW[] =
     {'S','i','z','e',0};
 static const WCHAR prop_speedW[] =
@@ -516,6 +530,14 @@ static const struct column col_service[] =
     { method_resumeserviceW,  CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_startserviceW,   CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_stopserviceW,    CIM_FLAG_ARRAY|COL_FLAG_METHOD }
+};
+static const struct column col_sid[] =
+{
+    { prop_accountnameW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_binaryrepresentationW,   CIM_UINT8|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
+    { prop_referenceddomainnameW,   CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_sidW,                    CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_sidlengthW,              CIM_UINT32 }
 };
 static const struct column col_sounddevice[] =
 {
@@ -854,6 +876,14 @@ struct record_service
     class_method *resume_service;
     class_method *start_service;
     class_method *stop_service;
+};
+struct record_sid
+{
+    const WCHAR *accountname;
+    const UINT8 *binaryrepresentation;
+    const WCHAR *referenceddomainname;
+    const WCHAR *sid;
+    UINT32       sidlength;
 };
 struct record_sounddevice
 {
@@ -2421,6 +2451,91 @@ done:
     return fill_status;
 }
 
+static WCHAR *get_accountname( LSA_TRANSLATED_NAME *name )
+{
+    if (!name || !name->Name.Buffer) return NULL;
+    return heap_strdupW( name->Name.Buffer );
+}
+static UINT8 *get_binaryrepresentation( PSID sid, UINT len )
+{
+    UINT8 *ret = heap_alloc( len );
+    if (!ret) return NULL;
+    memcpy( ret, sid, len );
+    return ret;
+}
+static WCHAR *get_referenceddomainname( LSA_REFERENCED_DOMAIN_LIST *domain )
+{
+    if (!domain || !domain->Domains || !domain->Domains->Name.Buffer) return NULL;
+    return heap_strdupW( domain->Domains->Name.Buffer );
+}
+static const WCHAR *find_sid_str( const struct expr *cond )
+{
+    const struct expr *left, *right;
+    const WCHAR *ret = NULL;
+
+    if (!cond || cond->type != EXPR_COMPLEX || cond->u.expr.op != OP_EQ) return NULL;
+
+    left = cond->u.expr.left;
+    right = cond->u.expr.right;
+    if (left->type == EXPR_PROPVAL && right->type == EXPR_SVAL && !strcmpiW( left->u.propval->name, prop_sidW ))
+    {
+        ret = right->u.sval;
+    }
+    else if (left->type == EXPR_SVAL && right->type == EXPR_PROPVAL && !strcmpiW( right->u.propval->name, prop_sidW ))
+    {
+        ret = left->u.sval;
+    }
+    return ret;
+}
+
+static enum fill_status fill_sid( struct table *table, const struct expr *cond )
+{
+    PSID sid;
+    LSA_REFERENCED_DOMAIN_LIST *domain;
+    LSA_TRANSLATED_NAME *name;
+    LSA_HANDLE handle;
+    LSA_OBJECT_ATTRIBUTES attrs;
+    const WCHAR *str;
+    struct record_sid *rec;
+    UINT len;
+
+    if (!(str = find_sid_str( cond ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    if (!ConvertStringSidToSidW( str, &sid )) return FILL_STATUS_FAILED;
+    len = GetLengthSid( sid );
+
+    memset( &attrs, 0, sizeof(attrs) );
+    attrs.Length = sizeof(attrs);
+    if (LsaOpenPolicy( NULL, &attrs, POLICY_ALL_ACCESS, &handle ))
+    {
+        LocalFree( sid );
+        return FILL_STATUS_FAILED;
+    }
+    if (LsaLookupSids( handle, 1, &sid, &domain, &name ))
+    {
+        LocalFree( sid );
+        LsaClose( handle );
+        return FILL_STATUS_FAILED;
+    }
+
+    rec = (struct record_sid *)table->data;
+    rec->accountname            = get_accountname( name );
+    rec->binaryrepresentation   = get_binaryrepresentation( sid, len );
+    rec->referenceddomainname   = get_referenceddomainname( domain );
+    rec->sid                    = heap_strdupW( str );
+    rec->sidlength              = len;
+
+    TRACE("created 1 row\n");
+    table->num_rows = 1;
+
+    LsaFreeMemory( domain );
+    LsaFreeMemory( name );
+    LocalFree( sid );
+    LsaClose( handle );
+    return FILL_STATUS_FILTERED;
+}
+
 static UINT32 get_bits_per_pixel( UINT *hres, UINT *vres )
 {
     HDC hdc = GetDC( NULL );
@@ -2524,6 +2639,7 @@ static struct table builtin_classes[] =
     { class_processor2W, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
     { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
     { class_serviceW, SIZEOF(col_service), col_service, 0, 0, NULL, fill_service },
+    { class_sidW, SIZEOF(col_sid), col_sid, 0, 0, NULL, fill_sid },
     { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), 0, (BYTE *)data_sounddevice },
     { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), 0, (BYTE *)data_stdregprov },
     { class_systemsecurityW, SIZEOF(col_systemsecurity), col_systemsecurity, SIZEOF(data_systemsecurity), 0, (BYTE *)data_systemsecurity },
