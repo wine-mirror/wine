@@ -83,8 +83,6 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
                 e->usage = 0;
                 e->usage_idx = 0;
 
-                if (f->AlignedByteOffset == D3D10_APPEND_ALIGNED_ELEMENT)
-                    FIXME("D3D10_APPEND_ALIGNED_ELEMENT not supported\n");
                 if (f->InputSlotClass != D3D10_INPUT_PER_VERTEX_DATA)
                     FIXME("Ignoring input slot class (%#x)\n", f->InputSlotClass);
                 if (f->InstanceDataStepRate)

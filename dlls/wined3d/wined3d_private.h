@@ -2422,8 +2422,8 @@ struct wined3d_vertex_declaration_element
 {
     const struct wined3d_format *format;
     BOOL ffp_valid;
-    WORD input_slot;
-    WORD offset;
+    unsigned int input_slot;
+    unsigned int offset;
     UINT output_slot;
     BYTE method;
     BYTE usage;

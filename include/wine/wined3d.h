@@ -1494,6 +1494,8 @@ enum wined3d_display_rotation
 #define WINED3D_SURFACE_DISCARD                                 0x00000002
 #define WINED3D_SURFACE_PIN_SYSMEM                              0x00000004
 
+#define WINED3D_APPEND_ALIGNED_ELEMENT                          0xffffffff
+
 struct wined3d_display_mode
 {
     UINT width;
@@ -1670,8 +1672,8 @@ struct wined3d_clip_status
 struct wined3d_vertex_element
 {
     enum wined3d_format_id format;
-    WORD input_slot;
-    WORD offset;
+    unsigned int input_slot;
+    unsigned int offset;
     UINT output_slot; /* D3D 8 & 10 */
     BYTE method;
     BYTE usage;
