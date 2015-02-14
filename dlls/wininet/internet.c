@@ -522,11 +522,12 @@ static void free_global_proxy( void )
 static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
 {
     static const WCHAR fmt[] = {'%','s',':','%','u',0};
-    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH] = {};
-    WCHAR username[INTERNET_MAX_USER_NAME_LENGTH] = {};
-    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH] = {};
+    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
+    WCHAR username[INTERNET_MAX_USER_NAME_LENGTH];
+    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
     URL_COMPONENTSW uc;
 
+    hostname[0] = username[0] = password[0] = 0;
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize      = sizeof(uc);
     uc.lpszHostName      = hostname;
