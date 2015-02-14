@@ -916,7 +916,7 @@ static LONG cookie_counter = 1;
 
 static DWORD WINAPI DSoundAdviseThread(LPVOID lpParam) {
     DSoundRenderImpl *This = lpParam;
-    struct dsoundrender_timer head = { };
+    struct dsoundrender_timer head = {NULL};
     MSG msg;
 
     TRACE("(%p): Main Loop\n", This);
