@@ -707,7 +707,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     PIN_INFO piOutput;
     const char *typename;
     char *name;
-    AM_MEDIA_TYPE amt = { };
+    AM_MEDIA_TYPE amt = {{0}};
     GstCaps *caps;
     GstStructure *arg;
     GstPad *mypad;
