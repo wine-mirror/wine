@@ -122,6 +122,21 @@ static void PB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
         HeapFree(GetProcessHeap(), 0, text);
     }
 
+    if (focused)
+    {
+        MARGINS margins;
+        RECT focusRect = bgRect;
+
+        GetThemeMargins(theme, hDC, BP_PUSHBUTTON, state, TMT_CONTENTMARGINS, NULL, &margins);
+
+        focusRect.left += margins.cxLeftWidth;
+        focusRect.top += margins.cyTopHeight;
+        focusRect.right -= margins.cxRightWidth;
+        focusRect.bottom -= margins.cyBottomHeight;
+
+        DrawFocusRect( hDC, &focusRect );
+    }
+
     if (hPrevFont) SelectObject(hDC, hPrevFont);
 }
 
