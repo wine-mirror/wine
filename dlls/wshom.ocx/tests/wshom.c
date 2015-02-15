@@ -33,6 +33,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static void test_wshshell(void)
 {
+    static const WCHAR notepadW[] = {'n','o','t','e','p','a','d','.','e','x','e',0};
     static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     static const WCHAR lnk1W[] = {'f','i','l','e','.','l','n','k',0};
     static const WCHAR pathW[] = {'%','P','A','T','H','%',0};
@@ -51,8 +52,9 @@ static void test_wshshell(void)
     TYPEATTR *tattr;
     DISPPARAMS dp;
     EXCEPINFO ei;
-    VARIANT arg, res;
+    VARIANT arg, res, arg2;
     BSTR str, ret;
+    DWORD retval;
     UINT err;
 
     hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -170,6 +172,34 @@ static void test_wshshell(void)
     SysFreeString(str);
 
     IWshEnvironment_Release(env);
+
+    V_VT(&arg) = VT_I2;
+    V_I2(&arg) = 0;
+    V_VT(&arg2) = VT_ERROR;
+    V_ERROR(&arg2) = DISP_E_PARAMNOTFOUND;
+
+    str = SysAllocString(notepadW);
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    retval = 10;
+    hr = IWshShell3_Run(sh3, str, NULL, &arg2, &retval);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(retval == 10, "got %u\n", retval);
+
+    retval = 10;
+    hr = IWshShell3_Run(sh3, str, &arg, NULL, &retval);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(retval == 10, "got %u\n", retval);
+
+    retval = 10;
+    V_VT(&arg2) = VT_ERROR;
+    V_ERROR(&arg2) = 0;
+    hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
+    ok(hr == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hr);
+    ok(retval == 10, "got %u\n", retval);
+
+    SysFreeString(str);
 
     IWshCollection_Release(coll);
     IDispatch_Release(disp);

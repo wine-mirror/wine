@@ -912,14 +912,22 @@ static HRESULT WINAPI WshShell3_get_Environment(IWshShell3 *iface, VARIANT *type
     return WshEnvironment_Create(env);
 }
 
-static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *WaitOnReturn, int *exit_code)
+static inline BOOL is_optional_argument(const VARIANT *arg)
+{
+    return V_VT(arg) == VT_ERROR && V_ERROR(arg) == DISP_E_PARAMNOTFOUND;
+}
+
+static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style, VARIANT *wait, DWORD *exit_code)
 {
     SHELLEXECUTEINFOW info;
     int waitforprocess;
-    VARIANT s, w;
+    VARIANT s;
     HRESULT hr;
 
-    TRACE("(%s %s %s %p)\n", debugstr_w(cmd), debugstr_variant(style), debugstr_variant(WaitOnReturn), exit_code);
+    TRACE("(%s %s %s %p)\n", debugstr_w(cmd), debugstr_variant(style), debugstr_variant(wait), exit_code);
+
+    if (!style || !wait || !exit_code)
+        return E_POINTER;
 
     VariantInit(&s);
     hr = VariantChangeType(&s, style, 0, VT_I4);
@@ -929,19 +937,21 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
         return hr;
     }
 
-    VariantInit(&w);
-    hr = VariantChangeType(&w, WaitOnReturn, 0, VT_I4);
-    if (FAILED(hr))
-    {
-        ERR("failed to convert wait argument, 0x%08x\n", hr);
-        return hr;
+    if (is_optional_argument(wait))
+        waitforprocess = 0;
+    else {
+        VARIANT w;
+
+        VariantInit(&w);
+        hr = VariantChangeType(&w, wait, 0, VT_I4);
+        if (FAILED(hr))
+            return hr;
+
+        waitforprocess = V_I4(&w);
     }
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
-
-    waitforprocess = V_I4(&w);
-
     info.fMask = waitforprocess ? SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS : SEE_MASK_DEFAULT;
     info.lpFile = cmd;
     info.nShow = V_I4(&s);
@@ -955,16 +965,11 @@ static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR cmd, VARIANT *style,
     {
         if (waitforprocess)
         {
-            if (exit_code)
-            {
-                DWORD code;
-                GetExitCodeProcess(info.hProcess, &code);
-                *exit_code = code;
-            }
+            GetExitCodeProcess(info.hProcess, exit_code);
             CloseHandle(info.hProcess);
         }
         else
-            if (exit_code) *exit_code = 0;
+            *exit_code = 0;
 
         return S_OK;
     }
