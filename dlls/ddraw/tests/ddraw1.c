@@ -5918,6 +5918,391 @@ static void test_surface_desc_lock(void)
     DestroyWindow(window);
 }
 
+static void test_texturemapblend(void)
+{
+    HRESULT hr;
+    DDSURFACEDESC ddsd;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    DDBLTFX fx;
+    static RECT rect = {0, 0, 64, 128};
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    DDCOLORKEY ckey;
+    IDirectDrawSurface *surface, *rt;
+    IDirect3DTexture *texture;
+    D3DTEXTUREHANDLE texture_handle;
+    HWND window;
+    IDirectDraw *ddraw;
+    IDirect3DDevice *device;
+    IDirect3DMaterial *material;
+    IDirect3DViewport *viewport;
+    IDirect3DExecuteBuffer *execute_buffer;
+    UINT inst_length;
+    void *ptr;
+    ULONG ref;
+    D3DCOLOR color;
+
+    static const D3DTLVERTEX test1_quads[] =
+    {
+        {{0.0f},   {0.0f},   {0.0f}, {1.0f}, {0xffffffff}, {0}, {0.0f}, {0.0f}},
+        {{0.0f},   {240.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0}, {0.0f}, {1.0f}},
+        {{640.0f}, {0.0f},   {0.0f}, {1.0f}, {0xffffffff}, {0}, {1.0f}, {0.0f}},
+        {{640.0f}, {240.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0}, {1.0f}, {1.0f}},
+        {{0.0f},   {240.0f}, {0.0f}, {1.0f}, {0x80ffffff}, {0}, {0.0f}, {0.0f}},
+        {{0.0f},   {480.0f}, {0.0f}, {1.0f}, {0x80ffffff}, {0}, {0.0f}, {1.0f}},
+        {{640.0f}, {240.0f}, {0.0f}, {1.0f}, {0x80ffffff}, {0}, {1.0f}, {0.0f}},
+        {{640.0f}, {480.0f}, {0.0f}, {1.0f}, {0x80ffffff}, {0}, {1.0f}, {1.0f}},
+    },
+    test2_quads[] =
+    {
+        {{0.0f},   {0.0f},   {0.0f}, {1.0f}, {0x00ff0080}, {0}, {0.0f}, {0.0f}},
+        {{0.0f},   {240.0f}, {0.0f}, {1.0f}, {0x00ff0080}, {0}, {0.0f}, {1.0f}},
+        {{640.0f}, {0.0f},   {0.0f}, {1.0f}, {0x00ff0080}, {0}, {1.0f}, {0.0f}},
+        {{640.0f}, {240.0f}, {0.0f}, {1.0f}, {0x00ff0080}, {0}, {1.0f}, {1.0f}},
+        {{0.0f},   {240.0f}, {0.0f}, {1.0f}, {0x008000ff}, {0}, {0.0f}, {0.0f}},
+        {{0.0f},   {480.0f}, {0.0f}, {1.0f}, {0x008000ff}, {0}, {0.0f}, {1.0f}},
+        {{640.0f}, {240.0f}, {0.0f}, {1.0f}, {0x008000ff}, {0}, {1.0f}, {0.0f}},
+        {{640.0f}, {480.0f}, {0.0f}, {1.0f}, {0x008000ff}, {0}, {1.0f}, {1.0f}},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        IDirectDraw_Release(ddraw);
+        return;
+    }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    material = create_diffuse_material(device, 0.0f, 0.0f, 0.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, material);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    /* Test alpha with DDPF_ALPHAPIXELS texture - should be taken from texture alpha channel.
+     *
+     * The vertex alpha is completely ignored in this case, so case 1 and 2 combined are not
+     * a D3DTOP_MODULATE with texture alpha = 0xff in case 2 (no alpha in texture). */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U5(ddsd.ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0xff0000ff;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0x800000ff;
+    hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, test1_quads, sizeof(test1_quads));
+
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test1_quads);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
+    emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+    emit_set_rs(&ptr, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+
+    emit_tquad(&ptr, 0);
+    emit_tquad(&ptr, 4);
+    emit_end(&ptr);
+
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(test1_quads);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    set_execute_data(execute_buffer, 8, sizeof(test1_quads), inst_length);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_UNCLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 5, 5);
+    ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 5);
+    ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 5, 245);
+    ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 245);
+    ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DTexture_Release(texture);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(ref == 0, "Surface not properly released, refcount %u.\n", ref);
+
+    /* Test alpha with texture that has no alpha channel - alpha should be taken from diffuse vertex color. */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    U5(fx).dwFillColor = 0xff0000ff;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0x800000ff;
+    hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test1_quads);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+
+    emit_tquad(&ptr, 0);
+    emit_tquad(&ptr, 4);
+    emit_end(&ptr);
+
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(test1_quads);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    set_execute_data(execute_buffer, 8, sizeof(test1_quads), inst_length);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_UNCLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 5, 5);
+    ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 5);
+    ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 5, 245);
+    ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 245);
+    ok(compare_color(color, 0x00000080, 2), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DTexture_Release(texture);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(ref == 0, "Surface not properly released, refcount %u.\n", ref);
+
+    /* Test RGB - should multiply color components from diffuse vertex color and texture. */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U5(ddsd.ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    U5(fx).dwFillColor = 0x00ffffff;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0x00ffff80;
+    hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, test2_quads, sizeof(test2_quads));
+
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test1_quads);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+
+    emit_tquad(&ptr, 0);
+    emit_tquad(&ptr, 4);
+    emit_end(&ptr);
+
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(test2_quads);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    set_execute_data(execute_buffer, 8, sizeof(test1_quads), inst_length);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_UNCLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 5, 5);
+    ok(compare_color(color, 0x00ff0040, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 5);
+    ok(compare_color(color, 0x00ff0080, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 5, 245);
+    ok(compare_color(color, 0x00800080, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 245);
+    ok(compare_color(color, 0x008000ff, 2), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DTexture_Release(texture);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(ref == 0, "Surface not properly released, refcount %u.\n", ref);
+
+    /* Test alpha again, now with color keyed texture (colorkey emulation in wine can interfere). */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 128;
+    ddsd.dwWidth = 128;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xf800;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x07e0;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x001f;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    U5(fx).dwFillColor = 0xf800;
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0x001f;
+    hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear texture, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = 0x001f;
+    ckey.dwColorSpaceHighValue = 0x001f;
+    hr = IDirectDrawSurface_SetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, test1_quads, sizeof(test1_quads));
+
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test1_quads);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+
+    emit_tquad(&ptr, 0);
+    emit_tquad(&ptr, 4);
+    emit_end(&ptr);
+
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(test1_quads);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+    set_execute_data(execute_buffer, 8, sizeof(test1_quads), inst_length);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_UNCLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 5, 5);
+    ok(compare_color(color, 0x00000000, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 5);
+    ok(compare_color(color, 0x00ff0000, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 5, 245);
+    ok(compare_color(color, 0x00000000, 2), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 400, 245);
+    ok(compare_color(color, 0x00800000, 2), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DTexture_Release(texture);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(ref == 0, "Surface not properly released, refcount %u.\n", ref);
+
+    ref = IDirect3DExecuteBuffer_Release(execute_buffer);
+    ok(ref == 0, "Execute buffer not properly released, refcount %u.\n", ref);
+    destroy_viewport(device, viewport);
+    ref = IDirect3DMaterial_Release(material);
+    ok(ref == 0, "Material not properly released, refcount %u.\n", ref);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DDevice_Release(device);
+    ref = IDirectDraw_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     IDirectDraw *ddraw;
@@ -5983,4 +6368,5 @@ START_TEST(ddraw1)
     test_palette_alpha();
     test_lost_device();
     test_surface_desc_lock();
+    test_texturemapblend();
 }
