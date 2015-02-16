@@ -125,20 +125,12 @@ time_t ConvertTimeString(LPCWSTR asctime)
 }
 
 
-BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct sockaddr *psa, socklen_t *sa_len)
+BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, socklen_t *sa_len)
 {
-    struct addrinfo *res, hints;
-    char *name;
-    int sz;
+    ADDRINFOW *res, hints;
     int ret;
 
-    TRACE("%s\n", debugstr_w(lpszServerName));
-
-    sz = WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, -1, NULL, 0, NULL, NULL );
-    if (!(name = heap_alloc(sz + 1))) return FALSE;
-    WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, -1, name, sz, NULL, NULL );
-    name[sz] = 0;
+    TRACE("%s\n", debugstr_w(name));
 
     memset( &hints, 0, sizeof(hints) );
     /* Prefer IPv4 to IPv6 addresses, since some servers do not listen on
@@ -146,23 +138,22 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
      */
     hints.ai_family = AF_INET;
 
-    ret = getaddrinfo( name, NULL, &hints, &res );
+    ret = GetAddrInfoW(name, NULL, &hints, &res);
     if (ret != 0)
     {
-        TRACE("failed to get IPv4 address of %s, retrying with IPv6\n", debugstr_w(lpszServerName));
+        TRACE("failed to get IPv4 address of %s, retrying with IPv6\n", debugstr_w(name));
         hints.ai_family = AF_INET6;
-        ret = getaddrinfo( name, NULL, &hints, &res );
+        ret = GetAddrInfoW(name, NULL, &hints, &res);
     }
-    heap_free( name );
     if (ret != 0)
     {
-        TRACE("failed to get address of %s\n", debugstr_w(lpszServerName));
+        TRACE("failed to get address of %s\n", debugstr_w(name));
         return FALSE;
     }
     if (*sa_len < res->ai_addrlen)
     {
         WARN("address too small\n");
-        freeaddrinfo( res );
+        FreeAddrInfoW(res);
         return FALSE;
     }
     *sa_len = res->ai_addrlen;
@@ -171,14 +162,14 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     switch (res->ai_family)
     {
     case AF_INET:
-        ((struct sockaddr_in *)psa)->sin_port = htons(nServerPort);
+        ((struct sockaddr_in *)psa)->sin_port = htons(port);
         break;
     case AF_INET6:
-        ((struct sockaddr_in6 *)psa)->sin6_port = htons(nServerPort);
+        ((struct sockaddr_in6 *)psa)->sin6_port = htons(port);
         break;
     }
 
-    freeaddrinfo( res );
+    FreeAddrInfoW(res);
     return TRUE;
 }
 
