@@ -70,9 +70,12 @@ DWORD get_last_error( void )
 
 void send_callback( object_header_t *hdr, DWORD status, LPVOID info, DWORD buflen )
 {
-    TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
-
-    if (hdr->callback && (hdr->notify_mask & status)) hdr->callback( hdr->handle, hdr->context, status, info, buflen );
+    if (hdr->callback && (hdr->notify_mask & status))
+    {
+        TRACE("%p, 0x%08x, %p, %u\n", hdr, status, info, buflen);
+        hdr->callback( hdr->handle, hdr->context, status, info, buflen );
+        TRACE("returning from 0x%08x callback\n", status);
+    }
 }
 
 /***********************************************************************
@@ -556,6 +559,15 @@ static void request_destroy( object_header_t *hdr )
 
     TRACE("%p\n", request);
 
+    if (request->task_thread)
+    {
+        SetEvent( request->task_cancel );
+        WaitForSingleObject( request->task_thread, INFINITE );
+        CloseHandle( request->task_thread );
+        CloseHandle( request->task_cancel );
+        CloseHandle( request->task_wait );
+        DeleteCriticalSection( &request->task_cs );
+    }
     release_object( &request->connect->hdr );
 
     destroy_authinfo( request->authinfo );
@@ -1057,6 +1069,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.context = connect->hdr.context;
     request->hdr.redirect_policy = connect->hdr.redirect_policy;
     list_init( &request->hdr.children );
+    list_init( &request->task_queue );
 
     addref_object( &connect->hdr );
     request->connect = connect;

@@ -178,20 +178,87 @@ static const WCHAR *attribute_table[] =
     NULL                            /* WINHTTP_QUERY_PASSPORT_CONFIG            = 78 */
 };
 
-static DWORD CALLBACK task_thread( LPVOID param )
+static task_header_t *dequeue_task( request_t *request )
 {
-    task_header_t *task = param;
+    task_header_t *task;
 
-    task->proc( task );
+    EnterCriticalSection( &request->task_cs );
+    TRACE("%u tasks queued\n", list_count( &request->task_queue ));
+    task = LIST_ENTRY( list_head( &request->task_queue ), task_header_t, entry );
+    if (task) list_remove( &task->entry );
+    LeaveCriticalSection( &request->task_cs );
 
-    release_object( &task->request->hdr );
-    heap_free( task );
-    return ERROR_SUCCESS;
+    TRACE("returning task %p\n", task);
+    return task;
+}
+
+static DWORD CALLBACK task_proc( LPVOID param )
+{
+    request_t *request = param;
+    HANDLE handles[2];
+
+    handles[0] = request->task_wait;
+    handles[1] = request->task_cancel;
+    for (;;)
+    {
+        DWORD err = WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
+        switch (err)
+        {
+        case WAIT_OBJECT_0:
+        {
+            task_header_t *task;
+            while ((task = dequeue_task( request )))
+            {
+                task->proc( task );
+                release_object( &task->request->hdr );
+                heap_free( task );
+            }
+            break;
+        }
+        case WAIT_OBJECT_0 + 1:
+            TRACE("exiting\n");
+            return 0;
+
+        default:
+            ERR("wait failed %u (%u)\n", err, GetLastError());
+            break;
+        }
+    }
+    return 0;
 }
 
 static BOOL queue_task( task_header_t *task )
 {
-    return QueueUserWorkItem( task_thread, task, WT_EXECUTELONGFUNCTION );
+    request_t *request = task->request;
+
+    if (!request->task_thread)
+    {
+        if (!(request->task_wait = CreateEventW( NULL, FALSE, FALSE, NULL ))) return FALSE;
+        if (!(request->task_cancel = CreateEventW( NULL, FALSE, FALSE, NULL )))
+        {
+            CloseHandle( request->task_wait );
+            request->task_wait = NULL;
+            return FALSE;
+        }
+        if (!(request->task_thread = CreateThread( NULL, 0, task_proc, request, 0, NULL )))
+        {
+            CloseHandle( request->task_wait );
+            request->task_wait = NULL;
+            CloseHandle( request->task_cancel );
+            request->task_cancel = NULL;
+            return FALSE;
+        }
+        InitializeCriticalSection( &request->task_cs );
+        request->task_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": request.task_cs");
+    }
+
+    EnterCriticalSection( &request->task_cs );
+    TRACE("queueing task %p\n", task );
+    list_add_tail( &request->task_queue, &task->entry );
+    LeaveCriticalSection( &request->task_cs );
+
+    SetEvent( request->task_wait );
+    return TRUE;
 }
 
 static void free_header( header_t *header )

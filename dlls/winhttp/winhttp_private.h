@@ -201,12 +201,18 @@ typedef struct
     DWORD num_accept_types;
     struct authinfo *authinfo;
     struct authinfo *proxy_authinfo;
+    HANDLE task_wait;
+    HANDLE task_cancel;
+    HANDLE task_thread;
+    struct list task_queue;
+    CRITICAL_SECTION task_cs;
 } request_t;
 
 typedef struct _task_header_t task_header_t;
 
 struct _task_header_t
 {
+    struct list entry;
     request_t *request;
     void (*proc)( task_header_t * );
 };
