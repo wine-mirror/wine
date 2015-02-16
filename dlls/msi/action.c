@@ -6968,6 +6968,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         data = msi_alloc(size);
         if (!data)
         {
+            msi_free(deformatted);
             RegCloseKey(env);
             return ERROR_OUTOFMEMORY;
         }
