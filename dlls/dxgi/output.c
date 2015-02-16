@@ -90,9 +90,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_SetPrivateData(IDXGIOutput *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_output_SetPrivateDataInterface(IDXGIOutput *iface,
         REFGUID guid, const IUnknown *object)
 {
-    FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
+
+    return dxgi_set_private_data_interface(&output->private_store, guid, object);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetPrivateData(IDXGIOutput *iface,
