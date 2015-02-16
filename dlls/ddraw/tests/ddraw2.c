@@ -4622,10 +4622,11 @@ static void test_surface_lock(void)
 static void test_surface_discard(void)
 {
     IDirectDraw2 *ddraw;
+    IDirect3DDevice2 *device;
     HRESULT hr;
     HWND window;
     DDSURFACEDESC ddsd;
-    IDirectDrawSurface *surface, *primary;
+    IDirectDrawSurface *surface, *target;
     void *addr;
     static const struct
     {
@@ -4645,14 +4646,16 @@ static void test_surface_discard(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        IDirectDraw2_Release(ddraw);
+        return;
+    }
 
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    hr = IDirect3DDevice2_GetRenderTarget(device, &target);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
@@ -4687,7 +4690,7 @@ static void test_surface_discard(void)
         hr = IDirectDrawSurface_Unlock(surface, NULL);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 
-        hr = IDirectDrawSurface_Blt(primary, NULL, surface, NULL, DDBLT_WAIT, NULL);
+        hr = IDirectDrawSurface_Blt(target, NULL, surface, NULL, DDBLT_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
 
         memset(&ddsd, 0, sizeof(ddsd));
@@ -4705,7 +4708,8 @@ static void test_surface_discard(void)
         ok(!discarded || tests[i].discard, "Expected surface not to be discarded, case %u\n", i);
     }
 
-    IDirectDrawSurface_Release(primary);
+    IDirectDrawSurface_Release(target);
+    IDirect3DDevice2_Release(device);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
