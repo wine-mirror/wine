@@ -3664,6 +3664,11 @@ static HRESULT WINAPI winhttp_request_get_ResponseBody(
     if (!body) return E_INVALIDARG;
 
     EnterCriticalSection( &request->cs );
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        err = ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND;
+        goto done;
+    }
     if (!(sa = SafeArrayCreateVector( VT_UI1, 0, request->offset )))
     {
         err = ERROR_OUTOFMEMORY;
