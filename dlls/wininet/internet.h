@@ -37,7 +37,7 @@ typedef struct {
     INTERNET_PORT port;
     BOOL is_https;
     struct sockaddr_storage addr;
-    socklen_t addr_len;
+    int addr_len;
     char addr_str[INET6_ADDRSTRLEN];
 
     WCHAR *scheme_host_port;

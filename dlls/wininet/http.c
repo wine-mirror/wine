@@ -30,11 +30,11 @@
 #include "config.h"
 
 #ifdef HAVE_ZLIB
-#  define Z_SOLO
 #  include <zlib.h>
 #endif
 
-#include "ws2tcpip.h"
+#include "winsock2.h"
+#include "ws2ipdef.h"
 
 #include <stdarg.h>
 #include <stdio.h>
