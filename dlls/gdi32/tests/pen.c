@@ -512,7 +512,7 @@ static void test_ps_userstyle(void)
     LOGBRUSH lb;
     HPEN pen;
     INT size, i;
-    char buffer[offsetof(EXTLOGPEN, elpStyleEntry[16])];
+    char buffer[offsetof(EXTLOGPEN, elpStyleEntry) + 16 * sizeof(DWORD)];
     EXTLOGPEN *ext_pen = (EXTLOGPEN *)buffer;
 
     lb.lbColor = 0x00ff0000;
@@ -569,7 +569,7 @@ static void test_ps_userstyle(void)
 
 static void test_brush_pens(void)
 {
-    char buffer[offsetof(EXTLOGPEN, elpStyleEntry[16])];
+    char buffer[offsetof(EXTLOGPEN, elpStyleEntry) + 16 * sizeof(DWORD)];
     EXTLOGPEN *elp = (EXTLOGPEN *)buffer;
     LOGBRUSH lb;
     HPEN pen = 0;

@@ -1588,7 +1588,7 @@ static BOOL is_black_pen( COLORREF fg, COLORREF bg, int r, int g, int b )
 static void test_bitmap_colors( HDC hdc, COLORREF fg, COLORREF bg, int r, int g, int b )
 {
     static const WORD pattern_bits[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
-    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors ) + 256 * sizeof(RGBQUAD)];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     RGBQUAD *colors = info->bmiColors;
     WORD bits[16];
