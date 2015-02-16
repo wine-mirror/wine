@@ -119,6 +119,7 @@ struct dxgi_output
 {
     IDXGIOutput IDXGIOutput_iface;
     LONG refcount;
+    struct wined3d_private_store private_store;
     struct dxgi_adapter *adapter;
 };
 
