@@ -103,9 +103,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateData(IDXGIFactory1 *ifac
 static HRESULT STDMETHODCALLTYPE dxgi_factory_SetPrivateDataInterface(IDXGIFactory1 *iface,
         REFGUID guid, const IUnknown *object)
 {
-    FIXME("iface %p, guid %s, object %p stub!\n", iface, debugstr_guid(guid), object);
+    struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
+
+    return dxgi_set_private_data_interface(&factory->private_store, guid, object);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_GetPrivateData(IDXGIFactory1 *iface,
