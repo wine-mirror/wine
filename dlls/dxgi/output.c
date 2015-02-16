@@ -100,9 +100,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_SetPrivateDataInterface(IDXGIOutput
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetPrivateData(IDXGIOutput *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_get_private_data(&output->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
