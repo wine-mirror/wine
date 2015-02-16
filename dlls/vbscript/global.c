@@ -1810,6 +1810,8 @@ static HRESULT Global_InStrRev(vbdisp_t *This, VARIANT *args, unsigned args_cnt,
         }else {
             start = SysStringLen(str1);
         }
+    } else {
+        str2 = NULL;
     }
 
     if(SUCCEEDED(hres)) {
