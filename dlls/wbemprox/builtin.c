@@ -543,7 +543,7 @@ static const struct column col_sounddevice[] =
 {
     { prop_nameW,        CIM_STRING },
     { prop_productnameW, CIM_STRING },
-    { prop_statusinfoW,  CIM_UINT16 }
+    { prop_statusinfoW,  CIM_UINT16, VT_I4 }
 };
 static const struct column col_stdregprov[] =
 {
