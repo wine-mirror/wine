@@ -7329,6 +7329,71 @@ static void test_texturemapblend(void)
     DestroyWindow(window);
 }
 
+static void test_viewport_clear_rect(void)
+{
+    HRESULT hr;
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DRECT clear_rect2 = {{90}, {90}, {110}, {110}};
+    IDirectDrawSurface *rt;
+    HWND window;
+    IDirectDraw2 *ddraw;
+    IDirect3DDevice2 *device;
+    IDirect3DMaterial2 *red, *green;
+    IDirect3DViewport2 *viewport, *viewport2;
+    ULONG ref;
+    D3DCOLOR color;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        IDirectDraw2_Release(ddraw);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    red = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, red);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    green = create_diffuse_material(device, 0.0f, 1.0f, 0.0f, 1.0f);
+    viewport2 = create_viewport(device, 100, 100, 20, 20);
+    viewport_set_background(device, viewport2, green);
+    hr = IDirect3DViewport2_Clear(viewport2, 1, &clear_rect2, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 85, 85);  /* Outside both. */
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 95, 95); /* Outside vp, inside rect. */
+    /* AMD GPUs ignore the viewport dimensions and only care about the rectangle. */
+    ok(compare_color(color, 0x00ff0000, 1) || broken(compare_color(color, 0x0000ff00, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 105, 105); /* Inside both. */
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 115, 115); /* Inside vp, outside rect. */
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 125, 125); /* Outside both. */
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    destroy_viewport(device, viewport2);
+    destroy_material(green);
+    destroy_viewport(device, viewport);
+    destroy_material(red);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DDevice2_Release(device);
+    ref = IDirectDraw2_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -7401,4 +7466,5 @@ START_TEST(ddraw2)
     test_lost_device();
     test_surface_desc_lock();
     test_texturemapblend();
+    test_viewport_clear_rect();
 }
