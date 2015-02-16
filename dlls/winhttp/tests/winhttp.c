@@ -2624,11 +2624,15 @@ static void test_IWinHttpRequest(void)
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL, headers = NULL;
     BSTR date, today, connection, value = NULL;
-    VARIANT async, empty, timeout, body, proxy_server, bypass_list, data;
+    VARIANT async, empty, timeout, body, body2, proxy_server, bypass_list, data;
     VARIANT_BOOL succeeded;
     LONG status;
     WCHAR todayW[WINHTTP_TIME_FORMAT_BUFSIZE];
     SYSTEMTIME st;
+    IStream *stream, *stream2;
+    LARGE_INTEGER pos;
+    char buf[128];
+    DWORD count;
 
     GetSystemTime( &st );
     WinHttpTimeFromSystemTime( &st, todayW );
@@ -2680,8 +2684,7 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_Abort( req );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = IWinHttpRequest_Release( req );
-    ok( hr == S_OK, "got %08x\n", hr );
+    IWinHttpRequest_Release( req );
 
     hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2714,8 +2717,7 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_Abort( req );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = IWinHttpRequest_Release( req );
-    ok( hr == S_OK, "got %08x\n", hr );
+    IWinHttpRequest_Release( req );
 
     hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2974,6 +2976,41 @@ static void test_IWinHttpRequest(void)
     hr = VariantClear( &body );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    VariantInit( &body );
+    V_VT( &body ) = VT_ERROR;
+    hr = IWinHttpRequest_get_ResponseStream( req, &body );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &body ) == VT_UNKNOWN, "got %08x\n", V_VT( &body ) );
+
+    hr = IUnknown_QueryInterface( V_UNKNOWN( &body ), &IID_IStream, (void **)&stream );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_UNKNOWN( &body ) == (IUnknown *)stream, "got different interface pointer\n" );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = IStream_Read( stream, buf, 128, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count != 0xdeadbeef, "count not set\n" );
+    ok( buf[0], "no data\n" );
+
+    VariantInit( &body2 );
+    V_VT( &body2 ) = VT_ERROR;
+    hr = IWinHttpRequest_get_ResponseStream( req, &body2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &body2 ) == VT_UNKNOWN, "got %08x\n", V_VT( &body2 ) );
+    ok( V_UNKNOWN( &body ) != V_UNKNOWN( &body2 ), "got same interface pointer\n" );
+
+    hr = IUnknown_QueryInterface( V_UNKNOWN( &body2 ), &IID_IStream, (void **)&stream2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_UNKNOWN( &body2 ) == (IUnknown *)stream2, "got different interface pointer\n" );
+    IStream_Release( stream2 );
+
+    hr = VariantClear( &body );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = VariantClear( &body2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
     hr = IWinHttpRequest_SetProxy( req, HTTPREQUEST_PROXYSETTING_PROXY, proxy_server, bypass_list );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -3003,8 +3040,19 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_Abort( req );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = IWinHttpRequest_Release( req );
+    IWinHttpRequest_Release( req );
+
+    pos.QuadPart = 0;
+    IStream_Seek( stream, pos, STREAM_SEEK_SET, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = IStream_Read( stream, buf, 128, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count != 0xdeadbeef, "count not set\n" );
+    ok( buf[0], "no data\n" );
+    IStream_Release( stream );
 
     hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3020,8 +3068,7 @@ static void test_IWinHttpRequest(void)
     hr = IWinHttpRequest_WaitForResponse( req, timeout, &succeeded );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = IWinHttpRequest_Release( req );
-    ok( hr == S_OK, "got %08x\n", hr );
+    IWinHttpRequest_Release( req );
 
     SysFreeString( method );
     SysFreeString( url );

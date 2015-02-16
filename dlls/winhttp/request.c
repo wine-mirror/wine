@@ -3695,12 +3695,203 @@ done:
     return HRESULT_FROM_WIN32( err );
 }
 
+struct stream
+{
+    IStream IStream_iface;
+    LONG    refs;
+    char   *data;
+    ULARGE_INTEGER pos, size;
+};
+
+static inline struct stream *impl_from_IStream( IStream *iface )
+{
+    return CONTAINING_RECORD( iface, struct stream, IStream_iface );
+}
+
+static HRESULT WINAPI stream_QueryInterface( IStream *iface, REFIID riid, void **obj )
+{
+    struct stream *stream = impl_from_IStream( iface );
+
+    TRACE("%p, %s, %p\n", stream, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID( riid, &IID_IStream ) || IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IStream_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI stream_AddRef( IStream *iface )
+{
+    struct stream *stream = impl_from_IStream( iface );
+    return InterlockedIncrement( &stream->refs );
+}
+
+static ULONG WINAPI stream_Release( IStream *iface )
+{
+    struct stream *stream = impl_from_IStream( iface );
+    LONG refs = InterlockedDecrement( &stream->refs );
+    if (!refs)
+    {
+        heap_free( stream->data );
+        heap_free( stream );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI stream_Read( IStream *iface, void *buf, ULONG len, ULONG *read )
+{
+    struct stream *stream = impl_from_IStream( iface );
+    ULONG size;
+
+    if (stream->pos.QuadPart >= stream->size.QuadPart)
+    {
+        *read = 0;
+        return S_FALSE;
+    }
+
+    size = min( stream->size.QuadPart - stream->pos.QuadPart, len );
+    memcpy( buf, stream->data + stream->pos.QuadPart, size );
+    stream->pos.QuadPart += size;
+    *read = size;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_Write( IStream *iface, const void *buf, ULONG len, ULONG *written )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Seek( IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *newpos )
+{
+    struct stream *stream = impl_from_IStream( iface );
+
+    if (origin == STREAM_SEEK_SET)
+        stream->pos.QuadPart = move.QuadPart;
+    else if (origin == STREAM_SEEK_CUR)
+        stream->pos.QuadPart += move.QuadPart;
+    else if (origin == STREAM_SEEK_END)
+        stream->pos.QuadPart = stream->size.QuadPart - move.QuadPart;
+
+    if (newpos) newpos->QuadPart = stream->pos.QuadPart;
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_SetSize( IStream *iface, ULARGE_INTEGER newsize )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_CopyTo( IStream *iface, IStream *stream, ULARGE_INTEGER len, ULARGE_INTEGER *read,
+                                     ULARGE_INTEGER *written )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Commit( IStream *iface, DWORD flags )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Revert( IStream *iface )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_LockRegion( IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER len, DWORD locktype )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_UnlockRegion( IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER len, DWORD locktype )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Stat( IStream *iface, STATSTG *stg, DWORD flag )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_Clone( IStream *iface, IStream **stream )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl stream_vtbl =
+{
+    stream_QueryInterface,
+    stream_AddRef,
+    stream_Release,
+    stream_Read,
+    stream_Write,
+    stream_Seek,
+    stream_SetSize,
+    stream_CopyTo,
+    stream_Commit,
+    stream_Revert,
+    stream_LockRegion,
+    stream_UnlockRegion,
+    stream_Stat,
+    stream_Clone
+};
+
 static HRESULT WINAPI winhttp_request_get_ResponseStream(
     IWinHttpRequest *iface,
     VARIANT *body )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    DWORD err = ERROR_SUCCESS;
+    struct stream *stream;
+
+    TRACE("%p, %p\n", request, body);
+
+    if (!body) return E_INVALIDARG;
+
+    EnterCriticalSection( &request->cs );
+    if (request->state < REQUEST_STATE_SENT)
+    {
+        err = ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND;
+        goto done;
+    }
+    if (!(stream = heap_alloc( sizeof(*stream) )))
+    {
+        err = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+    stream->IStream_iface.lpVtbl = &stream_vtbl;
+    stream->refs = 1;
+    if (!(stream->data = heap_alloc( request->offset )))
+    {
+        heap_free( stream );
+        err = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+    memcpy( stream->data, request->buffer, request->offset );
+    stream->pos.QuadPart = 0;
+    stream->size.QuadPart = request->offset;
+    V_VT( body ) = VT_UNKNOWN;
+    V_UNKNOWN( body ) = (IUnknown *)&stream->IStream_iface;
+
+done:
+    LeaveCriticalSection( &request->cs );
+    return HRESULT_FROM_WIN32( err );
 }
 
 static HRESULT WINAPI winhttp_request_get_Option(
