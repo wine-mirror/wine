@@ -2447,7 +2447,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     socklen_t sock_namelen;
     BOOL bSuccess = FALSE;
     ftp_session_t *lpwfs = NULL;
-    char szaddr[INET_ADDRSTRLEN];
+    char szaddr[INET6_ADDRSTRLEN];
 
     TRACE("%p  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
 	    hIC, debugstr_w(lpszServerName),
@@ -2535,7 +2535,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         (LPWSTR) lpszServerName, (strlenW(lpszServerName)+1) * sizeof(WCHAR));
 
     sock_namelen = sizeof(socketAddr);
-    if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen))
+    if (!GetAddress(lpszServerName, lpwfs->serverport, (struct sockaddr *)&socketAddr, &sock_namelen, szaddr))
     {
 	INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         goto lerror;
@@ -2548,7 +2548,6 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         goto lerror;
     }
 
-    inet_ntop(socketAddr.sin_family, &socketAddr.sin_addr, szaddr, sizeof(szaddr));
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
                       szaddr, strlen(szaddr)+1);
 

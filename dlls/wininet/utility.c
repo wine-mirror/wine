@@ -125,9 +125,10 @@ time_t ConvertTimeString(LPCWSTR asctime)
 }
 
 
-BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, socklen_t *sa_len)
+BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, int *sa_len, char *addr_str)
 {
     ADDRINFOW *res, hints;
+    void *addr = NULL;
     int ret;
 
     TRACE("%s\n", debugstr_w(name));
@@ -162,13 +163,17 @@ BOOL GetAddress(const WCHAR *name, INTERNET_PORT port, struct sockaddr *psa, soc
     switch (res->ai_family)
     {
     case AF_INET:
+        addr = &((struct sockaddr_in *)psa)->sin_addr;
         ((struct sockaddr_in *)psa)->sin_port = htons(port);
         break;
     case AF_INET6:
+        addr = &((struct sockaddr_in6 *)psa)->sin6_addr;
         ((struct sockaddr_in6 *)psa)->sin6_port = htons(port);
         break;
     }
 
+    if(addr_str)
+        inet_ntop(res->ai_family, addr, addr_str, INET6_ADDRSTRLEN);
     FreeAddrInfoW(res);
     return TRUE;
 }

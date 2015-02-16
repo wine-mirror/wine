@@ -1852,8 +1852,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
 static DWORD HTTP_ResolveName(http_request_t *request)
 {
     server_t *server = request->proxy ? request->proxy : request->server;
-    socklen_t addr_len;
-    void *addr;
+    int addr_len;
 
     if(server->addr_len)
         return ERROR_SUCCESS;
@@ -1864,23 +1863,10 @@ static DWORD HTTP_ResolveName(http_request_t *request)
                           (strlenW(server->name)+1) * sizeof(WCHAR));
 
     addr_len = sizeof(server->addr);
-    if (!GetAddress(server->name, server->port, (struct sockaddr *)&server->addr, &addr_len))
+    if (!GetAddress(server->name, server->port, (SOCKADDR*)&server->addr, &addr_len, server->addr_str))
         return ERROR_INTERNET_NAME_NOT_RESOLVED;
-
-    switch(server->addr.ss_family) {
-    case AF_INET:
-        addr = &((struct sockaddr_in *)&server->addr)->sin_addr;
-        break;
-    case AF_INET6:
-        addr = &((struct sockaddr_in6 *)&server->addr)->sin6_addr;
-        break;
-    default:
-        WARN("unsupported family %d\n", server->addr.ss_family);
-        return ERROR_INTERNET_NAME_NOT_RESOLVED;
-    }
 
     server->addr_len = addr_len;
-    inet_ntop(server->addr.ss_family, addr, server->addr_str, sizeof(server->addr_str));
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                           INTERNET_STATUS_NAME_RESOLVED,
                           server->addr_str, strlen(server->addr_str)+1);
