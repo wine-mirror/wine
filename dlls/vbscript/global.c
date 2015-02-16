@@ -209,11 +209,12 @@ static HRESULT set_object_site(script_ctx_t *ctx, IUnknown *obj)
         return S_OK;
 
     ax_site = create_ax_site(ctx);
-    if(ax_site)
+    if(ax_site) {
         hres = IObjectWithSite_SetSite(obj_site, ax_site);
+        IUnknown_Release(ax_site);
+    }
     else
         hres = E_OUTOFMEMORY;
-    IUnknown_Release(ax_site);
     IObjectWithSite_Release(obj_site);
     return hres;
 }
