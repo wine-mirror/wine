@@ -1590,8 +1590,10 @@ static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Ato
         return 0;
 
     out = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(WCHAR));
-    if (out == NULL)
+    if (out == NULL) {
+        HeapFree(GetProcessHeap(), 0, uriList);
         return 0;
+    }
 
     while (end < len)
     {
@@ -1650,6 +1652,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Ato
         }
     }
     HeapFree(GetProcessHeap(), 0, out);
+    HeapFree(GetProcessHeap(), 0, uriList);
     return handle;
 }
 
