@@ -129,27 +129,15 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct sockaddr *psa, socklen_t *sa_len)
 {
     struct addrinfo *res, hints;
-    WCHAR *found;
     char *name;
-    int len, sz;
+    int sz;
     int ret;
 
     TRACE("%s\n", debugstr_w(lpszServerName));
 
-    /* Validate server name first
-     * Check if there is something like
-     * pinger.macromedia.com:80
-     * if yes, eliminate the :80....
-     */
-    found = strchrW(lpszServerName, ':');
-    if (found)
-        len = found - lpszServerName;
-    else
-        len = strlenW(lpszServerName);
-
-    sz = WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, NULL, 0, NULL, NULL );
+    sz = WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, -1, NULL, 0, NULL, NULL );
     if (!(name = heap_alloc(sz + 1))) return FALSE;
-    WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, name, sz, NULL, NULL );
+    WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, -1, name, sz, NULL, NULL );
     name[sz] = 0;
 
     memset( &hints, 0, sizeof(hints) );
