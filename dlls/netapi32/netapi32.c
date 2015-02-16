@@ -2287,13 +2287,66 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
  */
 NET_API_STATUS WINAPI
 NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
-	    DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
-	    LPDWORD resume_handle)
+            DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
+            LPDWORD resume_handle)
 {
-  FIXME("(%s,%d, 0x%d,%p,%d,%p,%p,%p) stub!\n", debugstr_w(servername), level,
-        filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
+    NET_API_STATUS status;
+    USER_INFO_0 *info;
+    WCHAR *user;
+    DWORD size;
 
-  return ERROR_ACCESS_DENIED;
+    TRACE("(%s, %u, 0x%x, %p, %u, %p, %p, %p)\n", debugstr_w(servername), level,
+          filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
+
+    status = NETAPI_ValidateServername(servername);
+    if (status != NERR_Success)
+        return status;
+
+    if (!NETAPI_IsLocalComputer(servername))
+    {
+        FIXME("Only implemented for local computer, but remote server"
+              "%s was requested.\n", debugstr_w(servername));
+        return NERR_InvalidComputer;
+    }
+
+    if (level)
+    {
+        FIXME("level %u not supported\n", level);
+        return ERROR_INVALID_LEVEL;
+    }
+
+    size = UNLEN + 1;
+    status = NetApiBufferAllocate(size * sizeof(WCHAR), (void **)&user);
+    if (status != NERR_Success)
+        return status;
+
+    if (!GetUserNameW(user, &size))
+    {
+        NetApiBufferFree(user);
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
+
+    if (prefmaxlen < size)
+        status = ERROR_MORE_DATA;
+    else
+        status = NetApiBufferAllocate(size, (void **)&info);
+
+    if (status != NERR_Success)
+    {
+        NetApiBufferFree(user);
+        return status;
+    }
+
+    info->usri0_name = (WCHAR *)((char *)info + sizeof(*info));
+    strcpyW(info->usri0_name, user);
+
+    *bufptr = (BYTE *)info;
+    *entriesread = *totalentries = 1;
+
+    NetApiBufferFree(user);
+    return NERR_Success;
 }
 
 /************************************************************
