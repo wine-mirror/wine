@@ -456,6 +456,22 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
 
+    if (!(texture->flags & WINED3D_TEXTURE_COLOR_KEY) != !(texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
+            || (texture->flags & WINED3D_TEXTURE_COLOR_KEY
+            && (texture->gl_color_key.color_space_low_value != texture->src_blt_color_key.color_space_low_value
+            || texture->gl_color_key.color_space_high_value != texture->src_blt_color_key.color_space_high_value)))
+    {
+        unsigned int sub_count = texture->level_count * texture->layer_count;
+        unsigned int i;
+
+        TRACE("Reloading because of color key value change.\n");
+        for (i = 0; i < sub_count; i++)
+            texture->texture_ops->texture_sub_resource_add_dirty_region(texture->sub_resources[i], NULL);
+        wined3d_texture_set_dirty(texture);
+
+        texture->gl_color_key = texture->src_blt_color_key;
+    }
+
     if (texture->flags & flag)
     {
         TRACE("Texture %p not dirty, nothing to do.\n", texture);
@@ -665,8 +681,14 @@ void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct win
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
 
+    if (!(texture->flags & WINED3D_TEXTURE_COLOR_KEY) != !(texture->color_key_flags & WINED3D_CKEY_SRC_BLT))
+        wined3d_texture_force_reload(texture);
+
     if (texture->flags & alloc_flag)
         return;
+
+    if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
+        texture->flags |= WINED3D_TEXTURE_COLOR_KEY;
 
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
     texture->flags |= alloc_flag;
@@ -677,7 +699,8 @@ void wined3d_texture_force_reload(struct wined3d_texture *texture)
     unsigned int sub_count = texture->level_count * texture->layer_count;
     unsigned int i;
 
-    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED | WINED3D_TEXTURE_CONVERTED);
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED
+            | WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_COLOR_KEY);
     for (i = 0; i < sub_count; ++i)
     {
         texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i],

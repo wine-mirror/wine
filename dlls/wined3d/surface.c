@@ -1814,43 +1814,18 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 void surface_load(struct wined3d_surface *surface, BOOL srgb)
 {
     DWORD location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
-    BOOL ck_changed;
 
     TRACE("surface %p, srgb %#x.\n", surface, srgb);
 
     if (surface->resource.pool == WINED3D_POOL_SCRATCH)
         ERR("Not supported on scratch surfaces.\n");
 
-    ck_changed = !(surface->flags & SFLAG_GLCKEY) != !(surface->container->color_key_flags & WINED3D_CKEY_SRC_BLT);
-
-    /* Reload if either the texture and sysmem have different ideas about the
-     * color key, or the actual key values changed. */
-    if (ck_changed || ((surface->container->color_key_flags & WINED3D_CKEY_SRC_BLT)
-            && (surface->gl_color_key.color_space_low_value
-            != surface->container->src_blt_color_key.color_space_low_value
-            || surface->gl_color_key.color_space_high_value
-            != surface->container->src_blt_color_key.color_space_high_value)))
-    {
-        TRACE("Reloading because of color keying\n");
-        /* To perform the color key conversion we need a sysmem copy of
-         * the surface. Make sure we have it. */
-
-        surface_prepare_map_memory(surface);
-        surface_load_location(surface, surface->resource.map_binding);
-        surface_invalidate_location(surface, ~surface->resource.map_binding);
-        /* Switching color keying on / off may change the internal format. */
-        if (ck_changed)
-            wined3d_texture_force_reload(surface->container);
-    }
-    else if (!(surface->locations & location))
-    {
-        TRACE("Reloading because surface is dirty.\n");
-    }
-    else
+    if (surface->locations & location)
     {
         TRACE("surface is already in texture\n");
         return;
     }
+    TRACE("Reloading because surface is dirty.\n");
 
     surface_load_location(surface, location);
     surface_evict_sysmem(surface);
@@ -4178,13 +4153,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
-
-    if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
-    {
-        surface->flags |= SFLAG_GLCKEY;
-        surface->gl_color_key = texture->src_blt_color_key;
-    }
-    else surface->flags &= ~SFLAG_GLCKEY;
 
     width = surface->resource.width;
     src_pitch = wined3d_surface_get_pitch(surface);

@@ -2181,6 +2181,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_PIN_SYSMEM          0x00000100
 #define WINED3D_TEXTURE_DYNAMIC_MAP         0x00000200
 #define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
+#define WINED3D_TEXTURE_COLOR_KEY           0x00000800
 
 struct wined3d_texture
 {
@@ -2203,6 +2204,7 @@ struct wined3d_texture
     struct wined3d_color_key src_blt_color_key;
     struct wined3d_color_key dst_overlay_color_key;
     struct wined3d_color_key src_overlay_color_key;
+    struct wined3d_color_key gl_color_key;
     DWORD color_key_flags;
 };
 
@@ -2336,8 +2338,6 @@ struct wined3d_surface
     struct wined3d_surface_dib dib;
     HDC                       hDC;
 
-    struct wined3d_color_key gl_color_key;
-
     struct list               renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;
     SIZE ds_current_size;
@@ -2404,9 +2404,8 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_DISCARD           0x00000002 /* ??? */
 #define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
 #define SFLAG_LOST              0x00000008 /* Surface lost flag for ddraw. */
-#define SFLAG_GLCKEY            0x00000010 /* The GL texture was created with a color key. */
-#define SFLAG_CLIENT            0x00000020 /* GL_APPLE_client_storage is used with this surface. */
-#define SFLAG_DCINUSE           0x00000040 /* Set between GetDC and ReleaseDC calls. */
+#define SFLAG_CLIENT            0x00000010 /* GL_APPLE_client_storage is used with this surface. */
+#define SFLAG_DCINUSE           0x00000020 /* Set between GetDC and ReleaseDC calls. */
 
 struct wined3d_sampler
 {
