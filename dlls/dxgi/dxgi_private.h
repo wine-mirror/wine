@@ -157,6 +157,7 @@ struct dxgi_surface
     IUnknown IUnknown_iface;
     IUnknown *outer_unknown;
     LONG refcount;
+    struct wined3d_private_store private_store;
     IDXGIDevice *device;
 
     DXGI_SURFACE_DESC desc;

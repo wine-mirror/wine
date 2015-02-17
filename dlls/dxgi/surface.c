@@ -71,7 +71,10 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
     TRACE("%p decreasing refcount to %u.\n", surface, refcount);
 
     if (!refcount)
+    {
+        wined3d_private_store_cleanup(&surface->private_store);
         HeapFree(GetProcessHeap(), 0, surface);
+    }
 
     return refcount;
 }
@@ -110,9 +113,11 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface *iface)
 static HRESULT STDMETHODCALLTYPE dxgi_surface_SetPrivateData(IDXGISurface *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_surface *surface = impl_from_IDXGISurface(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_set_private_data(&surface->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_SetPrivateDataInterface(IDXGISurface *iface,
@@ -210,6 +215,7 @@ HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
     surface->IDXGISurface_iface.lpVtbl = &dxgi_surface_vtbl;
     surface->IUnknown_iface.lpVtbl = &dxgi_surface_inner_unknown_vtbl;
     surface->refcount = 1;
+    wined3d_private_store_init(&surface->private_store);
     surface->outer_unknown = outer ? outer : &surface->IUnknown_iface;
     surface->device = device;
     surface->desc = *desc;
