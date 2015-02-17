@@ -392,10 +392,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
         if (ret) return phdi->rect.right;
     }
     else
-    {
-        HEADER_FillItemFrame(infoPtr, hdc, &r, phdi, bHotTrack);
         HEADER_DrawItemFrame(infoPtr, hdc, &r, phdi);
-    }
 
     if (phdi->bDown) {
         r.left += 2;
