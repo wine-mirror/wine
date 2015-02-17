@@ -2969,7 +2969,7 @@ static HRESULT StorageImpl_GrabLocks(StorageImpl *This, DWORD openFlags)
     hr = S_OK;
 
     /* First check for any conflicting locks. */
-    if (SUCCEEDED(hr) && (openFlags & STGM_PRIORITY) == STGM_PRIORITY)
+    if ((openFlags & STGM_PRIORITY) == STGM_PRIORITY)
         hr = StorageImpl_CheckLockRange(This, RANGELOCK_COMMIT, RANGELOCK_COMMIT, STG_E_LOCKVIOLATION);
 
     if (SUCCEEDED(hr) && (STGM_ACCESS_MODE(openFlags) != STGM_WRITE))
