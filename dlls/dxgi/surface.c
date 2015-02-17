@@ -133,9 +133,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_SetPrivateDataInterface(IDXGISurfa
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetPrivateData(IDXGISurface *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_surface *surface = impl_from_IDXGISurface(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_get_private_data(&surface->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface *iface, REFIID riid, void **parent)
