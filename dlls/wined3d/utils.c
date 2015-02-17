@@ -795,7 +795,7 @@ const struct wined3d_color_key_conversion * wined3d_format_get_color_key_convers
         WINED3DFMT_B8G8R8A8_UNORM,  convert_p8_uint_b8g8r8a8_unorm
     };
 
-    if (need_alpha_ck && (texture->color_key_flags & WINED3D_CKEY_SRC_BLT))
+    if (need_alpha_ck && (texture->flags & WINED3D_TEXTURE_COLOR_KEY))
     {
         for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
         {

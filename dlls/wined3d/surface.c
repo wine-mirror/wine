@@ -4217,7 +4217,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
         conversion->convert(data.addr, src_pitch, mem, dst_pitch,
-                width, height, palette, &texture->src_blt_color_key);
+                width, height, palette, &texture->gl_color_key);
         src_pitch = dst_pitch;
         data.addr = mem;
     }
