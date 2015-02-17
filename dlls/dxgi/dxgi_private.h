@@ -144,6 +144,7 @@ struct dxgi_swapchain
 {
     IDXGISwapChain IDXGISwapChain_iface;
     LONG refcount;
+    struct wined3d_private_store private_store;
     struct wined3d_swapchain *wined3d_swapchain;
 };
 

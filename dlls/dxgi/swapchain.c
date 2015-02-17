@@ -82,9 +82,11 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_SetPrivateData(IDXGISwapChain *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return dxgi_set_private_data(&swapchain->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_SetPrivateDataInterface(IDXGISwapChain *iface,
@@ -276,6 +278,9 @@ static const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl =
 
 static void STDMETHODCALLTYPE dxgi_swapchain_wined3d_object_released(void *parent)
 {
+    struct dxgi_swapchain *swapchain = parent;
+
+    wined3d_private_store_cleanup(&swapchain->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
@@ -291,11 +296,13 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 
     swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
+    wined3d_private_store_init(&swapchain->private_store);
 
     if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
             &dxgi_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&swapchain->private_store);
         return hr;
     }
 
