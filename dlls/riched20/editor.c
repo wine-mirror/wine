@@ -4818,7 +4818,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcW.cbWndExtra = sizeof(ME_TextEditor *);
   wcW.hInstance = NULL; /* hInstance would register DLL-local class */
   wcW.hIcon = NULL;
-  wcW.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
+  wcW.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
   wcW.hbrBackground = GetStockObject(NULL_BRUSH);
   wcW.lpszMenuName = NULL;
 
@@ -4844,7 +4844,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcA.cbWndExtra = sizeof(ME_TextEditor *);
   wcA.hInstance = NULL; /* hInstance would register DLL-local class */
   wcA.hIcon = NULL;
-  wcA.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
+  wcA.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
   wcA.hbrBackground = GetStockObject(NULL_BRUSH);
   wcA.lpszMenuName = NULL;
   wcA.lpszClassName = RICHEDIT_CLASS20A;
