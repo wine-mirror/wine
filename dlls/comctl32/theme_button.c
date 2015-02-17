@@ -181,8 +181,10 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
             hPrevFont = SelectObject(hDC, font);
             created_font = TRUE;
         }
-    } else
+    } else {
         font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
+        hPrevFont = SelectObject(hDC, font);
+    }
 
     GetClientRect(hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
@@ -243,8 +245,10 @@ static void GB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
             hPrevFont = SelectObject(hDC, font);
             created_font = TRUE;
         }
-    } else
+    } else {
         font = (HFONT)SendMessageW(hwnd, WM_GETFONT, 0, 0);
+        hPrevFont = SelectObject(hDC, font);
+    }
 
     GetClientRect(hwnd, &bgRect);
     textRect = bgRect;
