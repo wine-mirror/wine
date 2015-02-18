@@ -240,10 +240,10 @@ static void test_registry(void)
     static const WCHAR brokenW[] = {'H','K','E','Y','_','b','r','o','k','e','n','_','k','e','y',0};
     static const WCHAR broken2W[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','a',0};
     WCHAR pathW[MAX_PATH];
+    DWORD dwvalue, type;
     VARIANT value, v;
     IWshShell3 *sh3;
     VARTYPE vartype;
-    DWORD dwvalue;
     LONG bound;
     HRESULT hr;
     BSTR name;
@@ -255,6 +255,7 @@ static void test_registry(void)
             &IID_IWshShell3, (void**)&sh3);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* RegRead() */
     V_VT(&value) = VT_I2;
     hr = IWshShell3_RegRead(sh3, NULL, &value);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -386,6 +387,84 @@ static void test_registry(void)
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_I2, "got %d\n", V_VT(&value));
     VariantClear(&value);
+    SysFreeString(name);
+
+    delete_key(root);
+
+    /* RegWrite() */
+    ret = RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &root);
+    ok(ret == 0, "got %d\n", ret);
+
+    hr = IWshShell3_RegWrite(sh3, NULL, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    lstrcpyW(pathW, keypathW);
+    lstrcatW(pathW, regszW);
+    name = SysAllocString(pathW);
+
+    hr = IWshShell3_RegWrite(sh3, name, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    VariantInit(&value);
+    hr = IWshShell3_RegWrite(sh3, name, &value, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IWshShell3_RegWrite(sh3, name, &value, &value);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* type is optional */
+    V_VT(&v) = VT_ERROR;
+    V_ERROR(&v) = DISP_E_PARAMNOTFOUND;
+    hr = IWshShell3_RegWrite(sh3, name, &value, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* default type is REG_SZ */
+    V_VT(&value) = VT_I4;
+    V_I4(&value) = 12;
+    hr = IWshShell3_RegWrite(sh3, name, &value, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    type = REG_NONE;
+    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    ok(type == REG_SZ, "got %d\n", type);
+
+    ret = RegDeleteValueA(root, "regsz");
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = SysAllocString(regszW);
+    hr = IWshShell3_RegWrite(sh3, name, &value, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&value);
+
+    type = REG_NONE;
+    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    ok(type == REG_SZ, "got %d\n", type);
+
+    ret = RegDeleteValueA(root, "regsz");
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    V_VT(&value) = VT_R4;
+    V_R4(&value) = 1.2;
+    hr = IWshShell3_RegWrite(sh3, name, &value, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&value);
+
+    type = REG_NONE;
+    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    ok(type == REG_SZ, "got %d\n", type);
+
+    ret = RegDeleteValueA(root, "regsz");
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    V_VT(&value) = VT_R4;
+    V_R4(&value) = 1.2;
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 1;
+    hr = IWshShell3_RegWrite(sh3, name, &value, &v);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    VariantClear(&value);
+
     SysFreeString(name);
 
     delete_key(root);

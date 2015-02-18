@@ -1035,12 +1035,46 @@ static HKEY get_root_key(const WCHAR *path)
     return NULL;
 }
 
+/* Caller is responsible to free 'subkey' if 'value' is not NULL */
+static HRESULT split_reg_path(const WCHAR *path, WCHAR **subkey, WCHAR **value)
+{
+    *value = NULL;
+
+    /* at least one separator should be present */
+    *subkey = strchrW(path, '\\');
+    if (!*subkey)
+        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+
+    /* default value or not */
+    if ((*subkey)[strlenW(*subkey)-1] == '\\') {
+        (*subkey)++;
+        *value = NULL;
+    }
+    else {
+        *value = strrchrW(*subkey, '\\');
+        if (*value - *subkey > 1) {
+            unsigned int len = *value - *subkey - 1;
+            WCHAR *ret;
+
+            ret = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            if (!ret)
+                return E_OUTOFMEMORY;
+
+            memcpy(ret, *subkey + 1, len*sizeof(WCHAR));
+            ret[len] = 0;
+            *subkey = ret;
+        }
+        (*value)++;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *value)
 {
     DWORD type, datalen, ret;
-    WCHAR *keyname, *val;
-    HRESULT hr = S_OK;
-    BSTR subkey = NULL;
+    WCHAR *subkey, *val;
+    HRESULT hr;
     HKEY root;
 
     TRACE("(%s %p)\n", debugstr_w(name), value);
@@ -1052,28 +1086,13 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
     if (!root)
         return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
 
-    /* at least one separator should be present */
-    keyname = strchrW(name, '\\');
-    if (!keyname)
-        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
-
-    /* default value or not */
-    if (keyname[strlenW(keyname)-1] == '\\') {
-        keyname++;
-        val = NULL;
-    }
-    else {
-        val = strrchrW(keyname, '\\');
-        if (val - keyname > 1) {
-            subkey = SysAllocStringLen(keyname+1, val-keyname-1);
-            keyname = subkey;
-        }
-        val++;
-    }
+    hr = split_reg_path(name, &subkey, &val);
+    if (FAILED(hr))
+        return hr;
 
     type = REG_NONE;
     datalen = 0;
-    ret = RegGetValueW(root, keyname, val, RRF_RT_ANY, &type, NULL, &datalen);
+    ret = RegGetValueW(root, subkey, val, RRF_RT_ANY, &type, NULL, &datalen);
     if (ret == ERROR_SUCCESS) {
         void *data;
 
@@ -1083,7 +1102,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
             goto fail;
         }
 
-        ret = RegGetValueW(root, keyname, val, RRF_RT_ANY, &type, data, &datalen);
+        ret = RegGetValueW(root, subkey, val, RRF_RT_ANY, &type, data, &datalen);
         if (ret) {
             HeapFree(GetProcessHeap(), 0, data);
             hr = HRESULT_FROM_WIN32(ret);
@@ -1183,14 +1202,97 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
         hr = HRESULT_FROM_WIN32(ret);
 
 fail:
-    SysFreeString(subkey);
+    if (val)
+        HeapFree(GetProcessHeap(), 0, subkey);
     return hr;
 }
 
-static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR Name, VARIANT *Value, VARIANT *Type)
+static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR name, VARIANT *value, VARIANT *type)
 {
-    FIXME("(%s %s %s): stub\n", debugstr_w(Name), debugstr_variant(Value), debugstr_variant(Type));
-    return E_NOTIMPL;
+    static const WCHAR regexpandszW[] = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0};
+    static const WCHAR regszW[] = {'R','E','G','_','S','Z',0};
+    static const WCHAR regdwordW[] = {'R','E','G','_','D','W','O','R','D',0};
+    static const WCHAR regbinaryW[] = {'R','E','G','_','B','I','N','A','R','Y',0};
+
+    DWORD regtype, data_len;
+    WCHAR *subkey, *val;
+    const BYTE *data;
+    HRESULT hr;
+    HKEY root;
+    VARIANT v;
+    LONG ret;
+
+    TRACE("(%s %s %s)\n", debugstr_w(name), debugstr_variant(value), debugstr_variant(type));
+
+    if (!name || !value || !type)
+        return E_POINTER;
+
+    root = get_root_key(name);
+    if (!root)
+        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+
+    /* value type */
+    if (is_optional_argument(type))
+        regtype = REG_SZ;
+    else {
+        if (V_VT(type) != VT_BSTR)
+            return E_INVALIDARG;
+
+        if (!strcmpW(V_BSTR(type), regszW))
+            regtype = REG_SZ;
+        else if (!strcmpW(V_BSTR(type), regdwordW))
+            regtype = REG_DWORD;
+        else if (!strcmpW(V_BSTR(type), regexpandszW))
+            regtype = REG_EXPAND_SZ;
+        else if (!strcmpW(V_BSTR(type), regbinaryW))
+            regtype = REG_BINARY;
+        else {
+            FIXME("unrecognized value type %s\n", debugstr_w(V_BSTR(type)));
+            return E_FAIL;
+        }
+    }
+
+    /* it's always a string or a DWORD */
+    VariantInit(&v);
+    switch (regtype)
+    {
+    case REG_SZ:
+    case REG_EXPAND_SZ:
+        hr = VariantChangeType(&v, value, 0, VT_BSTR);
+        if (hr == S_OK) {
+            data = (BYTE*)V_BSTR(&v);
+            data_len = SysStringByteLen(V_BSTR(&v)) + sizeof(WCHAR);
+        }
+        break;
+    case REG_DWORD:
+    case REG_BINARY:
+        hr = VariantChangeType(&v, value, 0, VT_I4);
+        data = (BYTE*)&V_I4(&v);
+        data_len = sizeof(DWORD);
+        break;
+    default:
+        FIXME("unexpected regtype %d\n", regtype);
+        return E_FAIL;
+    };
+
+    if (FAILED(hr)) {
+        FIXME("failed to convert value, regtype %d, 0x%08x\n", regtype, hr);
+        return hr;
+    }
+
+    hr = split_reg_path(name, &subkey, &val);
+    if (FAILED(hr))
+        goto fail;
+
+    ret = RegSetKeyValueW(root, subkey, val, regtype, data, data_len);
+    if (ret)
+        hr = HRESULT_FROM_WIN32(ret);
+
+fail:
+    VariantClear(&v);
+    if (val)
+        HeapFree(GetProcessHeap(), 0, subkey);
+    return hr;
 }
 
 static HRESULT WINAPI WshShell3_RegDelete(IWshShell3 *iface, BSTR Name)
