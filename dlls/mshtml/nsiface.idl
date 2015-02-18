@@ -711,9 +711,9 @@ interface nsIAsyncVerifyRedirectCallback : nsISupports
 ]
 interface nsIChannelEventSink : nsISupports
 {
-    cpp_quote("#define REDIRECT_TEMPORARY 1")
-    cpp_quote("#define REDIRECT_PERMANENT 2")
-    cpp_quote("#define REDIRECT_INTERNAL  4")
+    const UINT REDIRECT_TEMPORARY = 1;
+    const UINT REDIRECT_PERMANENT = 2;
+    const UINT REDIRECT_INTERNAL  = 4;
 
     nsresult AsyncOnChannelRedirect(nsIChannel *oldChannel, nsIChannel *newChannel, uint32_t flags,
                                     nsIAsyncVerifyRedirectCallback *callback);
