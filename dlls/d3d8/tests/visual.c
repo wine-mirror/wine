@@ -5130,15 +5130,17 @@ static void test_3dc_formats(void)
     static const struct
     {
         struct vec2 position;
-        D3DCOLOR amd;
-        D3DCOLOR nvidia;
+        D3DCOLOR amd_r500;
+        D3DCOLOR amd_r600;
+        D3DCOLOR nvidia_old;
+        D3DCOLOR nvidia_new;
     }
     expected_colors[] =
     {
-        {{ 80, 240}, 0x003f3f3f, 0x007f0000},
-        {{240, 240}, 0x003f3f3f, 0x007f0000},
-        {{400, 240}, 0x00007fff, 0x00007fff},
-        {{560, 240}, 0x007f00ff, 0x007f00ff},
+        {{ 80, 240}, 0x007fffff, 0x003f3f3f, 0x007f7f7f, 0x007f0000},
+        {{240, 240}, 0x007fffff, 0x003f3f3f, 0x007f7f7f, 0x007f0000},
+        {{400, 240}, 0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff},
+        {{560, 240}, 0x007f00ff, 0x007f00ff, 0x007f00ff, 0x007f00ff},
     };
     IDirect3D8 *d3d;
     IDirect3DDevice8 *device;
@@ -5236,9 +5238,11 @@ static void test_3dc_formats(void)
     for (i = 0; i < 4; ++i)
     {
         color = getPixelColor(device, expected_colors[i].position.x, expected_colors[i].position.y);
-        ok (color_match(color, expected_colors[i].amd, 1) || color_match(color, expected_colors[i].nvidia, 1),
-                "Expected color 0x%08x or 0x%08x, got 0x%08x, case %u.\n",
-                expected_colors[i].amd, expected_colors[i].nvidia, color, i);
+        ok (color_match(color, expected_colors[i].amd_r500, 1)
+                || color_match(color, expected_colors[i].amd_r600, 1)
+                || color_match(color, expected_colors[i].nvidia_old, 1)
+                || color_match(color, expected_colors[i].nvidia_new, 1),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
     }
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
