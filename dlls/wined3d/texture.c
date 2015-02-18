@@ -658,6 +658,19 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* We have no way of supporting a pitch that is not a multiple of the pixel
+     * byte width short of uploading the texture row-by-row.
+     * Fortunately that's not an issue since D3D9Ex doesn't allow a custom pitch
+     * for user-memory textures (it always expects packed data) while DirectDraw
+     * requires a 4-byte aligned pitch and doesn't support texture formats
+     * larger than 4 bytes per pixel nor any format using 3 bytes per pixel.
+     * This check is here to verify that the assumption holds. */
+    if (pitch % texture->resource.format->byte_count)
+    {
+        WARN("Pitch unsupported, not a multiple of the texture format byte width.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     surface = surface_from_resource(texture->sub_resources[0]);
     if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
     {
