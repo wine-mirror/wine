@@ -411,6 +411,7 @@ SRCDIR_INCLUDES = \
 	msacm.h \
 	msacmdlg.h \
 	msacmdrv.h \
+	msasn1.h \
 	mscat.h \
 	msdaguid.h \
 	mshtmcid.h \
