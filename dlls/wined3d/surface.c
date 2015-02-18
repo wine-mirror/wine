@@ -2187,10 +2187,16 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
     surface->resource.multisample_type = texture_resource->multisample_type;
     surface->resource.multisample_quality = texture_resource->multisample_quality;
     if (surface->pitch)
+    {
         surface->resource.size = height * surface->pitch;
+    }
     else
+    {
+        /* User memory surfaces don't have the regular surface alignment. */
         surface->resource.size = wined3d_format_calculate_size(texture_resource->format,
-                texture_resource->device->surface_alignment, width, height, 1);
+                1, width, height, 1);
+        surface->pitch = wined3d_format_calculate_pitch(texture_resource->format, width);
+    }
 
     /* The format might be changed to a format that needs conversion.
      * If the surface didn't use PBOs previously but could now, don't
