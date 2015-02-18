@@ -165,10 +165,20 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
         const D2D1_DRAWING_STATE_DESCRIPTION *desc, IDWriteRenderingParams *text_rendering_params,
         ID2D1DrawingStateBlock **state_block)
 {
-    FIXME("iface %p, desc %p, text_rendering_params %p, state_block %p stub!\n",
+    struct d2d_state_block *object;
+
+    TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_state_block_init(object, desc, text_rendering_params);
+
+    TRACE("Created state block %p.\n", object);
+    *state_block = &object->ID2D1DrawingStateBlock_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Factory *iface,

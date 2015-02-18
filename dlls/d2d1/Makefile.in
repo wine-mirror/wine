@@ -8,6 +8,7 @@ C_SRCS = \
 	factory.c \
 	mesh.c \
 	render_target.c \
+	state_block.c \
 	stroke.c \
 	wic_render_target.c
 
