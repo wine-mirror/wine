@@ -864,8 +864,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     const struct dwritescript_properties *scriptprops;
     struct scriptshaping_context context;
     struct scriptshaping_cache *cache = NULL;
+    BOOL update_cluster, need_vertical;
+    IDWriteFontFace1 *fontface1;
     WCHAR *string;
-    BOOL update_cluster;
     UINT32 i, g;
     HRESULT hr = S_OK;
     UINT16 script;
@@ -909,6 +910,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     if (!string)
         return E_OUTOFMEMORY;
 
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (FAILED(hr))
+        WARN("failed to get IDWriteFontFace1\n");
+
+    need_vertical = is_sideways && fontface1 && IDWriteFontFace1_HasVerticalGlyphVariants(fontface1);
+
     for (i = 0, g = 0, update_cluster = FALSE; i < length; i++) {
         UINT32 codepoint;
 
@@ -927,6 +934,14 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
             hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyph_indices[g]);
             if (FAILED(hr))
                 goto done;
+
+            if (need_vertical) {
+                UINT16 vertical;
+
+                hr = IDWriteFontFace1_GetVerticalGlyphVariants(fontface1, 1, &glyph_indices[g], &vertical);
+                if (hr == S_OK)
+                    glyph_indices[g] = vertical;
+            }
 
             g++;
         }
@@ -969,6 +984,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
 
 done:
+    if (fontface1)
+        IDWriteFontFace1_Release(fontface1);
     release_scriptshaping_cache(cache);
     heap_free(string);
 
