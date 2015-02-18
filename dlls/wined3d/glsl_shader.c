@@ -1758,28 +1758,28 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     }
     else
     {
-        char param_str[200];
-
-        shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, param_str);
+        char reg_name[200];
 
         switch (wined3d_src->reg.data_type)
         {
             case WINED3D_DATA_FLOAT:
-                sprintf(glsl_src->param_str, "%s", param_str);
+                sprintf(reg_name, "%s", glsl_src->reg_name);
                 break;
             case WINED3D_DATA_INT:
-                sprintf(glsl_src->param_str, "floatBitsToInt(%s)", param_str);
+                sprintf(reg_name, "floatBitsToInt(%s)", glsl_src->reg_name);
                 break;
             case WINED3D_DATA_RESOURCE:
             case WINED3D_DATA_SAMPLER:
             case WINED3D_DATA_UINT:
-                sprintf(glsl_src->param_str, "floatBitsToUint(%s)", param_str);
+                sprintf(reg_name, "floatBitsToUint(%s)", glsl_src->reg_name);
                 break;
             default:
                 FIXME("Unhandled data type %#x.\n", wined3d_src->reg.data_type);
-                sprintf(glsl_src->param_str, "%s", param_str);
+                sprintf(reg_name, "%s", glsl_src->reg_name);
                 break;
         }
+
+        shader_glsl_gen_modifier(wined3d_src->modifiers, reg_name, swizzle_str, glsl_src->param_str);
     }
 }
 
