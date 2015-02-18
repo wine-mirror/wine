@@ -1,0 +1,4 @@
+MODULE    = xapofx1_4.dll
+
+C_SRCS = \
+	main.c
