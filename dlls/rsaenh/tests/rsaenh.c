@@ -1728,7 +1728,7 @@ static void test_rc4(void)
         dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        if (BASE_PROV || STRONG_PROV || nt4)
+        if (BASE_PROV || STRONG_PROV)
             ok(dwLen == 11, "expected salt length 11, got %d\n", dwLen);
         else
             ok(dwLen == 0 || broken(nt4 && dwLen == 11), "expected salt length 0, got %d\n", dwLen);
