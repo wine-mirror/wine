@@ -2028,6 +2028,7 @@ static void test_GetFontFromFontFace(void)
     IDWriteFont *font, *font2, *font3;
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
+    IDWriteFontFile *file;
     HRESULT hr;
 
     factory = create_factory();
@@ -2064,14 +2065,32 @@ static void test_GetFontFromFontFace(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface2 == fontface, "got %p, %p\n", fontface2, fontface);
     IDWriteFontFace_Release(fontface2);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFont_Release(font3);
+    IDWriteFactory_Release(factory);
+
+    /* fontface that wasn't created from this collection */
+    factory = create_factory();
+    create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n",hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font3);
+    ok(hr == DWRITE_E_NOFONT, "got 0x%08x\n", hr);
+    ok(font3 == NULL, "got %p\n", font3);
+    IDWriteFontFace_Release(fontface);
 
     IDWriteFont_Release(font);
     IDWriteFont_Release(font2);
-    IDWriteFont_Release(font3);
-    IDWriteFontFace_Release(fontface);
     IDWriteFontFamily_Release(family);
     IDWriteFontCollection_Release(collection);
     IDWriteFactory_Release(factory);
+    DeleteFileW(test_fontfile);
 }
 
 static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STYLE style)

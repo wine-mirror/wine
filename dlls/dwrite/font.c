@@ -1514,7 +1514,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     }
 
     if (!found_font)
-        return E_INVALIDARG;
+        return DWRITE_E_NOFONT;
 
     hr = create_fontfamily(found_family, iface, &family);
     if (FAILED(hr))
