@@ -11546,7 +11546,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "오류:올바르지 않은 명령라인 매개변수\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: reg.rc:38

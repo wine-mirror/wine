@@ -11452,7 +11452,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Fel: Ogiltiga kommandoradsparametrar\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Fel: Kan inte lägga till nycklar till fjärrmaskin\n"
 
 #: reg.rc:38

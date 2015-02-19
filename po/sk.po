@@ -11181,8 +11181,10 @@ msgid "Error: Invalid command line parameters\n"
 msgstr ""
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+#, fuzzy
+#| msgid "Error: Unable to terminate process \"%1\".\n"
+msgid "Error: Unable to access remote machine\n"
+msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
 #: reg.rc:38
 msgid ""

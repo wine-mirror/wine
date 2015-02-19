@@ -11659,7 +11659,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Hiba: Érvénytelen parancssor paraméterek\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Hiba: nem lehet kulcsokat hozzáadni a távoli gépnél\n"
 
 #: reg.rc:38

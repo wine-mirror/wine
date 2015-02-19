@@ -11702,7 +11702,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Fout: Foutieve commandoregel-parameters\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Fout: Sleutels konden niet toegevoegd worden aan de remote machine\n"
 
 #: reg.rc:38

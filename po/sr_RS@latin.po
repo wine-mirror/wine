@@ -11722,7 +11722,7 @@ msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr ""
 
 #: reg.rc:38

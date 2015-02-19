@@ -11431,7 +11431,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "錯誤：無效的命令列參數\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
 #: reg.rc:38

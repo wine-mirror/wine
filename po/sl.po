@@ -11686,7 +11686,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Napaka: neveljaven parameter v ukazni vrstici\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Napaka: ni mogoče dodati ključa na oddaljen računalnik\n"
 
 #: reg.rc:38

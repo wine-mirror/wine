@@ -11584,7 +11584,7 @@ msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr ""
 
 #: reg.rc:38

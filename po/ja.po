@@ -11492,7 +11492,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "エラー: コマンド ライン引数が無効です\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "エラー: リモート マシンにキーを追加できませんでした\n"
 
 #: reg.rc:38

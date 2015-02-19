@@ -11743,7 +11743,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Eroare: Parametri nevalizi pentru linia de comandă\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
 
 #: reg.rc:38

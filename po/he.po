@@ -11716,7 +11716,9 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Error: Invalid command line parameters\n"
 
 #: reg.rc:37
-msgid "Error: Unable to add keys to remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Error: Unable to access remote machine\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
 #: reg.rc:38

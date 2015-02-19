@@ -179,6 +179,17 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
     return out_data;
 }
 
+static BOOL sane_path(const WCHAR *key)
+{
+    if (key[0] == '\\' && key[1] == '\\' && key[2] != '\\')
+    {
+        reg_message(STRING_NO_REMOTE);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
@@ -189,11 +200,8 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 
     reg_printfW(stubW, key_name, value_name, value_empty, type, data, force);
 
-    if (key_name[0]=='\\' && key_name[1]=='\\')
-    {
-        reg_message(STRING_NO_REMOTE);
+    if (!sane_path(key_name))
         return 1;
-    }
 
     p = strchrW(key_name,'\\');
     if (!p)
@@ -262,11 +270,8 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         ,0};
     reg_printfW(stubW, key_name, value_name, value_empty, value_all, force);
 
-    if (key_name[0]=='\\' && key_name[1]=='\\')
-    {
-        reg_message(STRING_NO_REMOTE);
+    if (!sane_path(key_name))
         return 1;
-    }
 
     p = strchrW(key_name,'\\');
     if (!p)
