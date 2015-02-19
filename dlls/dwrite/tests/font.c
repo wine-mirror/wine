@@ -1467,7 +1467,6 @@ if (0) /* crashes on native */
     ok(logfont.lfItalic == 1, "got %d\n", logfont.lfItalic);
     ok(logfont.lfUnderline == 0, "got %d\n", logfont.lfUnderline);
     ok(logfont.lfStrikeOut == 0, "got %d\n", logfont.lfStrikeOut);
-todo_wine
     ok(!lstrcmpW(logfont.lfFaceName, tahomaW), "got %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
     IDWriteGdiInterop_Release(interop);
