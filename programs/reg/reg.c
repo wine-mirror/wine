@@ -181,6 +181,14 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
 
 static BOOL sane_path(const WCHAR *key)
 {
+    unsigned int i = strlenW(key);
+
+    if (i < 3 || (key[i - 1] == '\\' && key[i - 2] == '\\'))
+    {
+        reg_message(STRING_INVALID_KEY);
+        return FALSE;
+    }
+
     if (key[0] == '\\' && key[1] == '\\' && key[2] != '\\')
     {
         reg_message(STRING_NO_REMOTE);

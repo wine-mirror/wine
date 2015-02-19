@@ -129,10 +129,10 @@ static void test_add(void)
     ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest2\\\\ /f", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */),
+    ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */),
         "got exit code %u\n", r);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest2");
-    todo_wine ok(err == ERROR_FILE_NOT_FOUND || broken(err == ERROR_SUCCESS /* WinXP */),
+    ok(err == ERROR_FILE_NOT_FOUND || broken(err == ERROR_SUCCESS /* WinXP */),
         "got exit code %d\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest3\\ /f", &r);
