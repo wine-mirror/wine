@@ -44,7 +44,7 @@ static void test_wshshell(void)
     IDispatchEx *dispex;
     IWshCollection *coll;
     IDispatch *disp, *shortcut;
-    IUnknown *shell;
+    IUnknown *shell, *unk;
     IFolderCollection *folders;
     IWshShortcut *shcut;
     ITypeInfo *ti;
@@ -70,6 +70,17 @@ static void test_wshshell(void)
 
     hr = IUnknown_QueryInterface(shell, &IID_IWshShell3, (void**)&sh3);
     EXPECT_HR(hr, S_OK);
+
+    hr = IWshShell3_QueryInterface(sh3, &IID_IObjectWithSite, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IWshShell3_QueryInterface(sh3, &IID_IWshShell, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IWshShell3_QueryInterface(sh3, &IID_IWshShell2, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IUnknown_Release(unk);
 
     hr = IWshShell3_get_SpecialFolders(sh3, &coll);
     EXPECT_HR(hr, S_OK);

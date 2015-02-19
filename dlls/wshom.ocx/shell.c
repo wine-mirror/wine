@@ -817,9 +817,11 @@ static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, v
 
     *ppv = NULL;
 
-    if(IsEqualGUID(riid, &IID_IUnknown)  ||
-       IsEqualGUID(riid, &IID_IDispatch) ||
-       IsEqualGUID(riid, &IID_IWshShell3))
+    if (IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IWshShell3) ||
+        IsEqualGUID(riid, &IID_IWshShell2) ||
+        IsEqualGUID(riid, &IID_IWshShell) ||
+        IsEqualGUID(riid, &IID_IUnknown))
     {
         *ppv = iface;
     }
@@ -829,7 +831,7 @@ static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, v
     }
     else
     {
-        FIXME("Unknown iface %s\n", debugstr_guid(riid));
+        WARN("unknown iface %s\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
