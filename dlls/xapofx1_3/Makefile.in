@@ -1,0 +1,6 @@
+MODULE    = xapofx1_3.dll
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = version.rc
