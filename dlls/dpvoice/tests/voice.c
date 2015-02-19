@@ -21,6 +21,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <initguid.h>
 #include <dplay8.h>
@@ -343,6 +344,195 @@ static void create_voicetest(void)
     }
 }
 
+static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDirectPlayVoiceServer *server_iface)
+{
+    const char *name = client_iface ? "client" : "server";
+    HRESULT ret;
+    DVCOMPRESSIONINFO data[32];
+    DWORD data_size = 0, num_elements, i, j;
+    WCHAR *string_loc;
+    BOOL found_pcm;
+
+    /* some variables are initialized to 99 just to check that they are not overwritten with 0 */
+    static struct
+    {
+        /* inputs */
+        DWORD data_size;
+        DWORD num_elements;
+        DWORD flags;
+        /* expected output */
+        HRESULT ret;
+        /* test flags */
+        enum
+        {
+            NULL_DATA = 1,
+            NULL_DATA_SIZE = 2,
+            NULL_NUM_ELEMENTS = 4,
+            SHARED_VARIABLE = 8
+        }
+        test_flags;
+    }
+    tests[] =
+    {
+        /* tests NULL data with an insufficient data_size */
+        { 10, 0, 0, DVERR_BUFFERTOOSMALL, NULL_DATA },
+
+        /* tests NULL data with an ample data_size */
+        { sizeof(data) - 1, 0, 0, DVERR_INVALIDPOINTER, NULL_DATA },
+
+        /* tests NULL data_size */
+        { 0, 99, 0, DVERR_INVALIDPOINTER, NULL_DATA_SIZE },
+
+        /* tests NULL num_elements */
+        { 99, 0, 0, DVERR_INVALIDPOINTER, NULL_NUM_ELEMENTS },
+
+        /* tests NULL everything */
+        { 99, 99, 0, DVERR_INVALIDPOINTER, NULL_DATA | NULL_DATA_SIZE | NULL_NUM_ELEMENTS },
+
+        /* tests passing the same pointer for data_size and num_elements */
+        { 10, 0, 0, DVERR_BUFFERTOOSMALL, SHARED_VARIABLE },
+
+        /* tests passing the same pointer but with an ample data_size */
+        { sizeof(data) - 1, 0, 0, DVERR_BUFFERTOOSMALL, SHARED_VARIABLE },
+
+        /* tests flags!=0 */
+        { 99, 99, 1, DVERR_INVALIDFLAGS },
+
+        /* tests data_size=0 */
+        { 0, 0, 0, DVERR_BUFFERTOOSMALL },
+
+        /* tests data_size=1 */
+        { 1, 0, 0, DVERR_BUFFERTOOSMALL },
+
+        /* tests data_size = sizeof(DVCOMPRESSIONINFO) */
+        { sizeof(DVCOMPRESSIONINFO), 0, 0, DVERR_BUFFERTOOSMALL },
+
+        /* tests data_size = returned data_size - 1 */
+        { 0 /* initialized later */, 0, 0, DVERR_BUFFERTOOSMALL },
+
+        /* tests data_size = returned data_size */
+        { 0 /* initialized later */, 0, 0, DV_OK },
+
+        /* tests data_size = returned data_size + 1 */
+        { 0 /* initialized later */, 0, 0, DV_OK }
+    };
+
+    /* either client_iface or server_iface must be given, but not both */
+    assert(!client_iface ^ !server_iface);
+
+    if(client_iface)
+        ret = IDirectPlayVoiceClient_GetCompressionTypes(client_iface, NULL, NULL, NULL, 0);
+    else
+        ret = IDirectPlayVoiceServer_GetCompressionTypes(server_iface, NULL, NULL, NULL, 0);
+    if(ret == E_NOTIMPL)
+    {
+        skip("%s: GetCompressionTypes not implemented\n", name);
+        return;
+    }
+
+    if (client_iface)
+        ret = IDirectPlayVoiceClient_GetCompressionTypes(client_iface, NULL, &data_size, &num_elements, 0);
+    else
+        ret = IDirectPlayVoiceServer_GetCompressionTypes(server_iface, NULL, &data_size, &num_elements, 0);
+    ok(ret == DVERR_BUFFERTOOSMALL,
+       "%s: expected ret=%x got ret=%x\n", name, DVERR_BUFFERTOOSMALL, ret);
+    ok(data_size > sizeof(DVCOMPRESSIONINFO) && data_size < sizeof(data) - 1,
+       "%s: got data_size=%u\n", name, data_size);
+    tests[sizeof(tests) / sizeof(tests[0]) - 3].data_size = data_size - 1;
+    tests[sizeof(tests) / sizeof(tests[0]) - 2].data_size = data_size;
+    tests[sizeof(tests) / sizeof(tests[0]) - 1].data_size = data_size + 1;
+
+    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        memset(data, 0x23, sizeof(data));
+
+        data_size = tests[i].data_size;
+        num_elements = tests[i].num_elements;
+
+        if(client_iface)
+            ret = IDirectPlayVoiceClient_GetCompressionTypes(
+                client_iface,
+                tests[i].test_flags & NULL_DATA         ? NULL : data,
+                tests[i].test_flags & NULL_DATA_SIZE    ? NULL : &data_size,
+                tests[i].test_flags & NULL_NUM_ELEMENTS ? NULL :
+                    tests[i].test_flags & SHARED_VARIABLE ? &data_size : &num_elements,
+                tests[i].flags
+            );
+        else
+            ret = IDirectPlayVoiceServer_GetCompressionTypes(
+                server_iface,
+                tests[i].test_flags & NULL_DATA         ? NULL : data,
+                tests[i].test_flags & NULL_DATA_SIZE    ? NULL : &data_size,
+                tests[i].test_flags & NULL_NUM_ELEMENTS ? NULL :
+                    tests[i].test_flags & SHARED_VARIABLE ? &data_size : &num_elements,
+                tests[i].flags
+            );
+
+        ok(ret == tests[i].ret,
+           "%s: tests[%u]: expected ret=%x got ret=%x\n", name, i, tests[i].ret, ret);
+
+        if(ret == DV_OK || ret == DVERR_BUFFERTOOSMALL || tests[i].test_flags == NULL_DATA)
+        {
+            ok(data_size > sizeof(DVCOMPRESSIONINFO) && data_size < sizeof(data) - 1,
+               "%s: tests[%u]: got data_size=%u\n", name, i, data_size);
+            if(!(tests[i].test_flags & SHARED_VARIABLE))
+                ok(num_elements > 0 && num_elements < data_size / sizeof(DVCOMPRESSIONINFO) + 1,
+                   "%s: tests[%u]: got num_elements=%u\n", name, i, num_elements);
+        }
+        else
+        {
+            ok(data_size == tests[i].data_size,
+               "%s: tests[%u]: expected data_size=%u got data_size=%u\n",
+               name, i, tests[i].data_size, data_size);
+            ok(num_elements == tests[i].num_elements,
+               "%s: tests[%u]: expected num_elements=%u got num_elements=%u\n",
+               name, i, tests[i].num_elements, num_elements);
+        }
+
+        if(ret == DV_OK)
+        {
+            string_loc = (WCHAR*)(data + num_elements);
+            found_pcm = FALSE;
+            for(j = 0; j < num_elements; j++)
+            {
+                if(memcmp(&data[j].guidType, &DPVCTGUID_NONE, sizeof(GUID)) == 0)
+                {
+                    ok(data[j].dwMaxBitsPerSecond == 64000,
+                       "%s: tests[%u]: data[%u]: expected dwMaxBitsPerSecond=64000 got dwMaxBitsPerSecond=%u\n",
+                       name, i, j, data[j].dwMaxBitsPerSecond);
+                    found_pcm = TRUE;
+                }
+                ok(data[j].dwSize == 80,
+                   "%s: tests[%u]: data[%u]: expected dwSize=80 got dwSize=%u\n",
+                   name, i, j, data[j].dwSize);
+                ok(data[j].lpszName == string_loc,
+                   "%s: tests[%u]: data[%u]: expected lpszName=%p got lpszName=%p\n",
+                   name, i, j, string_loc, data[j].lpszName);
+                ok(!data[j].lpszDescription,
+                   "%s: tests[%u]: data[%u]: expected lpszDescription=NULL got lpszDescription=%s\n",
+                   name, i, j, wine_dbgstr_w(data[j].lpszDescription));
+                ok(!data[j].dwFlags,
+                   "%s: tests[%u]: data[%u]: expected dwFlags=0 got dwFlags=%u\n",
+                   name, i, j, data[j].dwFlags);
+                string_loc += lstrlenW(data[j].lpszName) + 1;
+            }
+            ok((char*)string_loc == (char*)data + data_size,
+               "%s: tests[%u]: expected string_loc=%p got string_loc=%p\n",
+               name, i, (char*)data + data_size, string_loc);
+            ok(*(char*)string_loc == 0x23,
+               "%s: tests[%u]: expected *(char*)string_loc=0x23 got *(char*)string_loc=0x%x\n",
+               name, i, *(char*)string_loc);
+            ok(found_pcm, "%s: tests[%u]: MS-PCM codec not found\n", name, i);
+        }
+        else
+        {
+            ok(*(char*)data == 0x23,
+               "%s: tests[%u]: expected *(char*)data=0x23 got *(char*)data=0x%x\n",
+               name, i, *(char*)data);
+        }
+    }
+}
+
 START_TEST(voice)
 {
     HRESULT hr;
@@ -354,9 +544,22 @@ START_TEST(voice)
 
     create_voicetest();
 
-    if(test_init_dpvoice_server() && test_init_dpvoice_client())
+    if(test_init_dpvoice_server())
     {
-        /* TODO */
+        test_GetCompressionTypes(NULL, vserver);
+
+        if(test_init_dpvoice_client())
+        {
+            test_GetCompressionTypes(vclient, NULL);
+        }
+        else
+        {
+            skip("client failed to initialize\n");
+        }
+    }
+    else
+    {
+        skip("server failed to initialize\n");
     }
 
     test_cleanup_dpvoice();
