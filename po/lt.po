@@ -8161,7 +8161,7 @@ msgstr "Istorija"
 
 #: shell32.rc:215
 msgid "Program Files"
-msgstr "Programų failai"
+msgstr "Program Files"
 
 #: shell32.rc:217
 msgid "My Pictures"
@@ -8193,7 +8193,7 @@ msgstr "Vaizdai"
 
 #: shell32.rc:216
 msgid "Program Files (x86)"
-msgstr "Programų failai (x86)"
+msgstr "Program Files (x86)"
 
 #: shell32.rc:224
 msgid "Contacts"
