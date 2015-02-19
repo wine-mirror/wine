@@ -11727,6 +11727,12 @@ msgid ""
 msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Unsupported type\n"
+msgstr "Error: Command line not supported\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&רישום המערכת"

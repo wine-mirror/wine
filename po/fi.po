@@ -11496,6 +11496,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Virhe: järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Tyyppiä ei tueta.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

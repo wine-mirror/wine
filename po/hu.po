@@ -11670,6 +11670,12 @@ msgid ""
 msgstr ""
 "Hiba: A rendszer nem találta a megadott regisztrációs kulcsot vagy értéket\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Nem támogatott típus.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Fájl"

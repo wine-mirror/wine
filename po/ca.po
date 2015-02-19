@@ -11759,6 +11759,12 @@ msgstr ""
 "Error: El sistema no ha pogut trobar la clau o valor de registre "
 "especificada\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Tipus incompatible.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

@@ -11654,6 +11654,12 @@ msgstr ""
 "Erreur : le système n'a pas pu trouver la clé ou la valeur de registre "
 "spécifiée\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Type non pris en charge.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

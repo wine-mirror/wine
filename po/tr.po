@@ -11522,6 +11522,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Unsupported type\n"
+msgstr "Hata: Komut satırı desteklenmiyor\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt"

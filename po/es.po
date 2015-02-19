@@ -11747,6 +11747,12 @@ msgstr ""
 "Error: El sistema no pudo encontrar la clave o el valor del Registro "
 "especificado\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Tipo no soportado.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

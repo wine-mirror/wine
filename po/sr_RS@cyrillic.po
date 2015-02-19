@@ -11592,6 +11592,13 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Unsupported type\n"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

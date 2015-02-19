@@ -11054,6 +11054,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "错误：系统无法找到指定的注册表键或值\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Unsupported type\n"
+msgstr "错误：不支持此命令行\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "注册表(&R)"

@@ -11730,6 +11730,13 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "Error: Unsupported type\n"
+msgstr ""
+"Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

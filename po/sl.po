@@ -11696,6 +11696,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Napaka: sistem ni našel navedenega ključa ali vrednosti registra\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Nepodprta vrsta.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

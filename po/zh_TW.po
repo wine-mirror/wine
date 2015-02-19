@@ -11441,6 +11441,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "不受支援的型態。\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

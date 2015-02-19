@@ -11509,6 +11509,10 @@ msgid ""
 msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 
+#: reg.rc:39
+msgid "Error: Unsupported type\n"
+msgstr "Error: Unsupported type\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

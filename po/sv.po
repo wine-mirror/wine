@@ -11463,6 +11463,12 @@ msgid ""
 msgstr ""
 "Fel: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Ej stödd typ.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

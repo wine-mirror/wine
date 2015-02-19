@@ -11714,6 +11714,12 @@ msgstr ""
 "Fout: Het systeem kon de gespecificeerde registersleutel of waarde niet "
 "vinden\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Niet-ondersteund type.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registerbestand"

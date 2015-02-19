@@ -11556,6 +11556,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "지원하지 않는 형식.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "레지스트리(&R)"

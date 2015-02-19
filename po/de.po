@@ -11588,6 +11588,12 @@ msgid ""
 msgstr ""
 "Fehler: Der angegebene Schlüssel oder Wert konnte nicht gefunden werden\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Nicht unterstützter Typ.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

@@ -11227,6 +11227,12 @@ msgid ""
 msgstr ""
 "Greška: Sustav nije mogao pronaći navedeni ključ ili vrijednost u registru.\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Nepodržan tip.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registar"

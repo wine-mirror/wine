@@ -11517,6 +11517,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Klaida: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Nepalaikomas tipas.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

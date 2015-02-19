@@ -11754,6 +11754,12 @@ msgid ""
 msgstr ""
 "Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Unsupported type\n"
+msgstr "Eroare: Linie de comandă nesuportată\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registru"

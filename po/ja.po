@@ -11502,6 +11502,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "エラー: システムは指定されたキーまたは値を見つけられませんでした\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "サポートされていない種類です。\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"

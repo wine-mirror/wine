@@ -11667,6 +11667,12 @@ msgstr ""
 "Fejl: Systemet kunne ikke finde, den angivet registrerings nøgle eller "
 "værdi\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Ikke-understøttet type.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

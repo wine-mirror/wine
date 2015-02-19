@@ -11565,6 +11565,12 @@ msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Niewspierany typ.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

@@ -11573,6 +11573,12 @@ msgstr ""
 "Feil: Systemet klarte ikke finne den angitte registernøkkelen eller -"
 "verdien\n"
 
+#: reg.rc:39
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "Error: Unsupported type\n"
+msgstr "Typen støttes ikke.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"
