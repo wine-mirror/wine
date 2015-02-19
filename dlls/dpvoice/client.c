@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 
 #include "dvoice.h"
+#include "dvoice_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpvoice);
 
@@ -149,8 +150,8 @@ static HRESULT WINAPI dpvclient_GetCompressionTypes(IDirectPlayVoiceClient *ifac
                                 DWORD *pdwDataSize, DWORD *pdwNumElements, DWORD dwFlags)
 {
     IDirectPlayVoiceClientImpl *This = impl_from_IDirectPlayVoiceClient(iface);
-    FIXME("%p %p %p %p %d\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
-    return E_NOTIMPL;
+    FIXME("%p %p %p %p %d semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
+    return DPVOICE_GetCompressionTypes(pData, pdwDataSize, pdwNumElements, dwFlags);
 }
 
 static HRESULT WINAPI dpvclient_SetTransmitTargets(IDirectPlayVoiceClient *iface, PDVID pdvIDTargets,

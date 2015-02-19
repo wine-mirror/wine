@@ -420,16 +420,6 @@ static void test_GetCompressionTypes(IDirectPlayVoiceClient *client_iface, IDire
     /* either client_iface or server_iface must be given, but not both */
     assert(!client_iface ^ !server_iface);
 
-    if(client_iface)
-        ret = IDirectPlayVoiceClient_GetCompressionTypes(client_iface, NULL, NULL, NULL, 0);
-    else
-        ret = IDirectPlayVoiceServer_GetCompressionTypes(server_iface, NULL, NULL, NULL, 0);
-    if(ret == E_NOTIMPL)
-    {
-        skip("%s: GetCompressionTypes not implemented\n", name);
-        return;
-    }
-
     if (client_iface)
         ret = IDirectPlayVoiceClient_GetCompressionTypes(client_iface, NULL, &data_size, &num_elements, 0);
     else

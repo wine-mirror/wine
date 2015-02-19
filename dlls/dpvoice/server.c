@@ -41,6 +41,45 @@ typedef struct IDirectPlayVoiceServerImpl
     LONG ref;
 } IDirectPlayVoiceServerImpl;
 
+HRESULT DPVOICE_GetCompressionTypes(DVCOMPRESSIONINFO *pData, DWORD *pdwDataSize, DWORD *pdwNumElements, DWORD dwFlags)
+{
+    static const DVCOMPRESSIONINFO pcm_type =
+        {80, {0x8de12fd4,0x7cb3,0x48ce,{0xa7,0xe8,0x9c,0x47,0xa2,0x2e,0x8a,0xc5}}, NULL, NULL, 0, 64000};
+    static const WCHAR pcm_name[] =
+        {'M','S','-','P','C','M',' ','6','4',' ','k','b','i','t','/','s',0};
+
+    HRESULT ret;
+    LPWSTR string_loc;
+
+    if (!pdwDataSize || !pdwNumElements)
+        return DVERR_INVALIDPOINTER;
+
+    if (dwFlags)
+        return DVERR_INVALIDFLAGS;
+
+    *pdwNumElements = 1;
+
+    if (*pdwDataSize < sizeof(pcm_type) + sizeof(pcm_name))
+    {
+        ret = DVERR_BUFFERTOOSMALL;
+    }
+    else if (!pData)
+    {
+        ret = DVERR_INVALIDPOINTER;
+    }
+    else
+    {
+        string_loc = (LPWSTR)((char*)pData + sizeof(pcm_type));
+        memcpy(pData, &pcm_type, sizeof(pcm_type));
+        memcpy(string_loc, pcm_name, sizeof(pcm_name));
+        pData->lpszName = string_loc;
+        ret = DV_OK;
+    }
+
+    *pdwDataSize = sizeof(pcm_type) + sizeof(pcm_name);
+    return ret;
+}
+
 static inline IDirectPlayVoiceServerImpl *impl_from_IDirectPlayVoiceServer(IDirectPlayVoiceServer *iface)
 {
     return CONTAINING_RECORD(iface, IDirectPlayVoiceServerImpl, IDirectPlayVoiceServer_iface);
@@ -130,8 +169,8 @@ static HRESULT WINAPI dpvserver_GetCompressionTypes(IDirectPlayVoiceServer *ifac
                                 DWORD *pdwNumElements, DWORD dwFlags)
 {
     IDirectPlayVoiceServerImpl *This = impl_from_IDirectPlayVoiceServer(iface);
-    FIXME("%p %p %p %p %d\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
-    return E_NOTIMPL;
+    FIXME("%p %p %p %p %d semi-stub\n", This, pData, pdwDataSize, pdwNumElements, dwFlags);
+    return DPVOICE_GetCompressionTypes(pData, pdwDataSize, pdwNumElements, dwFlags);
 }
 
 static HRESULT WINAPI dpvserver_SetTransmitTargets(IDirectPlayVoiceServer *iface, DVID dvSource, PDVID pdvIDTargets,
