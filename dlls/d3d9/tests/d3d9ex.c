@@ -42,6 +42,76 @@ struct device_desc
     DWORD flags;
 };
 
+static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    unsigned int i;
+
+    for (i = 0; i < 4; ++i)
+    {
+        if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+            return FALSE;
+        c1 >>= 8;
+        c2 >>= 8;
+    }
+    return TRUE;
+}
+
+static DWORD get_pixel_color(IDirect3DDevice9Ex *device, unsigned int x, unsigned int y)
+{
+    DWORD ret;
+    IDirect3DSurface9 *surf = NULL, *target = NULL;
+    HRESULT hr;
+    D3DLOCKED_RECT locked_rect;
+    RECT rect = {x, y, x + 1, y + 1};
+
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 640, 480,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
+    if (FAILED(hr) || !surf)
+    {
+        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
+        return 0xdeadbeef;
+    }
+
+    hr = IDirect3DDevice9Ex_GetRenderTarget(device, 0, &target);
+    if (FAILED(hr))
+    {
+        trace("Can't get the render target, hr %#x.\n", hr);
+        ret = 0xdeadbeed;
+        goto out;
+    }
+
+    hr = IDirect3DDevice9Ex_GetRenderTargetData(device, target, surf);
+    if (FAILED(hr))
+    {
+        trace("Can't read the render target data, hr %#x.\n", hr);
+        ret = 0xdeadbeec;
+        goto out;
+    }
+
+    hr = IDirect3DSurface9_LockRect(surf, &locked_rect, &rect, D3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        trace("Can't lock the offscreen surface, hr %#x.\n", hr);
+        ret = 0xdeadbeeb;
+        goto out;
+    }
+
+    /* Remove the X channel for now. DirectX and OpenGL have different
+     * ideas how to treat it apparently, and it isn't really important
+     * for these tests. */
+    ret = ((DWORD *)locked_rect.pBits)[0] & 0x00ffffff;
+    hr = IDirect3DSurface9_UnlockRect(surf);
+    if (FAILED(hr))
+        trace("Can't unlock the offscreen surface, hr %#x.\n", hr);
+
+out:
+    if (target)
+        IDirect3DSurface9_Release(target);
+    if (surf)
+        IDirect3DSurface9_Release(surf);
+    return ret;
+}
+
 static HWND create_window(void)
 {
     WNDCLASSA wc = {0};
@@ -576,8 +646,20 @@ out:
 
 static void test_user_memory(void)
 {
+    static const struct
+    {
+        float x, y, z;
+        float u, v;
+    }
+    quad[] =
+    {
+        {-1.0f, -1.0f, 0.0f, 0.0f, 1.0f},
+        {-1.0f,  1.0f, 0.0f, 0.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f},
+        { 1.0f,  1.0f, 0.0f, 1.0f, 0.0f},
+    };
     IDirect3DDevice9Ex *device;
-    IDirect3DTexture9 *texture;
+    IDirect3DTexture9 *texture, *texture2;
     IDirect3DCubeTexture9 *cube_texture;
     IDirect3DVolumeTexture9 *volume_texture;
     IDirect3DVertexBuffer9 *vertex_buffer;
@@ -588,7 +670,10 @@ static void test_user_memory(void)
     HWND window;
     HRESULT hr;
     void *mem;
+    char *ptr;
     D3DCAPS9 caps;
+    unsigned int x, y;
+    D3DCOLOR color;
 
     window = create_window();
     if (!(device = create_device(window, NULL)))
@@ -675,6 +760,54 @@ static void test_user_memory(void)
             D3DPOOL_SCRATCH, &surface, &mem, 0);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    ptr = mem;
+    for (y = 0; y < 33; ++y)
+        for (x = 0; x < 33; ++x)
+            *ptr++ = x * 255 / 32;
+
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 33, 33, 1, 0, D3DFMT_L8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    ok(locked_rect.Pitch == 33, "Got unexpected pitch %d.\n", locked_rect.Pitch);
+    ok(locked_rect.pBits == mem, "Got unexpected pBits %p, expected %p.\n", locked_rect.pBits, mem);
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 33, 33, 1, 0, D3DFMT_L8,
+            D3DPOOL_DEFAULT, &texture2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)texture,
+            (IDirect3DBaseTexture9 *)texture2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture2);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_pixel_color(device, 320, 240);
+    ok(color_match(color, 0x007f7f7f, 2), "Got unexpected color %#x.\n", color);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(texture2);
+    IDirect3DTexture9_Release(texture);
     HeapFree(GetProcessHeap(), 0, mem);
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
