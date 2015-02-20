@@ -84,7 +84,6 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
     {
         UINT dst_row_pitch, dst_slice_pitch;
         UINT src_row_pitch, src_slice_pitch;
-        UINT alignment = volume->resource.device->surface_alignment;
 
         if (data->buffer_object)
             ERR("Loading a converted volume from a PBO.\n");
@@ -92,7 +91,6 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
             ERR("Converting a block-based format.\n");
 
         dst_row_pitch = width * format->conv_byte_count;
-        dst_row_pitch = (dst_row_pitch + alignment - 1) & ~(alignment - 1);
         dst_slice_pitch = dst_row_pitch * height;
 
         wined3d_volume_get_pitch(volume, &src_row_pitch, &src_slice_pitch);
