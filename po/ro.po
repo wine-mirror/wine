@@ -2716,7 +2716,7 @@ msgstr ""
 #: cryptui.rc:113
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
-"verify messages signed with it.\n"
+"verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "Nu veți mai putea cripta sau verifica mesaje semnate cu aceste certificate.\n"

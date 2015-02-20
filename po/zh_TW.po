@@ -2693,9 +2693,14 @@ msgstr ""
 "確定要移除這個憑證？"
 
 #: cryptui.rc:113
+#, fuzzy
+#| msgid ""
+#| "You will no longer be able to encrypt messages with these certificates, "
+#| "or verify messages signed with it.\n"
+#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
-"verify messages signed with it.\n"
+"verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "您將不能再以這些憑證加密訊息，或驗證以它們簽署的訊息。\n"

@@ -2724,9 +2724,14 @@ msgstr ""
 "당신은 정말로 이 인증서를 제거하기를 원합니까?"
 
 #: cryptui.rc:113
+#, fuzzy
+#| msgid ""
+#| "You will no longer be able to encrypt messages with these certificates, "
+#| "or verify messages signed with it.\n"
+#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
-"verify messages signed with it.\n"
+"verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "당신은 더 이상 이 인증서들를 이용해서 메세지를 암호하거나,아니면 서명된 것을 "

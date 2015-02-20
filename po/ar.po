@@ -2715,9 +2715,14 @@ msgstr ""
 "هل ترغب حقًا بإزالة هذه الشهادة ؟"
 
 #: cryptui.rc:113
+#, fuzzy
+#| msgid ""
+#| "You will no longer be able to encrypt messages with these certificates, "
+#| "or verify messages signed with it.\n"
+#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
-"verify messages signed with it.\n"
+"verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "قد لا تتمكن من تشفير الرسائل مستقبلًا بهذه الشهادات ، أو أن تقوم بتحقيق "
