@@ -546,6 +546,11 @@ obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *a
     switch(code)
     {
     case WS_SIO_ADDRESS_LIST_CHANGE:
+        if ((sock->state & FD_WINE_NONBLOCKING) && !blocking)
+        {
+            set_error( STATUS_CANT_WAIT );
+            return 0;
+        }
         if (!(ifchange_q = sock_get_ifchange_q( sock ))) return 0;
         if (!(async = create_async( current, ifchange_q, async_data ))) return 0;
         if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
