@@ -1023,6 +1023,8 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     if (uFlags != MMIO_READ && uFlags != MMIO_WRITE)
 	return MMSYSERR_INVALPARAM;
 
+    if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
+	return MMIOERR_CANNOTWRITE;
     if (uFlags == MMIO_WRITE && (lpmmioinfo->dwFlags & MMIO_DIRTY))
     {
         send_message(wm->ioProc, &wm->info, MMIOM_SEEK, lpmmioinfo->lBufOffset, SEEK_SET, FALSE);
@@ -1030,8 +1032,6 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
                      lpmmioinfo->pchNext - lpmmioinfo->pchBuffer, FALSE);
         lpmmioinfo->dwFlags &= ~MMIO_DIRTY;
     }
-    if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
-	return MMIOERR_CANNOTWRITE;
 
     if (lpmmioinfo && lpmmioinfo->fccIOProc == FOURCC_DOS) {
 	wm->dwFileSize = max(wm->dwFileSize, lpmmioinfo->lBufOffset + 
