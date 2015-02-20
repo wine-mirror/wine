@@ -632,6 +632,7 @@ static void test_CreateBitmapRenderTarget(void)
     HBITMAP hbm, hbm2;
     DWRITE_MATRIX m;
     DIBSECTION ds;
+    COLORREF c;
     HRESULT hr;
     FLOAT pdip;
     SIZE size;
@@ -688,6 +689,14 @@ if (0) /* crashes on native */
 
     hdc = IDWriteBitmapRenderTarget_GetMemoryDC(target);
     ok(hdc != NULL, "got %p\n", hdc);
+
+    /* test context settings */
+    c = GetTextColor(hdc);
+    ok(c == RGB(0, 0, 0), "got 0x%08x\n", c);
+    ret = GetBkMode(hdc);
+    ok(ret == OPAQUE, "got %d\n", ret);
+    c = GetBkColor(hdc);
+    ok(c == RGB(255, 255, 255), "got 0x%08x\n", c);
 
     hbm = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm != NULL, "got %p\n", hbm);
