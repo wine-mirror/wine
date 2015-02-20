@@ -60,13 +60,9 @@ typedef struct RuntimeHost RuntimeHost;
 typedef struct CLRRuntimeInfo
 {
     ICLRRuntimeInfo ICLRRuntimeInfo_iface;
-    LPCWSTR mono_libdir;
     DWORD major;
     DWORD minor;
     DWORD build;
-    BOOL found;
-    WCHAR mono_path[MAX_PATH];
-    WCHAR mscorlib_path[MAX_PATH];
     struct RuntimeHost *loaded_runtime;
 } CLRRuntimeInfo;
 
@@ -146,7 +142,7 @@ extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* na
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name) DECLSPEC_HIDDEN;
 extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]) DECLSPEC_HIDDEN;
-extern MonoDomain* (CDECL *mono_jit_init)(const char *file) DECLSPEC_HIDDEN;
+extern MonoDomain* (CDECL *mono_jit_init_version)(const char *domain_name, const char *runtime_version) DECLSPEC_HIDDEN;
 extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status) DECLSPEC_HIDDEN;
 extern void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj) DECLSPEC_HIDDEN;
