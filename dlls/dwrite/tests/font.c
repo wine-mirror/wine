@@ -2240,6 +2240,7 @@ static void test_GetGdiInterop(void)
 
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop2, &logfont, &font);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
 
     IDWriteGdiInterop_Release(interop2);
     IDWriteGdiInterop_Release(interop);
