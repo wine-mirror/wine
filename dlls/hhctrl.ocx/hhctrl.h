@@ -169,9 +169,20 @@ struct wintype_stringsA {
 };
 
 typedef struct {
-    IOleClientSite *client_site;
+    IOleClientSite IOleClientSite_iface;
+    IOleInPlaceSite IOleInPlaceSite_iface;
+    IOleInPlaceFrame IOleInPlaceFrame_iface;
+    IDocHostUIHandler IDocHostUIHandler_iface;
+
+    LONG ref;
+
+    IOleObject *ole_obj;
     IWebBrowser2 *web_browser;
-    IOleObject *wb_object;
+    HWND hwndWindow;
+} WebBrowserContainer;
+
+typedef struct {
+    WebBrowserContainer *web_browser;
 
     HH_WINTYPEW WinType;
 
@@ -197,7 +208,7 @@ typedef struct {
 BOOL InitWebBrowser(HHInfo*,HWND) DECLSPEC_HIDDEN;
 void ReleaseWebBrowser(HHInfo*) DECLSPEC_HIDDEN;
 void ResizeWebBrowser(HHInfo*,DWORD,DWORD) DECLSPEC_HIDDEN;
-void DoPageAction(HHInfo*,DWORD) DECLSPEC_HIDDEN;
+void DoPageAction(WebBrowserContainer*,DWORD) DECLSPEC_HIDDEN;
 
 void InitContent(HHInfo*) DECLSPEC_HIDDEN;
 void ReleaseContent(HHInfo*) DECLSPEC_HIDDEN;
