@@ -126,7 +126,6 @@ extern HRESULT get_family_names_from_stream(IDWriteFontFileStream*,UINT32,DWRITE
 /* Opentype font table functions */
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,UINT32*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,BOOL*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_table(IDWriteFontFileStream*,DWRITE_FONT_FACE_TYPE,UINT32,UINT32,const void**,void**,UINT32*,BOOL*) DECLSPEC_HIDDEN;
-extern void opentype_cmap_get_glyphindex(void*,UINT32,UINT16*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_cmap_get_unicode_ranges(void*,UINT32,DWRITE_UNICODE_RANGE*,UINT32*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_properties(IDWriteFontFileStream*,DWRITE_FONT_FACE_TYPE,UINT32,DWRITE_FONT_STRETCH*,
     DWRITE_FONT_WEIGHT*,DWRITE_FONT_STYLE*) DECLSPEC_HIDDEN;
@@ -162,6 +161,7 @@ extern void freetype_notify_cacheremove(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern BOOL freetype_is_monospaced(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_glyph_outline(IDWriteFontFace2*,FLOAT,UINT16,USHORT,struct glyph_outline**) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphcount(IDWriteFontFace2*) DECLSPEC_HIDDEN;
+extern UINT16 freetype_get_glyphindex(IDWriteFontFace2*,UINT32) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

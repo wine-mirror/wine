@@ -53,6 +53,7 @@ static CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static void *ft_handle = NULL;
 static FT_Library library = 0;
 static FTC_Manager cache_manager = 0;
+static FTC_CMapCache cmap_cache = 0;
 typedef struct
 {
     FT_Int major;
@@ -67,6 +68,8 @@ MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Transform);
+MAKE_FUNCPTR(FTC_CMapCache_Lookup);
+MAKE_FUNCPTR(FTC_CMapCache_New);
 MAKE_FUNCPTR(FTC_Manager_New);
 MAKE_FUNCPTR(FTC_Manager_Done);
 MAKE_FUNCPTR(FTC_Manager_LookupFace);
@@ -137,6 +140,8 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Transform)
+    LOAD_FUNCPTR(FTC_CMapCache_Lookup)
+    LOAD_FUNCPTR(FTC_CMapCache_New)
     LOAD_FUNCPTR(FTC_Manager_New)
     LOAD_FUNCPTR(FTC_Manager_Done)
     LOAD_FUNCPTR(FTC_Manager_LookupFace)
@@ -153,8 +158,11 @@ BOOL init_freetype(void)
     pFT_Library_Version(library, &FT_Version.major, &FT_Version.minor, &FT_Version.patch);
 
     /* init cache manager */
-    if (pFTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &cache_manager) != 0) {
+    if (pFTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &cache_manager) != 0 ||
+        pFTC_CMapCache_New(cache_manager, &cmap_cache) != 0) {
+
         ERR("Failed to init FreeType cache\n");
+        pFTC_Manager_Done(cache_manager);
         pFT_Done_FreeType(library);
         wine_dlclose(ft_handle, NULL, 0);
         ft_handle = NULL;
@@ -388,6 +396,17 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return count;
 }
 
+UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
+{
+    UINT16 glyph;
+
+    EnterCriticalSection(&freetype_cs);
+    glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, -1, codepoint);
+    LeaveCriticalSection(&freetype_cs);
+
+    return glyph;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -420,6 +439,11 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
 }
 
 UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
+{
+    return 0;
+}
+
+UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
 {
     return 0;
 }

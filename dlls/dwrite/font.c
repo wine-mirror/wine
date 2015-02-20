@@ -388,17 +388,12 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
     UINT32 count, UINT16 *glyph_indices)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    unsigned int i;
-    void *data;
+    UINT32 i;
 
     TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
 
-    data = get_fontface_cmap(This);
-    if (!data)
-        return E_FAIL;
-
     for (i = 0; i < count; i++)
-        opentype_cmap_get_glyphindex(data, codepoints[i], &glyph_indices[i]);
+        glyph_indices[i] = freetype_get_glyphindex(iface, codepoints[i]);
 
     return S_OK;
 }
