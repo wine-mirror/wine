@@ -1070,14 +1070,52 @@ static void on_draw_item(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
     if (draw_info->CtlID == IDC_SYSPARAM_COLOR)
     {
-        UINT state = DFCS_ADJUSTRECT | DFCS_BUTTONPUSH;
+        UINT state;
+        HTHEME theme;
+        RECT buttonrect;
 
-        if (draw_info->itemState & ODS_DISABLED)
-            state |= DFCS_INACTIVE;
-        else
-            state |= draw_info->itemState & ODS_SELECTED ? DFCS_PUSHED : 0;
+        theme = OpenThemeData(draw_info->hwndItem, WC_BUTTONW);
 
-        DrawFrameControl(draw_info->hDC, &draw_info->rcItem, DFC_BUTTON, state);
+        if (theme) {
+            MARGINS margins;
+
+            if (draw_info->itemState & ODS_DISABLED)
+                state = PBS_DISABLED;
+            else if (draw_info->itemState & ODS_SELECTED)
+                state = PBS_PRESSED;
+            else
+                state = PBS_NORMAL;
+
+            if (IsThemeBackgroundPartiallyTransparent(theme, BP_PUSHBUTTON, state))
+                DrawThemeParentBackground(draw_info->hwndItem, draw_info->hDC, NULL);
+
+            DrawThemeBackground(theme, draw_info->hDC, BP_PUSHBUTTON, state, &draw_info->rcItem, NULL);
+
+            buttonrect = draw_info->rcItem;
+
+            GetThemeMargins(theme, draw_info->hDC, BP_PUSHBUTTON, state, TMT_CONTENTMARGINS, &draw_info->rcItem, &margins);
+
+            buttonrect.left += margins.cxLeftWidth;
+            buttonrect.top += margins.cyTopHeight;
+            buttonrect.right -= margins.cxRightWidth;
+            buttonrect.bottom -= margins.cyBottomHeight;
+
+            if (draw_info->itemState & ODS_FOCUS)
+                DrawFocusRect(draw_info->hDC, &buttonrect);
+
+            CloseThemeData(theme);
+        } else {
+            state = DFCS_ADJUSTRECT | DFCS_BUTTONPUSH;
+
+            if (draw_info->itemState & ODS_DISABLED)
+                state |= DFCS_INACTIVE;
+            else
+                state |= draw_info->itemState & ODS_SELECTED ? DFCS_PUSHED : 0;
+
+            DrawFrameControl(draw_info->hDC, &draw_info->rcItem, DFC_BUTTON, state);
+
+            buttonrect = draw_info->rcItem;
+        }
 
         if (!(draw_info->itemState & ODS_DISABLED))
         {
@@ -1087,10 +1125,10 @@ static void on_draw_item(HWND hDlg, WPARAM wParam, LPARAM lParam)
             index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETITEMDATA, index, 0);
             brush = CreateSolidBrush(metrics[index].color);
 
-            InflateRect(&draw_info->rcItem, -1, -1);
-            FrameRect(draw_info->hDC, &draw_info->rcItem, black_brush);
-            InflateRect(&draw_info->rcItem, -1, -1);
-            FillRect(draw_info->hDC, &draw_info->rcItem, brush);
+            InflateRect(&buttonrect, -1, -1);
+            FrameRect(draw_info->hDC, &buttonrect, black_brush);
+            InflateRect(&buttonrect, -1, -1);
+            FillRect(draw_info->hDC, &buttonrect, brush);
             DeleteObject(brush);
         }
     }
