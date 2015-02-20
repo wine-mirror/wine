@@ -949,25 +949,23 @@ MMRESULT WINAPI mmioGetInfo(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
  */
 MMRESULT WINAPI mmioSetInfo(HMMIO hmmio, const MMIOINFO* lpmmioinfo, UINT uFlags)
 {
-    LPWINE_MMIO		wm;
+    LPWINE_MMIO wm;
 
     TRACE("(%p,%p,0x%08x)\n",hmmio,lpmmioinfo,uFlags);
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
-	return MMSYSERR_INVALHANDLE;
+        return MMSYSERR_INVALHANDLE;
 
     /* check pointers coherence */
     if (lpmmioinfo->pchNext < wm->info.pchBuffer ||
-	lpmmioinfo->pchNext > wm->info.pchBuffer + wm->info.cchBuffer ||
-	lpmmioinfo->pchEndRead < wm->info.pchBuffer ||
-	lpmmioinfo->pchEndRead > wm->info.pchBuffer + wm->info.cchBuffer ||
-	lpmmioinfo->pchEndWrite < wm->info.pchBuffer ||
-	lpmmioinfo->pchEndWrite > wm->info.pchBuffer + wm->info.cchBuffer)
-	return MMSYSERR_INVALPARAM;
+            lpmmioinfo->pchNext > wm->info.pchBuffer + wm->info.cchBuffer ||
+            lpmmioinfo->pchEndRead < wm->info.pchBuffer ||
+            lpmmioinfo->pchEndRead > wm->info.pchBuffer + wm->info.cchBuffer ||
+            lpmmioinfo->pchEndWrite < wm->info.pchBuffer ||
+            lpmmioinfo->pchEndWrite > wm->info.pchBuffer + wm->info.cchBuffer)
+        return MMSYSERR_INVALPARAM;
 
-    wm->info.pchNext = lpmmioinfo->pchNext;
-    wm->info.pchEndRead = lpmmioinfo->pchEndRead;
-
+    wm->info = *lpmmioinfo;
     return MMSYSERR_NOERROR;
 }
 
