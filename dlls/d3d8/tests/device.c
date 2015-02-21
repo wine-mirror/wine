@@ -6125,6 +6125,7 @@ static void test_volume_blocks(void)
             hr = IDirect3DDevice8_CreateVolumeTexture(device, formats[i].block_width, formats[i].block_height,
                     2, 2, 0, formats[i].fmt, D3DPOOL_SCRATCH, &texture);
 
+            ok(SUCCEEDED(hr), "CreateVolumeTexture failed, hr %#x.\n", hr);
             hr = IDirect3DVolumeTexture8_LockBox(texture, 1, &locked_box, NULL, 0);
             ok(SUCCEEDED(hr), "Failed to lock volume texture mipmap, hr %#x.\n", hr);
             hr = IDirect3DVolumeTexture8_UnlockBox(texture, 1);
@@ -6727,6 +6728,7 @@ static void test_resource_type(void)
     {
         hr = IDirect3DDevice8_CreateVolumeTexture(device, 2, 4, 8, 4, 0, D3DFMT_X8R8G8B8,
                 D3DPOOL_SYSTEMMEM, &volume_texture);
+        ok(SUCCEEDED(hr), "CreateVolumeTexture failed, hr %#x.\n", hr);
         type = IDirect3DVolumeTexture8_GetType(volume_texture);
         ok(type == D3DRTYPE_VOLUMETEXTURE, "Expected type D3DRTYPE_VOLUMETEXTURE, got %u.\n", type);
 
