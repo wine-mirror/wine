@@ -307,7 +307,7 @@ static enum install_res install_from_default_dir(void)
     const char *data_dir, *package_dir;
     char *dir_buf = NULL;
     int len;
-    BOOL ret;
+    enum install_res ret;
 
     if((data_dir = wine_get_data_dir())) {
         package_dir = data_dir;
