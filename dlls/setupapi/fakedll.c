@@ -791,7 +791,7 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size 
     HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
     HRSRC rsrc;
 
-    if ((rsrc = FindResourceW( module, manifestW, MAKEINTRESOURCEW(RT_MANIFEST) )))
+    if ((rsrc = FindResourceW( module, manifestW, (LPWSTR)RT_MANIFEST )))
     {
         char *manifest = LoadResource( module, rsrc );
         register_manifest( name, manifest, SizeofResource( module, rsrc ), data, size );
