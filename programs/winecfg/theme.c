@@ -83,6 +83,9 @@ HRESULT WINAPI CloseThemeFile (HTHEMEFILE hThemeFile);
 HRESULT WINAPI EnumThemes (LPCWSTR pszThemePath, EnumThemeProc callback,
                            LPVOID lpData);
 
+static void refresh_sysparams(HWND hDlg);
+static void on_sysparam_change(HWND hDlg);
+
 /* A struct to keep both the internal and "fancy" name of a color or size */
 typedef struct
 {
@@ -388,7 +391,7 @@ static BOOL update_color_and_size (int themeIndex, HWND comboColor,
 }
 
 /* Apply a theme from a given theme, color and size combo box item index. */
-static void do_apply_theme (int themeIndex, int colorIndex, int sizeIndex)
+static void do_apply_theme (HWND dialog, int themeIndex, int colorIndex, int sizeIndex)
 {
     static char b[] = "\0";
 
@@ -423,6 +426,8 @@ static void do_apply_theme (int themeIndex, int colorIndex, int sizeIndex)
 	    ApplyTheme (NULL, b, NULL);
 	}
     }
+
+    refresh_sysparams(dialog);
 }
 
 static BOOL updating_ui;
@@ -491,7 +496,7 @@ static void apply_theme(HWND dialog)
     sizeIndex = SendMessageW (GetDlgItem (dialog, IDC_THEME_SIZECOMBO),
         CB_GETCURSEL, 0, 0);
 
-    do_apply_theme (themeIndex, colorIndex, sizeIndex);
+    do_apply_theme (dialog, themeIndex, colorIndex, sizeIndex);
     theme_dirty = FALSE;
 }
 
@@ -954,6 +959,21 @@ static void apply_shell_folder_changes(void) {
             }
         }
     }
+}
+
+static void refresh_sysparams(HWND hDlg)
+{
+    int i;
+
+    for (i = 0; i < sizeof(metrics) / sizeof(metrics[0]); i++)
+    {
+        if (metrics[i].sm_idx != -1)
+            metrics[i].size = GetSystemMetrics(metrics[i].sm_idx);
+        if (metrics[i].color_idx != -1)
+            metrics[i].color = GetSysColor(metrics[i].color_idx);
+    }
+
+    on_sysparam_change(hDlg);
 }
 
 static void read_sysparams(HWND hDlg)
