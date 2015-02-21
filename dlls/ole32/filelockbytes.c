@@ -65,10 +65,6 @@ static inline FileLockBytesImpl *impl_from_ILockBytes(ILockBytes *iface)
  * Prototypes for private methods
  */
 
-/* Note that this evaluates a and b multiple times, so don't
- * pass expressions with side effects. */
-#define ROUND_UP(a, b) ((((a) + (b) - 1)/(b))*(b))
-
 /****************************************************************************
  *      GetProtectMode
  *

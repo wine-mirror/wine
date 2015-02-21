@@ -83,8 +83,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define HANDLE_ERROR(err) do { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; } while (0)
-
 /* Structure of 'Ole Private Data' clipboard format */
 typedef struct
 {
