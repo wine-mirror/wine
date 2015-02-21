@@ -1046,7 +1046,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   WCHAR  pathext[MAXSTRING];
   WCHAR *firstParam;
   BOOL  extensionsupplied = FALSE;
-  BOOL  launched = FALSE;
   BOOL  status;
   DWORD len;
   static const WCHAR envPath[] = {'P','A','T','H','\0'};
@@ -1098,8 +1097,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   pathposn = pathtosearch;
   WINE_TRACE("Searching in '%s' for '%s'\n", wine_dbgstr_w(pathtosearch),
              wine_dbgstr_w(stemofsearch));
-  while (!launched && pathposn) {
-
+  while (pathposn) {
     WCHAR  thisDir[MAX_PATH] = {'\0'};
     WCHAR *pos               = NULL;
     BOOL  found             = FALSE;
