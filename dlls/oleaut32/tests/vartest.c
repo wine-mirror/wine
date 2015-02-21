@@ -7548,7 +7548,7 @@ static void test_VarDiv(void)
                 }
 
                 /* Determine return type */
-                if (!(rightvt == VT_EMPTY))
+                if (rightvt != VT_EMPTY)
                 {
                     if (leftvt == VT_NULL || rightvt == VT_NULL)
                         resvt = VT_NULL;
@@ -7577,7 +7577,7 @@ static void test_VarDiv(void)
                     else if (leftvt == VT_R4 || rightvt == VT_R4)
                         resvt = VT_R4;
                 }
-                else if (leftvt == VT_NULL && rightvt == VT_EMPTY)
+                else if (leftvt == VT_NULL)
                     resvt = VT_NULL;
                 else
                     bFail = TRUE;
