@@ -48,9 +48,9 @@
  *    thus the child is inaccessible by an XPath query
  */
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
-
 #ifdef HAVE_LIBXML2
+
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct
 {

@@ -56,11 +56,11 @@
 
 #include "msxml_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
-
 HINSTANCE MSXML_hInstance = NULL;
 
 #ifdef HAVE_LIBXML2
+
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
 {

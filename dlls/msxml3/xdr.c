@@ -28,13 +28,13 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
-
 /* Both XDR and XSD are valid XML
  * We just convert the doc tree, no need for a parser.
  */
 
 #ifdef HAVE_LIBXML2
+
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 static const xmlChar DT_prefix[] = "dt";
 static const xmlChar DT_href[] = "urn:schemas-microsoft-com:datatypes";

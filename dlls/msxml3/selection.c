@@ -52,9 +52,9 @@
  *
  */
 
-WINE_DEFAULT_DEBUG_CHANNEL(msxml);
-
 #ifdef HAVE_LIBXML2
+
+WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 int registerNamespaces(xmlXPathContextPtr ctxt);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);

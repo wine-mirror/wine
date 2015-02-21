@@ -48,6 +48,8 @@
 
 #include "msxml_private.h"
 
+#ifdef HAVE_LIBXML2
+
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 /* We use a chained hashtable, which can hold any number of schemas
@@ -57,8 +59,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 /* This is just the number of buckets, should be prime */
 #define DEFAULT_HASHTABLE_SIZE 17
-
-#ifdef HAVE_LIBXML2
 
 xmlDocPtr XDR_to_XSD_doc(xmlDocPtr xdr_doc, xmlChar const* nsURI);
 
