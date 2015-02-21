@@ -161,24 +161,6 @@ static BOOL _isFileExists(LPCWSTR lpFile)
 /*******************************************************************************
  * test routines
  */
-static void test_create(BOOL* gameStatisticsAvailable)
-{
-    HRESULT hr;
-
-    IGameStatisticsMgr* gsm = NULL;
-    *gameStatisticsAvailable = FALSE;
-
-    /* interface available up from Win7 */
-    hr = CoCreateInstance( &CLSID_GameStatistics, NULL, CLSCTX_INPROC_SERVER, &IID_IGameStatisticsMgr, (LPVOID*)&gsm);
-    if(gsm)
-    {
-        ok( hr == S_OK, "IGameStatisticsMgr creating failed (result: 0x%08x)\n", hr);
-        *gameStatisticsAvailable = TRUE;
-        IGameStatisticsMgr_Release(gsm);
-    }
-    else
-        win_skip("IGameStatisticsMgr cannot be created\n");
-}
 static void test_gamestatisticsmgr( void )
 {
     static const GUID guidApplicationId = { 0x17A6558E, 0x60BE, 0x4078, { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 } };
@@ -411,28 +393,33 @@ static void test_gamestatisticsmgr( void )
 START_TEST(gamestatistics)
 {
     HRESULT hr;
-    BOOL gameStatisticsAvailable;
+    IGameStatisticsMgr* gsm;
+    IGameExplorer *ge;
 
-    if(_loadDynamicRoutines())
+    if (!_loadDynamicRoutines())
     {
-        hr = CoInitialize( NULL );
-        ok( hr == S_OK, "failed to init COM\n");
-
-        test_create(&gameStatisticsAvailable);
-
-        if(gameStatisticsAvailable)
-        {
-            IGameExplorer *ge;
-
-            test_register_game(&ge);
-            test_gamestatisticsmgr();
-            test_unregister_game(ge);
-        }
-
-        CoUninitialize();
-    }
-    else
         /* this is not a failure, because a procedure loaded by address
          * is always available on systems which has gameux.dll */
         win_skip("too old system, cannot load required dynamic procedures\n");
+        return;
+    }
+
+    hr = CoInitialize( NULL );
+    ok(hr == S_OK, "failed to init COM\n");
+
+    /* interface available up from Win7 */
+    hr = CoCreateInstance(&CLSID_GameStatistics, NULL, CLSCTX_INPROC_SERVER, &IID_IGameStatisticsMgr, (void**)&gsm);
+    if (FAILED(hr))
+    {
+        win_skip("IGameStatisticsMgr is not supported.\n");
+        CoUninitialize();
+        return;
+    }
+    IGameStatisticsMgr_Release(gsm);
+
+    test_register_game(&ge);
+    test_gamestatisticsmgr();
+    test_unregister_game(ge);
+
+    CoUninitialize();
 }
