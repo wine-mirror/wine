@@ -1955,8 +1955,8 @@ int mp_exptmod (const mp_int * G, const mp_int * X, mp_int * P, mp_int * Y)
 
   dr = 0;
 
-  /* if the modulus is odd or dr != 0 use the fast method */
-  if (mp_isodd (P) == 1 || dr !=  0) {
+  /* if the modulus is odd use the fast method */
+  if (mp_isodd (P) == 1) {
     return mp_exptmod_fast (G, X, P, Y, dr);
   } else {
     /* otherwise use the generic Barrett reduction technique */
