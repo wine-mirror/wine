@@ -30,7 +30,6 @@
 /*******************************************************************************
  * utilities
  */
-static IGameExplorer *ge = NULL;
 static WCHAR sExeName[MAX_PATH] = {0};
 static GUID gameInstanceId;
 static HRESULT WINAPI (*pSHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
@@ -52,65 +51,50 @@ static BOOL _loadDynamicRoutines(void)
     if (!pSHGetFolderPathW) return FALSE;
     return TRUE;
 }
+
 /*******************************************************************************
- * _registerGame
  * Registers test suite executable as game in Games Explorer. Required to test
  * game statistics.
  */
-static HRESULT _registerGame(void) {
+static void test_register_game(IGameExplorer **explorer)
+{
     HRESULT hr;
-    WCHAR sExePath[MAX_PATH];
+    WCHAR pathW[MAX_PATH];
     BSTR bstrExeName, bstrExePath;
-    DWORD dwExeNameLen;
 
     /* prepare path to binary */
-    dwExeNameLen = GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
-    hr = (dwExeNameLen!= 0 ? S_OK : E_FAIL);
-    lstrcpynW(sExePath, sExeName, StrRChrW(sExeName, NULL, '\\') - sExeName + 1);
+    GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
 
+    lstrcpyW(pathW, sExeName);
+    PathRemoveFileSpecW(pathW);
+
+    hr = CoCreateInstance(&CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer, (void**)explorer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    gameInstanceId = GUID_NULL;
     bstrExeName = SysAllocString(sExeName);
-    if(!bstrExeName) hr = E_OUTOFMEMORY;
-
-    bstrExePath = SysAllocString(sExePath);
-    if(!bstrExePath) hr = E_OUTOFMEMORY;
-
-    if(SUCCEEDED(hr))
-    {
-        gameInstanceId = GUID_NULL;
-        hr = CoCreateInstance(&CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER,
-                              &IID_IGameExplorer, (LPVOID*)&ge);
-    }
-
-    if(SUCCEEDED(hr))
-        hr = IGameExplorer_AddGame(ge, bstrExeName, bstrExePath,
-                                   GIS_CURRENT_USER, &gameInstanceId);
-
-    if(FAILED(hr) && ge)
-    {
-        IGameExplorer_Release(ge);
-        ge = NULL;
-    }
+    bstrExePath = SysAllocString(pathW);
+    hr = IGameExplorer_AddGame(*explorer, bstrExeName, bstrExePath, GIS_CURRENT_USER, &gameInstanceId);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     SysFreeString(bstrExeName);
     SysFreeString(bstrExePath);
-    return hr;
 }
+
 /*******************************************************************************
- * _unregisterGame
  * Unregisters test suite from Games Explorer.
  */
-static HRESULT _unregisterGame(void) {
+static void test_unregister_game(IGameExplorer *ge)
+{
     HRESULT hr;
 
-    if(!ge) return E_FAIL;
+    if (!ge) return;
 
     hr = IGameExplorer_RemoveGame(ge, gameInstanceId);
-
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     IGameExplorer_Release(ge);
-    ge = NULL;
-
-    return hr;
 }
+
 /*******************************************************************************
  * _buildStatisticsFilePath
  * Creates path to file containing statistics of game with given id.
@@ -438,13 +422,11 @@ START_TEST(gamestatistics)
 
         if(gameStatisticsAvailable)
         {
-            hr = _registerGame();
-            ok( hr == S_OK, "cannot register game in Game Explorer (error: 0x%x)\n", hr);
+            IGameExplorer *ge;
 
+            test_register_game(&ge);
             test_gamestatisticsmgr();
-
-            hr = _unregisterGame();
-            ok( hr == S_OK, "cannot unregister game from Game Explorer (error: 0x%x)\n", hr);
+            test_unregister_game(ge);
         }
 
         CoUninitialize();
