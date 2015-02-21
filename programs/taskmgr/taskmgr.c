@@ -184,26 +184,13 @@ static BOOL OnCreate(HWND hWnd)
     GetClientRect(hWnd, &rc);
     nOldWidth = rc.right;
     nOldHeight = rc.bottom;
-    /* nOldStartX = rc.left; */
-    /*nOldStartY = rc.top;  */
-
-#define PAGE_OFFSET_LEFT    17
-#define PAGE_OFFSET_TOP     72
-#define PAGE_OFFSET_WIDTH   (PAGE_OFFSET_LEFT*2)
-#define PAGE_OFFSET_HEIGHT  (PAGE_OFFSET_TOP+32)
 
     if ((TaskManagerSettings.Left != 0) ||
         (TaskManagerSettings.Top != 0) ||
         (TaskManagerSettings.Right != 0) ||
         (TaskManagerSettings.Bottom != 0))
-    {
         MoveWindow(hWnd, TaskManagerSettings.Left, TaskManagerSettings.Top, TaskManagerSettings.Right - TaskManagerSettings.Left, TaskManagerSettings.Bottom - TaskManagerSettings.Top, TRUE);
-#ifdef __GNUC__TEST__
-        MoveWindow(hApplicationPage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-        MoveWindow(hProcessPage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-        MoveWindow(hPerformancePage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-#endif
-    }
+
     if (TaskManagerSettings.Maximized)
         ShowWindow(hWnd, SW_MAXIMIZE);
 
@@ -295,19 +282,6 @@ static BOOL OnCreate(HWND hWnd)
     TrayIcon_ShellAddTrayIcon();
 
     return TRUE;
-}
-
-/* OnMove()
- * This function handles all the moving events for the application
- * It moves every child window that needs moving
- */
-static void OnMove( UINT nType, int cx, int cy )
-{
-#ifdef __GNUC__TEST__
-    MoveWindow(hApplicationPage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-    MoveWindow(hProcessPage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-    MoveWindow(hPerformancePage, TaskManagerSettings.Left + PAGE_OFFSET_LEFT, TaskManagerSettings.Top + PAGE_OFFSET_TOP, TaskManagerSettings.Right - TaskManagerSettings.Left - PAGE_OFFSET_WIDTH, TaskManagerSettings.Bottom - TaskManagerSettings.Top - PAGE_OFFSET_HEIGHT, FALSE);
-#endif
 }
 
 /* OnSize()
@@ -1009,11 +983,6 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         /* Handle the window sizing in its own function */
         OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
-        break;
-
-    case WM_MOVE:
-        /* Handle the window moving in its own function */
-        OnMove(wParam, LOWORD(lParam), HIWORD(lParam));
         break;
 
     case WM_DESTROY:
