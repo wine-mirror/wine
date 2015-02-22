@@ -344,6 +344,8 @@ static void test_Win32_Process( IWbemServices *services )
 static void test_Win32_ComputerSystem( IWbemServices *services )
 {
     static const WCHAR nameW[] = {'N','a','m','e',0};
+    static const WCHAR usernameW[] = {'U','s','e','r','N','a','m','e',0};
+    static const WCHAR backslashW[] = {'\\',0};
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'C','o','m','p','u','t','e','r','S','y','s','t','e','m',0};
@@ -354,15 +356,22 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     CIMTYPE type;
     HRESULT hr;
     WCHAR compname[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR username[128];
     DWORD len, count;
 
     len = sizeof(compname) / sizeof(compname[0]);
     if (!GetComputerNameW( compname, &len ))
         compname[0] = 0;
 
-    if (!compname[0])
+    lstrcpyW( username, compname );
+    lstrcatW( username, backslashW );
+    len = sizeof(username) / sizeof(username[0]) - lstrlenW( username );
+    if (!GetUserNameW( username + lstrlenW( username ), &len ))
+        username[0] = 0;
+
+    if (!compname[0] || !username[0])
     {
-        skip( "Failed to get computer name\n" );
+        skip( "Failed to get user or computer name\n" );
         return;
     }
 
@@ -383,6 +392,15 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     ok( !lstrcmpiW( V_BSTR( &value ), compname ), "got %s, expected %s\n", wine_dbgstr_w(V_BSTR(&value)), wine_dbgstr_w(compname) );
+    VariantClear( &value );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( service, usernameW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "failed to get computer name %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    ok( !lstrcmpiW( V_BSTR( &value ), username ), "got %s, expected %s\n", wine_dbgstr_w(V_BSTR(&value)), wine_dbgstr_w(username) );
     VariantClear( &value );
 
     IWbemClassObject_Release( service );
