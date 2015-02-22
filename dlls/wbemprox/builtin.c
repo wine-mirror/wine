@@ -1121,7 +1121,7 @@ static UINT64 get_total_physical_memory(void)
 static WCHAR *get_computername(void)
 {
     WCHAR *ret;
-    DWORD size = MAX_COMPUTERNAME_LENGTH;
+    DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
 
     if (!(ret = heap_alloc( size * sizeof(WCHAR) ))) return NULL;
     GetComputerNameW( ret, &size );
