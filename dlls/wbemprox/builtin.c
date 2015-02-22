@@ -2074,12 +2074,16 @@ done:
 static inline void do_cpuid( unsigned int ax, unsigned int *p )
 {
 #ifdef __i386__
+#ifdef _MSC_VER
+    __cpuid(p, ax);
+#else
     __asm__("pushl %%ebx\n\t"
                 "cpuid\n\t"
                 "movl %%ebx, %%esi\n\t"
                 "popl %%ebx"
                 : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
                 :  "0" (ax));
+#endif
 #endif
 }
 
