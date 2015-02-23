@@ -176,22 +176,26 @@ typedef struct _IP4_ARRAY
     IP4_ADDRESS AddrArray[1];
 } IP4_ARRAY, *PIP4_ARRAY;
 
+#include <pshpack1.h>
 typedef struct _DNS_HEADER
 {
     WORD Xid;
-    BYTE RecursionDesired;
-    BYTE Truncation;
-    BYTE Authoritative;
-    BYTE Opcode;
-    BYTE IsResponse;
-    BYTE ResponseCode;
-    BYTE Reserved;
-    BYTE RecursionAvailable;
+    BYTE RecursionDesired:1;
+    BYTE Truncation:1;
+    BYTE Authoritative:1;
+    BYTE Opcode:4;
+    BYTE IsResponse:1;
+    BYTE ResponseCode:4;
+    BYTE CheckingDisabled:1;
+    BYTE AuthenticatedData:1;
+    BYTE Reserved:1;
+    BYTE RecursionAvailable:1;
     WORD QuestionCount;
     WORD AnswerCount;
     WORD NameServerCount;
     WORD AdditionalCount;
 } DNS_HEADER, *PDNS_HEADER;
+#include <poppack.h>
 
 typedef struct _DNS_MESSAGE_BUFFER
 {
