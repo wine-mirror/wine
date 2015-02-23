@@ -96,10 +96,12 @@ static void STDMETHODCALLTYPE d3d10_query_GetDevice(ID3D10Query *iface, ID3D10De
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetPrivateData(ID3D10Query *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+    struct d3d10_query *query = impl_from_ID3D10Query(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_get_private_data(&query->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_SetPrivateData(ID3D10Query *iface,
