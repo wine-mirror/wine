@@ -66,6 +66,9 @@ DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage) DECL
 struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 
+HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
+        REFGUID guid, UINT data_size, const void *data) DECLSPEC_HIDDEN;
+
 static inline void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -83,6 +86,7 @@ struct d3d10_texture2d
     ID3D10Texture2D ID3D10Texture2D_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     IUnknown *dxgi_surface;
     struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE2D_DESC desc;
