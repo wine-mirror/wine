@@ -2672,14 +2672,13 @@ static void test_private_data(void)
     ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
 
     hr = ID3D10Texture2D_SetPrivateDataInterface(texture, &test_guid, (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ptr = NULL;
     size = sizeof(ptr);
     hr = IDXGISurface_GetPrivateData(surface, &test_guid, &size, &ptr);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
-    if (ptr)
-        IUnknown_Release(ptr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
+    IUnknown_Release(ptr);
 
     IDXGISurface_Release(surface);
     ID3D10Texture2D_Release(texture);

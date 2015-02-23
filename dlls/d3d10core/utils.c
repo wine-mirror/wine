@@ -428,6 +428,15 @@ HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
     return wined3d_private_store_set_private_data(store, guid, data, data_size, 0);
 }
 
+HRESULT d3d10_set_private_data_interface(struct wined3d_private_store *store,
+        REFGUID guid, const IUnknown *object)
+{
+    if (!object)
+        return d3d10_set_private_data(store, guid, sizeof(object), &object);
+
+    return wined3d_private_store_set_private_data(store,
+            guid, object, sizeof(object), WINED3DSPD_IUNKNOWN);
+}
 void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;

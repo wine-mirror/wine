@@ -149,9 +149,21 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_SetPrivateData(ID3D10Texture2D 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_SetPrivateDataInterface(ID3D10Texture2D *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d10_texture2d *texture = impl_from_ID3D10Texture2D(iface);
+    IDXGISurface *dxgi_surface;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    if (texture->dxgi_surface
+            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_surface, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    {
+        hr = IDXGISurface_SetPrivateDataInterface(dxgi_surface, guid, data);
+        IDXGISurface_Release(dxgi_surface);
+        return hr;
+    }
+
+    return d3d10_set_private_data_interface(&texture->private_store, guid, data);
 }
 
 /* ID3D10Resource methods */
