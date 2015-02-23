@@ -304,6 +304,7 @@ struct d3d10_query
     ID3D10Query ID3D10Query_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_query *wined3d_query;
     BOOL predicate;
     ID3D10Device1 *device;

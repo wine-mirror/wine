@@ -74,6 +74,7 @@ static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
     if (!refcount)
     {
         ID3D10Device1_Release(This->device);
+        wined3d_private_store_cleanup(&This->private_store);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -104,10 +105,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetPrivateData(ID3D10Query *iface,
 static HRESULT STDMETHODCALLTYPE d3d10_query_SetPrivateData(ID3D10Query *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_query *query = impl_from_ID3D10Query(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&query->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_SetPrivateDataInterface(ID3D10Query *iface,
@@ -207,11 +210,13 @@ HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
 
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
+    wined3d_private_store_init(&query->private_store);
 
     if (FAILED(hr = wined3d_query_create(device->wined3d_device,
             query_type_map[desc->Query], query, &query->wined3d_query)))
     {
         WARN("Failed to create wined3d query, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&query->private_store);
         return hr;
     }
 
