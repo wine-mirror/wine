@@ -2491,6 +2491,8 @@ static HRESULT WINAPI ISVDropTarget_Drop(IDropTarget *iface, IDataObject* pDataO
 {
     IShellViewImpl *This = impl_from_IDropTarget(iface);
 
+    if (!This->pCurDropTarget) return DRAGDROP_E_INVALIDHWND;
+
     IDropTarget_Drop(This->pCurDropTarget, pDataObject, grfKeyState, pt, pdwEffect);
 
     IDropTarget_Release(This->pCurDropTarget);
