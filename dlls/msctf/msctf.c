@@ -660,3 +660,12 @@ HRESULT WINAPI TF_CreateLangBarItemMgr(ITfLangBarItemMgr **pplbim)
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *              TF_InitMlngInfo (MSCTF.@)
+ */
+HRESULT WINAPI TF_InitMlngInfo(void)
+{
+    FIXME("stub\n");
+    return S_OK;
+}
