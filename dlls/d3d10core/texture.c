@@ -119,10 +119,22 @@ static void STDMETHODCALLTYPE d3d10_texture2d_GetDevice(ID3D10Texture2D *iface, 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_GetPrivateData(ID3D10Texture2D *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+    struct d3d10_texture2d *texture = impl_from_ID3D10Texture2D(iface);
+    IDXGISurface *dxgi_surface;
+    HRESULT hr;
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    if (texture->dxgi_surface
+            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_surface, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    {
+        hr = IDXGISurface_GetPrivateData(dxgi_surface, guid, data_size, data);
+        IDXGISurface_Release(dxgi_surface);
+        return hr;
+    }
+
+    return d3d10_get_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_SetPrivateData(ID3D10Texture2D *iface,
