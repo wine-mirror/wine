@@ -1284,10 +1284,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_GetPrivateData(ID3D10Device1 *ifac
 static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateData(ID3D10Device1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = ID3D10Device1_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+    hr = IDXGIDevice_SetPrivateData(dxgi_device, guid, data_size, data);
+    IDXGIDevice_Release(dxgi_device);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Device1 *iface,
