@@ -155,7 +155,7 @@
 319  pascal -ret16 DiOpenDevRegKey (ptr ptr word) DiOpenDevRegKey16
 320  stub     DiInstallDrvSection #(str str str str long)
 321  pascal -ret16 DiInstallClass (str long) DiInstallClass16
-322  stub     DiOpenClassRegKey #(ptr str)
+322  pascal -ret16 DiOpenClassRegKey (ptr str) DiOpenClassRegKey16
 323  stub     Display_SetFontSize #(str)
 324  stub     Display_OpenFontSizeKey #(ptr)
 325  stub     DiBuildClassDrvListFromOldInf #(ptr str ptr long)

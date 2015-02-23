@@ -133,3 +133,12 @@ RETERR16 WINAPI DiOpenDevRegKey16(LPDEVICE_INFO16 lpdi,
     FIXME("(%p %p %d): stub\n", lpdi, lphk, iFlags);
     return FALSE;
 }
+
+/***********************************************************************
+ *              DiOpenClassRegKey (SETUPX.319)
+ */
+RETERR16 WINAPI DiOpenClassRegKey16(LPHKEY16 hkey, const char *class)
+{
+    FIXME("(%p %s): stub\n", hkey, debugstr_a(class));
+    return ERR_DI_REG_API;
+}
