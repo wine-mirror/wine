@@ -3108,11 +3108,11 @@ msgstr "בהתחברות למצלמה... נא להמתין"
 msgid "S&ync"
 msgstr "&סנכרון"
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "ח&זרה"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "ק&דימה"
 
@@ -3125,13 +3125,47 @@ msgstr "&עמוד הבית"
 msgid "&Stop"
 msgstr "ע&צירה"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&רענון"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "ה&דפסה..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "בחירת ה&כול"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "&צפייה במקור"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "מאפיינים"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "ג&זירה"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "ה&עתקה"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "הדבקה"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "הדפ&סה"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7879,10 +7913,6 @@ msgstr "הע&תקת הרקע"
 msgid "Set as &Desktop Item"
 msgstr "הגדרה כפריט &שולחן עבודה"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "בחירת ה&כול"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "יצירת קיצו&ר דרך"
@@ -7890,10 +7920,6 @@ msgstr "יצירת קיצו&ר דרך"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "הוספה למו&עדפים..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "&צפייה במקור"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7947,17 +7973,6 @@ msgstr "הגדרה &כרקע"
 msgid "Set as &Desktop Item..."
 msgstr "הגדרה כ&פריט שולחן העבודה..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "ג&זירה"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "ה&עתקה"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "העתקת קיצור ה&דרך"
@@ -8001,14 +8016,6 @@ msgstr "מאפייני ה&תא"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "מאפייני ה&טבלה"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "הדבקה"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "הדפ&סה"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

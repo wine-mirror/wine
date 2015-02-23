@@ -3102,11 +3102,11 @@ msgstr "카메라하고 연결중... 잠시만 기다리십시오"
 msgid "S&ync"
 msgstr "동기화(&Y)"
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "뒤로(&B)"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "앞으로"
 
@@ -3119,13 +3119,47 @@ msgstr "홈(&H)"
 msgid "&Stop"
 msgstr "멈추기(&S)"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "인쇄(&P)..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "모두 선택(&A)"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "소스 보기(&V)"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "속성"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "잘라내기(&T)"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "복사(&C)"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "붙여넣기"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "인쇄(&P)"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7648,10 +7682,6 @@ msgstr "배경으로 복사(&C)"
 msgid "Set as &Desktop Item"
 msgstr "데스크탑 아이템으로 설정(&D)"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "모두 선택(&A)"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "바로가기 만들기(&T)"
@@ -7659,10 +7689,6 @@ msgstr "바로가기 만들기(&T)"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "즐겨 찾기에 추가(&F)..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "소스 보기(&V)"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7716,17 +7742,6 @@ msgstr "배경으로 설정(&G)"
 msgid "Set as &Desktop Item..."
 msgstr "데스크탑 아이템으로 설정(&D)..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "잘라내기(&T)"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "복사(&C)"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "바로 가기 복사(&T)"
@@ -7770,14 +7785,6 @@ msgstr "가로줄 속성(&C)"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "표 속성(&T)"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "붙여넣기"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "인쇄(&P)"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

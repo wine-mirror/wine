@@ -3019,11 +3019,11 @@ msgstr ""
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr ""
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr ""
 
@@ -3036,14 +3036,47 @@ msgstr ""
 msgid "&Stop"
 msgstr ""
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr ""
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 #, fuzzy
 msgid "&Print..."
 msgstr "फ़ॉन्ट (&F)..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr ""
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr ""
+
+#: hhctrl.rc:83
+#, fuzzy
+msgid "Proper&ties"
+msgstr "सूचना (&o)"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr ""
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr ""
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr ""
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr ""
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7463,20 +7496,12 @@ msgstr ""
 msgid "Set as &Desktop Item"
 msgstr ""
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr ""
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr ""
 
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
-msgstr ""
-
-#: shdoclc.rc:54
-msgid "&View Source"
 msgstr ""
 
 #: shdoclc.rc:56
@@ -7531,17 +7556,6 @@ msgstr ""
 msgid "Set as &Desktop Item..."
 msgstr ""
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr ""
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr ""
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr ""
@@ -7588,14 +7602,6 @@ msgstr "सूचना (&o)"
 #, fuzzy
 msgid "&Table Properties"
 msgstr "सूचना (&o)"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr ""
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr ""
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

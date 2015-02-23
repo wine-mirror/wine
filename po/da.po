@@ -3124,11 +3124,11 @@ msgstr "Tilslutter til kamera... Vent venligst"
 msgid "S&ync"
 msgstr "S&ynkroniser"
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "Til&bage"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "&Frem"
 
@@ -3141,13 +3141,47 @@ msgstr "&Hjem"
 msgid "&Stop"
 msgstr "&Stop"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Opdate&r"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "&Udskriv..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "Markér &alt"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "&Vis kildekode"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "Egenskaber"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "&Klip"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "&Kopier"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "Indsæt"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "&Udskriv"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7718,10 +7752,6 @@ msgstr "&Kopier baggrund"
 msgid "Set as &Desktop Item"
 msgstr "Brug som skrivebor&dsobjekt"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "Markér &alt"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "Lav g&envej"
@@ -7729,10 +7759,6 @@ msgstr "Lav g&envej"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "Tilføj til &favoritter..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "&Vis kildekode"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7786,17 +7812,6 @@ msgstr "Brug som bag&grund"
 msgid "Set as &Desktop Item..."
 msgstr "Brug som skrivebor&dsobjekt..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "&Klip"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "&Kopier"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "Kopier gen&vej"
@@ -7840,14 +7855,6 @@ msgstr "Egenskaber for &celle"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "Egenskaber for &tabel"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "Indsæt"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "&Udskriv"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

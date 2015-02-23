@@ -3021,11 +3021,11 @@ msgstr "正在连接照相机... 请稍候"
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "向后(&B)"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "向前(&F)"
 
@@ -3038,13 +3038,47 @@ msgstr "首页(&H)"
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "打印(&P)..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "全选(&A)"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "查看源代码(&V)"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "属性"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "剪切(&T)"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "复制(&C)"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "粘贴"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "打印(&P)"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7517,10 +7551,6 @@ msgstr "复制背景(&C)"
 msgid "Set as &Desktop Item"
 msgstr "设置到桌面(&D)"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "全选(&A)"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "创建捷径(&T)"
@@ -7528,10 +7558,6 @@ msgstr "创建捷径(&T)"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "添加到我的最爱(&F)..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "查看源代码(&V)"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7585,17 +7611,6 @@ msgstr "设为背景(&G)"
 msgid "Set as &Desktop Item..."
 msgstr "设为桌面项目(&D)..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "剪切(&T)"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "复制(&C)"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "复制捷径(&T)"
@@ -7639,14 +7654,6 @@ msgstr "格属性(&C)"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "表格属性(&T)"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "粘贴"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "打印(&P)"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

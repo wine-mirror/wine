@@ -19,6 +19,7 @@
  */
 
 #include "hhctrl.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 
@@ -159,6 +160,59 @@ static ULONG STDMETHODCALLTYPE UI_Release(IDocHostUIHandler * iface)
 
 static HRESULT STDMETHODCALLTYPE UI_ShowContextMenu(IDocHostUIHandler *iface, DWORD dwID, POINT *ppt, IUnknown *pcmdtReserved, IDispatch *pdispReserved)
 {
+    WebBrowserContainer *This = impl_from_IDocHostUIHandler(iface);
+    DWORD cmdid, menu_id = 0;
+    HMENU menu, submenu;
+
+    TRACE("(%p)->(%d %s)\n", This, dwID, wine_dbgstr_point(ppt));
+
+    menu = LoadMenuW(hhctrl_hinstance, MAKEINTRESOURCEW(MENU_WEBBROWSER));
+    if (!menu)
+        return S_OK;
+
+    /* FIXME: Support more menu types. */
+    if(dwID == CONTEXT_MENU_TEXTSELECT)
+        menu_id = 1;
+
+    submenu = GetSubMenu(menu, menu_id);
+
+    cmdid = TrackPopupMenu(submenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+            ppt->x, ppt->y, 0, This->hwndWindow, NULL);
+    DestroyMenu(menu);
+
+    switch(cmdid) {
+    case IDTB_BACK:
+        DoPageAction(This, WB_GOBACK);
+        break;
+    case IDTB_FORWARD:
+        DoPageAction(This, WB_GOFORWARD);
+        break;
+    case MIID_SELECTALL:
+        IWebBrowser2_ExecWB(This->web_browser, OLECMDID_SELECTALL, 0, NULL, NULL);
+        break;
+    case MIID_VIEWSOURCE:
+        FIXME("View source\n");
+        break;
+    case IDTB_PRINT:
+        DoPageAction(This, WB_PRINT);
+        break;
+    case IDTB_REFRESH:
+        DoPageAction(This, WB_REFRESH);
+        break;
+    case MIID_PROPERTIES:
+        FIXME("Properties\n");
+        break;
+    case MIID_COPY:
+        IWebBrowser2_ExecWB(This->web_browser, OLECMDID_COPY, 0, NULL, NULL);
+        break;
+    case MIID_PASTE:
+        IWebBrowser2_ExecWB(This->web_browser, OLECMDID_PASTE, 0, NULL, NULL);
+        break;
+    case MIID_CUT:
+        IWebBrowser2_ExecWB(This->web_browser, OLECMDID_CUT, 0, NULL, NULL);
+        break;
+    }
+
     return S_OK;
 }
 

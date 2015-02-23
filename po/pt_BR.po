@@ -3116,11 +3116,11 @@ msgstr "Conectando à câmera... Por favor, aguarde"
 msgid "S&ync"
 msgstr "Sin&cronizar"
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "&Voltar"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "&Avançar"
 
@@ -3133,13 +3133,47 @@ msgstr "&Início"
 msgid "&Stop"
 msgstr "&Parar"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Recarregar"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "&Imprimir..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "Selecionar &Tudo"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "Ver Código Fo&nte"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "Propriedades"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "Recor&tar"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "&Copiar"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "Co&lar"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "&Imprimir"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7616,10 +7650,6 @@ msgstr "&Copiar Fundo"
 msgid "Set as &Desktop Item"
 msgstr "Definir como &Item da Área de Trabalho"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "Selecionar &Tudo"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "Criar Ata&lho"
@@ -7627,10 +7657,6 @@ msgstr "Criar Ata&lho"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "Adicionar aos &Favoritos..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "Ver Código Fo&nte"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7684,17 +7710,6 @@ msgstr "&Definir como fundo"
 msgid "Set as &Desktop Item..."
 msgstr "Definir como &item da Área de Trabalho..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "Recor&tar"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "&Copiar"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "Copiar atal&ho"
@@ -7738,14 +7753,6 @@ msgstr "Propriedades da &célula"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "Propriedades da &tabela"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "Co&lar"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "&Imprimir"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"

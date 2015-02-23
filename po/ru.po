@@ -3113,11 +3113,11 @@ msgstr "Подключение к камере... Ждите"
 msgid "S&ync"
 msgstr "С&инхронизировать"
 
-#: hhctrl.rc:60 shdoclc.rc:41 winhlp32.rc:89
+#: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
 msgstr "&Назад"
 
-#: hhctrl.rc:61
+#: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
 msgstr "&Вперёд"
 
@@ -3130,13 +3130,47 @@ msgstr "&Начало"
 msgid "&Stop"
 msgstr "Останов&ить"
 
-#: hhctrl.rc:64 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "О&бновить"
 
-#: hhctrl.rc:65 winhlp32.rc:34
+#: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
 msgstr "&Печатать..."
+
+#: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
+#: user32.rc:65
+msgid "Select &All"
+msgstr "Выделить в&сё"
+
+#: hhctrl.rc:78 shdoclc.rc:54
+msgid "&View Source"
+msgstr "&Открыть исходный текст"
+
+#: hhctrl.rc:83
+#, fuzzy
+#| msgid "Properties"
+msgid "Proper&ties"
+msgstr "Сво&йства"
+
+#: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
+#: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
+msgid "Cu&t"
+msgstr "&Вырезать"
+
+#: hhctrl.rc:88 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133
+#: shdoclc.rc:160 shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32
+#: winhlp32.rc:40 wordpad.rc:105
+msgid "&Copy"
+msgstr "&Копировать"
+
+#: hhctrl.rc:89 shdoclc.rc:119 shell32.rc:64
+msgid "Paste"
+msgstr "&Вставить"
+
+#: hhctrl.rc:91 shdoclc.rc:121
+msgid "&Print"
+msgstr "&Печать"
 
 #: hhctrl.rc:31 taskmgr.rc:89
 msgid "&Contents"
@@ -7611,10 +7645,6 @@ msgstr "&Копировать фон"
 msgid "Set as &Desktop Item"
 msgstr "Установить как &элемент рабочего стола"
 
-#: shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120 user32.rc:65
-msgid "Select &All"
-msgstr "Выделить в&сё"
-
 #: shdoclc.rc:52
 msgid "Create Shor&tcut"
 msgstr "Создать &ярлык"
@@ -7622,10 +7652,6 @@ msgstr "Создать &ярлык"
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
 msgstr "Добавить в &избранное..."
-
-#: shdoclc.rc:54
-msgid "&View Source"
-msgstr "&Открыть исходный текст"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7679,17 +7705,6 @@ msgstr "С&делать фоновым рисунком"
 msgid "Set as &Desktop Item..."
 msgstr "Сохранить как &элемент рабочего стола..."
 
-#: shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159 shdoclc.rc:183
-#: user32.rc:60 wordpad.rc:104
-msgid "Cu&t"
-msgstr "&Вырезать"
-
-#: shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:118 shdoclc.rc:133 shdoclc.rc:160
-#: shdoclc.rc:184 shell32.rc:102 user32.rc:61 wineconsole.rc:32 winhlp32.rc:40
-#: wordpad.rc:105
-msgid "&Copy"
-msgstr "&Копировать"
-
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
 msgstr "Копировать &ярлык"
@@ -7733,14 +7748,6 @@ msgstr "Свойства &ячейки"
 #: shdoclc.rc:112
 msgid "&Table Properties"
 msgstr "Сво&йства таблицы"
-
-#: shdoclc.rc:119 shell32.rc:64
-msgid "Paste"
-msgstr "&Вставить"
-
-#: shdoclc.rc:121
-msgid "&Print"
-msgstr "&Печать"
 
 #: shdoclc.rc:128
 msgid "Open in &New Window"
