@@ -1490,9 +1490,21 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
     switch(aContextFlags) {
     case CONTEXT_NONE:
     case CONTEXT_DOCUMENT:
-    case CONTEXT_TEXT:
-        dwID = CONTEXT_MENU_DEFAULT;
+    case CONTEXT_TEXT: {
+        nsISelection *selection;
+
+        nsres = nsIDOMHTMLDocument_GetSelection(This->doc->basedoc.doc_node->nsdoc, &selection);
+        if(NS_SUCCEEDED(nsres) && selection) {
+            cpp_bool is_collapsed;
+
+            /* FIXME: Check if the click was inside selection. */
+            nsres = nsISelection_GetIsCollapsed(selection, &is_collapsed);
+            nsISelection_Release(selection);
+            if(NS_SUCCEEDED(nsres) && !is_collapsed)
+                dwID = CONTEXT_MENU_TEXTSELECT;
+        }
         break;
+    }
     case CONTEXT_IMAGE:
     case CONTEXT_IMAGE|CONTEXT_LINK:
         dwID = CONTEXT_MENU_IMAGE;
