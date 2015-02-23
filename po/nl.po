@@ -13946,7 +13946,7 @@ msgid ""
 "and attach that file to the report."
 msgstr ""
 "Indien dit probleem zich niet voordoet onder Windows en het probleem is nog "
-"niet gerapporteed, dan kunt U gedetailleerde informatie in een bestand "
+"niet gerapporteerd, dan kunt U gedetailleerde informatie in een bestand "
 "opslaan met de \"Opslaan als\" knop. Dit bestand kunt U via <a href=\"http://"
 "wiki.winehq.org/Bugs\">file a bug report</a> versturen."
 
