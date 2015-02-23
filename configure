@@ -1325,6 +1325,7 @@ enable_wuapi
 enable_wuaueng
 enable_x3daudio1_1
 enable_x3daudio1_4
+enable_x3daudio1_5
 enable_x3daudio1_6
 enable_x3daudio1_7
 enable_xapofx1_1
@@ -17681,6 +17682,7 @@ wine_fn_config_dll wuapi enable_wuapi clean
 wine_fn_config_dll wuaueng enable_wuaueng
 wine_fn_config_dll x3daudio1_1 enable_x3daudio1_1
 wine_fn_config_dll x3daudio1_4 enable_x3daudio1_4
+wine_fn_config_dll x3daudio1_5 enable_x3daudio1_5
 wine_fn_config_dll x3daudio1_6 enable_x3daudio1_6
 wine_fn_config_dll x3daudio1_7 enable_x3daudio1_7
 wine_fn_config_dll xapofx1_1 enable_xapofx1_1
