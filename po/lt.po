@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-20 19:22+0300\n"
+"PO-Revision-Date: 2015-02-23 22:54+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -11507,10 +11507,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Klaida: Netinkami komandos eilutės parametrai\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Klaida: Negalima pridėti raktų nuotoliniame kompiuteryje\n"
+msgstr "Klaida: Nepavyko prieiti prie nuotolinio kompiuterio\n"
 
 #: reg.rc:38
 msgid ""
@@ -11518,10 +11516,8 @@ msgid ""
 msgstr "Klaida: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Nepalaikomas tipas.\n"
+msgstr "Klaida: Nepalaikomas tipas\n"
 
 #: regedit.rc:34
 msgid "&Registry"
