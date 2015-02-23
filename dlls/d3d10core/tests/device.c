@@ -2551,14 +2551,14 @@ static void test_private_data(void)
     hr = ID3D10Device_SetPrivateData(device, &test_guid, 0, NULL);
     ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_SetPrivateData(device, &test_guid, ~0u, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = ID3D10Device_SetPrivateData(device, &test_guid, ~0u, NULL);
     ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     size = sizeof(ptr) * 2;
     ptr = (IUnknown *)0xdeadbeef;
     hr = ID3D10Device_GetPrivateData(device, &test_guid, &size, &ptr);
@@ -2571,33 +2571,33 @@ static void test_private_data(void)
     size = sizeof(ptr) * 2;
     ptr = (IUnknown *)0xdeadbeef;
     hr = IDXGIDevice_GetPrivateData(dxgi_device, &test_guid, &size, &ptr);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(!ptr, "Got unexpected pointer %p.\n", ptr);
-    todo_wine ok(size == sizeof(IUnknown *), "Got unexpected size %u.\n", size);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!ptr, "Got unexpected pointer %p.\n", ptr);
+    ok(size == sizeof(IUnknown *), "Got unexpected size %u.\n", size);
     IDXGIDevice_Release(dxgi_device);
 
     refcount = get_refcount((IUnknown *)test_object);
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected_refcount = refcount + 1;
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     --expected_refcount;
     refcount = get_refcount((IUnknown *)test_object);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     size = sizeof(data);
     hr = ID3D10Device_SetPrivateData(device, &test_guid, size, data);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -2610,7 +2610,7 @@ static void test_private_data(void)
 
     hr = ID3D10Device_SetPrivateDataInterface(device, &test_guid,
             (IUnknown *)test_object);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ++expected_refcount;
     size = 2 * sizeof(ptr);
     ptr = NULL;
@@ -2634,7 +2634,7 @@ static void test_private_data(void)
     todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     todo_wine ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     refcount = get_refcount((IUnknown *)test_object);
-    todo_wine ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
     size = 1;
     hr = ID3D10Device_GetPrivateData(device, &test_guid, &size, &ptr);
