@@ -121,6 +121,7 @@ struct d3d10_buffer
     ID3D10Buffer ID3D10Buffer_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_buffer *wined3d_buffer;
     ID3D10Device1 *device;
 };
