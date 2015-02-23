@@ -50,7 +50,7 @@ static const DWORD directinput_version_list[] =
     DIRECTINPUT_VERSION_700,
 };
 
-static HRESULT WINAPI (*pDirectInputCreateEx)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
+static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
 
 static BOOL CALLBACK dummy_callback(const DIDEVICEINSTANCEA *instance, void *context)
 {
