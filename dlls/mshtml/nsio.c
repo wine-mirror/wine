@@ -1277,6 +1277,20 @@ static nsresult NSAPI nsChannel_SetReferrer(nsIHttpChannel *iface, nsIURI *aRefe
     return NS_OK;
 }
 
+static nsresult NSAPI nsChannel_GetReferrerPolicy(nsIHttpChannel *iface, UINT32 *aReferrerPolicy)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p)\n", This, aReferrerPolicy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsChannel_SetReferrerWithPolicy(nsIHttpChannel *iface, nsIURI *aReferrer, UINT32 aReferrerPolicy)
+{
+    nsChannel *This = impl_from_nsIHttpChannel(iface);
+    FIXME("(%p)->(%p %x)\n", This, aReferrer, aReferrerPolicy);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsChannel_GetRequestHeader(nsIHttpChannel *iface,
          const nsACString *aHeader, nsACString *_retval)
 {
@@ -1504,6 +1518,8 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
     nsChannel_SetRequestMethod,
     nsChannel_GetReferrer,
     nsChannel_SetReferrer,
+    nsChannel_GetReferrerPolicy,
+    nsChannel_SetReferrerWithPolicy,
     nsChannel_GetRequestHeader,
     nsChannel_SetRequestHeader,
     nsChannel_VisitRequestHeaders,
@@ -1876,6 +1892,20 @@ static nsresult NSAPI nsHttpChannelInternal_GetLastModifiedTime(nsIHttpChannelIn
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsHttpChannelInternal_ForceNoIntercept(nsIHttpChannelInternal *iface)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+    FIXME("(%p)\n", This);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_GetTopWindowURI(nsIHttpChannelInternal *iface, nsIURI **aTopWindowURI)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+    FIXME("(%p)->(%p)\n", This, aTopWindowURI);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_QueryInterface,
     nsHttpChannelInternal_AddRef,
@@ -1908,7 +1938,9 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetResponseTimeoutEnabled,
     nsHttpChannelInternal_GetApiRedirectToURI,
     nsHttpChannelInternal_AddRedirect,
-    nsHttpChannelInternal_GetLastModifiedTime
+    nsHttpChannelInternal_GetLastModifiedTime,
+    nsHttpChannelInternal_ForceNoIntercept,
+    nsHttpChannelInternal_GetTopWindowURI
 };
 
 
@@ -3342,6 +3374,18 @@ static nsresult NSAPI nsProtocolHandler_NewURI(nsIProtocolHandler *iface,
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsProtocolHandler_NewChannel2(nsIProtocolHandler *iface,
+        nsIURI *aURI, nsILoadInfo *aLoadInfo, nsIChannel **_retval)
+{
+    nsProtocolHandler *This = impl_from_nsIProtocolHandler(iface);
+
+    TRACE("(%p)->(%p %p %p)\n", This, aURI, aLoadInfo, _retval);
+
+    if(This->nshandler)
+        return nsIProtocolHandler_NewChannel2(This->nshandler, aURI, aLoadInfo, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsProtocolHandler_NewChannel(nsIProtocolHandler *iface,
         nsIURI *aURI, nsIChannel **_retval)
 {
@@ -3374,6 +3418,7 @@ static const nsIProtocolHandlerVtbl nsProtocolHandlerVtbl = {
     nsProtocolHandler_GetDefaultPort,
     nsProtocolHandler_GetProtocolFlags,
     nsProtocolHandler_NewURI,
+    nsProtocolHandler_NewChannel2,
     nsProtocolHandler_NewChannel,
     nsProtocolHandler_AllowPort
 };
@@ -3535,6 +3580,15 @@ static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile
     return nsIIOService_NewFileURI(nsio, aFile, _retval);
 }
 
+static nsresult NSAPI nsIOService_NewChannelFromURI2(nsIIOService *iface, nsIURI *aURI,
+        nsIDOMNode *aLoadingNode, nsIPrincipal *aLoadingPrincipal, nsIPrincipal *aTriggeringPrincipal,
+        UINT32 aSecurityFlags, UINT32 aContentPolicyType, nsIChannel **_retval)
+{
+    FIXME("(%p %p %p %p %x %d %p)\n", aURI, aLoadingNode, aLoadingPrincipal, aTriggeringPrincipal,
+          aSecurityFlags, aContentPolicyType, _retval);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
                                                      nsIChannel **_retval)
 {
@@ -3562,6 +3616,16 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     return NS_OK;
 }
 
+static nsresult NSAPI nsIOService_NewChannel2(nsIIOService *iface, const nsACString *aSpec,
+        const char *aOriginCharset, nsIURI *aBaseURI, nsIDOMNode *aLoadingNode, nsIPrincipal *aLoadingPrincipal,
+         nsIPrincipal *aTriggeringPrincipal, UINT32 aSecurityFlags, UINT32 aContentPolicyType, nsIChannel **_retval)
+{
+    TRACE("(%s %s %p %p %p %p %x %d %p)\n", debugstr_nsacstr(aSpec), debugstr_a(aOriginCharset), aBaseURI,
+          aLoadingNode, aLoadingPrincipal, aTriggeringPrincipal, aSecurityFlags, aContentPolicyType, _retval);
+    return nsIIOService_NewChannel2(nsio, aSpec, aOriginCharset, aBaseURI, aLoadingNode, aLoadingPrincipal,
+            aTriggeringPrincipal, aSecurityFlags, aContentPolicyType, _retval);
+}
+
 static nsresult NSAPI nsIOService_NewChannel(nsIIOService *iface, const nsACString *aSpec,
         const char *aOriginCharset, nsIURI *aBaseURI, nsIChannel **_retval)
 {
@@ -3579,6 +3643,24 @@ static nsresult NSAPI nsIOService_SetOffline(nsIIOService *iface, cpp_bool aOffl
 {
     TRACE("(%x)\n", aOffline);
     return nsIIOService_SetOffline(nsio, aOffline);
+}
+
+static nsresult NSAPI nsIOService_SetAppOffline(nsIIOService *iface, UINT32 appId, INT32 state)
+{
+    TRACE("(%d %x)\n", appId, state);
+    return nsIIOService_SetAppOffline(nsio, appId, state);
+}
+
+static nsresult NSAPI nsIOService_IsAppOffline(nsIIOService *iface, UINT32 appId, cpp_bool *_retval)
+{
+    TRACE("(%u %p)\n", appId, _retval);
+    return nsIIOService_IsAppOffline(nsio, appId, _retval);
+}
+
+static nsresult NSAPI nsIOService_GetAppOfflineState(nsIIOService *iface, UINT32 appId, INT32 *_retval)
+{
+    TRACE("(%d %p)\n", appId, _retval);
+    return nsIIOService_GetAppOfflineState(nsio, appId, _retval);
 }
 
 static nsresult NSAPI nsIOService_AllowPort(nsIIOService *iface, LONG aPort,
@@ -3603,10 +3685,15 @@ static const nsIIOServiceVtbl nsIOServiceVtbl = {
     nsIOService_GetProtocolFlags,
     nsIOService_NewURI,
     nsIOService_NewFileURI,
+    nsIOService_NewChannelFromURI2,
     nsIOService_NewChannelFromURI,
+    nsIOService_NewChannel2,
     nsIOService_NewChannel,
     nsIOService_GetOffline,
     nsIOService_SetOffline,
+    nsIOService_SetAppOffline,
+    nsIOService_IsAppOffline,
+    nsIOService_GetAppOfflineState,
     nsIOService_AllowPort,
     nsIOService_ExtractScheme
 };
