@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-05 00:17+0900\n"
+"PO-Revision-Date: 2015-02-25 00:13+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
@@ -11476,7 +11476,7 @@ msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
-"REG ADD キー名 [/v 値名 | /ve] [/t type] [/s セパレータ] [/d データ] [/f]\n"
+"REG ADD キー名 [/v 値名 | /ve] [/t 種類] [/s セパレータ] [/d データ] [/f]\n"
 
 #: reg.rc:32
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
@@ -11499,10 +11499,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "エラー: コマンド ライン引数が無効です\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "エラー: リモート マシンにキーを追加できませんでした\n"
+msgstr "エラー: リモート マシンにアクセスできませんでした\n"
 
 #: reg.rc:38
 msgid ""
@@ -11510,10 +11508,8 @@ msgid ""
 msgstr "エラー: システムは指定されたキーまたは値を見つけられませんでした\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "サポートされていない種類です。\n"
+msgstr "エラー: サポートされていない種類です\n"
 
 #: regedit.rc:34
 msgid "&Registry"
