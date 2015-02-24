@@ -5794,7 +5794,7 @@ static void test_gettext(void)
         num_msgs++;
     }
     CloseHandle( thread );
-    ok( num_msgs == 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
+    ok( num_msgs >= 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
 
     /* test interthread SetWindowText */
     num_msgs = 0;
@@ -5807,7 +5807,7 @@ static void test_gettext(void)
         num_msgs++;
     }
     CloseHandle( thread );
-    ok( num_msgs == 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
+    ok( num_msgs >= 1, "got %u wakeups from MsgWaitForMultipleObjects\n", num_msgs );
 
     num_gettext_msgs = 0;
     memset( buf, 0, sizeof(buf) );
