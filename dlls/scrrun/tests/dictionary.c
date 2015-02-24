@@ -44,10 +44,7 @@ static void test_interfaces(void)
 
     hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
-    if(FAILED(hr)) {
-        win_skip("Could not create FileSystem object: %08x\n", hr);
-        return;
-    }
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     VariantInit(&key);
     VariantInit(&value);
@@ -91,12 +88,60 @@ static void test_interfaces(void)
     IDispatch_Release(disp);
 }
 
+static void test_comparemode(void)
+{
+    CompareMethod method;
+    IDictionary *dict;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDictionary_get_CompareMode(dict, NULL);
+
+    method = 10;
+    hr = IDictionary_get_CompareMode(dict, &method);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(method == BinaryCompare, "got %d\n", method);
+
+    /* invalid mode value is not checked */
+    hr = IDictionary_put_CompareMode(dict, 10);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_get_CompareMode(dict, &method);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(method == 10, "got %d\n", method);
+
+    hr = IDictionary_put_CompareMode(dict, DatabaseCompare);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_get_CompareMode(dict, &method);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(method == DatabaseCompare, "got %d\n", method);
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
+    IDispatch *disp;
+    HRESULT hr;
+
     CoInitialize(NULL);
 
-    test_interfaces();
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDispatch, (void**)&disp);
+    if(FAILED(hr)) {
+        win_skip("Dictionary object is not supported: %08x\n", hr);
+        CoUninitialize();
+        return;
+    }
+    IDispatch_Release(disp);
 
+    test_interfaces();
+    test_comparemode();
 
     CoUninitialize();
 }

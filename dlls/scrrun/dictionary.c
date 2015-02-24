@@ -34,8 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 typedef struct
 {
     IDictionary IDictionary_iface;
-
     LONG ref;
+
+    CompareMethod method;
 } dictionary;
 
 static inline dictionary *impl_from_IDictionary(IDictionary *iface)
@@ -260,22 +261,24 @@ static HRESULT WINAPI dictionary_RemoveAll(IDictionary *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_put_CompareMode(IDictionary *iface, CompareMethod pcomp)
+static HRESULT WINAPI dictionary_put_CompareMode(IDictionary *iface, CompareMethod method)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->()\n", This);
+    TRACE("(%p)->(%d)\n", This, method);
 
-    return E_NOTIMPL;
+    This->method = method;
+    return S_OK;
 }
 
-static HRESULT WINAPI dictionary_get_CompareMode(IDictionary *iface, CompareMethod *pcomp)
+static HRESULT WINAPI dictionary_get_CompareMode(IDictionary *iface, CompareMethod *method)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->(%p)\n", This, pcomp);
+    TRACE("(%p)->(%p)\n", This, method);
 
-    return E_NOTIMPL;
+    *method = This->method;
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary__NewEnum(IDictionary *iface, IUnknown **ppunk)
@@ -336,6 +339,7 @@ HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,
 
     This->IDictionary_iface.lpVtbl = &dictionary_vtbl;
     This->ref = 1;
+    This->method = BinaryCompare;
 
     *obj = &This->IDictionary_iface;
 
