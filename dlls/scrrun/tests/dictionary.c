@@ -22,6 +22,7 @@
 #include "windows.h"
 #include "ole2.h"
 #include "oleauto.h"
+#include "olectl.h"
 #include "dispex.h"
 
 #include "wine/test.h"
@@ -143,6 +144,11 @@ static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
     return hash % 1201;
 }
 
+static DWORD get_num_hash(FLOAT num)
+{
+    return (*((DWORD*)&num)) % 1201;
+}
+
 static void test_hash_value(void)
 {
     /* string test data */
@@ -153,6 +159,10 @@ static void test_hash_value(void)
         {'A',0},
         {'a',0},
         { 0 }
+    };
+
+    static const int int_hash_tests[] = {
+        0, -1, 100, 1, 255
     };
 
     IDictionary *dict;
@@ -215,6 +225,86 @@ static void test_hash_value(void)
         ok(V_I4(&hash) == expected, "%d: db mode: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
             expected);
         VariantClear(&key);
+    }
+
+    V_VT(&key) = VT_INT;
+    V_INT(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
+
+    V_VT(&key) = VT_UINT;
+    V_UINT(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
+
+    V_VT(&key) = VT_I1;
+    V_I1(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u || broken(V_I4(&hash) == 0xa1), "got hash 0x%08x\n", V_I4(&hash));
+
+    V_VT(&key) = VT_I8;
+    V_I8(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
+
+    V_VT(&key) = VT_UI2;
+    V_UI2(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
+
+    V_VT(&key) = VT_UI4;
+    V_UI4(&key) = 1;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
+
+    for (i = 0; i < sizeof(int_hash_tests)/sizeof(int_hash_tests[0]); i++) {
+        DWORD expected = get_num_hash(int_hash_tests[i]);
+
+        V_VT(&key) = VT_I2;
+        V_I2(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        V_VT(&key) = VT_I4;
+        V_I4(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        expected = get_num_hash((FLOAT)(BYTE)int_hash_tests[i]);
+        V_VT(&key) = VT_UI1;
+        V_UI1(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
     }
 
     IDictionary_Release(dict);

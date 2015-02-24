@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "olectl.h"
 #include "dispex.h"
 #include "scrrun.h"
 #include "scrrun_private.h"
@@ -309,6 +310,11 @@ static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
     return hash % 1201;
 }
 
+static DWORD get_num_hash(FLOAT num)
+{
+    return (*((DWORD*)&num)) % 1201;
+}
+
 static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, VARIANT *hash)
 {
     dictionary *This = impl_from_IDictionary(iface);
@@ -321,6 +327,23 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_BSTR:
         V_I4(hash) = get_str_hash(V_BSTR(key), This->method);
         break;
+    case VT_UI1:
+        V_I4(hash) = get_num_hash(V_UI1(key));
+        break;
+    case VT_I2:
+        V_I4(hash) = get_num_hash(V_I2(key));
+        break;
+    case VT_I4:
+        V_I4(hash) = get_num_hash(V_I4(key));
+        break;
+    case VT_INT:
+    case VT_UINT:
+    case VT_I1:
+    case VT_I8:
+    case VT_UI2:
+    case VT_UI4:
+        V_I4(hash) = ~0u;
+        return CTL_E_ILLEGALFUNCTIONCALL;
     default:
         FIXME("not implemented for type %d\n", V_VT(key));
         return E_NOTIMPL;
