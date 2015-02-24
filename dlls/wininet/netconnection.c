@@ -406,7 +406,8 @@ void NETCON_unload(void)
     if(have_compat_cred_handle)
         FreeCredentialsHandle(&compat_cred_handle);
     DeleteCriticalSection(&init_sechandle_cs);
-    WSACleanup();
+    if(winsock_loaded)
+        WSACleanup();
 }
 
 /* translate a unix error code into a winsock one */
