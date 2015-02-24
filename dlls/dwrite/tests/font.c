@@ -68,14 +68,20 @@ static IDWriteFactory *create_factory(void)
     return factory;
 }
 
-static void create_testfontfile(const WCHAR *filename)
+static WCHAR *create_testfontfile(const WCHAR *filename)
 {
+    static WCHAR pathW[MAX_PATH];
     DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
-    file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, error %d\n", GetLastError());
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, filename);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+        GetLastError());
 
     res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
     ok( res != 0, "couldn't find resource\n" );
@@ -83,6 +89,15 @@ static void create_testfontfile(const WCHAR *filename)
     WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
     ok( written == SizeofResource( GetModuleHandleA(NULL), res ), "couldn't write resource\n" );
     CloseHandle( file );
+
+    return pathW;
+}
+
+#define DELETE_FONTFILE(filename) _delete_testfontfile(filename, __LINE__)
+static void _delete_testfontfile(const WCHAR *filename, int line)
+{
+    BOOL ret = DeleteFileW(filename);
+    ok_(__FILE__,line)(ret, "failed to delete file %s, error %d\n", wine_dbgstr_w(filename), GetLastError());
 }
 
 struct test_fontenumerator
@@ -1027,6 +1042,7 @@ static void test_CreateFontFace(void)
     LOGFONTW logfont;
     BOOL supported;
     UINT32 count;
+    WCHAR *path;
     HRESULT hr;
 
     factory = create_factory();
@@ -1116,10 +1132,10 @@ if (0) /* crashes on native */
     IDWriteFontCollection_Release(collection);
 
     /* IDWriteFactory::CreateFontFace() */
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     supported = FALSE;
@@ -1160,7 +1176,7 @@ todo_wine
 
     IDWriteFontFile_Release(file);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_GetMetrics(void)
@@ -1889,11 +1905,12 @@ static void test_CreateFontFileReference(void)
     UINT32 count;
     IDWriteFontFace *fface = NULL;
     IDWriteFactory *factory;
+    WCHAR *path;
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &ffile);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &ffile);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     support = FALSE;
@@ -1914,7 +1931,7 @@ static void test_CreateFontFileReference(void)
     IDWriteFontFile_Release(ffile);
     IDWriteFactory_Release(factory);
 
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_shared_isolated(void)
@@ -2037,6 +2054,7 @@ static void test_GetFontFromFontFace(void)
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
+    WCHAR *path;
     HRESULT hr;
 
     factory = create_factory();
@@ -2079,9 +2097,9 @@ static void test_GetFontFromFontFace(void)
 
     /* fontface that wasn't created from this collection */
     factory = create_factory();
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
@@ -2098,7 +2116,7 @@ static void test_GetFontFromFontFace(void)
     IDWriteFontFamily_Release(family);
     IDWriteFontCollection_Release(collection);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STYLE style)
@@ -2443,13 +2461,14 @@ static void test_TryGetFontTable(void)
     WCHAR buffW[MAX_PATH];
     BOOL exists, ret;
     UINT32 size, len;
+    WCHAR *path;
     HRESULT hr;
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     key = NULL;
@@ -2458,7 +2477,7 @@ static void test_TryGetFontTable(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(size != 0, "got %u\n", size);
 
-    ret = GetFileAttributesExW(test_fontfile, GetFileExInfoStandard, &info);
+    ret = GetFileAttributesExW(path, GetFileExInfoStandard, &info);
     ok(ret, "got %d\n", ret);
     ok(!memcmp(&info.ftLastWriteTime, &key->writetime, sizeof(key->writetime)), "got wrong write time\n");
 
@@ -2501,7 +2520,7 @@ static void test_TryGetFontTable(void)
     IDWriteFontFace_Release(fontface);
     IDWriteFontFile_Release(file);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_ConvertFontToLOGFONT(void)
@@ -2566,15 +2585,16 @@ static void test_CreateStreamFromKey(void)
     IDWriteFactory *factory;
     IDWriteFontFile *file;
     UINT64 writetime;
+    WCHAR *path;
     void *key;
     UINT32 size;
     HRESULT hr;
 
     factory = create_factory();
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     key = NULL;
@@ -2613,7 +2633,7 @@ static void test_CreateStreamFromKey(void)
 
     IDWriteLocalFontFileLoader_Release(localloader);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_ReadFileFragment(void)
@@ -2627,13 +2647,14 @@ static void test_ReadFileFragment(void)
     void *key, *context, *context2;
     UINT64 filesize;
     UINT32 size;
+    WCHAR *path;
     HRESULT hr;
 
     factory = create_factory();
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     key = NULL;
@@ -2690,7 +2711,7 @@ static void test_ReadFileFragment(void)
     IDWriteFontFileStream_Release(stream);
     IDWriteLocalFontFileLoader_Release(localloader);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_GetDesignGlyphMetrics(void)
@@ -2701,13 +2722,14 @@ static void test_GetDesignGlyphMetrics(void)
     IDWriteFontFile *file;
     UINT16 indices[2];
     UINT32 codepoint;
+    WCHAR *path;
     HRESULT hr;
 
     factory = create_factory();
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file,
@@ -2740,7 +2762,7 @@ static void test_GetDesignGlyphMetrics(void)
 
     IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_IsMonospacedFont(void)
@@ -2807,13 +2829,14 @@ static void test_GetDesignGlyphAdvances(void)
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
+    WCHAR *path;
     HRESULT hr;
 
     factory = create_factory();
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file,
@@ -2850,7 +2873,7 @@ static void test_GetDesignGlyphAdvances(void)
 
     IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_GetGlyphRunOutline(void)
@@ -2862,12 +2885,13 @@ static void test_GetGlyphRunOutline(void)
     UINT32 codepoint;
     FLOAT advances[2];
     UINT16 glyphs[2];
+    WCHAR *path;
     HRESULT hr;
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face);
@@ -2956,7 +2980,7 @@ static void test_GetGlyphRunOutline(void)
     IDWriteFontFace_Release(face);
     IDWriteFactory_Release(factory);
 
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_GetEudcFontCollection(void)
@@ -2995,12 +3019,13 @@ static void test_GetCaretMetrics(void)
     IDWriteFactory *factory;
     IDWriteFontFile *file;
     IDWriteFont *font;
+    WCHAR *path;
     HRESULT hr;
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
@@ -3012,7 +3037,7 @@ static void test_GetCaretMetrics(void)
     if (hr != S_OK) {
         win_skip("GetCaretMetrics() is not supported.\n");
         IDWriteFactory_Release(factory);
-        DeleteFileW(test_fontfile);
+        DELETE_FONTFILE(path);
         return;
     }
 
@@ -3060,7 +3085,7 @@ static void test_GetCaretMetrics(void)
     IDWriteFontFace1_Release(fontface1);
 
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 static void test_GetGlyphCount(void)
@@ -3068,13 +3093,14 @@ static void test_GetGlyphCount(void)
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
-    HRESULT hr;
     UINT16 count;
+    WCHAR *path;
+    HRESULT hr;
 
-    create_testfontfile(test_fontfile);
+    path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
-    hr = IDWriteFactory_CreateFontFileReference(factory, test_fontfile, NULL, &file);
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
@@ -3086,7 +3112,7 @@ static void test_GetGlyphCount(void)
 
     IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
-    DeleteFileW(test_fontfile);
+    DELETE_FONTFILE(path);
 }
 
 START_TEST(font)

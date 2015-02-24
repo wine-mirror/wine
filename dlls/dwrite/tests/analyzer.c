@@ -443,15 +443,20 @@ static IDWriteFontFace *create_fontface(void)
     return fontface;
 }
 
-static void create_testfontfile(const WCHAR *filename)
+static WCHAR *create_testfontfile(const WCHAR *filename)
 {
+    static WCHAR pathW[MAX_PATH];
     DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
 
-    file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed\n");
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, filename);
+
+    file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", wine_dbgstr_w(pathW),
+        GetLastError());
 
     res = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
     ok(res != 0, "couldn't find resource\n");
@@ -459,6 +464,15 @@ static void create_testfontfile(const WCHAR *filename)
     WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res), &written, NULL);
     ok(written == SizeofResource(GetModuleHandleA(NULL), res), "couldn't write resource\n");
     CloseHandle(file);
+
+    return pathW;
+}
+
+#define DELETE_FONTFILE(filename) _delete_testfontfile(filename, __LINE__)
+static void _delete_testfontfile(const WCHAR *filename, int line)
+{
+    BOOL ret = DeleteFileW(filename);
+    ok_(__FILE__,line)(ret, "failed to delete file %s, error %d\n", wine_dbgstr_w(filename), GetLastError());
 }
 
 static IDWriteFontFace *create_testfontface(const WCHAR *filename)
@@ -473,6 +487,7 @@ static IDWriteFontFace *create_testfontface(const WCHAR *filename)
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file, 0,
         DWRITE_FONT_SIMULATIONS_NONE, &face);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
 
     return face;
 }
@@ -1338,13 +1353,14 @@ static void test_GetGlyphPlacements(void)
     DWRITE_SCRIPT_ANALYSIS sa;
     FLOAT advances[2];
     UINT32 count, len;
+    WCHAR *path;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    create_testfontfile(test_fontfile);
-    fontface = create_testfontface(test_fontfile);
+    path = create_testfontfile(test_fontfile);
+    fontface = create_testfontface(path);
 
     get_script_analysis(aW, &sa);
     count = 0;
@@ -1429,7 +1445,8 @@ static void test_GetGlyphPlacements(void)
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
 
     IDWriteTextAnalyzer_Release(analyzer);
-    DeleteFileW(test_fontfile);
+    IDWriteFontFace_Release(fontface);
+    DELETE_FONTFILE(path);
 }
 
 START_TEST(analyzer)
