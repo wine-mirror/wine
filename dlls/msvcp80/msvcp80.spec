@@ -2296,8 +2296,8 @@
 @ cdecl -arch=win64 ?_Getcat@?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) time_put_short__Getcat_old
 @ cdecl -arch=win32 ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@@Z(ptr) time_put_wchar__Getcat_old
 @ cdecl -arch=win64 ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@@Z(ptr) time_put_wchar__Getcat_old
-@ stub -arch=win32 ?_Getcat@facet@locale@std@@SAIPAPBV123@@Z
-@ stub -arch=win64 ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@@Z
+@ cdecl -arch=win32 ?_Getcat@facet@locale@std@@SAIPAPBV123@@Z(ptr) locale_facet__Getcat_old
+@ cdecl -arch=win64 ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@@Z(ptr) locale_facet__Getcat_old
 @ thiscall -arch=i386 ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ(ptr ptr) _Locinfo__Getcoll
 @ cdecl -arch=win64 ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ(ptr ptr) _Locinfo__Getcoll
 @ thiscall -arch=i386 ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ(ptr ptr) _Locinfo__Getctype

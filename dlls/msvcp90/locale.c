@@ -408,6 +408,14 @@ MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const loca
     return -1;
 }
 
+/* ?_Getcat@facet@locale@std@@SAIPAPBV123@@Z */
+/* ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@@Z */
+MSVCP_size_t __cdecl locale_facet__Getcat_old(const locale_facet **facet)
+{
+    TRACE("(%p)\n", facet);
+    return -1;
+}
+
 /* ??0_Timevec@std@@QAE@ABV01@@Z */
 /* ??0_Timevec@std@@QEAA@AEBV01@@Z */
 /* This copy constructor modifies copied object */
