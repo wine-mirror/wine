@@ -28,6 +28,7 @@
 #include "scrrun_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
@@ -290,15 +291,43 @@ static HRESULT WINAPI dictionary__NewEnum(IDictionary *iface, IUnknown **ppunk)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *Key, VARIANT *HashVal)
+static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
+{
+    DWORD hash = 0;
+
+    if (str) {
+        while (*str) {
+            WCHAR ch;
+
+            ch = (method == TextCompare || method == DatabaseCompare) ? tolowerW(*str) : *str;
+
+            hash += (hash << 4) + ch;
+            str++;
+        }
+    }
+
+    return hash % 1201;
+}
+
+static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, VARIANT *hash)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->(%p %p)\n", This, Key, HashVal);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), hash);
 
-    return E_NOTIMPL;
+    V_VT(hash) = VT_I4;
+    switch (V_VT(key))
+    {
+    case VT_BSTR:
+        V_I4(hash) = get_str_hash(V_BSTR(key), This->method);
+        break;
+    default:
+        FIXME("not implemented for type %d\n", V_VT(key));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
-
 
 static const struct IDictionaryVtbl dictionary_vtbl =
 {

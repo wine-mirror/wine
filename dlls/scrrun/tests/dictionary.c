@@ -124,6 +124,102 @@ if (0) /* crashes on native */
     IDictionary_Release(dict);
 }
 
+static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
+{
+    DWORD hash = 0;
+
+    while (*str) {
+        WCHAR ch;
+
+        if (method == TextCompare || method == DatabaseCompare)
+            ch = PtrToInt(CharLowerW(IntToPtr(*str)));
+        else
+            ch = *str;
+
+        hash += (hash << 4) + ch;
+        str++;
+    }
+
+    return hash % 1201;
+}
+
+static void test_hash_value(void)
+{
+    /* string test data */
+    static const WCHAR str_hash_tests[][10] = {
+        {'a','b','c','d',0},
+        {'a','B','C','d','1',0},
+        {'1','2','3',0},
+        {'A',0},
+        {'a',0},
+        { 0 }
+    };
+
+    IDictionary *dict;
+    VARIANT key, hash;
+    HRESULT hr;
+    unsigned i;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_BSTR;
+    V_BSTR(&key) = NULL;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got %d\n", V_I4(&hash));
+
+    for (i = 0; i < sizeof(str_hash_tests)/sizeof(str_hash_tests[0]); i++) {
+        DWORD expected = get_str_hash(str_hash_tests[i], BinaryCompare);
+
+        hr = IDictionary_put_CompareMode(dict, BinaryCompare);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        V_VT(&key) = VT_BSTR;
+        V_BSTR(&key) = SysAllocString(str_hash_tests[i]);
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: binary mode: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+        VariantClear(&key);
+
+        expected = get_str_hash(str_hash_tests[i], TextCompare);
+        hr = IDictionary_put_CompareMode(dict, TextCompare);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        V_VT(&key) = VT_BSTR;
+        V_BSTR(&key) = SysAllocString(str_hash_tests[i]);
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: text mode: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+        VariantClear(&key);
+
+        expected = get_str_hash(str_hash_tests[i], DatabaseCompare);
+        hr = IDictionary_put_CompareMode(dict, DatabaseCompare);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        V_VT(&key) = VT_BSTR;
+        V_BSTR(&key) = SysAllocString(str_hash_tests[i]);
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: db mode: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+        VariantClear(&key);
+    }
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -142,6 +238,7 @@ START_TEST(dictionary)
 
     test_interfaces();
     test_comparemode();
+    test_hash_value();
 
     CoUninitialize();
 }
