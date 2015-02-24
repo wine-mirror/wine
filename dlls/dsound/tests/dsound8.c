@@ -1171,6 +1171,174 @@ static void test_COM(void)
     while (IUnknown_Release(unk));
 }
 
+static void test_effects(void)
+{
+    HRESULT rc;
+    LPDIRECTSOUND8 dso;
+    LPDIRECTSOUNDBUFFER primary, secondary;
+    LPDIRECTSOUNDBUFFER8 secondary8;
+    DSBUFFERDESC bufdesc;
+    WAVEFORMATEX wfx;
+    DSEFFECTDESC effects[2];
+    DWORD resultcodes[2];
+
+    /* Create a DirectSound8 object */
+    rc=pDirectSoundCreate8(NULL,&dso,NULL);
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n",rc);
+
+    if (rc!=DS_OK)
+        return;
+
+    rc=IDirectSound8_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
+    ok(rc==DS_OK,"IDirectSound8_SetCooperativeLevel() failed: %08x\n", rc);
+    if (rc!=DS_OK) {
+        IDirectSound_Release(dso);
+        return;
+    }
+
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
+    rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok((rc==DS_OK && primary!=NULL),
+       "IDirectSound8_CreateSoundBuffer() failed to create a primary buffer: "
+       "%08x\n",rc);
+    if (rc==DS_OK) {
+        init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
+        ZeroMemory(&bufdesc, sizeof(bufdesc));
+        bufdesc.dwSize=sizeof(bufdesc);
+        bufdesc.dwFlags=0;
+        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                    wfx.nBlockAlign);
+        bufdesc.lpwfxFormat=&wfx;
+
+        ZeroMemory(effects, sizeof(effects));
+        effects[0].dwSize=sizeof(effects[0]);
+        effects[0].guidDSFXClass=GUID_DSFX_STANDARD_ECHO;
+        effects[1].dwSize=sizeof(effects[1]);
+        effects[1].guidDSFXClass=GUID_NULL;
+
+        secondary=NULL;
+        rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+        ok(rc==DS_OK && secondary!=NULL,
+           "IDirectSound8_CreateSoundBuffer() failed to create a secondary "
+           "buffer: %08x\n",rc);
+
+        /* Call SetFX on buffer without DSBCAPS_CTRLFX */
+        if (rc==DS_OK && secondary!=NULL) {
+            secondary8=NULL;
+            rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IDirectSoundBuffer8,(LPVOID*)&secondary8);
+            ok(rc==DS_OK,"IDirectSoundBuffer_QueryInterface(IID_IDirectSoundBuffer8) failed: %08x\n", rc);
+
+            if (rc==DS_OK && secondary8) {
+                rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
+                ok(rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                "should have returned DSERR_CONTROLUNAVAIL, returned: %08x\n", rc);
+
+                IDirectSoundBuffer8_Release(secondary8);
+            }
+            IDirectSoundBuffer_Release(secondary);
+        }
+
+        secondary=NULL;
+        bufdesc.dwFlags=DSBCAPS_CTRLFX;
+        rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+        ok(rc==DS_OK && secondary!=NULL,
+           "IDirectSound8_CreateSoundBuffer() failed to create a secondary "
+           "buffer: %08x\n",rc);
+
+        if (rc==DS_OK) {
+            secondary8=NULL;
+            rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IDirectSoundBuffer8,(LPVOID*)&secondary8);
+            ok(rc==DS_OK,"IDirectSoundBuffer_QueryInterface(IID_IDirectSoundBuffer8) failed: %08x\n", rc);
+
+            if (rc==DS_OK && secondary8) {
+                LPVOID ptr1,ptr2;
+                DWORD bytes1,bytes2;
+
+                /* Call SetFX with dwEffectsCount > 0 and pDSFXDesc == NULL */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,1,NULL,NULL);
+                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                "should have returned E_INVALIDARG, returned: %08x\n", rc);
+
+                /* Call SetFX with dwEffectsCount == 0 and pDSFXDesc != NULL */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,0,effects,NULL);
+                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                "should have returned E_INVALIDARG, returned: %08x\n", rc);
+
+                /* Call SetFX with dwEffectsCount == 0 and pdwResultCodes != NULL */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,0,NULL,resultcodes);
+                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                "should have returned E_INVALIDARG, returned: %08x\n", rc);
+
+                rc=IDirectSoundBuffer8_Lock(secondary8,0,0,&ptr1,&bytes1,&ptr2,&bytes2,DSBLOCK_ENTIREBUFFER);
+                ok(rc==DS_OK,"IDirectSoundBuffer8_Lock() failed: %08x\n",rc);
+
+                if (rc==DS_OK) {
+                    /* Call SetFX when buffer is locked */
+                    rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
+                    ok(rc==DSERR_INVALIDCALL||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                    "should have returned DSERR_INVALIDCALL, returned: %08x\n", rc);
+
+                    rc=IDirectSoundBuffer8_Unlock(secondary8,ptr1,bytes1,ptr2,bytes2);
+                    ok(rc==DS_OK,"IDirectSoundBuffer8_Unlock() failed: %08x\n",rc);
+                }
+
+                rc=IDirectSoundBuffer8_Play(secondary8,0,0,DSBPLAY_LOOPING);
+                ok(rc==DS_OK,"IDirectSoundBuffer8_Play() failed: %08x\n",rc);
+
+                if (rc==DS_OK) {
+                    /* Call SetFX when buffer is playing */
+                    rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
+                    ok(rc==DSERR_INVALIDCALL||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
+                    "should have returned DSERR_INVALIDCALL, returned: %08x\n", rc);
+
+                    rc=IDirectSoundBuffer8_Stop(secondary8);
+                    ok(rc==DS_OK,"IDirectSoundBuffer8_Stop() failed: %08x\n",rc);
+                }
+
+                /* Call SetFX with non-existent filter */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[1],resultcodes);
+                ok(rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX(GUID_NULL) "
+                    "should have returned REGDB_E_CLASSNOTREG, returned: %08x\n",rc);
+                if (rc!=DSERR_CONTROLUNAVAIL) {
+                    ok(resultcodes[0]==DSFXR_UNKNOWN,"result code == %08x, expected DSFXR_UNKNOWN\n",resultcodes[0]);
+                }
+
+                /* Call SetFX with standard echo */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[0],resultcodes);
+                ok(rc==DS_OK||rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,
+                   "IDirectSoundBuffer8_SetFX(GUID_DSFX_STANDARD_ECHO) failed: %08x\n",rc);
+                if (rc!=DSERR_CONTROLUNAVAIL) {
+                    ok(resultcodes[0]==DSFXR_UNKNOWN||resultcodes[0]==DSFXR_LOCHARDWARE||resultcodes[0]==DSFXR_LOCSOFTWARE,
+                        "resultcode == %08x, expected DSFXR_UNKNOWN, DSFXR_LOCHARDWARE, or DSFXR_LOCSOFTWARE\n",resultcodes[0]);
+                }
+
+                /* Call SetFX with one real filter and one fake one */
+                rc=IDirectSoundBuffer8_SetFX(secondary8,2,effects,resultcodes);
+                ok(rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,
+                   "IDirectSoundBuffer8_SetFX(GUID_DSFX_STANDARD_ECHO, GUID_NULL) "
+                    "should have returned REGDB_E_CLASSNOTREG, returned: %08x\n",rc);
+                if (rc!=DSERR_CONTROLUNAVAIL) {
+                    ok(resultcodes[0]==DSFXR_PRESENT||resultcodes[0]==DSFXR_UNKNOWN,
+                        "resultcodes[0] == %08x, expected DSFXR_PRESENT or DSFXR_UNKNOWN\n",resultcodes[0]);
+                    ok(resultcodes[1]==DSFXR_UNKNOWN,
+                        "resultcodes[1] == %08x, expected DSFXR_UNKNOWN\n",resultcodes[1]);
+                }
+
+                IDirectSoundBuffer8_Release(secondary8);
+            }
+
+            IDirectSoundBuffer_Release(secondary);
+        }
+
+        IDirectSoundBuffer_Release(primary);
+    }
+
+    while (IDirectSound_Release(dso));
+}
+
 START_TEST(dsound8)
 {
     HMODULE hDsound;
@@ -1192,6 +1360,7 @@ START_TEST(dsound8)
             dsound8_tests();
             test_hw_buffers();
             test_first_device();
+            test_effects();
         }
         else
             skip("DirectSoundCreate8 missing - skipping all tests\n");
