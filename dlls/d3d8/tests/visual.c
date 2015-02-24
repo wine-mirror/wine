@@ -1000,10 +1000,9 @@ static void fog_with_shader_test(void)
                     "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n",
                     test_data[i].vshader, test_data[i].pshader,
                     test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
-
-            IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         }
     }
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
     IDirect3DDevice8_DeleteVertexShader(device, vertex_shader[1]);
     IDirect3DDevice8_DeleteVertexShader(device, vertex_shader[2]);
