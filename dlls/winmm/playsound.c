@@ -55,11 +55,12 @@ static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
     HMMIO       ret;
     WCHAR       buf[256];
     LPWSTR      dummy;
+    static const WCHAR dotwav[] = {'.','w','a','v',0};
 
     ret = mmioOpenW((LPWSTR)lpszName, NULL,
                     MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     if (ret != 0) return ret;
-    if (SearchPathW(NULL, lpszName, NULL, sizeof(buf)/sizeof(buf[0]), buf, &dummy))
+    if (SearchPathW(NULL, lpszName, dotwav, sizeof(buf)/sizeof(buf[0]), buf, &dummy))
     {
         return mmioOpenW(buf, NULL,
                          MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);

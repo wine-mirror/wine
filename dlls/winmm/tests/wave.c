@@ -1676,7 +1676,7 @@ static void test_PlaySound(void)
     /* no extensions */
     *exts = '\0';
     br = PlaySoundA(temp, NULL, SND_FILENAME | SND_NODEFAULT);
-    todo_wine ok(br, "PlaySound failed, got %d\n", br);
+    ok(br, "PlaySound failed, got %d\n", br);
 
     /* ends with a dot */
     strcpy(exts, ".");
