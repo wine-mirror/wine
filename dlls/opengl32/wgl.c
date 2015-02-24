@@ -875,7 +875,10 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
         void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
 
         if (!is_extension_supported(ext_ret->extension))
+        {
             WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
+            return NULL;
+        }
 
         if (driver_func == NULL)
         {
