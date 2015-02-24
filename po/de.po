@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-05 22:22+0100\n"
+"PO-Revision-Date: 2015-02-24 14:54+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -4526,31 +4526,31 @@ msgstr "Ungültiger Schlüssel.\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
-msgstr "Kann Registry-Schlüssel nicht öffnen.\n"
+msgstr "Registrierungsschlüssel konnte nicht geöffnet werden.\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
-msgstr "Kann Registry-Schlüssel nicht lesen.\n"
+msgstr "Registrierungsschlüssel konnte nicht gelesen werden.\n"
 
 #: winerror.mc:1081
 msgid "Can't write registry key.\n"
-msgstr "Kann Registry-Schlüssel nicht schreiben.\n"
+msgstr "Registrierungsschlüssel konnte nicht geschrieben werden.\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
-msgstr "Registry wurde wiederhergestellt.\n"
+msgstr "Registrierung wurde wiederhergestellt.\n"
 
 #: winerror.mc:1091
 msgid "Registry is corrupt.\n"
-msgstr "Registry ist beschädigt.\n"
+msgstr "Registrierung ist beschädigt.\n"
 
 #: winerror.mc:1096
 msgid "I/O to registry failed.\n"
-msgstr "E/A zu Registry fehlgeschlagen.\n"
+msgstr "E/A zur Registrierung fehlgeschlagen.\n"
 
 #: winerror.mc:1101
 msgid "Not registry file.\n"
-msgstr "Keine Registry-Datei.\n"
+msgstr "Keine Registrierungsdatei.\n"
 
 #: winerror.mc:1106
 msgid "Key deleted.\n"
@@ -4558,11 +4558,11 @@ msgstr "Schlüssel gelöscht.\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
-msgstr "Kein Speicher für Registry-Protokoll.\n"
+msgstr "Kein Speicher für Registrierungs-Log.\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
-msgstr "Registry-Schlüssel hat Unterschlüssel.\n"
+msgstr "Registrierungsschlüssel hat Unterschlüssel.\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
@@ -4606,7 +4606,7 @@ msgstr "Dienst ist deaktiviert.\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency.\n"
-msgstr "Zirkulare Abhängigkeit.\n"
+msgstr "Zirkuläre Abhängigkeit.\n"
 
 #: winerror.mc:1176
 msgid "Service does not exist.\n"
@@ -4634,7 +4634,7 @@ msgstr "Datenbank existiert nicht.\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
-msgstr "Dienst-spezifischer Fehler.\n"
+msgstr "Dienstspezifischer Fehler.\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
@@ -11001,7 +11001,7 @@ msgstr "&Systemkonfiguration"
 
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "&Registry-Editor ausführen"
+msgstr "&Registrierungs-Editor ausführen"
 
 #: oleview.rc:40
 msgid "&Object"
@@ -11112,7 +11112,7 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"Diese Einstellungen ändern nur Registry-Werte.\n"
+"Diese Einstellungen ändern nur Registrierungswerte.\n"
 "Sie haben keinen Einfluss auf die Wine-Performance."
 
 #: oleview.rc:181
@@ -11181,7 +11181,7 @@ msgstr "Maschinenweite Distributed COM Einstellungen ändern"
 
 #: oleview.rc:109
 msgid "Run the Wine registry editor"
-msgstr "Wine-Registry-Editor ausführen"
+msgstr "Wine-Registrierungs-Editor ausführen"
 
 #: oleview.rc:110
 msgid "Quit the application. Prompts to save changes"
@@ -11584,10 +11584,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Fehler: Ungültige Befehlszeilenargumente\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Fehler: Konnte Schlüssel nicht zum Remoterechner hinzufügen\n"
+msgstr "Fehler: Auf den Remoterechner kann nicht zugegriffen werden\n"
 
 #: reg.rc:38
 msgid ""
@@ -11596,22 +11594,20 @@ msgstr ""
 "Fehler: Der angegebene Schlüssel oder Wert konnte nicht gefunden werden\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Nicht unterstützter Typ.\n"
+msgstr "Fehler: Nicht unterstützter Typ\n"
 
 #: regedit.rc:34
 msgid "&Registry"
-msgstr "&Registry"
+msgstr "&Registrierung"
 
 #: regedit.rc:36
 msgid "&Import Registry File..."
-msgstr "Registry &importieren..."
+msgstr "Registrierungsdatei &importieren..."
 
 #: regedit.rc:37
 msgid "&Export Registry File..."
-msgstr "Registry &exportieren..."
+msgstr "Registrierungsdatei &exportieren..."
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Key"
@@ -11667,7 +11663,7 @@ msgstr "Von den Favoriten &löschen..."
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
-msgstr "&Über Registry Editor"
+msgstr "&Über den Registrierungs-Editor"
 
 #: regedit.rc:91
 msgid "Modify Binary Data..."
@@ -11675,7 +11671,7 @@ msgstr "Binäre Daten ändern..."
 
 #: regedit.rc:218
 msgid "Export registry"
-msgstr "Registry &exportieren"
+msgstr "Registrierung &exportieren"
 
 #: regedit.rc:220
 msgid "S&elected branch:"
@@ -11711,7 +11707,7 @@ msgstr "Zu den Favoriten hinzufügen"
 
 #: regedit.rc:245 regedit.rc:256
 msgid "Name:"
-msgstr "NAME:"
+msgstr "Name:"
 
 #: regedit.rc:253
 msgid "Remove Favorite"
@@ -11719,7 +11715,7 @@ msgstr "Von den Favoriten entfernen"
 
 #: regedit.rc:264
 msgid "Edit String"
-msgstr "Zeichenfolge ändern"
+msgstr "Zeichenfolge editieren"
 
 #: regedit.rc:267 regedit.rc:280 regedit.rc:296 regedit.rc:309
 msgid "Value name:"
@@ -11755,7 +11751,7 @@ msgstr "Mehrteilige Zeichenfolge editieren"
 
 #: regedit.rc:137
 msgid "Contains commands for working with the whole registry"
-msgstr "Befehle zum Bearbeiten der ganzen Registry"
+msgstr "Befehle zum Bearbeiten der ganzen Registrierung"
 
 #: regedit.rc:138
 msgid "Contains commands for editing values or keys"
@@ -11772,7 +11768,8 @@ msgstr "Befehle zum Zugriff auf häufig benutzte Schlüssel"
 #: regedit.rc:141
 msgid ""
 "Contains commands for displaying help and information about registry editor"
-msgstr "Befehle zum Anzeigen der Hilfe oder Informationen über das Programm"
+msgstr ""
+"Befehle zum Anzeigen der Hilfe oder von Informationen über das Programm"
 
 #: regedit.rc:142
 msgid "Contains commands for creating new keys or values"
@@ -11784,23 +11781,23 @@ msgstr "Daten"
 
 #: regedit.rc:132
 msgid "Registry Editor"
-msgstr "Registry-Editor"
+msgstr "Registrierungs-Editor"
 
 #: regedit.rc:194
 msgid "Import Registry File"
-msgstr "Registry-Datei importieren"
+msgstr "Registrierungsdatei importieren"
 
 #: regedit.rc:195
 msgid "Export Registry File"
-msgstr "Registry-Datei exportieren"
+msgstr "Registrierungsdatei exportieren"
 
 #: regedit.rc:196
 msgid "Registry files (*.reg)"
-msgstr "Registry-Dateien (*.reg)"
+msgstr "Registrierungsdateien (*.reg)"
 
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 Registry-Dateien (REGEDIT4)"
+msgstr "Win9x/NT4 Registrierungsdateien (REGEDIT4)"
 
 #: regedit.rc:204
 msgid "(Default)"
@@ -11820,7 +11817,7 @@ msgstr "(unbekannt %d)"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
-msgstr "Beendet den Registry-Editor"
+msgstr "Beendet den Registrierungs-Editor"
 
 #: regedit.rc:164
 msgid "Adds keys to the favorites list"
@@ -13207,11 +13204,11 @@ msgstr "Darstellung"
 
 #: winecfg.rc:287
 msgid "&Theme:"
-msgstr "&Motiv:"
+msgstr "&Thema:"
 
 #: winecfg.rc:289
 msgid "&Install theme..."
-msgstr "Motiv &installieren..."
+msgstr "Thema &installieren..."
 
 #: winecfg.rc:294
 msgid "It&em:"
@@ -13247,7 +13244,7 @@ msgstr "&Erweitert ausblenden"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
-msgstr "(Kein Motiv)"
+msgstr "(Kein Thema)"
 
 #: winecfg.rc:40
 msgid "Graphics"
@@ -13271,11 +13268,11 @@ msgstr "Wine-Konfiguration"
 
 #: winecfg.rc:46
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr "Motiv-Dateien (*.msstyles; *.theme)"
+msgstr "Themen-Dateien (*.msstyles; *.theme)"
 
 #: winecfg.rc:47
 msgid "Select a theme file"
-msgstr "Motiv-Datei auswählen"
+msgstr "Themen-Datei auswählen"
 
 #: winecfg.rc:48
 msgid "Folder"
