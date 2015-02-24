@@ -953,6 +953,14 @@ static void test_GetTempPathA(char* tmp_dir)
     len = GetTempPathA(len, buf);
     ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]\n",tmp_dir,buf);
     ok(len == strlen(buf), "returned length should be equal to the length of string\n");
+
+    memset(buf, 'a', sizeof(buf));
+    len = GetTempPathA(sizeof(buf), buf);
+    ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]\n",tmp_dir,buf);
+    ok(len == strlen(buf), "returned length should be equal to the length of string\n");
+    /* The rest of the buffer remains untouched */
+    for(len++; len < sizeof(buf); len++)
+        ok(buf[len] == 'a', "expected 'a' at [%d], got 0x%x\n", len, buf[len]);
 }
 
 static void test_GetTempPathW(char* tmp_dir)
@@ -996,6 +1004,16 @@ static void test_GetTempPathW(char* tmp_dir)
     len = GetTempPathW(len, buf);
     ok(lstrcmpiW(buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path\n");
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string\n");
+
+    for(len = 0; len < sizeof(buf) / sizeof(buf[0]); len++)
+        buf[len] = 'a';
+    len = GetTempPathW(len, buf);
+    ok(lstrcmpiW(buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path\n");
+    ok(len == lstrlenW(buf), "returned length should be equal to the length of string\n");
+    /* The rest of the buffer must be zeroed */
+    for(len++; len < sizeof(buf) / sizeof(buf[0]); len++)
+        todo_wine
+        ok(buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, buf[len]);
 }
 
 static void test_GetTempPath(void)
