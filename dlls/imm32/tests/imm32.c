@@ -525,15 +525,15 @@ static void test_ImmThreads(void)
     ok(rc == 0, "ImmGetOpenStatus failed\n");
 
     rc = ImmSetOpenStatus(otherHimc, TRUE);
-    todo_wine ok(rc == 0, "ImmSetOpenStatus should fail\n");
+    ok(rc == 0, "ImmSetOpenStatus should fail\n");
     rc = ImmSetOpenStatus(threadinfo.u_himc, TRUE);
-    todo_wine ok(rc == 0, "ImmSetOpenStatus should fail\n");
+    ok(rc == 0, "ImmSetOpenStatus should fail\n");
     rc = ImmGetOpenStatus(otherHimc);
-    todo_wine ok(rc == 0, "ImmGetOpenStatus failed\n");
+    ok(rc == 0, "ImmGetOpenStatus failed\n");
     rc = ImmGetOpenStatus(threadinfo.u_himc);
     ok (rc == 1 || broken(rc == 0), "ImmGetOpenStatus should return 1\n");
     rc = ImmSetOpenStatus(otherHimc, FALSE);
-    todo_wine ok(rc == 0, "ImmSetOpenStatus should fail\n");
+    ok(rc == 0, "ImmSetOpenStatus should fail\n");
     rc = ImmGetOpenStatus(otherHimc);
     ok(rc == 0, "ImmGetOpenStatus failed\n");
 
@@ -548,9 +548,9 @@ static void test_ImmThreads(void)
     rc = ImmGetCompositionFontA(threadinfo.u_himc, &lf);
     ok(rc != 0 || broken(rc == 0), "ImmGetCompositionFont user himc failed\n");
     rc = ImmSetCompositionFontA(otherHimc, &lf);
-    todo_wine ok(rc == 0, "ImmSetCompositionFont should fail\n");
+    ok(rc == 0, "ImmSetCompositionFont should fail\n");
     rc = ImmSetCompositionFontA(threadinfo.u_himc, &lf);
-    todo_wine ok(rc == 0, "ImmSetCompositionFont should fail\n");
+    ok(rc == 0, "ImmSetCompositionFont should fail\n");
 
     /* CompositionWindow */
     rc = ImmSetCompositionWindow(himc, &cf);
@@ -559,9 +559,9 @@ static void test_ImmThreads(void)
     ok(rc != 0, "ImmGetCompositionWindow failed\n");
 
     rc = ImmSetCompositionWindow(otherHimc, &cf);
-    todo_wine ok(rc == 0, "ImmSetCompositionWindow should fail\n");
+    ok(rc == 0, "ImmSetCompositionWindow should fail\n");
     rc = ImmSetCompositionWindow(threadinfo.u_himc, &cf);
-    todo_wine ok(rc == 0, "ImmSetCompositionWindow should fail\n");
+    ok(rc == 0, "ImmSetCompositionWindow should fail\n");
     rc = ImmGetCompositionWindow(otherHimc, &cf);
     ok(rc != 0 || broken(rc == 0), "ImmGetCompositionWindow failed\n");
     rc = ImmGetCompositionWindow(threadinfo.u_himc, &cf);
@@ -578,9 +578,9 @@ static void test_ImmThreads(void)
     rc = ImmGetConversionStatus(threadinfo.u_himc, &status, &sentence);
     ok(rc != 0 || broken(rc == 0), "ImmGetConversionStatus failed\n");
     rc = ImmSetConversionStatus(otherHimc, status, sentence);
-    todo_wine ok(rc == 0, "ImmSetConversionStatus should fail\n");
+    ok(rc == 0, "ImmSetConversionStatus should fail\n");
     rc = ImmSetConversionStatus(threadinfo.u_himc, status, sentence);
-    todo_wine ok(rc == 0, "ImmSetConversionStatus should fail\n");
+    ok(rc == 0, "ImmSetConversionStatus should fail\n");
 
     /* StatusWindowPos */
     rc = ImmSetStatusWindowPos(himc, &pt);
@@ -589,9 +589,9 @@ static void test_ImmThreads(void)
     ok(rc != 0, "ImmGetStatusWindowPos failed\n");
 
     rc = ImmSetStatusWindowPos(otherHimc, &pt);
-    todo_wine ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
+    ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
     rc = ImmSetStatusWindowPos(threadinfo.u_himc, &pt);
-    todo_wine ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
+    ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
     rc = ImmGetStatusWindowPos(otherHimc, &pt);
     ok(rc != 0 || broken(rc == 0), "ImmGetStatusWindowPos failed\n");
     rc = ImmGetStatusWindowPos(threadinfo.u_himc, &pt);
@@ -624,11 +624,11 @@ static void test_ImmThreads(void)
     rc = ImmGetCandidateWindow(otherHimc, 0, &cdf);
     ok (rc == 0, "ImmGetCandidateWindow should fail\n");
     rc = ImmSetCandidateWindow(otherHimc, &cdf);
-    todo_wine ok (rc == 0, "ImmSetCandidateWindow should fail\n");
+    ok (rc == 0, "ImmSetCandidateWindow should fail\n");
     rc = ImmGetCandidateWindow(threadinfo.u_himc, 0, &cdf);
     ok (rc == 1 || broken( rc == 0), "ImmGetCandidateWindow should succeed\n");
     rc = ImmSetCandidateWindow(threadinfo.u_himc, &cdf);
-    todo_wine ok (rc == 0, "ImmSetCandidateWindow should fail\n");
+    ok (rc == 0, "ImmSetCandidateWindow should fail\n");
 
     ImmReleaseContext(threadinfo.hwnd,otherHimc);
     ImmReleaseContext(hwnd,himc);
