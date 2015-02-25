@@ -185,6 +185,7 @@ struct d3d10_input_layout
     ID3D10InputLayout ID3D10InputLayout_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_vertex_declaration *wined3d_decl;
 };
 

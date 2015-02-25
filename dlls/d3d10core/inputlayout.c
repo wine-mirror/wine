@@ -174,10 +174,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_GetPrivateData(ID3D10InputLa
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateData(ID3D10InputLayout *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_input_layout *layout = impl_from_ID3D10InputLayout(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&layout->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateDataInterface(ID3D10InputLayout *iface,
@@ -203,6 +205,9 @@ static const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
 
 static void STDMETHODCALLTYPE d3d10_input_layout_wined3d_object_destroyed(void *parent)
 {
+    struct d3d10_input_layout *layout = parent;
+
+    wined3d_private_store_cleanup(&layout->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
@@ -221,12 +226,14 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
 
     layout->ID3D10InputLayout_iface.lpVtbl = &d3d10_input_layout_vtbl;
     layout->refcount = 1;
+    wined3d_private_store_init(&layout->private_store);
 
     hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
             shader_byte_code, shader_byte_code_length, &wined3d_elements, &wined3d_element_count);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&layout->private_store);
         return hr;
     }
 
@@ -236,6 +243,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&layout->private_store);
         return hr;
     }
 
