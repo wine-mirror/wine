@@ -2730,11 +2730,6 @@ msgstr ""
 "Ви дійсно хочете видалити цей сертифікат?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
@@ -3146,8 +3141,6 @@ msgid "&View Source"
 msgstr "&Переглянути вихідний код"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
 msgstr "Властивості"
 
@@ -11601,10 +11594,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Помилка: неправильні параметри командного рядка\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Помилка: неможливо додати ключі на віддаленій машині\n"
+msgstr "Помилка: неможливо отримати доступ до віддаленої машини\n"
 
 #: reg.rc:38
 msgid ""
@@ -11612,10 +11603,8 @@ msgid ""
 msgstr "Помилка: не вдалось знайти вказаний ключ реєстру чи значення\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Непідтримуваний тип.\n"
+msgstr "Помилка: Непідтримуваний тип\n"
 
 #: regedit.rc:34
 msgid "&Registry"
