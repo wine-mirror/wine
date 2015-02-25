@@ -148,6 +148,14 @@ typedef struct {
     _Cvtvec cvt;
 } time_put;
 
+typedef struct {
+    locale_facet facet;
+    const char *days;
+    const char *months;
+    dateorder dateorder;
+    _Cvtvec cvt;
+} time_get_char;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -9302,6 +9310,329 @@ ostreambuf_iterator_wchar* __thiscall time_put_wchar_put_format(const time_put *
     return ret;
 }
 
+/* ?id@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A */
+locale_id time_get_char_id = {0};
+
+/* ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ */
+extern const vtable_ptr MSVCP_time_get_char_vtable;
+
+/* ?_Init@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char__Init, 8)
+void __thiscall time_get_char__Init(time_get_char *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAE@PBDI@Z */
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_ctor_name, 12)
+time_get_char* __thiscall time_get_char_ctor_name(time_get_char *this, const char *name, unsigned int refs)
+{
+    FIXME("(%p %p %d) stub\n", this, name, refs);
+    this->facet.vtable = &MSVCP_time_get_char_vtable;
+    return NULL;
+}
+
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_ctor_locinfo, 12)
+time_get_char* __thiscall time_get_char_ctor_locinfo(time_get_char *this,
+        const _Locinfo *locinfo, unsigned int refs)
+{
+    FIXME("(%p %p %d) stub\n", this, locinfo, refs);
+    this->facet.vtable = &MSVCP_time_get_char_vtable;
+    return NULL;
+}
+
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_ctor_refs, 8)
+time_get_char* __thiscall time_get_char_ctor_refs(time_get_char *this, unsigned int refs)
+{
+    FIXME("(%p %d) stub\n", this, refs);
+    this->facet.vtable = &MSVCP_time_get_char_vtable;
+    return NULL;
+}
+
+/* ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
+/* ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_get_char_ctor, 4)
+time_get_char* __thiscall time_get_char_ctor(time_get_char *this)
+{
+    return time_get_char_ctor_refs(this, 0);
+}
+
+/* ?_Tidy@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AAEXXZ */
+/* ?_Tidy@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(time_get_char__Tidy, 4)
+void __thiscall time_get_char__Tidy(time_get_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
+/* ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_char_dtor, 4) /* virtual */
+void __thiscall time_get_char_dtor(time_get_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(time_get_char_vector_dtor, 8)
+time_get_char* __thiscall time_get_char_vector_dtor(time_get_char *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            time_get_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        time_get_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+unsigned int __cdecl time_get_char__Getcat(const locale_facet **facet, const locale *loc)
+{
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(time_get_char));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, locale_string_char_c_str(&loc->ptr->name));
+        time_get_char_ctor_locinfo((time_get_char*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_TIME;
+}
+
+static time_get_char* time_get_char_use_facet(const locale *loc)
+{
+    static time_get_char *obj = NULL;
+
+    _Lockit lock;
+    const locale_facet *fac;
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    fac = locale__Getfacet(loc, locale_id_operator_size_t(&time_get_char_id));
+    if(fac) {
+        _Lockit_dtor(&lock);
+        return (time_get_char*)fac;
+    }
+
+    if(obj) {
+        _Lockit_dtor(&lock);
+        return obj;
+    }
+
+    time_get_char__Getcat(&fac, loc);
+    obj = (time_get_char*)fac;
+    call_locale_facet__Incref(&obj->facet);
+    locale_facet_register(&obj->facet);
+    _Lockit_dtor(&lock);
+
+    return obj;
+}
+
+/* ?_Getint@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@0HHAAH@Z */
+/* ?_Getint@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHAEAV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@0HHAEAH@Z */
+int __cdecl time_get_char__Getint(const time_get_char *this,
+        istreambuf_iterator_char *b, istreambuf_iterator_char *e,
+        int unk1, int unk2, int *val)
+{
+    FIXME("(%p %p %p %d %d %p) stub\n", this, b, e, unk1, unk2, val);
+    return 0;
+}
+
+/* ?do_date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AW4dateorder@time_base@2@XZ */
+/* ?do_date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AW4dateorder@time_base@2@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_date_order, 4) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_date_order(this) CALL_VTBL_FUNC(this, 4, dateorder, (const time_get_char*), (this))
+#else
+#define call_time_get_char_do_date_order(this) CALL_VTBL_FUNC(this, 12, dateorder, (const time_get_char*), (this))
+#endif
+dateorder __thiscall time_get_char_do_date_order(const time_get_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ */
+/* ?date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AW4dateorder@time_base@2@XZ */
+DEFINE_THISCALL_WRAPPER(time_get_char_date_order, 4)
+dateorder __thiscall time_get_char_date_order(const time_get_char *this)
+{
+    return call_time_get_char_do_date_order(this);
+}
+
+/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_date, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_date(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_date(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
+    return NULL;
+}
+
+/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_date@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_date, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_date(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_date(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_monthname, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_monthname(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_monthname(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_monthname(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
+    return NULL;
+}
+
+/* ?get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_monthname@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_monthname, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_monthname(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_monthname(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_time@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_time@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_time, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_time(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 8, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_time(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_time(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
+    return NULL;
+}
+
+/* ?get_time@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_time@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_time, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_time(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_time(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_weekday@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_weekday@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_weekday, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_weekday(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_weekday(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_weekday(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
+    return NULL;
+}
+
+/* ?get_weekday@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_weekday@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_weekday, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_weekday(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_weekday(this, ret, s, e, base, err, t);
+}
+
+/* ?do_get_year@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?do_get_year@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_do_get_year, 36) /* virtual */
+#if _MSVCP_VER <= 100
+#define call_time_get_char_do_get_year(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#else
+#define call_time_get_char_do_get_year(this, ret, s, e, base, err, t) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_char*, \
+        (const time_get_char*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, struct tm*), \
+        (this, ret, s, e, base, err, t))
+#endif
+istreambuf_iterator_char* __thiscall time_get_char_do_get_year(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, ret, base, err, t);
+    return NULL;
+}
+
+/* ?get_year@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHPAUtm@@@Z */
+/* ?get_year@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHPEAUtm@@@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_get_year, 36)
+istreambuf_iterator_char* __thiscall time_get_char_get_year(const time_get_char *this,
+        istreambuf_iterator_char *ret, istreambuf_iterator_char s, istreambuf_iterator_char e,
+        ios_base *base, int *err, struct tm *t)
+{
+    return call_time_get_char_do_get_year(this, ret, s, e, base, err, t);
+}
+
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -9830,6 +10161,22 @@ void __cdecl locale__Locimp__Makexloc(const _Locinfo *locinfo, category cat, loc
             collate_char_ctor_locinfo(c, locinfo, 0);
         }
         locale__Locimp__Addfac(locimp, &c->facet, locale_id_operator_size_t(&collate_char_id));
+    }
+
+    if(cat & (1<<(time_get_char__Getcat(NULL, NULL)-1))) {
+        time_get_char *t;
+
+        if(loc) {
+            t = time_get_char_use_facet(loc);
+        }else {
+            t = MSVCRT_operator_new(sizeof(time_get_char));
+            if(!t) {
+                ERR("Out of memory\n");
+                throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            }
+            time_get_char_ctor_locinfo(t, locinfo, 0);
+        }
+        locale__Locimp__Addfac(locimp, &t->facet, locale_id_operator_size_t(&time_get_char_id));
     }
 
     if(cat & (1<<(time_put_char__Getcat(NULL, NULL)-1))) {
@@ -10391,6 +10738,8 @@ DEFINE_RTTI_DATA1(num_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$n
 DEFINE_RTTI_DATA1(time_put_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
 DEFINE_RTTI_DATA1(time_put_wchar, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
 DEFINE_RTTI_DATA1(time_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@")
+DEFINE_RTTI_DATA1(time_base, 0, &locale_facet_rtti_base_descriptor, ".?AUtime_base@std@@")
+DEFINE_RTTI_DATA2(time_get_char, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -10705,6 +11054,18 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(locale_facet__Decref)
 #endif
             VTABLE_ADD_FUNC(time_put_wchar_do_put));
+    __ASM_VTABLE(time_get_char,
+            VTABLE_ADD_FUNC(time_get_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
+            VTABLE_ADD_FUNC(time_get_char_do_date_order)
+            VTABLE_ADD_FUNC(time_get_char_do_get_time)
+            VTABLE_ADD_FUNC(time_get_char_do_get_date)
+            VTABLE_ADD_FUNC(time_get_char_do_get_weekday)
+            VTABLE_ADD_FUNC(time_get_char_do_get_monthname)
+            VTABLE_ADD_FUNC(time_get_char_do_get_year));
 #ifndef __GNUC__
 }
 #endif
@@ -10736,6 +11097,8 @@ void init_locale(void *base)
     init_time_put_char_rtti(base);
     init_time_put_wchar_rtti(base);
     init_time_put_short_rtti(base);
+    init_time_base_rtti(base);
+    init_time_get_char_rtti(base);
 #endif
 }
 
