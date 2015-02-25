@@ -9471,8 +9471,8 @@ DEFINE_THISCALL_WRAPPER(time_get_char_do_date_order, 4) /* virtual */
 #endif
 dateorder __thiscall time_get_char_do_date_order(const time_get_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->dateorder;
 }
 
 /* ?date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ */
