@@ -2324,7 +2324,7 @@ static HRESULT translate_uri(HTMLOuterWindow *window, IUri *orig_uri, BSTR *ret_
 
         hres = IDocHostUIHandler_TranslateUrl(window->doc_obj->hostui, 0, display_uri,
                 &translated_url);
-        if(hres == S_OK) {
+        if(hres == S_OK && translated_url) {
             TRACE("%08x %s -> %s\n", hres, debugstr_w(display_uri), debugstr_w(translated_url));
             SysFreeString(display_uri);
             hres = create_uri(translated_url, 0, &uri);

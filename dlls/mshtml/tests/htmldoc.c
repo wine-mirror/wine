@@ -2614,6 +2614,12 @@ static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, D
     ok(ppchURLOut != NULL, "ppchURLOut == NULL\n");
     ok(!*ppchURLOut, "*ppchURLOut = %p\n", *ppchURLOut);
 
+    /* Not related to hash navigation, just return NULL and S_OK in some cases. */
+    if(loading_hash) {
+        *ppchURLOut = NULL;
+        return S_OK;
+    }
+
     return S_FALSE;
 }
 
