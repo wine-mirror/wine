@@ -38,6 +38,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
+typedef enum {
+    DATEORDER_no_order,
+    DATEORDER_dmy,
+    DATEORDER_mdy,
+    DATEORDER_ymd,
+    DATEORDER_ydm
+} dateorder;
+
 char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
@@ -689,13 +697,27 @@ _Cvtvec* __thiscall _Locinfo__Getcvt(const _Locinfo *this, _Cvtvec *ret)
     return ret;
 }
 
+int __cdecl _Getdateorder(void)
+{
+    WCHAR date_fmt[2];
+
+    if(!GetLocaleInfoW(___lc_handle_func()[LC_TIME], LOCALE_ILDATE,
+                date_fmt, sizeof(date_fmt)/sizeof(*date_fmt)))
+        return DATEORDER_no_order;
+
+    if(*date_fmt == '0') return DATEORDER_mdy;
+    if(*date_fmt == '1') return DATEORDER_dmy;
+    if(*date_fmt == '2') return DATEORDER_ymd;
+    return DATEORDER_no_order;
+}
+
 /* ?_Getdateorder@_Locinfo@std@@QBEHXZ */
 /* ?_Getdateorder@_Locinfo@std@@QEBAHXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getdateorder, 4)
 int __thiscall _Locinfo__Getdateorder(const _Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return _Getdateorder();
 }
 
 /* ?_Getdays@_Locinfo@std@@QBEPBDXZ */

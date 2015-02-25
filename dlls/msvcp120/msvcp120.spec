@@ -3724,7 +3724,7 @@
 @ cdecl -ret64 _Getcoll()
 @ cdecl _Getctype(ptr)
 @ cdecl -ret64 _Getcvt()
-@ stub _Getdateorder
+@ cdecl _Getdateorder()
 @ cdecl _Getwctype(long ptr)
 @ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
