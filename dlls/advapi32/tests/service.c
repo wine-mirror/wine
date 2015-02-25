@@ -2267,18 +2267,6 @@ static void test_start_stop(void)
     le = try_start_stop(svc_handle, displayname, is_nt4);
     ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
 
-    /* And finally with a service that plays dead, forcing a timeout.
-     * This time we will put no quotes. That should work too, even if there are
-     * spaces in the path.
-     */
-    sprintf(cmd, "%s service sleep", selfname);
-    displayname = "Winetest Sleep Service";
-    ret = ChangeServiceConfigA(svc_handle, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, cmd, NULL, NULL, NULL, NULL, NULL, displayname);
-    ok(ret, "ChangeServiceConfig() failed le=%u\n", GetLastError());
-
-    le = try_start_stop(svc_handle, displayname, is_nt4);
-    ok(le == ERROR_SERVICE_REQUEST_TIMEOUT, "%d != ERROR_SERVICE_REQUEST_TIMEOUT\n", le);
-
 cleanup:
     if (svc_handle)
     {
@@ -2392,10 +2380,6 @@ START_TEST(service)
     GetFullPathNameA(myARGV[0], sizeof(selfname), selfname, NULL);
     if (myARGC >= 3)
     {
-        if (strcmp(myARGV[2], "sleep") == 0)
-            /* Cause a service startup timeout */
-            Sleep(90000);
-        /* then, or if myARGV[2] == "exit", just exit */
         return;
     }
 
