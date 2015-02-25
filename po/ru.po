@@ -2731,11 +2731,6 @@ msgstr ""
 "Вы действительно хотите удалить его?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
@@ -3148,8 +3143,6 @@ msgid "&View Source"
 msgstr "&Открыть исходный текст"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
 msgstr "Сво&йства"
 
@@ -11519,10 +11512,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Ошибка: неправильные параметры командной строки\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Ошибка: нельзя добавлять разделы на удалённом компьютере\n"
+msgstr "Ошибка: нет удалось получить доступ к удалённому компьютеру\n"
 
 #: reg.rc:38
 msgid ""
@@ -11530,10 +11521,8 @@ msgid ""
 msgstr "Ошибка: не удалось найти указанный раздел реестра или значение\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Неподдерживаемый тип.\n"
+msgstr "Ошибка: тип не поддерживается\n"
 
 #: regedit.rc:34
 msgid "&Registry"
