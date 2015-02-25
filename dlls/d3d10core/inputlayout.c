@@ -185,9 +185,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateData(ID3D10InputLa
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateDataInterface(ID3D10InputLayout *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d10_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d10_set_private_data_interface(&layout->private_store, guid, data);
 }
 
 static const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
