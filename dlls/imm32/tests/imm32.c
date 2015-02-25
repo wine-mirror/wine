@@ -425,15 +425,17 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
     HWND hwnd2;
     COMPOSITIONFORM cf;
     POINT pt;
+    MSG msg;
+
     igc_threadinfo *info= (igc_threadinfo*)lpParam;
     info->hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                                  240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
 
     h1 = ImmGetContext(hwnd);
-    todo_wine ok(info->himc == h1, "hwnd context changed in new thread\n");
+    ok(info->himc == h1, "hwnd context changed in new thread\n");
     h2 = ImmGetContext(info->hwnd);
-    todo_wine ok(h2 != h1, "new hwnd in new thread should have different context\n");
+    ok(h2 != h1, "new hwnd in new thread should have different context\n");
     info->himc = h2;
     ImmReleaseContext(hwnd,h1);
 
@@ -452,7 +454,12 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
     ImmSetStatusWindowPos(h1, &pt);
 
     SetEvent(info->event);
-    Sleep(INFINITE);
+
+    while(GetMessageW(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
     return 1;
 }
 
@@ -477,8 +484,8 @@ static void test_ImmThreads(void)
 
     otherHimc = ImmGetContext(threadinfo.hwnd);
 
-    todo_wine ok(himc != otherHimc, "Windows from other threads should have different himc\n");
-    todo_wine ok(otherHimc == threadinfo.himc, "Context from other thread should not change in main thread\n");
+    ok(himc != otherHimc, "Windows from other threads should have different himc\n");
+    ok(otherHimc == threadinfo.himc, "Context from other thread should not change in main thread\n");
 
     if (0) /* FIXME: Causes wine to hang */
     {
@@ -566,7 +573,7 @@ static void test_ImmThreads(void)
     ok (rc == 1, "ImmGetCandidateWindow should succeed\n");
 
     rc = ImmGetCandidateWindow(otherHimc, 0, &cdf);
-    todo_wine ok (rc == 0, "ImmGetCandidateWindow should fail\n");
+    ok (rc == 0, "ImmGetCandidateWindow should fail\n");
     rc = ImmSetCandidateWindow(otherHimc, &cdf);
     todo_wine ok (rc == 0, "ImmSetCandidateWindow should fail\n");
 
@@ -577,7 +584,7 @@ static void test_ImmThreads(void)
     TerminateThread(hThread, 1);
 
     himc = ImmGetContext(GetDesktopWindow());
-    todo_wine ok(himc == NULL, "Should not be able to get himc from other process window\n");
+    ok(himc == NULL, "Should not be able to get himc from other process window\n");
 }
 
 static void test_ImmIsUIMessage(void)
