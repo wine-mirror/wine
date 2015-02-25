@@ -2335,3 +2335,37 @@ BOOL WINAPI EnumDependentServicesW( SC_HANDLE hService, DWORD dwServiceState,
     *lpServicesReturned = 0;
     return TRUE;
 }
+
+/******************************************************************************
+ * NotifyServiceStatusChangeW [ADVAPI32.@]
+ */
+DWORD WINAPI NotifyServiceStatusChangeW(SC_HANDLE hService, DWORD dwNotifyMask,
+        SERVICE_NOTIFYW *pNotifyBuffer)
+{
+    DWORD dummy;
+    BOOL ret;
+    SERVICE_STATUS_PROCESS st;
+
+    FIXME("%p 0x%x %p - semi-stub\n", hService, dwNotifyMask, pNotifyBuffer);
+
+    ret = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (void*)&st, sizeof(st), &dummy);
+    if (ret)
+    {
+        /* dwNotifyMask is a set of bitflags in same order as SERVICE_ statuses */
+        if (dwNotifyMask & (1 << (st.dwCurrentState - SERVICE_STOPPED)))
+        {
+            pNotifyBuffer->dwNotificationStatus = ERROR_SUCCESS;
+            memcpy(&pNotifyBuffer->ServiceStatus, &st, sizeof(pNotifyBuffer->ServiceStatus));
+            pNotifyBuffer->dwNotificationTriggered = 1 << (st.dwCurrentState - SERVICE_STOPPED);
+            pNotifyBuffer->pszServiceNames = NULL;
+            TRACE("Queueing notification: 0x%x\n", pNotifyBuffer->dwNotificationTriggered);
+            QueueUserAPC((PAPCFUNC)pNotifyBuffer->pfnNotifyCallback,
+                    GetCurrentThread(), (ULONG_PTR)pNotifyBuffer);
+        }
+    }
+
+    /* TODO: If the service is not currently in a matching state, we should
+     * tell `services` to monitor it. */
+
+    return ERROR_SUCCESS;
+}

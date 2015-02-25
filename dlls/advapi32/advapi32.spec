@@ -496,7 +496,7 @@
 @ stdcall NotifyChangeEventLog (long long)
 # @ stub NotifyServiceStatusChange
 # @ stub NotifyServiceStatusChangeA
-# @ stub NotifyServiceStatusChangeW
+@ stdcall NotifyServiceStatusChangeW(ptr long ptr)
 @ stdcall ObjectCloseAuditAlarmA(str ptr long)
 @ stdcall ObjectCloseAuditAlarmW(wstr ptr long)
 # @ stub ObjectDeleteAuditAlarmA

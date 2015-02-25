@@ -159,6 +159,43 @@ typedef struct _SERVICE_STATUS_PROCESS
   DWORD dwServiceFlags;
 } SERVICE_STATUS_PROCESS, *LPSERVICE_STATUS_PROCESS;
 
+#define SERVICE_NOTIFY_STATUS_CHANGE 2
+
+#define SERVICE_NOTIFY_STOPPED 0x1
+#define SERVICE_NOTIFY_START_PENDING 0x2
+#define SERVICE_NOTIFY_STOP_PENDING 0x4
+#define SERVICE_NOTIFY_RUNNING 0x8
+#define SERVICE_NOTIFY_CONTINUE_PENDING 0x10
+#define SERVICE_NOTIFY_PAUSE_PENDING 0x20
+#define SERVICE_NOTIFY_PAUSED 0x40
+#define SERVICE_NOTIFY_CREATED 0x80
+#define SERVICE_NOTIFY_DELETED 0x100
+#define SERVICE_NOTIFY_DELETE_PENDING 0x200
+
+typedef void (CALLBACK *PFN_SC_NOTIFY_CALLBACK)(void *);
+
+typedef struct _SERVICE_NOTIFY_2A {
+    DWORD dwVersion;
+    PFN_SC_NOTIFY_CALLBACK pfnNotifyCallback;
+    void *pContext;
+    DWORD dwNotificationStatus;
+    SERVICE_STATUS_PROCESS ServiceStatus;
+    DWORD dwNotificationTriggered;
+    char *pszServiceNames;
+} SERVICE_NOTIFY_2A, SERVICE_NOTIFYA;
+
+typedef struct _SERVICE_NOTIFY_2W {
+    DWORD dwVersion;
+    PFN_SC_NOTIFY_CALLBACK pfnNotifyCallback;
+    void *pContext;
+    DWORD dwNotificationStatus;
+    SERVICE_STATUS_PROCESS ServiceStatus;
+    DWORD dwNotificationTriggered;
+    WCHAR *pszServiceNames;
+} SERVICE_NOTIFY_2W, SERVICE_NOTIFYW;
+
+DWORD WINAPI NotifyServiceStatusChangeW(SC_HANDLE,DWORD,SERVICE_NOTIFYW*);
+
 typedef enum _SC_STATUS_TYPE {
   SC_STATUS_PROCESS_INFO      = 0
 } SC_STATUS_TYPE;
