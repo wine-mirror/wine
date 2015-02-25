@@ -921,7 +921,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     LPWSTR lpServiceNameW;
     SC_HANDLE ret;
 
-    TRACE("%p %s %d\n", hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
+    TRACE("%p %s 0x%08x\n", hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
 
     lpServiceNameW = SERV_dup(lpServiceName);
     ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
@@ -940,7 +940,7 @@ DWORD SERV_OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 {
     DWORD err;
 
-    TRACE("%p %s %d\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
+    TRACE("%p %s 0x%08x\n", hSCManager, debugstr_w(lpServiceName), dwDesiredAccess);
 
     if (!hSCManager)
         return ERROR_INVALID_HANDLE;
