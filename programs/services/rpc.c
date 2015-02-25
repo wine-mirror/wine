@@ -1276,7 +1276,8 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
     BYTE *buffer,
     DWORD size,
     LPDWORD needed,
-    LPDWORD returned)
+    LPDWORD returned,
+    LPDWORD resume)
 {
     DWORD err, sz, total_size, num_services;
     DWORD_PTR offset;
@@ -1284,13 +1285,16 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
     struct service_entry *service;
     ENUM_SERVICE_STATUSW *s;
 
-    WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p)\n", hmngr, type, state, buffer, size, needed, returned);
+    WINE_TRACE("(%p, 0x%x, 0x%x, %p, %u, %p, %p, %p)\n", hmngr, type, state, buffer, size, needed, returned, resume);
 
     if (!type || !state)
         return ERROR_INVALID_PARAMETER;
 
     if ((err = validate_scm_handle(hmngr, SC_MANAGER_ENUMERATE_SERVICE, &manager)) != ERROR_SUCCESS)
         return err;
+
+    if (resume)
+        WINE_FIXME("resume index not supported\n");
 
     scmdatabase_lock_exclusive(manager->db);
 

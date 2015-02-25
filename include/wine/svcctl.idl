@@ -253,7 +253,7 @@ typedef struct _SC_RPC_CONFIG_INFOW {
     /* Not compatible with Windows function 0x0d */
     DWORD svcctl_EnumDependentServicesW(/* FIXME */);
 
-    /* Not compatible with Windows function 0x0e */
+    /* Compatible with Windows function 0x0e */
     DWORD svcctl_EnumServicesStatusW(
         [in] SC_RPC_HANDLE hmngr,
         [in] DWORD type,
@@ -261,7 +261,8 @@ typedef struct _SC_RPC_CONFIG_INFOW {
         [out,size_is(size)] BYTE *buffer,
         [in] DWORD size,
         [out] LPDWORD needed,
-        [out] LPDWORD returned
+        [out] LPDWORD returned,
+        [in,out,unique] LPDWORD resume
     );
 
     /* Compatible with Windows function 0x0f */

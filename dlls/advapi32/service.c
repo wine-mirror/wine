@@ -1619,9 +1619,6 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
           returned, resume_handle);
 
-    if (resume_handle)
-        FIXME("resume handle not supported\n");
-
     if (!hmngr)
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -1637,7 +1634,7 @@ EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
 
     __TRY
     {
-        err = svcctl_EnumServicesStatusW( hmngr, type, state, (BYTE *)services, size, needed, returned );
+        err = svcctl_EnumServicesStatusW( hmngr, type, state, (BYTE *)services, size, needed, returned, resume_handle );
     }
     __EXCEPT(rpc_filter)
     {
