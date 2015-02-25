@@ -908,6 +908,16 @@ BOOLEAN WINAPI EventProviderEnabled( REGHANDLE handle, UCHAR level, ULONGLONG ke
 }
 
 /******************************************************************************
+ * EventActivityIdControl [ADVAPI32.@]
+ *
+ */
+ULONG WINAPI EventActivityIdControl(ULONG code, GUID *guid)
+{
+    FIXME("0x%x, %p: stub\n", code, guid);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * EventWrite [ADVAPI32.@]
  */
 ULONG WINAPI EventWrite( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, ULONG count,

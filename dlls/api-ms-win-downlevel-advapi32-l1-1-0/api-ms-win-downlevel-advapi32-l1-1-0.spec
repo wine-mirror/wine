@@ -38,7 +38,7 @@
 @ stub EqualDomainSid
 @ stdcall EqualPrefixSid(ptr ptr) advapi32.EqualPrefixSid
 @ stdcall EqualSid(ptr ptr) advapi32.EqualSid
-@ stub EventActivityIdControl
+@ stdcall EventActivityIdControl(long ptr) advapi32.EventActivityIdControl
 @ stdcall EventEnabled(int64 ptr) advapi32.EventEnabled
 @ stdcall EventProviderEnabled(int64 long int64) advapi32.EventProviderEnabled
 @ stdcall EventRegister(ptr ptr ptr ptr) advapi32.EventRegister
