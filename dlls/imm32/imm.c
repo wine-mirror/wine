@@ -74,6 +74,7 @@ typedef struct tagInputContextData
 {
         DWORD           dwLock;
         INPUTCONTEXT    IMC;
+        DWORD           threadID;
 
         ImmHkl          *immKbd;
         UINT            lastVK;
@@ -523,6 +524,22 @@ static IMMThreadData* IMM_GetInitializedThreadData(HWND hWnd)
     return thread_data;
 }
 
+static BOOL IMM_IsCrossThreadAccess(HWND hWnd,  HIMC hIMC)
+{
+    InputContextData *data;
+
+    if (hWnd)
+    {
+        DWORD thread = GetWindowThreadProcessId(hWnd, NULL);
+        if (thread != GetCurrentThreadId()) return TRUE;
+    }
+    data = get_imc_data(hIMC);
+    if (data && data->threadID != GetCurrentThreadId())
+        return TRUE;
+
+    return FALSE;
+}
+
 /***********************************************************************
  *		ImmAssociateContext (IMM32.@)
  */
@@ -542,6 +559,9 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
      */
     if (hIMC && data->IMC.hWnd == hWnd)
         return hIMC;
+
+    if (hIMC && IMM_IsCrossThreadAccess(hWnd, hIMC))
+        return NULL;
 
     thread_data = IMM_GetInitializedThreadData(hWnd);
     if (!thread_data)
@@ -770,6 +790,7 @@ HIMC WINAPI ImmCreateContext(void)
         IMM_DestroyContext(new_context);
         return 0;
     }
+    new_context->threadID = GetCurrentThreadId();
     SendMessageW(GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)GetKeyboardLayout(0));
 
     new_context->immKbd->uSelected++;
@@ -809,7 +830,7 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
  */
 BOOL WINAPI ImmDestroyContext(HIMC hIMC)
 {
-    if (!IMM_IsDefaultContext(hIMC))
+    if (!IMM_IsDefaultContext(hIMC) && !IMM_IsCrossThreadAccess(NULL, hIMC))
         return IMM_DestroyContext(hIMC);
     else
         return FALSE;
