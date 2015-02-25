@@ -1870,7 +1870,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       if (nCurEnd == 0)
       {
         ME_PrevRun(&pCurPara, &pCurItem);
-        nCurEnd = pCurItem->member.run.len + nMatched;
+        nCurEnd = pCurItem->member.run.len;
       }
 
       while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 ),
