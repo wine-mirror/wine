@@ -114,6 +114,18 @@ typedef struct _SERVICE_FAILURE_ACTIONSW {
     [size_is(cActions)] SC_ACTION *lpsaActions;
 } SERVICE_FAILURE_ACTIONSW,*LPSERVICE_FAILURE_ACTIONSW;
 
+typedef struct _SERVICE_DELAYED_AUTO_START_INFO {
+    BOOL fDelayedAutostart;
+} SERVICE_DELAYED_AUTO_START_INFO;
+
+typedef struct _SERVICE_FAILURE_ACTIONS_FLAG {
+    BOOL fFailureActionsOnNonCrashFailures;
+} SERVICE_FAILURE_ACTIONS_FLAG;
+
+typedef struct _SERVICE_SID_INFO {
+    DWORD dwServiceSidType;
+} SERVICE_SID_INFO;
+
 typedef struct _SERVICE_PRESHUTDOWN_INFO {
     DWORD dwPreshutdownTimeout;
 } SERVICE_PRESHUTDOWN_INFO,*LPSERVICE_PRESHUTDOWN_INFO;
@@ -134,12 +146,23 @@ typedef struct _ENUM_SERVICE_STATUSW {
 
 cpp_quote("#endif")
 
-typedef [switch_type(DWORD)] union
-{
-  [case (SERVICE_CONFIG_DESCRIPTION)] SERVICE_DESCRIPTIONW descr;
-  [case (SERVICE_CONFIG_FAILURE_ACTIONS)] SERVICE_FAILURE_ACTIONSW actions;
-  [case (SERVICE_CONFIG_PRESHUTDOWN_INFO)] SERVICE_PRESHUTDOWN_INFO preshutdown;
-} SERVICE_CONFIG2W;
+typedef struct _SERVICE_RPC_REQUIRED_PRIVILEGES_INFO {
+    DWORD cbRequiredPrivileges;
+    [size_is(cbRequiredPrivileges)] BYTE *pRequiredPrivileges;
+} SERVICE_RPC_REQUIRED_PRIVILEGES_INFO;
+
+typedef struct _SC_RPC_CONFIG_INFOW {
+    DWORD dwInfoLevel;
+    [switch_is(dwInfoLevel)] union {
+        [case(SERVICE_CONFIG_DESCRIPTION)] SERVICE_DESCRIPTIONW *descr;
+        [case(SERVICE_CONFIG_FAILURE_ACTIONS)] SERVICE_FAILURE_ACTIONSW *actions;
+        [case(SERVICE_CONFIG_DELAYED_AUTO_START_INFO)] SERVICE_DELAYED_AUTO_START_INFO *delayedstart;
+        [case(SERVICE_CONFIG_FAILURE_ACTIONS_FLAG)] SERVICE_FAILURE_ACTIONS_FLAG *actionsflag;
+        [case(SERVICE_CONFIG_SERVICE_SID_INFO)] SERVICE_SID_INFO *sid;
+        [case(SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO)] SERVICE_RPC_REQUIRED_PRIVILEGES_INFO *privinfo;
+        [case(SERVICE_CONFIG_PRESHUTDOWN_INFO)] SERVICE_PRESHUTDOWN_INFO *preshutdown;
+    };
+} SC_RPC_CONFIG_INFOW;
 
     /* Compatible with Windows function 0x00 */
     DWORD svcctl_CloseServiceHandle(
@@ -331,11 +354,10 @@ typedef [switch_type(DWORD)] union
     /* Not compatible with Windows function 0x24 */
     DWORD svcctl_ChangeServiceConfig2A(/* FIXME */);
 
-    /* Untested with Windows function 0x25 */
+    /* Compatible with Windows function 0x25 */
     DWORD svcctl_ChangeServiceConfig2W(
         [in] SC_RPC_HANDLE hService,
-        [in] DWORD InfoLevel,
-        [in,switch_is(InfoLevel)] SERVICE_CONFIG2W *config );
+        [in] SC_RPC_CONFIG_INFOW config);
 
     /* Not compatible with Windows function 0x26 */
     DWORD svcctl_QueryServiceConfig2A(/* FIXME */);

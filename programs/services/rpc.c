@@ -755,7 +755,7 @@ DWORD __cdecl svcctl_SetServiceStatus(
     return ERROR_SUCCESS;
 }
 
-DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level, SERVICE_CONFIG2W *config )
+DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFIG_INFOW config )
 {
     struct sc_service_handle *service;
     DWORD err;
@@ -763,15 +763,15 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
     if ((err = validate_service_handle(hService, SERVICE_CHANGE_CONFIG, &service)) != 0)
         return err;
 
-    switch (level)
+    switch (config.dwInfoLevel)
     {
     case SERVICE_CONFIG_DESCRIPTION:
         {
             WCHAR *descr = NULL;
 
-            if (config->descr.lpDescription[0])
+            if (config.descr->lpDescription[0])
             {
-                if (!(descr = strdupW( config->descr.lpDescription )))
+                if (!(descr = strdupW( config.descr->lpDescription )))
                     return ERROR_NOT_ENOUGH_MEMORY;
             }
 
@@ -785,20 +785,20 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         break;
     case SERVICE_CONFIG_FAILURE_ACTIONS:
         WINE_FIXME( "SERVICE_CONFIG_FAILURE_ACTIONS not implemented: period %u msg %s cmd %s\n",
-                    config->actions.dwResetPeriod,
-                    wine_dbgstr_w(config->actions.lpRebootMsg),
-                    wine_dbgstr_w(config->actions.lpCommand) );
+                    config.actions->dwResetPeriod,
+                    wine_dbgstr_w(config.actions->lpRebootMsg),
+                    wine_dbgstr_w(config.actions->lpCommand) );
         break;
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
         WINE_TRACE( "changing service %p preshutdown timeout to %d\n",
-                service, config->preshutdown.dwPreshutdownTimeout );
+                service, config.preshutdown->dwPreshutdownTimeout );
         service_lock_exclusive( service->service_entry );
-        service->service_entry->preshutdown_timeout = config->preshutdown.dwPreshutdownTimeout;
+        service->service_entry->preshutdown_timeout = config.preshutdown->dwPreshutdownTimeout;
         save_service_config( service->service_entry );
         service_unlock( service->service_entry );
         break;
     default:
-        WINE_FIXME("level %u not implemented\n", level);
+        WINE_FIXME("level %u not implemented\n", config.dwInfoLevel);
         err = ERROR_INVALID_LEVEL;
         break;
     }
