@@ -149,6 +149,29 @@ static DWORD get_num_hash(FLOAT num)
     return (*((DWORD*)&num)) % 1201;
 }
 
+typedef union
+{
+    struct
+    {
+        unsigned int m : 23;
+        unsigned int exp_bias : 8;
+        unsigned int sign : 1;
+    } i;
+    float f;
+} R4_FIELDS;
+
+typedef union
+{
+    struct
+    {
+        unsigned int m_lo : 32;     /* 52 bits of precision */
+        unsigned int m_hi : 20;
+        unsigned int exp_bias : 11; /* bias == 1023 */
+        unsigned int sign : 1;
+    } i;
+    double d;
+} R8_FIELDS;
+
 static void test_hash_value(void)
 {
     /* string test data */
@@ -165,8 +188,14 @@ static void test_hash_value(void)
         0, -1, 100, 1, 255
     };
 
+    static const FLOAT float_hash_tests[] = {
+        0.0, -1.0, 100.0, 1.0, 255.0, 1.234
+    };
+
     IDictionary *dict;
     VARIANT key, hash;
+    R8_FIELDS fx8;
+    R4_FIELDS fx4;
     HRESULT hr;
     unsigned i;
 
@@ -299,6 +328,81 @@ static void test_hash_value(void)
         expected = get_num_hash((FLOAT)(BYTE)int_hash_tests[i]);
         V_VT(&key) = VT_UI1;
         V_UI1(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+    }
+
+    /* nan */
+    fx4.f = 10.0;
+    fx4.i.exp_bias = 0xff;
+
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = fx4.f;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u || broken(V_I4(&hash) == 0 /* win2k */ ||
+        V_I4(&hash) == 0x1f4 /* vista, win2k8 */), "got hash 0x%08x\n", V_I4(&hash));
+
+    /* inf */
+    fx4.f = 10.0;
+    fx4.i.m = 0;
+    fx4.i.exp_bias = 0xff;
+
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = fx4.f;
+    V_I4(&hash) = 10;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
+
+    /* nan */
+    fx8.d = 10.0;
+    fx8.i.exp_bias = 0x7ff;
+
+    V_VT(&key) = VT_R8;
+    V_R8(&key) = fx8.d;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u || broken(V_I4(&hash) == 0 /* win2k */ ||
+        V_I4(&hash) == 0x1f4 /* vista, win2k8 */), "got hash 0x%08x\n", V_I4(&hash));
+
+    /* inf */
+    fx8.d = 10.0;
+    fx8.i.m_lo = 0;
+    fx8.i.m_hi = 0;
+    fx8.i.exp_bias = 0x7ff;
+
+    V_VT(&key) = VT_R8;
+    V_R8(&key) = fx8.d;
+    V_I4(&hash) = 10;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
+
+    for (i = 0; i < sizeof(float_hash_tests)/sizeof(float_hash_tests[0]); i++) {
+        DWORD expected = get_num_hash(float_hash_tests[i]);
+
+        V_VT(&key) = VT_R4;
+        V_R4(&key) = float_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        V_VT(&key) = VT_R8;
+        V_R8(&key) = float_hash_tests[i];
         VariantInit(&hash);
         hr = IDictionary_get_HashVal(dict, &key, &hash);
         ok(hr == S_OK, "got 0x%08x\n", hr);

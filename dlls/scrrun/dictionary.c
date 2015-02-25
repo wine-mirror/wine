@@ -18,6 +18,8 @@
 #define COBJMACROS
 
 #include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -336,6 +338,23 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_I4:
         V_I4(hash) = get_num_hash(V_I4(key));
         break;
+    case VT_R4:
+    case VT_R8:
+    {
+        FLOAT flt = V_VT(key) == VT_R4 ? V_R4(key) : V_R8(key);
+
+        if (isinf(flt))
+        {
+            V_I4(hash) = 0;
+            break;
+        }
+        else if (!isnan(flt))
+        {
+            V_I4(hash) = get_num_hash(flt);
+            break;
+        }
+        /* fallthrough on NAN */
+    }
     case VT_INT:
     case VT_UINT:
     case VT_I1:
