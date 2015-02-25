@@ -415,11 +415,19 @@ static enum install_res install_from_cache(void)
     return res;
 }
 
+static IInternetBindInfo InstallCallbackBindInfo;
+
 static HRESULT WINAPI InstallCallback_QueryInterface(IBindStatusCallback *iface,
         REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IBindStatusCallback, riid)) {
         *ppv = iface;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
+        TRACE("IID_IInternetBindInfo\n");
+        *ppv = &InstallCallbackBindInfo;
         return S_OK;
     }
 
@@ -563,6 +571,59 @@ static const IBindStatusCallbackVtbl InstallCallbackVtbl = {
 };
 
 static IBindStatusCallback InstallCallback = { &InstallCallbackVtbl };
+
+static HRESULT WINAPI InstallCallbackBindInfo_QueryInterface(IInternetBindInfo *iface, REFIID riid, void **ppv)
+{
+    return IBindStatusCallback_QueryInterface(&InstallCallback, riid, ppv);
+}
+
+static ULONG WINAPI InstallCallbackBindInfo_AddRef(IInternetBindInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InstallCallbackBindInfo_Release(IInternetBindInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InstallCallbackBindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *bindf, BINDINFO *bindinfo)
+{
+    ERR("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InstallCallbackBindInfo_GetBindString(IInternetBindInfo *iface, ULONG string_type,
+        WCHAR **strs, ULONG cnt, ULONG *fetched)
+{
+    static const WCHAR wine_addon_downloaderW[] =
+        {'W','i','n','e',' ','A','d','d','o','n',' ','D','o','w','n','l','o','a','d','e','r',0};
+
+    switch(string_type) {
+    case BINDSTRING_USER_AGENT:
+        TRACE("BINDSTRING_USER_AGENT\n");
+
+        *strs = CoTaskMemAlloc(sizeof(wine_addon_downloaderW));
+        if(!*strs)
+            return E_OUTOFMEMORY;
+
+        memcpy(*strs, wine_addon_downloaderW, sizeof(wine_addon_downloaderW));
+        *fetched = 1;
+        return S_OK;
+    }
+
+    return E_NOTIMPL;
+}
+
+static const IInternetBindInfoVtbl InstallCallbackBindInfoVtbl = {
+    InstallCallbackBindInfo_QueryInterface,
+    InstallCallbackBindInfo_AddRef,
+    InstallCallbackBindInfo_Release,
+    InstallCallbackBindInfo_GetBindInfo,
+    InstallCallbackBindInfo_GetBindString
+};
+
+static IInternetBindInfo InstallCallbackBindInfo = { &InstallCallbackBindInfoVtbl };
 
 static void append_url_params( WCHAR *url )
 {
