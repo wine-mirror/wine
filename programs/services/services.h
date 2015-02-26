@@ -49,6 +49,7 @@ struct service_entry
     HANDLE overlapped_event;
     HANDLE status_changed_event;
     BOOL marked_for_delete;
+    BOOL is_wow64;
 };
 
 extern struct scmdatabase *active_database;

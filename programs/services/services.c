@@ -66,7 +66,7 @@ static const WCHAR SZ_OBJECT_NAME[]       = {'O','b','j','e','c','t','N','a','m'
 static const WCHAR SZ_TAG[]               = {'T','a','g',0};
 static const WCHAR SZ_DESCRIPTION[]       = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR SZ_PRESHUTDOWN[]       = {'P','r','e','s','h','u','t','d','o','w','n','T','i','m','e','o','u','t',0};
-
+static const WCHAR SZ_WOW64[]             = {'W','O','W','6','4',0};
 
 DWORD service_create(LPCWSTR name, struct service_entry **entry)
 {
@@ -108,7 +108,7 @@ void free_service_entry(struct service_entry *entry)
 
 static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
 {
-    DWORD err;
+    DWORD err, value = 0;
     WCHAR *wptr;
 
     if ((err = load_reg_string(hKey, SZ_IMAGE_PATH,   TRUE, &entry->config.lpBinaryPathName)) != 0)
@@ -136,6 +136,9 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
         return err;
     if ((err = load_reg_dword(hKey, SZ_PRESHUTDOWN, &entry->preshutdown_timeout)) != 0)
         return err;
+
+    if (load_reg_dword(hKey, SZ_WOW64, &value) == 0 && value == 1)
+        entry->is_wow64 = TRUE;
 
     WINE_TRACE("Image path           = %s\n", wine_dbgstr_w(entry->config.lpBinaryPathName) );
     WINE_TRACE("Group                = %s\n", wine_dbgstr_w(entry->config.lpLoadOrderGroup) );
@@ -216,6 +219,14 @@ DWORD save_service_config(struct service_entry *entry)
         goto cleanup;
     if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
         goto cleanup;
+    if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
+        goto cleanup;
+    if (entry->is_wow64)
+    {
+        const DWORD is_wow64 = 1;
+        if ((err = RegSetValueExW(hKey, SZ_WOW64, 0, REG_DWORD, (LPBYTE)&is_wow64, sizeof(DWORD))) != 0)
+            goto cleanup;
+    }
 
     if (entry->config.dwTagId)
         err = RegSetValueExW(hKey, SZ_TAG, 0, REG_DWORD, (LPBYTE)&entry->config.dwTagId, sizeof(DWORD));

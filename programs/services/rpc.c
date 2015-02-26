@@ -510,6 +510,7 @@ static DWORD create_serviceW(
     }
 
     entry->ref_count = 1;
+    entry->is_wow64 = is_wow64;
     entry->config.dwServiceType = entry->status.dwServiceType = dwServiceType;
     entry->config.dwStartType = dwStartType;
     entry->config.dwErrorControl = dwErrorControl;
