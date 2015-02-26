@@ -1623,7 +1623,7 @@ DWORD events_loop(void)
 {
     struct timeout_queue_elem *iter, *iter_safe;
     DWORD err;
-    HANDLE wait_handles[2];
+    HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
     DWORD timeout = INFINITE;
 
     wait_handles[0] = __wine_make_process_system();
@@ -1636,13 +1636,29 @@ DWORD events_loop(void)
 
     do
     {
-        err = WaitForMultipleObjects(2, wait_handles, FALSE, timeout);
+        DWORD num_handles = 2;
+
+        /* monitor tracked process handles for process end */
+        EnterCriticalSection(&timeout_queue_cs);
+        LIST_FOR_EACH_ENTRY(iter, &timeout_queue, struct timeout_queue_elem, entry)
+        {
+            if(num_handles == MAXIMUM_WAIT_OBJECTS){
+                WINE_TRACE("Exceeded maximum wait object count\n");
+                break;
+            }
+            wait_handles[num_handles] = iter->service_entry->process;
+            num_handles++;
+        }
+        LeaveCriticalSection(&timeout_queue_cs);
+
+        err = WaitForMultipleObjects(num_handles, wait_handles, FALSE, timeout);
         WINE_TRACE("Wait returned %d\n", err);
 
-        if(err==WAIT_OBJECT_0+1 || err==WAIT_TIMEOUT)
+        if(err > WAIT_OBJECT_0 || err == WAIT_TIMEOUT)
         {
             FILETIME cur_time;
             ULARGE_INTEGER time;
+            DWORD idx = 0;
 
             GetSystemTimeAsFileTime(&cur_time);
             time.u.LowPart = cur_time.dwLowDateTime;
@@ -1652,7 +1668,8 @@ DWORD events_loop(void)
             timeout = INFINITE;
             LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
             {
-                if(CompareFileTime(&cur_time, &iter->time) >= 0)
+                if(CompareFileTime(&cur_time, &iter->time) >= 0 ||
+                        (err > WAIT_OBJECT_0 + 1 && idx == err - WAIT_OBJECT_0 - 2))
                 {
                     LeaveCriticalSection(&timeout_queue_cs);
                     iter->func(iter->service_entry);
@@ -1673,6 +1690,7 @@ DWORD events_loop(void)
                     if(time_diff.QuadPart < timeout)
                         timeout = time_diff.QuadPart;
                 }
+                idx++;
             }
             LeaveCriticalSection(&timeout_queue_cs);
 
