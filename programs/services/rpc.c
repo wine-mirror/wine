@@ -463,7 +463,7 @@ static DWORD parse_dependencies(const WCHAR *dependencies, struct service_entry 
     return ERROR_SUCCESS;
 }
 
-DWORD __cdecl svcctl_CreateServiceW(
+static DWORD create_serviceW(
     SC_RPC_HANDLE hSCManager,
     LPCWSTR lpServiceName,
     LPCWSTR lpDisplayName,
@@ -479,7 +479,8 @@ DWORD __cdecl svcctl_CreateServiceW(
     LPCWSTR lpServiceStartName,
     const BYTE *lpPassword,
     DWORD dwPasswordSize,
-    SC_RPC_HANDLE *phService)
+    SC_RPC_HANDLE *phService,
+    BOOL is_wow64)
 {
     struct service_entry *entry, *found;
     struct sc_manager_handle *manager;
@@ -560,6 +561,30 @@ DWORD __cdecl svcctl_CreateServiceW(
     scmdatabase_unlock(manager->db);
 
     return create_handle_for_service(entry, dwDesiredAccess, phService);
+}
+
+DWORD __cdecl svcctl_CreateServiceW(
+    SC_RPC_HANDLE hSCManager,
+    LPCWSTR lpServiceName,
+    LPCWSTR lpDisplayName,
+    DWORD dwDesiredAccess,
+    DWORD dwServiceType,
+    DWORD dwStartType,
+    DWORD dwErrorControl,
+    LPCWSTR lpBinaryPathName,
+    LPCWSTR lpLoadOrderGroup,
+    DWORD *lpdwTagId,
+    const BYTE *lpDependencies,
+    DWORD dwDependenciesSize,
+    LPCWSTR lpServiceStartName,
+    const BYTE *lpPassword,
+    DWORD dwPasswordSize,
+    SC_RPC_HANDLE *phService)
+{
+    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
+    return create_serviceW(hSCManager, lpServiceName, lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType,
+        dwErrorControl, lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, lpDependencies, dwDependenciesSize, lpServiceStartName,
+        lpPassword, dwPasswordSize, phService, FALSE);
 }
 
 DWORD __cdecl svcctl_DeleteService(
@@ -1521,8 +1546,9 @@ DWORD __cdecl svcctl_CreateServiceWOW64W(
     DWORD password_size,
     SC_RPC_HANDLE *service)
 {
-    WINE_FIXME("\n");
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(servicename), wine_dbgstr_w(displayname), accessmask, wine_dbgstr_w(imagepath));
+    return create_serviceW(scmanager, servicename, displayname, accessmask, service_type, start_type, error_control, imagepath,
+        loadordergroup, tagid, dependencies, depend_size, start_name, password, password_size, service, TRUE);
 }
 
 DWORD __cdecl svcctl_unknown46(void)

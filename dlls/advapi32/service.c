@@ -1057,11 +1057,22 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
 
     __TRY
     {
-        err = svcctl_CreateServiceW(hSCManager, lpServiceName,
-                lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
-                lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (const BYTE*)lpDependencies,
-                multisz_cb(lpDependencies), lpServiceStartName, (const BYTE*)lpPassword, passwdlen,
-                (SC_RPC_HANDLE *)&handle);
+        BOOL is_wow64;
+
+        IsWow64Process(GetCurrentProcess(), &is_wow64);
+
+        if (is_wow64)
+            err = svcctl_CreateServiceWOW64W(hSCManager, lpServiceName,
+                    lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
+                    lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (const BYTE*)lpDependencies,
+                    multisz_cb(lpDependencies), lpServiceStartName, (const BYTE*)lpPassword, passwdlen,
+                    (SC_RPC_HANDLE *)&handle);
+        else
+            err = svcctl_CreateServiceW(hSCManager, lpServiceName,
+                    lpDisplayName, dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
+                    lpBinaryPathName, lpLoadOrderGroup, lpdwTagId, (const BYTE*)lpDependencies,
+                    multisz_cb(lpDependencies), lpServiceStartName, (const BYTE*)lpPassword, passwdlen,
+                    (SC_RPC_HANDLE *)&handle);
     }
     __EXCEPT(rpc_filter)
     {
