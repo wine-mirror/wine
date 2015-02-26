@@ -41,6 +41,7 @@ typedef struct
     LONG ref;
 
     CompareMethod method;
+    LONG count;
 } dictionary;
 
 static inline dictionary *impl_from_IDictionary(IDictionary *iface)
@@ -200,14 +201,13 @@ static HRESULT WINAPI dictionary_Add(IDictionary *iface, VARIANT *Key, VARIANT *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_get_Count(IDictionary *iface, LONG *pCount)
+static HRESULT WINAPI dictionary_get_Count(IDictionary *iface, LONG *count)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->(%p)\n", This, pCount);
+    TRACE("(%p)->(%p)\n", This, count);
 
-    *pCount = 0;
-
+    *count = This->count;
     return S_OK;
 }
 
@@ -270,6 +270,9 @@ static HRESULT WINAPI dictionary_put_CompareMode(IDictionary *iface, CompareMeth
     dictionary *This = impl_from_IDictionary(iface);
 
     TRACE("(%p)->(%d)\n", This, method);
+
+    if (This->count)
+        return CTL_E_ILLEGALFUNCTIONCALL;
 
     This->method = method;
     return S_OK;
@@ -411,6 +414,7 @@ HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,
     This->IDictionary_iface.lpVtbl = &dictionary_vtbl;
     This->ref = 1;
     This->method = BinaryCompare;
+    This->count = 0;
 
     *obj = &This->IDictionary_iface;
 
