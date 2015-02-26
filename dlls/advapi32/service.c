@@ -150,8 +150,7 @@ static inline DWORD multisz_cb(LPCWSTR wmultisz)
 /******************************************************************************
  * RPC connection with services.exe
  */
-
-DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
+static handle_t rpc_wstr_bind(RPC_WSTR str)
 {
     WCHAR transport[] = SVCCTL_TRANSPORT;
     WCHAR endpoint[] = SVCCTL_ENDPOINT;
@@ -159,7 +158,7 @@ DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW Machine
     RPC_STATUS status;
     handle_t rpc_handle;
 
-    status = RpcStringBindingComposeW(NULL, transport, (RPC_WSTR)MachineName, endpoint, NULL, &binding_str);
+    status = RpcStringBindingComposeW(NULL, transport, str, endpoint, NULL, &binding_str);
     if (status != RPC_S_OK)
     {
         ERR("RpcStringBindingComposeW failed (%d)\n", (DWORD)status);
@@ -178,7 +177,59 @@ DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW Machine
     return rpc_handle;
 }
 
+static handle_t rpc_cstr_bind(RPC_CSTR str)
+{
+    RPC_CSTR transport = (RPC_CSTR)SVCCTL_TRANSPORTA;
+    RPC_CSTR endpoint = (RPC_CSTR)SVCCTL_ENDPOINTA;
+    RPC_CSTR binding_str;
+    RPC_STATUS status;
+    handle_t rpc_handle;
+
+    status = RpcStringBindingComposeA(NULL, transport, str, endpoint, NULL, &binding_str);
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcStringBindingComposeW failed (%d)\n", (DWORD)status);
+        return NULL;
+    }
+
+    status = RpcBindingFromStringBindingA(binding_str, &rpc_handle);
+    RpcStringFreeA(&binding_str);
+
+    if (status != RPC_S_OK)
+    {
+        ERR("Couldn't connect to services.exe: error code %u\n", (DWORD)status);
+        return NULL;
+    }
+
+    return rpc_handle;
+}
+
+DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEA_bind(MACHINE_HANDLEA MachineName)
+{
+    return rpc_cstr_bind((RPC_CSTR)MachineName);
+}
+
+DECLSPEC_HIDDEN void __RPC_USER MACHINE_HANDLEA_unbind(MACHINE_HANDLEA MachineName, handle_t h)
+{
+    RpcBindingFree(&h);
+}
+
+DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
+{
+    return rpc_wstr_bind((RPC_WSTR)MachineName);
+}
+
 DECLSPEC_HIDDEN void __RPC_USER MACHINE_HANDLEW_unbind(MACHINE_HANDLEW MachineName, handle_t h)
+{
+    RpcBindingFree(&h);
+}
+
+DECLSPEC_HIDDEN handle_t __RPC_USER SVCCTL_HANDLEW_bind(SVCCTL_HANDLEW MachineName)
+{
+    return rpc_wstr_bind((RPC_WSTR)MachineName);
+}
+
+DECLSPEC_HIDDEN void __RPC_USER SVCCTL_HANDLEW_unbind(SVCCTL_HANDLEW MachineName, handle_t h)
 {
     RpcBindingFree(&h);
 }
@@ -1387,7 +1438,7 @@ QueryServiceConfigW( SC_HANDLE hService,
 
     __TRY
     {
-        err = svcctl_QueryServiceConfigW(hService, &config);
+        err = svcctl_QueryServiceConfigW(hService, &config, cbBufSize, pcbBytesNeeded);
     }
     __EXCEPT(rpc_filter)
     {
@@ -1745,9 +1796,6 @@ EnumServicesStatusExW( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     TRACE("%p %u 0x%x 0x%x %p %u %p %p %p %s\n", hmngr, level, type, state, buffer,
           size, needed, returned, resume_handle, debugstr_w(group));
 
-    if (resume_handle)
-        FIXME("resume handle not supported\n");
-
     if (level != SC_ENUM_PROCESS_INFO)
     {
         SetLastError( ERROR_INVALID_LEVEL );
@@ -1768,8 +1816,8 @@ EnumServicesStatusExW( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
 
     __TRY
     {
-        err = svcctl_EnumServicesStatusExW( hmngr, type, state, buffer, size, needed,
-                                            returned, group );
+        err = svcctl_EnumServicesStatusExW( hmngr, SC_ENUM_PROCESS_INFO, type, state, buffer, size, needed,
+                                            returned, resume_handle, group );
     }
     __EXCEPT(rpc_filter)
     {
