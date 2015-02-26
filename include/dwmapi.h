@@ -95,8 +95,6 @@ typedef struct _MilMatrix3x2D
     DOUBLE DY;
 } MilMatrix3x2D;
 
-#include <poppack.h>
-
 #define DWM_BB_ENABLE                 0x00000001
 #define DWM_BB_BLURREGION             0x00000002
 #define DWM_BB_TRANSITIONONMAXIMIZED  0x00000004
@@ -108,6 +106,8 @@ typedef struct _DWM_BLURBEHIND
     HRGN hRgnBlur;
     BOOL fTransitionOnMaximized;
 } DWM_BLURBEHIND, *PDWM_BLURBEHIND;
+
+#include <poppack.h>
 
 DWMAPI DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
 DWMAPI DwmEnableBlurBehindWindow(HWND, const DWM_BLURBEHIND *);
