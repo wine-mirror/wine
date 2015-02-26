@@ -93,6 +93,7 @@ static void test_comparemode(void)
 {
     CompareMethod method;
     IDictionary *dict;
+    VARIANT key, item;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -121,6 +122,18 @@ if (0) /* crashes on native */
     hr = IDictionary_get_CompareMode(dict, &method);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(method == DatabaseCompare, "got %d\n", method);
+
+    /* try to change mode of a non-empty dict */
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &key, &item);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_put_CompareMode(dict, BinaryCompare);
+todo_wine
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
 
     IDictionary_Release(dict);
 }
@@ -414,6 +427,159 @@ static void test_hash_value(void)
     IDictionary_Release(dict);
 }
 
+static void test_Exists(void)
+{
+    VARIANT_BOOL exists;
+    IDictionary *dict;
+    VARIANT key, item;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDictionary_Exists(dict, NULL, NULL);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    hr = IDictionary_Exists(dict, &key, NULL);
+todo_wine
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    exists = VARIANT_TRUE;
+    hr = IDictionary_Exists(dict, &key, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == VARIANT_FALSE, "got %x\n", exists);
+}
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &key, &item);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = 0.0;
+    hr = IDictionary_Add(dict, &key, &item);
+todo_wine
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    hr = IDictionary_Exists(dict, &key, NULL);
+todo_wine
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &key, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == VARIANT_TRUE, "got %x\n", exists);
+}
+    /* key of different type, but resolves to same hash value */
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = 0.0;
+    exists = VARIANT_FALSE;
+    hr = IDictionary_Exists(dict, &key, &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == VARIANT_TRUE, "got %x\n", exists);
+}
+    IDictionary_Release(dict);
+}
+
+static void test_Keys(void)
+{
+    VARIANT key, keys, item;
+    IDictionary *dict;
+    LONG index;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_Keys(dict, NULL);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&keys);
+    hr = IDictionary_Keys(dict, &keys);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&keys) == (VT_ARRAY|VT_VARIANT), "got %d\n", V_VT(&keys));
+}
+    VariantClear(&keys);
+
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = 0.0;
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &key, &item);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&keys);
+    hr = IDictionary_Keys(dict, &keys);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&keys) == (VT_ARRAY|VT_VARIANT), "got %d\n", V_VT(&keys));
+}
+if (hr == S_OK)
+{
+    VariantInit(&key);
+    index = 0;
+    hr = SafeArrayGetElement(V_ARRAY(&keys), &index, &key);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&key) == VT_R4, "got %d\n", V_VT(&key));
+
+    index = SafeArrayGetDim(V_ARRAY(&keys));
+    ok(index == 1, "got %d\n", index);
+
+    hr = SafeArrayGetUBound(V_ARRAY(&keys), 1, &index);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(index == 0, "got %d\n", index);
+}
+    VariantClear(&keys);
+
+    IDictionary_Release(dict);
+}
+
+static void test_Remove(void)
+{
+    VARIANT key, item;
+    IDictionary *dict;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0)
+    hr = IDictionary_Remove(dict, NULL);
+
+    /* nothing added yet */
+    V_VT(&key) = VT_R4;
+    V_R4(&key) = 0.0;
+    hr = IDictionary_Remove(dict, &key);
+todo_wine
+    ok(hr == CTL_E_ELEMENT_NOT_FOUND, "got 0x%08x\n", hr);
+
+    VariantInit(&item);
+    hr = IDictionary_Add(dict, &key, &item);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_Remove(dict, &key);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -433,6 +599,9 @@ START_TEST(dictionary)
     test_interfaces();
     test_comparemode();
     test_hash_value();
+    test_Exists();
+    test_Keys();
+    test_Remove();
 
     CoUninitialize();
 }
