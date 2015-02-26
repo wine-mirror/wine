@@ -588,23 +588,9 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     if (!hIMC)
         return old;
 
-    if (IsWindow(data->IMC.hWnd))
-    {
-        /*
-         * Post a message that your context is switching
-         */
-        SendMessageW(data->IMC.hWnd, WM_IME_SETCONTEXT, FALSE, ISC_SHOWUIALL);
-    }
-
+    SendMessageW(data->IMC.hWnd, WM_IME_SETCONTEXT, FALSE, ISC_SHOWUIALL);
     data->IMC.hWnd = hWnd;
-
-    if (IsWindow(data->IMC.hWnd))
-    {
-        /*
-         * Post a message that your context is switching
-         */
-        SendMessageW(data->IMC.hWnd, WM_IME_SETCONTEXT, TRUE, ISC_SHOWUIALL);
-    }
+    SendMessageW(data->IMC.hWnd, WM_IME_SETCONTEXT, TRUE, ISC_SHOWUIALL);
 
     return old;
 }
@@ -2185,13 +2171,11 @@ LRESULT WINAPI ImmRequestMessageA(HIMC hIMC, WPARAM wParam, LPARAM lParam)
     InputContextData *data = get_imc_data(hIMC);
 
     TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
-    if (!data)
-        SetLastError(ERROR_INVALID_HANDLE);
 
-    if (data && IsWindow(data->IMC.hWnd))
-        return SendMessageA(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
+    if (data) return SendMessageA(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
 
-     return 0;
+    SetLastError(ERROR_INVALID_HANDLE);
+    return 0;
 }
 
 /***********************************************************************
@@ -2203,13 +2187,10 @@ LRESULT WINAPI ImmRequestMessageW(HIMC hIMC, WPARAM wParam, LPARAM lParam)
 
     TRACE("%p %ld %ld\n", hIMC, wParam, wParam);
 
-    if (!data)
-        SetLastError(ERROR_INVALID_HANDLE);
+    if (data) return SendMessageW(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
 
-    if (data && IsWindow(data->IMC.hWnd))
-        return SendMessageW(data->IMC.hWnd, WM_IME_REQUEST, wParam, lParam);
-
-     return 0;
+    SetLastError(ERROR_INVALID_HANDLE);
+    return 0;
 }
 
 /***********************************************************************
