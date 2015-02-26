@@ -2564,6 +2564,7 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     IHttpNegotiate *http_negotiate, *http_negotiate_serv;
     IHttpNegotiate2 *http_negotiate2, *http_negotiate2_serv;
     IAuthenticate *authenticate, *authenticate_serv;
+    IInternetBindInfo *bind_info;
     IInternetProtocol *protocol;
     BINDINFO bindinfo = {sizeof(bindinfo)};
     BOOL ret = TRUE;
@@ -2677,6 +2678,16 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
 
     IAuthenticate_Release(authenticate);
     IAuthenticate_Release(authenticate_serv);
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IInternetBindInfo, (void**)&bind_info);
+    ok(hres == S_OK || broken(hres == E_NOINTERFACE /* win2k */), "Could not get IInternetBindInfo interface: %08x\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_USER_AGENT, &wstr, 1, &dw);
+        ok(hres == E_NOINTERFACE, "GetBindString(BINDSTRING_USER_AGENT) failed: %08x\n", hres);
+
+        IInternetBindInfo_Release(bind_info);
+    }
 
     SET_EXPECT(OnStopBinding);
     hres = IBindStatusCallback_OnStopBinding(holder, S_OK, NULL);
