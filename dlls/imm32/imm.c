@@ -225,41 +225,27 @@ static DWORD convert_candidatelist_AtoW(
     return ret;
 }
 
-static IMMThreadData* IMM_GetThreadData(DWORD id)
+static IMMThreadData *IMM_GetThreadData(HWND hwnd)
 {
     IMMThreadData *data;
-
-    if (!id) id = GetCurrentThreadId();
-
-    EnterCriticalSection(&threaddata_cs);
-    LIST_FOR_EACH_ENTRY(data, &ImmThreadDataList, IMMThreadData, entry)
-    {
-        if (data->threadID == id)
-            return data;
-    }
-
-    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(IMMThreadData));
-    data->threadID = id;
-    list_add_head(&ImmThreadDataList,&data->entry);
-    TRACE("Thread Data Created (%x)\n",id);
-
-    return data;
-}
-
-static IMMThreadData* IMM_GetThreadDataForWindow(HWND hwnd)
-{
-    DWORD process;
-    DWORD thread = 0;
+    DWORD process, thread;
 
     if (hwnd)
     {
-        thread = GetWindowThreadProcessId(hwnd, &process);
-        if (process != GetCurrentProcessId())
-            return NULL;
+        if (!(thread = GetWindowThreadProcessId(hwnd, &process))) return NULL;
+        if (process != GetCurrentProcessId()) return NULL;
     }
+    else thread = GetCurrentThreadId();
 
-    return IMM_GetThreadData(thread);
+    EnterCriticalSection(&threaddata_cs);
+    LIST_FOR_EACH_ENTRY(data, &ImmThreadDataList, IMMThreadData, entry)
+        if (data->threadID == thread) return data;
+
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
+    data->threadID = thread;
+    list_add_head(&ImmThreadDataList,&data->entry);
+    TRACE("Thread Data Created (%x)\n",thread);
+    return data;
 }
 
 static BOOL IMM_IsDefaultContext(HIMC imc)
@@ -497,7 +483,7 @@ static InputContextData* get_imc_data(HIMC hIMC)
 static HIMC get_default_context( HWND hwnd )
 {
     HIMC ret;
-    IMMThreadData* thread_data = IMM_GetThreadDataForWindow( hwnd );
+    IMMThreadData* thread_data = IMM_GetThreadData( hwnd );
 
     if (!thread_data) return 0;
 
@@ -1625,7 +1611,7 @@ BOOL WINAPI ImmGetConversionStatus(
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
     HWND ret, new = NULL;
-    IMMThreadData* thread_data = IMM_GetThreadDataForWindow(hWnd);
+    IMMThreadData* thread_data = IMM_GetThreadData(hWnd);
     if (!thread_data)
         return NULL;
     if (thread_data->hwndDefault == NULL && thread_data->threadID == GetCurrentThreadId())
@@ -1634,12 +1620,8 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
         LeaveCriticalSection(&threaddata_cs);
         new = CreateWindowExW( WS_EX_TOOLWINDOW,
                     szwIME, NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, 0, 0);
-        thread_data = IMM_GetThreadDataForWindow(hWnd);
-        if (!thread_data)
-        {
-            DestroyWindow(new);
-            return NULL;
-        }
+        /* thread_data is in the current thread so we can assume it's still valid */
+        EnterCriticalSection(&threaddata_cs);
         /* See if anyone beat us */
         if (thread_data->hwndDefault == NULL)
         {
