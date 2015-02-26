@@ -4614,18 +4614,15 @@ static void test_SetFileInformationByHandle(void)
     /* invalid classes */
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileStandardInfo, &stdinfo, sizeof(stdinfo));
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     memset(&compressinfo, 0, sizeof(compressinfo));
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileCompressionInfo, &compressinfo, sizeof(compressinfo));
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileAttributeTagInfo, &fileattrinfo, sizeof(fileattrinfo));
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     memset(&protinfo, 0, sizeof(protinfo));
@@ -4633,7 +4630,6 @@ todo_wine
     protinfo.StructureSize = sizeof(protinfo);
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileRemoteProtocolInfo, &protinfo, sizeof(protinfo));
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
     CloseHandle(file);
