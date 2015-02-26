@@ -215,6 +215,7 @@ struct d3d10_geometry_shader
     ID3D10GeometryShader ID3D10GeometryShader_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_shader *wined3d_shader;
 };
 

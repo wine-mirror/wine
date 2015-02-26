@@ -377,10 +377,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_GetPrivateData(ID3D10Geom
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateData(ID3D10GeometryShader *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_geometry_shader *shader = impl_from_ID3D10GeometryShader(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateDataInterface(ID3D10GeometryShader *iface,
@@ -406,6 +408,9 @@ static const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
 
 static void STDMETHODCALLTYPE d3d10_geometry_shader_wined3d_object_destroyed(void *parent)
 {
+    struct d3d10_geometry_shader *shader = parent;
+
+    wined3d_private_store_cleanup(&shader->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
@@ -425,12 +430,14 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
 
     shader->ID3D10GeometryShader_iface.lpVtbl = &d3d10_geometry_shader_vtbl;
     shader->refcount = 1;
+    wined3d_private_store_init(&shader->private_store);
 
     shader_info.input_signature = &input_signature;
     shader_info.output_signature = &output_signature;
     if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&shader->private_store);
         return hr;
     }
 
@@ -446,6 +453,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&shader->private_store);
         return E_INVALIDARG;
     }
 
