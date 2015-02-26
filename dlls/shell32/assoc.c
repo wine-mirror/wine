@@ -916,6 +916,11 @@ static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IAp
                     ret = RegGetValueW(hkey, NULL, NULL, RRF_RT_REG_SZ, &keytype, *association, &size);
                     if(ret == ERROR_SUCCESS)
                         hr = S_OK;
+                    else
+                    {
+                        CoTaskMemFree(*association);
+                        *association = NULL;
+                    }
                 }
                 else
                     hr = E_OUTOFMEMORY;
@@ -952,6 +957,11 @@ static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IAp
                     ret = RegGetValueW(hkey, path, propid, RRF_RT_REG_SZ, &keytype, *association, &size);
                     if(ret == ERROR_SUCCESS)
                         hr = S_OK;
+                    else
+                    {
+                        CoTaskMemFree(*association);
+                        *association = NULL;
+                    }
                 }
                 else
                     hr = E_OUTOFMEMORY;
