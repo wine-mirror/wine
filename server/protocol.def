@@ -3504,3 +3504,13 @@ enum coords_relative
 @REQ(set_suspend_context)
     VARARG(context,context);   /* thread context */
 @END
+
+
+/* Create a new job object */
+@REQ(create_job)
+    unsigned int access;          /* wanted access rights */
+    unsigned int attributes;      /* object attributes */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;          /* handle to the job */
+@END

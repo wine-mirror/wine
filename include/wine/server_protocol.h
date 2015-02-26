@@ -5082,6 +5082,23 @@ struct set_suspend_context_reply
 };
 
 
+
+struct create_job_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
+};
+struct create_job_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -5340,6 +5357,7 @@ enum request
     REQ_update_rawinput_devices,
     REQ_get_suspend_context,
     REQ_set_suspend_context,
+    REQ_create_job,
     REQ_NB_REQUESTS
 };
 
@@ -5603,6 +5621,7 @@ union generic_request
     struct update_rawinput_devices_request update_rawinput_devices_request;
     struct get_suspend_context_request get_suspend_context_request;
     struct set_suspend_context_request set_suspend_context_request;
+    struct create_job_request create_job_request;
 };
 union generic_reply
 {
@@ -5864,8 +5883,9 @@ union generic_reply
     struct update_rawinput_devices_reply update_rawinput_devices_reply;
     struct get_suspend_context_reply get_suspend_context_reply;
     struct set_suspend_context_reply set_suspend_context_reply;
+    struct create_job_reply create_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 460
+#define SERVER_PROTOCOL_VERSION 461
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

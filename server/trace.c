@@ -4095,6 +4095,18 @@ static void dump_set_suspend_context_request( const struct set_suspend_context_r
     dump_varargs_context( " context=", cur_size );
 }
 
+static void dump_create_job_request( const struct create_job_request *req )
+{
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", attributes=%08x", req->attributes );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
+}
+
+static void dump_create_job_reply( const struct create_job_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4352,6 +4364,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_update_rawinput_devices_request,
     (dump_func)dump_get_suspend_context_request,
     (dump_func)dump_set_suspend_context_request,
+    (dump_func)dump_create_job_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4611,6 +4624,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_get_suspend_context_reply,
     NULL,
+    (dump_func)dump_create_job_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4870,6 +4884,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "update_rawinput_devices",
     "get_suspend_context",
     "set_suspend_context",
+    "create_job",
 };
 
 static const struct

@@ -133,6 +133,89 @@ static const struct object_ops startup_info_ops =
     startup_info_destroy           /* destroy */
 };
 
+/* job object */
+
+static void job_dump( struct object *obj, int verbose );
+static struct object_type *job_get_type( struct object *obj );
+static int job_signaled( struct object *obj, struct wait_queue_entry *entry );
+static unsigned int job_map_access( struct object *obj, unsigned int access );
+static void job_destroy( struct object *obj );
+
+struct job
+{
+    struct object obj;             /* object header */
+};
+
+static const struct object_ops job_ops =
+{
+    sizeof(struct job),            /* size */
+    job_dump,                      /* dump */
+    job_get_type,                  /* get_type */
+    add_queue,                     /* add_queue */
+    remove_queue,                  /* remove_queue */
+    job_signaled,                  /* signaled */
+    no_satisfied,                  /* satisfied */
+    no_signal,                     /* signal */
+    no_get_fd,                     /* get_fd */
+    job_map_access,                /* map_access */
+    default_get_sd,                /* get_sd */
+    default_set_sd,                /* set_sd */
+    no_lookup_name,                /* lookup_name */
+    no_open_file,                  /* open_file */
+    no_close_handle,               /* close_handle */
+    job_destroy                    /* destroy */
+};
+
+static struct job *create_job_object( struct directory *root, const struct unicode_str *name,
+                                      unsigned int attr, const struct security_descriptor *sd )
+{
+    struct job *job;
+
+    if ((job = create_named_object_dir( root, name, attr, &job_ops )))
+    {
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
+        {
+            /* initialize it if it didn't already exist */
+            if (sd) default_set_sd( &job->obj, sd, OWNER_SECURITY_INFORMATION |
+                                                   GROUP_SECURITY_INFORMATION |
+                                                   DACL_SECURITY_INFORMATION |
+                                                   SACL_SECURITY_INFORMATION );
+        }
+    }
+    return job;
+}
+
+static struct object_type *job_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'J','o','b'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
+};
+
+static unsigned int job_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_ALL)     access |= JOB_OBJECT_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static void job_destroy( struct object *obj )
+{
+    assert( obj->ops == &job_ops );
+}
+
+static void job_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &job_ops );
+    fprintf( stderr, "Job\n");
+}
+
+static int job_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    return 0;
+}
 
 struct ptid_entry
 {
@@ -1307,4 +1390,31 @@ DECL_HANDLER(make_process_system)
         if (!--user_processes && !shutdown_stage && master_socket_timeout != TIMEOUT_INFINITE)
             shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
+}
+
+/* create a new job object */
+DECL_HANDLER(create_job)
+{
+    struct job *job;
+    struct unicode_str name;
+    struct directory *root = NULL;
+    const struct object_attributes *objattr = get_req_data();
+    const struct security_descriptor *sd;
+
+    if (!objattr_is_valid( objattr, get_req_data_size() )) return;
+
+    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
+    objattr_get_name( objattr, &name );
+
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+
+    if ((job = create_job_object( root, &name, req->attributes, sd )))
+    {
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, job, req->access, req->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, job, req->access, req->attributes );
+        release_object( job );
+    }
+    if (root) release_object( root );
 }
