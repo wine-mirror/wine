@@ -494,34 +494,45 @@ static InputContextData* get_imc_data(HIMC hIMC)
     return data;
 }
 
-static IMMThreadData* IMM_GetInitializedThreadData(HWND hWnd)
+static HIMC get_default_context( HWND hwnd )
 {
-    IMMThreadData* thread_data = IMM_GetThreadDataForWindow(hWnd);
+    HIMC ret;
+    IMMThreadData* thread_data = IMM_GetThreadDataForWindow( hwnd );
 
-    if (!thread_data)
-        return NULL;
+    if (!thread_data) return 0;
 
-    if (!thread_data->defaultContext && thread_data->threadID == GetCurrentThreadId())
+    if (thread_data->defaultContext)
     {
-        HIMC defaultContext;
+        ret = thread_data->defaultContext;
         LeaveCriticalSection(&threaddata_cs);
-        defaultContext = ImmCreateContext();
-        if (defaultContext)
-            ((InputContextData*)defaultContext)->threadDefault = TRUE;
-        thread_data = IMM_GetThreadDataForWindow(hWnd);
-        if (!thread_data)
-        {
-            IMM_DestroyContext(defaultContext);
-            return NULL;
-        }
-
-        if (thread_data->defaultContext) /* someone beat us */
-            IMM_DestroyContext(defaultContext);
-        else
-            thread_data->defaultContext = defaultContext;
+        return ret;
     }
 
-    return thread_data;
+    /* can't create a default context in another thread */
+    if (thread_data->threadID != GetCurrentThreadId())
+    {
+        LeaveCriticalSection(&threaddata_cs);
+        return 0;
+    }
+
+    LeaveCriticalSection(&threaddata_cs);
+
+    ret = ImmCreateContext();
+    if (!ret) return 0;
+    ((InputContextData*)ret)->threadDefault = TRUE;
+
+    /* thread_data is in the current thread so we can assume it's still valid */
+    EnterCriticalSection(&threaddata_cs);
+
+    if (thread_data->defaultContext) /* someone beat us */
+    {
+        IMM_DestroyContext( ret );
+        ret = thread_data->defaultContext;
+    }
+    else thread_data->defaultContext = ret;
+
+    LeaveCriticalSection(&threaddata_cs);
+    return ret;
 }
 
 static BOOL IMM_IsCrossThreadAccess(HWND hWnd,  HIMC hIMC)
@@ -547,7 +558,6 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
     HIMC old = NULL;
     InputContextData *data = get_imc_data(hIMC);
-    IMMThreadData* thread_data = NULL;
 
     TRACE("(%p, %p):\n", hWnd, hIMC);
 
@@ -563,20 +573,17 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
     if (hIMC && IMM_IsCrossThreadAccess(hWnd, hIMC))
         return NULL;
 
-    thread_data = IMM_GetInitializedThreadData(hWnd);
-    if (!thread_data)
-        return NULL;
-
     if (hWnd)
     {
+        HIMC defaultContext = get_default_context( hWnd );
         old = RemovePropW(hWnd,szwWineIMCProperty);
 
         if (old == NULL)
-            old = thread_data->defaultContext;
+            old = defaultContext;
         else if (old == (HIMC)-1)
             old = NULL;
 
-        if (hIMC != thread_data->defaultContext)
+        if (hIMC != defaultContext)
         {
             if (hIMC == NULL) /* Meaning disable imm for that window*/
                 SetPropW(hWnd,szwWineIMCProperty,(HANDLE)-1);
@@ -591,7 +598,6 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
                 old_data->IMC.hWnd = NULL;
         }
     }
-    LeaveCriticalSection(&threaddata_cs);
 
     if (!hIMC)
         return old;
@@ -633,17 +639,7 @@ static BOOL CALLBACK _ImmAssociateContextExEnumProc(HWND hwnd, LPARAM lParam)
  */
 BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
 {
-    IMMThreadData* thread_data = NULL;
-    HIMC defaultContext = NULL;
-
     TRACE("(%p, %p, 0x%x):\n", hWnd, hIMC, dwFlags);
-
-    thread_data = IMM_GetInitializedThreadData(hWnd);
-    if (!thread_data)
-        return FALSE;
-
-    defaultContext = thread_data->defaultContext;
-    LeaveCriticalSection(&threaddata_cs);
 
     if (!hWnd)
         return FALSE;
@@ -654,8 +650,12 @@ BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
         ImmAssociateContext(hWnd,hIMC);
         return TRUE;
     case IACE_DEFAULT:
+    {
+        HIMC defaultContext = get_default_context( hWnd );
+        if (!defaultContext) return FALSE;
         ImmAssociateContext(hWnd,defaultContext);
         return TRUE;
+    }
     case IACE_IGNORENOCONTEXT:
         if (GetPropW(hWnd,szwWineIMCProperty))
             ImmAssociateContext(hWnd,hIMC);
@@ -1496,7 +1496,6 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 HIMC WINAPI ImmGetContext(HWND hWnd)
 {
     HIMC rc;
-    IMMThreadData* thread_data;
 
     TRACE("%p\n", hWnd);
 
@@ -1506,22 +1505,17 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
         return NULL;
     }
 
-    thread_data = IMM_GetInitializedThreadData(hWnd);
-    if (!thread_data)
-        return NULL;
-
     rc = GetPropW(hWnd,szwWineIMCProperty);
     if (rc == (HIMC)-1)
         rc = NULL;
     else if (rc == NULL)
-        rc = thread_data->defaultContext;
+        rc = get_default_context( hWnd );
 
     if (rc)
     {
         InputContextData *data = rc;
         data->IMC.hWnd = hWnd;
     }
-    LeaveCriticalSection(&threaddata_cs);
 
     TRACE("returning %p\n", rc);
 
