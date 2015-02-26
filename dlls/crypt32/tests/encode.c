@@ -8101,7 +8101,7 @@ static void test_decodeRsaPrivateKey(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, PKCS_RSA_PRIVATE_KEY,
      rsaPrivKeyDer, sizeof(rsaPrivKeyDer)-10,
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &bufSize);
-    todo_wine ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD),
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD),
      "Expected CRYPT_E_ASN1_EOD, got %08x\n",
      GetLastError());
 
@@ -8110,7 +8110,7 @@ static void test_decodeRsaPrivateKey(DWORD dwEncoding)
     ret = pCryptDecodeObjectEx(dwEncoding, PKCS_RSA_PRIVATE_KEY,
      rsaPrivKeyDer, sizeof(rsaPrivKeyDer),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &bufSize);
-    todo_wine ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+    ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
 
     if (ret)
     {

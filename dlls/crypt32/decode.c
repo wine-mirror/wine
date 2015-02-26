@@ -3936,6 +3936,147 @@ static BOOL WINAPI CRYPT_AsnDecodeRsaPubKey(DWORD dwCertEncodingType,
     return ret;
 }
 
+#define RSA2_MAGIC 0x32415352
+
+struct DECODED_RSA_PRIV_KEY
+{
+    DWORD              version;
+    DWORD              pubexp;
+    CRYPT_INTEGER_BLOB modulus;
+    CRYPT_INTEGER_BLOB privexp;
+    CRYPT_INTEGER_BLOB prime1;
+    CRYPT_INTEGER_BLOB prime2;
+    CRYPT_INTEGER_BLOB exponent1;
+    CRYPT_INTEGER_BLOB exponent2;
+    CRYPT_INTEGER_BLOB coefficient;
+};
+
+static BOOL WINAPI CRYPT_AsnDecodeRsaPrivKey(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+    DWORD halflen;
+
+    __TRY
+    {
+        struct AsnDecodeSequenceItem items[] = {
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, version),
+           CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, modulus),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, modulus.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, pubexp),
+           CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE, 0, 0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, privexp),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, privexp.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, prime1),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, prime1.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, prime2),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, prime2.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, exponent1),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, exponent1.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, exponent2),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, exponent2.pbData),
+           0 },
+         { ASN_INTEGER, offsetof(struct DECODED_RSA_PRIV_KEY, coefficient),
+           CRYPT_AsnDecodeUnsignedIntegerInternal, sizeof(CRYPT_INTEGER_BLOB),
+           FALSE, TRUE, offsetof(struct DECODED_RSA_PRIV_KEY, coefficient.pbData),
+           0 },
+        };
+        struct DECODED_RSA_PRIV_KEY *decodedKey = NULL;
+        DWORD size = 0;
+
+        ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
+         pbEncoded, cbEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL, &decodedKey,
+         &size, NULL, NULL);
+        if (ret)
+        {
+            halflen = decodedKey->modulus.cbData / 2;
+            if ((decodedKey->modulus.cbData != halflen * 2) ||
+                (decodedKey->prime1.cbData != halflen) ||
+                (decodedKey->prime2.cbData != halflen) ||
+                (decodedKey->exponent1.cbData != halflen) ||
+                (decodedKey->exponent2.cbData != halflen) ||
+                (decodedKey->coefficient.cbData != halflen) ||
+                (decodedKey->privexp.cbData != halflen * 2))
+            {
+                ret = FALSE;
+                SetLastError(CRYPT_E_BAD_ENCODE);
+            }
+
+            if (ret)
+            {
+                DWORD bytesNeeded = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+                 (halflen * 9);
+
+                if (!pvStructInfo)
+                {
+                    *pcbStructInfo = bytesNeeded;
+                    ret = TRUE;
+                }
+                else if ((ret = CRYPT_DecodeEnsureSpace(dwFlags, pDecodePara,
+                 pvStructInfo, pcbStructInfo, bytesNeeded)))
+                {
+                    BLOBHEADER *hdr;
+                    RSAPUBKEY *rsaPubKey;
+                    BYTE *vardata;
+
+                    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+                        pvStructInfo = *(BYTE **)pvStructInfo;
+
+                    hdr = pvStructInfo;
+                    hdr->bType = PRIVATEKEYBLOB;
+                    hdr->bVersion = CUR_BLOB_VERSION;
+                    hdr->reserved = 0;
+                    hdr->aiKeyAlg = CALG_RSA_KEYX;
+
+                    rsaPubKey = (RSAPUBKEY *)((BYTE *)pvStructInfo +
+                     sizeof(BLOBHEADER));
+                    rsaPubKey->magic = RSA2_MAGIC;
+                    rsaPubKey->pubexp = decodedKey->pubexp;
+                    rsaPubKey->bitlen = halflen * 16;
+
+                    vardata = (BYTE*)(rsaPubKey + 1);
+                    memcpy(vardata,
+                     decodedKey->modulus.pbData, halflen * 2);
+                    memcpy(vardata + halflen * 2,
+                     decodedKey->prime1.pbData, halflen);
+                    memcpy(vardata + halflen * 3,
+                     decodedKey->prime2.pbData, halflen);
+                    memcpy(vardata + halflen * 4,
+                     decodedKey->exponent1.pbData, halflen);
+                    memcpy(vardata + halflen * 5,
+                     decodedKey->exponent2.pbData, halflen);
+                    memcpy(vardata + halflen * 6,
+                     decodedKey->coefficient.pbData, halflen);
+                    memcpy(vardata + halflen * 7,
+                     decodedKey->privexp.pbData, halflen * 2);
+                }
+            }
+
+            LocalFree(decodedKey);
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError(STATUS_ACCESS_VIOLATION);
+        ret = FALSE;
+    }
+    __ENDTRY
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeOctetsInternal(const BYTE *pbEncoded,
  DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
@@ -5797,6 +5938,9 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
             break;
         case LOWORD(RSA_CSP_PUBLICKEYBLOB):
             decodeFunc = CRYPT_AsnDecodeRsaPubKey;
+            break;
+        case LOWORD(PKCS_RSA_PRIVATE_KEY):
+            decodeFunc = CRYPT_AsnDecodeRsaPrivKey;
             break;
         case LOWORD(X509_UNICODE_NAME):
             decodeFunc = CRYPT_AsnDecodeUnicodeName;
