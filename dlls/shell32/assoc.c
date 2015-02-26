@@ -897,7 +897,7 @@ static HRESULT WINAPI ApplicationAssociationRegistration_QueryCurrentDefault(IAp
 
     *association = NULL;
 
-    if((type == AT_URLPROTOCOL || type == AT_FILEEXTENSION) && !lstrlenW(query))
+    if((type == AT_URLPROTOCOL || type == AT_FILEEXTENSION) && !query[0])
         return E_INVALIDARG;
     else if(type == AT_FILEEXTENSION && query[0] != '.')
         return E_INVALIDARG;
