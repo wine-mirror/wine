@@ -2196,20 +2196,22 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileIdFullDirectoryInformation */
         0,                                             /* FileValidDataLengthInformation */
         0,                                             /* FileShortNameInformation */
-        0,
-        0,
-        0,
+        0,                                             /* FileIoCompletionNotificationInformation, */
+        0,                                             /* FileIoStatusBlockRangeInformation */
+        0,                                             /* FileIoPriorityHintInformation */
         0,                                             /* FileSfioReserveInformation */
         0,                                             /* FileSfioVolumeInformation */
         0,                                             /* FileHardLinkInformation */
-        0,
+        0,                                             /* FileProcessIdsUsingFileInformation */
         0,                                             /* FileNormalizedNameInformation */
-        0,
+        0,                                             /* FileNetworkPhysicalNameInformation */
         0,                                             /* FileIdGlobalTxDirectoryInformation */
-        0,
-        0,
-        0,
-        0                                              /* FileStandardLinkInformation */
+        0,                                             /* FileIsRemoteDeviceInformation */
+        0,                                             /* FileAttributeCacheInformation */
+        0,                                             /* FileNumaNodeInformation */
+        0,                                             /* FileStandardLinkInformation */
+        0,                                             /* FileRemoteProtocolInformation */
+        0,                                             /* FileReplaceCompletionInformation */
     };
 
     struct stat st;

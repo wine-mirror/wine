@@ -412,17 +412,23 @@ typedef enum _FILE_INFORMATION_CLASS {
     FileIdBothDirectoryInformation,
     FileIdFullDirectoryInformation,
     FileValidDataLengthInformation,
-    FileShortNameInformation = 40,
-    /* 41, 42, 43 undocumented */
-    FileSfioReserveInformation = 44,
-    FileSfioVolumeInformation = 45,
-    FileHardLinkInformation = 46,
-    /* 47 undocumented */
-    FileNormalizedNameInformation = 48,
-    /* 49 undocumented */
-    FileIdGlobalTxDirectoryInformation = 50,
-    /* 51, 52, 53 undocumented */
-    FileStandardLinkInformation = 54,
+    FileShortNameInformation,
+    FileIoCompletionNotificationInformation,
+    FileIoStatusBlockRangeInformation,
+    FileIoPriorityHintInformation,
+    FileSfioReserveInformation,
+    FileSfioVolumeInformation,
+    FileHardLinkInformation,
+    FileProcessIdsUsingFileInformation,
+    FileNormalizedNameInformation,
+    FileNetworkPhysicalNameInformation,
+    FileIdGlobalTxDirectoryInformation,
+    FileIsRemoteDeviceInformation,
+    FileAttributeCacheInformation,
+    FileNumaNodeInformation,
+    FileStandardLinkInformation,
+    FileRemoteProtocolInformation,
+    FileReplaceCompletionInformation,
     FileMaximumInformation
 } FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 
