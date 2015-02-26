@@ -691,7 +691,7 @@ typedef struct _reqresize {
 
 typedef struct _repastespecial {
     DWORD      dwAspect;
-    DWORD      dwParam;
+    DWORD_PTR  dwParam;
 } REPASTESPECIAL;
 
 typedef struct _punctuation {
