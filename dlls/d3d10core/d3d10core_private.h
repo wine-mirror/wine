@@ -200,6 +200,7 @@ struct d3d10_vertex_shader
     ID3D10VertexShader ID3D10VertexShader_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_shader *wined3d_shader;
     ID3D10Device1 *device;
 };
