@@ -3103,12 +3103,26 @@ static HRESULT WINAPI filesys_GetBaseName(IFileSystem3 *iface, BSTR Path,
     return S_OK;
 }
 
-static HRESULT WINAPI filesys_GetExtensionName(IFileSystem3 *iface, BSTR Path,
-                                            BSTR *pbstrResult)
+static HRESULT WINAPI filesys_GetExtensionName(IFileSystem3 *iface, BSTR path,
+                                            BSTR *ext)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+    INT len;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(path), ext);
+
+    *ext = NULL;
+    len = SysStringLen(path);
+    while (len) {
+        if (path[len-1] == '.') {
+            *ext = SysAllocString(&path[len]);
+            if (!*ext)
+                return E_OUTOFMEMORY;
+            break;
+        }
+        len--;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_GetAbsolutePathName(IFileSystem3 *iface, BSTR Path,

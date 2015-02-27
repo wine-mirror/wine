@@ -1865,6 +1865,40 @@ static void test_SerialNumber(void)
     IEnumVARIANT_Release(iter);
 }
 
+static const struct extension_test {
+    WCHAR path[20];
+    WCHAR ext[10];
+} extension_tests[] = {
+    { {'n','o','e','x','t',0}, {0} },
+    { {'n','.','o','.','e','x','t',0}, {'e','x','t',0} },
+    { {'n','.','o','.','e','X','t',0}, {'e','X','t',0} },
+    { { 0 } }
+};
+
+static void test_GetExtensionName(void)
+{
+    BSTR path, ext;
+    HRESULT hr;
+    int i;
+
+    for (i = 0; i < sizeof(extension_tests)/sizeof(extension_tests[0]); i++) {
+
+       path = SysAllocString(extension_tests[i].path);
+       ext = NULL;
+       hr = IFileSystem3_GetExtensionName(fs3, path, &ext);
+       ok(hr == S_OK, "got 0x%08x\n", hr);
+       if (*extension_tests[i].ext)
+           ok(!lstrcmpW(ext, extension_tests[i].ext), "%d: path %s, got %s, expected %s\n", i,
+               wine_dbgstr_w(path), wine_dbgstr_w(ext), wine_dbgstr_w(extension_tests[i].ext));
+       else
+           ok(ext == NULL, "%d: path %s, got %s, expected %s\n", i,
+               wine_dbgstr_w(path), wine_dbgstr_w(ext), wine_dbgstr_w(extension_tests[i].ext));
+
+       SysFreeString(path);
+       SysFreeString(ext);
+    }
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1899,6 +1933,7 @@ START_TEST(filesystem)
     test_Read();
     test_GetDriveName();
     test_SerialNumber();
+    test_GetExtensionName();
 
     IFileSystem3_Release(fs3);
 
