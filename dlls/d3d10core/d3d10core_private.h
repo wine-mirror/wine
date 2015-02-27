@@ -229,6 +229,7 @@ struct d3d10_pixel_shader
     ID3D10PixelShader ID3D10PixelShader_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_shader *wined3d_shader;
     ID3D10Device1 *device;
 };
