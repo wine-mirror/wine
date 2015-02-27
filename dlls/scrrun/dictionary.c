@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Alistair Leslie-Hughes
+ * Copyright 2015 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -420,13 +421,28 @@ static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
     return S_OK;
 }
 
-static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *Key, VARIANT *rhs)
+static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *key, VARIANT *newkey)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
+    VARIANT empty;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %p)\n", This, Key, rhs);
+    TRACE("(%p)->(%s %s)\n", This, debugstr_variant(key), debugstr_variant(newkey));
 
-    return E_NOTIMPL;
+    if ((pair = get_keyitem_pair(This, key))) {
+        /* found existing pair for a key, add new pair with new key
+           and old item and remove old pair after that */
+
+        hr = IDictionary_Add(iface, newkey, &pair->item);
+        if (FAILED(hr))
+            return hr;
+
+        return IDictionary_Remove(iface, key);
+    }
+
+    VariantInit(&empty);
+    return IDictionary_Add(iface, newkey, &empty);
 }
 
 static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
