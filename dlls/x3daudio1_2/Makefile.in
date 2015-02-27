@@ -1,0 +1,4 @@
+MODULE    = x3daudio1_2.dll
+
+C_SRCS = \
+	main.c

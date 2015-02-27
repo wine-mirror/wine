@@ -1324,6 +1324,7 @@ enable_wtsapi32
 enable_wuapi
 enable_wuaueng
 enable_x3daudio1_1
+enable_x3daudio1_2
 enable_x3daudio1_3
 enable_x3daudio1_4
 enable_x3daudio1_5
@@ -17682,6 +17683,7 @@ wine_fn_config_test dlls/wtsapi32/tests wtsapi32_test
 wine_fn_config_dll wuapi enable_wuapi clean
 wine_fn_config_dll wuaueng enable_wuaueng
 wine_fn_config_dll x3daudio1_1 enable_x3daudio1_1
+wine_fn_config_dll x3daudio1_2 enable_x3daudio1_2
 wine_fn_config_dll x3daudio1_3 enable_x3daudio1_3
 wine_fn_config_dll x3daudio1_4 enable_x3daudio1_4
 wine_fn_config_dll x3daudio1_5 enable_x3daudio1_5
