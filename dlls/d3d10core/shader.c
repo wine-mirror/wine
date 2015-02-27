@@ -571,9 +571,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateData(ID3D10PixelSh
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateDataInterface(ID3D10PixelShader *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d10_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d10_set_private_data_interface(&shader->private_store, guid, data);
 }
 
 static const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl =
