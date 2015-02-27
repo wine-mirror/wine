@@ -589,6 +589,35 @@ static void test_Item(void)
     IDictionary_Release(dict);
 }
 
+static void test_Add(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t','W',0};
+    VARIANT key, item;
+    IDictionary *dict;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(testW);
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 1;
+    V_VT(&item) = VT_BSTR|VT_BYREF;
+    V_BSTRREF(&item) = &str;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_get_Item(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&item) == VT_BSTR, "got %d\n", V_VT(&item));
+
+    SysFreeString(str);
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -612,6 +641,7 @@ START_TEST(dictionary)
     test_Keys();
     test_Remove();
     test_Item();
+    test_Add();
 
     CoUninitialize();
 }
