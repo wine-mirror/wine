@@ -404,13 +404,23 @@ static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *pKeysArray)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *Key)
+static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
 
-    FIXME("(%p)->(%p)\n", This, Key);
+    TRACE("(%p)->(%p)\n", This, debugstr_variant(key));
 
-    return E_NOTIMPL;
+    if (!(pair = get_keyitem_pair(This, key)))
+        return CTL_E_ELEMENT_NOT_FOUND;
+
+    list_remove(&pair->entry);
+    if (This->buckets[pair->bucket] == pair)
+        This->buckets[pair->bucket] = NULL;
+    This->count--;
+
+    free_keyitem_pair(pair);
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_RemoveAll(IDictionary *iface)

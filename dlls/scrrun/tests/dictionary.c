@@ -560,7 +560,6 @@ if (0)
     V_VT(&key) = VT_R4;
     V_R4(&key) = 0.0;
     hr = IDictionary_Remove(dict, &key);
-todo_wine
     ok(hr == CTL_E_ELEMENT_NOT_FOUND, "got 0x%08x\n", hr);
 
     VariantInit(&item);
@@ -568,7 +567,6 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDictionary_Remove(dict, &key);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IDictionary_Release(dict);
