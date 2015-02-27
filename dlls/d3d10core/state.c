@@ -79,6 +79,7 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface
         struct d3d10_device *device = impl_from_ID3D10Device(state->device);
         wine_rb_remove(&device->blend_states, &state->desc);
         ID3D10Device1_Release(state->device);
+        wined3d_private_store_cleanup(&state->private_store);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -109,10 +110,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_GetPrivateData(ID3D10BlendSta
 static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateData(ID3D10BlendState *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_blend_state *state = impl_from_ID3D10BlendState(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&state->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D10BlendState *iface,
@@ -155,11 +158,13 @@ HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d10_dev
 {
     state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
+    wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
     if (wine_rb_put(&device->blend_states, desc, &state->entry) == -1)
     {
         ERR("Failed to insert blend state entry.\n");
+        wined3d_private_store_cleanup(&state->private_store);
         return E_FAIL;
     }
 
