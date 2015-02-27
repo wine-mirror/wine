@@ -70,6 +70,29 @@ typedef enum {
   ASN1_BER_RULE = ASN1_BER_RULE_BER | ASN1_BER_RULE_CER | ASN1_BER_RULE_DER
 } ASN1encodingrule_e;
 
+typedef enum tagASN1error_e
+{
+  ASN1_SUCCESS = 0,
+  ASN1_ERR_INTERNAL = -1001,
+  ASN1_ERR_EOD = -1002,
+  ASN1_ERR_CORRUPT = -1003,
+  ASN1_ERR_LARGE = -1004,
+  ASN1_ERR_CONSTRAINT = -1005,
+  ASN1_ERR_MEMORY = -1006,
+  ASN1_ERR_OVERFLOW = -1007,
+  ASN1_ERR_BADPDU = -1008,
+  ASN1_ERR_BADARGS = -1009,
+  ASN1_ERR_BADREAL = -1010,
+  ASN1_ERR_BADTAG = -1011,
+  ASN1_ERR_CHOICE = -1012,
+  ASN1_ERR_RULE = -1013,
+  ASN1_ERR_UTF8 = -1014,
+  ASN1_ERR_PDU_TYPE = -1051,
+  ASN1_ERR_NYI = -1052,
+  ASN1_WRN_EXTENDED = 1001,
+  ASN1_WRN_NOEOD = 1002,
+} ASN1error_e;
+
 typedef struct tagASN1module_t {
   ASN1magic_t nModuleName;
   ASN1encodingrule_e eRule;
@@ -82,6 +105,47 @@ typedef struct tagASN1module_t {
     ASN1BerFunArr_t BER;
   };
 } *ASN1module_t;
+
+typedef enum tagASN1option_e
+{
+  ASN1OPT_CHANGE_RULE = 0x101,
+  ASN1OPT_GET_RULE = 0x201,
+  ASN1OPT_NOT_REUSE_BUFFER = 0x301,
+  ASN1OPT_REWIND_BUFFER = 0x302,
+  ASN1OPT_SET_DECODED_BUFFER = 0x501,
+  ASN1OPT_DEL_DECODED_BUFFER = 0x502,
+  ASN1OPT_GET_DECODED_BUFFER_SIZE = 0x601,
+} ASN1option_e;
+
+typedef struct tagASN1optionparam_t {
+  ASN1option_e eOption;
+  union
+  {
+    ASN1encodingrule_e eRule;
+    ASN1uint32_t cbRequiredDecodedBufSize;
+    struct
+    {
+      ASN1octet_t* pbBuf;
+      ASN1uint32_t cbBufSize;
+    } Buffer;
+  };
+} ASN1optionparam_t, ASN1optionparam_s;
+
+void         WINAPI ASN1_CloseDecoder(ASN1decoding_t);
+void         WINAPI ASN1_CloseEncoder(ASN1encoding_t);
+void         WINAPI ASN1_CloseEncoder2(ASN1encoding_t);
+void         WINAPI ASN1_CloseModule(ASN1module_t);
+ASN1error_e  WINAPI ASN1_CreateDecoder(ASN1module_t, ASN1decoding_t*,ASN1octet_t*, ASN1uint32_t, ASN1decoding_t);
+ASN1error_e  WINAPI ASN1_CreateEncoder(ASN1module_t, ASN1encoding_t*, ASN1octet_t*, ASN1uint32_t, ASN1encoding_t);
+ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t,ASN1encodingrule_e,ASN1uint32_t,ASN1uint32_t,const ASN1GenericFun_t [],const ASN1GenericFun_t [],const ASN1FreeFun_t [],const ASN1uint32_t [],ASN1magic_t);
+ASN1error_e  WINAPI ASN1_Decode(ASN1decoding_t, void** , ASN1uint32_t, ASN1uint32_t, ASN1octet_t*, ASN1uint32_t);
+ASN1error_e  WINAPI ASN1_Encode(ASN1encoding_t, void*, ASN1uint32_t, ASN1uint32_t, ASN1octet_t*, ASN1uint32_t);
+void         WINAPI ASN1_FreeDecoded(ASN1decoding_t, void*, ASN1uint32_t);
+void         WINAPI ASN1_FreeEncoded(ASN1encoding_t, void*);
+ASN1error_e  WINAPI ASN1_GetDecoderOption(ASN1decoding_t, ASN1optionparam_t*);
+ASN1error_e  WINAPI ASN1_GetEncoderOption(ASN1encoding_t, ASN1optionparam_t*);
+ASN1error_e  WINAPI ASN1_SetDecoderOption(ASN1decoding_t, ASN1optionparam_t*);
+ASN1error_e  WINAPI ASN1_SetEncoderOption(ASN1encoding_t, ASN1optionparam_t*);
 
 #ifdef __cplusplus
 }

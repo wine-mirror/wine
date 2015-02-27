@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "msasn1.h"
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
