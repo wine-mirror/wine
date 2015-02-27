@@ -21,6 +21,10 @@
 #ifndef __WINE_D3D9TYPES_H
 #define __WINE_D3D9TYPES_H
 
+#ifdef __i386__
+#include <pshpack4.h>
+#endif
+
 /*****************************************************************************
  * Direct 3D v9 #defines
  */
@@ -1579,5 +1583,9 @@ typedef enum _D3DSHADER_COMPARISON
     D3DSPC_LE,
     D3DSPC_RESERVED1,
 } D3DSHADER_COMPARISON;
+
+#ifdef __i386__
+#include <poppack.h>
+#endif
 
 #endif /* __WINE_D3D9TYPES_H */

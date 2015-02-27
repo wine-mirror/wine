@@ -20,6 +20,10 @@
 #ifndef __WINE_D3D9CAPS_H
 #define __WINE_D3D9CAPS_H
 
+#ifdef __i386__
+#include <pshpack4.h>
+#endif
+
 /*
  * Definitions
  */
@@ -391,5 +395,9 @@ typedef struct _D3DCAPS9 {
   DWORD               MaxPixelShader30InstructionSlots;
 
 } D3DCAPS9;
+
+#ifdef __i386__
+#include <poppack.h>
+#endif
 
 #endif
