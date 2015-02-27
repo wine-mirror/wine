@@ -3675,20 +3675,25 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     ZeroMemory(pKFD, sizeof(*pKFD));
 
     hr = get_known_folder_category(knownfolder->registryPath, &pKFD->category);
+    if(FAILED(hr))
+        return hr;
 
-    if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+    if(FAILED(hr))
+        return hr;
 
-    if(SUCCEEDED(hr))
-    {
-        pKFD->pszName = CoTaskMemAlloc(dwSize);
-        if(!pKFD->pszName) hr = E_OUTOFMEMORY;
+    pKFD->pszName = CoTaskMemAlloc(dwSize);
+    if(!pKFD->pszName)
+        return E_OUTOFMEMORY;
+
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, pKFD->pszName, &dwSize));
+    if(FAILED(hr)){
+        CoTaskMemFree(pKFD->pszName);
+        pKFD->pszName = NULL;
+        return hr;
     }
 
-    if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szName, RRF_RT_REG_SZ, NULL, pKFD->pszName, &dwSize));
-
-    return hr;
+    return S_OK;
 }
 
 static const struct IKnownFolderVtbl knownfolder_vtbl =
