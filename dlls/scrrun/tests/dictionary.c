@@ -495,15 +495,12 @@ static void test_Keys(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDictionary_Keys(dict, NULL);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     VariantInit(&keys);
     hr = IDictionary_Keys(dict, &keys);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&keys) == (VT_ARRAY|VT_VARIANT), "got %d\n", V_VT(&keys));
-}
     VariantClear(&keys);
 
     V_VT(&key) = VT_R4;
@@ -514,12 +511,9 @@ todo_wine {
 
     VariantInit(&keys);
     hr = IDictionary_Keys(dict, &keys);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&keys) == (VT_ARRAY|VT_VARIANT), "got %d\n", V_VT(&keys));
-}
-if (hr == S_OK)
-{
+
     VariantInit(&key);
     index = 0;
     hr = SafeArrayGetElement(V_ARRAY(&keys), &index, &key);
@@ -532,7 +526,7 @@ if (hr == S_OK)
     hr = SafeArrayGetUBound(V_ARRAY(&keys), 1, &index);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(index == 0, "got %d\n", index);
-}
+
     VariantClear(&keys);
 
     IDictionary_Release(dict);

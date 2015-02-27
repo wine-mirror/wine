@@ -381,13 +381,43 @@ static HRESULT WINAPI dictionary_Exists(IDictionary *iface, VARIANT *key, VARIAN
     return S_OK;
 }
 
-static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *pItemsArray)
+static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *items)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
+    SAFEARRAYBOUND bound;
+    SAFEARRAY *sa;
+    VARIANT *v;
+    HRESULT hr;
+    LONG i;
 
-    FIXME("(%p)->(%p)\n", This, pItemsArray);
+    TRACE("(%p)->(%p)\n", This, items);
 
-    return E_NOTIMPL;
+    if (!items)
+        return S_OK;
+
+    bound.lLbound = 0;
+    bound.cElements = This->count;
+    sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
+    if (!sa)
+        return E_OUTOFMEMORY;
+
+    hr = SafeArrayAccessData(sa, (void**)&v);
+    if (FAILED(hr)) {
+        SafeArrayDestroy(sa);
+        return hr;
+    }
+
+    i = 0;
+    LIST_FOR_EACH_ENTRY(pair, &This->pairs, struct keyitem_pair, entry) {
+        VariantCopy(&v[i], &pair->item);
+        i++;
+    }
+    SafeArrayUnaccessData(sa);
+
+    V_VT(items) = VT_ARRAY|VT_VARIANT;
+    V_ARRAY(items) = sa;
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *Key, VARIANT *rhs)
@@ -399,13 +429,43 @@ static HRESULT WINAPI dictionary_put_Key(IDictionary *iface, VARIANT *Key, VARIA
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *pKeysArray)
+static HRESULT WINAPI dictionary_Keys(IDictionary *iface, VARIANT *keys)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
+    SAFEARRAYBOUND bound;
+    SAFEARRAY *sa;
+    VARIANT *v;
+    HRESULT hr;
+    LONG i;
 
-    FIXME("(%p)->(%p)\n", This, pKeysArray);
+    TRACE("(%p)->(%p)\n", This, keys);
 
-    return E_NOTIMPL;
+    if (!keys)
+        return S_OK;
+
+    bound.lLbound = 0;
+    bound.cElements = This->count;
+    sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
+    if (!sa)
+        return E_OUTOFMEMORY;
+
+    hr = SafeArrayAccessData(sa, (void**)&v);
+    if (FAILED(hr)) {
+        SafeArrayDestroy(sa);
+        return hr;
+    }
+
+    i = 0;
+    LIST_FOR_EACH_ENTRY(pair, &This->pairs, struct keyitem_pair, entry) {
+        VariantCopy(&v[i], &pair->key);
+        i++;
+    }
+    SafeArrayUnaccessData(sa);
+
+    V_VT(keys) = VT_ARRAY|VT_VARIANT;
+    V_ARRAY(keys) = sa;
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
