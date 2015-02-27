@@ -69,16 +69,16 @@ static void test_interfaces(void)
 
     exists = VARIANT_FALSE;
     hr = IDictionary_Exists(dict, &key, &exists);
-    todo_wine ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
-    todo_wine ok(exists == VARIANT_TRUE, "Expected TRUE but got FALSE.\n");
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(exists == VARIANT_TRUE, "Expected TRUE but got FALSE.\n");
     VariantClear(&key);
 
     exists = VARIANT_TRUE;
     V_VT(&key) = VT_BSTR;
     V_BSTR(&key) = SysAllocString(key_non_exist);
     hr = IDictionary_Exists(dict, &key, &exists);
-    todo_wine ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
-    todo_wine ok(exists == VARIANT_FALSE, "Expected FALSE but got TRUE.\n");
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(exists == VARIANT_FALSE, "Expected FALSE but got TRUE.\n");
     VariantClear(&key);
 
     hr = IDictionary_get_Count(dict, &count);
@@ -442,17 +442,15 @@ if (0) /* crashes on native */
     V_VT(&key) = VT_I2;
     V_I2(&key) = 0;
     hr = IDictionary_Exists(dict, &key, NULL);
-todo_wine
     ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
 
     V_VT(&key) = VT_I2;
     V_I2(&key) = 0;
     exists = VARIANT_TRUE;
     hr = IDictionary_Exists(dict, &key, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == VARIANT_FALSE, "got %x\n", exists);
-}
+
     VariantInit(&item);
     hr = IDictionary_Add(dict, &key, &item);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -465,26 +463,23 @@ todo_wine {
     V_VT(&key) = VT_I2;
     V_I2(&key) = 0;
     hr = IDictionary_Exists(dict, &key, NULL);
-todo_wine
     ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
 
     V_VT(&key) = VT_I2;
     V_I2(&key) = 0;
     exists = VARIANT_FALSE;
     hr = IDictionary_Exists(dict, &key, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == VARIANT_TRUE, "got %x\n", exists);
-}
+
     /* key of different type, but resolves to same hash value */
     V_VT(&key) = VT_R4;
     V_R4(&key) = 0.0;
     exists = VARIANT_FALSE;
     hr = IDictionary_Exists(dict, &key, &exists);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists == VARIANT_TRUE, "got %x\n", exists);
-}
+
     IDictionary_Release(dict);
 }
 

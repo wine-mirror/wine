@@ -368,13 +368,17 @@ static HRESULT WINAPI dictionary_get_Count(IDictionary *iface, LONG *count)
     return S_OK;
 }
 
-static HRESULT WINAPI dictionary_Exists(IDictionary *iface, VARIANT *Key, VARIANT_BOOL *pExists)
+static HRESULT WINAPI dictionary_Exists(IDictionary *iface, VARIANT *key, VARIANT_BOOL *exists)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->(%p %p)\n", This, Key, pExists);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), exists);
 
-    return E_NOTIMPL;
+    if (!exists)
+        return CTL_E_ILLEGALFUNCTIONCALL;
+
+    *exists = get_keyitem_pair(This, key) != NULL ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Items(IDictionary *iface, VARIANT *pItemsArray)
