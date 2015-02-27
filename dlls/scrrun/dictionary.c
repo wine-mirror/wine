@@ -485,8 +485,9 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     V_VT(hash) = VT_I4;
     switch (V_VT(key))
     {
+    case VT_BSTR|VT_BYREF:
     case VT_BSTR:
-        V_I4(hash) = get_str_hash(V_BSTR(key), This->method);
+        V_I4(hash) = get_str_hash(get_key_strptr(key), This->method);
         break;
     case VT_UI1:
         V_I4(hash) = get_num_hash(V_UI1(key));
