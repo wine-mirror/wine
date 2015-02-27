@@ -127,7 +127,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_internalformat_query2",        ARB_INTERNALFORMAT_QUERY2,    },
     {"GL_ARB_map_buffer_alignment",         ARB_MAP_BUFFER_ALIGNMENT      },
     {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE          },
-    {"GL_ARB_multisample",                  ARB_MULTISAMPLE               }, /* needs GLX_ARB_MULTISAMPLE as well */
+    {"GL_ARB_multisample",                  ARB_MULTISAMPLE               },
     {"GL_ARB_multitexture",                 ARB_MULTITEXTURE              },
     {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY           },
     {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT       },
