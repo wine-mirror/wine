@@ -44,26 +44,19 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
         GLenum idxtype = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
         if (instance_count)
         {
-            if (!gl_info->supported[ARB_DRAW_INSTANCED] && !gl_info->supported[ARB_INSTANCED_ARRAYS])
+            if (start_instance)
+                FIXME("Start instance (%u) not supported.\n", start_instance);
+            if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
             {
-                FIXME("Instanced drawing not supported.\n");
+                GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
+                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
+                checkGLcall("glDrawElementsInstancedBaseVertex");
             }
             else
             {
-                if (start_instance)
-                    FIXME("Start instance (%u) not supported.\n", start_instance);
-                if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
-                {
-                    GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
-                            (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
-                    checkGLcall("glDrawElementsInstancedBaseVertex");
-                }
-                else
-                {
-                    GL_EXTCALL(glDrawElementsInstanced(primitive_type, count, idxtype,
-                            (const char *)idx_data + (idx_size * start_idx), instance_count));
-                    checkGLcall("glDrawElementsInstanced");
-                }
+                GL_EXTCALL(glDrawElementsInstanced(primitive_type, count, idxtype,
+                        (const char *)idx_data + (idx_size * start_idx), instance_count));
+                checkGLcall("glDrawElementsInstanced");
             }
         }
         else if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
