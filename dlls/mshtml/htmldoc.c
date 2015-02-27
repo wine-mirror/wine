@@ -2882,7 +2882,7 @@ static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *
 {
     HTMLDocument *This = impl_from_IHTMLDocument5(iface);
     nsAString mode_str;
-    const PRUnichar *mode;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -2892,13 +2892,8 @@ static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *
     }
 
     nsAString_Init(&mode_str, NULL);
-    nsIDOMHTMLDocument_GetCompatMode(This->doc_node->nsdoc, &mode_str);
-
-    nsAString_GetData(&mode_str, &mode);
-    *p = SysAllocString(mode);
-    nsAString_Finish(&mode_str);
-
-    return S_OK;
+    nsres = nsIDOMHTMLDocument_GetCompatMode(This->doc_node->nsdoc, &mode_str);
+    return return_nsstr(nsres, &mode_str, p);
 }
 
 static const IHTMLDocument5Vtbl HTMLDocument5Vtbl = {
