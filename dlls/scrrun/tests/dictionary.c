@@ -64,7 +64,7 @@ static void test_interfaces(void)
     V_VT(&value) = VT_BSTR;
     V_BSTR(&value) = SysAllocString(key_add_value);
     hr = IDictionary_Add(dict, &key, &value);
-    todo_wine ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
+    ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     VariantClear(&value);
 
     exists = VARIANT_FALSE;
@@ -83,7 +83,7 @@ static void test_interfaces(void)
 
     hr = IDictionary_get_Count(dict, &count);
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
-    todo_wine ok(count == 1, "got %d, expected 1\n", count);
+    ok(count == 1, "got %d, expected 1\n", count);
 
     IDictionary_Release(dict);
     IDispatch_Release(disp);
@@ -128,11 +128,9 @@ if (0) /* crashes on native */
     V_I2(&key) = 0;
     VariantInit(&item);
     hr = IDictionary_Add(dict, &key, &item);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDictionary_put_CompareMode(dict, BinaryCompare);
-todo_wine
     ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "got 0x%08x\n", hr);
 
     IDictionary_Release(dict);
@@ -457,13 +455,11 @@ todo_wine {
 }
     VariantInit(&item);
     hr = IDictionary_Add(dict, &key, &item);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     V_VT(&key) = VT_R4;
     V_R4(&key) = 0.0;
     hr = IDictionary_Add(dict, &key, &item);
-todo_wine
     ok(hr == CTL_E_KEY_ALREADY_EXISTS, "got 0x%08x\n", hr);
 
     V_VT(&key) = VT_I2;
@@ -519,7 +515,6 @@ todo_wine {
     V_R4(&key) = 0.0;
     VariantInit(&item);
     hr = IDictionary_Add(dict, &key, &item);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     VariantInit(&keys);
@@ -570,7 +565,6 @@ todo_wine
 
     VariantInit(&item);
     hr = IDictionary_Add(dict, &key, &item);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDictionary_Remove(dict, &key);
