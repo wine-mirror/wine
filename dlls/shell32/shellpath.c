@@ -768,6 +768,12 @@ VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
             PathSetDlgItemPathA(hDlg, id, pszPath);
 }
 
+static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
+static const WCHAR szAttributes[] = {'A','t','t','r','i','b','u','t','e','s',0};
+static const WCHAR szName[] = {'N','a','m','e',0};
+static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
+static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
+
 static const WCHAR szCurrentVersion[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0'};
 static const WCHAR Administrative_ToolsW[] = {'A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR AppDataW[] = {'A','p','p','D','a','t','a','\0'};
@@ -2816,7 +2822,6 @@ static HRESULT set_folder_attributes(void)
     static const WCHAR wfparsingW[] = {'W','a','n','t','s','F','O','R','P','A','R','S','I','N','G',0};
     static const WCHAR wfdisplayW[] = {'W','a','n','t','s','F','O','R','D','I','S','P','L','A','Y',0};
     static const WCHAR hideasdeleteW[] = {'H','i','d','e','A','s','D','e','l','e','t','e','P','e','r','U','s','e','r',0};
-    static const WCHAR attributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
     static const WCHAR cfattributesW[] = {'C','a','l','l','F','o','r','A','t','t','r','i','b','u','t','e','s',0};
     static const WCHAR emptyW[] = {0};
 
@@ -2864,7 +2869,7 @@ static HRESULT set_folder_attributes(void)
         if (folders[i].hideasdel)
             res = RegSetValueExW( hkey, hideasdeleteW, 0, REG_SZ, (const BYTE *)emptyW, sizeof(emptyW) );
         if (folders[i].attr)
-            res = RegSetValueExW( hkey, attributesW, 0, REG_DWORD,
+            res = RegSetValueExW( hkey, szAttributes, 0, REG_DWORD,
                                   (const BYTE *)&folders[i].attr, sizeof(DWORD));
         if (folders[i].call_for_attr)
             res = RegSetValueExW( hkey, cfattributesW, 0, REG_DWORD,
@@ -3147,12 +3152,6 @@ HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE toke
     return hr;
 }
 
-/* constant values used by known folder functions */
-static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
-static const WCHAR szName[] = {'N','a','m','e',0};
-static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
-static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
-
 /*
  * Internal function to convert known folder identifier to path of registry key
  * associated with known folder.
@@ -3195,6 +3194,13 @@ static HRESULT get_known_folder_registry_path(
     return hr;
 }
 
+static HRESULT get_known_folder_dword(const WCHAR *registryPath, const WCHAR *value, DWORD *out)
+{
+    DWORD dwSize = sizeof(DWORD);
+    DWORD dwType;
+    return HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, value, RRF_RT_DWORD, &dwType, out, &dwSize));
+}
+
 /*
  * Internal function to get place where folder redirection information are stored.
  *
@@ -3212,16 +3218,12 @@ static HRESULT get_known_folder_redirection_place(
     HRESULT hr;
     LPWSTR lpRegistryPath = NULL;
     KF_CATEGORY category;
-    DWORD dwSize;
 
     /* first, get known folder's category */
     hr = get_known_folder_registry_path(rfid, NULL, &lpRegistryPath);
 
     if(SUCCEEDED(hr))
-    {
-        dwSize = sizeof(category);
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, lpRegistryPath, szCategory, RRF_RT_DWORD, NULL, &category, &dwSize));
-    }
+        hr = get_known_folder_dword(lpRegistryPath, szCategory, &category);
 
     if(SUCCEEDED(hr))
     {
@@ -3244,15 +3246,6 @@ static HRESULT get_known_folder_redirection_place(
 }
 
 static HRESULT get_known_folder_path_by_id(REFKNOWNFOLDERID folderId, LPWSTR lpRegistryPath, DWORD dwFlags, LPWSTR *ppszPath);
-
-static HRESULT get_known_folder_category(
-    LPWSTR registryPath,
-    KF_CATEGORY* pCategory)
-{
-    DWORD dwSize = sizeof(DWORD);
-    DWORD dwType;
-    return HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szCategory, RRF_RT_DWORD, &dwType, pCategory, &dwSize));
-}
 
 static HRESULT redirect_known_folder(
     REFKNOWNFOLDERID rfid,
@@ -3460,7 +3453,7 @@ static HRESULT WINAPI knownfolder_GetCategory(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-        hr = get_known_folder_category(knownfolder->registryPath, pCategory);
+        hr = get_known_folder_dword(knownfolder->registryPath, szCategory, pCategory);
 
     return hr;
 }
@@ -3518,7 +3511,7 @@ static HRESULT get_known_folder_path(
 
     /* check, if folder was redirected */
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, registryPath, szCategory, RRF_RT_REG_DWORD, NULL, &category, &dwSize));
+        hr = get_known_folder_dword(registryPath, szCategory, &category);
 
     if(SUCCEEDED(hr))
     {
@@ -3674,7 +3667,7 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
 
     ZeroMemory(pKFD, sizeof(*pKFD));
 
-    hr = get_known_folder_category(knownfolder->registryPath, &pKFD->category);
+    hr = get_known_folder_dword(knownfolder->registryPath, szCategory, &pKFD->category);
     if(FAILED(hr))
         return hr;
 
