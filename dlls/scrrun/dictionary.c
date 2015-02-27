@@ -316,22 +316,34 @@ static HRESULT WINAPI dictionary_putref_Item(IDictionary *iface, VARIANT *Key, V
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dictionary_put_Item(IDictionary *iface, VARIANT *Key, VARIANT *pRetItem)
+static HRESULT WINAPI dictionary_put_Item(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
 
-    FIXME("(%p)->(%p %p)\n", This, Key, pRetItem);
+    TRACE("(%p)->(%s %s)\n", This, debugstr_variant(key), debugstr_variant(item));
 
-    return E_NOTIMPL;
+    if ((pair = get_keyitem_pair(This, key)))
+        return VariantCopyInd(&pair->item, item);
+
+    return IDictionary_Add(iface, key, item);
 }
 
-static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *Key, VARIANT *pRetItem)
+static HRESULT WINAPI dictionary_get_Item(IDictionary *iface, VARIANT *key, VARIANT *item)
 {
     dictionary *This = impl_from_IDictionary(iface);
+    struct keyitem_pair *pair;
 
-    FIXME("(%p)->(%p %p)\n", This, Key, pRetItem );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(key), item);
 
-    return E_NOTIMPL;
+    if ((pair = get_keyitem_pair(This, key)))
+        VariantCopy(item, &pair->item);
+    else {
+        VariantInit(item);
+        return IDictionary_Add(iface, key, item);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_Add(IDictionary *iface, VARIANT *key, VARIANT *item)

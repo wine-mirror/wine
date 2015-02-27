@@ -574,6 +574,34 @@ todo_wine
     IDictionary_Release(dict);
 }
 
+static void test_Item(void)
+{
+    VARIANT key, item;
+    IDictionary *dict;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 10;
+    V_VT(&item) = VT_I2;
+    V_I2(&item) = 123;
+    hr = IDictionary_get_Item(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&item) == VT_EMPTY, "got %d\n", V_VT(&item));
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 10;
+    V_VT(&item) = VT_I2;
+    hr = IDictionary_get_Item(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&item) == VT_EMPTY, "got %d\n", V_VT(&item));
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -596,6 +624,7 @@ START_TEST(dictionary)
     test_Exists();
     test_Keys();
     test_Remove();
+    test_Item();
 
     CoUninitialize();
 }
