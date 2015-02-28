@@ -119,8 +119,8 @@ typedef struct _IMAGE_INFO
             ULONG ImageMappedToAllPids : 1;
             ULONG ExtendedInfoPresent  : 1;
             ULONG Reserved             : 21;
-        };
-    };
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
     PVOID  ImageBase;
     ULONG  ImageSelector;
     SIZE_T ImageSize;
