@@ -2202,7 +2202,7 @@ struct notify_data {
     SC_HANDLE svc;
 };
 
-void CALLBACK cb_stopped(void *user)
+static void CALLBACK cb_stopped(void *user)
 {
     struct notify_data *data = user;
     BOOL br;
@@ -2218,7 +2218,7 @@ void CALLBACK cb_stopped(void *user)
     ok(br, "StartService failed: %u\n", GetLastError());
 }
 
-void CALLBACK cb_running(void *user)
+static void CALLBACK cb_running(void *user)
 {
     struct notify_data *data = user;
     BOOL br;
