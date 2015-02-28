@@ -65,12 +65,13 @@ interface svcctl
     typedef [context_handle] void *SC_RPC_LOCK;
     typedef [context_handle] void *SC_NOTIFY_RPC_HANDLE;
 
-    typedef DWORD SECURITY_INFORMATION;
-
     /* undocumented access rights */
     cpp_quote("#define SERVICE_SET_STATUS   0x8000")
 
-cpp_quote("#if 0 /* already defined in winsvc.h */")
+cpp_quote("#if 0 /* already defined in winsvc.h / winnt.h */")
+
+typedef DWORD SECURITY_INFORMATION;
+
 typedef struct _QUERY_SERVICE_CONFIGA {
     DWORD   dwServiceType;
     DWORD   dwStartType;
