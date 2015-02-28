@@ -856,7 +856,7 @@ static BOOL get_texture_memory(GUID *adapter, DWORD *available_mem)
     if (SUCCEEDED(hr))
     {
         dd_caps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
-        dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.dwCaps4 = 0;
+        dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.u1.dwCaps4 = 0;
         hr = IDirectDraw7_GetAvailableVidMem(pDirectDraw, &dd_caps, available_mem, NULL);
         IDirectDraw7_Release(pDirectDraw);
         if (SUCCEEDED(hr))
@@ -1112,7 +1112,7 @@ static HRESULT fill_display_information_fallback(IDxDiagContainerImpl_Container 
         return S_OK;
 
     dd_caps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
-    dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.dwCaps4 = 0;
+    dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.u1.dwCaps4 = 0;
     hr = IDirectDraw7_GetAvailableVidMem(pDirectDraw, &dd_caps, &tmp, NULL);
     if (SUCCEEDED(hr))
     {

@@ -390,7 +390,7 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
     if(in->dwFlags & DDSD_PIXELFORMAT) out->u4.ddpfPixelFormat = in->ddpfPixelFormat;
     if(in->dwFlags & DDSD_CAPS) out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if(in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->u5.dwBackBufferCount = in->dwBackBufferCount;
     if(in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->u2.dwMipMapCount = in->u2.dwZBufferBitDepth; /* same union */
     if(in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
@@ -417,7 +417,7 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
     if(in->dwFlags & DDSD_PIXELFORMAT) out->ddpfPixelFormat = in->u4.ddpfPixelFormat;
     if(in->dwFlags & DDSD_CAPS) out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if(in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if(in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->u5.dwBackBufferCount;
     if(in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->u2.dwZBufferBitDepth = in->u2.dwMipMapCount; /* same union */
     if(in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */

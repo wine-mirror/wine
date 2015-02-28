@@ -6747,7 +6747,7 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
 {
     IDirectDrawSurface7 *depthStencil = NULL;
     IDirectDrawSurface7 *render_target;
-    static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, 0 };
+    static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, {0} };
     struct ddraw_surface *dsi;
 
     if (device->rt_iface && SUCCEEDED(IUnknown_QueryInterface(device->rt_iface,

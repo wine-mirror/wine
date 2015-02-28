@@ -1438,7 +1438,7 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     DDCAPS caps;
     WINED3DCAPS winecaps;
     HRESULT hr;
-    DDSCAPS2 ddscaps = {0, 0, 0, 0};
+    DDSCAPS2 ddscaps = {0, 0, 0, {0}};
 
     TRACE("iface %p, driver_caps %p, hel_caps %p.\n", iface, DriverCaps, HELCaps);
 
@@ -3010,7 +3010,7 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
     static const struct compare_info compare[] =
     {
         CMP(ALPHABITDEPTH, dwAlphaBitDepth),
-        CMP(BACKBUFFERCOUNT, dwBackBufferCount),
+        CMP(BACKBUFFERCOUNT, u5.dwBackBufferCount),
         CMP(CAPS, ddsCaps),
         CMP(CKDESTBLT, ddckCKDestBlt),
         CMP(CKDESTOVERLAY, u3 /* ddckCKDestOverlay */),

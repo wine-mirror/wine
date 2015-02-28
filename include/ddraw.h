@@ -371,7 +371,10 @@ typedef struct _DDSCAPS2 {
 	DWORD	dwCaps;	/* capabilities of surface wanted */
 	DWORD   dwCaps2; /* additional capabilities */
 	DWORD   dwCaps3; /* reserved capabilities */
-	DWORD   dwCaps4; /* more reserved capabilities */
+	union {
+		DWORD dwCaps4; /* more reserved capabilities */
+		DWORD dwVolumeDepth;
+	} DUMMYUNIONNAME1;
 } DDSCAPS2,*LPDDSCAPS2;
 
 #define	DD_ROP_SPACE	(256/32)	/* space required to store ROP array */
@@ -1001,7 +1004,10 @@ typedef struct _DDSURFACEDESC2
 		LONG	lPitch;	      /*10: distance to start of next line (return value only)*/
 		DWORD   dwLinearSize; /*10: formless late-allocated optimized surface size */
 	} DUMMYUNIONNAME1;
-	DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
+	union {
+		DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
+		DWORD	dwDepth;
+	} DUMMYUNIONNAME5;
 	union {
 		DWORD	dwMipMapCount;/* 18:number of mip-map levels requested*/
 		DWORD	dwRefreshRate;/* 18:refresh rate (used when display mode is described)*/

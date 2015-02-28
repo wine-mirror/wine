@@ -155,7 +155,7 @@ static void destroy_window_thread(struct create_window_thread_param *p)
 static IDirectDrawSurface7 *get_depth_stencil(IDirect3DDevice7 *device)
 {
     IDirectDrawSurface7 *rt, *ret;
-    DDSCAPS2 caps = {DDSCAPS_ZBUFFER, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_ZBUFFER, 0, 0, {0}};
     HRESULT hr;
 
     hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
@@ -1613,7 +1613,7 @@ static void test_ck_default(void)
 static void test_ck_complex(void)
 {
     IDirectDrawSurface7 *surface, *mipmap, *tmp;
-    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DDSURFACEDESC2 surface_desc;
     IDirect3DDevice7 *device;
     DDCOLORKEY color_key;
@@ -5343,7 +5343,7 @@ static void test_flip(void)
 {
     const DWORD placement = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
     IDirectDrawSurface7 *primary, *backbuffer1, *backbuffer2, *backbuffer3, *surface;
-    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
     DDSURFACEDESC2 surface_desc;
     BOOL sysmem_primary;
     IDirectDraw7 *ddraw;
@@ -5962,7 +5962,7 @@ static void test_sysmem_overlay(void)
 
 static void test_primary_palette(void)
 {
-    DDSCAPS2 surface_caps = {DDSCAPS_FLIP, 0, 0, 0};
+    DDSCAPS2 surface_caps = {DDSCAPS_FLIP, 0, 0, {0}};
     IDirectDrawSurface7 *primary, *backbuffer;
     PALETTEENTRY palette_entries[256];
     IDirectDrawPalette *palette, *tmp;
@@ -6089,7 +6089,7 @@ static void test_surface_attachment(void)
 {
     IDirectDrawSurface7 *surface1, *surface2, *surface3, *surface4;
     IDirectDrawSurface *surface1v1, *surface2v1;
-    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, {0}};
     DDSURFACEDESC2 surface_desc;
     IDirectDraw7 *ddraw;
     UINT surface_count;
@@ -6335,7 +6335,7 @@ static void test_private_data(void)
     DWORD size = sizeof(ptr);
     HRESULT hr;
     HWND window;
-    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DWORD data[] = {1, 2, 3, 4};
     DDCAPS hal_caps;
     static const GUID ddraw_private_data_test_guid =
@@ -6780,7 +6780,7 @@ static void test_mipmap_lock(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DDCAPS hal_caps;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
@@ -6842,7 +6842,7 @@ static void test_palette_complex(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DDCAPS hal_caps;
     PALETTEENTRY palette_entries[256];
     unsigned int i;
@@ -7746,7 +7746,7 @@ static void test_resource_priority(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DDCAPS hal_caps;
     DWORD needed_caps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_MIPMAP;
     unsigned int i;

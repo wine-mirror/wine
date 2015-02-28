@@ -686,7 +686,7 @@ DDRAW_dump_DDSCAPS(const DDSCAPS *in)
     in_bis.dwCaps = in->dwCaps;
     in_bis.dwCaps2 = 0;
     in_bis.dwCaps3 = 0;
-    in_bis.dwCaps4 = 0;
+    in_bis.u1.dwCaps4 = 0;
 
     DDRAW_dump_DDSCAPS2(&in_bis);
 }
@@ -776,7 +776,7 @@ void DDRAW_dump_surface_desc(const DDSURFACEDESC2 *lpddsd)
         ME(DDSD_WIDTH, DDRAW_dump_DWORD, dwWidth),
         ME(DDSD_PITCH, DDRAW_dump_DWORD, u1 /* lPitch */),
         ME(DDSD_LINEARSIZE, DDRAW_dump_DWORD, u1 /* dwLinearSize */),
-        ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, dwBackBufferCount),
+        ME(DDSD_BACKBUFFERCOUNT, DDRAW_dump_DWORD, u5.dwBackBufferCount),
         ME(DDSD_MIPMAPCOUNT, DDRAW_dump_DWORD, u2 /* dwMipMapCount */),
         ME(DDSD_ZBUFFERBITDEPTH, DDRAW_dump_DWORD, u2 /* dwZBufferBitDepth */), /* This is for 'old-style' D3D */
         ME(DDSD_REFRESHRATE, DDRAW_dump_DWORD, u2 /* dwRefreshRate */),
@@ -862,7 +862,7 @@ void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS* pIn, DDSCAPS2* pOut)
     pOut->dwCaps = pIn->dwCaps;
     pOut->dwCaps2 = 0;
     pOut->dwCaps3 = 0;
-    pOut->dwCaps4 = 0;
+    pOut->u1.dwCaps4 = 0;
 }
 
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2* pIn, DDDEVICEIDENTIFIER* pOut)
@@ -1147,7 +1147,7 @@ void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out)
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->u5.dwBackBufferCount = in->dwBackBufferCount;
     if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */
     out->lpSurface = in->lpSurface;
@@ -1188,7 +1188,7 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out)
     /* ddsCaps is read even without DDSD_CAPS set. See dsurface:no_ddsd_caps_test */
     out->ddsCaps.dwCaps = in->ddsCaps.dwCaps;
     if (in->dwFlags & DDSD_PITCH) out->u1.lPitch = in->u1.lPitch;
-    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->dwBackBufferCount;
+    if (in->dwFlags & DDSD_BACKBUFFERCOUNT) out->dwBackBufferCount = in->u5.dwBackBufferCount;
     if (in->dwFlags & DDSD_ZBUFFERBITDEPTH) out->u2.dwZBufferBitDepth = in->u2.dwMipMapCount; /* same union */
     if (in->dwFlags & DDSD_ALPHABITDEPTH) out->dwAlphaBitDepth = in->dwAlphaBitDepth;
     /* DDraw(native, and wine) does not set the DDSD_LPSURFACE, so always copy */

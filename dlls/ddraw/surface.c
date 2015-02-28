@@ -745,14 +745,14 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
         our_caps.dwCaps = Caps->dwCaps;
         our_caps.dwCaps2 = 0;
         our_caps.dwCaps3 = 0;
-        our_caps.dwCaps4 = 0;
+        our_caps.u1.dwCaps4 = 0;
     }
     else
     {
         our_caps = *Caps;
     }
 
-    TRACE("(%p): Looking for caps: %x,%x,%x,%x\n", This, our_caps.dwCaps, our_caps.dwCaps2, our_caps.dwCaps3, our_caps.dwCaps4); /* FIXME: Better debugging */
+    TRACE("(%p): Looking for caps: %x,%x,%x,%x\n", This, our_caps.dwCaps, our_caps.dwCaps2, our_caps.dwCaps3, our_caps.u1.dwCaps4); /* FIXME: Better debugging */
 
     for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
     {
@@ -763,7 +763,7 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
                 surf->surface_desc.ddsCaps.dwCaps,
                 surf->surface_desc.ddsCaps.dwCaps2,
                 surf->surface_desc.ddsCaps.dwCaps3,
-                surf->surface_desc.ddsCaps.dwCaps4);
+                surf->surface_desc.ddsCaps.u1.dwCaps4);
 
         if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
             ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2)) {
@@ -793,7 +793,7 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
                 surf->surface_desc.ddsCaps.dwCaps,
                 surf->surface_desc.ddsCaps.dwCaps2,
                 surf->surface_desc.ddsCaps.dwCaps3,
-                surf->surface_desc.ddsCaps.dwCaps4);
+                surf->surface_desc.ddsCaps.u1.dwCaps4);
 
         if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
             ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2)) {
@@ -853,7 +853,7 @@ static HRESULT WINAPI ddraw_surface3_GetAttachedSurface(IDirectDrawSurface3 *ifa
     caps2.dwCaps  = caps->dwCaps;
     caps2.dwCaps2 = 0;
     caps2.dwCaps3 = 0;
-    caps2.dwCaps4 = 0;
+    caps2.u1.dwCaps4 = 0;
 
     hr = ddraw_surface7_GetAttachedSurface(&surface->IDirectDrawSurface7_iface,
             &caps2, &attachment7);
@@ -884,7 +884,7 @@ static HRESULT WINAPI ddraw_surface2_GetAttachedSurface(IDirectDrawSurface2 *ifa
     caps2.dwCaps  = caps->dwCaps;
     caps2.dwCaps2 = 0;
     caps2.dwCaps3 = 0;
-    caps2.dwCaps4 = 0;
+    caps2.u1.dwCaps4 = 0;
 
     hr = ddraw_surface7_GetAttachedSurface(&surface->IDirectDrawSurface7_iface,
             &caps2, &attachment7);
@@ -915,7 +915,7 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
     caps2.dwCaps  = caps->dwCaps;
     caps2.dwCaps2 = 0;
     caps2.dwCaps3 = 0;
-    caps2.dwCaps4 = 0;
+    caps2.u1.dwCaps4 = 0;
 
     hr = ddraw_surface7_GetAttachedSurface(&surface->IDirectDrawSurface7_iface,
             &caps2, &attachment7);
@@ -1214,7 +1214,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
     struct wined3d_rendertarget_view *tmp_rtv, *src_rtv, *rtv;
     struct ddraw_texture *ddraw_texture, *prev_ddraw_texture;
-    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
+    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
     struct wined3d_texture *texture;
     IDirectDrawSurface7 *current;
     struct wined3d_surface *tmp;
@@ -4985,7 +4985,7 @@ static HRESULT WINAPI d3d_texture1_GetHandle(IDirect3DTexture *iface,
 static struct ddraw_surface *get_sub_mimaplevel(struct ddraw_surface *surface)
 {
     /* Now go down the mipmap chain to the next surface */
-    static DDSCAPS2 mipmap_caps = { DDSCAPS_MIPMAP | DDSCAPS_TEXTURE, 0, 0, 0 };
+    static DDSCAPS2 mipmap_caps = { DDSCAPS_MIPMAP | DDSCAPS_TEXTURE, 0, 0, {0} };
     IDirectDrawSurface7 *next_level;
     HRESULT hr;
 
@@ -5652,7 +5652,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 return DDERR_INVALIDCAPS;
             }
 
-            if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->dwBackBufferCount)
+            if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
             {
                 WARN("Tried to create a flippable primary surface without any back buffers.\n");
                 HeapFree(GetProcessHeap(), 0, texture);
@@ -6079,7 +6079,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
-        unsigned int count = desc->dwBackBufferCount;
+        unsigned int count = desc->u5.dwBackBufferCount;
         struct ddraw_surface *last = root;
 
         attach = &last->complex_array[0];
@@ -6101,7 +6101,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     | DDSCAPS_BACKBUFFER);
             if (!i)
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
-            desc->dwBackBufferCount = 0;
+            desc->u5.dwBackBufferCount = 0;
 
             if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1,
                     WINED3D_SURFACE_PIN_SYSMEM, NULL, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
