@@ -38,7 +38,39 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
                                                 WPARAM wParam, LPARAM lParam,
                                                 ULONG_PTR dwRefData)
 {
+    const WCHAR* themeClass = WC_SCROLLBARW;
+    HTHEME theme;
+    LRESULT result;
+
     TRACE("(%p, 0x%x, %lu, %lu, %lu)\n", hwnd, msg, wParam, lParam, dwRefData);
 
-    return THEMING_CallOriginalClass (hwnd, msg, wParam, lParam);
+    switch (msg) {
+        case WM_CREATE:
+            result = THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            OpenThemeData(hwnd, themeClass);
+            return result;
+
+        case WM_DESTROY:
+            theme = GetWindowTheme(hwnd);
+            CloseThemeData(theme);
+            return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+
+        case WM_THEMECHANGED:
+            theme = GetWindowTheme(hwnd);
+            CloseThemeData(theme);
+            OpenThemeData(hwnd, themeClass);
+            break;
+
+        case WM_SYSCOLORCHANGE:
+            theme = GetWindowTheme(hwnd);
+            if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            /* Do nothing. When themed, a WM_THEMECHANGED will be received, too,
+             * which will do the repaint. */
+            break;
+
+        default:
+            return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+    }
+
+    return 0;
 }
