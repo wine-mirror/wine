@@ -623,9 +623,13 @@ DWORD WINAPI GetTempPathW( DWORD count, LPWSTR path )
 
     if (count)
     {
-        lstrcpynW(path, tmp_path, count);
+        lstrcpynW(path, tmp_path, ret);
         if (count >= ret)
+        {
+            /* the remaining buffer must be zeroed */
+            memset(path + ret, 0, (count - ret) * sizeof(WCHAR));
             ret--; /* return length without 0 */
+        }
         else if (count < 4)
             path[0] = 0; /* avoid returning ambiguous "X:" */
     }

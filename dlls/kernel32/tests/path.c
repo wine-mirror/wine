@@ -1012,7 +1012,6 @@ static void test_GetTempPathW(char* tmp_dir)
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string\n");
     /* The rest of the buffer must be zeroed */
     for(len++; len < sizeof(buf) / sizeof(buf[0]); len++)
-        todo_wine
         ok(buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, buf[len]);
 }
 
