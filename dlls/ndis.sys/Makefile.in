@@ -1,4 +1,5 @@
 MODULE    = ndis.sys
+EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
 	main.c
