@@ -866,7 +866,7 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
     /* Save the settings to disk */
     save_mapping_settings(iface, lpdiaf, username);
 
-    return IDirectInputDevice8WImpl_SetActionMap(iface, lpdiaf, lpszUserName, dwFlags);
+    return DI_OK;
 }
 
 /******************************************************************************
@@ -1716,16 +1716,6 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 	X(DIDBAM_HWDEFAULTS)
 #undef X
   
-    return DI_OK;
-}
-
-HRESULT WINAPI IDirectInputDevice8WImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
-                                                     LPDIACTIONFORMATW lpdiaf,
-                                                     LPCWSTR lpszUserName,
-                                                     DWORD dwFlags)
-{
-    FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", iface, lpdiaf, debugstr_w(lpszUserName), dwFlags);
-
     return DI_OK;
 }
 
