@@ -28,6 +28,8 @@
 #include <time.h>
 #include <assert.h>
 
+#define NONAMELESSUNION
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -2214,7 +2216,7 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         SC_RPC_CONFIG_INFOW info;
 
         info.dwInfoLevel = dwInfoLevel;
-        info.descr = lpInfo;
+        info.u.descr = lpInfo;
         err = svcctl_ChangeServiceConfig2W( hService, info );
     }
     __EXCEPT(rpc_filter)
