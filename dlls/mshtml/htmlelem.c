@@ -1508,7 +1508,7 @@ static HRESULT WINAPI HTMLElement_get_outerText(IHTMLElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
-HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDOMNode *nsnode, HTMLDOMNode **ret_node)
+static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDOMNode *nsnode, HTMLDOMNode **ret_node)
 {
     nsIDOMNode *ret_nsnode;
     nsresult nsres;

@@ -878,8 +878,6 @@ void detach_ranges(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 HRESULT get_node_text(HTMLDOMNode*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT replace_node_by_html(nsIDOMHTMLDocument*,nsIDOMNode*,const WCHAR*) DECLSPEC_HIDDEN;
 
-HRESULT insert_adjacent_node(HTMLElement*,const WCHAR*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDEN;
-
 HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**) DECLSPEC_HIDDEN;
 HRESULT create_element(HTMLDocumentNode*,const WCHAR*,HTMLElement**) DECLSPEC_HIDDEN;
 
