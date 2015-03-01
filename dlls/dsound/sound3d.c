@@ -177,7 +177,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			TRACE("3D processing disabled\n");
 			/* this one is here only to eliminate annoying warning message */
 			DSOUND_RecalcVolPan (&dsb->volpan);
-			break;
+			return;
 		case DS3DMODE_NORMAL:
 			TRACE("Normal 3D processing mode\n");
 			/* we need to calculate distance between buffer and listener*/
