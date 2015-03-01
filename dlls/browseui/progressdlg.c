@@ -235,6 +235,7 @@ static DWORD WINAPI dialog_thread(LPVOID lpParameter)
     /* Note: until we set the hEvent in WM_INITDIALOG, the ProgressDialog object
      * is protected by the critical section held by StartProgress */
     struct create_params *params = lpParameter;
+    ProgressDialog *This = params->This;
     HWND hwnd;
     MSG msg;
 
@@ -252,6 +253,7 @@ static DWORD WINAPI dialog_thread(LPVOID lpParameter)
         }
     }
 
+    IProgressDialog_Release(&This->IProgressDialog_iface);
     return 0;
 }
 
@@ -341,9 +343,13 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
         return S_OK;  /* as on XP */
     }
     This->dwFlags = dwFlags;
+
     params.This = This;
     params.hwndParent = hwndParent;
     params.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    /* thread holds one reference to ensure clean shutdown */
+    IProgressDialog_AddRef(&This->IProgressDialog_iface);
 
     hThread = CreateThread(NULL, 0, dialog_thread, &params, 0, NULL);
     WaitForSingleObject(params.hEvent, INFINITE);
