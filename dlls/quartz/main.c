@@ -29,8 +29,6 @@ extern HRESULT WINAPI QUARTZ_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLS
 extern HRESULT WINAPI QUARTZ_DllCanUnloadNow(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI QUARTZ_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
 
-static DWORD dll_ref = 0;
-
 /* For the moment, do nothing here. */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -206,7 +204,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    if (dll_ref) return S_FALSE;
     return QUARTZ_DllCanUnloadNow();
 }
 
