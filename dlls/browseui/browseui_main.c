@@ -74,7 +74,7 @@ static void ClassFactory_Destructor(ClassFactory *This)
 {
     TRACE("Destroying class factory %p\n", This);
     heap_free(This);
-    BROWSEUI_refCount--;
+    InterlockedDecrement(&BROWSEUI_refCount);
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
@@ -154,7 +154,7 @@ static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
     This->ctor = ctor;
     *ppvOut = This;
     TRACE("Created class factory %p\n", This);
-    BROWSEUI_refCount++;
+    InterlockedIncrement(&BROWSEUI_refCount);
     return S_OK;
 }
 

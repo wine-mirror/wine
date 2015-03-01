@@ -268,7 +268,7 @@ static void ProgressDialog_Destructor(ProgressDialog *This)
     This->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->cs);
     heap_free(This);
-    BROWSEUI_refCount--;
+    InterlockedDecrement(&BROWSEUI_refCount);
 }
 
 static HRESULT WINAPI ProgressDialog_QueryInterface(IProgressDialog *iface, REFIID iid, LPVOID *ppvOut)
@@ -574,6 +574,6 @@ HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
-    BROWSEUI_refCount++;
+    InterlockedIncrement(&BROWSEUI_refCount);
     return S_OK;
 }
