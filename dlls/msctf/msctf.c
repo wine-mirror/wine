@@ -110,7 +110,7 @@ static void ClassFactory_Destructor(ClassFactory *This)
 {
     TRACE("Destroying class factory %p\n", This);
     HeapFree(GetProcessHeap(),0,This);
-    MSCTF_refCount--;
+    InterlockedDecrement(&MSCTF_refCount);
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
@@ -190,7 +190,7 @@ static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
     This->ctor = ctor;
     *ppvOut = This;
     TRACE("Created class factory %p\n", This);
-    MSCTF_refCount++;
+    InterlockedIncrement(&MSCTF_refCount);
     return S_OK;
 }
 
