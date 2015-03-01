@@ -821,7 +821,6 @@ static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
                             unsigned int access, unsigned int options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
-    int prev_fd;
 
     if (entry >= FD_CACHE_ENTRIES)
     {
@@ -841,11 +840,11 @@ static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
         }
     }
     /* store fd+1 so that 0 can be used as the unset value */
-    prev_fd = interlocked_xchg( &fd_cache[entry][idx].fd, fd + 1 ) - 1;
+    fd = interlocked_xchg( &fd_cache[entry][idx].fd, fd + 1 );
     fd_cache[entry][idx].type = type;
     fd_cache[entry][idx].access = access;
     fd_cache[entry][idx].options = options;
-    if (prev_fd != -1) close( prev_fd );
+    assert( !fd );
     return TRUE;
 }
 
