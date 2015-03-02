@@ -71,6 +71,7 @@ static void address_addcomponents(void)
 {
     static const WCHAR UNKNOWN[] = { 'u','n','k','n','o','w','n',0 };
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+    static const char testing[] = "testing";
     HRESULT hr;
     IDirectPlay8Address *localaddr = NULL;
 
@@ -85,6 +86,7 @@ static void address_addcomponents(void)
         DWORD namelen = 0;
         DWORD bufflen = 0;
         DWORD port = 8888;
+        WCHAR buffer[256];
 
         /* We can add any Component to the Address interface not just the predefined ones. */
         hr = IDirectPlay8Address_AddComponent(localaddr, UNKNOWN, &IID_Random, sizeof(GUID), DPNA_DATATYPE_GUID);
@@ -93,8 +95,38 @@ static void address_addcomponents(void)
         hr = IDirectPlay8Address_AddComponent(localaddr, UNKNOWN, &IID_Random, sizeof(GUID)+1, DPNA_DATATYPE_GUID);
         ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
 
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost)+2, DPNA_DATATYPE_STRING);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost)/2, DPNA_DATATYPE_STRING);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, testing, sizeof(testing)+2, DPNA_DATATYPE_STRING_ANSI);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+        /* Show that on error, nothing is added. */
+        size = sizeof(buffer);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, DPNA_KEY_HOSTNAME, buffer, &size, &type);
+        ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, testing, sizeof(testing), DPNA_DATATYPE_STRING_ANSI);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD)+2, DPNA_DATATYPE_DWORD);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost), DPNA_DATATYPE_STRING);
         ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        /* The information doesn't get removed when invalid parameters are used.*/
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost)+2, DPNA_DATATYPE_STRING);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+        size = sizeof(buffer);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, DPNA_KEY_HOSTNAME, buffer, &size, &type);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(type == DPNA_DATATYPE_STRING, "incorrect type %d\n", type);
+        todo_wine ok(!lstrcmpW(buffer, localhost), "Invalid string: %s\n", wine_dbgstr_w(buffer));
 
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD)+2, DPNA_DATATYPE_DWORD);
         ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);

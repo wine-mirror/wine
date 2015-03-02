@@ -382,10 +382,42 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
     struct component *entry;
     BOOL found = FALSE;
 
-    TRACE("(%p, %s, %p, %u, %x): stub\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
+    TRACE("(%p, %s, %p, %u, %x)\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
 
     if (NULL == lpvData)
         return DPNERR_INVALIDPOINTER;
+
+    switch (dwDataType)
+    {
+        case DPNA_DATATYPE_DWORD:
+            if (sizeof(DWORD) != dwDataSize)
+            {
+                WARN("Invalid DWORD size, returning DPNERR_INVALIDPARAM\n");
+                return DPNERR_INVALIDPARAM;
+            }
+            break;
+        case DPNA_DATATYPE_GUID:
+            if (sizeof(GUID) != dwDataSize)
+            {
+                WARN("Invalid GUID size, returning DPNERR_INVALIDPARAM\n");
+                return DPNERR_INVALIDPARAM;
+            }
+            break;
+        case DPNA_DATATYPE_STRING:
+            if (((strlenW((WCHAR*)lpvData)+1)*sizeof(WCHAR)) != dwDataSize)
+            {
+                WARN("Invalid STRING size, returning DPNERR_INVALIDPARAM\n");
+                return DPNERR_INVALIDPARAM;
+            }
+            break;
+        case DPNA_DATATYPE_STRING_ANSI:
+            if ((strlen((const CHAR*)lpvData)+1) != dwDataSize)
+            {
+                WARN("Invalid ASCII size, returning DPNERR_INVALIDPARAM\n");
+                return DPNERR_INVALIDPARAM;
+            }
+            break;
+    }
 
     LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
     {
@@ -411,16 +443,10 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
     switch (dwDataType)
     {
         case DPNA_DATATYPE_DWORD:
-            if (sizeof(DWORD) != dwDataSize)
-                return DPNERR_INVALIDPARAM;
-
             entry->data.value = *(DWORD*)lpvData;
             TRACE("(%p, %u): DWORD Type -> %u\n", lpvData, dwDataSize, *(const DWORD*) lpvData);
             break;
         case DPNA_DATATYPE_GUID:
-            if (sizeof(GUID) != dwDataSize)
-                return DPNERR_INVALIDPARAM;
-
             entry->data.guid = *(GUID*)lpvData;
             TRACE("(%p, %u): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid(lpvData));
             break;
