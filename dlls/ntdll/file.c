@@ -336,22 +336,22 @@ struct async_fileio
     void               *apc_arg;
 };
 
-typedef struct
+struct async_fileio_read
 {
     struct async_fileio io;
     char*               buffer;
     unsigned int        already;
     unsigned int        count;
     BOOL                avail_mode;
-} async_fileio_read;
+};
 
-typedef struct
+struct async_fileio_write
 {
     struct async_fileio io;
     const char         *buffer;
     unsigned int        already;
     unsigned int        count;
-} async_fileio_write;
+};
 
 
 /* callback for file I/O user APC */
@@ -416,7 +416,7 @@ NTSTATUS FILE_GetNtStatus(void)
  */
 static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc)
 {
-    async_fileio_read *fileio = user;
+    struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
 
     switch (status)
@@ -730,7 +730,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
         if (async_read)
         {
-            async_fileio_read *fileio;
+            struct async_fileio_read *fileio;
             BOOL avail_mode;
 
             if ((status = get_io_avail_mode( hFile, type, &avail_mode )))
@@ -923,7 +923,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
  */
 static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status, void **apc)
 {
-    async_fileio_write *fileio = user;
+    struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
     enum server_fd_type type;
 
@@ -1140,7 +1140,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
         if (async_write)
         {
-            async_fileio_write *fileio;
+            struct async_fileio_write *fileio;
 
             if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
             {
@@ -1327,21 +1327,11 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 
 struct async_ioctl
 {
-    HANDLE          handle;   /* handle to the device */
-    HANDLE          event;    /* async event */
-    void           *buffer;   /* buffer for output */
-    ULONG           size;     /* size of buffer */
-    PIO_APC_ROUTINE apc;      /* user apc params */
-    void           *apc_arg;
+    struct async_fileio io;
+    HANDLE              event;    /* async event */
+    void               *buffer;   /* buffer for output */
+    ULONG               size;     /* size of buffer */
 };
-
-/* callback for ioctl user APC */
-static void WINAPI ioctl_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
-{
-    struct async_ioctl *async = arg;
-    if (async->apc) async->apc( async->apc_arg, io, reserved );
-    RtlFreeHeap( GetProcessHeap(), 0, async );
-}
 
 /* callback for ioctl async I/O completion */
 static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc )
@@ -1352,7 +1342,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     {
         SERVER_START_REQ( get_ioctl_result )
         {
-            req->handle   = wine_server_obj_handle( async->handle );
+            req->handle   = wine_server_obj_handle( async->io.handle );
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
             status = wine_server_call( req );
@@ -1363,7 +1353,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     if (status != STATUS_PENDING)
     {
         io->u.Status = status;
-        if (async->apc || async->event) *apc = ioctl_apc;
+        if (async->io.apc || async->event) *apc = fileio_apc;
     }
     return status;
 }
@@ -1383,12 +1373,12 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     if (!(async = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*async) )))
         return STATUS_NO_MEMORY;
-    async->handle  = handle;
+    async->io.handle  = handle;
+    async->io.apc     = apc;
+    async->io.apc_arg = apc_context;
     async->event   = event;
     async->buffer  = out_buffer;
     async->size    = out_size;
-    async->apc     = apc;
-    async->apc_arg = apc_context;
 
     SERVER_START_REQ( ioctl )
     {
