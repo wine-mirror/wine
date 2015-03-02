@@ -3683,12 +3683,15 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
 {
     struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HRESULT hr;
+    DWORD dwSize;
+    WCHAR parentGuid[39];
     TRACE("(%p, %p)\n", knownfolder, pKFD);
 
     if(!pKFD) return E_INVALIDARG;
 
     ZeroMemory(pKFD, sizeof(*pKFD));
 
+    /* required fields */
     hr = get_known_folder_dword(knownfolder->registryPath, szCategory, &pKFD->category);
     if(FAILED(hr))
         return hr;
@@ -3696,6 +3699,15 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     hr = get_known_folder_wstr(knownfolder->registryPath, szName, &pKFD->pszName);
     if(FAILED(hr))
         return hr;
+
+    /* optional fields */
+    dwSize = sizeof(parentGuid);
+    hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szParentFolder,
+                RRF_RT_REG_SZ, NULL, parentGuid, &dwSize));
+    if(SUCCEEDED(hr))
+        IIDFromString(parentGuid, &pKFD->fidParent);
+
+    get_known_folder_dword(knownfolder->registryPath, szAttributes, &pKFD->dwAttributes);
 
     return S_OK;
 }
