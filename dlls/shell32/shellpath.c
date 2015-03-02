@@ -3709,6 +3709,8 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
 
     get_known_folder_dword(knownfolder->registryPath, szAttributes, &pKFD->dwAttributes);
 
+    get_known_folder_wstr(knownfolder->registryPath, szRelativePath, &pKFD->pszRelativePath);
+
     return S_OK;
 }
 
