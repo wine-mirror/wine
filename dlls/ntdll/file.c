@@ -331,9 +331,10 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 
 struct async_fileio
 {
-    HANDLE              handle;
-    PIO_APC_ROUTINE     apc;
-    void               *apc_arg;
+    struct async_fileio *next;
+    HANDLE               handle;
+    PIO_APC_ROUTINE      apc;
+    void                *apc_arg;
 };
 
 struct async_fileio_read
@@ -353,13 +354,46 @@ struct async_fileio_write
     unsigned int        count;
 };
 
+static struct async_fileio *fileio_freelist;
+
+static void release_fileio( struct async_fileio *io )
+{
+    for (;;)
+    {
+        struct async_fileio *next = fileio_freelist;
+        io->next = next;
+        if (interlocked_cmpxchg_ptr( (void **)&fileio_freelist, io, next ) == next) return;
+    }
+}
+
+static struct async_fileio *alloc_fileio( DWORD size, HANDLE handle, PIO_APC_ROUTINE apc, void *arg )
+{
+    /* first free remaining previous fileinfos */
+
+    struct async_fileio *io = interlocked_xchg_ptr( (void **)&fileio_freelist, NULL );
+
+    while (io)
+    {
+        struct async_fileio *next = io->next;
+        RtlFreeHeap( GetProcessHeap(), 0, io );
+        io = next;
+    }
+
+    if ((io = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+    {
+        io->handle  = handle;
+        io->apc     = apc;
+        io->apc_arg = arg;
+    }
+    return io;
+}
 
 /* callback for file I/O user APC */
 static void WINAPI fileio_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
 {
     struct async_fileio *async = arg;
     if (async->apc) async->apc( async->apc_arg, io, reserved );
-    RtlFreeHeap( GetProcessHeap(), 0, async );
+    release_fileio( async );
 }
 
 /***********************************************************************
@@ -466,7 +500,10 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        *apc = fileio_apc;
+        if (fileio->io.apc)
+            *apc = fileio_apc;
+        else
+            release_fileio( &fileio->io );
     }
     return status;
 }
@@ -741,14 +778,12 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 goto done;
             }
 
-            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
+            fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), hFile, apc, apc_user );
+            if (!fileio)
             {
                 status = STATUS_NO_MEMORY;
                 goto err;
             }
-            fileio->io.handle  = hFile;
-            fileio->io.apc     = apc;
-            fileio->io.apc_arg = apc_user;
             fileio->already = total;
             fileio->count = length;
             fileio->buffer = buffer;
@@ -963,7 +998,10 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        *apc = fileio_apc;
+        if (fileio->io.apc)
+            *apc = fileio_apc;
+        else
+            release_fileio( &fileio->io );
     }
     return status;
 }
@@ -1142,14 +1180,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         {
             struct async_fileio_write *fileio;
 
-            if (!(fileio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*fileio))))
+            fileio = (struct async_fileio_write *)alloc_fileio( sizeof(*fileio), hFile, apc, apc_user );
+            if (!fileio)
             {
                 status = STATUS_NO_MEMORY;
                 goto err;
             }
-            fileio->io.handle  = hFile;
-            fileio->io.apc     = apc;
-            fileio->io.apc_arg = apc_user;
             fileio->already = total;
             fileio->count = length;
             fileio->buffer = buffer;
@@ -1353,7 +1389,10 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     if (status != STATUS_PENDING)
     {
         io->u.Status = status;
-        if (async->io.apc || async->event) *apc = fileio_apc;
+        if (async->io.apc)
+            *apc = fileio_apc;
+        else
+            release_fileio( &async->io );
     }
     return status;
 }
@@ -1371,11 +1410,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     ULONG options;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_context;
 
-    if (!(async = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*async) )))
+    if (!(async = (struct async_ioctl *)alloc_fileio( sizeof(*async), handle, apc, apc_context )))
         return STATUS_NO_MEMORY;
-    async->io.handle  = handle;
-    async->io.apc     = apc;
-    async->io.apc_arg = apc_context;
     async->event   = event;
     async->buffer  = out_buffer;
     async->size    = out_size;
@@ -1410,7 +1446,6 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         NtWaitForSingleObject( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), NULL );
         status = io->u.Status;
         NtClose( wait_handle );
-        RtlFreeHeap( GetProcessHeap(), 0, async );
     }
 
     return status;
@@ -1740,7 +1775,10 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
 
     iosb->u.Status = ret;
     iosb->Information = size;
-    *apc = fileio_apc;
+    if (fileio->io.apc)
+        *apc = fileio_apc;
+    else
+        release_fileio( &fileio->io );
     return ret;
 }
 
@@ -1772,13 +1810,10 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
     if (!iosb) return STATUS_ACCESS_VIOLATION;
     if (filter == 0 || (filter & ~FILE_NOTIFY_ALL)) return STATUS_INVALID_PARAMETER;
 
-    fileio = RtlAllocateHeap( GetProcessHeap(), 0, offsetof( struct read_changes_fileio, data[size] ));
-    if (!fileio)
-        return STATUS_NO_MEMORY;
+    fileio = (struct read_changes_fileio *)alloc_fileio( offsetof(struct read_changes_fileio, data[size]),
+                                                         handle, apc, apc_context );
+    if (!fileio) return STATUS_NO_MEMORY;
 
-    fileio->io.handle   = handle;
-    fileio->io.apc      = apc;
-    fileio->io.apc_arg  = apc_context;
     fileio->buffer      = buffer;
     fileio->buffer_size = buffer_size;
     fileio->data_size   = size;
