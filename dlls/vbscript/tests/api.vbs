@@ -1324,4 +1324,46 @@ Call testRGBError(&h4d&, -2, &h2f&, 5)
 
 Call ok(getVT(Timer) = "VT_R4", "getVT(Timer) = " & getVT(Timer))
 
+
+Sub testAscError(strings, error_num)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = Asc(strings)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+Call ok(Asc(0) = 48, "Asc(0) = " & Asc(0))
+Call ok(getVT(Asc(0)) = "VT_I2", "getVT(Asc(0)) = " & getVT(Asc(0)))
+Call ok(Asc(-32769) = 45, "Asc(-32769) = " & Asc(-32769))
+Call ok(getVT(Asc(-32769)) = "VT_I2", "getVT(Asc(-32769)) = " & getVT(Asc(-32769)))
+Call ok(Asc(CSng(90.68)) = 57, "Asc(CSng(90.68)) = " & Asc(CSng(90.68)))
+Call ok(getVT(Asc(CSng(90.68))) = "VT_I2", "getVT(Asc(CSng(90.68))) = " & getVT(Asc(CSng(90.68))))
+Call ok(Asc(123) = 49, "Asc(123) = " & Asc(123))
+Call ok(getVT(Asc(123)) = "VT_I2", "getVT(Asc(123)) = " & getVT(Asc(123)))
+Call ok(Asc(CCur(234)) = 50, "Asc(CCur(234)) = " & Asc(CCur(234)))
+Call ok(getVT(Asc(CCur(234))) = "VT_I2", "getVT(Asc(CCur(234))) = " & getVT(Asc(CCur(234))))
+Call ok(Asc("abc") = 97, "Asc(""abc"") = " & Asc("abc"))
+Call ok(getVT(Asc("abc")) = "VT_I2", "getVT(Asc(""abc"")) = " & getVT(Asc("abc")))
+Call ok(Asc("?") = 63, "Asc(""?"") = " & Asc("?"))
+Call ok(getVT(Asc("?")) = "VT_I2", "getVT(Asc(""?"")) = " & getVT(Asc("?")))
+Call ok(Asc(" space") = 32, "Asc("" space"") = " & Asc(" space"))
+Call ok(getVT(Asc(" space")) = "VT_I2", "getVT(Asc("" space"")) = " & getVT(Asc(" space")))
+Call ok(Asc("@") = 64, "Asc(""@"") = " & Asc("@"))
+Call ok(getVT(Asc("@")) = "VT_I2", "getVT(Asc(""@"")) = " & getVT(Asc("@")))
+Call ok(Asc("\n") = 92, "Asc(""\n"") = " & Asc("\n"))
+Call ok(getVT(Asc("\n")) = "VT_I2", "getVT(Asc(""\n"")) = " & getVT(Asc("\n")))
+if isEnglishLang then
+    Call ok(Asc(False) = 70, "Asc(False) = " & Asc(False))
+    Call ok(getVT(Asc(False)) = "VT_I2", "getVT(Asc(False)) = " & getVT(Asc(False)))
+    Call ok(Asc(True) = 84, "Asc(True) = " & Asc(True))
+    Call ok(getVT(Asc(True)) = "VT_I2", "getVT(Asc(True)) = " & getVT(Asc(True)))
+End if
+Call ok(Asc(CByte(7)) = 55, "Asc(CByte(7)) = " & Asc(CByte(7)))
+Call ok(getVT(Asc(CByte(7))) = "VT_I2", "getVT(Asc(CByte(7))) = " & getVT(Asc(CByte(7))))
+Call testAscError(Empty, 5)
+Call testAscError(Null, 94)
+Call testAscError("", 5)
+
 Call reportSuccess()
