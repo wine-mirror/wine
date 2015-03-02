@@ -3589,7 +3589,7 @@ static HRESULT get_known_folder_path_by_id(
     DWORD dwFlags,
     LPWSTR *ppszPath)
 {
-    HRESULT hr;
+    HRESULT hr = E_FAIL;
     WCHAR sGuid[39];
     DWORD dwAttributes;
 
@@ -3603,7 +3603,8 @@ static HRESULT get_known_folder_path_by_id(
         hr = get_known_folder_path(sGuid, lpRegistryPath, ppszPath);
     }
     /* in other case, use older way */
-    else
+
+    if(FAILED(hr))
         hr = SHGetKnownFolderPath( folderId, dwFlags, NULL, ppszPath );
 
     if (FAILED(hr)) return hr;
