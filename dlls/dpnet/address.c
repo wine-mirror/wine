@@ -426,6 +426,13 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             TRACE("Found %s\n", debugstr_w(pwszName));
             found = TRUE;
 
+            if(entry->type == DPNA_DATATYPE_STRING_ANSI)
+               heap_free(entry->data.ansi);
+            else if(entry->type == DPNA_DATATYPE_STRING)
+                heap_free(entry->data.string);
+            else if(entry->type == DPNA_DATATYPE_BINARY)
+                heap_free(entry->data.binary);
+
             break;
         }
     }
@@ -451,20 +458,14 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             TRACE("(%p, %u): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid(lpvData));
             break;
         case DPNA_DATATYPE_STRING:
-            heap_free(entry->data.string);
-
             entry->data.string = heap_strdupW((WCHAR*)lpvData);
             TRACE("(%p, %u): STRING Type -> %s\n", lpvData, dwDataSize, debugstr_w((WCHAR*)lpvData));
             break;
         case DPNA_DATATYPE_STRING_ANSI:
-            heap_free(entry->data.ansi);
-
             entry->data.ansi = heap_strdupA((CHAR*)lpvData);
             TRACE("(%p, %u): ANSI STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
             break;
         case DPNA_DATATYPE_BINARY:
-            heap_free(entry->data.binary);
-
             entry->data.binary = heap_alloc(dwDataSize);
             memcpy(entry->data.binary, lpvData, dwDataSize);
             TRACE("(%p, %u): BINARY Type\n", lpvData, dwDataSize);
