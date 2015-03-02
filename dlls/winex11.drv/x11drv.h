@@ -61,7 +61,7 @@ typedef int Status;
 
 #define MAX_DASHLEN 16
 
-#define WINE_XDND_VERSION 4
+#define WINE_XDND_VERSION 5
 
   /* X physical pen */
 typedef struct

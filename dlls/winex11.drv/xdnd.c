@@ -373,6 +373,8 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
 {
     XClientMessageEvent e;
     IDropTarget *dropTarget;
+    DWORD effect = XDNDDropEffect;
+    int accept = 0; /* Assume we're not accepting */
 
     TRACE("\n");
 
@@ -386,7 +388,6 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     {
         HRESULT hr;
         POINTL pointl;
-        DWORD effect = XDNDDropEffect;
 
         pointl.x = XDNDxy.x;
         pointl.y = XDNDxy.y;
@@ -395,7 +396,10 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
         if (SUCCEEDED(hr))
         {
             if (effect != DROPEFFECT_NONE)
+            {
                 TRACE("drop succeeded\n");
+                accept = 1;
+            }
             else
                 TRACE("the application refused the drop\n");
         }
@@ -414,6 +418,11 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     e.message_type = x11drv_atom(XdndFinished);
     e.format = 32;
     e.data.l[0] = event->window;
+    e.data.l[1] = accept;
+    if (accept)
+        e.data.l[2] = X11DRV_XDND_DROPEFFECTToXdndAction(effect);
+    else
+        e.data.l[2] = None;
     XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
 }
 
