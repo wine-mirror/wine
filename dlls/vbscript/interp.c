@@ -709,7 +709,7 @@ static HRESULT interp_mcallv(exec_ctx_t *ctx)
     return do_mcall(ctx, NULL);
 }
 
-static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
+static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *dp)
 {
     ref_t ref;
     HRESULT hres;
@@ -762,7 +762,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
         break;
     }
     case REF_DISP:
-        hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, dp);
+        hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, flags, dp);
         break;
     case REF_FUNC:
         FIXME("functions not implemented\n");
@@ -805,7 +805,7 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
         return hres;
 
     vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
-    hres = assign_ident(ctx, arg, &dp);
+    hres = assign_ident(ctx, arg, DISPATCH_PROPERTYPUT, &dp);
     if(FAILED(hres))
         return hres;
 
@@ -832,7 +832,7 @@ static HRESULT interp_set_ident(exec_ctx_t *ctx)
         return hres;
 
     vbstack_to_dp(ctx, 0, TRUE, &dp);
-    hres = assign_ident(ctx, ctx->instr->arg1.bstr, &dp);
+    hres = assign_ident(ctx, ctx->instr->arg1.bstr, DISPATCH_PROPERTYPUTREF, &dp);
     if(FAILED(hres))
         return hres;
 
@@ -867,7 +867,7 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
     hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
     if(SUCCEEDED(hres)) {
         vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
-        hres = disp_propput(ctx->script, obj, id, &dp);
+        hres = disp_propput(ctx->script, obj, id, DISPATCH_PROPERTYPUT, &dp);
     }
     if(FAILED(hres))
         return hres;
@@ -908,7 +908,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
     hres = disp_get_id(obj, identifier, VBDISP_SET, FALSE, &id);
     if(SUCCEEDED(hres)) {
         vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
-        hres = disp_propput(ctx->script, obj, id, &dp);
+        hres = disp_propput(ctx->script, obj, id, DISPATCH_PROPERTYPUTREF, &dp);
     }
     if(FAILED(hres))
         return hres;
@@ -1176,7 +1176,7 @@ static HRESULT interp_enumnext(exec_ctx_t *ctx)
         return hres;
 
     do_continue = hres == S_OK;
-    hres = assign_ident(ctx, ident, &dp);
+    hres = assign_ident(ctx, ident, DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF, &dp);
     VariantClear(&v);
     if(FAILED(hres))
         return hres;
