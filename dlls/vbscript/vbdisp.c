@@ -112,7 +112,9 @@ static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIA
         hres = VariantCopyInd(res, v);
         break;
 
-    case DISPATCH_PROPERTYPUT: {
+    case DISPATCH_PROPERTYPUT:
+    case DISPATCH_PROPERTYPUTREF:
+    case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF: {
         VARIANT *put_val;
 
         put_val = get_propput_arg(dp);
@@ -409,7 +411,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             }
 
             return exec_script(This->desc->ctx, func, This, pdp, pvarRes);
-        case DISPATCH_PROPERTYPUT: {
+        case DISPATCH_PROPERTYPUT:
+        case DISPATCH_PROPERTYPUTREF:
+        case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF: {
             VARIANT *put_val;
             DISPPARAMS dp = {NULL, NULL, 1, 0};
 
