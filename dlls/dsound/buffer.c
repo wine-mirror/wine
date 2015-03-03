@@ -844,10 +844,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(IDirectSoundBuffer8
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 
-	FIXME("(%p,%s,%u,%s,%p): stub\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
+	TRACE("(%p,%s,%u,%s,%p)\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
 
-	WARN("control unavailable\n");
-	return DSERR_CONTROLUNAVAIL;
+	if (dwIndex >= This->num_filters)
+		return DSERR_OBJECTNOTFOUND;
+
+	if (!ppObject)
+		return E_INVALIDARG;
+
+	if (IsEqualGUID(rguidObject, &This->filters[dwIndex].guid) || IsEqualGUID(rguidObject, &GUID_All_Objects)) {
+		if (SUCCEEDED(IMediaObject_QueryInterface(This->filters[dwIndex].obj, rguidInterface, ppObject)))
+			return DS_OK;
+		else
+			return E_NOINTERFACE;
+	} else {
+		WARN("control unavailable\n");
+		return DSERR_OBJECTNOTFOUND;
+	}
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(IDirectSoundBuffer8 *iface,
