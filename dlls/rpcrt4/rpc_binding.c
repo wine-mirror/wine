@@ -1120,7 +1120,7 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
 {
     RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
     if (!AuthInfo)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     AuthInfo->refs = 1;
     AuthInfo->AuthnLevel = AuthnLevel;
@@ -1140,7 +1140,7 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
         if (!AuthInfo->nt_identity)
         {
             HeapFree(GetProcessHeap(), 0, AuthInfo);
-            return ERROR_OUTOFMEMORY;
+            return RPC_S_OUT_OF_MEMORY;
         }
 
         AuthInfo->nt_identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -1169,7 +1169,7 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Password);
             HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity);
             HeapFree(GetProcessHeap(), 0, AuthInfo);
-            return ERROR_OUTOFMEMORY;
+            return RPC_S_OUT_OF_MEMORY;
         }
     }
     else
@@ -1493,7 +1493,7 @@ RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName,
     {
         *ServerPrincName = (RPC_CSTR)RPCRT4_strdupWtoA(principal);
         RpcStringFreeW(&principal);
-        if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
+        if (!*ServerPrincName) return RPC_S_OUT_OF_MEMORY;
     }
 
     return status;
@@ -1525,7 +1525,7 @@ RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName,
         if (bind->AuthInfo->server_principal_name)
         {
             *ServerPrincName = RPCRT4_strdupW(bind->AuthInfo->server_principal_name);
-            if (!*ServerPrincName) return ERROR_OUTOFMEMORY;
+            if (!*ServerPrincName) return RPC_S_OUT_OF_MEMORY;
         }
         else *ServerPrincName = NULL;
     }
@@ -1606,7 +1606,7 @@ RpcBindingInqAuthClientExA( RPC_BINDING_HANDLE ClientBinding, RPC_AUTHZ_HANDLE *
     if (status == RPC_S_OK && ServerPrincName)
     {
         *ServerPrincName = (RPC_CSTR)RPCRT4_strdupWtoA(principal);
-        if (!*ServerPrincName && principal) status = ERROR_OUTOFMEMORY;
+        if (!*ServerPrincName && principal) status = RPC_S_OUT_OF_MEMORY;
         RpcStringFreeW(&principal);
     }
 
@@ -1751,7 +1751,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
       else
       {
         RpcAuthInfo_Release(new_auth_info);
-        r = ERROR_OUTOFMEMORY;
+        r = RPC_S_OUT_OF_MEMORY;
       }
     }
     else
@@ -1882,7 +1882,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
       else
       {
         RpcAuthInfo_Release(new_auth_info);
-        r = ERROR_OUTOFMEMORY;
+        r = RPC_S_OUT_OF_MEMORY;
       }
     }
     else
@@ -1936,7 +1936,7 @@ RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Op
         int len = MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, NULL, 0);
         WCHAR *str;
 
-        if (!(str = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) return ERROR_OUTOFMEMORY;
+        if (!(str = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) return RPC_S_OUT_OF_MEMORY;
         MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, str, len);
         str[len] = 0;
         HeapFree(GetProcessHeap(), 0, binding->CookieAuth);

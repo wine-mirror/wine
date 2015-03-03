@@ -57,7 +57,7 @@ RPC_STATUS WINAPI MesEncodeIncrementalHandleCreate(
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     init_MIDL_ES_MESSAGE(pEsMsg);
 
@@ -84,7 +84,7 @@ RPC_STATUS WINAPI MesDecodeIncrementalHandleCreate(
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     init_MIDL_ES_MESSAGE(pEsMsg);
 
@@ -144,7 +144,7 @@ RPC_STATUS RPC_ENTRY MesEncodeFixedBufferHandleCreate(
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     init_MIDL_ES_MESSAGE(pEsMsg);
 
@@ -181,7 +181,7 @@ RPC_STATUS RPC_ENTRY MesDecodeBufferHandleCreate(
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     init_MIDL_ES_MESSAGE(pEsMsg);
 
@@ -205,7 +205,7 @@ static void es_data_alloc(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
         if (tmpsize < size)
         {
             ERR("not enough bytes allocated - requested %d, got %d\n", size, tmpsize);
-            RpcRaiseException(ERROR_OUTOFMEMORY);
+            RpcRaiseException(RPC_S_OUT_OF_MEMORY);
         }
     }
     else if (pEsMsg->HandleStyle == MES_FIXED_BUFFER_HANDLE)
@@ -226,7 +226,7 @@ static void es_data_read(MIDL_ES_MESSAGE *pEsMsg, ULONG size)
         if (tmpsize < size)
         {
             ERR("not enough bytes read - requested %d, got %d\n", size, tmpsize);
-            RpcRaiseException(ERROR_OUTOFMEMORY);
+            RpcRaiseException(RPC_S_OUT_OF_MEMORY);
         }
     }
     else

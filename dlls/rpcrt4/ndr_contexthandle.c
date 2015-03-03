@@ -91,7 +91,7 @@ RPC_BINDING_HANDLE WINAPI NDRCContextBinding(NDR_CCONTEXT CContext)
     if (!handle)
     {
         ERR("invalid handle %p\n", CContext);
-        RpcRaiseException(ERROR_INVALID_HANDLE);
+        RpcRaiseException(RPC_X_SS_CONTEXT_MISMATCH);
     }
     return handle;
 }
@@ -165,7 +165,7 @@ void WINAPI RpcSsDestroyClientContext(void **ContextHandle)
     FIXME("stub\n");
 }
 
-static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
+static RPC_STATUS ndr_update_context_handle(NDR_CCONTEXT *CContext,
                                       RPC_BINDING_HANDLE hBinding,
                                       const ndr_context_handle *chi)
 {
@@ -178,7 +178,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
         {
             che = get_context_entry(*CContext);
             if (!che)
-                return ERROR_INVALID_HANDLE;
+                return RPC_X_SS_CONTEXT_MISMATCH;
             list_remove(&che->entry);
             RpcBindingFree(&che->handle);
             HeapFree(GetProcessHeap(), 0, che);
@@ -190,7 +190,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
     {
         che = HeapAlloc(GetProcessHeap(), 0, sizeof *che);
         if (!che)
-            return ERROR_NOT_ENOUGH_MEMORY;
+            return RPC_X_NO_MEMORY;
         che->magic = NDR_CONTEXT_HANDLE_MAGIC;
         RpcBindingCopy(hBinding, &che->handle);
         list_add_tail(&context_handle_list, &che->entry);
@@ -199,7 +199,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
 
     *CContext = che;
 
-    return ERROR_SUCCESS;
+    return RPC_S_OK;
 }
 
 /***********************************************************************
@@ -209,16 +209,16 @@ void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
                                   RPC_BINDING_HANDLE hBinding,
                                   void *pBuff, ULONG DataRepresentation)
 {
-    UINT r;
+    RPC_STATUS status;
 
     TRACE("*%p=(%p) %p %p %08x\n",
           CContext, *CContext, hBinding, pBuff, DataRepresentation);
 
     EnterCriticalSection(&ndr_context_cs);
-    r = ndr_update_context_handle(CContext, hBinding, pBuff);
+    status = ndr_update_context_handle(CContext, hBinding, pBuff);
     LeaveCriticalSection(&ndr_context_cs);
-    if (r)
-        RpcRaiseException(r);
+    if (status)
+        RpcRaiseException(status);
 }
 
 /***********************************************************************
@@ -263,7 +263,7 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
           hBinding, SContext, pBuff, userRunDownIn, CtxGuard, Flags);
 
     if (!binding->server || !binding->Assoc)
-        RpcRaiseException(ERROR_INVALID_HANDLE);
+        RpcRaiseException(RPC_S_INVALID_BINDING);
 
     if (Flags & RPC_CONTEXT_HANDLE_FLAGS)
         FIXME("unimplemented flags: 0x%x\n", Flags & RPC_CONTEXT_HANDLE_FLAGS);
@@ -282,7 +282,7 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
     else
     {
         if (!RpcContextHandle_IsGuardCorrect(SContext, CtxGuard))
-            RpcRaiseException(ERROR_INVALID_HANDLE);
+            RpcRaiseException(RPC_X_SS_CONTEXT_MISMATCH);
         memset(ndr, 0, sizeof(*ndr));
 
         RPCRT4_RemoveThreadContextHandle(SContext);
@@ -337,7 +337,7 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
           hBinding, pBuff, DataRepresentation, CtxGuard, Flags);
 
     if (!binding->server || !binding->Assoc)
-        RpcRaiseException(ERROR_INVALID_HANDLE);
+        RpcRaiseException(RPC_S_INVALID_BINDING);
 
     if (Flags & RPC_CONTEXT_HANDLE_FLAGS)
         FIXME("unimplemented flags: 0x%x\n", Flags & RPC_CONTEXT_HANDLE_FLAGS);
@@ -351,7 +351,7 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
         if (context_ndr->attributes)
         {
             ERR("non-null attributes 0x%x\n", context_ndr->attributes);
-            status = ERROR_INVALID_HANDLE;
+            status = RPC_X_SS_CONTEXT_MISMATCH;
         }
         else
             status = RpcServerAssoc_FindContextHandle(binding->Assoc,

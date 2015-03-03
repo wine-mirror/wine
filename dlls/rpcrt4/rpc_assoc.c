@@ -341,7 +341,7 @@ static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *
             break;
         case REJECT_INVALID_CHECKSUM:
             ERR("invalid checksum\n");
-            status = ERROR_ACCESS_DENIED;
+            status = RPC_S_ACCESS_DENIED;
             break;
         default:
             ERR("rejected bind for reason %d\n", response_hdr->bind_nack.reject_reason);
@@ -443,7 +443,7 @@ RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard,
 
     context_handle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context_handle));
     if (!context_handle)
-        return ERROR_OUTOFMEMORY;
+        return RPC_S_OUT_OF_MEMORY;
 
     context_handle->ctx_guard = CtxGuard;
     RtlInitializeResource(&context_handle->rw_lock);

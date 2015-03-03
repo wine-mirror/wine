@@ -395,7 +395,7 @@ typedef struct _NDR_MEMORY_LIST
  *
  * NOTES
  *  The memory block is always 8-byte aligned.
- *  If the function is unable to allocate memory an ERROR_OUTOFMEMORY
+ *  If the function is unable to allocate memory an RPC_X_NO_MEMORY
  *  exception is raised.
  */
 void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, SIZE_T len)
@@ -415,7 +415,7 @@ void * WINAPI NdrAllocate(MIDL_STUB_MESSAGE *pStubMsg, SIZE_T len)
     }
 
     p = pStubMsg->pfnAllocate(adjusted_len);
-    if (!p) RpcRaiseException(ERROR_OUTOFMEMORY);
+    if (!p) RpcRaiseException(RPC_X_NO_MEMORY);
 
     mem_list = (NDR_MEMORY_LIST *)((char *)p + aligned_len);
     mem_list->magic = MEML_MAGIC;
@@ -4614,7 +4614,7 @@ RPC_STATUS RPC_ENTRY NdrGetUserMarshalInfo(ULONG *flags, ULONG level, NDR_USER_M
 
         if (umcb->pStubMsg->Buffer < buffer_start ||
             umcb->pStubMsg->Buffer > buffer_end)
-            return ERROR_INVALID_USER_BUFFER;
+            return RPC_X_INVALID_BUFFER;
 
         umi->u1.Level1.Buffer = umcb->pStubMsg->Buffer;
         umi->u1.Level1.BufferSize = buffer_end - umcb->pStubMsg->Buffer;

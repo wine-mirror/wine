@@ -1512,7 +1512,7 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
     }
 
     async_call_data = I_RpcAllocate(sizeof(*async_call_data) + sizeof(MIDL_STUB_MESSAGE) + sizeof(RPC_MESSAGE));
-    if (!async_call_data) RpcRaiseException(ERROR_OUTOFMEMORY);
+    if (!async_call_data) RpcRaiseException(RPC_X_NO_MEMORY);
     async_call_data->pProcHeader = pProcHeader;
 
     async_call_data->pStubMsg = pStubMsg = (PMIDL_STUB_MESSAGE)(async_call_data + 1);
