@@ -48,6 +48,9 @@ enum SCROLL_HITTEST
     SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
 };
 
+static HWND tracking_win = 0;
+static enum SCROLL_HITTEST tracking_hot_part = SCROLL_NOWHERE;
+
 WINE_DEFAULT_DEBUG_CHANNEL(theme_scroll);
 
 static void calc_thumb_dimensions(unsigned int size, SCROLLINFO *si, unsigned int *thumbpos, unsigned int *thumbsize)
@@ -149,6 +152,164 @@ static enum SCROLL_HITTEST hit_test(HWND hwnd, HTHEME theme, POINT pt)
         return SCROLL_BOTTOM_RECT;
 }
 
+static void redraw_part(HWND hwnd, HTHEME theme, enum SCROLL_HITTEST part)
+{
+    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+    BOOL vertical = style & SBS_VERT;
+    SIZE sz;
+    RECT r, partrect;
+    unsigned int size, upsize, downsize;
+
+    if (part == SCROLL_NOWHERE) { /* redraw everything */
+        InvalidateRect(hwnd, NULL, TRUE);
+        return;
+    }
+
+    GetWindowRect(hwnd, &r);
+    OffsetRect(&r, -r.left, -r.top);
+
+    if (vertical) {
+        size = r.bottom;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_UPNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get up arrow size.\n");
+            upsize = 0;
+        } else
+            upsize = sz.cy;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_DOWNNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get down arrow size.\n");
+            downsize = 0;
+        } else
+            downsize = sz.cy;
+    } else {
+        size = r.right;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_LEFTNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get left arrow size.\n");
+            upsize = 0;
+        } else
+            upsize = sz.cx;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_RIGHTNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get right arrow size.\n");
+            downsize = 0;
+        } else
+            downsize = sz.cx;
+    }
+
+    if (size < SCROLL_MIN_RECT + upsize + downsize)
+        upsize = downsize = (size - SCROLL_MIN_RECT)/2;
+
+    partrect = r;
+
+    if (part == SCROLL_TOP_ARROW) {
+        if (vertical)
+            partrect.bottom = partrect.top + upsize;
+        else
+            partrect.right = partrect.left + upsize;
+    } else if (part == SCROLL_BOTTOM_ARROW) {
+        if (vertical)
+            partrect.top = partrect.bottom - downsize;
+        else
+            partrect.left = partrect.right - downsize;
+    } else {
+        unsigned int thumbpos, thumbsize;
+        SCROLLINFO si;
+
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        if (!GetScrollInfo(hwnd, SB_CTL, &si)) {
+            WARN("GetScrollInfo failed.\n");
+            return;
+        }
+
+        calc_thumb_dimensions(size - upsize - downsize, &si, &thumbpos, &thumbsize);
+
+        if (part == SCROLL_TOP_RECT) {
+            if (vertical) {
+                partrect.top = r.top + upsize;
+                partrect.bottom = partrect.top + thumbpos;
+            } else {
+                partrect.left = r.left + upsize;
+                partrect.right = partrect.left + thumbpos;
+            }
+        } else if (part == SCROLL_THUMB) {
+            if (vertical) {
+                partrect.top = r.top + upsize + thumbpos;
+                partrect.bottom = partrect.top + thumbsize;
+            } else {
+                partrect.left = r.left + upsize + thumbpos;
+                partrect.right = partrect.left + thumbsize;
+            }
+        } else if (part == SCROLL_BOTTOM_RECT) {
+            if (vertical) {
+                partrect.top = r.top + upsize + thumbpos + thumbsize;
+                partrect.bottom = r.bottom - downsize;
+            } else {
+                partrect.left = r.left + upsize + thumbpos + thumbsize;
+                partrect.right = r.right - downsize;
+            }
+        }
+    }
+
+    InvalidateRect(hwnd, &partrect, TRUE);
+}
+
+static void scroll_event(HWND hwnd, HTHEME theme, UINT msg, POINT pt)
+{
+    enum SCROLL_HITTEST hittest;
+    TRACKMOUSEEVENT tme;
+
+    if (GetWindowLongW(hwnd, GWL_STYLE) & (SBS_SIZEGRIP | SBS_SIZEBOX))
+        return;
+
+    hittest = hit_test(hwnd, theme, pt);
+
+    switch (msg)
+    {
+        case WM_MOUSEMOVE:
+            hittest = hit_test(hwnd, theme, pt);
+            tracking_win = hwnd;
+            break;
+
+        case WM_MOUSELEAVE:
+            if (tracking_win == hwnd) {
+                hittest = SCROLL_NOWHERE;
+            }
+            break;
+    }
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_QUERY;
+    TrackMouseEvent(&tme);
+
+    if (!(tme.dwFlags & TME_LEAVE) || tme.hwndTrack != hwnd) {
+        tme.dwFlags = TME_LEAVE;
+        tme.hwndTrack = hwnd;
+        TrackMouseEvent(&tme);
+    }
+
+    if (tracking_win != hwnd && msg == WM_MOUSELEAVE) {
+        redraw_part(hwnd, theme, SCROLL_NOWHERE);
+        return;
+    }
+
+    if (tracking_win == hwnd && hittest != tracking_hot_part) {
+        enum SCROLL_HITTEST oldhotpart = tracking_hot_part;
+
+        tracking_hot_part = hittest;
+
+        if (hittest != SCROLL_NOWHERE)
+            redraw_part(hwnd, theme, hittest);
+        else
+            tracking_win = 0;
+
+        if (oldhotpart != SCROLL_NOWHERE)
+            redraw_part(hwnd, theme, oldhotpart);
+    }
+}
+
 static void paint_scrollbar(HWND hwnd, HTHEME theme)
 {
     HDC dc;
@@ -197,6 +358,15 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
             uppertrackstate = SCRBS_NORMAL;
             lowertrackstate = SCRBS_NORMAL;
             thumbstate = SCRBS_NORMAL;
+
+            if (tracking_win == hwnd) {
+                if (tracking_hot_part == SCROLL_TOP_RECT)
+                    uppertrackstate = SCRBS_HOT;
+                else if (tracking_hot_part == SCROLL_BOTTOM_RECT)
+                    lowertrackstate = SCRBS_HOT;
+                else if (tracking_hot_part == SCROLL_THUMB)
+                    thumbstate = SCRBS_HOT;
+            }
         }
 
         if (vertical) {
@@ -209,6 +379,13 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
             } else {
                 uparrowstate = ABS_UPNORMAL;
                 downarrowstate = ABS_DOWNNORMAL;
+
+                if (tracking_win == hwnd) {
+                    if (tracking_hot_part == SCROLL_TOP_ARROW)
+                        uparrowstate = ABS_UPHOT;
+                    else if (tracking_hot_part == SCROLL_BOTTOM_ARROW)
+                        downarrowstate = ABS_DOWNHOT;
+                }
             }
 
             if (FAILED(GetThemePartSize(theme, dc, SBP_ARROWBTN, uparrowstate, NULL, TS_DRAW, &upsize))) {
@@ -277,6 +454,13 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
             } else {
                 leftarrowstate = ABS_LEFTNORMAL;
                 rightarrowstate = ABS_RIGHTNORMAL;
+
+                if (tracking_win == hwnd) {
+                    if (tracking_hot_part == SCROLL_TOP_ARROW)
+                        leftarrowstate = ABS_LEFTHOT;
+                    else if (tracking_hot_part == SCROLL_BOTTOM_ARROW)
+                        rightarrowstate = ABS_RIGHTHOT;
+                }
             }
 
             if (FAILED(GetThemePartSize(theme, dc, SBP_ARROWBTN, leftarrowstate, NULL, TS_DRAW, &leftsize))) {
@@ -348,6 +532,7 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
     const WCHAR* themeClass = WC_SCROLLBARW;
     HTHEME theme;
     LRESULT result;
+    POINT pt;
 
     TRACE("(%p, 0x%x, %lu, %lu, %lu)\n", hwnd, msg, wParam, lParam, dwRefData);
 
@@ -380,6 +565,16 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
             if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
 
             paint_scrollbar(hwnd, theme);
+            break;
+
+        case WM_MOUSEMOVE:
+        case WM_MOUSELEAVE:
+            theme = GetWindowTheme(hwnd);
+            if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
+            scroll_event(hwnd, theme, msg, pt);
             break;
 
         default:
