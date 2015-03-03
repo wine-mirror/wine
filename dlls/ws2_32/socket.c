@@ -378,6 +378,34 @@ struct ws2_accept_async
     struct ws2_async    *read;
 };
 
+static struct ws2_async_io *async_io_freelist;
+
+static void release_async_io( struct ws2_async_io *io )
+{
+    for (;;)
+    {
+        struct ws2_async_io *next = async_io_freelist;
+        io->next = next;
+        if (interlocked_cmpxchg_ptr( (void **)&async_io_freelist, io, next ) == next) return;
+    }
+}
+
+static struct ws2_async_io *alloc_async_io( DWORD size )
+{
+    /* first free remaining previous fileinfos */
+
+    struct ws2_async_io *io = interlocked_xchg_ptr( (void **)&async_io_freelist, NULL );
+
+    while (io)
+    {
+        struct ws2_async_io *next = io->next;
+        HeapFree( GetProcessHeap(), 0, io );
+        io = next;
+    }
+
+    return HeapAlloc( GetProcessHeap(), 0, size );
+}
+
 /****************************************************************/
 
 /* ----------------------------------- internal data */
@@ -1904,7 +1932,7 @@ static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserv
     if (wsa->completion_func) wsa->completion_func( NtStatusToWSAError(iosb->u.Status),
                                                     iosb->Information, wsa->user_overlapped,
                                                     wsa->flags );
-    HeapFree( GetProcessHeap(), 0, wsa );
+    release_async_io( &wsa->io );
 }
 
 /***********************************************************************
@@ -2022,18 +2050,12 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
     {
         iosb->u.Status = status;
         iosb->Information = result;
-        *apc = ws2_async_apc;
+        if (wsa->completion_func)
+            *apc = ws2_async_apc;
+        else
+            release_async_io( &wsa->io );
     }
     return status;
-}
-
-/* user APC called upon async accept completion */
-static void WINAPI ws2_async_accept_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
-{
-    struct ws2_accept_async *wsa = arg;
-
-    HeapFree( GetProcessHeap(), 0, wsa->read );
-    HeapFree( GetProcessHeap(), 0, wsa );
 }
 
 /***********************************************************************
@@ -2056,7 +2078,7 @@ static NTSTATUS WS2_async_accept_recv( void *arg, IO_STATUS_BLOCK *iosb, NTSTATU
     if (wsa->cvalue)
         WS_AddCompletion( HANDLE2SOCKET(wsa->listen_socket), wsa->cvalue, iosb->u.Status, iosb->Information );
 
-    *apc = ws2_async_accept_apc;
+    release_async_io( &wsa->io );
     return status;
 }
 
@@ -2139,7 +2161,8 @@ finish:
     if (wsa->user_overlapped->hEvent)
         SetEvent(wsa->user_overlapped->hEvent);
 
-    *apc = ws2_async_accept_apc;
+    if (wsa->read) release_async_io( &wsa->read->io );
+    release_async_io( &wsa->io );
     return status;
 }
 
@@ -2261,7 +2284,10 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        *apc = ws2_async_apc;
+        if (wsa->completion_func)
+            *apc = ws2_async_apc;
+        else
+            release_async_io( &wsa->io );
     }
     return status;
 }
@@ -2293,7 +2319,7 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
     }
     iosb->u.Status = status;
     iosb->Information = 0;
-    *apc = ws2_async_apc;
+    release_async_io( &wsa->io );
     return status;
 }
 
@@ -2309,7 +2335,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 
     TRACE("s %04lx type %d\n", s, type);
 
-    wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
+    wsa = (struct ws2_async_shutdown *)alloc_async_io( sizeof(*wsa) );
     if ( !wsa )
         return WSAEFAULT;
 
@@ -2436,7 +2462,7 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     }
     release_sock_fd( acceptor, fd );
 
-    wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
+    wsa = (struct ws2_accept_async *)alloc_async_io( sizeof(*wsa) );
     if(!wsa)
     {
         SetLastError(WSAEFAULT);
@@ -2456,7 +2482,7 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     if (wsa->data_len)
     {
         /* set up a read request if we need it */
-        wsa->read = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[1]) );
+        wsa->read = (struct ws2_async *)alloc_async_io( offsetof(struct ws2_async, iovec[1]) );
         if (!wsa->read)
         {
             HeapFree( GetProcessHeap(), 0, wsa );
@@ -2472,6 +2498,7 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
         wsa->read->control     = NULL;
         wsa->read->n_iovecs    = 1;
         wsa->read->first_iovec = 0;
+        wsa->read->completion_func = NULL;
         wsa->read->iovec[0].iov_base = wsa->buf;
         wsa->read->iovec[0].iov_len  = wsa->data_len;
     }
@@ -2915,7 +2942,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
                       FD_WINE_CONNECTED|FD_WINE_LISTENING);
 
         /* Indirectly call WSASend */
-        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct ws2_async, iovec[1] ))))
+        if (!(wsa = (struct ws2_async *)alloc_async_io( offsetof( struct ws2_async, iovec[1] ))))
         {
             SetLastError(WSAEFAULT);
         }
@@ -3800,7 +3827,7 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
     NTSTATUS status;
     PIO_STATUS_BLOCK io;
 
-    if (!(wsa = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wsa) )))
+    if (!(wsa = (struct ws2_async *)alloc_async_io( sizeof(*wsa) )))
         return WSA_NOT_ENOUGH_MEMORY;
     wsa->hSocket           = handle;
     wsa->user_overlapped   = overlapped;
@@ -4651,7 +4678,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
     if (overlapped || dwBufferCount > 1)
     {
-        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+        if (!(wsa = (struct ws2_async *)alloc_async_io( offsetof(struct ws2_async, iovec[dwBufferCount]))))
         {
             err = WSAEFAULT;
             goto error;
@@ -6666,7 +6693,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
     if (overlapped || dwBufferCount > 1)
     {
-        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+        if (!(wsa = (struct ws2_async *)alloc_async_io( offsetof(struct ws2_async, iovec[dwBufferCount]))))
         {
             err = WSAEFAULT;
             goto error;
