@@ -38,6 +38,16 @@
 /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4
 
+enum SCROLL_HITTEST
+{
+    SCROLL_NOWHERE,      /* Outside the scroll bar */
+    SCROLL_TOP_ARROW,    /* Top or left arrow */
+    SCROLL_TOP_RECT,     /* Rectangle between the top arrow and the thumb */
+    SCROLL_THUMB,        /* Thumb rectangle */
+    SCROLL_BOTTOM_RECT,  /* Rectangle between the thumb and the bottom arrow */
+    SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
+};
+
 WINE_DEFAULT_DEBUG_CHANNEL(theme_scroll);
 
 static void calc_thumb_dimensions(unsigned int size, SCROLLINFO *si, unsigned int *thumbpos, unsigned int *thumbsize)
@@ -64,6 +74,79 @@ static void calc_thumb_dimensions(unsigned int size, SCROLLINFO *si, unsigned in
                 *thumbpos = MulDiv(size, si->nTrackPos - si->nMin, max - si->nMin);
         }
     }
+}
+
+static enum SCROLL_HITTEST hit_test(HWND hwnd, HTHEME theme, POINT pt)
+{
+    RECT r;
+    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+    BOOL vertical = style & SBS_VERT;
+    SIZE sz;
+    SCROLLINFO si;
+    unsigned int offset, size, upsize, downsize, thumbpos, thumbsize;
+
+    GetWindowRect(hwnd, &r);
+    OffsetRect(&r, -r.left, -r.top);
+
+    if (vertical) {
+        offset = pt.y;
+        size = r.bottom;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_UPNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get up arrow size.\n");
+            upsize = 0;
+        } else
+            upsize = sz.cy;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_DOWNNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get down arrow size.\n");
+            downsize = 0;
+        } else
+            downsize = sz.cy;
+    } else {
+        offset = pt.x;
+        size = r.right;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_LEFTNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get left arrow size.\n");
+            upsize = 0;
+        } else
+            upsize = sz.cx;
+
+        if (FAILED(GetThemePartSize(theme, NULL, SBP_ARROWBTN, ABS_RIGHTNORMAL, NULL, TS_DRAW, &sz))) {
+            WARN("Could not get right arrow size.\n");
+            downsize = 0;
+        } else
+            downsize = sz.cx;
+    }
+
+    if (pt.x < 0 || pt.x > r.right || pt.y < 0 || pt.y > r.bottom)
+        return SCROLL_NOWHERE;
+
+    if (size < SCROLL_MIN_RECT + upsize + downsize)
+        upsize = downsize = (size - SCROLL_MIN_RECT)/2;
+
+    if (offset < upsize)
+        return SCROLL_TOP_ARROW;
+
+    if (offset > size - downsize)
+        return SCROLL_BOTTOM_ARROW;
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_ALL;
+    if (!GetScrollInfo(hwnd, SB_CTL, &si)) {
+        WARN("GetScrollInfo failed.\n");
+        return SCROLL_NOWHERE;
+    }
+
+    calc_thumb_dimensions(size - upsize - downsize, &si, &thumbpos, &thumbsize);
+
+    if (offset < upsize + thumbpos)
+        return SCROLL_TOP_RECT;
+    else if (offset < upsize + thumbpos + thumbsize)
+        return SCROLL_THUMB;
+    else
+        return SCROLL_BOTTOM_RECT;
 }
 
 static void paint_scrollbar(HWND hwnd, HTHEME theme)
