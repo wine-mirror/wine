@@ -42,6 +42,7 @@ static inline void init_MIDL_ES_MESSAGE(MIDL_ES_MESSAGE *pEsMsg)
     /* even if we are unmarshalling, as we don't want pointers to be pointed
      * to buffer memory */
     pEsMsg->StubMsg.IsClient = TRUE;
+    pEsMsg->MesVersion = 1;
 }
 
 /***********************************************************************
@@ -141,6 +142,17 @@ RPC_STATUS RPC_ENTRY MesEncodeFixedBufferHandleCreate(
     MIDL_ES_MESSAGE *pEsMsg;
 
     TRACE("(%p, %d, %p, %p)\n", Buffer, BufferSize, pEncodedSize, pHandle);
+
+    if (!Buffer)
+        return RPC_S_INVALID_ARG;
+
+    if (((ULONG_PTR)Buffer % 8) != 0)
+        return RPC_X_INVALID_BUFFER;
+
+    if (!pEncodedSize)
+        return RPC_S_INVALID_ARG;
+
+    /* FIXME: check BufferSize too */
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
