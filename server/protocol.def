@@ -480,7 +480,7 @@ typedef union
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
         unsigned int     status;   /* I/O status */
-        client_ptr_t     func;     /* unsigned int (*func)(void*, void*, unsigned int, void **); */
+        client_ptr_t     func;     /* unsigned int (*func)(void*, void*, unsigned int, void**, void**); */
         client_ptr_t     user;     /* user pointer */
         client_ptr_t     sb;       /* status block */
     } async_io;

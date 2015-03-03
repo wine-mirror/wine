@@ -448,7 +448,8 @@ NTSTATUS FILE_GetNtStatus(void)
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc)
+static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb,
+                                       NTSTATUS status, void **apc, void **arg )
 {
     struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -501,7 +502,10 @@ static NTSTATUS FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, NTSTATU
         iosb->u.Status = status;
         iosb->Information = fileio->already;
         if (fileio->io.apc)
+        {
             *apc = fileio_apc;
+            *arg = &fileio->io;
+        }
         else
             release_fileio( &fileio->io );
     }
@@ -956,7 +960,8 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status, void **apc)
+static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb,
+                                        NTSTATUS status, void **apc, void **arg )
 {
     struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -999,7 +1004,10 @@ static NTSTATUS FILE_AsyncWriteService(void *user, IO_STATUS_BLOCK *iosb, NTSTAT
         iosb->u.Status = status;
         iosb->Information = fileio->already;
         if (fileio->io.apc)
+        {
             *apc = fileio_apc;
+            *arg = &fileio->io;
+        }
         else
             release_fileio( &fileio->io );
     }
@@ -1370,9 +1378,10 @@ struct async_ioctl
 };
 
 /* callback for ioctl async I/O completion */
-static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc )
+static NTSTATUS ioctl_completion( void *user, IO_STATUS_BLOCK *io,
+                                  NTSTATUS status, void **apc, void **arg )
 {
-    struct async_ioctl *async = arg;
+    struct async_ioctl *async = user;
 
     if (status == STATUS_ALERTED)
     {
@@ -1390,7 +1399,10 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     {
         io->u.Status = status;
         if (async->io.apc)
+        {
             *apc = fileio_apc;
+            *arg = &async->io;
+        }
         else
             release_fileio( &async->io );
     }
@@ -1709,7 +1721,8 @@ struct read_changes_fileio
     char                data[1];
 };
 
-static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
+static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb,
+                                  NTSTATUS status, void **apc, void **arg )
 {
     struct read_changes_fileio *fileio = user;
     NTSTATUS ret;
@@ -1776,7 +1789,10 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
     iosb->u.Status = ret;
     iosb->Information = size;
     if (fileio->io.apc)
+    {
         *apc = fileio_apc;
+        *arg = &fileio->io;
+    }
     else
         release_fileio( &fileio->io );
     return ret;
