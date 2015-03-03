@@ -116,6 +116,9 @@ static HRESULT get_propput_arg(script_ctx_t *ctx, const DISPPARAMS *dp, WORD fla
             *v = value;
             *is_owned = TRUE;
         }
+    }else if(!(flags & DISPATCH_PROPERTYPUT)) {
+        WARN("%s can't be assigned without DISPATCH_PROPERTYPUT flag\n", debugstr_variant(v));
+        return DISP_E_EXCEPTION;
     }
 
     return S_OK;
