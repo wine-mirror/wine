@@ -388,14 +388,6 @@ static struct async_fileio *alloc_fileio( DWORD size, HANDLE handle, PIO_APC_ROU
     return io;
 }
 
-/* callback for file I/O user APC */
-static void WINAPI fileio_apc( void *arg, IO_STATUS_BLOCK *io, ULONG reserved )
-{
-    struct async_fileio *async = arg;
-    if (async->apc) async->apc( async->apc_arg, io, reserved );
-    release_fileio( async );
-}
-
 /***********************************************************************
  *           FILE_GetNtStatus(void)
  *
@@ -501,13 +493,9 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        if (fileio->io.apc)
-        {
-            *apc = fileio_apc;
-            *arg = &fileio->io;
-        }
-        else
-            release_fileio( &fileio->io );
+        *apc = fileio->io.apc;
+        *arg = fileio->io.apc_arg;
+        release_fileio( &fileio->io );
     }
     return status;
 }
@@ -1003,13 +991,9 @@ static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        if (fileio->io.apc)
-        {
-            *apc = fileio_apc;
-            *arg = &fileio->io;
-        }
-        else
-            release_fileio( &fileio->io );
+        *apc = fileio->io.apc;
+        *arg = fileio->io.apc_arg;
+        release_fileio( &fileio->io );
     }
     return status;
 }
@@ -1398,13 +1382,9 @@ static NTSTATUS ioctl_completion( void *user, IO_STATUS_BLOCK *io,
     if (status != STATUS_PENDING)
     {
         io->u.Status = status;
-        if (async->io.apc)
-        {
-            *apc = fileio_apc;
-            *arg = &async->io;
-        }
-        else
-            release_fileio( &async->io );
+        *apc = async->io.apc;
+        *arg = async->io.apc_arg;
+        release_fileio( &async->io );
     }
     return status;
 }
@@ -1788,13 +1768,9 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb,
 
     iosb->u.Status = ret;
     iosb->Information = size;
-    if (fileio->io.apc)
-    {
-        *apc = fileio_apc;
-        *arg = &fileio->io;
-    }
-    else
-        release_fileio( &fileio->io );
+    *apc = fileio->io.apc;
+    *arg = fileio->io.apc_arg;
+    release_fileio( &fileio->io );
     return ret;
 }
 
