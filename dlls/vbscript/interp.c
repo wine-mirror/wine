@@ -220,13 +220,12 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 }
 
 static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
-        BOOL is_const, VARIANT *val, BOOL own_val, VARIANT **out_var)
+        BOOL is_const, VARIANT **out_var)
 {
     dynamic_var_t *new_var;
     heap_pool_t *heap;
     WCHAR *str;
     unsigned size;
-    HRESULT hres;
 
     heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
 
@@ -241,15 +240,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
     memcpy(str, name, size);
     new_var->name = str;
     new_var->is_const = is_const;
-
-    if(own_val) {
-        new_var->v = *val;
-    }else {
-        V_VT(&new_var->v) = VT_EMPTY;
-        hres = VariantCopy(&new_var->v, val);
-        if(FAILED(hres))
-            return hres;
-    }
+    V_VT(&new_var->v) = VT_EMPTY;
 
     if(ctx->func->type == FUNC_GLOBAL) {
         new_var->next = ctx->script->global_vars;
@@ -259,9 +250,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
         ctx->dynamic_vars = new_var;
     }
 
-    if(out_var)
-        *out_var = &new_var->v;
-
+    *out_var = &new_var->v;
     return S_OK;
 }
 
@@ -620,9 +609,8 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         break;
     case REF_NONE:
         if(res && !ctx->func->code_ctx->option_explicit && arg_cnt == 0) {
-            VARIANT v, *new;
-            VariantInit(&v);
-            hres = add_dynamic_var(ctx, identifier, FALSE, &v, FALSE, &new);
+            VARIANT *new;
+            hres = add_dynamic_var(ctx, identifier, FALSE, &new);
             if(FAILED(hres))
                 return hres;
             V_VT(res) = VT_BYREF|VT_VARIANT;
@@ -778,13 +766,17 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
             FIXME("throw exception\n");
             hres = E_FAIL;
         }else {
+            VARIANT *new_var;
+
             if(arg_cnt(dp)) {
                 FIXME("arg_cnt %d not supported\n", arg_cnt(dp));
                 return E_NOTIMPL;
             }
 
             TRACE("creating variable %s\n", debugstr_w(name));
-            hres = add_dynamic_var(ctx, name, FALSE, dp->rgvarg, FALSE, NULL);
+            hres = add_dynamic_var(ctx, name, FALSE, &new_var);
+            if(SUCCEEDED(hres))
+                hres = VariantCopyInd(new_var, dp->rgvarg);
         }
     }
 
@@ -920,7 +912,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
 static HRESULT interp_const(exec_ctx_t *ctx)
 {
     BSTR arg = ctx->instr->arg1.bstr;
-    variant_val_t val;
+    VARIANT *v;
     ref_t ref;
     HRESULT hres;
 
@@ -937,11 +929,16 @@ static HRESULT interp_const(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = stack_pop_val(ctx, &val);
+    hres = stack_assume_val(ctx, 0);
     if(FAILED(hres))
         return hres;
 
-    return add_dynamic_var(ctx, arg, TRUE, val.v, val.owned, NULL);
+    hres = add_dynamic_var(ctx, arg, TRUE, &v);
+    if(FAILED(hres))
+        return hres;
+
+    *v = *stack_pop(ctx);
+    return S_OK;
 }
 
 static HRESULT interp_val(exec_ctx_t *ctx)
