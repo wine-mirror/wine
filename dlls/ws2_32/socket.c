@@ -330,8 +330,14 @@ static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
  * Async IO declarations
  ****************************************************************/
 
-typedef struct ws2_async
+struct ws2_async_io
 {
+    struct ws2_async_io *next;
+};
+
+struct ws2_async
+{
+    struct ws2_async_io                 io;
     HANDLE                              hSocket;
     int                                 type;
     LPWSAOVERLAPPED                     user_overlapped;
@@ -349,10 +355,11 @@ typedef struct ws2_async
     unsigned int                        n_iovecs;
     unsigned int                        first_iovec;
     struct iovec                        iovec[1];
-} ws2_async;
+};
 
-typedef struct ws2_accept_async
+struct ws2_accept_async
 {
+    struct ws2_async_io io;
     HANDLE              listen_socket;
     HANDLE              accept_socket;
     LPOVERLAPPED        user_overlapped;
@@ -362,7 +369,7 @@ typedef struct ws2_accept_async
     int                 local_len;
     int                 remote_len;
     struct ws2_async    *read;
-} ws2_accept_async;
+};
 
 /****************************************************************/
 
@@ -1885,7 +1892,7 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
 /* user APC called upon async completion */
 static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
 {
-    ws2_async *wsa = arg;
+    struct ws2_async *wsa = arg;
 
     if (wsa->completion_func) wsa->completion_func( NtStatusToWSAError(iosb->u.Status),
                                                     iosb->Information, wsa->user_overlapped,
@@ -1973,7 +1980,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
  */
 static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, void **apc)
 {
-    ws2_async* wsa = user;
+    struct ws2_async *wsa = user;
     int result = 0, fd;
 
     switch (status)
@@ -2206,7 +2213,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
  */
 static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS status, void **apc)
 {
-    ws2_async* wsa = user;
+    struct ws2_async *wsa = user;
     int result = 0, fd;
 
     switch (status)
@@ -2259,7 +2266,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
  */
 static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
 {
-    ws2_async* wsa = user;
+    struct ws2_async *wsa = user;
     int fd, err = 1;
 
     switch (status)
@@ -3794,7 +3801,7 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
     wsa->completion_func   = completion;
     io = (overlapped ? (PIO_STATUS_BLOCK)overlapped : &wsa->local_iosb);
 
-    status = NtDeviceIoControlFile( handle, event, (PIO_APC_ROUTINE)ws2_async_apc, wsa, io, code,
+    status = NtDeviceIoControlFile( handle, event, ws2_async_apc, wsa, io, code,
                                     in_buff, in_size, out_buff, out_size );
     if (status == STATUS_NOT_SUPPORTED)
     {
