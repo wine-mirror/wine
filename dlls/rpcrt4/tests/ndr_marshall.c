@@ -2437,6 +2437,28 @@ if (status == RPC_S_OK)
     status = MesEncodeFixedBufferHandleCreate(buffer, 32, &encoded_size, &handle);
     ok(status == RPC_S_OK, "got %d\n", status);
 
+    status = MesBufferHandleReset(NULL, MES_DYNAMIC_BUFFER_HANDLE, MES_ENCODE,
+        &buffer, 32, &encoded_size);
+    ok(status == RPC_S_INVALID_ARG, "got %d\n", status);
+
+    /* convert to dynamic buffer handle */
+    status = MesBufferHandleReset(handle, MES_DYNAMIC_BUFFER_HANDLE, MES_ENCODE,
+        &buffer, 32, &encoded_size);
+    ok(status == RPC_S_OK, "got %d\n", status);
+
+    status = MesBufferHandleReset(handle, MES_DYNAMIC_BUFFER_HANDLE, MES_ENCODE,
+        NULL, 32, &encoded_size);
+    ok(status == RPC_S_INVALID_ARG, "got %d\n", status);
+
+    status = MesBufferHandleReset(handle, MES_DYNAMIC_BUFFER_HANDLE, MES_ENCODE,
+        &buffer, 32, NULL);
+    ok(status == RPC_S_INVALID_ARG, "got %d\n", status);
+
+    /* invalid handle type */
+    status = MesBufferHandleReset(handle, MES_DYNAMIC_BUFFER_HANDLE+1, MES_ENCODE,
+        &buffer, 32, &encoded_size);
+    ok(status == RPC_S_INVALID_ARG, "got %d\n", status);
+
     status = MesHandleFree(handle);
     ok(status == RPC_S_OK, "got %d\n", status);
 }

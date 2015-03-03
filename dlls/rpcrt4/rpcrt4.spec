@@ -96,7 +96,7 @@
 @ stub I_UuidCreate
 @ stub MIDL_wchar_strcpy
 @ stub MIDL_wchar_strlen
-@ stub MesBufferHandleReset
+@ stdcall MesBufferHandleReset(ptr long long ptr long ptr)
 @ stdcall MesDecodeBufferHandleCreate(ptr long ptr)
 @ stdcall MesDecodeIncrementalHandleCreate(ptr ptr ptr)
 @ stdcall MesEncodeDynBufferHandleCreate(ptr ptr ptr)

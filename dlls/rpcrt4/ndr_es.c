@@ -124,6 +124,40 @@ RPC_STATUS WINAPI MesIncrementalHandleReset(
 }
 
 /***********************************************************************
+ *            MesBufferHandleReset [RPCRT4.@]
+ */
+RPC_STATUS WINAPI MesBufferHandleReset(handle_t Handle, ULONG HandleStyle,
+    MIDL_ES_CODE Operation, char **Buffer, ULONG BufferSize, ULONG *EncodedSize)
+{
+    MIDL_ES_MESSAGE *pEsMsg = (MIDL_ES_MESSAGE *)Handle;
+
+    TRACE("(%p, %u, %d, %p, %u, %p)\n", Handle, HandleStyle, Operation, Buffer,
+        BufferSize, EncodedSize);
+
+    if (!Handle || !Buffer || !EncodedSize)
+        return RPC_S_INVALID_ARG;
+
+    if (Operation != MES_ENCODE && Operation != MES_DECODE && Operation != MES_ENCODE_NDR64)
+        return RPC_S_INVALID_ARG;
+
+    if (HandleStyle != MES_FIXED_BUFFER_HANDLE && HandleStyle != MES_DYNAMIC_BUFFER_HANDLE)
+        return RPC_S_INVALID_ARG;
+
+    init_MIDL_ES_MESSAGE(pEsMsg);
+
+    pEsMsg->Operation = Operation;
+    pEsMsg->HandleStyle = HandleStyle;
+    if (HandleStyle == MES_FIXED_BUFFER_HANDLE)
+        pEsMsg->Buffer = (unsigned char*)*Buffer;
+    else
+        pEsMsg->pDynBuffer = (unsigned char**)Buffer;
+    pEsMsg->BufferSize = BufferSize;
+    pEsMsg->pEncodedSize = EncodedSize;
+
+    return RPC_S_OK;
+}
+
+/***********************************************************************
  *            MesHandleFree [RPCRT4.@]
  */
 RPC_STATUS WINAPI MesHandleFree(handle_t Handle)
