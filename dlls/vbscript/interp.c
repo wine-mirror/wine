@@ -697,6 +697,29 @@ static HRESULT interp_mcallv(exec_ctx_t *ctx)
     return do_mcall(ctx, NULL);
 }
 
+static HRESULT assign_value(exec_ctx_t *ctx, VARIANT *dst, VARIANT *src, WORD flags)
+{
+    HRESULT hres;
+
+    hres = VariantCopyInd(dst, src);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(dst) == VT_DISPATCH && !(flags & DISPATCH_PROPERTYPUTREF)) {
+        DISPPARAMS dp = {NULL};
+        VARIANT value;
+
+        hres = disp_call(ctx->script, V_DISPATCH(dst), DISPID_VALUE, &dp, &value);
+        IDispatch_Release(V_DISPATCH(dst));
+        if(FAILED(hres))
+            return hres;
+
+        *dst = value;
+    }
+
+    return S_OK;
+}
+
 static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *dp)
 {
     ref_t ref;
@@ -746,7 +769,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
             return E_NOTIMPL;
         }
 
-        hres = VariantCopyInd(v, dp->rgvarg);
+        hres = assign_value(ctx, v, dp->rgvarg, flags);
         break;
     }
     case REF_DISP:
@@ -776,7 +799,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
             TRACE("creating variable %s\n", debugstr_w(name));
             hres = add_dynamic_var(ctx, name, FALSE, &new_var);
             if(SUCCEEDED(hres))
-                hres = VariantCopyInd(new_var, dp->rgvarg);
+                hres = assign_value(ctx, new_var, dp->rgvarg, flags);
         }
     }
 
@@ -791,10 +814,6 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
-
-    hres = stack_assume_val(ctx, arg_cnt);
-    if(FAILED(hres))
-        return hres;
 
     vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
     hres = assign_ident(ctx, arg, DISPATCH_PROPERTYPUT, &dp);
@@ -851,10 +870,6 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         FIXME("NULL obj\n");
         return E_FAIL;
     }
-
-    hres = stack_assume_val(ctx, arg_cnt);
-    if(FAILED(hres))
-        return hres;
 
     hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
     if(SUCCEEDED(hres)) {
