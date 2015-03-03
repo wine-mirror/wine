@@ -335,11 +335,18 @@ struct ws2_async_io
     struct ws2_async_io *next;
 };
 
+struct ws2_async_shutdown
+{
+    struct ws2_async_io io;
+    HANDLE              hSocket;
+    IO_STATUS_BLOCK     iosb;
+    int                 type;
+};
+
 struct ws2_async
 {
     struct ws2_async_io                 io;
     HANDLE                              hSocket;
-    int                                 type;
     LPWSAOVERLAPPED                     user_overlapped;
     LPWSAOVERLAPPED_COMPLETION_ROUTINE  completion_func;
     IO_STATUS_BLOCK                     local_iosb;
@@ -2266,7 +2273,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
  */
 static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS status, void **apc )
 {
-    struct ws2_async *wsa = user;
+    struct ws2_async_shutdown *wsa = user;
     int fd, err = 1;
 
     switch (status)
@@ -2297,25 +2304,24 @@ static NTSTATUS WS2_async_shutdown( void* user, PIO_STATUS_BLOCK iosb, NTSTATUS 
  */
 static int WS2_register_async_shutdown( SOCKET s, int type )
 {
-    struct ws2_async *wsa;
+    struct ws2_async_shutdown *wsa;
     NTSTATUS status;
 
     TRACE("s %04lx type %d\n", s, type);
 
-    wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct ws2_async, iovec[1] ));
+    wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) );
     if ( !wsa )
         return WSAEFAULT;
 
-    wsa->hSocket         = SOCKET2HANDLE(s);
-    wsa->type            = type;
-    wsa->completion_func = NULL;
+    wsa->hSocket = SOCKET2HANDLE(s);
+    wsa->type    = type;
 
     SERVER_START_REQ( register_async )
     {
         req->type   = type;
         req->async.handle   = wine_server_obj_handle( wsa->hSocket );
         req->async.callback = wine_server_client_ptr( WS2_async_shutdown );
-        req->async.iosb     = wine_server_client_ptr( &wsa->local_iosb );
+        req->async.iosb     = wine_server_client_ptr( &wsa->iosb );
         req->async.arg      = wine_server_client_ptr( wsa );
         req->async.cvalue   = 0;
         status = wine_server_call( req );
