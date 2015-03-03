@@ -401,6 +401,7 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         {
             result->async_io.total = iosb->Information;
             result->async_io.apc   = wine_server_client_ptr( apc );
+            result->async_io.arg   = call->async_io.user;
         }
         break;
     }

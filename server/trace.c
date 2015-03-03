@@ -227,6 +227,7 @@ static void dump_apc_result( const char *prefix, const apc_result_t *result )
         fprintf( stderr, "APC_ASYNC_IO,status=%s,total=%u",
                  get_status_name( result->async_io.status ), result->async_io.total );
         dump_uint64( ",apc=", &result->async_io.apc );
+        dump_uint64( ",arg=", &result->async_io.arg );
         break;
     case APC_VIRTUAL_ALLOC:
         fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s",

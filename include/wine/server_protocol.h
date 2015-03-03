@@ -554,6 +554,7 @@ typedef union
         enum apc_type    type;
         unsigned int     status;
         client_ptr_t     apc;
+        client_ptr_t     arg;
         unsigned int     total;
     } async_io;
     struct
@@ -5847,6 +5848,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 458
+#define SERVER_PROTOCOL_VERSION 459
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -570,6 +570,7 @@ typedef union
         enum apc_type    type;      /* APC_ASYNC_IO */
         unsigned int     status;    /* new status of async operation */
         client_ptr_t     apc;       /* user APC to call */
+        client_ptr_t     arg;       /* user APC argument */
         unsigned int     total;     /* bytes transferred */
     } async_io;
     struct

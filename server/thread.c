@@ -1451,8 +1451,8 @@ DECL_HANDLER(select)
         else if (apc->result.type == APC_ASYNC_IO)
         {
             if (apc->owner)
-                async_set_result( apc->owner, apc->result.async_io.status,
-                                  apc->result.async_io.total, apc->result.async_io.apc );
+                async_set_result( apc->owner, apc->result.async_io.status, apc->result.async_io.total,
+                                  apc->result.async_io.apc, apc->result.async_io.arg );
         }
         wake_up( &apc->obj, 0 );
         close_handle( current->process, req->prev_apc );

@@ -262,7 +262,8 @@ static void add_async_completion( struct async_queue *queue, apc_param_t cvalue,
 }
 
 /* store the result of the client-side async callback */
-void async_set_result( struct object *obj, unsigned int status, apc_param_t total, client_ptr_t apc )
+void async_set_result( struct object *obj, unsigned int status, apc_param_t total,
+                       client_ptr_t apc, client_ptr_t apc_arg )
 {
     struct async *async = (struct async *)obj;
 
@@ -293,7 +294,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             memset( &data, 0, sizeof(data) );
             data.type         = APC_USER;
             data.user.func    = apc;
-            data.user.args[0] = async->data.arg;
+            data.user.args[0] = apc_arg;
             data.user.args[1] = async->data.iosb;
             data.user.args[2] = 0;
             thread_queue_apc( async->thread, NULL, &data );
