@@ -167,6 +167,17 @@ RPC_STATUS WINAPI MesHandleFree(handle_t Handle)
     return RPC_S_OK;
 }
 
+static RPC_STATUS validate_mes_buffer_pointer(const char *Buffer)
+{
+    if (!Buffer)
+        return RPC_S_INVALID_ARG;
+
+    if (((ULONG_PTR)Buffer & 7) != 0)
+        return RPC_X_INVALID_BUFFER;
+
+    return RPC_S_OK;
+}
+
 /***********************************************************************
  *            MesEncodeFixedBufferHandleCreate [RPCRT4.@]
  */
@@ -174,14 +185,12 @@ RPC_STATUS RPC_ENTRY MesEncodeFixedBufferHandleCreate(
     char *Buffer, ULONG BufferSize, ULONG *pEncodedSize, handle_t *pHandle)
 {
     MIDL_ES_MESSAGE *pEsMsg;
+    RPC_STATUS status;
 
     TRACE("(%p, %d, %p, %p)\n", Buffer, BufferSize, pEncodedSize, pHandle);
 
-    if (!Buffer)
-        return RPC_S_INVALID_ARG;
-
-    if (((ULONG_PTR)Buffer % 8) != 0)
-        return RPC_X_INVALID_BUFFER;
+    if ((status = validate_mes_buffer_pointer(Buffer)))
+        return status;
 
     if (!pEncodedSize)
         return RPC_S_INVALID_ARG;
@@ -208,10 +217,29 @@ RPC_STATUS RPC_ENTRY MesEncodeFixedBufferHandleCreate(
 /***********************************************************************
  *            MesEncodeDynBufferHandleCreate [RPCRT4.@]
  */
-RPC_STATUS RPC_ENTRY MesEncodeDynBufferHandleCreate(char **ppBuffer,
+RPC_STATUS RPC_ENTRY MesEncodeDynBufferHandleCreate(char **Buffer,
         ULONG *pEncodedSize, handle_t *pHandle)
 {
-    FIXME("%p %p %p stub\n", ppBuffer, pEncodedSize, pHandle);
+    MIDL_ES_MESSAGE *pEsMsg;
+
+    TRACE("(%p, %p, %p)\n", Buffer, pEncodedSize, pHandle);
+
+    if (!pEncodedSize)
+        return RPC_S_INVALID_ARG;
+
+    pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
+    if (!pEsMsg)
+        return RPC_S_OUT_OF_MEMORY;
+
+    init_MIDL_ES_MESSAGE(pEsMsg);
+
+    pEsMsg->Operation = MES_ENCODE;
+    pEsMsg->HandleStyle = MES_DYNAMIC_BUFFER_HANDLE;
+    pEsMsg->pDynBuffer = (unsigned char **)Buffer;
+    pEsMsg->pEncodedSize = pEncodedSize;
+
+    *pHandle = (handle_t)pEsMsg;
+
     return RPC_S_OK;
 }
 
@@ -222,8 +250,12 @@ RPC_STATUS RPC_ENTRY MesDecodeBufferHandleCreate(
     char *Buffer, ULONG BufferSize, handle_t *pHandle)
 {
     MIDL_ES_MESSAGE *pEsMsg;
+    RPC_STATUS status;
 
     TRACE("(%p, %d, %p)\n", Buffer, BufferSize, pHandle);
+
+    if ((status = validate_mes_buffer_pointer(Buffer)))
+        return status;
 
     pEsMsg = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEsMsg));
     if (!pEsMsg)
