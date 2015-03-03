@@ -38,6 +38,8 @@
 #include "ksmedia.h"
 
 #include "initguid.h"
+
+#include "mediaobj.h"
 #include "wingdi.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
@@ -1256,6 +1258,8 @@ static void test_effects(void)
             if (rc==DS_OK && secondary8) {
                 LPVOID ptr1,ptr2;
                 DWORD bytes1,bytes2;
+                IUnknown* obj = NULL;
+                HRESULT rc2;
 
                 /* Call SetFX with dwEffectsCount > 0 and pDSFXDesc == NULL */
                 rc=IDirectSoundBuffer8_SetFX(secondary8,1,NULL,NULL);
@@ -1307,12 +1311,44 @@ static void test_effects(void)
                 }
 
                 /* Call SetFX with standard echo */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[0],resultcodes);
-                ok(rc==DS_OK||rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,
+                rc2=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[0],resultcodes);
+                ok(rc2==DS_OK||rc2==REGDB_E_CLASSNOTREG||rc2==DSERR_CONTROLUNAVAIL,
                    "IDirectSoundBuffer8_SetFX(GUID_DSFX_STANDARD_ECHO) failed: %08x\n",rc);
-                if (rc!=DSERR_CONTROLUNAVAIL) {
+                if (rc2!=DSERR_CONTROLUNAVAIL) {
                     ok(resultcodes[0]==DSFXR_UNKNOWN||resultcodes[0]==DSFXR_LOCHARDWARE||resultcodes[0]==DSFXR_LOCSOFTWARE,
                         "resultcode == %08x, expected DSFXR_UNKNOWN, DSFXR_LOCHARDWARE, or DSFXR_LOCSOFTWARE\n",resultcodes[0]);
+                }
+
+                /* Call GetObjectInPath for out-of-bounds DMO */
+                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,2,&IID_IMediaObject,(void**)&obj);
+                ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
+
+                /* Call GetObjectInPath with NULL ppObject */
+                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&IID_IMediaObject,NULL);
+                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                "should have returned E_INVALIDARG, returned: %08x\n",rc);
+
+                /* Call GetObjectInPath for unsupported interface */
+                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&GUID_NULL,(void**)&obj);
+                ok(rc==E_NOINTERFACE||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                "should have returned E_NOINTERFACE, returned: %08x\n",rc);
+
+                /* Call GetObjectInPath for unloaded DMO */
+                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_NULL,0,&IID_IMediaObject,(void**)&obj);
+                ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
+
+                /* Call GetObjectInPath for first DMO */
+                obj=NULL;
+                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&IID_IMediaObject,(void**)&obj);
+                if (rc2==DS_OK) {
+                    ok(rc==DS_OK||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                    "should have returned DS_OK, returned: %08x\n",rc);
+                    if (obj) IUnknown_Release(obj);
+                } else {
+                    ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
+                    "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
                 }
 
                 /* Call SetFX with one real filter and one fake one */
