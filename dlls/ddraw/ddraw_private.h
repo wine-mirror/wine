@@ -183,7 +183,6 @@ struct ddraw_surface
     DDSURFACEDESC2          surface_desc;
 
     /* Misc things */
-    DWORD                   uniqueness_value;
     UINT                    mipmap_level;
 
     /* Clipper objects */

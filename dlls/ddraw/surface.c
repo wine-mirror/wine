@@ -3886,34 +3886,9 @@ static HRESULT WINAPI ddraw_surface2_GetDDInterface(IDirectDrawSurface2 *iface, 
     return ddraw_surface7_GetDDInterface(&surface->IDirectDrawSurface7_iface, ddraw);
 }
 
-/* This seems also windows implementation specific - I don't think WineD3D needs this */
 static HRESULT WINAPI ddraw_surface7_ChangeUniquenessValue(IDirectDrawSurface7 *iface)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface7(iface);
-    volatile struct ddraw_surface* vThis = This;
-
     TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-    /* A uniqueness value of 0 is apparently special.
-     * This needs to be checked.
-     * TODO: Write tests for this code and check if the volatile, interlocked stuff is really needed
-     */
-    while (1) {
-        DWORD old_uniqueness_value = vThis->uniqueness_value;
-        DWORD new_uniqueness_value = old_uniqueness_value+1;
-
-        if (old_uniqueness_value == 0) break;
-        if (new_uniqueness_value == 0) new_uniqueness_value = 1;
-
-        if (InterlockedCompareExchange((LONG*)&vThis->uniqueness_value,
-                                      old_uniqueness_value,
-                                      new_uniqueness_value)
-            == old_uniqueness_value)
-            break;
-    }
-
-    wined3d_mutex_unlock();
 
     return DD_OK;
 }
@@ -3929,13 +3904,9 @@ static HRESULT WINAPI ddraw_surface4_ChangeUniquenessValue(IDirectDrawSurface4 *
 
 static HRESULT WINAPI ddraw_surface7_GetUniquenessValue(IDirectDrawSurface7 *iface, DWORD *pValue)
 {
-    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-
     TRACE("iface %p, value %p.\n", iface, pValue);
 
-    wined3d_mutex_lock();
-    *pValue = surface->uniqueness_value;
-    wined3d_mutex_unlock();
+    *pValue = 0;
 
     return DD_OK;
 }
