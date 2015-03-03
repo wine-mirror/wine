@@ -519,16 +519,20 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
 		TRACE("Locked %p(%i bytes) and %p(%i bytes) writecursor=%d\n",
 		  *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
 		TRACE("->%d.0\n",writebytes);
+		This->buffer->lockedbytes += writebytes;
 	} else {
 		DWORD remainder = writebytes + writecursor - This->buflen;
 		*(LPBYTE*)lplpaudioptr1 = This->buffer->memory+writecursor;
 		*audiobytes1 = This->buflen-writecursor;
+		This->buffer->lockedbytes += *audiobytes1;
 		if (This->sec_mixpos >= writecursor && This->sec_mixpos < writecursor + writebytes && This->state == STATE_PLAYING)
 			WARN("Overwriting mixing position, case 2\n");
 		if (lplpaudioptr2)
 			*(LPBYTE*)lplpaudioptr2 = This->buffer->memory;
-		if (audiobytes2)
+		if (audiobytes2) {
 			*audiobytes2 = writebytes-(This->buflen-writecursor);
+			This->buffer->lockedbytes += *audiobytes2;
+		}
 		if (audiobytes2 && This->sec_mixpos < remainder && This->state == STATE_PLAYING)
 			WARN("Overwriting mixing position, case 3\n");
 		TRACE("Locked %p(%i bytes) and %p(%i bytes) writecursor=%d\n", *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
@@ -644,7 +648,17 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
                         {
 			    if(x1 + (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory > iter->buflen)
 			      hres = DSERR_INVALIDPARAM;
+			    else
+			      iter->buffer->lockedbytes -= x1;
                         }
+
+			if (x2)
+			{
+			    if(x2 + (DWORD_PTR)p2 - (DWORD_PTR)iter->buffer->memory > iter->buflen)
+			      hres = DSERR_INVALIDPARAM;
+			    else
+			      iter->buffer->lockedbytes -= x2;
+			}
 			RtlReleaseResource(&iter->lock);
 		}
 		RtlReleaseResource(&This->device->buffer_list_lock);
@@ -927,6 +941,7 @@ HRESULT IDirectSoundBufferImpl_Create(
 	}
 
 	dsb->buffer->ref = 1;
+	dsb->buffer->lockedbytes = 0;
 	list_init(&dsb->buffer->buffers);
 	list_add_head(&dsb->buffer->buffers, &dsb->entry);
 	FillMemory(dsb->buffer->memory, dsb->buflen, dsbd->lpwfxFormat->wBitsPerSample == 8 ? 128 : 0);

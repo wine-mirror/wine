@@ -107,6 +107,7 @@ struct DirectSoundDevice
 typedef struct BufferMemory
 {
     LONG                        ref;
+    LONG                        lockedbytes;
     LPBYTE                      memory;
     struct list buffers;
 } BufferMemory;
