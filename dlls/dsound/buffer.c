@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "windef.h"
@@ -697,14 +699,129 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(IDirectSoundBuffer8 *iface, D
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	DWORD u;
+	DSFilter *filters;
+	HRESULT hr, hr2;
+	DMO_MEDIA_TYPE dmt;
+	WAVEFORMATEX wfx;
 
-	FIXME("(%p,%u,%p,%p): stub\n",This,dwEffectsCount,pDSFXDesc,pdwResultCodes);
+	TRACE("(%p,%u,%p,%p)\n", This, dwEffectsCount, pDSFXDesc, pdwResultCodes);
 
 	if (pdwResultCodes)
 		for (u=0; u<dwEffectsCount; u++) pdwResultCodes[u] = DSFXR_UNKNOWN;
 
-	WARN("control unavailable\n");
-	return DSERR_CONTROLUNAVAIL;
+	if ((dwEffectsCount > 0 && !pDSFXDesc) ||
+		(dwEffectsCount == 0 && (pDSFXDesc || pdwResultCodes))
+	)
+		return E_INVALIDARG;
+
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLFX)) {
+		WARN("attempted to call SetFX on buffer without DSBCAPS_CTRLFX\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
+
+	if (This->state != STATE_STOPPED)
+		return DSERR_INVALIDCALL;
+
+	if (This->buffer->lockedbytes > 0)
+		return DSERR_INVALIDCALL;
+
+	if (dwEffectsCount == 0) {
+		if (This->num_filters > 0) {
+			for (u = 0; u < This->num_filters; u++) {
+				IMediaObject_Release(This->filters[u].obj);
+			}
+			HeapFree(GetProcessHeap(), 0, This->filters);
+
+			This->filters = NULL;
+			This->num_filters = 0;
+		}
+
+		return DS_OK;
+	}
+
+	filters = HeapAlloc(GetProcessHeap(), 0, dwEffectsCount * sizeof(DSFilter));
+	if (!filters) {
+		WARN("out of memory\n");
+		return DSERR_OUTOFMEMORY;
+	}
+
+	hr = DS_OK;
+
+	wfx.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+	wfx.nChannels = This->pwfx->nChannels;
+	wfx.nSamplesPerSec = This->pwfx->nSamplesPerSec;
+	wfx.wBitsPerSample = sizeof(float) * 8;
+	wfx.nBlockAlign = (wfx.nChannels * wfx.wBitsPerSample)/8;
+	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+	wfx.cbSize = sizeof(wfx);
+
+	dmt.majortype = KSDATAFORMAT_TYPE_AUDIO;
+	dmt.subtype = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+	dmt.bFixedSizeSamples = TRUE;
+	dmt.bTemporalCompression = FALSE;
+	dmt.lSampleSize = sizeof(float) * This->pwfx->nChannels / 8;
+	dmt.formattype = FORMAT_WaveFormatEx;
+	dmt.pUnk = NULL;
+	dmt.cbFormat = sizeof(WAVEFORMATEX);
+	dmt.pbFormat = (BYTE*)&wfx;
+
+	for (u = 0; u < dwEffectsCount; u++) {
+		hr2 = CoCreateInstance(&pDSFXDesc[u].guidDSFXClass, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (LPVOID*)&filters[u].obj);
+
+		if (SUCCEEDED(hr2)) {
+			hr2 = IMediaObject_SetInputType(filters[u].obj, 0, &dmt, 0);
+			if (FAILED(hr2))
+				WARN("Could not set DMO input type\n");
+		}
+
+		if (SUCCEEDED(hr2)) {
+			hr2 = IMediaObject_SetOutputType(filters[u].obj, 0, &dmt, 0);
+			if (FAILED(hr2))
+				WARN("Could not set DMO output type\n");
+		}
+
+		if (FAILED(hr2)) {
+			if (hr == DS_OK)
+				hr = hr2;
+
+			if (pdwResultCodes)
+				pdwResultCodes[u] = (hr2 == REGDB_E_CLASSNOTREG) ? DSFXR_UNKNOWN : DSFXR_FAILED;
+		} else {
+			if (pdwResultCodes)
+				pdwResultCodes[u] = DSFXR_LOCSOFTWARE;
+		}
+	}
+
+	if (FAILED(hr)) {
+		for (u = 0; u < dwEffectsCount; u++) {
+			if (pdwResultCodes)
+				pdwResultCodes[u] = (pdwResultCodes[u] != DSFXR_UNKNOWN) ? DSFXR_PRESENT : DSFXR_UNKNOWN;
+
+			if (filters[u].obj)
+				IMediaObject_Release(filters[u].obj);
+		}
+
+		HeapFree(GetProcessHeap(), 0, filters);
+	} else {
+		if (This->num_filters > 0) {
+			for (u = 0; u < This->num_filters; u++) {
+				IMediaObject_Release(This->filters[u].obj);
+				if (This->filters[u].inplace) IMediaObjectInPlace_Release(This->filters[u].inplace);
+			}
+			HeapFree(GetProcessHeap(), 0, This->filters);
+		}
+
+		for (u = 0; u < dwEffectsCount; u++) {
+			memcpy(&filters[u].guid, &pDSFXDesc[u].guidDSFXClass, sizeof(GUID));
+			if (FAILED(IMediaObject_QueryInterface(filters[u].obj, &IID_IMediaObjectInPlace, (void*)&filters[u].inplace)))
+				filters[u].inplace = NULL;
+		}
+
+		This->filters = filters;
+		This->num_filters = dwEffectsCount;
+	}
+
+	return hr;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(IDirectSoundBuffer8 *iface,
@@ -1024,6 +1141,16 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->notifies);
     HeapFree(GetProcessHeap(), 0, This->pwfx);
+
+    if (This->filters) {
+        int i;
+        for (i = 0; i < This->num_filters; i++) {
+            IMediaObject_Release(This->filters[i].obj);
+            if (This->filters[i].inplace) IMediaObjectInPlace_Release(This->filters[i].inplace);
+        }
+        HeapFree(GetProcessHeap(), 0, This->filters);
+    }
+
     HeapFree(GetProcessHeap(), 0, This);
 
     TRACE("(%p) released\n", This);

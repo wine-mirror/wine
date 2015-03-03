@@ -26,7 +26,9 @@
 #include "wingdi.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
+#include "mediaobj.h"
 #include "mmsystem.h"
+#include "uuids.h"
 
 #include "wine/list.h"
 
@@ -56,6 +58,12 @@ typedef struct _DSVOLUMEPAN
     LONG	lVolume;
     LONG	lPan;
 } DSVOLUMEPAN,*PDSVOLUMEPAN;
+
+typedef struct DSFilter {
+    GUID guid;
+    IMediaObject* obj;
+    IMediaObjectInPlace* inplace;
+} DSFilter;
 
 /*****************************************************************************
  * IDirectSoundDevice implementation structure
@@ -160,6 +168,8 @@ struct IDirectSoundBufferImpl
     int                         mix_channels;
     bitsgetfunc get, get_aux;
     bitsputfunc put, put_aux;
+    int                         num_filters;
+    DSFilter*                   filters;
 
     struct list entry;
 };

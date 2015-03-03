@@ -55,6 +55,7 @@
 #include "unknwn.h"
 #include "oleidl.h"
 #include "shobjidl.h"
+#include "strmif.h"
 
 #include "initguid.h"
 #include "ksmedia.h"
