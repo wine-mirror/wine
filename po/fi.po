@@ -2717,22 +2717,17 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Jos jatkat, et voi enää salata viestejä tällä varmenteella tai vahvistaa "
+"Jos poistat varmenteen, et voi enää salata sillä viestejä etkä vahvistaa "
 "sillä allekirjoitettujen viestien aitoutta.\n"
-"Haluatko varmasti poistaa varmenteen?"
+"Haluatko varmasti poistaa tämän varmenteen?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Jos jatkat, et voi enää salata viestejä näillä varmenteilla tai vahvistaa "
+"Jos poistat varmenteita, et voi enää salata niillä viestejä etkä vahvistaa "
 "niillä allekirjoitettujen viestien aitoutta.\n"
 "Haluatko varmasti poistaa nämä varmenteet?"
 
@@ -3138,10 +3133,8 @@ msgid "&View Source"
 msgstr "Nä&ytä lähde"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Ominaisuudet"
+msgstr "&Ominaisuudet"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
@@ -11493,21 +11486,17 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Virhe: Viallisia komentoriviparametreja\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Virhe: Etäkoneelle ei voitu lisätä avaimia\n"
+msgstr "Virhe: Ei pääsyä etäkoneelle\n"
 
 #: reg.rc:38
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
-msgstr "Virhe: järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+msgstr "Virhe: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Tyyppiä ei tueta.\n"
+msgstr "Virhe: Tyyppiä ei tueta\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -11663,19 +11652,19 @@ msgstr "Muokkaa merkkijonoja"
 
 #: regedit.rc:137
 msgid "Contains commands for working with the whole registry"
-msgstr "Sisältää komentoja koko rekisteriä varten"
+msgstr "Sisältää komentoja, joilla voi käsitellä koko rekisteriä"
 
 #: regedit.rc:138
 msgid "Contains commands for editing values or keys"
-msgstr "Sisältää avainten arvojen muokkauskomentoja"
+msgstr "Sisältää komentoja, joilla voi muokata avaimia ja arvoja"
 
 #: regedit.rc:139
 msgid "Contains commands for customizing the registry window"
-msgstr "Sisältää rekisteri-ikkunan mukauttamiskomentoja"
+msgstr "Sisältää komentoja, joilla voi mukauttaa rekisteri-ikkunaa"
 
 #: regedit.rc:140
 msgid "Contains commands for accessing frequently used keys"
-msgstr "Sisältää komentoja usein käytettyihin avaimiin"
+msgstr "Sisältää komentoja, joilla pääsee usein käytettyihin avaimiin"
 
 #: regedit.rc:141
 msgid ""
