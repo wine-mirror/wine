@@ -278,7 +278,7 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
         if (V_VT(v) == (VT_VARIANT|VT_BYREF))
             return wine_dbg_sprintf( "%p {VT_VARIANT|VT_BYREF: %s}", v, wine_dbgstr_variant(V_VARIANTREF(v)) );
         if (V_VT(v) == (VT_BSTR|VT_BYREF))
-            return wine_dbg_sprintf( "%p {VT_BSTR|VT_BYREF: %s}", v, wine_dbgstr_w(*V_BSTRREF(v)) );
+            return wine_dbg_sprintf( "%p {VT_BSTR|VT_BYREF: %s}", v, V_BSTRREF(v) ? wine_dbgstr_w(*V_BSTRREF(v)) : "(none)" );
         return wine_dbg_sprintf( "%p {%s %p}", v, wine_dbgstr_vt(V_VT(v)), V_BYREF(v) );
     }
 
