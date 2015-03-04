@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#undef __thiscall
 #ifdef __i386__  /* thiscall functions are i386-specific */
 
 #define THISCALL(func) __thiscall_ ## func
