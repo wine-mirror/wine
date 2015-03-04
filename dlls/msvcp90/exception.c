@@ -623,6 +623,11 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_bad_alloc_ctor(&e, &addr);
         _CxxThrowException(&e, &bad_alloc_cxx_type);
     }
+    case EXCEPTION_BAD_CAST: {
+        bad_cast e;
+        MSVCP_bad_cast_ctor(&e, str);
+        _CxxThrowException(&e, &bad_cast_cxx_type);
+    }
     case EXCEPTION_LOGIC_ERROR: {
         logic_error e;
         MSVCP_logic_error_ctor(&e, &addr);
