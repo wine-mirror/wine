@@ -410,7 +410,7 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
     }
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return irp->IoStatus.u.Status;
+    return STATUS_SUCCESS;
 }
 
 /* main entry point for the mount point manager driver */

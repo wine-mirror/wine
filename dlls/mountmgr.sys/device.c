@@ -967,7 +967,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     LeaveCriticalSection( &device_section );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return irp->IoStatus.u.Status;
+    return STATUS_SUCCESS;
 }
 
 /* driver entry point for the harddisk driver */
