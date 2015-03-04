@@ -64,14 +64,6 @@ KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
 typedef void (WINAPI *PCREATE_THREAD_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
 
-static struct list Irps = LIST_INIT(Irps);
-
-struct IrpInstance
-{
-    struct list entry;
-    IRP *irp;
-};
-
 /* tid of the thread running client request */
 static DWORD request_thread;
 
@@ -496,7 +488,6 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
 {
     PIRP irp;
     PIO_STACK_LOCATION irpsp;
-    struct IrpInstance *instance;
 
     TRACE( "%x, %p, %p, %u, %p, %u, %u, %p, %p\n",
            code, device, in_buff, in_len, out_buff, out_len, internal, event, iosb );
@@ -507,15 +498,6 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
     irp = IoAllocateIrp( device->StackSize, FALSE );
     if (irp == NULL)
         return NULL;
-
-    instance = HeapAlloc( GetProcessHeap(), 0, sizeof(struct IrpInstance) );
-    if (instance == NULL)
-    {
-        IoFreeIrp( irp );
-        return NULL;
-    }
-    instance->irp = irp;
-    list_add_tail( &Irps, &instance->entry );
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = internal ? IRP_MJ_INTERNAL_DEVICE_CONTROL : IRP_MJ_DEVICE_CONTROL;
@@ -540,7 +522,6 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
                                          PKEVENT event, PIO_STATUS_BLOCK iosb)
 {
     PIRP irp;
-    struct IrpInstance *instance;
     PIO_STACK_LOCATION irpsp;
 
     FIXME("(%d %p %p %d %p %p %p) stub\n", majorfunc, device, buffer, length, startoffset, event, iosb);
@@ -548,15 +529,6 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     irp = IoAllocateIrp( device->StackSize, FALSE );
     if (irp == NULL)
         return NULL;
-
-    instance = HeapAlloc( GetProcessHeap(), 0, sizeof(struct IrpInstance) );
-    if (instance == NULL)
-    {
-        IoFreeIrp( irp );
-        return NULL;
-    }
-    instance->irp = irp;
-    list_add_tail( &Irps, &instance->entry );
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = majorfunc;
@@ -987,7 +959,6 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
     IO_STATUS_BLOCK *iosb;
-    struct IrpInstance *instance;
     NTSTATUS status, stat;
     int call_flag = 0;
 
@@ -1025,16 +996,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         iosb->u.Status = irp->IoStatus.u.Status;
         if (iosb->u.Status >= 0) iosb->Information = irp->IoStatus.Information;
     }
-    LIST_FOR_EACH_ENTRY( instance, &Irps, struct IrpInstance, entry )
-    {
-        if (instance->irp == irp)
-        {
-            list_remove( &instance->entry );
-            HeapFree( GetProcessHeap(), 0, instance );
-            IoFreeIrp( irp );
-            break;
-        }
-    }
+    IoFreeIrp( irp );
 }
 
 
