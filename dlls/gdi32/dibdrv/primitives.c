@@ -6020,7 +6020,7 @@ static void shrink_row_24(const dib_info *dst_dib, const POINT *dst_start,
     else
     {
         struct rop_codes codes;
-        BYTE init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+        BYTE init_val = (mode == STRETCH_ANDSCANS) ? 0xff : 0;
         BOOL new_pix = TRUE;
 
         rop_codes_from_stretch_mode( mode, &codes );
@@ -6070,7 +6070,7 @@ static void shrink_row_16(const dib_info *dst_dib, const POINT *dst_start,
     else
     {
         struct rop_codes codes;
-        WORD init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+        WORD init_val = (mode == STRETCH_ANDSCANS) ? 0xffff : 0;
         BOOL new_pix = TRUE;
 
         rop_codes_from_stretch_mode( mode, &codes );
@@ -6118,7 +6118,7 @@ static void shrink_row_8(const dib_info *dst_dib, const POINT *dst_start,
     else
     {
         struct rop_codes codes;
-        BYTE init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+        BYTE init_val = (mode == STRETCH_ANDSCANS) ? 0xff : 0;
         BOOL new_pix = TRUE;
 
         rop_codes_from_stretch_mode( mode, &codes );
@@ -6149,7 +6149,7 @@ static void shrink_row_4(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width, dst_x = dst_dib->rect.left + dst_start->x, src_x = src_dib->rect.left + src_start->x;
     struct rop_codes codes;
-    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? 0xff : 0;
     BOOL new_pix = TRUE;
 
     rop_codes_from_stretch_mode( mode, &codes );
@@ -6189,7 +6189,7 @@ static void shrink_row_1(const dib_info *dst_dib, const POINT *dst_start,
     int err = params->err_start;
     int width, dst_x = dst_dib->rect.left + dst_start->x, src_x = src_dib->rect.left + src_start->x;
     struct rop_codes codes;
-    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? 0xff : 0;
     BOOL new_pix = TRUE;
 
     rop_codes_from_stretch_mode( mode, &codes );
