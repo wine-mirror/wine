@@ -904,7 +904,7 @@ const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
+        _CxxThrowException( &e, &__non_rtti_object_exception_type );
         return NULL;
     }
     __ENDTRY
@@ -941,7 +941,7 @@ const type_info* CDECL MSVCRT___RTtypeid(void *cppobj)
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
+        _CxxThrowException( &e, &__non_rtti_object_exception_type );
         return NULL;
     }
     __ENDTRY
@@ -1028,7 +1028,7 @@ void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
+        _CxxThrowException( &e, &__non_rtti_object_exception_type );
         return NULL;
     }
     __ENDTRY
@@ -1091,7 +1091,7 @@ void* CDECL MSVCRT___RTDynamicCast(void *cppobj, int unknown,
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
+        _CxxThrowException( &e, &__non_rtti_object_exception_type );
         return NULL;
     }
     __ENDTRY
@@ -1131,7 +1131,7 @@ void* CDECL MSVCRT___RTCastToVoid(void *cppobj)
     {
         __non_rtti_object e;
         MSVCRT___non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
+        _CxxThrowException( &e, &__non_rtti_object_exception_type );
         return NULL;
     }
     __ENDTRY
