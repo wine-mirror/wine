@@ -1268,29 +1268,8 @@ static HRESULT Global_ChrB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_Asc(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    HRESULT hres;
-    BSTR bstr;
-    WCHAR ret;
-
-    TRACE("(%s)\n", debugstr_variant(arg));
-
-    switch(V_VT(arg)) {
-    case VT_NULL:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-    case VT_EMPTY:
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    case VT_BSTR:
-        bstr = V_BSTR(arg);
-    default:
-        hres = to_string(arg, &bstr);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    ret = bstr[0];
-    if(ret == 0)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    return return_short(res, ret);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 /* The function supports only single-byte and double-byte character sets. It
