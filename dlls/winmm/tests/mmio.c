@@ -870,7 +870,8 @@ static void test_mmio_buffer_pointer(void)
     ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
 
     /* fill the buffer */
-    size = mmioAdvance(hmmio, &mmio, MMIO_READ);
+    res = mmioAdvance(hmmio, &mmio, MMIO_READ);
+    ok(res == MMSYSERR_NOERROR, "mmioAdvance failed %x\n", res);
     ok(mmio.pchEndRead-mmio.pchBuffer == sizeof(buffer), "got %d\n", (int)(mmio.pchEndRead-mmio.pchBuffer));
 
     /* seeking to the same buffer chunk, the buffer is kept */
