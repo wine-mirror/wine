@@ -972,6 +972,7 @@ static void test_depth_blit(void)
     memset(&ddsd_existing, 0, sizeof(ddsd_existing));
     ddsd_existing.dwSize = sizeof(ddsd_existing);
     hr = IDirectDrawSurface_GetSurfaceDesc(ds1, &ddsd_existing);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
     ddsd_new.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     ddsd_new.dwWidth = ddsd_existing.dwWidth;
@@ -3733,6 +3734,7 @@ static void test_lighting_interface_versions(void)
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
         hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
                 tests[i].vertextype, tests[i].data, 4, tests[i].draw_flags | D3DDP_WAIT);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
         hr = IDirect3DDevice2_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
