@@ -3531,6 +3531,24 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     ok(hres == S_OK, "hres = %x\n", hres);
     ok(!ocs, "ocs != NULL\n");
 
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    hres = IOleObject_DoVerb(oo, OLEIVERB_HIDE, NULL, (IOleClientSite*)0xdeadbeef,
+            0, (HWND)0xdeadbeef, NULL);
+    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    todo_wine CHECK_CALLED(GetContainer);
+    todo_wine CHECK_CALLED(Site_GetWindow);
+    todo_wine CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    todo_wine CHECK_CALLED(Invoke_AMBIENT_SILENT);
+
+    hres = IOleObject_GetClientSite(oo, &ocs);
+    ok(hres == S_OK, "hres = %x\n", hres);
+    todo_wine ok(ocs == &ClientSite, "ocs != &ClientSite\n");
+    if(ocs)
+        IOleClientSite_Release(ocs);
+
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
 
