@@ -2683,7 +2683,6 @@ static void test_converttovar(void)
     VariantClear(&dst);
 
     V_VT(&dst) = VT_EMPTY;
-    dst_len = 0;
     dst_status = DBSTATUS_S_DEFAULT;
     i8.QuadPart = 12345;
     dst_len = 0x1234;
