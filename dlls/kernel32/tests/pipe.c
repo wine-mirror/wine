@@ -2111,6 +2111,7 @@ static void test_readfileex_pending(void)
     num_bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(server, read_buf, 0, &num_bytes, &overlapped);
+    ok(!ret, "ReadFile should fail\n");
 todo_wine
     ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ok(num_bytes == 0, "bytes %u\n", num_bytes);
