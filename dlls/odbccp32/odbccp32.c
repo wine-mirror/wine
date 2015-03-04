@@ -56,6 +56,7 @@ static const WCHAR odbc_error_invalid_buff_len[] = {'I','n','v','a','l','i','d',
 static const WCHAR odbc_error_component_not_found[] = {'C','o','m','p','o','n','e','n','t',' ','n','o','t',' ','f','o','u','n','d',0};
 static const WCHAR odbc_error_out_of_mem[] = {'O','u','t',' ','o','f',' ','m','e','m','o','r','y',0};
 static const WCHAR odbc_error_invalid_param_sequence[] = {'I','n','v','a','l','i','d',' ','p','a','r','a','m','e','t','e','r',' ','s','e','q','u','e','n','c','e',0};
+static const WCHAR odbc_error_invalid_param_string[] = {'I','n','v','a','l','i','d',' ','p','a','r','a','m','e','t','e','r',' ','s','t','r','i','n','g',0};
 
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
@@ -73,6 +74,33 @@ static void clear_errors(void)
 {
     num_errors = 0;
 }
+
+static inline void * heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline WCHAR *heap_strdupAtoW(const char *str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD len;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = heap_alloc(len*sizeof(WCHAR));
+        if(ret)
+            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
 
 BOOL WINAPI ODBCCPlApplet( LONG i, LONG j, LONG * p1, LONG * p2)
 {
@@ -965,17 +993,62 @@ BOOL WINAPI SQLWriteFileDSN(LPCSTR lpszFileName, LPCSTR lpszAppName,
 BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
                LPCWSTR lpszString, LPCWSTR lpszFilename)
 {
+    LONG ret;
+    HKEY hkey;
+    WCHAR softwareodbc[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C',0};
+
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %s %s %s\n", debugstr_w(lpszSection), debugstr_w(lpszEntry),
+                debugstr_w(lpszString), debugstr_w(lpszFilename));
+
+    if(!lpszFilename || !*lpszFilename)
+    {
+        push_error(ODBC_ERROR_INVALID_STR, odbc_error_invalid_param_string);
+        return FALSE;
+    }
+
+    if ((ret = RegCreateKeyW(HKEY_CURRENT_USER, softwareodbc, &hkey)) == ERROR_SUCCESS)
+    {
+         HKEY hkeyfilename;
+
+         if ((ret = RegCreateKeyW(hkey, lpszFilename, &hkeyfilename)) == ERROR_SUCCESS)
+         {
+              HKEY hkey_section;
+
+              if ((ret = RegCreateKeyW(hkeyfilename, lpszSection, &hkey_section)) == ERROR_SUCCESS)
+              {
+                  ret = RegSetValueExW(hkey_section, lpszEntry, 0, REG_SZ, (BYTE*)lpszString, (lstrlenW(lpszString)+1)*sizeof(WCHAR));
+                  RegCloseKey(hkey_section);
+              }
+
+              RegCloseKey(hkeyfilename);
+         }
+
+         RegCloseKey(hkey);
+    }
+
+    return ret == ERROR_SUCCESS;
 }
 
 BOOL WINAPI SQLWritePrivateProfileString(LPCSTR lpszSection, LPCSTR lpszEntry,
                LPCSTR lpszString, LPCSTR lpszFilename)
 {
+    BOOL ret;
+    WCHAR *sect, *entry, *string, *file;
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %s %s %s\n", lpszSection, lpszEntry, lpszString, lpszFilename);
+
+    sect = heap_strdupAtoW(lpszSection);
+    entry = heap_strdupAtoW(lpszEntry);
+    string = heap_strdupAtoW(lpszString);
+    file = heap_strdupAtoW(lpszFilename);
+
+    ret = SQLWritePrivateProfileStringW(sect, entry, string, file);
+
+    heap_free(sect);
+    heap_free(entry);
+    heap_free(string);
+    heap_free(file);
+
+    return ret;
 }
