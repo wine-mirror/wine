@@ -629,6 +629,7 @@ static void append_url_params( WCHAR *url )
 {
     static const WCHAR arch_formatW[] = {'?','a','r','c','h','='};
     static const WCHAR v_formatW[] = {'&','v','='};
+    static const WCHAR winevW[] = {'&','w','i','n','e','v','='};
     DWORD size = INTERNET_MAX_URL_LENGTH * sizeof(WCHAR);
     DWORD len = strlenW(url);
 
@@ -638,7 +639,10 @@ static void append_url_params( WCHAR *url )
                                url+len, size/sizeof(WCHAR)-len)-1;
     memcpy(url+len, v_formatW, sizeof(v_formatW));
     len += sizeof(v_formatW)/sizeof(WCHAR);
-    MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len);
+    len += MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len)-1;
+    memcpy(url+len, winevW, sizeof(winevW));
+    len += sizeof(winevW)/sizeof(WCHAR);
+    MultiByteToWideChar(CP_ACP, 0, PACKAGE_VERSION, -1, url+len, size/sizeof(WCHAR)-len);
 }
 
 static LPWSTR get_url(void)
