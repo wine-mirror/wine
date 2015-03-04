@@ -2107,6 +2107,7 @@ static void test_knownFolders(void)
             ok(IsEqualGUID(&folderId, &FOLDERID_Windows)==TRUE, "invalid KNOWNFOLDERID returned\n");
 
             hr = IKnownFolder_GetPath(folder, 0, &folderPath);
+            ok(hr == S_OK, "failed to get path from known folder: 0x%08x\n", hr);
             ok(lstrcmpiW(sWinDir, folderPath)==0, "invalid path returned: \"%s\", expected: \"%s\"\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sWinDir));
             CoTaskMemFree(folderPath);
 
