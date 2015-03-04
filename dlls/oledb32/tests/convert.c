@@ -1346,7 +1346,7 @@ static void test_converttowstr(void)
     memcpy(src, &IID_IDataConvert, sizeof(GUID));
     memset(dst, 0xcc, sizeof(dst));
     dst_len = 0x1234;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_WSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_GUID, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 76, "got %ld\n", dst_len);
@@ -1469,17 +1469,15 @@ static void test_converttowstr(void)
     b = SysAllocStringLen(NULL, 0);
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = b;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == 0, "got %ld\n", dst_len);
-    ok(dst != NULL, "got %p\n", dst);
-    ok(dst != b, "got %p src %p\n", dst, b);
     ok(!lstrcmpW(b, dst), "got %s\n", wine_dbgstr_w(dst));
     VariantClear(&v);
 
     V_VT(&v) = VT_NULL;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_WSTR, 0, &dst_len, &v, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
     ok(dst_len == 0, "got %ld\n", dst_len);
