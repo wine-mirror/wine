@@ -504,7 +504,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
                                           STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
                                           &pPropStg);
 
-            r = get_profile_string(str_header, str_iconfile, pszFileName, &iconfile);
+            get_profile_string(str_header, str_iconfile, pszFileName, &iconfile);
             if (iconfile != NULL)
             {
                 PROPSPEC ps;
@@ -522,7 +522,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
                 CoTaskMemFree(iconfile);
             }
 
-            r = get_profile_string(str_header, str_iconindex, pszFileName, &iconindexstring);
+            get_profile_string(str_header, str_iconindex, pszFileName, &iconindexstring);
 
             if (iconindexstring != NULL)
             {
