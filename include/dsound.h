@@ -1138,6 +1138,7 @@ DECLARE_INTERFACE_(IDirectSound3DBuffer,IUnknown)
  */
 #ifndef _IKsPropertySet_
 #define _IKsPropertySet_
+#define __IKsPropertySet_FWD_DEFINED__
 
 typedef struct IKsPropertySet *LPKSPROPERTYSET;
 
