@@ -140,7 +140,6 @@ static HANDLE get_device_manager(void)
 static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff, ULONG in_size,
                                void *out_buff, ULONG *out_size )
 {
-    MDL mdl;
     IRP *irp;
     void *sys_buff = NULL;
     FILE_OBJECT file;
@@ -150,7 +149,6 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     TRACE( "ioctl %x device %p in_size %u out_size %u\n", code, device, in_size, *out_size );
 
     /* so we can spot things that we should initialize */
-    memset( &mdl, 0x77, sizeof(mdl) );
     memset( &file, 0x88, sizeof(file) );
 
     if ((code & 3) == METHOD_BUFFERED)
@@ -170,17 +168,12 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = ((code & 3) == METHOD_BUFFERED) ? sys_buff : in_buff;
     irp->UserBuffer = out_buff;
-    irp->MdlAddress = &mdl;
     irp->Tail.Overlay.OriginalFileObject = &file;
-
-    mdl.Next = NULL;
-    mdl.Size = 0;
-    mdl.StartVa = out_buff;
-    mdl.ByteCount = *out_size;
-    mdl.ByteOffset = 0;
 
     file.FsContext = NULL;
     file.FsContext2 = NULL;
+
+    IoAllocateMdl( out_buff, *out_size, FALSE, FALSE, irp );
 
     device->CurrentIrp = irp;
 
@@ -385,7 +378,17 @@ PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
  */
 void WINAPI IoFreeIrp( IRP *irp )
 {
+    MDL *mdl;
+
     TRACE( "%p\n", irp );
+
+    mdl = irp->MdlAddress;
+    while (mdl)
+    {
+        MDL *next = mdl->Next;
+        IoFreeMdl( mdl );
+        mdl = next;
+    }
 
     ExFreePool( irp );
 }
@@ -404,24 +407,21 @@ PVOID WINAPI IoAllocateErrorLogEntry( PVOID IoObject, UCHAR EntrySize )
 /***********************************************************************
  *           IoAllocateMdl  (NTOSKRNL.EXE.@)
  */
-PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN SecondaryBuffer, BOOLEAN ChargeQuota, PIRP Irp )
+PMDL WINAPI IoAllocateMdl( PVOID va, ULONG length, BOOLEAN secondary, BOOLEAN charge_quota, IRP *irp )
 {
     PMDL mdl;
-    ULONG_PTR address = (ULONG_PTR)VirtualAddress;
+    ULONG_PTR address = (ULONG_PTR)va;
     ULONG_PTR page_address;
     SIZE_T nb_pages, mdl_size;
 
-    TRACE("(%p, %u, %i, %i, %p)\n", VirtualAddress, Length, SecondaryBuffer, ChargeQuota, Irp);
+    TRACE("(%p, %u, %i, %i, %p)\n", va, length, secondary, charge_quota, irp);
 
-    if (Irp)
-        FIXME("Attaching the MDL to an IRP is not yet supported\n");
-
-    if (ChargeQuota)
+    if (charge_quota)
         FIXME("Charge quota is not yet supported\n");
 
     /* FIXME: We suppose that page size is 4096 */
     page_address = address & ~(4096 - 1);
-    nb_pages = (((address + Length - 1) & ~(4096 - 1)) - page_address) / 4096 + 1;
+    nb_pages = (((address + length - 1) & ~(4096 - 1)) - page_address) / 4096 + 1;
 
     mdl_size = sizeof(MDL) + nb_pages * sizeof(PVOID);
 
@@ -430,11 +430,24 @@ PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN Secondary
         return NULL;
 
     mdl->Size = mdl_size;
-    mdl->Process = IoGetCurrentProcess();
+    mdl->Process = NULL; /* FIXME: IoGetCurrentProcess */
     mdl->StartVa = (PVOID)page_address;
-    mdl->ByteCount = Length;
+    mdl->ByteCount = length;
     mdl->ByteOffset = address - page_address;
 
+    if (!irp) return mdl;
+
+    if (secondary)  /* add it at the end */
+    {
+        MDL **pmdl = &irp->MdlAddress;
+        while (*pmdl) pmdl = &(*pmdl)->Next;
+        *pmdl = mdl;
+    }
+    else
+    {
+        mdl->Next = irp->MdlAddress;
+        irp->MdlAddress = mdl;
+    }
     return mdl;
 }
 
@@ -442,10 +455,9 @@ PMDL WINAPI IoAllocateMdl( PVOID VirtualAddress, ULONG Length, BOOLEAN Secondary
 /***********************************************************************
  *           IoFreeMdl  (NTOSKRNL.EXE.@)
  */
-VOID WINAPI IoFreeMdl(PMDL mdl)
+void WINAPI IoFreeMdl(PMDL mdl)
 {
-    FIXME("partial stub: %p\n", mdl);
-
+    TRACE("%p\n", mdl);
     HeapFree(GetProcessHeap(), 0, mdl);
 }
 
