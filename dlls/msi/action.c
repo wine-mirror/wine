@@ -1340,17 +1340,15 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
     MSIFILEPATCH *patch;
-    LPWSTR file_key;
+    const WCHAR *file_key;
 
     patch = msi_alloc_zero( sizeof (MSIFILEPATCH) );
     if (!patch)
         return ERROR_NOT_ENOUGH_MEMORY;
 
-    file_key = msi_dup_record_field( row, 1 );
+    file_key = MSI_RecordGetString( row, 1 );
     patch->File = msi_get_loaded_file( package, file_key );
-    msi_free(file_key);
-
-    if( !patch->File )
+    if (!patch->File)
     {
         ERR("Failed to find target for patch in File table\n");
         msi_free(patch);
@@ -1358,10 +1356,6 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
     }
 
     patch->Sequence = MSI_RecordGetInteger( row, 2 );
-
-    /* FIXME: The database should be properly transformed */
-    patch->Sequence += MSI_INITIAL_MEDIA_TRANSFORM_OFFSET;
-
     patch->PatchSize = MSI_RecordGetInteger( row, 3 );
     patch->Attributes = MSI_RecordGetInteger( row, 4 );
     patch->IsApplied = FALSE;
@@ -1371,7 +1365,7 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
      * _StreamRef   - External key into MsiPatchHeaders (instead of the header field)
      */
 
-    TRACE("Patch Loaded (%s)\n", debugstr_w(patch->File->File));
+    TRACE("Patch loaded (file %s sequence %u)\n", debugstr_w(patch->File->File), patch->Sequence);
 
     list_add_tail( &package->filepatches, &patch->entry );
 
