@@ -3702,7 +3702,7 @@ static void test_accept(void)
 
     closesocket(accepted);
     closesocket(connector);
-    accepted = connector = server_socket = INVALID_SOCKET;
+    accepted = connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
     server_socket = setup_server_socket(&address, &socklen);
