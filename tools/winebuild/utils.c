@@ -869,7 +869,7 @@ const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
 }
 
 /* parse a cpu name and return the corresponding value */
-enum target_cpu get_cpu_from_name( const char *name )
+int get_cpu_from_name( const char *name )
 {
     unsigned int i;
 

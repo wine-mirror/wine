@@ -199,9 +199,12 @@ static void set_target( const char *target )
 
     if ((p = strchr( spec, '-' )))
     {
+        int cpu;
+
         *p++ = 0;
-        if ((target_cpu = get_cpu_from_name( spec )) == -1)
-            fatal_error( "Unrecognized CPU '%s'\n", spec );
+        cpu = get_cpu_from_name( spec );
+        if (cpu == -1) fatal_error( "Unrecognized CPU '%s'\n", spec );
+        target_cpu = cpu;
         platform = p;
         if ((p = strrchr( p, '-' ))) platform = p + 1;
     }

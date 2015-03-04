@@ -473,7 +473,7 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp )
                     odp->flags |= FLAG_CPU_WIN64;
                 else
                 {
-                    enum target_cpu cpu = get_cpu_from_name( cpu_name );
+                    int cpu = get_cpu_from_name( cpu_name );
                     if (cpu == -1)
                     {
                         error( "Unknown architecture '%s'\n", cpu_name );
