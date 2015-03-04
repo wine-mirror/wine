@@ -611,7 +611,7 @@ static int compare_ver_block(ver_block_t *ver_block1, ver_block_t *ver_block2);
 static int compare_ver_value(ver_value_t *ver_value1, ver_value_t *ver_value2) {
 	int different = 0;
 	int i = 0;
-	if((ver_value1->type == ver_value2->type)) {
+	if (ver_value1->type == ver_value2->type) {
 		switch(ver_value1->type) {
 			case val_str:
 				if(ver_value1->key && ver_value2->key)
