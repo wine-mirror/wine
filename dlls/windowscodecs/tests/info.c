@@ -80,6 +80,7 @@ static void test_decoder_info(void)
     int i;
 
     hr = get_component_info(&CLSID_WICBmpDecoder, &info);
+    ok(hr == S_OK, "CreateComponentInfo failed, hr=%x\n", hr);
 
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICBitmapDecoderInfo, (void**)&decoder_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
