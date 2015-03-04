@@ -2429,7 +2429,7 @@ static void test_unicode(void)
     shfoW.hwnd = NULL;
     shfoW.wFunc = FO_DELETE;
     shfoW.pFrom = UNICODE_PATH;
-    shfoW.pTo = '\0';
+    shfoW.pTo = NULL;
     shfoW.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     shfoW.hNameMappings = NULL;
     shfoW.lpszProgressTitle = NULL;
