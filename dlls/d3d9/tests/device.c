@@ -1081,6 +1081,7 @@ static void test_swapchain(void)
     ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x)\n", hr);
     /* Check if the back buffer count was modified */
     hr = IDirect3DSwapChain9_GetPresentParameters(swapchain0, &d3dpp);
+    ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
     ok(d3dpp.BackBufferCount == 1, "Got unexpected back buffer count %u.\n", d3dpp.BackBufferCount);
     IDirect3DSwapChain9_Release(swapchain0);
 
@@ -8821,6 +8822,7 @@ static void test_volume_blocks(void)
         {
             hr = IDirect3DDevice9_CreateVolumeTexture(device, formats[i].block_width, formats[i].block_height,
                     2, 2, 0, formats[i].fmt, D3DPOOL_SCRATCH, &texture, NULL);
+            ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
 
             hr = IDirect3DVolumeTexture9_LockBox(texture, 1, &locked_box, NULL, 0);
             ok(SUCCEEDED(hr), "Failed to lock volume texture mipmap, hr %#x.\n", hr);
@@ -9728,6 +9730,7 @@ static void test_resource_type(void)
     {
         hr = IDirect3DDevice9_CreateVolumeTexture(device, 2, 4, 8, 4, 0, D3DFMT_X8R8G8B8,
                 D3DPOOL_SYSTEMMEM, &volume_texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
         type = IDirect3DVolumeTexture9_GetType(volume_texture);
         ok(type == D3DRTYPE_VOLUMETEXTURE, "Expected type D3DRTYPE_VOLUMETEXTURE, got %u.\n", type);
 

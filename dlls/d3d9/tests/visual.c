@@ -12095,6 +12095,7 @@ static void loop_index_test(void)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShaderConstantI returned %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
@@ -14793,6 +14794,7 @@ static void multisampled_depth_buffer_test(void)
     IDirect3DSurface9_Release(ds);
     hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
             D3DMULTISAMPLE_2_SAMPLES, 0, TRUE, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
     ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
 
@@ -15074,6 +15076,7 @@ static void resz_test(void)
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
             D3DMULTISAMPLE_2_SAMPLES, 0, TRUE, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil, hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
             D3DMULTISAMPLE_NONE, 0, TRUE, &readback, NULL);
     ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
