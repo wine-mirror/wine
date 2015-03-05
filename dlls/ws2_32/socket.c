@@ -2780,9 +2780,23 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
  */
 int WINAPI WS_closesocket(SOCKET s)
 {
-    TRACE("socket %04lx\n", s);
-    if (CloseHandle(SOCKET2HANDLE(s))) return 0;
-    return SOCKET_ERROR;
+    int res = SOCKET_ERROR, fd;
+    if (num_startup)
+    {
+        fd = get_sock_fd(s, FILE_READ_DATA, NULL);
+        if (fd >= 0)
+        {
+            release_sock_fd(s, fd);
+            if (CloseHandle(SOCKET2HANDLE(s)))
+                res = 0;
+        }
+        else
+            SetLastError(WSAENOTSOCK);
+    }
+    else
+        SetLastError(WSANOTINITIALISED);
+    TRACE("(socket %04lx) -> %d\n", s, res);
+    return res;
 }
 
 static int do_connect(int fd, const struct WS_sockaddr* name, int namelen)
