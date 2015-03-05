@@ -111,7 +111,7 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
 
     value_len = data_size - name_len - 1;
 
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
     name = HeapAlloc(GetProcessHeap(), 0, name_len + 1);
     value = HeapAlloc(GetProcessHeap(), 0, value_len + 1);
     if (!result || !name || !value)

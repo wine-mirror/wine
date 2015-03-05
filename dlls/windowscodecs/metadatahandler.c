@@ -696,7 +696,7 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
         return hr;
     }
 
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataItem));
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
     if (!result)
     {
         HeapFree(GetProcessHeap(), 0, data);
@@ -1126,7 +1126,7 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
         return WINCODEC_ERR_BADMETADATAHEADER;
     }
 
-    result = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*result));
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(*result));
     if (!result)
     {
         HeapFree(GetProcessHeap(), 0, entry);
