@@ -1923,9 +1923,6 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     parent = GetAncestor( winpos->hwnd, GA_PARENT );
     if (!IsWindowVisible( parent )) winpos->flags |= SWP_NOREDRAW;
 
-    if (winpos->flags & SWP_HIDEWINDOW) wndPtr->flags |= WIN_HIDDEN;
-    else if (winpos->flags & SWP_SHOWWINDOW) wndPtr->flags &= ~WIN_HIDDEN;
-
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
     else
     {

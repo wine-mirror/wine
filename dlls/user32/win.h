@@ -76,7 +76,6 @@ typedef struct tagWND
 #define WIN_ISUNICODE             0x0010 /* Window is Unicode */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0020 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
 #define WIN_CHILDREN_MOVED        0x0040 /* children may have moved, ignore stored positions */
-#define WIN_HIDDEN                0x0080 /* hidden by an explicit SWP_HIDEWINDOW (as opposed to WM_SETREDRAW) */
 
   /* Window functions */
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;

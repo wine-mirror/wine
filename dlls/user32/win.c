@@ -774,10 +774,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 
     if (ok && ((style.styleOld ^ style.styleNew) & WS_VISIBLE))
     {
-        /* Some apps try to make their window visible through WM_SETREDRAW.
-         * Only do that if the window was never explicitly hidden,
-         * because Steam messes with WM_SETREDRAW after hiding its windows. */
-        made_visible = !(win->flags & WIN_HIDDEN) && (style.styleNew & WS_VISIBLE);
+        made_visible = (style.styleNew & WS_VISIBLE) != 0;
         invalidate_dce( win, NULL );
     }
     WIN_ReleasePtr( win );
@@ -2499,7 +2496,7 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) ||
         (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)))
     {
-        made_visible = !(wndPtr->flags & WIN_HIDDEN) && (wndPtr->dwStyle & WS_VISIBLE);
+        made_visible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
         invalidate_dce( wndPtr, NULL );
     }
     WIN_ReleasePtr( wndPtr );
