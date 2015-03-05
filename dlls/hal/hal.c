@@ -23,9 +23,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
