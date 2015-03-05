@@ -922,7 +922,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 
 static void test_GetTempPathA(char* tmp_dir)
 {
-    DWORD len, len_with_null;
+    DWORD len, slen, len_with_null;
     char buf[MAX_PATH];
 
     len_with_null = strlen(tmp_dir) + 1;
@@ -959,13 +959,22 @@ static void test_GetTempPathA(char* tmp_dir)
     ok(lstrcmpiA(buf, tmp_dir) == 0, "expected [%s], got [%s]\n",tmp_dir,buf);
     ok(len == strlen(buf), "returned length should be equal to the length of string\n");
     /* The rest of the buffer remains untouched */
+    slen = len + 1;
     for(len++; len < sizeof(buf); len++)
+        ok(buf[len] == 'a', "expected 'a' at [%d], got 0x%x\n", len, buf[len]);
+
+    /* When the buffer is not long enough it remains untouched */
+    memset(buf, 'a', sizeof(buf));
+    len = GetTempPathA(slen / 2, buf);
+    ok(len == slen || broken(len == slen + 1) /* read the big comment above */ ,
+       "expected %d, got %d\n", slen, len);
+    for(len = 0; len < sizeof(buf) / sizeof(buf[0]); len++)
         ok(buf[len] == 'a', "expected 'a' at [%d], got 0x%x\n", len, buf[len]);
 }
 
 static void test_GetTempPathW(char* tmp_dir)
 {
-    DWORD len, len_with_null;
+    DWORD len, slen, len_with_null;
     WCHAR buf[MAX_PATH];
     WCHAR tmp_dirW[MAX_PATH];
     static const WCHAR fooW[] = {'f','o','o',0};
@@ -1011,8 +1020,34 @@ static void test_GetTempPathW(char* tmp_dir)
     ok(lstrcmpiW(buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path\n");
     ok(len == lstrlenW(buf), "returned length should be equal to the length of string\n");
     /* The rest of the buffer must be zeroed */
+    slen = len + 1;
     for(len++; len < sizeof(buf) / sizeof(buf[0]); len++)
         ok(buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, buf[len]);
+
+    /* When the buffer is not long enough the length passed is zeroed */
+    for(len = 0; len < sizeof(buf) / sizeof(buf[0]); len++)
+        buf[len] = 'a';
+    len = GetTempPathW(slen / 2, buf);
+    ok(len == slen || broken(len == slen + 1) /* read the big comment above */ ,
+       "expected %d, got %d\n", slen, len);
+
+    {
+        /* In Windows 8 when TMP var points to a drive only (like C:) instead of a
+        * full directory the behavior changes. It will start filling the path but
+        * will later truncate the buffer before returning. So the generic test
+        * below will fail for this Windows 8 corner case.
+        */
+        char tmp_var[64];
+        DWORD version = GetVersion();
+        GetEnvironmentVariableA("TMP", tmp_var, sizeof(tmp_var));
+        if (strlen(tmp_var) == 2 && version >= 0x00060002)
+            return;
+    }
+
+    for(len = 0; len < slen / 2; len++)
+        ok(buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, buf[len]);
+    for(; len < sizeof(buf) / sizeof(buf[0]); len++)
+        ok(buf[len] == 'a', "expected 'a' at [%d], got 0x%x\n", len, buf[len]);
 }
 
 static void test_GetTempPath(void)

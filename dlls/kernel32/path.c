@@ -621,17 +621,17 @@ DWORD WINAPI GetTempPathW( DWORD count, LPWSTR path )
 
     ret++; /* add space for terminating 0 */
 
-    if (count)
+    if (count >= ret)
     {
-        lstrcpynW(path, tmp_path, ret);
-        if (count >= ret)
-        {
-            /* the remaining buffer must be zeroed */
-            memset(path + ret, 0, (count - ret) * sizeof(WCHAR));
-            ret--; /* return length without 0 */
-        }
-        else if (count < 4)
-            path[0] = 0; /* avoid returning ambiguous "X:" */
+        lstrcpynW(path, tmp_path, count);
+        /* the remaining buffer must be zeroed */
+        memset(path + ret, 0, (count - ret) * sizeof(WCHAR));
+        ret--; /* return length without 0 */
+    }
+    else if (count)
+    {
+        /* the buffer must be cleared if contents will not fit */
+        memset(path, 0, count * sizeof(WCHAR));
     }
 
     TRACE("returning %u, %s\n", ret, debugstr_w(path));
