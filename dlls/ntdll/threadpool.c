@@ -39,32 +39,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(threadpool);
 
 #define WORKER_TIMEOUT 30000 /* 30 seconds */
 
-/* threadpool_cs must be held while modifying the following elements */
-static struct list work_item_list = LIST_INIT(work_item_list);
-static LONG num_workers;
-static LONG num_busy_workers;
-static LONG num_items_processed;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug;
+static RTL_CRITICAL_SECTION_DEBUG critsect_compl_debug;
 
-static RTL_CONDITION_VARIABLE threadpool_cond = RTL_CONDITION_VARIABLE_INIT;
+static struct
+{
+    /* threadpool_cs must be held while modifying the following four elements */
+    struct list             work_item_list;
+    LONG                    num_workers;
+    LONG                    num_busy_workers;
+    LONG                    num_items_processed;
+    RTL_CONDITION_VARIABLE  threadpool_cond;
+    RTL_CRITICAL_SECTION    threadpool_cs;
+    HANDLE                  compl_port;
+    RTL_CRITICAL_SECTION    threadpool_compl_cs;
+}
+old_threadpool =
+{
+    LIST_INIT(old_threadpool.work_item_list),   /* work_item_list */
+    0,                                          /* num_workers */
+    0,                                          /* num_busy_workers */
+    0,                                          /* num_items_processed */
+    RTL_CONDITION_VARIABLE_INIT,                /* threadpool_cond */
+    { &critsect_debug, -1, 0, 0, 0, 0 },        /* threadpool_cs */
+    NULL,                                       /* compl_port */
+    { &critsect_compl_debug, -1, 0, 0, 0, 0 },  /* threadpool_compl_cs */
+};
 
-static RTL_CRITICAL_SECTION threadpool_cs;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
-    0, 0, &threadpool_cs,
+    0, 0, &old_threadpool.threadpool_cs,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
     0, 0, { (DWORD_PTR)(__FILE__ ": threadpool_cs") }
 };
-static RTL_CRITICAL_SECTION threadpool_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static HANDLE compl_port = NULL;
-static RTL_CRITICAL_SECTION threadpool_compl_cs;
 static RTL_CRITICAL_SECTION_DEBUG critsect_compl_debug =
 {
-    0, 0, &threadpool_compl_cs,
+    0, 0, &old_threadpool.threadpool_compl_cs,
     { &critsect_compl_debug.ProcessLocksList, &critsect_compl_debug.ProcessLocksList },
     0, 0, { (DWORD_PTR)(__FILE__ ": threadpool_compl_cs") }
 };
-static RTL_CRITICAL_SECTION threadpool_compl_cs = { &critsect_compl_debug, -1, 0, 0, 0, 0 };
 
 struct work_item
 {
@@ -90,18 +104,18 @@ static void WINAPI worker_thread_proc(void * param)
     LARGE_INTEGER timeout;
     timeout.QuadPart = -(WORKER_TIMEOUT * (ULONGLONG)10000);
 
-    RtlEnterCriticalSection( &threadpool_cs );
-    num_workers++;
+    RtlEnterCriticalSection( &old_threadpool.threadpool_cs );
+    old_threadpool.num_workers++;
 
     for (;;)
     {
-        if ((item = list_head( &work_item_list )))
+        if ((item = list_head( &old_threadpool.work_item_list )))
         {
             work_item_ptr = LIST_ENTRY( item, struct work_item, entry );
             list_remove( &work_item_ptr->entry );
-            num_busy_workers++;
-            num_items_processed++;
-            RtlLeaveCriticalSection( &threadpool_cs );
+            old_threadpool.num_busy_workers++;
+            old_threadpool.num_items_processed++;
+            RtlLeaveCriticalSection( &old_threadpool.threadpool_cs );
 
             /* copy item to stack and do the work */
             work_item = *work_item_ptr;
@@ -109,15 +123,18 @@ static void WINAPI worker_thread_proc(void * param)
             TRACE("executing %p(%p)\n", work_item.function, work_item.context);
             work_item.function( work_item.context );
 
-            RtlEnterCriticalSection( &threadpool_cs );
-            num_busy_workers--;
+            RtlEnterCriticalSection( &old_threadpool.threadpool_cs );
+            old_threadpool.num_busy_workers--;
         }
-        else if (RtlSleepConditionVariableCS( &threadpool_cond, &threadpool_cs, &timeout ) != STATUS_SUCCESS)
+        else if (RtlSleepConditionVariableCS( &old_threadpool.threadpool_cond,
+                 &old_threadpool.threadpool_cs, &timeout ) != STATUS_SUCCESS)
+        {
             break;
+        }
     }
 
-    num_workers--;
-    RtlLeaveCriticalSection( &threadpool_cs );
+    old_threadpool.num_workers--;
+    RtlLeaveCriticalSection( &old_threadpool.threadpool_cs );
     RtlExitUserThread( 0 );
 
     /* never reached */
@@ -161,16 +178,17 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
     if (Flags & ~WT_EXECUTELONGFUNCTION)
         FIXME("Flags 0x%x not supported\n", Flags);
 
-    RtlEnterCriticalSection( &threadpool_cs );
-    list_add_tail( &work_item_list, &work_item->entry );
-    status = (num_workers > num_busy_workers) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
-    items_processed = num_items_processed;
-    RtlLeaveCriticalSection( &threadpool_cs );
+    RtlEnterCriticalSection( &old_threadpool.threadpool_cs );
+    list_add_tail( &old_threadpool.work_item_list, &work_item->entry );
+    status = (old_threadpool.num_workers > old_threadpool.num_busy_workers) ?
+             STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+    items_processed = old_threadpool.num_items_processed;
+    RtlLeaveCriticalSection( &old_threadpool.threadpool_cs );
 
     /* FIXME: tune this algorithm to not be as aggressive with creating threads
      * if WT_EXECUTELONGFUNCTION isn't specified */
     if (status == STATUS_SUCCESS)
-        RtlWakeConditionVariable( &threadpool_cond );
+        RtlWakeConditionVariable( &old_threadpool.threadpool_cond );
     else
     {
         status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
@@ -182,12 +200,15 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
             NtClose( thread );
         else
         {
-            RtlEnterCriticalSection( &threadpool_cs );
-            if (num_workers > 0 || num_items_processed != items_processed)
+            RtlEnterCriticalSection( &old_threadpool.threadpool_cs );
+            if (old_threadpool.num_workers > 0 ||
+                old_threadpool.num_items_processed != items_processed)
+            {
                 status = STATUS_SUCCESS;
+            }
             else
                 list_remove( &work_item->entry );
-            RtlLeaveCriticalSection( &threadpool_cs );
+            RtlLeaveCriticalSection( &old_threadpool.threadpool_cs );
 
             if (status != STATUS_SUCCESS)
                 RtlFreeHeap( GetProcessHeap(), 0, work_item );
@@ -253,12 +274,12 @@ NTSTATUS WINAPI RtlSetIoCompletionCallback(HANDLE FileHandle, PRTL_OVERLAPPED_CO
 
     if (Flags) FIXME("Unknown value Flags=0x%x\n", Flags);
 
-    if (!compl_port)
+    if (!old_threadpool.compl_port)
     {
         NTSTATUS res = STATUS_SUCCESS;
 
-        RtlEnterCriticalSection(&threadpool_compl_cs);
-        if (!compl_port)
+        RtlEnterCriticalSection(&old_threadpool.threadpool_compl_cs);
+        if (!old_threadpool.compl_port)
         {
             HANDLE cport;
 
@@ -268,16 +289,16 @@ NTSTATUS WINAPI RtlSetIoCompletionCallback(HANDLE FileHandle, PRTL_OVERLAPPED_CO
                 /* FIXME native can start additional threads in case of e.g. hung callback function. */
                 res = RtlQueueWorkItem( iocp_poller, cport, WT_EXECUTEDEFAULT );
                 if (!res)
-                    compl_port = cport;
+                    old_threadpool.compl_port = cport;
                 else
                     NtClose( cport );
             }
         }
-        RtlLeaveCriticalSection(&threadpool_compl_cs);
+        RtlLeaveCriticalSection(&old_threadpool.threadpool_compl_cs);
         if (res) return res;
     }
 
-    info.CompletionPort = compl_port;
+    info.CompletionPort = old_threadpool.compl_port;
     info.CompletionKey = (ULONG_PTR)Function;
 
     return NtSetInformationFile( FileHandle, &iosb, &info, sizeof(info), FileCompletionInformation );
