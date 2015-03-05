@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+#define NONAMELESSUNION
+
 #include "mountmgr.h"
 #include "winreg.h"
 #include "winuser.h"

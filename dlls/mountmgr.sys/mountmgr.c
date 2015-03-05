@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "mountmgr.h"
 #include "winreg.h"
