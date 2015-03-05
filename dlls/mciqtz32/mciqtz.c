@@ -198,6 +198,12 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicAudio, (void**)&wma->audio);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IBasicAudio interface (hr = %x)\n", hr);
+        goto err;
+    }
+
     if (!(dwFlags & MCI_OPEN_ELEMENT) || (dwFlags & MCI_OPEN_ELEMENT_ID)) {
         TRACE("Wrong dwFlags %x\n", dwFlags);
         goto err;
@@ -240,6 +246,9 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
     return 0;
 
 err:
+    if (wma->audio)
+        IBasicAudio_Release(wma->audio);
+    wma->audio = NULL;
     if (wma->vidbasic)
         IBasicVideo_Release(wma->vidbasic);
     wma->vidbasic = NULL;
@@ -284,6 +293,7 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (wma->opened) {
         IVideoWindow_Release(wma->vidwin);
         IBasicVideo_Release(wma->vidbasic);
+        IBasicAudio_Release(wma->audio);
         IMediaSeeking_Release(wma->seek);
         IMediaEvent_Release(wma->mevent);
         IGraphBuilder_Release(wma->pgraph);
@@ -892,8 +902,9 @@ out:
 static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_PARMSW lpParms)
 {
     WINE_MCIQTZ *wma;
+    DWORD ret = 0;
 
-    FIXME("(%04x, %08x, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
 
     if (!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
@@ -902,9 +913,38 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
-    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
+    if (!(dwFlags & MCI_DGV_SETAUDIO_ITEM)) {
+        FIXME("Unknown flags (%08x)\n", dwFlags);
+        return 0;
+    }
 
-    return 0;
+    if (dwFlags & MCI_DGV_SETAUDIO_ITEM) {
+        switch (lpParms->dwItem) {
+        case MCI_DGV_SETAUDIO_VOLUME:
+            if (dwFlags & MCI_DGV_SETAUDIO_VALUE) {
+                long vol = -10000;
+                HRESULT hr;
+                if (lpParms->dwValue > 1000) {
+                    ret = MCIERR_OUTOFRANGE;
+                    break;
+                }
+                if (dwFlags & MCI_TEST)
+                    break;
+                vol += (long)lpParms->dwValue * 10;
+                hr = IBasicAudio_put_Volume(wma->audio, vol);
+                if (FAILED(hr)) {
+                    WARN("Cannot set volume (hr = %x)\n", hr);
+                    ret = MCIERR_INTERNAL;
+                }
+            }
+            break;
+        default:
+            FIXME("Unknown item %08x\n", lpParms->dwItem);
+            break;
+        }
+    }
+
+    return ret;
 }
 
 /*======================================================================*

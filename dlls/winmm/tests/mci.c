@@ -1334,14 +1334,14 @@ static void test_playWaveTypeMpegvideo(void)
 
     err = mciSendStringA("status mysound mode", buf, sizeof(buf), NULL);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
-    todo_wine ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
+    ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
 
     err = mciSendStringA("setaudio mysound volume to 1001", NULL, 0, NULL);
-    todo_wine ok(err==MCIERR_OUTOFRANGE,"mci setaudio volume to 1001 returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_OUTOFRANGE,"mci setaudio volume to 1001 returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("status mysound mode", buf, sizeof(buf), NULL);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
-    todo_wine ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
+    ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
 
     err = mciSendStringA("close mysound", NULL, 0, NULL);
     ok(!err,"mci close returned %s\n", dbg_mcierr(err));

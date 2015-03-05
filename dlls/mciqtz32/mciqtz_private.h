@@ -35,6 +35,7 @@ typedef struct {
     IMediaEvent*   mevent;
     IVideoWindow*  vidwin;
     IBasicVideo*   vidbasic;
+    IBasicAudio*   audio;
     DWORD          time_format;
     UINT           command_table;
     HWND parent;
