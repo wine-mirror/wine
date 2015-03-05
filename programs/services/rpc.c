@@ -1573,7 +1573,7 @@ DWORD __cdecl svcctl_NotifyServiceStatusChange(
 
 DWORD __cdecl svcctl_GetNotifyResults(
     SC_NOTIFY_RPC_HANDLE notify,
-    SC_RPC_NOTIFY_PARAMS_LIST *params)
+    SC_RPC_NOTIFY_PARAMS_LIST **params)
 {
     WINE_FIXME("\n");
     return ERROR_CALL_NOT_IMPLEMENTED;

@@ -741,7 +741,7 @@ typedef [switch_type(DWORD)] union _SC_RPC_SERVICE_CONTROL_OUT_PARAMSW {
     /* Function 48 */
     DWORD svcctl_GetNotifyResults(
         [in] SC_NOTIFY_RPC_HANDLE notify,
-        [out] SC_RPC_NOTIFY_PARAMS_LIST *params
+        [out] SC_RPC_NOTIFY_PARAMS_LIST **params
     );
 
     /* Function 49 */
