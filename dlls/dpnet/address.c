@@ -442,7 +442,6 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
         /* Create a new one */
         entry = heap_alloc(sizeof(struct component));
         entry->name = heap_strdupW(pwszName);
-        entry->type = dwDataType;
 
         list_add_tail(&This->components, &entry->entry);
     }
@@ -472,6 +471,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             break;
     }
 
+    entry->type = dwDataType;
     entry->size = dwDataSize;
 
     return DPN_OK;
