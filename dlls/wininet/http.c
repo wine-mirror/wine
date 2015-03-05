@@ -2763,8 +2763,19 @@ static DWORD start_next_chunk(chunked_stream_t *stream, http_request_t *req)
                 if (req->contentLength == ~0u) req->contentLength = chunk_size;
                 else req->contentLength += chunk_size;
 
-                if (!chunk_size) stream->end_of_data = TRUE;
-                return discard_chunked_eol(stream, req);
+                /* eat the rest of this line */
+                if ((res = discard_chunked_eol(stream, req)) != ERROR_SUCCESS)
+                    return res;
+
+                /* if there's chunk data, return now */
+                if (chunk_size) return ERROR_SUCCESS;
+
+                /* otherwise, eat the terminator for this chunk */
+                if ((res = discard_chunked_eol(stream, req)) != ERROR_SUCCESS)
+                    return res;
+
+                stream->end_of_data = TRUE;
+                return ERROR_SUCCESS;
             }
             remove_chunked_data(stream, 1);
         }
