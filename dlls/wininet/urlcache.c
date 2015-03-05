@@ -1296,9 +1296,6 @@ static DWORD urlcache_copy_entry(cache_container *container, const urlcache_head
         dos_date_time_to_file_time(url_entry->sync_date, url_entry->sync_time, &entry_info->LastSyncTime);
     }
 
-    if(size%4 && size<*info_size)
-        ZeroMemory((LPBYTE)entry_info+size, 4-size%4);
-    size = DWORD_ALIGN(size);
     if(unicode)
         url_len = urlcache_decode_url((const char*)url_entry+url_entry->url_off, NULL, 0);
     else
