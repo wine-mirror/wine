@@ -636,7 +636,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
     if ((magic == 1) && (hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
         HRSRC hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
-                                     MAKEINTRESOURCEW(VS_FILE_INFO) );
+                                     (LPWSTR)VS_FILE_INFO );
         if (hRsrc)
         {
             magic = IMAGE_NT_SIGNATURE;
@@ -733,7 +733,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     if ((magic == 1) && (hModule = LoadLibraryExW( filename, 0, LOAD_LIBRARY_AS_DATAFILE )))
     {
         HRSRC hRsrc = FindResourceW( hModule, MAKEINTRESOURCEW(VS_VERSION_INFO),
-                                     MAKEINTRESOURCEW(VS_FILE_INFO) );
+                                     (LPWSTR)VS_FILE_INFO );
         if (hRsrc)
         {
             HGLOBAL hMem = LoadResource( hModule, hRsrc );
