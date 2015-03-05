@@ -323,10 +323,9 @@ static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *r)
     stack_pop_deref(ctx, r);
 
     if(V_VT(r->v) == VT_DISPATCH) {
-        DISPPARAMS dp = {0};
         HRESULT hres;
 
-        hres = disp_call(ctx->script, V_DISPATCH(r->v), DISPID_VALUE, &dp, &r->store);
+        hres = get_disp_value(ctx->script, V_DISPATCH(r->v), &r->store);
         if(r->owned)
             IDispatch_Release(V_DISPATCH(r->v));
         if(FAILED(hres))
@@ -354,12 +353,10 @@ static HRESULT stack_assume_val(exec_ctx_t *ctx, unsigned n)
     }
 
     if(V_VT(v) == VT_DISPATCH) {
-        DISPPARAMS dp = {0};
         IDispatch *disp;
 
         disp = V_DISPATCH(v);
-        V_VT(v) = VT_EMPTY;
-        hres = disp_call(ctx->script, disp, DISPID_VALUE, &dp, v);
+        hres = get_disp_value(ctx->script, disp, v);
         IDispatch_Release(disp);
         if(FAILED(hres))
             return hres;
@@ -706,10 +703,9 @@ static HRESULT assign_value(exec_ctx_t *ctx, VARIANT *dst, VARIANT *src, WORD fl
         return hres;
 
     if(V_VT(dst) == VT_DISPATCH && !(flags & DISPATCH_PROPERTYPUTREF)) {
-        DISPPARAMS dp = {NULL};
         VARIANT value;
 
-        hres = disp_call(ctx->script, V_DISPATCH(dst), DISPID_VALUE, &dp, &value);
+        hres = get_disp_value(ctx->script, V_DISPATCH(dst), &value);
         IDispatch_Release(V_DISPATCH(dst));
         if(FAILED(hres))
             return hres;

@@ -105,15 +105,12 @@ static HRESULT get_propput_arg(script_ctx_t *ctx, const DISPPARAMS *dp, WORD fla
 
     if(V_VT(v) == VT_DISPATCH) {
         if(!(flags & DISPATCH_PROPERTYPUTREF)) {
-            DISPPARAMS val_dp = {NULL};
-            VARIANT value;
             HRESULT hres;
 
-            hres = disp_call(ctx, V_DISPATCH(v), DISPID_VALUE, &val_dp, &value);
+            hres = get_disp_value(ctx, V_DISPATCH(v), v);
             if(FAILED(hres))
                 return hres;
 
-            *v = value;
             *is_owned = TRUE;
         }
     }else if(!(flags & DISPATCH_PROPERTYPUT)) {
@@ -1100,6 +1097,12 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, DISPPARAMS *dp,
     hres = IDispatchEx_InvokeEx(dispex, id, ctx->lcid, flags, dp, retv, &ei, NULL /* CALLER_FIXME */);
     IDispatchEx_Release(dispex);
     return hres;
+}
+
+HRESULT get_disp_value(script_ctx_t *ctx, IDispatch *disp, VARIANT *v)
+{
+    DISPPARAMS dp = {NULL};
+    return disp_call(ctx, disp, DISPID_VALUE, &dp, v);
 }
 
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, DISPPARAMS *dp)
