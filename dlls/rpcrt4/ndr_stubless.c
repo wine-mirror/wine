@@ -344,7 +344,11 @@ static PFORMAT_STRING client_get_handle(
         *phBinding = *pStubMsg->StubDesc->IMPLICIT_HANDLE_INFO.pPrimitiveHandle;
         break;
     case RPC_FC_CALLBACK_HANDLE: /* implicit callback */
-        FIXME("RPC_FC_CALLBACK_HANDLE\n");
+        TRACE("RPC_FC_CALLBACK_HANDLE\n");
+        /* server calls callback procedures only in response to remote call, and most recent
+           binding handle is used. Calling back to a client can potentially result in another
+           callback with different current handle. */
+        *phBinding = I_RpcGetCurrentCallHandle();
         break;
     case RPC_FC_AUTO_HANDLE: /* implicit auto handle */
         /* strictly speaking, it isn't necessary to set hBinding here
