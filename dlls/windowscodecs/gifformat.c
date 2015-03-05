@@ -545,7 +545,8 @@ static IStream *create_stream(const void *data, int data_size)
 }
 
 static HRESULT create_metadata_reader(const void *data, int data_size,
-                                      const CLSID *clsid, IWICMetadataReader **reader)
+                                      class_constructor constructor,
+                                      IWICMetadataReader **reader)
 {
     HRESULT hr;
     IWICMetadataReader *metadata_reader;
@@ -554,8 +555,7 @@ static HRESULT create_metadata_reader(const void *data, int data_size,
 
     /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
 
-    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    hr = constructor(&IID_IWICMetadataReader, (void**)&metadata_reader);
     if (FAILED(hr)) return hr;
 
     hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
@@ -900,8 +900,7 @@ static HRESULT create_IMD_metadata_reader(GifFrameDecode *This, IWICMetadataRead
 
     /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
 
-    hr = CoCreateInstance(&CLSID_WICIMDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    hr = IMDReader_CreateInstance(&IID_IWICMetadataReader, (void **)&metadata_reader);
     if (FAILED(hr)) return hr;
 
     hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
@@ -957,7 +956,7 @@ static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockRea
 
     for (i = 0; i < This->frame->Extensions.ExtensionBlockCount; i++)
     {
-        const CLSID *clsid;
+        class_constructor constructor;
         const void *data;
         int data_size;
 
@@ -971,24 +970,24 @@ static HRESULT WINAPI GifFrameDecode_Block_GetReaderByIndex(IWICMetadataBlockRea
         }
         else if (This->frame->Extensions.ExtensionBlocks[i].Function == COMMENT_EXT_FUNC_CODE)
         {
-            clsid = &CLSID_WICGifCommentMetadataReader;
+            constructor = GifCommentReader_CreateInstance;
             data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
             data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
         }
         else
         {
-            clsid = &CLSID_WICUnknownMetadataReader;
+            constructor = UnknownMetadataReader_CreateInstance;
             data = This->frame->Extensions.ExtensionBlocks[i].Bytes;
             data_size = This->frame->Extensions.ExtensionBlocks[i].ByteCount;
         }
-        return create_metadata_reader(data, data_size, clsid, reader);
+        return create_metadata_reader(data, data_size, constructor, reader);
     }
 
     if (gce_index == -1) return E_INVALIDARG;
 
     return create_metadata_reader(This->frame->Extensions.ExtensionBlocks[gce_index].Bytes + 3,
                                   This->frame->Extensions.ExtensionBlocks[gce_index].ByteCount - 4,
-                                  &CLSID_WICGCEMetadataReader, reader);
+                                  GCEReader_CreateInstance, reader);
 }
 
 static HRESULT WINAPI GifFrameDecode_Block_GetEnumerator(IWICMetadataBlockReader *iface,
@@ -1376,24 +1375,24 @@ static HRESULT WINAPI GifDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader 
 
     if (index == 0)
         return create_metadata_reader(This->LSD_data, sizeof(This->LSD_data),
-                                      &CLSID_WICLSDMetadataReader, reader);
+                                      LSDReader_CreateInstance, reader);
 
     for (i = 0; i < This->gif->Extensions.ExtensionBlockCount; i++)
     {
-        const CLSID *clsid;
+        class_constructor constructor;
 
         if (index != i + 1) continue;
 
         if (This->gif->Extensions.ExtensionBlocks[i].Function == APPLICATION_EXT_FUNC_CODE)
-            clsid = &CLSID_WICAPEMetadataReader;
+            constructor = APEReader_CreateInstance;
         else if (This->gif->Extensions.ExtensionBlocks[i].Function == COMMENT_EXT_FUNC_CODE)
-            clsid = &CLSID_WICGifCommentMetadataReader;
+            constructor = GifCommentReader_CreateInstance;
         else
-            clsid = &CLSID_WICUnknownMetadataReader;
+            constructor = UnknownMetadataReader_CreateInstance;
 
         return create_metadata_reader(This->gif->Extensions.ExtensionBlocks[i].Bytes,
                                       This->gif->Extensions.ExtensionBlocks[i].ByteCount,
-                                      clsid, reader);
+                                      constructor, reader);
     }
 
     return E_INVALIDARG;

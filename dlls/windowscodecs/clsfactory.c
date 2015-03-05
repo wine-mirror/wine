@@ -41,7 +41,7 @@ extern HRESULT WINAPI WIC_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC
 
 typedef struct {
     REFCLSID classid;
-    HRESULT (*constructor)(REFIID,void**);
+    class_constructor constructor;
 } classinfo;
 
 static const classinfo wic_classes[] = {

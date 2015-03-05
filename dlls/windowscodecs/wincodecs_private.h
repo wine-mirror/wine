@@ -67,6 +67,7 @@ DECLARE_INTERFACE_(IMILUnknown2,IUnknown)
 };
 #undef INTERFACE
 
+typedef HRESULT(*class_constructor)(REFIID,void**);
 extern HRESULT FormatConverter_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT ComponentFactory_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT BmpDecoder_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;

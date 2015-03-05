@@ -1223,8 +1223,7 @@ static HRESULT create_metadata_reader(TiffFrameDecode *This, IWICMetadataReader 
 
     /* FIXME: Use IWICComponentFactory_CreateMetadataReader once it's implemented */
 
-    hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICMetadataReader, (void **)&metadata_reader);
+    hr = IfdMetadataReader_CreateInstance(&IID_IWICMetadataReader, (void **)&metadata_reader);
     if (FAILED(hr)) return hr;
 
     hr = IWICMetadataReader_QueryInterface(metadata_reader, &IID_IWICPersistStream, (void **)&persist);
