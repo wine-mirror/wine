@@ -348,13 +348,13 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(IDirectPlay8Add
                     memcpy(pvBuffer, &entry->data.guid, sizeof(GUID));
                     break;
                 case DPNA_DATATYPE_STRING:
-                    memcpy(pvBuffer, &entry->data.string, entry->size);
+                    memcpy(pvBuffer, entry->data.string, entry->size);
                     break;
                 case DPNA_DATATYPE_STRING_ANSI:
-                    memcpy(pvBuffer, &entry->data.ansi, entry->size);
+                    memcpy(pvBuffer, entry->data.ansi, entry->size);
                     break;
                 case DPNA_DATATYPE_BINARY:
-                    memcpy(pvBuffer, &entry->data.binary, entry->size);
+                    memcpy(pvBuffer, entry->data.binary, entry->size);
                     break;
             }
 

@@ -126,7 +126,7 @@ static void address_addcomponents(void)
         hr = IDirectPlay8Address_GetComponentByName(localaddr, DPNA_KEY_HOSTNAME, buffer, &size, &type);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(type == DPNA_DATATYPE_STRING, "incorrect type %d\n", type);
-        todo_wine ok(!lstrcmpW(buffer, localhost), "Invalid string: %s\n", wine_dbgstr_w(buffer));
+        ok(!lstrcmpW(buffer, localhost), "Invalid string: %s\n", wine_dbgstr_w(buffer));
 
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_PORT, &port, sizeof(DWORD)+2, DPNA_DATATYPE_DWORD);
         ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
