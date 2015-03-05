@@ -21,8 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "windef.h"
