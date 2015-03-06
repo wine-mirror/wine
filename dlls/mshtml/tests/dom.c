@@ -5295,6 +5295,12 @@ static void test_plugins_col(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_length failed: %08x\n", hres);
     ok(!len, "length = %d\n", len);
 
+    hres = IHTMLPluginsCollection_refresh(col, VARIANT_FALSE);
+    ok(hres == S_OK, "refresh failed: %08x\n", hres);
+
+    hres = IHTMLPluginsCollection_refresh(col, VARIANT_TRUE);
+    ok(hres == S_OK, "refresh failed: %08x\n", hres);
+
     ref = IHTMLPluginsCollection_Release(col);
     ok(!ref, "ref=%d\n", ref);
 
