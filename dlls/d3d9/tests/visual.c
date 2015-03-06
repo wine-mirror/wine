@@ -99,7 +99,7 @@ static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y
     switch(desc.Format) {
         case D3DFMT_A8R8G8B8:
         {
-            color = ((DWORD *) lockedRect.pBits)[0] & 0xffffffff;
+            color = ((DWORD *) lockedRect.pBits)[0];
             break;
         }
         default:
