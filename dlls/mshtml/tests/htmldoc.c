@@ -5737,7 +5737,6 @@ static void test_download(DWORD flags)
             SET_EXPECT(CountEntries);
         SET_EXPECT(Exec_HTTPEQUIV_DONE);
     }
-    SET_EXPECT(SetStatusText);
     if(nav_url || support_wbapp) {
         SET_EXPECT(UpdateUI);
         SET_EXPECT(Exec_UPDATECOMMANDS);
