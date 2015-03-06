@@ -212,21 +212,23 @@ static const IStreamVtbl RpcStream_Vtbl =
   NULL  /* Clone */
 };
 
-static HRESULT RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init, IStream **stream)
+static HRESULT RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init, ULONG *size, IStream **stream)
 {
   RpcStreamImpl *This;
 
   *stream = NULL;
-  This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(RpcStreamImpl));
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcStreamImpl));
   if (!This) return E_OUTOFMEMORY;
   This->IStream_iface.lpVtbl = &RpcStream_Vtbl;
   This->RefCount = 1;
   This->pMsg = pStubMsg;
   This->size = (LPDWORD)pStubMsg->Buffer;
-  This->data = (unsigned char*)(This->size + 1);
+  This->data = pStubMsg->Buffer + sizeof(DWORD);
   This->pos = 0;
   if (init) *This->size = 0;
   TRACE("init size=%d\n", *This->size);
+
+  if (size) *size = *This->size;
   *stream = &This->IStream_iface;
   return S_OK;
 }
@@ -263,7 +265,7 @@ unsigned char * WINAPI NdrInterfacePointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   pStubMsg->MaxCount = 0;
   if (!LoadCOM()) return NULL;
   if (pStubMsg->Buffer + sizeof(DWORD) <= (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
-    hr = RpcStream_Create(pStubMsg, TRUE, &stream);
+    hr = RpcStream_Create(pStubMsg, TRUE, NULL, &stream);
     if (hr == S_OK) {
       if (pMemory)
         hr = COM_MarshalInterface(stream, riid, (LPUNKNOWN)pMemory,
@@ -293,9 +295,11 @@ unsigned char * WINAPI NdrInterfacePointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg
   if (!LoadCOM()) return NULL;
   *(LPVOID*)ppMemory = NULL;
   if (pStubMsg->Buffer + sizeof(DWORD) < (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength) {
-    hr = RpcStream_Create(pStubMsg, FALSE, &stream);
+    ULONG size;
+
+    hr = RpcStream_Create(pStubMsg, FALSE, &size, &stream);
     if (hr == S_OK) {
-      if (*((RpcStreamImpl *)stream)->size != 0)
+      if (size != 0)
         hr = COM_UnmarshalInterface(stream, &IID_NULL, (LPVOID*)ppMemory);
 
       IStream_Release(stream);
