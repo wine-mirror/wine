@@ -645,8 +645,7 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
                 IDirectSound_Release((IDirectSound*)*ppv);
         }
     }
-    else if (IsEqualIID(riid, &IID_IDirectSoundCapture)
-             || IsEqualIID(riid, &IID_IDirectSoundCapture8))
+    else if (IsEqualIID(riid, &IID_IDirectSoundCapture))
     {
         if (This->flow == eCapture)
             hr = CoCreateInstance(&CLSID_DirectSoundCapture8, NULL, clsctx, riid, ppv);
