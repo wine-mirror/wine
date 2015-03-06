@@ -2684,9 +2684,11 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
             SET_EXPECT(GetOptionKeyPath);
             SET_EXPECT(GetOverridesKeyPath);
         }
-        if (use_container_olecmd) SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
-        if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSMAX);
-        if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSPOS);
+        if (use_container_olecmd) {
+            SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+            SET_EXPECT(Exec_SETPROGRESSMAX);
+            SET_EXPECT(Exec_SETPROGRESSPOS);
+        }
         SET_EXPECT(Invoke_SETSECURELOCKICON);
         SET_EXPECT(Invoke_FILEDOWNLOAD);
         if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
@@ -2725,9 +2727,11 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
             CLEAR_CALLED(GetOptionKeyPath);
             CHECK_CALLED(GetOverridesKeyPath);
         }
-        if (use_container_olecmd) todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
-        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+        if (use_container_olecmd) {
+            todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+            todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
+            todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+        }
         todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
         todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
 
