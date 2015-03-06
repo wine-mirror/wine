@@ -623,8 +623,7 @@ static HRESULT WINAPI BitmapDecoderInfo_CreateInstance(IWICBitmapDecoderInfo *if
 
     TRACE("(%p,%p)\n", iface, ppIBitmapDecoder);
 
-    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICBitmapDecoder, (void**)ppIBitmapDecoder);
+    return create_instance(&This->clsid, &IID_IWICBitmapDecoder, (void**)ppIBitmapDecoder);
 }
 
 static const IWICBitmapDecoderInfoVtbl BitmapDecoderInfo_Vtbl = {
@@ -917,8 +916,7 @@ static HRESULT WINAPI BitmapEncoderInfo_CreateInstance(IWICBitmapEncoderInfo *if
 
     TRACE("(%p,%p)\n", iface, ppIBitmapEncoder);
 
-    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICBitmapEncoder, (void**)ppIBitmapEncoder);
+    return create_instance(&This->clsid, &IID_IWICBitmapEncoder, (void**)ppIBitmapEncoder);
 }
 
 static const IWICBitmapEncoderInfoVtbl BitmapEncoderInfo_Vtbl = {
@@ -1125,8 +1123,8 @@ static HRESULT WINAPI FormatConverterInfo_CreateInstance(IWICFormatConverterInfo
 
     TRACE("(%p,%p)\n", iface, ppIFormatConverter);
 
-    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICFormatConverter, (void**)ppIFormatConverter);
+    return create_instance(&This->clsid, &IID_IWICFormatConverter,
+            (void**)ppIFormatConverter);
 }
 
 static BOOL ConverterSupportsFormat(IWICFormatConverterInfo *iface, const WCHAR *formatguid)
@@ -1871,8 +1869,7 @@ static HRESULT WINAPI MetadataReaderInfo_CreateInstance(IWICMetadataReaderInfo *
 
     TRACE("(%p,%p)\n", iface, reader);
 
-    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
-                            &IID_IWICMetadataReader, (void **)reader);
+    return create_instance(&This->clsid, &IID_IWICMetadataReader, (void **)reader);
 }
 
 static const IWICMetadataReaderInfoVtbl MetadataReaderInfo_Vtbl = {

@@ -25,6 +25,8 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
+HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
+
 static const char gif_global_palette[] = {
 /* LSD */'G','I','F','8','7','a',0x01,0x00,0x01,0x00,0xa1,0x02,0x00,
 /* palette */0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,
@@ -344,4 +346,14 @@ START_TEST(gifformat)
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();
+
+    /* run the same tests with no COM initialization */
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
+    ok(hr == S_OK, "WICCreateImagingFactory_Proxy error %#x\n", hr);
+
+    test_global_gif_palette();
+    test_global_gif_palette_2frames();
+    test_local_gif_palette();
+
+    IWICImagingFactory_Release(factory);
 }
