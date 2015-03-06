@@ -50,6 +50,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 #define NDR_TABLE_MASK 127
 
+static inline BOOL is_oicf_stubdesc(const PMIDL_STUB_DESC pStubDesc)
+{
+    return pStubDesc->Version >= 0x20000;
+}
+
 static inline void call_buffer_sizer(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory,
                                      const NDR_PARAM_OIF *param)
 {
@@ -670,7 +675,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         if (!pFormat) goto done;
     }
 
-    if (pStubDesc->Version >= 0x20000)  /* -Oicf format */
+    if (is_oicf_stubdesc(pStubDesc))  /* -Oicf format */
     {
         const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
             (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
@@ -1311,7 +1316,7 @@ LONG WINAPI NdrStubCall2(
     if (pThis)
         *(void **)args = ((CStdStubBuffer *)pThis)->pvServerObject;
 
-    if (pStubDesc->Version >= 0x20000)  /* -Oicf format */
+    if (is_oicf_stubdesc(pStubDesc))
     {
         const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
 
@@ -1502,8 +1507,6 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
     INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
     /* header for procedure string */
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
-    /* -Oif or -Oicf generated format */
-    BOOL bV2Format = FALSE;
     RPC_STATUS status;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
@@ -1565,9 +1568,7 @@ LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING 
     pFormat = client_get_handle(pStubMsg, pProcHeader, async_call_data->pHandleFormat, &async_call_data->hBinding);
     if (!pFormat) goto done;
 
-    bV2Format = (pStubDesc->Version >= 0x20000);
-
-    if (bV2Format)
+    if (is_oicf_stubdesc(pStubDesc))
     {
         const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader =
             (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
