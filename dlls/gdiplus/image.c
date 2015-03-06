@@ -71,8 +71,7 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
     IWICPalette *wic_palette;
     ColorPalette *palette = NULL;
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICImagingFactory, (void **)&factory);
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     if (hr != S_OK) return NULL;
 
     hr = IWICImagingFactory_CreatePalette(factory, &wic_palette);
@@ -3181,8 +3180,7 @@ static PropertyItem *get_gif_palette(IWICBitmapDecoder *decoder, IWICMetadataRea
     if (!get_bool_property(reader, &GUID_MetadataFormatLSD, global_flagW))
         return NULL;
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IWICImagingFactory, (void **)&factory);
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     if (hr != S_OK) return NULL;
 
     hr = IWICImagingFactory_CreatePalette(factory, &palette);
@@ -3424,11 +3422,9 @@ static GpStatus decode_image_wic(IStream *stream, REFGUID container,
     UINT width, height, frame_count;
     BitmapData lockeddata;
     WICRect wrc;
-    HRESULT initresult;
 
     TRACE("%p,%s,%u,%p\n", stream, wine_dbgstr_guid(container), active_frame, image);
 
-    initresult = CoInitialize(NULL);
     hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     if (FAILED(hr)) goto end;
     hr = IWICImagingFactory_CreateDecoder(factory, container, NULL, &decoder);
@@ -3544,8 +3540,6 @@ static GpStatus decode_image_wic(IStream *stream, REFGUID container,
     IWICBitmapDecoder_Release(decoder);
 
 end:
-    if (SUCCEEDED(initresult)) CoUninitialize();
-
     if (FAILED(hr) && status == Ok) status = hresult_to_status(hr);
 
     if (status == Ok)
