@@ -1203,6 +1203,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           DRIVER_NVIDIA_GEFORCE6,  256 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8200,       "NVIDIA GeForce 8200",              DRIVER_NVIDIA_GEFORCE8,  512 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           DRIVER_NVIDIA_GEFORCE8,  128 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8400GS,     "NVIDIA GeForce 8400 GS",           DRIVER_NVIDIA_GEFORCE8,  128 },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           DRIVER_NVIDIA_GEFORCE8,  256 },
@@ -2070,7 +2071,7 @@ cards_nvidia_mesa[] =
     /* Tesla */
     {"NVAF",                        CARD_NVIDIA_GEFORCE_GT320M},
     {"NVAC",                        CARD_NVIDIA_GEFORCE_8200},
-    {"NVAA",                        CARD_NVIDIA_GEFORCE_8200},
+    {"NVAA",                        CARD_NVIDIA_GEFORCE_8200},      /* 8100 */
     {"NVA8",                        CARD_NVIDIA_GEFORCE_210},
     {"NVA5",                        CARD_NVIDIA_GEFORCE_GT220},
     {"NVA3",                        CARD_NVIDIA_GEFORCE_GT240},
