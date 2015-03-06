@@ -19,7 +19,6 @@
  *
  * TODO:
  *  - fix the wire-protocol to match MS/RPC
- *  - finish RpcStream_Vtbl
  */
 
 #include <stdarg.h>
@@ -194,6 +193,58 @@ static HRESULT WINAPI RpcStream_SetSize(LPSTREAM iface,
   return S_OK;
 }
 
+static HRESULT WINAPI RpcStream_CopyTo(IStream *iface, IStream *dest,
+  ULARGE_INTEGER len, ULARGE_INTEGER *read, ULARGE_INTEGER *written)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_Commit(IStream *iface, DWORD flags)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p)->(0x%08x): stub\n", This, flags);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_Revert(IStream *iface)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_LockRegion(IStream *iface,
+  ULARGE_INTEGER offset, ULARGE_INTEGER len, DWORD locktype)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_UnlockRegion(IStream *iface,
+  ULARGE_INTEGER offset, ULARGE_INTEGER len, DWORD locktype)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_Stat(IStream *iface, STATSTG *stat, DWORD flag)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RpcStream_Clone(IStream *iface, IStream **cloned)
+{
+  RpcStreamImpl *This = impl_from_IStream(iface);
+  FIXME("(%p): stub\n", This);
+  return E_NOTIMPL;
+}
+
 static const IStreamVtbl RpcStream_Vtbl =
 {
   RpcStream_QueryInterface,
@@ -203,13 +254,13 @@ static const IStreamVtbl RpcStream_Vtbl =
   RpcStream_Write,
   RpcStream_Seek,
   RpcStream_SetSize,
-  NULL, /* CopyTo */
-  NULL, /* Commit */
-  NULL, /* Revert */
-  NULL, /* LockRegion */
-  NULL, /* UnlockRegion */
-  NULL, /* Stat */
-  NULL  /* Clone */
+  RpcStream_CopyTo,
+  RpcStream_Commit,
+  RpcStream_Revert,
+  RpcStream_LockRegion,
+  RpcStream_UnlockRegion,
+  RpcStream_Stat,
+  RpcStream_Clone
 };
 
 static HRESULT RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init, ULONG *size, IStream **stream)
