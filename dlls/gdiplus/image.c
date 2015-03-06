@@ -3875,11 +3875,12 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
  *   These functions encode an image in different image file formats.
  */
 
-static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
-    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
+static GpStatus encode_image_wic(GpImage *image, IStream* stream,
+    REFGUID container, GDIPCONST EncoderParameters* params)
 {
     GpStatus stat;
     GpBitmap *bitmap;
+    IWICImagingFactory *factory;
     IWICBitmapEncoder *encoder;
     IWICBitmapFrameEncode *frameencode;
     IPropertyBag2 *encoderoptions;
@@ -3890,7 +3891,6 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
     WICPixelFormatGUID wicformat;
     GpRect rc;
     BitmapData lockeddata;
-    HRESULT initresult;
     UINT i;
 
     if (image->type != ImageTypeBitmap)
@@ -3906,15 +3906,13 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
     rc.Width = width;
     rc.Height = height;
 
-    initresult = CoInitialize(NULL);
-
-    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICBitmapEncoder, (void**)&encoder);
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     if (FAILED(hr))
-    {
-        if (SUCCEEDED(initresult)) CoUninitialize();
         return hresult_to_status(hr);
-    }
+    hr = IWICImagingFactory_CreateEncoder(factory, container, NULL, &encoder);
+    IWICImagingFactory_Release(factory);
+    if (FAILED(hr))
+        return hresult_to_status(hr);
 
     hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
 
@@ -4009,34 +4007,31 @@ static GpStatus encode_image_WIC(GpImage *image, IStream* stream,
         hr = IWICBitmapEncoder_Commit(encoder);
 
     IWICBitmapEncoder_Release(encoder);
-
-    if (SUCCEEDED(initresult)) CoUninitialize();
-
     return hresult_to_status(hr);
 }
 
 static GpStatus encode_image_BMP(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
-    return encode_image_WIC(image, stream, &CLSID_WICBmpEncoder, params);
+    return encode_image_wic(image, stream, &GUID_ContainerFormatBmp, params);
 }
 
 static GpStatus encode_image_tiff(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
-    return encode_image_WIC(image, stream, &CLSID_WICTiffEncoder, params);
+    return encode_image_wic(image, stream, &GUID_ContainerFormatTiff, params);
 }
 
 static GpStatus encode_image_png(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
-    return encode_image_WIC(image, stream, &CLSID_WICPngEncoder, params);
+    return encode_image_wic(image, stream, &GUID_ContainerFormatPng, params);
 }
 
 static GpStatus encode_image_jpeg(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
-    return encode_image_WIC(image, stream, &CLSID_WICJpegEncoder, params);
+    return encode_image_wic(image, stream, &GUID_ContainerFormatJpeg, params);
 }
 
 /*****************************************************************************
