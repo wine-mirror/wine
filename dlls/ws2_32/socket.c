@@ -2079,7 +2079,7 @@ static NTSTATUS WS2_async_accept_recv( void *user, IO_STATUS_BLOCK *iosb,
         return status;
 
     if (wsa->user_overlapped->hEvent)
-        SetEvent(wsa->user_overlapped->hEvent);
+        NtSetEvent(wsa->user_overlapped->hEvent, NULL);
     if (wsa->cvalue)
         WS_AddCompletion( HANDLE2SOCKET(wsa->listen_socket), wsa->cvalue, iosb->u.Status, iosb->Information );
 
@@ -2165,7 +2165,7 @@ finish:
     iosb->Information = 0;
 
     if (wsa->user_overlapped->hEvent)
-        SetEvent(wsa->user_overlapped->hEvent);
+        NtSetEvent(wsa->user_overlapped->hEvent, NULL);
 
     if (wsa->read) release_async_io( &wsa->read->io );
     release_async_io( &wsa->io );
