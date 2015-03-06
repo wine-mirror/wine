@@ -1063,7 +1063,6 @@ static void test_clock(int share)
     last = pos;
 
     Sleep(100);
-    slept += 100;
 
     hr = IAudioClock_GetPosition(acl, &pos, NULL);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
