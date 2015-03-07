@@ -322,6 +322,45 @@ static void convert_r5g5_snorm_l6_unorm(const BYTE *src, BYTE *dst, UINT src_row
     }
 }
 
+static void convert_r5g5_snorm_l6_unorm_ext(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
+        UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth)
+{
+    unsigned int x, y, z;
+    unsigned char *texel_out, r_out, g_out, r_in, g_in, l_in;
+    const unsigned short *texel_in;
+
+    for (z = 0; z < depth; z++)
+    {
+        for (y = 0; y < height; y++)
+        {
+            texel_in = (const unsigned short *)(src + z * src_slice_pitch + y * src_row_pitch);
+            texel_out = dst + z * dst_slice_pitch + y * dst_row_pitch;
+            for (x = 0; x < width; x++ )
+            {
+                l_in = (*texel_in & 0xfc00) >> 10;
+                g_in = (*texel_in & 0x03e0) >> 5;
+                r_in = *texel_in & 0x001f;
+
+                r_out = r_in << 3;
+                if (!(r_in & 0x10)) /* r > 0 */
+                    r_out |= r_in >> 1;
+
+                g_out = g_in << 3;
+                if (!(g_in & 0x10)) /* g > 0 */
+                    g_out |= g_in >> 1;
+
+                texel_out[0] = r_out;
+                texel_out[1] = g_out;
+                texel_out[2] = l_in << 1 | l_in >> 5;
+                texel_out[3] = 0;
+
+                texel_out += 4;
+                texel_in++;
+            }
+        }
+    }
+}
+
 static void convert_r5g5_snorm_l6_unorm_nv(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
         UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth)
 {
@@ -331,8 +370,12 @@ static void convert_r5g5_snorm_l6_unorm_nv(const BYTE *src, BYTE *dst, UINT src_
 
     /* This makes the gl surface bigger(24 bit instead of 16), but it works with
      * fixed function and shaders without further conversion once the surface is
-     * loaded
-     */
+     * loaded.
+     *
+     * The difference between this function and convert_r5g5_snorm_l6_unorm_ext
+     * is that convert_r5g5_snorm_l6_unorm_ext creates a 32 bit XRGB texture and
+     * this function creates a 24 bit DSDT_MAG texture. Trying to load a DSDT_MAG
+     * internal with a 32 bit DSDT_MAG_INTENSITY or DSDT_MAG_VIB format fails. */
     for (z = 0; z < depth; z++)
     {
         for (y = 0; y < height; y++)
@@ -1080,6 +1123,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_BUMPMAP,
             NV_TEXTURE_SHADER,          convert_r5g5_snorm_l6_unorm_nv},
+    {WINED3DFMT_R5G5_SNORM_L6_UNORM,    GL_RGB8_SNORM,                    GL_RGB8_SNORM,                          0,
+            GL_RGBA,                    GL_BYTE,                          4,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_BUMPMAP,
+            EXT_TEXTURE_SNORM,          convert_r5g5_snorm_l6_unorm_ext},
     {WINED3DFMT_R8G8_SNORM_L8X8_UNORM,  GL_RGB8,                          GL_RGB8,                                0,
             GL_BGRA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      4,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
@@ -2020,24 +2068,16 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         idx = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
+        idx = getFmtIdx(WINED3DFMT_R5G5_SNORM_L6_UNORM);
+        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
     }
 
     if (!gl_info->supported[NV_TEXTURE_SHADER])
     {
-        /* If GL_NV_texture_shader is not supported, R5G5_SNORM_L6_UNORM and R8G8_SNORM_L8X8_UNORM
-         * are converted, incompatiby with each other. */
-        idx = getFmtIdx(WINED3DFMT_R5G5_SNORM_L6_UNORM);
-        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
         idx = getFmtIdx(WINED3DFMT_R8G8_SNORM_L8X8_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
-    }
-    else
-    {
-        /* If GL_NV_texture_shader is supported, WINED3DFMT_L6V5U5 and WINED3DFMT_X8L8V8U8
-         * are converted at surface loading time, but they do not need any modification in
-         * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats. */
     }
 
     if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
