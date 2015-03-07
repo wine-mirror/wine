@@ -1321,6 +1321,24 @@ static HRESULT WINAPI WshShell3_SendKeys(IWshShell3 *iface, BSTR Keys, VARIANT *
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec **ret)
+{
+    FIXME("(%s %p): stub\n", debugstr_w(command), ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshShell3_get_CurrentDirectory(IWshShell3 *iface, BSTR *dir)
+{
+    FIXME("(%p): stub\n", dir);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshShell3_put_CurrentDirectory(IWshShell3 *iface, BSTR dir)
+{
+    FIXME("(%s): stub\n", debugstr_w(dir));
+    return E_NOTIMPL;
+}
+
 static const IWshShell3Vtbl WshShell3Vtbl = {
     WshShell3_QueryInterface,
     WshShell3_AddRef,
@@ -1340,7 +1358,10 @@ static const IWshShell3Vtbl WshShell3Vtbl = {
     WshShell3_RegDelete,
     WshShell3_LogEvent,
     WshShell3_AppActivate,
-    WshShell3_SendKeys
+    WshShell3_SendKeys,
+    WshShell3_Exec,
+    WshShell3_get_CurrentDirectory,
+    WshShell3_put_CurrentDirectory
 };
 
 static IWshShell3 WshShell3 = { &WshShell3Vtbl };
