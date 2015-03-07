@@ -196,6 +196,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC},
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS          },
     {"GL_EXT_texture_mirror_clamp",         EXT_TEXTURE_MIRROR_CLAMP      },
+    {"GL_EXT_texture_snorm",                EXT_TEXTURE_SNORM             },
     {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB              },
     {"GL_EXT_texture_sRGB_decode",          EXT_TEXTURE_SRGB_DECODE       },
     {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA         },

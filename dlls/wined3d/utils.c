@@ -1065,6 +1065,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_BUMPMAP,
             NV_TEXTURE_SHADER,          NULL},
+    {WINED3DFMT_R8G8_SNORM,             GL_RG8_SNORM,                     GL_RG8_SNORM,                           0,
+            GL_RG,                      GL_BYTE,                          0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_BUMPMAP,
+            EXT_TEXTURE_SNORM,          NULL},
     {WINED3DFMT_R5G5_SNORM_L6_UNORM,    GL_RGB5,                          GL_RGB5,                                0,
             GL_RGB,                     GL_UNSIGNED_SHORT_5_6_5,          2,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
@@ -1095,6 +1100,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_BUMPMAP,
             NV_TEXTURE_SHADER,          NULL},
+    {WINED3DFMT_R8G8B8A8_SNORM,         GL_RGBA8_SNORM,                   GL_RGBA8_SNORM,                         0,
+            GL_RGBA,                    GL_BYTE,                          0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_BUMPMAP,
+            EXT_TEXTURE_SNORM,          NULL},
     {WINED3DFMT_R16G16_SNORM,           GL_RGB16,                         GL_RGB16,                               0,
             GL_BGR,                     GL_UNSIGNED_SHORT,                6,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
@@ -1105,6 +1115,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_BUMPMAP,
             NV_TEXTURE_SHADER,          NULL},
+    {WINED3DFMT_R16G16_SNORM,           GL_RG16_SNORM,                    GL_RG16_SNORM,                          0,
+            GL_RG,                      GL_SHORT,                         0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_BUMPMAP,
+            EXT_TEXTURE_SNORM,          NULL},
     /* Depth stencil formats */
     {WINED3DFMT_D16_LOCKABLE,           GL_DEPTH_COMPONENT,               GL_DEPTH_COMPONENT,                     0,
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_SHORT,                0,
@@ -1978,57 +1993,51 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
-    /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
-     * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
-     * their extensions are not available. GL_ATI_envmap_bumpmap is not used because
-     * the only driver that implements it(fglrx) has a buggy implementation.
-     *
-     * V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
-     * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
-     * conversion for this format.
-     */
-    if (!gl_info->supported[NV_TEXTURE_SHADER])
+    /* GL_ATI_envmap_bumpmap in theory supports R8G8_SNORM but is no longer supported by
+     * any driver. */
+    if (gl_info->supported[NV_TEXTURE_SHADER] || gl_info->supported[EXT_TEXTURE_SNORM])
     {
+        /* R8G8_SNORM and R16G16_SNORM need a fixup of the undefined blue channel. OpenGL
+         * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
+         * conversion for this format. */
         idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
         idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
     else
     {
+        /* Emulate using unsigned formats. This requires load-time conversion in addition to the
+         * fixups here. */
         idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
         idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+        idx = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
+        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
     }
 
     if (!gl_info->supported[NV_TEXTURE_SHADER])
     {
-        /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly
-         * with each other
-         */
+        /* If GL_NV_texture_shader is not supported, R5G5_SNORM_L6_UNORM and R8G8_SNORM_L8X8_UNORM
+         * are converted, incompatiby with each other. */
         idx = getFmtIdx(WINED3DFMT_R5G5_SNORM_L6_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
         idx = getFmtIdx(WINED3DFMT_R8G8_SNORM_L8X8_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
-        idx = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
-        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
     }
     else
     {
         /* If GL_NV_texture_shader is supported, WINED3DFMT_L6V5U5 and WINED3DFMT_X8L8V8U8
          * are converted at surface loading time, but they do not need any modification in
-         * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats.
-         * WINED3DFMT_Q8W8V8U8 doesn't even need load-time conversion
-         */
+         * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats. */
     }
 
     if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
