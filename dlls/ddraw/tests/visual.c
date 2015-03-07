@@ -130,7 +130,7 @@ static BOOL createObjects(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
-    ddsd.dwBackBufferCount = 1;
+    U5(ddsd).dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
     if(FAILED(hr)) goto err;
 

@@ -2013,7 +2013,7 @@ static void test_ck_complex(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    surface_desc.dwBackBufferCount = 1;
+    U5(surface_desc).dwBackBufferCount = 1;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
@@ -4220,7 +4220,7 @@ static void test_coop_level_activateapp(void)
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-    ddsd.dwBackBufferCount = 1;
+    U5(ddsd).dwBackBufferCount = 1;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
@@ -5234,7 +5234,7 @@ static void test_primary_caps(void)
         if (test_data[i].back_buffer_count != ~0u)
             surface_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
         surface_desc.ddsCaps.dwCaps = test_data[i].caps_in;
-        surface_desc.dwBackBufferCount = test_data[i].back_buffer_count;
+        U5(surface_desc).dwBackBufferCount = test_data[i].back_buffer_count;
         hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
         if (FAILED(hr))
@@ -5528,7 +5528,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    surface_desc.dwBackBufferCount = 3;
+    U5(surface_desc).dwBackBufferCount = 3;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
@@ -5547,7 +5547,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer1, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
+    ok(!U5(surface_desc).dwBackBufferCount, "Got unexpected back buffer count %u.\n", U5(surface_desc).dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_BACKBUFFER),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
@@ -5557,7 +5557,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer2, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
+    ok(!U5(surface_desc).dwBackBufferCount, "Got unexpected back buffer count %u.\n", U5(surface_desc).dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
@@ -5567,7 +5567,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer3, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
+    ok(!U5(surface_desc).dwBackBufferCount, "Got unexpected back buffer count %u.\n", U5(surface_desc).dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
@@ -6153,7 +6153,7 @@ static void test_primary_palette(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    surface_desc.dwBackBufferCount = 1;
+    U5(surface_desc).dwBackBufferCount = 1;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_GetAttachedSurface(primary, &surface_caps, &backbuffer);
@@ -7923,7 +7923,7 @@ static void test_lost_device(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    surface_desc.dwBackBufferCount = 1;
+    U5(surface_desc).dwBackBufferCount = 1;
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
