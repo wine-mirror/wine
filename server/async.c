@@ -243,9 +243,6 @@ void async_set_timeout( struct async *async, timeout_t timeout, unsigned int sta
 static void add_async_completion( struct async_queue *queue, apc_param_t cvalue, unsigned int status,
                                   apc_param_t information )
 {
-    if (status == STATUS_MORE_PROCESSING_REQUIRED)
-        return; /* The async callback has successfully finished but no completion should be reported */
-
     if (queue->fd)
     {
         apc_param_t ckey;
@@ -287,6 +284,8 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
+        if (status == STATUS_MORE_PROCESSING_REQUIRED) return;  /* don't report the completion */
+
         if (async->data.cvalue) add_async_completion( async->queue, async->data.cvalue, status, total );
         if (apc)
         {
