@@ -1329,14 +1329,39 @@ static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec *
 
 static HRESULT WINAPI WshShell3_get_CurrentDirectory(IWshShell3 *iface, BSTR *dir)
 {
-    FIXME("(%p): stub\n", dir);
-    return E_NOTIMPL;
+    DWORD ret;
+
+    TRACE("(%p)\n", dir);
+
+    ret = GetCurrentDirectoryW(0, NULL);
+    if (!ret)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    *dir = SysAllocStringLen(NULL, ret-1);
+    if (!*dir)
+        return E_OUTOFMEMORY;
+
+    ret = GetCurrentDirectoryW(ret, *dir);
+    if (!ret) {
+        SysFreeString(*dir);
+        *dir = NULL;
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshShell3_put_CurrentDirectory(IWshShell3 *iface, BSTR dir)
 {
-    FIXME("(%s): stub\n", debugstr_w(dir));
-    return E_NOTIMPL;
+    TRACE("(%s)\n", debugstr_w(dir));
+
+    if (!dir)
+        return E_INVALIDARG;
+
+    if (!SetCurrentDirectoryW(dir))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
 }
 
 static const IWshShell3Vtbl WshShell3Vtbl = {
