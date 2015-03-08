@@ -517,12 +517,7 @@ static BOOL WINAPI IRecordInfoImpl_IsMatchingType(IRecordInfo *iface, IRecordInf
     TRACE( "(%p)->(%p)\n", This, info2 );
 
     IRecordInfo_GetGuid( info2, &guid2 );
-    if (IsEqualGUID( &This->guid, &guid2 )) return TRUE;
-
-    FIXME( "records have different guids (%s %s) but could still match\n",
-           debugstr_guid( &This->guid ), debugstr_guid( &guid2 ) );
-
-    return FALSE;
+    return IsEqualGUID( &This->guid, &guid2 );
 }
 
 static PVOID WINAPI IRecordInfoImpl_RecordCreate(IRecordInfo *iface)
