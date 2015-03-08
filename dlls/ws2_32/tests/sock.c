@@ -3389,16 +3389,19 @@ static void test_listen(void)
     ok (ret == 0, "closesocket failed unexpectedly: %d\n", ret);
 }
 
+#define FD_ZERO_ALL() { FD_ZERO(&readfds); FD_ZERO(&writefds); FD_ZERO(&exceptfds); }
+#define FD_SET_ALL(s) { FD_SET(s, &readfds); FD_SET(s, &writefds); FD_SET(s, &exceptfds); }
 static void test_select(void)
 {
-    static const char tmp_buf[1024];
+    static char tmp_buf[1024];
 
-    SOCKET fdRead, fdWrite;
+    SOCKET fdListen, fdRead, fdWrite;
     fd_set readfds, writefds, exceptfds;
     unsigned int maxfd;
-    int ret;
+    int ret, len;
     char buffer;
     struct timeval select_timeout;
+    struct sockaddr_in address;
     select_thread_params thread_params;
     HANDLE thread_handle;
     DWORD id;
@@ -3407,14 +3410,10 @@ static void test_select(void)
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
     fdWrite = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdWrite != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
- 
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_ZERO(&exceptfds);
-    FD_SET(fdRead, &readfds);
-    FD_SET(fdWrite, &writefds);
-    FD_SET(fdRead, &exceptfds);
-    FD_SET(fdWrite, &exceptfds);
+
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdRead);
+    FD_SET_ALL(fdWrite);
     select_timeout.tv_sec=0;
     select_timeout.tv_usec=500;
 
@@ -3455,9 +3454,7 @@ static void test_select(void)
     ok( (ret == -1), "peek at closed socket expected -1 got %d\n", ret);
 
     /* Test selecting invalid handles */
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_ZERO(&exceptfds);
+    FD_ZERO_ALL();
 
     SetLastError(0);
     ret = select(maxfd+1, 0, 0, 0, &select_timeout);
@@ -3564,7 +3561,106 @@ static void test_select(void)
 
     closesocket(fdRead);
     closesocket(fdWrite);
+
+    /* select() works in 3 distinct states:
+     * - to check if a connection attempt ended with success or error;
+     * - to check if a pending connection is waiting for acceptance;
+     * - to check for data to read, avaliability for write and OOB data
+     *
+     * The tests below ensure that all conditions are tested.
+     */
+    memset(&address, 0, sizeof(address));
+    address.sin_addr.s_addr = inet_addr("127.0.0.1");
+    address.sin_family = AF_INET;
+    len = sizeof(address);
+    fdListen = setup_server_socket(&address, &len);
+    select_timeout.tv_sec = 1;
+    select_timeout.tv_usec = 250000;
+
+    /* When a socket is attempting to connect the listening socket receives the read descriptor */
+    fdWrite = setup_connector_socket(&address, len, TRUE);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(FD_ISSET(fdListen, &readfds), "fdListen socket is not in the set\n");
+    len = sizeof(address);
+    fdRead = accept(fdListen, (struct sockaddr*) &address, &len);
+    ok(fdRead != INVALID_SOCKET, "expected a valid socket\n");
+
+    /* The connector is signaled through the write descriptor */
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    FD_SET_ALL(fdRead);
+    FD_SET_ALL(fdWrite);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 2, "expected 2, got %d\n", ret);
+    ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
+    ok(FD_ISSET(fdRead, &writefds), "fdRead socket is not in the set\n");
+
+    /* When data is received the receiver gets the read descriptor */
+    ret = send(fdWrite, "1234", 4, 0);
+    ok(ret == 4, "expected 4, got %d\n", ret);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdRead, &exceptfds);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
+    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
+    ok(ret == 4, "expected 4, got %d\n", ret);
+    ok(!strcmp(tmp_buf, "1234"), "data received differs from sent\n");
+
+    /* When OOB data is received the socket is set in the except descriptor */
+    ret = send(fdWrite, "A", 1, MSG_OOB);
+    ok(ret == 1, "expected 4, got %d\n", ret);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdRead, &exceptfds);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+todo_wine
+    ok(ret == 1, "expected 1, got %d\n", ret);
+todo_wine
+    ok(FD_ISSET(fdRead, &exceptfds), "fdRead socket is not in the set\n");
+    tmp_buf[0] = 0xAF;
+    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
+
+    /* When the connection is closed the socket is set in the read descriptor */
+    ret = closesocket(fdRead);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    FD_SET(fdWrite, &readfds);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+    ret = recv(fdWrite, tmp_buf, sizeof(tmp_buf), 0);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
+    /* When a connection is attempted to a non-listening socket it will get to the except descriptor */
+    ret = closesocket(fdWrite);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ret = closesocket(fdListen);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    fdWrite = setup_connector_socket(&address, len, TRUE);
+    FD_ZERO_ALL();
+    FD_SET(fdWrite, &writefds);
+    FD_SET(fdWrite, &exceptfds);
+    select_timeout.tv_sec = 2; /* requires more time to realize it will not connect */
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+todo_wine
+    ok(ret == 1, "expected 1, got %d\n", ret);
+todo_wine
+    ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
+    ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
+    closesocket(fdWrite);
 }
+#undef FD_SET_ALL
+#undef FD_ZERO_ALL
 
 static DWORD WINAPI AcceptKillThread(void *param)
 {
