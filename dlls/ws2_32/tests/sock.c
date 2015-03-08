@@ -1380,17 +1380,24 @@ todo_wine
     s = socket(AF_INET, SOCK_DGRAM, 0);
     ok(s != INVALID_SOCKET, "Failed to create socket\n");
     size = sizeof(i);
-    for (i = 0; i < 4; i++)
+    i = 0x0000000a;
+    err = setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &i, size);
+    if (!err)
     {
-        int k, j;
-        const int tests[] = {0xffffff0a, 0xffff000b, 0xff00000c, 0x0000000d};
-        err = setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &tests[i], i + 1);
-        ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
-        err = getsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &k, &size);
-        ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
-        j = i != 3 ? tests[i] & ((1 << (i + 1) * 8) - 1) : tests[i];
-        ok(k == j, "Test [%d] Expected 0x%x, got 0x%x\n", i, j, k);
+        for (i = 0; i < 4; i++)
+        {
+            int k, j;
+            const int tests[] = {0xffffff0a, 0xffff000b, 0xff00000c, 0x0000000d};
+            err = setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &tests[i], i + 1);
+            ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
+            err = getsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &k, &size);
+            ok(!err, "Test [%d] Expected 0, got %d\n", i, err);
+            j = i != 3 ? tests[i] & ((1 << (i + 1) * 8) - 1) : tests[i];
+            ok(k == j, "Test [%d] Expected 0x%x, got 0x%x\n", i, j, k);
+        }
     }
+    else
+        win_skip("IP_MULTICAST_TTL is unsupported\n");
     closesocket(s);
 
     /* test SO_PROTOCOL_INFOA invalid parameters */
