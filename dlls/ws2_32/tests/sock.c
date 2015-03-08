@@ -196,6 +196,9 @@ static int        client_id;
 
 /**************** General utility functions ***************/
 
+static SOCKET setup_server_socket(struct sockaddr_in *addr, int *len);
+static SOCKET setup_connector_socket(struct sockaddr_in *addr, int len, BOOL nonblock);
+
 static int tcp_socketpair(SOCKET *src, SOCKET *dst)
 {
     SOCKET server = INVALID_SOCKET;
@@ -3632,7 +3635,7 @@ static SOCKET setup_server_socket(struct sockaddr_in *addr, int *len)
     return server_socket;
 }
 
-static SOCKET setup_connector_socket(struct sockaddr_in *addr, int len)
+static SOCKET setup_connector_socket(struct sockaddr_in *addr, int len, BOOL nonblock)
 {
     int ret;
     SOCKET connector;
@@ -3640,8 +3643,18 @@ static SOCKET setup_connector_socket(struct sockaddr_in *addr, int len)
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create connector socket %d\n", WSAGetLastError());
 
+    if (nonblock)
+        set_blocking(connector, !nonblock);
+
     ret = connect(connector, (struct sockaddr *)addr, len);
-    ok(!ret, "connecting to accepting socket failed %d\n", WSAGetLastError());
+    if (!nonblock)
+        ok(!ret, "connecting to accepting socket failed %d\n", WSAGetLastError());
+    else if (ret == SOCKET_ERROR)
+    {
+        DWORD error = WSAGetLastError();
+        ok(error == WSAEWOULDBLOCK || error == WSAEINPROGRESS,
+           "expected 10035 or 10036, got %d\n", error);
+    }
 
     return connector;
 }
@@ -3669,7 +3682,7 @@ static void test_accept(void)
         return;
     }
 
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     trace("Blocking accept next\n");
@@ -3717,7 +3730,7 @@ static void test_accept(void)
     server_socket = setup_server_socket(&address, &socklen);
     if (server_socket == INVALID_SOCKET) goto done;
 
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     socklen = 0;
@@ -3728,7 +3741,7 @@ static void test_accept(void)
     connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     accepted = WSAAccept(server_socket, NULL, NULL, NULL, 0);
@@ -3738,7 +3751,7 @@ static void test_accept(void)
     accepted = connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     socklen = sizeof(ss);
@@ -3752,7 +3765,7 @@ static void test_accept(void)
     accepted = connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     socklen = 0;
@@ -3763,7 +3776,7 @@ static void test_accept(void)
     accepted = connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     accepted = accept(server_socket, NULL, NULL);
@@ -3773,7 +3786,7 @@ static void test_accept(void)
     accepted = connector = INVALID_SOCKET;
 
     socklen = sizeof(address);
-    connector = setup_connector_socket(&address, socklen);
+    connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
     socklen = sizeof(ss);
