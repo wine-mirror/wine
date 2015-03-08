@@ -1303,7 +1303,7 @@ static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
         buf[len++] = c>>8;
     if(!len || IsDBCSLeadByteEx(cp, buf[0]))
         buf[len++] = c;
-    if(!MultiByteToWideChar(0, 0, buf, len, &ch, 1)) {
+    if(!MultiByteToWideChar(CP_ACP, 0, buf, len, &ch, 1)) {
         WARN("invalid arg %d, cp %d\n", c, cp);
         return E_FAIL;
     }
