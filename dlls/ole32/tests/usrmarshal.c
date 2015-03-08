@@ -472,6 +472,17 @@ static void test_marshal_HMETAFILEPICT(void)
     HMETAFILEPICT_UserFree(&umcb.Flags, &hmfp2);
 }
 
+typedef struct
+{
+    IUnknown IUnknown_iface;
+    LONG refs;
+} TestUnknown;
+
+static inline TestUnknown *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, TestUnknown, IUnknown_iface);
+}
+
 static HRESULT WINAPI Test_IUnknown_QueryInterface(
                                                    LPUNKNOWN iface,
                                                    REFIID riid,
@@ -492,12 +503,14 @@ static HRESULT WINAPI Test_IUnknown_QueryInterface(
 
 static ULONG WINAPI Test_IUnknown_AddRef(LPUNKNOWN iface)
 {
-    return 2; /* non-heap-based object */
+    TestUnknown *This = impl_from_IUnknown(iface);
+    return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
 {
-    return 1; /* non-heap-based object */
+    TestUnknown *This = impl_from_IUnknown(iface);
+    return InterlockedDecrement(&This->refs);
 }
 
 static const IUnknownVtbl TestUnknown_Vtbl =
@@ -542,7 +555,7 @@ static const IStreamVtbl TestStream_Vtbl =
     /* the rest can be NULLs */
 };
 
-static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+static TestUnknown Test_Unknown = { {&TestUnknown_Vtbl}, 1 };
 static IStream Test_Stream = { &TestStream_Vtbl };
 
 ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *, ULONG, ULONG, IUnknown *, REFIID);
@@ -582,7 +595,8 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     /* Now for a non-NULL pointer. The marshalled data are two size DWORDS and then
        the result of CoMarshalInterface called with the LOWORD of the ctx */
 
-    unk = &Test_Unknown;
+    unk = &Test_Unknown.IUnknown_iface;
+    Test_Unknown.refs = 1;
 
     CreateStreamOnHGlobal(h, TRUE, &stm);
     CoMarshalInterface(stm, &IID_IUnknown, unk, LOWORD(ctx), NULL, MSHLFLAGS_NORMAL);
@@ -591,6 +605,8 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     marshal_size = pos.u.LowPart;
     marshal_data = GlobalLock(h);
     trace("marshal_size %x\n", marshal_size);
+todo_wine
+    ok(Test_Unknown.refs == 2, "got %d\n", Test_Unknown.refs);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, umcb_ctx);
     size = WdtpInterfacePointer_UserSize(&umcb.Flags, ctx, 0, unk, &IID_IUnknown);
@@ -599,6 +615,8 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
+todo_wine
+    ok(Test_Unknown.refs == 2, "got %d\n", Test_Unknown.refs);
     wireip = buffer;
 
     ok(buffer_end == buffer + marshal_size + 2 * sizeof(DWORD), "buffer_end %p buffer %p\n", buffer_end, buffer);
@@ -619,6 +637,7 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     WdtpInterfacePointer_UserUnmarshal(&umcb.Flags, buffer, &unk2, &IID_IUnknown);
     ok(unk2 != NULL, "IUnknown object didn't unmarshal properly\n");
+    ok(Test_Unknown.refs == 2, "got %d\n", Test_Unknown.refs);
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     IUnknown_Release(unk2);
@@ -651,7 +670,7 @@ static void test_marshal_STGMEDIUM(void)
     unsigned char *buffer, *buffer_end, *expect_buffer, *expect_buffer_end;
     ULONG size, expect_size;
     STGMEDIUM med, med2;
-    IUnknown *unk = &Test_Unknown;
+    IUnknown *unk = &Test_Unknown.IUnknown_iface;
     IStream *stm = &Test_Stream;
 
     /* TYMED_NULL with pUnkForRelease */

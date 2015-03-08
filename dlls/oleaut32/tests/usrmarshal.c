@@ -1386,31 +1386,31 @@ static void test_marshal_VARIANT(void)
     V_UNKNOWN(&v) = &heap_unknown->IUnknown_iface;
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
-    ok(stubMsg.BufferLength > 32, "size %d\n", stubMsg.BufferLength);
+    ok(stubMsg.BufferLength > 40, "size %d\n", stubMsg.BufferLength);
     buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+todo_wine
+    ok(heap_unknown->refs == 2, "got refcount %d\n", heap_unknown->refs);
     wirev = (DWORD*)buffer;
     wirev = check_variant_header(wirev, &v, next - buffer);
 
-    todo_wine
     ok(*wirev == (DWORD_PTR)V_UNKNOWN(&v) /* Win9x */ ||
        *wirev == (DWORD_PTR)V_UNKNOWN(&v) + 1 /* NT */, "wv[5] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == next - buffer - 0x20, "wv[6] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == next - buffer - 0x20, "wv[7] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == 0x574f454d, "wv[8] %08x\n", *wirev);
     VariantInit(&v3);
     V_VT(&v3) = VT_UNKNOWN;
     V_UNKNOWN(&v3) = &heap_unknown->IUnknown_iface;
     IUnknown_AddRef(V_UNKNOWN(&v3));
     stubMsg.Buffer = buffer;
+todo_wine
+    ok(heap_unknown->refs == 3, "got refcount %d\n", heap_unknown->refs);
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
     ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
     ok(V_UNKNOWN(&v) == V_UNKNOWN(&v3), "got %p expect %p\n", V_UNKNOWN(&v), V_UNKNOWN(&v3));
@@ -1452,27 +1452,26 @@ static void test_marshal_VARIANT(void)
     V_UNKNOWNREF(&v) = (IUnknown **)&heap_unknown;
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
-    ok(stubMsg.BufferLength > 36, "size %d\n", stubMsg.BufferLength);
+    ok(stubMsg.BufferLength >= 44, "size %d\n", stubMsg.BufferLength);
     buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
+    ok(heap_unknown->refs == 1, "got refcount %d\n", heap_unknown->refs);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
+todo_wine
+    ok(heap_unknown->refs == 2, "got refcount %d\n", heap_unknown->refs);
     wirev = (DWORD*)buffer;
     wirev = check_variant_header(wirev, &v, next - buffer);
 
     ok(*wirev == 4, "wv[5] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == (DWORD_PTR)heap_unknown /* Win9x, Win2000 */ ||
        *wirev == (DWORD_PTR)heap_unknown + 1 /* XP */, "wv[6] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == next - buffer - 0x24, "wv[7] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == next - buffer - 0x24, "wv[8] %08x\n", *wirev);
     wirev++;
-    todo_wine
     ok(*wirev == 0x574f454d, "wv[9] %08x\n", *wirev);
 
     VariantInit(&v3);
@@ -1481,6 +1480,7 @@ static void test_marshal_VARIANT(void)
     IUnknown_AddRef(V_UNKNOWN(&v3));
     stubMsg.Buffer = buffer;
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v3);
+    ok(heap_unknown->refs == 2, "got refcount %d\n", heap_unknown->refs);
     ok(V_VT(&v) == V_VT(&v3), "got vt %d expect %d\n", V_VT(&v), V_VT(&v3));
     ok(*V_UNKNOWNREF(&v) == *V_UNKNOWNREF(&v3), "got %p expect %p\n", *V_UNKNOWNREF(&v), *V_UNKNOWNREF(&v3));
     VARIANT_UserFree(&umcb.Flags, &v3);
