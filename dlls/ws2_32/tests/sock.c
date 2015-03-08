@@ -1124,7 +1124,14 @@ static void test_WithWSAStartup(void)
     closesocket(src);
     closesocket(dst);
 
-    WSACleanup();
+    res = WSACleanup();
+    ok(res == 0, "expected 0, got %d\n", res);
+    WSASetLastError(0xdeadbeef);
+    res = WSACleanup();
+    error = WSAGetLastError();
+    ok ( (res == SOCKET_ERROR && error ==  WSANOTINITIALISED) ||
+         broken(res == 0),  /* WinME */
+            "WSACleanup returned %d WSAGetLastError is %d\n", res, error);
 }
 
 /**************** Main program utility functions ***************/
@@ -1156,11 +1163,6 @@ static void Exit (void)
     ret = WSACleanup();
     err = WSAGetLastError();
     ok ( ret == 0, "WSACleanup failed ret = %d GetLastError is %d\n", ret, err);
-    ret = WSACleanup();
-    err = WSAGetLastError();
-    ok ( (ret == SOCKET_ERROR && err ==  WSANOTINITIALISED) ||
-         broken(ret == 0),  /* WinME */
-            "WSACleanup returned %d GetLastError is %d\n", ret, err);
 }
 
 static void StartServer (LPTHREAD_START_ROUTINE routine,
