@@ -7960,6 +7960,12 @@ static void test_address_list_query(void)
     bytes_returned = 0;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, 0, &bytes_returned, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    if(WSAGetLastError() == WSAEINVAL)
+    {
+      win_skip("Windows <= NT4 is not supported in this test\n");
+      closesocket(s);
+      return;
+    }
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
     ok(bytes_returned >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]),
             "Got unexpected bytes_returned %u.\n", bytes_returned);
