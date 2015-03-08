@@ -791,13 +791,17 @@ static void test_UuidCreateSequential(void)
     UUID guid1;
     BYTE version;
     RPC_STATUS (WINAPI *pUuidCreateSequential)(UUID *) = (void *)GetProcAddress(GetModuleHandleA("rpcrt4.dll"), "UuidCreateSequential");
+    RPC_STATUS (WINAPI *pI_UuidCreate)(UUID *) = (void*)GetProcAddress(GetModuleHandleA("rpcrt4.dll"), "I_UuidCreate");
     RPC_STATUS ret;
 
     if (!pUuidCreateSequential)
     {
-        skip("UuidCreateSequential not exported\n");
+        win_skip("UuidCreateSequential not exported\n");
         return;
     }
+
+    ok(pI_UuidCreate != pUuidCreateSequential, "got %p, %p\n", pI_UuidCreate, pUuidCreateSequential);
+
     ret = pUuidCreateSequential(&guid1);
     ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
        "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
@@ -831,6 +835,14 @@ static void test_UuidCreateSequential(void)
         ret = pUuidCreateSequential(&guid2);
         ok(!ret || ret == RPC_S_UUID_LOCAL_ONLY,
            "expected RPC_S_OK or RPC_S_UUID_LOCAL_ONLY, got %08x\n", ret);
+        version = (guid2.Data3 & 0xf000) >> 12;
+        ok(version == 1, "unexpected version %d\n", version);
+        ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
+           "unexpected value in MAC address: %s\n",
+           wine_dbgstr_guid(&guid2));
+
+        /* I_UuidCreate does exactly the same */
+        pI_UuidCreate(&guid2);
         version = (guid2.Data3 & 0xf000) >> 12;
         ok(version == 1, "unexpected version %d\n", version);
         ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),

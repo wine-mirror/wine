@@ -93,7 +93,7 @@
 @ stub I_RpcTransServerNewConnection
 @ stub I_RpcTurnOnEEInfoPropagation # wxp
 @ stdcall I_RpcWindowProc(ptr long long long) # win9x
-@ stub I_UuidCreate
+@ stdcall I_UuidCreate(ptr)
 @ stub MIDL_wchar_strcpy
 @ stub MIDL_wchar_strlen
 @ stdcall MesBufferHandleReset(ptr long long ptr long ptr)
