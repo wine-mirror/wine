@@ -2190,7 +2190,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FileMoveClusterInformation */
         0,                                             /* FileQuotaInformation */
         0,                                             /* FileReparsePointInformation */
-        0,                                             /* FileNetworkOpenInformation */
+        sizeof(FILE_NETWORK_OPEN_INFORMATION),         /* FileNetworkOpenInformation */
         0,                                             /* FileAttributeTagInformation */
         0,                                             /* FileTrackingInformation */
         0,                                             /* FileIdBothDirectoryInformation */
@@ -2411,6 +2411,40 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 io->u.Status = fill_name_info( &unix_name, info, &name_len );
                 RtlFreeAnsiString( &unix_name );
                 io->Information = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + name_len;
+            }
+        }
+        break;
+    case FileNetworkOpenInformation:
+        {
+            FILE_NETWORK_OPEN_INFORMATION *info = ptr;
+            ANSI_STRING unix_name;
+
+            if (!(io->u.Status = server_get_unix_name( hFile, &unix_name )))
+            {
+                ULONG attributes;
+                struct stat st;
+
+                if (get_file_info( unix_name.Buffer, &st, &attributes ) == -1)
+                    io->u.Status = FILE_GetNtStatus();
+                else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+                    io->u.Status = STATUS_INVALID_INFO_CLASS;
+                else
+                {
+                    FILE_BASIC_INFORMATION basic;
+                    FILE_STANDARD_INFORMATION std;
+
+                    fill_file_info( &st, attributes, &basic, FileBasicInformation );
+                    fill_file_info( &st, attributes, &std, FileStandardInformation );
+
+                    info->CreationTime   = basic.CreationTime;
+                    info->LastAccessTime = basic.LastAccessTime;
+                    info->LastWriteTime  = basic.LastWriteTime;
+                    info->ChangeTime     = basic.ChangeTime;
+                    info->AllocationSize = std.AllocationSize;
+                    info->EndOfFile      = std.EndOfFile;
+                    info->FileAttributes = basic.FileAttributes;
+                }
+                RtlFreeAnsiString( &unix_name );
             }
         }
         break;
