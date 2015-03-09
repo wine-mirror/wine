@@ -933,7 +933,6 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
             if (!search)
             {
                 SetLastError( ERROR_OUTOFMEMORY );
-                HeapFree( GetProcessHeap(), 0, dll_path );
                 return 0;
             }
             strcpyW( search, name );
