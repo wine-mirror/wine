@@ -22,7 +22,6 @@
 #include "wine/port.h"
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 
 #include <stdio.h>
