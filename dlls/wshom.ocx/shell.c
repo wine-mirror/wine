@@ -236,9 +236,13 @@ static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
 {
     WshExec *This = impl_from_IWshExec(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, pid);
+    TRACE("(%p)->(%p)\n", This, pid);
 
-    return E_NOTIMPL;
+    if (!pid)
+        return E_INVALIDARG;
+
+    *pid = This->info.dwProcessId;
+    return S_OK;
 }
 
 static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
