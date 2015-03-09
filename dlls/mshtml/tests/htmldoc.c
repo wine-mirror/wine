@@ -6509,11 +6509,10 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
 
     editmode = TRUE;
 
-    if(loaded)
+    if(loaded) {
         load_state = LD_DOLOAD;
-
-    if(loaded)
         SET_EXPECT(GetClassID);
+    }
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(GetHostInfo);
