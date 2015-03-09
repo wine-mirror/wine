@@ -314,8 +314,11 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_value(IHTMLDOMAttribute2 *iface, BST
 static HRESULT WINAPI HTMLDOMAttribute2_get_expando(IHTMLDOMAttribute2 *iface, VARIANT_BOOL *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = get_dispid_type(This->dispid) == DISPEXPROP_BUILTIN ? VARIANT_FALSE : VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute2_get_nodeType(IHTMLDOMAttribute2 *iface, LONG *p)

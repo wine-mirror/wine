@@ -974,6 +974,17 @@ static IHTMLLabelElement *_get_label_iface(unsigned line, IUnknown *unk)
     return ret;
 }
 
+#define get_attr2_iface(u) _get_attr2_iface(__LINE__,u)
+static IHTMLDOMAttribute2 *_get_attr2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMAttribute2 *ret;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDOMAttribute2, (void**)&ret);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDOMAttribute2: %08x\n", hres);
+    return ret;
+}
+
 #define test_node_name(u,n) _test_node_name(__LINE__,u,n)
 static void _test_node_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -1729,6 +1740,31 @@ static void _test_comment_text(unsigned line, IUnknown *unk, const char *extext)
     SysFreeString(text);
 }
 
+#define test_attr_specified(a,b) _test_attr_specified(__LINE__,a,b)
+static void _test_attr_specified(unsigned line, IHTMLDOMAttribute *attr, VARIANT_BOOL expected)
+{
+    VARIANT_BOOL specified;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_get_specified(attr, &specified);
+    ok_(__FILE__,line)(hres == S_OK, "get_specified failed: %08x\n", hres);
+    ok_(__FILE__,line)(specified == expected, "specified = %x, expected %x\n", specified, expected);
+}
+
+#define test_attr_expando(a,b) _test_attr_expando(__LINE__,a,b)
+static void _test_attr_expando(unsigned line, IHTMLDOMAttribute *attr, VARIANT_BOOL expected)
+{
+    IHTMLDOMAttribute2 *attr2 = _get_attr2_iface(line, (IUnknown*)attr);
+    VARIANT_BOOL expando;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute2_get_expando(attr2, &expando);
+    ok_(__FILE__,line)(hres == S_OK, "get_expando failed: %08x\n", hres);
+    ok_(__FILE__,line)(expando == expected, "expando = %x, expected %x\n", expando, expected);
+
+    IHTMLDOMAttribute2_Release(attr2);
+}
+
 #define test_comment_attrs(c) _test_comment_attrs(__LINE__,c)
 static void _test_comment_attrs(unsigned line, IUnknown *unk)
 {
@@ -1752,6 +1788,8 @@ static void _test_comment_attrs(unsigned line, IUnknown *unk)
     hres = IHTMLElement4_getAttributeNode(elem4, name, &attr);
     ok(hres == S_OK, "getAttributeNode failed: %08x\n", hres);
     ok(attr != NULL, "attr == NULL\n");
+
+    test_attr_expando(attr, VARIANT_TRUE);
 
     IHTMLDOMAttribute_Release(attr);
     IHTMLCommentElement_Release(comment);
@@ -3171,12 +3209,14 @@ static void test_attr_collection(IHTMLElement *elem)
             ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
             ok(V_VT(&val) == VT_BSTR, "id: V_VT(&val) = %d\n", V_VT(&val));
             ok(!strcmp_wa(V_BSTR(&val), "attr"), "id: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+            test_attr_expando(dom_attr, VARIANT_FALSE);
         } else if(!strcmp_wa(name, "attr1")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
             ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
             ok(V_VT(&val) == VT_BSTR, "attr1: V_VT(&val) = %d\n", V_VT(&val));
             ok(!strcmp_wa(V_BSTR(&val), "attr1"), "attr1: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+            test_attr_expando(dom_attr, VARIANT_TRUE);
         } else if(!strcmp_wa(name, "attr2")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
@@ -3217,17 +3257,6 @@ static void test_attr_collection(IHTMLElement *elem)
 
     IDispatch_Release(disp);
     IHTMLAttributeCollection_Release(attr_col);
-}
-
-#define test_attr_specified(a,b) _test_attr_specified(__LINE__,a,b)
-static void _test_attr_specified(unsigned line, IHTMLDOMAttribute *attr, VARIANT_BOOL expected)
-{
-    VARIANT_BOOL specified;
-    HRESULT hres;
-
-    hres = IHTMLDOMAttribute_get_specified(attr, &specified);
-    ok_(__FILE__,line)(hres == S_OK, "get_specified failed: %08x\n", hres);
-    ok_(__FILE__,line)(specified == expected, "specified = %x, expected %x\n", specified, expected);
 }
 
 #define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
@@ -8019,6 +8048,7 @@ static void test_attr(IHTMLElement *elem)
 
     attr = get_elem_attr_node((IUnknown*)elem, "tabIndex", TRUE);
     test_attr_specified(attr, VARIANT_FALSE);
+    test_attr_expando(attr, VARIANT_FALSE);
     IHTMLDOMAttribute_Release(attr);
 }
 
