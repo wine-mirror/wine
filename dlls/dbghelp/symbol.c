@@ -20,7 +20,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "config.h"
 
