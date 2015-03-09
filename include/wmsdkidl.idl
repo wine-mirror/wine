@@ -516,6 +516,77 @@ interface IWMSyncReader : IUnknown
         [in] IStream *pStream);
 };
 
+[
+    object,
+    uuid(96406bd5-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMInputMediaProps : IWMMediaProps
+{
+    HRESULT GetConnectionName(
+        [out, size_is(*pcchName)] WCHAR *pwszName,
+        [in, out] WORD *pcchName);
+
+    HRESULT GetGroupName(
+        [out, size_is(*pcchName)] WCHAR *pwszName,
+        [in, out] WORD *pcchName);
+}
+
+[
+    object,
+    uuid(96406bd4-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMWriter : IUnknown
+{
+    HRESULT SetProfileByID(
+        [in] REFGUID guidProfile);
+
+    HRESULT SetProfile(
+        [in] IWMProfile *pProfile);
+
+    HRESULT SetOutputFilename(
+        [in] const WCHAR *pwszFilename);
+
+    HRESULT GetInputCount(
+        [out] DWORD *pcInputs);
+
+    HRESULT GetInputProps(
+        [in] DWORD dwInputNum,
+        [out] IWMInputMediaProps **ppInput);
+
+    HRESULT SetInputProps(
+        [in] DWORD dwInputNum,
+        [in] IWMInputMediaProps *pInput);
+
+    HRESULT GetInputFormatCount(
+        [in] DWORD dwInputNumber,
+        [out] DWORD *pcFormats);
+
+    HRESULT GetInputFormat(
+        [in] DWORD dwInputNumber,
+        [in] DWORD dwFormatNumber,
+        [out] IWMInputMediaProps **pProps);
+
+    HRESULT BeginWriting();
+
+    HRESULT EndWriting();
+
+    HRESULT AllocateSample(
+        [in] DWORD dwSampleSize,
+        [out] INSSBuffer **ppSample);
+
+    HRESULT WriteSample(
+        [in] DWORD dwInputNum,
+        [in] QWORD cnsSampleTime,
+        [in] DWORD dwFlags,
+        [in] INSSBuffer *pSample);
+
+    HRESULT Flush();
+}
+
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_Base,   0x00000000,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIATYPE_Video,     0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_RGB1,   0xe436eb78,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);")
