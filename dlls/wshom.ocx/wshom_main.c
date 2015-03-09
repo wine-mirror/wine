@@ -35,6 +35,7 @@ static REFIID tid_ids[] = {
     &IID_NULL,
     &IID_IWshCollection,
     &IID_IWshEnvironment,
+    &IID_IWshExec,
     &IID_IWshShell3,
     &IID_IWshShortcut
 };

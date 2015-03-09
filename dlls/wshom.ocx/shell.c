@@ -51,6 +51,13 @@ typedef struct
     LONG ref;
 } WshEnvironment;
 
+typedef struct
+{
+    IWshExec IWshExec_iface;
+    LONG ref;
+    PROCESS_INFORMATION info;
+} WshExec;
+
 static inline WshCollection *impl_from_IWshCollection( IWshCollection *iface )
 {
     return CONTAINING_RECORD(iface, WshCollection, IWshCollection_iface);
@@ -64,6 +71,213 @@ static inline WshShortcut *impl_from_IWshShortcut( IWshShortcut *iface )
 static inline WshEnvironment *impl_from_IWshEnvironment( IWshEnvironment *iface )
 {
     return CONTAINING_RECORD(iface, WshEnvironment, IWshEnvironment_iface);
+}
+
+static inline WshExec *impl_from_IWshExec( IWshExec *iface )
+{
+    return CONTAINING_RECORD(iface, WshExec, IWshExec_iface);
+}
+
+static HRESULT WINAPI WshExec_QueryInterface(IWshExec *iface, REFIID riid, void **obj)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IWshExec) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+    }else {
+        FIXME("Unknown iface %s\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IWshExec_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI WshExec_AddRef(IWshExec *iface)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) ref = %d\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI WshExec_Release(IWshExec *iface)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) ref = %d\n", This, ref);
+
+    if (!ref) {
+        CloseHandle(This->info.hThread);
+        CloseHandle(This->info.hProcess);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI WshExec_GetTypeInfoCount(IWshExec *iface, UINT *pctinfo)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI WshExec_GetTypeInfo(IWshExec *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IWshExec_tid, ppTInfo);
+}
+
+static HRESULT WINAPI WshExec_GetIDsOfNames(IWshExec *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IWshExec_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI WshExec_Invoke(IWshExec *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IWshExec_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &This->IWshExec_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI WshExec_get_Status(IWshExec *iface, WshExecStatus *status)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, status);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_get_StdIn(IWshExec *iface, ITextStream **stream)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_get_StdOut(IWshExec *iface, ITextStream **stream)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_get_StdErr(IWshExec *iface, ITextStream **stream)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, pid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, code);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshExec_Terminate(IWshExec *iface)
+{
+    WshExec *This = impl_from_IWshExec(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const IWshExecVtbl WshExecVtbl = {
+    WshExec_QueryInterface,
+    WshExec_AddRef,
+    WshExec_Release,
+    WshExec_GetTypeInfoCount,
+    WshExec_GetTypeInfo,
+    WshExec_GetIDsOfNames,
+    WshExec_Invoke,
+    WshExec_get_Status,
+    WshExec_get_StdIn,
+    WshExec_get_StdOut,
+    WshExec_get_StdErr,
+    WshExec_get_ProcessID,
+    WshExec_get_ExitCode,
+    WshExec_Terminate
+};
+
+static HRESULT WshExec_create(BSTR command, IWshExec **ret)
+{
+    STARTUPINFOW si = {0};
+    WshExec *This;
+
+    *ret = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IWshExec_iface.lpVtbl = &WshExecVtbl;
+    This->ref = 1;
+
+    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &This->info)) {
+        HeapFree(GetProcessHeap(), 0, This);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    *ret = &This->IWshExec_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI WshEnvironment_QueryInterface(IWshEnvironment *iface, REFIID riid, void **obj)
@@ -1323,8 +1537,15 @@ static HRESULT WINAPI WshShell3_SendKeys(IWshShell3 *iface, BSTR Keys, VARIANT *
 
 static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec **ret)
 {
-    FIXME("(%s %p): stub\n", debugstr_w(command), ret);
-    return E_NOTIMPL;
+    TRACE("(%s %p)\n", debugstr_w(command), ret);
+
+    if (!ret)
+        return E_POINTER;
+
+    if (!command)
+        return DISP_E_EXCEPTION;
+
+    return WshExec_create(command, ret);
 }
 
 static HRESULT WINAPI WshShell3_get_CurrentDirectory(IWshShell3 *iface, BSTR *dir)

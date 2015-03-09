@@ -42,6 +42,7 @@ static void test_wshshell(void)
     static const WCHAR dummydirW[] = {'d','e','a','d','p','a','r','r','o','t',0};
     static const WCHAR emptyW[] = {'e','m','p','t','y',0};
     IWshEnvironment *env;
+    IWshExec *shexec;
     IWshShell3 *sh3;
     IDispatchEx *dispex;
     IWshCollection *coll;
@@ -231,6 +232,18 @@ if (0) /* crashes on native */
 
     str = SysAllocString(dummydirW);
     hr = IWshShell3_put_CurrentDirectory(sh3, str);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    /* Exec */
+    hr = IWshShell3_Exec(sh3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IWshShell3_Exec(sh3, NULL, &shexec);
+    ok(hr == DISP_E_EXCEPTION, "got 0x%08x\n", hr);
+
+    str = SysAllocString(emptyW);
+    hr = IWshShell3_Exec(sh3, str, &shexec);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
     SysFreeString(str);
 
