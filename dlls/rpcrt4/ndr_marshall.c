@@ -440,6 +440,11 @@ static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
     return (*(const ULONG *)pFormat != -1);
 }
 
+static inline PFORMAT_STRING SkipConformance(const PMIDL_STUB_MESSAGE pStubMsg, const PFORMAT_STRING pFormat)
+{
+    return pStubMsg->fHasNewCorrDesc ? pFormat + 6 : pFormat + 4;
+}
+
 static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 {
   align_pointer(&pStubMsg->Buffer, 4);
@@ -448,10 +453,7 @@ static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRIN
   pStubMsg->MaxCount = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
   pStubMsg->Buffer += 4;
   TRACE("unmarshalled conformance is %ld\n", pStubMsg->MaxCount);
-  if (pStubMsg->fHasNewCorrDesc)
-    return pFormat+6;
-  else
-    return pFormat+4;
+  return SkipConformance(pStubMsg, pFormat);
 }
 
 static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat, ULONG MaxValue)
@@ -483,10 +485,7 @@ static inline PFORMAT_STRING ReadVariance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_S
   }
 
 done:
-  if (pStubMsg->fHasNewCorrDesc)
-    return pFormat+6;
-  else
-    return pFormat+4;
+  return SkipConformance(pStubMsg, pFormat);
 }
 
 /* writes the conformance value to the buffer */
@@ -664,20 +663,8 @@ done_conf_grab:
 
 finish_conf:
   TRACE("resulting conformance is %ld\n", *pCount);
-  if (pStubMsg->fHasNewCorrDesc)
-    return pFormat+6;
-  else
-    return pFormat+4;
-}
 
-static inline PFORMAT_STRING SkipConformance(PMIDL_STUB_MESSAGE pStubMsg,
-                                             PFORMAT_STRING pFormat)
-{
-    if (pStubMsg->fHasNewCorrDesc)
-      pFormat += 6;
-    else
-      pFormat += 4;
-    return pFormat;
+  return SkipConformance(pStubMsg, pFormat);
 }
 
 static inline PFORMAT_STRING SkipVariance(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
@@ -2785,11 +2772,7 @@ static ULONG EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
   }
   case RPC_FC_NON_ENCAPSULATED_UNION:
     pFormat += 2;
-    if (pStubMsg->fHasNewCorrDesc)
-        pFormat += 6;
-    else
-        pFormat += 4;
-
+    pFormat = SkipConformance(pStubMsg, pFormat);
     pFormat += *(const SHORT*)pFormat;
     return *(const SHORT*)pFormat;
   case RPC_FC_IP:
@@ -6186,10 +6169,7 @@ static LONG unmarshall_discriminant(PMIDL_STUB_MESSAGE pStubMsg,
     }
     (*ppFormat)++;
 
-    if (pStubMsg->fHasNewCorrDesc)
-        *ppFormat += 6;
-    else
-        *ppFormat += 4;
+    *ppFormat = SkipConformance(pStubMsg, *ppFormat);
     return discriminant;
 }
 
