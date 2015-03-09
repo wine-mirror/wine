@@ -528,7 +528,7 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
 
     release_mmdevenum(devenum, init_hr);
 
-    return (keep_going == TRUE) ? S_OK : S_FALSE;
+    return keep_going ? S_OK : S_FALSE;
 }
 
 /***************************************************************************
