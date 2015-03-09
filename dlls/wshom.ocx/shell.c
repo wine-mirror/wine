@@ -180,10 +180,29 @@ static HRESULT WINAPI WshExec_Invoke(IWshExec *iface, DISPID dispIdMember, REFII
 static HRESULT WINAPI WshExec_get_Status(IWshExec *iface, WshExecStatus *status)
 {
     WshExec *This = impl_from_IWshExec(iface);
+    DWORD code;
 
-    FIXME("(%p)->(%p): stub\n", This, status);
+    TRACE("(%p)->(%p)\n", This, status);
 
-    return E_NOTIMPL;
+    if (!status)
+        return E_INVALIDARG;
+
+    if (!GetExitCodeProcess(This->info.hProcess, &code))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    switch (code)
+    {
+    case 0:
+        *status = WshFinished;
+        break;
+    case STILL_ACTIVE:
+        *status = WshRunning;
+        break;
+    default:
+        *status = WshFailed;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshExec_get_StdIn(IWshExec *iface, ITextStream **stream)
