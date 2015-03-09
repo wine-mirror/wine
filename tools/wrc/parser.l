@@ -90,7 +90,6 @@
 
 /* Some shortcut definitions */
 ws	[ \f\t\r]
-cident	[a-zA-Z_][0-9a-zA-Z_]*
 
 %{
 
