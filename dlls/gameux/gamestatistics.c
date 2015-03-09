@@ -1127,7 +1127,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_RemoveGameStatistics(
         hr = GAMEUX_buildStatisticsFilePath(lpApplicationId, sStatsFile);
 
     if(SUCCEEDED(hr))
-        hr = (DeleteFileW(sStatsFile)==TRUE ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
+        hr = DeleteFileW(sStatsFile) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
 
     return hr;
 }
