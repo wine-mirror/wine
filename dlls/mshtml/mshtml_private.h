@@ -135,6 +135,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLDocument4) \
     XIID(IHTMLDocument5) \
     XIID(IHTMLDOMAttribute) \
+    XIID(IHTMLDOMAttribute2) \
     XIID(IHTMLDOMChildrenCollection) \
     XIID(IHTMLDOMImplementation) \
     XIID(IHTMLDOMNode) \
@@ -902,6 +903,7 @@ struct HTMLAttributeCollection {
 typedef struct {
     DispatchEx dispex;
     IHTMLDOMAttribute IHTMLDOMAttribute_iface;
+    IHTMLDOMAttribute2 IHTMLDOMAttribute2_iface;
 
     LONG ref;
 
