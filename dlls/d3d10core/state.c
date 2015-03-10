@@ -415,10 +415,12 @@ static void STDMETHODCALLTYPE d3d10_rasterizer_state_GetDevice(ID3D10RasterizerS
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_GetPrivateData(ID3D10RasterizerState *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+    struct d3d10_rasterizer_state *state = impl_from_ID3D10RasterizerState(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_get_private_data(&state->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateData(ID3D10RasterizerState *iface,
