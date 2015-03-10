@@ -2876,11 +2876,6 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
     HRESULT hr;
     int delay = 0;
 
-    /* if it's a FileLockBytesImpl use LockFileEx in blocking mode */
-    if (SUCCEEDED(FileLockBytesImpl_LockRegionSync(This->lockBytes, offset, cb)))
-        return S_OK;
-
-    /* otherwise we have to fake it based on an async lock */
     do
     {
         hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, dwLockType);
