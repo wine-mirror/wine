@@ -3938,7 +3938,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
              * because BSD returns TRUE if it's in the OOB mark
              * while Windows returns TRUE if there are NO OOB bytes.
              */
-            (*(WS_u_long *) out_buff) = oob | !atmark;
+            (*(WS_u_long *) out_buff) = oob || !atmark;
         }
 
         release_sock_fd( s, fd );
