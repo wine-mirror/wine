@@ -21,6 +21,10 @@
 
 #include <ddraw.h>
 
+#ifdef __i386__
+#include <pshpack4.h>
+#endif
+
 typedef struct _D3DTRANSFORMCAPS {
 	DWORD dwSize;
 	DWORD dwCaps;
@@ -428,6 +432,8 @@ typedef struct _D3DDEVINFO_TEXTURING {
 	DWORD   dwNumGetDCs;
 } D3DDEVINFO_TEXTURING, *LPD3DDEVINFO_TEXTURING;
 
-
+#ifdef __i386__
+#include <poppack.h>
+#endif
 
 #endif

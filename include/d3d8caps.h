@@ -19,6 +19,10 @@
 #ifndef __WINE_D3D8CAPS_H
 #define __WINE_D3D8CAPS_H
 
+#ifdef __i386__
+#include <pshpack4.h>
+#endif
+
 /*
  * Definitions
  */
@@ -282,5 +286,9 @@ typedef struct _D3DCAPS8 {
     DWORD               PixelShaderVersion;
     float               MaxPixelShaderValue;
 } D3DCAPS8;
+
+#ifdef __i386__
+#include <poppack.h>
+#endif
 
 #endif  /* __WINE_D3D8CAPS_H */

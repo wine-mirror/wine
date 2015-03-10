@@ -19,6 +19,9 @@
 #ifndef __WINE_D3D8TYPES_H
 #define __WINE_D3D8TYPES_H
 
+#ifdef __i386__
+#include <pshpack4.h>
+#endif
 
 /*****************************************************************************
  * Direct 3D v8 #defines
@@ -1209,5 +1212,9 @@ typedef struct _D3DVOLUME_DESC {
     UINT                Height;
     UINT                Depth;
 } D3DVOLUME_DESC;
+
+#ifdef __i386__
+#include <poppack.h>
+#endif
 
 #endif  /* __WINE_D3D8TYPES_H */
