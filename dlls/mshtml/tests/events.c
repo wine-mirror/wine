@@ -1571,7 +1571,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("function();");
     hres = IHTMLElement_put_onclick(div, v);
-    todo_wine ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
 
     if(hres == S_OK) {
         V_VT(&v) = VT_EMPTY;

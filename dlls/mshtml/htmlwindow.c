@@ -95,7 +95,8 @@ static inline HRESULT set_window_event(HTMLWindow *window, eventid_t eid, VARIAN
         return E_FAIL;
     }
 
-    return set_event_handler(&window->inner_window->doc->body_event_target, window->inner_window->doc, eid, var);
+    return set_event_handler(&window->inner_window->dispex, &window->inner_window->doc->body_event_target,
+                             window->inner_window->doc, eid, var);
 }
 
 static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIANT *var)
@@ -105,7 +106,7 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
         return E_FAIL;
     }
 
-    return get_event_handler(&window->inner_window->doc->body_event_target, eid, var);
+    return get_event_handler(&window->inner_window->dispex, &window->inner_window->doc->body_event_target, eid, var);
 }
 
 static void detach_inner_window(HTMLInnerWindow *window)
