@@ -2876,6 +2876,11 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
     HRESULT hr;
     int delay = 0;
     DWORD start_time = GetTickCount();
+    DWORD last_sanity_check = start_time;
+    ULARGE_INTEGER sanity_offset, sanity_cb;
+
+    sanity_offset.QuadPart = RANGELOCK_UNK1_FIRST;
+    sanity_cb.QuadPart = RANGELOCK_UNK1_LAST - RANGELOCK_UNK1_FIRST + 1;
 
     do
     {
@@ -2883,10 +2888,35 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
 
         if (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION)
         {
-            if (GetTickCount() - start_time >= 20000)
+            DWORD current_time = GetTickCount();
+            if (current_time - start_time >= 20000)
             {
                 /* timeout */
                 break;
+            }
+            if (current_time - last_sanity_check >= 500)
+            {
+                /* Any storage implementation with the file open in a
+                 * shared mode should not lock these bytes for writing. However,
+                 * some programs (LibreOffice Writer) will keep ALL bytes locked
+                 * when opening in exclusive mode. We can use a read lock to
+                 * detect this case early, and not hang a full 20 seconds.
+                 *
+                 * This can collide with another attempt to open the file in
+                 * exclusive mode, but it's unlikely, and someone would fail anyway. */
+                hr = ILockBytes_LockRegion(This->lockBytes, sanity_offset, sanity_cb, 0);
+                if (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION)
+                    break;
+                if (hr == STG_E_INVALIDFUNCTION)
+                {
+                    /* ignore this, lockbytes might support dwLockType but not 0 */
+                    hr = STG_E_ACCESSDENIED;
+                }
+                if (SUCCEEDED(hr))
+                {
+                    ILockBytes_UnlockRegion(This->lockBytes, sanity_offset, sanity_cb, 0);
+                    hr = STG_E_ACCESSDENIED;
+                }
             }
             Sleep(delay);
             if (delay < 150) delay++;
