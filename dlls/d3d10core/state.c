@@ -552,6 +552,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
         wined3d_sampler_decref(state->wined3d_sampler);
         wine_rb_remove(&device->sampler_states, &state->desc);
         ID3D10Device1_Release(state->device);
+        wined3d_private_store_cleanup(&state->private_store);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -582,10 +583,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_GetPrivateData(ID3D10Sample
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateData(ID3D10SamplerState *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&state->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateDataInterface(ID3D10SamplerState *iface,
@@ -667,6 +670,7 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10
 
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
+    wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
     wined3d_desc.address_u = wined3d_texture_address_from_d3d10core(desc->AddressU);
@@ -687,6 +691,7 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10
     if (FAILED(hr = wined3d_sampler_create(device->wined3d_device, &wined3d_desc, state, &state->wined3d_sampler)))
     {
         WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&state->private_store);
         return hr;
     }
 
@@ -694,6 +699,7 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10
     {
         ERR("Failed to insert sampler state entry.\n");
         wined3d_sampler_decref(state->wined3d_sampler);
+        wined3d_private_store_cleanup(&state->private_store);
         return E_FAIL;
     }
 

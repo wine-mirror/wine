@@ -296,6 +296,7 @@ struct d3d10_sampler_state
     ID3D10SamplerState ID3D10SamplerState_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_sampler *wined3d_sampler;
     D3D10_SAMPLER_DESC desc;
     struct wine_rb_entry entry;
