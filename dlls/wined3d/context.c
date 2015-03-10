@@ -1465,7 +1465,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     if (!(hdc = GetDC(swapchain->win_handle)))
     {
-        WARN("Failed to retireve device context, trying swapchain backup.\n");
+        WARN("Failed to retrieve device context, trying swapchain backup.\n");
 
         if ((hdc = swapchain_get_backup_dc(swapchain)))
             hdc_is_private = TRUE;
