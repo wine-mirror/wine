@@ -3153,22 +3153,22 @@ struct lock_test
     BOOL todo;
 };
 
-static const int priority_locked_bytes[] = { 0x58, 0x81, 0x93, -1 };
-static const int rwex_locked_bytes[] = { 0x93, 0xa7, 0xbb, 0xcf, -1 };
-static const int rw_locked_bytes[] = { 0x93, 0xa7, -1 };
-static const int nosn_locked_bytes[] = { 0x6c, 0x93, 0xa7, 0xcf, -1 };
-static const int rwdw_locked_bytes[] = { 0x93, 0xa7, 0xcf, -1 };
-static const int wodw_locked_bytes[] = { 0xa7, 0xcf, -1 };
-static const int tr_locked_bytes[] = { 0x93, -1 };
+static const int priority_locked_bytes[] = { 0x158, 0x181, 0x193, -1 };
+static const int rwex_locked_bytes[] = { 0x193, 0x1a7, 0x1bb, 0x1cf, -1 };
+static const int rw_locked_bytes[] = { 0x193, 0x1a7, -1 };
+static const int nosn_locked_bytes[] = { 0x16c, 0x193, 0x1a7, 0x1cf, -1 };
+static const int rwdw_locked_bytes[] = { 0x193, 0x1a7, 0x1cf, -1 };
+static const int wodw_locked_bytes[] = { 0x1a7, 0x1cf, -1 };
+static const int tr_locked_bytes[] = { 0x193, -1 };
 static const int no_locked_bytes[] = { -1 };
-static const int roex_locked_bytes[] = { 0x93, 0xbb, 0xcf, -1 };
+static const int roex_locked_bytes[] = { 0x193, 0x1bb, 0x1cf, -1 };
 
-static const int rwex_fail_ranges[] = { 0x93,0xe3, -1 };
-static const int rw_fail_ranges[] = { 0xbb,0xe3, -1 };
-static const int rwdw_fail_ranges[] = { 0xa7,0xe3, -1 };
-static const int dw_fail_ranges[] = { 0xa7,0xcf, -1 };
-static const int tr_fail_ranges[] = { 0xbb,0xcf, -1 };
-static const int pr_fail_ranges[] = { 0x80,0x81, 0xbb,0xcf, -1 };
+static const int rwex_fail_ranges[] = { 0x193,0x1e3, -1 };
+static const int rw_fail_ranges[] = { 0x1bb,0x1e3, -1 };
+static const int rwdw_fail_ranges[] = { 0x1a7,0x1e3, -1 };
+static const int dw_fail_ranges[] = { 0x1a7,0x1cf, -1 };
+static const int tr_fail_ranges[] = { 0x1bb,0x1cf, -1 };
+static const int pr_fail_ranges[] = { 0x180,0x181, 0x1bb,0x1cf, -1 };
 static const int roex_fail_ranges[] = { 0x0,-1 };
 
 static const struct lock_test lock_tests[] = {
@@ -3313,7 +3313,7 @@ static void test_locking(void)
             ol.u.s.OffsetHigh = 0;
             ol.hEvent = NULL;
 
-            for (ol.u.s.Offset = 0x7fffff00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
+            for (ol.u.s.Offset = 0x7ffffe00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
             {
                 if (LockFileEx(hfile, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ol))
                     locked = FALSE;
@@ -3325,7 +3325,7 @@ static void test_locking(void)
 
                 UnlockFileEx(hfile, 0, 1, 0, &ol);
 
-                if ((ol.u.s.Offset&0xff) == *next_lock)
+                if ((ol.u.s.Offset&0x1ff) == *next_lock)
                 {
                     expect_locked = TRUE;
                     next_lock++;
@@ -3362,14 +3362,17 @@ static void test_locking(void)
             ol.u.s.OffsetHigh = 0;
             ol.hEvent = NULL;
 
-            for (ol.u.s.Offset = 0x7fffff00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
+            for (ol.u.s.Offset = 0x7ffffe00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
             {
                 if (ol.u.s.Offset == 0x7fffff92 ||
                     (ol.u.s.Offset == 0x7fffff80 && current->stg_mode == (STGM_TRANSACTED|STGM_READWRITE)) ||
                     (ol.u.s.Offset == 0x7fffff80 && current->stg_mode == (STGM_TRANSACTED|STGM_READ)))
                     continue; /* This makes opens hang */
 
-                LockFileEx(hfile, LOCKFILE_EXCLUSIVE_LOCK, 0, 1, 0, &ol);
+                if (ol.u.s.Offset < 0x7fffff00)
+                    LockFileEx(hfile, 0, 0, 1, 0, &ol);
+                else
+                    LockFileEx(hfile, LOCKFILE_EXCLUSIVE_LOCK, 0, 1, 0, &ol);
 
                 hr = StgOpenStorage(filename, NULL, current->stg_mode, NULL, 0, &stg);
                 ok(hr == S_OK || hr == STG_E_LOCKVIOLATION || hr == STG_E_SHAREVIOLATION, "failed with unexpected hr %x\n", hr);
@@ -3379,11 +3382,11 @@ static void test_locking(void)
 
                 failed = FAILED(hr);
 
-                if (!expect_failed && (ol.u.s.Offset&0xff) == next_range[0])
+                if (!expect_failed && (ol.u.s.Offset&0x1ff) == next_range[0])
                 {
                     expect_failed = TRUE;
                 }
-                else if (expect_failed && (ol.u.s.Offset&0xff) == next_range[1])
+                else if (expect_failed && (ol.u.s.Offset&0x1ff) == next_range[1])
                 {
                     expect_failed = FALSE;
                     next_range += 2;

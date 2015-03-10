@@ -505,7 +505,10 @@ StgStreamImpl* StgStreamImpl_Construct(
 /* Range lock constants.
  *
  * The storage format reserves the region from 0x7fffff00-0x7fffffff for
- * locking and synchronization. Unfortunately, the spec doesn't say which bytes
+ * locking and synchronization. Because it reserves the entire block containing
+ * that range, and the minimum block size is 512 bytes, 0x7ffffe00-0x7ffffeff
+ * also cannot be used for any other purpose.
+ * Unfortunately, the spec doesn't say which bytes
  * within that range are used, and for what. These are guesses based on testing.
  * In particular, ends of ranges may be wrong.
 
@@ -524,7 +527,7 @@ StgStreamImpl* StgStreamImpl_Construct(
  0xe2 through 0xff: Unknown. Causes read-only exclusive opens to fail.
 */
 
-#define RANGELOCK_UNK1_FIRST            0x7fffff00
+#define RANGELOCK_UNK1_FIRST            0x7ffffe00
 #define RANGELOCK_UNK1_LAST             0x7fffff57
 #define RANGELOCK_PRIORITY1_FIRST       0x7fffff58
 #define RANGELOCK_PRIORITY1_LAST        0x7fffff6b
