@@ -2959,7 +2959,8 @@ static HRESULT StorageImpl_GrabLocks(StorageImpl *This, DWORD openFlags)
     hr = StorageImpl_LockRegionSync(This, offset, cb, LOCK_ONLYONCE);
 
     /* If the ILockBytes doesn't support locking that's ok. */
-    if (FAILED(hr)) return S_OK;
+    if (hr == STG_E_INVALIDFUNCTION) return S_OK;
+    else if (FAILED(hr)) return hr;
 
     hr = S_OK;
 
