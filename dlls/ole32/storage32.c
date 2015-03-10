@@ -2875,6 +2875,7 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
 {
     HRESULT hr;
     int delay = 0;
+    DWORD start_time = GetTickCount();
 
     do
     {
@@ -2882,6 +2883,11 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
 
         if (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION)
         {
+            if (GetTickCount() - start_time >= 20000)
+            {
+                /* timeout */
+                break;
+            }
             Sleep(delay);
             if (delay < 150) delay++;
         }
