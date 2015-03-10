@@ -293,6 +293,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(IDirectSoundBuffer8 *iface, DW
 {
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	HRESULT hres = DS_OK;
+	int i;
 
 	TRACE("(%p,%08x,%08x,%08x)\n",This,reserved1,reserved2,flags);
 
@@ -305,6 +306,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(IDirectSoundBuffer8 *iface, DW
 		This->state = STATE_STARTING;
 	} else if (This->state == STATE_STOPPING)
 		This->state = STATE_PLAYING;
+
+	for (i = 0; i < This->num_filters; i++) {
+		IMediaObject_Discontinuity(This->filters[i].obj, 0);
+	}
 
 	RtlReleaseResource(&This->lock);
 	/* **** */
