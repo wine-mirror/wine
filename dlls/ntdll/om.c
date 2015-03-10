@@ -56,8 +56,7 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08x,%p,0x%08x,%p): stub\n",
-          handle, info_class, ptr, len, used_len);
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", handle, info_class, ptr, len, used_len);
 
     if (used_len) *used_len = 0;
 
@@ -192,8 +191,7 @@ NTSTATUS WINAPI NtSetInformationObject(IN HANDLE handle,
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08x,%p,0x%08x): stub\n",
-          handle, info_class, ptr, len);
+    TRACE("(%p,0x%08x,%p,0x%08x)\n", handle, info_class, ptr, len);
 
     switch (info_class)
     {
