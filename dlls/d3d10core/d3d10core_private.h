@@ -280,6 +280,7 @@ struct d3d10_rasterizer_state
     ID3D10RasterizerState ID3D10RasterizerState_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     D3D10_RASTERIZER_DESC desc;
     struct wine_rb_entry entry;
     ID3D10Device1 *device;

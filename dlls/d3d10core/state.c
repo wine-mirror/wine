@@ -393,6 +393,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_Release(ID3D10RasterizerSt
         struct d3d10_device *device = impl_from_ID3D10Device(state->device);
         wine_rb_remove(&device->rasterizer_states, &state->desc);
         ID3D10Device1_Release(state->device);
+        wined3d_private_store_cleanup(&state->private_store);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -423,10 +424,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_GetPrivateData(ID3D10Ras
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateData(ID3D10RasterizerState *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_rasterizer_state *state = impl_from_ID3D10RasterizerState(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&state->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_SetPrivateDataInterface(ID3D10RasterizerState *iface,
@@ -469,11 +472,13 @@ HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state, struct
 {
     state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
     state->refcount = 1;
+    wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
     if (wine_rb_put(&device->rasterizer_states, desc, &state->entry) == -1)
     {
         ERR("Failed to insert rasterizer state entry.\n");
+        wined3d_private_store_cleanup(&state->private_store);
         return E_FAIL;
     }
 
