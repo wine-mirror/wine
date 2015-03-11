@@ -703,6 +703,12 @@ static struct layout_range *alloc_layout_range_from(struct layout_range *from, c
     *range = *from;
     range->range = *r;
 
+    range->fontfamily = heap_strdupW(from->fontfamily);
+    if (!range->fontfamily) {
+        heap_free(range);
+        return NULL;
+    }
+
     /* update refcounts */
     if (range->object)
         IDWriteInlineObject_AddRef(range->object);
