@@ -37,7 +37,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(threadpool);
 
-#define WORKER_TIMEOUT 30000 /* 30 seconds */
+#define OLD_WORKER_TIMEOUT 30000        /* 30 seconds */
+#define EXPIRE_NEVER       (~(ULONGLONG)0)
+#define TIMER_QUEUE_MAGIC  0x516d6954   /* TimQ */
 
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug;
 static RTL_CRITICAL_SECTION_DEBUG critsect_compl_debug;
@@ -87,6 +89,44 @@ struct work_item
     PVOID context;
 };
 
+struct wait_work_item
+{
+    HANDLE Object;
+    HANDLE CancelEvent;
+    WAITORTIMERCALLBACK Callback;
+    PVOID Context;
+    ULONG Milliseconds;
+    ULONG Flags;
+    HANDLE CompletionEvent;
+    LONG DeleteCount;
+    BOOLEAN CallbackInProgress;
+};
+
+struct timer_queue;
+struct queue_timer
+{
+    struct timer_queue *q;
+    struct list entry;
+    ULONG runcount;             /* number of callbacks pending execution */
+    RTL_WAITORTIMERCALLBACKFUNC callback;
+    PVOID param;
+    DWORD period;
+    ULONG flags;
+    ULONGLONG expire;
+    BOOL destroy;               /* timer should be deleted; once set, never unset */
+    HANDLE event;               /* removal event */
+};
+
+struct timer_queue
+{
+    DWORD magic;
+    RTL_CRITICAL_SECTION cs;
+    struct list timers;         /* sorted by expiration time */
+    BOOL quit;                  /* queue should be deleted; once set, never unset */
+    HANDLE event;
+    HANDLE thread;
+};
+
 static inline LONG interlocked_inc( PLONG dest )
 {
     return interlocked_xchg_add( dest, 1 ) + 1;
@@ -102,7 +142,7 @@ static void WINAPI worker_thread_proc(void * param)
     struct list *item;
     struct work_item *work_item_ptr, work_item;
     LARGE_INTEGER timeout;
-    timeout.QuadPart = -(WORKER_TIMEOUT * (ULONGLONG)10000);
+    timeout.QuadPart = -(OLD_WORKER_TIMEOUT * (ULONGLONG)10000);
 
     RtlEnterCriticalSection( &old_threadpool.threadpool_cs );
     old_threadpool.num_workers++;
@@ -311,19 +351,6 @@ static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, ULONG timeout
     return pTime;
 }
 
-struct wait_work_item
-{
-    HANDLE Object;
-    HANDLE CancelEvent;
-    WAITORTIMERCALLBACK Callback;
-    PVOID Context;
-    ULONG Milliseconds;
-    ULONG Flags;
-    HANDLE CompletionEvent;
-    LONG DeleteCount;
-    BOOLEAN CallbackInProgress;
-};
-
 static void delete_wait_work_item(struct wait_work_item *wait_work_item)
 {
     NtClose( wait_work_item->CancelEvent );
@@ -525,34 +552,6 @@ NTSTATUS WINAPI RtlDeregisterWait(HANDLE WaitHandle)
 
 
 /************************** Timer Queue Impl **************************/
-
-struct timer_queue;
-struct queue_timer
-{
-    struct timer_queue *q;
-    struct list entry;
-    ULONG runcount;             /* number of callbacks pending execution */
-    RTL_WAITORTIMERCALLBACKFUNC callback;
-    PVOID param;
-    DWORD period;
-    ULONG flags;
-    ULONGLONG expire;
-    BOOL destroy;      /* timer should be deleted; once set, never unset */
-    HANDLE event;      /* removal event */
-};
-
-struct timer_queue
-{
-    DWORD magic;
-    RTL_CRITICAL_SECTION cs;
-    struct list timers;          /* sorted by expiration time */
-    BOOL quit;         /* queue should be deleted; once set, never unset */
-    HANDLE event;
-    HANDLE thread;
-};
-
-#define EXPIRE_NEVER (~(ULONGLONG) 0)
-#define TIMER_QUEUE_MAGIC 0x516d6954  /* TimQ */
 
 static void queue_remove_timer(struct queue_timer *t)
 {
@@ -861,10 +860,10 @@ NTSTATUS WINAPI RtlDeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
     return status;
 }
 
-static struct timer_queue *default_timer_queue;
-
 static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
 {
+    static struct timer_queue *default_timer_queue;
+
     if (TimerQueue)
         return TimerQueue;
     else
