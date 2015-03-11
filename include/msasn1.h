@@ -70,6 +70,11 @@ typedef struct tagASN1bitstring_t
   ASN1octet_t *value;
 } ASN1bitstring_t;
 
+typedef enum tagASN1blocktype_e
+{
+  ASN1_DER_SET_OF_BLOCK,
+} ASN1blocktype_e;
+
 typedef struct tagASN1charstring_t
 {
   ASN1uint32_t length;
@@ -87,6 +92,12 @@ typedef struct tagASN1char32string_t
   ASN1uint32_t length;
   ASN1char32_t *value;
 } ASN1char32string_t;
+
+typedef struct tagASN1encodedOID_t
+{
+  ASN1uint16_t length;
+  ASN1octet_t  *value;
+} ASN1encodedOID_t;
 
 typedef enum {
   ASN1_PER_RULE_ALIGNED = 0x0001,ASN1_PER_RULE_UNALIGNED = 0x0002,ASN1_PER_RULE = ASN1_PER_RULE_ALIGNED | ASN1_PER_RULE_UNALIGNED,
@@ -117,6 +128,25 @@ typedef enum tagASN1error_e
   ASN1_WRN_NOEOD = 1002,
 } ASN1error_e;
 
+typedef struct tagASN1generalizedtime_t
+{
+  ASN1uint16_t year;
+  ASN1uint8_t  month;
+  ASN1uint8_t  day;
+  ASN1uint8_t  hour;
+  ASN1uint8_t  minute;
+  ASN1uint8_t  second;
+  ASN1uint16_t millisecond;
+  ASN1bool_t   universal;
+  ASN1int16_t  diff;
+} ASN1generalizedtime_t;
+
+typedef struct tagASN1intx_t
+{
+  ASN1uint32_t length;
+  ASN1octet_t *value;
+} ASN1intx_t;
+
 typedef struct tagASN1module_t {
   ASN1magic_t nModuleName;
   ASN1encodingrule_e eRule;
@@ -130,11 +160,33 @@ typedef struct tagASN1module_t {
   };
 } *ASN1module_t;
 
+typedef struct ASN1objectidentifier_s
+{
+  struct ASN1objectidentifier_s *next;
+  ASN1uint32_t value;
+} *ASN1objectidentifier_t;
+
+typedef struct tagASN1objectidentifier2_t
+{
+  ASN1uint16_t count;
+  ASN1uint32_t value[16];
+} ASN1objectidentifier2_t;
+
 typedef struct tagASN1octetstring_t
 {
   ASN1uint32_t length;
   ASN1octet_t *value;
 } ASN1octetstring_t;
+
+typedef struct tagASN1open_t
+{
+  ASN1uint32_t    length;
+  union
+  {
+    void  *encoded;
+    void  *value;
+  };
+} ASN1open_t;
 
 typedef enum tagASN1option_e
 {
@@ -160,6 +212,18 @@ typedef struct tagASN1optionparam_t {
     } Buffer;
   };
 } ASN1optionparam_t, ASN1optionparam_s;
+
+typedef struct tagASN1utctime_t
+{
+  ASN1uint8_t year;
+  ASN1uint8_t month;
+  ASN1uint8_t day;
+  ASN1uint8_t hour;
+  ASN1uint8_t minute;
+  ASN1uint8_t second;
+  ASN1bool_t  universal;
+  ASN1int16_t diff;
+} ASN1utctime_t;
 
 typedef struct tagASN1wstring_t
 {
@@ -190,9 +254,29 @@ int          WINAPI ASN1char32string_cmp(ASN1char32string_t*,ASN1char32string_t*
 void         WINAPI ASN1char32string_free(ASN1char32string_t*);
 int          WINAPI ASN1charstring_cmp(ASN1charstring_t*,ASN1charstring_t*);
 void         WINAPI ASN1charstring_free(ASN1charstring_t*);
+LPVOID       WINAPI ASN1DecAlloc(ASN1decoding_t,ASN1uint32_t);
+LPVOID       WINAPI ASN1DecRealloc(ASN1decoding_t,LPVOID,ASN1uint32_t);
+ASN1error_e  WINAPI ASN1DecSetError(ASN1decoding_t,ASN1error_e);
+ASN1error_e  WINAPI ASN1EncSetError(ASN1encoding_t,ASN1error_e);
+void         WINAPI ASN1Free(LPVOID);
+int          WINAPI ASN1generalizedtime_cmp(ASN1generalizedtime_t*,ASN1generalizedtime_t*);
+int          WINAPI ASN1intx_cmp(ASN1intx_t*,ASN1intx_t*);
+void         WINAPI ASN1intx_free(ASN1intx_t*);
+void         WINAPI ASN1intx_setuint32(ASN1intx_t*,ASN1uint32_t);
+ASN1uint32_t WINAPI ASN1intx_uoctets(ASN1intx_t*);
+ASN1int32_t  WINAPI ASN1intx2int32(ASN1intx_t*);
+ASN1uint32_t WINAPI ASN1intx2uint32(ASN1intx_t*);
+int          WINAPI ASN1intxisuint32(ASN1intx_t*);
+int          WINAPI ASN1objectidentifier_cmp(ASN1objectidentifier_t*,ASN1objectidentifier_t*);
+void         WINAPI ASN1objectidentifier_free(ASN1objectidentifier_t*);
+int          WINAPI ASN1objectidentifier2_cmp(ASN1objectidentifier2_t*,ASN1objectidentifier2_t*);
 int          WINAPI ASN1octetstring_cmp(ASN1octetstring_t*,ASN1octetstring_t*);
 void         WINAPI ASN1octetstring_free(ASN1octetstring_t*);
+int          WINAPI ASN1open_cmp(ASN1open_t*,ASN1open_t*);
+void         WINAPI ASN1open_free(ASN1open_t*);
+ASN1uint32_t WINAPI ASN1uint32_uoctets(ASN1uint32_t);
 void         WINAPI ASN1utf8string_free(ASN1wstring_t*);
+int          WINAPI ASN1utctime_cmp(ASN1utctime_t*,ASN1utctime_t*);
 int          WINAPI ASN1ztchar16string_cmp(ASN1ztchar16string_t*,ASN1ztchar16string_t*);
 void         WINAPI ASN1ztchar16string_free(ASN1ztchar16string_t*);
 void         WINAPI ASN1ztchar32string_free(ASN1ztchar32string_t*);
