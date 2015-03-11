@@ -3160,10 +3160,8 @@ msgid "&View Source"
 msgstr "Afficher la &source"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Propriétés"
+msgstr "Proprié&tés"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
@@ -11649,10 +11647,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Erreur : paramètre de ligne de commande invalide\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Erreur : impossible d'ajouter des clés à une machine distante\n"
+msgstr "Erreur : impossible d'accéder à une machine distante\n"
 
 #: reg.rc:38
 msgid ""
@@ -11662,10 +11658,8 @@ msgstr ""
 "spécifiée\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Type non pris en charge.\n"
+msgstr "Erreur : type non pris en charge\n"
 
 #: regedit.rc:34
 msgid "&Registry"
