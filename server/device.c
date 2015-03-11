@@ -313,7 +313,7 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
 {
     struct device *device = get_fd_user( fd );
     struct ioctl_call *ioctl;
-    obj_handle_t handle;
+    obj_handle_t handle = 0;
 
     if (!device->manager)  /* it has been deleted */
     {
@@ -327,7 +327,7 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
     ioctl->thread   = (struct thread *)grab_object( current );
     ioctl->user_arg = async_data->arg;
 
-    if (!(handle = alloc_handle( current->process, ioctl, SYNCHRONIZE, 0 )))
+    if (blocking && !(handle = alloc_handle( current->process, ioctl, SYNCHRONIZE, 0 )))
     {
         release_object( ioctl );
         return 0;
@@ -335,7 +335,7 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
 
     if (!(ioctl->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
     {
-        close_handle( current->process, handle );
+        if (handle) close_handle( current->process, handle );
         release_object( ioctl );
         return 0;
     }
