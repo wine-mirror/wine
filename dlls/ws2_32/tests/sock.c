@@ -4215,6 +4215,39 @@ static void test_gethostbyname_hack(void)
      * resolve nonexistent host names to addresses of the ISP's spam pages. */
 }
 
+static void test_gethostname(void)
+{
+    struct hostent *he;
+    char name[256];
+    int ret, len;
+
+    WSASetLastError(0xdeadbeef);
+    ret = gethostname(NULL, 256);
+    ok(ret == -1, "gethostname() returned %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "gethostname with null buffer "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    ret = gethostname(name, sizeof(name));
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+
+    len = strlen(name);
+    WSASetLastError(0xdeadbeef);
+    strcpy(name, "deadbeef");
+    ret = gethostname(name, len);
+    ok(ret == -1, "gethostname() returned %d\n", ret);
+    ok(!strcmp(name, "deadbeef"), "name changed unexpected!\n");
+    ok(WSAGetLastError() == WSAEFAULT, "gethostname with insufficient length "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    len++;
+    ret = gethostname(name, len);
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+}
+
 static void test_inet_addr(void)
 {
     u_long addr;
@@ -8437,6 +8470,7 @@ START_TEST( sock )
     test_ioctlsocket();
     test_dns();
     test_gethostbyname_hack();
+    test_gethostname();
 
     test_WSASendMsg();
     test_WSASendTo();

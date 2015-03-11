@@ -6056,16 +6056,35 @@ struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
  */
 int WINAPI WS_gethostname(char *name, int namelen)
 {
+    char buf[256];
+    int len;
+
     TRACE("name %p, len %d\n", name, namelen);
 
-    if (gethostname(name, namelen) == 0)
+    if (!name)
     {
-        TRACE("<- '%s'\n", name);
-        return 0;
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
     }
-    SetLastError((errno == EINVAL) ? WSAEFAULT : wsaErrno());
-    TRACE("<- ERROR !\n");
-    return SOCKET_ERROR;
+
+    if (gethostname(buf, sizeof(buf)) != 0)
+    {
+        SetLastError(wsaErrno());
+        return SOCKET_ERROR;
+    }
+
+    TRACE("<- '%s'\n", buf);
+    len = strlen(buf);
+    if (len > 15)
+        WARN("Windows supports NetBIOS name length up to 15 bytes!\n");
+    if (namelen <= len)
+    {
+        SetLastError(WSAEFAULT);
+        WARN("<- not enough space for hostname, required %d, got %d!\n", len + 1, namelen);
+        return SOCKET_ERROR;
+    }
+    strcpy(name, buf);
+    return 0;
 }
 
 
