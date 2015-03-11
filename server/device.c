@@ -531,6 +531,26 @@ DECL_HANDLER(get_next_device_request)
 }
 
 
+/* store results of an async ioctl */
+DECL_HANDLER(set_ioctl_result)
+{
+    struct ioctl_call *ioctl;
+    struct device_manager *manager;
+
+    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
+                                                             0, &device_manager_ops )))
+        return;
+
+    if ((ioctl = (struct ioctl_call *)get_handle_obj( current->process, req->handle, 0, &ioctl_call_ops )))
+    {
+        set_ioctl_result( ioctl, req->status, get_req_data(), get_req_data_size() );
+        close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
+        release_object( ioctl );
+    }
+    release_object( manager );
+}
+
+
 /* retrieve results of an async ioctl */
 DECL_HANDLER(get_ioctl_result)
 {

@@ -2262,6 +2262,15 @@ enum message_type
 @END
 
 
+/* Store results of an async ioctl */
+@REQ(set_ioctl_result)
+    obj_handle_t manager;         /* handle to the device manager */
+    obj_handle_t handle;          /* handle to the ioctl */
+    unsigned int status;          /* status of the ioctl */
+    VARARG(data,bytes);           /* output data of the ioctl */
+@END
+
+
 /* Retrieve results of an async ioctl */
 @REQ(get_ioctl_result)
     obj_handle_t   handle;        /* handle to the device */

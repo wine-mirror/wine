@@ -3128,6 +3128,21 @@ struct ioctl_reply
 
 
 
+struct set_ioctl_result_request
+{
+    struct request_header __header;
+    obj_handle_t manager;
+    obj_handle_t handle;
+    unsigned int status;
+    /* VARARG(data,bytes); */
+};
+struct set_ioctl_result_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct get_ioctl_result_request
 {
     struct request_header __header;
@@ -5211,6 +5226,7 @@ enum request
     REQ_register_async,
     REQ_cancel_async,
     REQ_ioctl,
+    REQ_set_ioctl_result,
     REQ_get_ioctl_result,
     REQ_create_named_pipe,
     REQ_get_named_pipe_info,
@@ -5473,6 +5489,7 @@ union generic_request
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
     struct ioctl_request ioctl_request;
+    struct set_ioctl_result_request set_ioctl_result_request;
     struct get_ioctl_result_request get_ioctl_result_request;
     struct create_named_pipe_request create_named_pipe_request;
     struct get_named_pipe_info_request get_named_pipe_info_request;
@@ -5733,6 +5750,7 @@ union generic_reply
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
     struct ioctl_reply ioctl_reply;
+    struct set_ioctl_result_reply set_ioctl_result_reply;
     struct get_ioctl_result_reply get_ioctl_result_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
@@ -5848,6 +5866,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 459
+#define SERVER_PROTOCOL_VERSION 460
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
