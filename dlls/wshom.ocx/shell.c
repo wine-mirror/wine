@@ -254,13 +254,37 @@ static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
     return E_NOTIMPL;
 }
 
+BOOL CALLBACK enum_thread_wnd_proc(HWND hwnd, LPARAM lParam)
+{
+    INT *count = (INT*)lParam;
+
+    (*count)++;
+    PostMessageW(hwnd, WM_CLOSE, 0, 0);
+    /* try to send it to all windows, even if failed for some */
+    return TRUE;
+}
+
 static HRESULT WINAPI WshExec_Terminate(IWshExec *iface)
 {
     WshExec *This = impl_from_IWshExec(iface);
+    BOOL ret, kill = FALSE;
+    INT count = 0;
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    ret = EnumThreadWindows(This->info.dwThreadId, enum_thread_wnd_proc, (LPARAM)&count);
+    if (ret && count) {
+        /* manual testing shows that it waits 2 seconds before forcing termination */
+        if (WaitForSingleObject(This->info.hProcess, 2000) != WAIT_OBJECT_0)
+            kill = TRUE;
+    }
+    else
+        kill = TRUE;
+
+    if (kill)
+        TerminateProcess(This->info.hProcess, 0);
+
+    return S_OK;
 }
 
 static const IWshExecVtbl WshExecVtbl = {
