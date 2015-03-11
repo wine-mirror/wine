@@ -7764,8 +7764,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_anchor_put_search((IUnknown*)elem, "?????word???press");
         test_anchor_search((IUnknown*)elem, "?????word???press", FALSE);
 
-        test_anchor_put_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD"); /* encoded cjk characters */
-        test_anchor_search((IUnknown*)elem, "?q=\%E4\%BD\%A0\%E5\%A5\%BD", FALSE);
+        test_anchor_put_search((IUnknown*)elem, "?q=%E4%BD%A0%E5%A5%BD"); /* encoded cjk characters */
+        test_anchor_search((IUnknown*)elem, "?q=%E4%BD%A0%E5%A5%BD", FALSE);
 
         test_anchor_put_search((IUnknown*)elem, "?how?old=are");
         test_anchor_search((IUnknown*)elem, "?how?old=are", FALSE);
