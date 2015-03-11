@@ -310,7 +310,7 @@ void ddrawformat_from_wined3dformat(DDPIXELFORMAT *DDPixelFormat, enum wined3d_f
             break;
 
         case WINED3DFMT_R5G5_SNORM_L6_UNORM:
-            DDPixelFormat->dwFlags = DDPF_BUMPDUDV;
+            DDPixelFormat->dwFlags = DDPF_BUMPDUDV | DDPF_BUMPLUMINANCE;
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwBumpBitCount = 16;
             DDPixelFormat->u2.dwBumpDuBitMask =         0x0000001f;
@@ -320,7 +320,7 @@ void ddrawformat_from_wined3dformat(DDPIXELFORMAT *DDPixelFormat, enum wined3d_f
             break;
 
         case WINED3DFMT_R8G8_SNORM_L8X8_UNORM:
-            DDPixelFormat->dwFlags = DDPF_BUMPDUDV;
+            DDPixelFormat->dwFlags = DDPF_BUMPDUDV | DDPF_BUMPLUMINANCE;
             DDPixelFormat->dwFourCC = 0;
             DDPixelFormat->u1.dwBumpBitCount = 32;
             DDPixelFormat->u2.dwBumpDuBitMask =         0x000000ff;
