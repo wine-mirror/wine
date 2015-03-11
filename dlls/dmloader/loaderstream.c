@@ -45,7 +45,6 @@
 */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "dmloader_private.h"
 
