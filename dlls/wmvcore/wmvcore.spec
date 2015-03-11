@@ -12,7 +12,7 @@
 @ stdcall WMCreateReader(ptr long ptr)
 @ stub WMCreateReaderPriv
 @ stdcall WMCreateSyncReader(ptr long ptr)
-@ stub WMCreateWriter
+@ stdcall WMCreateWriter(ptr ptr)
 @ stub WMCreateWriterFileSink
 @ stub WMCreateWriterNetworkSink
 @ stub WMCreateWriterPriv
