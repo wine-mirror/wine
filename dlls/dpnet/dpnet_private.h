@@ -91,7 +91,9 @@ struct IDirectPlay8AddressImpl
     GUID SP_guid;
     BOOL init;
 
-    struct list components;
+    struct component **components;
+    DWORD comp_count;
+    DWORD comp_array_size;
 };
 
 /*****************************************************************************

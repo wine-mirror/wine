@@ -44,6 +44,11 @@ static inline void *heap_alloc(size_t len)
     return HeapAlloc(GetProcessHeap(), 0, len);
 }
 
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, len);
+}
+
 static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
@@ -72,6 +77,28 @@ static char *heap_strdupA( const char *str )
     if (!str) return NULL;
     if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
     return ret;
+}
+
+static BOOL add_component(IDirectPlay8AddressImpl *This, struct component *item)
+{
+    if(This->comp_count == This->comp_array_size)
+    {
+        struct component **temp;
+
+        temp = heap_realloc(This->components, sizeof(*temp) * This->comp_array_size * 2 );
+        if(!temp)
+        {
+            return FALSE;
+        }
+
+        This->comp_array_size *= 2;
+        This->components = temp;
+    }
+
+    This->components[This->comp_count] = item;
+    This->comp_count++;
+
+    return TRUE;
 }
 
 static inline IDirectPlay8AddressImpl *impl_from_IDirectPlay8Address(IDirectPlay8Address *iface)
@@ -112,10 +139,13 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(IDirectPlay8Address *iface)
 
     if (!ref)
     {
-        struct component *entry, *entry2;
+        struct component *entry;
+        DWORD i;
 
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->components, struct component, entry)
+        for(i=0; i < This->comp_count; i++)
         {
+            entry = This->components[i];
+
             switch(entry->type)
             {
                 case DPNA_DATATYPE_STRING:
@@ -129,10 +159,11 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(IDirectPlay8Address *iface)
                     break;
             }
 
-            HeapFree(GetProcessHeap(), 0, entry);
+            heap_free(entry);
         }
 
-        HeapFree(GetProcessHeap(), 0, This);
+        heap_free(This->components);
+        heap_free(This);
     }
     return ref;
 }
@@ -192,13 +223,15 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(IDirectPlay8Address *ifa
     if(hr == S_OK)
     {
         IDirectPlay8AddressImpl *DupThis = impl_from_IDirectPlay8Address(dup);
-        struct component *entry;
+        DWORD i;
 
         DupThis->SP_guid = This->SP_guid;
         DupThis->init    = This->init;
 
-        LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
+        for(i=0; i < This->comp_count; i++)
         {
+            struct component *entry = This->components[i];
+
             hr = IDirectPlay8Address_AddComponent(dup, entry->name, &entry->data, entry->size, entry->type);
             if(hr != S_OK)
                 ERR("Failed to copy component: %s - 0x%08x\n", debugstr_w(entry->name), hr);
@@ -308,7 +341,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetNumComponents(IDirectPlay8Addre
     if(!pdwNumComponents)
         return DPNERR_INVALIDPOINTER;
 
-    *pdwNumComponents = list_count(&This->components);
+    *pdwNumComponents = This->comp_count;
 
     return DPN_OK;
 }
@@ -318,14 +351,17 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(IDirectPlay8Add
 {
     IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
     struct component *entry;
+    DWORD i;
 
     TRACE("(%p)->(%p %p %p %p)\n", This, pwszName, pvBuffer, pdwBufferSize, pdwDataType);
 
     if(!pwszName || !pdwBufferSize || !pdwDataType || (!pvBuffer && pdwBufferSize))
         return E_POINTER;
 
-    LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
+    for(i=0; i < This->comp_count; i++)
     {
+        entry = This->components[i];
+
         if (lstrcmpW(pwszName, entry->name) == 0)
         {
             TRACE("Found %s\n", debugstr_w(pwszName));
@@ -381,6 +417,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
     IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
     struct component *entry;
     BOOL found = FALSE;
+    DWORD i;
 
     TRACE("(%p, %s, %p, %u, %x)\n", This, debugstr_w(pwszName), lpvData, dwDataSize, dwDataType);
 
@@ -419,15 +456,17 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             break;
     }
 
-    LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
+    for(i=0; i < This->comp_count; i++)
     {
+        entry = This->components[i];
+
         if (lstrcmpW(pwszName, entry->name) == 0)
         {
             TRACE("Found %s\n", debugstr_w(pwszName));
             found = TRUE;
 
             if(entry->type == DPNA_DATATYPE_STRING_ANSI)
-               heap_free(entry->data.ansi);
+                heap_free(entry->data.ansi);
             else if(entry->type == DPNA_DATATYPE_STRING)
                 heap_free(entry->data.string);
             else if(entry->type == DPNA_DATATYPE_BINARY)
@@ -441,9 +480,22 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
     {
         /* Create a new one */
         entry = heap_alloc(sizeof(struct component));
-        entry->name = heap_strdupW(pwszName);
+        if(!entry)
+            return E_OUTOFMEMORY;
 
-        list_add_tail(&This->components, &entry->entry);
+        entry->name = heap_strdupW(pwszName);
+        if(!entry->name)
+        {
+            heap_free(entry);
+            return E_OUTOFMEMORY;
+        }
+
+        if(!add_component(This, entry))
+        {
+           heap_free(entry->name);
+           heap_free(entry);
+           return E_OUTOFMEMORY;
+        }
     }
 
     switch (dwDataType)
@@ -532,7 +584,7 @@ HRESULT DPNET_CreateDirectPlay8Address(IClassFactory *iface, IUnknown *pUnkOuter
 
     TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppobj);
 
-     *ppobj = NULL;
+    *ppobj = NULL;
 
     client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8AddressImpl));
     if (!client)
@@ -540,8 +592,13 @@ HRESULT DPNET_CreateDirectPlay8Address(IClassFactory *iface, IUnknown *pUnkOuter
 
     client->IDirectPlay8Address_iface.lpVtbl = &DirectPlay8Address_Vtbl;
     client->ref = 1;
-
-    list_init(&client->components);
+    client->comp_array_size = 4;
+    client->components = heap_alloc( sizeof(*client->components) * client->comp_array_size );
+    if(!client->components)
+    {
+        heap_free(client);
+        return E_OUTOFMEMORY;
+    }
 
     ret = IDirectPlay8AddressImpl_QueryInterface(&client->IDirectPlay8Address_iface, riid, ppobj);
     IDirectPlay8AddressImpl_Release(&client->IDirectPlay8Address_iface);
