@@ -887,7 +887,6 @@ if (0) { /* crashes */
 
 /* Standard CSIDL values (and their flags) uses only two less-significant bytes */
 #define NO_CSIDL 0x10000
-#define CSIDL_TODO_WINE 0x20000
 #define KNOWN_FOLDER(id, csidl, name, category, parent, relative_path, parsing_name, attributes, definitionFlags) \
     { &id, # id, csidl, # csidl, name, category, &parent, # parent, relative_path, parsing_name, attributes, definitionFlags, __LINE__ }
 
@@ -1940,17 +1939,15 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
             *current_known_folder_found = TRUE;
             found = TRUE;
             /* verify CSIDL */
-            if(known_folder->csidl != NO_CSIDL)
+            if(!(known_folder->csidl & NO_CSIDL))
             {
-                expectedCsidl = known_folder->csidl & (~CSIDL_TODO_WINE);
+                /* mask off winetest flags */
+                expectedCsidl = known_folder->csidl & 0xFFFF;
 
                 hr = IKnownFolderManager_FolderIdToCsidl(mgr, folderId, &csidl);
                 ok_(__FILE__, known_folder->line)(hr == S_OK, "cannot retrieve CSIDL for folder %s\n", known_folder->sFolderId);
 
-                if(known_folder->csidl & CSIDL_TODO_WINE)
-                    todo_wine ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
-                else
-                    ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
+                ok_(__FILE__, known_folder->line)(csidl == expectedCsidl, "invalid CSIDL retrieved for folder %s. %d (%s) expected, but %d found\n", known_folder->sFolderId, expectedCsidl, known_folder->sCsidl, csidl);
             }
 
             hr = IKnownFolderManager_GetFolder(mgr, folderId, &folder);
@@ -2028,7 +2025,6 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     }
 }
 #undef NO_CSIDL
-#undef CSIDL_TODO_WINE
 
 static void test_knownFolders(void)
 {
