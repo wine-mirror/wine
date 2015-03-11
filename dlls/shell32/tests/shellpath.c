@@ -887,6 +887,7 @@ if (0) { /* crashes */
 
 /* Standard CSIDL values (and their flags) uses only two less-significant bytes */
 #define NO_CSIDL 0x10000
+#define WINE_ATTRIBUTES_OPTIONAL 0x20000
 #define KNOWN_FOLDER(id, csidl, name, category, parent, relative_path, parsing_name, attributes, definitionFlags) \
     { &id, # id, csidl, # csidl, name, category, &parent, # parent, relative_path, parsing_name, attributes, definitionFlags, __LINE__ }
 
@@ -1587,7 +1588,7 @@ static const struct knownFolderDef known_folders[] = {
                  0,
                  0),
     KNOWN_FOLDER(FOLDERID_SampleMusic,
-                 NO_CSIDL,
+                 NO_CSIDL|WINE_ATTRIBUTES_OPTIONAL /* win8 */,
                  "SampleMusic",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicMusic,
@@ -1596,7 +1597,7 @@ static const struct knownFolderDef known_folders[] = {
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
     KNOWN_FOLDER(FOLDERID_SamplePictures,
-                 NO_CSIDL,
+                 NO_CSIDL|WINE_ATTRIBUTES_OPTIONAL /* win8 */,
                  "SamplePictures",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicPictures,
@@ -1614,7 +1615,7 @@ static const struct knownFolderDef known_folders[] = {
                  FILE_ATTRIBUTE_READONLY,
                  0),
     KNOWN_FOLDER(FOLDERID_SampleVideos,
-                 NO_CSIDL,
+                 NO_CSIDL|WINE_ATTRIBUTES_OPTIONAL /* win8 */,
                  "SampleVideos",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicVideos,
@@ -1975,7 +1976,9 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
                     ok_(__FILE__, known_folder->line)(is_in_strarray(kfd.pszParsingName, known_folder->sParsingName), "invalid known folder parsing name returned for %s: %s retrieved\n", known_folder->sFolderId, wine_dbgstr_w(kfd.pszParsingName));
 
-                    ok_(__FILE__, known_folder->line)(known_folder->attributes == kfd.dwAttributes, "invalid known folder attributes for %s: 0x%08x expected, but 0x%08x retrieved\n", known_folder->sFolderId, known_folder->attributes, kfd.dwAttributes);
+                    ok_(__FILE__, known_folder->line)(known_folder->attributes == kfd.dwAttributes ||
+                            (known_folder->csidl & WINE_ATTRIBUTES_OPTIONAL && kfd.dwAttributes == 0),
+                            "invalid known folder attributes for %s: 0x%08x expected, but 0x%08x retrieved\n", known_folder->sFolderId, known_folder->attributes, kfd.dwAttributes);
 
                     ok_(__FILE__, known_folder->line)(!(kfd.kfdFlags & (~known_folder->definitionFlags)), "invalid known folder flags for %s: 0x%08x expected, but 0x%08x retrieved\n", known_folder->sFolderId, known_folder->definitionFlags, kfd.kfdFlags);
 
