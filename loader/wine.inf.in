@@ -47,7 +47,8 @@ AddReg=\
     Services, \
     SessionMgr,\
     Tapi,\
-    Timezones
+    Timezones,\
+    LicenseInformation
 
 [DefaultInstall.NT]
 RegisterDlls=RegisterDllsSection
@@ -71,7 +72,8 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     Timezones,\
-    VersionInfo
+    VersionInfo,\
+    LicenseInformation
 
 [DefaultInstall.ntamd64]
 RegisterDlls=RegisterDllsSection
@@ -97,7 +99,8 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     Timezones,\
-    VersionInfo.ntamd64
+    VersionInfo.ntamd64,\
+    LicenseInformation
 
 [Wow64Install]
 RegisterDlls=RegisterDllsSection
@@ -111,7 +114,8 @@ AddReg=\
     MCI,\
     Misc,\
     Tapi,\
-    VersionInfo.ntamd64
+    VersionInfo.ntamd64,\
+    LicenseInformation
 
 [DefaultInstall.Services]
 AddService=BITS,0,BITSService
@@ -3140,3 +3144,17 @@ HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Time Zones,"Symbol
 HKLM,Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Time Zones,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Time Zones"
 HKLM,Software\Wow6432Node\Policies,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Policies"
 HKLM,Software\Wow6432Node\Registered Applications,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Registered Applications"
+
+[LicenseInformation]
+; based on information from http://www.geoffchappell.com/notes/windows/license/install.htm
+HKLM,Software\Wine\LicenseInformation,"Kernel-MUI-Language-Allowed",,"EMPTY"
+HKLM,Software\Wine\LicenseInformation,"Kernel-MUI-Language-Disallowed",,"EMPTY"
+HKLM,Software\Wine\LicenseInformation,"Kernel-MUI-Number-Allowed",0x10001,1000
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-FreeCell-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Hearts-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Minesweeper-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-PurblePlace-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Shanghai-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Solitaire-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGame",0x10001,0x00000001
+HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
