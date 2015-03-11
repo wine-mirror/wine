@@ -386,7 +386,7 @@ static void release_async_io( struct ws2_async_io *io )
     {
         struct ws2_async_io *next = async_io_freelist;
         io->next = next;
-        if (interlocked_cmpxchg_ptr( (void **)&async_io_freelist, io, next ) == next) return;
+        if (InterlockedCompareExchangePointer( (void **)&async_io_freelist, io, next ) == next) return;
     }
 }
 
@@ -394,7 +394,7 @@ static struct ws2_async_io *alloc_async_io( DWORD size )
 {
     /* first free remaining previous fileinfos */
 
-    struct ws2_async_io *io = interlocked_xchg_ptr( (void **)&async_io_freelist, NULL );
+    struct ws2_async_io *io = InterlockedExchangePointer( (void **)&async_io_freelist, NULL );
 
     while (io)
     {
