@@ -6298,6 +6298,9 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
         shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
+    if (tempreg_used || settings->sRGB_write)
+        shader_addline(&buffer, "MOV tempreg, 0.0;\n");
+
     /* Generate texture sampling instructions) */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {

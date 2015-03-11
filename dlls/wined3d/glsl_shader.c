@@ -5413,7 +5413,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     shader_addline(buffer, "vec4 tmp0, tmp1;\n");
     shader_addline(buffer, "vec4 ret;\n");
     if (tempreg_used || settings->sRGB_write)
-        shader_addline(buffer, "vec4 temp_reg;\n");
+        shader_addline(buffer, "vec4 temp_reg = vec4(0.0);\n");
     shader_addline(buffer, "vec4 arg0, arg1, arg2;\n");
 
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
