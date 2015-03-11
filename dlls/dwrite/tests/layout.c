@@ -691,6 +691,9 @@ static void test_SetInlineObject(void)
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    EXPECT_REF(inlineobj, 1);
+    EXPECT_REF(inlineobj2, 1);
+
     inlinetest = (void*)0x1;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -700,6 +703,8 @@ static void test_SetInlineObject(void)
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(inlineobj, 2);
 
     inlinetest = (void*)0x1;
     hr = IDWriteTextLayout_GetInlineObject(layout, 2, &inlinetest, NULL);
@@ -714,6 +719,8 @@ static void test_SetInlineObject(void)
     ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
+    EXPECT_REF(inlineobj, 2);
+
     /* get from somewhere inside a range */
     inlinetest = NULL;
     r2.startPosition = r2.length = 100;
@@ -722,6 +729,8 @@ static void test_SetInlineObject(void)
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
     ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
+
+    EXPECT_REF(inlineobj, 2);
 
     range.startPosition = 1;
     range.length = 1;
@@ -736,6 +745,9 @@ static void test_SetInlineObject(void)
     ok(r2.startPosition == 1 && r2.length == 1, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
+    EXPECT_REF(inlineobj, 2);
+    EXPECT_REF(inlineobj2, 2);
+
     inlinetest = NULL;
     r2.startPosition = r2.length = 100;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
@@ -743,6 +755,8 @@ static void test_SetInlineObject(void)
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
     ok(r2.startPosition == 0 && r2.length == 1, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
+
+    EXPECT_REF(inlineobj, 2);
 
     range.startPosition = 1;
     range.length = 1;
@@ -756,10 +770,14 @@ static void test_SetInlineObject(void)
     ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
+    EXPECT_REF(inlineobj, 2);
+
     range.startPosition = 1;
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(inlineobj, 2);
 
     r2.startPosition = r2.length = 100;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
@@ -768,7 +786,15 @@ static void test_SetInlineObject(void)
     ok(r2.startPosition == 0 && r2.length == 3, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
+    EXPECT_REF(inlineobj, 2);
+    EXPECT_REF(inlineobj2, 1);
+
     IDWriteTextLayout_Release(layout);
+
+    EXPECT_REF(inlineobj, 1);
+
+    IDWriteInlineObject_Release(inlineobj);
+    IDWriteInlineObject_Release(inlineobj2);
     IDWriteTextFormat_Release(format);
 }
 

@@ -775,6 +775,19 @@ static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *la
     return NULL;
 }
 
+static inline BOOL set_layout_range_iface_attr(IUnknown **dest, IUnknown *value)
+{
+    if (*dest == value) return FALSE;
+
+    if (*dest)
+        IUnknown_Release(*dest);
+    *dest = value;
+    if (*dest)
+        IUnknown_AddRef(*dest);
+
+    return TRUE;
+}
+
 static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
     BOOL changed = FALSE;
@@ -797,20 +810,10 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         dest->fontsize = value->u.fontsize;
         break;
     case LAYOUT_RANGE_ATTR_INLINE:
-        changed = dest->object != value->u.object;
-        if (changed && dest->object)
-            IDWriteInlineObject_Release(dest->object);
-        dest->object = value->u.object;
-        if (dest->object)
-            IDWriteInlineObject_AddRef(dest->object);
+        changed = set_layout_range_iface_attr((IUnknown**)&dest->object, (IUnknown*)value->u.object);
         break;
     case LAYOUT_RANGE_ATTR_EFFECT:
-        changed = dest->effect != value->u.effect;
-        if (changed && dest->effect)
-            IUnknown_Release(dest->effect);
-        dest->effect = value->u.effect;
-        if (dest->effect)
-            IUnknown_AddRef(dest->effect);
+        changed = set_layout_range_iface_attr((IUnknown**)&dest->effect, (IUnknown*)value->u.effect);
         break;
     case LAYOUT_RANGE_ATTR_UNDERLINE:
         changed = dest->underline != value->u.underline;
@@ -821,12 +824,7 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         dest->strikethrough = value->u.strikethrough;
         break;
     case LAYOUT_RANGE_ATTR_FONTCOLL:
-        changed = dest->collection != value->u.collection;
-        if (changed && dest->collection)
-            IDWriteFontCollection_Release(dest->collection);
-        dest->collection = value->u.collection;
-        if (dest->collection)
-            IDWriteFontCollection_AddRef(dest->collection);
+        changed = set_layout_range_iface_attr((IUnknown**)&dest->collection, (IUnknown*)value->u.collection);
         break;
     case LAYOUT_RANGE_ATTR_LOCALE:
         changed = strcmpW(dest->locale, value->u.locale) != 0;
