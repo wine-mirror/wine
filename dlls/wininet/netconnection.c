@@ -301,7 +301,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
         result = connect(netconn->socket, (struct sockaddr*)&server->addr, server->addr_len);
         if(result == -1)
         {
-            res = sock_get_error();
+            res = WSAGetLastError();
             if (res == WSAEINPROGRESS || res == WSAEWOULDBLOCK) {
                 FD_SET set;
                 int res;
@@ -410,12 +410,6 @@ void NETCON_unload(void)
         WSACleanup();
 }
 
-/* translate a unix error code into a winsock one */
-int sock_get_error(void)
-{
-    return WSAGetLastError();
-}
-
 int sock_send(int fd, const void *msg, size_t len, int flags)
 {
     int ret;
@@ -423,7 +417,7 @@ int sock_send(int fd, const void *msg, size_t len, int flags)
     {
         ret = send(fd, msg, len, flags);
     }
-    while(ret == -1 && sock_get_error() == WSAEINTR);
+    while(ret == -1 && WSAGetLastError() == WSAEINTR);
     return ret;
 }
 
@@ -434,7 +428,7 @@ int sock_recv(int fd, void *msg, size_t len, int flags)
     {
         ret = recv(fd, msg, len, flags);
     }
-    while(ret == -1 && sock_get_error() == WSAEINTR);
+    while(ret == -1 && WSAGetLastError() == WSAEINTR);
     return ret;
 }
 
@@ -671,7 +665,7 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
     if(!connection->secure)
     {
 	*sent = sock_send(connection->socket, msg, len, flags);
-        return *sent == -1 ? sock_get_error() : ERROR_SUCCESS;
+        return *sent == -1 ? WSAGetLastError() : ERROR_SUCCESS;
     }
     else
     {
@@ -723,7 +717,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
     size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, 0);
     if(size < 0) {
         if(!buf_len) {
-            if(sock_get_error() == WSAEWOULDBLOCK) {
+            if(WSAGetLastError() == WSAEWOULDBLOCK) {
                 TRACE("would block\n");
                 return WSAEWOULDBLOCK;
             }
@@ -763,7 +757,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
             set_socket_blocking(conn->socket, mode);
             size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, 0);
             if(size < 1) {
-                if(size < 0 && sock_get_error() == WSAEWOULDBLOCK) {
+                if(size < 0 && WSAGetLastError() == WSAEWOULDBLOCK) {
                     TRACE("would block\n");
 
                     /* FIXME: Optimize extra_buf usage. */
@@ -838,7 +832,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
 
         set_socket_blocking(connection->socket, mode);
 	*recvd = sock_recv(connection->socket, buf, len, flags);
-	return *recvd == -1 ? sock_get_error() :  ERROR_SUCCESS;
+	return *recvd == -1 ? WSAGetLastError() :  ERROR_SUCCESS;
     }
     else
     {
@@ -926,7 +920,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     len = sock_recv(netconn->socket, &b, 1, MSG_PEEK);
     set_socket_blocking(netconn->socket, BLOCKING_ALLOW);
 
-    return len == 1 || (len == -1 && sock_get_error() == WSAEWOULDBLOCK);
+    return len == 1 || (len == -1 && WSAGetLastError() == WSAEWOULDBLOCK);
 }
 
 LPCVOID NETCON_GetCert(netconn_t *connection)
@@ -974,7 +968,7 @@ DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value)
     if (result == -1)
     {
         WARN("setsockopt failed\n");
-        return sock_get_error();
+        return WSAGetLastError();
     }
     return ERROR_SUCCESS;
 }
