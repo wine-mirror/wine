@@ -2340,7 +2340,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
     struct ws2_async_shutdown *wsa;
     NTSTATUS status;
 
-    TRACE("s %04lx type %d\n", s, type);
+    TRACE("socket %04lx type %d\n", s, type);
 
     wsa = (struct ws2_async_shutdown *)alloc_async_io( sizeof(*wsa) );
     if ( !wsa )
@@ -2431,7 +2431,7 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     struct ws2_accept_async *wsa;
     int fd;
 
-    TRACE("(%lx, %lx, %p, %d, %d, %d, %p, %p)\n", listener, acceptor, dest, dest_len, local_addr_len,
+    TRACE("(%04lx, %04lx, %p, %d, %d, %d, %p, %p)\n", listener, acceptor, dest, dest_len, local_addr_len,
                                                   rem_addr_len, received, overlapped);
 
     if (!dest)
@@ -3027,7 +3027,7 @@ int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
+    TRACE("socket %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
 
     fd = get_sock_fd( s, 0, NULL );
     res = SOCKET_ERROR;
@@ -3065,7 +3065,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     int fd;
     int res;
 
-    TRACE("socket: %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
+    TRACE("socket %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
 
     /* Check if what we've received is valid. Should we use IsBadReadPtr? */
     if( (name == NULL) || (namelen == NULL) )
@@ -3114,7 +3114,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     int fd;
     INT ret = 0;
 
-    TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
+    TRACE("socket %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, optlen ? *optlen : 0);
 
     switch(level)
@@ -4897,7 +4897,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     struct linger linger;
     struct timeval tval;
 
-    TRACE("socket: %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
+    TRACE("socket %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, optlen);
 
     /* some broken apps pass the value directly instead of a pointer to it */
@@ -6082,7 +6082,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
     int i;
     int errors[FD_MAX_EVENTS];
 
-    TRACE("%08lx, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
+    TRACE("%04lx, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
 
     SERVER_START_REQ( get_socket_event )
     {
@@ -6110,7 +6110,7 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 {
     int ret;
 
-    TRACE("%08lx, hEvent %p, event %08x\n", s, hEvent, lEvent);
+    TRACE("%04lx, hEvent %p, event %08x\n", s, hEvent, lEvent);
 
     SERVER_START_REQ( set_socket_event )
     {
@@ -6179,7 +6179,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     int ret;
 
-    TRACE("%lx, hWnd %p, uMsg %08x, event %08x\n", s, hWnd, uMsg, lEvent);
+    TRACE("%04lx, hWnd %p, uMsg %08x, event %08x\n", s, hWnd, uMsg, lEvent);
 
     SERVER_START_REQ( set_socket_event )
     {
@@ -6913,7 +6913,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
+       TRACE("socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
        cs = WS_accept(s, addr, addrlen);
@@ -7553,7 +7553,7 @@ INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
  */
 INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
 {
-    TRACE( "(0x%04lx 0x%08x %p)\n", s, netlong, lphostlong );
+    TRACE( "(%04lx 0x%08x %p)\n", s, netlong, lphostlong );
 
     if (!lphostlong) return WSAEFAULT;
 
@@ -7566,7 +7566,7 @@ INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
  */
 INT WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short* lphostshort )
 {
-    TRACE( "(0x%04lx 0x%08x %p)\n", s, netshort, lphostshort );
+    TRACE( "(%04lx 0x%08x %p)\n", s, netshort, lphostshort );
 
     if (!lphostshort) return WSAEFAULT;
 
@@ -7589,7 +7589,7 @@ INT WINAPI WSAProviderConfigChange( LPHANDLE handle, LPWSAOVERLAPPED overlapped,
  */
 INT WINAPI WSARecvDisconnect( SOCKET s, LPWSABUF disconnectdata )
 {
-    TRACE( "(0x%04lx %p)\n", s, disconnectdata );
+    TRACE( "(%04lx %p)\n", s, disconnectdata );
 
     return WS_shutdown( s, SD_RECEIVE );
 }
