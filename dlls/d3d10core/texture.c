@@ -404,6 +404,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
 
 static void STDMETHODCALLTYPE d3d10_texture3d_wined3d_object_released(void *parent)
 {
+    struct d3d10_texture3d *texture = parent;
+
+    wined3d_private_store_cleanup(&texture->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
@@ -449,10 +452,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10Texture3D *iface,
@@ -567,6 +572,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
 
     texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
     texture->refcount = 1;
+    wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
     wined3d_desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
@@ -587,6 +593,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
             &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&texture->private_store);
         return hr;
     }
     texture->desc.MipLevels = levels;
