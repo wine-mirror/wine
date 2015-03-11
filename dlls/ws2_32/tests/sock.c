@@ -4450,7 +4450,9 @@ static void test_ioctlsocket(void)
     struct tcp_keepalive kalive;
     int ret, optval;
     static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
-    UINT i;
+    UINT i, bytes_rec;
+    char data;
+    WSABUF bufs;
     u_long arg = 0;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -4550,6 +4552,38 @@ static void test_ioctlsocket(void)
     ret = WSAIoctl(dst, FIONREAD, NULL, 0, &optval, sizeof(optval), &arg, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly with error %d\n", WSAGetLastError());
     ok(optval == 4, "FIONREAD should have returned 4 bytes, got %d instead\n", optval);
+
+    /* trying to read from an OOB inlined socket with MSG_OOB results in WSAEINVAL */
+    set_blocking(dst, FALSE);
+    i = MSG_OOB;
+    SetLastError(0xdeadbeef);
+    ret = recv(dst, &data, 1, i);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+    ret = GetLastError();
+todo_wine
+    ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
+    bufs.len = sizeof(char);
+    bufs.buf = &data;
+    ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+    ret = GetLastError();
+todo_wine
+    ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
+    optval = 1;
+    ret = setsockopt(dst, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
+    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
+    i = MSG_OOB;
+    SetLastError(0xdeadbeef);
+    ret = recv(dst, &data, 1, i);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+    ret = GetLastError();
+    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
+    bufs.len = sizeof(char);
+    bufs.buf = &data;
+    ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+    ret = GetLastError();
+    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
 
     closesocket(dst);
     optval = 0xdeadbeef;
