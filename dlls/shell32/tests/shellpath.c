@@ -1002,7 +1002,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Common Start Menu",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramData,
-                 "Microsoft\\Windows\\Start Menu",
+                 "Microsoft\\Windows\\Start Menu\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1020,7 +1020,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Common Templates",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramData,
-                 "Microsoft\\Windows\\Templates",
+                 "Microsoft\\Windows\\Templates\0",
                  NULL,
                  0,
                  0),
@@ -1077,7 +1077,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Cookies",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Cookies",
+                 "Microsoft\\Windows\\Cookies\0Microsoft\\Windows\\INetCookies\0" /* win8 */,
                  NULL,
                  0,
                  0),
@@ -1095,7 +1095,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Device Metadata Store",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramData,
-                 "Microsoft\\Windows\\DeviceMetadataStore",
+                 "Microsoft\\Windows\\DeviceMetadataStore\0",
                  NULL,
                  0,
                  0),
@@ -1104,8 +1104,8 @@ static const struct knownFolderDef known_folders[] = {
                  "Personal",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Documents",
-                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{FDD39AD0-238F-46AF-ADB4-6C85480369C7}\0\0",
+                 "Documents\0",
+                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{FDD39AD0-238F-46AF-ADB4-6C85480369C7}\0shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{A8CDFF1C-4878-43be-B5FD-F8091C1C60D0}\0\0", /* win8 */
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE),
     KNOWN_FOLDER(FOLDERID_DocumentsLibrary,
@@ -1113,7 +1113,7 @@ static const struct knownFolderDef known_folders[] = {
                  "DocumentsLibrary",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Libraries,
-                 "Documents.library-ms",
+                 "Documents.library-ms\0",
                  "::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{7b0db17d-9cd2-4a93-9733-46cc89022e7c}\0\0",
                  0,
                  KFDF_PRECREATE | KFDF_STREAM),
@@ -1122,8 +1122,8 @@ static const struct knownFolderDef known_folders[] = {
                  "Downloads",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Downloads",
-                 NULL,
+                 "Downloads\0",
+                 "(null)\0shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{374DE290-123F-4565-9164-39C4925E467B}\0\0", /* win8 */
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
     KNOWN_FOLDER(FOLDERID_Favorites,
@@ -1131,7 +1131,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Favorites",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Favorites",
+                 "Favorites\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1158,7 +1158,7 @@ static const struct knownFolderDef known_folders[] = {
                  "GameTasks",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows\\GameExplorer",
+                 "Microsoft\\Windows\\GameExplorer\0",
                  NULL,
                  0,
                  KFDF_LOCAL_REDIRECT_ONLY),
@@ -1167,7 +1167,7 @@ static const struct knownFolderDef known_folders[] = {
                  "History",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows\\History",
+                 "Microsoft\\Windows\\History\0",
                  NULL,
                  0,
                  KFDF_LOCAL_REDIRECT_ONLY),
@@ -1185,7 +1185,7 @@ static const struct knownFolderDef known_folders[] = {
                  "ImplicitAppShortcuts",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_UserPinned,
-                 "ImplicitAppShortcuts",
+                 "ImplicitAppShortcuts\0",
                  NULL,
                  0,
                  KFDF_PRECREATE),
@@ -1194,7 +1194,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Cache",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows\\Temporary Internet Files",
+                 "Microsoft\\Windows\\Temporary Internet Files\0Microsoft\\Windows\\INetCache\0\0", /* win8 */
                  NULL,
                  0,
                  KFDF_LOCAL_REDIRECT_ONLY),
@@ -1212,7 +1212,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Libraries",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Libraries",
+                 "Microsoft\\Windows\\Libraries\0",
                  NULL,
                  0,
                  KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1221,7 +1221,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Links",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Links",
+                 "Links\0",
                  "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{bfb9d5e0-c6a9-404c-b2b2-ae6db6af4968}\0\0",
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1230,7 +1230,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Local AppData",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "AppData\\Local",
+                 "AppData\\Local\0",
                  NULL,
                  0,
                  KFDF_LOCAL_REDIRECT_ONLY | KFDF_PUBLISHEXPANDEDPATH),
@@ -1239,7 +1239,7 @@ static const struct knownFolderDef known_folders[] = {
                  "LocalAppDataLow",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "AppData\\LocalLow",
+                 "AppData\\LocalLow\0",
                  NULL,
                  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
                  KFDF_LOCAL_REDIRECT_ONLY | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1257,8 +1257,8 @@ static const struct knownFolderDef known_folders[] = {
                  "My Music",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Music",
-                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{4BD8D571-6D19-48D3-BE97-422220080E43}\0\0",
+                 "Music\0",
+                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{4BD8D571-6D19-48D3-BE97-422220080E43}\0shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{1CF1260C-4DD0-4EBB-811F-33C572699FDE}\0\0", /* win8 */
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE),
     KNOWN_FOLDER(FOLDERID_MusicLibrary,
@@ -1266,7 +1266,7 @@ static const struct knownFolderDef known_folders[] = {
                  "MusicLibrary",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Libraries,
-                 "Music.library-ms",
+                 "Music.library-ms\0",
                  "::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{2112AB0A-C86A-4ffe-A368-0DE96E47012E}\0\0",
                  0,
                  KFDF_PRECREATE | KFDF_STREAM),
@@ -1275,7 +1275,7 @@ static const struct knownFolderDef known_folders[] = {
                  "NetHood",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Network Shortcuts",
+                 "Microsoft\\Windows\\Network Shortcuts\0",
                  NULL,
                  0,
                  0),
@@ -1293,7 +1293,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Original Images",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows Photo Gallery\\Original Images",
+                 "Microsoft\\Windows Photo Gallery\\Original Images\0",
                  NULL,
                  0,
                  0),
@@ -1302,7 +1302,7 @@ static const struct knownFolderDef known_folders[] = {
                  "PhotoAlbums",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Pictures,
-                 "Slide Shows",
+                 "Slide Shows\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  0),
@@ -1311,8 +1311,8 @@ static const struct knownFolderDef known_folders[] = {
                  "My Pictures",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Pictures",
-                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{33E28130-4E1E-4676-835A-98395C3BC3BB}\0\0",
+                 "Pictures\0",
+                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{33E28130-4E1E-4676-835A-98395C3BC3BB}\0shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{3ADD1653-EB32-4CB0-BBD7-DFA0ABB5ACCA}\0\0", /* win8 */
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE),
     KNOWN_FOLDER(FOLDERID_PicturesLibrary,
@@ -1320,7 +1320,7 @@ static const struct knownFolderDef known_folders[] = {
                  "PicturesLibrary",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Libraries,
-                 "Pictures.library-ms",
+                 "Pictures.library-ms\0",
                  "::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{A990AE9F-A03B-4e80-94BC-9912D7504104}\0\0",
                  0,
                  KFDF_PRECREATE | KFDF_STREAM),
@@ -1329,7 +1329,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Playlists",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Music,
-                 "Playlists",
+                 "Playlists\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  0),
@@ -1347,7 +1347,7 @@ static const struct knownFolderDef known_folders[] = {
                  "PrintHood",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Printer Shortcuts",
+                 "Microsoft\\Windows\\Printer Shortcuts\0",
                  NULL,
                  0,
                  0),
@@ -1429,7 +1429,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Programs",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_StartMenu,
-                 "Programs",
+                 "Programs\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1448,7 +1448,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Common Desktop",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Desktop",
+                 "Desktop\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN,
                  KFDF_PRECREATE),
@@ -1457,7 +1457,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Common Documents",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Documents",
+                 "Documents\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1466,7 +1466,7 @@ static const struct knownFolderDef known_folders[] = {
                  "CommonDownloads",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Downloads",
+                 "Downloads\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1475,7 +1475,7 @@ static const struct knownFolderDef known_folders[] = {
                  "PublicGameTasks",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramData,
-                 "Microsoft\\Windows\\GameExplorer",
+                 "Microsoft\\Windows\\GameExplorer\0",
                  NULL,
                  0,
                  KFDF_LOCAL_REDIRECT_ONLY),
@@ -1484,7 +1484,7 @@ static const struct knownFolderDef known_folders[] = {
                  "PublicLibraries",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Libraries",
+                 "Libraries\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN,
                  KFDF_PRECREATE),
@@ -1493,7 +1493,7 @@ static const struct knownFolderDef known_folders[] = {
                  "CommonMusic",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Music",
+                 "Music\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1502,7 +1502,7 @@ static const struct knownFolderDef known_folders[] = {
                  "CommonPictures",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Pictures",
+                 "Pictures\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1511,7 +1511,7 @@ static const struct knownFolderDef known_folders[] = {
                  "CommonRingtones",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramData,
-                 "Microsoft\\Windows\\Ringtones",
+                 "Microsoft\\Windows\\Ringtones\0",
                  NULL,
                  0,
                  KFDF_PRECREATE),
@@ -1520,7 +1520,7 @@ static const struct knownFolderDef known_folders[] = {
                  "CommonVideo",
                  KF_CATEGORY_COMMON,
                  FOLDERID_Public,
-                 "Videos",
+                 "Videos\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1529,7 +1529,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Quick Launch",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Internet Explorer\\Quick Launch",
+                 "Microsoft\\Internet Explorer\\Quick Launch\0",
                  NULL,
                  0,
                  0),
@@ -1538,7 +1538,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Recent",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Recent",
+                 "Microsoft\\Windows\\Recent\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1547,7 +1547,7 @@ static const struct knownFolderDef known_folders[] = {
                  "RecordedTVLibrary",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicLibraries,
-                 "RecordedTV.library-ms",
+                 "RecordedTV.library-ms\0",
                  NULL,
                  0,
                  KFDF_PRECREATE | KFDF_STREAM),
@@ -1574,7 +1574,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Ringtones",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows\\Ringtones",
+                 "Microsoft\\Windows\\Ringtones\0",
                  NULL,
                  0,
                  KFDF_PRECREATE),
@@ -1583,7 +1583,7 @@ static const struct knownFolderDef known_folders[] = {
                  "AppData",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "AppData\\Roaming",
+                 "AppData\\Roaming\0",
                  NULL,
                  0,
                  0),
@@ -1592,7 +1592,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SampleMusic",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicMusic,
-                 "Sample Music",
+                 "Sample Music\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1601,7 +1601,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SamplePictures",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicPictures,
-                 "Sample Pictures",
+                 "Sample Pictures\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1610,7 +1610,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SamplePlaylists",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicMusic,
-                 "Sample Playlists",
+                 "Sample Playlists\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  0),
@@ -1619,7 +1619,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SampleVideos",
                  KF_CATEGORY_COMMON,
                  FOLDERID_PublicVideos,
-                 "Sample Videos",
+                 "Sample Videos\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1628,7 +1628,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SavedGames",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Saved Games",
+                 "Saved Games\0",
                  "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4}\0\0",
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1637,7 +1637,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Searches",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Searches",
+                 "Searches\0",
                  "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{7d1d3a04-debb-4115-95cf-2f29da2920da}\0\0",
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH),
@@ -1673,7 +1673,7 @@ static const struct knownFolderDef known_folders[] = {
                  "SendTo",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\SendTo",
+                 "Microsoft\\Windows\\SendTo\0",
                  NULL,
                  0,
                  0),
@@ -1682,7 +1682,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Default Gadgets",
                  KF_CATEGORY_COMMON,
                  FOLDERID_ProgramFiles,
-                 "Windows Sidebar\\Gadgets",
+                 "Windows Sidebar\\Gadgets\0",
                  NULL,
                  0,
                  0),
@@ -1691,7 +1691,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Gadgets",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Microsoft\\Windows Sidebar\\Gadgets",
+                 "Microsoft\\Windows Sidebar\\Gadgets\0",
                  NULL,
                  0,
                  0),
@@ -1700,7 +1700,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Start Menu",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Start Menu",
+                 "Microsoft\\Windows\\Start Menu\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1709,7 +1709,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Startup",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Programs,
-                 "StartUp",
+                 "StartUp\0",
                  NULL,
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_PRECREATE),
@@ -1766,7 +1766,7 @@ static const struct knownFolderDef known_folders[] = {
                  "Templates",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_RoamingAppData,
-                 "Microsoft\\Windows\\Templates",
+                 "Microsoft\\Windows\\Templates\0",
                  NULL,
                  0,
                  0),
@@ -1775,7 +1775,7 @@ static const struct knownFolderDef known_folders[] = {
                  "User Pinned",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_QuickLaunch,
-                 "User Pinned",
+                 "User Pinned\0",
                  NULL,
                  FILE_ATTRIBUTE_HIDDEN,
                  KFDF_PRECREATE),
@@ -1793,7 +1793,7 @@ static const struct knownFolderDef known_folders[] = {
                  "UserProgramFiles",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_LocalAppData,
-                 "Programs",
+                 "Programs\0",
                  NULL,
                  0,
                  0),
@@ -1802,7 +1802,7 @@ static const struct knownFolderDef known_folders[] = {
                  "UserProgramFilesCommon",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_UserProgramFiles,
-                 "Common",
+                 "Common\0",
                  NULL,
                  0,
                  0),
@@ -1829,8 +1829,8 @@ static const struct knownFolderDef known_folders[] = {
                  "My Video",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Profile,
-                 "Videos",
-                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{18989B1D-99B5-455B-841C-AB7C74E4DDFC}\0\0",
+                 "Videos\0",
+                 "::{59031a47-3f72-44a7-89c5-5595fe6b30ee}\\{18989B1D-99B5-455B-841C-AB7C74E4DDFC}\0shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{A0953C92-50DC-43BF-BE83-3742FED03C9C}\0\0", /* win8 */
                  FILE_ATTRIBUTE_READONLY,
                  KFDF_ROAMABLE | KFDF_PRECREATE),
     KNOWN_FOLDER(FOLDERID_VideosLibrary,
@@ -1838,7 +1838,7 @@ static const struct knownFolderDef known_folders[] = {
                  "VideosLibrary",
                  KF_CATEGORY_PERUSER,
                  FOLDERID_Libraries,
-                 "Videos.library-ms",
+                 "Videos.library-ms\0",
                  "::{031E4825-7B94-4dc3-B131-E946B44C8DD5}\\{491E922F-5643-4af4-A7EB-4E7A138D8174}\0\0",
                  0,
                  KFDF_PRECREATE | KFDF_STREAM),
@@ -1892,6 +1892,36 @@ static const struct knownFolderDef known_folders[] = {
 #undef KNOWN_FOLDER
 BOOL known_folder_found[sizeof(known_folders)/sizeof(known_folders[0])-1];
 
+static BOOL is_in_strarray(const WCHAR *needle, const char *hay)
+{
+    WCHAR wstr[MAX_PATH];
+
+    if(!needle && !hay)
+        return TRUE;
+
+    while(hay && *hay)
+    {
+        DWORD ret;
+
+        if(strcmp(hay, "(null)") == 0 && !needle)
+            return TRUE;
+
+        ret = MultiByteToWideChar(CP_ACP, 0, hay, -1, wstr, sizeof(wstr)/sizeof(wstr[0]));
+        if(ret == 0)
+        {
+            ok(0, "Failed to convert string\n");
+            return FALSE;
+        }
+
+        if(lstrcmpW(wstr, needle) == 0)
+            return TRUE;
+
+        hay += strlen(hay) + 1;
+    }
+
+    return FALSE;
+}
+
 static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId)
 {
     HRESULT hr;
@@ -1899,11 +1929,9 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     int csidl, expectedCsidl, ret;
     KNOWNFOLDER_DEFINITION kfd;
     IKnownFolder *folder;
-    WCHAR sName[1024], sRelativePath[MAX_PATH], sParsingName[MAX_PATH];
-    BOOL validPath;
+    WCHAR sName[1024];
     BOOL *current_known_folder_found = &known_folder_found[0];
     BOOL found = FALSE;
-    const char *srcParsingName;
 
     while(known_folder->folderId != NULL)
     {
@@ -1946,43 +1974,9 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
                                                       "invalid known folder parent for %s: %s expected, but %s retrieved\n",
                                                       known_folder->sFolderId, known_folder->sParent, wine_dbgstr_guid(&kfd.fidParent));
 
-                    if(!known_folder->sRelativePath)
-                        validPath = (kfd.pszRelativePath==NULL);
-                    else
-                    {
-                        ret = MultiByteToWideChar(CP_ACP, 0, known_folder->sRelativePath, -1, sRelativePath, sizeof(sRelativePath)/sizeof(sRelativePath[0]));
-                        ok_(__FILE__, known_folder->line)(ret != 0, "cannot convert known folder path \"%s\" to wide characters\n", known_folder->sRelativePath);
+                    ok_(__FILE__, known_folder->line)(is_in_strarray(kfd.pszRelativePath, known_folder->sRelativePath), "invalid known folder relative path returned for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, known_folder->sRelativePath, wine_dbgstr_w(kfd.pszRelativePath));
 
-                        validPath = (lstrcmpW(kfd.pszRelativePath, sRelativePath)==0);
-                    }
-
-                    ok_(__FILE__, known_folder->line)(validPath, "invalid known folder relative path returned for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, known_folder->sRelativePath, wine_dbgstr_w(kfd.pszRelativePath));
-
-                    /* to check parsing name, we need to iterate list */
-                    srcParsingName = known_folder->sParsingName;
-
-                    /* if we expect NULL, then we don't even check the list */
-                    validPath = (srcParsingName==NULL) && (kfd.pszParsingName==NULL);
-
-                    if(srcParsingName)
-                        while(*srcParsingName && !validPath)
-                        {
-                            /* when NULL is only one of possible value, we mark path as valid */
-                            validPath = (strcmp(srcParsingName, "(null)")==0) && (kfd.pszParsingName==NULL);
-
-                            /* in the other case, we compare string from list with retrieved value */
-                            if(!validPath)
-                            {
-                                ret = MultiByteToWideChar(CP_ACP, 0, srcParsingName, -1, sParsingName, sizeof(sParsingName)/sizeof(sParsingName[0]));
-                                ok_(__FILE__, known_folder->line)(ret != 0, "cannot convert known folder path \"%s\" to wide characters\n", srcParsingName);
-
-                                validPath = (lstrcmpW(kfd.pszParsingName, sParsingName)==0);
-                            }
-
-                            srcParsingName += strlen(srcParsingName)+1;
-                        }
-
-                    ok_(__FILE__, known_folder->line)(validPath, "invalid known folder parsing name returned for %s: %s retrieved\n", known_folder->sFolderId, wine_dbgstr_w(kfd.pszParsingName));
+                    ok_(__FILE__, known_folder->line)(is_in_strarray(kfd.pszParsingName, known_folder->sParsingName), "invalid known folder parsing name returned for %s: %s retrieved\n", known_folder->sFolderId, wine_dbgstr_w(kfd.pszParsingName));
 
                     ok_(__FILE__, known_folder->line)(known_folder->attributes == kfd.dwAttributes, "invalid known folder attributes for %s: 0x%08x expected, but 0x%08x retrieved\n", known_folder->sFolderId, known_folder->attributes, kfd.dwAttributes);
 
