@@ -33,7 +33,7 @@
 #include <string.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
+
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
