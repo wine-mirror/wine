@@ -463,9 +463,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10Texture3D *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d10_set_private_data_interface(&texture->private_store, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetType(ID3D10Texture3D *iface,
