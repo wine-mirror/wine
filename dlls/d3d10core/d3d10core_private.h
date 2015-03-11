@@ -137,6 +137,7 @@ struct d3d10_depthstencil_view
     ID3D10DepthStencilView ID3D10DepthStencilView_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_rendertarget_view *wined3d_view;
     D3D10_DEPTH_STENCIL_VIEW_DESC desc;
     ID3D10Resource *resource;
