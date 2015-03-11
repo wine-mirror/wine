@@ -111,7 +111,7 @@ static const BYTE folderType[] = { PT_FOLDER, PT_FOLDERW };
 static const BYTE favoritesType[] = { PT_FOLDER, PT_FOLDERW, 0, PT_IESPECIAL2 /* Win98 */ };
 static const BYTE folderOrSpecialType[] = { PT_FOLDER, PT_IESPECIAL2 };
 static const BYTE personalType[] = { PT_FOLDER, PT_GUID, PT_DRIVE, 0xff /* Win9x */,
- PT_IESPECIAL2 /* Win98 */, 0 /* Vista */ };
+ PT_IESPECIAL2 /* Win98 */, 0 /* Vista */, PT_SHELLEXT /* win8 */ };
 /* FIXME: don't know the type of 0x71 returned by Vista/2008 for printers */
 static const BYTE printersType[] = { PT_YAGUID, PT_SHELLEXT, 0x71 };
 static const BYTE ieSpecialType[] = { PT_IESPECIAL2 };
@@ -568,6 +568,7 @@ static void test_PidlTypes(void)
 
 /* FIXME: Should be in shobjidl.idl */
 DEFINE_GUID(CLSID_NetworkExplorerFolder, 0xF02C1A0D, 0xBE21, 0x4350, 0x88, 0xB0, 0x73, 0x67, 0xFC, 0x96, 0xEF, 0x3C);
+DEFINE_GUID(_CLSID_Documents, 0xA8CDFF1C, 0x4878, 0x43be, 0xB5, 0xFD, 0xF8, 0x09, 0x1C, 0x1C, 0x60, 0xD0);
 
 /* Verifies various shell virtual folders have the correct well-known GUIDs. */
 static void test_GUIDs(void)
@@ -577,7 +578,7 @@ static void test_GUIDs(void)
     matchGUID(CSIDL_DRIVES, &CLSID_MyComputer, NULL);
     matchGUID(CSIDL_INTERNET, &CLSID_Internet, NULL);
     matchGUID(CSIDL_NETWORK, &CLSID_NetworkPlaces, &CLSID_NetworkExplorerFolder); /* Vista and higher */
-    matchGUID(CSIDL_PERSONAL, &CLSID_MyDocuments, NULL);
+    matchGUID(CSIDL_PERSONAL, &CLSID_MyDocuments, &_CLSID_Documents /* win8 */);
     matchGUID(CSIDL_COMMON_DOCUMENTS, &CLSID_CommonDocuments, NULL);
     matchGUID(CSIDL_PRINTERS, &CLSID_Printers, NULL);
 }
