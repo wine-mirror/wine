@@ -39,8 +39,6 @@
 #include <stdarg.h>
 #include <math.h>
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"

@@ -26,8 +26,7 @@
 #include <math.h>
 
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
