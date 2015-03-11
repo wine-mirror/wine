@@ -64,6 +64,30 @@ typedef struct tagASN1BerFunArr_t {
   const ASN1BerDecFun_t *apfnDecoder;
 } ASN1BerFunArr_t;
 
+typedef struct tagASN1bitstring_t
+{
+  ASN1uint32_t length;
+  ASN1octet_t *value;
+} ASN1bitstring_t;
+
+typedef struct tagASN1charstring_t
+{
+  ASN1uint32_t length;
+  ASN1char_t *value;
+} ASN1charstring_t;
+
+typedef struct tagASN1char16string_t
+{
+  ASN1uint32_t length;
+  ASN1char16_t *value;
+} ASN1char16string_t;
+
+typedef struct tagASN1char32string_t
+{
+  ASN1uint32_t length;
+  ASN1char32_t *value;
+} ASN1char32string_t;
+
 typedef enum {
   ASN1_PER_RULE_ALIGNED = 0x0001,ASN1_PER_RULE_UNALIGNED = 0x0002,ASN1_PER_RULE = ASN1_PER_RULE_ALIGNED | ASN1_PER_RULE_UNALIGNED,
   ASN1_BER_RULE_BER = 0x0100,ASN1_BER_RULE_CER = 0x0200,ASN1_BER_RULE_DER = 0x0400,
@@ -106,6 +130,12 @@ typedef struct tagASN1module_t {
   };
 } *ASN1module_t;
 
+typedef struct tagASN1octetstring_t
+{
+  ASN1uint32_t length;
+  ASN1octet_t *value;
+} ASN1octetstring_t;
+
 typedef enum tagASN1option_e
 {
   ASN1OPT_CHANGE_RULE = 0x101,
@@ -131,6 +161,12 @@ typedef struct tagASN1optionparam_t {
   };
 } ASN1optionparam_t, ASN1optionparam_s;
 
+typedef struct tagASN1wstring_t
+{
+  ASN1uint32_t length;
+  WCHAR *value;
+} ASN1wstring_t;
+
 void         WINAPI ASN1_CloseDecoder(ASN1decoding_t);
 void         WINAPI ASN1_CloseEncoder(ASN1encoding_t);
 void         WINAPI ASN1_CloseEncoder2(ASN1encoding_t);
@@ -146,6 +182,22 @@ ASN1error_e  WINAPI ASN1_GetDecoderOption(ASN1decoding_t, ASN1optionparam_t*);
 ASN1error_e  WINAPI ASN1_GetEncoderOption(ASN1encoding_t, ASN1optionparam_t*);
 ASN1error_e  WINAPI ASN1_SetDecoderOption(ASN1decoding_t, ASN1optionparam_t*);
 ASN1error_e  WINAPI ASN1_SetEncoderOption(ASN1encoding_t, ASN1optionparam_t*);
+int          WINAPI ASN1bitstring_cmp(ASN1bitstring_t*,ASN1bitstring_t*);
+void         WINAPI ASN1bitstring_free(ASN1bitstring_t*);
+int          WINAPI ASN1char16string_cmp(ASN1char16string_t*,ASN1char16string_t*);
+void         WINAPI ASN1char16string_free(ASN1char16string_t*);
+int          WINAPI ASN1char32string_cmp(ASN1char32string_t*,ASN1char32string_t*);
+void         WINAPI ASN1char32string_free(ASN1char32string_t*);
+int          WINAPI ASN1charstring_cmp(ASN1charstring_t*,ASN1charstring_t*);
+void         WINAPI ASN1charstring_free(ASN1charstring_t*);
+int          WINAPI ASN1octetstring_cmp(ASN1octetstring_t*,ASN1octetstring_t*);
+void         WINAPI ASN1octetstring_free(ASN1octetstring_t*);
+void         WINAPI ASN1utf8string_free(ASN1wstring_t*);
+int          WINAPI ASN1ztchar16string_cmp(ASN1ztchar16string_t*,ASN1ztchar16string_t*);
+void         WINAPI ASN1ztchar16string_free(ASN1ztchar16string_t*);
+void         WINAPI ASN1ztchar32string_free(ASN1ztchar32string_t*);
+int          WINAPI ASN1ztcharstring_cmp(ASN1ztcharstring_t*,ASN1ztcharstring_t*);
+void         WINAPI ASN1ztcharstring_free(ASN1charstring_t*);
 
 #ifdef __cplusplus
 }
