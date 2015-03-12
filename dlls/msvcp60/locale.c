@@ -59,11 +59,11 @@ MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
 LCID* __cdecl ___lc_handle_func(void);
 
 #define locale_string basic_string_char
-#define locale_string_char_ctor_cstr(this,str)  basic_string_char_ctor_cstr(this,str)
-#define locale_string_char_copy_ctor(this,copy) basic_string_char_copy_ctor(this,copy)
-#define locale_string_char_dtor(this)           basic_string_char_dtor(this)
-#define locale_string_char_c_str(this)          basic_string_char_c_str(this)
-#define locale_string_char_assign(this,assign)  basic_string_char_assign(this,assign)
+#define locale_string_char_ctor_cstr(this,str)  MSVCP_basic_string_char_ctor_cstr(this,str)
+#define locale_string_char_copy_ctor(this,copy) MSVCP_basic_string_char_copy_ctor(this,copy)
+#define locale_string_char_dtor(this)           MSVCP_basic_string_char_dtor(this)
+#define locale_string_char_c_str(this)          MSVCP_basic_string_char_c_str(this)
+#define locale_string_char_assign(this,assign)  MSVCP_basic_string_char_assign(this,assign)
 
 typedef int category;
 
@@ -658,7 +658,7 @@ basic_string_char* __thiscall _Locinfo__Getname(const _Locinfo *this, basic_stri
 {
     TRACE("(%p)\n", this);
 
-    basic_string_char_copy_ctor(ret, &this->newlocname);
+    MSVCP_basic_string_char_copy_ctor(ret, &this->newlocname);
     return ret;
 }
 
@@ -3411,7 +3411,7 @@ basic_string_char* __thiscall numpunct_char_do_grouping(
         const numpunct_char *this, basic_string_char *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_char_ctor_cstr(ret, this->grouping);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->grouping);
 }
 
 /* ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -3432,7 +3432,7 @@ basic_string_char* __thiscall numpunct_char_do_falsename(
         const numpunct_char *this, basic_string_char *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_char_ctor_cstr(ret, this->false_name);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->false_name);
 }
 
 /* ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -3453,7 +3453,7 @@ basic_string_char* __thiscall numpunct_char_do_truename(
         const numpunct_char *this, basic_string_char *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_char_ctor_cstr(ret, this->true_name);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->true_name);
 }
 
 /* ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -3815,7 +3815,7 @@ DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_grouping, 8)
 basic_string_char* __thiscall numpunct_wchar_do_grouping(const numpunct_wchar *this, basic_string_char *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_char_ctor_cstr(ret, this->grouping);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->grouping);
 }
 
 /* ?grouping@?$numpunct@_W@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -3839,7 +3839,7 @@ DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_falsename, 8)
 basic_string_wchar* __thiscall numpunct_wchar_do_falsename(const numpunct_wchar *this, basic_string_wchar *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_wchar_ctor_cstr(ret, this->false_name);
+    return MSVCP_basic_string_wchar_ctor_cstr(ret, this->false_name);
 }
 
 /* ?falsename@?$numpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
@@ -3863,7 +3863,7 @@ DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_truename, 8)
 basic_string_wchar* __thiscall numpunct_wchar_do_truename(const numpunct_wchar *this, basic_string_wchar *ret)
 {
     TRACE("(%p)\n", this);
-    return basic_string_wchar_ctor_cstr(ret, this->true_name);
+    return MSVCP_basic_string_wchar_ctor_cstr(ret, this->true_name);
 }
 
 /* ?truename@?$numpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ */
@@ -4928,8 +4928,8 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
 
         numpunct_wchar_falsename(numpunct, &false_bstr);
         numpunct_wchar_truename(numpunct, &true_bstr);
-        pfalse = basic_string_wchar_c_str(&false_bstr);
-        ptrue = basic_string_wchar_c_str(&true_bstr);
+        pfalse = MSVCP_basic_string_wchar_c_str(&false_bstr);
+        ptrue = MSVCP_basic_string_wchar_c_str(&true_bstr);
 
         for(istreambuf_iterator_wchar_val(&first); first.strbuf;) {
             if(pfalse && *pfalse && first.val!=*pfalse)
@@ -4961,8 +4961,8 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
         else
             *state |= IOSTATE_failbit;
 
-        basic_string_wchar_dtor(&false_bstr);
-        basic_string_wchar_dtor(&true_bstr);
+        MSVCP_basic_string_wchar_dtor(&false_bstr);
+        MSVCP_basic_string_wchar_dtor(&true_bstr);
     }else {
         char tmp[25], *end;
         int err;
@@ -5116,7 +5116,7 @@ MSVCP_size_t __cdecl num_get_char__Getcat(const locale_facet **facet, const loca
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
         num_get_char_ctor_locinfo((num_get*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -5712,8 +5712,8 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
 
         numpunct_char_falsename(numpunct, &false_bstr);
         numpunct_char_truename(numpunct, &true_bstr);
-        pfalse = basic_string_char_c_str(&false_bstr);
-        ptrue = basic_string_char_c_str(&true_bstr);
+        pfalse = MSVCP_basic_string_char_c_str(&false_bstr);
+        ptrue = MSVCP_basic_string_char_c_str(&true_bstr);
 
         for(istreambuf_iterator_char_val(&first); first.strbuf;) {
             if(pfalse && *pfalse && first.val!=*pfalse)
@@ -5745,8 +5745,8 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
         else
             *state |= IOSTATE_failbit;
 
-        basic_string_char_dtor(&false_bstr);
-        basic_string_char_dtor(&true_bstr);
+        MSVCP_basic_string_char_dtor(&false_bstr);
+        MSVCP_basic_string_char_dtor(&true_bstr);
     }else {
         char tmp[25], *end;
         int err;
@@ -5874,7 +5874,7 @@ MSVCP_size_t __cdecl num_put_char__Getcat(const locale_facet **facet, const loca
             return 0;
         }
 
-        _Locinfo_ctor_cstr(&locinfo, basic_string_char_c_str(&loc->ptr->name));
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
         num_put_char_ctor_locinfo((num_put*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
     }
@@ -6056,7 +6056,7 @@ ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostrea
 
     /* Add separators to number */
     numpunct_char_grouping(numpunct, &grouping_bstr);
-    grouping = basic_string_char_c_str(&grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
     sep = grouping[0] ? numpunct_char_thousands_sep(numpunct) : '\0';
 
     for(p=buf+count-1; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
@@ -6071,7 +6071,7 @@ ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostrea
             count++;
         }
     }
-    basic_string_char_dtor(&grouping_bstr);
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
 
     /* Display number with padding */
     if(count >= base->wide)
@@ -6318,7 +6318,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *thi
         else
             numpunct_char_falsename(numpunct, &str);
 
-        len = basic_string_char_length(&str);
+        len = MSVCP_basic_string_char_length(&str);
         pad = (len>base->wide ? 0 : base->wide-len);
         base->wide = 0;
 
@@ -6326,8 +6326,8 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *thi
             num_put_char__Rep(this, &dest, dest, fill, pad);
             pad = 0;
         }
-        num_put_char__Putc(this, &dest, dest, basic_string_char_c_str(&str), len);
-        basic_string_char_dtor(&str);
+        num_put_char__Putc(this, &dest, dest, MSVCP_basic_string_char_c_str(&str), len);
+        MSVCP_basic_string_char_dtor(&str);
         return num_put_char__Rep(this, ret, dest, fill, pad);
     }
 
@@ -6735,7 +6735,7 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
 
     /* Add separators to number */
     numpunct_wchar_grouping(numpunct, &grouping_bstr);
-    grouping = basic_string_char_c_str(&grouping_bstr);
+    grouping = MSVCP_basic_string_char_c_str(&grouping_bstr);
     sep = grouping[0] ? numpunct_wchar_thousands_sep(numpunct) : '\0';
 
     for(p=buf+count-1; p>buf && sep && grouping[cur_group]!=CHAR_MAX; p--) {
@@ -6750,7 +6750,7 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
             count++;
         }
     }
-    basic_string_char_dtor(&grouping_bstr);
+    MSVCP_basic_string_char_dtor(&grouping_bstr);
 
     /* Display number with padding */
     if(count >= base->wide)
@@ -7131,7 +7131,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_bool(const num_put *t
         else
             numpunct_wchar_falsename(numpunct, &str);
 
-        len = basic_string_wchar_length(&str);
+        len = MSVCP_basic_string_wchar_length(&str);
         pad = (len>base->wide ? 0 : base->wide-len);
         base->wide = 0;
 
@@ -7139,8 +7139,8 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_bool(const num_put *t
             num_put_wchar__Rep(this, &dest, dest, fill, pad);
             pad = 0;
         }
-        num_put_wchar__Put(this, &dest, dest, basic_string_wchar_c_str(&str), len);
-        basic_string_wchar_dtor(&str);
+        num_put_wchar__Put(this, &dest, dest, MSVCP_basic_string_wchar_c_str(&str), len);
+        MSVCP_basic_string_wchar_dtor(&str);
         return num_put_wchar__Rep(this, ret, dest, fill, pad);
     }
 
@@ -7165,7 +7165,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_bool(const num_put *t
         else
             numpunct_wchar_falsename(numpunct, &str);
 
-        len = basic_string_wchar_length(&str);
+        len = MSVCP_basic_string_wchar_length(&str);
         pad = (len>base->wide ? 0 : base->wide-len);
         base->wide = 0;
 
@@ -7173,8 +7173,8 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_bool(const num_put *t
             num_put_wchar__Rep(this, &dest, dest, fill, pad);
             pad = 0;
         }
-        num_put_wchar__Put(this, &dest, dest, basic_string_wchar_c_str(&str), len);
-        basic_string_wchar_dtor(&str);
+        num_put_wchar__Put(this, &dest, dest, MSVCP_basic_string_wchar_c_str(&str), len);
+        MSVCP_basic_string_wchar_dtor(&str);
         return num_put_wchar__Rep(this, ret, dest, fill, pad);
     }
 
@@ -8537,7 +8537,7 @@ DEFINE_THISCALL_WRAPPER(locale_name, 8)
 basic_string_char* __thiscall locale_name(const locale *this, basic_string_char *ret)
 {
     TRACE( "(%p)\n", this);
-    basic_string_char_copy_ctor(ret, &this->ptr->name);
+    MSVCP_basic_string_char_copy_ctor(ret, &this->ptr->name);
     return ret;
 }
 
@@ -8561,7 +8561,7 @@ locale* __cdecl locale_global(locale *ret, const locale *loc)
         for(i=LC_ALL+1; i<=LC_MAX; i++) {
             if((global_locale->catmask & (1<<(i-1))) == 0)
                 continue;
-            setlocale(i, basic_string_char_c_str(&global_locale->name));
+            setlocale(i, MSVCP_basic_string_char_c_str(&global_locale->name));
         }
     }
     _Lockit_dtor(&lock);

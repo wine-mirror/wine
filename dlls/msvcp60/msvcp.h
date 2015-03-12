@@ -41,17 +41,17 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_char;
 
-basic_string_char* __thiscall basic_string_char_ctor(basic_string_char*);
-basic_string_char* basic_string_char_ctor_cstr(basic_string_char*, const char*);
-basic_string_char* basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
-basic_string_char* __thiscall basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
-void __thiscall basic_string_char_dtor(basic_string_char*);
-const char* __thiscall basic_string_char_c_str(const basic_string_char*);
-void basic_string_char_clear(basic_string_char*);
-basic_string_char* __thiscall basic_string_char_append_ch(basic_string_char*, char);
-MSVCP_size_t __thiscall basic_string_char_length(const basic_string_char*);
-basic_string_char* __thiscall basic_string_char_append_len_ch(basic_string_char*, MSVCP_size_t, char);
-basic_string_char* __thiscall basic_string_char_assign(basic_string_char*, const basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
+basic_string_char* __thiscall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
+void __thiscall MSVCP_basic_string_char_dtor(basic_string_char*);
+const char* __thiscall MSVCP_basic_string_char_c_str(const basic_string_char*);
+void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
+MSVCP_size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_append_len_ch(basic_string_char*, MSVCP_size_t, char);
+basic_string_char* __thiscall MSVCP_basic_string_char_assign(basic_string_char*, const basic_string_char*);
 
 typedef struct
 {
@@ -61,14 +61,14 @@ typedef struct
     MSVCP_size_t res;
 } basic_string_wchar;
 
-basic_string_wchar* __thiscall basic_string_wchar_ctor(basic_string_wchar*);
-basic_string_wchar* basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
-basic_string_wchar* basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
-void __thiscall basic_string_wchar_dtor(basic_string_wchar*);
-const wchar_t* __thiscall basic_string_wchar_c_str(const basic_string_wchar*);
-void basic_string_wchar_clear(basic_string_wchar*);
-basic_string_wchar* __thiscall basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
-MSVCP_size_t __thiscall basic_string_wchar_length(const basic_string_wchar*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
+void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
+const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
+void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
+MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
 char* __thiscall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void __thiscall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
