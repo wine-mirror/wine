@@ -3238,14 +3238,13 @@ static PropertyItem *get_gif_transparent_idx(IWICMetadataReader *reader)
     return index;
 }
 
-static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
+static LONG get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *format, const WCHAR *property)
 {
-    static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
     HRESULT hr;
     IWICMetadataBlockReader *block_reader;
     IWICMetadataReader *reader;
     UINT block_count, i;
-    PropertyItem *delay;
+    PropertyItem *prop;
     LONG value = 0;
 
     hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
@@ -3259,13 +3258,15 @@ static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
                 hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
                 if (hr == S_OK)
                 {
-                    delay = get_property(reader, &GUID_MetadataFormatGCE, delayW);
-                    if (delay)
+                    prop = get_property(reader, format, property);
+                    if (prop)
                     {
-                        if (delay->type == PropertyTagTypeShort && delay->length == 2)
-                            value = *(SHORT *)delay->value;
+                        if (prop->type == PropertyTagTypeByte && prop->length == 1)
+                            value = *(BYTE *)prop->value;
+                        else if (prop->type == PropertyTagTypeShort && prop->length == 2)
+                            value = *(SHORT *)prop->value;
 
-                        GdipFree(delay);
+                        GdipFree(prop);
                     }
                     IWICMetadataReader_Release(reader);
                 }
@@ -3279,6 +3280,7 @@ static LONG get_gif_frame_delay(IWICBitmapFrameDecode *frame)
 
 static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
 {
+    static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
     HRESULT hr;
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *block_reader;
@@ -3307,7 +3309,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                 hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
                 if (hr == S_OK)
                 {
-                    value[i] = get_gif_frame_delay(frame);
+                    value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, delayW);
                     IWICBitmapFrameDecode_Release(frame);
                 }
                 else value[i] = 0;
@@ -3603,23 +3605,159 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
     return Ok;
 }
 
-static GpStatus select_frame_gif(GpImage *image, UINT active_frame)
+static HRESULT get_gif_frame_rect(IWICBitmapFrameDecode *frame,
+        UINT *left, UINT *top, UINT *width, UINT *height)
 {
-    GpImage *new_image;
-    GpStatus status;
+    static const WCHAR leftW[] = {'L','e','f','t',0};
+    static const WCHAR topW[] = {'T','o','p',0};
 
-    status = decode_frame_wic(image->decoder, TRUE, active_frame, gif_metadata_reader, &new_image);
-    if(status != Ok)
-        return status;
+    *left = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, leftW);
+    *top = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, topW);
 
-    memcpy(&new_image->format, &image->format, sizeof(GUID));
-    free_image_data(image);
-    if (image->type == ImageTypeBitmap)
-        *(GpBitmap *)image = *(GpBitmap *)new_image;
-    else if (image->type == ImageTypeMetafile)
-        *(GpMetafile *)image = *(GpMetafile *)new_image;
-    new_image->type = ~0;
-    GdipFree(new_image);
+    return IWICBitmapFrameDecode_GetSize(frame, width, height);
+}
+
+static HRESULT blit_gif_frame(GpBitmap *bitmap, IWICBitmapFrameDecode *frame, BOOL first_frame)
+{
+    UINT i, j, left, top, width, height;
+    IWICBitmapSource *source;
+    BYTE *new_bits;
+    HRESULT hr;
+
+    hr = get_gif_frame_rect(frame, &left, &top, &width, &height);
+    if(FAILED(hr))
+        return hr;
+
+    hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)frame, &source);
+    if(FAILED(hr))
+        return hr;
+
+    new_bits = GdipAlloc(width*height*4);
+    if(!new_bits)
+        return E_OUTOFMEMORY;
+
+    hr = IWICBitmapSource_CopyPixels(source, NULL, width*4, width*height*4, new_bits);
+    IWICBitmapSource_Release(source);
+    if(FAILED(hr)) {
+        GdipFree(new_bits);
+        return hr;
+    }
+
+    for(i=0; i<height && i+top<bitmap->height; i++) {
+        for(j=0; j<width && j+left<bitmap->width; j++) {
+            DWORD *src = (DWORD*)(new_bits+i*width*4+j*4);
+            DWORD *dst = (DWORD*)(bitmap->bits+(i+top)*bitmap->stride+(j+left)*4);
+
+            if(first_frame || *src>>24 != 0)
+                *dst = *src;
+        }
+    }
+    GdipFree(new_bits);
+    return hr;
+}
+
+static DWORD get_gif_background_color(GpBitmap *bitmap)
+{
+    BYTE bgcolor_idx = 0;
+    UINT i;
+
+    for(i=0; i<bitmap->prop_count; i++) {
+        if(bitmap->prop_item[i].id == PropertyTagIndexBackground) {
+            bgcolor_idx = *(BYTE*)bitmap->prop_item[i].value;
+            break;
+        }
+    }
+
+    for(i=0; i<bitmap->prop_count; i++) {
+        if(bitmap->prop_item[i].id == PropertyTagIndexTransparent) {
+            BYTE transparent_idx;
+            transparent_idx = *(BYTE*)bitmap->prop_item[i].value;
+
+            if(transparent_idx == bgcolor_idx)
+                return 0;
+        }
+    }
+
+    for(i=0; i<bitmap->prop_count; i++) {
+        if(bitmap->prop_item[i].id == PropertyTagGlobalPalette) {
+            if(bitmap->prop_item[i].length/3 > bgcolor_idx) {
+                BYTE *color = ((BYTE*)bitmap->prop_item[i].value)+bgcolor_idx*3;
+                return color[2] + (color[1]<<8) + (color[0]<<16) + (0xff<<24);
+            }
+            break;
+        }
+    }
+
+    FIXME("can't get gif background color\n");
+    return 0xffffffff;
+}
+
+static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
+{
+    static const WCHAR disposalW[] = {'D','i','s','p','o','s','a','l',0};
+
+    GpBitmap *bitmap = (GpBitmap*)image;
+    IWICBitmapFrameDecode *frame;
+    int cur_frame=0, disposal;
+    BOOL bgcolor_set = FALSE;
+    DWORD bgcolor = 0;
+    HRESULT hr;
+
+    if(active_frame > image->current_frame) {
+        hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, image->current_frame, &frame);
+        if(FAILED(hr))
+            return hresult_to_status(hr);
+        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, disposalW);
+        IWICBitmapFrameDecode_Release(frame);
+
+        if(disposal == GIF_DISPOSE_RESTORE_TO_BKGND)
+            cur_frame = image->current_frame;
+        else if(disposal != GIF_DISPOSE_RESTORE_TO_PREV)
+            cur_frame = image->current_frame+1;
+    }
+
+    while(cur_frame != active_frame) {
+        hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, cur_frame, &frame);
+        if(FAILED(hr))
+            return hresult_to_status(hr);
+        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, disposalW);
+
+        if(disposal==GIF_DISPOSE_UNSPECIFIED || disposal==GIF_DISPOSE_DO_NOT_DISPOSE) {
+            hr = blit_gif_frame(bitmap, frame, cur_frame==0);
+            if(FAILED(hr))
+                return hresult_to_status(hr);
+        }else if(disposal == GIF_DISPOSE_RESTORE_TO_BKGND) {
+            UINT left, top, width, height, i, j;
+
+            if(!bgcolor_set) {
+                bgcolor = get_gif_background_color(bitmap);
+                bgcolor_set = TRUE;
+            }
+
+            hr = get_gif_frame_rect(frame, &left, &top, &width, &height);
+            if(FAILED(hr))
+                return hresult_to_status(hr);
+            for(i=top; i<top+height && i<bitmap->height; i++) {
+                DWORD *bits = (DWORD*)(bitmap->bits+i*bitmap->stride);
+                for(j=left; j<left+width && j<bitmap->width; j++)
+                    bits[j] = bgcolor;
+            }
+        }
+
+        IWICBitmapFrameDecode_Release(frame);
+        cur_frame++;
+    }
+
+    hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, active_frame, &frame);
+    if(FAILED(hr))
+        return hresult_to_status(hr);
+
+    hr = blit_gif_frame(bitmap, frame, cur_frame==0);
+    IWICBitmapFrameDecode_Release(frame);
+    if(FAILED(hr))
+        return hresult_to_status(hr);
+
+    image->current_frame = active_frame;
     return Ok;
 }
 
