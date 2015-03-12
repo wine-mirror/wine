@@ -1287,18 +1287,22 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
     wined3d_resource = wined3d_surface_get_resource(surface_impl->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &desc);
 
-    /* This method is only allowed with surfaces that are render targets, or
-     * offscreen plain surfaces in D3DPOOL_DEFAULT. */
-    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET) && desc.pool != WINED3D_POOL_DEFAULT)
+    if (desc.pool != WINED3D_POOL_DEFAULT)
     {
         wined3d_mutex_unlock();
-        WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
+        WARN("Colorfill is not allowed on surfaces in pool %#x, returning D3DERR_INVALIDCALL.\n", desc.pool);
         return D3DERR_INVALIDCALL;
     }
-
-    if (desc.pool != WINED3D_POOL_DEFAULT && desc.pool != WINED3D_POOL_SYSTEM_MEM)
+    if ((desc.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_TEXTURE)) == WINED3DUSAGE_TEXTURE)
     {
-        WARN("Color-fill not allowed on surfaces in pool %#x.\n", desc.pool);
+        wined3d_mutex_unlock();
+        WARN("Colorfill is not allowed on non-RT textures, returning D3DERR_INVALIDCALL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+    if (desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        wined3d_mutex_unlock();
+        WARN("Colorfill is not allowed on depth stencil surfaces, returning D3DERR_INVALIDCALL.\n");
         return D3DERR_INVALIDCALL;
     }
 
