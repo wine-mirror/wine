@@ -1376,19 +1376,21 @@ static void test_ck_rgba(void)
         D3DCOLOR fill_color;
         BOOL color_key;
         BOOL blend;
-        D3DCOLOR result1;
-        D3DCOLOR result2;
+        D3DCOLOR result1, result1_broken;
+        D3DCOLOR result2, result2_broken;
     }
     tests[] =
     {
-        {0xff00ff00, TRUE,  TRUE,  0x00ff0000, 0x000000ff},
-        {0xff00ff00, TRUE,  FALSE, 0x00ff0000, 0x000000ff},
-        {0xff00ff00, FALSE, TRUE,  0x0000ff00, 0x0000ff00},
-        {0xff00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00},
-        {0x7f00ff00, TRUE,  TRUE,  0x00807f00, 0x00807f00},
-        {0x7f00ff00, TRUE,  FALSE, 0x0000ff00, 0x0000ff00},
-        {0x7f00ff00, FALSE, TRUE,  0x00807f00, 0x00807f00},
-        {0x7f00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00},
+        /* r200 on Windows doesn't check the alpha component when applying the color
+         * key, so the key matches on every texel. */
+        {0xff00ff00, TRUE,  TRUE,  0x00ff0000, 0x00ff0000, 0x000000ff, 0x000000ff},
+        {0xff00ff00, TRUE,  FALSE, 0x00ff0000, 0x00ff0000, 0x000000ff, 0x000000ff},
+        {0xff00ff00, FALSE, TRUE,  0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0xff00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0x7f00ff00, TRUE,  TRUE,  0x00807f00, 0x00ff0000, 0x00807f00, 0x000000ff},
+        {0x7f00ff00, TRUE,  FALSE, 0x0000ff00, 0x00ff0000, 0x0000ff00, 0x000000ff},
+        {0x7f00ff00, FALSE, TRUE,  0x00807f00, 0x00807f00, 0x00807f00, 0x00807f00},
+        {0x7f00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
     };
 
     IDirectDrawSurface7 *texture;
@@ -1470,10 +1472,12 @@ static void test_ck_rgba(void)
 
         color = get_surface_color(rt, 320, 240);
         if (i == 2)
-            todo_wine ok(compare_color(color, tests[i].result1, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+            todo_wine ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
+                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
                     tests[i].result1, i, color);
         else
-            ok(compare_color(color, tests[i].result1, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+            ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
+                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
                     tests[i].result1, i, color);
 
         U5(fx).dwFillColor = 0xff0000ff;
@@ -1491,10 +1495,12 @@ static void test_ck_rgba(void)
          * discarded, instead of just fully transparent. */
         color = get_surface_color(rt, 320, 240);
         if (i == 2)
-            todo_wine ok(compare_color(color, tests[i].result2, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+            todo_wine ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
+                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
                     tests[i].result2, i, color);
         else
-            ok(compare_color(color, tests[i].result2, 1), "Expected color 0x%08x for test %u, got 0x%08x.\n",
+            ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
+                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
                     tests[i].result2, i, color);
     }
 
