@@ -24,8 +24,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "gphoto2_i.h"
 #include "winuser.h"
 #include "winnls.h"
