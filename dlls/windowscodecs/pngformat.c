@@ -296,6 +296,7 @@ typedef struct {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICMetadataBlockReader IWICMetadataBlockReader_iface;
     LONG ref;
+    IStream *stream;
     png_structp png_ptr;
     png_infop info_ptr;
     png_infop end_info;
@@ -366,6 +367,7 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        IStream_Release(This->stream);
         if (This->png_ptr)
             ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
         This->lock.DebugInfo->Spare[0] = 0;
@@ -604,6 +606,9 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     row_pointers = NULL;
 
     ppng_read_end(This->png_ptr, This->end_info);
+
+    This->stream = pIStream;
+    IStream_AddRef(This->stream);
 
     This->initialized = TRUE;
 
