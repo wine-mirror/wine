@@ -578,6 +578,7 @@ static HRESULT create_metadata_reader(const void *data, int data_size,
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICMetadataBlockReader IWICMetadataBlockReader_iface;
+    IStream *stream;
     BYTE LSD_data[13]; /* Logical Screen Descriptor */
     LONG ref;
     BOOL initialized;
@@ -1054,6 +1055,7 @@ static ULONG WINAPI GifDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        IStream_Release(This->stream);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         DGifCloseFile(This->gif);
@@ -1140,6 +1142,9 @@ static HRESULT WINAPI GifDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     seek.QuadPart = 0;
     IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
     IStream_Read(pIStream, This->LSD_data, sizeof(This->LSD_data), NULL);
+
+    This->stream = pIStream;
+    IStream_AddRef(This->stream);
 
     This->initialized = TRUE;
 
