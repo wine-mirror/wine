@@ -845,10 +845,10 @@
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_alloc_ctor
 @ thiscall -arch=win32 ??0bad_alloc@std@@QAE@XZ(ptr) MSVCP_bad_alloc_default_ctor
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@XZ(ptr) MSVCP_bad_alloc_default_ctor
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QEAA@AEBV0@@Z
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) msvcrt.??0bad_cast@@QAE@PBD@Z
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) msvcrt.??0bad_cast@@QEAA@PEBD@Z
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) MSVCP_bad_cast_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ stub -arch=win32 ??0bad_exception@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0bad_exception@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0bad_exception@std@@QAE@PBD@Z
@@ -1049,8 +1049,8 @@
 @ stub -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ
 @ thiscall -arch=win32 ??1bad_alloc@std@@UAE@XZ(ptr) MSVCP_bad_alloc_dtor
 @ cdecl -arch=win64 ??1bad_alloc@std@@UEAA@XZ(ptr) MSVCP_bad_alloc_dtor
-@ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
-@ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) msvcrt.??1bad_cast@@UEAA@XZ
+@ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) MSVCP_bad_cast_dtor
+@ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) MSVCP_bad_cast_dtor
 @ stub -arch=win32 ??1bad_exception@std@@UAE@XZ
 @ stub -arch=win64 ??1bad_exception@std@@UEAA@XZ
 @ stub -arch=win32 ??1bad_typeid@std@@UAE@XZ
@@ -1235,8 +1235,8 @@
 @ stub -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4bad_alloc@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
 @ cdecl -arch=win64 ??4bad_alloc@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
-@ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
-@ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_bad_cast_opequals
+@ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_opequals
 @ stub -arch=win32 ??4bad_exception@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4bad_exception@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z
@@ -1815,7 +1815,7 @@
 @ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_time_put_short_vtable
 # extern ??_7__non_rtti_object@std@@6B@
 @ extern ??_7bad_alloc@std@@6B@ MSVCP_bad_alloc_vtable
-@ extern ??_7bad_cast@std@@6B@ msvcrt.??_7bad_cast@@6B@
+@ extern ??_7bad_cast@std@@6B@ MSVCP_bad_cast_vtable
 # extern ??_7bad_exception@std@@6B@
 # extern ??_7bad_typeid@std@@6B@
 @ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
@@ -1979,8 +1979,8 @@
 @ cdecl -arch=win64 ??_F_Locinfo@std@@QEAAXXZ(ptr) _Locinfo_ctor
 @ thiscall -arch=win32 ??_F_Timevec@std@@QAEXXZ(ptr) _Timevec_ctor
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) _Timevec_ctor
-@ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
-@ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) msvcrt.??_Fbad_cast@@QEAAXXZ
+@ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) MSVCP_bad_cast_default_ctor
+@ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) MSVCP_bad_cast_default_ctor
 @ stub -arch=win32 ??_Fbad_exception@std@@QAEXXZ
 @ stub -arch=win64 ??_Fbad_exception@std@@QEAAXXZ
 @ stub -arch=win32 ??_Fbad_typeid@std@@QAEXXZ
@@ -4192,7 +4192,7 @@
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_streambuf_char_uflow
 @ thiscall -arch=win32 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ(ptr) basic_streambuf_wchar_uflow
-@ cdecl ?uncaught_exception@std@@YA_NXZ() msvcp90.?uncaught_exception@std@@YA_NXZ
+@ cdecl ?uncaught_exception@std@@YA_NXZ() MSVCP__uncaught_exception
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_filebuf_char_underflow
 @ cdecl -arch=win64 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_filebuf_char_underflow
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ(ptr) basic_filebuf_wchar_underflow

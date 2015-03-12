@@ -71,14 +71,16 @@ extern MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
 #endif
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
-#define BUF_SIZE_CHAR 16
 typedef struct
 {
 #if _MSVCP_VER <= 90
     void *allocator;
 #endif
     union {
+#if _MSVCP_VER >= 70
+#define BUF_SIZE_CHAR 16
         char buf[BUF_SIZE_CHAR];
+#endif
         char *ptr;
     } data;
     MSVCP_size_t size;
@@ -99,14 +101,16 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_cha
 MSVCP_size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_assign(basic_string_char*, const basic_string_char*);
 
-#define BUF_SIZE_WCHAR 8
 typedef struct
 {
 #if _MSVCP_VER <= 90
     void *allocator;
 #endif
     union {
+#if _MSVCP_VER >= 70
+#define BUF_SIZE_WCHAR 8
         wchar_t buf[BUF_SIZE_WCHAR];
+#endif
         wchar_t *ptr;
     } data;
     MSVCP_size_t size;
@@ -366,8 +370,12 @@ typedef struct _ios_base {
     streamsize wide;
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
+#if _MSVCP_VER < 70
+    locale loc;
+#else
     locale *loc;
-#if _MSVCP_VER == 70
+#endif
+#if _MSVCP_VER <= 70
     MSVCP_size_t stdstr;
 #endif
 } ios_base;
@@ -375,7 +383,7 @@ typedef struct _ios_base {
 /* class basic_streambuf<char> */
 typedef struct {
     const vtable_ptr *vtable;
-#if _MSVCP_VER <= 100
+#if _MSVCP_VER >= 70 && _MSVCP_VER <= 100
     mutex lock;
 #endif
     char *rbuf;
@@ -390,7 +398,11 @@ typedef struct {
     int wsize;
     int *prsize;
     int *pwsize;
+#if _MSVCP_VER < 70
+    locale loc;
+#else
     locale *loc;
+#endif
 } basic_streambuf_char;
 
 typedef struct {
@@ -414,7 +426,7 @@ int __thiscall basic_streambuf_char_sputc(basic_streambuf_char*, char);
 /* class basic_streambuf<wchar> */
 typedef struct {
     const vtable_ptr *vtable;
-#if _MSVCP_VER <= 100
+#if _MSVCP_VER >= 70 && _MSVCP_VER <= 100
     mutex lock;
 #endif
     wchar_t *rbuf;
@@ -429,7 +441,11 @@ typedef struct {
     int wsize;
     int *prsize;
     int *pwsize;
+#if _MSVCP_VER < 70
+    locale loc;
+#else
     locale *loc;
+#endif
 } basic_streambuf_wchar;
 
 typedef struct {
