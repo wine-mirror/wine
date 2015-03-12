@@ -709,7 +709,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 behavior &= ~NSWindowCollectionBehaviorFullScreenPrimary;
                 behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
                 if (style & NSFullScreenWindowMask)
-                    [self toggleFullScreen:nil];
+                    [super toggleFullScreen:nil];
             }
         }
 
