@@ -18,7 +18,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "hhctrl.h"
 #include "stream.h"
