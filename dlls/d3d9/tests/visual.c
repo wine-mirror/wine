@@ -1009,10 +1009,10 @@ static void fog_test(void)
     },
     untransformed_3[] =
     {
-        {-1.0f, -1.0f, 0.4999f, 0xffff0000, 0xff000000},
-        {-1.0f,  1.0f, 0.4999f, 0xffff0000, 0xff000000},
-        { 1.0f, -1.0f, 0.4999f, 0xffff0000, 0xff000000},
-        { 1.0f,  1.0f, 0.4999f, 0xffff0000, 0xff000000},
+        {-1.0f, -1.0f, 0.5f,    0xffff0000, 0xff000000},
+        {-1.0f,  1.0f, 0.5f,    0xffff0000, 0xff000000},
+        { 1.0f, -1.0f, 0.5f,    0xffff0000, 0xff000000},
+        { 1.0f,  1.0f, 0.5f,    0xffff0000, 0xff000000},
     },
     far_quad1[] =
     {
@@ -1429,15 +1429,12 @@ static void fog_test(void)
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_RANGEFOGENABLE, TRUE);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
 
-        /* z=0.4999, set the fogstart to 0.5 and fogend slightly higher. If range fog
-         * is not used, the fog coordinate will be equal to fogstart and the quad not
-         * fogged. If range fog is used the fog coordinate will be slightly higher and
-         * the fog coordinate will be > fogend, so we get a fully fogged quad. The fog
-         * is calculated per vertex and interpolated, so even the center of the screen
-         * where the difference doesn't matter will be fogged, but check the corners in
-         * case a d3d/gl implementation decides to calculate the fog factor per fragment */
-        start = 0.5f;
-        end = 0.50001f;
+        /* z=0.5, x = +/- 1.0, y = +/- 1.0. In case of z fog the fog coordinate is
+         * 0.5. With range fog it is sqrt(x*x + y*y + z*z) = 1.5 for all vertices.
+         * Note that the fog coordinate is interpolated linearly across the vertices,
+         * so the different eye distance at the screen center should not matter. */
+        start = 0.75f;
+        end = 0.75001f;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, *((DWORD *) &start));
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, *((DWORD *) &end));
