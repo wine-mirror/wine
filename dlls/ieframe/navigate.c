@@ -17,7 +17,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "ieframe.h"
 

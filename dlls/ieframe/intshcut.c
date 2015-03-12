@@ -29,6 +29,8 @@
 
 #include <stdio.h>
 
+#define NONAMELESSUNION
+
 #include "ieframe.h"
 
 #include "shlobj.h"
