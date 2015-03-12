@@ -699,7 +699,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             NSUInteger style = [self styleMask];
 
             if (behavior & NSWindowCollectionBehaviorParticipatesInCycle &&
-                style & NSResizableWindowMask && !(style & NSUtilityWindowMask))
+                style & NSResizableWindowMask && !(style & NSUtilityWindowMask) && !maximized)
             {
                 behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
                 behavior &= ~NSWindowCollectionBehaviorFullScreenAuxiliary;
@@ -852,25 +852,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [[WineApplicationController sharedController] adjustWindowLevels];
         }
 
-        behavior = NSWindowCollectionBehaviorDefault;
-        if (state->excluded_by_expose)
-            behavior |= NSWindowCollectionBehaviorTransient;
-        else
-            behavior |= NSWindowCollectionBehaviorManaged;
-        if (state->excluded_by_cycle)
-        {
-            behavior |= NSWindowCollectionBehaviorIgnoresCycle;
-            if ([self isOrderedIn])
-                [NSApp removeWindowsItem:self];
-        }
-        else
-        {
-            behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
-            if ([self isOrderedIn])
-                [NSApp addWindowsItem:self title:[self title] filename:NO];
-        }
-        [self adjustFullScreenBehavior:behavior];
-
         if (state->minimized_valid)
         {
             macdrv_event_mask discard = event_mask_for_type(WINDOW_DID_UNMINIMIZE);
@@ -912,6 +893,25 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             maximized = state->maximized;
             [self adjustFeaturesForState];
         }
+
+        behavior = NSWindowCollectionBehaviorDefault;
+        if (state->excluded_by_expose)
+            behavior |= NSWindowCollectionBehaviorTransient;
+        else
+            behavior |= NSWindowCollectionBehaviorManaged;
+        if (state->excluded_by_cycle)
+        {
+            behavior |= NSWindowCollectionBehaviorIgnoresCycle;
+            if ([self isOrderedIn])
+                [NSApp removeWindowsItem:self];
+        }
+        else
+        {
+            behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
+            if ([self isOrderedIn])
+                [NSApp addWindowsItem:self title:[self title] filename:NO];
+        }
+        [self adjustFullScreenBehavior:behavior];
     }
 
     - (BOOL) addChildWineWindow:(WineWindow*)child assumeVisible:(BOOL)assumeVisible
@@ -1570,7 +1570,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         if ([menuItem action] == @selector(makeKeyAndOrderFront:))
             ret = [self isKeyWindow] || (!self.disabled && !self.noActivate);
-        if ([menuItem action] == @selector(toggleFullScreen:) && self.disabled)
+        if ([menuItem action] == @selector(toggleFullScreen:) && (self.disabled || maximized))
             ret = NO;
 
         return ret;
@@ -1609,7 +1609,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) toggleFullScreen:(id)sender
     {
-        if (!self.disabled)
+        if (!self.disabled && !maximized)
             [super toggleFullScreen:sender];
     }
 
