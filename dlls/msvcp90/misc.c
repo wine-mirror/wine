@@ -125,6 +125,14 @@ void CDECL mutex_mutex_dtor(mutex *m)
 
 static CRITICAL_SECTION lockit_cs[_MAX_LOCK];
 
+#if _MSVCP_VER >= 70
+static inline int get_locktype( _Lockit *lockit ) { return lockit->locktype; }
+static inline void set_locktype( _Lockit *lockit, int type ) { lockit->locktype = type; }
+#else
+static inline int get_locktype( _Lockit *lockit ) { return 0; }
+static inline void set_locktype( _Lockit *lockit, int type ) { }
+#endif
+
 /* ?_Lockit_ctor@_Lockit@std@@SAXH@Z */
 void __cdecl _Lockit_init(int locktype) {
     InitializeCriticalSection(&lockit_cs[locktype]);
@@ -156,7 +164,7 @@ void free_lockit(void) {
 /* ?_Lockit_ctor@_Lockit@std@@CAXPEAV12@H@Z */
 void __cdecl _Lockit__Lockit_ctor_locktype(_Lockit *lockit, int locktype)
 {
-    lockit->locktype = locktype;
+    set_locktype( lockit, locktype );
     EnterCriticalSection(&lockit_cs[locktype]);
 }
 
@@ -189,7 +197,7 @@ _Lockit* __thiscall _Lockit_ctor(_Lockit *this)
 /* ?_Lockit_dtor@_Lockit@std@@CAXPEAV12@@Z */
 void __cdecl _Lockit__Lockit_dtor(_Lockit *lockit)
 {
-    LeaveCriticalSection(&lockit_cs[lockit->locktype]);
+    LeaveCriticalSection(&lockit_cs[get_locktype( lockit )]);
 }
 
 /* ??1_Lockit@std@@QAE@XZ */

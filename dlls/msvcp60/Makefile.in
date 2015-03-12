@@ -3,7 +3,6 @@ IMPORTS   = msvcrt
 EXTRADEFS = -D_MSVCP_VER=60
 PARENTSRC = ../msvcp90
 
-
 C_SRCS = \
 	exception.c \
 	ios.c \

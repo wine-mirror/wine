@@ -250,7 +250,11 @@ ctype_wchar* ctype_short_use_facet(const locale*);
 
 /* class _Lockit */
 typedef struct {
+#if _MSVCP_VER >= 70
     int locktype;
+#else
+    char empty_struct;
+#endif
 } _Lockit;
 
 #define _LOCK_LOCALE 0
