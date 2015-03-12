@@ -57,6 +57,27 @@ static const char gif_local_palette[] = {
 0x02,0x02,0x44,0x01,0x00,0x3b
 };
 
+/* Generated with ImageMagick:
+ * convert -delay 100 -size 2x2 xc:red \
+ *     -dispose none -page +0+0 -size 2x1 xc:white \
+ *     test.gif
+ */
+static const char gif_frame_sizes[] = {
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x02, 0x00,
+    0x02, 0x00, 0xf1, 0x00, 0x00, 0xff, 0x00, 0x00,
+    0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00,
+    0x00, 0x21, 0xf9, 0x04, 0x00, 0x64, 0x00, 0x00,
+    0x00, 0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53,
+    0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03,
+    0x01, 0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00,
+    0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x02, 0x03,
+    0x44, 0x34, 0x05, 0x00, 0x21, 0xf9, 0x04, 0x04,
+    0x64, 0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x80, 0xff, 0xff,
+    0xff, 0x00, 0x00, 0x00, 0x02, 0x02, 0x04, 0x0a,
+    0x00, 0x3b
+};
+
 static IWICImagingFactory *factory;
 
 static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size)
@@ -332,6 +353,55 @@ static void test_local_gif_palette(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
+static void test_gif_frame_sizes(void)
+{
+    static const BYTE frame0[] = {0, 1, 0xfe, 0xfe, 2, 3, 0xfe, 0xfe};
+    static const BYTE frame1[] = {0, 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame;
+    UINT width, height;
+    BYTE buf[8];
+    HRESULT hr;
+
+    decoder = create_decoder(gif_frame_sizes, sizeof(gif_frame_sizes));
+    ok(decoder != 0, "Failed to load GIF image data\n");
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "GetSize error %x\n", hr);
+    ok(width == 2, "width = %d\n", width);
+    ok(height == 2, "height = %d\n", height);
+
+    memset(buf, 0xfe, sizeof(buf));
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %x\n", hr);
+    ok(!memcmp(buf, frame0, sizeof(buf)), "buf = %x %x %x %x %x %x %x %x\n",
+            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+
+    IWICBitmapFrameDecode_Release(frame);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 1, &frame);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "GetSize error %x\n", hr);
+    ok(width == 2, "width = %d\n", width);
+    ok(height == 1, "height = %d\n", height);
+
+    memset(buf, 0xfe, sizeof(buf));
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 4, sizeof(buf), buf);
+    ok(hr == S_OK, "CopyPixels error %x\n", hr);
+    ok(!memcmp(buf, frame1, sizeof(buf)), "buf = %x %x %x %x %x %x %x %x\n",
+            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+
+    IWICBitmapFrameDecode_Release(frame);
+
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(gifformat)
 {
     HRESULT hr;
@@ -345,6 +415,7 @@ START_TEST(gifformat)
     test_global_gif_palette();
     test_global_gif_palette_2frames();
     test_local_gif_palette();
+    test_gif_frame_sizes();
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();
@@ -356,6 +427,7 @@ START_TEST(gifformat)
     test_global_gif_palette();
     test_global_gif_palette_2frames();
     test_local_gif_palette();
+    test_gif_frame_sizes();
 
     IWICImagingFactory_Release(factory);
 }
