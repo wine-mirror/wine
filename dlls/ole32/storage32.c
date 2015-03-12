@@ -2917,6 +2917,8 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
                     ILockBytes_UnlockRegion(This->lockBytes, sanity_offset, sanity_cb, 0);
                     hr = STG_E_ACCESSDENIED;
                 }
+
+                last_sanity_check = current_time;
             }
             Sleep(delay);
             if (delay < 150) delay++;
