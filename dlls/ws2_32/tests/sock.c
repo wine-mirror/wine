@@ -3614,7 +3614,7 @@ static void test_select(void)
 
     /* When OOB data is received the socket is set in the except descriptor */
     ret = send(fdWrite, "A", 1, MSG_OOB);
-    ok(ret == 1, "expected 4, got %d\n", ret);
+    ok(ret == 1, "expected 1, got %d\n", ret);
     FD_ZERO_ALL();
     FD_SET_ALL(fdListen);
     FD_SET(fdRead, &readfds);
@@ -3626,6 +3626,28 @@ todo_wine
     ok(FD_ISSET(fdRead, &exceptfds), "fdRead socket is not in the set\n");
     tmp_buf[0] = 0xAF;
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
+
+    /* If the socket is OOBINLINED it will not receive the OOB in except fds */
+    ret = 1;
+    ret = setsockopt(fdRead, SOL_SOCKET, SO_OOBINLINE, (char*) &ret, sizeof(ret));
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ret = send(fdWrite, "A", 1, MSG_OOB);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    FD_SET(fdRead, &readfds);
+    FD_SET(fdRead, &exceptfds);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(FD_ISSET(fdRead, &readfds), "fdRead socket is not in the set\n");
+    tmp_buf[0] = 0xAF;
+    SetLastError(0xdeadbeef);
+    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret); /* can't recv with MSG_OOB if OOBINLINED */
+    ok(GetLastError() == WSAEINVAL, "expected 10022, got %d\n", GetLastError());
+    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
 
