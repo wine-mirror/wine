@@ -1034,13 +1034,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
     return hr;
 }
 
-#ifdef __i386__
-#define __thiscall __stdcall
-#else
-#define __thiscall __cdecl
-#endif
-
-static __thiscall void* Allocate_CoTaskMemAlloc(void *userdata, ULONG size)
+static void* WINAPI Allocate_CoTaskMemAlloc(void *this, ULONG size)
 {
     return CoTaskMemAlloc(size);
 }
@@ -1049,7 +1043,7 @@ static __thiscall void* Allocate_CoTaskMemAlloc(void *userdata, ULONG size)
  * end of the buffer.
  */
 static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data,
-    UINT codepage, void* (__thiscall *allocate)(void *userdata, ULONG size), void *allocate_data)
+    UINT codepage, void* (WINAPI *allocate)(void *this, ULONG size), void *allocate_data)
 {
     HRESULT hr = S_OK;
 
@@ -2738,13 +2732,13 @@ end:
                    "jmp *(4*(" #num "))(%eax)" )
 
 DEFINE_STDCALL_WRAPPER(0,Allocate_PMemoryAllocator,8)
-extern void* __thiscall Allocate_PMemoryAllocator(void *this, ULONG cbSize);
+extern void* WINAPI Allocate_PMemoryAllocator(void *this, ULONG cbSize);
 
 #else
 
-static void* __thiscall Allocate_PMemoryAllocator(void *this, ULONG cbSize)
+static void* WINAPI Allocate_PMemoryAllocator(void *this, ULONG cbSize)
 {
-    void* (__thiscall *fn)(void*,ULONG) = **(void***)this;
+    void* (WINAPI *fn)(void*,ULONG) = **(void***)this;
     return fn(this, cbSize);
 }
 

@@ -349,18 +349,12 @@ typedef struct _PMemoryAllocator {
     struct _PMemoryAllocator_vtable *vt;
 } PMemoryAllocator;
 
-#ifdef __i386__
-#define __thiscall __stdcall
-#else
-#define __thiscall __cdecl
-#endif
-
-static void * __thiscall PMemoryAllocator_Allocate(PMemoryAllocator *_this, ULONG cbSize)
+static void * WINAPI PMemoryAllocator_Allocate(PMemoryAllocator *_this, ULONG cbSize)
 {
     return CoTaskMemAlloc(cbSize);
 }
 
-static void __thiscall PMemoryAllocator_Free(PMemoryAllocator *_this, void *pv)
+static void WINAPI PMemoryAllocator_Free(PMemoryAllocator *_this, void *pv)
 {
     CoTaskMemFree(pv);
 }
