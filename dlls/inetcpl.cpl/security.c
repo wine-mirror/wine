@@ -21,7 +21,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <windef.h>
