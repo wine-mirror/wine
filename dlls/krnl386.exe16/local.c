@@ -30,7 +30,7 @@
 #include "config.h"
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
+
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
