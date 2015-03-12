@@ -42,8 +42,6 @@
 # include <linux/hdreg.h>
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
