@@ -774,122 +774,123 @@ static void fog_with_shader_test(void)
         int pshader;
         D3DFOGMODE vfog;
         D3DFOGMODE tfog;
+        BOOL uninitialized_reg;
         unsigned int color[11];
     }
     test_data[] =
     {
         /* Only pixel shader */
-        {0, 1, D3DFOG_NONE, D3DFOG_LINEAR,
+        {0, 1, D3DFOG_NONE, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {0, 1, D3DFOG_EXP, D3DFOG_LINEAR,
+        {0, 1, D3DFOG_EXP, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {0, 1, D3DFOG_EXP2, D3DFOG_LINEAR,
+        {0, 1, D3DFOG_EXP2, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {0, 1, D3DFOG_LINEAR, D3DFOG_NONE,
+        {0, 1, D3DFOG_LINEAR, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {0, 1, D3DFOG_LINEAR, D3DFOG_LINEAR,
+        {0, 1, D3DFOG_LINEAR, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
 
         /* Vertex shader */
-        {1, 0, D3DFOG_NONE, D3DFOG_NONE,
+        {1, 0, D3DFOG_NONE, D3DFOG_NONE, TRUE,
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
          0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
-        {1, 0, D3DFOG_NONE, D3DFOG_LINEAR,
+        {1, 0, D3DFOG_NONE, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {1, 0, D3DFOG_EXP, D3DFOG_LINEAR,
+        {1, 0, D3DFOG_EXP, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
 
-        {1, 0, D3DFOG_EXP2, D3DFOG_LINEAR,
+        {1, 0, D3DFOG_EXP2, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {1, 0, D3DFOG_LINEAR, D3DFOG_LINEAR,
+        {1, 0, D3DFOG_LINEAR, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
 
         /* Vertex shader and pixel shader */
         /* The next 4 tests would read the fog coord output, but it isn't available.
          * The result is a fully fogged quad, no matter what the Z coord is. */
-        {1, 1, D3DFOG_NONE, D3DFOG_NONE,
+        {1, 1, D3DFOG_NONE, D3DFOG_NONE, TRUE,
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
         0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_LINEAR, D3DFOG_NONE,
+        {1, 1, D3DFOG_LINEAR, D3DFOG_NONE, TRUE,
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
         0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_EXP, D3DFOG_NONE,
+        {1, 1, D3DFOG_EXP, D3DFOG_NONE, TRUE,
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
         0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_EXP2, D3DFOG_NONE,
+        {1, 1, D3DFOG_EXP2, D3DFOG_NONE, TRUE,
         {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00,
         0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00}},
 
         /* These use the Z coordinate with linear table fog */
-        {1, 1, D3DFOG_NONE, D3DFOG_LINEAR,
+        {1, 1, D3DFOG_NONE, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_EXP, D3DFOG_LINEAR,
+        {1, 1, D3DFOG_EXP, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_EXP2, D3DFOG_LINEAR,
+        {1, 1, D3DFOG_EXP2, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
-        {1, 1, D3DFOG_LINEAR, D3DFOG_LINEAR,
+        {1, 1, D3DFOG_LINEAR, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
 
         /* Non-linear table fog without fog coord */
-        {1, 1, D3DFOG_NONE, D3DFOG_EXP,
+        {1, 1, D3DFOG_NONE, D3DFOG_EXP, FALSE,
         {0x00ff0000, 0x00e71800, 0x00d12e00, 0x00bd4200, 0x00ab5400, 0x009b6400,
         0x008d7200, 0x007f8000, 0x00738c00, 0x00689700, 0x005ea100}},
-        {1, 1, D3DFOG_NONE, D3DFOG_EXP2,
+        {1, 1, D3DFOG_NONE, D3DFOG_EXP2, FALSE,
         {0x00fd0200, 0x00f50200, 0x00f50a00, 0x00e91600, 0x00d92600, 0x00c73800,
         0x00b24d00, 0x009c6300, 0x00867900, 0x00728d00, 0x005ea100}},
 
         /* These tests fail on older Nvidia drivers */
         /* Foggy vertex shader */
-        {2, 0, D3DFOG_NONE, D3DFOG_NONE,
+        {2, 0, D3DFOG_NONE, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 0, D3DFOG_EXP, D3DFOG_NONE,
+        {2, 0, D3DFOG_EXP, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 0, D3DFOG_EXP2, D3DFOG_NONE,
+        {2, 0, D3DFOG_EXP2, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 0, D3DFOG_LINEAR, D3DFOG_NONE,
+        {2, 0, D3DFOG_LINEAR, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
 
         /* Foggy vertex shader and pixel shader. First 4 tests with vertex fog,
          * all using the fixed fog-coord linear fog */
-        {2, 1, D3DFOG_NONE, D3DFOG_NONE,
+        {2, 1, D3DFOG_NONE, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 1, D3DFOG_EXP, D3DFOG_NONE,
+        {2, 1, D3DFOG_EXP, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 1, D3DFOG_EXP2, D3DFOG_NONE,
+        {2, 1, D3DFOG_EXP2, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
-        {2, 1, D3DFOG_LINEAR, D3DFOG_NONE,
+        {2, 1, D3DFOG_LINEAR, D3DFOG_NONE, FALSE,
         {0x00ff0000, 0x00fe0100, 0x00de2100, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x003fc000, 0x001fe000, 0x0000ff00, 0x0000ff00}},
 
         /* These use table fog. Here the shader-provided fog coordinate is
          * ignored and the z coordinate used instead */
-        {2, 1, D3DFOG_NONE, D3DFOG_EXP,
+        {2, 1, D3DFOG_NONE, D3DFOG_EXP, FALSE,
         {0x00ff0000, 0x00e71800, 0x00d12e00, 0x00bd4200, 0x00ab5400, 0x009b6400,
         0x008d7200, 0x007f8000, 0x00738c00, 0x00689700, 0x005ea100}},
-        {2, 1, D3DFOG_NONE, D3DFOG_EXP2,
+        {2, 1, D3DFOG_NONE, D3DFOG_EXP2, FALSE,
         {0x00fd0200, 0x00f50200, 0x00f50a00, 0x00e91600, 0x00d92600, 0x00c73800,
         0x00b24d00, 0x009c6300, 0x00867900, 0x00728d00, 0x005ea100}},
-        {2, 1, D3DFOG_NONE, D3DFOG_LINEAR,
+        {2, 1, D3DFOG_NONE, D3DFOG_LINEAR, FALSE,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
     };
@@ -996,7 +997,7 @@ static void fog_with_shader_test(void)
 
             /* As the red and green component are the result of blending use 5% tolerance on the expected value */
             color = getPixelColor(device, 128, 240);
-            ok(color_match(color, test_data[i].color[j], 13),
+            ok(color_match(color, test_data[i].color[j], 13) || broken(test_data[i].uninitialized_reg),
                     "fog vs%i ps%i fvm%i ftm%i %d: got color %08x, expected %08x +-5%%\n",
                     test_data[i].vshader, test_data[i].pshader,
                     test_data[i].vfog, test_data[i].tfog, j, color, test_data[i].color[j]);
