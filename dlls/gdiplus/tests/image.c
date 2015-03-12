@@ -1335,6 +1335,12 @@ static const unsigned char gifimage[35] = {
 0xff,0xff,0xff,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x44,
 0x01,0x00,0x3b
 };
+/* 1x1 pixel transparent gif */
+static const unsigned char transparentgif[] = {
+0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00,0x01,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x21,0xf9,0x04,0x01,0x00,0x00,0x00,0x00,0x2c,0x00,0x00,0x00,0x00,
+0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x44,0x01,0x00,0x3b
+};
 /* 1x1 pixel bmp */
 static const unsigned char bmpimage[66] = {
 0x42,0x4d,0x42,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x28,0x00,
@@ -2620,6 +2626,30 @@ static void test_multiframegif(void)
 
     GdipDisposeImage((GpImage*)bmp);
     IStream_Release(stream);
+
+    /* Test with a non-animated transparent gif */
+    hglob = GlobalAlloc (0, sizeof(transparentgif));
+    data = GlobalLock (hglob);
+    memcpy(data, transparentgif, sizeof(transparentgif));
+    GlobalUnlock(hglob);
+
+    hres = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create a stream\n");
+
+    stat = GdipCreateBitmapFromStream(stream, &bmp);
+    IStream_Release(stream);
+    ok(stat == Ok, "Failed to create a Bitmap\n");
+
+    stat = GdipGetImagePixelFormat((GpImage*)bmp, &pixel_format);
+    expect(Ok, stat);
+    expect(PixelFormat8bppIndexed, pixel_format);
+
+    count = 12345;
+    stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);
+    expect(Ok, stat);
+    expect(1, count);
+
+    GdipDisposeImage((GpImage*)bmp);
 
     /* Test frame dispose methods */
     hglob = GlobalAlloc (0, sizeof(gifanimation2));
