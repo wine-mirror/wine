@@ -1871,7 +1871,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->height = height;
     (*bitmap)->format = format;
     (*bitmap)->image.picture = NULL;
-    (*bitmap)->image.stream = NULL;
     (*bitmap)->image.decoder = NULL;
     (*bitmap)->hbitmap = hbitmap;
     (*bitmap)->hdc = NULL;
@@ -2089,9 +2088,6 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     GdipFree(dst->prop_item);
     dst->prop_item = src->prop_item;
     dst->prop_count = src->prop_count;
-    if (dst->image.stream)
-        IStream_Release(dst->image.stream);
-    dst->image.stream = src->image.stream;
     if (dst->image.decoder)
         IWICBitmapDecoder_Release(dst->image.decoder);
     dst->image.decoder = src->image.decoder;
@@ -2140,8 +2136,6 @@ static GpStatus free_image_data(GpImage *image)
     }
     if (image->picture)
         IPicture_Release(image->picture);
-    if (image->stream)
-        IStream_Release(image->stream);
     if (image->decoder)
         IWICBitmapDecoder_Release(image->decoder);
     GdipFree(image->palette);
@@ -3427,7 +3421,7 @@ static GpStatus initialize_decoder_wic(IStream *stream, REFGUID container, IWICB
 
 typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
 
-static GpStatus decode_frame_wic(IStream *stream, IWICBitmapDecoder *decoder,
+static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder,
     UINT active_frame, metadata_reader_func metadata_reader, GpImage **image)
 {
     GpStatus status=Ok;
@@ -3556,7 +3550,6 @@ static GpStatus decode_frame_wic(IStream *stream, IWICBitmapDecoder *decoder,
         bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI|ImageFlagsColorSpaceRGB;
         bitmap->image.frame_count = frame_count;
         bitmap->image.current_frame = active_frame;
-        bitmap->image.stream = stream;
         bitmap->image.decoder = decoder;
         IWICBitmapDecoder_AddRef(decoder);
         if (palette)
@@ -3569,8 +3562,6 @@ static GpStatus decode_frame_wic(IStream *stream, IWICBitmapDecoder *decoder,
             if (IsEqualGUID(&wic_format, &GUID_WICPixelFormatBlackWhite))
                 bitmap->image.palette->Flags = 0;
         }
-        /* Pin the source stream */
-        IStream_AddRef(stream);
         TRACE("=> %p\n", *image);
     }
 
@@ -3587,7 +3578,7 @@ static GpStatus decode_image_wic(IStream *stream, REFGUID container,
     if(status != Ok)
         return status;
 
-    status = decode_frame_wic(stream, decoder, 0, metadata_reader, image);
+    status = decode_frame_wic(decoder, 0, metadata_reader, image);
     IWICBitmapDecoder_Release(decoder);
     return status;
 }
@@ -3597,7 +3588,7 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
     GpImage *new_image;
     GpStatus status;
 
-    status = decode_frame_wic(image->stream, image->decoder, active_frame, NULL, &new_image);
+    status = decode_frame_wic(image->decoder, active_frame, NULL, &new_image);
     if(status != Ok)
         return status;
 
@@ -3617,7 +3608,7 @@ static GpStatus select_frame_gif(GpImage *image, UINT active_frame)
     GpImage *new_image;
     GpStatus status;
 
-    status = decode_frame_wic(image->stream, image->decoder, active_frame, gif_metadata_reader, &new_image);
+    status = decode_frame_wic(image->decoder, active_frame, gif_metadata_reader, &new_image);
     if(status != Ok)
         return status;
 
@@ -3782,6 +3773,23 @@ static GpStatus get_decoder_info(IStream* stream, const struct image_codec **res
     return GenericError;
 }
 
+static GpStatus get_decoder_info_from_image(GpImage *image, const struct image_codec **result)
+{
+    int i;
+
+    for (i = 0; i < NUM_CODECS; i++) {
+        if ((codecs[i].info.Flags & ImageCodecFlagsDecoder) &&
+                IsEqualIID(&codecs[i].info.FormatID, &image->format))
+        {
+            *result = &codecs[i];
+            return Ok;
+        }
+    }
+
+    TRACE("no match for format: %s\n", wine_dbgstr_guid(&image->format));
+    return GenericError;
+}
+
 GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *dimensionID,
                                                UINT frame)
 {
@@ -3808,12 +3816,6 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
     if (image->current_frame == frame)
         return Ok;
 
-    if (!image->stream)
-    {
-        TRACE("image doesn't have an associated stream\n");
-        return Ok;
-    }
-
     if (!image->decoder)
     {
         TRACE("image doesn't have an associated decoder\n");
@@ -3821,7 +3823,7 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image, GDIPCONST GUID *d
     }
 
     /* choose an appropriate image decoder */
-    stat = get_decoder_info(image->stream, &codec);
+    stat = get_decoder_info_from_image(image, &codec);
     if (stat != Ok)
     {
         WARN("can't find decoder info\n");
