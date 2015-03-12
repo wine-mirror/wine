@@ -21,6 +21,7 @@
 #ifndef __WINE_WINTERNL_H
 #define __WINE_WINTERNL_H
 
+#include <ntdef.h>
 #include <windef.h>
 
 #ifdef __cplusplus
@@ -812,11 +813,6 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemLogicalProcessorInformation = 73,
     SystemInformationClassMax
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
-
-typedef enum _TIMER_TYPE {
-    NotificationTimer,
-    SynchronizationTimer
-} TIMER_TYPE;
 
 typedef enum _THREADINFOCLASS {
     ThreadBasicInformation,
@@ -1761,11 +1757,6 @@ typedef struct _KEY_MULTIPLE_VALUE_INFORMATION
 typedef VOID (CALLBACK *PRTL_OVERLAPPED_COMPLETION_ROUTINE)(DWORD,DWORD,LPVOID);
 
 typedef VOID (CALLBACK *PTIMER_APC_ROUTINE) ( PVOID, ULONG, LONG );
-
-typedef enum _EVENT_TYPE {
-  NotificationEvent,
-  SynchronizationEvent
-} EVENT_TYPE, *PEVENT_TYPE;
 
 typedef enum _EVENT_INFORMATION_CLASS {
   EventBasicInformation
