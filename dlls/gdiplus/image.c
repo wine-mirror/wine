@@ -3421,7 +3421,7 @@ static GpStatus initialize_decoder_wic(IStream *stream, REFGUID container, IWICB
 
 typedef void (*metadata_reader_func)(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT frame);
 
-static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder,
+static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversion,
     UINT active_frame, metadata_reader_func metadata_reader, GpImage **image)
 {
     GpStatus status=Ok;
@@ -3449,25 +3449,25 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder,
 
         if (SUCCEEDED(hr))
         {
-            IWICBitmapSource *bmp_source;
-            IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICBitmapSource, (void **)&bmp_source);
-
-            for (i=0; pixel_formats[i].wic_format; i++)
+            if (!force_conversion)
             {
-                if (IsEqualGUID(&wic_format, pixel_formats[i].wic_format))
+                for (i=0; pixel_formats[i].wic_format; i++)
                 {
-                    source = bmp_source;
-                    gdip_format = pixel_formats[i].gdip_format;
-                    palette_type = pixel_formats[i].palette_type;
-                    break;
+                    if (IsEqualGUID(&wic_format, pixel_formats[i].wic_format))
+                    {
+                        source = (IWICBitmapSource*)frame;
+                        IWICBitmapSource_AddRef(source);
+                        gdip_format = pixel_formats[i].gdip_format;
+                        palette_type = pixel_formats[i].palette_type;
+                        break;
+                    }
                 }
             }
             if (!source)
             {
                 /* unknown format; fall back on 32bppARGB */
-                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, bmp_source, &source);
+                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)frame, &source);
                 gdip_format = PixelFormat32bppARGB;
-                IWICBitmapSource_Release(bmp_source);
             }
             TRACE("%s => %#x\n", wine_dbgstr_guid(&wic_format), gdip_format);
         }
@@ -3578,7 +3578,7 @@ static GpStatus decode_image_wic(IStream *stream, REFGUID container,
     if(status != Ok)
         return status;
 
-    status = decode_frame_wic(decoder, 0, metadata_reader, image);
+    status = decode_frame_wic(decoder, FALSE, 0, metadata_reader, image);
     IWICBitmapDecoder_Release(decoder);
     return status;
 }
@@ -3588,7 +3588,7 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
     GpImage *new_image;
     GpStatus status;
 
-    status = decode_frame_wic(image->decoder, active_frame, NULL, &new_image);
+    status = decode_frame_wic(image->decoder, FALSE, active_frame, NULL, &new_image);
     if(status != Ok)
         return status;
 
@@ -3608,7 +3608,7 @@ static GpStatus select_frame_gif(GpImage *image, UINT active_frame)
     GpImage *new_image;
     GpStatus status;
 
-    status = decode_frame_wic(image->decoder, active_frame, gif_metadata_reader, &new_image);
+    status = decode_frame_wic(image->decoder, TRUE, active_frame, gif_metadata_reader, &new_image);
     if(status != Ok)
         return status;
 
@@ -3658,7 +3658,30 @@ static GpStatus decode_image_png(IStream* stream, GpImage **image)
 
 static GpStatus decode_image_gif(IStream* stream, GpImage **image)
 {
-    return decode_image_wic(stream, &GUID_ContainerFormatGif, gif_metadata_reader, image);
+    IWICBitmapDecoder *decoder;
+    UINT frame_count;
+    GpStatus status;
+    HRESULT hr;
+
+    status = initialize_decoder_wic(stream, &GUID_ContainerFormatGif, &decoder);
+    if(status != Ok)
+        return status;
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+    if(FAILED(hr))
+        return hresult_to_status(hr);
+
+    status = decode_frame_wic(decoder, frame_count>1 ? TRUE : FALSE,
+            0, gif_metadata_reader, image);
+    IWICBitmapDecoder_Release(decoder);
+    if(status != Ok)
+        return status;
+
+    if(frame_count > 1) {
+        GdipFree((*image)->palette);
+        (*image)->palette = NULL;
+    }
+    return Ok;
 }
 
 static GpStatus decode_image_tiff(IStream* stream, GpImage **image)

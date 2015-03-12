@@ -2434,6 +2434,8 @@ static void test_multiframegif(void)
     ARGB color;
     UINT count;
     GUID dimension;
+    PixelFormat pixel_format;
+    INT palette_size;
 
     /* Test frame functions with an animated GIF */
     hglob = GlobalAlloc (0, sizeof(gifanimation));
@@ -2451,6 +2453,16 @@ static void test_multiframegif(void)
         IStream_Release(stream);
         return;
     }
+
+    stat = GdipGetImagePixelFormat((GpImage*)bmp, &pixel_format);
+    expect(Ok, stat);
+    expect(PixelFormat32bppARGB, pixel_format);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bmp, &palette_size);
+    expect(Ok, stat);
+    ok(palette_size == sizeof(ColorPalette) ||
+            broken(palette_size == sizeof(ColorPalette)+sizeof(ARGB[3])),
+            "palette_size = %d\n", palette_size);
 
     /* Bitmap starts at frame 0 */
     color = 0xdeadbeef;
@@ -2542,6 +2554,10 @@ static void test_multiframegif(void)
         IStream_Release(stream);
         return;
     }
+
+    stat = GdipGetImagePixelFormat((GpImage*)bmp, &pixel_format);
+    expect(Ok, stat);
+    expect(PixelFormat8bppIndexed, pixel_format);
 
     /* Check metadata */
     stat = GdipImageGetFrameDimensionsCount((GpImage*)bmp,&count);
