@@ -192,9 +192,6 @@ typedef struct _SessionMgr {
     IMMDevice *device;
 } SessionMgr;
 
-static const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
-    'w','i','n','e','c','o','r','e','a','u','d','i','o','.','d','r','v',0};
 static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','c','o','r','e','a','u','d','i','o','.','d','r','v','\\','d','e','v','i','c','e','s',0};
