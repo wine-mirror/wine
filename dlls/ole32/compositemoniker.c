@@ -722,6 +722,8 @@ CompositeMonikerImpl_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
         IRunningObjectTable* rot;
 
         res = IMoniker_ComposeWith(pmkToLeft, iface, FALSE, &leftMk);
+        if (FAILED(res))
+            return res;
 
         res = IBindCtx_GetRunningObjectTable(pbc,&rot);
         if (FAILED(res))
