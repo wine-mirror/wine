@@ -947,7 +947,6 @@ static void test_GetClusterMetrics(void)
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
-todo_wine
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(count == 4, "got %u\n", count);
 
@@ -962,10 +961,10 @@ todo_wine
     /* inline object takes a separate cluster, replaced codepoints number doesn't matter */
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
-todo_wine {
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+todo_wine
     ok(count == 3, "got %u\n", count);
-}
+
     IDWriteInlineObject_Release(trimm);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
