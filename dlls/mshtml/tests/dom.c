@@ -1670,6 +1670,38 @@ static void _test_textarea_put_value(unsigned line, IUnknown *unk, const char *v
     _test_textarea_value(line, unk, value);
 }
 
+#define test_textarea_defaultvalue(t,v) _test_textarea_defaultvalue(__LINE__,t,v)
+static void _test_textarea_defaultvalue(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    BSTR value = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_get_defaultValue(textarea, &value);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "get_defaultValue failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(value, exval), "defaultValue = %s, expected %s\n", wine_dbgstr_w(value), exval);
+    else
+        ok_(__FILE__,line)(!value, "value = %p\n", value);
+    SysFreeString(value);
+}
+
+#define test_textarea_put_defaultvalue(t,v) _test_textarea_put_defaultvalue(__LINE__,t,v)
+static void _test_textarea_put_defaultvalue(unsigned line, IUnknown *unk, const char *value)
+{
+    IHTMLTextAreaElement *textarea = _get_textarea_iface(line, unk);
+    BSTR tmp = a2bstr(value);
+    HRESULT hres;
+
+    hres = IHTMLTextAreaElement_put_defaultValue(textarea, tmp);
+    IHTMLTextAreaElement_Release(textarea);
+    ok_(__FILE__,line)(hres == S_OK, "put_defaultValue failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    _test_textarea_defaultvalue(line, unk, value);
+}
+
 #define test_textarea_readonly(t,v) _test_textarea_readonly(__LINE__,t,v)
 static void _test_textarea_readonly(unsigned line, IUnknown *unk, VARIANT_BOOL ex)
 {
@@ -8172,6 +8204,9 @@ static void test_elems2(IHTMLDocument2 *doc)
 
         test_textarea_value((IUnknown*)elem, NULL);
         test_textarea_put_value((IUnknown*)elem, "test");
+        test_textarea_defaultvalue((IUnknown*)elem, NULL);
+        test_textarea_put_defaultvalue((IUnknown*)elem, "defval text");
+        test_textarea_put_value((IUnknown*)elem, "test");
         test_textarea_readonly((IUnknown*)elem, VARIANT_FALSE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_TRUE);
         test_textarea_put_readonly((IUnknown*)elem, VARIANT_FALSE);
@@ -8182,6 +8217,13 @@ static void test_elems2(IHTMLDocument2 *doc)
 
         test_elem_istextedit(elem, VARIANT_TRUE);
 
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div, "<textarea id=\"ta\">default text</textarea>");
+    elem = get_elem_by_id(doc, "ta", TRUE);
+    if(elem) {
+        test_textarea_defaultvalue((IUnknown*)elem, "default text");
         IHTMLElement_Release(elem);
     }
 

@@ -229,15 +229,28 @@ static HRESULT WINAPI HTMLTextAreaElement_get_form(IHTMLTextAreaElement *iface, 
 static HRESULT WINAPI HTMLTextAreaElement_put_defaultValue(IHTMLTextAreaElement *iface, BSTR v)
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMHTMLTextAreaElement_SetDefaultValue(This->nstextarea, &nsstr);
+    nsAString_Finish(&nsstr);
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_get_defaultValue(IHTMLTextAreaElement *iface, BSTR *p)
 {
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLTextAreaElement_GetDefaultValue(This->nstextarea, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
 }
 
 static HRESULT WINAPI HTMLTextAreaElement_select(IHTMLTextAreaElement *iface)
