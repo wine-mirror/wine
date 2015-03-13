@@ -936,10 +936,12 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDevice(ID3D10ShaderR
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D10ShaderResourceView *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+    struct d3d10_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_get_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D10ShaderResourceView *iface,
