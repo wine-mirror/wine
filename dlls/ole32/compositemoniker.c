@@ -778,9 +778,16 @@ CompositeMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
     /* This method returns a composite moniker that consists of the inverses of each of the components */
     /* of the original composite, stored in reverse order */
 
+    *ppmk = NULL;
+
     res=CreateAntiMoniker(&antiMk);
-    res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
+    if (FAILED(res))
+        return res;
+
+    res=IMoniker_ComposeWith(iface,antiMk,FALSE,&tempMk);
     IMoniker_Release(antiMk);
+    if (FAILED(res))
+        return res;
 
     if (tempMk==NULL)
 
