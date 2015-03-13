@@ -162,6 +162,7 @@ extern BOOL freetype_is_monospaced(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_glyph_outline(IDWriteFontFace2*,FLOAT,UINT16,USHORT,struct glyph_outline**) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphcount(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphindex(IDWriteFontFace2*,UINT32) DECLSPEC_HIDDEN;
+extern BOOL freetype_has_kerning_pairs(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

@@ -669,8 +669,8 @@ static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace2
 static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    TRACE("(%p)\n", This);
+    return freetype_has_kerning_pairs(iface);
 }
 
 static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFace2 *iface,

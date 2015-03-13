@@ -407,6 +407,19 @@ UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
     return glyph;
 }
 
+BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
+{
+    BOOL has_kerning_pairs = FALSE;
+    FT_Face face;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+        has_kerning_pairs = FT_HAS_KERNING(face);
+    LeaveCriticalSection(&freetype_cs);
+
+    return has_kerning_pairs;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -446,6 +459,11 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
 UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
 {
     return 0;
+}
+
+BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
+{
+    return FALSE;
 }
 
 #endif /* HAVE_FREETYPE */
