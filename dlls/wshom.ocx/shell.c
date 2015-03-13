@@ -254,7 +254,7 @@ static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
     return E_NOTIMPL;
 }
 
-BOOL CALLBACK enum_thread_wnd_proc(HWND hwnd, LPARAM lParam)
+static BOOL CALLBACK enum_thread_wnd_proc(HWND hwnd, LPARAM lParam)
 {
     INT *count = (INT*)lParam;
 
