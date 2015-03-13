@@ -244,10 +244,15 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             /* restart with larger buffer */
             break;
         case STATUS_PENDING:
-            if (WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) == WAIT_OBJECT_0)
+            for (;;)
             {
-                HeapFree( GetProcessHeap(), 0, in_buff );
-                return STATUS_SUCCESS;
+                DWORD ret = WaitForMultipleObjectsEx( 2, handles, FALSE, INFINITE, TRUE );
+                if (ret == WAIT_OBJECT_0)
+                {
+                    HeapFree( GetProcessHeap(), 0, in_buff );
+                    return STATUS_SUCCESS;
+                }
+                if (ret != WAIT_IO_COMPLETION) break;
             }
             break;
         }
