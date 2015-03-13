@@ -35,6 +35,31 @@ typedef struct _WMMediaType
     [size_is(cbFormat)] BYTE *pbFormat;
 } WM_MEDIA_TYPE;
 
+typedef struct _WMWriterStatistics
+{
+    QWORD qwSampleCount;
+    QWORD qwByteCount;
+    QWORD qwDroppedSampleCount;
+    QWORD qwDroppedByteCount;
+    DWORD dwCurrentBitrate;
+    DWORD dwAverageBitrate;
+    DWORD dwExpectedBitrate;
+    DWORD dwCurrentSampleRate;
+    DWORD dwAverageSampleRate;
+    DWORD dwExpectedSampleRate;
+} WM_WRITER_STATISTICS;
+
+typedef struct _WMWriterStatisticsEx
+{
+    DWORD dwBitratePlusOverhead;
+    DWORD dwCurrentSampleDropRateInQueue;
+    DWORD dwCurrentSampleDropRateInCodec;
+    DWORD dwCurrentSampleDropRateInMultiplexer;
+    DWORD dwTotalSampleDropsInQueue;
+    DWORD dwTotalSampleDropsInCodec;
+    DWORD dwTotalSampleDropsInMultiplexer;
+} WM_WRITER_STATISTICS_EX;
+
 typedef enum WMT_ATTR_DATATYPE
 {
     WMT_TYPE_DWORD      = 0,
@@ -535,6 +560,30 @@ interface IWMInputMediaProps : IWMMediaProps
 
 [
     object,
+    uuid(96406be4-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMWriterSink : IUnknown
+{
+    HRESULT OnHeader(
+        [in] INSSBuffer *pHeader);
+
+    HRESULT IsRealTime(
+        [out] BOOL *pfRealTime);
+
+    HRESULT AllocateDataUnit(
+        [in] DWORD cbDataUnit,
+        [out] INSSBuffer **ppDataUnit);
+
+    HRESULT OnDataUnit(
+        [in] INSSBuffer *pDataUnit);
+
+    HRESULT OnEndWriting();
+}
+
+[
+    object,
     uuid(96406bd4-2b2b-11d3-b36b-00c04f6108ff),
     pointer_default(unique),
     local
@@ -585,6 +634,93 @@ interface IWMWriter : IUnknown
         [in] INSSBuffer *pSample);
 
     HRESULT Flush();
+}
+
+[
+    object,
+    uuid(96406be3-2b2b-11d3-b36b-00C04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMWriterAdvanced : IUnknown
+{
+    HRESULT GetSinkCount(
+        [out] DWORD *pcSinks);
+
+    HRESULT GetSink(
+        [in] DWORD dwSinkNum,
+        [out] IWMWriterSink **ppSink);
+
+    HRESULT AddSink(
+        [in] IWMWriterSink *pSink);
+
+    HRESULT RemoveSink(
+        [in] IWMWriterSink *pSink);
+
+    HRESULT WriteStreamSample(
+        [in] WORD wStreamNum,
+        [in] QWORD cnsSampleTime,
+        [in] DWORD msSampleSendTime,
+        [in] QWORD cnsSampleDuration,
+        [in] DWORD dwFlags,
+        [in] INSSBuffer *pSample);
+
+    HRESULT SetLiveSource(
+        BOOL fIsLiveSource);
+
+    HRESULT IsRealTime(
+        [out] BOOL *pfRealTime);
+
+    HRESULT GetWriterTime(
+        [out] QWORD *pCurrentTime);
+
+    HRESULT GetStatistics(
+        [in] WORD wStreamNum,
+        [out] WM_WRITER_STATISTICS *pStats);
+
+    HRESULT SetSyncTolerance(
+        [in] DWORD msWindow);
+
+    HRESULT GetSyncTolerance(
+        [out] DWORD *pmsWindow);
+}
+
+[
+    object,
+    uuid(962dc1ec-c046-4db8-9cc7-26ceae500817),
+    pointer_default(unique),
+    local
+]
+interface IWMWriterAdvanced2 : IWMWriterAdvanced
+{
+    HRESULT GetInputSetting(
+        [in] DWORD dwInputNum,
+        [in] LPCWSTR pszName,
+        [out] WMT_ATTR_DATATYPE *pType,
+        [out, size_is(*pcbLength)] BYTE *pValue,
+        [in, out] WORD *pcbLength);
+
+    HRESULT SetInputSetting(
+        [in] DWORD dwInputNum,
+        [in] LPCWSTR pszName,
+        [in] WMT_ATTR_DATATYPE Type,
+        [in, size_is(cbLength)] const BYTE *pValue,
+        [in] WORD cbLength);
+}
+
+[
+    object,
+    uuid(2cd6492d-7c37-4e76-9d3b-59261183a22e),
+    pointer_default(unique),
+    local
+]
+interface IWMWriterAdvanced3 : IWMWriterAdvanced2
+{
+    HRESULT GetStatisticsEx(
+        [in] WORD wStreamNum,
+        [out] WM_WRITER_STATISTICS_EX *pStats);
+
+    HRESULT SetNonBlocking();
 }
 
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
