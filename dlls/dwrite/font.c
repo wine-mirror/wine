@@ -773,7 +773,7 @@ HRESULT get_family_names_from_stream(IDWriteFontFileStream *stream, UINT32 index
 {
     const void *name_table = NULL;
     void *name_context;
-    HRESULT hr = S_OK;
+    HRESULT hr = E_FAIL;
 
     opentype_get_font_table(stream, facetype, index, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
     if (name_table) {
@@ -781,7 +781,7 @@ HRESULT get_family_names_from_stream(IDWriteFontFileStream *stream, UINT32 index
         IDWriteFontFileStream_ReleaseFileFragment(stream, name_context);
     }
     else
-        names = NULL;
+        *names = NULL;
 
     return hr;
 }
