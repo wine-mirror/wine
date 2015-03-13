@@ -1279,6 +1279,8 @@ HRESULT WINAPI OleLoad(
    * Get the class ID for the object.
    */
   hres = IStorage_Stat(pStg, &storageInfo, STATFLAG_NONAME);
+  if (FAILED(hres))
+    return hres;
 
   /*
    * Now, try and create the handler for the object
