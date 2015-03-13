@@ -394,7 +394,7 @@ HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 
 
 /***********************************************************************
- *           _lread16   (KERNEL.82)
+ *           _lread16 (internal)
  */
 UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 {
