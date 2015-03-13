@@ -646,7 +646,6 @@ extern struct module*
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module) DECLSPEC_HIDDEN;
 extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size) DECLSPEC_HIDDEN;
-extern void         pe_unmap_directoy(struct module* module, int dirno) DECLSPEC_HIDDEN;
 
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source) DECLSPEC_HIDDEN;
