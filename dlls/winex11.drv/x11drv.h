@@ -214,8 +214,6 @@ extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
 extern INT X11DRV_XWStoDS( HDC hdc, INT width ) DECLSPEC_HIDDEN;
 extern INT X11DRV_YWStoDS( HDC hdc, INT height ) DECLSPEC_HIDDEN;
 
-extern const int X11DRV_XROPfunction[];
-
 extern BOOL client_side_graphics DECLSPEC_HIDDEN;
 extern BOOL client_side_with_render DECLSPEC_HIDDEN;
 extern BOOL shape_layered_windows DECLSPEC_HIDDEN;

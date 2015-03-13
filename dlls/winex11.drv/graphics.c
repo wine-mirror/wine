@@ -51,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 #define ABS(x)    ((x)<0?(-(x)):(x))
 
   /* ROP code to GC function conversion */
-const int X11DRV_XROPfunction[16] =
+static const int X11DRV_XROPfunction[16] =
 {
     GXclear,        /* R2_BLACK */
     GXnor,          /* R2_NOTMERGEPEN */
