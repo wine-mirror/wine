@@ -913,6 +913,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderRe
         wined3d_shader_resource_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
+        wined3d_private_store_cleanup(&This->private_store);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -944,10 +945,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D1
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D10ShaderResourceView *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+    struct d3d10_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return E_NOTIMPL;
+    return d3d10_set_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterface(ID3D10ShaderResourceView *iface,
@@ -1032,6 +1035,7 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
         return hr;
     }
 
+    wined3d_private_store_init(&view->private_store);
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;

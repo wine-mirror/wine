@@ -171,6 +171,7 @@ struct d3d10_shader_resource_view
     ID3D10ShaderResourceView ID3D10ShaderResourceView_iface;
     LONG refcount;
 
+    struct wined3d_private_store private_store;
     struct wined3d_shader_resource_view *wined3d_view;
     D3D10_SHADER_RESOURCE_VIEW_DESC desc;
     ID3D10Resource *resource;
