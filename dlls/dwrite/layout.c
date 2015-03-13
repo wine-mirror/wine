@@ -67,6 +67,7 @@ enum layout_range_attr_kind {
     LAYOUT_RANGE_ATTR_INLINE,
     LAYOUT_RANGE_ATTR_UNDERLINE,
     LAYOUT_RANGE_ATTR_STRIKETHROUGH,
+    LAYOUT_RANGE_ATTR_PAIR_KERNING,
     LAYOUT_RANGE_ATTR_FONTCOLL,
     LAYOUT_RANGE_ATTR_LOCALE,
     LAYOUT_RANGE_ATTR_FONTFAMILY
@@ -83,6 +84,7 @@ struct layout_range_attr_value {
         IUnknown *effect;
         BOOL underline;
         BOOL strikethrough;
+        BOOL pair_kerning;
         IDWriteFontCollection *collection;
         const WCHAR *locale;
         const WCHAR *fontfamily;
@@ -100,6 +102,7 @@ struct layout_range {
     IUnknown *effect;
     BOOL underline;
     BOOL strikethrough;
+    BOOL pair_kerning;
     IDWriteFontCollection *collection;
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     WCHAR *fontfamily;
@@ -628,6 +631,8 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
         return range->underline == value->u.underline;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         return range->strikethrough == value->u.strikethrough;
+    case LAYOUT_RANGE_ATTR_PAIR_KERNING:
+        return range->pair_kerning == value->u.pair_kerning;
     case LAYOUT_RANGE_ATTR_FONTCOLL:
         return range->collection == value->u.collection;
     case LAYOUT_RANGE_ATTR_LOCALE:
@@ -651,6 +656,7 @@ static inline BOOL is_same_layout_attributes(struct layout_range const *left, st
            left->effect == right->effect &&
            left->underline == right->underline &&
            left->strikethrough == right->strikethrough &&
+           left->pair_kerning == right->pair_kerning &&
            left->collection == right->collection &&
           !strcmpW(left->locale, right->locale) &&
           !strcmpW(left->fontfamily, right->fontfamily);
@@ -678,6 +684,7 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range->effect = NULL;
     range->underline = FALSE;
     range->strikethrough = FALSE;
+    range->pair_kerning = FALSE;
 
     range->fontfamily = heap_strdupW(layout->format.family_name);
     if (!range->fontfamily) {
@@ -822,6 +829,10 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         changed = dest->strikethrough != value->u.strikethrough;
         dest->strikethrough = value->u.strikethrough;
+        break;
+    case LAYOUT_RANGE_ATTR_PAIR_KERNING:
+        changed = dest->pair_kerning != value->u.pair_kerning;
+        dest->pair_kerning = value->u.pair_kerning;
         break;
     case LAYOUT_RANGE_ATTR_FONTCOLL:
         changed = set_layout_range_iface_attr((IUnknown**)&dest->collection, (IUnknown*)value->u.collection);
@@ -1758,16 +1769,30 @@ static HRESULT WINAPI dwritetextlayout1_SetPairKerning(IDWriteTextLayout2 *iface
         DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%d %s): stub\n", This, is_pairkerning_enabled, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%d %s)\n", This, is_pairkerning_enabled, debugstr_range(&range));
+
+    value.range = range;
+    value.u.pair_kerning = !!is_pairkerning_enabled;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_PAIR_KERNING, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout1_GetPairKerning(IDWriteTextLayout2 *iface, UINT32 position, BOOL *is_pairkerning_enabled,
-        DWRITE_TEXT_RANGE *range)
+        DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, is_pairkerning_enabled, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, is_pairkerning_enabled, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(This, position);
+    *is_pairkerning_enabled = range->pair_kerning;
+
+    return return_range(range, r);
 }
 
 static HRESULT WINAPI dwritetextlayout1_SetCharacterSpacing(IDWriteTextLayout2 *iface, FLOAT leading_spacing, FLOAT trailing_spacing,

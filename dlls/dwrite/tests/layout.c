@@ -1035,6 +1035,60 @@ if (0) /* crashes on native */
     IDWriteTextFormat_Release(format);
 }
 
+static void test_SetPairKerning(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextLayout1 *layout1;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    DWRITE_TEXT_RANGE range;
+    BOOL kerning;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout1, (void**)&layout1);
+    IDWriteTextLayout_Release(layout);
+
+    if (hr != S_OK) {
+        win_skip("SetPairKerning() is not supported.\n");
+        return;
+    }
+
+if (0) { /* crashes on native */
+    hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, NULL, NULL);
+    hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, NULL, &range);
+}
+
+    hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, &kerning, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 0;
+    kerning = TRUE;
+    hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, &kerning, &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!kerning, "got %d\n", kerning);
+
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout1_SetPairKerning(layout1, 2, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    kerning = FALSE;
+    hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, &kerning, &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(kerning == TRUE, "got %d\n", kerning);
+
+    IDWriteTextLayout1_Release(layout1);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -1061,6 +1115,7 @@ START_TEST(layout)
     test_typography();
     test_GetClusterMetrics();
     test_SetLocaleName();
+    test_SetPairKerning();
 
     IDWriteFactory_Release(factory);
 }
