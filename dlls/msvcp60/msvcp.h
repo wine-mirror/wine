@@ -24,6 +24,8 @@ typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
 typedef SSIZE_T streamoff;
 typedef SSIZE_T streamsize;
+#define STREAMOFF_BITS 32
+#define STREAMSIZE_BITS 32
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
