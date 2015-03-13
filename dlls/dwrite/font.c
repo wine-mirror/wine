@@ -658,12 +658,27 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace2 *iface, UINT32 glyph_count,
+static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace2 *iface, UINT32 count,
     const UINT16 *indices, INT32 *adjustments)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, glyph_count, indices, adjustments);
-    return E_NOTIMPL;
+    UINT32 i;
+
+    TRACE("(%p)->(%u %p %p)\n", This, count, indices, adjustments);
+
+    if (!(indices || adjustments) || !count)
+        return E_INVALIDARG;
+
+    if (!indices || count == 1) {
+        memset(adjustments, 0, count*sizeof(INT32));
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < count-1; i++)
+        adjustments[i] = freetype_get_kerning_pair_adjustment(iface, indices[i], indices[i+1]);
+    adjustments[count-1] = 0;
+
+    return S_OK;
 }
 
 static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace2 *iface)

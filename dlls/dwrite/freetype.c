@@ -63,6 +63,7 @@ typedef struct
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_FreeType);
+MAKE_FUNCPTR(FT_Get_Kerning);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -135,6 +136,7 @@ BOOL init_freetype(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
+    LOAD_FUNCPTR(FT_Get_Kerning)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
@@ -420,6 +422,24 @@ BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
     return has_kerning_pairs;
 }
 
+INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 left, UINT16 right)
+{
+    INT32 adjustment = 0;
+    FT_Face face;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0) {
+        FT_Vector kern;
+        if (FT_HAS_KERNING(face)) {
+            pFT_Get_Kerning(face, left, right, FT_KERNING_UNSCALED, &kern);
+            adjustment = kern.x;
+        }
+    }
+    LeaveCriticalSection(&freetype_cs);
+
+    return adjustment;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -464,6 +484,11 @@ UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
 BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
 {
     return FALSE;
+}
+
+INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 left, UINT16 right)
+{
+    return 0;
 }
 
 #endif /* HAVE_FREETYPE */
