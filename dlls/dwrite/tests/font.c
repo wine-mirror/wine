@@ -1779,7 +1779,7 @@ static void test_CreateCustomFontFileReference(void)
     HRESULT hr;
     HRSRC fontrsrc;
     UINT32 codePoints[1] = {0xa8};
-    UINT16 indices[1];
+    UINT16 indices[2];
 
     factory = create_factory();
     factory2 = create_factory();
@@ -1875,6 +1875,27 @@ if (face2)
     ok(face == face2 || broken(face != face2), "got %p, %p\n", face, face2);
     IDWriteFontFace_Release(face2);
     IDWriteFontFile_Release(file2);
+
+    hr = IDWriteFontFace_GetGlyphIndices(face, NULL, 0, NULL);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_GetGlyphIndices(face, codePoints, 0, NULL);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_GetGlyphIndices(face, codePoints, 0, indices);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_GetGlyphIndices(face, NULL, 0, indices);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "got 0x%08x\n", hr);
+
+    indices[0] = indices[1] = 11;
+    hr = IDWriteFontFace_GetGlyphIndices(face, NULL, 1, indices);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(indices[0] == 0, "got index %i\n", indices[0]);
+    ok(indices[1] == 11, "got index %i\n", indices[1]);
+
+if (0) /* crashes on native */
+    hr = IDWriteFontFace_GetGlyphIndices(face, NULL, 1, NULL);
 
     hr = IDWriteFontFace_GetGlyphIndices(face, codePoints, 1, indices);
     ok(hr == S_OK, "got 0x%08x\n", hr);

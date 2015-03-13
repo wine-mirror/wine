@@ -392,6 +392,14 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
 
     TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
 
+    if (!glyph_indices)
+        return E_INVALIDARG;
+
+    if (!codepoints) {
+        memset(glyph_indices, 0, count*sizeof(UINT16));
+        return E_INVALIDARG;
+    }
+
     for (i = 0; i < count; i++)
         glyph_indices[i] = freetype_get_glyphindex(iface, codepoints[i]);
 
