@@ -538,7 +538,7 @@ static void test_GetAbsolutePathName(void)
 static void test_GetFile(void)
 {
     static const WCHAR slW[] = {'\\',0};
-    BSTR path;
+    BSTR path, str;
     WCHAR pathW[MAX_PATH];
     FileAttribute fa;
     VARIANT size;
@@ -571,6 +571,14 @@ static void test_GetFile(void)
 
     hr = IFileSystem3_GetFile(fs3, path, &file);
     ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
+
+    hr = IFile_get_Path(file, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFile_get_Path(file, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, pathW), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     hr = IFile_get_Attributes(file, &fa);
     gfa = GetFileAttributesW(pathW) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |

@@ -2546,11 +2546,20 @@ static HRESULT WINAPI file_Invoke(IFile *iface, DISPID dispIdMember, REFIID riid
     return hr;
 }
 
-static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *pbstrPath)
+static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *path)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrPath);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, path);
+
+    if (!path)
+        return E_POINTER;
+
+    *path = SysAllocString(This->path);
+    if (!*path)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *name)
