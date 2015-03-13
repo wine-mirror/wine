@@ -2487,6 +2487,9 @@ static void test_multiframegif(void)
     GUID dimension;
     PixelFormat pixel_format;
     INT palette_size, i, j;
+    char palette_buf[256];
+    ColorPalette *palette;
+    ARGB *palette_entries;
 
     /* Test frame functions with an animated GIF */
     hglob = GlobalAlloc (0, sizeof(gifanimation));
@@ -2643,6 +2646,26 @@ static void test_multiframegif(void)
     stat = GdipGetImagePixelFormat((GpImage*)bmp, &pixel_format);
     expect(Ok, stat);
     expect(PixelFormat8bppIndexed, pixel_format);
+
+    stat = GdipBitmapGetPixel(bmp, 0, 0, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipGetImagePaletteSize((GpImage*)bmp, &palette_size);
+    expect(Ok, stat);
+    ok(palette_size == sizeof(ColorPalette)+sizeof(ARGB),
+            "palette_size = %d\n", palette_size);
+
+    memset(palette_buf, 0xfe, sizeof(palette_buf));
+    palette = (ColorPalette*)palette_buf;
+    stat = GdipGetImagePalette((GpImage*)bmp, palette,
+            sizeof(ColorPalette)+sizeof(ARGB));
+    palette_entries = palette->Entries;
+    expect(Ok, stat);
+    expect(PaletteFlagsHasAlpha, palette->Flags);
+    expect(2, palette->Count);
+    expect(0, palette_entries[0]);
+    expect(0xff000000, palette_entries[1]);
 
     count = 12345;
     stat = GdipImageGetFrameCount((GpImage*)bmp, &dimension, &count);

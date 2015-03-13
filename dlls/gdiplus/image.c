@@ -87,22 +87,36 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
         }
         if (hr == S_OK)
         {
+            WICBitmapPaletteType type;
+            BOOL alpha;
             UINT count;
-            BOOL mono, gray;
-
-            IWICPalette_IsBlackWhite(wic_palette, &mono);
-            IWICPalette_IsGrayscale(wic_palette, &gray);
 
             IWICPalette_GetColorCount(wic_palette, &count);
             palette = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(UINT) + count * sizeof(ARGB));
             IWICPalette_GetColors(wic_palette, count, palette->Entries, &palette->Count);
 
-            if (mono)
-                palette->Flags = 0;
-            else if (gray)
-                palette->Flags = PaletteFlagsGrayScale;
-            else
-                palette->Flags = PaletteFlagsHalftone;
+            IWICPalette_GetType(wic_palette, &type);
+            switch(type) {
+                case WICBitmapPaletteTypeFixedGray4:
+                case WICBitmapPaletteTypeFixedGray16:
+                case WICBitmapPaletteTypeFixedGray256:
+                    palette->Flags = PaletteFlagsGrayScale;
+                    break;
+                case WICBitmapPaletteTypeFixedHalftone8:
+                case WICBitmapPaletteTypeFixedHalftone27:
+                case WICBitmapPaletteTypeFixedHalftone64:
+                case WICBitmapPaletteTypeFixedHalftone125:
+                case WICBitmapPaletteTypeFixedHalftone216:
+                case WICBitmapPaletteTypeFixedHalftone252:
+                case WICBitmapPaletteTypeFixedHalftone256:
+                    palette->Flags = PaletteFlagsHalftone;
+                    break;
+                default:
+                    palette->Flags = 0;
+            }
+            IWICPalette_HasAlpha(wic_palette, &alpha);
+            if(alpha)
+                palette->Flags |= PaletteFlagsHasAlpha;
         }
         IWICPalette_Release(wic_palette);
     }
