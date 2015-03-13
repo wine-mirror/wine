@@ -47,6 +47,7 @@ struct dwrite_textformat_data {
     DWRITE_TEXT_ALIGNMENT textalignment;
     DWRITE_FLOW_DIRECTION flow;
     DWRITE_LINE_SPACING_METHOD spacingmethod;
+    DWRITE_VERTICAL_GLYPH_ORIENTATION vertical_orientation;
 
     FLOAT spacing;
     FLOAT baseline;
@@ -1821,15 +1822,21 @@ static HRESULT WINAPI dwritetextlayout2_GetMetrics(IDWriteTextLayout2 *iface, DW
 static HRESULT WINAPI dwritetextlayout2_SetVerticalGlyphOrientation(IDWriteTextLayout2 *iface, DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%d): stub\n", This, orientation);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, orientation);
+
+    if ((UINT32)orientation > DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED)
+        return E_INVALIDARG;
+
+    This->format.vertical_orientation = orientation;
+    return S_OK;
 }
 
 static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextlayout2_GetVerticalGlyphOrientation(IDWriteTextLayout2 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
+    TRACE("(%p)\n", This);
+    return This->format.vertical_orientation;
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetLastLineWrapping(IDWriteTextLayout2 *iface, BOOL lastline_wrapping_enabled)
@@ -2174,6 +2181,7 @@ static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
 
 static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
 {
+    IDWriteTextFormat1 *format1;
     UINT32 len;
     HRESULT hr;
 
@@ -2216,6 +2224,14 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     if (FAILED(hr))
         return hr;
     layout->format.family_len = len;
+
+    hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
+    if (hr == S_OK) {
+        layout->format.vertical_orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
+        IDWriteTextFormat1_Release(format1);
+    }
+    else
+        layout->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
 
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
@@ -2674,15 +2690,21 @@ static HRESULT WINAPI dwritetextformat_GetLocaleName(IDWriteTextFormat1 *iface, 
 static HRESULT WINAPI dwritetextformat1_SetVerticalGlyphOrientation(IDWriteTextFormat1 *iface, DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, orientation);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, orientation);
+
+    if ((UINT32)orientation > DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED)
+        return E_INVALIDARG;
+
+    This->format.vertical_orientation = orientation;
+    return S_OK;
 }
 
 static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextformat1_GetVerticalGlyphOrientation(IDWriteTextFormat1 *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
+    TRACE("(%p)\n", This);
+    return This->format.vertical_orientation;
 }
 
 static HRESULT WINAPI dwritetextformat1_SetLastLineWrapping(IDWriteTextFormat1 *iface, BOOL lastline_wrapping_enabled)
@@ -2792,6 +2814,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.readingdir = DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
     This->format.flow = DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM;
     This->format.spacingmethod = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+    This->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
     This->format.spacing = 0.0;
     This->format.baseline = 0.0;
     This->format.trimming.granularity = DWRITE_TRIMMING_GRANULARITY_NONE;
