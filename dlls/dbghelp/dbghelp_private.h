@@ -580,7 +580,7 @@ extern BOOL         macho_read_wine_loader_dbg_info(struct process* pcs) DECLSPE
 extern BOOL         macho_synchronize_module_list(struct process* pcs) DECLSPEC_HIDDEN;
 
 /* minidump.c */
-void minidump_add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva);
+void minidump_add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva) DECLSPEC_HIDDEN;
 
 /* module.c */
 extern const WCHAR      S_ElfW[] DECLSPEC_HIDDEN;
