@@ -975,7 +975,7 @@ static void test_GetTempPathA(char* tmp_dir)
 static void test_GetTempPathW(char* tmp_dir)
 {
     DWORD len, slen, len_with_null;
-    WCHAR buf[MAX_PATH];
+    WCHAR buf[MAX_PATH], *long_buf;
     WCHAR tmp_dirW[MAX_PATH];
     static const WCHAR fooW[] = {'f','o','o',0};
 
@@ -1048,6 +1048,34 @@ static void test_GetTempPathW(char* tmp_dir)
         ok(buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, buf[len]);
     for(; len < sizeof(buf) / sizeof(buf[0]); len++)
         ok(buf[len] == 'a', "expected 'a' at [%d], got 0x%x\n", len, buf[len]);
+
+    /* bogus application from bug 38220 passes the count value in sizeof(buffer)
+     * instead the correct count of WCHAR, this test catches this case. */
+    slen = 65534;
+    long_buf = HeapAlloc(GetProcessHeap(), 0, slen * sizeof(WCHAR));
+    if (!long_buf)
+    {
+        skip("Could not allocate memory for the test\n");
+        return;
+    }
+    for(len = 0; len < slen; len++)
+        long_buf[len] = 0xCC;
+    len = GetTempPathW(slen, long_buf);
+    ok(lstrcmpiW(long_buf, tmp_dirW) == 0, "GetTempPathW returned an incorrect temporary path\n");
+    ok(len == lstrlenW(long_buf), "returned length should be equal to the length of string\n");
+    /* the remaining buffer must be zeroed up to different values in different OS versions.
+     * <= XP - 32766
+     *  > XP - 32767
+     * to simplify testing we will test only until XP.
+     */
+    for(; len < 32767; len++)
+        ok(long_buf[len] == '\0', "expected NULL at [%d], got 0x%x\n", len, long_buf[len]);
+    /* we will know skip the test that is in the middle of the OS difference by
+     * incrementing len and then resume the test for the untouched part. */
+    for(len++; len < slen; len++)
+        ok(long_buf[len] == 0xcc, "expected 0xcc at [%d], got 0x%x\n", len, long_buf[len]);
+
+    HeapFree(GetProcessHeap(), 0, long_buf);
 }
 
 static void test_GetTempPath(void)
