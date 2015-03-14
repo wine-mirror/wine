@@ -25,10 +25,9 @@
 #define _WIN32_WINNT 0x500 /* For NTSTATUS */
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
