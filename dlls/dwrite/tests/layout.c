@@ -342,30 +342,50 @@ static void test_CreateTextLayout(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    EXPECT_REF(format, 1);
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(format, 1);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
     if (hr == S_OK) {
         IDWriteTextLayout1 *layout1;
         IDWriteTextFormat1 *format1;
+        IDWriteTextFormat *format;
 
         hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextLayout1, (void**)&layout1);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         IDWriteTextLayout1_Release(layout1);
 
+        EXPECT_REF(layout2, 2);
         hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
+        EXPECT_REF(layout2, 3);
+
+        hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat, (void**)&format);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(format == (IDWriteTextFormat*)format1, "got %p, %p\n", format, format1);
+        ok(format != (IDWriteTextFormat*)layout2, "got %p, %p\n", format, layout2);
+        EXPECT_REF(layout2, 4);
+
+        hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextLayout1, (void**)&layout1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout1_Release(layout1);
+
         IDWriteTextFormat1_Release(format1);
+        IDWriteTextFormat_Release(format);
 
         hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat1, (void**)&format1);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
-        IDWriteTextFormat1_Release(format1);
+        EXPECT_REF(layout2, 3);
 
+        hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&format);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(format == (IDWriteTextFormat*)format1, "got %p, %p\n", format, format1);
+        EXPECT_REF(layout2, 4);
+
+        IDWriteTextFormat1_Release(format1);
+        IDWriteTextFormat_Release(format);
         IDWriteTextLayout2_Release(layout2);
     }
     else
