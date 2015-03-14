@@ -28,8 +28,6 @@
 
 #include "wine/test.h"
 
-static IDWriteFactory *factory;
-
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
@@ -39,6 +37,14 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc = IUnknown_AddRef(obj);
     IUnknown_Release(obj);
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
+
+static IDWriteFactory *create_factory(void)
+{
+    IDWriteFactory *factory;
+    HRESULT hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    return factory;
 }
 
 enum drawcall_kind {
@@ -312,7 +318,10 @@ static void test_CreateTextLayout(void)
     IDWriteTextLayout2 *layout2;
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -364,6 +373,7 @@ if (hr == S_OK)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_CreateGdiCompatibleTextLayout(void)
@@ -371,8 +381,11 @@ static void test_CreateGdiCompatibleTextLayout(void)
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
+    IDWriteFactory *factory;
     FLOAT dimension;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -418,6 +431,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_CreateTextFormat(void)
@@ -433,7 +447,10 @@ static void test_CreateTextFormat(void)
     IDWriteTextFormat *format;
     FLOAT spacing, baseline;
     IDWriteInlineObject *trimmingsign;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -509,6 +526,7 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_GetLocaleName(void)
@@ -517,9 +535,12 @@ static void test_GetLocaleName(void)
     static const WCHAR ruW[] = {'r','u',0};
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format, *format2;
+    IDWriteFactory *factory;
     WCHAR buff[10];
     UINT32 len;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
@@ -549,6 +570,7 @@ static void test_GetLocaleName(void)
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
     IDWriteTextFormat_Release(format2);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_CreateEllipsisTrimmingSign(void)
@@ -556,7 +578,10 @@ static void test_CreateEllipsisTrimmingSign(void)
     DWRITE_BREAK_CONDITION before, after;
     IDWriteTextFormat *format;
     IDWriteInlineObject *sign;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -578,6 +603,7 @@ if (0) /* crashes on native */
 
     IDWriteInlineObject_Release(sign);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_fontweight(void)
@@ -588,8 +614,11 @@ static void test_fontweight(void)
     IDWriteTextLayout *layout;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
     FLOAT size;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
@@ -665,6 +694,7 @@ static void test_fontweight(void)
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(fmt2);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetInlineObject(void)
@@ -676,7 +706,10 @@ static void test_SetInlineObject(void)
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range, r2;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
@@ -796,6 +829,7 @@ static void test_SetInlineObject(void)
     IDWriteInlineObject_Release(inlineobj);
     IDWriteInlineObject_Release(inlineobj2);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 /* drawing calls sequence doesn't depend on run order, instead all runs are
@@ -830,7 +864,10 @@ static void test_Draw(void)
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
@@ -879,16 +916,19 @@ todo_wine
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
 
     IDWriteTextLayout_Release(layout);
-
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_typography(void)
 {
     DWRITE_FONT_FEATURE feature;
     IDWriteTypography *typography;
+    IDWriteFactory *factory;
     UINT32 count;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTypography(factory, &typography);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -926,6 +966,7 @@ static void test_typography(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     IDWriteTypography_Release(typography);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_GetClusterMetrics(void)
@@ -935,8 +976,11 @@ static void test_GetClusterMetrics(void)
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
     UINT32 count;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -968,6 +1012,7 @@ todo_wine
     IDWriteInlineObject_Release(trimm);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetLocaleName(void)
@@ -977,7 +1022,10 @@ static void test_SetLocaleName(void)
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -1032,6 +1080,7 @@ if (0) /* crashes on native */
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetPairKerning(void)
@@ -1041,8 +1090,11 @@ static void test_SetPairKerning(void)
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
     BOOL kerning;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -1057,6 +1109,7 @@ static void test_SetPairKerning(void)
 
     if (hr != S_OK) {
         win_skip("SetPairKerning() is not supported.\n");
+        IDWriteFactory_Release(factory);
         return;
     }
 
@@ -1086,6 +1139,7 @@ if (0) { /* crashes on native */
     ok(kerning == TRUE, "got %d\n", kerning);
 
     IDWriteTextLayout1_Release(layout1);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetVerticalGlyphOrientation(void)
@@ -1095,7 +1149,10 @@ static void test_SetVerticalGlyphOrientation(void)
     IDWriteTextLayout2 *layout2;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -1110,6 +1167,7 @@ static void test_SetVerticalGlyphOrientation(void)
 
     if (hr != S_OK) {
         win_skip("SetVerticalGlyphOrientation() is not supported.\n");
+        IDWriteFactory_Release(factory);
         return;
     }
 
@@ -1120,6 +1178,7 @@ static void test_SetVerticalGlyphOrientation(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     IDWriteTextLayout2_Release(layout2);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_fallback(void)
@@ -1129,7 +1188,10 @@ static void test_fallback(void)
     IDWriteTextLayout2 *layout2;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
     HRESULT hr;
+
+    factory = create_factory();
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
@@ -1144,6 +1206,7 @@ static void test_fallback(void)
 
     if (hr != S_OK) {
         win_skip("GetFontFallback() is not supported.\n");
+        IDWriteFactory_Release(factory);
         return;
     }
 
@@ -1156,16 +1219,14 @@ if (0) /* crashes on native */
     ok(fallback == NULL, "got %p\n", fallback);
 
     IDWriteTextLayout2_Release(layout2);
+    IDWriteFactory_Release(factory);
 }
 
 START_TEST(layout)
 {
-    HRESULT hr;
+    IDWriteFactory *factory;
 
-    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr != S_OK)
-    {
+    if (!(factory = create_factory())) {
         win_skip("failed to create factory\n");
         return;
     }
