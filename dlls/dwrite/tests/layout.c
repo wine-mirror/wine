@@ -1122,6 +1122,42 @@ static void test_SetVerticalGlyphOrientation(void)
     IDWriteTextLayout2_Release(layout2);
 }
 
+static void test_fallback(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteFontFallback *fallback;
+    IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
+    IDWriteTextLayout_Release(layout);
+
+    if (hr != S_OK) {
+        win_skip("GetFontFallback() is not supported.\n");
+        return;
+    }
+
+if (0) /* crashes on native */
+    hr = IDWriteTextLayout2_GetFontFallback(layout2, NULL);
+
+    fallback = (void*)0xdeadbeef;
+    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback == NULL, "got %p\n", fallback);
+
+    IDWriteTextLayout2_Release(layout2);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -1150,6 +1186,7 @@ START_TEST(layout)
     test_SetLocaleName();
     test_SetPairKerning();
     test_SetVerticalGlyphOrientation();
+    test_fallback();
 
     IDWriteFactory_Release(factory);
 }

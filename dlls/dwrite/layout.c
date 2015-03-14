@@ -57,6 +57,7 @@ struct dwrite_textformat_data {
     IDWriteInlineObject *trimmingsign;
 
     IDWriteFontCollection *collection;
+    IDWriteFontFallback *fallback;
 };
 
 enum layout_range_attr_kind {
@@ -173,6 +174,7 @@ static const IDWriteTextFormat1Vtbl dwritetextformatvtbl;
 static void release_format_data(struct dwrite_textformat_data *data)
 {
     if (data->collection) IDWriteFontCollection_Release(data->collection);
+    if (data->fallback) IDWriteFontFallback_Release(data->fallback);
     if (data->trimmingsign) IDWriteInlineObject_Release(data->trimmingsign);
     heap_free(data->family_name);
     heap_free(data->locale);
@@ -217,6 +219,14 @@ static inline const char *debugstr_run(const struct layout_run *run)
 {
     return wine_dbg_sprintf("[%u,%u]", run->descr.textPosition, run->descr.textPosition +
         run->descr.stringLength);
+}
+
+static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
+{
+    *fallback = format->fallback;
+    if (*fallback)
+        IDWriteFontFallback_AddRef(*fallback);
+    return S_OK;
 }
 
 static struct layout_run *alloc_layout_run(void)
@@ -1877,8 +1887,8 @@ static HRESULT WINAPI dwritetextlayout2_SetFontFallback(IDWriteTextLayout2 *ifac
 static HRESULT WINAPI dwritetextlayout2_GetFontFallback(IDWriteTextLayout2 *iface, IDWriteFontFallback **fallback)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return get_fontfallback_from_format(&This->format, fallback);
 }
 
 static const IDWriteTextLayout2Vtbl dwritetextlayoutvtbl = {
@@ -2194,6 +2204,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
     layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
     layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
+    layout->format.fallback = NULL;
     hr = IDWriteTextFormat_GetLineSpacing(format, &layout->format.spacingmethod,
         &layout->format.spacing, &layout->format.baseline);
     if (FAILED(hr))
@@ -2228,6 +2239,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
     if (hr == S_OK) {
         layout->format.vertical_orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
+        IDWriteTextFormat1_GetFontFallback(format1, &layout->format.fallback);
         IDWriteTextFormat1_Release(format1);
     }
     else
@@ -2745,8 +2757,8 @@ static HRESULT WINAPI dwritetextformat1_SetFontFallback(IDWriteTextFormat1 *ifac
 static HRESULT WINAPI dwritetextformat1_GetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback **fallback)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return get_fontfallback_from_format(&This->format, fallback);
 }
 
 static const IDWriteTextFormat1Vtbl dwritetextformatvtbl = {
@@ -2822,6 +2834,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.trimming.delimiterCount = 0;
     This->format.trimmingsign = NULL;
     This->format.collection = collection;
+    This->format.fallback = NULL;
     IDWriteFontCollection_AddRef(collection);
 
     *format = (IDWriteTextFormat*)&This->IDWriteTextFormat1_iface;
