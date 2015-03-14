@@ -28,10 +28,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ntdll_misc.h"

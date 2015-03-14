@@ -48,10 +48,9 @@
 #define MTSETBLK MTSETBSIZ
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
 #include "winioctl.h"

@@ -33,10 +33,9 @@
 #define RUNNING_ON_VALGRIND 0
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
