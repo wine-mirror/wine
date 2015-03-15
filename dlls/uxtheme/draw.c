@@ -1734,6 +1734,120 @@ HRESULT WINAPI GetThemeBackgroundExtent(HTHEME hTheme, HDC hdc, int iPartId,
     return S_OK;
 }
 
+static inline void flush_rgn_data( HRGN rgn, RGNDATA *data )
+{
+    HRGN tmp = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
+
+    CombineRgn( rgn, rgn, tmp, RGN_OR );
+    DeleteObject( tmp );
+    data->rdh.nCount = 0;
+}
+
+static inline void add_row( HRGN rgn, RGNDATA *data, int x, int y, int len )
+{
+    RECT *rect = (RECT *)data->Buffer + data->rdh.nCount;
+
+    if (len <= 0) return;
+    rect->left   = x;
+    rect->top    = y;
+    rect->right  = x + len;
+    rect->bottom = y + 1;
+    data->rdh.nCount++;
+    if (data->rdh.nCount * sizeof(RECT) > data->rdh.nRgnSize - sizeof(RECT))
+        flush_rgn_data( rgn, data );
+}
+
+static HRESULT create_image_bg_region(HTHEME theme, int part, int state, const RECT *rect, HRGN *rgn)
+{
+    RECT r;
+    HDC dc;
+    HBITMAP bmp;
+    HRGN hrgn;
+    BOOL istrans;
+    COLORREF transcolour;
+    HBRUSH transbrush;
+    unsigned int x, y, start;
+    BITMAPINFO bitmapinfo;
+    DWORD *bits;
+    char buffer[4096];
+    RGNDATA *data = (RGNDATA *)buffer;
+
+    if (FAILED(GetThemeBool(theme, part, state, TMT_TRANSPARENT, &istrans)) || !istrans) {
+        *rgn = CreateRectRgn(rect->left, rect->top, rect->right, rect->bottom);
+        return S_OK;
+    }
+
+    r = *rect;
+    OffsetRect(&r, -r.left, -r.top);
+
+    if (FAILED(GetThemeColor(theme, part, state, TMT_TRANSPARENTCOLOR, &transcolour)))
+        transcolour = RGB(255, 0, 255); /* defaults to magenta */
+
+    dc = CreateCompatibleDC(NULL);
+    if (!dc) {
+        WARN("CreateCompatibleDC failed\n");
+        return E_FAIL;
+    }
+
+    bitmapinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapinfo.bmiHeader.biWidth = rect->right - rect->left;
+    bitmapinfo.bmiHeader.biHeight = -(rect->bottom - rect->top);
+    bitmapinfo.bmiHeader.biPlanes = 1;
+    bitmapinfo.bmiHeader.biBitCount = 32;
+    bitmapinfo.bmiHeader.biCompression = BI_RGB;
+    bitmapinfo.bmiHeader.biSizeImage = bitmapinfo.bmiHeader.biWidth * bitmapinfo.bmiHeader.biHeight * 4;
+    bitmapinfo.bmiHeader.biXPelsPerMeter = 0;
+    bitmapinfo.bmiHeader.biYPelsPerMeter = 0;
+    bitmapinfo.bmiHeader.biClrUsed = 0;
+    bitmapinfo.bmiHeader.biClrImportant = 0;
+
+    bmp = CreateDIBSection(dc, &bitmapinfo, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    if (!bmp) {
+        WARN("CreateDIBSection failed\n");
+        DeleteDC(dc);
+        return E_FAIL;
+    }
+
+    SelectObject(dc, bmp);
+
+    transbrush = CreateSolidBrush(transcolour);
+    FillRect(dc, &r, transbrush);
+    DeleteObject(transbrush);
+
+    if (FAILED(DrawThemeBackground(theme, dc, part, state, &r, NULL))) {
+        WARN("DrawThemeBackground failed\n");
+        DeleteObject(bmp);
+        DeleteDC(dc);
+        return E_FAIL;
+    }
+
+    data->rdh.dwSize = sizeof(data->rdh);
+    data->rdh.iType  = RDH_RECTANGLES;
+    data->rdh.nCount = 0;
+    data->rdh.nRgnSize = sizeof(buffer) - sizeof(data->rdh);
+
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+
+    for (y = 0; y < r.bottom; y++, bits += r.right) {
+        x = 0;
+        while (x < r.right) {
+            while (x < r.right && (bits[x] & 0xffffff) == transcolour) x++;
+            start = x;
+            while (x < r.right && !((bits[x] & 0xffffff) == transcolour)) x++;
+            add_row( hrgn, data, rect->left + start, rect->top + y, x - start );
+        }
+    }
+
+    if (data->rdh.nCount > 0) flush_rgn_data(hrgn, data);
+
+    *rgn = hrgn;
+
+    DeleteObject(bmp);
+    DeleteDC(dc);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      GetThemeBackgroundRegion                            (UXTHEME.@)
  *
@@ -1755,8 +1869,7 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
 
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
     if(bgtype == BT_IMAGEFILE) {
-        FIXME("Images not handled yet\n");
-        hr = ERROR_CALL_NOT_IMPLEMENTED;
+        hr = create_image_bg_region(hTheme, iPartId, iStateId, pRect, pRegion);
     }
     else if(bgtype == BT_BORDERFILL) {
         *pRegion = CreateRectRgn(pRect->left, pRect->top, pRect->right, pRect->bottom);
