@@ -301,32 +301,41 @@ static void read_zero_bytes ( SOCKET s )
     ok ( n <= 0, "garbage data received: %d bytes\n", n );
 }
 
-static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int sendlen, int flags )
+static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int flags, int sendlen )
 {
     char* last = buf + buflen, *p;
     int n = 1;
-    for ( p = buf; n > 0 && p < last; p += n )
+    for ( p = buf; n > 0 && p < last; )
+    {
         n = send ( s, p, min ( sendlen, last - p ), flags );
+        if (n > 0) p += n;
+    }
     wsa_ok ( n, 0 <=, "do_synchronous_send (%x): error %d\n" );
     return p - buf;
 }
 
-static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int recvlen )
+static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int flags, int recvlen )
 {
     char* last = buf + buflen, *p;
     int n = 1;
-    for ( p = buf; n > 0 && p < last; p += n )
-        n = recv ( s, p, min ( recvlen, last - p ), 0 );
+    for ( p = buf; n > 0 && p < last; )
+    {
+        n = recv ( s, p, min ( recvlen, last - p ), flags );
+        if (n > 0) p += n;
+    }
     wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
     return p - buf;
 }
 
-static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen,int flags,struct sockaddr *from, int *fromlen, int recvlen )
+static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen, int flags, struct sockaddr *from, int *fromlen, int recvlen )
 {
     char* last = buf + buflen, *p;
     int n = 1;
-    for ( p = buf; n > 0 && p < last; p += n )
-      n = recvfrom ( s, p, min ( recvlen, last - p ), 0, from, fromlen );
+    for ( p = buf; n > 0 && p < last; )
+    {
+        n = recvfrom ( s, p, min ( recvlen, last - p ), flags, from, fromlen );
+        if (n > 0) p += n;
+    }
     wsa_ok ( n, 0 <=, "do_synchronous_recv (%x): error %d:\n" );
     return p - buf;
 }
@@ -538,14 +547,14 @@ static VOID WINAPI simple_server ( server_params *par )
              "simple_server (%x): strange peer address\n", id );
 
         /* Receive data & check it */
-        n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+        n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
         ok ( n_recvd == n_expected,
              "simple_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
         pos = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
         ok ( pos == -1, "simple_server (%x): test pattern error: %d\n", id, pos);
 
         /* Echo data back */
-        n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen, 0 );
+        n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
         ok ( n_sent == n_expected,
              "simple_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
@@ -597,14 +606,14 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
     /* Receive normal data */
-    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
     ok ( n_recvd == n_expected,
          "oob_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
     pos = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
     ok ( pos == -1, "oob_server (%x): test pattern error: %d\n", id, pos);
 
     /* Echo data back */
-    n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen, 0 );
+    n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
     ok ( n_sent == n_expected,
          "oob_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
@@ -613,7 +622,7 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
     /* Receive a part of the out-of-band data and check atmark state */
-    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, par->buflen );
+    n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, 0, par->buflen );
     ok ( n_recvd == 8,
          "oob_server (%x): received less data than expected: %d of %d\n", id, n_recvd, 8 );
     n_expected -= 8;
@@ -622,7 +631,7 @@ static VOID WINAPI oob_server ( server_params *par )
     todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
 
     /* Receive the rest of the out-of-band data and check atmark state */
-    do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+    do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
     todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
@@ -795,7 +804,7 @@ static VOID WINAPI simple_client ( client_params *par )
     trace ( "simple_client (%x) connected\n", id );
 
     /* send data to server */
-    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen, 0 );
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
     ok ( n_sent == n_expected,
          "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
@@ -803,7 +812,7 @@ static VOID WINAPI simple_client ( client_params *par )
     wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%x): shutdown failed: %d\n" );
 
     /* Receive data echoed back & check it */
-    n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
+    n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, 0, par->buflen );
     ok ( n_recvd == n_expected,
          "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
 
@@ -845,19 +854,19 @@ static VOID WINAPI oob_client ( client_params *par )
     trace ( "oob_client (%x) connected\n", id );
 
     /* send data to server */
-    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen, 0 );
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
     ok ( n_sent == n_expected,
          "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* Receive data echoed back & check it */
-    n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
+    n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, 0, par->buflen );
     ok ( n_recvd == n_expected,
          "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
     pos = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
     ok ( pos == -1, "simple_client (%x): test pattern error: %d\n", id, pos);
 
     /* send out-of-band data to server */
-    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen, MSG_OOB );
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, MSG_OOB, par->buflen );
     ok ( n_sent == n_expected,
          "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
@@ -900,7 +909,7 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
     trace ( "simple_client (%x) connected\n", id );
 
     /* send data to server */
-    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen, 0 );
+    n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
     ok ( n_sent == n_expected,
          "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
