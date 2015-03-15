@@ -1204,10 +1204,12 @@ static void test_SetVerticalGlyphOrientation(void)
 static void test_fallback(void)
 {
     static const WCHAR strW[] = {'a','b','c','d',0};
-    IDWriteFontFallback *fallback;
+    IDWriteFontFallback *fallback, *fallback2;
     IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat1 *format1;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
+    IDWriteFactory2 *factory2;
     IDWriteFactory *factory;
     HRESULT hr;
 
@@ -1238,6 +1240,43 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fallback == NULL, "got %p\n", fallback);
 
+    hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback = (void*)0xdeadbeef;
+    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback == NULL, "got %p\n", fallback);
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback = NULL;
+    hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    ok(fallback != NULL, "got %p\n", fallback);
+
+    hr = IDWriteTextFormat1_SetFontFallback(format1, fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback2 = (void*)0xdeadbeef;
+    hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback2 == fallback, "got %p\n", fallback2);
+
+    hr = IDWriteTextLayout2_SetFontFallback(layout2, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fallback2 = (void*)0xdeadbeef;
+    hr = IDWriteTextFormat1_GetFontFallback(format1, &fallback2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fallback2 == NULL, "got %p\n", fallback2);
+
+    IDWriteFontFallback_Release(fallback);
+}
+    IDWriteTextFormat1_Release(format1);
     IDWriteTextLayout2_Release(layout2);
     IDWriteFactory_Release(factory);
 }

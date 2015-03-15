@@ -235,6 +235,16 @@ static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data 
     return S_OK;
 }
 
+static HRESULT set_fontfallback_for_format(struct dwrite_textformat_data *format, IDWriteFontFallback *fallback)
+{
+    if (format->fallback)
+        IDWriteFontFallback_Release(format->fallback);
+    format->fallback = fallback;
+    if (fallback)
+        IDWriteFontFallback_AddRef(fallback);
+    return S_OK;
+}
+
 static struct layout_run *alloc_layout_run(void)
 {
     struct layout_run *ret;
@@ -1867,8 +1877,8 @@ static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextlayout2_GetOpticalAlignment(IDW
 static HRESULT WINAPI dwritetextlayout2_SetFontFallback(IDWriteTextLayout2 *iface, IDWriteFontFallback *fallback)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return set_fontfallback_for_format(&This->format, fallback);
 }
 
 static HRESULT WINAPI dwritetextlayout2_GetFontFallback(IDWriteTextLayout2 *iface, IDWriteFontFallback **fallback)
@@ -2228,15 +2238,15 @@ static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_layout_GetOpticalAlignm
 static HRESULT WINAPI dwritetextformat1_layout_SetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback *fallback)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return IDWriteTextLayout2_SetFontFallback(&This->IDWriteTextLayout2_iface, fallback);
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_GetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback **fallback)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    TRACE("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return IDWriteTextLayout2_GetFontFallback(&This->IDWriteTextLayout2_iface, fallback);
 }
 
 static const IDWriteTextFormat1Vtbl dwritetextformat1_layout_vtbl = {
@@ -3055,8 +3065,8 @@ static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_GetOpticalAlignment(IDW
 static HRESULT WINAPI dwritetextformat1_SetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback *fallback)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, fallback);
+    return set_fontfallback_for_format(&This->format, fallback);
 }
 
 static HRESULT WINAPI dwritetextformat1_GetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback **fallback)
