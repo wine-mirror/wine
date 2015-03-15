@@ -612,14 +612,14 @@ static VOID WINAPI oob_server ( server_params *par )
     pos = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
     ok ( pos == -1, "oob_server (%x): test pattern error: %d\n", id, pos);
 
+    /* check atmark state */
+    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
+    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+
     /* Echo data back */
     n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
     ok ( n_sent == n_expected,
          "oob_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
-
-    /* check atmark state */
-    ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
     /* Receive a part of the out-of-band data and check atmark state */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, 0, par->buflen );
