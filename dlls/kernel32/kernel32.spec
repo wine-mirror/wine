@@ -1135,7 +1135,7 @@
 @ stdcall PeekNamedPipe(long ptr long ptr ptr ptr)
 @ stdcall PostQueuedCompletionStatus(long long ptr ptr)
 # @ stub PowerClearRequest
-# @ stub PowerCreateRequest
+@ stdcall PowerCreateRequest(ptr)
 # @ stub PowerSetRequest
 @ stdcall PrepareTape(ptr long long)
 @ stub PrivCopyFileExW

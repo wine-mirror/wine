@@ -100,3 +100,14 @@ EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
         current = flags;
     return old;
 }
+
+/***********************************************************************
+ *           PowerCreateRequest      (KERNEL32.@)
+ */
+HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
+{
+    FIXME("(%p): stub\n", context);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
+}
