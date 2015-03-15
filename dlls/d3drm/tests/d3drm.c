@@ -1,6 +1,7 @@
 /*
  * Copyright 2010, 2012 Christian Costa
  * Copyright 2012 André Hentschel
+ * Copyright 2011-2014 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1726,6 +1727,83 @@ static void test_frame_mesh_materials(void)
     IDirect3DRM_Release(d3drm);
 }
 
+struct qi_test
+{
+    REFIID iid;
+    REFIID refcount_iid;
+    HRESULT hr;
+    BOOL refcount_todo;
+};
+
+static void test_qi(const char *test_name, IUnknown *base_iface,
+                    REFIID refcount_iid, const struct qi_test *tests, UINT entry_count)
+{
+    ULONG refcount, expected_refcount;
+    IUnknown *iface1, *iface2;
+    HRESULT hr;
+    UINT i, j;
+
+    for (i = 0; i < entry_count; ++i)
+    {
+        hr = IUnknown_QueryInterface(base_iface, tests[i].iid, (void **)&iface1);
+        ok(hr == tests[i].hr, "Got hr %#x for test \"%s\" %u.\n", hr, test_name, i);
+        if (SUCCEEDED(hr))
+        {
+            for (j = 0; j < entry_count; ++j)
+            {
+                hr = IUnknown_QueryInterface(iface1, tests[j].iid, (void **)&iface2);
+                ok(hr == tests[j].hr, "Got hr %#x for test \"%s\" %u, %u.\n", hr, test_name, i, j);
+                if (SUCCEEDED(hr))
+                {
+                    expected_refcount = 0;
+                    if (IsEqualGUID(refcount_iid, tests[j].refcount_iid))
+                        ++expected_refcount;
+                    if (IsEqualGUID(tests[i].refcount_iid, tests[j].refcount_iid))
+                        ++expected_refcount;
+                    refcount = IUnknown_Release(iface2);
+                    if (tests[i].refcount_todo || tests[j].refcount_todo)
+                        todo_wine ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, %u, expected %u.\n",
+                                     refcount, test_name, i, j, expected_refcount);
+                    else
+                        ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, %u, expected %u.\n",
+                                     refcount, test_name, i, j, expected_refcount);
+                }
+            }
+
+            expected_refcount = 0;
+            if (IsEqualGUID(refcount_iid, tests[i].refcount_iid))
+                ++expected_refcount;
+            refcount = IUnknown_Release(iface1);
+            if (tests[i].refcount_todo)
+                todo_wine ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, expected %u.\n",
+                             refcount, test_name, i, expected_refcount);
+            else
+                ok(refcount == expected_refcount, "Got refcount %u for test \"%s\" %u, expected %u.\n",
+                             refcount, test_name, i, expected_refcount);
+        }
+    }
+}
+
+static void test_d3drm_qi(void)
+{
+    static const struct qi_test tests[] =
+    {
+        { &IID_IDirect3DRM3, &IID_IDirect3DRM3,       S_OK, TRUE },
+        { &IID_IDirect3DRM2, &IID_IDirect3DRM2,       S_OK, TRUE },
+        { &IID_IDirect3DRM,  &IID_IDirect3DRM,        S_OK, FALSE },
+        { &IID_IUnknown,     &IID_IDirect3DRM,        S_OK, FALSE },
+    };
+    HRESULT hr;
+    IDirect3DRM *d3drm;
+
+    hr = pDirect3DRMCreate(&d3drm);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+
+    test_qi("d3drm_qi", (IUnknown *)d3drm, &IID_IDirect3DRM, tests, sizeof(tests) / sizeof(*tests));
+
+    IDirect3DRM_Release(d3drm);
+}
+
 START_TEST(d3drm)
 {
     if (!InitFunctionPtrs())
@@ -1744,6 +1822,7 @@ START_TEST(d3drm)
     test_frame_transform();
     test_d3drm_load();
     test_frame_mesh_materials();
+    test_d3drm_qi();
 
     FreeLibrary(d3drm_handle);
 }

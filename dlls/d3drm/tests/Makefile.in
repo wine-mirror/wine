@@ -1,5 +1,5 @@
 TESTDLL   = d3drm.dll
-IMPORTS   = dxguid ddraw user32
+IMPORTS   = dxguid ddraw user32 uuid
 
 C_SRCS = \
 	d3drm.c \
