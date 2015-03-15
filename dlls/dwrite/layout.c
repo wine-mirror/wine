@@ -206,11 +206,6 @@ static inline struct dwrite_textformat *impl_from_IDWriteTextFormat1(IDWriteText
     return CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat1_iface);
 }
 
-static inline struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat1(IDWriteTextFormat1 *iface)
-{
-    return iface->lpVtbl == &dwritetextformatvtbl ? impl_from_IDWriteTextFormat1(iface) : NULL;
-}
-
 static inline struct dwrite_trimmingsign *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_trimmingsign, IDWriteInlineObject_iface);
