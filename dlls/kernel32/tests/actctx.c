@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include <winbase.h>
 #include <windef.h>
@@ -38,6 +40,10 @@ static BOOL   (WINAPI *pIsDebuggerPresent)(void);
 static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T*);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pFindActCtxSectionGuid)(DWORD,const GUID*,ULONG,const GUID*,PACTCTX_SECTION_KEYED_DATA);
+
+static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
+static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
+static VOID    (NTAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 
 static const char* strw(LPCWSTR x)
 {
@@ -2048,6 +2054,140 @@ static void test_app_manifest(void)
     }
 }
 
+static HANDLE create_manifest(const char *filename, const char *data, int line)
+{
+    HANDLE handle;
+    create_manifest_file(filename, data, -1, NULL, NULL);
+
+    handle = test_create(filename);
+    ok_(__FILE__, line)(handle != INVALID_HANDLE_VALUE,
+        "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
+    DeleteFileA(filename);
+    return handle;
+}
+
+static void kernel32_find(ULONG section, const char *string_to_find, BOOL should_find, BOOL todo, int line)
+{
+    UNICODE_STRING string_to_findW;
+    ACTCTX_SECTION_KEYED_DATA data;
+    BOOL ret;
+    DWORD err;
+
+    pRtlCreateUnicodeStringFromAsciiz(&string_to_findW, string_to_find);
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    SetLastError(0);
+    ret = pFindActCtxSectionStringA(0, NULL, section, string_to_find, &data);
+    err = GetLastError();
+    ok_(__FILE__, line)(ret == should_find,
+        "FindActCtxSectionStringA: expected ret = %u, got %u\n", should_find, ret);
+    if (todo)
+        todo_wine
+        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+            "FindActCtxSectionStringA: unexpected error %u\n", err);
+    else
+        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+            "FindActCtxSectionStringA: unexpected error %u\n", err);
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    SetLastError(0);
+    ret = pFindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, &data);
+    err = GetLastError();
+    ok_(__FILE__, line)(ret == should_find,
+        "FindActCtxSectionStringW: expected ret = %u, got %u\n", should_find, ret);
+    if (todo)
+        todo_wine
+        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+            "FindActCtxSectionStringW: unexpected error %u\n", err);
+    else
+        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+            "FindActCtxSectionStringW: unexpected error %u\n", err);
+
+    SetLastError(0);
+    ret = pFindActCtxSectionStringA(0, NULL, section, string_to_find, NULL);
+    err = GetLastError();
+    ok_(__FILE__, line)(!ret,
+        "FindActCtxSectionStringA: expected failure, got %u\n", ret);
+    ok_(__FILE__, line)(err == ERROR_INVALID_PARAMETER,
+        "FindActCtxSectionStringA: unexpected error %u\n", err);
+
+    SetLastError(0);
+    ret = pFindActCtxSectionStringW(0, NULL, section, string_to_findW.Buffer, NULL);
+    err = GetLastError();
+    ok_(__FILE__, line)(!ret,
+        "FindActCtxSectionStringW: expected failure, got %u\n", ret);
+    ok_(__FILE__, line)(err == ERROR_INVALID_PARAMETER,
+        "FindActCtxSectionStringW: unexpected error %u\n", err);
+
+    pRtlFreeUnicodeString(&string_to_findW);
+}
+
+static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_find, BOOL todo, int line)
+{
+    UNICODE_STRING string_to_findW;
+    ACTCTX_SECTION_KEYED_DATA data;
+    NTSTATUS ret;
+
+    pRtlCreateUnicodeStringFromAsciiz(&string_to_findW, string_to_find);
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, &data);
+    if (todo)
+        todo_wine
+        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+    else
+        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+
+    ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, NULL);
+    todo_wine
+    ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+        "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+
+    pRtlFreeUnicodeString(&string_to_findW);
+}
+
+static void test_findsectionstring(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    ULONG_PTR cookie;
+
+    handle = create_manifest("test.manifest", testdep_manifest3, __LINE__);
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    /* first we show the parameter validation from kernel32 */
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, TRUE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, FALSE, __LINE__);
+
+    /* then we show that ntdll plays by different rules */
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, TRUE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, FALSE, __LINE__);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+    pReleaseActCtx(handle);
+}
+
 static void run_child_process(void)
 {
     char cmdline[MAX_PATH];
@@ -2263,9 +2403,9 @@ todo_wine
 
 static BOOL init_funcs(void)
 {
-    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hLibrary = GetModuleHandleA("kernel32.dll");
 
-#define X(f) if (!(p##f = (void*)GetProcAddress(hKernel32, #f))) return FALSE;
+#define X(f) if (!(p##f = (void*)GetProcAddress(hLibrary, #f))) return FALSE;
     X(ActivateActCtx);
     X(CreateActCtxA);
     X(CreateActCtxW);
@@ -2277,6 +2417,11 @@ static BOOL init_funcs(void)
     X(QueryActCtxW);
     X(ReleaseActCtx);
     X(FindActCtxSectionGuid);
+
+    hLibrary = GetModuleHandleA("ntdll.dll");
+    X(RtlFindActivationContextSectionString);
+    X(RtlCreateUnicodeStringFromAsciiz);
+    X(RtlFreeUnicodeString);
 #undef X
 
     return TRUE;
@@ -2303,5 +2448,6 @@ START_TEST(actctx)
 
     test_actctx();
     test_CreateActCtx();
+    test_findsectionstring();
     run_child_process();
 }
