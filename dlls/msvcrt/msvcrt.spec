@@ -700,7 +700,7 @@
 # stub _mbclen_l(ptr ptr)
 @ cdecl _mbctohira(long)
 # stub _mbctohira_l(long ptr)
-@ stub _mbctokata(long)
+@ cdecl _mbctokata(long)
 # stub _mbctokata_l(long ptr)
 @ cdecl _mbctolower(long)
 # stub _mbctolower_l(long ptr)

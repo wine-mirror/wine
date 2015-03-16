@@ -424,7 +424,7 @@
 @ cdecl _mbcjmstojis(long)
 @ cdecl _mbclen(ptr)
 @ cdecl _mbctohira(long)
-@ stub _mbctokata(long)
+@ cdecl _mbctokata(long)
 @ cdecl _mbctolower(long)
 @ cdecl _mbctombb(long)
 @ cdecl _mbctoupper(long)

@@ -734,7 +734,7 @@
 @ stub _mbclen_l
 @ cdecl _mbctohira(long)
 @ stub _mbctohira_l
-@ stub _mbctokata(long)
+@ cdecl _mbctokata(long)
 @ stub _mbctokata_l
 @ cdecl _mbctolower(long)
 @ stub _mbctolower_l

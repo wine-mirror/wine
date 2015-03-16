@@ -2288,3 +2288,15 @@ unsigned int CDECL _mbctohira(unsigned int c)
         return (c - 0x8340 - (c >= 0x837f ? 1 : 0)) + 0x829f;
     return c;
 }
+
+/*********************************************************************
+ *		_mbctokata (MSVCRT.@)
+ *
+ *              Converts a sjis hiragana character to katakana.
+ */
+unsigned int CDECL _mbctokata(unsigned int c)
+{
+    if(_ismbchira(c))
+        return (c - 0x829f) + 0x8340 + (c >= 0x82de ? 1 : 0);
+    return c;
+}
