@@ -1000,6 +1000,34 @@ static void test_IOleClientSite_QueryInterface(void)
   release_interfaces(&w, &reOle, &txtDoc, NULL);
 }
 
+static void test_IOleWindow_GetWindow(void)
+{
+  HWND w;
+  IRichEditOle *reOle = NULL;
+  ITextDocument *txtDoc = NULL;
+  IOleClientSite *clientSite = NULL;
+  IOleWindow *oleWin = NULL;
+  HRESULT hres;
+  HWND hwnd;
+
+  create_interfaces(&w, &reOle, &txtDoc, NULL);
+  hres = IRichEditOle_GetClientSite(reOle, &clientSite);
+  ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
+
+  hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleWindow, (void **)&oleWin);
+  ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
+  hres = IOleWindow_GetWindow(oleWin, &hwnd);
+  ok(hres == S_OK, "IOleClientSite_GetWindow: 0x%08x\n", hres);
+  ok(w == hwnd, "got wrong pointer\n");
+
+  hres = IOleWindow_GetWindow(oleWin, NULL);
+  ok(hres == E_INVALIDARG, "IOleClientSite_GetWindow: 0x%08x\n", hres);
+
+  IOleWindow_Release(oleWin);
+  IOleClientSite_Release(clientSite);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1019,4 +1047,5 @@ START_TEST(richole)
   test_ITextRange_GetDuplicate();
   test_ITextRange_Collapse();
   test_IOleClientSite_QueryInterface();
+  test_IOleWindow_GetWindow();
 }
