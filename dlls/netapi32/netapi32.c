@@ -2291,9 +2291,8 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
             LPDWORD resume_handle)
 {
     NET_API_STATUS status;
-    USER_INFO_0 *info;
-    WCHAR *user;
-    DWORD size;
+    WCHAR user[UNLEN + 1];
+    DWORD size, len = sizeof(user)/sizeof(user[0]);
 
     TRACE("(%s, %u, 0x%x, %p, %u, %p, %p, %p)\n", debugstr_w(servername), level,
           filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
@@ -2309,43 +2308,81 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
         return NERR_InvalidComputer;
     }
 
-    if (level)
+    if (!GetUserNameW(user, &len)) return GetLastError();
+
+    switch (level)
     {
+    case 0:
+    {
+        USER_INFO_0 *info;
+
+        size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
+
+        if (prefmaxlen < size)
+            status = ERROR_MORE_DATA;
+        else
+            status = NetApiBufferAllocate(size, (void **)&info);
+
+        if (status != NERR_Success)
+            return status;
+
+        info->usri0_name = (WCHAR *)((char *)info + sizeof(*info));
+        strcpyW(info->usri0_name, user);
+
+        *bufptr = (BYTE *)info;
+        *entriesread = *totalentries = 1;
+        break;
+    }
+    case 20:
+    {
+        USER_INFO_20 *info;
+        SID *sid;
+        UCHAR *count;
+        DWORD *rid;
+        SID_NAME_USE use;
+
+        size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
+
+        if (prefmaxlen < size)
+            status = ERROR_MORE_DATA;
+        else
+            status = NetApiBufferAllocate(size, (void **)&info);
+
+        if (status != NERR_Success)
+            return status;
+
+        size = len = 0;
+        LookupAccountNameW(NULL, user, NULL, &size, NULL, &len, &use);
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return GetLastError();
+
+        status = NetApiBufferAllocate(size, (void **)&sid);
+        if (status != NERR_Success)
+            return status;
+
+        if (!LookupAccountNameW(NULL, user, sid, &size, NULL, &len, &use))
+            return GetLastError();
+
+        count = GetSidSubAuthorityCount(sid);
+        rid = GetSidSubAuthority(sid, *count - 1);
+
+        info->usri20_name      = (WCHAR *)((char *)info + sizeof(*info));
+        strcpyW(info->usri20_name, user);
+        info->usri20_full_name = NULL;
+        info->usri20_comment   = NULL;
+        info->usri20_flags     = UF_NORMAL_ACCOUNT;
+        info->usri20_user_id   = *rid;
+
+        *bufptr = (BYTE *)info;
+        *entriesread = *totalentries = 1;
+
+        NetApiBufferFree(sid);
+        break;
+    }
+    default:
         FIXME("level %u not supported\n", level);
         return ERROR_INVALID_LEVEL;
     }
-
-    size = UNLEN + 1;
-    status = NetApiBufferAllocate(size * sizeof(WCHAR), (void **)&user);
-    if (status != NERR_Success)
-        return status;
-
-    if (!GetUserNameW(user, &size))
-    {
-        NetApiBufferFree(user);
-        return ERROR_NOT_ENOUGH_MEMORY;
-    }
-
-    size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
-
-    if (prefmaxlen < size)
-        status = ERROR_MORE_DATA;
-    else
-        status = NetApiBufferAllocate(size, (void **)&info);
-
-    if (status != NERR_Success)
-    {
-        NetApiBufferFree(user);
-        return status;
-    }
-
-    info->usri0_name = (WCHAR *)((char *)info + sizeof(*info));
-    strcpyW(info->usri0_name, user);
-
-    *bufptr = (BYTE *)info;
-    *entriesread = *totalentries = 1;
-
-    NetApiBufferFree(user);
     return NERR_Success;
 }
 
