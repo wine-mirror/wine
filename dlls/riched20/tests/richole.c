@@ -949,6 +949,57 @@ static void test_ITextSelection_Collapse(void)
   release_interfaces(&w, &reOle, &txtDoc, &txtSel);
 }
 
+static void test_IOleClientSite_QueryInterface(void)
+{
+  HWND w;
+  IRichEditOle *reOle = NULL, *reOle1 = NULL;
+  ITextDocument *txtDoc = NULL;
+  IOleClientSite *clientSite = NULL, *clientSite1 = NULL, *clientSite2 = NULL;
+  IOleWindow *oleWin = NULL, *oleWin1 = NULL;
+  HRESULT hres;
+  LONG refcount1, refcount2;
+
+  create_interfaces(&w, &reOle, &txtDoc, NULL);
+  hres = IRichEditOle_GetClientSite(reOle, &clientSite);
+  ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
+  refcount1 = get_refcount((IUnknown *)clientSite);
+  todo_wine ok(refcount1 == 1, "got wrong ref count: %d\n", refcount1);
+
+  hres = IOleClientSite_QueryInterface(clientSite, &IID_IRichEditOle, (void **)&reOle1);
+  ok(hres == E_NOINTERFACE, "IOleClientSite_QueryInterface: %x\n", hres);
+
+  hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleClientSite, (void **)&clientSite1);
+  ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
+  ok(clientSite == clientSite1, "Should not return a new pointer.\n");
+  refcount1 = get_refcount((IUnknown *)clientSite);
+  todo_wine ok(refcount1 == 2, "got wrong ref count: %d\n", refcount1);
+
+  /* IOleWindow interface */
+  hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleWindow, (void **)&oleWin);
+  ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
+  refcount1 = get_refcount((IUnknown *)clientSite);
+  refcount2 = get_refcount((IUnknown *)oleWin);
+  ok(refcount1 == refcount2, "got wrong ref count.\n");
+
+  hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleWindow, (void **)&oleWin1);
+  ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
+  ok(oleWin == oleWin1, "Should not return a new pointer.\n");
+  refcount1 = get_refcount((IUnknown *)clientSite);
+  refcount2 = get_refcount((IUnknown *)oleWin);
+  ok(refcount1 == refcount2, "got wrong ref count.\n");
+
+  hres = IOleWindow_QueryInterface(oleWin, &IID_IOleClientSite, (void **)&clientSite2);
+  ok(hres == S_OK, "IOleWindow_QueryInterface: 0x%08x\n", hres);
+  ok(clientSite2 == clientSite1, "got wrong pointer\n");
+
+  IOleWindow_Release(oleWin1);
+  IOleWindow_Release(oleWin);
+  IOleClientSite_Release(clientSite2);
+  IOleClientSite_Release(clientSite1);
+  IOleClientSite_Release(clientSite);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -967,4 +1018,5 @@ START_TEST(richole)
   test_ITextRange_GetStart_GetEnd();
   test_ITextRange_GetDuplicate();
   test_ITextRange_Collapse();
+  test_IOleClientSite_QueryInterface();
 }

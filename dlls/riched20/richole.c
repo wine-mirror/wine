@@ -82,6 +82,7 @@ struct ITextSelectionImpl {
 
 struct IOleClientSiteImpl {
     IOleClientSite IOleClientSite_iface;
+    IOleWindow IOleWindow_iface;
     LONG ref;
 
     IRichEditOleImpl *reOle;
@@ -219,12 +220,15 @@ static inline IOleClientSiteImpl *impl_from_IOleClientSite(IOleClientSite *iface
 static HRESULT WINAPI
 IOleClientSite_fnQueryInterface(IOleClientSite *me, REFIID riid, LPVOID *ppvObj)
 {
+    IOleClientSiteImpl *This = impl_from_IOleClientSite(me);
     TRACE("%p %s\n", me, debugstr_guid(riid) );
 
     *ppvObj = NULL;
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IOleClientSite))
         *ppvObj = me;
+    else if (IsEqualGUID(riid, &IID_IOleWindow))
+        *ppvObj = &This->IOleWindow_iface;
     if (*ppvObj)
     {
         IOleClientSite_AddRef(me);
@@ -325,6 +329,52 @@ static const IOleClientSiteVtbl ocst = {
     IOleClientSite_fnRequestNewObjectLayout
 };
 
+/* IOleWindow interface */
+static inline IOleClientSiteImpl *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleWindow_iface);
+}
+
+static HRESULT WINAPI IOleWindow_fnQueryInterface(IOleWindow *iface, REFIID riid, void **ppvObj)
+{
+    IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppvObj);
+}
+
+static ULONG WINAPI IOleWindow_fnAddRef(IOleWindow *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG WINAPI IOleWindow_fnRelease(IOleWindow *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI IOleWindow_fnContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
+{
+    IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
+    FIXME("not implemented: (%p)->(%d)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IOleWindow_fnGetWindow(IOleWindow *iface, HWND *phwnd)
+{
+    IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
+    FIXME("not implemented: (%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl olewinvt = {
+    IOleWindow_fnQueryInterface,
+    IOleWindow_fnAddRef,
+    IOleWindow_fnRelease,
+    IOleWindow_fnGetWindow,
+    IOleWindow_fnContextSensitiveHelp
+};
+
 static IOleClientSiteImpl *
 CreateOleClientSite(IRichEditOleImpl *reOle)
 {
@@ -333,6 +383,7 @@ CreateOleClientSite(IRichEditOleImpl *reOle)
         return NULL;
 
     clientSite->IOleClientSite_iface.lpVtbl = &ocst;
+    clientSite->IOleWindow_iface.lpVtbl = &olewinvt;
     clientSite->ref = 1;
     clientSite->reOle = reOle;
     return clientSite;
