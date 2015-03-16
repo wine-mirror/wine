@@ -1280,7 +1280,7 @@ enum platform parse_platform( const WCHAR *str )
     return PLATFORM_UNKNOWN;
 }
 
-static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
+static UINT parse_suminfo( MSISUMMARYINFO *si, MSIPACKAGE *package )
 {
     WCHAR *template, *p, *q, *platform;
     DWORD i, count;
@@ -1483,10 +1483,12 @@ static WCHAR *get_package_code( MSIDATABASE *db )
 {
     WCHAR *ret;
     MSISUMMARYINFO *si;
+    UINT r;
 
-    if (!(si = MSI_GetSummaryInformationW( db->storage, 0 )))
+    r = msi_get_suminfo( db->storage, 0, &si );
+    if (r != ERROR_SUCCESS)
     {
-        WARN("failed to load summary info\n");
+        WARN("failed to load summary info %u\n", r);
         return NULL;
     }
     ret = msi_suminfo_dup_string( si, PID_REVNUMBER );
@@ -1633,14 +1635,14 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     package->localfile = strdupW( localfile );
     package->delete_on_close = delete_on_close;
 
-    si = MSI_GetSummaryInformationW( db->storage, 0 );
-    if (!si)
+    r = msi_get_suminfo( db->storage, 0, &si );
+    if (r != ERROR_SUCCESS)
     {
         WARN("failed to load summary info\n");
         msiobj_release( &package->hdr );
         return ERROR_INSTALL_PACKAGE_INVALID;
     }
-    r = msi_parse_summary( si, package );
+    r = parse_suminfo( si, package );
     msiobj_release( &si->hdr );
     if (r != ERROR_SUCCESS)
     {

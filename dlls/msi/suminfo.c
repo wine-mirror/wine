@@ -235,7 +235,6 @@ static void read_properties_from_data( PROPVARIANT *prop, LPBYTE data, DWORD sz 
 
 static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
 {
-    UINT ret = ERROR_FUNCTION_FAILED;
     PROPERTYSETHEADER set_hdr;
     FORMATIDOFFSET format_hdr;
     PROPERTYSECTIONHEADER section_hdr;
@@ -250,44 +249,44 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
     sz = sizeof set_hdr;
     r = IStream_Read( stm, &set_hdr, sz, &count );
     if( FAILED(r) || count != sz )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     if( set_hdr.wByteOrder != 0xfffe )
     {
         ERR("property set not big-endian %04X\n", set_hdr.wByteOrder);
-        return ret;
+        return ERROR_FUNCTION_FAILED;
     }
 
     sz = sizeof format_hdr;
     r = IStream_Read( stm, &format_hdr, sz, &count );
     if( FAILED(r) || count != sz )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     /* check the format id is correct */
     if( !IsEqualGUID( &FMTID_SummaryInformation, &format_hdr.fmtid ) )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     /* seek to the location of the section */
     ofs.QuadPart = format_hdr.dwOffset;
     r = IStream_Seek( stm, ofs, STREAM_SEEK_SET, NULL );
     if( FAILED(r) )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     /* read the section itself */
     sz = SECT_HDR_SIZE;
     r = IStream_Read( stm, &section_hdr, sz, &count );
     if( FAILED(r) || count != sz )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     if( section_hdr.cProperties > MSI_MAX_PROPS )
     {
         ERR("too many properties %d\n", section_hdr.cProperties);
-        return ret;
+        return ERROR_FUNCTION_FAILED;
     }
 
     data = msi_alloc( section_hdr.cbSection);
     if( !data )
-        return ret;
+        return ERROR_FUNCTION_FAILED;
 
     memcpy( data, &section_hdr, SECT_HDR_SIZE );
 
@@ -300,7 +299,7 @@ static UINT load_summary_info( MSISUMMARYINFO *si, IStream *stm )
         ERR("failed to read properties %d %d\n", count, sz);
 
     msi_free( data );
-    return ret;
+    return ERROR_SUCCESS;
 }
 
 static DWORD write_dword( LPBYTE data, DWORD ofs, DWORD val )
@@ -426,34 +425,75 @@ static UINT save_summary_info( const MSISUMMARYINFO * si, IStream *stm )
     return ERROR_SUCCESS;
 }
 
-MSISUMMARYINFO *MSI_GetSummaryInformationW( IStorage *stg, UINT uiUpdateCount )
+static MSISUMMARYINFO *create_suminfo( IStorage *stg, UINT update_count )
 {
-    IStream *stm = NULL;
     MSISUMMARYINFO *si;
-    DWORD grfMode;
-    HRESULT r;
 
-    TRACE("%p %d\n", stg, uiUpdateCount );
+    if (!(si = alloc_msiobject( MSIHANDLETYPE_SUMMARYINFO, sizeof(MSISUMMARYINFO), MSI_CloseSummaryInfo )))
+        return NULL;
 
-    si = alloc_msiobject( MSIHANDLETYPE_SUMMARYINFO, 
-                  sizeof (MSISUMMARYINFO), MSI_CloseSummaryInfo );
-    if( !si )
-        return si;
-
-    si->update_count = uiUpdateCount;
+    si->update_count = update_count;
     IStorage_AddRef( stg );
     si->storage = stg;
 
-    /* read the stream... if we fail, we'll start with an empty property set */
-    grfMode = STGM_READ | STGM_SHARE_EXCLUSIVE;
-    r = IStorage_OpenStream( si->storage, szSumInfo, 0, grfMode, 0, &stm );
-    if( SUCCEEDED(r) )
+    return si;
+}
+
+UINT msi_get_suminfo( IStorage *stg, UINT uiUpdateCount, MSISUMMARYINFO **ret )
+{
+    IStream *stm;
+    MSISUMMARYINFO *si;
+    HRESULT hr;
+    UINT r;
+
+    TRACE("%p, %u\n", stg, uiUpdateCount);
+
+    if (!(si = create_suminfo( stg, uiUpdateCount ))) return ERROR_OUTOFMEMORY;
+
+    hr = IStorage_OpenStream( si->storage, szSumInfo, 0, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stm );
+    if (FAILED( hr ))
     {
-        load_summary_info( si, stm );
-        IStream_Release( stm );
+        msiobj_release( &si->hdr );
+        return ERROR_FUNCTION_FAILED;
     }
 
-    return si;
+    r = load_summary_info( si, stm );
+    IStream_Release( stm );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &si->hdr );
+        return r;
+    }
+
+    *ret = si;
+    return ERROR_SUCCESS;
+}
+
+static UINT get_db_suminfo( MSIDATABASE *db, UINT uiUpdateCount, MSISUMMARYINFO **ret )
+{
+    IStream *stm;
+    MSISUMMARYINFO *si;
+    UINT r;
+
+    if (!(si = create_suminfo( db->storage, uiUpdateCount ))) return ERROR_OUTOFMEMORY;
+
+    r = msi_get_stream( db, szSumInfo, &stm );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &si->hdr );
+        return r;
+    }
+
+    r = load_summary_info( si, stm );
+    IStream_Release( stm );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &si->hdr );
+        return r;
+    }
+
+    *ret = si;
+    return ERROR_SUCCESS;
 }
 
 UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase, 
@@ -461,7 +501,7 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
 {
     MSISUMMARYINFO *si;
     MSIDATABASE *db;
-    UINT ret = ERROR_FUNCTION_FAILED;
+    UINT ret;
 
     TRACE("%d %s %d %p\n", hDatabase, debugstr_w(szDatabase),
            uiUpdateCount, pHandle);
@@ -505,8 +545,16 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
         }
     }
 
-    si = MSI_GetSummaryInformationW( db->storage, uiUpdateCount );
-    if (si)
+    ret = msi_get_suminfo( db->storage, uiUpdateCount, &si );
+    if (ret != ERROR_SUCCESS)
+        ret = get_db_suminfo( db, uiUpdateCount, &si );
+    if (ret != ERROR_SUCCESS)
+    {
+        if ((si = create_suminfo( db->storage, uiUpdateCount )))
+            ret = ERROR_SUCCESS;
+    }
+
+    if (ret == ERROR_SUCCESS)
     {
         *pHandle = alloc_msihandle( &si->hdr );
         if( *pHandle )
@@ -658,9 +706,10 @@ LPWSTR msi_get_suminfo_product( IStorage *stg )
 {
     MSISUMMARYINFO *si;
     LPWSTR prod;
+    UINT r;
 
-    si = MSI_GetSummaryInformationW( stg, 0 );
-    if (!si)
+    r = msi_get_suminfo( stg, 0, &si );
+    if (r != ERROR_SUCCESS)
     {
         ERR("no summary information!\n");
         return NULL;
@@ -921,15 +970,16 @@ static UINT parse_prop( LPCWSTR prop, LPCWSTR value, UINT *pid, INT *int_value,
 
 UINT msi_add_suminfo( MSIDATABASE *db, LPWSTR **records, int num_records, int num_columns )
 {
-    UINT r = ERROR_FUNCTION_FAILED;
+    UINT r;
     int i, j;
     MSISUMMARYINFO *si;
 
-    si = MSI_GetSummaryInformationW( db->storage, num_records * (num_columns / 2) );
-    if (!si)
+    r = msi_get_suminfo( db->storage, num_records * (num_columns / 2), &si );
+    if (r != ERROR_SUCCESS)
     {
-        ERR("no summary information!\n");
-        return ERROR_FUNCTION_FAILED;
+        if (!(si = create_suminfo( db->storage, num_records * (num_columns / 2) )))
+            return ERROR_OUTOFMEMORY;
+        r = ERROR_SUCCESS;
     }
 
     for (i = 0; i < num_records; i++)

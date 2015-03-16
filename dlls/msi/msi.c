@@ -557,7 +557,7 @@ static UINT MSI_ApplicablePatchW( MSIPACKAGE *package, LPCWSTR patch )
 {
     MSISUMMARYINFO *si;
     MSIDATABASE *patch_db;
-    UINT r = ERROR_SUCCESS;
+    UINT r;
 
     r = MSI_OpenDatabaseW( patch, MSIDBOPEN_READONLY, &patch_db );
     if (r != ERROR_SUCCESS)
@@ -566,8 +566,8 @@ static UINT MSI_ApplicablePatchW( MSIPACKAGE *package, LPCWSTR patch )
         return r;
     }
 
-    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
-    if (!si)
+    r = msi_get_suminfo( patch_db->storage, 0, &si );
+    if (r != ERROR_SUCCESS)
     {
         msiobj_release( &patch_db->hdr );
         return ERROR_FUNCTION_FAILED;
