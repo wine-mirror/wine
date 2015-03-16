@@ -3189,7 +3189,8 @@ static void test_try_transform(void)
     r = MsiDatabaseApplyTransformA( hdb, mstfile, 0 );
     ok( r == ERROR_SUCCESS, "return code %d, should be ERROR_SUCCESS\n", r );
 
-    MsiDatabaseCommit( hdb );
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
     /* check new values */
     hrec = 0;

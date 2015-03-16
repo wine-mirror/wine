@@ -613,16 +613,9 @@ UINT msi_commit_streams( MSIDATABASE *db )
         name = msi_string_lookup( db->strings, db->streams[i].str_index, NULL );
         if (!(encname = encode_streamname( FALSE, name ))) return ERROR_OUTOFMEMORY;
 
-        hr = open_stream( db, encname, &stream );
-        if (FAILED( hr )) /* new stream */
+        hr = IStorage_CreateStream( db->storage, encname, STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, 0, &stream );
+        if (SUCCEEDED( hr ))
         {
-            hr = IStorage_CreateStream( db->storage, encname, STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, 0, &stream );
-            if (FAILED( hr ))
-            {
-                ERR("failed to create stream %s (hr = %08x)\n", debugstr_w(encname), hr);
-                msi_free( encname );
-                return ERROR_FUNCTION_FAILED;
-            }
             hr = write_stream( stream, db->streams[i].stream );
             if (FAILED( hr ))
             {
@@ -631,12 +624,18 @@ UINT msi_commit_streams( MSIDATABASE *db )
                 IStream_Release( stream );
                 return ERROR_FUNCTION_FAILED;
             }
+            hr = IStream_Commit( stream, 0 );
+            IStream_Release( stream );
+            if (FAILED( hr ))
+            {
+                ERR("failed to commit stream %s (hr = %08x)\n", debugstr_w(encname), hr);
+                msi_free( encname );
+                return ERROR_FUNCTION_FAILED;
+            }
         }
-        hr = IStream_Commit( stream, 0 );
-        IStream_Release( stream );
-        if (FAILED( hr ))
+        else if (hr != STG_E_FILEALREADYEXISTS)
         {
-            WARN("failed to commit stream %s (hr = %08x)\n", debugstr_w(encname), hr);
+            ERR("failed to create stream %s (hr = %08x)\n", debugstr_w(encname), hr);
             msi_free( encname );
             return ERROR_FUNCTION_FAILED;
         }
