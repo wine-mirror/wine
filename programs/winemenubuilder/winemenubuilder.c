@@ -195,8 +195,6 @@ static char *xdg_config_dir;
 static char *xdg_data_dir;
 static char *xdg_desktop_dir;
 
-static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
-static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream);
 
 /* Utility routines */
 static unsigned short crc16(const char* string)
@@ -1002,6 +1000,28 @@ static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPC
 end:
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
     return hr;
+}
+
+static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
+{
+    HRESULT hr;
+    WCHAR *value = NULL;
+    DWORD size = 0;
+    hr = AssocQueryStringW(0, assocStr, name, extra, NULL, &size);
+    if (SUCCEEDED(hr))
+    {
+        value = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (value)
+        {
+            hr = AssocQueryStringW(0, assocStr, name, extra, value, &size);
+            if (FAILED(hr))
+            {
+                HeapFree(GetProcessHeap(), 0, value);
+                value = NULL;
+            }
+        }
+    }
+    return value;
 }
 
 static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
@@ -1937,28 +1957,6 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
 
     IShellLinkDataList_Release( dl );
     return hr;
-}
-
-static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
-{
-    HRESULT hr;
-    WCHAR *value = NULL;
-    DWORD size = 0;
-    hr = AssocQueryStringW(0, assocStr, name, extra, NULL, &size);
-    if (SUCCEEDED(hr))
-    {
-        value = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        if (value)
-        {
-            hr = AssocQueryStringW(0, assocStr, name, extra, value, &size);
-            if (FAILED(hr))
-            {
-                HeapFree(GetProcessHeap(), 0, value);
-                value = NULL;
-            }
-        }
-    }
-    return value;
 }
 
 static char *slashes_to_minuses(const char *string)
