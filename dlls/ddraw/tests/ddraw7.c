@@ -8541,6 +8541,7 @@ static void test_color_fill(void)
     {
         DWORD caps, caps2;
         HRESULT colorfill_hr, depthfill_hr;
+        BOOL rop_success;
         const char *name;
         DWORD result;
         BOOL check_result;
@@ -8550,7 +8551,7 @@ static void test_color_fill(void)
     {
         {
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem offscreenplain RGB", 0xdeadbeef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem offscreenplain RGB", 0xdeadbeef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
@@ -8558,7 +8559,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "sysmem offscreenplain RGB", 0xdeadbeef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem offscreenplain RGB", 0xdeadbeef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
@@ -8566,7 +8567,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem texture RGB", 0xdeadbeef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem texture RGB", 0xdeadbeef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
@@ -8574,7 +8575,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "sysmem texture RGB", 0xdeadbeef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem texture RGB", 0xdeadbeef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
@@ -8582,7 +8583,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE,
-            DD_OK, DDERR_INVALIDPARAMS, "managed texture RGB", 0xdeadbeef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "managed texture RGB", 0xdeadbeef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
@@ -8590,12 +8591,12 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY, 0,
-            DDERR_INVALIDPARAMS, DD_OK, "vidmem zbuffer", 0, FALSE,
+            DDERR_INVALIDPARAMS, DD_OK, TRUE, "vidmem zbuffer", 0, FALSE,
             {0, 0, 0, {0}, {0}, {0}, {0}, {0}}
         },
         {
             DDSCAPS_ZBUFFER | DDSCAPS_SYSTEMMEMORY, 0,
-            DDERR_INVALIDPARAMS, DD_OK, "sysmem zbuffer", 0, FALSE,
+            DDERR_INVALIDPARAMS, DD_OK, TRUE, "sysmem zbuffer", 0, FALSE,
             {0, 0, 0, {0}, {0}, {0}, {0}, {0}}
         },
         {
@@ -8605,7 +8606,7 @@ static void test_color_fill(void)
              * value they set. r200 (dx8) just sets the entire block to the clear
              * value. */
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem offscreenplain YUY2", 0, FALSE,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem offscreenplain YUY2", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('Y', 'U', 'Y', '2'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8613,7 +8614,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem offscreenplain UYVY", 0, FALSE,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem offscreenplain UYVY", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('U', 'Y', 'V', 'Y'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8621,7 +8622,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem overlay YUY2", 0, FALSE,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem overlay YUY2", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('Y', 'U', 'Y', '2'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8629,7 +8630,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem overlay UYVY", 0, FALSE,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem overlay UYVY", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('U', 'Y', 'V', 'Y'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8637,7 +8638,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0,
-            E_NOTIMPL, DDERR_INVALIDPARAMS, "vidmem texture DXT1", 0, FALSE,
+            E_NOTIMPL, DDERR_INVALIDPARAMS, FALSE, "vidmem texture DXT1", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8645,7 +8646,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0,
-            E_NOTIMPL, DDERR_INVALIDPARAMS, "sysmem texture DXT1", 0, FALSE,
+            E_NOTIMPL, DDERR_INVALIDPARAMS, FALSE, "sysmem texture DXT1", 0, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
                 {0}, {0}, {0}, {0}, {0}
@@ -8656,7 +8657,7 @@ static void test_color_fill(void)
              * surface works, presumably because it is handled by the runtime instead of
              * the driver. */
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "vidmem offscreenplain P8", 0xefefefef, FALSE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem offscreenplain P8", 0xefefefef, FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_PALETTEINDEXED8, 0,
                 {8}, {0}, {0}, {0}, {0}
@@ -8664,7 +8665,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0,
-            DD_OK, DDERR_INVALIDPARAMS, "sysmem offscreenplain P8", 0xefefefef, TRUE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem offscreenplain P8", 0xefefefef, TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_PALETTEINDEXED8, 0,
                 {8}, {0}, {0}, {0}, {0}
@@ -8728,7 +8729,7 @@ static void test_color_fill(void)
         /* Some Windows drivers modify dwFillColor when it is used on P8 or FourCC formats. */
         memset(&fx, 0, sizeof(fx));
         fx.dwSize = sizeof(fx);
-        fx.dwFillColor = 0xdeadbeef;
+        U5(fx).dwFillColor = 0xdeadbeef;
 
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
@@ -8795,8 +8796,55 @@ static void test_color_fill(void)
         ok(hr == tests[i].depthfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                 hr, tests[i].depthfill_hr, tests[i].name);
 
+        U5(fx).dwFillColor = 0xdeadbeef;
+        fx.dwROP = BLACKNESS;
+        hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#x, expected %s, surface %s.\n",
+                hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
+        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08x, surface %s\n",
+                U5(fx).dwFillColor, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            ok(*color == 0, "Got clear result 0x%08x, expected 0x00000000, surface %s.\n",
+                    *color, tests[i].name);
+            hr = IDirectDrawSurface7_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
+
+        fx.dwROP = WHITENESS;
+        hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#x, expected %s, surface %s.\n",
+                hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
+        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08x, surface %s\n",
+                U5(fx).dwFillColor, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            /* WHITENESS sets the alpha channel to 0x00. Ignore this for now. */
+            ok((*color & 0x00ffffff) == 0x00ffffff, "Got clear result 0x%08x, expected 0xffffffff, surface %s.\n",
+                    *color, tests[i].name);
+            hr = IDirectDrawSurface7_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
+
         IDirectDrawSurface7_Release(surface);
     }
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0xdeadbeef;
+    fx.dwROP = WHITENESS;
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -8818,16 +8866,24 @@ static void test_color_fill(void)
     /* No DDBLTFX. */
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, &rect, DDBLT_ROP | DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     /* Unused source rectangle. */
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
 
     /* Unused source surface. */
     hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
 
     /* Inverted destination or source rectangle. */
     SetRect(&rect, 5, 7, 7, 5);
@@ -8839,6 +8895,8 @@ static void test_color_fill(void)
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
 
     /* Negative rectangle. */
     SetRect(&rect, -1, -1, 5, 5);
@@ -8850,15 +8908,23 @@ static void test_color_fill(void)
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Blt(surface, &rect, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
 
     /* Out of bounds rectangle. */
     SetRect(&rect, 0, 0, 65, 65);
     hr = IDirectDrawSurface7_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
 
     /* Combine multiple flags. */
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface7_Release(surface2);
     IDirectDrawSurface7_Release(surface);

@@ -1539,6 +1539,12 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
 
     if (Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
     {
+        if (Flags & DDBLT_ROP)
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_ROP used with DDBLT_COLORFILL or DDBLT_DEPTHFILL, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
         if (src_surface)
         {
             wined3d_mutex_unlock();
@@ -1565,6 +1571,16 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
         {
             wined3d_mutex_unlock();
             WARN("DDBLT_DEPTHFILL used on a color buffer, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+    }
+
+    if (Flags & DDBLT_ROP)
+    {
+        if (!DDBltFx)
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_ROP used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
     }
