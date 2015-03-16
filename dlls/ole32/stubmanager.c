@@ -24,8 +24,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <assert.h>
 #include <stdarg.h>

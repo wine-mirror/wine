@@ -43,12 +43,12 @@
  *     header. I was able to figure-out where the extent of the object
  *     was stored and the aspect, but that's about it.
  */
+
 #include <stdarg.h>
 #include <string.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winbase.h"
