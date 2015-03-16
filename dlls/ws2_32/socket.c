@@ -6386,8 +6386,8 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         req->type       = unixtype;
         req->protocol   = protocol;
         req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-        req->attributes = OBJ_INHERIT;
-        req->flags      = dwFlags;
+        req->attributes = (dwFlags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT;
+        req->flags      = dwFlags & ~WSA_FLAG_NO_HANDLE_INHERIT;
         set_error( wine_server_call( req ) );
         ret = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
     }
