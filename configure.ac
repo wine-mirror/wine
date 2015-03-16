@@ -1767,7 +1767,7 @@ dnl **** Disable unsupported winmm drivers ****
 test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO_LIBS" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
-test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
+test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
 if test "x$ALSA_LIBS$COREAUDIO_LIBS" = "x" -a \
