@@ -2684,7 +2684,7 @@ static HANDLE create_manifest(const char *filename, const char *data, int line)
     return handle;
 }
 
-static void kernel32_find(ULONG section, const char *string_to_find, BOOL should_find, BOOL todo, int line)
+static void kernel32_find(ULONG section, const char *string_to_find, BOOL should_find, int line)
 {
     UNICODE_STRING string_to_findW;
     ACTCTX_SECTION_KEYED_DATA data;
@@ -2701,7 +2701,6 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringA: expected ret = %u, got %u\n", should_find, ret);
-    todo_wine_if(todo)
     ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
         "FindActCtxSectionStringA: unexpected error %lu\n", err);
 
@@ -2713,7 +2712,6 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringW: expected ret = %u, got %u\n", should_find, ret);
-    todo_wine_if(todo)
     ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
         "FindActCtxSectionStringW: unexpected error %lu\n", err);
 
@@ -2736,7 +2734,7 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     pRtlFreeUnicodeString(&string_to_findW);
 }
 
-static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_find, BOOL todo, int line)
+static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_find, int line)
 {
     UNICODE_STRING string_to_findW;
     ACTCTX_SECTION_KEYED_DATA data;
@@ -2748,12 +2746,10 @@ static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_fi
     data.cbSize = sizeof(data);
 
     ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, &data);
-    todo_wine_if(todo)
     ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
         "RtlFindActivationContextSectionString: unexpected status 0x%lx\n", ret);
 
     ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, NULL);
-    todo_wine_if(todo)
     ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
         "RtlFindActivationContextSectionString: unexpected status 0x%lx\n", ret);
 
@@ -2771,22 +2767,22 @@ static void test_findsectionstring(void)
     ok(ret, "ActivateActCtx failed: %lu\n", GetLastError());
 
     /* first we show the parameter validation from kernel32 */
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, TRUE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, FALSE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, FALSE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, FALSE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, FALSE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, FALSE, __LINE__);
-    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, __LINE__);
+    kernel32_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, __LINE__);
 
     /* then we show that ntdll plays by different rules */
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, TRUE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, FALSE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, FALSE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, FALSE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, FALSE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, FALSE, __LINE__);
-    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION, "testdep", FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib.dll", TRUE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib2.dll", TRUE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, "testlib3.dll", FALSE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass", TRUE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass2", TRUE, __LINE__);
+    ntdll_find(ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, "wndClass3", FALSE, __LINE__);
 
     ret = DeactivateActCtx(0, cookie);
     ok(ret, "DeactivateActCtx failed: %lu\n", GetLastError());
