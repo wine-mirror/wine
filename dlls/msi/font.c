@@ -172,7 +172,6 @@ static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
 
 end:
     CloseHandle(handle);
-    TRACE("Returning %s\n", debugstr_w(ret));
     return ret;
 }
 

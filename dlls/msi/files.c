@@ -69,34 +69,38 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
     VS_FIXEDFILEINFO *file_version;
     WCHAR *font_version;
     msi_file_state state;
+    DWORD size;
 
     comp->Action = msi_get_component_action( package, comp );
     if (comp->Action != INSTALLSTATE_LOCAL || (comp->assembly && comp->assembly->installed))
     {
-        TRACE("file %s is not scheduled for install\n", debugstr_w(file->File));
+        TRACE("skipping %s (not scheduled for install)\n", debugstr_w(file->File));
         return msifs_skipped;
     }
     if ((comp->assembly && !comp->assembly->application && !comp->assembly->installed) ||
         GetFileAttributesW( file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
     {
-        TRACE("file %s is missing\n", debugstr_w(file->File));
+        TRACE("installing %s (missing)\n", debugstr_w(file->File));
         return msifs_missing;
     }
     if (file->Version)
     {
         if ((file_version = msi_get_disk_file_version( file->TargetPath )))
         {
-            TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
-                  HIWORD(file_version->dwFileVersionMS),
-                  LOWORD(file_version->dwFileVersionMS),
-                  HIWORD(file_version->dwFileVersionLS),
-                  LOWORD(file_version->dwFileVersionLS));
-
             if (msi_compare_file_versions( file_version, file->Version ) < 0)
+            {
+                TRACE("overwriting %s (new version %s old version %u.%u.%u.%u)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version),
+                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
+                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
                 state = msifs_overwrite;
+            }
             else
             {
-                TRACE("destination file version equal or greater, not overwriting\n");
+                TRACE("keeping %s (new version %s old version %u.%u.%u.%u)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version),
+                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
+                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
                 state = msifs_present;
             }
             msi_free( file_version );
@@ -104,37 +108,46 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
         }
         else if ((font_version = msi_font_version_from_file( file->TargetPath )))
         {
-            TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(font_version));
-
             if (msi_compare_font_versions( font_version, file->Version ) < 0)
+            {
+                TRACE("overwriting %s (new version %s old version %u.%u.%u.%u)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version),
+                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
+                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
                 state = msifs_overwrite;
+            }
             else
             {
-                TRACE("destination file version equal or greater, not overwriting\n");
+                TRACE("keeping %s (new version %s old version %u.%u.%u.%u)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version),
+                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
+                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
                 state = msifs_present;
             }
             msi_free( font_version );
             return state;
         }
     }
-    if (msi_get_disk_file_size( file->TargetPath ) != file->FileSize)
+    if ((size = msi_get_disk_file_size( file->TargetPath )) != file->FileSize)
     {
+        TRACE("overwriting %s (old size %u new size %u)\n", debugstr_w(file->File), size, file->FileSize);
         return msifs_overwrite;
     }
     if (file->hash.dwFileHashInfoSize)
     {
         if (msi_file_hash_matches( file ))
         {
-            TRACE("file hashes match, not overwriting\n");
+            TRACE("keeping %s (hash match)\n", debugstr_w(file->File));
             return msifs_hashmatch;
         }
         else
         {
-            TRACE("file hashes do not match, overwriting\n");
+            TRACE("overwriting %s (hash mismatch)\n", debugstr_w(file->File));
             return msifs_overwrite;
         }
     }
     /* assume present */
+    TRACE("keeping %s\n", debugstr_w(file->File));
     return msifs_present;
 }
 

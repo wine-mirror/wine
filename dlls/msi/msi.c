@@ -4013,17 +4013,55 @@ extern VOID WINAPI MD5Init( MD5_CTX *);
 extern VOID WINAPI MD5Update( MD5_CTX *, const unsigned char *, unsigned int );
 extern VOID WINAPI MD5Final( MD5_CTX *);
 
-/***********************************************************************
- * MsiGetFileHashW            [MSI.@]
- */
-UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
-                             PMSIFILEHASHINFO pHash )
+UINT msi_get_filehash( const WCHAR *path, MSIFILEHASHINFO *hash )
 {
     HANDLE handle, mapping;
     void *p;
     DWORD length;
     UINT r = ERROR_FUNCTION_FAILED;
 
+    handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        WARN("can't open file %u\n", GetLastError());
+        return ERROR_FILE_NOT_FOUND;
+    }
+    if ((length = GetFileSize( handle, NULL )))
+    {
+        if ((mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL )))
+        {
+            if ((p = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, length )))
+            {
+                MD5_CTX ctx;
+
+                MD5Init( &ctx );
+                MD5Update( &ctx, p, length );
+                MD5Final( &ctx );
+                UnmapViewOfFile( p );
+
+                memcpy( hash->dwData, ctx.digest, sizeof(hash->dwData) );
+                r = ERROR_SUCCESS;
+            }
+            CloseHandle( mapping );
+        }
+    }
+    else
+    {
+        /* Empty file -> set hash to 0 */
+        memset( hash->dwData, 0, sizeof(hash->dwData) );
+        r = ERROR_SUCCESS;
+    }
+
+    CloseHandle( handle );
+    return r;
+}
+
+/***********************************************************************
+ * MsiGetFileHashW            [MSI.@]
+ */
+UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
+                             PMSIFILEHASHINFO pHash )
+{
     TRACE("%s %08x %p\n", debugstr_w(szFilePath), dwOptions, pHash );
 
     if (!szFilePath)
@@ -4039,46 +4077,7 @@ UINT WINAPI MsiGetFileHashW( LPCWSTR szFilePath, DWORD dwOptions,
     if (pHash->dwFileHashInfoSize < sizeof *pHash)
         return ERROR_INVALID_PARAMETER;
 
-    handle = CreateFileW( szFilePath, GENERIC_READ,
-                          FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
-    if (handle == INVALID_HANDLE_VALUE)
-    {
-        WARN("can't open file %u\n", GetLastError());
-        return ERROR_FILE_NOT_FOUND;
-    }
-    length = GetFileSize( handle, NULL );
-
-    if (length)
-    {
-        mapping = CreateFileMappingW( handle, NULL, PAGE_READONLY, 0, 0, NULL );
-        if (mapping)
-        {
-            p = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, length );
-            if (p)
-            {
-                MD5_CTX ctx;
-
-                MD5Init( &ctx );
-                MD5Update( &ctx, p, length );
-                MD5Final( &ctx );
-                UnmapViewOfFile( p );
-
-                memcpy( pHash->dwData, ctx.digest, sizeof pHash->dwData );
-                r = ERROR_SUCCESS;
-            }
-            CloseHandle( mapping );
-        }
-    }
-    else
-    {
-        /* Empty file -> set hash to 0 */
-        memset( pHash->dwData, 0, sizeof pHash->dwData );
-        r = ERROR_SUCCESS;
-    }
-
-    CloseHandle( handle );
-
-    return r;
+    return msi_get_filehash( szFilePath, pHash );
 }
 
 /***********************************************************************

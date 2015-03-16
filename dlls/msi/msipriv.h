@@ -937,6 +937,7 @@ extern int msi_compare_file_versions(VS_FIXEDFILEINFO *, const WCHAR *) DECLSPEC
 extern int msi_compare_font_versions(const WCHAR *, const WCHAR *) DECLSPEC_HIDDEN;
 extern DWORD msi_get_disk_file_size(LPCWSTR) DECLSPEC_HIDDEN;
 extern BOOL msi_file_hash_matches(MSIFILE *) DECLSPEC_HIDDEN;
+extern UINT msi_get_filehash(const WCHAR *, MSIFILEHASHINFO *) DECLSPEC_HIDDEN;
 
 extern LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value ) DECLSPEC_HIDDEN;
 extern LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value ) DECLSPEC_HIDDEN;

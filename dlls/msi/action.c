@@ -2070,7 +2070,6 @@ DWORD msi_get_disk_file_size( LPCWSTR filename )
         return INVALID_FILE_SIZE;
 
     size = GetFileSize( file, NULL );
-    TRACE("size is %u\n", size);
     CloseHandle( file );
     return size;
 }
@@ -2081,7 +2080,7 @@ BOOL msi_file_hash_matches( MSIFILE *file )
     MSIFILEHASHINFO hash;
 
     hash.dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
-    r = MsiGetFileHashW( file->TargetPath, 0, &hash );
+    r = msi_get_filehash( file->TargetPath, &hash );
     if (r != ERROR_SUCCESS)
         return FALSE;
 
@@ -2154,8 +2153,6 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
 {
     MSIASSEMBLY *assembly = file->Component->assembly;
 
-    TRACE("file %s is named %s\n", debugstr_w(file->File), debugstr_w(file->FileName));
-
     msi_free( file->TargetPath );
     if (assembly && !assembly->application)
     {
@@ -2169,7 +2166,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
         file->TargetPath = msi_build_directory_name( 2, dir, file->FileName );
     }
 
-    TRACE("resolves to %s\n", debugstr_w(file->TargetPath));
+    TRACE("file %s resolves to %s\n", debugstr_w(file->File), debugstr_w(file->TargetPath));
 }
 
 static UINT calculate_file_cost( MSIPACKAGE *package )
@@ -2197,6 +2194,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
             continue;
         }
         file_size = msi_get_disk_file_size( file->TargetPath );
+        TRACE("%s (size %u)\n", debugstr_w(file->TargetPath), file_size);
 
         if (file->Version)
         {

@@ -888,7 +888,7 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, const WCHAR *file )
     MSIPATCHINFO *patch = NULL;
     UINT r = ERROR_SUCCESS;
 
-    TRACE("%p %s\n", package, debugstr_w(file));
+    TRACE("%p, %s\n", package, debugstr_w(file));
 
     r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY + MSIDBOPEN_PATCHFILE, &patch_db );
     if (r != ERROR_SUCCESS)
@@ -1002,6 +1002,8 @@ UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
     MSIDATABASE *patch_db;
     MSIPATCHINFO *patch_info;
     MSISUMMARYINFO *si;
+
+    TRACE("%p, %s\n", package, debugstr_w(patch_code));
 
     len = sizeof(patch_file) / sizeof(WCHAR);
     r = MsiGetPatchInfoExW( patch_code, package->ProductCode, NULL, package->Context,
