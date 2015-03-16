@@ -2,4 +2,5 @@ MODULE    = winejoystick.drv
 IMPORTS   = winmm user32
 
 C_SRCS = \
-	joystick.c
+	joystick.c \
+	joystick_linux.c
