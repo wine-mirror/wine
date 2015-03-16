@@ -1142,6 +1142,36 @@ static void test_mbcjmsjis(void)
     _setmbcp(prev_cp);
 }
 
+static void test_mbctohira(void)
+{
+    static const unsigned int mbchira_932[][2] = {
+        {0x8152, 0x8152}, {0x8153, 0x8153}, {0x8154, 0x8154}, {0x8155, 0x8155},
+        {0x82a0, 0x82a0}, {0x833f, 0x833f}, {0x8340, 0x829f}, {0x837e, 0x82dd},
+        {0x837f, 0x837f}, {0x8380, 0x82de}, {0x8393, 0x82f1}, {0x8394, 0x8394},
+        {0x8396, 0x8396}, {0x8397, 0x8397},
+        {0xa5, 0xa5}, {0xb0, 0xb0}, {0xdd, 0xdd} };
+    unsigned int i;
+    unsigned int prev_cp = _getmbcp();
+
+    _setmbcp(_MB_CP_SBCS);
+    for (i = 0; i < sizeof(mbchira_932)/sizeof(mbchira_932[0]); i++)
+    {
+        int ret, exp = mbchira_932[i][0];
+        ret = _mbctohira(mbchira_932[i][0]);
+        ok(ret == exp, "Expected 0x%x, got 0x%x\n", exp, ret);
+    }
+
+    _setmbcp(932);
+    for (i = 0; i < sizeof(mbchira_932)/sizeof(mbchira_932[0]); i++)
+    {
+        unsigned int ret, exp;
+        ret = _mbctohira(mbchira_932[i][0]);
+        exp = mbchira_932[i][1];
+        ok(ret == exp, "Expected 0x%x, got 0x%x\n", exp, ret);
+    }
+    _setmbcp(prev_cp);
+}
+
 static void test_mbbtombc(void)
 {
     static const unsigned int mbbmbc[][2] = {
@@ -2888,6 +2918,7 @@ START_TEST(string)
     test__mbscpy_s();
     test_mbcjisjms();
     test_mbcjmsjis();
+    test_mbctohira();
     test_mbbtombc();
     test_mbctombb();
     test_ismbckata();

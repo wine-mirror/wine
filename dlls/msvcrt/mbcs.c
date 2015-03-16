@@ -2276,3 +2276,15 @@ MSVCRT_size_t CDECL MSVCRT_mbsrtowcs(MSVCRT_wchar_t *wcstr,
 
     return ret;
 }
+
+/*********************************************************************
+ *		_mbctohira (MSVCRT.@)
+ *
+ *              Converts a sjis katakana character to hiragana.
+ */
+unsigned int CDECL _mbctohira(unsigned int c)
+{
+    if(_ismbckata(c) && c <= 0x8393)
+        return (c - 0x8340 - (c >= 0x837f ? 1 : 0)) + 0x829f;
+    return c;
+}
