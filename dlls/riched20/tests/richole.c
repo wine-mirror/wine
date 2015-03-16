@@ -156,6 +156,14 @@ static void test_Interfaces(void)
   ok(punk != NULL, "ITextSelection_QueryInterface\n");
   IUnknown_Release(punk);
 
+  punk = NULL;
+  hres = IRichEditOle_QueryInterface(reOle, &IID_IOleClientSite, (void **) &punk);
+  ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface\n");
+
+  punk = NULL;
+  hres = IRichEditOle_QueryInterface(reOle, &IID_IOleWindow, (void **) &punk);
+  ok(hres == E_NOINTERFACE, "IRichEditOle_QueryInterface\n");
+
   ITextDocument_Release(txtDoc);
   IRichEditOle_Release(reOle);
   refcount = IRichEditOle_Release(reOle);
