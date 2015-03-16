@@ -828,6 +828,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->wparam  = 0;
     acceptsock->deferred = NULL;
     acceptsock->connect_time = current_time;
+    fd_copy_completion( acceptsock->fd, newfd );
     release_object( acceptsock->fd );
     acceptsock->fd = newfd;
 
