@@ -2148,9 +2148,13 @@ static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_fi
             "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
 
     ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, NULL);
-    todo_wine
-    ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
-        "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+    if (todo)
+        todo_wine
+        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+    else
+        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
 
     pRtlFreeUnicodeString(&string_to_findW);
 }
