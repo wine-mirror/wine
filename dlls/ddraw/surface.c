@@ -1537,24 +1537,34 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
 
     wined3d_mutex_lock();
 
-    if (Flags & DDBLT_COLORFILL)
+    if (Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
     {
         if (src_surface)
         {
             wined3d_mutex_unlock();
-            WARN("DDBLT_COLORFILL is not compatible with source surfaces, returning DDERR_INVALIDPARAMS\n");
+            WARN("Depth or colorfill is not compatible with source surfaces, returning DDERR_INVALIDPARAMS\n");
             return DDERR_INVALIDPARAMS;
         }
         if (!DDBltFx)
         {
             wined3d_mutex_unlock();
-            WARN("DDBLT_COLORFILL used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
+            WARN("Depth or colorfill used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
-        if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+
+        if ((Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL)) == (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
+            Flags &= ~DDBLT_DEPTHFILL;
+
+        if ((dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (Flags & DDBLT_COLORFILL))
         {
             wined3d_mutex_unlock();
             WARN("DDBLT_COLORFILL used on a depth buffer, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if (!(dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (Flags & DDBLT_DEPTHFILL))
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_DEPTHFILL used on a color buffer, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
     }
