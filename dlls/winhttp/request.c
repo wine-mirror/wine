@@ -2056,9 +2056,13 @@ static BOOL refill_buffer( request_t *request, BOOL notify )
         {
             if (!start_next_chunk( request, notify )) return FALSE;
         }
+        len = min( len, request->read_chunked_size );
     }
-    if (!request->read_chunked && request->content_length != ~0u)
+    else if (request->content_length != ~0u)
+    {
         len = min( len, request->content_length - request->content_read );
+    }
+
     if (len <= request->read_size) return TRUE;
     if (!read_more_data( request, len, notify )) return FALSE;
     if (!request->read_size) request->content_length = request->content_read = 0;
