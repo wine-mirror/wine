@@ -5299,7 +5299,7 @@ static istreambuf_iterator_wchar* num_get_do_get_void(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoullx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                &last, FMTFLAG_hex, base->loc, numpunct), &err);
+                &last, FMTFLAG_hex, IOS_LOCALE(base), numpunct), &err);
     if(v!=(unsigned __int64)((INT_PTR)v))
         *state |= IOSTATE_failbit;
     else if(end!=tmp && !err)
@@ -5330,7 +5330,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_void(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, void **pval)
 {
     return num_get_do_get_void(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
@@ -5340,7 +5340,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_void(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, void **pval)
 {
     return num_get_do_get_void(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
@@ -5366,7 +5366,7 @@ static istreambuf_iterator_wchar* num_get_do_get_double(const num_get *this,
 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
-    v = _Stodx(tmp, &end, num_get__Getffld(this, tmp, &first, &last, base->loc, numpunct), &err);
+    v = _Stodx(tmp, &end, num_get__Getffld(this, tmp, &first, &last, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5403,7 +5403,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_double(const num_get 
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, double *pval)
 {
     return num_get_do_get_double(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
@@ -5415,7 +5415,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_double(const num_get 
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, double *pval)
 {
     return num_get_do_get_double(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAO@Z */
@@ -5454,7 +5454,7 @@ static istreambuf_iterator_wchar* num_get_do_get_float(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stofx(tmp, &end, num_get__Getffld(this, tmp, &first,
-                &last, base->loc, numpunct), &err);
+                &last, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5483,7 +5483,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_float(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, float *pval)
 {
     return num_get_do_get_float(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
@@ -5493,7 +5493,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_float(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, float *pval)
 {
     return num_get_do_get_float(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
@@ -5520,7 +5520,7 @@ static istreambuf_iterator_wchar* num_get_do_get_uint64(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoullx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                &last, base->fmtfl, base->loc, numpunct), &err);
+                &last, base->fmtfl, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5549,7 +5549,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint64(const num_get 
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONGLONG *pval)
 {
     return num_get_do_get_uint64(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
@@ -5559,7 +5559,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_uint64(const num_get 
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONGLONG *pval)
 {
     return num_get_do_get_uint64(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
@@ -5586,7 +5586,7 @@ static istreambuf_iterator_wchar* num_get_do_get_int64(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stollx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                &last, base->fmtfl, base->loc, numpunct), &err);
+                &last, base->fmtfl, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5615,7 +5615,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_int64(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONGLONG *pval)
 {
     return num_get_do_get_int64(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
@@ -5625,7 +5625,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_int64(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONGLONG *pval)
 {
     return num_get_do_get_int64(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
@@ -5652,7 +5652,7 @@ static istreambuf_iterator_wchar* num_get_do_get_ulong(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoulx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                &last, base->fmtfl, base->loc, numpunct), &err);
+                &last, base->fmtfl, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5681,7 +5681,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ulong(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONG *pval)
 {
     return num_get_do_get_ulong(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
@@ -5691,7 +5691,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_ulong(const num_get *
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONG *pval)
 {
     return num_get_do_get_ulong(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
@@ -5718,7 +5718,7 @@ static istreambuf_iterator_wchar* num_get_do_get_long(const num_get *this,
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stolx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                &last, base->fmtfl, base->loc, numpunct), &err);
+                &last, base->fmtfl, IOS_LOCALE(base), numpunct), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -5747,7 +5747,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_long(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONG *pval)
 {
     return num_get_do_get_long(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
@@ -5757,7 +5757,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_long(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONG *pval)
 {
     return num_get_do_get_long(this, ret, first, last, base,
-        state, pval, numpunct_short_use_facet(base->loc));
+        state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
@@ -5835,7 +5835,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ushort(const num_get 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     b = num_get_wchar__Getifld(this, tmp,
-            &first, &last, base->fmtfl, base->loc);
+            &first, &last, base->fmtfl, IOS_LOCALE(base));
     beg = tmp + (tmp[0]=='-' ? 1 : 0);
     v = _Stoulx(beg, &end, b, &err);
 
@@ -5927,7 +5927,7 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
         char tmp[25], *end;
         int err;
         LONG v = _Stolx(tmp, &end, num_get__Getifld(this, tmp, &first,
-                    &last, base->fmtfl, base->loc, numpunct), &err);
+                    &last, base->fmtfl, IOS_LOCALE(base), numpunct), &err);
 
         if(end!=tmp && err==0 && (v==0 || v==1))
             *pval = v;
@@ -5957,7 +5957,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_bool(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
 {
     return num_get_do_get_bool(this, ret, first, last, base,
-            state, pval, numpunct_wchar_use_facet(base->loc));
+            state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
@@ -5967,7 +5967,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_bool(const num_get *t
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
 {
     return num_get_do_get_bool(this, ret, first, last, base,
-            state, pval, numpunct_short_use_facet(base->loc));
+            state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
@@ -6449,7 +6449,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_void(const num_get *thi
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoullx(tmp, &end, num_get_char__Getifld(this, tmp,
-                &first, &last, FMTFLAG_hex, base->loc), &err);
+                &first, &last, FMTFLAG_hex, IOS_LOCALE(base)), &err);
     if(v!=(unsigned __int64)((INT_PTR)v))
         *state |= IOSTATE_failbit;
     else if(end!=tmp && !err)
@@ -6503,7 +6503,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_double(const num_get *t
 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
-    v = _Stodx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, base->loc), &err);
+    v = _Stodx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6557,7 +6557,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_float(const num_get *th
 
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
-    v = _Stofx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, base->loc), &err);
+    v = _Stofx(tmp, &end, num_get_char__Getffld(this, tmp, &first, &last, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6602,7 +6602,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_uint64(const num_get *t
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoullx(tmp, &end, num_get_char__Getifld(this, tmp,
-                &first, &last, base->fmtfl, base->loc), &err);
+                &first, &last, base->fmtfl, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6647,7 +6647,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_int64(const num_get *th
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stollx(tmp, &end, num_get_char__Getifld(this, tmp,
-                &first, &last, base->fmtfl, base->loc), &err);
+                &first, &last, base->fmtfl, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6692,7 +6692,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_ulong(const num_get *th
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stoulx(tmp, &end, num_get_char__Getifld(this, tmp,
-                &first, &last, base->fmtfl, base->loc), &err);
+                &first, &last, base->fmtfl, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6737,7 +6737,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_long(const num_get *thi
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     v = _Stolx(tmp, &end, num_get_char__Getifld(this, tmp,
-                &first, &last, base->fmtfl, base->loc), &err);
+                &first, &last, base->fmtfl, IOS_LOCALE(base)), &err);
     if(end!=tmp && !err)
         *pval = v;
     else
@@ -6811,7 +6811,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_ushort(const num_get *t
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     b = num_get_char__Getifld(this, tmp,
-            &first, &last, base->fmtfl, base->loc);
+            &first, &last, base->fmtfl, IOS_LOCALE(base));
     beg = tmp + (tmp[0]=='-' ? 1 : 0);
     v = _Stoulx(beg, &end, b, &err);
 
@@ -6857,7 +6857,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
     if(base->fmtfl & FMTFLAG_boolalpha) {
-        numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+        numpunct_char *numpunct = numpunct_char_use_facet(IOS_LOCALE(base));
         basic_string_char false_bstr, true_bstr;
         const char *pfalse, *ptrue;
 
@@ -6902,7 +6902,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
         char tmp[25], *end;
         int err;
         LONG v = _Stolx(tmp, &end, num_get_char__Getifld(this, tmp,
-                    &first, &last, base->fmtfl, base->loc), &err);
+                    &first, &last, base->fmtfl, IOS_LOCALE(base)), &err);
 
         if(end!=tmp && err==0 && (v==0 || v==1))
             *pval = v;
@@ -7164,7 +7164,7 @@ ostreambuf_iterator_char* __cdecl num_put_char__Fput(const num_put *this, ostrea
 static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
 {
-    numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+    numpunct_char *numpunct = numpunct_char_use_facet(IOS_LOCALE(base));
     basic_string_char grouping_bstr;
     const char *grouping;
     char *p, sep = *localeconv()->decimal_point;
@@ -7256,7 +7256,7 @@ char* __cdecl num_put_char__Ifmt(const num_put *this, char *fmt, const char *spe
 ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, char *buf, MSVCP_size_t count)
 {
-    numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+    numpunct_char *numpunct = numpunct_char_use_facet(IOS_LOCALE(base));
     basic_string_char grouping_bstr;
     const char *grouping;
     char *p, sep;
@@ -7622,7 +7622,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *thi
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
     if(base->fmtfl & FMTFLAG_boolalpha) {
-        numpunct_char *numpunct = numpunct_char_use_facet(base->loc);
+        numpunct_char *numpunct = numpunct_char_use_facet(IOS_LOCALE(base));
         basic_string_char str;
         MSVCP_size_t pad, len;
 
@@ -8181,7 +8181,7 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
 ostreambuf_iterator_wchar* __cdecl num_put_wchar__Iput(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf, MSVCP_size_t count)
 {
-    return num_put__Iput(this, ret, dest, base, fill, buf, count, numpunct_wchar_use_facet(base->loc));
+    return num_put__Iput(this, ret, dest, base, fill, buf, count, numpunct_wchar_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?_Iput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPADI@Z */
@@ -8189,7 +8189,7 @@ ostreambuf_iterator_wchar* __cdecl num_put_wchar__Iput(const num_put *this, ostr
 ostreambuf_iterator_wchar* __cdecl num_put_short__Iput(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf, MSVCP_size_t count)
 {
-    return num_put__Iput(this, ret, dest, base, fill, buf, count, numpunct_short_use_facet(base->loc));
+    return num_put__Iput(this, ret, dest, base, fill, buf, count, numpunct_short_use_facet(IOS_LOCALE(base)));
 }
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WJ@Z */
@@ -8363,7 +8363,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_double(const num_put 
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
     num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v),
-            numpunct_wchar_use_facet(base->loc));
+            numpunct_wchar_use_facet(IOS_LOCALE(base)));
     MSVCRT_operator_delete(tmp);
     return ret;
 }
@@ -8398,7 +8398,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_double(const num_put 
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
     num_put__fput(this, ret, dest, base, fill, tmp, sprintf(tmp, fmt, prec, v),
-            numpunct_short_use_facet(base->loc));
+            numpunct_short_use_facet(IOS_LOCALE(base)));
     MSVCRT_operator_delete(tmp);
     return ret;
 }
@@ -8642,7 +8642,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_bool(const num_put *t
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
     if(base->fmtfl & FMTFLAG_boolalpha) {
-        numpunct_wchar *numpunct = numpunct_wchar_use_facet(base->loc);
+        numpunct_wchar *numpunct = numpunct_wchar_use_facet(IOS_LOCALE(base));
         basic_string_wchar str;
         MSVCP_size_t pad, len;
 
@@ -8680,7 +8680,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_bool(const num_put *t
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
     if(base->fmtfl & FMTFLAG_boolalpha) {
-        numpunct_wchar *numpunct = numpunct_short_use_facet(base->loc);
+        numpunct_wchar *numpunct = numpunct_short_use_facet(IOS_LOCALE(base));
         basic_string_wchar str;
         MSVCP_size_t pad, len;
 

@@ -466,6 +466,12 @@ unsigned short __thiscall basic_streambuf_wchar_sgetc(basic_streambuf_wchar*);
 unsigned short __thiscall basic_streambuf_wchar_sbumpc(basic_streambuf_wchar*);
 unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar*, wchar_t);
 
+#if _MSVCP_VER < 70
+#define IOS_LOCALE(ios) (&(ios)->loc)
+#else
+#define IOS_LOCALE(ios) ((ios)->loc)
+#endif
+
 /* class num_get<char> */
 typedef struct {
     locale_facet facet;

@@ -352,6 +352,8 @@ unsigned short __thiscall basic_streambuf_wchar_sgetc(basic_streambuf_wchar*);
 unsigned short __thiscall basic_streambuf_wchar_sbumpc(basic_streambuf_wchar*);
 unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar*, wchar_t);
 
+#define IOS_LOCALE(ios) (&(ios)->loc)
+
 /* class num_get<char> */
 typedef struct {
     locale_facet facet;
