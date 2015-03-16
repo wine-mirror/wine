@@ -983,10 +983,10 @@ static BOOL secure_proxy_connect( request_t *request )
 #define INET6_ADDRSTRLEN 46
 #endif
 
-static WCHAR *addr_to_str( const struct sockaddr *addr )
+static WCHAR *addr_to_str( struct sockaddr *addr )
 {
     char buf[INET6_ADDRSTRLEN];
-    const void *src;
+    void *src;
 
     switch (addr->sa_family)
     {
