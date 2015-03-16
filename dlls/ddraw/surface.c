@@ -1537,6 +1537,28 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
 
     wined3d_mutex_lock();
 
+    if (Flags & DDBLT_COLORFILL)
+    {
+        if (src_surface)
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_COLORFILL is not compatible with source surfaces, returning DDERR_INVALIDPARAMS\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if (!DDBltFx)
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_COLORFILL used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+        {
+            wined3d_mutex_unlock();
+            WARN("DDBLT_COLORFILL used on a depth buffer, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+    }
+
     if (Flags & DDBLT_KEYSRC && (!src_surface || !(src_surface->surface_desc.dwFlags & DDSD_CKSRCBLT)))
     {
         WARN("DDBLT_KEYDEST blit without color key in surface, returning DDERR_INVALIDPARAMS\n");
