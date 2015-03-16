@@ -1350,7 +1350,6 @@ int CDECL _ismbcpunct(unsigned int ch)
  */
 int CDECL _ismbchira(unsigned int c)
 {
-  /* FIXME: use lc_ctype when supported, not lc_all */
   if(get_mbcinfo()->mbcodepage == 932)
   {
     /* Japanese/Hiragana, CP 932 */
@@ -1364,11 +1363,8 @@ int CDECL _ismbchira(unsigned int c)
  */
 int CDECL _ismbckata(unsigned int c)
 {
-  /* FIXME: use lc_ctype when supported, not lc_all */
   if(get_mbcinfo()->mbcodepage == 932)
   {
-    if(c < 256)
-      return _ismbbkana(c);
     /* Japanese/Katakana, CP 932 */
     return (c >= 0x8340 && c <= 0x8396 && c != 0x837f);
   }

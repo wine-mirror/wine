@@ -1190,6 +1190,37 @@ static void test_mbctombb(void)
     _setmbcp(prev_cp);
 }
 
+static void test_ismbckata(void) {
+    struct katakana_pair {
+        UINT c;
+        BOOL exp;
+    };
+    static const struct katakana_pair tests[] = {
+        {0x8152, FALSE}, {0x8153, FALSE}, {0x8154, FALSE}, {0x8155, FALSE},
+        {0x82a0, FALSE}, {0x833f, FALSE}, {0x8340, TRUE }, {0x837e, TRUE },
+        {0x837f, FALSE}, {0x8380, TRUE }, {0x8396, TRUE }, {0x8397, FALSE},
+        {0xa5, FALSE}, {0xb0, FALSE}, {0xdd, FALSE}
+    };
+    unsigned int prev_cp = _getmbcp();
+    int ret;
+    unsigned int i;
+
+    _setmbcp(_MB_CP_SBCS);
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
+        ret = _ismbckata(tests[i].c);
+        ok(!ret, "expected 0, got %d for %04x\n", ret, tests[i].c);
+    }
+
+    _setmbcp(932);
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
+        ret = _ismbckata(tests[i].c);
+        ok(!!ret == tests[i].exp, "expected %d, got %d for %04x\n",
+           tests[i].exp, !!ret, tests[i].c);
+    }
+
+    _setmbcp(prev_cp);
+}
+
 static void test_ismbclegal(void) {
     unsigned int prev_cp = _getmbcp();
     int ret, exp, err;
@@ -2859,6 +2890,7 @@ START_TEST(string)
     test_mbcjmsjis();
     test_mbbtombc();
     test_mbctombb();
+    test_ismbckata();
     test_ismbclegal();
     test_strtok();
     test__mbstok();
