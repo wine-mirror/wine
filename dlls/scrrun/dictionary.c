@@ -73,9 +73,21 @@ typedef struct
     struct list buckets[BUCKET_COUNT];
 } dictionary;
 
+struct dictionary_enum {
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref;
+
+    dictionary *dict;
+};
+
 static inline dictionary *impl_from_IDictionary(IDictionary *iface)
 {
     return CONTAINING_RECORD(iface, dictionary, IDictionary_iface);
+}
+
+static inline struct dictionary_enum *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, struct dictionary_enum, IEnumVARIANT_iface);
 }
 
 static inline struct list *get_bucket_head(dictionary *dict, DWORD hash)
@@ -200,6 +212,104 @@ static void free_keyitem_pair(struct keyitem_pair *pair)
     VariantClear(&pair->key);
     VariantClear(&pair->item);
     heap_free(pair);
+}
+
+static HRESULT WINAPI dict_enum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **obj)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IEnumVARIANT) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IEnumVARIANT_AddRef(iface);
+        return S_OK;
+    }
+    else {
+        WARN("interface not supported %s\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI dict_enum_AddRef(IEnumVARIANT *iface)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    TRACE("(%p)\n", This);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI dict_enum_Release(IEnumVARIANT *iface)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    LONG ref;
+
+    TRACE("(%p)\n", This);
+
+    ref = InterlockedDecrement(&This->ref);
+    if(ref == 0) {
+        IDictionary_Release(&This->dict->IDictionary_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI dict_enum_Next(IEnumVARIANT *iface, ULONG count, VARIANT *keys, ULONG *fetched)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%u %p %p): stub\n", This, count, keys, fetched);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dict_enum_Skip(IEnumVARIANT *iface, ULONG count)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%u): stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dict_enum_Reset(IEnumVARIANT *iface)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dict_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **cloned)
+{
+    struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%p): stub\n", This, cloned);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl dictenumvtbl = {
+    dict_enum_QueryInterface,
+    dict_enum_AddRef,
+    dict_enum_Release,
+    dict_enum_Next,
+    dict_enum_Skip,
+    dict_enum_Reset,
+    dict_enum_Clone
+};
+
+static HRESULT create_dict_enum(dictionary *dict, IUnknown **ret)
+{
+    struct dictionary_enum *This;
+
+    *ret = NULL;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IEnumVARIANT_iface.lpVtbl = &dictenumvtbl;
+    This->ref = 1;
+    This->dict = dict;
+    IDictionary_AddRef(&dict->IDictionary_iface);
+
+    *ret = (IUnknown*)&This->IEnumVARIANT_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid, void **obj)
@@ -557,13 +667,13 @@ static HRESULT WINAPI dictionary_get_CompareMode(IDictionary *iface, CompareMeth
     return S_OK;
 }
 
-static HRESULT WINAPI dictionary__NewEnum(IDictionary *iface, IUnknown **ppunk)
+static HRESULT WINAPI dictionary__NewEnum(IDictionary *iface, IUnknown **ret)
 {
     dictionary *This = impl_from_IDictionary(iface);
 
-    FIXME("(%p)->(%p)\n", This, ppunk);
+    TRACE("(%p)->(%p)\n", This, ret);
 
-    return E_NOTIMPL;
+    return create_dict_enum(This, ret);
 }
 
 static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
