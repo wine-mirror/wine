@@ -365,8 +365,12 @@ static GpStatus alpha_blend_bmp_pixels(GpGraphics *graphics, INT dst_x, INT dst_
         for (y=0; y<src_height; y++)
         {
             ARGB dst_color, src_color;
-            GdipBitmapGetPixel(dst_bitmap, x+dst_x, y+dst_y, &dst_color);
             src_color = ((ARGB*)(src + src_stride * y))[x];
+
+            if (!(src_color & 0xff000000))
+                continue;
+
+            GdipBitmapGetPixel(dst_bitmap, x+dst_x, y+dst_y, &dst_color);
             GdipBitmapSetPixel(dst_bitmap, x+dst_x, y+dst_y, color_over(dst_color, src_color));
         }
     }

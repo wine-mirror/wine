@@ -2417,6 +2417,27 @@ static void test_fromMemoryBitmap(void)
     GdipDeleteGraphics(graphics);
 
     GdipDisposeImage((GpImage*)bitmap);
+
+    /* If we don't draw to the HDC, the bits are never accessed */
+    status = GdipCreateBitmapFromScan0(4, 4, 12, PixelFormat24bppRGB, (BYTE*)1, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipGetDC(graphics, &hdc);
+    expect(Ok, status);
+    ok(hdc != NULL, "got NULL hdc\n");
+
+    color = GetPixel(hdc, 0, 0);
+    todo_wine expect(0x0c0b0d, color);
+
+    status = GdipReleaseDC(graphics, hdc);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    GdipDisposeImage((GpImage*)bitmap);
 }
 
 static void test_GdipIsVisiblePoint(void)
