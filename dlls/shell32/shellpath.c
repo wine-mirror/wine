@@ -3946,11 +3946,8 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParentFolder, 0, REG_SZ, (LPBYTE)sParentGuid, sizeof(sParentGuid)));
         }
 
-        if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL)
+        if(SUCCEEDED(hr) && pKFD->category != KF_CATEGORY_VIRTUAL && pKFD->pszRelativePath)
         {
-            if(!pKFD->pszRelativePath)
-                hr = E_INVALIDARG;
-
             if(SUCCEEDED(hr))
                 hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szRelativePath, 0, REG_SZ, (LPBYTE)pKFD->pszRelativePath, (lstrlenW(pKFD->pszRelativePath)+1)*sizeof(WCHAR) ));
         }
