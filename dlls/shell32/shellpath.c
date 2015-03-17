@@ -812,6 +812,7 @@ static const WCHAR Local_Settings_Temporary_Internet_FilesW[] = {'L','o','c','a'
 static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p','l','o','r','e','r','\0'};
 static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
 static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','i','n','g','t','o','n','e','s','\0'};
+static const WCHAR Microsoft_Windows_Start_MenuW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u',0};
 static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
 static const WCHAR Music_PlaylistsW[] = {'M','u','s','i','c','\\','P','l','a','y','l','i','s','t','s','\0'};
 static const WCHAR Music_Sample_MusicW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','M','u','s','i','c','\0'};
@@ -827,9 +828,11 @@ static const WCHAR Pictures_Sample_PicturesW[] = {'P','i','c','t','u','r','e','s
 static const WCHAR Pictures_Slide_ShowsW[] = {'P','i','c','t','u','r','e','s','\\','S','l','i','d','e',' ','S','h','o','w','s','\0'};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
 static const WCHAR Program_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\0'};
+static const WCHAR ProgramFilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','\0'};
 static const WCHAR Program_Files_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
 static const WCHAR Program_Files_x86W[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\0'};
 static const WCHAR Program_Files_x86_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
+static const WCHAR ProgramFilesCommonW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n',0};
 static const WCHAR ProgramFilesDirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r','\0'};
 static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
@@ -843,11 +846,13 @@ static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'
 static const WCHAR Start_Menu_ProgramsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\0'};
 static const WCHAR Start_Menu_Admin_ToolsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR Start_Menu_StartupW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','U','p','\0'};
+static const WCHAR SystemW[] = {'S','y','s','t','e','m',0};
 static const WCHAR TemplatesW[] = {'T','e','m','p','l','a','t','e','s','\0'};
 static const WCHAR UsersW[] = {'U','s','e','r','s','\0'};
 static const WCHAR UsersPublicW[] = {'U','s','e','r','s','\\','P','u','b','l','i','c','\0'};
 static const WCHAR VideosW[] = {'V','i','d','e','o','s','\0'};
 static const WCHAR Videos_Sample_VideosW[] = {'V','i','d','e','o','s','\\','S','a','m','p','l','e',' ','V','i','d','e','o','s','\0'};
+static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
 static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
 static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
 static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
@@ -886,6 +891,21 @@ typedef struct
     CSIDL_Type type;
     LPCWSTR    szValueName;
     LPCWSTR    szDefaultPath; /* fallback string or resource ID */
+
+    /* KNOWNFOLDER_DEFINITION fields */
+    KF_CATEGORY category;
+    const WCHAR *pszName;
+    const WCHAR *pszDescription;
+    const KNOWNFOLDERID *fidParent;
+    const WCHAR *pszRelativePath;
+    const WCHAR *pszParsingName;
+    const WCHAR *pszTooltip;
+    const WCHAR *pszLocalizedName;
+    const WCHAR *pszIcon;
+    const WCHAR *pszSecurity;
+    DWORD dwAttributes;
+    KF_DEFINITION_FLAGS kfdFlags;
+    const FOLDERTYPEID *ftidType;
 } CSIDL_DATA;
 
 static const CSIDL_DATA CSIDL_Data[] =
@@ -894,7 +914,21 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Desktop,
         CSIDL_Type_User,
         DesktopW,
-        MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY)
+        MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY),
+
+        KF_CATEGORY_PERUSER, /* category */
+        DesktopW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        DesktopW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x01 - CSIDL_INTERNET */
         &FOLDERID_InternetFolder,
@@ -1014,7 +1048,21 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Fonts,
         CSIDL_Type_WindowsPath,
         FontsW,
-        FontsW
+        FontsW,
+
+        KF_CATEGORY_FIXED, /* category */
+        FontsW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &FOLDERID_Windows/* typeid */
     },
     { /* 0x15 - CSIDL_TEMPLATES */
         &FOLDERID_Templates,
@@ -1026,13 +1074,41 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_CommonStartMenu,
         CSIDL_Type_AllUsers,
         Common_Start_MenuW,
-        Start_MenuW
+        Start_MenuW,
+
+        KF_CATEGORY_COMMON, /* category */
+        Common_Start_MenuW, /* name */
+        NULL, /* description */
+        &FOLDERID_ProgramData, /* parent */
+        Microsoft_Windows_Start_MenuW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x17 - CSIDL_COMMON_PROGRAMS */
         &FOLDERID_CommonPrograms,
         CSIDL_Type_AllUsers,
         Common_ProgramsW,
-        Start_Menu_ProgramsW
+        Start_Menu_ProgramsW,
+
+        KF_CATEGORY_COMMON, /* category */
+        Common_ProgramsW, /* name */
+        NULL, /* description */
+        &FOLDERID_CommonStartMenu, /* parent */
+        ProgramsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x18 - CSIDL_COMMON_STARTUP */
         &FOLDERID_CommonStartup,
@@ -1104,25 +1180,81 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_ProgramData,
         CSIDL_Type_AllUsers,
         Common_AppDataW,
-        Application_DataW
+        Application_DataW,
+
+        KF_CATEGORY_FIXED, /* category */
+        Common_AppDataW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x24 - CSIDL_WINDOWS */
         &FOLDERID_Windows,
         CSIDL_Type_WindowsPath,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_FIXED, /* category */
+        WindowsW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x25 - CSIDL_SYSTEM */
         &FOLDERID_System,
         CSIDL_Type_SystemPath,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_FIXED, /* category */
+        SystemW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x26 - CSIDL_PROGRAM_FILES */
         &FOLDERID_ProgramFiles,
         CSIDL_Type_CurrVer,
         ProgramFilesDirW,
-        Program_FilesW
+        Program_FilesW,
+
+        KF_CATEGORY_FIXED, /* category */
+        ProgramFilesW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x27 - CSIDL_MYPICTURES */
         &FOLDERID_Pictures,
@@ -1152,7 +1284,21 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_ProgramFilesCommon,
         CSIDL_Type_CurrVer,
         CommonFilesDirW,
-        Program_Files_Common_FilesW
+        Program_Files_Common_FilesW,
+
+        KF_CATEGORY_FIXED, /* category */
+        ProgramFilesCommonW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x2c - CSIDL_PROGRAM_FILES_COMMONX86 */
         &FOLDERID_ProgramFilesCommonX86,
@@ -2879,32 +3025,6 @@ static HRESULT set_folder_attributes(void)
     return S_OK;
 }
 
-
-/* Register the default values in the registry, as some apps seem to depend
- * on their presence.  The set registered was taken from Windows XP.
- */
-HRESULT SHELL_RegisterShellFolders(void)
-{
-    HRESULT hr;
-
-    /* Set up '$HOME' targeted symlinks for 'My Documents', 'My Pictures',
-     * 'My Videos', 'My Music' and 'Desktop' in advance, so that the
-     * _SHRegister*ShellFolders() functions will find everything nice and clean
-     * and thus will not attempt to create them in the profile directory. */
-    _SHCreateSymbolicLinks();
-    
-    hr = _SHRegisterUserShellFolders(TRUE);
-    if (SUCCEEDED(hr))
-        hr = _SHRegisterUserShellFolders(FALSE);
-    if (SUCCEEDED(hr))
-        hr = _SHRegisterCommonShellFolders();
-    if (SUCCEEDED(hr))
-        hr = create_extra_folders();
-    if (SUCCEEDED(hr))
-        hr = set_folder_attributes();
-    return hr;
-}
-
 /*************************************************************************
  * SHGetSpecialFolderPathA [SHELL32.@]
  */
@@ -3912,16 +4032,12 @@ static HRESULT WINAPI foldermanager_GetFolderByName(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI foldermanager_RegisterFolder(
-    IKnownFolderManager *iface,
-    REFKNOWNFOLDERID rfid,
-    KNOWNFOLDER_DEFINITION const *pKFD)
+static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFINITION *pKFD)
 {
     HRESULT hr;
     HKEY hKey = NULL;
     DWORD dwDisp;
     LPWSTR registryPath = NULL;
-    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(rfid), pKFD);
 
     hr = get_known_folder_registry_path(rfid, NULL, &registryPath);
     TRACE("registry path: %s\n", debugstr_w(registryPath));
@@ -3963,6 +4079,15 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
 
     HeapFree(GetProcessHeap(), 0, registryPath);
     return hr;
+}
+
+static HRESULT WINAPI foldermanager_RegisterFolder(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid,
+    KNOWNFOLDER_DEFINITION const *pKFD)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(rfid), pKFD);
+    return register_folder(rfid, pKFD);
 }
 
 static HRESULT WINAPI foldermanager_UnregisterFolder(
@@ -4084,4 +4209,57 @@ HRESULT WINAPI SHGetKnownFolderIDList(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE
 {
         FIXME("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, pidl);
         return E_NOTIMPL;
+}
+
+static void register_system_knownfolders(void)
+{
+    int i;
+    for(i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); ++i){
+        const CSIDL_DATA *folder = &CSIDL_Data[i];
+        if(folder->pszName){
+            KNOWNFOLDER_DEFINITION kfd;
+
+            /* register_folder won't modify kfd, so cast away const instead of
+             * reallocating */
+            kfd.category = folder->category;
+            kfd.pszName = (WCHAR*)folder->pszName;
+            kfd.pszDescription = (WCHAR*)folder->pszDescription;
+            memcpy(&kfd.fidParent, folder->fidParent, sizeof(KNOWNFOLDERID));
+            kfd.pszRelativePath = (WCHAR*)folder->pszRelativePath;
+            kfd.pszParsingName = (WCHAR*)folder->pszParsingName;
+            kfd.pszTooltip = (WCHAR*)folder->pszTooltip;
+            kfd.pszLocalizedName = (WCHAR*)folder->pszLocalizedName;
+            kfd.pszIcon = (WCHAR*)folder->pszIcon;
+            kfd.pszSecurity = (WCHAR*)folder->pszSecurity;
+            kfd.dwAttributes = folder->dwAttributes;
+            kfd.kfdFlags = folder->kfdFlags;
+            memcpy(&kfd.ftidType, folder->ftidType, sizeof(FOLDERTYPEID));
+
+            register_folder(folder->id, &kfd);
+        }
+    }
+}
+
+HRESULT SHELL_RegisterShellFolders(void)
+{
+    HRESULT hr;
+
+    /* Set up '$HOME' targeted symlinks for 'My Documents', 'My Pictures',
+     * 'My Videos', 'My Music' and 'Desktop' in advance, so that the
+     * _SHRegister*ShellFolders() functions will find everything nice and clean
+     * and thus will not attempt to create them in the profile directory. */
+    _SHCreateSymbolicLinks();
+
+    hr = _SHRegisterUserShellFolders(TRUE);
+    if (SUCCEEDED(hr))
+        hr = _SHRegisterUserShellFolders(FALSE);
+    if (SUCCEEDED(hr))
+        hr = _SHRegisterCommonShellFolders();
+    if (SUCCEEDED(hr))
+        hr = create_extra_folders();
+    if (SUCCEEDED(hr))
+        hr = set_folder_attributes();
+    if (SUCCEEDED(hr))
+        register_system_knownfolders();
+    return hr;
 }
