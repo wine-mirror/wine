@@ -2458,6 +2458,26 @@ static void test_knownFolders(void)
 
                     hr = IKnownFolder_Release(folder);
                     ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
+
+                    /* update the folder */
+                    CoTaskMemFree(kfDefinition.pszName);
+                    kfDefinition.pszName = CoTaskMemAlloc(sizeof(sExample2));
+                    lstrcpyW(kfDefinition.pszName, sExample2);
+                    hr = IKnownFolderManager_RegisterFolder(mgr, &newFolderId, &kfDefinition);
+                    ok(hr == S_OK, "failed to re-register known folder: 0x%08x\n", hr);
+
+                    hr = IKnownFolderManager_GetFolder(mgr, &newFolderId, &folder);
+                    ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
+
+                    hr = IKnownFolder_GetFolderDefinition(folder, &kfSubDefinition);
+                    ok(hr == S_OK, "failed to get folder definition: 0x%08x\n", hr);
+                    ok(!memcmp(kfDefinition.pszName, kfSubDefinition.pszName, sizeof(sExample2)),
+                            "Got wrong updated name: %s\n", wine_dbgstr_w(kfSubDefinition.pszName));
+
+                    FreeKnownFolderDefinitionFields(&kfSubDefinition);
+
+                    hr = IKnownFolder_Release(folder);
+                    ok(hr == S_OK, "failed to release KnownFolder instance: 0x%08x\n", hr);
                 }
 
                 hr = IKnownFolderManager_UnregisterFolder(mgr, &newFolderId);

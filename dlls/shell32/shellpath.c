@@ -3931,9 +3931,6 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
 
     if(SUCCEEDED(hr))
     {
-        if(dwDisp == REG_OPENED_EXISTING_KEY)
-            hr = E_FAIL;
-
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
 
