@@ -1376,7 +1376,7 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     err = mciSendStringA("status mysound mode notify", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"paused"), "mci status mode: %s\n", buf);
-    todo_wine test_notification(hwnd,"play (superseded)",MCI_NOTIFY_SUPERSEDED);
+    test_notification(hwnd,"play (superseded)",MCI_NOTIFY_SUPERSEDED);
     test_notification(hwnd,"status",MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendStringA("seek mysound to start wait", NULL, 0, NULL);
@@ -1388,11 +1388,11 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     err = mciSendStringA("play mysound to 1500 notify", NULL, 0, hwnd);
     ok(!err,"mci play returned %s\n", dbg_mcierr(err));
     Sleep(200);
-    todo_wine test_notification(hwnd,"play",0);
+    test_notification(hwnd,"play",0);
 
     err = mciSendStringA("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
-    todo_wine test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
+    test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
 }
 
 START_TEST(mci)

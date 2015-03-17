@@ -85,6 +85,7 @@ static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     if (!wma)
         return 0;
 
+    wma->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;
     wma->wDevID = modp->wDeviceID;
     modp->wCustomCommandTable = wma->command_table = mciLoadCommandResource(MCIQTZ_hInstance, mciAviWStr, 0);
@@ -110,6 +111,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
 
         mciFreeCommandResource(wma->command_table);
         mciSetDriverData(dwDevID, 0);
+        CloseHandle(wma->stop_event);
         HeapFree(GetProcessHeap(), 0, wma);
         return 1;
     }
@@ -135,6 +137,20 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
     MessageBoxA(0, "Sample QTZ Wine Driver !", "MM-Wine Driver", MB_OK);
 
     return 1;
+}
+
+/**************************************************************************
+ *                              MCIQTZ_mciNotify                [internal]
+ *
+ * Notifications in MCI work like a 1-element queue.
+ * Each new notification request supersedes the previous one.
+ */
+static void MCIQTZ_mciNotify(DWORD_PTR hWndCallBack, WINE_MCIQTZ* wma, UINT wStatus)
+{
+    MCIDEVICEID wDevID = wma->notify_devid;
+    HANDLE old = InterlockedExchangePointer(&wma->callback, NULL);
+    if (old) mciDriverNotify(old, wDevID, MCI_NOTIFY_SUPERSEDED);
+    mciDriverNotify(HWND_32(LOWORD(hWndCallBack)), wDevID, wStatus);
 }
 
 /***************************************************************************
@@ -307,6 +323,63 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 }
 
 /***************************************************************************
+ *                              MCIQTZ_notifyThread             [internal]
+ */
+static DWORD CALLBACK MCIQTZ_notifyThread(LPVOID parm)
+{
+    WINE_MCIQTZ* wma = (WINE_MCIQTZ *)parm;
+    HRESULT hr;
+    HANDLE handle[2];
+    DWORD n = 0, ret = 0;
+
+    handle[n++] = wma->stop_event;
+    IMediaEvent_GetEventHandle(wma->mevent, (OAEVENT *)&handle[n++]);
+
+    for (;;) {
+        DWORD r;
+        HANDLE old;
+
+        r = WaitForMultipleObjects(n, handle, FALSE, INFINITE);
+        if (r == WAIT_OBJECT_0) {
+            TRACE("got stop event\n");
+            old = InterlockedExchangePointer(&wma->callback, NULL);
+            if (old)
+                mciDriverNotify(old, wma->notify_devid, MCI_NOTIFY_ABORTED);
+            break;
+        }
+        else if (r == WAIT_OBJECT_0+1) {
+            LONG event_code;
+            LONG_PTR p1, p2;
+            do {
+                hr = IMediaEvent_GetEvent(wma->mevent, &event_code, &p1, &p2, 0);
+                if (SUCCEEDED(hr)) {
+                    TRACE("got event_code = 0x%02x\n", event_code);
+                    IMediaEvent_FreeEventParams(wma->mevent, event_code, p1, p2);
+                }
+            } while (hr == S_OK && event_code != EC_COMPLETE);
+            if (hr == S_OK && event_code == EC_COMPLETE) {
+                old = InterlockedExchangePointer(&wma->callback, NULL);
+                if (old)
+                    mciDriverNotify(old, wma->notify_devid, MCI_NOTIFY_SUCCESSFUL);
+                break;
+            }
+        }
+        else {
+            TRACE("Unknown error (%d)\n", (int)r);
+            break;
+        }
+    }
+
+    hr = IMediaControl_Stop(wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot stop filtergraph (hr = %x)\n", hr);
+        ret = MCIERR_INTERNAL;
+    }
+
+    return ret;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciPlay                  [internal]
  */
 static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
@@ -325,6 +398,14 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
+
+    ResetEvent(wma->stop_event);
+    if (dwFlags & MCI_NOTIFY) {
+        HANDLE old;
+        old = InterlockedExchangePointer(&wma->callback, HWND_32(LOWORD(lpParms->dwCallback)));
+        if (old)
+            mciDriverNotify(old, wma->notify_devid, MCI_NOTIFY_ABORTED);
+    }
 
     IMediaSeeking_GetTimeFormat(wma->seek, &format);
     if (dwFlags & MCI_FROM) {
@@ -352,8 +433,11 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     IVideoWindow_put_Visible(wma->vidwin, OATRUE);
 
-    if (dwFlags & MCI_NOTIFY)
-        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+    wma->thread = CreateThread(NULL, 0, MCIQTZ_notifyThread, wma, 0, NULL);
+    if (!wma->thread) {
+        TRACE("Can't create thread\n");
+        return MCIERR_INTERNAL;
+    }
     return 0;
 }
 
@@ -397,7 +481,7 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     }
 
     if (dwFlags & MCI_NOTIFY)
-        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+        MCIQTZ_mciNotify(lpParms->dwCallback, wma, MCI_NOTIFY_SUCCESSFUL);
 
     return 0;
 }
@@ -408,7 +492,6 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIQTZ* wma;
-    HRESULT hr;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -419,10 +502,11 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     if (!wma->opened)
         return 0;
 
-    hr = IMediaControl_Stop(wma->pmctrl);
-    if (FAILED(hr)) {
-        TRACE("Cannot stop filtergraph (hr = %x)\n", hr);
-        return MCIERR_INTERNAL;
+    if (wma->thread) {
+        SetEvent(wma->stop_event);
+        WaitForSingleObject(wma->thread, INFINITE);
+        CloseHandle(wma->thread);
+        wma->thread = NULL;
     }
 
     if (!wma->parent)
@@ -676,19 +760,9 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             if (state == State_Stopped)
                 lpParms->dwReturn = MAKEMCIRESOURCE(MCI_MODE_STOP, MCI_MODE_STOP);
             else if (state == State_Running) {
-                LONG code;
-                LONG_PTR p1, p2;
-
                 lpParms->dwReturn = MAKEMCIRESOURCE(MCI_MODE_PLAY, MCI_MODE_PLAY);
-
-                do {
-                    hr = IMediaEvent_GetEvent(wma->mevent, &code, &p1, &p2, 0);
-                    if (hr == S_OK && code == EC_COMPLETE){
-                        lpParms->dwReturn = MAKEMCIRESOURCE(MCI_MODE_STOP, MCI_MODE_STOP);
-                        IMediaControl_Stop(wma->pmctrl);
-                    }
-                } while (hr == S_OK);
-
+                if (!wma->thread || WaitForSingleObject(wma->thread, 0) == WAIT_OBJECT_0)
+                    lpParms->dwReturn = MAKEMCIRESOURCE(MCI_MODE_STOP, MCI_MODE_STOP);
             } else if (state == State_Paused)
                 lpParms->dwReturn = MAKEMCIRESOURCE(MCI_MODE_PAUSE, MCI_MODE_PAUSE);
             ret = MCI_RESOURCE_RETURNED;
@@ -714,7 +788,7 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
     }
 
     if (dwFlags & MCI_NOTIFY)
-        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+        MCIQTZ_mciNotify(lpParms->dwCallback, wma, MCI_NOTIFY_SUCCESSFUL);
 
     return ret;
 }
