@@ -360,9 +360,9 @@ static GpStatus alpha_blend_bmp_pixels(GpGraphics *graphics, INT dst_x, INT dst_
     GpBitmap *dst_bitmap = (GpBitmap*)graphics->image;
     INT x, y;
 
-    for (x=0; x<src_width; x++)
+    for (y=0; y<src_height; y++)
     {
-        for (y=0; y<src_height; y++)
+        for (x=0; x<src_width; x++)
         {
             ARGB dst_color, src_color;
             src_color = ((ARGB*)(src + src_stride * y))[x];
