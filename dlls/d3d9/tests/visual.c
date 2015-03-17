@@ -732,15 +732,73 @@ done:
 
 static void color_fill_test(void)
 {
-    IDirect3DSurface9 *offscreen_surface;
-    IDirect3DSurface9 *backbuffer;
-    IDirect3DSurface9 *rt_surface;
+    IDirect3DSurface9 *surface;
+    IDirect3DTexture9 *texture;
     D3DCOLOR fill_color, color;
+    DWORD fill_a, expected_a;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    static const struct
+    {
+        D3DPOOL pool;
+        DWORD usage;
+        HRESULT hr;
+    }
+    resource_types[] =
+    {
+        {D3DPOOL_DEFAULT,    0,                     D3DERR_INVALIDCALL},
+        {D3DPOOL_DEFAULT,    D3DUSAGE_DYNAMIC,      D3DERR_INVALIDCALL},
+        {D3DPOOL_DEFAULT,    D3DUSAGE_RENDERTARGET, D3D_OK},
+        {D3DPOOL_SYSTEMMEM,  0,                     D3DERR_INVALIDCALL},
+        {D3DPOOL_MANAGED,    0,                     D3DERR_INVALIDCALL},
+        {D3DPOOL_SCRATCH,    0,                     D3DERR_INVALIDCALL},
+    };
+    static const struct
+    {
+        D3DFORMAT format;
+        const char *name;
+        enum
+        {
+            CHECK_FILL_VALUE = 0x1,
+            TODO_FILL_RETURN = 0x2,
+            BLOCKS           = 0x4,
+        } flags;
+        DWORD fill_value;
+    }
+    formats[] =
+    {
+        {D3DFMT_A8R8G8B8, "D3DFMT_A8R8G8B8", CHECK_FILL_VALUE,                    0xdeadbeef},
+        /* D3DFMT_X8R8G8B8 either set X = A or X = 0, depending on the driver. */
+        {D3DFMT_R5G6B5,   "D3DFMT_R5G6B5",   CHECK_FILL_VALUE,                    0xadfdadfd},
+        {D3DFMT_G16R16,   "D3DFMT_G16R16",   CHECK_FILL_VALUE,                    0xbebeadad},
+        /* Real hardware reliably fills the surface with the blue channel but
+         * the testbot fills it with 0x00. Wine incorrectly uses the alpha
+         * channel. Don't bother checking the result because P8 surfaces are
+         * essentially useless in d3d9. */
+        {D3DFMT_P8,       "D3DFMT_P8",       0,                                   0xefefefef},
+        /* Windows drivers produce different results for these formats.
+         * No driver produces a YUV value that matches the input RGB
+         * value, and no driver produces a proper DXT compression block.
+         *
+         * Even the clear value 0 does not reliably produce a fill value
+         * that will return vec4(0.0, 0.0, 0.0, 0.0) when sampled.
+         *
+         * The YUV tests are disabled because they produce a driver-dependent
+         * result on Wine.
+         * {D3DFMT_YUY2,     "D3DFMT_YUY2",     BLOCKS,                              0},
+         * {D3DFMT_UYVY,     "D3DFMT_UYVY",     BLOCKS,                              0}, */
+        {D3DFMT_DXT1,     "D3DFMT_DXT1",     BLOCKS | TODO_FILL_RETURN,           0},
+        /* Vendor-specific formats like ATI2N are a non-issue here since they're not
+         * supported as offscreen plain surfaces and do not support D3DUSAGE_RENDERTARGET
+         * when created as texture. */
+    };
+    unsigned int i;
+    D3DLOCKED_RECT locked_rect;
+    DWORD *surface_data;
+    static const RECT rect = {4, 4, 8, 8}, rect2 = {5, 5, 7, 7};
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -753,55 +811,135 @@ static void color_fill_test(void)
     }
 
     /* Test ColorFill on a the backbuffer (should pass) */
-    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
 
     fill_color = 0x112233;
-    hr = IDirect3DDevice9_ColorFill(device, backbuffer, NULL, fill_color);
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, fill_color);
     ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
     color = getPixelColor(device, 0, 0);
     ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
 
-    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DSurface9_Release(surface);
 
     /* Test ColorFill on a render target surface (should pass) */
     hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, D3DFMT_A8R8G8B8,
-            D3DMULTISAMPLE_NONE, 0, TRUE, &rt_surface, NULL );
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL );
     ok(hr == D3D_OK, "Unable to create render target surface, hr = %08x\n", hr);
 
     fill_color = 0x445566;
-    hr = IDirect3DDevice9_ColorFill(device, rt_surface, NULL, fill_color);
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, fill_color);
     ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-    color = getPixelColorFromSurface(rt_surface, 0, 0);
+    color = getPixelColorFromSurface(surface, 0, 0);
     ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
 
-    IDirect3DSurface9_Release(rt_surface);
+    IDirect3DSurface9_Release(surface);
 
     /* Test ColorFill on an offscreen plain surface in D3DPOOL_DEFAULT (should pass) */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
-            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreen_surface, NULL);
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface, NULL);
     ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
 
     fill_color = 0x778899;
-    hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, fill_color);
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, fill_color);
     ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-    color = getPixelColorFromSurface(offscreen_surface, 0, 0);
+    color = getPixelColorFromSurface(surface, 0, 0);
     ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
 
-    IDirect3DSurface9_Release(offscreen_surface);
+    IDirect3DSurface9_Release(surface);
 
     /* Try ColorFill on an offscreen surface in sysmem (should fail) */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
-            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, 0);
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0);
     ok(hr == D3DERR_INVALIDCALL, "ColorFill on offscreen sysmem surface failed with hr = %08x\n", hr);
 
-    IDirect3DSurface9_Release(offscreen_surface);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 32, 32, D3DFMT_D16,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr = %08x.\n", hr);
+
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "ColorFill on a depth stencil surface returned hr = %08x.\n", hr);
+
+    IDirect3DSurface9_Release(surface);
+
+    for (i = 0; i < sizeof(resource_types) / sizeof(resource_types[0]); i++)
+    {
+        texture = NULL;
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, resource_types[i].usage,
+                D3DFMT_A8R8G8B8, resource_types[i].pool, &texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, i=%u.\n", hr, i);
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        ok(SUCCEEDED(hr), "Failed to get surface, hr %#x, i=%u.\n", hr, i);
+
+        hr = IDirect3DDevice9_ColorFill(device, surface, NULL, fill_color);
+        ok(hr == resource_types[i].hr, "Got unexpected hr %#x, expected %#x, i=%u.\n",
+                hr, resource_types[i].hr, i);
+
+        IDirect3DSurface9_Release(surface);
+        IDirect3DTexture9_Release(texture);
+    }
+
+    for (i = 0; i < sizeof(formats) / sizeof(formats[0]); i++)
+    {
+        if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, 0, D3DRTYPE_SURFACE, formats[i].format) != D3D_OK)
+        {
+            skip("Offscreenplain %s surfaces not supported, skipping colorfill test\n", formats[i].name);
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+                formats[i].format, D3DPOOL_DEFAULT, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+
+        hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0xdeadbeef);
+        if (formats[i].flags & TODO_FILL_RETURN)
+            todo_wine ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        else
+            ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+
+        hr = IDirect3DDevice9_ColorFill(device, surface, &rect, 0xdeadbeef);
+        if (formats[i].flags & TODO_FILL_RETURN)
+            todo_wine ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        else
+            ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DDevice9_ColorFill(device, surface, &rect2, 0xdeadbeef);
+            if (formats[i].flags & BLOCKS)
+                todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, fmt=%s.\n", hr, formats[i].name);
+            else
+                ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        }
+
+        if (formats[i].flags & CHECK_FILL_VALUE)
+        {
+            hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_READONLY);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+            surface_data = locked_rect.pBits;
+            fill_a = (surface_data[0] & 0xff000000) >> 24;
+            expected_a = (formats[i].fill_value & 0xff000000) >> 24;
+            /* Windows drivers disagree on how to promote the 8 bit per channel
+             * input argument to 16 bit for D3DFMT_G16R16. */
+            ok(color_match(surface_data[0], formats[i].fill_value, 2) &&
+                    abs((expected_a) - (fill_a)) < 3,
+                    "Expected clear value 0x%08x, got 0x%08x, fmt=%s.\n",
+                    formats[i].fill_value, surface_data[0], formats[i].name);
+            hr = IDirect3DSurface9_UnlockRect(surface);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        }
+
+        IDirect3DSurface9_Release(surface);
+    }
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
