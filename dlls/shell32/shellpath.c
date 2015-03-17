@@ -3934,6 +3934,9 @@ static HRESULT WINAPI foldermanager_RegisterFolder(
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
 
+        if(SUCCEEDED(hr) && pKFD->dwAttributes != 0)
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szAttributes, 0, REG_DWORD, (LPBYTE)&pKFD->dwAttributes, sizeof(pKFD->dwAttributes)));
+
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
 
