@@ -39,9 +39,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
 #define BUCKET_COUNT 509
 
+/* Implementation details
+
+   Dictionary contains one list that links all pairs, this way
+   order in which they were added is preserved. Each bucket has
+   its own list to hold all pairs in this bucket. Initially all
+   bucket lists are zeroed and we init them once we about to add
+   first pair.
+
+   When pair is removed it's unlinked from both lists; if it was
+   a last pair in a bucket list it stays empty in initialized state.
+
+   Preserving pair order is important for enumeration, so far testing
+   indicates that pairs are not reordered basing on hash value.
+ */
+
 struct keyitem_pair {
-    struct list entry;
-    DWORD   bucket;
+    struct  list entry;
+    struct  list bucket;
     DWORD   hash;
     VARIANT key;
     VARIANT item;
@@ -55,7 +70,7 @@ typedef struct
     CompareMethod method;
     LONG count;
     struct list pairs;
-    struct keyitem_pair *buckets[BUCKET_COUNT];
+    struct list buckets[BUCKET_COUNT];
 } dictionary;
 
 static inline dictionary *impl_from_IDictionary(IDictionary *iface)
@@ -63,9 +78,9 @@ static inline dictionary *impl_from_IDictionary(IDictionary *iface)
     return CONTAINING_RECORD(iface, dictionary, IDictionary_iface);
 }
 
-static inline struct keyitem_pair *get_bucket_head(const dictionary *dict, DWORD hash)
+static inline struct list *get_bucket_head(dictionary *dict, DWORD hash)
 {
-    return dict->buckets[hash % BUCKET_COUNT];
+    return &dict->buckets[hash % BUCKET_COUNT];
 }
 
 static inline BOOL is_string_key(const VARIANT *key)
@@ -115,7 +130,7 @@ static BOOL is_matching_key(const dictionary *dict, const struct keyitem_pair *p
 static struct keyitem_pair *get_keyitem_pair(dictionary *dict, VARIANT *key)
 {
     struct keyitem_pair *pair;
-    DWORD bucket;
+    struct list *head, *entry;
     VARIANT hash;
     HRESULT hr;
 
@@ -123,24 +138,22 @@ static struct keyitem_pair *get_keyitem_pair(dictionary *dict, VARIANT *key)
     if (FAILED(hr))
         return NULL;
 
-    pair = get_bucket_head(dict, V_I4(&hash));
-    if (!pair)
+    entry = head = get_bucket_head(dict, V_I4(&hash));
+    if (!head->next || list_empty(head))
         return NULL;
 
-    bucket = pair->bucket;
-
     do {
+        pair = LIST_ENTRY(entry, struct keyitem_pair, bucket);
         if (is_matching_key(dict, pair, key, V_I4(&hash))) return pair;
-        pair = LIST_ENTRY(list_next(&dict->pairs, &pair->entry), struct keyitem_pair, entry);
-        if (pair && pair->bucket != bucket) break;
-    } while (pair != NULL);
+    } while ((entry = list_next(head, entry)));
 
     return NULL;
 }
 
 static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
 {
-    struct keyitem_pair *pair, *head;
+    struct keyitem_pair *pair;
+    struct list *head;
     VARIANT hash;
     HRESULT hr;
 
@@ -153,7 +166,6 @@ static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
         return E_OUTOFMEMORY;
 
     pair->hash = V_I4(&hash);
-    pair->bucket = pair->hash % BUCKET_COUNT;
     VariantInit(&pair->key);
     VariantInit(&pair->item);
 
@@ -166,13 +178,13 @@ static HRESULT add_keyitem_pair(dictionary *dict, VARIANT *key, VARIANT *item)
         goto failed;
 
     head = get_bucket_head(dict, pair->hash);
-    if (head)
-        list_add_tail(&head->entry, &pair->entry);
-    else {
-        dict->buckets[pair->bucket] = pair;
-        list_add_tail(&dict->pairs, &pair->entry);
-    }
+    if (!head->next)
+        /* this only happens once per bucket */
+        list_init(head);
 
+    /* link to bucket list and to full list */
+    list_add_tail(head, &pair->bucket);
+    list_add_tail(&dict->pairs, &pair->entry);
     dict->count++;
     return S_OK;
 
@@ -495,8 +507,7 @@ static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
         return CTL_E_ELEMENT_NOT_FOUND;
 
     list_remove(&pair->entry);
-    if (This->buckets[pair->bucket] == pair)
-        This->buckets[pair->bucket] = NULL;
+    list_remove(&pair->bucket);
     This->count--;
 
     free_keyitem_pair(pair);
@@ -515,9 +526,9 @@ static HRESULT WINAPI dictionary_RemoveAll(IDictionary *iface)
 
     LIST_FOR_EACH_ENTRY_SAFE(pair, pair2, &This->pairs, struct keyitem_pair, entry) {
         list_remove(&pair->entry);
+        list_remove(&pair->bucket);
         free_keyitem_pair(pair);
     }
-    memset(This->buckets, 0, sizeof(This->buckets));
     This->count = 0;
 
     return S_OK;
