@@ -3404,6 +3404,24 @@ static void test_WM_SETTEXT(void)
 #undef TEST_SETTEXTW
 }
 
+/* Set *pcb to one to show that the remaining cb-1 bytes are not
+   resent to the callkack. */
+static DWORD CALLBACK test_esCallback_written_1(DWORD_PTR dwCookie,
+                                                LPBYTE pbBuff,
+                                                LONG cb,
+                                                LONG *pcb)
+{
+  char** str = (char**)dwCookie;
+  ok(cb == *pcb, "cb %d, *pcb %d\n", cb, *pcb);
+  *pcb = 0;
+  if (cb > 0) {
+    memcpy(*str, pbBuff, cb);
+    *str += cb;
+    *pcb = 1;
+  }
+  return 0;
+}
+
 static void test_EM_STREAMOUT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -3451,6 +3469,19 @@ static void test_EM_STREAMOUT(void)
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
   ok(strcmp(buf, TestItem3) == 0,
         "streamed text different, got %s\n", buf);
+
+  /* Use a callback that sets *pcb to one */
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_esCallback_written_1;
+  memset(buf, 0, sizeof(buf));
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  r = strlen(buf);
+  ok(r == 14, "streamed text length is %d, expecting 14\n", r);
+  ok(strcmp(buf, TestItem3) == 0,
+        "streamed text different, got %s\n", buf);
+
 
   DestroyWindow(hwndRichEdit);
 }
