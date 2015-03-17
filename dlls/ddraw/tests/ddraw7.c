@@ -8672,6 +8672,31 @@ static void test_color_fill(void)
             }
         },
     };
+    static const struct
+    {
+        DWORD rop;
+        const char *name;
+        HRESULT hr;
+    }
+    rops[] =
+    {
+        {SRCCOPY,       "SRCCOPY",      DD_OK},
+        {SRCPAINT,      "SRCPAINT",     DDERR_NORASTEROPHW},
+        {SRCAND,        "SRCAND",       DDERR_NORASTEROPHW},
+        {SRCINVERT,     "SRCINVERT",    DDERR_NORASTEROPHW},
+        {SRCERASE,      "SRCERASE",     DDERR_NORASTEROPHW},
+        {NOTSRCCOPY,    "NOTSRCCOPY",   DDERR_NORASTEROPHW},
+        {NOTSRCERASE,   "NOTSRCERASE",  DDERR_NORASTEROPHW},
+        {MERGECOPY,     "MERGECOPY",    DDERR_NORASTEROPHW},
+        {MERGEPAINT,    "MERGEPAINT",   DDERR_NORASTEROPHW},
+        {PATCOPY,       "PATCOPY",      DDERR_NORASTEROPHW},
+        {PATPAINT,      "PATPAINT",     DDERR_NORASTEROPHW},
+        {PATINVERT,     "PATINVERT",    DDERR_NORASTEROPHW},
+        {DSTINVERT,     "DSTINVERT",    DDERR_NORASTEROPHW},
+        {BLACKNESS,     "BLACKNESS",    DD_OK},
+        {WHITENESS,     "WHITENESS",    DD_OK},
+        {0xaa0029,      "0xaa0029",     DDERR_NORASTEROPHW} /* noop */
+    };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -8925,6 +8950,13 @@ static void test_color_fill(void)
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(rops) / sizeof(*rops); i++)
+    {
+        fx.dwROP = rops[i].rop;
+        hr = IDirectDrawSurface7_Blt(surface, NULL, surface2, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(hr == rops[i].hr, "Got unexpected hr %#x for rop %s.\n", hr, rops[i].name);
+    }
 
     IDirectDrawSurface7_Release(surface2);
     IDirectDrawSurface7_Release(surface);

@@ -4733,27 +4733,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     {
         FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
     }
-    if (flags & WINEDDBLT_ROP)
-    {
-        /* Catch some degenerate cases here. */
-        switch (fx->dwROP)
-        {
-            case BLACKNESS:
-                hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, 0);
-                break;
-            case 0xaa0029: /* No-op */
-                break;
-            case WHITENESS:
-                hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, ~0U);
-                break;
-            case SRCCOPY: /* Well, we do that below? */
-                break;
-            default:
-                FIXME("Unsupported raster op: %08x Pattern: %p\n", fx->dwROP, fx->u5.lpDDSPattern);
-                goto error;
-        }
-        flags &= ~WINEDDBLT_ROP;
-    }
     if (flags & WINEDDBLT_DDROPS)
     {
         FIXME("\tDdraw Raster Ops: %08x Pattern: %p\n", fx->dwDDROP, fx->u5.lpDDSPattern);

@@ -1518,6 +1518,7 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
     struct ddraw_surface *dst_surface = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_surface *src_surface = unsafe_impl_from_IDirectDrawSurface7(SrcSurface);
     HRESULT hr = DD_OK;
+    DDBLTFX rop_fx;
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p.\n",
             iface, wine_dbgstr_rect(DestRect), SrcSurface, wine_dbgstr_rect(SrcRect), Flags, DDBltFx);
@@ -1582,6 +1583,35 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
             wined3d_mutex_unlock();
             WARN("DDBLT_ROP used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
+        }
+
+        Flags &= ~DDBLT_ROP;
+        switch (DDBltFx->dwROP)
+        {
+            case SRCCOPY:
+                break;
+
+            case WHITENESS:
+            case BLACKNESS:
+                rop_fx = *DDBltFx;
+
+                if (DDBltFx->dwROP == WHITENESS)
+                    rop_fx.u5.dwFillColor = 0xffffffff;
+                else
+                    rop_fx.u5.dwFillColor = 0;
+
+                if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+                    Flags |= DDBLT_DEPTHFILL;
+                else
+                    Flags |= DDBLT_COLORFILL;
+
+                DDBltFx = &rop_fx;
+                break;
+
+            default:
+                wined3d_mutex_unlock();
+                WARN("Unsupported ROP %#x used, returning DDERR_NORASTEROPHW.\n", DDBltFx->dwROP);
+                return DDERR_NORASTEROPHW;
         }
     }
 
