@@ -123,12 +123,14 @@ static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
 {
     struct cursoricon_object *obj;
     int icon_size;
+    HICON handle;
 
     if (is_ani)
         icon_size = FIELD_OFFSET( struct animated_cursoricon_object, frames[num_steps] );
     else
         icon_size = sizeof( struct static_cursoricon_object );
     obj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, icon_size );
+    if (!obj) return NULL;
 
     obj->delay = 0;
     obj->is_ani = is_ani;
@@ -139,7 +141,10 @@ static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
         ani_icon_data->num_steps = num_steps;
         ani_icon_data->num_frames = num_steps; /* changed later for some animated cursors */
     }
-    return alloc_user_handle( &obj->obj, USER_ICON );
+
+    if (!(handle = alloc_user_handle( &obj->obj, USER_ICON )))
+        HeapFree( GetProcessHeap(), 0, obj );
+    return handle;
 }
 
 static struct cursoricon_object *get_icon_ptr( HICON handle )
