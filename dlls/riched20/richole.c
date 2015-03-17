@@ -82,6 +82,7 @@ struct ITextSelectionImpl {
 struct IOleClientSiteImpl {
     IOleClientSite IOleClientSite_iface;
     IOleWindow IOleWindow_iface;
+    IOleInPlaceSite IOleInPlaceSite_iface;
     LONG ref;
 
     IRichEditOleImpl *reOle;
@@ -228,6 +229,8 @@ IOleClientSite_fnQueryInterface(IOleClientSite *me, REFIID riid, LPVOID *ppvObj)
         *ppvObj = me;
     else if (IsEqualGUID(riid, &IID_IOleWindow))
         *ppvObj = &This->IOleWindow_iface;
+    else if (IsEqualGUID(riid, &IID_IOleInPlaceSite))
+        *ppvObj = &This->IOleInPlaceSite_iface;
     if (*ppvObj)
     {
         IOleClientSite_AddRef(me);
@@ -379,6 +382,133 @@ static const IOleWindowVtbl olewinvt = {
     IOleWindow_fnContextSensitiveHelp
 };
 
+/* IOleInPlaceSite interface */
+static inline IOleClientSiteImpl *impl_from_IOleInPlaceSite(IOleInPlaceSite *iface)
+{
+    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleInPlaceSite_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnQueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppvObj)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    return IOleClientSite_QueryInterface(&This->IOleClientSite_iface, riid, ppvObj);
+}
+
+static ULONG STDMETHODCALLTYPE IOleInPlaceSite_fnAddRef(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    return IOleClientSite_AddRef(&This->IOleClientSite_iface);
+}
+
+static ULONG STDMETHODCALLTYPE IOleInPlaceSite_fnRelease(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    return IOleClientSite_Release(&This->IOleClientSite_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnGetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    return IOleWindow_GetWindow(&This->IOleWindow_iface, phwnd);
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    return IOleWindow_ContextSensitiveHelp(&This->IOleWindow_iface, fEnterMode);
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnCanInPlaceActivate(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnOnInPlaceActivate(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnOnUIActivate(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnGetWindowContext(IOleInPlaceSite *iface, IOleInPlaceFrame **ppFrame,
+                                                                    IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
+                                                                    LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)->(%p %p %p %p %p\n)", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, lpFrameInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnScroll(IOleInPlaceSite *iface, SIZE scrollExtent)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnOnUIDeactivate(IOleInPlaceSite *iface, BOOL fUndoable)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)->(%d)\n", This, fUndoable);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnOnInPlaceDeactivate(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnDiscardUndoState(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnDeactivateAndUndo(IOleInPlaceSite *iface)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnOnPosRectChange(IOleInPlaceSite *iface, LPCRECT lprcPosRect)
+{
+    IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
+    FIXME("not implemented: (%p)->(%p)\n", This, lprcPosRect);
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceSiteVtbl olestvt =
+{
+    IOleInPlaceSite_fnQueryInterface,
+    IOleInPlaceSite_fnAddRef,
+    IOleInPlaceSite_fnRelease,
+    IOleInPlaceSite_fnGetWindow,
+    IOleInPlaceSite_fnContextSensitiveHelp,
+    IOleInPlaceSite_fnCanInPlaceActivate,
+    IOleInPlaceSite_fnOnInPlaceActivate,
+    IOleInPlaceSite_fnOnUIActivate,
+    IOleInPlaceSite_fnGetWindowContext,
+    IOleInPlaceSite_fnScroll,
+    IOleInPlaceSite_fnOnUIDeactivate,
+    IOleInPlaceSite_fnOnInPlaceDeactivate,
+    IOleInPlaceSite_fnDiscardUndoState,
+    IOleInPlaceSite_fnDeactivateAndUndo,
+    IOleInPlaceSite_fnOnPosRectChange
+};
+
 static IOleClientSiteImpl *
 CreateOleClientSite(IRichEditOleImpl *reOle)
 {
@@ -388,6 +518,7 @@ CreateOleClientSite(IRichEditOleImpl *reOle)
 
     clientSite->IOleClientSite_iface.lpVtbl = &ocst;
     clientSite->IOleWindow_iface.lpVtbl = &olewinvt;
+    clientSite->IOleInPlaceSite_iface.lpVtbl = &olestvt;
     clientSite->ref = 1;
     clientSite->reOle = reOle;
     return clientSite;
