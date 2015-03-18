@@ -618,6 +618,123 @@ static void test_Add(void)
     IDictionary_Release(dict);
 }
 
+static void test_IEnumVARIANT(void)
+{
+    IUnknown *enum1, *enum2;
+    IEnumVARIANT *enumvar;
+    VARIANT key, item;
+    IDictionary *dict;
+    ULONG fetched;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void**)&dict);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDictionary__NewEnum(dict, NULL);
+
+    hr = IDictionary__NewEnum(dict, &enum1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary__NewEnum(dict, &enum2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(enum1 != enum2, "got %p, %p\n", enum2, enum1);
+    IUnknown_Release(enum2);
+
+    hr = IUnknown_QueryInterface(enum1, &IID_IEnumVARIANT, (void**)&enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IUnknown_Release(enum1);
+
+    /* dictionary is empty */
+    hr = IEnumVARIANT_Skip(enumvar, 1);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    hr = IEnumVARIANT_Skip(enumvar, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 1;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 100;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IEnumVARIANT_Skip(enumvar, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 1);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 4000;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 200;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 0;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 300;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&key);
+    hr = IEnumVARIANT_Next(enumvar, 1, &key, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&key) == VT_I2, "got %d\n", V_VT(&key));
+    ok(V_I2(&key) == 1, "got %d\n", V_I2(&key));
+    ok(fetched == 1, "got %u\n", fetched);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDictionary_Remove(dict, &key);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&key);
+    hr = IEnumVARIANT_Next(enumvar, 1, &key, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&key) == VT_I2, "got %d\n", V_VT(&key));
+    ok(V_I2(&key) == 4000, "got %d\n", V_I2(&key));
+    ok(fetched == 1, "got %u\n", fetched);
+
+    VariantInit(&key);
+    hr = IEnumVARIANT_Next(enumvar, 1, &key, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&key) == VT_I2, "got %d\n", V_VT(&key));
+    ok(V_I2(&key) == 0, "got %d\n", V_I2(&key));
+    ok(fetched == 1, "got %u\n", fetched);
+
+    /* enumeration reached the bottom, add one more pair */
+    VariantInit(&key);
+    hr = IEnumVARIANT_Next(enumvar, 1, &key, &fetched);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 13;
+    V_VT(&item) = VT_I4;
+    V_I4(&item) = 350;
+    hr = IDictionary_Add(dict, &key, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* still doesn't work until Reset() */
+    VariantInit(&key);
+    hr = IEnumVARIANT_Next(enumvar, 1, &key, &fetched);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    IEnumVARIANT_Release(enumvar);
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -642,6 +759,7 @@ START_TEST(dictionary)
     test_Remove();
     test_Item();
     test_Add();
+    test_IEnumVARIANT();
 
     CoUninitialize();
 }

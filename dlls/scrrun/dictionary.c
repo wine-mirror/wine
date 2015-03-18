@@ -71,6 +71,7 @@ typedef struct
     LONG count;
     struct list pairs;
     struct list buckets[BUCKET_COUNT];
+    struct list notifier;
 } dictionary;
 
 struct dictionary_enum {
@@ -78,6 +79,8 @@ struct dictionary_enum {
     LONG ref;
 
     dictionary *dict;
+    struct list *cur;
+    struct list notify;
 };
 
 static inline dictionary *impl_from_IDictionary(IDictionary *iface)
@@ -248,6 +251,7 @@ static ULONG WINAPI dict_enum_Release(IEnumVARIANT *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0) {
+        list_remove(&This->notify);
         IDictionary_Release(&This->dict->IDictionary_iface);
         heap_free(This);
     }
@@ -258,29 +262,67 @@ static ULONG WINAPI dict_enum_Release(IEnumVARIANT *iface)
 static HRESULT WINAPI dict_enum_Next(IEnumVARIANT *iface, ULONG count, VARIANT *keys, ULONG *fetched)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, count, keys, fetched);
-    return E_NOTIMPL;
+    struct keyitem_pair *pair;
+    ULONG i = 0;
+
+    TRACE("(%p)->(%u %p %p)\n", This, count, keys, fetched);
+
+    if (fetched)
+        *fetched = 0;
+
+    if (!count)
+        return S_OK;
+
+    while (This->cur && i < count) {
+        pair = LIST_ENTRY(This->cur, struct keyitem_pair, entry);
+        VariantCopy(&keys[i], &pair->key);
+        This->cur = list_next(&This->dict->pairs, This->cur);
+        i++;
+    }
+
+    if (fetched)
+        *fetched = i;
+
+    return i < count ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI dict_enum_Skip(IEnumVARIANT *iface, ULONG count)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%u): stub\n", This, count);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u)\n", This, count);
+
+    if (!count)
+        return S_OK;
+
+    if (!This->cur)
+        return S_FALSE;
+
+    while (count--) {
+        This->cur = list_next(&This->dict->pairs, This->cur);
+        if (!This->cur) break;
+    }
+
+    return count == 0 ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI dict_enum_Reset(IEnumVARIANT *iface)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->cur = list_head(&This->dict->pairs);
+    return S_OK;
 }
+
+static HRESULT create_dict_enum(dictionary*, IUnknown**);
 
 static HRESULT WINAPI dict_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **cloned)
 {
     struct dictionary_enum *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p): stub\n", This, cloned);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, cloned);
+    return create_dict_enum(This->dict, (IUnknown**)cloned);
 }
 
 static const IEnumVARIANTVtbl dictenumvtbl = {
@@ -305,11 +347,28 @@ static HRESULT create_dict_enum(dictionary *dict, IUnknown **ret)
 
     This->IEnumVARIANT_iface.lpVtbl = &dictenumvtbl;
     This->ref = 1;
+    This->cur = list_head(&dict->pairs);
+    list_add_tail(&dict->notifier, &This->notify);
     This->dict = dict;
     IDictionary_AddRef(&dict->IDictionary_iface);
 
     *ret = (IUnknown*)&This->IEnumVARIANT_iface;
     return S_OK;
+}
+
+static void notify_remove_pair(struct list *notifier, struct list *pair)
+{
+    struct dictionary_enum *dict_enum;
+    struct list *cur;
+
+    LIST_FOR_EACH(cur, notifier) {
+        dict_enum = LIST_ENTRY(cur, struct dictionary_enum, notify);
+        if (!pair)
+            dict_enum->cur = list_head(&dict_enum->dict->pairs);
+        else if (dict_enum->cur == pair) {
+            dict_enum->cur = list_next(&dict_enum->dict->pairs, dict_enum->cur);
+        }
+    }
 }
 
 static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid, void **obj)
@@ -616,6 +675,7 @@ static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
     if (!(pair = get_keyitem_pair(This, key)))
         return CTL_E_ELEMENT_NOT_FOUND;
 
+    notify_remove_pair(&This->notifier, &pair->entry);
     list_remove(&pair->entry);
     list_remove(&pair->bucket);
     This->count--;
@@ -634,6 +694,7 @@ static HRESULT WINAPI dictionary_RemoveAll(IDictionary *iface)
     if (This->count == 0)
         return S_OK;
 
+    notify_remove_pair(&This->notifier, NULL);
     LIST_FOR_EACH_ENTRY_SAFE(pair, pair2, &This->pairs, struct keyitem_pair, entry) {
         list_remove(&pair->entry);
         list_remove(&pair->bucket);
@@ -796,6 +857,7 @@ HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,
     This->method = BinaryCompare;
     This->count = 0;
     list_init(&This->pairs);
+    list_init(&This->notifier);
     memset(This->buckets, 0, sizeof(This->buckets));
 
     *obj = &This->IDictionary_iface;
