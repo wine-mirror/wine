@@ -3117,6 +3117,19 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
     return FALSE;
 }
 
+void get_identity_matrix(struct wined3d_matrix *mat)
+{
+    static const struct wined3d_matrix identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
+
+    *mat = identity;
+}
+
 /* Setup this textures matrix according to the texture flags. */
 /* Context activation is done by the caller (state handler). */
 void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,

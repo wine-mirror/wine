@@ -1121,16 +1121,11 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         DWORD d;
     } tmpfloat;
     unsigned int i;
-    static const struct wined3d_matrix identity =
-    {{{
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f,
-    }}};
+    struct wined3d_matrix identity;
 
     TRACE("state %p, gl_info %p.\n", state, gl_info);
 
+    get_identity_matrix(&identity);
     state->gl_primitive_type = ~0u;
 
     /* Set some of the defaults for lights, transforms etc */

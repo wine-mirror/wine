@@ -3037,6 +3037,8 @@ static inline BOOL shader_constant_is_local(const struct wined3d_shader *shader,
     return FALSE;
 }
 
+void get_identity_matrix(struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
+
 /* Using additional shader constants (uniforms in GLSL / program environment
  * or local parameters in ARB) is costly:
  * ARB only knows float4 parameters and GLSL compiler are not really smart
