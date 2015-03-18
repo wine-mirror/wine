@@ -74,7 +74,7 @@ static void state_fillmode(struct wined3d_context *context, const struct wined3d
     }
 }
 
-static void state_lighting(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_lighting(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -1392,7 +1392,7 @@ static void state_linepattern(struct wined3d_context *context, const struct wine
     }
 }
 
-static void state_normalize(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_normalize(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -4627,7 +4627,7 @@ static void vdecl_miscpart(struct wined3d_context *context, const struct wined3d
     streamsrc(context, state, STATE_STREAMSRC);
 }
 
-void vertexdeclaration(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void vertexdeclaration(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL useVertexShaderFunction = use_vs(state);
