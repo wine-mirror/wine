@@ -41,7 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 HINSTANCE hhctrl_hinstance;
 BOOL hh_process = FALSE;
 
-extern struct list window_list;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
