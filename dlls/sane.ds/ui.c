@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
+
 #include "sane_i.h"
 #include "winuser.h"
 #include "winnls.h"
