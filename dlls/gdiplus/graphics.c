@@ -5713,7 +5713,7 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
     {
         stat = METAFILE_GetDC((GpMetafile*)graphics->image, hdc);
     }
-    else if (!graphics->hdc || graphics->alpha_hdc ||
+    else if (!graphics->hdc ||
         (graphics->image && graphics->image->type == ImageTypeBitmap && ((GpBitmap*)graphics->image)->format & PixelFormatAlpha))
     {
         /* Create a fake HDC and fill it with a constant color. */

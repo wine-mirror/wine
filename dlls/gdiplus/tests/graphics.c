@@ -4445,12 +4445,13 @@ static void test_measured_extra_space(void)
 static void test_alpha_hdc(void)
 {
     GpStatus status;
-    HDC hdc;
+    HDC hdc, gp_hdc;
     HBITMAP hbm, old_hbm;
     GpGraphics *graphics;
     ULONG *bits;
     BITMAPINFO bmi;
     GpRectF bounds;
+    COLORREF colorref;
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -4483,6 +4484,21 @@ static void test_alpha_hdc(void)
     expect(Ok, status);
 
     expect(0xffaaaaaa, bits[0]);
+
+    bits[0] = 0xdeadbeef;
+
+    status = GdipGetDC(graphics, &gp_hdc);
+    expect(Ok, status);
+
+    colorref = GetPixel(gp_hdc, 0, 4);
+    expect(0xefbead, colorref);
+
+    SetPixel(gp_hdc, 0, 4, 0xffffff);
+
+    expect(0xffffff, bits[0]);
+
+    status = GdipReleaseDC(graphics, gp_hdc);
+    expect(Ok, status);
 
     SelectObject(hdc, old_hbm);
 
