@@ -3,3 +3,7 @@ APPMODE   = -mwindows
 
 C_SRCS = \
 	main.c
+
+RC_SRCS = hh.rc
+
+SVG_SRCS = winhelp.svg
