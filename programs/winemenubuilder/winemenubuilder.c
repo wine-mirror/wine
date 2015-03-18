@@ -1168,7 +1168,7 @@ static inline int size_to_slot(int size)
 
 #define CLASSIC_SLOT 3
 
-static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *pIconDirEntry,
+static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntries,
                                    int numEntries, int exeIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
 {
