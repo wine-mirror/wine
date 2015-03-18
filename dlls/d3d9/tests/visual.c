@@ -17520,7 +17520,7 @@ static void test_signed_formats(void)
     D3DCAPS9 caps;
     ULONG refcount;
 
-    /* The input data was designed for D3DFMT_L6V5U5 and then transfered
+    /* The input data was designed for D3DFMT_L6V5U5 and then transferred
      * to the other formats because L6V5U5 is the lowest precision format.
      * It tests the extreme values -1.0 (-16) and 1.0 (15) for U/V and
      * 0.0 (0) and 1.0 (63) for L, the neutral point 0 as well as -1 and 1.

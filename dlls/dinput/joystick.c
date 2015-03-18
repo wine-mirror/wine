@@ -409,13 +409,13 @@ void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
     TRACE("dwFlags: %08x\n", lpDIDevCaps->dwFlags);
     switch(type)
     {
-        /* Directx <= 7 definitions */
+        /* Direct X <= 7 definitions */
         DEBUG_TYPE(DIDEVTYPE_DEVICE);
         DEBUG_TYPE(DIDEVTYPE_MOUSE);
         DEBUG_TYPE(DIDEVTYPE_KEYBOARD);
         DEBUG_TYPE(DIDEVTYPE_JOYSTICK);
         DEBUG_TYPE(DIDEVTYPE_HID);
-        /* Directx >= 8 definitions */
+        /* Direct X >= 8 definitions */
         DEBUG_TYPE(DI8DEVTYPE_DEVICE);
         DEBUG_TYPE(DI8DEVTYPE_MOUSE);
         DEBUG_TYPE(DI8DEVTYPE_KEYBOARD);
@@ -742,7 +742,7 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
         DWORD type = 0x000000ff & (lpdiaf->rgoAction[i].dwSemantic >> 8);
         DWORD genre = 0xff000000 & lpdiaf->rgoAction[i].dwSemantic;
 
-        /* Don't touch an user configured action */
+        /* Don't touch a user configured action */
         if (lpdiaf->rgoAction[i].dwHow == DIAH_USERCONFIG) continue;
 
         /* Only consider actions of the right genre */
@@ -752,7 +752,7 @@ HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
         {
             if (type & object_types[j])
             {
-                /* Assure that the object exists */
+                /* Ensure that the object exists */
                 LPDIOBJECTDATAFORMAT odf = dataformat_to_odf_by_type(This->base.data_format.wine_df, inst, object_types[j]);
 
                 if (odf != NULL)

@@ -725,7 +725,7 @@ static void test_NtQueryLicenseKey(void)
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue unexpected suceeded\n");
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue unexpected succeeded\n");
     ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
     ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
 

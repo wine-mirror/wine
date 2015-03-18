@@ -504,7 +504,7 @@ void break_delete_xpoints_from_module(DWORD64 base)
     DWORD_PTR                   linear;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-    /* FIXME: should do it also on the ELF sibbling if any */
+    /* FIXME: should do it also on the ELF sibling if any */
     im.SizeOfStruct = sizeof(im);
     im_elf.SizeOfStruct = sizeof(im_elf);
     if (!SymGetModuleInfo64(dbg_curr_process->handle, base, &im)) return;

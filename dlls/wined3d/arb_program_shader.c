@@ -254,7 +254,7 @@ struct shader_arb_ctx_priv
     {
         /* plain GL_ARB_vertex_program or GL_ARB_fragment_program */
         ARB,
-        /* GL_NV_vertex_progam2_option or GL_NV_fragment_program_option */
+        /* GL_NV_vertex_program2_option or GL_NV_fragment_program_option */
         NV2,
         /* GL_NV_vertex_program3 or GL_NV_fragment_program2 */
         NV3

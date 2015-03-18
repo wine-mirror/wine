@@ -662,7 +662,7 @@ static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bFailIfExists)
  *  ERROR_PATH_NOT_FOUND can't find the path, probably invalid
  *  ERROR_INVALID_NAME if the path contains invalid chars
  *  ERROR_ALREADY_EXISTS when the directory already exists
- *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
+ *  ERROR_FILENAME_EXCED_RANGE if the filename was too long to process
  *
  * NOTES
  *  exported by ordinal
@@ -694,7 +694,7 @@ DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
  *  ERROR_INVALID_NAME if the path contains invalid chars
  *  ERROR_FILE_EXISTS when a file with that name exists
  *  ERROR_ALREADY_EXISTS when the directory already exists
- *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
+ *  ERROR_FILENAME_EXCED_RANGE if the filename was too long to process
  *
  *  FIXME: Not implemented yet;
  *  SHCreateDirectoryEx also verifies that the files in the directory will be visible

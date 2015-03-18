@@ -1708,7 +1708,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
  *  options    [I] The remaining list of directories still to process
  *
  * Note this routine inserts the subdirectories found between the entry being
- * processed, and any other directory still to be processed, mimicing what
+ * processed, and any other directory still to be processed, mimicking what
  * Windows does
  */
 static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {

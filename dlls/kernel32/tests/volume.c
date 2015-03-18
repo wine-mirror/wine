@@ -535,7 +535,7 @@ static void test_enum_vols(void)
     /*get windows drive letter and update strings for testing  */
     ret = GetWindowsDirectoryA( windowsdir, sizeof(windowsdir) );
     ok(ret < sizeof(windowsdir), "windowsdir is abnormally long!\n");
-    ok(ret != 0, "GetWindowsDirecory: error %d\n", GetLastError());
+    ok(ret != 0, "GetWindowsDirectory: error %d\n", GetLastError());
     path[0] = windowsdir[0];
 
     /* get the unique volume name for the windows drive  */

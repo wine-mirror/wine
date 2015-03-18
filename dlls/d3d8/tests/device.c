@@ -2739,7 +2739,7 @@ static void test_wndproc(void)
 
     /* ShowWindow(SW_RESTORE); SetForegroundWindow(desktop); SetForegroundWindow(focus);
      * results in the second SetForegroundWindow call failing and the device not being
-     * restored on native. Directly useing ShowWindow(SW_RESTORE) works, but it means
+     * restored on native. Directly using ShowWindow(SW_RESTORE) works, but it means
      * we cannot test for the absence of WM_WINDOWPOSCHANGED messages. */
     expect_messages = reactivate_messages_filtered;
     ShowWindow(focus_window, SW_RESTORE);

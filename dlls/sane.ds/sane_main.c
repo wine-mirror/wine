@@ -176,7 +176,7 @@ static TW_UINT16 SANE_SourceControlHandler (
                 default:
                     twRC = TWRC_FAILURE;
                     activeDS.twCC = TWCC_CAPBADOPERATION;
-                    FIXME("unrecognized opertion triplet\n");
+                    FIXME("unrecognized operation triplet\n");
                     break;
             }
             break;

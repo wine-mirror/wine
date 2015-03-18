@@ -586,7 +586,7 @@ static HRESULT WINAPI HTMLObjectElement2_put_classid(IHTMLObjectElement2 *iface,
         return hres;
 
     if(This->plugin_container.plugin_host) {
-        FIXME("Host already asociated.\n");
+        FIXME("Host already associated.\n");
         return E_NOTIMPL;
     }
 

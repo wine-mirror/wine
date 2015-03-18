@@ -2828,7 +2828,7 @@ static void _SHCreateSymbolicLinks(void)
             strcpy(szPersonalTarget, pszHome);
         }
 
-        /* Replace 'My Documents' directory with a symlink of fail silently if not empty. */
+        /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
         rmdir(pszPersonal);
         symlink(szPersonalTarget, pszPersonal);
     }

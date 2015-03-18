@@ -331,7 +331,7 @@ resource_file
 		/* Find the tail again */
 		while($1 && $1->next)
 			$1 = $1->next;
-		/* Now add any fontdirecory */
+		/* Now add any fontdirectory */
 		rsc = build_fontdirs($1);
 		/* 'build_fontdir' returns a head and $1 is a tail */
 		if($1)
