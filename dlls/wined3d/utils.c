@@ -3130,6 +3130,14 @@ void get_identity_matrix(struct wined3d_matrix *mat)
     *mat = identity;
 }
 
+void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state, struct wined3d_matrix *mat)
+{
+    if (context->last_was_rhw)
+        get_identity_matrix(mat);
+    else
+        multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
+}
+
 /* Setup this textures matrix according to the texture flags. */
 /* Context activation is done by the caller (state handler). */
 void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,

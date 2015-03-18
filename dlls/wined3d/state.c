@@ -3844,6 +3844,7 @@ static void shader_bumpenv(struct wined3d_context *context, const struct wined3d
 void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_matrix mat;
 
     /* This function is called by transform_view below if the view matrix was changed too
      *
@@ -3855,18 +3856,10 @@ void transform_world(struct wined3d_context *context, const struct wined3d_state
     gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode");
 
-    if (context->last_was_rhw)
-    {
-        gl_info->gl_ops.gl.p_glLoadIdentity();
-        checkGLcall("glLoadIdentity()");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-        gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_WORLD_MATRIX(0)].u.m[0][0]);
-        checkGLcall("glMultMatrixf");
-    }
+    get_modelview_matrix(context, state, &mat);
+
+    gl_info->gl_ops.gl.p_glLoadMatrixf((GLfloat *)&mat);
+    checkGLcall("glLoadMatrixf");
 }
 
 void clipplane(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
