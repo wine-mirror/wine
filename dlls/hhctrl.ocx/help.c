@@ -61,7 +61,7 @@ struct html_encoded_symbol {
  * Table mapping the conversion between HTML encoded symbols and their ANSI code page equivalent.
  * Note: Add additional entries in proper alphabetical order (a binary search is used on this table).
  */
-struct html_encoded_symbol html_encoded_symbols[] =
+static struct html_encoded_symbol html_encoded_symbols[] =
 {
     {"AElig",  0xC6},
     {"Aacute", 0xC1},
