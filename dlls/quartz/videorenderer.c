@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "quartz_private.h"
 #include "pin.h"
 
