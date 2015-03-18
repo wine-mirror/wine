@@ -4103,8 +4103,9 @@ static void test_image_format(void)
             ok(status == OutOfMemory || broken(status == InvalidParameter) /* before win7 */,
                "expected OutOfMemory, got %d\n", status);
         else
-        {
             expect(Ok, status);
+        if (status == Ok)
+        {
             status = GdipGetImagePixelFormat(thumb, &format);
             expect(Ok, status);
             ok(format == PixelFormat32bppPARGB || broken(format != PixelFormat32bppPARGB) /* before win7 */,
