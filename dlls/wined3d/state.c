@@ -3841,7 +3841,7 @@ static void shader_bumpenv(struct wined3d_context *context, const struct wined3d
     context->constant_update_mask |= WINED3D_SHADER_CONST_PS_BUMP_ENV;
 }
 
-void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void transform_world(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_matrix mat;
