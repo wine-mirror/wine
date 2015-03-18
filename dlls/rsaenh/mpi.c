@@ -1783,7 +1783,7 @@ static int mp_div_d (const mp_int * a, mp_digit b, mp_int * c, mp_digit * d)
   }
 
   /* power of two ? */
-  if (s_is_power_of_two(b, &ix) == 1) {
+  if (s_is_power_of_two(b, &ix)) {
      if (d != NULL) {
         *d = a->dp[0] & ((((mp_digit)1)<<ix) - 1);
      }
