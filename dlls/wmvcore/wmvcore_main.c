@@ -217,7 +217,7 @@ HRESULT WINAPI WMCreateReader(IUnknown *reserved, DWORD rights, IWMReader **ret_
     reader->ref = 1;
 
     *ret_reader = &reader->IWMReader_iface;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT WINAPI WMCreateSyncReader(IUnknown *pcert, DWORD rights, IWMSyncReader **syncreader)
