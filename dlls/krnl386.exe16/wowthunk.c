@@ -52,8 +52,6 @@ extern void DPMI_PendingEventCheck_Return(void);
 extern BYTE __wine_call16_start[];
 extern BYTE __wine_call16_end[];
 
-extern void RELAY16_InitDebugLists(void);
-
 static SEGPTR call16_ret_addr;  /* segptr to __wine_call_to_16_ret routine */
 
 static WORD  dpmi_checker_selector;

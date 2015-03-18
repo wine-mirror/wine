@@ -150,7 +150,7 @@ typedef struct _THHOOK
 extern LONG __wine_call_from_16(void);
 extern void __wine_call_from_16_regs(void);
 
-extern THHOOK *pThhook;
+extern THHOOK *pThhook DECLSPEC_HIDDEN;
 
 #include "poppack.h"
 
@@ -189,82 +189,83 @@ static inline void stack16_pop( int size )
 }
 
 /* dosmem.c */
-extern BOOL   DOSMEM_Init(void);
-extern BOOL   DOSMEM_InitDosMemory(void);
-extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
-extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
-extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
-extern BOOL   DOSMEM_MapDosLayout(void);
-extern LPVOID DOSMEM_AllocBlock(UINT size, WORD* p);
-extern BOOL   DOSMEM_FreeBlock(void* ptr);
-extern UINT   DOSMEM_ResizeBlock(void* ptr, UINT size, BOOL exact);
-extern UINT   DOSMEM_Available(void);
+extern BOOL   DOSMEM_Init(void) DECLSPEC_HIDDEN;
+extern BOOL   DOSMEM_InitDosMemory(void) DECLSPEC_HIDDEN;
+extern LPVOID DOSMEM_MapRealToLinear(DWORD) DECLSPEC_HIDDEN; /* real-mode to linear */
+extern LPVOID DOSMEM_MapDosToLinear(UINT) DECLSPEC_HIDDEN;   /* linear DOS to Wine */
+extern UINT   DOSMEM_MapLinearToDos(LPVOID) DECLSPEC_HIDDEN; /* linear Wine to DOS */
+extern BOOL   DOSMEM_MapDosLayout(void) DECLSPEC_HIDDEN;
+extern LPVOID DOSMEM_AllocBlock(UINT size, WORD* p) DECLSPEC_HIDDEN;
+extern BOOL   DOSMEM_FreeBlock(void* ptr) DECLSPEC_HIDDEN;
+extern UINT   DOSMEM_ResizeBlock(void* ptr, UINT size, BOOL exact) DECLSPEC_HIDDEN;
+extern UINT   DOSMEM_Available(void) DECLSPEC_HIDDEN;
 
 /* global16.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, void *ptr, DWORD size,
-                                     HGLOBAL16 hOwner, unsigned char selflags );
-extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
-extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size );
-extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
+                                     HGLOBAL16 hOwner, unsigned char selflags ) DECLSPEC_HIDDEN;
+extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle ) DECLSPEC_HIDDEN;
+extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, void *ptr, DWORD size ) DECLSPEC_HIDDEN;
+extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags ) DECLSPEC_HIDDEN;
 
 /* instr.c */
-extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context );
-extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
+extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs ) DECLSPEC_HIDDEN;
 
 /* ne_module.c */
-extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
-extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
-extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
-extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
-extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
-extern DWORD NE_StartTask(void);
+extern NE_MODULE *NE_GetPtr( HMODULE16 hModule ) DECLSPEC_HIDDEN;
+extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name ) DECLSPEC_HIDDEN;
+extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal ) DECLSPEC_HIDDEN;
+extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop ) DECLSPEC_HIDDEN;
+extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset ) DECLSPEC_HIDDEN;
+extern DWORD NE_StartTask(void) DECLSPEC_HIDDEN;
 
 /* ne_segment.c */
-extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
-extern BOOL NE_LoadAllSegments( NE_MODULE *pModule );
-extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum );
-extern BOOL NE_CreateAllSegments( NE_MODULE *pModule );
-extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
-extern void NE_InitializeDLLs( HMODULE16 hModule );
-extern void NE_DllProcessAttach( HMODULE16 hModule );
-extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
+extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum ) DECLSPEC_HIDDEN;
+extern BOOL NE_LoadAllSegments( NE_MODULE *pModule ) DECLSPEC_HIDDEN;
+extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum ) DECLSPEC_HIDDEN;
+extern BOOL NE_CreateAllSegments( NE_MODULE *pModule ) DECLSPEC_HIDDEN;
+extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule ) DECLSPEC_HIDDEN;
+extern void NE_InitializeDLLs( HMODULE16 hModule ) DECLSPEC_HIDDEN;
+extern void NE_DllProcessAttach( HMODULE16 hModule ) DECLSPEC_HIDDEN;
+extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code ) DECLSPEC_HIDDEN;
 
 /* selector.c */
-extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
-extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
-extern void SELECTOR_FreeBlock( WORD sel );
+extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags ) DECLSPEC_HIDDEN;
+extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size ) DECLSPEC_HIDDEN;
+extern void SELECTOR_FreeBlock( WORD sel ) DECLSPEC_HIDDEN;
 #define IS_SELECTOR_32BIT(sel) \
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
 /* relay16.c */
-extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context );
+extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void RELAY16_InitDebugLists(void) DECLSPEC_HIDDEN;
 
 /* snoop16.c */
-extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);
-extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
-extern BOOL SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
+extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR) DECLSPEC_HIDDEN;
+extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16) DECLSPEC_HIDDEN;
+extern BOOL SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname) DECLSPEC_HIDDEN;
 
 /* syslevel.c */
-extern VOID SYSLEVEL_CheckNotLevel( INT level );
+extern VOID SYSLEVEL_CheckNotLevel( INT level ) DECLSPEC_HIDDEN;
 
 /* task.c */
-extern void TASK_CreateMainTask(void);
+extern void TASK_CreateMainTask(void) DECLSPEC_HIDDEN;
 extern HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
-                               LPCSTR cmdline, BYTE len, HANDLE *hThread );
-extern void TASK_ExitTask(void);
-extern HTASK16 TASK_GetTaskFromThread( DWORD thread );
-extern TDB *TASK_GetCurrent(void);
-extern void TASK_InstallTHHook( THHOOK *pNewThook );
+                               LPCSTR cmdline, BYTE len, HANDLE *hThread ) DECLSPEC_HIDDEN;
+extern void TASK_ExitTask(void) DECLSPEC_HIDDEN;
+extern HTASK16 TASK_GetTaskFromThread( DWORD thread ) DECLSPEC_HIDDEN;
+extern TDB *TASK_GetCurrent(void) DECLSPEC_HIDDEN;
+extern void TASK_InstallTHHook( THHOOK *pNewThook ) DECLSPEC_HIDDEN;
 
-extern BOOL WOWTHUNK_Init(void);
+extern BOOL WOWTHUNK_Init(void) DECLSPEC_HIDDEN;
 
-extern WORD DOSMEM_0000H;
-extern WORD DOSMEM_BiosDataSeg;
-extern WORD DOSMEM_BiosSysSeg;
-extern DWORD CallTo16_DataSelector;
-extern DWORD CallTo16_TebSelector;
-extern SEGPTR CALL32_CBClient_RetAddr;
-extern SEGPTR CALL32_CBClientEx_RetAddr;
+extern WORD DOSMEM_0000H DECLSPEC_HIDDEN;
+extern WORD DOSMEM_BiosDataSeg DECLSPEC_HIDDEN;
+extern WORD DOSMEM_BiosSysSeg DECLSPEC_HIDDEN;
+extern DWORD CallTo16_DataSelector DECLSPEC_HIDDEN;
+extern DWORD CallTo16_TebSelector DECLSPEC_HIDDEN;
+extern SEGPTR CALL32_CBClient_RetAddr DECLSPEC_HIDDEN;
+extern SEGPTR CALL32_CBClientEx_RetAddr DECLSPEC_HIDDEN;
 
 struct tagSYSLEVEL;
 
