@@ -528,7 +528,7 @@ static BOOL open_joystick(joystick_t* joystick)
     }
 
     index = joystick - joysticks;
-    if (index > CFArrayGetCount(device_main_elements))
+    if (index >= CFArrayGetCount(device_main_elements))
         return FALSE;
 
     joystick->element = (IOHIDElementRef)CFArrayGetValueAtIndex(device_main_elements, index);
