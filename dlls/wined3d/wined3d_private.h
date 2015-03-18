@@ -2809,8 +2809,6 @@ void state_specularenable(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void transform_world(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void transform_view(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void transform_projection(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void transform_texture(struct wined3d_context *context,

@@ -3990,7 +3990,7 @@ static void state_vertexblend(struct wined3d_context *context, const struct wine
     }
 }
 
-void transform_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void transform_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_light_info *light = NULL;

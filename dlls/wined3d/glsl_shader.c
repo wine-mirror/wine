@@ -7026,6 +7026,40 @@ static void glsl_vertex_pipe_vs(struct wined3d_context *context,
         context_apply_state(context, state, STATE_VDECL);
 }
 
+void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_light_info *light = NULL;
+    unsigned int k;
+
+    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0))))
+        transform_world(context, state, state_id);
+
+    for (k = 0; k < gl_info->limits.lights; ++k)
+    {
+        if (!(light = state->lights[k]))
+            continue;
+        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightPosn);
+        checkGLcall("glLightfv posn");
+        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, light->lightDirn);
+        checkGLcall("glLightfv dirn");
+    }
+
+    for (k = 0; k < gl_info->limits.clipplanes; ++k)
+    {
+        if (!isStateDirty(context, STATE_CLIPPLANE(k)))
+            clipplane(context, state, STATE_CLIPPLANE(k));
+    }
+
+    if (context->swapchain->device->vertexBlendUsed)
+    {
+        static int warned;
+
+        if (!warned++)
+            FIXME("Vertex blending emulation.\n");
+    }
+}
+
 static void glsl_vertex_pipe_projection(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -7088,7 +7122,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     /* Viewport */
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             viewport_vertexpart    }, WINED3D_GL_EXT_NONE          },
     /* Transform states */
-    {STATE_TRANSFORM(WINED3D_TS_VIEW),                           {STATE_TRANSFORM(WINED3D_TS_VIEW),                           transform_view         }, WINED3D_GL_EXT_NONE          },
+    {STATE_TRANSFORM(WINED3D_TS_VIEW),                           {STATE_TRANSFORM(WINED3D_TS_VIEW),                           glsl_vertex_pipe_view  }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     glsl_vertex_pipe_projection}, WINED3D_GL_EXT_NONE      },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE0),                       {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE1),                       {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
