@@ -18,8 +18,6 @@
  *
  */
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "config.h"
