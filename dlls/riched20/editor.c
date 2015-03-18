@@ -224,6 +224,8 @@
  *
  */
 
+#define NONAMELESSUNION
+
 #include "editor.h"
 #include "commdlg.h"
 #include "winreg.h"

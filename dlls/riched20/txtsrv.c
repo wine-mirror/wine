@@ -21,8 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "editor.h"
