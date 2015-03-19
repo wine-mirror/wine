@@ -457,6 +457,8 @@ static void (*__thiscall p_basic_fstream_wchar_vbase_dtor)(basic_fstream_wchar*)
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_uint64)(basic_istream_char*, unsigned __int64*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_float)(basic_istream_char*, float*);
 static basic_istream_char* (*__thiscall p_basic_istream_char_read_double)(basic_istream_char*, double*);
+static basic_istream_char* (*__cdecl p_basic_istream_char_read_str)(basic_istream_char*, char*);
+static basic_istream_char* (*__cdecl    p_basic_istream_char_read_complex_double)(basic_istream_char*, complex_double*);
 static int                 (*__thiscall p_basic_istream_char_get)(basic_istream_char*);
 static MSVCP_bool          (*__thiscall p_basic_istream_char_ipfx)(basic_istream_char*, MSVCP_bool);
 static basic_istream_char* (*__thiscall p_basic_istream_char_ignore)(basic_istream_char*, streamsize, int);
@@ -672,6 +674,10 @@ static BOOL init(void)
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAN@Z");
+        SET(p_basic_istream_char_read_str,
+            "??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@PEAD@Z");
+        SET(p_basic_istream_char_read_complex_double,
+            "??$?5NDU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$complex@N@0@@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ");
         SET(p_basic_istream_char_ipfx,
@@ -800,6 +806,10 @@ static BOOL init(void)
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAAAAV01@AAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAAAAV01@AAN@Z");
+        SET(p_basic_istream_char_read_str,
+            "??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAD@Z");
+        SET(p_basic_istream_char_read_complex_double,
+            "??$?5NDU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$complex@N@0@@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QAAHXZ");
         SET(p_basic_istream_char_ipfx,
@@ -927,6 +937,10 @@ static BOOL init(void)
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAM@Z");
         SET(p_basic_istream_char_read_double,
             "??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAN@Z");
+        SET(p_basic_istream_char_read_str,
+            "??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@PAD@Z");
+        SET(p_basic_istream_char_read_complex_double,
+            "??$?5NDU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$complex@N@0@@Z");
         SET(p_basic_istream_char_get,
             "?get@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ");
         SET(p_basic_istream_char_ipfx,
@@ -2241,6 +2255,95 @@ static void test_ostream_print_complex_ldouble(void)
     call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
 }
 
+static void test_istream_read_complex_double(void)
+{
+    basic_string_char str;
+    IOSB_iostate state;
+    complex_double val;
+    locale lcl, retlcl;
+    basic_stringstream_char ss;
+    int i;
+    char next[100];
+    const char deadbeef_str[] = "(3.14159,3456.7890)";
+    const complex_double deadbeef = {3.14159, 3456.7890};
+    const IOSB_iostate IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
+
+    struct _test_istream_read_complex_double {
+        const char *complex_double_str;
+        const char *lcl;
+        complex_double correct_val;
+        IOSB_iostate state;
+        const char *str;
+    } tests[] = {
+        /* supported format: real */
+        { "-12 3", NULL, {-12 , 0}, IOSTATE_goodbit, "3"},
+        { "1e2,3", NULL, {100 , 0}, IOSTATE_goodbit, ",3"},
+        { "3E2,,", NULL, {300 , 0}, IOSTATE_goodbit, ",,"},
+
+        /* supported format: (real) */
+        { "(3.)",    NULL, {3., 0},    IOSTATE_goodbit, "" },
+        { "(3E10)1", NULL, {3e+10, 0}, IOSTATE_goodbit, "1"},
+
+        /* supported format: (real,imaginary) */
+        { "(3, -.4)",       NULL, {3, -0.4} , IOSTATE_goodbit, ""},
+        { " (6.6,\n1.1\t)", NULL, {6.6, 1.1}, IOSTATE_goodbit, ""},
+        { "(6.666 , 7.77)mark", NULL, {6.666, 7.77}, IOSTATE_goodbit, "mark"},
+
+        /* different locales */
+        { "1,234e10", "English", {1234.0e10, 0}, IOSTATE_eofbit, ""},
+        { "1,234e10", "German" , {1.234e10,  0}, IOSTATE_eofbit, ""},
+        { "1,234,567,890", "English", {1234567890.0, 0}, IOSTATE_eofbit , ""},
+        { "1,234,567,890", "German" , {1.234, 0}       , IOSTATE_goodbit, ",567,890"},
+        { "(0.123,-4.5)",  "English", {0.123,-4.5}, IOSTATE_goodbit, ""},
+        { "(0,123,4,5)" ,  "German" , {0.123,4.5 }, IOSTATE_goodbit, ""},
+        { "(123,456.,4.5678)", "English", {123456,4.5678}, IOSTATE_goodbit, ""},
+        { "(123.456,,4,5678)", "German" , {123456,4.5678}, IOSTATE_goodbit, ""},
+
+        /* eofbit */
+        { ".09",    NULL, {0.09, 0}, IOSTATE_eofbit,  ""},
+        { "\t-1e2", NULL, {-100, 0}, IOSTATE_eofbit,  ""},
+        { "+",      NULL, deadbeef,  IOSTATE_faileof, ""},
+        { "(-1.1,3  \t  " , NULL, deadbeef, IOSTATE_faileof, ""},
+        { "(-1.1  , \t -3.4E3 \t ", NULL, deadbeef, IOSTATE_faileof, ""},
+
+        /* nonsupported formats */
+        { "(*)"    , NULL, deadbeef, IOSTATE_failbit, ""},
+        { "(\n*"   , NULL, deadbeef, IOSTATE_failbit, ""},
+        { "(6..)"  , NULL, deadbeef, IOSTATE_failbit, ""},
+        { "(3.12,*", NULL, deadbeef, IOSTATE_failbit, ""},
+        { "(3.12,)", NULL, deadbeef, IOSTATE_failbit, ""},
+        { "(1.0eE10, 3)" , NULL, deadbeef, IOSTATE_failbit, ""},
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        call_func2(p_basic_string_char_ctor_cstr, &str, deadbeef_str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+        p_basic_istream_char_read_complex_double(&ss.base.base1, &val);
+
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].complex_double_str);
+        call_func4(p_basic_stringstream_char_ctor_str, &ss, &str, OPENMODE_out|OPENMODE_in, TRUE);
+        if(tests[i].lcl) {
+            call_func3(p_locale_ctor_cstr, &lcl, tests[i].lcl, 0x3f /* FIXME: support categories */);
+            call_func3(p_basic_ios_char_imbue, &ss.basic_ios, &retlcl, &lcl);
+        }
+        p_basic_istream_char_read_complex_double(&ss.base.base1, &val);
+        state = (IOSB_iostate)call_func1(p_ios_base_rdstate, &ss.basic_ios.base);
+
+        memset(next, 0, sizeof(next));
+        p_basic_istream_char_read_str(&ss.base.base1, next);
+
+        ok(tests[i].state == state, "test %d fail, wrong state, expected = %x found = %x\n", i+1, tests[i].state, state);
+        ok(tests[i].correct_val.real == val.real, "test %d fail, wrong val, expected = %g found %g\n", i+1, tests[i].correct_val.real, val.real);
+        ok(tests[i].correct_val.imag == val.imag, "test %d fail, wrong val, expected = %g found %g\n", i+1, tests[i].correct_val.imag, val.imag);
+        ok(!strcmp(tests[i].str, next), "test %d fail, wrong next, expected = %s found %s\n", i+1, tests[i].str, next);
+
+        if(tests[i].lcl)
+            call_func1(p_locale_dtor, &lcl);
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+        call_func1(p_basic_string_char_dtor, &str);
+    }
+}
+
 START_TEST(ios)
 {
     if(!init())
@@ -2265,6 +2368,7 @@ START_TEST(ios)
     test_ostream_print_complex_float();
     test_ostream_print_complex_double();
     test_ostream_print_complex_ldouble();
+    test_istream_read_complex_double();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 

@@ -9026,6 +9026,183 @@ basic_istream_char* __thiscall basic_istream_char_read_func_ios_base(basic_istre
     return this;
 }
 
+/* ??$?5MDU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$complex@M@0@@Z */
+/* ??$?5MDU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$complex@M@0@@Z */
+basic_istream_char* __cdecl basic_istream_char_read_complex_float(basic_istream_char *this, complex_float *v)
+{
+    float r;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+
+    TRACE("(%p %p)\n", this, v);
+
+    ws_basic_istream_char(this);
+    if(basic_istream_char_peek(this) == '(') {
+        char c;
+        basic_istream_char_get(this);
+        basic_istream_char_read_float(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        ws_basic_istream_char(this);
+        c = basic_istream_char_peek(this);
+        if(c == ',') {
+            float i;
+            basic_istream_char_get(this);
+            basic_istream_char_read_float(this, &i);
+
+            if(ios_base_fail(&base->base))
+                return this;
+
+            ws_basic_istream_char(this);
+            c = basic_istream_char_peek(this);
+            if(c == ')') { /* supported format: (real, imag) */
+                basic_istream_char_get(this);
+                v->real = r;
+                v->imag = i;
+            }else {
+                basic_ios_char_setstate(base, IOSTATE_failbit);
+                return this;
+            }
+        }else if(c == ')') { /* supported format: (real) */
+            basic_istream_char_get(this);
+            v->real = r;
+            v->imag = 0;
+        }else {
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+            return this;
+        }
+    }else { /* supported format: real */
+        basic_istream_char_read_float(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        v->real = r;
+        v->imag = 0;
+    }
+
+    return this;
+}
+
+/* ??$?5NDU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$complex@N@0@@Z */
+/* ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$complex@N@0@@Z */
+basic_istream_char* __cdecl basic_istream_char_read_complex_double(basic_istream_char *this, complex_double *v)
+{
+    double r;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+
+    TRACE("(%p %p)\n", this, v);
+
+    ws_basic_istream_char(this);
+    if(basic_istream_char_peek(this) == '(') {
+        char c;
+        basic_istream_char_get(this);
+        basic_istream_char_read_double(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        ws_basic_istream_char(this);
+        c = basic_istream_char_peek(this);
+        if(c == ',') {
+            double i;
+            basic_istream_char_get(this);
+            basic_istream_char_read_double(this, &i);
+
+            if(ios_base_fail(&base->base))
+                return this;
+
+            ws_basic_istream_char(this);
+            c = basic_istream_char_peek(this);
+            if(c == ')') { /* supported format: (real, imag) */
+                basic_istream_char_get(this);
+                v->real = r;
+                v->imag = i;
+            }else {
+                basic_ios_char_setstate(base, IOSTATE_failbit);
+                return this;
+            }
+        }else if(c == ')') { /* supported format: (real) */
+            basic_istream_char_get(this);
+            v->real = r;
+            v->imag = 0;
+        }else {
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+            return this;
+        }
+    }else { /* supported format: real */
+        basic_istream_char_read_double(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        v->real = r;
+        v->imag = 0;
+    }
+
+    return this;
+}
+
+/* ??$?5ODU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAV?$complex@O@0@@Z */
+/* ??$?5ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$complex@O@0@@Z */
+basic_istream_char* __cdecl basic_istream_char_read_complex_ldouble(basic_istream_char *this, complex_double *v)
+{
+    double r;
+    basic_ios_char *base = basic_istream_char_get_basic_ios(this);
+
+    TRACE("(%p %p)\n", this, v);
+
+    ws_basic_istream_char(this);
+    if(basic_istream_char_peek(this) == '(') {
+        char c;
+        basic_istream_char_get(this);
+        basic_istream_char_read_ldouble(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        ws_basic_istream_char(this);
+        c = basic_istream_char_peek(this);
+        if(c == ',') {
+            double i;
+            basic_istream_char_get(this);
+            basic_istream_char_read_ldouble(this, &i);
+
+            if(ios_base_fail(&base->base))
+                return this;
+
+            ws_basic_istream_char(this);
+            c = basic_istream_char_peek(this);
+            if(c == ')') { /* supported format: (real, imag) */
+                basic_istream_char_get(this);
+                v->real = r;
+                v->imag = i;
+            }else {
+                basic_ios_char_setstate(base, IOSTATE_failbit);
+                return this;
+            }
+        }else if(c == ')') { /* supported format: (real) */
+            basic_istream_char_get(this);
+            v->real = r;
+            v->imag = 0;
+        }else {
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+            return this;
+        }
+    }else { /* supported format: real */
+        basic_istream_char_read_ldouble(this, &r);
+
+        if(ios_base_fail(&base->base))
+            return this;
+
+        v->real = r;
+        v->imag = 0;
+    }
+
+    return this;
+}
+
 /* ?swap@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXAAV12@@Z */
 /* ?swap@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXAEAV12@@Z */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_swap, 8)
