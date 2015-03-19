@@ -28,14 +28,6 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-#define SECSPERDAY 86400
-/* 1601 to 1970 is 369 years plus 89 leap days */
-#define SECS_1601_TO_1970 ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
-#define TICKSPERSEC 10000000
-#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
-#define NANOSEC_PER_MILLISEC 1000000
-#define MILLISEC_PER_SEC 1000
-
 struct __Container_proxy;
 
 typedef struct {
@@ -361,6 +353,15 @@ void __thiscall _Container_base12__Swap_all(
 }
 
 #if _MSVCP_VER >= 110
+
+#define SECSPERDAY 86400
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define SECS_1601_TO_1970 ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+#define TICKSPERSEC 10000000
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+#define NANOSEC_PER_MILLISEC 1000000
+#define MILLISEC_PER_SEC 1000
+
 typedef int MSVCRT_long;
 
 /* xtime */
@@ -440,16 +441,6 @@ unsigned int __cdecl _Random_device(void)
 #if _MSVCP_VER >= 110
 #if defined(__i386__) && !defined(__arm__)
 
-#define THISCALL(func) __thiscall_ ## func
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-            "popl %eax\n\t" \
-            "pushl %ecx\n\t" \
-            "pushl %eax\n\t" \
-            "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-
 extern void *call_thiscall_func;
 __ASM_GLOBAL_FUNC(call_thiscall_func,
         "popl %eax\n\t"
@@ -461,9 +452,6 @@ __ASM_GLOBAL_FUNC(call_thiscall_func,
 #define call_func1(func,this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)(func,this)
 
 #else /* __i386__ */
-
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #define call_func1(func,this) func(this)
 
