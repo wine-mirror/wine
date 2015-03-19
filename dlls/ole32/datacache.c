@@ -576,6 +576,11 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *cache_entry)
   hres = IStream_Stat(presStream,
 		      &streamInfo,
 		      STATFLAG_NONAME);
+  if (FAILED(hres))
+  {
+      IStream_Release(presStream);
+      return hres;
+  }
 
   /*
    * Read the header.
