@@ -627,6 +627,7 @@ static HRESULT GAMEUX_loadGameStatistics(struct GAMEUX_STATS *pStats,
     TRACE("(%p, %s, %d, %p)\n", pStats, debugstr_w(sGameId), openType, pOpenResult);
 
     hr = GAMEUX_buildStatisticsFilePath(sGameId, pStats->sStatsFile);
+    if (FAILED(hr)) return hr;
 
     hr = GAMEUX_loadStatisticsFromFile(pStats);
     TRACE("ldstats finished, res: %#x\n", hr);
