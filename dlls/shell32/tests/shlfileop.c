@@ -1860,7 +1860,6 @@ static void test_move(void)
 
     ok(file_exists("testdir2"), "dir should not be moved\n");
     ok(!file_exists("testdir2\\one.txt"), "file should be moved\n");
-todo_wine
     ok(!file_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
 

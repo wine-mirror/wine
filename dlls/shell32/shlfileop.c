@@ -1389,42 +1389,13 @@ static DWORD delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
     return ERROR_SUCCESS;
 }
 
-static void move_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, const FILE_ENTRY *feFrom, LPCWSTR szDestPath)
-{
-    WCHAR szFrom[MAX_PATH], szTo[MAX_PATH];
-    SHFILEOPSTRUCTW fileOp;
-
-    static const WCHAR wildCardFiles[] = {'*','.','*',0};
-
-    if (IsDotDir(feFrom->szFilename))
-        return;
-
-    SHNotifyCreateDirectoryW(szDestPath, NULL);
-
-    PathCombineW(szFrom, feFrom->szFullPath, wildCardFiles);
-    szFrom[lstrlenW(szFrom) + 1] = '\0';
-
-    lstrcpyW(szTo, szDestPath);
-    szTo[lstrlenW(szDestPath) + 1] = '\0';
-
-    fileOp = *lpFileOp;
-    fileOp.pFrom = szFrom;
-    fileOp.pTo = szTo;
-
-    SHFileOperationW(&fileOp);
-}
-
 /* moves a file or directory to another directory */
 static void move_to_dir(LPSHFILEOPSTRUCTW lpFileOp, const FILE_ENTRY *feFrom, const FILE_ENTRY *feTo)
 {
     WCHAR szDestPath[MAX_PATH];
 
     PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
-
-    if (IsAttribFile(feFrom->attributes))
-        SHNotifyMoveFileW(feFrom->szFullPath, szDestPath);
-    else if (!(lpFileOp->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
-        move_dir_to_dir(lpFileOp, feFrom, szDestPath);
+    SHNotifyMoveFileW(feFrom->szFullPath, szDestPath);
 }
 
 /* the FO_MOVE operation */
