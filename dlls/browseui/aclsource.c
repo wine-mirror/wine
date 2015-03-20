@@ -67,7 +67,7 @@ static HRESULT WINAPI ACLShellSource_QueryInterface(IACList2 *iface, REFIID iid,
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IACList2) ||
         IsEqualIID(iid, &IID_IACList))
     {
-        *ppvOut = This;
+        *ppvOut = &This->IACList2_iface;
     }
 
     if (*ppvOut)

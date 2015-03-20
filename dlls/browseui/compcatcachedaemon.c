@@ -70,7 +70,7 @@ static HRESULT WINAPI CompCatCacheDaemon_QueryInterface(IRunnableTask *iface, RE
 
     if (IsEqualIID(iid, &IID_IRunnableTask) || IsEqualIID(iid, &IID_IUnknown))
     {
-        *ppvOut = This;
+        *ppvOut = &This->IRunnableTask_iface;
     }
 
     if (*ppvOut)

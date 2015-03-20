@@ -100,7 +100,7 @@ static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LP
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumString))
     {
-        *ppvOut = This;
+        *ppvOut = &This->IEnumString_iface;
     }
     else if (IsEqualIID(iid, &IID_IACList))
     {
