@@ -1198,7 +1198,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     IStorage *pstg=0;
     HRESULT res;
     int nbElm, length, i;
-    LONG sizeProgId;
+    LONG sizeProgId, ret;
     LPOLESTR *pathDec=0,absFile=0,progId=0;
     LPWSTR extension;
     static const WCHAR bkslashW[] = {'\\',0};
@@ -1264,26 +1264,23 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
         return MK_E_INVALIDEXTENSION;
     }
 
-    res=RegQueryValueW(HKEY_CLASSES_ROOT, extension, NULL, &sizeProgId);
+    ret = RegQueryValueW(HKEY_CLASSES_ROOT, extension, NULL, &sizeProgId);
 
     /* get the progId associated to the extension */
     progId = CoTaskMemAlloc(sizeProgId);
-    res = RegQueryValueW(HKEY_CLASSES_ROOT, extension, progId, &sizeProgId);
-
-    if (res==ERROR_SUCCESS)
+    ret = RegQueryValueW(HKEY_CLASSES_ROOT, extension, progId, &sizeProgId);
+    if (!ret)
         /* return the clsid associated to the progId */
-        res= CLSIDFromProgID(progId,pclsid);
+        res = CLSIDFromProgID(progId,pclsid);
+    else
+        res = HRESULT_FROM_WIN32(ret);
 
     for(i=0; pathDec[i]!=NULL;i++)
         CoTaskMemFree(pathDec[i]);
     CoTaskMemFree(pathDec);
 
     CoTaskMemFree(progId);
-
-    if (res==ERROR_SUCCESS)
-        return res;
-
-    return MK_E_INVALIDEXTENSION;
+    return res != S_OK ? MK_E_INVALIDEXTENSION : res;
 }
 
 /***********************************************************************
