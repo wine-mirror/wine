@@ -97,7 +97,7 @@ static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream *iface,
 
   if (IsEqualGUID(&IID_IUnknown, refiid) ||
       IsEqualGUID(&IID_IAVIStream, refiid)) {
-    *obj = This;
+    *obj = &This->IAVIStream_iface;
     IAVIStream_AddRef(iface);
 
     return S_OK;
