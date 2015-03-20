@@ -89,7 +89,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
       IsEqualIID(&IID_ISequentialStream, riid) ||
       IsEqualIID(&IID_IStream, riid))
   {
-    *ppvObject = This;
+    *ppvObject = &This->IStream_iface;
   }
 
   if ((*ppvObject)==0)

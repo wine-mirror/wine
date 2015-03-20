@@ -316,7 +316,7 @@ RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IRunningObjectTable, riid))
-        *ppvObject = This;
+        *ppvObject = &This->IRunningObjectTable_iface;
 
     if ((*ppvObject)==0)
         return E_NOINTERFACE;

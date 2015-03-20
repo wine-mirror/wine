@@ -6300,7 +6300,7 @@ static HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
   if (IsEqualGUID(&IID_IUnknown, riid) ||
       IsEqualGUID(&IID_IEnumSTATSTG, riid))
   {
-    *ppvObject = This;
+    *ppvObject = &This->IEnumSTATSTG_iface;
     IEnumSTATSTG_AddRef(&This->IEnumSTATSTG_iface);
     return S_OK;
   }
