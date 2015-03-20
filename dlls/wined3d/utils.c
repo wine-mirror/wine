@@ -3120,12 +3120,12 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
 void get_identity_matrix(struct wined3d_matrix *mat)
 {
     static const struct wined3d_matrix identity =
-    {{{
+    {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
-    }}};
+    };
 
     *mat = identity;
 }
@@ -3140,10 +3140,10 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
 
 /* Setup this textures matrix according to the texture flags. */
 /* Context activation is done by the caller (state handler). */
-void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat, DWORD flags,
-        BOOL calculatedCoords, BOOL transformed, enum wined3d_format_id vtx_fmt, BOOL ffp_proj_control)
+void set_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix, DWORD flags,
+        BOOL calculated_coords, BOOL transformed, enum wined3d_format_id format_id, BOOL ffp_proj_control)
 {
-    float mat[16];
+    struct wined3d_matrix mat;
 
     gl_info->gl_ops.gl.p_glMatrixMode(GL_TEXTURE);
     checkGLcall("glMatrixMode(GL_TEXTURE)");
@@ -3161,7 +3161,7 @@ void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat
         return;
     }
 
-    memcpy(mat, smat, 16 * sizeof(float));
+    mat = *matrix;
 
     if (flags & WINED3D_TTFF_PROJECTED)
     {
@@ -3170,42 +3170,47 @@ void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat
             switch (flags & ~WINED3D_TTFF_PROJECTED)
             {
                 case WINED3D_TTFF_COUNT2:
-                    mat[ 3] = mat[ 1];
-                    mat[ 7] = mat[ 5];
-                    mat[11] = mat[ 9];
-                    mat[15] = mat[13];
-                    mat[ 1] = mat[ 5] = mat[ 9] = mat[13] = 0.0f;
+                    mat._14 = mat._12;
+                    mat._24 = mat._22;
+                    mat._34 = mat._32;
+                    mat._44 = mat._42;
+                    mat._12 = mat._22 = mat._32 = mat._42 = 0.0f;
                     break;
                 case WINED3D_TTFF_COUNT3:
-                    mat[ 3] = mat[ 2];
-                    mat[ 7] = mat[ 6];
-                    mat[11] = mat[10];
-                    mat[15] = mat[14];
-                    mat[ 2] = mat[ 6] = mat[10] = mat[14] = 0.0f;
+                    mat._14 = mat._13;
+                    mat._24 = mat._23;
+                    mat._34 = mat._33;
+                    mat._44 = mat._43;
+                    mat._13 = mat._23 = mat._33 = mat._43 = 0.0f;
                     break;
             }
         }
-    } else { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
-        if(!calculatedCoords) {
-            switch(vtx_fmt)
+    }
+    else
+    {
+        /* Under Direct3D the R/Z coord can be used for translation, under
+         * OpenGL we use the Q coord instead. */
+        if (!calculated_coords)
+        {
+            switch (format_id)
             {
+                /* Direct3D passes the default 1.0 in the 2nd coord, while GL
+                 * passes it in the 4th. Swap 2nd and 4th coord. No need to
+                 * store the value of mat._41 in mat._21 because the input
+                 * value to the transformation will be 0, so the matrix value
+                 * is irrelevant. */
                 case WINED3DFMT_R32_FLOAT:
-                    /* Direct3D passes the default 1.0 in the 2nd coord, while gl passes it in the 4th.
-                     * swap 2nd and 4th coord. No need to store the value of mat[12] in mat[4] because
-                     * the input value to the transformation will be 0, so the matrix value is irrelevant
-                     */
-                    mat[12] = mat[4];
-                    mat[13] = mat[5];
-                    mat[14] = mat[6];
-                    mat[15] = mat[7];
+                    mat._41 = mat._21;
+                    mat._42 = mat._22;
+                    mat._43 = mat._23;
+                    mat._44 = mat._24;
                     break;
+                /* See above, just 3rd and 4th coord. */
                 case WINED3DFMT_R32G32_FLOAT:
-                    /* See above, just 3rd and 4th coord
-                    */
-                    mat[12] = mat[8];
-                    mat[13] = mat[9];
-                    mat[14] = mat[10];
-                    mat[15] = mat[11];
+                    mat._41 = mat._31;
+                    mat._42 = mat._32;
+                    mat._43 = mat._33;
+                    mat._44 = mat._34;
                     break;
                 case WINED3DFMT_R32G32B32_FLOAT: /* Opengl defaults match dx defaults */
                 case WINED3DFMT_R32G32B32A32_FLOAT: /* No defaults apply, all app defined */
@@ -3226,7 +3231,7 @@ void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat
             {
                 /* case WINED3D_TTFF_COUNT1: Won't ever get here. */
                 case WINED3D_TTFF_COUNT2:
-                    mat[2] = mat[6] = mat[10] = mat[14] = 0;
+                    mat._13 = mat._23 = mat._33 = mat._43 = 0.0f;
                 /* OpenGL divides the first 3 vertex coord by the 4th by default,
                 * which is essentially the same as D3DTTFF_PROJECTED. Make sure that
                 * the 4th coord evaluates to 1.0 to eliminate that.
@@ -3240,12 +3245,12 @@ void set_texture_matrix(const struct wined3d_gl_info *gl_info, const float *smat
                 * 4th is != 1.0(opengl default). This would have to be fixed in drawStridedSlow
                 * or a replacement shader. */
                 default:
-                    mat[3] = mat[7] = mat[11] = 0; mat[15] = 1;
+                    mat._14 = mat._24 = mat._34 = 0.0f; mat._44 = 1.0f;
             }
         }
     }
 
-    gl_info->gl_ops.gl.p_glLoadMatrixf(mat);
+    gl_info->gl_ops.gl.p_glLoadMatrixf(&mat._11);
     checkGLcall("glLoadMatrixf(mat)");
 }
 
@@ -3408,35 +3413,33 @@ enum wined3d_format_id pixelformat_for_depth(DWORD depth)
     }
 }
 
-void multiply_matrix(struct wined3d_matrix *dest, const struct wined3d_matrix *src1,
-        const struct wined3d_matrix *src2)
+void multiply_matrix(struct wined3d_matrix *dst, const struct wined3d_matrix *src1, const struct wined3d_matrix *src2)
 {
-    struct wined3d_matrix temp;
+    struct wined3d_matrix tmp;
 
     /* Now do the multiplication 'by hand'.
        I know that all this could be optimised, but this will be done later :-) */
-    temp.u.s._11 = (src1->u.s._11 * src2->u.s._11) + (src1->u.s._21 * src2->u.s._12) + (src1->u.s._31 * src2->u.s._13) + (src1->u.s._41 * src2->u.s._14);
-    temp.u.s._21 = (src1->u.s._11 * src2->u.s._21) + (src1->u.s._21 * src2->u.s._22) + (src1->u.s._31 * src2->u.s._23) + (src1->u.s._41 * src2->u.s._24);
-    temp.u.s._31 = (src1->u.s._11 * src2->u.s._31) + (src1->u.s._21 * src2->u.s._32) + (src1->u.s._31 * src2->u.s._33) + (src1->u.s._41 * src2->u.s._34);
-    temp.u.s._41 = (src1->u.s._11 * src2->u.s._41) + (src1->u.s._21 * src2->u.s._42) + (src1->u.s._31 * src2->u.s._43) + (src1->u.s._41 * src2->u.s._44);
+    tmp._11 = (src1->_11 * src2->_11) + (src1->_21 * src2->_12) + (src1->_31 * src2->_13) + (src1->_41 * src2->_14);
+    tmp._21 = (src1->_11 * src2->_21) + (src1->_21 * src2->_22) + (src1->_31 * src2->_23) + (src1->_41 * src2->_24);
+    tmp._31 = (src1->_11 * src2->_31) + (src1->_21 * src2->_32) + (src1->_31 * src2->_33) + (src1->_41 * src2->_34);
+    tmp._41 = (src1->_11 * src2->_41) + (src1->_21 * src2->_42) + (src1->_31 * src2->_43) + (src1->_41 * src2->_44);
 
-    temp.u.s._12 = (src1->u.s._12 * src2->u.s._11) + (src1->u.s._22 * src2->u.s._12) + (src1->u.s._32 * src2->u.s._13) + (src1->u.s._42 * src2->u.s._14);
-    temp.u.s._22 = (src1->u.s._12 * src2->u.s._21) + (src1->u.s._22 * src2->u.s._22) + (src1->u.s._32 * src2->u.s._23) + (src1->u.s._42 * src2->u.s._24);
-    temp.u.s._32 = (src1->u.s._12 * src2->u.s._31) + (src1->u.s._22 * src2->u.s._32) + (src1->u.s._32 * src2->u.s._33) + (src1->u.s._42 * src2->u.s._34);
-    temp.u.s._42 = (src1->u.s._12 * src2->u.s._41) + (src1->u.s._22 * src2->u.s._42) + (src1->u.s._32 * src2->u.s._43) + (src1->u.s._42 * src2->u.s._44);
+    tmp._12 = (src1->_12 * src2->_11) + (src1->_22 * src2->_12) + (src1->_32 * src2->_13) + (src1->_42 * src2->_14);
+    tmp._22 = (src1->_12 * src2->_21) + (src1->_22 * src2->_22) + (src1->_32 * src2->_23) + (src1->_42 * src2->_24);
+    tmp._32 = (src1->_12 * src2->_31) + (src1->_22 * src2->_32) + (src1->_32 * src2->_33) + (src1->_42 * src2->_34);
+    tmp._42 = (src1->_12 * src2->_41) + (src1->_22 * src2->_42) + (src1->_32 * src2->_43) + (src1->_42 * src2->_44);
 
-    temp.u.s._13 = (src1->u.s._13 * src2->u.s._11) + (src1->u.s._23 * src2->u.s._12) + (src1->u.s._33 * src2->u.s._13) + (src1->u.s._43 * src2->u.s._14);
-    temp.u.s._23 = (src1->u.s._13 * src2->u.s._21) + (src1->u.s._23 * src2->u.s._22) + (src1->u.s._33 * src2->u.s._23) + (src1->u.s._43 * src2->u.s._24);
-    temp.u.s._33 = (src1->u.s._13 * src2->u.s._31) + (src1->u.s._23 * src2->u.s._32) + (src1->u.s._33 * src2->u.s._33) + (src1->u.s._43 * src2->u.s._34);
-    temp.u.s._43 = (src1->u.s._13 * src2->u.s._41) + (src1->u.s._23 * src2->u.s._42) + (src1->u.s._33 * src2->u.s._43) + (src1->u.s._43 * src2->u.s._44);
+    tmp._13 = (src1->_13 * src2->_11) + (src1->_23 * src2->_12) + (src1->_33 * src2->_13) + (src1->_43 * src2->_14);
+    tmp._23 = (src1->_13 * src2->_21) + (src1->_23 * src2->_22) + (src1->_33 * src2->_23) + (src1->_43 * src2->_24);
+    tmp._33 = (src1->_13 * src2->_31) + (src1->_23 * src2->_32) + (src1->_33 * src2->_33) + (src1->_43 * src2->_34);
+    tmp._43 = (src1->_13 * src2->_41) + (src1->_23 * src2->_42) + (src1->_33 * src2->_43) + (src1->_43 * src2->_44);
 
-    temp.u.s._14 = (src1->u.s._14 * src2->u.s._11) + (src1->u.s._24 * src2->u.s._12) + (src1->u.s._34 * src2->u.s._13) + (src1->u.s._44 * src2->u.s._14);
-    temp.u.s._24 = (src1->u.s._14 * src2->u.s._21) + (src1->u.s._24 * src2->u.s._22) + (src1->u.s._34 * src2->u.s._23) + (src1->u.s._44 * src2->u.s._24);
-    temp.u.s._34 = (src1->u.s._14 * src2->u.s._31) + (src1->u.s._24 * src2->u.s._32) + (src1->u.s._34 * src2->u.s._33) + (src1->u.s._44 * src2->u.s._34);
-    temp.u.s._44 = (src1->u.s._14 * src2->u.s._41) + (src1->u.s._24 * src2->u.s._42) + (src1->u.s._34 * src2->u.s._43) + (src1->u.s._44 * src2->u.s._44);
+    tmp._14 = (src1->_14 * src2->_11) + (src1->_24 * src2->_12) + (src1->_34 * src2->_13) + (src1->_44 * src2->_14);
+    tmp._24 = (src1->_14 * src2->_21) + (src1->_24 * src2->_22) + (src1->_34 * src2->_23) + (src1->_44 * src2->_24);
+    tmp._34 = (src1->_14 * src2->_31) + (src1->_24 * src2->_32) + (src1->_34 * src2->_33) + (src1->_44 * src2->_34);
+    tmp._44 = (src1->_14 * src2->_41) + (src1->_24 * src2->_42) + (src1->_34 * src2->_43) + (src1->_44 * src2->_44);
 
-    /* And copy the new matrix in the good storage.. */
-    memcpy(dest, &temp, 16 * sizeof(float));
+    *dst = tmp;
 }
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
@@ -3973,10 +3976,10 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     {
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
 
-        if (state->transforms[WINED3D_TS_PROJECTION].u.m[0][3] == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION].u.m[1][3] == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION].u.m[2][3] == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION].u.m[3][3] == 1.0f)
+        if (state->transforms[WINED3D_TS_PROJECTION]._14 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._24 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._34 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._44 == 1.0f)
             settings->ortho_fog = 1;
     }
     else if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE)

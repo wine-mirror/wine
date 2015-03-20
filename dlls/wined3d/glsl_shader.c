@@ -782,7 +782,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         struct wined3d_matrix mat;
 
         get_modelview_matrix(context, state, &mat);
-        GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location, 1, FALSE, (GLfloat *)&mat));
+        GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location, 1, FALSE, &mat._11));
         checkGLcall("glUniformMatrix4fv");
     }
 
