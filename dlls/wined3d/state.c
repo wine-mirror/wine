@@ -4790,7 +4790,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     checkGLcall("glViewport");
 }
 
-void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
         transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));

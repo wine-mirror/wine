@@ -2814,8 +2814,6 @@ void transform_texture(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_ambient(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void viewport_vertexpart(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_clipping(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void light(struct wined3d_context *context,

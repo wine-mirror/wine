@@ -7100,6 +7100,17 @@ static void glsl_vertex_pipe_projection(struct wined3d_context *context,
     transform_projection(context, state, state_id);
 }
 
+static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
+        glsl_vertex_pipe_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE))
+            && state->render_states[WINED3D_RS_POINTSCALEENABLE])
+        state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
+    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
+}
+
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
@@ -7150,7 +7161,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_ACTIVELIGHT(6),                                       {STATE_ACTIVELIGHT(6),                                       light                  }, WINED3D_GL_EXT_NONE          },
     {STATE_ACTIVELIGHT(7),                                       {STATE_ACTIVELIGHT(7),                                       light                  }, WINED3D_GL_EXT_NONE          },
     /* Viewport */
-    {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             viewport_vertexpart    }, WINED3D_GL_EXT_NONE          },
+    {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             glsl_vertex_pipe_viewport}, WINED3D_GL_EXT_NONE        },
     /* Transform states */
     {STATE_TRANSFORM(WINED3D_TS_VIEW),                           {STATE_TRANSFORM(WINED3D_TS_VIEW),                           glsl_vertex_pipe_view  }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     glsl_vertex_pipe_projection}, WINED3D_GL_EXT_NONE      },
