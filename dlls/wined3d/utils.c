@@ -3138,6 +3138,70 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
         multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
 }
 
+void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
+        struct wined3d_matrix *mat)
+{
+    /* There are a couple of additional things we have to take into account
+     * here besides the projection transformation itself:
+     *   - We need to flip along the y-axis in case of offscreen rendering.
+     *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
+     *   - D3D coordinates refer to pixel centers while GL coordinates refer
+     *     to pixel corners.
+     *   - D3D has a top-left filling convention. We need to maintain this
+     *     even after the y-flip mentioned above.
+     * In order to handle the last two points, we translate by
+     * (63.0 / 128.0) / VPw and (63.0 / 128.0) / VPh. This is equivalent to
+     * translating slightly less than half a pixel. We want the difference to
+     * be large enough that it doesn't get lost due to rounding inside the
+     * driver, but small enough to prevent it from interfering with any
+     * anti-aliasing. */
+
+    if (context->last_was_rhw)
+    {
+        /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
+        float x = state->viewport.x;
+        float y = state->viewport.y;
+        float w = state->viewport.width;
+        float h = state->viewport.height;
+        float x_scale = 2.0f / w;
+        float x_offset = (float)((63.0 / 64.0 - (2.0 * x) - w) / w);
+        float y_scale = context->render_offscreen ? 2.0f / h : 2.0f / -h;
+        float y_offset = (float)(context->render_offscreen
+                ? (63.0 / 64.0 - (2.0 * y) - h) / h
+                : (63.0 / 64.0 - (2.0 * y) - h) / -h);
+        enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
+                state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
+        float z_scale = zenable ? 2.0f : 0.0f;
+        float z_offset = zenable ? -1.0f : 0.0f;
+        const struct wined3d_matrix projection =
+        {
+             x_scale,     0.0f,      0.0f, 0.0f,
+                0.0f,  y_scale,      0.0f, 0.0f,
+                0.0f,     0.0f,   z_scale, 0.0f,
+            x_offset, y_offset,  z_offset, 1.0f,
+        };
+
+        *mat = projection;
+    }
+    else
+    {
+        float y_scale = context->render_offscreen ? -1.0f : 1.0f;
+        float x_offset = 63.0f / 64.0f * (1.0f / state->viewport.width);
+        float y_offset = context->render_offscreen
+                ? 63.0f / 64.0f * (1.0f / state->viewport.height)
+                : -63.0f / 64.0f * (1.0f / state->viewport.height);
+        const struct wined3d_matrix projection =
+        {
+                1.0f,     0.0f,  0.0f, 0.0f,
+                0.0f,  y_scale,  0.0f, 0.0f,
+                0.0f,     0.0f,  2.0f, 0.0f,
+            x_offset, y_offset, -1.0f, 1.0f,
+        };
+
+        multiply_matrix(mat, &projection, &state->transforms[WINED3D_TS_PROJECTION]);
+    }
+}
+
 /* Setup this textures matrix according to the texture flags. */
 /* Context activation is done by the caller (state handler). */
 void set_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix, DWORD flags,

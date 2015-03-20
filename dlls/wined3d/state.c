@@ -4052,74 +4052,14 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
 void transform_projection(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_matrix projection;
 
     gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
 
-    /* There are a couple of additional things we have to take into account
-     * here besides the projection transformation itself:
-     *   - We need to flip along the y-axis in case of offscreen rendering.
-     *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
-     *   - D3D coordinates refer to pixel centers while GL coordinates refer
-     *     to pixel corners.
-     *   - D3D has a top-left filling convention. We need to maintain this
-     *     even after the y-flip mentioned above.
-     * In order to handle the last two points, we translate by
-     * (63.0 / 128.0) / VPw and (63.0 / 128.0) / VPh. This is equivalent to
-     * translating slightly less than half a pixel. We want the difference to
-     * be large enough that it doesn't get lost due to rounding inside the
-     * driver, but small enough to prevent it from interfering with any
-     * anti-aliasing. */
-
-    if (context->last_was_rhw)
-    {
-        /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
-        double x = state->viewport.x;
-        double y = state->viewport.y;
-        double w = state->viewport.width;
-        double h = state->viewport.height;
-        double x_scale = 2.0 / w;
-        double x_offset = ((63.0 / 64.0) - (2.0 * x) - w) / w;
-        double y_scale = context->render_offscreen ? 2.0 / h : 2.0 / -h;
-        double y_offset = context->render_offscreen
-                ? ((63.0 / 64.0) - (2.0 * y) - h) / h
-                : ((63.0 / 64.0) - (2.0 * y) - h) / -h;
-        enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
-                state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
-        double z_scale = zenable ? 2.0f : 0.0f;
-        double z_offset = zenable ? -1.0f : 0.0f;
-        const GLdouble projection[] =
-        {
-             x_scale,      0.0,  0.0,      0.0,
-                 0.0,  y_scale,  0.0,      0.0,
-                 0.0,      0.0,  z_scale,  0.0,
-            x_offset, y_offset,  z_offset, 1.0,
-        };
-
-        gl_info->gl_ops.gl.p_glLoadMatrixd(projection);
-        checkGLcall("glLoadMatrixd");
-    }
-    else
-    {
-        double y_scale = context->render_offscreen ? -1.0 : 1.0;
-        double x_offset = (63.0 / 64.0) / state->viewport.width;
-        double y_offset = context->render_offscreen
-                ? (63.0 / 64.0) / state->viewport.height
-                : -(63.0 / 64.0) / state->viewport.height;
-        const GLdouble projection[] =
-        {
-                 1.0,      0.0,  0.0, 0.0,
-                 0.0,  y_scale,  0.0, 0.0,
-                 0.0,      0.0,  2.0, 0.0,
-            x_offset, y_offset, -1.0, 1.0,
-        };
-
-        gl_info->gl_ops.gl.p_glLoadMatrixd(projection);
-        checkGLcall("glLoadMatrixd");
-
-        gl_info->gl_ops.gl.p_glMultMatrixf(&state->transforms[WINED3D_TS_PROJECTION]._11);
-        checkGLcall("glLoadMatrixf");
-    }
+    get_projection_matrix(context, state, &projection);
+    gl_info->gl_ops.gl.p_glLoadMatrixf(&projection._11);
+    checkGLcall("glLoadMatrixf");
 }
 
 /* This should match any arrays loaded in load_vertex_data.
