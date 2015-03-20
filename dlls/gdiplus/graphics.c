@@ -2123,7 +2123,7 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
     HFONT unscaled_font;
     TEXTMETRICW textmet;
 
-    if (font->unit == UnitPixel)
+    if (font->unit == UnitPixel || font->unit == UnitWorld)
         font_height = font->emSize;
     else
     {

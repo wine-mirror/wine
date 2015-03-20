@@ -3695,6 +3695,62 @@ todo_wine
         GdipDeleteFont(font);
     }
 
+    /* Font with units = UnitWorld */
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        GpPointF pt = {0.0, 100.0};
+        GpImage* image;
+        REAL expected_width, expected_height;
+
+        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale, &image);
+
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &pt, 1);
+        expect(Ok, status);
+
+        status = GdipCreateFont(family, pt.Y, FontStyleRegular, UnitWorld, &font);
+        expect(Ok, status);
+
+        status = GdipGetFontUnit(font, &font_unit);
+        expect(Ok, status);
+        expect(UnitWorld, font_unit);
+
+        lf.lfHeight = 0xdeadbeef;
+        status = GdipGetLogFontW(font, graphics, &lf);
+        expect(Ok, status);
+        ok(lf.lfHeight == -100, "%u: expected -100, got %d\n", i, lf.lfHeight);
+
+        set_rect_empty(&rc);
+        set_rect_empty(&bounds);
+        status = GdipMeasureString(graphics, string, -1, font, &rc, format, &bounds, &chars, &lines);
+        expect(Ok, status);
+
+        if (i == 0)
+        {
+            base_cx = bounds.Width;
+            base_cy = bounds.Height;
+        }
+
+        pt.X = 1.0;
+        pt.Y = 1.0;
+
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &pt, 1);
+        expect(Ok, status);
+
+        /* height is constant in device space, width is proportional to height in world space */
+        expected_width = base_cx * pt.Y;
+        expected_height = base_cy * pt.Y;
+
+        if (td[i].unit == UnitDisplay || td[i].unit == UnitPixel)
+            ok(fabs(expected_width - bounds.Width) <= 0.001, "%u: expected %f, got %f\n", i, expected_width, bounds.Width);
+        else
+            todo_wine ok(fabs(expected_width - bounds.Width) <= 0.001, "%u: expected %f, got %f\n", i, expected_width, bounds.Width);
+        ok(fabs(expected_height - bounds.Height) <= 0.001, "%u: expected %f, got %f\n", i, expected_height, bounds.Height);
+
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage(image);
+        GdipDeleteFont(font);
+    }
+
     GdipDeleteFontFamily(family);
     GdipDeleteStringFormat(format);
 }
