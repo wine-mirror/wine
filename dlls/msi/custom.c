@@ -1455,7 +1455,7 @@ HRESULT create_msi_custom_remote( IUnknown *pOuter, LPVOID *ppObj )
     This->IWineMsiRemoteCustomAction_iface.lpVtbl = &msi_custom_remote_vtbl;
     This->refs = 1;
 
-    *ppObj = This;
+    *ppObj = &This->IWineMsiRemoteCustomAction_iface;
 
     return S_OK;
 }

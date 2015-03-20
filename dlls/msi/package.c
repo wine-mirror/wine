@@ -2660,7 +2660,7 @@ HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
     This->package = 0;
     This->refs = 1;
 
-    *ppObj = This;
+    *ppObj = &This->IWineMsiRemotePackage_iface;
 
     return S_OK;
 }
