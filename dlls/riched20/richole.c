@@ -444,7 +444,7 @@ static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnGetWindowContext(IOleInPlaceS
                                                                     LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
     IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
-    FIXME("not implemented: (%p)->(%p %p %p %p %p\n)", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, lpFrameInfo);
+    FIXME("not implemented: (%p)->(%p %p %p %p %p)\n", This, ppFrame, ppDoc, lprcPosRect, lprcClipRect, lpFrameInfo);
     return E_NOTIMPL;
 }
 
