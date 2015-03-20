@@ -430,6 +430,15 @@ static const IID * const img_factory_iids[] = {
     NULL
 };
 
+static const IID * const selection_iids[] = {
+    &IID_IUnknown,
+    &IID_IDispatch,
+    &IID_IDispatchEx,
+    &IID_IHTMLSelectionObject,
+    &IID_IHTMLSelectionObject2,
+    NULL
+};
+
 typedef struct {
     const char *tag;
     REFIID *iids;
@@ -5151,6 +5160,7 @@ static void test_txtrange(IHTMLDocument2 *doc)
     ok(hres == S_OK, "IHTMLDocument2_get_selection failed: %08x\n", hres);
 
     test_disp((IUnknown*)selection, &IID_IHTMLSelectionObject, "[object]");
+    test_ifaces((IUnknown*)selection, selection_iids);
 
     hres = IHTMLSelectionObject_createRange(selection, &disp_range);
     ok(hres == S_OK, "IHTMLSelectionObject_createRange failed: %08x\n", hres);
