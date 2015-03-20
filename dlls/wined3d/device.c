@@ -3464,7 +3464,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
 void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
         UINT start_idx, UINT index_count, UINT start_instance, UINT instance_count)
 {
-    TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
+    TRACE("device %p, start_idx %u, index_count %u, start_instance %u, instance_count %u.\n",
+            device, start_idx, index_count, start_instance, instance_count);
 
     wined3d_cs_emit_draw(device->cs, start_idx, index_count, start_instance, instance_count, TRUE);
 }
