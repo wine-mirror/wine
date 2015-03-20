@@ -557,6 +557,35 @@ DWORD WINAPI GetThreadId(HANDLE Thread)
     return HandleToULong(tbi.ClientId.UniqueThread);
 }
 
+/**********************************************************************
+ * GetProcessIdOfThread [KERNEL32.@]
+ *
+ * Retrieve process identifier given thread belongs to.
+ *
+ * PARAMS
+ *  Thread [I] The thread identifier.
+ *
+ * RETURNS
+ *    Success: Process identifier
+ *    Failure: 0
+ */
+DWORD WINAPI GetProcessIdOfThread(HANDLE Thread)
+{
+    THREAD_BASIC_INFORMATION tbi;
+    NTSTATUS status;
+
+    TRACE("(%p)\n", Thread);
+
+    status = NtQueryInformationThread(Thread, ThreadBasicInformation, &tbi,
+                                      sizeof(tbi), NULL);
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
+
+    return HandleToULong(tbi.ClientId.UniqueProcess);
+}
 
 /***********************************************************************
  * GetCurrentThread [KERNEL32.@]  Gets pseudohandle for current thread

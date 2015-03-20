@@ -21,7 +21,7 @@
 @ stdcall GetPriorityClass(long) kernel32.GetPriorityClass
 @ stdcall GetProcessHandleCount(long ptr) kernel32.GetProcessHandleCount
 @ stdcall GetProcessId(long) kernel32.GetProcessId
-@ stub GetProcessIdOfThread
+@ stdcall GetProcessIdOfThread(long) kernel32.GetProcessIdOfThread
 @ stub GetProcessMitigationPolicy
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr) kernel32.GetProcessTimes
 @ stdcall GetProcessVersion(long) kernel32.GetProcessVersion

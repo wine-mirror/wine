@@ -780,7 +780,7 @@
 @ stdcall -norelay GetProcessHeap()
 @ stdcall GetProcessHeaps(long ptr)
 @ stdcall GetProcessId(long)
-# @ stub GetProcessIdOfThread
+@ stdcall GetProcessIdOfThread(long)
 @ stdcall GetProcessIoCounters(long ptr)
 # @ stub GetProcessPreferredUILanguages
 @ stdcall GetProcessPriorityBoost(long ptr)
