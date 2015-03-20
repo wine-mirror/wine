@@ -3278,12 +3278,10 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
 
 void transform_texture(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD texUnit = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    DWORD mapped_stage = context->tex_unit_map[texUnit];
-    BOOL generated;
-    int coordIdx;
+    unsigned int tex = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    unsigned int mapped_stage = context->tex_unit_map[tex];
+    struct wined3d_matrix mat;
 
     /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
     if (use_vs(state) || isStateDirty(context, STATE_VDECL))
@@ -3296,31 +3294,13 @@ void transform_texture(struct wined3d_context *context, const struct wined3d_sta
     if (mapped_stage >= gl_info->limits.textures) return;
 
     context_active_texture(context, gl_info, mapped_stage);
-    generated = (state->texture_states[texUnit][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000) != WINED3DTSS_TCI_PASSTHRU;
-    coordIdx = min(state->texture_states[texUnit][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff], MAX_TEXTURES - 1);
+    gl_info->gl_ops.gl.p_glMatrixMode(GL_TEXTURE);
+    checkGLcall("glMatrixMode(GL_TEXTURE)");
 
-    set_texture_matrix(gl_info, &state->transforms[WINED3D_TS_TEXTURE0 + texUnit],
-            state->texture_states[texUnit][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, context->last_was_rhw,
-            context->stream_info.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
-            ? context->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
-            : WINED3DFMT_UNKNOWN,
-            device->shader_backend->shader_has_ffp_proj_control(device->shader_priv));
+    get_texture_matrix(context, state, mapped_stage, &mat);
 
-    /* The sampler applying function calls us if this changes */
-    if ((context->lastWasPow2Texture & (1 << texUnit)) && state->textures[texUnit])
-    {
-        if(generated) {
-            FIXME("Non-power2 texture being used with generated texture coords\n");
-        }
-        /* NP2 texcoord fixup is implemented for pixelshaders so only enable the
-           fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
-        if (!use_ps(state))
-        {
-            TRACE("Non power two matrix multiply fixup\n");
-            gl_info->gl_ops.gl.p_glMultMatrixf(state->textures[texUnit]->pow2_matrix);
-        }
-    }
+    gl_info->gl_ops.gl.p_glLoadMatrixf(&mat._11);
+    checkGLcall("glLoadMatrixf");
 }
 
 static void unload_tex_coords(const struct wined3d_gl_info *gl_info)

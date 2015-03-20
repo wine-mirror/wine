@@ -3203,19 +3203,15 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
 }
 
 /* Setup this textures matrix according to the texture flags. */
-/* Context activation is done by the caller (state handler). */
-void set_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix, DWORD flags,
-        BOOL calculated_coords, BOOL transformed, enum wined3d_format_id format_id, BOOL ffp_proj_control)
+static void compute_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix,
+        DWORD flags, BOOL calculated_coords, BOOL transformed, enum wined3d_format_id format_id,
+        BOOL ffp_proj_control, struct wined3d_matrix *out_matrix)
 {
     struct wined3d_matrix mat;
 
-    gl_info->gl_ops.gl.p_glMatrixMode(GL_TEXTURE);
-    checkGLcall("glMatrixMode(GL_TEXTURE)");
-
     if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1 || transformed)
     {
-        gl_info->gl_ops.gl.p_glLoadIdentity();
-        checkGLcall("glLoadIdentity()");
+        get_identity_matrix(out_matrix);
         return;
     }
 
@@ -3314,8 +3310,39 @@ void set_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wine
         }
     }
 
-    gl_info->gl_ops.gl.p_glLoadMatrixf(&mat._11);
-    checkGLcall("glLoadMatrixf(mat)");
+    *out_matrix = mat;
+}
+
+void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
+        unsigned int tex, struct wined3d_matrix *mat)
+{
+    const struct wined3d_device *device = context->swapchain->device;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
+            != WINED3DTSS_TCI_PASSTHRU;
+    unsigned int coord_idx = min(state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX & 0x0000ffff],
+            MAX_TEXTURES - 1);
+
+    compute_texture_matrix(gl_info, &state->transforms[WINED3D_TS_TEXTURE0 + tex],
+            state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
+            generated, context->last_was_rhw,
+            context->stream_info.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coord_idx))
+            ? context->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->id
+            : WINED3DFMT_UNKNOWN,
+            device->shader_backend->shader_has_ffp_proj_control(device->shader_priv), mat);
+
+    if ((context->lastWasPow2Texture & (1 << tex)) && state->textures[tex])
+    {
+        if (generated)
+            FIXME("Non-power-of-two texture being used with generated texture coords.\n");
+        /* NP2 texcoord fixup is implemented for pixelshaders so only enable the
+         * fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
+        if (!use_ps(state))
+        {
+            TRACE("Non-power-of-two texture matrix multiply fixup.\n");
+            multiply_matrix(mat, mat, (struct wined3d_matrix *)state->textures[tex]->pow2_matrix);
+        }
+    }
 }
 
 /* This small helper function is used to convert a bitmask into the number of masked bits */

@@ -2782,9 +2782,6 @@ BOOL is_invalid_op(const struct wined3d_state *state, int stage,
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         BOOL is_alpha, int stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3,
         INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
-void set_texture_matrix(const struct wined3d_gl_info *gl_info, const struct wined3d_matrix *matrix,
-        DWORD flags, BOOL calculated_coords, BOOL transformed, enum wined3d_format_id format_id,
-        BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
 void texture_activate_dimensions(const struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void sampler_texdim(struct wined3d_context *context,
@@ -3039,6 +3036,8 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
         struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
+void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
+        unsigned int tex, struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
 
 /* Using additional shader constants (uniforms in GLSL / program environment
  * or local parameters in ARB) is costly:
