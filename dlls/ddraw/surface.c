@@ -81,6 +81,8 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
         ERR("Failed to get surface DC, hr %#x.\n", hr);
         return hr;
     }
+    if (surface->palette)
+        wined3d_palette_apply_to_dc(surface->palette->wineD3DPalette, surface_dc);
 
     if (!(screen_dc = GetDC(NULL)))
     {
