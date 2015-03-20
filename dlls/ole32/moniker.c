@@ -1298,17 +1298,12 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(IEnumMoniker* iface,REFIID 
 
     *ppvObject = NULL;
 
-    if (IsEqualIID(&IID_IUnknown, riid))
-        *ppvObject = This;
+    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IEnumMoniker, riid))
+        *ppvObject = &This->IEnumMoniker_iface;
     else
-        if (IsEqualIID(&IID_IEnumMoniker, riid))
-            *ppvObject = This;
-
-    if ((*ppvObject)==NULL)
         return E_NOINTERFACE;
 
     IEnumMoniker_AddRef(iface);
-
     return S_OK;
 }
 
