@@ -26,7 +26,6 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "wine/debug.h"
 #include "undocshell.h"

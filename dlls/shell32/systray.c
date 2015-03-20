@@ -21,7 +21,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 

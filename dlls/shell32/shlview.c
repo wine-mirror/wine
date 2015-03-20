@@ -45,7 +45,6 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "windef.h"
 #include "winerror.h"

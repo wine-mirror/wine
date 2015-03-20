@@ -23,7 +23,6 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "winerror.h"
 #include "wine/debug.h"
