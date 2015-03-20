@@ -136,30 +136,30 @@ typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char *
 
 typedef void (*MonoProfileFunc)(MonoProfiler *prof);
 
-extern BOOL is_mono_started;
+extern BOOL is_mono_started DECLSPEC_HIDDEN;
 
-extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
-extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status);
-extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
-extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
-extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
-extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
-extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
-extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
-extern MonoDomain* (CDECL *mono_jit_init)(const char *file);
-extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
-extern void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type);
-extern MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
-extern MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
-extern void* (CDECL *mono_object_unbox)(MonoObject *obj);
-extern MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
-extern MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
-extern void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
-extern void (CDECL *mono_runtime_quit)(void);
-extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
-extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
-extern void (CDECL *mono_thread_manage)(void);
-extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
+extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
+extern MonoAssembly* (CDECL *mono_assembly_load_from)(MonoImage *image, const char *fname, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
+extern MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status) DECLSPEC_HIDDEN;
+extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HIDDEN;
+extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name) DECLSPEC_HIDDEN;
+extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count) DECLSPEC_HIDDEN;
+extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name) DECLSPEC_HIDDEN;
+extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]) DECLSPEC_HIDDEN;
+extern MonoDomain* (CDECL *mono_jit_init)(const char *file) DECLSPEC_HIDDEN;
+extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status) DECLSPEC_HIDDEN;
+extern void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type) DECLSPEC_HIDDEN;
+extern MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj) DECLSPEC_HIDDEN;
+extern MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass) DECLSPEC_HIDDEN;
+extern void* (CDECL *mono_object_unbox)(MonoObject *obj) DECLSPEC_HIDDEN;
+extern MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image) DECLSPEC_HIDDEN;
+extern MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_runtime_object_init)(MonoObject *this_obj) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_runtime_quit)(void) DECLSPEC_HIDDEN;
+extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str) DECLSPEC_HIDDEN;
+extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_thread_manage)(void) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
 
 /* loaded runtime interfaces */
 extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;
@@ -185,7 +185,7 @@ extern HRESULT create_monodata(REFIID riid, LPVOID *ppObj) DECLSPEC_HIDDEN;
 
 extern HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int path_length) DECLSPEC_HIDDEN;
 
-extern void runtimehost_init(void);
-extern void runtimehost_uninit(void);
+extern void runtimehost_init(void) DECLSPEC_HIDDEN;
+extern void runtimehost_uninit(void) DECLSPEC_HIDDEN;
 
 #endif   /* __MSCOREE_PRIVATE__ */
