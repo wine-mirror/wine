@@ -6189,7 +6189,7 @@ static void test_texturemapblend(void)
 
     memcpy(exec_desc.lpData, test2_quads, sizeof(test2_quads));
 
-    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test1_quads);
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(test2_quads);
     emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
     emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
@@ -6202,7 +6202,7 @@ static void test_texturemapblend(void)
     inst_length -= sizeof(test2_quads);
     hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
     ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
-    set_execute_data(execute_buffer, 8, sizeof(test1_quads), inst_length);
+    set_execute_data(execute_buffer, 8, sizeof(test2_quads), inst_length);
 
     hr = IDirect3DDevice_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
