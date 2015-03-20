@@ -3425,13 +3425,13 @@ static GpStatus initialize_decoder_wic(IStream *stream, REFGUID container, IWICB
     TRACE("%p,%s\n", stream, wine_dbgstr_guid(container));
 
     hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
-    if (FAILED(hr)) hresult_to_status(hr);
+    if (FAILED(hr)) return hresult_to_status(hr);
     hr = IWICImagingFactory_CreateDecoder(factory, container, NULL, decoder);
     IWICImagingFactory_Release(factory);
-    if (FAILED(hr)) hresult_to_status(hr);
+    if (FAILED(hr)) return hresult_to_status(hr);
 
     hr = IWICBitmapDecoder_Initialize(*decoder, stream, WICDecodeMetadataCacheOnLoad);
-    if (FAILED(hr)) hresult_to_status(hr);
+    if (FAILED(hr)) return hresult_to_status(hr);
     return Ok;
 }
 
