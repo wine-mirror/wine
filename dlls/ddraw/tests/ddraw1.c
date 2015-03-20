@@ -6211,14 +6211,24 @@ static void test_texturemapblend(void)
     hr = IDirect3DDevice_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+    /* WARP (Win8 testbot) emulates color keying with the alpha channel like Wine does,
+     * but even applies it when there's no color key assigned. The surface alpha is zero
+     * here, so nothing gets drawn.
+     *
+     * The ddraw2 version of this test draws these quads with color keying off due to
+     * different defaults in ddraw1 and ddraw2. */
     color = get_surface_color(rt, 5, 5);
-    ok(compare_color(color, 0x00ff0040, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0040, 2) || broken(compare_color(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 5);
-    ok(compare_color(color, 0x00ff0080, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0080, 2) || broken(compare_color(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 5, 245);
-    ok(compare_color(color, 0x00800080, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00800080, 2) || broken(compare_color(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 245);
-    ok(compare_color(color, 0x008000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x008000ff, 2) || broken(compare_color(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     IDirect3DTexture_Release(texture);
     ref = IDirectDrawSurface_Release(surface);
