@@ -9494,6 +9494,24 @@ interface IHTMLSelectionObject : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLSelectionObject2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f7ec-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLSelectionObject2 : IDispatch
+{
+    [id(DISPID_IHTMLSELECTIONOBJECT2_CREATERANGECOLLECTION)]
+    HRESULT createRangeCollection([out, retval] IDispatch **rangeCollection);
+
+    [propget, id(DISPID_IHTMLSELECTIONOBJECT2_TYPEDETAIL)]
+    HRESULT typeDetail([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
  *    IHTMLSelection interface
  */
 [
