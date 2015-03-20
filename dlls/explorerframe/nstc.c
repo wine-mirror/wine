@@ -818,7 +818,7 @@ static HRESULT WINAPI NSTC2_fnQueryInterface(INameSpaceTreeControl2* iface,
        IsEqualIID(riid, &IID_INameSpaceTreeControl) ||
        IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppvObject = This;
+        *ppvObject = &This->INameSpaceTreeControl2_iface;
     }
     else if(IsEqualIID(riid, &IID_IOleWindow))
     {
