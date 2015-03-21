@@ -28,6 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 typedef struct {
     IAccessible IAccessible_iface;
     IOleWindow IOleWindow_iface;
+    IEnumVARIANT IEnumVARIANT_iface;
 
     LONG ref;
 
@@ -51,6 +52,8 @@ static HRESULT WINAPI Client_QueryInterface(IAccessible *iface, REFIID riid, voi
         *ppv = iface;
     }else if(IsEqualIID(riid, &IID_IOleWindow)) {
         *ppv = &This->IOleWindow_iface;
+    }else if(IsEqualIID(riid, &IID_IEnumVARIANT)) {
+        *ppv = &This->IEnumVARIANT_iface;
     }else {
         WARN("no interface: %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -496,6 +499,68 @@ static const IOleWindowVtbl ClientOleWindowVtbl = {
     Client_OleWindow_ContextSensitiveHelp
 };
 
+static inline Client* impl_from_Client_EnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, Client, IEnumVARIANT_iface);
+}
+
+static HRESULT WINAPI Client_EnumVARIANT_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+}
+
+static ULONG WINAPI Client_EnumVARIANT_AddRef(IEnumVARIANT *iface)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Client_EnumVARIANT_Release(IEnumVARIANT *iface)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Client_EnumVARIANT_Next(IEnumVARIANT *iface,
+        ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    FIXME("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Client_EnumVARIANT_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    FIXME("(%p)->(%u)\n", This, celt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Client_EnumVARIANT_Reset(IEnumVARIANT *iface)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Client_EnumVARIANT_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
+{
+    Client *This = impl_from_Client_EnumVARIANT(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl ClientEnumVARIANTVtbl = {
+    Client_EnumVARIANT_QueryInterface,
+    Client_EnumVARIANT_AddRef,
+    Client_EnumVARIANT_Release,
+    Client_EnumVARIANT_Next,
+    Client_EnumVARIANT_Skip,
+    Client_EnumVARIANT_Reset,
+    Client_EnumVARIANT_Clone
+};
+
 HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
 {
     Client *client;
@@ -510,6 +575,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
 
     client->IAccessible_iface.lpVtbl = &ClientVtbl;
     client->IOleWindow_iface.lpVtbl = &ClientOleWindowVtbl;
+    client->IEnumVARIANT_iface.lpVtbl = &ClientEnumVARIANTVtbl;
     client->ref = 1;
     client->hwnd = hwnd;
 
