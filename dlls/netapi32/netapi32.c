@@ -1042,7 +1042,8 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
             GetComputerNameW(computerName, &computerNameLen);
             computerNameLen++; /* include NULL terminator */
 
-            size = sizeof(SERVER_INFO_101) + computerNameLen * sizeof(WCHAR);
+            /* Plus 1 for empty comment */
+            size = sizeof(SERVER_INFO_101) + (computerNameLen + 1) * sizeof(WCHAR);
             ret = NetApiBufferAllocate(size, (LPVOID *)bufptr);
             if (ret == NERR_Success)
             {
@@ -1060,7 +1061,9 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
                 info->sv101_version_minor = verInfo.dwMinorVersion;
                  /* Use generic type as no wine equivalent of DC / Server */
                 info->sv101_type = SV_TYPE_NT;
-                info->sv101_comment = NULL;
+                info->sv101_comment = (LMSTR)(*bufptr + sizeof(SERVER_INFO_101)
+                                              + computerNameLen * sizeof(WCHAR));
+                info->sv101_comment[0] = '\0';
             }
             break;
         }
