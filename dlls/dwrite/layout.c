@@ -1705,8 +1705,16 @@ static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout2 *iface,
 static HRESULT WINAPI dwritetextlayout_GetMetrics(IDWriteTextLayout2 *iface, DWRITE_TEXT_METRICS *metrics)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
-    return E_NOTIMPL;
+    DWRITE_TEXT_METRICS1 metrics1;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, metrics);
+
+    hr = IDWriteTextLayout2_GetMetrics(iface, &metrics1);
+    if (hr == S_OK)
+        memcpy(metrics, &metrics1, sizeof(*metrics));
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout2 *iface, DWRITE_OVERHANG_METRICS *overhangs)
