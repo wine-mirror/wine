@@ -348,6 +348,8 @@ static void run_localgroupgetinfo_tests(void)
 
     for(i=0;i<entries_read;i++)
         trace("domain and name: %s\n", wine_dbgstr_w(buffer[i].lgrmi3_domainandname));
+
+    pNetApiBufferFree(buffer);
 }
 
 START_TEST(access)
