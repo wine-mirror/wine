@@ -421,6 +421,19 @@ static void test_default_client_accessible_object(void)
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
+    disp = (void*)0xdeadbeef;
+    hr = IAccessible_get_accChild(acc, vid, &disp);
+    ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
+    ok(disp == NULL, "disp = %p\n", disp);
+
+    V_I4(&vid) = 1;
+    disp = (void*)0xdeadbeef;
+    hr = IAccessible_get_accChild(acc, vid, &disp);
+    ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
+    ok(disp == NULL, "disp = %p\n", disp);
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
     ok(hr == S_OK, "got %x\n", hr);
     ok(!lstrcmpW(str, testW), "name = %s\n", wine_dbgstr_w(str));

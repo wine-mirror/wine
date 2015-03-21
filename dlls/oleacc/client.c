@@ -144,8 +144,11 @@ static HRESULT WINAPI Client_get_accChild(IAccessible *iface,
         VARIANT varChildID, IDispatch **ppdispChild)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&varChildID), ppdispChild);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varChildID), ppdispChild);
+
+    *ppdispChild = NULL;
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI Client_get_accName(IAccessible *iface, VARIANT varID, BSTR *pszName)
