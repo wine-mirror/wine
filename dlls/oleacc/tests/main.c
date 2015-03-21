@@ -384,6 +384,7 @@ static void test_default_client_accessible_object(void)
     IAccessible *acc;
     IDispatch *disp;
     IOleWindow *ow;
+    IEnumVARIANT *ev;
     HWND chld, hwnd, hwnd2;
     HRESULT hr;
     VARIANT vid, v;
@@ -391,6 +392,7 @@ static void test_default_client_accessible_object(void)
     POINT pt;
     RECT rect;
     LONG l, left, top, width, height;
+    ULONG fetched;
 
     hwnd = CreateWindowA("oleacc_test", "test &t &junk", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
@@ -431,6 +433,31 @@ static void test_default_client_accessible_object(void)
     hr = IAccessible_get_accChild(acc, vid, &disp);
     ok(hr == E_INVALIDARG, "get_accChild returned %x\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
+
+    hr = IAccessible_QueryInterface(acc, &IID_IEnumVARIANT, (void**)&ev);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    hr = IEnumVARIANT_Skip(ev, 100);
+    ok(hr == S_FALSE, "Skip returned %x\n", hr);
+
+    V_VT(&v) = VT_I4;
+    fetched = 1;
+    hr = IEnumVARIANT_Next(ev, 1, &v, &fetched);
+    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(fetched == 0, "fetched = %d\n", fetched);
+
+    hr = IEnumVARIANT_Reset(ev);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    V_VT(&v) = VT_I4;
+    fetched = 2;
+    hr = IEnumVARIANT_Next(ev, 1, &v, &fetched);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
+    IDispatch_Release(V_DISPATCH(&v));
+    ok(fetched == 1, "fetched = %d\n", fetched);
+    IEnumVARIANT_Release(ev);
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
