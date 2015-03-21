@@ -568,3 +568,50 @@ UINT WINAPI GetStateTextA(DWORD state_bit, CHAR *state_str, UINT state_str_len)
         return LoadStringA(oleacc_handle, state_id, tmp, sizeof(tmp));
     }
 }
+
+HRESULT WINAPI AccessibleChildren(IAccessible *container,
+        LONG start, LONG count, VARIANT *children, LONG *children_cnt)
+{
+    IEnumVARIANT *ev;
+    LONG i, child_no;
+    HRESULT hr;
+
+    TRACE("%p %d %d %p %p\n", container, start, count, children, children_cnt);
+
+    if(!container || !children || !children_cnt)
+        return E_INVALIDARG;
+
+    for(i=0; i<count; i++)
+        VariantInit(children+i);
+
+    hr = IAccessible_QueryInterface(container, &IID_IEnumVARIANT, (void**)&ev);
+    if(SUCCEEDED(hr)) {
+        hr = IEnumVARIANT_Reset(ev);
+        if(SUCCEEDED(hr))
+            hr = IEnumVARIANT_Skip(ev, start);
+        if(SUCCEEDED(hr))
+            hr = IEnumVARIANT_Next(ev, count, children, (ULONG*)children_cnt);
+        IEnumVARIANT_Release(ev);
+        return hr;
+    }
+
+    hr = IAccessible_get_accChildCount(container, &child_no);
+    if(FAILED(hr))
+        return hr;
+
+    for(i=0; i<count && start+i+1<=child_no; i++) {
+        IDispatch *disp;
+
+        V_VT(children+i) = VT_I4;
+        V_I4(children+i) = start+i+1;
+
+        hr = IAccessible_get_accChild(container, children[i], &disp);
+        if(SUCCEEDED(hr) && disp) {
+            V_VT(children+i) = VT_DISPATCH;
+            V_DISPATCH(children+i) = disp;
+        }
+    }
+
+    *children_cnt = i;
+    return i==count ? S_OK : S_FALSE;
+}
