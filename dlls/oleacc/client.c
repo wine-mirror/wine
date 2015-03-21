@@ -33,6 +33,7 @@ typedef struct {
     LONG ref;
 
     HWND hwnd;
+    HWND enum_pos;
 } Client;
 
 static inline Client* impl_from_Client(IAccessible *iface)
@@ -526,22 +527,82 @@ static HRESULT WINAPI Client_EnumVARIANT_Next(IEnumVARIANT *iface,
         ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
 {
     Client *This = impl_from_Client_EnumVARIANT(iface);
-    FIXME("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
-    return E_NOTIMPL;
+    HWND cur = This->enum_pos, next;
+    ULONG fetched = 0;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+
+    if(!celt) {
+        if(pCeltFetched)
+            *pCeltFetched = 0;
+        return S_OK;
+    }
+
+    if(!This->enum_pos)
+        next = GetWindow(This->hwnd, GW_CHILD);
+    else
+        next = GetWindow(This->enum_pos, GW_HWNDNEXT);
+
+    while(next) {
+        cur = next;
+
+        V_VT(rgVar+fetched) = VT_DISPATCH;
+        hr = AccessibleObjectFromWindow(cur, OBJID_WINDOW,
+                &IID_IDispatch, (void**)&V_DISPATCH(rgVar+fetched));
+        if(FAILED(hr)) {
+            V_VT(rgVar+fetched) = VT_EMPTY;
+            while(fetched > 0) {
+                VariantClear(rgVar+fetched-1);
+                fetched--;
+            }
+            if(pCeltFetched)
+                *pCeltFetched = 0;
+            return hr;
+        }
+        fetched++;
+        if(fetched == celt)
+            break;
+
+        next = GetWindow(cur, GW_HWNDNEXT);
+    }
+
+    This->enum_pos = cur;
+    if(pCeltFetched)
+        *pCeltFetched = fetched;
+    return celt == fetched ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI Client_EnumVARIANT_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     Client *This = impl_from_Client_EnumVARIANT(iface);
-    FIXME("(%p)->(%u)\n", This, celt);
-    return E_NOTIMPL;
+    HWND next;
+
+    TRACE("(%p)->(%u)\n", This, celt);
+
+    while(celt) {
+        if(!This->enum_pos)
+            next = GetWindow(This->hwnd, GW_CHILD);
+        else
+            next = GetWindow(This->enum_pos, GW_HWNDNEXT);
+        if(!next)
+            return S_FALSE;
+
+        This->enum_pos = next;
+        celt--;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_EnumVARIANT_Reset(IEnumVARIANT *iface)
 {
     Client *This = impl_from_Client_EnumVARIANT(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->enum_pos = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_EnumVARIANT_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
@@ -578,6 +639,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     client->IEnumVARIANT_iface.lpVtbl = &ClientEnumVARIANTVtbl;
     client->ref = 1;
     client->hwnd = hwnd;
+    client->enum_pos = 0;
 
     hres = IAccessible_QueryInterface(&client->IAccessible_iface, iid, obj);
     IAccessible_Release(&client->IAccessible_iface);
