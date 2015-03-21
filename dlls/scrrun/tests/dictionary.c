@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Alistair Leslie-Hughes
+ * Copyright 2015 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -160,6 +161,11 @@ static DWORD get_num_hash(FLOAT num)
     return (*((DWORD*)&num)) % 1201;
 }
 
+static DWORD get_ptr_hash(void *ptr)
+{
+    return PtrToUlong(ptr) % 1201;
+}
+
 typedef union
 {
     struct
@@ -183,6 +189,110 @@ typedef union
     double d;
 } R8_FIELDS;
 
+static HRESULT WINAPI test_unk_QI(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected %s\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI test_unk_no_QI(IUnknown *iface, REFIID riid, void **obj)
+{
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_unk_AddRef(IUnknown *iface)
+{
+    ok(0, "unxpected\n");
+    return 2;
+}
+
+static ULONG WINAPI test_unk_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl test_unk_vtbl = {
+    test_unk_QI,
+    test_unk_AddRef,
+    test_unk_Release
+};
+
+static const IUnknownVtbl test_unk_no_vtbl = {
+    test_unk_no_QI,
+    test_unk_AddRef,
+    test_unk_Release
+};
+
+static HRESULT WINAPI test_disp_QI(IDispatch *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDispatch) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected %s\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_disp_AddRef(IDispatch *iface)
+{
+    ok(0, "unxpected\n");
+    return 2;
+}
+
+static ULONG WINAPI test_disp_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_disp_GetTypeInfoCount(IDispatch *iface, UINT *count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_disp_GetTypeInfo(IDispatch *iface, UINT index, LCID lcid, ITypeInfo **ti)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_disp_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names,
+    UINT name_count, LCID lcid, DISPID *dispid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_disp_Invoke(IDispatch *iface, DISPID dispid, REFIID riid,
+    LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *arg_err)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl test_disp_vtbl = {
+    test_disp_QI,
+    test_disp_AddRef,
+    test_disp_Release,
+    test_disp_GetTypeInfoCount,
+    test_disp_GetTypeInfo,
+    test_disp_GetIDsOfNames,
+    test_disp_Invoke
+};
+
+static IUnknown test_unk = { &test_unk_vtbl };
+static IUnknown test_unk2 = { &test_unk_no_vtbl };
+static IDispatch test_disp = { &test_disp_vtbl };
+
 static void test_hash_value(void)
 {
     /* string test data */
@@ -205,6 +315,9 @@ static void test_hash_value(void)
 
     IDictionary *dict;
     VARIANT key, hash;
+    IDispatch *disp;
+    DWORD expected;
+    IUnknown *unk;
     R8_FIELDS fx8;
     R4_FIELDS fx4;
     HRESULT hr;
@@ -223,7 +336,7 @@ static void test_hash_value(void)
     ok(V_I4(&hash) == 0, "got %d\n", V_I4(&hash));
 
     for (i = 0; i < sizeof(str_hash_tests)/sizeof(str_hash_tests[0]); i++) {
-        DWORD expected = get_str_hash(str_hash_tests[i], BinaryCompare);
+        expected = get_str_hash(str_hash_tests[i], BinaryCompare);
 
         hr = IDictionary_put_CompareMode(dict, BinaryCompare);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -316,7 +429,7 @@ static void test_hash_value(void)
     ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
 
     for (i = 0; i < sizeof(int_hash_tests)/sizeof(int_hash_tests[0]); i++) {
-        DWORD expected = get_num_hash(int_hash_tests[i]);
+        expected = get_num_hash(int_hash_tests[i]);
 
         V_VT(&key) = VT_I2;
         V_I2(&key) = int_hash_tests[i];
@@ -401,7 +514,7 @@ static void test_hash_value(void)
     ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
 
     for (i = 0; i < sizeof(float_hash_tests)/sizeof(float_hash_tests[0]); i++) {
-        DWORD expected = get_num_hash(float_hash_tests[i]);
+        expected = get_num_hash(float_hash_tests[i]);
 
         V_VT(&key) = VT_R4;
         V_R4(&key) = float_hash_tests[i];
@@ -421,6 +534,101 @@ static void test_hash_value(void)
         ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
             expected);
     }
+
+    /* interface pointers as keys */
+    V_VT(&key) = VT_UNKNOWN;
+    V_UNKNOWN(&key) = 0;
+    VariantInit(&hash);
+    V_I4(&hash) = 1;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got hash 0x%08x, expected 0\n", V_I4(&hash));
+
+    /* QI doesn't work */
+    V_VT(&key) = VT_UNKNOWN;
+    V_UNKNOWN(&key) = &test_unk2;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_unk2);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    V_VT(&key) = VT_UNKNOWN;
+    V_UNKNOWN(&key) = &test_unk;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_unk);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    /* interface without IDispatch support */
+    V_VT(&key) = VT_DISPATCH;
+    V_DISPATCH(&key) = (IDispatch*)&test_unk;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_unk);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    V_VT(&key) = VT_DISPATCH;
+    V_DISPATCH(&key) = &test_disp;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_disp);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    /* same with BYREF */
+if (0) { /* crashes on native */
+    V_VT(&key) = VT_UNKNOWN|VT_BYREF;
+    V_UNKNOWNREF(&key) = 0;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+}
+    unk = NULL;
+    V_VT(&key) = VT_UNKNOWN|VT_BYREF;
+    V_UNKNOWNREF(&key) = &unk;
+    VariantInit(&hash);
+    V_I4(&hash) = 1;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got hash 0x%08x, expected 0\n", V_I4(&hash));
+
+    V_VT(&key) = VT_UNKNOWN|VT_BYREF;
+    unk = &test_unk;
+    V_UNKNOWNREF(&key) = &unk;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_unk);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    /* interface without IDispatch support */
+    V_VT(&key) = VT_DISPATCH|VT_BYREF;
+    unk = &test_unk;
+    V_DISPATCHREF(&key) = (IDispatch**)&unk;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_unk);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
+
+    V_VT(&key) = VT_DISPATCH|VT_BYREF;
+    disp = &test_disp;
+    V_DISPATCHREF(&key) = &disp;
+    VariantInit(&hash);
+    expected = get_ptr_hash(&test_disp);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == expected, "got hash 0x%08x, expected 0x%08x\n", V_I4(&hash), expected);
 
     IDictionary_Release(dict);
 }

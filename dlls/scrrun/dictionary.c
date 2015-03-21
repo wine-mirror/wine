@@ -37,7 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
-#define BUCKET_COUNT 509
+#define BUCKET_COUNT  509
+#define DICT_HASH_MOD 1201
 
 /* Implementation details
 
@@ -752,12 +753,17 @@ static DWORD get_str_hash(const WCHAR *str, CompareMethod method)
         }
     }
 
-    return hash % 1201;
+    return hash % DICT_HASH_MOD;
 }
 
 static DWORD get_num_hash(FLOAT num)
 {
-    return (*((DWORD*)&num)) % 1201;
+    return (*((DWORD*)&num)) % DICT_HASH_MOD;
+}
+
+static DWORD get_ptr_hash(void *ptr)
+{
+    return PtrToUlong(ptr) % DICT_HASH_MOD;
 }
 
 static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, VARIANT *hash)
@@ -782,6 +788,28 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_I4:
         V_I4(hash) = get_num_hash(V_I4(key));
         break;
+    case VT_UNKNOWN|VT_BYREF:
+    case VT_DISPATCH|VT_BYREF:
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+    {
+        IUnknown *src = (V_VT(key) & VT_BYREF) ? *V_UNKNOWNREF(key) : V_UNKNOWN(key);
+        IUnknown *unk = NULL;
+
+        if (!src) {
+            V_I4(hash) = 0;
+            return S_OK;
+        }
+
+        IUnknown_QueryInterface(src, &IID_IUnknown, (void**)&unk);
+        if (!unk) {
+            V_I4(hash) = ~0u;
+            return CTL_E_ILLEGALFUNCTIONCALL;
+        }
+        V_I4(hash) = get_ptr_hash(unk);
+        IUnknown_Release(unk);
+        break;
+    }
     case VT_R4:
     case VT_R8:
     {
