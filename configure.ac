@@ -165,6 +165,7 @@ case $host in
                           [AC_MSG_RESULT([no])
                            AC_MSG_ERROR([You need gcc >= 4.4 to build Wine as 64-bit.])])
       fi
+      host_cpu="x86_64"
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;

@@ -4924,6 +4924,7 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
       fi
+      host_cpu="x86_64"
       TARGETFLAGS="-m64"
 
     fi
