@@ -4864,7 +4864,7 @@ case $host in
     fi
     with_fontconfig=${with_fontconfig:-no}
     ;;
-  x86_64*)
+  x86_64*|amd64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
     then
       CC="$CC -m32"
