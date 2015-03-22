@@ -112,7 +112,6 @@ static inline D3DVALUE AngleBetweenVectorsRad (const D3DVECTOR *a, const D3DVECT
 
 	cos = product/(la*lb);
 	angle = acos(cos);
-	if (cos < 0.0f) { angle -= M_PI; }
 	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians (%f degrees)\n",  a->x, a->y, a->z, b->x,
 	      b->y, b->z, angle, RadToDeg(angle));
 	return angle;	
@@ -264,16 +263,20 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	else
 	{
 		vLeft = VectorProduct(&dsb->device->ds3dl.vOrientFront, &dsb->device->ds3dl.vOrientTop);
-		flAngle = AngleBetweenVectorsRad(&dsb->device->ds3dl.vOrientFront, &vDistance);
-		flAngle2 = AngleBetweenVectorsRad(&vLeft, &vDistance);
-
-		/* AngleBetweenVectorsRad performs a dot product, which gives us the cosine of the angle
-		 * between two vectors. Unfortunately, because cos(theta) = cos(-theta), we've no idea from
-		 * this whether the sound is to our left or to our right. We have to perform another dot
-		 * product, with a vector at right angles to the initial one, to get the correct angle.
-		 * The angle should be between -180 degrees and 180 degrees. */
-		if (flAngle < 0.0f) { flAngle += M_PI; }
-		if (flAngle2 > 0.0f) { flAngle = -flAngle; }
+		/* To calculate angle to sound source we need to:
+		 * 1) Get angle between vDistance and a plane on which angle to sound source should be 0.
+		 *    Such a plane is given by vectors vOrientFront and vOrientTop, and angle between vector
+		 *    and a plane equals to M_PI_2 - angle between vector and normal to this plane (vLeft in this case).
+		 * 2) Determine if the source is behind or in front of us by calculating angle between vDistance
+		 *    and vOrientFront.
+		 */
+		flAngle = AngleBetweenVectorsRad(&vLeft, &vDistance);
+		flAngle2 = AngleBetweenVectorsRad(&dsb->device->ds3dl.vOrientFront, &vDistance);
+		if (flAngle2 > M_PI_2)
+			flAngle = -flAngle;
+		flAngle -= M_PI_2;
+		if (flAngle < -M_PI)
+			flAngle += 2*M_PI;
 	}
 	TRACE("panning: Angle = %f rad, lPan = %d\n", flAngle, dsb->volpan.lPan);
 
