@@ -4554,6 +4554,12 @@ static void test_get_set_view(void)
     style = GetWindowLongPtrA(hwnd, GWL_STYLE);
     ok(style & LVS_LIST, "Expected style to be preserved\n");
 
+    /* now change window style to see if view is remapped */
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_SHOWSELALWAYS);
+    ret = SendMessageA(hwnd, LVM_GETVIEW, 0, 0);
+    expect(LV_VIEW_SMALLICON, ret);
+
     DestroyWindow(hwnd);
 }
 
