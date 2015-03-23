@@ -20,6 +20,8 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include "resources.h"
+
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
@@ -326,6 +328,30 @@ static void test_gettext(void)
         SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
         ok(toolinfoA.lpszText == NULL,
            "expected NULL, got %p\n", toolinfoA.lpszText);
+
+        /* NULL hinst, valid resource id for text */
+        toolinfoA.cbSize = sizeof(TTTOOLINFOA);
+        toolinfoA.hwnd = NULL;
+        toolinfoA.hinst = NULL;
+        toolinfoA.uFlags = 0;
+        toolinfoA.uId = 0x1233ABCD;
+        toolinfoA.lpszText = MAKEINTRESOURCEA(IDS_TBADD1);
+        toolinfoA.lParam = 0xdeadbeef;
+        GetClientRect(hwnd, &toolinfoA.rect);
+        r = SendMessageA(hwnd, TTM_ADDTOOLA, 0, (LPARAM)&toolinfoA);
+        ok(r, "failed to add a tool\n");
+
+        toolinfoA.hwnd = NULL;
+        toolinfoA.uId = 0x1233ABCD;
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
+        ok(strcmp(toolinfoA.lpszText, "abc") == 0, "lpszText should be an empty string\n");
+
+        toolinfoA.hinst = (HINSTANCE)0xdeadbee;
+        SendMessageA(hwnd, TTM_GETTOOLINFOA, 0, (LPARAM)&toolinfoA);
+        ok(toolinfoA.hinst == NULL, "expected NULL, got %p\n", toolinfoA.hinst);
+
+        SendMessageA(hwnd, TTM_DELTOOLA, 0, (LPARAM)&toolinfoA);
     }
     else
     {

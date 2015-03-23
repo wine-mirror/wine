@@ -484,12 +484,12 @@ TOOLTIPS_GetTipText (const TOOLTIPS_INFO *infoPtr, INT nTool, WCHAR *buffer)
 {
     TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
 
-    if (IS_INTRESOURCE(toolPtr->lpszText) && toolPtr->hinst) {
+    if (IS_INTRESOURCE(toolPtr->lpszText)) {
 	/* load a resource */
 	TRACE("load res string %p %x\n",
 	       toolPtr->hinst, LOWORD(toolPtr->lpszText));
-	LoadStringW (toolPtr->hinst, LOWORD(toolPtr->lpszText),
-		       buffer, INFOTIPSIZE);
+	if (!LoadStringW (toolPtr->hinst, LOWORD(toolPtr->lpszText), buffer, INFOTIPSIZE))
+	    buffer[0] = '\0';
     }
     else if (toolPtr->lpszText) {
 	if (toolPtr->lpszText == LPSTR_TEXTCALLBACKW) {
