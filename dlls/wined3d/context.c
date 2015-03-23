@@ -2771,7 +2771,11 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 
         if (use_vshader)
         {
-            if (element->output_slot == ~0U)
+            if (element->output_slot == WINED3D_OUTPUT_SLOT_UNUSED)
+            {
+                stride_used = FALSE;
+            }
+            else if (element->output_slot == WINED3D_OUTPUT_SLOT_SEMANTIC)
             {
                 /* TODO: Assuming vertexdeclarations are usually used with the
                  * same or a similar shader, it might be worth it to store the

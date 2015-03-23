@@ -296,7 +296,7 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
     elements[idx].format = format_id;
     elements[idx].input_slot = 0;
     elements[idx].offset = offset;
-    elements[idx].output_slot = 0;
+    elements[idx].output_slot = WINED3D_OUTPUT_SLOT_SEMANTIC;
     elements[idx].method = WINED3D_DECL_METHOD_DEFAULT;
     elements[idx].usage = usage;
     elements[idx].usage_idx = usage_idx;

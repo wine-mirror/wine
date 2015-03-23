@@ -353,7 +353,7 @@ static HRESULT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9 *d3d9_elem
         (*wined3d_elements)[i].format = d3d_dtype_lookup[d3d9_elements[i].Type].format;
         (*wined3d_elements)[i].input_slot = d3d9_elements[i].Stream;
         (*wined3d_elements)[i].offset = d3d9_elements[i].Offset;
-        (*wined3d_elements)[i].output_slot = ~0U;
+        (*wined3d_elements)[i].output_slot = WINED3D_OUTPUT_SLOT_SEMANTIC;
         (*wined3d_elements)[i].method = d3d9_elements[i].Method;
         (*wined3d_elements)[i].usage = d3d9_elements[i].Usage;
         (*wined3d_elements)[i].usage_idx = d3d9_elements[i].UsageIndex;

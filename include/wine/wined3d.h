@@ -1496,6 +1496,9 @@ enum wined3d_display_rotation
 
 #define WINED3D_APPEND_ALIGNED_ELEMENT                          0xffffffff
 
+#define WINED3D_OUTPUT_SLOT_SEMANTIC                            0xffffffff
+#define WINED3D_OUTPUT_SLOT_UNUSED                              0xfffffffe
+
 struct wined3d_display_mode
 {
     UINT width;

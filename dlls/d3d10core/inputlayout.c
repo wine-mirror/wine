@@ -41,7 +41,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
 
 static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
-        struct wined3d_vertex_element **wined3d_elements, UINT *wined3d_element_count)
+        struct wined3d_vertex_element **wined3d_elements)
 {
     struct wined3d_shader_signature is;
     HRESULT hr;
@@ -61,33 +61,32 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
         HeapFree(GetProcessHeap(), 0, is.elements);
         return E_OUTOFMEMORY;
     }
-    *wined3d_element_count = 0;
 
     for (i = 0; i < element_count; ++i)
     {
+        struct wined3d_vertex_element *e = &(*wined3d_elements)[i];
+        const D3D10_INPUT_ELEMENT_DESC *f = &element_descs[i];
         UINT j;
+
+        e->format = wined3dformat_from_dxgi_format(f->Format);
+        e->input_slot = f->InputSlot;
+        e->offset = f->AlignedByteOffset;
+        e->output_slot = WINED3D_OUTPUT_SLOT_UNUSED;
+        e->method = WINED3D_DECL_METHOD_DEFAULT;
+        e->usage = 0;
+        e->usage_idx = 0;
+
+        if (f->InputSlotClass != D3D10_INPUT_PER_VERTEX_DATA)
+            FIXME("Ignoring input slot class (%#x)\n", f->InputSlotClass);
+        if (f->InstanceDataStepRate)
+            FIXME("Ignoring instance data step rate (%#x)\n", f->InstanceDataStepRate);
 
         for (j = 0; j < is.element_count; ++j)
         {
             if (!strcmp(element_descs[i].SemanticName, is.elements[j].semantic_name)
                     && element_descs[i].SemanticIndex == is.elements[j].semantic_idx)
             {
-                struct wined3d_vertex_element *e = &(*wined3d_elements)[(*wined3d_element_count)++];
-                const D3D10_INPUT_ELEMENT_DESC *f = &element_descs[i];
-
-                e->format = wined3dformat_from_dxgi_format(f->Format);
-                e->input_slot = f->InputSlot;
-                e->offset = f->AlignedByteOffset;
                 e->output_slot = is.elements[j].register_idx;
-                e->method = WINED3D_DECL_METHOD_DEFAULT;
-                e->usage = 0;
-                e->usage_idx = 0;
-
-                if (f->InputSlotClass != D3D10_INPUT_PER_VERTEX_DATA)
-                    FIXME("Ignoring input slot class (%#x)\n", f->InputSlotClass);
-                if (f->InstanceDataStepRate)
-                    FIXME("Ignoring instance data step rate (%#x)\n", f->InstanceDataStepRate);
-
                 break;
             }
         }
@@ -225,23 +224,21 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
 {
     struct wined3d_vertex_element *wined3d_elements;
-    UINT wined3d_element_count;
     HRESULT hr;
 
     layout->ID3D10InputLayout_iface.lpVtbl = &d3d10_input_layout_vtbl;
     layout->refcount = 1;
     wined3d_private_store_init(&layout->private_store);
 
-    hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
-            shader_byte_code, shader_byte_code_length, &wined3d_elements, &wined3d_element_count);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
+            shader_byte_code, shader_byte_code_length, &wined3d_elements)))
     {
         WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&layout->private_store);
         return hr;
     }
 
-    hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, wined3d_element_count,
+    hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, element_count,
             layout, &d3d10_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
