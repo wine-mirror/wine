@@ -7539,12 +7539,23 @@ static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
     {0 /* Terminate */,                                         {0,                                                          0                                      }, WINED3D_GL_EXT_NONE },
 };
 
+static BOOL glsl_fragment_pipe_alloc_context_data(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void glsl_fragment_pipe_free_context_data(struct wined3d_context *context)
+{
+}
+
 const struct fragment_pipeline glsl_fragment_pipe =
 {
     glsl_fragment_pipe_enable,
     glsl_fragment_pipe_get_caps,
     glsl_fragment_pipe_alloc,
     glsl_fragment_pipe_free,
+    glsl_fragment_pipe_alloc_context_data,
+    glsl_fragment_pipe_free_context_data,
     shader_glsl_color_fixup_supported,
     glsl_fragment_pipe_state_template,
 };

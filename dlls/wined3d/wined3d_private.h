@@ -1190,6 +1190,7 @@ struct wined3d_context
     GLint                   aux_buffers;
 
     void *shader_backend_data;
+    void *fragment_pipe_data;
 
     /* FBOs */
     UINT                    fbo_entry_count;
@@ -1273,6 +1274,8 @@ struct fragment_pipeline
     void (*get_caps)(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
     void *(*alloc_private)(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv);
     void (*free_private)(struct wined3d_device *device);
+    BOOL (*allocate_context_data)(struct wined3d_context *context);
+    void (*free_context_data)(struct wined3d_context *context);
     BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
     const struct StateEntryTemplate *states;
 };

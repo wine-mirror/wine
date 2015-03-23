@@ -906,11 +906,23 @@ static const struct StateEntryTemplate nvrc_fragmentstate_template[] =
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
+static BOOL nvrc_context_alloc(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void nvrc_context_free(struct wined3d_context *context)
+{
+}
+
+
 const struct fragment_pipeline nvts_fragment_pipeline = {
     nvts_enable,
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
+    nvrc_context_alloc,
+    nvrc_context_free,
     nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
 };
@@ -920,6 +932,8 @@ const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_fragment_get_caps,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
+    nvrc_context_alloc,
+    nvrc_context_free,
     nvts_color_fixup_supported,
     nvrc_fragmentstate_template,
 };

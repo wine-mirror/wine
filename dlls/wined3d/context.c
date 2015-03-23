@@ -1447,6 +1447,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         ERR("Failed to allocate shader backend context data.\n");
         goto out;
     }
+    if (!device->adapter->fragment_pipe->allocate_context_data(ret))
+    {
+        ERR("Failed to allocate fragment pipeline context data.\n");
+        goto out;
+    }
 
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)
@@ -1764,6 +1769,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
 out:
     device->shader_backend->shader_free_context_data(ret);
+    device->adapter->fragment_pipe->free_context_data(ret);
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_timestamp_queries);
@@ -1797,6 +1803,7 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     }
 
     device->shader_backend->shader_free_context_data(context);
+    device->adapter->fragment_pipe->free_context_data(context);
     HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
     device_context_remove(device, context);

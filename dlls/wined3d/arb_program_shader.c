@@ -6789,11 +6789,22 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] =
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 
+static BOOL arbfp_alloc_context_data(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void arbfp_free_context_data(struct wined3d_context *context)
+{
+}
+
 const struct fragment_pipeline arbfp_fragment_pipeline = {
     arbfp_enable,
     arbfp_get_caps,
     arbfp_alloc,
     arbfp_free,
+    arbfp_alloc_context_data,
+    arbfp_free_context_data,
     shader_arb_color_fixup_supported,
     arbfp_fragmentstate_template,
 };

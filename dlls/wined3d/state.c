@@ -5793,11 +5793,22 @@ static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
+static BOOL ffp_none_context_alloc(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void ffp_none_context_free(struct wined3d_context *context)
+{
+}
+
 const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_enable,
     ffp_fragment_get_caps,
     ffp_alloc,
     ffp_free,
+    ffp_none_context_alloc,
+    ffp_none_context_free,
     ffp_color_fixup_supported,
     ffp_fragmentstate_template,
 };
@@ -5841,6 +5852,8 @@ const struct fragment_pipeline none_fragment_pipe =
     fp_none_get_caps,
     none_alloc,
     none_free,
+    ffp_none_context_alloc,
+    ffp_none_context_free,
     fp_none_color_fixup_supported,
     NULL,
 };

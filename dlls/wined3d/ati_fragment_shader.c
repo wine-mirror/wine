@@ -1249,11 +1249,22 @@ static BOOL atifs_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
+static BOOL atifs_alloc_context_data(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void atifs_free_context_data(struct wined3d_context *context)
+{
+}
+
 const struct fragment_pipeline atifs_fragment_pipeline = {
     atifs_enable,
     atifs_get_caps,
     atifs_alloc,
     atifs_free,
+    atifs_alloc_context_data,
+    atifs_free_context_data,
     atifs_color_fixup_supported,
     atifs_fragmentstate_template,
 };
