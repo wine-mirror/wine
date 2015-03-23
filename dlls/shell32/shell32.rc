@@ -457,9 +457,14 @@ IDR_AVI_FILEDELETE AVI searching.avi
 /* @makedep: AUTHORS */
 AUTHORS RCDATA AUTHORS
 
-#include "version.h"
+/* please keep in sync with version.h values */
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #define WINE_FILENAME_STR "shell32.dll"
+#define WINE_FILEVERSION 6,0,2900,6242
+#define WINE_FILEVERSION_STR "6.0.2900.6242"
+#define WINE_PRODUCTVERSION 6,0,2900,6242
+#define WINE_PRODUCTVERSION_STR "6.0.2900.6242"
 #define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
 
 #include "wine/wine_common_ver.rc"
