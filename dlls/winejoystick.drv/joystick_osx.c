@@ -678,8 +678,7 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
             if (value)
             {
                 info->dwButtons |= 1 << i;
-                if (!info->dwButtonNumber)
-                    info->dwButtonNumber = i + 1;
+                info->dwButtonNumber++;
             }
         }
     }
