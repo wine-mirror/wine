@@ -44,17 +44,30 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define ATI_FFP_CONST_CONSTANT5 GL_CON_5_ATI
 #define ATI_FFP_CONST_TFACTOR   GL_CON_6_ATI
 
+enum atifs_constant_value
+{
+    ATIFS_CONSTANT_UNUSED = 0,
+    ATIFS_CONSTANT_BUMP,
+    ATIFS_CONSTANT_TFACTOR
+};
+
 /* GL_ATI_fragment_shader specific fixed function pipeline description. "Inherits" from the common one */
 struct atifs_ffp_desc
 {
     struct ffp_frag_desc parent;
     GLuint shader;
     unsigned int num_textures_used;
+    enum atifs_constant_value constants[8];
 };
 
 struct atifs_private_data
 {
     struct wine_rb_tree fragment_shaders; /* A rb-tree to track fragment pipeline replacement shaders */
+};
+
+struct atifs_context_private_data
+{
+    const struct atifs_ffp_desc *last_shader;
 };
 
 static const char *debug_dstmod(GLuint mod) {
@@ -439,7 +452,20 @@ static void atifs_color_fixup(const struct wined3d_gl_info *gl_info, struct colo
     }
 }
 
-static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], const struct wined3d_gl_info *gl_info)
+static BOOL op_reads_tfactor(const struct texture_stage_op *op)
+{
+    return (op->carg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || (op->carg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || (op->carg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || (op->aarg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || (op->aarg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || (op->aarg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TFACTOR
+            || op->cop == WINED3D_TOP_BLEND_FACTOR_ALPHA
+            || op->aop == WINED3D_TOP_BLEND_FACTOR_ALPHA;
+}
+
+static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES],
+        const struct wined3d_gl_info *gl_info, enum atifs_constant_value *constants)
 {
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
     unsigned int stage;
@@ -449,6 +475,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     GLuint swizzle;
     GLuint tmparg = find_tmpreg(op);
     GLuint dstreg;
+    BOOL tfactor_used = FALSE;
 
     if(!ret) {
         ERR("Failed to generate a GL_ATI_fragment_shader shader id\n");
@@ -469,6 +496,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         if (op[stage].cop != WINED3D_TOP_BUMPENVMAP
                 && op[stage].cop != WINED3D_TOP_BUMPENVMAP_LUMINANCE)
             continue;
+
+        constants[stage] = ATIFS_CONSTANT_BUMP;
 
         TRACE("glSampleMapATI(GL_REG_%d_ATI, GL_TEXTURE_%d_ARB, GL_SWIZZLE_STR_ATI)\n",
               stage, stage);
@@ -614,6 +643,9 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         dstmod = GL_NONE;
         argmodextra = GL_NONE;
         extrarg = GL_NONE;
+
+        if (op_reads_tfactor(&op[stage]))
+            tfactor_used = TRUE;
 
         if (op_reads_texture(&op[stage]) && !is_identity_fixup(op[stage].color_fixup))
             atifs_color_fixup(gl_info, op[stage].color_fixup, GL_REG_0_ATI + stage);
@@ -889,10 +921,65 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         }
     }
 
+    if (tfactor_used && constants[ATI_FFP_CONST_TFACTOR - GL_CON_0_ATI] != ATIFS_CONSTANT_UNUSED)
+        FIXME("Texture factor constant already used.\n");
+    constants[ATI_FFP_CONST_TFACTOR - GL_CON_0_ATI] = ATIFS_CONSTANT_TFACTOR;
+
+    /* Assign unused constants to avoid reloading due to unused <-> bump matrix switches. */
+    for (stage = 0; stage < 8; ++stage)
+    {
+        if (constants[stage] == ATIFS_CONSTANT_UNUSED)
+            constants[stage] = ATIFS_CONSTANT_BUMP;
+    }
+
     TRACE("glEndFragmentShaderATI()\n");
     GL_EXTCALL(glEndFragmentShaderATI());
     checkGLcall("GL_EXTCALL(glEndFragmentShaderATI())");
     return ret;
+}
+
+static void atifs_tfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float col[4];
+    struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
+
+    if (!ctx_priv->last_shader
+            || ctx_priv->last_shader->constants[ATI_FFP_CONST_TFACTOR - GL_CON_0_ATI] != ATIFS_CONSTANT_TFACTOR)
+        return;
+
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
+    GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col));
+    checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
+}
+
+static void set_bumpmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float mat[2][2];
+    struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
+
+    if (!ctx_priv->last_shader
+            || ctx_priv->last_shader->constants[stage] != ATIFS_CONSTANT_BUMP)
+        return;
+
+    mat[0][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT00]);
+    mat[1][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT01]);
+    mat[0][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT10]);
+    mat[1][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT11]);
+    /* GL_ATI_fragment_shader allows only constants from 0.0 to 1.0, but the bumpmat
+     * constants can be in any range. While they should stay between [-1.0 and 1.0] because
+     * Shader Model 1.x pixel shaders are clamped to that range negative values are used occasionally,
+     * for example by our d3d9 test. So to get negative values scale -1;1 to 0;1 and undo that in the
+     * shader(it is free). This might potentially reduce precision. However, if the hardware does
+     * support proper floats it shouldn't, and if it doesn't we can't get anything better anyway. */
+    mat[0][0] = (mat[0][0] + 1.0f) * 0.5f;
+    mat[1][0] = (mat[1][0] + 1.0f) * 0.5f;
+    mat[0][1] = (mat[0][1] + 1.0f) * 0.5f;
+    mat[1][1] = (mat[1][1] + 1.0f) * 0.5f;
+    GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
+    checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }
 
 static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -900,7 +987,8 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
-    const struct atifs_ffp_desc *desc;
+    struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
+    const struct atifs_ffp_desc *desc, *last_shader = ctx_priv->last_shader;
     struct ffp_frag_settings settings;
     struct atifs_private_data *priv = device->fragment_priv;
     DWORD mapped_stage;
@@ -909,7 +997,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     gen_ffp_frag_op(context, state, &settings, TRUE);
     desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
     if(!desc) {
-        struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
+        struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*new_desc));
         if (!new_desc)
         {
             ERR("Out of memory\n");
@@ -924,7 +1012,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
         }
 
         new_desc->parent.settings = settings;
-        new_desc->shader = gen_ati_shader(settings.op, gl_info);
+        new_desc->shader = gen_ati_shader(settings.op, gl_info, new_desc->constants);
         add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
         TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
         desc = new_desc;
@@ -944,41 +1032,27 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     }
 
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
-}
+    ctx_priv->last_shader = desc;
 
-static void state_texfactor_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    float col[4];
+    for (i = 0; i < 8; i++)
+    {
+        if (last_shader && last_shader->constants[i] == desc->constants[i])
+            continue;
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
-    GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col));
-    checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
-}
+        switch (desc->constants[i])
+        {
+            case ATIFS_CONSTANT_BUMP:
+                set_bumpmat(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
+                break;
 
-static void set_bumpmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    float mat[2][2];
+            case ATIFS_CONSTANT_TFACTOR:
+                atifs_tfactor(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
+                break;
 
-    mat[0][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT00]);
-    mat[1][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT01]);
-    mat[0][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT10]);
-    mat[1][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT11]);
-    /* GL_ATI_fragment_shader allows only constants from 0.0 to 1.0, but the bumpmat
-     * constants can be in any range. While they should stay between [-1.0 and 1.0] because
-     * Shader Model 1.x pixel shaders are clamped to that range negative values are used occasionally,
-     * for example by our d3d9 test. So to get negative values scale -1;1 to 0;1 and undo that in the
-     * shader(it is free). This might potentially reduce precision. However, if the hardware does
-     * support proper floats it shouldn't, and if it doesn't we can't get anything better anyway
-     */
-    mat[0][0] = (mat[0][0] + 1.0f) * 0.5f;
-    mat[1][0] = (mat[1][0] + 1.0f) * 0.5f;
-    mat[0][1] = (mat[0][1] + 1.0f) * 0.5f;
-    mat[1][1] = (mat[1][1] + 1.0f) * 0.5f;
-    GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
-    checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
+            default:
+                ERR("Unexpected constant type %u.\n", desc->constants[i]);
+        }
+    }
 }
 
 static void textransform(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -994,7 +1068,7 @@ static void atifs_srgbwriteenable(struct wined3d_context *context, const struct 
 }
 
 static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
-    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor_atifs   }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             atifs_tfactor           }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_FOGCOLOR),                   { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  state_fogcolor          }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_FOGDENSITY),                 { STATE_RENDER(WINED3D_RS_FOGDENSITY),                state_fogdensity        }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_FOGENABLE),                  { STATE_RENDER(WINED3D_RS_FOGENABLE),                 state_fog_fragpart      }, WINED3D_GL_EXT_NONE             },
@@ -1251,11 +1325,16 @@ static BOOL atifs_color_fixup_supported(struct color_fixup_desc fixup)
 
 static BOOL atifs_alloc_context_data(struct wined3d_context *context)
 {
+    struct atifs_context_private_data *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
+    if (!priv)
+        return FALSE;
+    context->fragment_pipe_data = priv;
     return TRUE;
 }
 
 static void atifs_free_context_data(struct wined3d_context *context)
 {
+    HeapFree(GetProcessHeap(), 0, context->fragment_pipe_data);
 }
 
 const struct fragment_pipeline atifs_fragment_pipeline = {
