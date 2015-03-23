@@ -69,6 +69,10 @@
     NSRect nonFullscreenFrame;
     NSTimeInterval enteredFullScreenTime;
 
+    int draggingPhase;
+    NSPoint dragStartPosition;
+    NSPoint dragWindowStartPosition;
+
     BOOL ignore_windowDeminiaturize;
     BOOL ignore_windowResize;
     BOOL fakingClose;

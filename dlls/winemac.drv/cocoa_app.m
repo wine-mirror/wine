@@ -1436,6 +1436,15 @@ int macdrv_err_on;
             pressedKeyCodes[index] &= ~mask;
     }
 
+    - (void) window:(WineWindow*)window isBeingDragged:(BOOL)dragged
+    {
+        if (dragged)
+            [windowsBeingDragged addObject:window];
+        else
+            [windowsBeingDragged removeObject:window];
+        [self updateCursorClippingState];
+    }
+
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
