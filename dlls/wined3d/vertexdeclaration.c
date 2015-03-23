@@ -218,14 +218,18 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
 
         if (e->offset == WINED3D_APPEND_ALIGNED_ELEMENT)
         {
-            if (!i)
+            const struct wined3d_vertex_declaration_element *prev;
+            unsigned int j;
+
+            e->offset = 0;
+            for (j = 1; j <= i; ++j)
             {
-                e->offset = 0;
-            }
-            else
-            {
-                struct wined3d_vertex_declaration_element *prev = &declaration->elements[i - 1];
-                e->offset = (prev->offset + prev->format->byte_count + 3) & ~3;
+                prev = &declaration->elements[i - j];
+                if (prev->input_slot == e->input_slot)
+                {
+                    e->offset = (prev->offset + prev->format->byte_count + 3) & ~3;
+                    break;
+                }
             }
         }
 
