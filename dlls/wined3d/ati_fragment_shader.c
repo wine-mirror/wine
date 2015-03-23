@@ -376,6 +376,69 @@ static GLuint find_tmpreg(const struct texture_stage_op op[MAX_TEXTURES])
     }
 }
 
+static const struct color_fixup_desc color_fixup_rg =
+{
+    1, CHANNEL_SOURCE_X,
+    1, CHANNEL_SOURCE_Y,
+    0, CHANNEL_SOURCE_ONE,
+    0, CHANNEL_SOURCE_ONE
+};
+static const struct color_fixup_desc color_fixup_rgl =
+{
+    1, CHANNEL_SOURCE_X,
+    1, CHANNEL_SOURCE_Y,
+    0, CHANNEL_SOURCE_Z,
+    0, CHANNEL_SOURCE_W
+};
+static const struct color_fixup_desc color_fixup_rgba =
+{
+    1, CHANNEL_SOURCE_X,
+    1, CHANNEL_SOURCE_Y,
+    1, CHANNEL_SOURCE_Z,
+    1, CHANNEL_SOURCE_W
+};
+
+static BOOL op_reads_texture(const struct texture_stage_op *op)
+{
+    return (op->carg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || (op->carg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || (op->carg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || (op->aarg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || (op->aarg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || (op->aarg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
+            || op->cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA;
+}
+
+static void atifs_color_fixup(const struct wined3d_gl_info *gl_info, struct color_fixup_desc fixup, GLuint reg)
+{
+    if(is_same_fixup(fixup, color_fixup_rg))
+    {
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_RED_BIT_ATI | GL_GREEN_BIT_ATI, GL_NONE,
+                reg, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI);
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_BLUE_BIT_ATI, GL_NONE,
+                GL_ONE, GL_NONE, GL_NONE);
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_ALPHA, GL_NONE,
+                GL_ONE, GL_NONE, GL_NONE);
+    }
+    else if(is_same_fixup(fixup, color_fixup_rgl))
+    {
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_RED_BIT_ATI | GL_GREEN_BIT_ATI, GL_NONE,
+                reg, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI);
+    }
+    else if (is_same_fixup(fixup, color_fixup_rgba))
+    {
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_NONE, GL_NONE,
+                reg, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI);
+        wrap_op1(gl_info, GL_MOV_ATI, reg, GL_ALPHA, GL_NONE,
+                reg, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI);
+    }
+    else
+    {
+        /* Should not happen - atifs_color_fixup_supported refuses other fixups. */
+        ERR("Unsupported color fixup.\n");
+    }
+}
+
 static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], const struct wined3d_gl_info *gl_info)
 {
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
@@ -491,13 +554,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
             swizzle = GL_SWIZZLE_STQ_DQ_ATI;
         }
 
-        if ((op[stage].carg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || (op[stage].carg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || (op[stage].carg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || (op[stage].aarg0 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || (op[stage].aarg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || (op[stage].aarg2 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
-                || op[stage].cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA)
+        if (op_reads_texture(&op[stage]))
         {
             if (stage > 0
                     && (op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP
@@ -545,12 +602,21 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
             dstreg = GL_REG_0_ATI;
         }
 
+        if (op[stage].cop == WINED3D_TOP_BUMPENVMAP || op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
+        {
+            /* Those are handled in the first pass of the shader (generation pass 1 and 2) already */
+            continue;
+        }
+
         arg0 = register_for_arg(op[stage].carg0, gl_info, stage, &argmod0, &rep0, tmparg);
         arg1 = register_for_arg(op[stage].carg1, gl_info, stage, &argmod1, &rep1, tmparg);
         arg2 = register_for_arg(op[stage].carg2, gl_info, stage, &argmod2, &rep2, tmparg);
         dstmod = GL_NONE;
         argmodextra = GL_NONE;
         extrarg = GL_NONE;
+
+        if (op_reads_texture(&op[stage]) && !is_identity_fixup(op[stage].color_fixup))
+            atifs_color_fixup(gl_info, op[stage].color_fixup, GL_REG_0_ATI + stage);
 
         switch (op[stage].cop)
         {
@@ -681,11 +747,6 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                          arg0, rep0, argmod0,
                          arg1, rep1, argmod1,
                          arg2, rep2, argmod2);
-                break;
-
-            case WINED3D_TOP_BUMPENVMAP:
-            case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
-                /* Those are handled in the first pass of the shader(generation pass 1 and 2) already */
                 break;
 
             default: FIXME("Unhandled color operation %d on stage %d\n", op[stage].cop, stage);
@@ -1196,9 +1257,8 @@ static BOOL atifs_color_fixup_supported(struct color_fixup_desc fixup)
     }
 
     /* We only support sign fixup of the first two channels. */
-    if (fixup.x_source == CHANNEL_SOURCE_X && fixup.y_source == CHANNEL_SOURCE_Y
-            && fixup.z_source == CHANNEL_SOURCE_Z && fixup.w_source == CHANNEL_SOURCE_W
-            && !fixup.z_sign_fixup && !fixup.w_sign_fixup)
+    if (is_identity_fixup(fixup) || is_same_fixup(fixup, color_fixup_rg)
+            || is_same_fixup(fixup, color_fixup_rgl) || is_same_fixup(fixup, color_fixup_rgba))
     {
         TRACE("[OK]\n");
         return TRUE;
