@@ -130,3 +130,63 @@ interface IDXGISwapChain1 : IDXGISwapChain
     HRESULT GetRotation(
             [out] DXGI_MODE_ROTATION *pRotation);
 }
+
+[
+    object,
+    uuid(50c83a1c-e072-4c48-87b0-3630fa36a6d0),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIFactory2 : IDXGIFactory1
+{
+    BOOL IsWindowedStereoEnabled();
+
+    HRESULT CreateSwapChainForHwnd(
+            [in]  IUnknown *pDevice,
+            [in]  HWND hWnd,
+            [in]  const DXGI_SWAP_CHAIN_DESC1 *pDesc,
+            [in]  const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *pFullscreenDesc,
+            [in]  IDXGIOutput *pRestrictToOutput,
+            [out] IDXGISwapChain1 **ppSwapChain);
+
+    HRESULT CreateSwapChainForCoreWindow(
+            [in]  IUnknown *pDevice,
+            [in]  IUnknown *pWindow,
+            [in]  const DXGI_SWAP_CHAIN_DESC1 *pDesc,
+            [in]  IDXGIOutput *pRestrictToOutput,
+            [out] IDXGISwapChain1 **ppSwapChain);
+
+    HRESULT GetSharedResourceAdapterLuid(
+            [in]  HANDLE hResource,
+            [out] LUID *pLuid);
+
+    HRESULT RegisterOcclusionStatusWindow(
+            [in]  HWND WindowHandle,
+            [in]  UINT wMsg,
+            [out] DWORD *pdwCookie);
+
+    HRESULT RegisterStereoStatusEvent(
+            [in]  HANDLE hEvent,
+            [out] DWORD *pdwCookie);
+
+    void UnregisterStereoStatus(
+            [in]  DWORD dwCookie);
+
+    HRESULT RegisterStereoStatusWindow(
+            [in]  HWND WindowHandle,
+            [in]  UINT wMsg,
+            [out] DWORD *pdwCookie);
+
+    HRESULT RegisterOcclusionStatusEvent(
+            [in]  HANDLE hEvent,
+            [out] DWORD *pdwCookie);
+
+    void UnregisterOcclusionStatus(
+            [in]  DWORD dwCookie);
+
+    HRESULT CreateSwapChainForComposition(
+            [in]  IUnknown *pDevice,
+            [in]  const DXGI_SWAP_CHAIN_DESC1 *pDesc,
+            [in]  IDXGIOutput *pRestrictToOutput,
+            [out] IDXGISwapChain1 **ppSwapChain);
+}
