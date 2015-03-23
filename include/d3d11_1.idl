@@ -22,6 +22,69 @@ import "dxgi1_2.idl";
 import "d3dcommon.idl";
 import "d3d11.idl";
 
+typedef enum D3D11_LOGIC_OP {
+    D3D11_LOGIC_OP_CLEAR = 0,
+    D3D11_LOGIC_OP_SET,
+    D3D11_LOGIC_OP_COPY,
+    D3D11_LOGIC_OP_COPY_INVERTED,
+    D3D11_LOGIC_OP_NOOP,
+    D3D11_LOGIC_OP_INVERT,
+    D3D11_LOGIC_OP_AND,
+    D3D11_LOGIC_OP_NAND,
+    D3D11_LOGIC_OP_OR,
+    D3D11_LOGIC_OP_NOR,
+    D3D11_LOGIC_OP_XOR,
+    D3D11_LOGIC_OP_EQUIV,
+    D3D11_LOGIC_OP_AND_REVERSE,
+    D3D11_LOGIC_OP_AND_INVERTED,
+    D3D11_LOGIC_OP_OR_REVERSE,
+    D3D11_LOGIC_OP_OR_INVERTED
+} D3D11_LOGIC_OP;
+
+typedef struct _D3D11_RENDER_TARGET_BLEND_DESC1 {
+    BOOL           BlendEnable;
+    BOOL           LogicOpEnable;
+    D3D11_BLEND    SrcBlend;
+    D3D11_BLEND    DestBlend;
+    D3D11_BLEND_OP BlendOp;
+    D3D11_BLEND    SrcBlendAlpha;
+    D3D11_BLEND    DestBlendAlpha;
+    D3D11_BLEND_OP BlendOpAlpha;
+    D3D11_LOGIC_OP LogicOp;
+    UINT8          RenderTargetWriteMask;
+} D3D11_RENDER_TARGET_BLEND_DESC1;
+
+typedef struct _D3D11_BLEND_DESC1 {
+    BOOL                            AlphaToCoverageEnable;
+    BOOL                            IndependentBlendEnable;
+    D3D11_RENDER_TARGET_BLEND_DESC1 RenderTarget[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+} D3D11_BLEND_DESC1;
+
+typedef struct _D3D11_RASTERIZER_DESC1 {
+    D3D11_FILL_MODE FillMode;
+    D3D11_CULL_MODE CullMode;
+    BOOL            FrontCounterClockwise;
+    INT             DepthBias;
+    FLOAT           DepthBiasClamp;
+    FLOAT           SlopeScaledDepthBias;
+    BOOL            DepthClipEnable;
+    BOOL            ScissorEnable;
+    BOOL            MultisampleEnable;
+    BOOL            AntialiasedLineEnable;
+    UINT            ForcedSampleCount;
+} D3D11_RASTERIZER_DESC1;
+
+[
+    uuid(cc86fabe-da55-401d-85e7-e3c9de2877e9),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11BlendState1 : ID3D11BlendState
+{
+    void GetDesc1(D3D11_BLEND_DESC1 *pDesc);
+}
+
 [
     uuid(5c1e0d8a-7c23-48f9-8c59-a92958ceff11),
     object,
@@ -176,4 +239,59 @@ interface ID3DUserDefinedAnnotation : IUnknown
     INT EndEvent();
     void SetMarker(LPCWSTR Name);
     BOOL GetStatus();
+}
+
+[
+    uuid(1217d7a6-5039-418c-b042-9cbe256afd6e),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11RasterizerState1 : ID3D11RasterizerState
+{
+    void GetDesc1(D3D11_RASTERIZER_DESC1 *pDesc);
+}
+
+[
+    uuid(a04bfb29-08ef-43d6-a49c-a9bdbdcbe686),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11Device1 : ID3D11Device
+{
+    void GetImmediateContext1(
+            ID3D11DeviceContext1 **ppImmediateContext);
+
+    HRESULT CreateDeferredContext1(
+            UINT ContextFlags,
+            ID3D11DeviceContext1 **ppDeferredContext);
+
+    HRESULT CreateBlendState1(
+            const D3D11_BLEND_DESC1 *pBlendStateDesc,
+            ID3D11BlendState1 **ppBlendState);
+
+    HRESULT CreateRasterizerState1(
+            const D3D11_RASTERIZER_DESC1 *pRasterizerDesc,
+            ID3D11RasterizerState1 **ppRasterizerState);
+
+    HRESULT CreateDeviceContextState(
+            UINT Flags,
+            const D3D_FEATURE_LEVEL *pFeatureLevels,
+            UINT FeatureLevels,
+            UINT SDKVersion,
+            REFIID EmulatedInterface,
+            D3D_FEATURE_LEVEL *pChosenFeatureLevel,
+            ID3DDeviceContextState **ppContextState);
+
+    HRESULT OpenSharedResource1(
+            HANDLE hResource,
+            REFIID returnedInterface,
+            void **ppResource);
+
+     HRESULT OpenSharedResourceByName(
+            LPCWSTR lpName,
+            DWORD dwDesiredAccess,
+            REFIID returnedInterface,
+            void **ppResource);
 }
