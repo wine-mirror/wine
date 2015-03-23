@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_KNOWNFOLDERS_H
+#define __WINE_KNOWNFOLDERS_H
+
 #ifdef DEFINE_KNOWN_FOLDER
 #undef DEFINE_KNOWN_FOLDER
 #endif
@@ -140,3 +143,5 @@ DEFINE_KNOWN_FOLDER(FOLDERID_UsersLibraries,        0xa302545d, 0xdeff, 0x464b, 
 DEFINE_KNOWN_FOLDER(FOLDERID_Videos,                0x18989b1d, 0x99b5, 0x455b, 0x84, 0x1c, 0xab, 0x7c, 0x74, 0xe4, 0xdd, 0xfc);
 DEFINE_KNOWN_FOLDER(FOLDERID_VideosLibrary,         0x491e922f, 0x5643, 0x4af4, 0xa7, 0xeb, 0x4e, 0x7a, 0x13, 0x8d, 0x81, 0x74);
 DEFINE_KNOWN_FOLDER(FOLDERID_Windows,               0xf38bf404, 0x1d43, 0x42f2, 0x93, 0x05, 0x67, 0xde, 0x0b, 0x28, 0xfc, 0x23);
+
+#endif  /* __WINE_KNOWNFOLDERS_H */

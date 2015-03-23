@@ -17,6 +17,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef AVIRIFF_H
+#define AVIRIFF_H
+
 /* All definitions here are packed structures of on-disk formats */
 #include <pshpack2.h>
 
@@ -322,3 +325,5 @@ typedef struct _avifieldindex_chunk {
 } AVIFIELDINDEX, * PAVIFIELDINDEX;
 
 #include <poppack.h>
+
+#endif  /* AVIRIFF_H */

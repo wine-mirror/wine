@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _RASDLG_H_
+#define _RASDLG_H_
+
 #include <ras.h>
 
 typedef struct tagRASENTRYDLGW
@@ -30,3 +33,5 @@ typedef struct tagRASENTRYDLGW
     ULONG_PTR reserved;
     ULONG_PTR reserved2;
 } RASENTRYDLGW;
+
+#endif  /* _RASDLG_H_ */
