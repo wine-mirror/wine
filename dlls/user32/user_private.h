@@ -189,9 +189,9 @@ struct user_thread_info
     HWND                          top_window;             /* Desktop window */
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
     RAWINPUT                     *rawinput;
-
-    ULONG                         pad[6];                 /* Available for more data */
 };
+
+C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
 
 struct hook_extra_info
 {
