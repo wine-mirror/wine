@@ -464,15 +464,12 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_SETTEXT:
         if (hasTextStyle( full_style ))
         {
-	    if (HIWORD(lParam))
-	    {
-	        if(unicode)
-		     lResult = DefWindowProcW( hwnd, uMsg, wParam, lParam );
-                else
-                    lResult = DefWindowProcA( hwnd, uMsg, wParam, lParam );
-	        STATIC_TryPaintFcn( hwnd, full_style );
-	    }
-	}
+            if (unicode)
+                lResult = DefWindowProcW( hwnd, uMsg, wParam, lParam );
+            else
+                lResult = DefWindowProcA( hwnd, uMsg, wParam, lParam );
+            STATIC_TryPaintFcn( hwnd, full_style );
+        }
         break;
 
     case WM_SETFONT:
