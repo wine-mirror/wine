@@ -761,6 +761,22 @@ static DWORD get_num_hash(FLOAT num)
     return (*((DWORD*)&num)) % DICT_HASH_MOD;
 }
 
+static HRESULT get_flt_hash(FLOAT flt, LONG *hash)
+{
+    if (isinf(flt)) {
+        *hash = 0;
+        return S_OK;
+    }
+    else if (!isnan(flt)) {
+        *hash = get_num_hash(flt);
+        return S_OK;
+    }
+
+    /* NaN case */
+    *hash = ~0u;
+    return CTL_E_ILLEGALFUNCTIONCALL;
+}
+
 static DWORD get_ptr_hash(void *ptr)
 {
     return PtrToUlong(ptr) % DICT_HASH_MOD;
@@ -810,23 +826,15 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
         IUnknown_Release(unk);
         break;
     }
+    case VT_DATE|VT_BYREF:
+    case VT_DATE:
+        return get_flt_hash(V_VT(key) & VT_BYREF ? *V_DATEREF(key) : V_DATE(key), &V_I4(hash));
+    case VT_R4|VT_BYREF:
     case VT_R4:
+        return get_flt_hash(V_VT(key) & VT_BYREF ? *V_R4REF(key) : V_R4(key), &V_I4(hash));
+    case VT_R8|VT_BYREF:
     case VT_R8:
-    {
-        FLOAT flt = V_VT(key) == VT_R4 ? V_R4(key) : V_R8(key);
-
-        if (isinf(flt))
-        {
-            V_I4(hash) = 0;
-            break;
-        }
-        else if (!isnan(flt))
-        {
-            V_I4(hash) = get_num_hash(flt);
-            break;
-        }
-        /* fallthrough on NAN */
-    }
+        return get_flt_hash(V_VT(key) & VT_BYREF ? *V_R8REF(key) : V_R8(key), &V_I4(hash));
     case VT_INT:
     case VT_UINT:
     case VT_I1:

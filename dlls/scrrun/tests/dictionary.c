@@ -499,6 +499,15 @@ static void test_hash_value(void)
     ok(V_I4(&hash) == ~0u || broken(V_I4(&hash) == 0 /* win2k */ ||
         V_I4(&hash) == 0x1f4 /* vista, win2k8 */), "got hash 0x%08x\n", V_I4(&hash));
 
+    V_VT(&key) = VT_DATE;
+    V_DATE(&key) = fx8.d;
+    VariantInit(&hash);
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL || broken(hr == S_OK) /* win2k, win2k3 */, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == ~0u || broken(V_I4(&hash) == 0 /* win2k */ ||
+        V_I4(&hash) == 0x1f4 /* vista, win2k8 */), "got hash 0x%08x\n", V_I4(&hash));
+
     /* inf */
     fx8.d = 10.0;
     fx8.i.m_lo = 0;
@@ -513,7 +522,19 @@ static void test_hash_value(void)
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
 
+    V_VT(&key) = VT_DATE;
+    V_DATE(&key) = fx8.d;
+    V_I4(&hash) = 10;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "got hash 0x%08x\n", V_I4(&hash));
+
     for (i = 0; i < sizeof(float_hash_tests)/sizeof(float_hash_tests[0]); i++) {
+        double dbl;
+        FLOAT flt;
+        DATE date;
+
         expected = get_num_hash(float_hash_tests[i]);
 
         V_VT(&key) = VT_R4;
@@ -525,8 +546,47 @@ static void test_hash_value(void)
         ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
             expected);
 
+        flt = float_hash_tests[i];
+        V_VT(&key) = VT_R4|VT_BYREF;
+        V_R4REF(&key) = &flt;
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
         V_VT(&key) = VT_R8;
         V_R8(&key) = float_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        dbl = float_hash_tests[i];
+        V_VT(&key) = VT_R8|VT_BYREF;
+        V_R8REF(&key) = &dbl;
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        V_VT(&key) = VT_DATE;
+        V_DATE(&key) = float_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        V_VT(&key) = VT_DATE|VT_BYREF;
+        date = float_hash_tests[i];
+        V_DATEREF(&key) = &date;
         VariantInit(&hash);
         hr = IDictionary_get_HashVal(dict, &key, &hash);
         ok(hr == S_OK, "got 0x%08x\n", hr);
