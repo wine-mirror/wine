@@ -331,17 +331,6 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...
     return ret;
 }
 
-static void shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
-        void *parent, const struct wined3d_parent_ops *parent_ops)
-{
-    shader->ref = 1;
-    shader->device = device;
-    shader->parent = parent;
-    shader->parent_ops = parent_ops;
-    list_init(&shader->linked_programs);
-    list_add_head(&device->shaders, &shader->shader_list_entry);
-}
-
 /* Convert floating point offset relative to a register file to an absolute
  * offset for float constants. */
 static unsigned int shader_get_float_offset(enum wined3d_shader_register_type register_type, UINT register_idx)
@@ -2199,73 +2188,120 @@ BOOL vshader_get_input(const struct wined3d_shader *shader,
     return FALSE;
 }
 
+static HRESULT shader_signature_copy(struct wined3d_shader_signature *dst,
+        const struct wined3d_shader_signature *src, char **signature_strings)
+{
+    struct wined3d_shader_signature_element *e;
+    unsigned int i;
+    SIZE_T len;
+    char *ptr;
+
+    ptr = *signature_strings;
+
+    dst->element_count = src->element_count;
+    if (!(dst->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst->elements) * dst->element_count)))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < src->element_count; ++i)
+    {
+        e = &src->elements[i];
+        dst->elements[i] = *e;
+
+        len = strlen(e->semantic_name);
+        memcpy(ptr, e->semantic_name, len + 1);
+        dst->elements[i].semantic_name = ptr;
+        ptr += len + 1;
+    }
+
+    *signature_strings = ptr;
+
+    return WINED3D_OK;
+}
+
+static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+        const struct wined3d_shader_desc *desc, DWORD float_const_count, enum wined3d_shader_type type,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    struct wined3d_shader_signature_element *e;
+    SIZE_T total, len;
+    unsigned int i;
+    HRESULT hr;
+    char *ptr;
+
+    if (!desc->byte_code)
+        return WINED3DERR_INVALIDCALL;
+
+    shader->ref = 1;
+    shader->device = device;
+    shader->parent = parent;
+    shader->parent_ops = parent_ops;
+
+    total = 0;
+    if (desc->input_signature)
+    {
+        for (i = 0; i < desc->input_signature->element_count; ++i)
+        {
+            e = &desc->input_signature->elements[i];
+            len = strlen(e->semantic_name);
+            if (len >= ~(SIZE_T)0 - total)
+                return E_OUTOFMEMORY;
+
+            total += len + 1;
+        }
+    }
+    if (desc->output_signature)
+    {
+        for (i = 0; i < desc->output_signature->element_count; ++i)
+        {
+            e = &desc->output_signature->elements[i];
+            len = strlen(e->semantic_name);
+            if (len >= ~(SIZE_T)0 - total)
+                return E_OUTOFMEMORY;
+
+            total += len + 1;
+        }
+    }
+    if (!(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
+        return E_OUTOFMEMORY;
+    ptr = shader->signature_strings;
+
+    if (desc->input_signature && FAILED(hr = shader_signature_copy(&shader->input_signature,
+            desc->input_signature, &ptr)))
+    {
+        HeapFree(GetProcessHeap(), 0, shader->signature_strings);
+        return hr;
+    }
+    if (desc->output_signature && FAILED(hr = shader_signature_copy(&shader->output_signature,
+            desc->output_signature, &ptr)))
+    {
+        HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
+        HeapFree(GetProcessHeap(), 0, shader->signature_strings);
+        return hr;
+    }
+
+    list_init(&shader->linked_programs);
+    list_add_head(&device->shaders, &shader->shader_list_entry);
+
+    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
+            float_const_count, type, desc->max_version)))
+    {
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup(shader);
+    }
+
+    return hr;
+}
+
 static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     unsigned int i;
     HRESULT hr;
-    const DWORD vs_uniform_count = device->adapter->d3d_info.limits.vs_uniform_count;
 
-    if (!desc->byte_code)
-        return WINED3DERR_INVALIDCALL;
-
-    shader_init(shader, device, parent, parent_ops);
-
-    if (desc->output_signature)
-    {
-        struct wined3d_shader_signature_element *e;
-        SIZE_T total, len;
-        char *ptr;
-
-        total = 0;
-        for (i = 0; i < desc->output_signature->element_count; ++i)
-        {
-            e = &desc->output_signature->elements[i];
-            len = strlen(e->semantic_name);
-            if (len >= ~(SIZE_T)0 - total)
-            {
-                shader_cleanup(shader);
-                return E_OUTOFMEMORY;
-            }
-
-            total += len + 1;
-        }
-
-        if (!(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
-        {
-            shader_cleanup(shader);
-            return E_OUTOFMEMORY;
-        }
-        ptr = shader->signature_strings;
-
-        shader->output_signature.element_count = desc->output_signature->element_count;
-        if (!(shader->output_signature.elements = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*shader->output_signature.elements) * shader->output_signature.element_count)))
-        {
-            shader_cleanup(shader);
-            return E_OUTOFMEMORY;
-        }
-
-        for (i = 0; i < desc->output_signature->element_count; ++i)
-        {
-            e = &desc->output_signature->elements[i];
-            shader->output_signature.elements[i] = *e;
-
-            len = strlen(e->semantic_name);
-            memcpy(ptr, e->semantic_name, len + 1);
-            shader->output_signature.elements[i].semantic_name = ptr;
-            ptr += len + 1;
-        }
-    }
-
-    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
-            vs_uniform_count, WINED3D_SHADER_TYPE_VERTEX, desc->max_version)))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup(shader);
+    if (FAILED(hr = shader_init(shader, device, desc, device->adapter->d3d_info.limits.vs_uniform_count,
+            WINED3D_SHADER_TYPE_VERTEX, parent, parent_ops)))
         return hr;
-    }
 
     for (i = 0; i < shader->input_signature.element_count; ++i)
     {
@@ -2290,14 +2326,9 @@ static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d
 {
     HRESULT hr;
 
-    shader_init(shader, device, parent, parent_ops);
-    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
-            0, WINED3D_SHADER_TYPE_GEOMETRY, desc->max_version)))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup(shader);
+    if (FAILED(hr = shader_init(shader, device, desc, 0,
+            WINED3D_SHADER_TYPE_GEOMETRY, parent, parent_ops)))
         return hr;
-    }
 
     shader->load_local_constsF = shader->lconst_inf_or_nan;
 
@@ -2486,67 +2517,10 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     HRESULT hr;
-    const DWORD ps_uniform_count = device->adapter->d3d_info.limits.ps_uniform_count;
 
-    if (!desc->byte_code)
-        return WINED3DERR_INVALIDCALL;
-
-    shader_init(shader, device, parent, parent_ops);
-
-    if (desc->input_signature)
-    {
-        struct wined3d_shader_signature_element *e;
-        SIZE_T total, len;
-        char *ptr;
-
-        total = 0;
-        for (i = 0; i < desc->input_signature->element_count; ++i)
-        {
-            e = &desc->input_signature->elements[i];
-            len = strlen(e->semantic_name);
-            if (len >= ~(SIZE_T)0 - total)
-            {
-                shader_cleanup(shader);
-                return E_OUTOFMEMORY;
-            }
-
-            total += len + 1;
-        }
-
-        if (!(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
-        {
-            shader_cleanup(shader);
-            return E_OUTOFMEMORY;
-        }
-        ptr = shader->signature_strings;
-
-        shader->input_signature.element_count = desc->input_signature->element_count;
-        if (!(shader->input_signature.elements = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*shader->input_signature.elements) * shader->input_signature.element_count)))
-        {
-            shader_cleanup(shader);
-            return E_OUTOFMEMORY;
-        }
-
-        for (i = 0; i < desc->input_signature->element_count; ++i)
-        {
-            e = &desc->input_signature->elements[i];
-            shader->input_signature.elements[i] = *e;
-
-            len = strlen(e->semantic_name);
-            memcpy(ptr, e->semantic_name, len + 1);
-            shader->input_signature.elements[i].semantic_name = ptr;
-            ptr += len + 1;
-        }
-    }
-
-    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
-            ps_uniform_count, WINED3D_SHADER_TYPE_PIXEL, desc->max_version)))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup(shader);
+    if (FAILED(hr = shader_init(shader, device, desc, device->adapter->d3d_info.limits.ps_uniform_count,
+            WINED3D_SHADER_TYPE_PIXEL, parent, parent_ops)))
         return hr;
-    }
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
