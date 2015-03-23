@@ -429,10 +429,24 @@ static void test_hash_value(void)
     ok(V_I4(&hash) == ~0u, "got hash 0x%08x\n", V_I4(&hash));
 
     for (i = 0; i < sizeof(int_hash_tests)/sizeof(int_hash_tests[0]); i++) {
+        SHORT i2;
+        BYTE ui1;
+        LONG i4;
+
         expected = get_num_hash(int_hash_tests[i]);
 
         V_VT(&key) = VT_I2;
         V_I2(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        i2 = int_hash_tests[i];
+        V_VT(&key) = VT_I2|VT_BYREF;
+        V_I2REF(&key) = &i2;
         VariantInit(&hash);
         hr = IDictionary_get_HashVal(dict, &key, &hash);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -449,9 +463,29 @@ static void test_hash_value(void)
         ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
             expected);
 
+        i4 = int_hash_tests[i];
+        V_VT(&key) = VT_I4|VT_BYREF;
+        V_I4REF(&key) = &i4;
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
         expected = get_num_hash((FLOAT)(BYTE)int_hash_tests[i]);
         V_VT(&key) = VT_UI1;
         V_UI1(&key) = int_hash_tests[i];
+        VariantInit(&hash);
+        hr = IDictionary_get_HashVal(dict, &key, &hash);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
+        ok(V_I4(&hash) == expected, "%d: got hash 0x%08x, expected 0x%08x\n", i, V_I4(&hash),
+            expected);
+
+        ui1 = int_hash_tests[i];
+        V_VT(&key) = VT_UI1|VT_BYREF;
+        V_UI1REF(&key) = &ui1;
         VariantInit(&hash);
         hr = IDictionary_get_HashVal(dict, &key, &hash);
         ok(hr == S_OK, "got 0x%08x\n", hr);

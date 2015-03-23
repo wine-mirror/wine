@@ -795,14 +795,17 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_BSTR:
         V_I4(hash) = get_str_hash(get_key_strptr(key), This->method);
         break;
+    case VT_UI1|VT_BYREF:
     case VT_UI1:
-        V_I4(hash) = get_num_hash(V_UI1(key));
+        V_I4(hash) = get_num_hash(V_VT(key) & VT_BYREF ? *V_UI1REF(key) : V_UI1(key));
         break;
+    case VT_I2|VT_BYREF:
     case VT_I2:
-        V_I4(hash) = get_num_hash(V_I2(key));
+        V_I4(hash) = get_num_hash(V_VT(key) & VT_BYREF ? *V_I2REF(key) : V_I2(key));
         break;
+    case VT_I4|VT_BYREF:
     case VT_I4:
-        V_I4(hash) = get_num_hash(V_I4(key));
+        V_I4(hash) = get_num_hash(V_VT(key) & VT_BYREF ? *V_I4REF(key) : V_I4(key));
         break;
     case VT_UNKNOWN|VT_BYREF:
     case VT_DISPATCH|VT_BYREF:
