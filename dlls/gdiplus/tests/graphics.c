@@ -3813,6 +3813,128 @@ static void test_transform(void)
     }
 }
 
+static void test_pen_thickness(void)
+{
+    static const struct test_data
+    {
+        REAL res_x, res_y, scale;
+        GpUnit pen_unit, page_unit;
+        REAL pen_width;
+        INT cx, cy;
+    } td[] =
+    {
+        { 10.0, 10.0, 1.0, UnitPixel, UnitPixel, 1.0, 1, 1 },
+        { 10.0, 10.0, 3.0, UnitPixel, UnitPixel, 2.0, 2, 2 },
+        { 10.0, 10.0, 30.0, UnitPixel, UnitInch, 1.0, 1, 1 },
+        { 10.0, 10.0, 1.0, UnitWorld, UnitPixel, 1.0, 1, 1 },
+        { 10.0, 10.0, 3.0, UnitWorld, UnitPixel, 2.0, 6, 6 },
+        { 10.0, 10.0, 2.0, UnitWorld, UnitInch, 1.0, 20, 20 },
+    };
+    GpStatus status;
+    int i, j;
+    GpGraphics *graphics;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u;
+    GpPen *pen;
+    GpPointF corner;
+    BitmapData bd;
+    INT min, max, size;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        status = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat24bppRGB, NULL, &u.bitmap);
+        expect(Ok, status);
+
+        status = GdipBitmapSetResolution(u.bitmap, td[i].res_x, td[i].res_y);
+        expect(Ok, status);
+
+        status = GdipGetImageGraphicsContext(u.image, &graphics);
+        expect(Ok, status);
+
+        status = GdipSetPageUnit(graphics, td[i].page_unit);
+        expect(Ok, status);
+
+        status = GdipSetPageScale(graphics, td[i].scale);
+        expect(Ok, status);
+
+        status = GdipCreatePen1(0xffffffff, td[i].pen_width, td[i].pen_unit, &pen);
+        expect(Ok, status);
+
+        corner.X = corner.Y = 100.0;
+        status = GdipTransformPoints(graphics, CoordinateSpaceWorld, CoordinateSpaceDevice, &corner, 1);
+        expect(Ok, status);
+
+        status = GdipDrawLine(graphics, pen, corner.X/2, 0, corner.X/2, corner.Y);
+        expect(Ok, status);
+
+        status = GdipDrawLine(graphics, pen, 0, corner.Y/2, corner.X, corner.Y/2);
+        expect(Ok, status);
+
+        status = GdipBitmapLockBits(u.bitmap, NULL, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+        expect(Ok, status);
+
+        min = -1;
+        max = -2;
+
+        for (j=0; j<100; j++)
+        {
+            if (((BYTE*)bd.Scan0)[j*3] == 0xff)
+            {
+                min = j;
+                break;
+            }
+        }
+
+        for (j=99; j>=0; j--)
+        {
+            if (((BYTE*)bd.Scan0)[j*3] == 0xff)
+            {
+                max = j;
+                break;
+            }
+        }
+
+        size = max-min+1;
+
+        ok(size == td[i].cx, "%u: expected %d, got %d\n", i, td[i].cx, size);
+
+        min = -1;
+        max = -2;
+
+        for (j=0; j<100; j++)
+        {
+            if (((BYTE*)bd.Scan0)[bd.Stride*j] == 0xff)
+            {
+                min = j;
+                break;
+            }
+        }
+
+        for (j=99; j>=0; j--)
+        {
+            if (((BYTE*)bd.Scan0)[bd.Stride*j] == 0xff)
+            {
+                max = j;
+                break;
+            }
+        }
+
+        size = max-min+1;
+
+        ok(size == td[i].cy, "%u: expected %d, got %d\n", i, td[i].cy, size);
+
+        status = GdipBitmapUnlockBits(u.bitmap, &bd);
+        expect(Ok, status);
+
+        GdipDeletePen(pen);
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage(u.image);
+    }
+}
+
 /* Many people on the net ask why there is so much difference in rendered
  * text height between gdiplus and gdi32, this test suggests an answer to
  * that question. Important: this test assumes that font dpi == device dpi.
@@ -5728,6 +5850,7 @@ START_TEST(graphics)
     test_measure_string();
     test_font_height_scaling();
     test_transform();
+    test_pen_thickness();
     test_GdipMeasureString();
     test_constructor_destructor();
     test_save_restore();
