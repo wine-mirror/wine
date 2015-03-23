@@ -291,6 +291,10 @@ typedef struct macdrv_event {
             unsigned long   serial;
             void           *tried_windows;
         }                                           window_got_focus;
+        struct {
+            int     keep_frame;
+            CGRect  frame;
+        }                                           window_restore_requested;
     };
 } macdrv_event;
 

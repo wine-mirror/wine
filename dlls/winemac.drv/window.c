@@ -2139,8 +2139,28 @@ void macdrv_window_resize_ended(HWND hwnd)
  * Handler for WINDOW_RESTORE_REQUESTED events.  This is specifically
  * for restoring from maximized, not from minimized.
  */
-void macdrv_window_restore_requested(HWND hwnd)
+void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
 {
+    if (event->window_restore_requested.keep_frame && hwnd)
+    {
+        DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+        struct macdrv_win_data *data;
+
+        if ((style & WS_MAXIMIZE) && (style & WS_VISIBLE) && (data = get_win_data(hwnd)))
+        {
+            RECT rect;
+            HWND parent = GetAncestor(hwnd, GA_PARENT);
+
+            rect = rect_from_cgrect(event->window_restore_requested.frame);
+            macdrv_mac_to_window_rect(data, &rect);
+            MapWindowPoints(0, parent, (POINT *)&rect, 2);
+
+            release_win_data(data);
+
+            SetInternalWindowPos(hwnd, SW_SHOW, &rect, NULL);
+        }
+    }
+
     perform_window_command(hwnd, WS_MAXIMIZE, 0, SC_RESTORE, HTMAXBUTTON);
 }
 

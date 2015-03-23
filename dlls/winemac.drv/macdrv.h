@@ -172,7 +172,7 @@ extern void macdrv_window_minimize_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_brought_forward(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_resize_ended(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_restore_requested(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_drag_begin(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_drag_end(HWND hwnd) DECLSPEC_HIDDEN;
 extern BOOL query_resize_size(HWND hwnd, macdrv_query *query) DECLSPEC_HIDDEN;

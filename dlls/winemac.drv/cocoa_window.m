@@ -650,7 +650,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     - (BOOL) preventResizing
     {
         BOOL preventForClipping = cursor_clipping_locks_windows && [[WineApplicationController sharedController] clippingCursor];
-        return ([self styleMask] & NSResizableWindowMask) && (disabled || !resizable || maximized || preventForClipping);
+        return ([self styleMask] & NSResizableWindowMask) && (disabled || !resizable || preventForClipping);
     }
 
     - (void) adjustFeaturesForState
@@ -814,6 +814,16 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         macdrv_release_event(event);
     }
 
+    - (void) sendResizeStartQuery
+    {
+        macdrv_query* query = macdrv_create_query();
+        query->type = QUERY_RESIZE_START;
+        query->window = (macdrv_window)[self retain];
+
+        [self.queue query:query timeout:0.3];
+        macdrv_release_query(query);
+    }
+
     - (void) setMacDrvState:(const struct macdrv_window_state*)state
     {
         NSWindowCollectionBehavior behavior;
@@ -892,6 +902,9 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         {
             maximized = state->maximized;
             [self adjustFeaturesForState];
+
+            if (!maximized && [self inLiveResize])
+                [self sendResizeStartQuery];
         }
 
         behavior = NSWindowCollectionBehaviorDefault;
@@ -1797,9 +1810,12 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
     {
-        macdrv_event* event = macdrv_create_event(WINDOW_RESIZE_ENDED, self);
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        if (!maximized)
+        {
+            macdrv_event* event = macdrv_create_event(WINDOW_RESIZE_ENDED, self);
+            [queue postEvent:event];
+            macdrv_release_event(event);
+        }
 
         self.liveResizeDisplayTimer = nil;
     }
@@ -1958,6 +1974,9 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     {
         if ([self inLiveResize])
         {
+            if (maximized)
+                return self.frame.size;
+
             NSRect rect;
             macdrv_query* query;
 
@@ -1992,12 +2011,21 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) windowWillStartLiveResize:(NSNotification *)notification
     {
-        macdrv_query* query = macdrv_create_query();
-        query->type = QUERY_RESIZE_START;
-        query->window = (macdrv_window)[self retain];
+        if (maximized)
+        {
+            macdrv_event* event;
+            NSRect frame = [self contentRectForFrameRect:self.frame];
 
-        [self.queue query:query timeout:0.3];
-        macdrv_release_query(query);
+            [[WineApplicationController sharedController] flipRect:&frame];
+
+            event = macdrv_create_event(WINDOW_RESTORE_REQUESTED, self);
+            event->window_restore_requested.keep_frame = TRUE;
+            event->window_restore_requested.frame = NSRectToCGRect(frame);
+            [queue postEvent:event];
+            macdrv_release_event(event);
+        }
+        else
+            [self sendResizeStartQuery];
 
         frameAtResizeStart = [self frame];
         resizingFromLeft = resizingFromTop = FALSE;

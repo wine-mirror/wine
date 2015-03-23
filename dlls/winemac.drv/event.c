@@ -280,7 +280,7 @@ void macdrv_handle_event(const macdrv_event *event)
         macdrv_window_resize_ended(hwnd);
         break;
     case WINDOW_RESTORE_REQUESTED:
-        macdrv_window_restore_requested(hwnd);
+        macdrv_window_restore_requested(hwnd, event);
         break;
     default:
         TRACE("    ignoring\n");
