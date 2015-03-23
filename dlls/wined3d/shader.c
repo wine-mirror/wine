@@ -640,14 +640,17 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
 /* Note that this does not count the loop register as an address register. */
 static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
-        struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
+        struct wined3d_shader_signature *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
+    struct wined3d_shader_signature_element output_signature_elements[MAX_REG_OUTPUT];
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     void *fe_data = shader->frontend_data;
     struct wined3d_shader_version shader_version;
     const DWORD *ptr = byte_code;
+    unsigned int i;
 
     memset(reg_maps, 0, sizeof(*reg_maps));
+    memset(output_signature_elements, 0, sizeof(output_signature_elements));
     reg_maps->min_rel_offset = ~0U;
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
@@ -707,7 +710,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         break;
                     }
                     reg_maps->output_registers |= 1 << reg_idx;
-                    shader_signature_from_semantic(&output_signature[reg_idx], semantic);
+                    shader_signature_from_semantic(&output_signature_elements[reg_idx], semantic);
                     if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
                     break;
@@ -851,19 +854,19 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             {
                                 case 0: /* oPos */
                                     reg_maps->output_registers |= 1 << 10;
-                                    shader_signature_from_usage(&output_signature[10],
+                                    shader_signature_from_usage(&output_signature_elements[10],
                                             WINED3D_DECL_USAGE_POSITION, 0, 10, WINED3DSP_WRITEMASK_ALL);
                                     break;
 
                                 case 1: /* oFog */
                                     reg_maps->output_registers |= 1 << 11;
-                                    shader_signature_from_usage(&output_signature[11],
+                                    shader_signature_from_usage(&output_signature_elements[11],
                                             WINED3D_DECL_USAGE_FOG, 0, 11, WINED3DSP_WRITEMASK_0);
                                     break;
 
                                 case 2: /* oPts */
                                     reg_maps->output_registers |= 1 << 11;
-                                    shader_signature_from_usage(&output_signature[11],
+                                    shader_signature_from_usage(&output_signature_elements[11],
                                             WINED3D_DECL_USAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
                                     break;
                             }
@@ -875,12 +878,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                                 idx += 8;
                                 if (reg_maps->output_registers & (1 << idx))
                                 {
-                                    output_signature[idx].mask |= ins.dst[i].write_mask;
+                                    output_signature_elements[idx].mask |= ins.dst[i].write_mask;
                                 }
                                 else
                                 {
                                     reg_maps->output_registers |= 1 << idx;
-                                    shader_signature_from_usage(&output_signature[idx],
+                                    shader_signature_from_usage(&output_signature_elements[idx],
                                             WINED3D_DECL_USAGE_COLOR, idx - 8, idx, ins.dst[i].write_mask);
                                 }
                             }
@@ -891,12 +894,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             reg_maps->texcoord_mask[idx] |= ins.dst[i].write_mask;
                             if (reg_maps->output_registers & (1 << idx))
                             {
-                                output_signature[idx].mask |= ins.dst[i].write_mask;
+                                output_signature_elements[idx].mask |= ins.dst[i].write_mask;
                             }
                             else
                             {
                                 reg_maps->output_registers |= 1 << idx;
-                                shader_signature_from_usage(&output_signature[idx],
+                                shader_signature_from_usage(&output_signature_elements[idx],
                                         WINED3D_DECL_USAGE_TEXCOORD, idx, idx, ins.dst[i].write_mask);
                             }
                             break;
@@ -1044,6 +1047,32 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         reg_maps->rt_mask |= (1 << 0);
 
     shader->functionLength = ((const char *)ptr - (const char *)byte_code);
+
+    if (output_signature->elements)
+    {
+        for (i = 0; i < output_signature->element_count; ++i)
+        {
+            reg_maps->output_registers |= 1 << output_signature->elements[i].register_idx;
+        }
+    }
+    else if (reg_maps->output_registers)
+    {
+        unsigned int count = count_bits(reg_maps->output_registers);
+        struct wined3d_shader_signature_element *e;
+        unsigned int i;
+
+        if (!(output_signature->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*output_signature->elements) * count)))
+            return E_OUTOFMEMORY;
+        output_signature->element_count = count;
+
+        e = output_signature->elements;
+        for (i = 0; i < ARRAY_SIZE(output_signature_elements); ++i)
+        {
+            if (!(reg_maps->output_registers & (1 << i)))
+                continue;
+            *e++ = output_signature_elements[i];
+        }
+    }
 
     return WINED3D_OK;
 }
@@ -1765,6 +1794,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
 static void shader_cleanup(struct wined3d_shader *shader)
 {
+    HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
     shader->device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
@@ -1956,10 +1986,9 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     shader->lconst_inf_or_nan = FALSE;
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
-    hr = shader_get_registers_used(shader, fe,
-            reg_maps, shader->input_signature, shader->output_signature,
-            byte_code, float_const_count);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = shader_get_registers_used(shader, fe, reg_maps, shader->input_signature,
+            &shader->output_signature, byte_code, float_const_count)))
+        return hr;
 
     if (reg_maps->shader_version.type != type)
     {
@@ -2152,24 +2181,6 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
         return WINED3DERR_INVALIDCALL;
 
     shader_init(shader, device, parent, parent_ops);
-    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
-            vs_uniform_count, WINED3D_SHADER_TYPE_VERTEX, desc->max_version)))
-    {
-        WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup(shader);
-        return hr;
-    }
-
-    map = reg_maps->input_registers;
-    for (i = 0; map; map >>= 1, ++i)
-    {
-        if (!(map & 1) || !shader->input_signature[i].semantic_name)
-            continue;
-
-        shader->u.vs.attributes[i].usage =
-                shader_usage_from_semantic_name(shader->input_signature[i].semantic_name);
-        shader->u.vs.attributes[i].usage_idx = shader->input_signature[i].semantic_idx;
-    }
 
     if (desc->output_signature)
     {
@@ -2198,17 +2209,43 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
         }
         ptr = shader->signature_strings;
 
+        shader->output_signature.element_count = desc->output_signature->element_count;
+        if (!(shader->output_signature.elements = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*shader->output_signature.elements) * shader->output_signature.element_count)))
+        {
+            shader_cleanup(shader);
+            return E_OUTOFMEMORY;
+        }
+
         for (i = 0; i < desc->output_signature->element_count; ++i)
         {
             e = &desc->output_signature->elements[i];
-            reg_maps->output_registers |= 1 << e->register_idx;
-            shader->output_signature[e->register_idx] = *e;
+            shader->output_signature.elements[i] = *e;
 
             len = strlen(e->semantic_name);
             memcpy(ptr, e->semantic_name, len + 1);
-            shader->output_signature[e->register_idx].semantic_name = ptr;
+            shader->output_signature.elements[i].semantic_name = ptr;
             ptr += len + 1;
         }
+    }
+
+    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->output_signature,
+            vs_uniform_count, WINED3D_SHADER_TYPE_VERTEX, desc->max_version)))
+    {
+        WARN("Failed to set function, hr %#x.\n", hr);
+        shader_cleanup(shader);
+        return hr;
+    }
+
+    map = reg_maps->input_registers;
+    for (i = 0; map; map >>= 1, ++i)
+    {
+        if (!(map & 1) || !shader->input_signature[i].semantic_name)
+            continue;
+
+        shader->u.vs.attributes[i].usage =
+                shader_usage_from_semantic_name(shader->input_signature[i].semantic_name);
+        shader->u.vs.attributes[i].usage_idx = shader->input_signature[i].semantic_idx;
     }
 
     shader->load_local_constsF = (reg_maps->usesrelconstF && !list_empty(&shader->constantsF)) ||

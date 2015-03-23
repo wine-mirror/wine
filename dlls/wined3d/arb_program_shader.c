@@ -3986,7 +3986,6 @@ static void init_output_registers(const struct wined3d_shader *shader,
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
     };
-    const char *semantic_name;
     DWORD semantic_idx, reg_idx;
 
     /* Write generic input varyings 0 to 7 to result.texcoord[], varying 8 to result.color.primary
@@ -4012,47 +4011,57 @@ static void init_output_registers(const struct wined3d_shader *shader,
         priv_ctx->fog_output = "TMP_FOGCOORD";
 
         /* Map declared regs to builtins. Use "TA" to /dev/null unread output */
-        for (i = 0; i < (sizeof(shader->output_signature) / sizeof(*shader->output_signature)); ++i)
+        for (i = 0; i < shader->output_signature.element_count; ++i)
         {
-            semantic_name = shader->output_signature[i].semantic_name;
-            if (!semantic_name) continue;
+            const struct wined3d_shader_signature_element *output = &shader->output_signature.elements[i];
 
-            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION))
+            if (!output->semantic_name)
+                continue;
+
+            if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_POSITION))
             {
-                TRACE("o%u is TMP_OUT\n", i);
-                if (!shader->output_signature[i].semantic_idx) priv_ctx->vs_output[i] = "TMP_OUT";
-                else priv_ctx->vs_output[i] = "TA";
+                TRACE("o%u is TMP_OUT\n", output->register_idx);
+                if (!output->semantic_idx)
+                    priv_ctx->vs_output[output->register_idx] = "TMP_OUT";
+                else
+                    priv_ctx->vs_output[output->register_idx] = "TA";
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
+            else if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
-                TRACE("o%u is result.pointsize\n", i);
-                if (!shader->output_signature[i].semantic_idx) priv_ctx->vs_output[i] = "result.pointsize";
-                else priv_ctx->vs_output[i] = "TA";
+                TRACE("o%u is result.pointsize\n", output->register_idx);
+                if (!output->semantic_idx)
+                    priv_ctx->vs_output[output->register_idx] = "result.pointsize";
+                else
+                    priv_ctx->vs_output[output->register_idx] = "TA";
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
+            else if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_COLOR))
             {
-                TRACE("o%u is result.color.?, idx %u\n", i, shader->output_signature[i].semantic_idx);
-                if (!shader->output_signature[i].semantic_idx)
-                    priv_ctx->vs_output[i] = "result.color.primary";
-                else if (shader->output_signature[i].semantic_idx == 1)
-                    priv_ctx->vs_output[i] = "result.color.secondary";
-                else priv_ctx->vs_output[i] = "TA";
+                TRACE("o%u is result.color.?, idx %u\n", output->register_idx, output->semantic_idx);
+                if (!output->semantic_idx)
+                    priv_ctx->vs_output[output->register_idx] = "result.color.primary";
+                else if (output->semantic_idx == 1)
+                    priv_ctx->vs_output[output->register_idx] = "result.color.secondary";
+                else priv_ctx->vs_output[output->register_idx] = "TA";
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
+            else if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
             {
-                TRACE("o%u is %s\n", i, texcoords[shader->output_signature[i].semantic_idx]);
-                if (shader->output_signature[i].semantic_idx >= 8) priv_ctx->vs_output[i] = "TA";
-                else priv_ctx->vs_output[i] = texcoords[shader->output_signature[i].semantic_idx];
+                TRACE("o%u is result.texcoord[%u]\n", output->register_idx, output->semantic_idx);
+                if (output->semantic_idx >= 8)
+                    priv_ctx->vs_output[output->register_idx] = "TA";
+                else
+                    priv_ctx->vs_output[output->register_idx] = texcoords[output->semantic_idx];
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
+            else if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                TRACE("o%u is result.fogcoord\n", i);
-                if (shader->output_signature[i].semantic_idx > 0) priv_ctx->vs_output[i] = "TA";
-                else priv_ctx->vs_output[i] = "result.fogcoord";
+                TRACE("o%u is result.fogcoord\n", output->register_idx);
+                if (output->semantic_idx > 0)
+                    priv_ctx->vs_output[output->register_idx] = "TA";
+                else
+                    priv_ctx->vs_output[output->register_idx] = "result.fogcoord";
             }
             else
             {
-                priv_ctx->vs_output[i] = "TA";
+                priv_ctx->vs_output[output->register_idx] = "TA";
             }
         }
         return;
@@ -4071,6 +4080,8 @@ static void init_output_registers(const struct wined3d_shader *shader,
 
     for(i = 0; i < MAX_REG_INPUT; i++)
     {
+        const char *semantic_name;
+
         semantic_name = ps_input_sig[i].semantic_name;
         semantic_idx = ps_input_sig[i].semantic_idx;
         reg_idx = ps_input_sig[i].register_idx;
@@ -4110,23 +4121,24 @@ static void init_output_registers(const struct wined3d_shader *shader,
     }
 
     /* Map declared to declared */
-    for (i = 0; i < (sizeof(shader->output_signature) / sizeof(*shader->output_signature)); ++i)
+    for (i = 0; i < shader->output_signature.element_count; ++i)
     {
-        /* Write unread output to TA to throw them away */
-        priv_ctx->vs_output[i] = "TA";
-        semantic_name = shader->output_signature[i].semantic_name;
-        if (!semantic_name) continue;
+        const struct wined3d_shader_signature_element *output = &shader->output_signature.elements[i];
 
-        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION)
-                && !shader->output_signature[i].semantic_idx)
+        /* Write unread output to TA to throw them away */
+        priv_ctx->vs_output[output->register_idx] = "TA";
+
+        if (!output->semantic_name)
+            continue;
+
+        if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_POSITION) && !output->semantic_idx)
         {
-            priv_ctx->vs_output[i] = "TMP_OUT";
+            priv_ctx->vs_output[output->register_idx] = "TMP_OUT";
             continue;
         }
-        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE)
-                && !shader->output_signature[i].semantic_idx)
+        else if (shader_match_semantic(output->semantic_name, WINED3D_DECL_USAGE_PSIZE) && !output->semantic_idx)
         {
-            priv_ctx->vs_output[i] = "result.pointsize";
+            priv_ctx->vs_output[output->register_idx] = "result.pointsize";
             continue;
         }
 
@@ -4134,13 +4146,13 @@ static void init_output_registers(const struct wined3d_shader *shader,
         {
             if (!ps_input_sig[j].semantic_name) continue;
 
-            if (!strcmp(ps_input_sig[j].semantic_name, semantic_name)
-                    && ps_input_sig[j].semantic_idx == shader->output_signature[i].semantic_idx)
+            if (!strcmp(ps_input_sig[j].semantic_name, output->semantic_name)
+                    && ps_input_sig[j].semantic_idx == output->semantic_idx)
             {
-                priv_ctx->vs_output[i] = decl_idx_to_string[ps_input_sig[j].register_idx];
+                priv_ctx->vs_output[output->register_idx] = decl_idx_to_string[ps_input_sig[j].register_idx];
 
-                if (!strcmp(priv_ctx->vs_output[i], "result.color.primary")
-                        || !strcmp(priv_ctx->vs_output[i], "result.color.secondary"))
+                if (!strcmp(priv_ctx->vs_output[output->register_idx], "result.color.primary")
+                        || !strcmp(priv_ctx->vs_output[output->register_idx], "result.color.secondary"))
                 {
                     compiled->need_color_unclamp = TRUE;
                 }

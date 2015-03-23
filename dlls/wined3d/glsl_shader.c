@@ -4261,7 +4261,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature_element *input_signature,
         const struct wined3d_shader_reg_maps *reg_maps_in,
-        const struct wined3d_shader_signature_element *output_signature,
+        const struct wined3d_shader_signature *output_signature,
         const struct wined3d_shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
@@ -4272,7 +4272,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
     unsigned int in_count = vec4_varyings(3, gl_info);
     char reg_mask[6];
     char destination[50];
-    WORD input_map, output_map;
+    WORD input_map;
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (in_count + 2));
 
@@ -4299,24 +4299,28 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
 
         semantic_name_in = input_signature[i].semantic_name;
         semantic_idx_in = input_signature[i].semantic_idx;
-        set[in_idx] = ~0U;
+        if (!set[in_idx])
+            set[in_idx] = ~0u;
 
-        output_map = reg_maps_out->output_registers;
-        for (j = 0; output_map; output_map >>= 1, ++j)
+        for (j = 0; j < output_signature->element_count; ++j)
         {
+            const struct wined3d_shader_signature_element *output = &output_signature->elements[j];
             DWORD mask;
 
-            if (!(output_map & 1)
-                    || semantic_idx_in != output_signature[j].semantic_idx
-                    || strcmp(semantic_name_in, output_signature[j].semantic_name)
-                    || !(mask = input_signature[i].mask & output_signature[j].mask))
+            if (!(reg_maps_out->output_registers & (1 << output->register_idx))
+                    || semantic_idx_in != output->semantic_idx
+                    || strcmp(semantic_name_in, output->semantic_name)
+                    || !(mask = input_signature[i].mask & output->mask))
                 continue;
 
-            set[in_idx] = mask;
+            if (set[in_idx] == ~0u)
+                set[in_idx] = mask;
+            else
+                set[in_idx] |= mask;
             shader_glsl_write_mask_to_str(mask, reg_mask);
 
             shader_addline(buffer, "%s%s = vs_out[%u]%s;\n",
-                    destination, reg_mask, j, reg_mask);
+                    destination, reg_mask, output->register_idx, reg_mask);
         }
     }
 
@@ -4361,8 +4365,6 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
     const char *semantic_name;
     UINT semantic_idx;
     char reg_mask[6];
-    const struct wined3d_shader_signature_element *output_signature = vs->output_signature;
-    WORD map = vs->reg_maps.output_registers;
 
     shader_buffer_clear(buffer);
 
@@ -4372,30 +4374,32 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
     {
         shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
-        for (i = 0; map; map >>= 1, ++i)
+        for (i = 0; i < vs->output_signature.element_count; ++i)
         {
+            const struct wined3d_shader_signature_element *output = &vs->output_signature.elements[i];
             DWORD write_mask;
 
-            if (!(map & 1)) continue;
+            if (!(vs->reg_maps.output_registers & (1 << output->register_idx)))
+                continue;
 
-            semantic_name = output_signature[i].semantic_name;
-            semantic_idx = output_signature[i].semantic_idx;
-            write_mask = output_signature[i].mask;
+            semantic_name = output->semantic_name;
+            semantic_idx = output->semantic_idx;
+            write_mask = output->mask;
             shader_glsl_write_mask_to_str(write_mask, reg_mask);
 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
             {
                 if (!semantic_idx)
                     shader_addline(buffer, "gl_FrontColor%s = vs_out[%u]%s;\n",
-                            reg_mask, i, reg_mask);
+                            reg_mask, output->register_idx, reg_mask);
                 else if (semantic_idx == 1)
                     shader_addline(buffer, "gl_FrontSecondaryColor%s = vs_out[%u]%s;\n",
-                            reg_mask, i, reg_mask);
+                            reg_mask, output->register_idx, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
             {
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
-                        reg_mask, i, reg_mask);
+                        reg_mask, output->register_idx, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
             {
@@ -4405,18 +4409,19 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
                         write_mask |= WINED3DSP_WRITEMASK_3;
 
                     shader_addline(buffer, "gl_TexCoord[%u]%s = vs_out[%u]%s;\n",
-                            semantic_idx, reg_mask, i, reg_mask);
+                            semantic_idx, reg_mask, output->register_idx, reg_mask);
                     if (!(write_mask & WINED3DSP_WRITEMASK_3))
                         shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
                 }
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", output->register_idx, reg_mask[1]);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                shader_addline(buffer, "gl_FogFragCoord = clamp(vs_out[%u].%c, 0.0, 1.0);\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_FogFragCoord = clamp(vs_out[%u].%c, 0.0, 1.0);\n",
+                        output->register_idx, reg_mask[1]);
             }
         }
         shader_addline(buffer, "}\n");
@@ -4429,28 +4434,31 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
         shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
-        for (i = 0; map; map >>= 1, ++i)
+        for (i = 0; i < vs->output_signature.element_count; ++i)
         {
-            if (!(map & 1)) continue;
+            const struct wined3d_shader_signature_element *output = &vs->output_signature.elements[i];
 
-            semantic_name = output_signature[i].semantic_name;
-            semantic_idx = output_signature[i].semantic_idx;
-            shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask);
+            if (!(vs->reg_maps.output_registers & (1 << output->register_idx)))
+                continue;
+
+            semantic_name = output->semantic_name;
+            semantic_idx = output->semantic_idx;
+            shader_glsl_write_mask_to_str(output->mask, reg_mask);
 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
             {
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
-                        reg_mask, i, reg_mask);
+                        reg_mask, output->register_idx, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", output->register_idx, reg_mask[1]);
             }
         }
 
         /* Then, fix the pixel shader input */
         handle_ps3_input(buffer, gl_info, ps->u.ps.input_reg_map, ps->input_signature,
-                &ps->reg_maps, output_signature, &vs->reg_maps);
+                &ps->reg_maps, &vs->output_signature, &vs->reg_maps);
 
         shader_addline(buffer, "}\n");
     }

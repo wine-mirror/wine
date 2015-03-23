@@ -2932,7 +2932,7 @@ struct wined3d_shader
     BOOL lconst_inf_or_nan;
 
     struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
-    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
+    struct wined3d_shader_signature output_signature;
     char *signature_strings;
 
     /* Pointer to the parent device */
