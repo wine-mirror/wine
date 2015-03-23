@@ -2931,7 +2931,7 @@ struct wined3d_shader
     struct wined3d_shader_reg_maps reg_maps;
     BOOL lconst_inf_or_nan;
 
-    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
+    struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
     char *signature_strings;
 

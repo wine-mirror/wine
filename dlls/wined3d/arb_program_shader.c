@@ -288,7 +288,7 @@ struct shader_arb_ctx_priv
 
 struct ps_signature
 {
-    struct wined3d_shader_signature_element *sig;
+    struct wined3d_shader_signature sig;
     DWORD                               idx;
     struct wine_rb_entry                entry;
 };
@@ -3489,7 +3489,7 @@ static void init_ps_input(const struct wined3d_shader *shader,
         "fragment.texcoord[4]", "fragment.texcoord[5]", "fragment.texcoord[6]", "fragment.texcoord[7]"
     };
     unsigned int i;
-    const struct wined3d_shader_signature_element *sig = shader->input_signature;
+    const struct wined3d_shader_signature_element *input;
     const char *semantic_name;
     DWORD semantic_idx;
 
@@ -3505,38 +3505,47 @@ static void init_ps_input(const struct wined3d_shader *shader,
              * we'd either need a replacement shader that can load other attribs like BINORMAL, or
              * load the texcoord attrib pointers to match the pixel shader signature
              */
-            for(i = 0; i < MAX_REG_INPUT; i++)
+            for (i = 0; i < shader->input_signature.element_count; ++i)
             {
-                semantic_name = sig[i].semantic_name;
-                semantic_idx = sig[i].semantic_idx;
-                if (!semantic_name) continue;
+                input = &shader->input_signature.elements[i];
+                if (!(semantic_name = input->semantic_name))
+                    continue;
+                semantic_idx = input->semantic_idx;
 
                 if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
                 {
-                    if (!semantic_idx) priv->ps_input[i] = "fragment.color.primary";
-                    else if(semantic_idx == 1) priv->ps_input[i] = "fragment.color.secondary";
-                    else priv->ps_input[i] = "0.0";
+                    if (!semantic_idx)
+                        priv->ps_input[input->register_idx] = "fragment.color.primary";
+                    else if (semantic_idx == 1)
+                        priv->ps_input[input->register_idx] = "fragment.color.secondary";
+                    else
+                        priv->ps_input[input->register_idx] = "0.0";
                 }
-                else if(args->super.vp_mode == fixedfunction)
+                else if (args->super.vp_mode == fixedfunction)
                 {
-                    priv->ps_input[i] = "0.0";
+                    priv->ps_input[input->register_idx] = "0.0";
                 }
-                else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
+                else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
                 {
-                    if(semantic_idx < 8) priv->ps_input[i] = texcoords[semantic_idx];
-                    else priv->ps_input[i] = "0.0";
+                    if (semantic_idx < 8)
+                        priv->ps_input[input->register_idx] = texcoords[semantic_idx];
+                    else
+                        priv->ps_input[input->register_idx] = "0.0";
                 }
-                else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
+                else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
                 {
-                    if (!semantic_idx) priv->ps_input[i] = "fragment.fogcoord";
-                    else priv->ps_input[i] = "0.0";
+                    if (!semantic_idx)
+                        priv->ps_input[input->register_idx] = "fragment.fogcoord";
+                    else
+                        priv->ps_input[input->register_idx] = "0.0";
                 }
                 else
                 {
-                    priv->ps_input[i] = "0.0";
+                    priv->ps_input[input->register_idx] = "0.0";
                 }
 
-                TRACE("v%u, semantic %s%u is %s\n", i, semantic_name, semantic_idx, priv->ps_input[i]);
+                TRACE("v%u, semantic %s%u is %s\n", input->register_idx,
+                        semantic_name, semantic_idx, priv->ps_input[input->register_idx]);
             }
             break;
 
@@ -3910,51 +3919,68 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     return retval;
 }
 
-static int compare_sig(const struct wined3d_shader_signature_element *sig1, const struct wined3d_shader_signature_element *sig2)
+static int compare_sig(const struct wined3d_shader_signature *sig1, const struct wined3d_shader_signature *sig2)
 {
     unsigned int i;
     int ret;
 
-    for(i = 0; i < MAX_REG_INPUT; i++)
+    if (sig1->element_count != sig2->element_count)
+        return sig1->element_count < sig2->element_count ? -1 : 1;
+
+    for (i = 0; i < sig1->element_count; ++i)
     {
-        if (!sig1[i].semantic_name || !sig2[i].semantic_name)
+        const struct wined3d_shader_signature_element *e1, *e2;
+
+        e1 = &sig1->elements[i];
+        e2 = &sig2->elements[i];
+
+        if (!e1->semantic_name || !e2->semantic_name)
         {
-            /* Compare pointers, not contents. One string is NULL(element does not exist), the other one is not NULL */
-            if(sig1[i].semantic_name != sig2[i].semantic_name) return sig1[i].semantic_name < sig2[i].semantic_name ? -1 : 1;
+            /* Compare pointers, not contents. One string is NULL (element
+             * does not exist), the other one is not NULL. */
+            if (e1->semantic_name != e2->semantic_name)
+                return e1->semantic_name < e2->semantic_name ? -1 : 1;
             continue;
         }
 
-        if ((ret = strcmp(sig1[i].semantic_name, sig2[i].semantic_name))) return ret;
-        if(sig1[i].semantic_idx    != sig2[i].semantic_idx)    return sig1[i].semantic_idx    < sig2[i].semantic_idx    ? -1 : 1;
-        if(sig1[i].sysval_semantic != sig2[i].sysval_semantic) return sig1[i].sysval_semantic < sig2[i].sysval_semantic ? -1 : 1;
-        if(sig1[i].component_type  != sig2[i].component_type)  return sig1[i].component_type  < sig2[i].component_type  ? -1 : 1;
-        if(sig1[i].register_idx    != sig2[i].register_idx)    return sig1[i].register_idx    < sig2[i].register_idx    ? -1 : 1;
-        if(sig1[i].mask            != sig2[i].mask)            return sig1[i].mask            < sig2[i].mask            ? -1 : 1;
+        if ((ret = strcmp(e1->semantic_name, e2->semantic_name)))
+            return ret;
+        if (e1->semantic_idx != e2->semantic_idx)
+            return e1->semantic_idx < e2->semantic_idx ? -1 : 1;
+        if (e1->sysval_semantic != e2->sysval_semantic)
+            return e1->sysval_semantic < e2->sysval_semantic ? -1 : 1;
+        if (e1->component_type != e2->component_type)
+            return e1->component_type < e2->component_type ? -1 : 1;
+        if (e1->register_idx != e2->register_idx)
+            return e1->register_idx < e2->register_idx ? -1 : 1;
+        if (e1->mask != e2->mask)
+            return e1->mask < e2->mask ? -1 : 1;
     }
     return 0;
 }
 
-static struct wined3d_shader_signature_element *clone_sig(const struct wined3d_shader_signature_element *sig)
+static void clone_sig(struct wined3d_shader_signature *new, const struct wined3d_shader_signature *sig)
 {
-    struct wined3d_shader_signature_element *new;
-    int i;
+    unsigned int i;
     char *name;
 
-    new = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*new) * MAX_REG_INPUT);
-    for(i = 0; i < MAX_REG_INPUT; i++)
+    new->element_count = sig->element_count;
+    new->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*new->elements) * new->element_count);
+    for (i = 0; i < sig->element_count; ++i)
     {
-        if (!sig[i].semantic_name) continue;
+        new->elements[i] = sig->elements[i];
 
-        new[i] = sig[i];
+        if (!new->elements[i].semantic_name)
+            continue;
+
         /* Clone the semantic string */
-        name = HeapAlloc(GetProcessHeap(), 0, strlen(sig[i].semantic_name) + 1);
-        strcpy(name, sig[i].semantic_name);
-        new[i].semantic_name = name;
+        name = HeapAlloc(GetProcessHeap(), 0, strlen(sig->elements[i].semantic_name) + 1);
+        strcpy(name, sig->elements[i].semantic_name);
+        new->elements[i].semantic_name = name;
     }
-    return new;
 }
 
-static DWORD find_input_signature(struct shader_arb_priv *priv, const struct wined3d_shader_signature_element *sig)
+static DWORD find_input_signature(struct shader_arb_priv *priv, const struct wined3d_shader_signature *sig)
 {
     struct wine_rb_entry *entry = wine_rb_get(&priv->signature_tree, sig);
     struct ps_signature *found_sig;
@@ -3966,7 +3992,7 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
         return found_sig->idx;
     }
     found_sig = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*found_sig));
-    found_sig->sig = clone_sig(sig);
+    clone_sig(&found_sig->sig, sig);
     found_sig->idx = priv->ps_sig_number++;
     TRACE("New signature stored and assigned number %u\n", found_sig->idx);
     if(wine_rb_put(&priv->signature_tree, sig, &found_sig->entry) == -1)
@@ -3977,7 +4003,7 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
 }
 
 static void init_output_registers(const struct wined3d_shader *shader,
-        const struct wined3d_shader_signature_element *ps_input_sig,
+        const struct wined3d_shader_signature *ps_input_sig,
         struct shader_arb_ctx_priv *priv_ctx, struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
@@ -3986,8 +4012,6 @@ static void init_output_registers(const struct wined3d_shader *shader,
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
     };
-    DWORD semantic_idx, reg_idx;
-
     /* Write generic input varyings 0 to 7 to result.texcoord[], varying 8 to result.color.primary
      * and varying 9 to result.color.secondary
      */
@@ -4078,14 +4102,12 @@ static void init_output_registers(const struct wined3d_shader *shader,
     priv_ctx->color_output[1] = "TA";
     priv_ctx->fog_output = "TA";
 
-    for(i = 0; i < MAX_REG_INPUT; i++)
+    for (i = 0; i < ps_input_sig->element_count; ++i)
     {
-        const char *semantic_name;
+        const struct wined3d_shader_signature_element *input = &ps_input_sig->elements[i];
 
-        semantic_name = ps_input_sig[i].semantic_name;
-        semantic_idx = ps_input_sig[i].semantic_idx;
-        reg_idx = ps_input_sig[i].register_idx;
-        if (!semantic_name) continue;
+        if (!input->semantic_name)
+            continue;
 
         /* If a declared input register is not written by builtin arguments, don't write to it.
          * GL_NV_vertex_program makes sure the input defaults to 0.0, which is correct with D3D
@@ -4093,28 +4115,28 @@ static void init_output_registers(const struct wined3d_shader *shader,
          * Don't care about POSITION and PSIZE here - this is a builtin vertex shader, position goes
          * to TMP_OUT in any case
          */
-        if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
+        if (shader_match_semantic(input->semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
-            if (semantic_idx < 8)
-                priv_ctx->texcrd_output[semantic_idx] = decl_idx_to_string[reg_idx];
+            if (input->semantic_idx < 8)
+                priv_ctx->texcrd_output[input->semantic_idx] = decl_idx_to_string[input->register_idx];
         }
-        else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
+        else if (shader_match_semantic(input->semantic_name, WINED3D_DECL_USAGE_COLOR))
         {
-            if (semantic_idx < 2)
-                priv_ctx->color_output[semantic_idx] = decl_idx_to_string[reg_idx];
+            if (input->semantic_idx < 2)
+                priv_ctx->color_output[input->semantic_idx] = decl_idx_to_string[input->register_idx];
         }
-        else if(shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
+        else if (shader_match_semantic(input->semantic_name, WINED3D_DECL_USAGE_FOG))
         {
-            if (!semantic_idx)
-                priv_ctx->fog_output = decl_idx_to_string[reg_idx];
+            if (!input->semantic_idx)
+                priv_ctx->fog_output = decl_idx_to_string[input->register_idx];
         }
         else
         {
             continue;
         }
 
-        if (!strcmp(decl_idx_to_string[reg_idx], "result.color.primary")
-                || !strcmp(decl_idx_to_string[reg_idx], "result.color.secondary"))
+        if (!strcmp(decl_idx_to_string[input->register_idx], "result.color.primary")
+                || !strcmp(decl_idx_to_string[input->register_idx], "result.color.secondary"))
         {
             compiled->need_color_unclamp = TRUE;
         }
@@ -4142,14 +4164,17 @@ static void init_output_registers(const struct wined3d_shader *shader,
             continue;
         }
 
-        for(j = 0; j < MAX_REG_INPUT; j++)
+        for (j = 0; j < ps_input_sig->element_count; ++j)
         {
-            if (!ps_input_sig[j].semantic_name) continue;
+            const struct wined3d_shader_signature_element *input = &ps_input_sig->elements[i];
 
-            if (!strcmp(ps_input_sig[j].semantic_name, output->semantic_name)
-                    && ps_input_sig[j].semantic_idx == output->semantic_idx)
+            if (!input->semantic_name)
+                continue;
+
+            if (!strcmp(input->semantic_name, output->semantic_name)
+                    && input->semantic_idx == output->semantic_idx)
             {
-                priv_ctx->vs_output[output->register_idx] = decl_idx_to_string[ps_input_sig[j].register_idx];
+                priv_ctx->vs_output[output->register_idx] = decl_idx_to_string[input->register_idx];
 
                 if (!strcmp(priv_ctx->vs_output[output->register_idx], "result.color.primary")
                         || !strcmp(priv_ctx->vs_output[output->register_idx], "result.color.secondary"))
@@ -4165,7 +4190,7 @@ static void init_output_registers(const struct wined3d_shader *shader,
 static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled,
-        const struct wined3d_shader_signature_element *ps_input_sig)
+        const struct wined3d_shader_signature *ps_input_sig)
 {
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
@@ -4345,7 +4370,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *sh
         if (shader->reg_maps.shader_version.major < 3)
             shader_data->input_signature_idx = ~0U;
         else
-            shader_data->input_signature_idx = find_input_signature(priv, shader->input_signature);
+            shader_data->input_signature_idx = find_input_signature(priv, &shader->input_signature);
 
         TRACE("Shader got assigned input signature index %u\n", shader_data->input_signature_idx);
 
@@ -4420,7 +4445,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
 
 static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, DWORD use_map, const struct arb_vs_compile_args *args,
-        const struct wined3d_shader_signature_element *ps_input_sig)
+        const struct wined3d_shader_signature *ps_input_sig)
 {
     UINT i;
     DWORD new_size;
@@ -4717,7 +4742,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         struct wined3d_shader *vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
-        const struct wined3d_shader_signature_element *ps_input_sig;
+        const struct wined3d_shader_signature *ps_input_sig;
 
         TRACE("Using vertex shader %p\n", vs);
         find_arb_vs_compile_args(state, context, vs, &compile_args);
@@ -4728,7 +4753,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         if (compile_args.ps_signature == ~0U)
             ps_input_sig = NULL;
         else
-            ps_input_sig = state->shader[WINED3D_SHADER_TYPE_PIXEL]->input_signature;
+            ps_input_sig = &state->shader[WINED3D_SHADER_TYPE_PIXEL]->input_signature;
 
         compiled = find_arb_vshader(vs, context->gl_info, context->stream_info.use_map,
                 &compile_args, ps_input_sig);
@@ -4917,7 +4942,7 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
 static int sig_tree_compare(const void *key, const struct wine_rb_entry *entry)
 {
     struct ps_signature *e = WINE_RB_ENTRY_VALUE(entry, struct ps_signature, entry);
-    return compare_sig(key, e->sig);
+    return compare_sig(key, &e->sig);
 }
 
 static const struct wine_rb_functions sig_tree_functions =
@@ -4994,12 +5019,13 @@ fail:
 static void release_signature(struct wine_rb_entry *entry, void *context)
 {
     struct ps_signature *sig = WINE_RB_ENTRY_VALUE(entry, struct ps_signature, entry);
-    int i;
-    for(i = 0; i < MAX_REG_INPUT; i++)
+    unsigned int i;
+
+    for (i = 0; i < sig->sig.element_count; ++i)
     {
-        HeapFree(GetProcessHeap(), 0, (char *) sig->sig[i].semantic_name);
+        HeapFree(GetProcessHeap(), 0, (char *)sig->sig.elements[i].semantic_name);
     }
-    HeapFree(GetProcessHeap(), 0, sig->sig);
+    HeapFree(GetProcessHeap(), 0, sig->sig.elements);
     HeapFree(GetProcessHeap(), 0, sig);
 }
 
