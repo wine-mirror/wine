@@ -8264,7 +8264,7 @@ static void test_signed_formats(void)
             ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, format %s.\n", hr, formats[i].name);
             for (y = 0; y < 4; y++)
             {
-                memcpy((char *)surface_desc.lpSurface + y * surface_desc.lPitch,
+                memcpy((char *)surface_desc.lpSurface + y * U1(surface_desc).lPitch,
                         (char *)formats[i].content + y * 4 * formats[i].pixel_size,
                         width * formats[i].pixel_size);
             }
