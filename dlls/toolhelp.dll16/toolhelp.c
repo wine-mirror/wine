@@ -21,8 +21,6 @@
 
 #include "config.h"
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
