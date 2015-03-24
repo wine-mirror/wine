@@ -1318,7 +1318,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             goto cleanup;
 
         hr = get_file_from_strongname(assemblyname, filename, MAX_PATH);
-        if (!SUCCEEDED(hr))
+        if (FAILED(hr))
         {
             /*
              * The registry doesn't have a CodeBase entry and it's not in the GAC.
