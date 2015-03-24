@@ -304,9 +304,14 @@ static void STDMETHODCALLTYPE d3d10_device_DrawInstanced(ID3D10Device1 *iface,
         UINT instance_vertex_count, UINT instance_count,
         UINT start_vertex_location, UINT start_instance_location)
 {
-    FIXME("iface %p, instance_vertex_count %u, instance_count %u, start_vertex_location %u,\n"
-            "\tstart_instance_location %u stub!\n", iface, instance_vertex_count, instance_count,
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, instance_vertex_count %u, instance_count %u, start_vertex_location %u, "
+            "start_instance_location %u.\n", iface, instance_vertex_count, instance_count,
             start_vertex_location, start_instance_location);
+
+    wined3d_device_draw_primitive_instanced(device->wined3d_device, start_vertex_location,
+            instance_vertex_count, start_instance_location, instance_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device1 *iface,

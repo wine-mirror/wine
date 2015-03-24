@@ -3427,6 +3427,15 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
     return WINED3D_OK;
 }
 
+void CDECL wined3d_device_draw_primitive_instanced(struct wined3d_device *device,
+        UINT start_vertex, UINT vertex_count, UINT start_instance, UINT instance_count)
+{
+    TRACE("device %p, start_vertex %u, vertex_count %u, start_instance %u, instance_count %u.\n",
+            device, start_vertex, vertex_count, start_instance, instance_count);
+
+    wined3d_cs_emit_draw(device->cs, start_vertex, vertex_count, start_instance, instance_count, FALSE);
+}
+
 HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;

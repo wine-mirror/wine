@@ -74,8 +74,18 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
     }
     else
     {
-        gl_info->gl_ops.gl.p_glDrawArrays(primitive_type, start_idx, count);
-        checkGLcall("glDrawArrays");
+        if (instance_count)
+        {
+            if (start_instance)
+                FIXME("Start instance (%u) not supported.\n", start_instance);
+            GL_EXTCALL(glDrawArraysInstanced(primitive_type, start_idx, count, instance_count));
+            checkGLcall("glDrawArraysInstanced");
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glDrawArrays(primitive_type, start_idx, count);
+            checkGLcall("glDrawArrays");
+        }
     }
 }
 

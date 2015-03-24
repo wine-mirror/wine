@@ -43,6 +43,7 @@
 @ cdecl wined3d_device_draw_indexed_primitive(ptr long long)
 @ cdecl wined3d_device_draw_indexed_primitive_instanced(ptr long long long long)
 @ cdecl wined3d_device_draw_primitive(ptr long long)
+@ cdecl wined3d_device_draw_primitive_instanced(ptr long long long long)
 @ cdecl wined3d_device_end_scene(ptr)
 @ cdecl wined3d_device_end_stateblock(ptr ptr)
 @ cdecl wined3d_device_evict_managed_resources(ptr)
