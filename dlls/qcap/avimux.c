@@ -1015,7 +1015,7 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(
         IMediaSeeking *iface, const GUID *pFormat)
 {
     AviMux *This = impl_from_IMediaSeeking(iface);
-    FIXME("(%p)->(%p)\n", This, debugstr_guid(pFormat));
+    FIXME("(%p)->(%s)\n", This, debugstr_guid(pFormat));
     return E_NOTIMPL;
 }
 
