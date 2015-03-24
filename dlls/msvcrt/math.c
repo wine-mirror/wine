@@ -46,8 +46,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #endif
 #endif
 
+/* FIXME: Does not work with -NAN and -0. */
 #ifndef signbit
-#define signbit(x) 0
+#define signbit(x) ((x) < 0)
 #endif
 
 typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
@@ -88,10 +89,9 @@ float CDECL MSVCRT__chgsignf( float num )
  */
 float CDECL MSVCRT__copysignf( float num, float sign )
 {
-    /* FIXME: Behaviour for Nan/Inf? */
-    if (sign < 0.0)
-        return num < 0.0 ? num : -num;
-    return num < 0.0 ? -num : num;
+    if (signbit(sign))
+        return signbit(num) ? num : -num;
+    return signbit(num) ? -num : num;
 }
 
 /*********************************************************************
@@ -1227,10 +1227,9 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
  */
 double CDECL MSVCRT__copysign(double num, double sign)
 {
-  /* FIXME: Behaviour for Nan/Inf? */
-  if (sign < 0.0)
-    return num < 0.0 ? num : -num;
-  return num < 0.0 ? -num : num;
+  if (signbit(sign))
+    return signbit(num) ? num : -num;
+  return signbit(num) ? -num : num;
 }
 
 /*********************************************************************
