@@ -2603,6 +2603,20 @@ const char *debug_d3ddeclusage(enum wined3d_decl_usage usage)
     }
 }
 
+const char *debug_d3dinput_classification(enum wined3d_input_classification classification)
+{
+    switch (classification)
+    {
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(WINED3D_INPUT_PER_VERTEX_DATA);
+        WINED3D_TO_STR(WINED3D_INPUT_PER_INSTANCE_DATA);
+#undef WINED3D_TO_STR
+        default:
+            FIXME("Unrecognized input classification %#x.\n", classification);
+            return "unrecognized";
+    }
+}
+
 const char *debug_d3dresourcetype(enum wined3d_resource_type resource_type)
 {
     switch (resource_type)

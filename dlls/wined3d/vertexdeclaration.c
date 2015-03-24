@@ -30,13 +30,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
 
 static void dump_wined3d_vertex_element(const struct wined3d_vertex_element *element)
 {
-    TRACE("     format: %s (%#x)\n", debug_d3dformat(element->format), element->format);
-    TRACE(" input_slot: %u\n", element->input_slot);
-    TRACE("     offset: %u\n", element->offset);
-    TRACE("output_slot: %u\n", element->output_slot);
-    TRACE("     method: %s (%#x)\n", debug_d3ddeclmethod(element->method), element->method);
-    TRACE("      usage: %s (%#x)\n", debug_d3ddeclusage(element->usage), element->usage);
-    TRACE("  usage_idx: %u\n", element->usage_idx);
+    TRACE("                 format: %s (%#x)\n", debug_d3dformat(element->format), element->format);
+    TRACE("             input_slot: %u\n", element->input_slot);
+    TRACE("                 offset: %u\n", element->offset);
+    TRACE("            output_slot: %u\n", element->output_slot);
+    TRACE("       input slot class: %s\n", debug_d3dinput_classification(element->input_slot_class));
+    TRACE("instance data step rate: %u\n", element->instance_data_step_rate);
+    TRACE("                 method: %s (%#x)\n", debug_d3ddeclmethod(element->method), element->method);
+    TRACE("                  usage: %s (%#x)\n", debug_d3ddeclusage(element->usage), element->usage);
+    TRACE("              usage_idx: %u\n", element->usage_idx);
 }
 
 ULONG CDECL wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration)
@@ -197,6 +199,8 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
         e->input_slot = elements[i].input_slot;
         e->offset = elements[i].offset;
         e->output_slot = elements[i].output_slot;
+        e->input_slot_class = elements[i].input_slot_class;
+        e->instance_data_step_rate = elements[i].instance_data_step_rate;
         e->method = elements[i].method;
         e->usage = elements[i].usage;
         e->usage_idx = elements[i].usage_idx;
@@ -297,6 +301,8 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
     elements[idx].input_slot = 0;
     elements[idx].offset = offset;
     elements[idx].output_slot = WINED3D_OUTPUT_SLOT_SEMANTIC;
+    elements[idx].input_slot_class = WINED3D_INPUT_PER_VERTEX_DATA;
+    elements[idx].instance_data_step_rate = 0;
     elements[idx].method = WINED3D_DECL_METHOD_DEFAULT;
     elements[idx].usage = usage;
     elements[idx].usage_idx = usage_idx;

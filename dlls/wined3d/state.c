@@ -4105,25 +4105,20 @@ static void load_numbered_arrays(struct wined3d_context *context,
 
         stream = &state->streams[stream_info->elements[i].stream_idx];
 
-        if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
+        if ((stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA) && !context->instance_count)
+            context->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
+
+        if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {
-            if (!context->instance_count)
-                context->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
-
-            if (!gl_info->supported[ARB_INSTANCED_ARRAYS])
-            {
-                /* Unload instanced arrays, they will be loaded using
-                 * immediate mode instead. */
-                if (context->numbered_array_mask & (1 << i))
-                    unload_numbered_array(context, i);
-                continue;
-            }
-
-            GL_EXTCALL(glVertexAttribDivisor(i, 1));
+            GL_EXTCALL(glVertexAttribDivisor(i, stream_info->elements[i].divisor));
         }
-        else if (gl_info->supported[ARB_INSTANCED_ARRAYS])
+        else if (stream_info->elements[i].divisor)
         {
-            GL_EXTCALL(glVertexAttribDivisor(i, 0));
+            /* Unload instanced arrays, they will be loaded using
+             * immediate mode instead. */
+            if (context->numbered_array_mask & (1 << i))
+                unload_numbered_array(context, i);
+            continue;
         }
 
         TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, stream_info->elements[i].data.buffer_object);

@@ -981,7 +981,8 @@ struct wined3d_stream_info_element
     const struct wined3d_format *format;
     struct wined3d_bo_address data;
     GLsizei stride;
-    UINT stream_idx;
+    unsigned int stream_idx;
+    unsigned int divisor;
 };
 
 struct wined3d_stream_info
@@ -2424,7 +2425,9 @@ struct wined3d_vertex_declaration_element
     BOOL ffp_valid;
     unsigned int input_slot;
     unsigned int offset;
-    UINT output_slot;
+    unsigned int output_slot;
+    enum wined3d_input_classification input_slot_class;
+    unsigned int instance_data_step_rate;
     BYTE method;
     BYTE usage;
     BYTE usage_idx;
@@ -2764,6 +2767,7 @@ const char *debug_d3dusage(DWORD usage) DECLSPEC_HIDDEN;
 const char *debug_d3dusagequery(DWORD usagequery) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclmethod(enum wined3d_decl_method method) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclusage(enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
+const char *debug_d3dinput_classification(enum wined3d_input_classification classification) DECLSPEC_HIDDEN;
 const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 const char *debug_d3drenderstate(enum wined3d_render_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HIDDEN;

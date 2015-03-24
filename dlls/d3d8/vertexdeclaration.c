@@ -286,6 +286,8 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
             element->input_slot = stream;
             element->offset = offset;
             element->output_slot = reg;
+            element->input_slot_class = WINED3D_INPUT_PER_VERTEX_DATA;
+            element->instance_data_step_rate = 0;
             element->method = WINED3D_DECL_METHOD_DEFAULT;
             element->usage = wined3d_usage_lookup[reg].usage;
             element->usage_idx = wined3d_usage_lookup[reg].usage_idx;

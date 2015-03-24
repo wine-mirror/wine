@@ -72,14 +72,11 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
         e->input_slot = f->InputSlot;
         e->offset = f->AlignedByteOffset;
         e->output_slot = WINED3D_OUTPUT_SLOT_UNUSED;
+        e->input_slot_class = f->InputSlotClass;
+        e->instance_data_step_rate = f->InstanceDataStepRate;
         e->method = WINED3D_DECL_METHOD_DEFAULT;
         e->usage = 0;
         e->usage_idx = 0;
-
-        if (f->InputSlotClass != D3D10_INPUT_PER_VERTEX_DATA)
-            FIXME("Ignoring input slot class (%#x)\n", f->InputSlotClass);
-        if (f->InstanceDataStepRate)
-            FIXME("Ignoring instance data step rate (%#x)\n", f->InstanceDataStepRate);
 
         for (j = 0; j < is.element_count; ++j)
         {

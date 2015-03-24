@@ -2806,16 +2806,31 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
         if (stride_used)
         {
             TRACE("Load %s array %u [usage %s, usage_idx %u, "
-                    "input_slot %u, offset %u, stride %u, format %s].\n",
+                    "input_slot %u, offset %u, stride %u, format %s, class %s, step_rate %u].\n",
                     use_vshader ? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
-                    element->offset, stream->stride, debug_d3dformat(element->format->id));
+                    element->offset, stream->stride, debug_d3dformat(element->format->id),
+                    debug_d3dinput_classification(element->input_slot_class), element->instance_data_step_rate);
 
             stream_info->elements[idx].format = element->format;
             stream_info->elements[idx].data.buffer_object = 0;
             stream_info->elements[idx].data.addr = (BYTE *)NULL + stream->offset + element->offset;
             stream_info->elements[idx].stride = stream->stride;
             stream_info->elements[idx].stream_idx = element->input_slot;
+            if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
+            {
+                stream_info->elements[idx].divisor = 1;
+            }
+            else if (element->input_slot_class == WINED3D_INPUT_PER_INSTANCE_DATA)
+            {
+                stream_info->elements[idx].divisor = element->instance_data_step_rate;
+                if (!element->instance_data_step_rate)
+                    FIXME("Instance step rate 0 not implemented.\n");
+            }
+            else
+            {
+                stream_info->elements[idx].divisor = 0;
+            }
 
             if (!context->gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)

@@ -1665,12 +1665,20 @@ struct wined3d_clip_status
    DWORD clip_intersection;
 };
 
+enum wined3d_input_classification
+{
+    WINED3D_INPUT_PER_VERTEX_DATA,
+    WINED3D_INPUT_PER_INSTANCE_DATA,
+};
+
 struct wined3d_vertex_element
 {
     enum wined3d_format_id format;
     unsigned int input_slot;
     unsigned int offset;
-    UINT output_slot; /* D3D 8 & 10 */
+    unsigned int output_slot; /* D3D 8 & 10 */
+    enum wined3d_input_classification input_slot_class;
+    unsigned int instance_data_step_rate;
     BYTE method;
     BYTE usage;
     BYTE usage_idx;
