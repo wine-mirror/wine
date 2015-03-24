@@ -363,7 +363,7 @@ double CDECL MSVCRT_asin( double x )
  */
 double CDECL MSVCRT_atan( double x )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan(x);
 }
 
@@ -399,7 +399,7 @@ double CDECL MSVCRT_cosh( double x )
  */
 double CDECL MSVCRT_exp( double x )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return exp(x);
 }
 
@@ -484,7 +484,7 @@ double CDECL MSVCRT_tan( double x )
  */
 double CDECL MSVCRT_tanh( double x )
 {
-  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (isnan(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tanh(x);
 }
 
