@@ -521,20 +521,22 @@ static GpStatus alpha_blend_pixels(GpGraphics *graphics, INT dst_x, INT dst_y,
 
 static ARGB blend_colors(ARGB start, ARGB end, REAL position)
 {
-    ARGB result=0;
-    ARGB i;
-    INT a1, a2, a3;
+    INT start_a, end_a, final_a;
+    INT pos;
 
-    a1 = (start >> 24) & 0xff;
-    a2 = (end >> 24) & 0xff;
+    pos = gdip_round(position * 0xff);
 
-    a3 = (int)(a1*(1.0f - position)+a2*(position));
+    start_a = ((start >> 24) & 0xff) * (pos ^ 0xff);
+    end_a = ((end >> 24) & 0xff) * pos;
 
-    result |= a3 << 24;
+    final_a = start_a + end_a;
 
-    for (i=0xff; i<=0xff0000; i = i << 8)
-        result |= (int)((start&i)*(1.0f - position)+(end&i)*(position))&i;
-    return result;
+    if (final_a < 0xff) return 0;
+
+    return (final_a / 0xff) << 24 |
+        ((((start >> 16) & 0xff) * start_a + (((end >> 16) & 0xff) * end_a)) / final_a) << 16 |
+        ((((start >> 8) & 0xff) * start_a + (((end >> 8) & 0xff) * end_a)) / final_a) << 8 |
+        (((start & 0xff) * start_a + ((end & 0xff) * end_a)) / final_a);
 }
 
 static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
