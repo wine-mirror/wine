@@ -1045,7 +1045,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         {
             reg_maps->input_registers |= 1 << input_signature->elements[i].register_idx;
             if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL
-                    && !strcmp(input_signature->elements[i].semantic_name, "SV_POSITION"))
+                    && input_signature->elements[i].sysval_semantic == WINED3D_SV_POSITION)
                 reg_maps->vpos = 1;
         }
     }

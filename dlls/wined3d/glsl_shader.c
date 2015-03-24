@@ -4167,7 +4167,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
 
         if (vertexprocessing == vertexshader)
         {
-            if (!strcmp(semantic_name, "SV_POSITION") && !semantic_idx)
+            if (input->sysval_semantic == WINED3D_SV_POSITION)
                 shader_addline(buffer, "ps_in[%u]%s = vpos%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
             else

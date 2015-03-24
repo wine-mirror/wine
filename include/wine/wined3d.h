@@ -767,6 +767,8 @@ enum wined3d_decl_usage
 
 enum wined3d_sysval_semantic
 {
+    WINED3D_SV_POSITION = 1,
+
     WINED3D_SV_DEPTH = 0xffffffff,
     WINED3D_SV_TARGET0 = 0,
     WINED3D_SV_TARGET1 = 1,
