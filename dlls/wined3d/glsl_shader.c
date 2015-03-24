@@ -1182,11 +1182,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
     if (version->type == WINED3D_SHADER_TYPE_VERTEX)
     {
-        /* Declare attributes. */
-        for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
+        for (i = 0; i < shader->input_signature.element_count; ++i)
         {
-            if (map & 1)
-                shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, i);
+            const struct wined3d_shader_signature_element *e = &shader->input_signature.elements[i];
+            if (e->sysval_semantic == WINED3D_SV_INSTANCEID)
+                shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
+                        prefix, e->register_idx);
+            else
+                shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, e->register_idx);
         }
 
         shader_addline(buffer, "uniform vec4 posFixup;\n");
@@ -4588,6 +4591,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     shader_addline(buffer, "#version 120\n");
 
+    if (gl_info->supported[ARB_DRAW_INSTANCED])
+        shader_addline(buffer, "#extension GL_ARB_draw_instanced : enable\n");
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
