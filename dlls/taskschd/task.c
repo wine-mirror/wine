@@ -137,7 +137,7 @@ static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface,
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(description));
+    TRACE("%p,%s\n", iface, debugstr_w(description));
 
     if (!description) return E_INVALIDARG;
 
@@ -163,7 +163,7 @@ static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(author));
+    TRACE("%p,%s\n", iface, debugstr_w(author));
 
     if (!author) return E_INVALIDARG;
 
@@ -189,7 +189,7 @@ static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BST
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(version));
+    TRACE("%p,%s\n", iface, debugstr_w(version));
 
     if (!version) return E_INVALIDARG;
 
@@ -215,7 +215,7 @@ static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR d
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(date));
+    TRACE("%p,%s\n", iface, debugstr_w(date));
 
     if (!date) return E_INVALIDARG;
 
@@ -241,7 +241,7 @@ static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *ifac
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(doc));
+    TRACE("%p,%s\n", iface, debugstr_w(doc));
 
     if (!doc) return E_INVALIDARG;
 
@@ -259,7 +259,7 @@ static HRESULT WINAPI RegistrationInfo_get_XmlText(IRegistrationInfo *iface, BST
 
 static HRESULT WINAPI RegistrationInfo_put_XmlText(IRegistrationInfo *iface, BSTR xml)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(xml));
+    FIXME("%p,%s: stub\n", iface, debugstr_w(xml));
     return E_NOTIMPL;
 }
 
@@ -279,7 +279,7 @@ static HRESULT WINAPI RegistrationInfo_put_URI(IRegistrationInfo *iface, BSTR ur
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(uri));
+    TRACE("%p,%s\n", iface, debugstr_w(uri));
 
     if (!uri) return E_INVALIDARG;
 
@@ -297,7 +297,7 @@ static HRESULT WINAPI RegistrationInfo_get_SecurityDescriptor(IRegistrationInfo 
 
 static HRESULT WINAPI RegistrationInfo_put_SecurityDescriptor(IRegistrationInfo *iface, VARIANT sddl)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_variant(&sddl));
+    FIXME("%p,%s: stub\n", iface, debugstr_variant(&sddl));
     return E_NOTIMPL;
 }
 
@@ -317,7 +317,7 @@ static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR
 {
     registration_info *reginfo = impl_from_IRegistrationInfo(iface);
 
-    TRACE("%p,%p\n", iface, debugstr_w(source));
+    TRACE("%p,%s\n", iface, debugstr_w(source));
 
     if (!source) return E_INVALIDARG;
 
