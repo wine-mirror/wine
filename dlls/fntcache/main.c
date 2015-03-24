@@ -64,14 +64,14 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, void *event_d
     {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
-        WINE_TRACE( "shutting down\n" );
+        TRACE( "shutting down\n" );
         status.dwCurrentState     = SERVICE_STOP_PENDING;
         status.dwControlsAccepted = 0;
         SetServiceStatus( service_handle, &status );
         SetEvent( stop_event );
         return NO_ERROR;
     default:
-        WINE_FIXME( "got service ctrl %x\n", ctrl );
+        FIXME( "got service ctrl %x\n", ctrl );
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
         return NO_ERROR;
@@ -86,7 +86,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
     static const WCHAR fontcacheW[] = {'F','o','n','t','C','a','c','h','e',0};
     SERVICE_STATUS status;
 
-    WINE_TRACE( "starting service\n" );
+    TRACE( "starting service\n" );
 
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
@@ -108,5 +108,5 @@ VOID WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
     status.dwCurrentState     = SERVICE_STOPPED;
     status.dwControlsAccepted = 0;
     SetServiceStatus( service_handle, &status );
-    WINE_TRACE( "service stopped\n" );
+    TRACE( "service stopped\n" );
 }
