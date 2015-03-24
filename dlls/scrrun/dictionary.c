@@ -671,7 +671,7 @@ static HRESULT WINAPI dictionary_Remove(IDictionary *iface, VARIANT *key)
     dictionary *This = impl_from_IDictionary(iface);
     struct keyitem_pair *pair;
 
-    TRACE("(%p)->(%p)\n", This, debugstr_variant(key));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(key));
 
     if (!(pair = get_keyitem_pair(This, key)))
         return CTL_E_ELEMENT_NOT_FOUND;
