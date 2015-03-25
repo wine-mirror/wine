@@ -1027,74 +1027,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     msi_set_property( package->db, szBrowseProperty, szInstallDir, -1 );
 }
 
-static UINT msi_load_summary_properties( MSIPACKAGE *package )
-{
-    UINT rc;
-    MSIHANDLE suminfo;
-    MSIHANDLE hdb = alloc_msihandle( &package->db->hdr );
-    INT count;
-    DWORD len;
-    LPWSTR package_code;
-    static const WCHAR szPackageCode[] = {
-        'P','a','c','k','a','g','e','C','o','d','e',0};
-
-    if (!hdb) {
-        ERR("Unable to allocate handle\n");
-        return ERROR_OUTOFMEMORY;
-    }
-
-    rc = MsiGetSummaryInformationW( hdb, NULL, 0, &suminfo );
-    MsiCloseHandle(hdb);
-    if (rc != ERROR_SUCCESS)
-    {
-        ERR("Unable to open Summary Information\n");
-        return rc;
-    }
-
-    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_PAGECOUNT, NULL,
-                                     &count, NULL, NULL, NULL );
-    if (rc != ERROR_SUCCESS)
-    {
-        WARN("Unable to query page count: %d\n", rc);
-        goto done;
-    }
-
-    /* load package code property */
-    len = 0;
-    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
-                                     NULL, NULL, NULL, &len );
-    if (rc != ERROR_MORE_DATA)
-    {
-        WARN("Unable to query revision number: %d\n", rc);
-        rc = ERROR_FUNCTION_FAILED;
-        goto done;
-    }
-
-    len++;
-    package_code = msi_alloc( len * sizeof(WCHAR) );
-    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
-                                     NULL, NULL, package_code, &len );
-    if (rc != ERROR_SUCCESS)
-    {
-        WARN("Unable to query rev number: %d\n", rc);
-        msi_free( package_code );
-        goto done;
-    }
-
-    msi_set_property( package->db, szPackageCode, package_code, len );
-    msi_free( package_code );
-
-    /* load package attributes */
-    count = 0;
-    MsiSummaryInfoGetPropertyW( suminfo, PID_WORDCOUNT, NULL,
-                                &count, NULL, NULL, NULL );
-    package->WordCount = count;
-
-done:
-    MsiCloseHandle(suminfo);
-    return rc;
-}
-
 static MSIPACKAGE *msi_alloc_package( void )
 {
     MSIPACKAGE *package;
@@ -1187,7 +1119,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         len = sprintfW( uilevel, fmtW, gUILevel & INSTALLUILEVEL_MASK );
         msi_set_property( package->db, szUILevel, uilevel, len );
 
-        r = msi_load_summary_properties( package );
+        r = msi_load_suminfo_properties( package );
         if (r != ERROR_SUCCESS)
         {
             msiobj_release( &package->hdr );
