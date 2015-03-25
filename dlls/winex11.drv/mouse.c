@@ -815,10 +815,10 @@ static const struct system_cursors comctl32_cursors[] =
     { 102, "move" },
     { 104, "copy" },
     { 105, "left_ptr" },
-    { 106, "row-resize" },
-    { 107, "row-resize" },
+    { 106, "col-resize" },
+    { 107, "col-resize" },
     { 108, "hand2" },
-    { 135, "col-resize" },
+    { 135, "row-resize" },
     { 0 }
 };
 
@@ -876,7 +876,7 @@ static const struct cursor_font_fallback fallbacks[] =
     { "circle",              XC_circle },
     { "clock",               XC_clock },
     { "coffee_mug",          XC_coffee_mug },
-    { "col-resize",          XC_sb_v_double_arrow },
+    { "col-resize",          XC_sb_h_double_arrow },
     { "cross",               XC_cross },
     { "cross_reverse",       XC_cross_reverse },
     { "crosshair",           XC_crosshair },
@@ -913,7 +913,7 @@ static const struct cursor_font_fallback fallbacks[] =
     { "right_side",          XC_right_side },
     { "right_tee",           XC_right_tee },
     { "rightbutton",         XC_rightbutton },
-    { "row-resize",          XC_sb_h_double_arrow },
+    { "row-resize",          XC_sb_v_double_arrow },
     { "rtl_logo",            XC_rtl_logo },
     { "sailboat",            XC_sailboat },
     { "sb_down_arrow",       XC_sb_down_arrow },
