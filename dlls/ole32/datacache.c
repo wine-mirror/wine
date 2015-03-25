@@ -92,6 +92,7 @@ enum stream_type
 {
     no_stream,
     pres_stream,
+    contents_stream
 };
 
 typedef struct DataCacheEntry
@@ -1293,6 +1294,26 @@ static HRESULT parse_pres_streams( DataCache *This, IStorage *stg )
     return S_OK;
 }
 
+static const FORMATETC static_dib_fmt = { CF_DIB, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+static HRESULT parse_contents_stream( DataCache *This, IStorage *stg, IStream *stm )
+{
+    HRESULT hr;
+    STATSTG stat;
+    const FORMATETC *fmt;
+
+    hr = IStorage_Stat( stg, &stat, STATFLAG_NONAME );
+    if (FAILED( hr )) return hr;
+
+    if (IsEqualCLSID( &stat.clsid, &CLSID_Picture_Dib ))
+        fmt = &static_dib_fmt;
+    else
+        return E_FAIL;
+
+    return add_cache_entry( This, fmt, stm, contents_stream );
+}
+
+static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
 
 /************************************************************************
  * DataCache_Load (IPersistStorage)
@@ -1306,12 +1327,21 @@ static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *pStg )
 {
     DataCache *This = impl_from_IPersistStorage(iface);
     HRESULT hr;
+    IStream *stm;
 
     TRACE("(%p, %p)\n", iface, pStg);
 
     IPersistStorage_HandsOffStorage( iface );
 
-    hr = parse_pres_streams( This, pStg );
+    hr = IStorage_OpenStream( pStg, CONTENTS, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE,
+                              0, &stm );
+    if (SUCCEEDED( hr ))
+    {
+        hr = parse_contents_stream( This, pStg, stm );
+        IStream_Release( stm );
+    }
+    else
+        hr = parse_pres_streams( This, pStg );
 
     if (SUCCEEDED( hr ))
     {
