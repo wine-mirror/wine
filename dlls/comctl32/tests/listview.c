@@ -5644,6 +5644,30 @@ static void test_insertitem(void)
     DestroyWindow(hwnd);
 }
 
+static void test_header_proc(void)
+{
+    HWND hwnd, header, hdr;
+    WNDPROC proc1, proc2;
+
+    hwnd = create_listview_control(LVS_REPORT);
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(header != NULL, "got %p\n", header);
+
+    hdr = CreateWindowExA(0, WC_HEADERA, NULL,
+			     WS_BORDER|WS_VISIBLE|HDS_BUTTONS|HDS_HORZ,
+			     0, 0, 0, 0,
+			     NULL, NULL, NULL, NULL);
+    ok(hdr != NULL, "got %p\n", hdr);
+
+    proc1 = (WNDPROC)GetWindowLongPtrW(header, GWLP_WNDPROC);
+    proc2 = (WNDPROC)GetWindowLongPtrW(hdr, GWLP_WNDPROC);
+    ok(proc1 == proc2, "got %p, expected %p\n", proc1, proc2);
+
+    DestroyWindow(hdr);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -5712,6 +5736,7 @@ START_TEST(listview)
     test_imagelists();
     test_deleteitem();
     test_insertitem();
+    test_header_proc();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -5729,6 +5754,7 @@ START_TEST(listview)
     test_deleteitem();
     test_multiselect();
     test_insertitem();
+    test_header_proc();
 
     unload_v6_module(ctx_cookie, hCtx);
 
