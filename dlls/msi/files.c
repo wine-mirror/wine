@@ -77,6 +77,11 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
         TRACE("skipping %s (not scheduled for install)\n", debugstr_w(file->File));
         return msifs_skipped;
     }
+    if (!list_empty( &package->patches ) && file->disk_id < MSI_INITIAL_MEDIA_TRANSFORM_DISKID)
+    {
+        TRACE("skipping %s (not part of patch)\n", debugstr_w(file->File));
+        return msifs_skipped;
+    }
     if ((comp->assembly && !comp->assembly->application && !comp->assembly->installed) ||
         GetFileAttributesW( file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
     {
