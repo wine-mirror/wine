@@ -1679,3 +1679,75 @@ BOOL WINAPI SetupOpenLog(BOOL reserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *      SetupLogErrorA(SETUPAPI.@)
+ */
+BOOL WINAPI SetupLogErrorA(LPCSTR message, LogSeverity severity)
+{
+    static const char null[] = "(null)";
+    BOOL ret;
+    DWORD written;
+    DWORD len;
+
+    EnterCriticalSection(&setupapi_cs);
+
+    if (setupact == INVALID_HANDLE_VALUE || setuperr == INVALID_HANDLE_VALUE)
+    {
+        SetLastError(ERROR_FILE_INVALID);
+        ret = FALSE;
+        goto done;
+    }
+
+    if (message == NULL)
+        message = null;
+
+    len = lstrlenA(message);
+
+    ret = WriteFile(setupact, message, len, &written, NULL);
+    if (!ret)
+        goto done;
+
+    if (severity >= LogSevMaximum)
+    {
+        ret = FALSE;
+        goto done;
+    }
+
+    if (severity > LogSevInformation)
+        ret = WriteFile(setuperr, message, len, &written, NULL);
+
+done:
+    LeaveCriticalSection(&setupapi_cs);
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupLogErrorW(SETUPAPI.@)
+ */
+BOOL WINAPI SetupLogErrorW(LPCWSTR message, LogSeverity severity)
+{
+    LPSTR msg = NULL;
+    DWORD len;
+    BOOL ret;
+
+    if (message)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, message, -1, NULL, 0, NULL, NULL);
+        msg = HeapAlloc(GetProcessHeap(), 0, len);
+        if (msg == NULL)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+        WideCharToMultiByte(CP_ACP, 0, message, -1, msg, len, NULL, NULL);
+    }
+
+    /* This is the normal way to proceed. The log files are ASCII files
+     * and W is to be converted.
+     */
+    ret = SetupLogErrorA(msg, severity);
+
+    HeapFree(GetProcessHeap(), 0, msg);
+    return ret;
+}

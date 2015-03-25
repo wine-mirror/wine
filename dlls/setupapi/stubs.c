@@ -189,15 +189,6 @@ BOOL WINAPI RegistryDelnode(DWORD x, DWORD y)
 }
 
 /***********************************************************************
- *      SetupLogErrorW(SETUPAPI.@)
- */
-BOOL WINAPI SetupLogErrorW(LPCWSTR MessageString, LogSeverity Severity)
-{
-    FIXME("(%s, %d) stub\n", debugstr_w(MessageString), Severity);
-    return TRUE;
-}
-
-/***********************************************************************
  *      SetupPromptReboot(SETUPAPI.@)
  */
 INT WINAPI SetupPromptReboot( HSPFILEQ file_queue, HWND owner, BOOL scan_only )
