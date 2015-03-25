@@ -96,7 +96,15 @@ static void STDMETHODCALLTYPE d2d_state_block_SetDescription(ID2D1DrawingStateBl
 static void STDMETHODCALLTYPE d2d_state_block_SetTextRenderingParams(ID2D1DrawingStateBlock *iface,
         IDWriteRenderingParams *text_rendering_params)
 {
-    FIXME("iface %p, text_rendering_params %p stub!\n", iface, text_rendering_params);
+    struct d2d_state_block *state_block = impl_from_ID2D1DrawingStateBlock(iface);
+
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if (text_rendering_params)
+        IDWriteRenderingParams_AddRef(text_rendering_params);
+    if (state_block->text_rendering_params)
+        IDWriteRenderingParams_Release(state_block->text_rendering_params);
+    state_block->text_rendering_params = text_rendering_params;
 }
 
 static void STDMETHODCALLTYPE d2d_state_block_GetTextRenderingParams(ID2D1DrawingStateBlock *iface,
