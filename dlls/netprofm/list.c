@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 Hans Leidekker for CodeWeavers
+ * Copyright 2015 Michael Müller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,7 @@
 #include "objbase.h"
 #include "ocidl.h"
 #include "netlistmgr.h"
+#include "olectl.h"
 
 #include "wine/debug.h"
 #include "netprofm_private.h"
@@ -40,6 +42,14 @@ struct list_manager
     LONG                refs;
 };
 
+struct connection_point
+{
+    IConnectionPoint IConnectionPoint_iface;
+    IConnectionPointContainer *container;
+    LONG refs;
+    IID iid;
+};
+
 static inline struct list_manager *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, struct list_manager, IConnectionPointContainer_iface);
@@ -49,6 +59,151 @@ static inline struct list_manager *impl_from_INetworkCostManager(
     INetworkCostManager *iface )
 {
     return CONTAINING_RECORD( iface, struct list_manager, INetworkCostManager_iface );
+}
+
+static inline struct connection_point *impl_from_IConnectionPoint(
+    IConnectionPoint *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection_point, IConnectionPoint_iface );
+}
+
+static HRESULT WINAPI connection_point_QueryInterface(
+    IConnectionPoint *iface,
+    REFIID riid,
+    void **obj )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    TRACE( "%p, %s, %p\n", cp, debugstr_guid(riid), obj );
+
+    if (IsEqualGUID( riid, &IID_IConnectionPoint ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    IConnectionPoint_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI connection_point_AddRef(
+    IConnectionPoint *iface )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    return InterlockedIncrement( &cp->refs );
+}
+
+static ULONG WINAPI connection_point_Release(
+    IConnectionPoint *iface )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    LONG refs = InterlockedDecrement( &cp->refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", cp );
+        IConnectionPointContainer_Release( cp->container );
+        HeapFree( GetProcessHeap(), 0, cp );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI connection_point_GetConnectionInterface(
+    IConnectionPoint *iface,
+    IID *iid )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    TRACE( "%p, %p\n", cp, iid );
+
+    if (!iid)
+        return E_POINTER;
+
+    memcpy( iid, &cp->iid, sizeof(*iid) );
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_point_GetConnectionPointContainer(
+    IConnectionPoint *iface,
+    IConnectionPointContainer **container )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    TRACE( "%p, %p\n", cp, container );
+
+    if (!container)
+        return E_POINTER;
+
+    IConnectionPointContainer_AddRef( cp->container );
+    *container = cp->container;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_point_Advise(
+    IConnectionPoint *iface,
+    IUnknown *sink,
+    DWORD *cookie )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p, %p - stub\n", cp, sink, cookie );
+
+    if (!sink || !cookie)
+        return E_POINTER;
+
+    return CONNECT_E_CANNOTCONNECT;
+}
+
+static HRESULT WINAPI connection_point_Unadvise(
+    IConnectionPoint *iface,
+    DWORD cookie )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %d - stub\n", cp, cookie );
+
+    return E_POINTER;
+}
+
+static HRESULT WINAPI connection_point_EnumConnections(
+    IConnectionPoint *iface,
+    IEnumConnections **connections )
+{
+    struct connection_point *cp = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p - stub\n", cp, connections );
+
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl connection_point_vtbl =
+{
+    connection_point_QueryInterface,
+    connection_point_AddRef,
+    connection_point_Release,
+    connection_point_GetConnectionInterface,
+    connection_point_GetConnectionPointContainer,
+    connection_point_Advise,
+    connection_point_Unadvise,
+    connection_point_EnumConnections
+};
+
+static HRESULT connection_point_create(
+    IConnectionPoint **obj,
+    REFIID riid,
+    IConnectionPointContainer *container )
+{
+    struct connection_point *cp;
+    TRACE( "%p, %s, %p\n", obj, debugstr_guid(riid), container );
+
+    if (!(cp = HeapAlloc( GetProcessHeap(), 0, sizeof(*cp) ))) return E_OUTOFMEMORY;
+    cp->IConnectionPoint_iface.lpVtbl = &connection_point_vtbl;
+    cp->container = container;
+    cp->refs = 1;
+
+    memcpy( &cp->iid, riid, sizeof(*riid) );
+    IConnectionPointContainer_AddRef( container );
+
+    *obj = &cp->IConnectionPoint_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
 }
 
 static HRESULT WINAPI cost_manager_QueryInterface(
@@ -328,8 +483,19 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         REFIID riid, IConnectionPoint **cp)
 {
     struct list_manager *This = impl_from_IConnectionPointContainer( iface );
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), cp);
-    return E_NOTIMPL;
+
+    TRACE( "%p, %s, %p\n", This, debugstr_guid(riid), cp );
+
+    if (!riid || !cp)
+        return E_POINTER;
+
+    if (IsEqualGUID( riid, &IID_INetworkListManagerEvents ))
+        return connection_point_create( cp, riid, iface );
+
+    FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+
+    *cp = NULL;
+    return E_NOINTERFACE;
 }
 
 static const struct IConnectionPointContainerVtbl cpc_vtbl =

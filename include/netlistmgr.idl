@@ -29,6 +29,7 @@ interface INetwork;
 interface INetworkConnection;
 interface INetworkCostManager;
 interface INetworkListManager;
+interface INetworkListManagerEvents;
 
 typedef [v1_enum] enum NLM_CONNECTIVITY
 {
@@ -145,3 +146,15 @@ interface INetworkListManager : IDispatch
     uuid(dcb00c01-570f-4a9b-8d69-199fdba5723b)
 ]
 coclass NetworkListManager { interface INetworkListManager; }
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    uuid(DCB00001-570F-4A9B-8D69-199FDBA5723B)
+]
+interface INetworkListManagerEvents : IUnknown
+{
+    HRESULT ConnectivityChanged(
+        [in] NLM_CONNECTIVITY newConnectivity);
+}
