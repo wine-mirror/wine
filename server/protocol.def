@@ -3366,7 +3366,7 @@ enum coords_relative
     unsigned int attributes;      /* object attributes */
     unsigned int concurrent;      /* max number of concurrent active threads */
     obj_handle_t rootdir;         /* root directory */
-    VARARG(filename,string);      /* port name */
+    VARARG(filename,unicode_str); /* port name */
 @REPLY
     obj_handle_t handle;          /* port handle */
 @END
@@ -3377,7 +3377,7 @@ enum coords_relative
     unsigned int access;          /* desired access to a port */
     unsigned int attributes;      /* object attributes */
     obj_handle_t rootdir;         /* root directory */
-    VARARG(filename,string);      /* port name */
+    VARARG(filename,unicode_str); /* port name */
 @REPLY
     obj_handle_t handle;          /* port handle */
 @END

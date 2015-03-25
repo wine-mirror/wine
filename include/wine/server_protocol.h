@@ -4845,7 +4845,7 @@ struct create_completion_request
     unsigned int attributes;
     unsigned int concurrent;
     obj_handle_t rootdir;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
     char __pad_28[4];
 };
 struct create_completion_reply
@@ -4863,7 +4863,7 @@ struct open_completion_request
     unsigned int access;
     unsigned int attributes;
     obj_handle_t rootdir;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 struct open_completion_reply
 {
