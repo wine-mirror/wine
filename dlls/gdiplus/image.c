@@ -3417,6 +3417,101 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
     IWICBitmapFrameDecode_Release(frame);
 }
 
+static PropertyItem* create_prop(PROPID propid, PROPVARIANT* value)
+{
+    PropertyItem *item = NULL;
+    UINT item_size = propvariant_size(value);
+
+    if (item_size)
+    {
+        item_size += sizeof(*item);
+        item = GdipAlloc(item_size);
+        if (propvariant_to_item(value, item, item_size, propid) != Ok)
+        {
+            GdipFree(item);
+            item = NULL;
+        }
+    }
+
+    return item;
+}
+
+static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
+{
+    HRESULT hr;
+    IWICBitmapFrameDecode *frame;
+    IWICMetadataBlockReader *block_reader;
+    IWICMetadataReader *reader;
+    UINT block_count, i, j;
+    struct keyword_info {
+        const char* name;
+        PROPID propid;
+        BOOL seen;
+    } keywords[] = {
+        { "Title", PropertyTagImageTitle },
+        { "Author", PropertyTagArtist },
+        { "Description", PropertyTagImageDescription },
+        { "Copyright", PropertyTagCopyright },
+        { "Software", PropertyTagSoftwareUsed },
+        { "Source", PropertyTagEquipModel },
+        { "Comment", PropertyTagExifUserComment },
+    };
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
+    if (hr != S_OK) return;
+
+    hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
+    if (hr == S_OK)
+    {
+        hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+        if (hr == S_OK)
+        {
+            for (i = 0; i < block_count; i++)
+            {
+                hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &reader);
+                if (hr == S_OK)
+                {
+                    GUID format;
+
+                    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+                    if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunktEXt, &format))
+                    {
+                        PROPVARIANT name, value;
+                        PropertyItem* item;
+
+                        hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &name, &value);
+
+                        if (SUCCEEDED(hr))
+                        {
+                            if (name.vt == VT_LPSTR)
+                            {
+                                for (j=0; j<sizeof(keywords)/sizeof(keywords[0]); j++)
+                                    if (!strcmp(keywords[j].name, name.u.pszVal))
+                                        break;
+                                if (j < sizeof(keywords)/sizeof(keywords[0]) && !keywords[j].seen)
+                                {
+                                    keywords[j].seen = TRUE;
+                                    item = create_prop(keywords[j].propid, &value);
+                                    if (item)
+                                        add_property(bitmap, item);
+                                }
+                            }
+
+                            PropVariantClear(&name);
+                            PropVariantClear(&value);
+                        }
+                    }
+
+                    IWICMetadataReader_Release(reader);
+                }
+            }
+        }
+        IWICMetadataBlockReader_Release(block_reader);
+    }
+
+    IWICBitmapFrameDecode_Release(frame);
+}
+
 static GpStatus initialize_decoder_wic(IStream *stream, REFGUID container, IWICBitmapDecoder **decoder)
 {
     IWICImagingFactory *factory;
@@ -3805,7 +3900,7 @@ static GpStatus decode_image_jpeg(IStream* stream, GpImage **image)
 
 static GpStatus decode_image_png(IStream* stream, GpImage **image)
 {
-    return decode_image_wic(stream, &GUID_ContainerFormatPng, NULL, image);
+    return decode_image_wic(stream, &GUID_ContainerFormatPng, png_metadata_reader, image);
 }
 
 static GpStatus decode_image_gif(IStream* stream, GpImage **image)
