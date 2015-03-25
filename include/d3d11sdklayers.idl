@@ -1184,6 +1184,11 @@ typedef enum D3D11_MESSAGE_ID {
     D3D11_MESSAGE_ID_D3D11_1_MESSAGES_END
 } D3D11_MESSAGE_ID;
 
+typedef enum D3D11_RLDO_FLAGS {
+    D3D11_RLDO_SUMMARY = 1,
+    D3D11_RLDO_DETAIL = 2
+} D3D11_RLDO_FLAGS;
+
 typedef struct D3D11_MESSAGE {
     D3D11_MESSAGE_CATEGORY Category;
     D3D11_MESSAGE_SEVERITY Severity;
@@ -1207,6 +1212,24 @@ typedef struct D3D11_INFO_QUEUE_FILTER {
 } D3D11_INFO_QUEUE_FILTER;
 
 cpp_quote("#define D3D11_INFO_QUEUE_DEFAULT_MESSAGE_COUNT_LIMIT 1024")
+
+[
+    object,
+    uuid(79cf2233-7536-4948-9d36-1e4692dc5760),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11Debug : IUnknown {
+    HRESULT SetFeatureMask(UINT Mask);
+    UINT GetFeatureMask();
+    HRESULT SetPresentPerRenderOpDelay(UINT Milliseconds);
+    UINT GetPresentPerRenderOpDelay();
+    HRESULT SetSwapChain(IDXGISwapChain *pSwapChain);
+    HRESULT GetSwapChain(IDXGISwapChain **ppSwapChain);
+    HRESULT ValidateContext(ID3D11DeviceContext *pContext);
+    HRESULT ReportLiveDeviceObjects(D3D11_RLDO_FLAGS Flags);
+    HRESULT ValidateContextForDispatch(ID3D11DeviceContext *pContext);
+}
 
 [
     object,
