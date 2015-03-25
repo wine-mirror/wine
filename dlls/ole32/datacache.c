@@ -1646,6 +1646,26 @@ static HRESULT WINAPI DataCache_Draw(
 
         return S_OK;
       }
+      case CF_DIB:
+      {
+          BITMAPFILEHEADER *file_head;
+          BITMAPINFO *info;
+          BYTE *bits;
+
+          if ((cache_entry->stgmedium.tymed != TYMED_HGLOBAL) ||
+              !((file_head = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
+              continue;
+
+          info = (BITMAPINFO *)(file_head + 1);
+          bits = (BYTE *) file_head + file_head->bfOffBits;
+          StretchDIBits( hdcDraw, lprcBounds->left, lprcBounds->top,
+                         lprcBounds->right - lprcBounds->left, lprcBounds->bottom - lprcBounds->top,
+                         0, 0, info->bmiHeader.biWidth, info->bmiHeader.biHeight,
+                         bits, info, DIB_RGB_COLORS, SRCCOPY );
+
+          GlobalUnlock( cache_entry->stgmedium.u.hGlobal );
+          return S_OK;
+      }
     }
   }
 
