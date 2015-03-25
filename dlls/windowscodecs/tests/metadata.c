@@ -946,11 +946,11 @@ static void test_metadata_png(void)
         ok(IsEqualGUID(&containerformat, &GUID_ContainerFormatPng), "unexpected container format\n");
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
-        todo_wine ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
+        ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
 
         hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
-        todo_wine ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
-        todo_wine ok(count == 1, "unexpected count %d\n", count);
+        ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+        ok(count == 1, "unexpected count %d\n", count);
 
         if (0)
         {
