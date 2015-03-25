@@ -224,10 +224,8 @@ static void test_rpc_ncacn_ip_tcp(void)
     ok(status == RPC_S_OK, "return wrong\n");
 
     status = RpcMgmtStopServerListening(NULL);
-todo_wine {
     ok(status == RPC_S_NOT_LISTENING,
        "wrong RpcMgmtStopServerListening error (%u)\n", status);
-}
 
     status = RpcMgmtWaitServerListen();
     ok(status == RPC_S_NOT_LISTENING,
@@ -244,9 +242,7 @@ todo_wine {
     ok(status == RPC_S_OK, "RpcServerRegisterIf failed (%u)\n", status);
 
     status = RpcServerListen(1, 20, TRUE);
-todo_wine {
     ok(status == RPC_S_OK, "RpcServerListen failed (%u)\n", status);
-}
 
     status = RpcServerListen(1, 20, TRUE);
 todo_wine {

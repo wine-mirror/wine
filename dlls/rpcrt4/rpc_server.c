@@ -762,9 +762,18 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
   return status;
 }
 
-static void RPCRT4_stop_listen(BOOL auto_listen)
+static RPC_STATUS RPCRT4_stop_listen(BOOL auto_listen)
 {
+  RPC_STATUS status = RPC_S_OK;
+
   EnterCriticalSection(&listen_cs);
+
+  if (!std_listen)
+  {
+    status = RPC_S_NOT_LISTENING;
+    goto done;
+  }
+
   if (auto_listen || (--manual_listen_count == 0))
   {
     if (listen_count != 0 && --listen_count == 0) {
@@ -779,12 +788,14 @@ static void RPCRT4_stop_listen(BOOL auto_listen)
       EnterCriticalSection(&listen_cs);
       if (listen_done_event) SetEvent( listen_done_event );
       listen_done_event = 0;
-      LeaveCriticalSection(&listen_cs);
-      return;
+      goto done;
     }
     assert(listen_count >= 0);
   }
+
+done:
   LeaveCriticalSection(&listen_cs);
+  return status;
 }
 
 static BOOL RPCRT4_protseq_is_endpoint_registered(RpcServerProtseq *protseq, const char *endpoint)
@@ -1560,9 +1571,7 @@ RPC_STATUS WINAPI RpcMgmtStopServerListening ( RPC_BINDING_HANDLE Binding )
     return RPC_S_WRONG_KIND_OF_BINDING;
   }
   
-  RPCRT4_stop_listen(FALSE);
-
-  return RPC_S_OK;
+  return RPCRT4_stop_listen(FALSE);
 }
 
 /***********************************************************************
