@@ -362,7 +362,30 @@ typedef enum D3D11_FEATURE
     D3D11_FEATURE_FORMAT_SUPPORT,
     D3D11_FEATURE_FORMAT_SUPPORT2,
     D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS,
+    D3D11_FEATURE_D3D11_OPTIONS,
+    D3D11_FEATURE_ARCHITECTURE_INFO,
+    D3D11_FEATURE_D3D9_OPTIONS,
+    D3D11_FEATURE_SHADER_MIN_PRECISION_SUPPORT,
+    D3D11_FEATURE_D3D9_SHADOW_SUPPORT
 } D3D11_FEATURE;
+
+typedef struct D3D11_FEATURE_DATA_D3D11_OPTIONS
+{
+    BOOL OutputMergerLogicOp;
+    BOOL UAVOnlyRenderingForcedSampleCount;
+    BOOL DiscardAPIsSeenByDriver;
+    BOOL FlagsForUpdateAndCopySeenByDriver;
+    BOOL ClearView;
+    BOOL CopyWithOverlap;
+    BOOL ConstantBufferPartialUpdate;
+    BOOL ConstantBufferOffsetting;
+    BOOL MapNoOverwriteOnDynamicConstantBuffer;
+    BOOL MapNoOverwriteOnDynamicBufferSRV;
+    BOOL MultisampleRTVWithForcedSampleCountOne;
+    BOOL SAD4ShaderInstructions;
+    BOOL ExtendedDoublesShaderInstructions;
+    BOOL ExtendedResourceSharing;
+} D3D11_FEATURE_DATA_D3D11_OPTIONS;
 
 typedef enum D3D11_FILL_MODE
 {
