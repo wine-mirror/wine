@@ -26,6 +26,10 @@
 #define FUNC_NAME(func) func ## _a
 #endif
 
+#ifndef signbit
+#define signbit(x) ((x) < 0)
+#endif
+
 typedef struct FUNC_NAME(pf_flags_t)
 {
     APICHAR Sign, LeftAlign, Alternate, PadZero;
@@ -539,19 +543,23 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
             int r;
-            BOOL inf = FALSE, nan = FALSE;
+            BOOL inf = FALSE, nan = FALSE, ind = FALSE;
 
             if(isinf(val))
                 inf = TRUE;
-            else if(isnan(val))
-                nan = TRUE; /* FIXME: NaN value may be displayed as #IND or #QNAN */
+            else if(isnan(val)) {
+                if(!signbit(val))
+                    nan = TRUE;
+                else
+                    ind = TRUE;
+            }
 
-            if(inf || nan) {
-                if(nan || val<0)
+            if(inf || nan || ind) {
+                if(ind || val<0)
                     flags.Sign = '-';
 
                 if(flags.Format=='g' || flags.Format=='G')
-                    val = 1.1234; /* fraction will be overwritten with #INF or #IND string */
+                    val = (nan ? 1.12345 : 1.1234); /* fraction will be overwritten with #INF, #IND or #QNAN string */
                 else
                     val = 1;
 
@@ -592,18 +600,33 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(decimal_point) {
                 *decimal_point = *locinfo->lconv->decimal_point;
 
-                if(inf || nan) {
+                if(inf || nan || ind) {
                     static const char inf_str[] = "#INF";
                     static const char ind_str[] = "#IND";
+                    static const char nan_str[] = "#QNAN";
 
-                    for(i=1; i<(inf ? sizeof(inf_str) : sizeof(ind_str)); i++) {
+                    const char *str;
+                    int size;
+
+                    if(inf) {
+                        str = inf_str;
+                        size = sizeof(inf_str);
+                    }else if(ind) {
+                        str = ind_str;
+                        size = sizeof(ind_str);
+                    }else {
+                        str = nan_str;
+                        size = sizeof(nan_str);
+                    }
+
+                    for(i=1; i<size; i++) {
                         if(decimal_point[i]<'0' || decimal_point[i]>'9')
                             break;
 
-                        decimal_point[i] = inf ? inf_str[i-1] : ind_str[i-1];
+                        decimal_point[i] = str[i-1];
                     }
 
-                    if(i!=sizeof(inf_str) && i!=1)
+                    if(i!=size && i!=1)
                         decimal_point[i-1]++;
                 }
             }
