@@ -88,6 +88,12 @@ typedef struct PresentationDataHeader
   DWORD dwSize;
 } PresentationDataHeader;
 
+enum stream_type
+{
+    no_stream,
+    pres_stream,
+};
+
 typedef struct DataCacheEntry
 {
   struct list entry;
@@ -103,6 +109,7 @@ typedef struct DataCacheEntry
    * representation of the object is stored.
    */
   IStream *stream;
+  enum stream_type stream_type;
   /* connection ID */
   DWORD id;
   /* dirty flag */
@@ -315,6 +322,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->stgmedium.tymed = TYMED_NULL;
     (*cache_entry)->stgmedium.pUnkForRelease = NULL;
     (*cache_entry)->stream = NULL;
+    (*cache_entry)->stream_type = no_stream;
     (*cache_entry)->id = This->last_cache_id++;
     (*cache_entry)->dirty = TRUE;
     (*cache_entry)->stream_number = -1;
@@ -1214,6 +1222,78 @@ static HRESULT WINAPI DataCache_InitNew(
     return S_OK;
 }
 
+
+static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, IStream *stm,
+                                enum stream_type type )
+{
+    DataCacheEntry *cache_entry;
+    HRESULT hr = S_OK;
+
+    TRACE( "loading entry with formatetc: %s\n", debugstr_formatetc( fmt ) );
+
+    cache_entry = DataCache_GetEntryForFormatEtc( This, fmt );
+    if (!cache_entry)
+        hr = DataCache_CreateEntry( This, fmt, &cache_entry );
+    if (SUCCEEDED( hr ))
+    {
+        DataCacheEntry_DiscardData( cache_entry );
+        if (cache_entry->stream) IStream_Release( cache_entry->stream );
+        cache_entry->stream = stm;
+        IStream_AddRef( stm );
+        cache_entry->stream_type = type;
+        cache_entry->dirty = FALSE;
+    }
+    return hr;
+}
+
+static HRESULT parse_pres_streams( DataCache *This, IStorage *stg )
+{
+    HRESULT hr;
+    IEnumSTATSTG *stat_enum;
+    STATSTG stat;
+    IStream *stm;
+    PresentationDataHeader header;
+    ULONG actual_read;
+    CLIPFORMAT clipformat;
+    FORMATETC fmtetc;
+
+    hr = IStorage_EnumElements( stg, 0, NULL, 0, &stat_enum );
+    if (FAILED( hr )) return hr;
+
+    while ((hr = IEnumSTATSTG_Next( stat_enum, 1, &stat, NULL )) == S_OK)
+    {
+        if (DataCache_IsPresentationStream( &stat ))
+        {
+            hr = IStorage_OpenStream( stg, stat.pwcsName, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE,
+                                      0, &stm );
+            if (SUCCEEDED( hr ))
+            {
+                hr = read_clipformat( stm, &clipformat );
+
+                if (hr == S_OK)
+                    hr = IStream_Read( stm, &header, sizeof(header), &actual_read );
+
+                if (hr == S_OK && actual_read == sizeof(header))
+                {
+                    fmtetc.cfFormat = clipformat;
+                    fmtetc.ptd = NULL; /* FIXME */
+                    fmtetc.dwAspect = header.dvAspect;
+                    fmtetc.lindex = header.lindex;
+                    fmtetc.tymed = header.tymed;
+
+                    add_cache_entry( This, &fmtetc, stm, pres_stream );
+                }
+                IStream_Release( stm );
+            }
+        }
+        CoTaskMemFree( stat.pwcsName );
+    }
+    IEnumSTATSTG_Release( stat_enum );
+
+    return S_OK;
+}
+
+
 /************************************************************************
  * DataCache_Load (IPersistStorage)
  *
@@ -1222,86 +1302,25 @@ static HRESULT WINAPI DataCache_InitNew(
  * and it will load the presentation information when the
  * IDataObject_GetData or IViewObject2_Draw methods are called.
  */
-static HRESULT WINAPI DataCache_Load(
-            IPersistStorage* iface,
-	    IStorage*        pStg)
+static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *pStg )
 {
     DataCache *This = impl_from_IPersistStorage(iface);
-    STATSTG elem;
-    IEnumSTATSTG *pEnum;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", iface, pStg);
 
-    if (This->presentationStorage != NULL)
-      IStorage_Release(This->presentationStorage);
+    IPersistStorage_HandsOffStorage( iface );
 
-    This->presentationStorage = pStg;
+    hr = parse_pres_streams( This, pStg );
 
-    hr = IStorage_EnumElements(pStg, 0, NULL, 0, &pEnum);
-    if (FAILED(hr)) return hr;
-
-    while ((hr = IEnumSTATSTG_Next(pEnum, 1, &elem, NULL)) == S_OK)
+    if (SUCCEEDED( hr ))
     {
-	if (DataCache_IsPresentationStream(&elem))
-	{
-	    IStream *pStm;
-
-	    hr = IStorage_OpenStream(This->presentationStorage, elem.pwcsName,
-				     NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0,
-				     &pStm);
-	    if (SUCCEEDED(hr))
-	    {
-                PresentationDataHeader header;
-                ULONG actual_read;
-                CLIPFORMAT clipformat;
-
-                hr = read_clipformat(pStm, &clipformat);
-
-                if (hr == S_OK)
-                    hr = IStream_Read(pStm, &header, sizeof(header),
-                                      &actual_read);
-
-		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
-		if (hr == S_OK && actual_read == sizeof(header))
-		{
-		    DataCacheEntry *cache_entry;
-		    FORMATETC fmtetc;
-
-		    fmtetc.cfFormat = clipformat;
-		    fmtetc.ptd = NULL; /* FIXME */
-		    fmtetc.dwAspect = header.dvAspect;
-		    fmtetc.lindex = header.lindex;
-		    fmtetc.tymed = header.tymed;
-
-                    TRACE("loading entry with formatetc: %s\n", debugstr_formatetc(&fmtetc));
-
-                    cache_entry = DataCache_GetEntryForFormatEtc(This, &fmtetc);
-                    if (!cache_entry)
-                        hr = DataCache_CreateEntry(This, &fmtetc, &cache_entry);
-                    if (SUCCEEDED(hr))
-                    {
-                        DataCacheEntry_DiscardData(cache_entry);
-                        if (cache_entry->stream) IStream_Release(cache_entry->stream);
-                        cache_entry->stream = pStm;
-                        IStream_AddRef(pStm);
-                        cache_entry->dirty = FALSE;
-                    }
-		}
-
-		IStream_Release(pStm);
-	    }
-	}
-
-	CoTaskMemFree(elem.pwcsName);
+        This->dirty = FALSE;
+        This->presentationStorage = pStg;
+        IStorage_AddRef( This->presentationStorage );
     }
 
-    This->dirty = FALSE;
-
-    IEnumSTATSTG_Release(pEnum);
-
-    IStorage_AddRef(This->presentationStorage);
-    return S_OK;
+    return hr;
 }
 
 /************************************************************************
