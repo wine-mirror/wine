@@ -581,6 +581,43 @@ static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
     return hr;
 }
 
+static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
+{
+    HRESULT hr;
+    STATSTG stat;
+    void *dib;
+    HGLOBAL hglobal;
+    ULONG read;
+
+    if (cache_entry->stream_type != contents_stream)
+    {
+        FIXME( "Unimplemented for stream type %d\n", cache_entry->stream_type );
+        return E_FAIL;
+    }
+
+    hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
+    if (FAILED( hr )) return hr;
+
+    hglobal = GlobalAlloc( GMEM_MOVEABLE, stat.cbSize.u.LowPart );
+    if (!hglobal) return E_OUTOFMEMORY;
+    dib = GlobalLock( hglobal );
+
+    hr = IStream_Read( stm, dib, stat.cbSize.u.LowPart, &read );
+    GlobalUnlock( hglobal );
+
+    if (hr != S_OK || read != stat.cbSize.u.LowPart)
+    {
+        GlobalFree( hglobal );
+        return E_FAIL;
+    }
+
+    cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
+    cache_entry->stgmedium.tymed = TYMED_HGLOBAL;
+    cache_entry->stgmedium.u.hGlobal = hglobal;
+
+    return S_OK;
+}
+
 /************************************************************************
  * DataCacheEntry_LoadData
  *
@@ -606,6 +643,10 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *cache_entry)
     {
     case CF_METAFILEPICT:
         hr = load_mf_pict( cache_entry, stm );
+        break;
+
+    case CF_DIB:
+        hr = load_dib( cache_entry, stm );
         break;
 
     default:
