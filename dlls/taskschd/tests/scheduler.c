@@ -345,7 +345,7 @@ todo_wine
 
     hr = ITaskFolder_DeleteFolder(folder, Wine_Folder1_Folder2, 0);
     ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
-    ITaskFolder_DeleteFolder(folder, Wine_Folder1+1, 0);
+    hr = ITaskFolder_DeleteFolder(folder, Wine_Folder1+1, 0);
     ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
     hr = ITaskFolder_DeleteFolder(folder, Wine+1, 0);
     ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
