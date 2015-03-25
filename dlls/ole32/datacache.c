@@ -1026,12 +1026,15 @@ static HRESULT WINAPI DataCache_GetDataHere(
   return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DataCache_QueryGetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc)
+static HRESULT WINAPI DataCache_QueryGetData( IDataObject *iface, FORMATETC *fmt )
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IDataObject( iface );
+    DataCacheEntry *cache_entry;
+
+    TRACE( "(%p)->(%s)\n", iface, debugstr_formatetc( fmt ) );
+    cache_entry = DataCache_GetEntryForFormatEtc( This, fmt );
+
+    return cache_entry ? S_OK : S_FALSE;
 }
 
 /************************************************************************
