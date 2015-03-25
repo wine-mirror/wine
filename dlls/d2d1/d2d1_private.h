@@ -175,6 +175,7 @@ struct d2d_state_block
     ID2D1DrawingStateBlock ID2D1DrawingStateBlock_iface;
     LONG refcount;
 
+    D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     IDWriteRenderingParams *text_rendering_params;
 };
 
