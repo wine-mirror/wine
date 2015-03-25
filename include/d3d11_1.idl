@@ -217,7 +217,7 @@ interface ID3D11DeviceContext1 : ID3D11DeviceContext
 
     void ClearView(
             ID3D11View *pView,
-            FLOAT Color[4],
+            const FLOAT Color[4],
             const D3D11_RECT *pRect,
             UINT NumRects);
 
