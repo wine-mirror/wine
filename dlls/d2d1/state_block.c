@@ -65,7 +65,11 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_Release(ID2D1DrawingStateBlock *i
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        if (state_block->text_rendering_params)
+            IDWriteRenderingParams_Release(state_block->text_rendering_params);
         HeapFree(GetProcessHeap(), 0, state_block);
+    }
 
     return refcount;
 }
@@ -98,7 +102,12 @@ static void STDMETHODCALLTYPE d2d_state_block_SetTextRenderingParams(ID2D1Drawin
 static void STDMETHODCALLTYPE d2d_state_block_GetTextRenderingParams(ID2D1DrawingStateBlock *iface,
         IDWriteRenderingParams **text_rendering_params)
 {
-    FIXME("iface %p, text_rendering_params %p stub!\n", iface, text_rendering_params);
+    struct d2d_state_block *state_block = impl_from_ID2D1DrawingStateBlock(iface);
+
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if ((*text_rendering_params = state_block->text_rendering_params))
+        IDWriteRenderingParams_AddRef(*text_rendering_params);
 }
 
 static const struct ID2D1DrawingStateBlockVtbl d2d_state_block_vtbl =
@@ -120,4 +129,9 @@ void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWIN
 
     state_block->ID2D1DrawingStateBlock_iface.lpVtbl = &d2d_state_block_vtbl;
     state_block->refcount = 1;
+    if (text_rendering_params)
+    {
+        state_block->text_rendering_params = text_rendering_params;
+        IDWriteRenderingParams_AddRef(state_block->text_rendering_params);
+    }
 }
