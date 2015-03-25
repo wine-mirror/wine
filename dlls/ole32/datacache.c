@@ -507,6 +507,80 @@ static HRESULT DataCacheEntry_OpenPresStream(DataCacheEntry *cache_entry, IStrea
     return hr;
 }
 
+
+static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
+{
+    HRESULT hr;
+    STATSTG stat;
+    ULARGE_INTEGER current_pos;
+    void *bits;
+    METAFILEPICT *mfpict;
+    HGLOBAL hmfpict;
+    PresentationDataHeader header;
+    CLIPFORMAT clipformat;
+    static const LARGE_INTEGER offset_zero;
+    ULONG read;
+
+    if (cache_entry->stream_type != pres_stream)
+    {
+        FIXME( "Unimplemented for stream type %d\n", cache_entry->stream_type );
+        return E_FAIL;
+    }
+
+    hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
+    if (FAILED( hr )) return hr;
+
+    hr = read_clipformat( stm, &clipformat );
+    if (FAILED( hr )) return hr;
+
+    hr = IStream_Read( stm, &header, sizeof(header), &read );
+    if (hr != S_OK || read != sizeof(header)) return E_FAIL;
+
+    hr = IStream_Seek( stm, offset_zero, STREAM_SEEK_CUR, &current_pos );
+    if (FAILED( hr )) return hr;
+
+    stat.cbSize.QuadPart -= current_pos.QuadPart;
+
+    hmfpict = GlobalAlloc( GMEM_MOVEABLE, sizeof(METAFILEPICT) );
+    if (!hmfpict) return E_OUTOFMEMORY;
+    mfpict = GlobalLock( hmfpict );
+
+    bits = HeapAlloc( GetProcessHeap(), 0, stat.cbSize.u.LowPart);
+    if (!bits)
+    {
+        GlobalFree( hmfpict );
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IStream_Read( stm, bits, stat.cbSize.u.LowPart, &read );
+    if (hr != S_OK || read != stat.cbSize.u.LowPart) hr = E_FAIL;
+
+    if (SUCCEEDED( hr ))
+    {
+        /* FIXME: get this from the stream */
+        mfpict->mm = MM_ANISOTROPIC;
+        mfpict->xExt = header.dwObjectExtentX;
+        mfpict->yExt = header.dwObjectExtentY;
+        mfpict->hMF = SetMetaFileBitsEx( stat.cbSize.u.LowPart, bits );
+        if (!mfpict->hMF)
+            hr = E_FAIL;
+    }
+
+    GlobalUnlock( hmfpict );
+    if (SUCCEEDED( hr ))
+    {
+        cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
+        cache_entry->stgmedium.tymed = TYMED_MFPICT;
+        cache_entry->stgmedium.u.hMetaFilePict = hmfpict;
+    }
+    else
+        GlobalFree( hmfpict );
+
+    HeapFree( GetProcessHeap(), 0, bits );
+
+    return hr;
+}
+
 /************************************************************************
  * DataCacheEntry_LoadData
  *
@@ -522,118 +596,25 @@ static HRESULT DataCacheEntry_OpenPresStream(DataCacheEntry *cache_entry, IStrea
  */
 static HRESULT DataCacheEntry_LoadData(DataCacheEntry *cache_entry)
 {
-  IStream*      presStream = NULL;
-  HRESULT       hres;
-  ULARGE_INTEGER current_pos;
-  STATSTG       streamInfo;
-  void*         metafileBits;
-  METAFILEPICT *mfpict;
-  HGLOBAL       hmfpict;
-  PresentationDataHeader header;
-  CLIPFORMAT    clipformat;
-  static const LARGE_INTEGER offset_zero;
+    HRESULT hr;
+    IStream *stm;
 
-  /*
-   * Open the presentation stream.
-   */
-  hres = DataCacheEntry_OpenPresStream(cache_entry, &presStream);
+    hr = DataCacheEntry_OpenPresStream( cache_entry, &stm );
+    if (FAILED(hr)) return hr;
 
-  if (FAILED(hres))
-    return hres;
+    switch (cache_entry->fmtetc.cfFormat)
+    {
+    case CF_METAFILEPICT:
+        hr = load_mf_pict( cache_entry, stm );
+        break;
 
-  /*
-   * Get the size of the stream.
-   */
-  hres = IStream_Stat(presStream,
-		      &streamInfo,
-		      STATFLAG_NONAME);
-  if (FAILED(hres))
-  {
-      IStream_Release(presStream);
-      return hres;
-  }
+    default:
+        FIXME( "Unimplemented clip format %x\n", cache_entry->fmtetc.cfFormat );
+        hr = E_NOTIMPL;
+    }
 
-  /*
-   * Read the header.
-   */
-
-  hres = read_clipformat(presStream, &clipformat);
-  if (FAILED(hres))
-  {
-      IStream_Release(presStream);
-      return hres;
-  }
-
-  hres = IStream_Read(
-                      presStream,
-                      &header,
-                      sizeof(PresentationDataHeader),
-                      NULL);
-  if (hres != S_OK)
-  {
-      IStream_Release(presStream);
-      return E_FAIL;
-  }
-
-  hres = IStream_Seek(presStream, offset_zero, STREAM_SEEK_CUR, &current_pos);
-
-  streamInfo.cbSize.QuadPart -= current_pos.QuadPart;
-
-  hmfpict = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
-  if (!hmfpict)
-  {
-      IStream_Release(presStream);
-      return E_OUTOFMEMORY;
-  }
-  mfpict = GlobalLock(hmfpict);
-
-  /*
-   * Allocate a buffer for the metafile bits.
-   */
-  metafileBits = HeapAlloc(GetProcessHeap(),
-			   0,
-			   streamInfo.cbSize.u.LowPart);
-
-  /*
-   * Read the metafile bits.
-   */
-  hres = IStream_Read(
-	   presStream,
-	   metafileBits,
-	   streamInfo.cbSize.u.LowPart,
-	   NULL);
-
-  /*
-   * Create a metafile with those bits.
-   */
-  if (SUCCEEDED(hres))
-  {
-    /* FIXME: get this from the stream */
-    mfpict->mm = MM_ANISOTROPIC;
-    mfpict->xExt = header.dwObjectExtentX;
-    mfpict->yExt = header.dwObjectExtentY;
-    mfpict->hMF = SetMetaFileBitsEx(streamInfo.cbSize.u.LowPart, metafileBits);
-    if (!mfpict->hMF)
-      hres = E_FAIL;
-  }
-
-  GlobalUnlock(hmfpict);
-  if (SUCCEEDED(hres))
-  {
-    cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
-    cache_entry->stgmedium.tymed = TYMED_MFPICT;
-    cache_entry->stgmedium.u.hMetaFilePict = hmfpict;
-  }
-  else
-    GlobalFree(hmfpict);
-
-  /*
-   * Cleanup.
-   */
-  HeapFree(GetProcessHeap(), 0, metafileBits);
-  IStream_Release(presStream);
-
-  return hres;
+    IStream_Release( stm );
+    return hr;
 }
 
 static HRESULT DataCacheEntry_CreateStream(DataCacheEntry *cache_entry,
