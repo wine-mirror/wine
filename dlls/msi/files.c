@@ -72,7 +72,7 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
     DWORD size;
 
     comp->Action = msi_get_component_action( package, comp );
-    if (comp->Action != INSTALLSTATE_LOCAL || (comp->assembly && comp->assembly->installed))
+    if (!comp->Enabled || comp->Action != INSTALLSTATE_LOCAL || (comp->assembly && comp->assembly->installed))
     {
         TRACE("skipping %s (not scheduled for install)\n", debugstr_w(file->File));
         return msifs_skipped;
@@ -353,7 +353,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             rc = ERROR_FUNCTION_FAILED;
             goto done;
         }
-        if (!file->Component->Enabled) continue;
 
         if (file->state != msifs_hashmatch &&
             file->state != msifs_skipped &&
