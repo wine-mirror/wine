@@ -193,7 +193,6 @@ typedef struct tagMSIPATCHINFO
     MSIPATCHSTATE state;
     BOOL delete_on_close;
     UINT disk_id;
-    UINT last_sequence;
 } MSIPATCHINFO;
 
 typedef struct tagMSIBINARY

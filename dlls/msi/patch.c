@@ -741,7 +741,7 @@ static UINT patch_add_media( MSIPACKAGE *package, IStorage *storage, MSIPATCHINF
 
         disk_id = package->db->media_transform_disk_id;
         TRACE("disk id       %u\n", disk_id);
-        TRACE("last sequence %u\n", patch->last_sequence);
+        TRACE("last sequence %u\n", media->last_sequence);
         TRACE("prompt        %s\n", debugstr_w(media->prompt));
         TRACE("cabinet       %s\n", debugstr_w(media->cabinet));
         TRACE("volume        %s\n", debugstr_w(media->volume));
@@ -749,7 +749,7 @@ static UINT patch_add_media( MSIPACKAGE *package, IStorage *storage, MSIPATCHINF
 
         rec = MSI_CreateRecord( 6 );
         MSI_RecordSetInteger( rec, 1, disk_id );
-        MSI_RecordSetInteger( rec, 2, patch->last_sequence );
+        MSI_RecordSetInteger( rec, 2, media->last_sequence );
         MSI_RecordSetStringW( rec, 3, media->prompt );
         MSI_RecordSetStringW( rec, 4, media->cabinet );
         MSI_RecordSetStringW( rec, 5, media->volume );
@@ -828,7 +828,6 @@ static UINT patch_set_offsets( MSIDATABASE *db, MSIPATCHINFO *patch )
         if (r != ERROR_SUCCESS)
             ERR("Failed to update Media table entry, expect breakage (%u)\n", r);
 
-        patch->last_sequence = last_sequence;
         db->media_transform_offset = last_sequence + 1;
 
         patch_offset_list_free( pos );
