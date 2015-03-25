@@ -340,7 +340,6 @@ WCHAR *msi_resolve_file_source( MSIPACKAGE *package, MSIFILE *file )
 UINT ACTION_InstallFiles(MSIPACKAGE *package)
 {
     MSIMEDIAINFO *mi;
-    MSICOMPONENT *comp;
     UINT rc = ERROR_SUCCESS;
     MSIFILE *file;
 
@@ -418,18 +417,19 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             goto done;
         }
     }
-    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        comp->Action = msi_get_component_action( package, comp );
-        if (comp->Action == INSTALLSTATE_LOCAL && comp->assembly && !comp->assembly->installed)
+        MSICOMPONENT *comp = file->Component;
+
+        if (!comp->assembly || (file->state != msifs_missing && file->state != msifs_overwrite))
+            continue;
+
+        rc = msi_install_assembly( package, comp );
+        if (rc != ERROR_SUCCESS)
         {
-            rc = msi_install_assembly( package, comp );
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Failed to install assembly\n");
-                rc = ERROR_INSTALL_FAILURE;
-                break;
-            }
+            ERR("Failed to install assembly\n");
+            rc = ERROR_INSTALL_FAILURE;
+            break;
         }
     }
 
