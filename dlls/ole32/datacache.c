@@ -98,11 +98,11 @@ typedef struct DataCacheEntry
   /* cached data */
   STGMEDIUM stgmedium;
   /*
-   * This storage pointer is set through a call to
+   * This stream pointer is set through a call to
    * IPersistStorage_Load. This is where the visual
    * representation of the object is stored.
    */
-  IStorage *storage;
+  IStream *stream;
   /* connection ID */
   DWORD id;
   /* dirty flag */
@@ -218,8 +218,8 @@ static const char * debugstr_formatetc(const FORMATETC *formatetc)
 static void DataCacheEntry_Destroy(DataCache *cache, DataCacheEntry *cache_entry)
 {
     list_remove(&cache_entry->entry);
-    if (cache_entry->storage)
-        IStorage_Release(cache_entry->storage);
+    if (cache_entry->stream)
+        IStream_Release(cache_entry->stream);
     HeapFree(GetProcessHeap(), 0, cache_entry->fmtetc.ptd);
     ReleaseStgMedium(&cache_entry->stgmedium);
     if(cache_entry->sink_id)
@@ -314,7 +314,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->data_cf = 0;
     (*cache_entry)->stgmedium.tymed = TYMED_NULL;
     (*cache_entry)->stgmedium.pUnkForRelease = NULL;
-    (*cache_entry)->storage = NULL;
+    (*cache_entry)->stream = NULL;
     (*cache_entry)->id = This->last_cache_id++;
     (*cache_entry)->dirty = TRUE;
     (*cache_entry)->stream_number = -1;
@@ -477,63 +477,25 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
  */
 static HRESULT DataCacheEntry_OpenPresStream(DataCacheEntry *cache_entry, IStream **ppStm)
 {
-    STATSTG elem;
-    IEnumSTATSTG *pEnum;
     HRESULT hr;
+    LARGE_INTEGER offset;
 
-    if (!ppStm) return E_POINTER;
-
-    hr = IStorage_EnumElements(cache_entry->storage, 0, NULL, 0, &pEnum);
-    if (FAILED(hr)) return hr;
-
-    while ((hr = IEnumSTATSTG_Next(pEnum, 1, &elem, NULL)) == S_OK)
+    if (cache_entry->stream)
     {
-	if (DataCache_IsPresentationStream(&elem))
-	{
-	    IStream *pStm;
+        /* Rewind the stream before returning it. */
+        offset.QuadPart = 0;
 
-	    hr = IStorage_OpenStream(cache_entry->storage, elem.pwcsName,
-				     NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0,
-				     &pStm);
-	    if (SUCCEEDED(hr))
-	    {
-		PresentationDataHeader header;
-		ULONG actual_read;
-                CLIPFORMAT clipformat;
-
-                hr = read_clipformat(pStm, &clipformat);
-
-                if (hr == S_OK)
-                    hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
-
-		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
-		if (hr == S_OK && actual_read == sizeof(header)
-		    && header.dvAspect == cache_entry->fmtetc.dwAspect)
-		{
-		    /* Rewind the stream before returning it. */
-		    LARGE_INTEGER offset;
-		    offset.u.LowPart = 0;
-		    offset.u.HighPart = 0;
-		    IStream_Seek(pStm, offset, STREAM_SEEK_SET, NULL);
-
-		    *ppStm = pStm;
-
-		    CoTaskMemFree(elem.pwcsName);
-		    IEnumSTATSTG_Release(pEnum);
-
-		    return S_OK;
-		}
-
-		IStream_Release(pStm);
-	    }
-	}
-
-	CoTaskMemFree(elem.pwcsName);
+        hr = IStream_Seek( cache_entry->stream, offset, STREAM_SEEK_SET, NULL );
+        if (SUCCEEDED( hr ))
+        {
+            *ppStm = cache_entry->stream;
+            IStream_AddRef( cache_entry->stream );
+        }
     }
+    else
+        hr = OLE_E_BLANK;
 
-    IEnumSTATSTG_Release(pEnum);
-
-    return (hr == S_FALSE ? OLE_E_BLANK : hr);
+    return hr;
 }
 
 /************************************************************************
@@ -841,7 +803,7 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
 
 static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, STGMEDIUM *stgmedium)
 {
-    if (stgmedium->tymed == TYMED_NULL && cache_entry->storage)
+    if (stgmedium->tymed == TYMED_NULL && cache_entry->stream)
     {
         HRESULT hr = DataCacheEntry_LoadData(cache_entry);
         if (FAILED(hr))
@@ -861,10 +823,10 @@ static inline HRESULT DataCacheEntry_DiscardData(DataCacheEntry *cache_entry)
 
 static inline void DataCacheEntry_HandsOffStorage(DataCacheEntry *cache_entry)
 {
-    if (cache_entry->storage)
+    if (cache_entry->stream)
     {
-        IStorage_Release(cache_entry->storage);
-        cache_entry->storage = NULL;
+        IStream_Release(cache_entry->stream);
+        cache_entry->stream = NULL;
     }
 }
 
@@ -1320,9 +1282,9 @@ static HRESULT WINAPI DataCache_Load(
                     if (SUCCEEDED(hr))
                     {
                         DataCacheEntry_DiscardData(cache_entry);
-                        if (cache_entry->storage) IStorage_Release(cache_entry->storage);
-                        cache_entry->storage = pStg;
-                        IStorage_AddRef(pStg);
+                        if (cache_entry->stream) IStream_Release(cache_entry->stream);
+                        cache_entry->stream = pStm;
+                        IStream_AddRef(pStm);
                         cache_entry->dirty = FALSE;
                     }
 		}
@@ -1542,7 +1504,7 @@ static HRESULT WINAPI DataCache_Draw(
       continue;
 
     /* if the data hasn't been loaded yet, do it now */
-    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->storage)
+    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->stream)
     {
       hres = DataCacheEntry_LoadData(cache_entry);
       if (FAILED(hres))
@@ -1784,7 +1746,7 @@ static HRESULT WINAPI DataCache_GetExtent(
       continue;
 
     /* if the data hasn't been loaded yet, do it now */
-    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->storage)
+    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->stream)
     {
       hres = DataCacheEntry_LoadData(cache_entry);
       if (FAILED(hres))
