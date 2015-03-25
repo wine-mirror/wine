@@ -1182,34 +1182,28 @@ static ULONG WINAPI DataCache_IPersistStorage_Release(
 /************************************************************************
  * DataCache_GetClassID (IPersistStorage)
  *
- * The data cache doesn't implement this method.
  */
-static HRESULT WINAPI DataCache_GetClassID(
-            IPersistStorage* iface,
-	    CLSID*           pClassID)
+static HRESULT WINAPI DataCache_GetClassID(IPersistStorage *iface, CLSID *clsid)
 {
-  DataCache *This = impl_from_IPersistStorage(iface);
-  DataCacheEntry *cache_entry;
+    DataCache *This = impl_from_IPersistStorage( iface );
+    HRESULT hr;
+    STATSTG statstg;
 
-  TRACE("(%p, %p)\n", iface, pClassID);
+    TRACE( "(%p, %p)\n", iface, clsid );
 
-  LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
-  {
-    if (cache_entry->storage != NULL)
+    if (This->presentationStorage)
     {
-      STATSTG statstg;
-      HRESULT hr = IStorage_Stat(cache_entry->storage, &statstg, STATFLAG_NONAME);
-      if (SUCCEEDED(hr))
-      {
-        *pClassID = statstg.clsid;
-        return S_OK;
-      }
+        hr = IStorage_Stat( This->presentationStorage, &statstg, STATFLAG_NONAME );
+        if (SUCCEEDED(hr))
+        {
+            *clsid = statstg.clsid;
+            return S_OK;
+        }
     }
-  }
 
-  *pClassID = CLSID_NULL;
+    *clsid = CLSID_NULL;
 
-  return S_OK;
+    return S_OK;
 }
 
 /************************************************************************
