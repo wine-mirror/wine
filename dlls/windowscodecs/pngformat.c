@@ -1062,8 +1062,51 @@ static HRESULT WINAPI PngDecoder_Block_GetCount(IWICMetadataBlockReader *iface,
 static HRESULT WINAPI PngDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
     UINT nIndex, IWICMetadataReader **ppIMetadataReader)
 {
-    FIXME("%p,%d,%p\n", iface, nIndex, ppIMetadataReader);
-    return E_NOTIMPL;
+    PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
+    HRESULT hr;
+    IWICComponentFactory* factory;
+    IWICStream* stream;
+
+    TRACE("%p,%d,%p\n", iface, nIndex, ppIMetadataReader);
+
+    if (nIndex >= This->metadata_count || !ppIMetadataReader)
+        return E_INVALIDARG;
+
+    if (!This->metadata_blocks[nIndex].reader)
+    {
+        hr = StreamImpl_Create(&stream);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICStream_InitializeFromIStreamRegion(stream, This->stream,
+                This->metadata_blocks[nIndex].ofs, This->metadata_blocks[nIndex].len);
+
+            if (SUCCEEDED(hr))
+                hr = ComponentFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+                    &GUID_ContainerFormatPng, NULL, WICMetadataCreationAllowUnknown,
+                    (IStream*)stream, &This->metadata_blocks[nIndex].reader);
+
+                IWICComponentFactory_Release(factory);
+            }
+
+            IWICStream_Release(stream);
+        }
+
+        if (FAILED(hr))
+        {
+            *ppIMetadataReader = NULL;
+            return hr;
+        }
+    }
+
+    *ppIMetadataReader = This->metadata_blocks[nIndex].reader;
+    IWICMetadataReader_AddRef(*ppIMetadataReader);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_Block_GetEnumerator(IWICMetadataBlockReader *iface,

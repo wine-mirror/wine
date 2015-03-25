@@ -960,19 +960,19 @@ static void test_metadata_png(void)
         }
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
-        todo_wine ok(hr == S_OK, "GetReaderByIndex failed, hr=%x\n", hr);
+        ok(hr == S_OK, "GetReaderByIndex failed, hr=%x\n", hr);
 
         if (SUCCEEDED(hr))
         {
             hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
             ok(hr == S_OK, "GetMetadataFormat failed, hr=%#x\n", hr);
-            ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
+            todo_wine ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
                broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
                "unexpected container format\n");
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#x\n", hr);
-            ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
+            todo_wine ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
             if (count == 6)
                 compare_metadata(reader, td, count);
 
