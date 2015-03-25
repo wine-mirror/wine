@@ -1488,8 +1488,12 @@ static WCHAR *get_package_code( MSIDATABASE *db )
     r = msi_get_suminfo( db->storage, 0, &si );
     if (r != ERROR_SUCCESS)
     {
-        WARN("failed to load summary info %u\n", r);
-        return NULL;
+        r = msi_get_db_suminfo( db, 0, &si );
+        if (r != ERROR_SUCCESS)
+        {
+            WARN("failed to load summary info %u\n", r);
+            return NULL;
+        }
     }
     ret = msi_suminfo_dup_string( si, PID_REVNUMBER );
     msiobj_release( &si->hdr );
@@ -1638,9 +1642,13 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     r = msi_get_suminfo( db->storage, 0, &si );
     if (r != ERROR_SUCCESS)
     {
-        WARN("failed to load summary info\n");
-        msiobj_release( &package->hdr );
-        return ERROR_INSTALL_PACKAGE_INVALID;
+        r = msi_get_db_suminfo( db, 0, &si );
+        if (r != ERROR_SUCCESS)
+        {
+            WARN("failed to load summary info\n");
+            msiobj_release( &package->hdr );
+            return ERROR_INSTALL_PACKAGE_INVALID;
+        }
     }
     r = parse_suminfo( si, package );
     msiobj_release( &si->hdr );

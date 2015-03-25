@@ -469,7 +469,7 @@ UINT msi_get_suminfo( IStorage *stg, UINT uiUpdateCount, MSISUMMARYINFO **ret )
     return ERROR_SUCCESS;
 }
 
-static UINT get_db_suminfo( MSIDATABASE *db, UINT uiUpdateCount, MSISUMMARYINFO **ret )
+UINT msi_get_db_suminfo( MSIDATABASE *db, UINT uiUpdateCount, MSISUMMARYINFO **ret )
 {
     IStream *stm;
     MSISUMMARYINFO *si;
@@ -547,7 +547,7 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
 
     ret = msi_get_suminfo( db->storage, uiUpdateCount, &si );
     if (ret != ERROR_SUCCESS)
-        ret = get_db_suminfo( db, uiUpdateCount, &si );
+        ret = msi_get_db_suminfo( db, uiUpdateCount, &si );
     if (ret != ERROR_SUCCESS)
     {
         if ((si = create_suminfo( db->storage, uiUpdateCount )))
