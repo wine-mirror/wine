@@ -1846,6 +1846,41 @@ static HRESULT WINAPI DataCache_GetExtent(
 
         return S_OK;
       }
+      case CF_DIB:
+      {
+          BITMAPFILEHEADER *file_head;
+          BITMAPINFOHEADER *info;
+          LONG x_pels_m, y_pels_m;
+
+
+          if ((cache_entry->stgmedium.tymed != TYMED_HGLOBAL) ||
+              !((file_head = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
+              continue;
+
+          info = (BITMAPINFOHEADER *)(file_head + 1);
+
+          x_pels_m = info->biXPelsPerMeter;
+          y_pels_m = info->biYPelsPerMeter;
+
+          /* Size in units of 0.01mm (ie. MM_HIMETRIC) */
+          if (x_pels_m != 0 && y_pels_m != 0)
+          {
+              lpsizel->cx = info->biWidth  * 100000 / x_pels_m;
+              lpsizel->cy = info->biHeight * 100000 / y_pels_m;
+          }
+          else
+          {
+              HDC hdc = GetDC( 0 );
+              lpsizel->cx = info->biWidth  * 2540 / GetDeviceCaps( hdc, LOGPIXELSX );
+              lpsizel->cy = info->biHeight * 2540 / GetDeviceCaps( hdc, LOGPIXELSY );
+
+              ReleaseDC( 0, hdc );
+          }
+
+          GlobalUnlock( cache_entry->stgmedium.u.hGlobal );
+
+          return S_OK;
+      }
     }
   }
 
