@@ -1899,6 +1899,9 @@ static void test_Input_mouse(void)
     ok(!got_button_up, "unexpected WM_LBUTTONUP message\n");
 
     /* click after SetCapture call */
+    hwnd = CreateWindowA("button", "button", WS_VISIBLE | WS_POPUP,
+            0, 0, 100, 100, 0, NULL, NULL, NULL);
+    ok(hwnd != 0, "CreateWindow failed\n");
     SetCapture(button_win);
     got_button_down = got_button_up = FALSE;
     simulate_click(FALSE, 50, 50);
@@ -1920,6 +1923,7 @@ static void test_Input_mouse(void)
     }
     ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
     ok(got_button_up, "expected WM_RBUTTONUP message\n");
+    DestroyWindow(hwnd);
 
     /* click on child window after SetCapture call */
     hwnd = CreateWindowA("button", "button2", WS_VISIBLE | WS_CHILD,
