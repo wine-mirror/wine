@@ -27,12 +27,15 @@
 
 static void test_INetworkListManager( void )
 {
-    IConnectionPointContainer *cpc;
+    IConnectionPointContainer *cpc, *cpc2;
     INetworkListManager *mgr;
     INetworkCostManager *cost_mgr;
     NLM_CONNECTIVITY connectivity;
     VARIANT_BOOL connected;
+    IConnectionPoint *pt;
     HRESULT hr;
+    ULONG ref1, ref2;
+    IID iid;
 
     hr = CoCreateInstance( &CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER,
                            &IID_INetworkListManager, (void **)&mgr );
@@ -78,8 +81,31 @@ static void test_INetworkListManager( void )
 
     hr = INetworkListManager_QueryInterface( mgr, &IID_IConnectionPointContainer, (void**)&cpc );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    ref1 = IConnectionPointContainer_AddRef( cpc );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkListManagerEvents, &pt );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    ref2 = IConnectionPointContainer_AddRef( cpc );
+    ok( ref2 == ref1 + 2, "Expected refcount %d, got %d\n", ref1 + 2, ref2 );
+
+    IConnectionPointContainer_Release( cpc );
     IConnectionPointContainer_Release( cpc );
 
+    hr = IConnectionPoint_GetConnectionPointContainer( pt, &cpc2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cpc2 == cpc, "Expected cpc2 == %p, but got %p\n", cpc, cpc2 );
+    IConnectionPointContainer_Release( cpc2 );
+
+    memset( &iid, 0, sizeof(iid) );
+    hr = IConnectionPoint_GetConnectionInterface( pt, &iid );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp( &iid, &IID_INetworkListManagerEvents, sizeof(iid) ),
+        "Expected iid to be IID_INetworkListManagerEvents\n" );
+
+    IConnectionPoint_Release( pt );
+    IConnectionPointContainer_Release( cpc );
     INetworkListManager_Release( mgr );
 }
 
