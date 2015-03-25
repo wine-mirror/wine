@@ -445,7 +445,6 @@ ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     int        nXDifference;
     int        nYDifference;
     int        cx, cy;
-    DWORD      extended_styles;
 
     switch (message) {
     case WM_INITDIALOG:
@@ -467,11 +466,9 @@ ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         hProcessPageEndProcessButton = GetDlgItem(hDlg, IDC_ENDPROCESS);
         hProcessPageShowAllProcessesButton = GetDlgItem(hDlg, IDC_SHOWALLPROCESSES);
 
-        /*
-         * Set the extended window styles for the list control
-         */
-        extended_styles = SendMessageW(hProcessPageListCtrl, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
-        SendMessageW(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, extended_styles | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+        /* Enable manual column reordering, set full select */
+        SendMessageW(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT|LVS_EX_HEADERDRAGDROP,
+            LVS_EX_FULLROWSELECT|LVS_EX_HEADERDRAGDROP);
 
         AddColumns();
 
