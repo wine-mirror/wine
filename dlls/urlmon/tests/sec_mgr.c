@@ -20,7 +20,6 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
-#define NONAMELESSUNION
 
 /* needed for IInternetZoneManagerEx2 */
 #define _WIN32_IE 0x0700

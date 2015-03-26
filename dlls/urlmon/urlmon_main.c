@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "urlmon_main.h"
 
 #include "winreg.h"
