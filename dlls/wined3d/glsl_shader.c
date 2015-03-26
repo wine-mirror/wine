@@ -118,6 +118,7 @@ struct glsl_vs_program
     GLint pos_fixup_location;
 
     GLint modelview_matrix_location;
+    GLint normal_matrix_location;
 };
 
 struct glsl_gs_program
@@ -735,6 +736,93 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
     GL_EXTCALL(glUniform4fv(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, np2fixup_constants));
 }
 
+/* Taken and adapted from Mesa. */
+static BOOL invert_matrix_3d(struct wined3d_matrix *out, const struct wined3d_matrix *in)
+{
+    float pos, neg, t, det;
+    struct wined3d_matrix temp;
+
+    /* Calculate the determinant of upper left 3x3 submatrix and
+     * determine if the matrix is singular. */
+    pos = neg = 0.0f;
+    t =  in->_11 * in->_22 * in->_33;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t =  in->_21 * in->_32 * in->_13;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+    t =  in->_31 * in->_12 * in->_23;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t = -in->_31 * in->_22 * in->_13;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+    t = -in->_21 * in->_12 * in->_33;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    t = -in->_11 * in->_32 * in->_23;
+    if (t >= 0.0f)
+        pos += t;
+    else
+        neg += t;
+
+    det = pos + neg;
+
+    if (fabsf(det) < 1e-25f)
+        return FALSE;
+
+    det = 1.0f / det;
+    temp._11 =  (in->_22 * in->_33 - in->_32 * in->_23) * det;
+    temp._12 = -(in->_12 * in->_33 - in->_32 * in->_13) * det;
+    temp._13 =  (in->_12 * in->_23 - in->_22 * in->_13) * det;
+    temp._21 = -(in->_21 * in->_33 - in->_31 * in->_23) * det;
+    temp._22 =  (in->_11 * in->_33 - in->_31 * in->_13) * det;
+    temp._23 = -(in->_11 * in->_23 - in->_21 * in->_13) * det;
+    temp._31 =  (in->_21 * in->_32 - in->_31 * in->_22) * det;
+    temp._32 = -(in->_11 * in->_32 - in->_31 * in->_12) * det;
+    temp._33 =  (in->_11 * in->_22 - in->_21 * in->_12) * det;
+
+    *out = temp;
+    return TRUE;
+}
+
+static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float mat[3 * 3];
+    struct wined3d_matrix mv;
+    unsigned int i, j;
+
+    /* gl_NormalMatrix is defined in the OpenGL spec as "transpose of the
+     * inverse of the upper leftmost 3x3 of gl_ModelViewMatrix" and that
+     * seems to be correct for D3D too. */
+    get_modelview_matrix(context, state, &mv);
+    invert_matrix_3d(&mv, &mv);
+    /* Tests show that singular modelview matrices are used unchanged as normal
+     * matrices on D3D3 and older. There seems to be no clearly consistent
+     * behavior on newer D3D versions so always follow older ddraw behavior. */
+    for (i = 0; i < 3; ++i)
+        for (j = 0; j < 3; ++j)
+            mat[i * 3 + j] = (&mv._11)[j * 4 + i];
+
+    GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location, 1, FALSE, mat));
+    checkGLcall("glUniformMatrix3fv");
+}
+
 /* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
@@ -784,6 +872,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         get_modelview_matrix(context, state, &mat);
         GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location, 1, FALSE, &mat._11));
         checkGLcall("glUniformMatrix4fv");
+
+        shader_glsl_ffp_vertex_normalmatrix_uniform(context, state, prog);
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
@@ -5002,6 +5092,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffe
     shader_addline(buffer, "\n");
 
     shader_addline(buffer, "uniform mat4 ffp_modelview_matrix;\n");
+    shader_addline(buffer, "uniform mat3 ffp_normal_matrix;\n");
 
     shader_addline(buffer, "\nvoid main()\n{\n");
     shader_addline(buffer, "float m;\n");
@@ -5025,9 +5116,9 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffe
     if (!settings->normal)
         shader_addline(buffer, "vec3 normal = vec3(0.0);\n");
     else if (settings->normalize)
-        shader_addline(buffer, "vec3 normal = normalize(gl_NormalMatrix * gl_Normal);\n");
+        shader_addline(buffer, "vec3 normal = normalize(ffp_normal_matrix * gl_Normal);\n");
     else
-        shader_addline(buffer, "vec3 normal = gl_NormalMatrix * gl_Normal;\n");
+        shader_addline(buffer, "vec3 normal = ffp_normal_matrix * gl_Normal;\n");
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, gl_info);
 
@@ -5784,6 +5875,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "posFixup"));
 
     vs->modelview_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_modelview_matrix"));
+    vs->normal_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_normal_matrix"));
 }
 
 static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *gl_info,
