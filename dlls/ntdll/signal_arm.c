@@ -2,7 +2,7 @@
  * ARM signal handling routines
  *
  * Copyright 2002 Marcus Meissner, SuSE Linux AG
- * Copyright 2010, 2011 André Hentschel
+ * Copyright 2010-2013, 2015 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -96,8 +96,20 @@ typedef struct ucontext
 
 /* Exceptions */
 # define ERROR_sig(context)         REG_sig(error_code, context)
-# define FAULT_sig(context)         REG_sig(fault_address, context)
 # define TRAP_sig(context)          REG_sig(trap_no, context)
+
+#elif defined(__FreeBSD__)
+
+/* All Registers access - only for local access */
+# define REGn_sig(reg_num, context) ((context)->uc_mcontext.__gregs[reg_num])
+
+/* Special Registers access  */
+# define SP_sig(context)            REGn_sig(_REG_SP, context)    /* Stack pointer */
+# define LR_sig(context)            REGn_sig(_REG_LR, context)    /* Link register */
+# define PC_sig(context)            REGn_sig(_REG_PC, context)    /* Program counter */
+# define CPSR_sig(context)          REGn_sig(_REG_CPSR, context)  /* Current State Register */
+# define IP_sig(context)            REGn_sig(_REG_R12, context)   /* Intra-Procedure-call scratch register */
+# define FP_sig(context)            REGn_sig(_REG_FP, context)    /* Frame pointer */
 
 #endif /* linux */
 
@@ -122,6 +134,35 @@ struct UNWIND_INFO
     WORD count : 5;
     WORD unknown2 : 4;
 };
+
+
+/***********************************************************************
+ *           get_trap_code
+ *
+ * Get the trap code for a signal.
+ */
+static inline enum arm_trap_code get_trap_code( const ucontext_t *sigcontext )
+{
+#ifdef TRAP_sig
+    return TRAP_sig(sigcontext);
+#else
+    return TRAP_ARM_UNKNOWN;  /* unknown trap code */
+#endif
+}
+
+/***********************************************************************
+ *           get_error_code
+ *
+ * Get the error code for a signal.
+ */
+static inline WORD get_error_code( const ucontext_t *sigcontext )
+{
+#ifdef ERROR_sig
+    return ERROR_sig(sigcontext);
+#else
+    return 0;
+#endif
+}
 
 /***********************************************************************
  *           dispatch_signal
@@ -587,7 +628,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     ucontext_t *context = ucontext;
 
     /* check for page fault inside the thread stack */
-    if (TRAP_sig(context) == TRAP_ARM_PAGEFLT &&
+    if (get_trap_code(context) == TRAP_ARM_PAGEFLT &&
         (char *)info->si_addr >= (char *)NtCurrentTeb()->DeallocationStack &&
         (char *)info->si_addr < (char *)NtCurrentTeb()->Tib.StackBase &&
         virtual_handle_stack_fault( info->si_addr ))
@@ -604,7 +645,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     rec = setup_exception( context, raise_segv_exception );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
-    switch(TRAP_sig(context))
+    switch(get_trap_code(context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
@@ -612,14 +653,20 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     case TRAP_ARM_PAGEFLT:  /* Page fault */
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = (ERROR_sig(context) & 0x800) != 0;
+        rec->ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
+    case TRAP_ARM_UNKNOWN:   /* Unknown fault code */
+        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        rec->NumberParameters = 2;
+        rec->ExceptionInformation[0] = 0;
+        rec->ExceptionInformation[1] = 0xffffffff;
+        break;
     default:
-        ERR("Got unexpected trap %ld\n", TRAP_sig(context));
+        ERR("Got unexpected trap %d\n", get_trap_code(context));
         rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
