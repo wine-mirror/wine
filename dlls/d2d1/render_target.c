@@ -872,9 +872,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextRenderingParams(ID2D1
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTextRenderingParams(ID2D1RenderTarget *iface,
         IDWriteRenderingParams **text_rendering_params)
 {
-    FIXME("iface %p, text_rendering_params %p stub!\n", iface, text_rendering_params);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    *text_rendering_params = NULL;
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if ((*text_rendering_params = render_target->text_rendering_params))
+        IDWriteRenderingParams_AddRef(*text_rendering_params);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTags(ID2D1RenderTarget *iface, D2D1_TAG tag1, D2D1_TAG tag2)
