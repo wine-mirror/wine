@@ -307,7 +307,8 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_PS_Y_CORR      0x00000100
 #define WINED3D_SHADER_CONST_PS_NP2_FIXUP   0x00000200
 #define WINED3D_SHADER_CONST_FFP_MODELVIEW  0x00000400
-#define WINED3D_SHADER_CONST_FFP_PS         0x00000800
+#define WINED3D_SHADER_CONST_FFP_PROJ       0x00000800
+#define WINED3D_SHADER_CONST_FFP_PS         0x00001000
 
 enum wined3d_shader_register_type
 {
@@ -2811,8 +2812,6 @@ void state_srgbwrite(struct wined3d_context *context,
 void sampler_texmatrix(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_specularenable(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void transform_projection(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void transform_texture(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;

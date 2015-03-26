@@ -118,6 +118,7 @@ struct glsl_vs_program
     GLint pos_fixup_location;
 
     GLint modelview_matrix_location;
+    GLint projection_matrix_location;
     GLint normal_matrix_location;
 };
 
@@ -874,6 +875,15 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         checkGLcall("glUniformMatrix4fv");
 
         shader_glsl_ffp_vertex_normalmatrix_uniform(context, state, prog);
+    }
+
+    if (update_mask & WINED3D_SHADER_CONST_FFP_PROJ)
+    {
+        struct wined3d_matrix projection;
+
+        get_projection_matrix(context, state, &projection);
+        GL_EXTCALL(glUniformMatrix4fv(prog->vs.projection_matrix_location, 1, FALSE, &projection._11));
+        checkGLcall("glUniformMatrix4fv");
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
@@ -5092,6 +5102,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffe
     shader_addline(buffer, "\n");
 
     shader_addline(buffer, "uniform mat4 ffp_modelview_matrix;\n");
+    shader_addline(buffer, "uniform mat4 ffp_projection_matrix;\n");
     shader_addline(buffer, "uniform mat3 ffp_normal_matrix;\n");
 
     shader_addline(buffer, "\nvoid main()\n{\n");
@@ -5101,13 +5112,13 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_shader_buffe
     if (settings->transformed)
     {
         shader_addline(buffer, "vec4 ec_pos = vec4(gl_Vertex.xyz, 1.0);\n");
-        shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
+        shader_addline(buffer, "gl_Position = ffp_projection_matrix * ec_pos;\n");
         shader_addline(buffer, "if (gl_Vertex.w != 0.0) gl_Position /= gl_Vertex.w;\n");
     }
     else
     {
         shader_addline(buffer, "vec4 ec_pos = ffp_modelview_matrix * gl_Vertex;\n");
-        shader_addline(buffer, "gl_Position = gl_ProjectionMatrix * ec_pos;\n");
+        shader_addline(buffer, "gl_Position = ffp_projection_matrix * ec_pos;\n");
         if (settings->clipping)
             shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
         shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
@@ -5875,6 +5886,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "posFixup"));
 
     vs->modelview_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_modelview_matrix"));
+    vs->projection_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_projection_matrix"));
     vs->normal_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_normal_matrix"));
 }
 
@@ -6178,7 +6190,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
     else
     {
-        entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW;
+        entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
+                | WINED3D_SHADER_CONST_FFP_PROJ;
     }
 
     if (gshader)
@@ -7095,11 +7108,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         }
 
         if (transformed != wasrhw)
-        {
-            if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION))
-                    && !isStateDirty(context, STATE_VIEWPORT))
-                transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
-        }
+            context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
 
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
@@ -7132,9 +7141,6 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
                 clipplane(context, state, STATE_CLIPPLANE(i));
         }
     }
-
-    if (transformed != wasrhw && !isStateDirty(context, STATE_RENDER(WINED3D_RS_ZENABLE)))
-        context_apply_state(context, state, STATE_RENDER(WINED3D_RS_ZENABLE));
 
     context->last_was_vshader = use_vs(state);
 }
@@ -7194,7 +7200,7 @@ static void glsl_vertex_pipe_projection(struct wined3d_context *context,
     if (state->render_states[WINED3D_RS_FOGENABLE]
             && state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
         context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_VERTEX;
-    transform_projection(context, state, state_id);
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
 }
 
 static void glsl_vertex_pipe_viewport(struct wined3d_context *context,

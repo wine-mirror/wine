@@ -132,7 +132,7 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
     }
 
     if (context->last_was_rhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
-        transform_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+        context_apply_state(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
 
 static void state_cullmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4029,7 +4029,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
     }
 }
 
-void transform_projection(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void transform_projection(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_matrix projection;
