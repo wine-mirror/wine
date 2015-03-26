@@ -64,6 +64,7 @@ struct d2d_d3d_render_target
     ID3D10PixelShader *rect_solid_ps;
     ID3D10PixelShader *rect_bitmap_ps;
 
+    D2D1_ANTIALIAS_MODE antialias_mode;
     IDWriteRenderingParams *text_rendering_params;
 
     D2D1_SIZE_U pixel_size;
