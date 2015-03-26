@@ -8310,6 +8310,517 @@ done:
     DestroyWindow(window);
 }
 
+static void test_color_fill(void)
+{
+    HRESULT hr;
+    IDirect3DDevice3 *device;
+    IDirect3D3 *d3d;
+    IDirectDraw4 *ddraw;
+    IDirectDrawSurface4 *surface, *surface2;
+    DDSURFACEDESC2 surface_desc;
+    DDPIXELFORMAT z_fmt;
+    ULONG refcount;
+    HWND window;
+    unsigned int i;
+    DDBLTFX fx;
+    RECT rect = {5, 5, 7, 7};
+    DWORD *color;
+    DWORD supported_fmts = 0, num_fourcc_codes, *fourcc_codes;
+    DDCAPS hal_caps;
+    static const struct
+    {
+        DWORD caps, caps2;
+        HRESULT colorfill_hr, depthfill_hr;
+        BOOL rop_success;
+        const char *name;
+        DWORD result;
+        BOOL check_result;
+        DDPIXELFORMAT format;
+    }
+    tests[] =
+    {
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem offscreenplain RGB", 0xdeadbeef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem offscreenplain RGB", 0xdeadbeef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem texture RGB", 0xdeadbeef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem texture RGB", 0xdeadbeef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "managed texture RGB", 0xdeadbeef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+            }
+        },
+        {
+            DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY, 0,
+            DDERR_INVALIDPARAMS, DD_OK, TRUE, "vidmem zbuffer", 0, FALSE,
+            {0, 0, 0, {0}, {0}, {0}, {0}, {0}}
+        },
+        {
+            DDSCAPS_ZBUFFER | DDSCAPS_SYSTEMMEMORY, 0,
+            DDERR_INVALIDPARAMS, DD_OK, TRUE, "sysmem zbuffer", 0, FALSE,
+            {0, 0, 0, {0}, {0}, {0}, {0}, {0}}
+        },
+        {
+            /* Colorfill on YUV surfaces always returns DD_OK, but the content is
+             * different afterwards. DX9+ GPUs set one of the two luminance values
+             * in each block, but AMD and Nvidia GPUs disagree on which luminance
+             * value they set. r200 (dx8) just sets the entire block to the clear
+             * value. */
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem offscreenplain YUY2", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('Y', 'U', 'Y', '2'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem offscreenplain UYVY", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('U', 'Y', 'V', 'Y'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem overlay YUY2", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('Y', 'U', 'Y', '2'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, FALSE, "vidmem overlay UYVY", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('U', 'Y', 'V', 'Y'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0,
+            E_NOTIMPL, DDERR_INVALIDPARAMS, FALSE, "vidmem texture DXT1", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0,
+            E_NOTIMPL, DDERR_INVALIDPARAMS, FALSE, "sysmem texture DXT1", 0, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'),
+                {0}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            /* The testbot fills this with 0x00 instead of the blue channel. The sysmem
+             * surface works, presumably because it is handled by the runtime instead of
+             * the driver. */
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "vidmem offscreenplain P8", 0xefefefef, FALSE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_PALETTEINDEXED8, 0,
+                {8}, {0}, {0}, {0}, {0}
+            }
+        },
+        {
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0,
+            DD_OK, DDERR_INVALIDPARAMS, TRUE, "sysmem offscreenplain P8", 0xefefefef, TRUE,
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_PALETTEINDEXED8, 0,
+                {8}, {0}, {0}, {0}, {0}
+            }
+        },
+    };
+    static const struct
+    {
+        DWORD rop;
+        const char *name;
+        HRESULT hr;
+    }
+    rops[] =
+    {
+        {SRCCOPY,       "SRCCOPY",      DD_OK},
+        {SRCPAINT,      "SRCPAINT",     DDERR_NORASTEROPHW},
+        {SRCAND,        "SRCAND",       DDERR_NORASTEROPHW},
+        {SRCINVERT,     "SRCINVERT",    DDERR_NORASTEROPHW},
+        {SRCERASE,      "SRCERASE",     DDERR_NORASTEROPHW},
+        {NOTSRCCOPY,    "NOTSRCCOPY",   DDERR_NORASTEROPHW},
+        {NOTSRCERASE,   "NOTSRCERASE",  DDERR_NORASTEROPHW},
+        {MERGECOPY,     "MERGECOPY",    DDERR_NORASTEROPHW},
+        {MERGEPAINT,    "MERGEPAINT",   DDERR_NORASTEROPHW},
+        {PATCOPY,       "PATCOPY",      DDERR_NORASTEROPHW},
+        {PATPAINT,      "PATPAINT",     DDERR_NORASTEROPHW},
+        {PATINVERT,     "PATINVERT",    DDERR_NORASTEROPHW},
+        {DSTINVERT,     "DSTINVERT",    DDERR_NORASTEROPHW},
+        {BLACKNESS,     "BLACKNESS",    DD_OK},
+        {WHITENESS,     "WHITENESS",    DD_OK},
+        {0xaa0029,      "0xaa0029",     DDERR_NORASTEROPHW} /* noop */
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+
+    memset(&z_fmt, 0, sizeof(z_fmt));
+    IDirect3D3_EnumZBufferFormats(d3d, &IID_IDirect3DHALDevice, enum_z_fmt, &z_fmt);
+    if (!z_fmt.dwSize)
+        skip("No Z buffer formats supported, skipping Z buffer colorfill test.\n");
+
+    IDirect3DDevice3_EnumTextureFormats(device, test_block_formats_creation_cb, &supported_fmts);
+    if (!(supported_fmts & SUPPORT_DXT1))
+        skip("DXT1 textures not supported, skipping DXT1 colorfill test.\n");
+
+    IDirect3D3_Release(d3d);
+
+    hr = IDirectDraw4_GetFourCCCodes(ddraw, &num_fourcc_codes, NULL);
+    ok(SUCCEEDED(hr), "Failed to get fourcc codes %#x.\n", hr);
+    fourcc_codes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            num_fourcc_codes * sizeof(*fourcc_codes));
+    if (!fourcc_codes)
+        goto done;
+    hr = IDirectDraw4_GetFourCCCodes(ddraw, &num_fourcc_codes, fourcc_codes);
+    ok(SUCCEEDED(hr), "Failed to get fourcc codes %#x.\n", hr);
+    for (i = 0; i < num_fourcc_codes; i++)
+    {
+        if (fourcc_codes[i] == MAKEFOURCC('Y', 'U', 'Y', '2'))
+            supported_fmts |= SUPPORT_YUY2;
+        else if (fourcc_codes[i] == MAKEFOURCC('U', 'Y', 'V', 'Y'))
+            supported_fmts |= SUPPORT_UYVY;
+    }
+    HeapFree(GetProcessHeap(), 0, fourcc_codes);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw4_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
+    if (!(supported_fmts & (SUPPORT_YUY2 | SUPPORT_UYVY)) || !(hal_caps.dwCaps & DDCAPS_OVERLAY))
+        skip("Overlays or some YUV formats not supported, skipping YUV colorfill tests.\n");
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        /* Some Windows drivers modify dwFillColor when it is used on P8 or FourCC formats. */
+        memset(&fx, 0, sizeof(fx));
+        fx.dwSize = sizeof(fx);
+        U5(fx).dwFillColor = 0xdeadbeef;
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        surface_desc.dwWidth = 64;
+        surface_desc.dwHeight = 64;
+        U4(surface_desc).ddpfPixelFormat = tests[i].format;
+        surface_desc.ddsCaps.dwCaps = tests[i].caps;
+        surface_desc.ddsCaps.dwCaps2 = tests[i].caps2;
+
+        if (tests[i].format.dwFourCC == MAKEFOURCC('D','X','T','1') && !(supported_fmts & SUPPORT_DXT1))
+            continue;
+        if (tests[i].format.dwFourCC == MAKEFOURCC('Y','U','Y','2') && !(supported_fmts & SUPPORT_YUY2))
+            continue;
+        if (tests[i].format.dwFourCC == MAKEFOURCC('U','Y','V','Y') && !(supported_fmts & SUPPORT_UYVY))
+            continue;
+        if (tests[i].caps & DDSCAPS_OVERLAY && !(hal_caps.dwCaps & DDCAPS_OVERLAY))
+            continue;
+
+        if (tests[i].caps & DDSCAPS_ZBUFFER)
+        {
+            if (!z_fmt.dwSize)
+                continue;
+
+            U4(surface_desc).ddpfPixelFormat = z_fmt;
+        }
+
+        hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, surface %s.\n", hr, tests[i].name);
+
+        hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        if (tests[i].format.dwFourCC)
+            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                    hr, tests[i].colorfill_hr, tests[i].name);
+        else
+            ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                    hr, tests[i].colorfill_hr, tests[i].name);
+
+        hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        if (tests[i].format.dwFourCC)
+            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                    hr, tests[i].colorfill_hr, tests[i].name);
+        else
+            ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                    hr, tests[i].colorfill_hr, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            ok(*color == tests[i].result, "Got clear result 0x%08x, expected 0x%08x, surface %s.\n",
+                    *color, tests[i].result, tests[i].name);
+            hr = IDirectDrawSurface4_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
+
+        hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+        ok(hr == tests[i].depthfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                hr, tests[i].depthfill_hr, tests[i].name);
+        hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+        ok(hr == tests[i].depthfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
+                hr, tests[i].depthfill_hr, tests[i].name);
+
+        U5(fx).dwFillColor = 0xdeadbeef;
+        fx.dwROP = BLACKNESS;
+        hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#x, expected %s, surface %s.\n",
+                hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
+        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08x, surface %s\n",
+                U5(fx).dwFillColor, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            ok(*color == 0, "Got clear result 0x%08x, expected 0x00000000, surface %s.\n",
+                    *color, tests[i].name);
+            hr = IDirectDrawSurface4_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
+
+        fx.dwROP = WHITENESS;
+        hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#x, expected %s, surface %s.\n",
+                hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
+        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08x, surface %s\n",
+                U5(fx).dwFillColor, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            /* WHITENESS sets the alpha channel to 0x00. Ignore this for now. */
+            ok((*color & 0x00ffffff) == 0x00ffffff, "Got clear result 0x%08x, expected 0xffffffff, surface %s.\n",
+                    *color, tests[i].name);
+            hr = IDirectDrawSurface4_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
+
+        IDirectDrawSurface4_Release(surface);
+    }
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0xdeadbeef;
+    fx.dwROP = WHITENESS;
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* No DDBLTFX. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_ROP | DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Unused source rectangle. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* Unused source surface. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* Inverted destination or source rectangle. */
+    SetRect(&rect, 5, 7, 7, 5);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+
+    /* Negative rectangle. */
+    SetRect(&rect, -1, -1, 5, 5);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, &rect, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+
+    /* Out of bounds rectangle. */
+    SetRect(&rect, 0, 0, 65, 65);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+
+    /* Combine multiple flags. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_ROP | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(rops) / sizeof(*rops); i++)
+    {
+        fx.dwROP = rops[i].rop;
+        hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
+        ok(hr == rops[i].hr, "Got unexpected hr %#x for rop %s.\n", hr, rops[i].name);
+    }
+
+    IDirectDrawSurface4_Release(surface2);
+    IDirectDrawSurface4_Release(surface);
+
+    if (!z_fmt.dwSize)
+        goto done;
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    U4(surface_desc).ddpfPixelFormat = z_fmt;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* No DDBLTFX. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Unused source rectangle. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* Unused source surface. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Inverted destination or source rectangle. */
+    SetRect(&rect, 5, 7, 7, 5);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, surface2, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Negative rectangle. */
+    SetRect(&rect, -1, -1, 5, 5);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, surface2, &rect, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Out of bounds rectangle. */
+    SetRect(&rect, 0, 0, 65, 65);
+    hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDRECT, "Got unexpected hr %#x.\n", hr);
+
+    /* Combine multiple flags. */
+    hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface4_Release(surface2);
+    IDirectDrawSurface4_Release(surface);
+
+done:
+    IDirectDraw4_Release(ddraw);
+    refcount = IDirect3DDevice3_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -8389,4 +8900,5 @@ START_TEST(ddraw4)
     test_lost_device();
     test_surface_desc_lock();
     test_signed_formats();
+    test_color_fill();
 }
