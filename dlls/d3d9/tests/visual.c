@@ -269,6 +269,20 @@ static void lighting_test(void)
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    mat_singular =
+    {{{
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}},
+    mat_transf =
+    {{{
+         0.0f,  0.0f,  1.0f, 0.0f,
+         0.0f,  1.0f,  0.0f, 0.0f,
+        -1.0f,  0.0f,  0.0f, 0.0f,
+         10.f, 10.0f, 10.0f, 1.0f,
     }}};
     static const struct
     {
@@ -315,8 +329,22 @@ static void lighting_test(void)
         {{0.0f,  1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
         {{1.0f,  1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
         {{1.0f,  0.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
+    },
+    nquad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+    },
+    rotatedquad[] =
+    {
+        {{-10.0f, -11.0f, 11.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f,  -9.0f, 11.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f,  -9.0f,  9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f, -11.0f,  9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
     };
-    static const WORD Indices[] = {0, 1, 2, 2, 3, 0};
+    static const WORD indices[] = {0, 1, 2, 2, 3, 0};
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -331,7 +359,6 @@ static void lighting_test(void)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
-    /* Setup some states that may cause issues */
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), &mat);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform returned %08x\n", hr);
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &mat);
@@ -346,19 +373,8 @@ static void lighting_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHATESTENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHABLENDENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SCISSORTESTENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
-
-    hr = IDirect3DDevice9_SetFVF(device, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, fvf);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
@@ -369,14 +385,14 @@ static void lighting_test(void)
     /* No lights are defined... That means, lit vertices should be entirely black */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            2 /* PrimCount */, Indices, D3DFMT_INDEX16, unlitquad, sizeof(unlitquad[0]));
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, unlitquad, sizeof(unlitquad[0]));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            2 /* PrimCount */, Indices, D3DFMT_INDEX16, litquad, sizeof(litquad[0]));
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, litquad, sizeof(litquad[0]));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, nfvf);
@@ -384,14 +400,14 @@ static void lighting_test(void)
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            2 /* PrimCount */, Indices, D3DFMT_INDEX16, unlitnquad, sizeof(unlitnquad[0]));
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, unlitnquad, sizeof(unlitnquad[0]));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */, 4 /* NumVerts */,
-            2 /* PrimCount */, Indices, D3DFMT_INDEX16, litnquad, sizeof(litnquad[0]));
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, litnquad, sizeof(litnquad[0]));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_EndScene(device);
@@ -407,6 +423,72 @@ static void lighting_test(void)
     ok(color == 0x00000000, "Lit quad with normals has color 0x%08x, expected 0x00000000.\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_LightEnable(device, 0, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable light 0, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, nquad, sizeof(nquad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x000000ff, "Lit quad with light has color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat_singular);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, nquad, sizeof(nquad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 240);
+    ok(color == 0x00ffffff, "Cleared area has color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 240);
+    ok(color == 0x000000ff, "Lit quad with singular world matrix has color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat_transf);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+            2, indices, D3DFMT_INDEX16, rotatedquad, sizeof(rotatedquad[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color == 0x000000ff, "Lit quad with transformation matrix has color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_LightEnable(device, 0, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable light 0, hr %#x.\n", hr);
 
     memset(&material, 0, sizeof(material));
     material.Diffuse.r = 0.0;
