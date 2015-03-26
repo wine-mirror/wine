@@ -841,9 +841,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetAntialiasMode(ID2D1Render
 
 static D2D1_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetAntialiasMode(ID2D1RenderTarget *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    return D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+    TRACE("iface %p.\n", iface);
+
+    return render_target->antialias_mode;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextAntialiasMode(ID2D1RenderTarget *iface,
