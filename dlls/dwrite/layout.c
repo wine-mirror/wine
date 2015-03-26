@@ -500,7 +500,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         while (1) {
             hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, run->descr.string, run->descr.stringLength,
-                run->run.fontFace, FALSE /* FIXME */, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
+                run->run.fontFace, run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
                 NULL /* FIXME */, NULL, NULL, 0, max_count, run->clustermap, text_props, run->glyphs, glyph_props,
                 &run->run.glyphCount);
             if (hr == E_NOT_SUFFICIENT_BUFFER) {
@@ -540,12 +540,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap,
                 text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->run.glyphCount,
                 run->run.fontFace, run->run.fontEmSize, layout->pixels_per_dip, &layout->transform, layout->use_gdi_natural,
-                FALSE /* FIXME */, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0,
+                run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0,
                 run->advances, run->offsets);
         else
             hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap, text_props,
                 run->descr.stringLength, run->run.glyphIndices, glyph_props, run->run.glyphCount, run->run.fontFace,
-                run->run.fontEmSize, FALSE /* FIXME */, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
+                run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
                 NULL, NULL, 0, run->advances, run->offsets);
 
         heap_free(text_props);
