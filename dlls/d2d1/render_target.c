@@ -235,6 +235,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
         render_target->stateblock->lpVtbl->Release(render_target->stateblock);
         ID3D10RenderTargetView_Release(render_target->view);
         ID3D10Device_Release(render_target->device);
+        ID2D1Factory_Release(render_target->factory);
         HeapFree(GetProcessHeap(), 0, render_target);
     }
 
@@ -243,9 +244,12 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetFactory(ID2D1RenderTarget *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    *factory = render_target->factory;
+    ID2D1Factory_AddRef(*factory);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderTarget *iface,
@@ -1361,10 +1365,13 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
     render_target->IDWriteTextRenderer_iface.lpVtbl = &d2d_text_renderer_vtbl;
     render_target->refcount = 1;
+    render_target->factory = factory;
+    ID2D1Factory_AddRef(render_target->factory);
 
     if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&render_target->device)))
     {
         WARN("Failed to get device interface, hr %#x.\n", hr);
+        ID2D1Factory_Release(render_target->factory);
         return hr;
     }
 
@@ -1521,5 +1528,6 @@ err:
         ID3D10RenderTargetView_Release(render_target->view);
     if (render_target->device)
         ID3D10Device_Release(render_target->device);
+    ID2D1Factory_Release(render_target->factory);
     return hr;
 }

@@ -50,6 +50,7 @@ struct d2d_d3d_render_target
     IDWriteTextRenderer IDWriteTextRenderer_iface;
     LONG refcount;
 
+    ID2D1Factory *factory;
     ID3D10Device *device;
     ID3D10RenderTargetView *view;
     ID3D10StateBlock *stateblock;
