@@ -1100,10 +1100,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             while (isspace(*value)) value++;
             if ((s = strchr(value,'\n')))
                 *s='\0';
-            if (!strcasecmp(line, "CPU part"))
+            if (!strcasecmp(line, "CPU architecture"))
             {
                 if (isdigit(value[0]))
-                    info->Level = strtol(value, NULL, 16);
+                    info->Level = atoi(value);
                 continue;
             }
             if (!strcasecmp(line, "CPU revision"))
