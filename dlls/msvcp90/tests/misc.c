@@ -27,6 +27,27 @@
 #include <winbase.h>
 #include "wine/test.h"
 
+static inline float __port_infinity(void)
+{
+        static const unsigned __inf_bytes = 0x7f800000;
+            return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+
+static inline float __port_nan(void)
+{
+        static const unsigned __nan_bytes = 0x7fc00000;
+            return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+
+static inline float __port_ind(void)
+{
+        static const unsigned __ind_bytes = 0xffc00000;
+            return *(const float *)&__ind_bytes;
+}
+#define IND __port_ind()
+
 typedef double LDOUBLE;  /* long double is just a double */
 
 typedef struct {
@@ -707,31 +728,34 @@ static void test_Ctraits_math_functions(void)
     ret = p_std_Ctraits_float__Isnan(0.0);
     ok(ret == FALSE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_float__Isnan(0.0 / 0.0);
-    ok(ret == TRUE, "ret = %d\n", ret);
-
-    ret = p_std_Ctraits_float__Isnan(1.0 / 0.0);
+    ret = p_std_Ctraits_float__Isnan(INFINITY);
     ok(ret == FALSE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_float__Isnan(-1.0 / 0.0);
+    ret = p_std_Ctraits_float__Isnan(-INFINITY);
     ok(ret == FALSE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_float__Isnan(log(-1.0));
+    ret = p_std_Ctraits_float__Isnan(IND);
     ok(ret == TRUE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_float__Isnan(sqrt(-1.0));
+    ret = p_std_Ctraits_float__Isnan(NAN);
     ok(ret == TRUE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_double__Isnan(3.14159 / 0.0);
+    ret = p_std_Ctraits_double__Isnan(INFINITY);
     ok(ret == FALSE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_double__Isnan(log(-3.14159));
+    ret = p_std_Ctraits_double__Isnan(IND);
     ok(ret == TRUE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_long_double__Isnan(3.14159 / 0.0);
+    ret = p_std_Ctraits_double__Isnan(NAN);
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_long_double__Isnan(INFINITY);
     ok(ret == FALSE, "ret = %d\n", ret);
 
-    ret = p_std_Ctraits_long_double__Isnan(sqrt(-3.14159));
+    ret = p_std_Ctraits_long_double__Isnan(IND);
+    ok(ret == TRUE, "ret = %d\n", ret);
+
+    ret = p_std_Ctraits_long_double__Isnan(NAN);
     ok(ret == TRUE, "ret = %d\n", ret);
 }
 
