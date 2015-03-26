@@ -28,9 +28,9 @@ typedef struct {
   void  *func;     /* pointer to the Wine function for this extension */
 } OpenGL_extension;
 
-extern const OpenGL_extension extension_registry[];
-extern const int extension_registry_size;
+extern const OpenGL_extension extension_registry[] DECLSPEC_HIDDEN;
+extern const int extension_registry_size DECLSPEC_HIDDEN;
 
-extern BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format );
+extern BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format ) DECLSPEC_HIDDEN;
 
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */
