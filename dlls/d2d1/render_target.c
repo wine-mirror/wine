@@ -225,6 +225,8 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
     if (!refcount)
     {
         d2d_clip_stack_cleanup(&render_target->clip_stack);
+        if (render_target->text_rendering_params)
+            IDWriteRenderingParams_Release(render_target->text_rendering_params);
         ID3D10PixelShader_Release(render_target->rect_bitmap_ps);
         ID3D10PixelShader_Release(render_target->rect_solid_ps);
         ID3D10BlendState_Release(render_target->bs);
@@ -856,7 +858,15 @@ static D2D1_TEXT_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetTextA
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextRenderingParams(ID2D1RenderTarget *iface,
         IDWriteRenderingParams *text_rendering_params)
 {
-    FIXME("iface %p, text_rendering_params %p stub!\n", iface, text_rendering_params);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if (text_rendering_params)
+        IDWriteRenderingParams_AddRef(text_rendering_params);
+    if (render_target->text_rendering_params)
+        IDWriteRenderingParams_Release(render_target->text_rendering_params);
+    render_target->text_rendering_params = text_rendering_params;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTextRenderingParams(ID2D1RenderTarget *iface,
