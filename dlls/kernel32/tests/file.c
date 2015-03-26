@@ -46,6 +46,8 @@ static HANDLE (WINAPI *pOpenFileById)(HANDLE, LPFILE_ID_DESCRIPTOR, DWORD, DWORD
 static BOOL (WINAPI *pSetFileValidData)(HANDLE, LONGLONG);
 static HRESULT (WINAPI *pCopyFile2)(PCWSTR,PCWSTR,COPYFILE2_EXTENDED_PARAMETERS*);
 static HANDLE (WINAPI *pCreateFile2)(LPCWSTR, DWORD, DWORD, DWORD, CREATEFILE2_EXTENDED_PARAMETERS*);
+static DWORD (WINAPI *pGetFinalPathNameByHandleA)(HANDLE, LPSTR, DWORD, DWORD);
+static DWORD (WINAPI *pGetFinalPathNameByHandleW)(HANDLE, LPWSTR, DWORD, DWORD);
 
 static const char filename[] = "testfile.xxx";
 static const char sillytext[] =
@@ -83,6 +85,8 @@ static void InitFunctionPointers(void)
     pSetFileValidData = (void *) GetProcAddress(hkernel32, "SetFileValidData");
     pCopyFile2 = (void *) GetProcAddress(hkernel32, "CopyFile2");
     pCreateFile2 = (void *) GetProcAddress(hkernel32, "CreateFile2");
+    pGetFinalPathNameByHandleA = (void *) GetProcAddress(hkernel32, "GetFinalPathNameByHandleA");
+    pGetFinalPathNameByHandleW = (void *) GetProcAddress(hkernel32, "GetFinalPathNameByHandleW");
 }
 
 static void test__hread( void )
@@ -4182,6 +4186,176 @@ todo_wine
     }
 }
 
+static void test_GetFinalPathNameByHandleA(void)
+{
+    static char prefix[] = "GetFinalPathNameByHandleA";
+    static char dos_prefix[] = "\\\\?\\";
+    char temp_path[MAX_PATH], test_path[MAX_PATH];
+    char long_path[MAX_PATH], result_path[MAX_PATH];
+    char dos_path[MAX_PATH + sizeof(dos_prefix)];
+    HANDLE file;
+    DWORD count;
+    UINT ret;
+
+    if (!pGetFinalPathNameByHandleA)
+    {
+        skip("GetFinalPathNameByHandleA is missing\n");
+        return;
+    }
+
+    /* Test calling with INVALID_HANDLE_VALUE */
+    SetLastError(0xdeadbeaf);
+    count = pGetFinalPathNameByHandleA(INVALID_HANDLE_VALUE, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == 0, "Expected length 0, got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
+    count = GetTempPathA(MAX_PATH, temp_path);
+    ok(count, "Failed to get temp path, error %u\n", GetLastError());
+    ret = GetTempFileNameA(temp_path, prefix, 0, test_path);
+    ok(ret != 0, "GetTempFileNameA error %u\n", GetLastError());
+    ret = GetLongPathNameA(test_path, long_path, MAX_PATH);
+    ok(ret != 0, "GetLongPathNameA error %u\n", GetLastError());
+    strcpy(dos_path, dos_prefix);
+    strcat(dos_path, long_path);
+
+    file = CreateFileA(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                       CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA error %u\n", GetLastError());
+
+    /* Test VOLUME_NAME_DOS with sufficient buffer size */
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleA(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", (DWORD)strlen(dos_path), count);
+    ok(lstrcmpiA(dos_path, result_path) == 0, "Expected %s, got %s\n", dos_path, result_path);
+
+    /* Test VOLUME_NAME_DOS with insufficient buffer size */
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleA(file, result_path, strlen(dos_path)-2, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", (DWORD)strlen(dos_path), count);
+    ok(result_path[0] == 0x11, "Result path was modified\n");
+
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleA(file, result_path, strlen(dos_path)-1, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", (DWORD)strlen(dos_path), count);
+    ok(result_path[0] == 0x11, "Result path was modified\n");
+
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleA(file, result_path, strlen(dos_path), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", (DWORD)strlen(dos_path), count);
+    ok(result_path[0] == 0x11, "Result path was modified\n");
+
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleA(file, result_path, strlen(dos_path)+1, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", (DWORD)strlen(dos_path), count);
+    ok(result_path[0] != 0x11, "Result path was not modified\n");
+    ok(!result_path[strlen(dos_path)], "Expected nullterminated string\n");
+    ok(result_path[strlen(dos_path)+1] == 0x11, "Buffer overflow\n");
+
+    CloseHandle(file);
+}
+
+static void test_GetFinalPathNameByHandleW(void)
+{
+    static WCHAR prefix[] = {'G','e','t','F','i','n','a','l','P','a','t','h',
+                             'N','a','m','e','B','y','H','a','n','d','l','e','W','\0'};
+    static WCHAR dos_prefix[] = {'\\','\\','?','\\','\0'};
+    WCHAR temp_path[MAX_PATH], test_path[MAX_PATH];
+    WCHAR long_path[MAX_PATH], result_path[MAX_PATH];
+    WCHAR dos_path[MAX_PATH + sizeof(dos_prefix)];
+    WCHAR drive_part[MAX_PATH];
+    WCHAR *file_part;
+    WCHAR volume_path[MAX_PATH + 50];
+    WCHAR nt_path[2 * MAX_PATH];
+    BOOL success;
+    HANDLE file;
+    DWORD count;
+    UINT ret;
+
+    if (!pGetFinalPathNameByHandleW)
+    {
+        skip("GetFinalPathNameByHandleW is missing\n");
+        return;
+    }
+
+    /* Test calling with INVALID_HANDLE_VALUE */
+    SetLastError(0xdeadbeaf);
+    count = pGetFinalPathNameByHandleW(INVALID_HANDLE_VALUE, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == 0, "Expected length 0, got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
+    count = GetTempPathW(MAX_PATH, temp_path);
+    ok(count, "Failed to get temp path, error %u\n", GetLastError());
+    ret = GetTempFileNameW(temp_path, prefix, 0, test_path);
+    ok(ret != 0, "GetTempFileNameW error %u\n", GetLastError());
+    ret = GetLongPathNameW(test_path, long_path, MAX_PATH);
+    ok(ret != 0, "GetLongPathNameW error %u\n", GetLastError());
+    lstrcpyW(dos_path, dos_prefix);
+    lstrcatW(dos_path, long_path);
+
+    file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                       CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %u\n", GetLastError());
+
+    /* Test VOLUME_NAME_DOS with sufficient buffer size */
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path), "Expected length %u, got %u\n", lstrlenW(dos_path), count);
+    ok(lstrcmpiW(dos_path, result_path) == 0, "Expected %s, got %s\n", wine_dbgstr_w(dos_path), wine_dbgstr_w(result_path));
+
+    /* Test VOLUME_NAME_DOS with insufficient buffer size */
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, lstrlenW(dos_path)-1, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path) + 1, "Expected length %u, got %u\n", lstrlenW(dos_path) + 1, count);
+    ok(result_path[0] == 0x1111, "Result path was modified\n");
+
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, lstrlenW(dos_path), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path) + 1, "Expected length %u, got %u\n", lstrlenW(dos_path) + 1, count);
+    ok(result_path[0] == 0x1111, "Result path was modified\n");
+
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, lstrlenW(dos_path)+1, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path), "Expected length %u, got %u\n", lstrlenW(dos_path), count);
+    ok(result_path[0] != 0x1111, "Result path was not modified\n");
+    ok(!result_path[lstrlenW(dos_path)], "Expected nullterminated string\n");
+    ok(result_path[lstrlenW(dos_path)+1] == 0x1111, "Buffer overflow\n");
+
+    success = GetVolumePathNameW(long_path, drive_part, MAX_PATH);
+    ok(success, "GetVolumePathNameW error %u\n", GetLastError());
+    success = GetVolumeNameForVolumeMountPointW(drive_part, volume_path, sizeof(volume_path) / sizeof(WCHAR));
+    ok(success, "GetVolumeNameForVolumeMountPointW error %u\n", GetLastError());
+
+    /* Test for VOLUME_NAME_GUID */
+    lstrcatW(volume_path, long_path + lstrlenW(drive_part));
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_GUID);
+    ok(count == lstrlenW(volume_path), "Expected length %u, got %u\n", lstrlenW(volume_path), count);
+    ok(lstrcmpiW(volume_path, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(volume_path), wine_dbgstr_w(result_path));
+
+    /* Test for VOLUME_NAME_NONE */
+    file_part = long_path + lstrlenW(drive_part) - 1;
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_NONE);
+    ok(count == lstrlenW(file_part), "Expected length %u, got %u\n", lstrlenW(file_part), count);
+    ok(lstrcmpiW(file_part, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(file_part), wine_dbgstr_w(result_path));
+
+    drive_part[lstrlenW(drive_part)-1] = 0;
+    success = QueryDosDeviceW(drive_part, nt_path, sizeof(nt_path) / sizeof(WCHAR));
+    ok(success, "QueryDosDeviceW error %u\n", GetLastError());
+
+    /* Test for VOLUME_NAME_NT */
+    lstrcatW(nt_path, file_part);
+    memset(result_path, 0x11, sizeof(result_path));
+    count = pGetFinalPathNameByHandleW(file, result_path, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
+    ok(count == lstrlenW(nt_path), "Expected length %u, got %u\n", lstrlenW(nt_path), count);
+    ok(lstrcmpiW(nt_path, result_path) == 0, "Expected %s, got %s\n",
+       wine_dbgstr_w(nt_path), wine_dbgstr_w(result_path));
+
+    CloseHandle(file);
+}
+
 START_TEST(file)
 {
     InitFunctionPointers();
@@ -4234,4 +4408,6 @@ START_TEST(file)
     test_SetFileValidData();
     test_WriteFileGather();
     test_file_access();
+    test_GetFinalPathNameByHandleA();
+    test_GetFinalPathNameByHandleW();
 }
