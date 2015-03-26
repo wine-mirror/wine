@@ -6280,6 +6280,11 @@ static void test_texturemapblend(void)
     emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
     emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+    /* This is supposed to be on by default on version 1 devices,
+     * but for some reason it randomly defaults to FALSE on the W8
+     * testbot. This is either the fault of Windows 8 or the WARP
+     * driver. */
+    emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
 
     emit_tquad(&ptr, 0);
     emit_tquad(&ptr, 4);
