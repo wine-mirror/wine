@@ -66,6 +66,7 @@ struct d2d_d3d_render_target
 
     D2D1_ANTIALIAS_MODE antialias_mode;
     D2D1_TEXT_ANTIALIAS_MODE text_antialias_mode;
+    D2D1_TAG tag1, tag2;
     IDWriteRenderingParams *text_rendering_params;
 
     D2D1_SIZE_U pixel_size;

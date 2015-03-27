@@ -894,7 +894,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTextRenderingParams(ID2D1
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTags(ID2D1RenderTarget *iface, D2D1_TAG tag1, D2D1_TAG tag2)
 {
-    FIXME("iface %p, tag1 %s, tag2 %s stub!\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, tag1 %s, tag2 %s.\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
+
+    render_target->tag1 = tag1;
+    render_target->tag2 = tag2;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTags(ID2D1RenderTarget *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
