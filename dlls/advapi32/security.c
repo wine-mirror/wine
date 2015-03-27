@@ -397,7 +397,7 @@ static inline BOOL set_ntstatus( NTSTATUS status )
 }
 
 /* helper function for SE_FILE_OBJECT objects in [Get|Set]NamedSecurityInfo */
-static inline DWORD get_security_file( LPWSTR full_file_name, DWORD access, HANDLE *file )
+static inline DWORD get_security_file( LPCWSTR full_file_name, DWORD access, HANDLE *file )
 {
     UNICODE_STRING file_nameW;
     OBJECT_ATTRIBUTES attr;
@@ -2029,7 +2029,7 @@ GetFileSecurityW( LPCWSTR lpFileName,
 {
     HANDLE hfile;
     NTSTATUS status;
-    DWORD access = 0;
+    DWORD access = 0, err;
 
     TRACE("(%s,%d,%p,%d,%p)\n", debugstr_w(lpFileName),
           RequestedInformation, pSecurityDescriptor,
@@ -2041,10 +2041,12 @@ GetFileSecurityW( LPCWSTR lpFileName,
     if (RequestedInformation & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
 
-    hfile = CreateFileW( lpFileName, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                         NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
-    if ( hfile == INVALID_HANDLE_VALUE )
+    err = get_security_file( lpFileName, access, &hfile);
+    if (err)
+    {
+        SetLastError(err);
         return FALSE;
+    }
 
     status = NtQuerySecurityObject( hfile, RequestedInformation, pSecurityDescriptor,
                                     nLength, lpnLengthNeeded );
@@ -2325,7 +2327,7 @@ SetFileSecurityW( LPCWSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor )
 {
     HANDLE file;
-    DWORD access = 0;
+    DWORD access = 0, err;
     NTSTATUS status;
 
     TRACE("(%s, 0x%x, %p)\n", debugstr_w(lpFileName), RequestedInformation,
@@ -2339,10 +2341,12 @@ SetFileSecurityW( LPCWSTR lpFileName,
     if (RequestedInformation & DACL_SECURITY_INFORMATION)
         access |= WRITE_DAC;
 
-    file = CreateFileW( lpFileName, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                        NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
-    if (file == INVALID_HANDLE_VALUE)
+    err = get_security_file( lpFileName, access, &file);
+    if (err)
+    {
+        SetLastError(err);
         return FALSE;
+    }
 
     status = NtSetSecurityObject( file, RequestedInformation, pSecurityDescriptor );
     CloseHandle( file );
