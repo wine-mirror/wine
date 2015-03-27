@@ -64,13 +64,10 @@ struct d2d_d3d_render_target
     ID3D10PixelShader *rect_solid_ps;
     ID3D10PixelShader *rect_bitmap_ps;
 
-    D2D1_ANTIALIAS_MODE antialias_mode;
-    D2D1_TEXT_ANTIALIAS_MODE text_antialias_mode;
-    D2D1_TAG tag1, tag2;
+    D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     IDWriteRenderingParams *text_rendering_params;
 
     D2D1_SIZE_U pixel_size;
-    D2D1_MATRIX_3X2_F transform;
     struct d2d_clip_stack clip_stack;
     float dpi_x;
     float dpi_y;

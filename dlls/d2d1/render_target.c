@@ -558,13 +558,13 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
      * dpi and rendertarget transform into account. */
     tmp_x =  (2.0f * render_target->dpi_x) / (96.0f * render_target->pixel_size.width);
     tmp_y = -(2.0f * render_target->dpi_y) / (96.0f * render_target->pixel_size.height);
-    transform._11 = render_target->transform._11 * tmp_x;
-    transform._21 = render_target->transform._21 * tmp_x;
-    transform._31 = render_target->transform._31 * tmp_x - 1.0f;
+    transform._11 = render_target->drawing_state.transform._11 * tmp_x;
+    transform._21 = render_target->drawing_state.transform._21 * tmp_x;
+    transform._31 = render_target->drawing_state.transform._31 * tmp_x - 1.0f;
     transform.pad0 = 0.0f;
-    transform._12 = render_target->transform._12 * tmp_y;
-    transform._22 = render_target->transform._22 * tmp_y;
-    transform._32 = render_target->transform._32 * tmp_y + 1.0f;
+    transform._12 = render_target->drawing_state.transform._12 * tmp_y;
+    transform._22 = render_target->drawing_state.transform._22 * tmp_y;
+    transform._32 = render_target->drawing_state.transform._32 * tmp_y + 1.0f;
     transform.pad1 = 0.0f;
 
     /* Translate from world space to object space. */
@@ -816,7 +816,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarg
 
     TRACE("iface %p, transform %p.\n", iface, transform);
 
-    render_target->transform = *transform;
+    render_target->drawing_state.transform = *transform;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTransform(ID2D1RenderTarget *iface,
@@ -826,7 +826,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTransform(ID2D1RenderTarg
 
     TRACE("iface %p, transform %p.\n", iface, transform);
 
-    *transform = render_target->transform;
+    *transform = render_target->drawing_state.transform;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetAntialiasMode(ID2D1RenderTarget *iface,
@@ -836,7 +836,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetAntialiasMode(ID2D1Render
 
     TRACE("iface %p, antialias_mode %#x stub!\n", iface, antialias_mode);
 
-    render_target->antialias_mode = antialias_mode;
+    render_target->drawing_state.antialiasMode = antialias_mode;
 }
 
 static D2D1_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetAntialiasMode(ID2D1RenderTarget *iface)
@@ -845,7 +845,7 @@ static D2D1_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetAntialiasM
 
     TRACE("iface %p.\n", iface);
 
-    return render_target->antialias_mode;
+    return render_target->drawing_state.antialiasMode;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextAntialiasMode(ID2D1RenderTarget *iface,
@@ -855,7 +855,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextAntialiasMode(ID2D1Re
 
     TRACE("iface %p, antialias_mode %#x.\n", iface, antialias_mode);
 
-    render_target->text_antialias_mode = antialias_mode;
+    render_target->drawing_state.textAntialiasMode = antialias_mode;
 }
 
 static D2D1_TEXT_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetTextAntialiasMode(ID2D1RenderTarget *iface)
@@ -864,7 +864,7 @@ static D2D1_TEXT_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_d3d_render_target_GetTextA
 
     TRACE("iface %p.\n", iface);
 
-    return render_target->text_antialias_mode;
+    return render_target->drawing_state.textAntialiasMode;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTextRenderingParams(ID2D1RenderTarget *iface,
@@ -898,8 +898,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTags(ID2D1RenderTarget *i
 
     TRACE("iface %p, tag1 %s, tag2 %s.\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
 
-    render_target->tag1 = tag1;
-    render_target->tag2 = tag2;
+    render_target->drawing_state.tag1 = tag1;
+    render_target->drawing_state.tag2 = tag2;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTags(ID2D1RenderTarget *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
@@ -908,8 +908,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTags(ID2D1RenderTarget *i
 
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
-    *tag1 = render_target->tag1;
-    *tag2 = render_target->tag2;
+    *tag1 = render_target->drawing_state.tag1;
+    *tag2 = render_target->drawing_state.tag2;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PushLayer(ID2D1RenderTarget *iface,
@@ -957,13 +957,17 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_PushAxisAlignedClip(ID2D1Ren
 
     x_scale = render_target->dpi_x / 96.0f;
     y_scale = render_target->dpi_y / 96.0f;
-    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->top * y_scale);
+    d2d_point_transform(&point, &render_target->drawing_state.transform,
+            clip_rect->left * x_scale, clip_rect->top * y_scale);
     d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
-    d2d_point_transform(&point, &render_target->transform, clip_rect->left * x_scale, clip_rect->bottom * y_scale);
+    d2d_point_transform(&point, &render_target->drawing_state.transform,
+            clip_rect->left * x_scale, clip_rect->bottom * y_scale);
     d2d_rect_expand(&transformed_rect, &point);
-    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->top * y_scale);
+    d2d_point_transform(&point, &render_target->drawing_state.transform,
+            clip_rect->right * x_scale, clip_rect->top * y_scale);
     d2d_rect_expand(&transformed_rect, &point);
-    d2d_point_transform(&point, &render_target->transform, clip_rect->right * x_scale, clip_rect->bottom * y_scale);
+    d2d_point_transform(&point, &render_target->drawing_state.transform,
+            clip_rect->right * x_scale, clip_rect->bottom * y_scale);
     d2d_rect_expand(&transformed_rect, &point);
 
     if (!d2d_clip_stack_push(&render_target->clip_stack, &transformed_rect))
@@ -1519,7 +1523,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
-    render_target->transform = identity;
+    render_target->drawing_state.transform = identity;
 
     if (!d2d_clip_stack_init(&render_target->clip_stack))
     {
