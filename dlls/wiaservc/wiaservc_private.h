@@ -34,7 +34,7 @@ typedef struct
     LONG ref;
 } wiadevmgr;
 
-HRESULT wiadevmgr_Constructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT wiadevmgr_Constructor(IWiaDevMgr **ppObj) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
 static inline char *

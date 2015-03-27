@@ -70,19 +70,19 @@ WIASERVC_IClassFactory_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pUnkOuter,
                                       REFIID riid, LPVOID *ppvObj)
 {
     HRESULT res;
-    IUnknown *punk = NULL;
+    IWiaDevMgr *devmgr = NULL;
 
     TRACE("IID: %s\n", debugstr_guid(riid));
 
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    res = wiadevmgr_Constructor((LPVOID*) &punk);
+    res = wiadevmgr_Constructor(&devmgr);
     if (FAILED(res))
         return res;
 
-    res = IUnknown_QueryInterface(punk, riid, ppvObj);
-    IUnknown_Release(punk);
+    res = IWiaDevMgr_QueryInterface(devmgr, riid, ppvObj);
+    IWiaDevMgr_Release(devmgr);
     return res;
 }
 

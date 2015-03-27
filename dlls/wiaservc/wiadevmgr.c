@@ -164,7 +164,7 @@ static const IWiaDevMgrVtbl WIASERVC_IWiaDevMgr_Vtbl =
     wiadevmgr_AddDeviceDlg
 };
 
-HRESULT wiadevmgr_Constructor(LPVOID *ppObj)
+HRESULT wiadevmgr_Constructor(IWiaDevMgr **ppObj)
 {
     wiadevmgr *This;
     TRACE("(%p)\n", ppObj);
@@ -173,7 +173,7 @@ HRESULT wiadevmgr_Constructor(LPVOID *ppObj)
     {
         This->IWiaDevMgr_iface.lpVtbl = &WIASERVC_IWiaDevMgr_Vtbl;
         This->ref = 1;
-        *ppObj = This;
+        *ppObj = &This->IWiaDevMgr_iface;
         return S_OK;
     }
     *ppObj = NULL;
