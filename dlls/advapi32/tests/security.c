@@ -3405,7 +3405,6 @@ static void test_GetNamedSecurityInfoA(void)
            "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
     }
     LocalFree(pSD);
-    HeapFree(GetProcessHeap(), 0, user);
 
     /* show that setting empty DACL is not removing all file permissions */
     pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
@@ -3442,7 +3441,7 @@ static void test_GetNamedSecurityInfoA(void)
     /* NtSetSecurityObject doesn't inherit DACL entries */
     pSD = sd+sizeof(void*)-((ULONG_PTR)sd)%sizeof(void*);
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
-    pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
+    pDacl = HeapAlloc(GetProcessHeap(), 0, 100);
     bret = InitializeAcl(pDacl, sizeof(ACL), ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
     bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
@@ -3473,7 +3472,39 @@ static void test_GetNamedSecurityInfoA(void)
             NULL, OPEN_EXISTING, 0, NULL);
     ok(h == INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     CloseHandle(h);
+
+    /* test if DACL is properly mapped to permission */
+    bret = InitializeAcl(pDacl, 100, ACL_REVISION);
+    ok(bret, "Failed to initialize ACL.\n");
+    bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    ok(bret, "Failed to add Current User to ACL.\n");
+    bret = pAddAccessDeniedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    ok(bret, "Failed to add Current User to ACL.\n");
+    bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
+    ok(bret, "Failed to add ACL to security desciptor.\n");
+    status = pNtSetSecurityObject(hTemp, DACL_SECURITY_INFORMATION, pSD);
+    ok(status == ERROR_SUCCESS, "NtSetSecurityObject returned %x\n", status);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    todo_wine ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    bret = InitializeAcl(pDacl, 100, ACL_REVISION);
+    ok(bret, "Failed to initialize ACL.\n");
+    bret = pAddAccessDeniedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    ok(bret, "Failed to add Current User to ACL.\n");
+    bret = pAddAccessAllowedAceEx(pDacl, ACL_REVISION, 0, GENERIC_ALL, user_sid);
+    ok(bret, "Failed to add Current User to ACL.\n");
+    bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
+    ok(bret, "Failed to add ACL to security desciptor.\n");
+    status = pNtSetSecurityObject(hTemp, DACL_SECURITY_INFORMATION, pSD);
+    ok(status == ERROR_SUCCESS, "NtSetSecurityObject returned %x\n", status);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    ok(h == INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, pDacl);
+    HeapFree(GetProcessHeap(), 0, user);
     CloseHandle(hTemp);
 
     /* Test querying the ownership of a built-in registry key */
