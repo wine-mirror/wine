@@ -4052,6 +4052,8 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
         }
         break;
     case SE_FILE_OBJECT:
+        if (SecurityInfo & DACL_SECURITY_INFORMATION)
+            access |= READ_CONTROL;
         if (!(err = get_security_file( pObjectName, access, &handle )))
         {
             err = SetSecurityInfo( handle, ObjectType, SecurityInfo, psidOwner, psidGroup, pDacl, pSacl );
@@ -5729,6 +5731,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                       PSID psidGroup, PACL pDacl, PACL pSacl)
 {
     SECURITY_DESCRIPTOR sd;
+    PACL dacl = pDacl;
     NTSTATUS status;
 
     if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
@@ -5739,7 +5742,130 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
     if (SecurityInfo & GROUP_SECURITY_INFORMATION)
         SetSecurityDescriptorGroup(&sd, psidGroup, FALSE);
     if (SecurityInfo & DACL_SECURITY_INFORMATION)
-        SetSecurityDescriptorDacl(&sd, TRUE, pDacl, FALSE);
+    {
+        if (ObjectType == SE_FILE_OBJECT)
+        {
+            SECURITY_DESCRIPTOR_CONTROL control;
+            PSECURITY_DESCRIPTOR psd;
+            OBJECT_NAME_INFORMATION *name_info;
+            DWORD size, rev;
+
+            status = NtQuerySecurityObject(handle, SecurityInfo, NULL, 0, &size);
+            if (status != STATUS_BUFFER_TOO_SMALL)
+                return RtlNtStatusToDosError(status);
+
+            psd = heap_alloc(size);
+            if (!psd)
+                return ERROR_NOT_ENOUGH_MEMORY;
+
+            status = NtQuerySecurityObject(handle, SecurityInfo, psd, size, &size);
+            if (status)
+            {
+                heap_free(psd);
+                return RtlNtStatusToDosError(status);
+            }
+
+            status = RtlGetControlSecurityDescriptor(psd, &control, &rev);
+            heap_free(psd);
+            if (status)
+                return RtlNtStatusToDosError(status);
+            /* TODO: copy some control flags to new sd */
+
+            /* inherit parent directory DACL */
+            if (!(control & SE_DACL_PROTECTED))
+            {
+                status = NtQueryObject(handle, ObjectNameInformation, NULL, 0, &size);
+                if (status != STATUS_INFO_LENGTH_MISMATCH)
+                    return RtlNtStatusToDosError(status);
+
+                name_info = heap_alloc(size);
+                if (!name_info)
+                    return ERROR_NOT_ENOUGH_MEMORY;
+
+                status = NtQueryObject(handle, ObjectNameInformation, name_info, size, NULL);
+                if (status)
+                {
+                    heap_free(name_info);
+                    return RtlNtStatusToDosError(status);
+                }
+
+                for (name_info->Name.Length-=2; name_info->Name.Length>0; name_info->Name.Length-=2)
+                    if (name_info->Name.Buffer[name_info->Name.Length/2-1]=='\\' ||
+                            name_info->Name.Buffer[name_info->Name.Length/2-1]=='/')
+                        break;
+                if (name_info->Name.Length)
+                {
+                    OBJECT_ATTRIBUTES attr;
+                    IO_STATUS_BLOCK io;
+                    HANDLE parent;
+                    PSECURITY_DESCRIPTOR parent_sd;
+                    ACL *parent_dacl;
+                    DWORD err = ERROR_ACCESS_DENIED;
+
+                    name_info->Name.Buffer[name_info->Name.Length/2] = 0;
+
+                    attr.Length = sizeof(attr);
+                    attr.RootDirectory = 0;
+                    attr.Attributes = 0;
+                    attr.ObjectName = &name_info->Name;
+                    attr.SecurityDescriptor = NULL;
+                    status = NtOpenFile(&parent, READ_CONTROL, &attr, &io,
+                            FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                            FILE_OPEN_FOR_BACKUP_INTENT);
+                    heap_free(name_info);
+                    if (!status)
+                    {
+                        err = GetSecurityInfo(parent, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+                                NULL, NULL, &parent_dacl, NULL, &parent_sd);
+                        CloseHandle(parent);
+                    }
+
+                    if (!err)
+                    {
+                        int i;
+
+                        dacl = heap_alloc_zero(pDacl->AclSize+parent_dacl->AclSize);
+                        if (!dacl)
+                        {
+                            LocalFree(parent_sd);
+                            return ERROR_NOT_ENOUGH_MEMORY;
+                        }
+                        memcpy(dacl, pDacl, pDacl->AclSize);
+                        dacl->AclSize = pDacl->AclSize+parent_dacl->AclSize;
+
+                        for (i=0; i<parent_dacl->AceCount; i++)
+                        {
+                            ACE_HEADER *ace;
+
+                            if (!GetAce(parent_dacl, i, (void*)&ace))
+                                continue;
+                            if (!(ace->AceFlags & (OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE)))
+                                continue;
+                            if ((ace->AceFlags & (OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE)) !=
+                                    (OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE))
+                            {
+                                FIXME("unsupported flags: %x\n", ace->AceFlags);
+                                continue;
+                            }
+
+                            if (ace->AceFlags & NO_PROPAGATE_INHERIT_ACE)
+                                ace->AceFlags &= ~(OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE|NO_PROPAGATE_INHERIT_ACE);
+                            ace->AceFlags &= ~INHERIT_ONLY_ACE;
+                            ace->AceFlags |= INHERITED_ACE;
+
+                            if(!AddAce(dacl, ACL_REVISION, MAXDWORD, ace, ace->AceSize))
+                                WARN("error adding inherited ACE\n");
+                        }
+                        LocalFree(parent_sd);
+                    }
+                }
+                else
+                    heap_free(name_info);
+            }
+        }
+
+        SetSecurityDescriptorDacl(&sd, TRUE, dacl, FALSE);
+    }
     if (SecurityInfo & SACL_SECURITY_INFORMATION)
         SetSecurityDescriptorSacl(&sd, TRUE, pSacl, FALSE);
 
@@ -5753,6 +5879,8 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
         status = NtSetSecurityObject(handle, SecurityInfo, &sd);
         break;
     }
+    if (dacl != pDacl)
+        heap_free(dacl);
     return RtlNtStatusToDosError(status);
 }
 
