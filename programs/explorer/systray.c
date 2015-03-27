@@ -97,11 +97,9 @@ static HWND start_button;
 #define MIN_DISPLAYED 8
 #define ICON_BORDER  2
 
-#define VALID_WIN_TIMER      1
-#define BALLOON_CREATE_TIMER 2
-#define BALLOON_SHOW_TIMER   3
+#define BALLOON_CREATE_TIMER 1
+#define BALLOON_SHOW_TIMER   2
 
-#define VALID_WIN_TIMEOUT        2000
 #define BALLOON_CREATE_TIMEOUT   2000
 #define BALLOON_SHOW_MIN_TIMEOUT 10000
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
@@ -430,7 +428,6 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = -1;
 
-    if (list_empty( &icon_list )) SetTimer( tray_window, VALID_WIN_TIMER, VALID_WIN_TIMEOUT, NULL );
     list_add_tail(&icon_list, &icon->entry);
 
     return modify_icon( icon, nid );
@@ -443,17 +440,22 @@ static BOOL delete_icon(struct icon *icon)
     list_remove(&icon->entry);
     DestroyIcon(icon->image);
     HeapFree(GetProcessHeap(), 0, icon);
-    if (list_empty( &icon_list )) KillTimer( tray_window, VALID_WIN_TIMER );
     return TRUE;
 }
 
-/* cleanup icons belonging to windows that have been destroyed */
-static void cleanup_destroyed_windows(void)
+/* cleanup icons belonging to a window that has been destroyed */
+void cleanup_systray_window( HWND hwnd )
 {
     struct icon *icon, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( icon, next, &icon_list, struct icon, entry )
-        if (!IsWindow( icon->owner )) delete_icon( icon );
+        if (icon->owner == hwnd) delete_icon( icon );
+
+    if (wine_notify_icon)
+    {
+        NOTIFYICONDATAW nid = { sizeof(nid), hwnd };
+        wine_notify_icon( 0xdead, &nid );
+    }
 }
 
 static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
@@ -561,7 +563,6 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     case WM_TIMER:
         switch (wparam)
         {
-        case VALID_WIN_TIMER:      cleanup_destroyed_windows(); break;
         case BALLOON_CREATE_TIMER: balloon_create_timer(); break;
         case BALLOON_SHOW_TIMER:   balloon_timer(); break;
         }

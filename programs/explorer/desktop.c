@@ -529,6 +529,10 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
             SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         return 0;
 
+    case WM_PARENTNOTIFY:
+        if (LOWORD(wp) == WM_DESTROY) cleanup_systray_window( (HWND)lp );
+        return 0;
+
     case WM_LBUTTONDBLCLK:
         if (!using_root)
         {
