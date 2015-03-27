@@ -397,7 +397,7 @@ static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     if (!This->initialized)
         return WINCODEC_ERR_WRONGSTATE;
 
-    hr = configure_write_source(iface, pIBitmapSource, &prc,
+    hr = configure_write_source(iface, pIBitmapSource, prc,
         &GUID_WICPixelFormat32bppBGRA, This->size, This->size,
         1.0, 1.0);
 
