@@ -60,6 +60,29 @@ typedef struct _WMWriterStatisticsEx
     DWORD dwTotalSampleDropsInMultiplexer;
 } WM_WRITER_STATISTICS_EX;
 
+typedef struct _WMReaderStatistics
+{
+    DWORD cbSize;
+    DWORD dwBandwidth;
+    DWORD cPacketsReceived;
+    DWORD cPacketsRecovered;
+    DWORD cPacketsLost;
+    WORD wQuality;
+} WM_READER_STATISTICS;
+
+typedef struct _WMReaderClientInfo
+{
+    DWORD cbSize;
+    WCHAR *wszLang;
+    WCHAR *wszBrowserUserAgent;
+    WCHAR *wszBrowserWebPage;
+    QWORD qwReserved;
+    LPARAM *pReserved;
+    WCHAR *wszHostExe;
+    QWORD qwHostVersion;
+    WCHAR *wszPlayerUserAgent;
+} WM_READER_CLIENTINFO;
+
 typedef enum WMT_ATTR_DATATYPE
 {
     WMT_TYPE_DWORD      = 0,
@@ -142,6 +165,23 @@ typedef enum WMT_VERSION
     WMT_VER_8_0 = 0x00080000,
     WMT_VER_9_0 = 0x00090000
 } WMT_VERSION;
+
+typedef enum WMT_PLAY_MODE
+{
+    WMT_PLAY_MODE_AUTOSELECT,
+    WMT_PLAY_MODE_LOCAL,
+    WMT_PLAY_MODE_DOWNLOAD,
+    WMT_PLAY_MODE_STREAMING
+} WMT_PLAY_MODE;
+
+typedef enum tagWMT_OFFSET_FORMAT
+{
+    WMT_OFFSET_FORMAT_100NS,
+    WMT_OFFSET_FORMAT_FRAME_NUMBERS,
+    WMT_OFFSET_FORMAT_PLAYLIST_OFFSET,
+    WMT_OFFSET_FORMAT_TIMECODE,
+    WMT_OFFSET_FORMAT_100NS_APPROXIMATE
+} WMT_OFFSET_FORMAT;
 
 typedef LPCWSTR LPCWSTR_WMSDK_TYPE_SAFE;
 
@@ -438,6 +478,259 @@ interface IWMReader : IUnknown
 
     HRESULT Resume();
 };
+
+[
+    object,
+    uuid(e5b7ca9a-0f1c-4f66-9002-74ec50d8b304),
+    pointer_default(unique),
+    local
+]
+interface IWMPlayerHook : IUnknown
+{
+    HRESULT PreDecode();
+}
+
+[
+    object,
+    uuid(96406bea-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced : IUnknown
+{
+    HRESULT SetUserProvidedClock(
+        [in] BOOL fUserClock);
+
+    HRESULT GetUserProvidedClock(
+        [out] BOOL *pfUserClock);
+
+    HRESULT DeliverTime(
+        [in] QWORD cnsTime);
+
+    HRESULT SetManualStreamSelection(
+        [in] BOOL fSelection);
+
+    HRESULT GetManualStreamSelection(
+        [out] BOOL *pfSelection);
+
+    HRESULT SetStreamsSelected(
+        [in] WORD cStreamCount,
+        [in] WORD *pwStreamNumbers,
+        [in] WMT_STREAM_SELECTION *pSelections);
+
+    HRESULT GetStreamSelected(
+        [in] WORD wStreamNum,
+        [out] WMT_STREAM_SELECTION *pSelection);
+
+    HRESULT SetReceiveSelectionCallbacks(
+        [in] BOOL fGetCallbacks);
+
+    HRESULT GetReceiveSelectionCallbacks(
+        [out] BOOL *pfGetCallbacks);
+
+    HRESULT SetReceiveStreamSamples(
+        [in] WORD wStreamNum,
+        [in] BOOL fReceiveStreamSamples);
+
+    HRESULT GetReceiveStreamSamples(
+        [in] WORD wStreamNum,
+        [out] BOOL *pfReceiveStreamSamples);
+
+    HRESULT SetAllocateForOutput(
+        [in] DWORD dwOutputNum,
+        [in] BOOL fAllocate);
+
+    HRESULT GetAllocateForOutput(
+        [in] DWORD dwOutputNum,
+        [out] BOOL *pfAllocate);
+
+    HRESULT SetAllocateForStream(
+        [in] WORD wStreamNum,
+        [in] BOOL fAllocate);
+
+    HRESULT GetAllocateForStream(
+        [in] WORD dwSreamNum,
+        [out] BOOL *pfAllocate);
+
+    HRESULT GetStatistics(
+        [in, out] WM_READER_STATISTICS *pStatistics);
+
+    HRESULT SetClientInfo(
+        [in] WM_READER_CLIENTINFO *pClientInfo);
+
+    HRESULT GetMaxOutputSampleSize(
+        [in] DWORD dwOutput,
+        [out] DWORD *pcbMax);
+
+    HRESULT GetMaxStreamSampleSize(
+        [in] WORD wStream,
+        [out] DWORD *pcbMax);
+
+    HRESULT NotifyLateDelivery(
+        QWORD cnsLateness);
+}
+
+[
+    object,
+    uuid(ae14a945-b90c-4d0d-9127-80d665f7d73e),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced2 : IWMReaderAdvanced
+{
+    HRESULT SetPlayMode(
+        [in] WMT_PLAY_MODE Mode);
+
+    HRESULT GetPlayMode(
+        [out] WMT_PLAY_MODE *pMode);
+
+    HRESULT GetBufferProgress(
+        [out] DWORD *pdwPercent,
+        [out] QWORD *pcnsBuffering);
+
+    HRESULT GetDownloadProgress(
+        [out] DWORD *pdwPercent,
+        [out] QWORD *pqwBytesDownloaded,
+        [out] QWORD *pcnsDownload);
+
+    HRESULT GetSaveAsProgress(
+        [out] DWORD *pdwPercent);
+
+    HRESULT SaveFileAs(
+        [in] const WCHAR *pwszFilename);
+
+    HRESULT GetProtocolName(
+        [out, size_is(*pcchProtocol)] WCHAR *pwszProtocol,
+        [in, out] DWORD *pcchProtocol);
+
+    HRESULT StartAtMarker(
+        [in] WORD wMarkerIndex,
+        [in] QWORD cnsDuration,
+        [in] float fRate,
+        [in] void *pvContext);
+
+    HRESULT GetOutputSetting(
+        [in] DWORD dwOutputNum,
+        [in] LPCWSTR pszName,
+        [out] WMT_ATTR_DATATYPE *pType,
+        [out, size_is(*pcbLength)] BYTE *pValue,
+        [in, out] WORD *pcbLength);
+
+    HRESULT SetOutputSetting(
+        [in] DWORD dwOutputNum,
+        [in] LPCWSTR pszName,
+        [in] WMT_ATTR_DATATYPE Type,
+        [in, size_is(cbLength)] const BYTE *pValue,
+        [in] WORD cbLength);
+
+    HRESULT Preroll(
+        [in] QWORD cnsStart,
+        [in] QWORD cnsDuration,
+        [in] float fRate);
+
+    HRESULT SetLogClientID(
+        [in] BOOL fLogClientID);
+
+    HRESULT GetLogClientID(
+        [out] BOOL *pfLogClientID);
+
+    HRESULT StopBuffering();
+
+    HRESULT OpenStream(
+        [in] IStream *pStream,
+        [in] IWMReaderCallback *pCallback,
+        [in] void *pvContext);
+}
+
+[
+    object,
+    uuid(5dc0674b-f04B-4a4e-9f2a-b1afde2c8100),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced3 : IWMReaderAdvanced2
+{
+    HRESULT StopNetStreaming();
+
+    HRESULT StartAtPosition(
+        [in] WORD wStreamNum,
+        [in] void *pvOffsetStart,
+        [in] void *pvDuration,
+        [in] WMT_OFFSET_FORMAT dwOffsetFormat,
+        [in] float fRate,
+        [in] void *pvContext);
+}
+
+[
+    object,
+    uuid(945a76a2-12ae-4d48-bd3c-cd1d90399b85),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced4 : IWMReaderAdvanced3
+{
+    HRESULT GetLanguageCount(
+        [in] DWORD dwOutputNum,
+        [out] WORD *pwLanguageCount);
+
+    HRESULT GetLanguage(
+        [in] DWORD dwOutputNum,
+        [in] WORD wLanguage,
+        [out, size_is(*pcchLanguageStringLength)] WCHAR *pwszLanguageString,
+        [in, out] WORD *pcchLanguageStringLength);
+
+    HRESULT GetMaxSpeedFactor(
+        [out] double *pdblFactor);
+
+    HRESULT IsUsingFastCache(
+        [out] BOOL *pfUsingFastCache);
+
+    HRESULT AddLogParam(
+        [in] LPCWSTR wszNameSpace,
+        [in] LPCWSTR wszName,
+        [in] LPCWSTR wszValue);
+
+    HRESULT SendLogParams();
+
+    HRESULT CanSaveFileAs(
+        [out] BOOL *pfCanSave);
+
+    HRESULT CancelSaveFileAs();
+
+    HRESULT GetURL(
+        [out, size_is(*pcchURL)] WCHAR *pwszURL,
+        [in, out] DWORD *pcchURL);
+}
+
+[
+    object,
+    uuid(24c44db0-55d1-49ae-a5cc-f13815e36363),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced5 : IWMReaderAdvanced4
+{
+    HRESULT SetPlayerHook(
+        [in] DWORD dwOutputNum,
+        [in] IWMPlayerHook *pHook);
+}
+
+[
+    object,
+    uuid(18a2e7f8-428f-4acd-8a00-e64639bc93de),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderAdvanced6 : IWMReaderAdvanced5
+{
+    HRESULT SetProtectStreamSamples(
+        [in, size_is(cbCertificate)] BYTE *pbCertificate,
+        [in] DWORD cbCertificate,
+        [in] DWORD dwCertificateType,
+        [in] DWORD dwFlags,
+        [out, size_is(*pcbInitializationVector)] BYTE *pbInitializationVector,
+        [in, out] DWORD *pcbInitializationVector);
+}
 
 [
     object,
