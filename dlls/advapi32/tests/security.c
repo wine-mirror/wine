@@ -147,6 +147,7 @@ static BOOL (WINAPI *pCreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTR
                                              PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 static BOOL (WINAPI *pGetAclInformation)(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
 static BOOL (WINAPI *pGetAce)(PACL,DWORD,LPVOID*);
+static NTSTATUS (WINAPI *pNtSetSecurityObject)(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -173,6 +174,7 @@ static void init(void)
     hntdll = GetModuleHandleA("ntdll.dll");
     pNtQueryObject = (void *)GetProcAddress( hntdll, "NtQueryObject" );
     pNtAccessCheck = (void *)GetProcAddress( hntdll, "NtAccessCheck" );
+    pNtSetSecurityObject = (void *)GetProcAddress(hntdll, "NtSetSecurityObject");
 
     hmod = GetModuleHandleA("advapi32.dll");
     pAddAccessAllowedAceEx = (void *)GetProcAddress(hmod, "AddAccessAllowedAceEx");
@@ -3229,7 +3231,7 @@ static void test_GetNamedSecurityInfoA(void)
     char invalid_path[] = "/an invalid file path";
     int users_ace_id = -1, admins_ace_id = -1, i;
     char software_key[] = "MACHINE\\Software";
-    char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
+    char sd[SECURITY_DESCRIPTOR_MIN_LENGTH+sizeof(void*)];
     SECURITY_DESCRIPTOR_CONTROL control;
     ACL_SIZE_INFORMATION acl_size;
     CHAR windows_dir[MAX_PATH];
@@ -3241,11 +3243,12 @@ static void test_GetNamedSecurityInfoA(void)
     BOOL owner_defaulted;
     BOOL group_defaulted;
     BOOL dacl_defaulted;
-    HANDLE token, hTemp;
+    HANDLE token, hTemp, h;
     PSID owner, group;
     BOOL dacl_present;
     PACL pDacl;
     BYTE flags;
+    NTSTATUS status;
 
     if (!pSetNamedSecurityInfoA || !pGetNamedSecurityInfoA || !pCreateWellKnownSid)
     {
@@ -3350,8 +3353,8 @@ static void test_GetNamedSecurityInfoA(void)
     bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
     ok(bret, "Failed to add ACL to security desciptor.\n");
     GetTempFileNameA(".", "foo", 0, tmpfile);
-    hTemp = CreateFileA(tmpfile, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                        FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    hTemp = CreateFileA(tmpfile, WRITE_DAC|GENERIC_WRITE, FILE_SHARE_DELETE|FILE_SHARE_READ,
+                        NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, NULL);
     SetLastError(0xdeadbeef);
     error = pSetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, NULL,
                                    NULL, pDacl, NULL);
@@ -3403,6 +3406,74 @@ static void test_GetNamedSecurityInfoA(void)
     }
     LocalFree(pSD);
     HeapFree(GetProcessHeap(), 0, user);
+
+    /* show that setting empty DACL is not removing all file permissions */
+    pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
+    bret = InitializeAcl(pDacl, sizeof(ACL), ACL_REVISION);
+    ok(bret, "Failed to initialize ACL.\n");
+    error =  pSetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+            NULL, NULL, pDacl, NULL);
+    ok(!error, "SetNamedSecurityInfoA failed with error %d\n", error);
+    HeapFree(GetProcessHeap(), 0, pDacl);
+
+    error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+            NULL, NULL, &pDacl, NULL, &pSD);
+    todo_wine ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    if (!error)
+    {
+        bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+        ok(bret, "GetAclInformation failed\n");
+        if (acl_size.AceCount > 0)
+        {
+            bret = pGetAce(pDacl, 0, (VOID **)&ace);
+            ok(bret, "Failed to get ACE.\n");
+            ok(((ACE_HEADER *)ace)->AceFlags & INHERITED_ACE,
+                    "ACE has unexpected flags: 0x%x\n", ((ACE_HEADER *)ace)->AceFlags);
+        }
+        LocalFree(pSD);
+    }
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    todo_wine ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
+
+    /* NtSetSecurityObject doesn't inherit DACL entries */
+    pSD = sd+sizeof(void*)-((ULONG_PTR)sd)%sizeof(void*);
+    InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
+    pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
+    bret = InitializeAcl(pDacl, sizeof(ACL), ACL_REVISION);
+    ok(bret, "Failed to initialize ACL.\n");
+    bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
+    ok(bret, "Failed to add ACL to security desciptor.\n");
+    status = pNtSetSecurityObject(hTemp, DACL_SECURITY_INFORMATION, pSD);
+    ok(status == ERROR_SUCCESS, "NtSetSecurityObject returned %x\n", status);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    ok(h == INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
+
+    pSetSecurityDescriptorControl(pSD, SE_DACL_AUTO_INHERIT_REQ, SE_DACL_AUTO_INHERIT_REQ);
+    status = pNtSetSecurityObject(hTemp, DACL_SECURITY_INFORMATION, pSD);
+    ok(status == ERROR_SUCCESS, "NtSetSecurityObject returned %x\n", status);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    ok(h == INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
+
+    pSetSecurityDescriptorControl(pSD, SE_DACL_AUTO_INHERIT_REQ|SE_DACL_AUTO_INHERITED,
+            SE_DACL_AUTO_INHERIT_REQ|SE_DACL_AUTO_INHERITED);
+    status = pNtSetSecurityObject(hTemp, DACL_SECURITY_INFORMATION, pSD);
+    ok(status == ERROR_SUCCESS, "NtSetSecurityObject returned %x\n", status);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    ok(h == INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
+    HeapFree(GetProcessHeap(), 0, pDacl);
     CloseHandle(hTemp);
 
     /* Test querying the ownership of a built-in registry key */
