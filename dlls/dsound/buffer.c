@@ -850,7 +850,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(IDirectSoundBuffer8
 	TRACE("(%p,%s,%u,%s,%p)\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
 
 	if (dwIndex >= This->num_filters)
-		return DSERR_OBJECTNOTFOUND;
+		return DSERR_CONTROLUNAVAIL;
 
 	if (!ppObject)
 		return E_INVALIDARG;
