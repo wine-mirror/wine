@@ -3484,7 +3484,8 @@ static void test_GetNamedSecurityInfoA(void)
 
     h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
             NULL, OPEN_EXISTING, 0, NULL);
-    todo_wine ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
 
     bret = InitializeAcl(pDacl, 100, ACL_REVISION);
     ok(bret, "Failed to initialize ACL.\n");
