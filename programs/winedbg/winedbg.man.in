@@ -70,7 +70,7 @@ When in \fBgdb\fR proxy mode, the following options are available:
 .PP
 .IP \fB--no-start\fR
 \fBgdb\fR will not be automatically
-started. Relevant information for starting \fBgdb\fR are printed on
+started. Relevant information for starting \fBgdb\fR is printed on
 screen. This is somehow useful when not directly using \fBgdb\fR but
 some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
 .IP \fB--with-xterm\fR

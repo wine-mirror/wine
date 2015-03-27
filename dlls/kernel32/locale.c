@@ -2274,8 +2274,8 @@ static int utf7_wcstombs(const WCHAR *src, int srclen, char *dst, int dstlen)
 
             if (offset)
             {
-                /* Windows won't create a padded base64 character if there's not room for the - sign too
-                 * this is probably a bug in Windows */
+                /* Windows won't create a padded base64 character if there's no room for the - sign
+                 * as well ; this is probably a bug in Windows */
                 if (dstlen > 0 && dest_index + 1 >= dstlen)
                     return -1;
 

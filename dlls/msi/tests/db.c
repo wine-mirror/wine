@@ -2770,7 +2770,7 @@ static void test_markers(void)
     DeleteFileA(msifile);
 }
 
-#define MY_NVIEWS 4000    /* Largest installer I've seen uses < 2k */
+#define MY_NVIEWS 4000    /* Largest installer I've seen uses < 2000 */
 static void test_handle_limit(void)
 {
     int i;

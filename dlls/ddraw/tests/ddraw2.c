@@ -2246,7 +2246,7 @@ static void test_window_style(void)
 
     ret = SetForegroundWindow(window);
     ok(ret, "Failed to set foreground window.\n");
-    /* Windows 7 (but not Vista and XP) show the window when it receives focus. Hide it again,
+    /* Windows 7 (but not Vista and XP) shows the window when it receives focus. Hide it again,
      * the next tests expect this. */
     ShowWindow(window, SW_HIDE);
 
@@ -2417,7 +2417,7 @@ static void test_coop_level_mode_set(void)
         {WM_WINDOWPOSCHANGING,  FALSE,  0},
         /* Like d3d8 and d3d9 ddraw seems to use SW_SHOWMINIMIZED instead of
          * SW_MINIMIZED, causing a recursive window activation that does not
-         * produe the same result in Wine yet. Ignore the difference for now.
+         * produce the same result in Wine yet. Ignore the difference for now.
          * {WM_ACTIVATE,           TRUE,   0x200000 | WA_ACTIVE}, */
         {WM_WINDOWPOSCHANGED,   FALSE,  0},
         {WM_MOVE,               FALSE,  0},

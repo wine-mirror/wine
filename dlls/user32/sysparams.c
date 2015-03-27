@@ -722,7 +722,7 @@ static BOOL get_twips_entry( union sysparam_all_entry *entry, UINT int_param, vo
         if (load_entry( &entry->hdr, buf, sizeof(buf) ))
         {
             int val = atoiW( buf );
-            /* Dimension are quoted as being "twips" values if negative and pixels if positive.
+            /* Dimensions are quoted as being "twips" values if negative and pixels if positive.
              * One inch is 1440 twips.
              * See for example
              *       Technical Reference to the Windows 2000 Registry ->

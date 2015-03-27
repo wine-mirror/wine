@@ -3574,7 +3574,7 @@ static void test_select(void)
     /* select() works in 3 distinct states:
      * - to check if a connection attempt ended with success or error;
      * - to check if a pending connection is waiting for acceptance;
-     * - to check for data to read, avaliability for write and OOB data
+     * - to check for data to read, availability for write and OOB data
      *
      * The tests below ensure that all conditions are tested.
      */
@@ -7327,7 +7327,7 @@ static void test_sioAddressListChange(void)
         goto end;
     }
 
-    /* Wait for address changes, request that the user connect/disconnect an interface */
+    /* Wait for address changes, request that the user connects/disconnects an interface */
     memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);

@@ -2085,7 +2085,7 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     ok(!fetched, "fetched = %d\n", fetched);
     /* Although fetched==0, an element is returned. */
     expect_oleverb(verbs, OLEIVERB_PRIMARY);
-    /* The first argument is ignorred and always one element is returned. */
+    /* The first argument is ignored and always one element is returned. */
     ok(verbs[1].lVerb == 0xdeadbeef, "verbs[1].lVerb = %x\n", verbs[1].lVerb);
 
     test_next_oleverb(enum_verbs, OLEIVERB_INPLACEACTIVATE);
