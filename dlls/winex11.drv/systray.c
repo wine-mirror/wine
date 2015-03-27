@@ -85,11 +85,9 @@ Atom systray_atom = 0;
 #define MIN_DISPLAYED 8
 #define ICON_BORDER 2
 
-#define VALID_WIN_TIMER      1
-#define BALLOON_CREATE_TIMER 2
-#define BALLOON_SHOW_TIMER   3
+#define BALLOON_CREATE_TIMER 1
+#define BALLOON_SHOW_TIMER   2
 
-#define VALID_WIN_TIMEOUT        2000
 #define BALLOON_CREATE_TIMEOUT   2000
 #define BALLOON_SHOW_MIN_TIMEOUT 10000
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
@@ -453,10 +451,6 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
     switch (msg)
     {
-    case WM_CREATE:
-        SetTimer( hwnd, VALID_WIN_TIMER, VALID_WIN_TIMEOUT, NULL );
-        break;
-
     case WM_SIZE:
         if (icon->window && icon->layered) repaint_tray_icon( icon );
         break;
@@ -507,9 +501,6 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_TIMER:
         switch (wparam)
         {
-        case VALID_WIN_TIMER:
-            if (!IsWindow( icon->owner )) delete_icon( icon );
-            break;
         case BALLOON_CREATE_TIMER:
             balloon_create_timer( icon );
             break;
@@ -811,6 +802,15 @@ static BOOL delete_icon( struct tray_icon *icon )
     return TRUE;
 }
 
+/* cleanup all icons for a given window */
+static void cleanup_icons( HWND owner )
+{
+    struct tray_icon *this, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( this, next, &icon_list, struct tray_icon, entry )
+        if (this->owner == owner) delete_icon( this );
+}
+
 
 /***********************************************************************
  *              wine_notify_icon   (X11DRV.@)
@@ -833,6 +833,9 @@ int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
         break;
     case NIM_MODIFY:
         if ((icon = get_icon( data->hWnd, data->uID ))) ret = modify_icon( icon, data );
+        break;
+    case 0xdead:  /* Wine extension: owner window has died */
+        cleanup_icons( data->hWnd );
         break;
     default:
         FIXME( "unhandled tray message: %u\n", msg );
