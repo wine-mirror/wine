@@ -109,8 +109,9 @@ static void check_command_line( int argc, char *argv[] )
 }
 
 
-#if defined(__linux__) && defined(__i386__)
+#if defined(__linux__) && (defined(__i386__) || defined(__arm__))
 
+#ifdef __i386__
 /* separate thread to check for NPTL and TLS features */
 static void *needs_pthread( void *arg )
 {
@@ -140,6 +141,11 @@ static void check_threading(void)
     pthread_join( id, &ret );
     if (!ret) exit(1);
 }
+#else
+static void check_threading(void)
+{
+}
+#endif
 
 static void check_vmsplit( void *stack )
 {
@@ -171,7 +177,11 @@ static int pre_exec(void)
     check_threading();
     check_vmsplit( &temp );
     set_max_limit( RLIMIT_AS );
-    return 1;
+#ifdef __i386__
+    return 1;  /* we have a preloader on x86 */
+#else
+    return 0;
+#endif
 }
 
 #elif defined(__linux__) && defined(__x86_64__)
