@@ -904,10 +904,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTags(ID2D1RenderTarget *i
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTags(ID2D1RenderTarget *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
-    FIXME("iface %p, tag1 %p, tag2 %p stub!\n", iface, tag1, tag2);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    *tag1 = 0;
-    *tag2 = 0;
+    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
+
+    *tag1 = render_target->tag1;
+    *tag2 = render_target->tag2;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_PushLayer(ID2D1RenderTarget *iface,
