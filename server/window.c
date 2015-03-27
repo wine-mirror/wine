@@ -1865,6 +1865,11 @@ void destroy_window( struct window *win )
         if (desktop->top_window == win) desktop->top_window = NULL;
         else desktop->msg_window = NULL;
     }
+    else if (is_desktop_window( win->parent ))
+    {
+        post_message( win->parent->handle, WM_PARENTNOTIFY, WM_DESTROY, win->handle );
+    }
+
     detach_window_thread( win );
     if (win->win_region) free_region( win->win_region );
     if (win->update_region) free_region( win->update_region );
