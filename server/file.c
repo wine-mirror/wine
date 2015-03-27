@@ -367,7 +367,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
     aaa = (ACCESS_ALLOWED_ACE *)(dacl + 1);
     current_ace = &aaa->Header;
     aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    aaa->Header.AceFlags = 0;
+    aaa->Header.AceFlags = (mode & S_IFDIR) ? OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE : 0;
     aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( local_system_sid );
     aaa->Mask = FILE_ALL_ACCESS;
     sid = (SID *)&aaa->SidStart;
@@ -379,7 +379,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
         current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-        aaa->Header.AceFlags = 0;
+        aaa->Header.AceFlags = (mode & S_IFDIR) ? OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE : 0;
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( user );
         aaa->Mask = WRITE_DAC | WRITE_OWNER;
         if (mode & S_IRUSR)
@@ -397,7 +397,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         ACCESS_DENIED_ACE *ada = (ACCESS_DENIED_ACE *)ace_next( current_ace );
         current_ace = &ada->Header;
         ada->Header.AceType = ACCESS_DENIED_ACE_TYPE;
-        ada->Header.AceFlags = 0;
+        ada->Header.AceFlags = (mode & S_IFDIR) ? OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE : 0;
         ada->Header.AceSize = FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart) + security_sid_len( user );
         ada->Mask = 0;
         if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
@@ -414,7 +414,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         aaa = (ACCESS_ALLOWED_ACE *)ace_next( current_ace );
         current_ace = &aaa->Header;
         aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-        aaa->Header.AceFlags = 0;
+        aaa->Header.AceFlags = (mode & S_IFDIR) ? OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE : 0;
         aaa->Header.AceSize = FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) + security_sid_len( world_sid );
         aaa->Mask = 0;
         if (mode & S_IROTH)
