@@ -3332,7 +3332,7 @@ static NTSTATUS find_window_class(ACTIVATION_CONTEXT* actctx, const UNICODE_STRI
         {
             const WCHAR *nameW = (WCHAR*)((BYTE*)actctx->wndclass_section + iter->name_offset);
 
-            if (!strcmpW(nameW, name->Buffer))
+            if (!strcmpiW(nameW, name->Buffer))
             {
                 index = iter;
                 break;
