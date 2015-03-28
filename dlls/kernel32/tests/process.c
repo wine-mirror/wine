@@ -69,6 +69,7 @@ static DWORD  (WINAPI *pK32GetProcessImageFileNameA)(HANDLE,LPSTR,DWORD);
 static HANDLE (WINAPI *pCreateJobObjectW)(LPSECURITY_ATTRIBUTES sa, LPCWSTR name);
 static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
 static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
+static BOOL   (WINAPI *pTerminateJobObject)(HANDLE job, UINT exit_code);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -215,6 +216,7 @@ static BOOL init(void)
     pCreateJobObjectW = (void *)GetProcAddress(hkernel32, "CreateJobObjectW");
     pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
+    pTerminateJobObject = (void *)GetProcAddress(hkernel32, "TerminateJobObject");
     return TRUE;
 }
 
@@ -2187,6 +2189,40 @@ static void test_IsProcessInJob(void)
     CloseHandle(job);
 }
 
+static void test_TerminateJobObject(void)
+{
+    HANDLE job;
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+    DWORD dwret;
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi);
+
+    ret = pAssignProcessToJobObject(job, pi.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    ret = pTerminateJobObject(job, 123);
+    ok(ret, "TerminateJobObject error %u\n", GetLastError());
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    todo_wine
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
+
+    ret = GetExitCodeProcess(pi.hProcess, &dwret);
+    ok(ret, "GetExitCodeProcess error %u\n", GetLastError());
+    todo_wine
+    ok(dwret == 123 || broken(dwret == 0) /* randomly fails on Win 2000 / XP */,
+       "wrong exitcode %u\n", dwret);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(job);
+}
+
 START_TEST(process)
 {
     BOOL b = init();
@@ -2242,4 +2278,5 @@ START_TEST(process)
     }
 
     test_IsProcessInJob();
+    test_TerminateJobObject();
 }
