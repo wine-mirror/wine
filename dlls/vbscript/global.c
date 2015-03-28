@@ -584,8 +584,43 @@ static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    WCHAR buf[23], *ptr;
+    DWORD n;
+    int ret;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    switch(V_VT(arg)) {
+    case VT_I2:
+        n = (WORD)V_I2(arg);
+        break;
+    case VT_NULL:
+        if(res)
+            V_VT(res) = VT_NULL;
+        return S_OK;
+    default:
+        hres = to_int(arg, &ret);
+        if(FAILED(hres))
+            return hres;
+        else
+            n = ret;
+    }
+
+    buf[22] = 0;
+    ptr = buf + 21;
+
+    if(n) {
+        do {
+            *ptr-- = '0' + (n & 0x7);
+            n >>= 3;
+        }while(n);
+        ptr++;
+    }else {
+        *ptr = '0';
+    }
+
+    return return_string(res, ptr);
 }
 
 static HRESULT Global_VarType(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
