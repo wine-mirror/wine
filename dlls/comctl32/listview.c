@@ -4550,6 +4550,7 @@ static inline BOOL LISTVIEW_FillBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc, con
 static void LISTVIEW_DrawItemPart(LISTVIEW_INFO *infoPtr, LVITEMW *item, const NMLVCUSTOMDRAW *nmlvcd, const POINT *pos)
 {
     RECT rcSelect, rcLabel, rcBox, rcStateIcon, rcIcon;
+    const RECT *background;
     HIMAGELIST himl;
     UINT format;
     RECT *focus;
@@ -4579,37 +4580,41 @@ static void LISTVIEW_DrawItemPart(LISTVIEW_INFO *infoPtr, LVITEMW *item, const N
     if ( infoPtr->uView == LV_VIEW_ICON ||
         (infoPtr->uView == LV_VIEW_DETAILS && (!(item->state & LVIS_SELECTED) ||
         (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))))
-        rcSelect = rcLabel;
+        background = &rcLabel;
+    else
+        background = &rcSelect;
 
     if (nmlvcd->clrTextBk != CLR_NONE)
-        ExtTextOutW(nmlvcd->nmcd.hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, NULL, 0, NULL);
+        ExtTextOutW(nmlvcd->nmcd.hdc, background->left, background->top, ETO_OPAQUE, background, NULL, 0, NULL);
 
     if (item->state & LVIS_FOCUSED)
     {
-	if (infoPtr->uView == LV_VIEW_DETAILS && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
-	{
-	    /* we have to update left focus bound too if item isn't in leftmost column
-	       and reduce right box bound */
-	    if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
-	    {
-		INT leftmost;
+        if (infoPtr->uView == LV_VIEW_DETAILS)
+        {
+            if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
+            {
+                /* we have to update left focus bound too if item isn't in leftmost column
+	           and reduce right box bound */
+                if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
+                {
+                    INT leftmost;
 
-	        if ((leftmost = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, 0, 0)))
-	        {
-		    INT Originx = pos->x - LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left;
-		    INT index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
-				DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
+                    if ((leftmost = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, 0, 0)))
+                    {
+                        INT Originx = pos->x - LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left;
+                        INT index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+                            DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
 
-		    rcBox.right   = LISTVIEW_GetColumnInfo(infoPtr, index)->rcHeader.right + Originx;
-		    rcSelect.left = LISTVIEW_GetColumnInfo(infoPtr, leftmost)->rcHeader.left + Originx;
-	        }
-	    }
-
-	    rcSelect.right = rcBox.right;
-	}
-
-	/* store new focus rectangle */
-        infoPtr->rcFocus = rcSelect;
+                        rcBox.right   = LISTVIEW_GetColumnInfo(infoPtr, index)->rcHeader.right + Originx;
+                        rcSelect.left = LISTVIEW_GetColumnInfo(infoPtr, leftmost)->rcHeader.left + Originx;
+                    }
+                }
+                rcSelect.right = rcBox.right;
+            }
+            infoPtr->rcFocus = rcSelect;
+        }
+        else
+            infoPtr->rcFocus = rcLabel;
     }
 
     /* state icons */
