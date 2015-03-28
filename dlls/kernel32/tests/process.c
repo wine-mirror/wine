@@ -70,6 +70,7 @@ static HANDLE (WINAPI *pCreateJobObjectW)(LPSECURITY_ATTRIBUTES sa, LPCWSTR name
 static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
 static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
 static BOOL   (WINAPI *pTerminateJobObject)(HANDLE job, UINT exit_code);
+static BOOL   (WINAPI *pQueryInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len, LPDWORD ret_len);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -217,6 +218,7 @@ static BOOL init(void)
     pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
     pTerminateJobObject = (void *)GetProcAddress(hkernel32, "TerminateJobObject");
+    pQueryInformationJobObject = (void *)GetProcAddress(hkernel32, "QueryInformationJobObject");
     return TRUE;
 }
 
@@ -2223,6 +2225,91 @@ static void test_TerminateJobObject(void)
     CloseHandle(job);
 }
 
+static void test_QueryInformationJobObject(void)
+{
+    char buf[FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[5])];
+    PJOBOBJECT_BASIC_PROCESS_ID_LIST pid_list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
+    DWORD dwret, ret_len;
+    PROCESS_INFORMATION pi[2];
+    HANDLE job;
+    BOOL ret;
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    /* Only active processes are returned */
+    create_process("exit", &pi[0]);
+    ret = pAssignProcessToJobObject(job, pi[0].hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+    dwret = WaitForSingleObject(pi[0].hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    CloseHandle(pi[0].hProcess);
+    CloseHandle(pi[0].hThread);
+
+    create_process("wait", &pi[0]);
+    ret = pAssignProcessToJobObject(job, pi[0].hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi[1]);
+    ret = pAssignProcessToJobObject(job, pi[1].hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = QueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list,
+                                    FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList), &ret_len);
+    ok(!ret, "QueryInformationJobObject expected failure\n");
+    todo_wine
+    expect_eq_d(ERROR_BAD_LENGTH, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memset(buf, 0, sizeof(buf));
+    pid_list->NumberOfAssignedProcesses = 42;
+    pid_list->NumberOfProcessIdsInList  = 42;
+    ret = QueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list,
+                                    FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[1]), &ret_len);
+    ok(!ret, "QueryInformationJobObject expected failure\n");
+    todo_wine
+    expect_eq_d(ERROR_MORE_DATA, GetLastError());
+    if (ret)
+    {
+        expect_eq_d(42, pid_list->NumberOfAssignedProcesses);
+        expect_eq_d(42, pid_list->NumberOfProcessIdsInList);
+    }
+
+    memset(buf, 0, sizeof(buf));
+    ret = pQueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list, sizeof(buf), &ret_len);
+    todo_wine
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    if(ret)
+    {
+        if (pid_list->NumberOfAssignedProcesses == 3) /* Win 8 */
+            win_skip("Number of assigned processes broken on Win 8\n");
+        else
+        {
+            ULONG_PTR *list = pid_list->ProcessIdList;
+
+            ok(ret_len == FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[2]),
+               "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+
+            expect_eq_d(2, pid_list->NumberOfAssignedProcesses);
+            expect_eq_d(2, pid_list->NumberOfProcessIdsInList);
+            expect_eq_d(pi[0].dwProcessId, list[0]);
+            expect_eq_d(pi[1].dwProcessId, list[1]);
+        }
+    }
+
+    TerminateProcess(pi[0].hProcess, 0);
+    CloseHandle(pi[0].hProcess);
+    CloseHandle(pi[0].hThread);
+
+    TerminateProcess(pi[1].hProcess, 0);
+    CloseHandle(pi[1].hProcess);
+    CloseHandle(pi[1].hThread);
+
+    CloseHandle(job);
+}
+
 START_TEST(process)
 {
     BOOL b = init();
@@ -2240,6 +2327,11 @@ START_TEST(process)
         {
             Sleep(30000);
             ok(0, "Child process not killed\n");
+            return;
+        }
+        else if (!strcmp(myARGV[2], "exit"))
+        {
+            Sleep(100);
             return;
         }
 
@@ -2279,4 +2371,5 @@ START_TEST(process)
 
     test_IsProcessInJob();
     test_TerminateJobObject();
+    test_QueryInformationJobObject();
 }
