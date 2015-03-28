@@ -71,6 +71,8 @@ static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
 static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
 static BOOL   (WINAPI *pTerminateJobObject)(HANDLE job, UINT exit_code);
 static BOOL   (WINAPI *pQueryInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len, LPDWORD ret_len);
+static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len);
+static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -219,6 +221,8 @@ static BOOL init(void)
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
     pTerminateJobObject = (void *)GetProcAddress(hkernel32, "TerminateJobObject");
     pQueryInformationJobObject = (void *)GetProcAddress(hkernel32, "QueryInformationJobObject");
+    pSetInformationJobObject = (void *)GetProcAddress(hkernel32, "SetInformationJobObject");
+    pCreateIoCompletionPort = (void *)GetProcAddress(hkernel32, "CreateIoCompletionPort");
     return TRUE;
 }
 
@@ -2129,6 +2133,25 @@ static void test_DuplicateHandle(void)
     CloseHandle(out);
 }
 
+#define test_completion(a, b, c, d, e) _test_completion(__LINE__, a, b, c, d, e)
+static void _test_completion(int line, HANDLE port, DWORD ekey, ULONG_PTR evalue, ULONG_PTR eoverlapped, DWORD wait)
+{
+    LPOVERLAPPED overlapped;
+    ULONG_PTR value;
+    DWORD key;
+    BOOL ret;
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, wait);
+
+    ok_(__FILE__, line)(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    if (ret)
+    {
+        ok_(__FILE__, line)(key == ekey, "unexpected key %x\n", key);
+        ok_(__FILE__, line)(value == evalue, "unexpected value %p\n", (void *)value);
+        ok_(__FILE__, line)(overlapped == (LPOVERLAPPED)eoverlapped, "unexpected overlapped %p\n", overlapped);
+    }
+}
+
 #define create_process(cmd, pi) _create_process(__LINE__, cmd, pi)
 static void _create_process(int line, const char *command, LPPROCESS_INFORMATION pi)
 {
@@ -2310,6 +2333,48 @@ static void test_QueryInformationJobObject(void)
     CloseHandle(job);
 }
 
+static void test_CompletionPort(void)
+{
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
+    PROCESS_INFORMATION pi;
+    HANDLE job, port;
+    DWORD dwret;
+    BOOL ret;
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+    ok(port != NULL, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    port_info.CompletionKey = job;
+    port_info.CompletionPort = port;
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi);
+
+    ret = pAssignProcessToJobObject(job, pi.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    todo_wine
+    test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
+
+    TerminateProcess(pi.hProcess, 0);
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    todo_wine
+    test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
+    todo_wine
+    test_completion(port, JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, (DWORD_PTR)job, 0, 100);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(job);
+    CloseHandle(port);
+}
+
 START_TEST(process)
 {
     BOOL b = init();
@@ -2372,4 +2437,5 @@ START_TEST(process)
     test_IsProcessInJob();
     test_TerminateJobObject();
     test_QueryInformationJobObject();
+    test_CompletionPort();
 }
