@@ -1167,7 +1167,7 @@ NTSTATUS WINAPI RtlAddAce(
 	PACE_HEADER	ace,targetace;
 	int		nrofaces;
 
-	if (acl->AclRevision != ACL_REVISION)
+	if (!RtlValidAcl(acl))
 		return STATUS_INVALID_PARAMETER;
 	if (!RtlFirstFreeAce(acl,&targetace))
 		return STATUS_INVALID_PARAMETER;
@@ -1180,6 +1180,8 @@ NTSTATUS WINAPI RtlAddAce(
 		return STATUS_INVALID_PARAMETER;
 	memcpy(targetace,acestart,acelen);
 	acl->AceCount+=nrofaces;
+	if (rev > acl->AclRevision)
+		acl->AclRevision = rev;
 	return STATUS_SUCCESS;
 }
 

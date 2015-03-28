@@ -5568,6 +5568,51 @@ static void test_AdjustTokenPrivileges(void)
     CloseHandle(token);
 }
 
+static void test_AddAce(void)
+{
+    static SID const sidWorld = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY} , { SECURITY_WORLD_RID } };
+
+    char acl_buf[1024], ace_buf[256];
+    ACCESS_ALLOWED_ACE *ace = (ACCESS_ALLOWED_ACE*)ace_buf;
+    PACL acl = (PACL)acl_buf;
+    BOOL ret;
+
+    memset(ace, 0, sizeof(ace_buf));
+    ace->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    ace->Header.AceSize = sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD)+sizeof(SID);
+    memcpy(&ace->SidStart, &sidWorld, sizeof(sidWorld));
+
+    ret = InitializeAcl(acl, sizeof(acl_buf), ACL_REVISION2);
+    ok(ret, "InitializeAcl failed: %d\n", GetLastError());
+
+    ret = AddAce(acl, ACL_REVISION1, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ret = AddAce(acl, ACL_REVISION2, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ret = AddAce(acl, ACL_REVISION3, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ok(acl->AclRevision == ACL_REVISION3, "acl->AclRevision = %d\n", acl->AclRevision);
+    ret = AddAce(acl, ACL_REVISION4, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ok(acl->AclRevision == ACL_REVISION4, "acl->AclRevision = %d\n", acl->AclRevision);
+    ret = AddAce(acl, ACL_REVISION1, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ok(acl->AclRevision == ACL_REVISION4, "acl->AclRevision = %d\n", acl->AclRevision);
+    ret = AddAce(acl, ACL_REVISION2, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+
+    ret = AddAce(acl, MIN_ACL_REVISION-1, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    /* next test succeededs but corrupts ACL */
+    ret = AddAce(acl, MAX_ACL_REVISION+1, MAXDWORD, ace, ace->Header.AceSize);
+    ok(ret, "AddAce failed: %d\n", GetLastError());
+    ok(acl->AclRevision == MAX_ACL_REVISION+1, "acl->AclRevision = %d\n", acl->AclRevision);
+    SetLastError(0xdeadbeef);
+    ret = AddAce(acl, ACL_REVISION1, MAXDWORD, ace, ace->Header.AceSize);
+    ok(!ret, "AddAce succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %d\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -5609,4 +5654,5 @@ START_TEST(security)
     test_TokenIntegrityLevel();
     test_default_dacl_owner_sid();
     test_AdjustTokenPrivileges();
+    test_AddAce();
 }
