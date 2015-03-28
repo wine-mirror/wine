@@ -4601,11 +4601,11 @@ static void LISTVIEW_DrawItemPart(LISTVIEW_INFO *infoPtr, LVITEMW *item, const N
 
                     if ((leftmost = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, 0, 0)))
                     {
-                        INT Originx = pos->x - LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left;
-                        INT index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+                        INT Originx = pos->x - LISTVIEW_GetColumnInfo(infoPtr, leftmost)->rcHeader.left;
+                        INT rightmost = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
                             DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
 
-                        rcBox.right   = LISTVIEW_GetColumnInfo(infoPtr, index)->rcHeader.right + Originx;
+                        rcBox.right   = LISTVIEW_GetColumnInfo(infoPtr, rightmost)->rcHeader.right + Originx;
                         rcSelect.left = LISTVIEW_GetColumnInfo(infoPtr, leftmost)->rcHeader.left + Originx;
                     }
                 }
