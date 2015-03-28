@@ -2301,5 +2301,5 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown *parent, IUnknown **out)
 
     hr = IDirect3DRMFrame3_QueryInterface(&object->IDirect3DRMFrame3_iface, riid, (void **)out);
     IDirect3DRMFrame3_Release(&object->IDirect3DRMFrame3_iface);
-    return S_OK;
+    return hr;
 }
