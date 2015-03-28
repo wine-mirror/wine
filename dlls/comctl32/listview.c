@@ -6,7 +6,7 @@
  * Copyright 2000 Jason Mawdsley
  * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
- * Copyright 2009-2014 Nikolay Sivov
+ * Copyright 2009-2015 Nikolay Sivov
  * Copyright 2009 Owen Rudge for CodeWeavers
  * Copyright 2012-2013 Daniel Jelinski
  *
@@ -54,7 +54,6 @@
  *   -- Support CustomDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs).
  *   -- LVA_SNAPTOGRID not implemented
  *   -- LISTVIEW_ApproximateViewRect partially implemented
- *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
@@ -8402,18 +8401,38 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	    cx = 0;
 
 	    /* retrieve header text */
-	    hdi.mask = HDI_TEXT;
+	    hdi.mask = HDI_TEXT|HDI_FORMAT|HDI_IMAGE|HDI_BITMAP;
 	    hdi.cchTextMax = DISP_TEXT_SIZE;
 	    hdi.pszText = szDispText;
 	    if (SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nColumn, (LPARAM)&hdi))
 	    {
 		HDC hdc = GetDC(infoPtr->hwndSelf);
 		HFONT old_font = SelectObject(hdc, (HFONT)SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0, 0));
+		HIMAGELIST himl = (HIMAGELIST)SendMessageW(infoPtr->hwndHeader, HDM_GETIMAGELIST, 0, 0);
+		INT bitmap_margin = 0;
 		SIZE size;
 
 		if (GetTextExtentPoint32W(hdc, hdi.pszText, lstrlenW(hdi.pszText), &size))
 		    cx = size.cx + TRAILING_HEADER_PADDING;
-		/* FIXME: Take into account the header image, if one is present */
+
+		if (hdi.fmt & (HDF_IMAGE|HDF_BITMAP))
+		    bitmap_margin = SendMessageW(infoPtr->hwndHeader, HDM_GETBITMAPMARGIN, 0, 0);
+
+		if ((hdi.fmt & HDF_IMAGE) && himl)
+		{
+		    INT icon_cx, icon_cy;
+
+		    if (!ImageList_GetIconSize(himl, &icon_cx, &icon_cy))
+		        cx += icon_cx + 2*bitmap_margin;
+		}
+		else if (hdi.fmt & HDF_BITMAP)
+		{
+		    BITMAP bmp;
+
+		    GetObjectW(hdi.hbm, sizeof(BITMAP), &bmp);
+		    cx += bmp.bmWidth + 2*bitmap_margin;
+		}
+
 		SelectObject(hdc, old_font);
 		ReleaseDC(infoPtr->hwndSelf, hdc);
 	    }
