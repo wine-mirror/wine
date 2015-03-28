@@ -2425,6 +2425,38 @@ static HANDLE test_AddSelfToJob(void)
     return job;
 }
 
+static void test_jobInheritance(HANDLE job)
+{
+    char buffer[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    DWORD dwret;
+    BOOL ret, out;
+
+    if (!pIsProcessInJob)
+    {
+        win_skip("IsProcessInJob not available.\n");
+        return;
+    }
+
+    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, "exit");
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcessA error %u\n", GetLastError());
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    todo_wine
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 static void test_BreakawayOk(HANDLE job)
 {
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
@@ -2565,6 +2597,7 @@ START_TEST(process)
     test_CompletionPort();
     test_KillOnJobClose();
     job = test_AddSelfToJob();
+    test_jobInheritance(job);
     test_BreakawayOk(job);
     CloseHandle(job);
 }
