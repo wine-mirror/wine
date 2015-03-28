@@ -2375,6 +2375,42 @@ static void test_CompletionPort(void)
     CloseHandle(port);
 }
 
+static void test_KillOnJobClose(void)
+{
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
+    PROCESS_INFORMATION pi;
+    DWORD dwret;
+    HANDLE job;
+    BOOL ret;
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("Kill on job close limit not available\n");
+        return;
+    }
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi);
+
+    ret = pAssignProcessToJobObject(job, pi.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    CloseHandle(job);
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    todo_wine
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+    if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 START_TEST(process)
 {
     BOOL b = init();
@@ -2438,4 +2474,5 @@ START_TEST(process)
     test_TerminateJobObject();
     test_QueryInformationJobObject();
     test_CompletionPort();
+    test_KillOnJobClose();
 }
