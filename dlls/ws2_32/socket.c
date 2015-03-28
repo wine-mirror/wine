@@ -4780,7 +4780,11 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
             }
 
             timeout = torig - (tv2.tv_sec * 1000) - (tv2.tv_usec + 999) / 1000;
-            if (timeout <= 0) break;
+            if (timeout <= 0)
+            {
+                ret = 0;
+                break;
+            }
         } else break;
     }
     release_poll_fds( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
