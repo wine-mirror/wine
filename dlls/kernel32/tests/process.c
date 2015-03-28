@@ -2411,8 +2411,97 @@ static void test_KillOnJobClose(void)
     CloseHandle(pi.hThread);
 }
 
+static HANDLE test_AddSelfToJob(void)
+{
+    HANDLE job;
+    BOOL ret;
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    ret = pAssignProcessToJobObject(job, GetCurrentProcess());
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    return job;
+}
+
+static void test_BreakawayOk(HANDLE job)
+{
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    char buffer[MAX_PATH];
+    BOOL ret, out;
+    DWORD dwret;
+
+    if (!pIsProcessInJob)
+    {
+        win_skip("IsProcessInJob not available.\n");
+        return;
+    }
+
+    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, "exit");
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
+    todo_wine
+    ok(!ret, "CreateProcessA expected failure\n");
+    todo_wine
+    expect_eq_d(ERROR_ACCESS_DENIED, GetLastError());
+
+    if (ret)
+    {
+        TerminateProcess(pi.hProcess, 0);
+
+        dwret = WaitForSingleObject(pi.hProcess, 1000);
+        ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+
+    limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+    ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcessA error %u\n", GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+    ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess error %u\n", GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    /* unset breakaway ok */
+    limit_info.BasicLimitInformation.LimitFlags = 0;
+    ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+}
+
 START_TEST(process)
 {
+    HANDLE job;
     BOOL b = init();
     ok(b, "Basic init of CreateProcess test\n");
     if (!b) return;
@@ -2475,4 +2564,7 @@ START_TEST(process)
     test_QueryInformationJobObject();
     test_CompletionPort();
     test_KillOnJobClose();
+    job = test_AddSelfToJob();
+    test_BreakawayOk(job);
+    CloseHandle(job);
 }
