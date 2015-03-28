@@ -176,6 +176,8 @@ static const struct message listview_ownerdata_switchto_seq[] = {
 static const struct message listview_getorderarray_seq[] = {
     { LVM_GETCOLUMNORDERARRAY, sent|id|wparam, 2, 0, LISTVIEW_ID },
     { HDM_GETORDERARRAY,       sent|id|wparam, 2, 0, HEADER_ID },
+    { LVM_GETCOLUMNORDERARRAY, sent|id|wparam, 0, 0, LISTVIEW_ID },
+    { HDM_GETORDERARRAY,       sent|id|wparam, 0, 0, HEADER_ID },
     { 0 }
 };
 
@@ -1413,12 +1415,27 @@ static void test_items(void)
 
 static void test_columns(void)
 {
-    HWND hwnd;
+    HWND hwnd, header;
     LVCOLUMNA column;
     LVITEMA item;
     INT order[2];
     CHAR buff[5];
     DWORD rc;
+
+    hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_LIST,
+                10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(header == NULL, "got %p\n", header);
+
+    rc = SendMessageA(hwnd, LVM_GETCOLUMNORDERARRAY, 2, (LPARAM)&order);
+    ok(rc == 0, "got %d\n", rc);
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(header == NULL, "got %p\n", header);
+
+    DestroyWindow(hwnd);
 
     hwnd = CreateWindowExA(0, "SysListView32", "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
@@ -1456,6 +1473,9 @@ static void test_columns(void)
     expect(1, rc);
     ok(order[0] == 0, "Expected order 0, got %d\n", order[0]);
     ok(order[1] == 1, "Expected order 1, got %d\n", order[1]);
+
+    rc = SendMessageA(hwnd, LVM_GETCOLUMNORDERARRAY, 0, 0);
+    expect(0, rc);
 
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_getorderarray_seq, "get order array", FALSE);
 
