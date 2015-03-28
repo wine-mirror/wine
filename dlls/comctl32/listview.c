@@ -4565,12 +4565,21 @@ static void LISTVIEW_DrawItemPart(LISTVIEW_INFO *infoPtr, LVITEMW *item, const N
     OffsetRect(&rcIcon, pos->x, pos->y);
     OffsetRect(&rcStateIcon, pos->x, pos->y);
     OffsetRect(&rcLabel, pos->x, pos->y);
-    TRACE("    rcBox=%s, rcSelect=%s, rcIcon=%s. rcLabel=%s\n",
+    TRACE("%d: box=%s, select=%s, icon=%s. label=%s\n", item->iSubItem,
         wine_dbgstr_rect(&rcBox), wine_dbgstr_rect(&rcSelect),
         wine_dbgstr_rect(&rcIcon), wine_dbgstr_rect(&rcLabel));
 
     /* FIXME: temporary hack */
     rcSelect.left = rcLabel.left;
+
+    if (infoPtr->uView == LV_VIEW_DETAILS && item->iSubItem == 0)
+    {
+        if (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+            OffsetRect(&rcSelect, LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left, 0);
+        OffsetRect(&rcIcon, LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left, 0);
+        OffsetRect(&rcStateIcon, LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left, 0);
+        OffsetRect(&rcLabel, LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left, 0);
+    }
 
     /* in icon mode, the label rect is really what we want to draw the
      * background for */
@@ -4900,9 +4909,9 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
 {
     INT rgntype;
     RECT rcClip, rcItem;
-    POINT Origin, Position;
+    POINT Origin;
     RANGES colRanges;
-    INT col, index;
+    INT col;
     ITERATOR j;
 
     TRACE("()\n");
@@ -4919,7 +4928,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     /* narrow down the columns we need to paint */
     for(col = 0; col < DPA_GetPtrCount(infoPtr->hdpaColumns); col++)
     {
-	index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, col, 0);
+	INT index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, col, 0);
 
 	LISTVIEW_GetHeaderRect(infoPtr, index, &rcItem);
 	if ((rcItem.right + Origin.x >= rcClip.left) && (rcItem.left + Origin.x < rcClip.right))
@@ -4935,10 +4944,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     while(iterator_next(i))
     {
         RANGES subitems;
+        POINT Position;
         ITERATOR k;
 
         SelectObject(hdc, infoPtr->hFont);
 	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
+        Position.x = Origin.x;
 	Position.y += Origin.y;
 
         subitems = ranges_create(DPA_GetPtrCount(infoPtr->hdpaColumns));
@@ -4947,7 +4958,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
 	while(iterator_next(&j))
 	{
 	    LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
-	    Position.x = (j.nItem == 0) ? rcItem.left + Origin.x : Origin.x;
 
 	    if (rgntype == COMPLEXREGION && !((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) && j.nItem == 0))
 	    {
