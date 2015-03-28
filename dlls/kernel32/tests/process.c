@@ -66,6 +66,9 @@ static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static BOOL   (WINAPI *pQueryFullProcessImageNameA)(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD lpdwSize);
 static BOOL   (WINAPI *pQueryFullProcessImageNameW)(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD lpdwSize);
 static DWORD  (WINAPI *pK32GetProcessImageFileNameA)(HANDLE,LPSTR,DWORD);
+static HANDLE (WINAPI *pCreateJobObjectW)(LPSECURITY_ATTRIBUTES sa, LPCWSTR name);
+static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
+static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -209,6 +212,9 @@ static BOOL init(void)
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
+    pCreateJobObjectW = (void *)GetProcAddress(hkernel32, "CreateJobObjectW");
+    pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
+    pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
     return TRUE;
 }
 
@@ -2119,17 +2125,85 @@ static void test_DuplicateHandle(void)
     CloseHandle(out);
 }
 
+#define create_process(cmd, pi) _create_process(__LINE__, cmd, pi)
+static void _create_process(int line, const char *command, LPPROCESS_INFORMATION pi)
+{
+    BOOL ret;
+    char buffer[MAX_PATH];
+    STARTUPINFOA si = {0};
+
+    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, command);
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, pi);
+    ok_(__FILE__, line)(ret, "CreateProcess error %u\n", GetLastError());
+}
+
+
+static void test_IsProcessInJob(void)
+{
+    HANDLE job;
+    PROCESS_INFORMATION pi;
+    BOOL ret, out;
+    DWORD dwret;
+
+    if (!pIsProcessInJob)
+    {
+        win_skip("IsProcessInJob not available.\n");
+        return;
+    }
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi);
+
+    out = TRUE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pAssignProcessToJobObject(job, pi.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    todo_wine
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    todo_wine
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(job);
+}
+
 START_TEST(process)
 {
     BOOL b = init();
     ok(b, "Basic init of CreateProcess test\n");
     if (!b) return;
 
-    if (myARGC >= 4)
+    if (myARGC >= 3)
     {
-        if (!strcmp(myARGV[2], "dump"))
+        if (!strcmp(myARGV[2], "dump") && myARGC >= 4)
         {
             doChild(myARGV[3], (myARGC >= 5) ? myARGV[4] : NULL);
+            return;
+        }
+        else if (!strcmp(myARGV[2], "wait"))
+        {
+            Sleep(30000);
+            ok(0, "Child process not killed\n");
             return;
         }
 
@@ -2160,4 +2234,12 @@ START_TEST(process)
      *  handles:        check the handle inheritance stuff (+sec options)
      *  console:        check if console creation parameters work
      */
+
+    if (!pCreateJobObjectW)
+    {
+        win_skip("No job object support\n");
+        return;
+    }
+
+    test_IsProcessInJob();
 }
