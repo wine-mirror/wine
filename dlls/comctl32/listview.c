@@ -6537,8 +6537,6 @@ static INT LISTVIEW_GetColumnWidth(const LISTVIEW_INFO *infoPtr, INT nColumn)
 	/* We are not using LISTVIEW_GetHeaderRect as this data is updated only after a HDN_ITEMCHANGED.
 	 * There is an application that subclasses the listview, calls LVM_GETCOLUMNWIDTH in the
 	 * HDN_ITEMCHANGED handler and goes into infinite recursion if it receives old data.
-	 *
-	 * TODO: should we do the same in LVM_GETCOLUMN?
 	 */
 	hdItem.mask = HDI_WIDTH;
 	if (!SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nColumn, (LPARAM)&hdItem))
