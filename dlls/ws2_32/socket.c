@@ -4479,24 +4479,51 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
         {
             fds[j].fd = get_sock_fd( readfds->fd_array[i], FILE_READ_DATA, NULL );
             if (fds[j].fd == -1) goto failed;
-            fds[j].events = POLLIN;
             fds[j].revents = 0;
+            if (is_fd_bound(fds[j].fd, NULL, NULL) == 1)
+            {
+                fds[j].events = POLLIN;
+            }
+            else
+            {
+                release_sock_fd( readfds->fd_array[i], fds[j].fd );
+                fds[j].fd = -1;
+                fds[j].events = 0;
+            }
         }
     if (writefds)
         for (i = 0; i < writefds->fd_count; i++, j++)
         {
             fds[j].fd = get_sock_fd( writefds->fd_array[i], FILE_WRITE_DATA, NULL );
             if (fds[j].fd == -1) goto failed;
-            fds[j].events = POLLOUT;
             fds[j].revents = 0;
+            if (is_fd_bound(fds[j].fd, NULL, NULL) == 1)
+            {
+                fds[j].events = POLLOUT;
+            }
+            else
+            {
+                release_sock_fd( readfds->fd_array[i], fds[j].fd );
+                fds[j].fd = -1;
+                fds[j].events = 0;
+            }
         }
     if (exceptfds)
         for (i = 0; i < exceptfds->fd_count; i++, j++)
         {
             fds[j].fd = get_sock_fd( exceptfds->fd_array[i], 0, NULL );
             if (fds[j].fd == -1) goto failed;
-            fds[j].events = POLLHUP;
             fds[j].revents = 0;
+            if (is_fd_bound(fds[j].fd, NULL, NULL) == 1)
+            {
+                fds[j].events = POLLHUP;
+            }
+            else
+            {
+                release_sock_fd( readfds->fd_array[i], fds[j].fd );
+                fds[j].fd = -1;
+                fds[j].events = 0;
+            }
         }
     return fds;
 
@@ -4505,13 +4532,13 @@ failed:
     j = 0;
     if (readfds)
         for (i = 0; i < readfds->fd_count && j < count; i++, j++)
-            release_sock_fd( readfds->fd_array[i], fds[j].fd );
+            if (fds[j].fd != -1) release_sock_fd( readfds->fd_array[i], fds[j].fd );
     if (writefds)
         for (i = 0; i < writefds->fd_count && j < count; i++, j++)
-            release_sock_fd( writefds->fd_array[i], fds[j].fd );
+            if (fds[j].fd != -1) release_sock_fd( writefds->fd_array[i], fds[j].fd );
     if (exceptfds)
         for (i = 0; i < exceptfds->fd_count && j < count; i++, j++)
-            release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
+            if (fds[j].fd != -1) release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
     HeapFree( GetProcessHeap(), 0, fds );
     return NULL;
 }

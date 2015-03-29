@@ -3430,17 +3430,12 @@ static void test_select(void)
     if (fdWrite > maxfd)
         maxfd = fdWrite;
        
-    todo_wine {
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
     ok ( (ret == 0), "select should not return any socket handles\n");
     ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
-    }
     ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
-
-    todo_wine {
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
     ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
-    }
  
     ok ((listen(fdWrite, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
     ret = closesocket(fdWrite);
