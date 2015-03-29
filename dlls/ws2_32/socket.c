@@ -6713,7 +6713,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 {
     unsigned int i, options;
     int n, fd, err, overlapped;
-    struct ws2_async *wsa, localwsa;
+    struct ws2_async *wsa = NULL, localwsa;
     BOOL is_blocking;
     DWORD timeout_start = GetTickCount();
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
@@ -6727,6 +6727,18 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     TRACE( "fd=%d, options=%x\n", fd, options );
 
     if (fd == -1) return SOCKET_ERROR;
+
+    if (*lpFlags & WS_MSG_OOB)
+    {
+        /* It's invalid to receive OOB data from an OOBINLINED socket
+         * as OOB data is turned into normal data. */
+        i = sizeof(n);
+        if (!getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, (char*) &n, &i) && n)
+        {
+            err = WSAEINVAL;
+            goto error;
+        }
+    }
 
     overlapped = (lpOverlapped || lpCompletionRoutine) &&
         !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
