@@ -1586,6 +1586,22 @@ static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
     }
 }
 
+/* Returns -1 if getsockname fails, 0 if not bound, 1 otherwise */
+static int is_fd_bound(int fd, union generic_unix_sockaddr *uaddr, socklen_t *uaddrlen)
+{
+    union generic_unix_sockaddr inaddr;
+    socklen_t inlen;
+    int res;
+
+    if (!uaddr) uaddr = &inaddr;
+    if (!uaddrlen) uaddrlen = &inlen;
+
+    *uaddrlen = sizeof(inaddr);
+    res = getsockname(fd, &uaddr->addr, uaddrlen);
+    if (!res) res = is_sockaddr_bound(&uaddr->addr, *uaddrlen);
+    return res;
+}
+
 /* Returns 0 if successful, -1 if the buffer is too small */
 static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* wsaddr, int* wsaddrlen)
 {
@@ -2941,8 +2957,6 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
                           PVOID sendBuf, DWORD sendBufLen, LPDWORD sent, LPOVERLAPPED ov)
 {
     int fd, ret, status;
-    union generic_unix_sockaddr uaddr;
-    socklen_t uaddrlen = sizeof(uaddr);
 
     if (!ov)
     {
@@ -2960,14 +2974,10 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
     TRACE("socket %04lx, ptr %p %s, length %d, sendptr %p, len %d, ov %p\n",
           s, name, debugstr_sockaddr(name), namelen, sendBuf, sendBufLen, ov);
 
-    if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
+    ret = is_fd_bound(fd, NULL, NULL);
+    if (ret <= 0)
     {
-        SetLastError(wsaErrno());
-        return FALSE;
-    }
-    else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
-    {
-        SetLastError(WSAEINVAL);
+        SetLastError(ret == -1 ? wsaErrno() : WSAEINVAL);
         return FALSE;
     }
 
@@ -3115,15 +3125,12 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
     if (fd != -1)
     {
         union generic_unix_sockaddr uaddr;
-        socklen_t uaddrlen = sizeof(uaddr);
+        socklen_t uaddrlen;
+        int bound = is_fd_bound(fd, &uaddr, &uaddrlen);
 
-        if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
+        if (bound <= 0)
         {
-            SetLastError(wsaErrno());
-        }
-        else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
-        {
-            SetLastError(WSAEINVAL);
+            SetLastError(bound == -1 ? wsaErrno() : WSAEINVAL);
         }
         else if (ws_sockaddr_u2ws(&uaddr.addr, name, namelen) != 0)
         {
@@ -3132,7 +3139,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
         }
         else
         {
-            res=0;
+            res = 0;
             TRACE("=> %s\n", debugstr_sockaddr(name));
         }
         release_sock_fd( s, fd );
@@ -3222,7 +3229,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 else
                 {
                     union generic_unix_sockaddr uaddr;
-                    socklen_t uaddrlen = sizeof(uaddr);
+                    socklen_t uaddrlen;
 
                     if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                         return SOCKET_ERROR;
@@ -3230,8 +3237,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                     csinfo = (CSADDR_INFO*) optval;
 
                     /* Check if the sock is bound */
-                    if (!getsockname(fd, &uaddr.addr, &uaddrlen) &&
-                        is_sockaddr_bound(&uaddr.addr, uaddrlen))
+                    if (is_fd_bound(fd, &uaddr, &uaddrlen) == 1)
                     {
                         csinfo->LocalAddr.lpSockaddr =
                             (LPSOCKADDR) (optval + sizeof(CSADDR_INFO));
@@ -4399,16 +4405,11 @@ int WINAPI WS_listen(SOCKET s, int backlog)
     TRACE("socket %04lx, backlog %d\n", s, backlog);
     if (fd != -1)
     {
-        union generic_unix_sockaddr uaddr;
-        socklen_t uaddrlen = sizeof(uaddr);
+        int bound = is_fd_bound(fd, NULL, NULL);
 
-        if (getsockname(fd, &uaddr.addr, &uaddrlen) != 0)
+        if (bound <= 0)
         {
-            SetLastError(wsaErrno());
-        }
-        else if (!is_sockaddr_bound(&uaddr.addr, uaddrlen))
-        {
-            SetLastError(WSAEINVAL);
+            SetLastError(bound == -1 ? wsaErrno() : WSAEINVAL);
         }
         else if (listen(fd, backlog) == 0)
         {
