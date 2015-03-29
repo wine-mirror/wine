@@ -3626,9 +3626,7 @@ static void test_select(void)
     FD_SET(fdRead, &readfds);
     FD_SET(fdRead, &exceptfds);
     ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
-todo_wine
     ok(ret == 1, "expected 1, got %d\n", ret);
-todo_wine
     ok(FD_ISSET(fdRead, &exceptfds), "fdRead socket is not in the set\n");
     tmp_buf[0] = 0xAF;
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);

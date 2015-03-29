@@ -4516,7 +4516,15 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
             fds[j].revents = 0;
             if (is_fd_bound(fds[j].fd, NULL, NULL) == 1)
             {
+                int oob_inlined = 0;
+                socklen_t olen = sizeof(oob_inlined);
+
                 fds[j].events = POLLHUP;
+
+                /* Check if we need to test for urgent data or not */
+                getsockopt(fds[j].fd, SOL_SOCKET, SO_OOBINLINE, (char*) &oob_inlined, &olen);
+                if (!oob_inlined)
+                    fds[j].events |= POLLPRI;
             }
             else
             {
