@@ -1124,15 +1124,6 @@ static char *strdup_lower(const char *str)
     return ret;
 }
 
-static inline int sock_error_p(int s)
-{
-    unsigned int optval;
-    socklen_t optlen = sizeof(optval);
-    getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
-    if (optval) WARN("\t[%i] error: %d\n", s, optval);
-    return optval != 0;
-}
-
 /* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
  * from an fd and return the value converted to milli seconds
  * or -1 if there is an infinite time out */
@@ -4545,12 +4536,7 @@ static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefd
     if (exceptfds)
     {
         for (i = 0; i < exceptfds->fd_count; i++, j++)
-            if (fds[j].fd != -1)
-            {
-                /* make sure we have a real error before releasing the fd */
-                if (!sock_error_p( fds[j].fd )) fds[j].revents = 0;
-                release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
-            }
+            if (fds[j].fd != -1) release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
     }
 }
 

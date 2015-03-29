@@ -3437,8 +3437,10 @@ static void test_select(void)
     }
     ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
 
+    todo_wine {
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
     ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
+    }
  
     ok ((listen(fdWrite, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
     ret = closesocket(fdWrite);
@@ -3683,9 +3685,7 @@ todo_wine
     FD_SET(fdWrite, &exceptfds);
     select_timeout.tv_sec = 2; /* requires more time to realize it will not connect */
     ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
-todo_wine
     ok(ret == 1, "expected 1, got %d\n", ret);
-todo_wine
     ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
     ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
     closesocket(fdWrite);
