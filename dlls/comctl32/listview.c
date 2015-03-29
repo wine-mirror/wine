@@ -8340,9 +8340,10 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
     /* set column width only if in report or list mode */
     if (infoPtr->uView != LV_VIEW_DETAILS && infoPtr->uView != LV_VIEW_LIST) return FALSE;
 
-    /* take care of invalid cx values */
-    if(infoPtr->uView == LV_VIEW_DETAILS && cx < -2) cx = LVSCW_AUTOSIZE;
-    else if (infoPtr->uView == LV_VIEW_LIST && cx < 1) return FALSE;
+    /* take care of invalid cx values - LVSCW_AUTOSIZE_* values are negative,
+       with _USEHEADER being the lowest */
+    if (infoPtr->uView == LV_VIEW_DETAILS && cx < LVSCW_AUTOSIZE_USEHEADER) cx = LVSCW_AUTOSIZE;
+    else if (infoPtr->uView == LV_VIEW_LIST && cx <= 0) return FALSE;
 
     /* resize all columns if in LV_VIEW_LIST mode */
     if(infoPtr->uView == LV_VIEW_LIST)
