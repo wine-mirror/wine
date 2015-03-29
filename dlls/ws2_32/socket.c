@@ -462,6 +462,14 @@ static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS C
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
+static const int ws_flags_map[][2] =
+{
+    MAP_OPTION( MSG_OOB ),
+    MAP_OPTION( MSG_PEEK ),
+    MAP_OPTION( MSG_DONTROUTE ),
+    MAP_OPTION( MSG_WAITALL ),
+};
+
 static const int ws_sock_map[][2] =
 {
     MAP_OPTION( SO_DEBUG ),
@@ -1011,6 +1019,33 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *          convert_flags()
+ *
+ * Converts send/recv flags from Windows format.
+ * Return the converted flag bits, unsupported flags remain unchanged.
+ */
+static int convert_flags(int flags)
+{
+    int i, out;
+    if (!flags) return 0;
+
+    for (out = i = 0; flags && i < sizeof(ws_flags_map) / sizeof(ws_flags_map[0]); i++)
+    {
+        if (ws_flags_map[i][0] & flags)
+        {
+            out |= ws_flags_map[i][1];
+            flags &= ~ws_flags_map[i][0];
+        }
+    }
+    if (flags)
+    {
+        FIXME("Unknown send/recv flags 0x%x, using anyway...\n", flags);
+        out |= flags;
+    }
+    return out;
 }
 
 /***********************************************************************
@@ -1940,7 +1975,7 @@ static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserv
  *
  * Workhorse for both synchronous and asynchronous recv() operations.
  */
-static int WS2_recv( int fd, struct ws2_async *wsa )
+static int WS2_recv( int fd, struct ws2_async *wsa, int flags )
 {
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     char pktbuf[512];
@@ -1970,7 +2005,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
     hdr.msg_flags = 0;
 #endif
 
-    while ((n = recvmsg(fd, &hdr, wsa->flags)) == -1)
+    while ((n = recvmsg(fd, &hdr, flags)) == -1)
     {
         if (errno != EINTR)
             return -1;
@@ -2025,7 +2060,7 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb,
         if ((status = wine_server_handle_to_fd( wsa->hSocket, FILE_READ_DATA, &fd, NULL ) ))
             break;
 
-        result = WS2_recv( fd, wsa );
+        result = WS2_recv( fd, wsa, convert_flags(wsa->flags) );
         wine_server_release_fd( wsa->hSocket, fd );
         if (result >= 0)
         {
@@ -2173,7 +2208,7 @@ finish:
  *
  * Workhorse for both synchronous and asynchronous send() operations.
  */
-static int WS2_send( int fd, struct ws2_async *wsa )
+static int WS2_send( int fd, struct ws2_async *wsa, int flags )
 {
     struct msghdr hdr;
     union generic_unix_sockaddr unix_addr;
@@ -2221,7 +2256,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
     hdr.msg_flags = 0;
 #endif
 
-    while ((ret = sendmsg(fd, &hdr, wsa->flags)) == -1)
+    while ((ret = sendmsg(fd, &hdr, flags)) == -1)
     {
         if (errno != EINTR)
             return -1;
@@ -2262,7 +2297,7 @@ static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb,
             break;
 
         /* check to see if the data is ready (non-blocking) */
-        result = WS2_send( fd, wsa );
+        result = WS2_send( fd, wsa, convert_flags(wsa->flags) );
         wine_server_release_fd( wsa->hSocket, fd );
 
         if (result >= 0)
@@ -4673,7 +4708,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
     unsigned int i, options;
-    int n, fd, err, overlapped;
+    int n, fd, err, overlapped, flags;
     struct ws2_async *wsa = NULL, localwsa;
     int totalLength = 0;
     DWORD bytes_sent;
@@ -4722,7 +4757,8 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         totalLength += lpBuffers[i].len;
     }
 
-    n = WS2_send( fd, wsa );
+    flags = convert_flags(dwFlags);
+    n = WS2_send( fd, wsa, flags );
     if (n == -1 && errno != EAGAIN)
     {
         err = wsaErrno();
@@ -4814,7 +4850,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 goto error; /* msdn says a timeout in send is fatal */
             }
 
-            n = WS2_send( fd, wsa );
+            n = WS2_send( fd, wsa, flags );
             if (n == -1 && errno != EAGAIN)
             {
                 err = wsaErrno();
@@ -6712,7 +6748,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                           LPWSABUF lpControlBuffer )
 {
     unsigned int i, options;
-    int n, fd, err, overlapped;
+    int n, fd, err, overlapped, flags;
     struct ws2_async *wsa = NULL, localwsa;
     BOOL is_blocking;
     DWORD timeout_start = GetTickCount();
@@ -6773,9 +6809,10 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         wsa->iovec[i].iov_len  = lpBuffers[i].len;
     }
 
+    flags = convert_flags(wsa->flags);
     for (;;)
     {
-        n = WS2_recv( fd, wsa );
+        n = WS2_recv( fd, wsa, flags );
         if (n == -1)
         {
             if (errno != EAGAIN)
