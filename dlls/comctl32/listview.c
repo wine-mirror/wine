@@ -8307,12 +8307,8 @@ static BOOL LISTVIEW_SetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn,
  */
 static BOOL LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, const INT *lpiArray)
 {
-    TRACE("iCount %d lpiArray %p\n", iCount, lpiArray);
-
-    if (!lpiArray || !IsWindow(infoPtr->hwndHeader)) return FALSE;
-
+    if (!infoPtr->hwndHeader) return FALSE;
     infoPtr->colRectsDirty = TRUE;
-
     return SendMessageW(infoPtr->hwndHeader, HDM_SETORDERARRAY, iCount, (LPARAM)lpiArray);
 }
 

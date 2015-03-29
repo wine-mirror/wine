@@ -181,6 +181,14 @@ static const struct message listview_getorderarray_seq[] = {
     { 0 }
 };
 
+static const struct message listview_setorderarray_seq[] = {
+    { LVM_SETCOLUMNORDERARRAY, sent|id|wparam, 2, 0, LISTVIEW_ID },
+    { HDM_SETORDERARRAY,       sent|id|wparam, 2, 0, HEADER_ID },
+    { LVM_SETCOLUMNORDERARRAY, sent|id|wparam, 0, 0, LISTVIEW_ID },
+    { HDM_SETORDERARRAY,       sent|id|wparam, 0, 0, HEADER_ID },
+    { 0 }
+};
+
 static const struct message empty_seq[] = {
     { 0 }
 };
@@ -1478,6 +1486,19 @@ static void test_columns(void)
     expect(0, rc);
 
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_getorderarray_seq, "get order array", FALSE);
+
+    /* LVM_SETCOLUMNORDERARRAY */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    order[0] = 0;
+    order[1] = 1;
+    rc = SendMessageA(hwnd, LVM_SETCOLUMNORDERARRAY, 2, (LPARAM)&order);
+    expect(1, rc);
+
+    rc = SendMessageA(hwnd, LVM_SETCOLUMNORDERARRAY, 0, 0);
+    expect(0, rc);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_setorderarray_seq, "set order array", FALSE);
 
     /* after column added subitem is considered as present */
     insert_item(hwnd, 0);
