@@ -3180,7 +3180,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
     ID3DXFileData *child = NULL;
     DWORD i;
     SIZE_T nb_children;
-    DWORD nb_skin_weigths_info = 0;
+    DWORD nb_skin_weights_info = 0;
 
     /*
      * template Mesh {
@@ -3310,14 +3310,14 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
                     goto end;
             } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
                 if (!mesh_data->skin_info) {
-                    WARN("Skin weigths found but skin mesh header not encountered yet\n");
+                    WARN("Skin weights found but skin mesh header not encountered yet\n");
                     hr = E_FAIL;
                     goto end;
                 }
-                hr = parse_skin_mesh_info(child, mesh_data, nb_skin_weigths_info);
+                hr = parse_skin_mesh_info(child, mesh_data, nb_skin_weights_info);
                 if (FAILED(hr))
                     goto end;
-                nb_skin_weigths_info++;
+                nb_skin_weights_info++;
             }
         }
         if (FAILED(hr))
@@ -3327,9 +3327,9 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         child = NULL;
     }
 
-    if (mesh_data->skin_info && (nb_skin_weigths_info != mesh_data->nb_bones)) {
+    if (mesh_data->skin_info && (nb_skin_weights_info != mesh_data->nb_bones)) {
         WARN("Mismatch between nb skin weights info %u encountered and nb bones %u from skin mesh header\n",
-             nb_skin_weigths_info, mesh_data->nb_bones);
+             nb_skin_weights_info, mesh_data->nb_bones);
         hr = E_FAIL;
         goto end;
     }
@@ -7005,7 +7005,7 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
 
     if (flags == 0)
     {
-        WARN("No flags is undefined. Using D3DXWELDEPSILONS_WELDPARTIALMATCHES instead.\n");
+        WARN("No flags are undefined. Using D3DXWELDEPSILONS_WELDPARTIALMATCHES instead.\n");
         flags = D3DXWELDEPSILONS_WELDPARTIALMATCHES;
     }
 
