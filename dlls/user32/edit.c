@@ -2194,12 +2194,9 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
 		ret = (INT)LOWORD(TabbedTextOutW(dc, x, y, es->text + li + col, count,
 					es->tabs_count, es->tabs, es->format_rect.left - es->x_offset));
 	} else {
-		LPWSTR text = es->text;
-		TextOutW(dc, x, y, text + li + col, count);
-		GetTextExtentPoint32W(dc, text + li + col, count, &size);
+		TextOutW(dc, x, y, es->text + li + col, count);
+		GetTextExtentPoint32W(dc, es->text + li + col, count, &size);
 		ret = size.cx;
-		if (es->style & ES_PASSWORD)
-			HeapFree(GetProcessHeap(), 0, text);
 	}
 	if (rev) {
 		if (es->composition_len == 0)
