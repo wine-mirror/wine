@@ -636,9 +636,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         ps = render_target->rect_solid_ps;
 
         color = brush_impl->u.solid.color;
-        color.r *= brush_impl->opacity;
-        color.g *= brush_impl->opacity;
-        color.b *= brush_impl->opacity;
         color.a *= brush_impl->opacity;
 
         buffer_desc.ByteWidth = sizeof(color);
