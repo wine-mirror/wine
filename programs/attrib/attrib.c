@@ -64,7 +64,7 @@ static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...)
     /*
      * Allocate buffer to use when writing to console
      * Note: Not freed - memory will be allocated once and released when
-     *         xcopy ends
+     * attrib ends
      */
 
     if (!output_bufW) output_bufW = HeapAlloc(GetProcessHeap(), 0,
