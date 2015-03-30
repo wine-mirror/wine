@@ -171,7 +171,7 @@ void AddColumns(void)
         InsertColumn(24, wszIOOtherBytes, LVCFMT_RIGHT, TaskManagerSettings.ColumnSizeArray[24], -1);
 
     size = SendMessageW(hProcessPageHeaderCtrl, HDM_GETITEMCOUNT, 0, 0);
-    SendMessageW(hProcessPageHeaderCtrl, HDM_SETORDERARRAY, (WPARAM) size, (LPARAM) &TaskManagerSettings.ColumnOrderArray);
+    SendMessageW(hProcessPageListCtrl, LVM_SETCOLUMNORDERARRAY, (WPARAM) size, (LPARAM) &TaskManagerSettings.ColumnOrderArray);
 
     UpdateColumnDataHints();
 }
