@@ -6839,6 +6839,8 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
         wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_COLORKEYENABLE, TRUE);
     else if (version == 2)
         wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_SPECULARENABLE, TRUE);
+    if (version < 7)
+        wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_NORMALIZENORMALS, TRUE);
 
     return D3D_OK;
 }
