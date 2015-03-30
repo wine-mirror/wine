@@ -1814,15 +1814,14 @@ static void test_CreateCustomFontFileReference(void)
     face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
     support = TRUE;
     count = 1;
-    IDWriteFontFile_Analyze(file, &support, &file_type, &face_type, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFontFile_Analyze(file, &support, &file_type, &face_type, &count);
+    ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     ok(support == FALSE, "got %i\n", support);
     ok(file_type == DWRITE_FONT_FILE_TYPE_UNKNOWN, "got %i\n", file_type);
     ok(face_type == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face_type);
     ok(count == 0, "got %i\n", count);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, 0, &face);
-todo_wine
     ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(file);
 

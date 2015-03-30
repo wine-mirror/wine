@@ -1715,10 +1715,12 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         if (FAILED(hr))
             break;
 
+        /* failed font files are skipped */
         hr = IDWriteFontFile_Analyze(file, &supported, &file_type, &face_type, &face_count);
         if (FAILED(hr) || !supported || face_count == 0) {
-            TRACE("unsupported font (0x%08x, %d, %u)\n", hr, supported, face_count);
+            TRACE("unsupported font (%p, 0x%08x, %d, %u)\n", file, hr, supported, face_count);
             IDWriteFontFile_Release(file);
+            hr = S_OK;
             continue;
         }
 
@@ -2080,7 +2082,7 @@ static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSup
 
     hr = IDWriteFontFileLoader_CreateStreamFromKey(This->loader, This->reference_key, This->key_size, &stream);
     if (FAILED(hr))
-        return S_OK;
+        return hr;
 
     hr = opentype_analyze_font(stream, numberOfFaces, fontFileType, fontFaceType, isSupportedFontType);
 
