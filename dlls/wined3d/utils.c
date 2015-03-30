@@ -3155,6 +3155,8 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         struct wined3d_matrix *mat)
 {
+    float center_offset;
+
     /* There are a couple of additional things we have to take into account
      * here besides the projection transformation itself:
      *   - We need to flip along the y-axis in case of offscreen rendering.
@@ -3170,6 +3172,11 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * driver, but small enough to prevent it from interfering with any
      * anti-aliasing. */
 
+    if (context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+        center_offset = 63.0f / 64.0f;
+    else
+        center_offset = -1.0f / 64.0f;
+
     if (context->last_was_rhw)
     {
         /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
@@ -3178,11 +3185,11 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
         float w = state->viewport.width;
         float h = state->viewport.height;
         float x_scale = 2.0f / w;
-        float x_offset = (float)((63.0 / 64.0 - (2.0 * x) - w) / w);
+        float x_offset = (center_offset - (2.0f * x) - w) / w;
         float y_scale = context->render_offscreen ? 2.0f / h : 2.0f / -h;
-        float y_offset = (float)(context->render_offscreen
-                ? (63.0 / 64.0 - (2.0 * y) - h) / h
-                : (63.0 / 64.0 - (2.0 * y) - h) / -h);
+        float y_offset = context->render_offscreen
+                ? (center_offset - (2.0f * y) - h) / h
+                : (center_offset - (2.0f * y) - h) / -h;
         enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
                 state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
         float z_scale = zenable ? 2.0f : 0.0f;
@@ -3200,10 +3207,10 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
     else
     {
         float y_scale = context->render_offscreen ? -1.0f : 1.0f;
-        float x_offset = 63.0f / 64.0f * (1.0f / state->viewport.width);
+        float x_offset = center_offset / state->viewport.width;
         float y_offset = context->render_offscreen
-                ? 63.0f / 64.0f * (1.0f / state->viewport.height)
-                : -63.0f / 64.0f * (1.0f / state->viewport.height);
+                ? center_offset / state->viewport.height
+                : -center_offset / state->viewport.height;
         const struct wined3d_matrix projection =
         {
                 1.0f,     0.0f,  0.0f, 0.0f,

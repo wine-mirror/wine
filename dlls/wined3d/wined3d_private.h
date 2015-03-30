@@ -3009,10 +3009,17 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 static inline void shader_get_position_fixup(const struct wined3d_context *context,
         const struct wined3d_state *state, float *position_fixup)
 {
+    float center_offset;
+
+    if (context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+        center_offset = 63.0f / 64.0f;
+    else
+        center_offset = -1.0f / 64.0f;
+
     position_fixup[0] = 1.0f;
     position_fixup[1] = 1.0f;
-    position_fixup[2] = (63.0f / 64.0f) / state->viewport.width;
-    position_fixup[3] = -(63.0f / 64.0f) / state->viewport.height;
+    position_fixup[2] = center_offset / state->viewport.width;
+    position_fixup[3] = -center_offset / state->viewport.height;
 
     if (context->render_offscreen)
     {

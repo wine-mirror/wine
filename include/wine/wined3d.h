@@ -1247,6 +1247,7 @@ enum wined3d_display_rotation
 #define WINED3D_RESTORE_MODE_ON_ACTIVATE                        0x00000010
 #define WINED3D_FOCUS_MESSAGES                                  0x00000020
 #define WINED3D_HANDLE_RESTORE                                  0x00000040
+#define WINED3D_PIXEL_CENTER_INTEGER                            0x00000080
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 
