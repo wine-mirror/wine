@@ -826,7 +826,7 @@ static void test_Face(void)
         ok(count == 4, "count = %u\n", count);
         hr = IDirect3DRMFaceArray_GetElement(array1, 1, &face);
         ok(hr == D3DRM_OK, "Cannot get face (hr = %x)\n", hr);
-        IDirect3DRMFace_GetVertices(face, &count, v2, n2);
+        hr = IDirect3DRMFace_GetVertices(face, &count, v2, n2);
         ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
         ok(count == 3, "Wrong number of vertices %d (must be 3)\n", count);
         ok(U1(v2[0]).x == U1(v1[0]).x, "Wrong component v2[0].x = %f (expected %f)\n",
