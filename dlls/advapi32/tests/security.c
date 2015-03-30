@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "aclapi.h"
 #include "winnt.h"
 #include "sddl.h"
@@ -58,29 +59,6 @@
 
 #define THREAD_ALL_ACCESS_NT4 (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3ff)
 #define THREAD_ALL_ACCESS_VISTA (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0xffff)
-
-/* copied from Wine winternl.h - not included in the Windows SDK */
-typedef enum _OBJECT_INFORMATION_CLASS {
-    ObjectBasicInformation,
-    ObjectNameInformation,
-    ObjectTypeInformation,
-    ObjectAllInformation,
-    ObjectDataInformation
-} OBJECT_INFORMATION_CLASS, *POBJECT_INFORMATION_CLASS;
-
-typedef struct _OBJECT_BASIC_INFORMATION {
-    ULONG  Attributes;
-    ACCESS_MASK  GrantedAccess;
-    ULONG  HandleCount;
-    ULONG  PointerCount;
-    ULONG  PagedPoolUsage;
-    ULONG  NonPagedPoolUsage;
-    ULONG  Reserved[3];
-    ULONG  NameInformationLength;
-    ULONG  TypeInformationLength;
-    ULONG  SecurityDescriptorLength;
-    LARGE_INTEGER  CreateTime;
-} OBJECT_BASIC_INFORMATION, *POBJECT_BASIC_INFORMATION;
 
 #define expect_eq(expr, value, type, format) { type ret_ = expr; ok((value) == ret_, #expr " expected " format "  got " format "\n", (value), (ret_)); }
 
@@ -148,6 +126,9 @@ static BOOL (WINAPI *pCreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTR
 static BOOL (WINAPI *pGetAclInformation)(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
 static BOOL (WINAPI *pGetAce)(PACL,DWORD,LPVOID*);
 static NTSTATUS (WINAPI *pNtSetSecurityObject)(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
+static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
+static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
+static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -175,6 +156,9 @@ static void init(void)
     pNtQueryObject = (void *)GetProcAddress( hntdll, "NtQueryObject" );
     pNtAccessCheck = (void *)GetProcAddress( hntdll, "NtAccessCheck" );
     pNtSetSecurityObject = (void *)GetProcAddress(hntdll, "NtSetSecurityObject");
+    pNtCreateFile = (void *)GetProcAddress(hntdll, "NtCreateFile");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
+    pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
 
     hmod = GetModuleHandleA("advapi32.dll");
     pAddAccessAllowedAceEx = (void *)GetProcAddress(hmod, "AddAccessAllowedAceEx");
@@ -3108,6 +3092,24 @@ static void test_SetEntriesInAclA(void)
     HeapFree(GetProcessHeap(), 0, OldAcl);
 }
 
+/* helper function for test_CreateDirectoryA */
+static void get_nt_pathW(const char *name, UNICODE_STRING *nameW)
+{
+    UNICODE_STRING strW;
+    ANSI_STRING str;
+    NTSTATUS status;
+    BOOLEAN ret;
+    RtlInitAnsiString(&str, name);
+
+    status = pRtlAnsiStringToUnicodeString(&strW, &str, TRUE);
+    ok(!status, "RtlAnsiStringToUnicodeString failed with %08x\n", status);
+
+    ret = pRtlDosPathNameToNtPathName_U(strW.Buffer, nameW, NULL, NULL);
+    ok(ret, "RtlDosPathNameToNtPathName_U failed\n");
+
+    RtlFreeUnicodeString(&strW);
+}
+
 static void test_CreateDirectoryA(void)
 {
     char admin_ptr[sizeof(SID)+sizeof(ULONG)*SID_MAX_SUB_AUTHORITIES], *user;
@@ -3116,13 +3118,17 @@ static void test_CreateDirectoryA(void)
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     PSECURITY_DESCRIPTOR pSD = &sd;
     ACL_SIZE_INFORMATION acl_size;
+    UNICODE_STRING tmpfileW;
     ACCESS_ALLOWED_ACE *ace;
     SECURITY_ATTRIBUTES sa;
+    OBJECT_ATTRIBUTES attr;
     char tmpfile[MAX_PATH];
     char tmpdir[MAX_PATH];
     HANDLE token, hTemp;
+    IO_STATUS_BLOCK io;
     struct _SID *owner;
     BOOL bret = TRUE;
+    NTSTATUS status;
     DWORD error;
     PACL pDacl;
 
@@ -3222,6 +3228,62 @@ static void test_CreateDirectoryA(void)
     hTemp = CreateFileA(tmpfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                         CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE, NULL);
     ok(hTemp != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError());
+
+    error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
+                                   OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                                   (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    ok(error == ERROR_SUCCESS, "Failed to get permissions on file\n");
+
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    todo_wine
+    ok(acl_size.AceCount == 2, "GetAclInformation returned unexpected entry count (%d != 2).\n",
+                               acl_size.AceCount);
+    if (acl_size.AceCount > 0)
+    {
+        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        ok(bret, "Inherited Failed to get Current User ACE.\n");
+        bret = EqualSid(&ace->SidStart, user_sid);
+        todo_wine
+        ok(bret, "Inherited Current User ACE != Current User SID.\n");
+        todo_wine
+        ok(((ACE_HEADER *)ace)->AceFlags == INHERITED_ACE,
+           "Inherited Current User ACE has unexpected flags (0x%x != 0x10)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff,
+           "Current User ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
+    }
+    if (acl_size.AceCount > 1)
+    {
+        bret = pGetAce(pDacl, 1, (VOID **)&ace);
+        ok(bret, "Inherited Failed to get Administators Group ACE.\n");
+        bret = EqualSid(&ace->SidStart, admin_sid);
+        todo_wine
+        ok(bret, "Inherited Administators Group ACE != Administators Group SID.\n");
+        todo_wine
+        ok(((ACE_HEADER *)ace)->AceFlags == INHERITED_ACE,
+           "Inherited Administators Group ACE has unexpected flags (0x%x != 0x10)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff,
+           "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
+    }
+    LocalFree(pSD);
+    CloseHandle(hTemp);
+
+    /* Repeat the same test with ntdll functions */
+    strcpy(tmpfile, tmpdir);
+    lstrcatA(tmpfile, "/tmpfile");
+    get_nt_pathW(tmpfile, &tmpfileW);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &tmpfileW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = pNtCreateFile(&hTemp, GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ, FILE_CREATE, FILE_DELETE_ON_CLOSE, NULL, 0);
+    ok(!status, "NtCreateFile failed with %08x\n", status);
+    RtlFreeUnicodeString(&tmpfileW);
 
     error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
                                    OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
