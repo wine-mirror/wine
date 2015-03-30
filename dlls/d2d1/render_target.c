@@ -933,7 +933,17 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_Flush(ID2D1RenderTarget *
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SaveDrawingState(ID2D1RenderTarget *iface,
         ID2D1DrawingStateBlock *state_block)
 {
-    FIXME("iface %p, state_block %p stub!\n", iface, state_block);
+    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, state_block %p.\n", iface, state_block);
+
+    state_block_impl->drawing_state = render_target->drawing_state;
+    if (render_target->text_rendering_params)
+        IDWriteRenderingParams_AddRef(render_target->text_rendering_params);
+    if (state_block_impl->text_rendering_params)
+        IDWriteRenderingParams_Release(state_block_impl->text_rendering_params);
+    state_block_impl->text_rendering_params = render_target->text_rendering_params;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_RestoreDrawingState(ID2D1RenderTarget *iface,

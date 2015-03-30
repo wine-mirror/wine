@@ -157,3 +157,11 @@ void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWIN
     if ((state_block->text_rendering_params = text_rendering_params))
         IDWriteRenderingParams_AddRef(state_block->text_rendering_params);
 }
+
+struct d2d_state_block *unsafe_impl_from_ID2D1DrawingStateBlock(ID2D1DrawingStateBlock *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d2d_state_block_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_state_block, ID2D1DrawingStateBlock_iface);
+}
