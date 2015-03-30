@@ -201,7 +201,11 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
 
     wined3d_mutex_lock();
     memcpy(&light->light, data, sizeof(D3DLIGHT));
-    if (flags & D3DLIGHT_ACTIVE)
+    if (!(light->light.dwFlags & D3DLIGHT_ACTIVE) && flags & D3DLIGHT_ACTIVE)
+        light_activate(light);
+    else if (light->light.dwFlags & D3DLIGHT_ACTIVE && !(flags & D3DLIGHT_ACTIVE))
+        light_deactivate(light);
+    else if (flags & D3DLIGHT_ACTIVE)
         light_update(light);
     light->light.dwFlags = flags;
     wined3d_mutex_unlock();
