@@ -1021,7 +1021,7 @@
 @ cdecl _calloc_crt(long long) msvcr120._calloc_crt
 @ cdecl _cexit() msvcr120._cexit
 @ cdecl _chgsign(double) msvcr120._chgsign
-@ cdecl -arch=arm,x86_64 _chgsignf(float) msvcr120._chgsignf
+@ cdecl _chgsignf(float) msvcr120._chgsignf
 @ cdecl -arch=i386 -norelay _chkesp() msvcr120._chkesp
 @ cdecl _chmod(str long) msvcr120._chmod
 @ cdecl _chsize(long long) msvcr120._chsize
@@ -1035,7 +1035,7 @@
 @ cdecl _controlfp(long long) msvcr120._controlfp
 @ cdecl _controlfp_s(ptr long long) msvcr120._controlfp_s
 @ cdecl _copysign(double double) msvcr120._copysign
-@ cdecl -arch=arm,x86_64 _copysignf(float float) msvcr120._copysignf
+@ cdecl _copysignf(float float) msvcr120._copysignf
 @ cdecl _creat(str long) msvcr120._creat
 @ cdecl _create_locale(long str) msvcr120._create_locale
 @ stub -arch=i386 _crt_debugger_hook

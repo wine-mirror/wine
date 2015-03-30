@@ -73,7 +73,7 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
     return sse2_enabled;
 }
 
-#if defined(__x86_64__) || defined(__arm__)
+#if defined(__x86_64__) || defined(__arm__) || _MSVCR_VER>=120
 
 /*********************************************************************
  *      _chgsignf (MSVCRT.@)
@@ -93,6 +93,9 @@ float CDECL MSVCRT__copysignf( float num, float sign )
         return signbit(num) ? num : -num;
     return signbit(num) ? -num : num;
 }
+
+#endif
+#if defined(__x86_64__) || defined(__arm__)
 
 /*********************************************************************
  *      _finitef (MSVCRT.@)

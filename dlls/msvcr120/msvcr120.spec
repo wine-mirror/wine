@@ -893,8 +893,8 @@
 @ stub -arch=i386,win64 __crtCompareStringEx
 @ cdecl __crtCompareStringW(long long wstr long wstr long)
 @ stub __crtCreateEventExW
-@ stub -arch=i386 ___crtCreateSemaphoreExW
-@ stub -arch=x86_64 __crtCreateSymbolicLinkW
+@ stub -arch=i386 __crtCreateSemaphoreExW
+@ stub __crtCreateSymbolicLinkW
 @ stub -arch=i386,win64 __crtEnumSystemLocalesEx
 @ stub -arch=i386,win64 __crtFlsAlloc
 @ stub -arch=i386,win64 __crtFlsFree
@@ -1057,7 +1057,7 @@
 @ cdecl _chdir(str) MSVCRT__chdir
 @ cdecl _chdrive(long) MSVCRT__chdrive
 @ cdecl _chgsign(double) MSVCRT__chgsign
-@ cdecl -arch=arm,x86_64 _chgsignf(float) MSVCRT__chgsignf
+@ cdecl _chgsignf(float) MSVCRT__chgsignf
 @ cdecl -arch=i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
@@ -1071,7 +1071,7 @@
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
 @ cdecl _copysign(double double) MSVCRT__copysign
-@ cdecl -arch=arm,x86_64 _copysignf(float float) MSVCRT__copysignf
+@ cdecl _copysignf(float float) MSVCRT__copysignf
 @ varargs _cprintf(str)
 @ stub _cprintf_l
 @ stub _cprintf_p
