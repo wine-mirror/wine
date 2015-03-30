@@ -1610,7 +1610,15 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
     HANDLE handle;
     UINT ret;
 
-    if (!open_device_root( root, &handle )) return DRIVE_NO_ROOT_DIR;
+    if (!open_device_root( root, &handle ))
+    {
+        /* CD ROM devices do not necessarily have a volume, but a drive type */
+        ret = get_mountmgr_drive_type( root );
+        if (ret == DRIVE_CDROM || ret == DRIVE_REMOVABLE)
+            return ret;
+
+        return DRIVE_NO_ROOT_DIR;
+    }
 
     status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsDeviceInformation );
     NtClose( handle );
