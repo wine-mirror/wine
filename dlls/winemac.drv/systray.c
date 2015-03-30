@@ -35,10 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
 
-#define CHECK_SYSTRAY_TIMER         1
-#define CHECK_SYSTRAY_INTERVAL_MS   2000
-
-
 /* an individual systray icon */
 struct tray_icon
 {
@@ -59,49 +55,16 @@ static BOOL delete_icon(struct tray_icon *icon);
 
 
 /***********************************************************************
- *              check_icons
+ *              cleanup_icons
  *
- * Timer procedure for periodically checking that the systray icons are
- * still valid (their owning windows still exist).
+ * Delete all systray icons owned by a given window.
  */
-static VOID CALLBACK check_icons(HWND hwnd, UINT msg, UINT_PTR timer, DWORD time)
+static void cleanup_icons(HWND hwnd)
 {
     struct tray_icon *icon, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(icon, next, &icon_list, struct tray_icon, entry)
-        if (!IsWindow(icon->owner)) delete_icon(icon);
-}
-
-
-/***********************************************************************
- *              setup_check_icons_timer
- *
- * Set up a window with a timer to check that tray icons are still valid
- * (their owning windows still exist).
- */
-static void setup_check_icons_timer(void)
-{
-    static BOOL done;
-
-    if (!done)
-    {
-        static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
-        HWND timer_window;
-
-        /* Whether we succeed or not, don't try again. */
-        done = TRUE;
-
-        timer_window = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE,
-                                     NULL, NULL, NULL);
-        if (!timer_window)
-        {
-            WARN("Could not create systray checking message window\n");
-            return;
-        }
-
-        if (!SetTimer(timer_window, CHECK_SYSTRAY_TIMER, CHECK_SYSTRAY_INTERVAL_MS, check_icons))
-            WARN("Could not create systray checking timer\n");
-    }
+        if (icon->owner == hwnd) delete_icon(icon);
 }
 
 
@@ -231,8 +194,6 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
         return FALSE;
     }
 
-    setup_check_icons_timer();
-
     if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
     {
         ERR("out of memory\n");
@@ -298,6 +259,9 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
         break;
     case NIM_MODIFY:
         if ((icon = get_icon(data->hWnd, data->uID))) ret = modify_icon(icon, data);
+        break;
+    case 0xdead:  /* Wine extension: owner window has died */
+        cleanup_icons(data->hWnd);
         break;
     default:
         FIXME("unhandled tray message: %u\n", msg);
