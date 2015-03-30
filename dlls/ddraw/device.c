@@ -2525,6 +2525,7 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
         }
 
         case D3DRENDERSTATE_LIGHTING:
+        case D3DRENDERSTATE_NORMALIZENORMALS:
             *value = 0xffffffff;
             return D3D_OK;
 
@@ -2884,6 +2885,7 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
         }
 
         case D3DRENDERSTATE_LIGHTING:
+        case D3DRENDERSTATE_NORMALIZENORMALS:
             hr = D3D_OK;
             break;
 
