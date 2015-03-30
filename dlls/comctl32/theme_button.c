@@ -380,9 +380,11 @@ LRESULT CALLBACK THEMING_ButtonSubclassProc(HWND hwnd, UINT msg,
 
     case WM_ENABLE:
         theme = GetWindowTheme(hwnd);
-        if (theme) RedrawWindow(hwnd, NULL, NULL,
-                                RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
-        return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+        if (theme) {
+            RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
+            return 0;
+        } else
+            return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
 
     case WM_MOUSEMOVE:
     {
