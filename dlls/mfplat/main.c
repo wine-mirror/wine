@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "mfapi.h"
 #include "mferror.h"
 
 #include "wine/debug.h"
