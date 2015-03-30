@@ -3797,7 +3797,7 @@ static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
             ok((lpss->styleOld & ~WS_EX_WINDOWEDGE) == (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE),
                 "Ex style (0x%08x) should match what the caller passed to CreateWindowEx (0x%08x)\n",
-                (lpss->styleOld & ~WS_EX_WINDOWEDGE), (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE));
+                lpss->styleOld, lpcs->dwExStyle);
 
             ok(lpss->styleNew == lpcs->style,
                 "Style (0x%08x) should match what the caller passed to CreateWindowEx (0x%08x)\n",
@@ -3985,14 +3985,14 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ex_style = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(style == (style_out | DS_3DLOOK), "expected style %#x, got %#x\n", style_out | DS_3DLOOK, style);
+    ok(style == (style_out | DS_3DLOOK), "got %#x\n", style);
     ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
 
     /* try setting the styles explicitly */
     SetWindowLongA(hwnd, GWL_EXSTYLE, ex_style_in);
     style = GetWindowLongA(hwnd, GWL_STYLE);
     ex_style = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(style == (style_out | DS_3DLOOK), "expected style %#x, got %#x\n", style_out|DS_3DLOOK, style);
+    ok(style == (style_out | DS_3DLOOK), "got %#x\n", style);
     /* WS_EX_WINDOWEDGE can't always be changed */
     if (ex_style_in & WS_EX_DLGMODALFRAME)
         ex_style_out = ex_style_in | WS_EX_WINDOWEDGE;
