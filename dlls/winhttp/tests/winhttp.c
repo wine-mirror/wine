@@ -3043,7 +3043,7 @@ static void test_IWinHttpRequest(void)
     IWinHttpRequest_Release( req );
 
     pos.QuadPart = 0;
-    IStream_Seek( stream, pos, STREAM_SEEK_SET, NULL );
+    hr = IStream_Seek( stream, pos, STREAM_SEEK_SET, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     buf[0] = 0;
