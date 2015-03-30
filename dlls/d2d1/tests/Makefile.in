@@ -1,5 +1,5 @@
 TESTDLL   = d2d1.dll
-IMPORTS   = d2d1 d3d10_1 dxguid uuid user32 advapi32
+IMPORTS   = d2d1 d3d10_1 dwrite dxguid uuid user32 advapi32
 
 C_SRCS = \
 	d2d1.c
