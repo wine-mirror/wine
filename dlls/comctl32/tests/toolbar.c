@@ -1917,7 +1917,7 @@ static void test_TB_GET_SET_EXTENDEDSTYLE(void)
     ok(style == TBSTYLE_EX_VERTICAL, "got style 0x%08x, expected 0x%08x\n", style, TBSTYLE_EX_VERTICAL);
     style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
  todo_wine
-    ok(style == CCS_VERT, "got style 0x%08x, expected 0x%08x\n", style, CCS_VERT);
+    ok(style == CCS_VERT, "got style 0x%08x, expected CCS_VERT\n", style);
 
     DestroyWindow(hwnd);
 }
