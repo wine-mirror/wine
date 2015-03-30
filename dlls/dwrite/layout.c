@@ -1,7 +1,7 @@
 /*
  *    Text format and layout
  *
- * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -121,6 +121,12 @@ struct layout_run {
     DWRITE_GLYPH_OFFSET *offsets;
 };
 
+enum layout_recompute_mask {
+    RECOMPUTE_NOMINAL_RUNS  = 1 << 0,
+    RECOMPUTE_MINIMAL_WIDTH = 1 << 1,
+    RECOMPUTE_EVERYTHING    = 0xffff
+};
+
 struct dwrite_textlayout {
     IDWriteTextLayout2 IDWriteTextLayout2_iface;
     IDWriteTextFormat1 IDWriteTextFormat1_iface;
@@ -135,13 +141,14 @@ struct dwrite_textlayout {
     FLOAT  maxheight;
     struct list ranges;
     struct list runs;
-    BOOL   recompute;
+    USHORT recompute;
 
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
     DWRITE_LINE_BREAKPOINT *actual_breakpoints;
 
     DWRITE_CLUSTER_METRICS *clusters;
     UINT32 clusters_count;
+    FLOAT  minwidth;
 
     /* gdi-compatible layout specifics */
     BOOL   gdicompatible;
@@ -586,7 +593,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
 {
     HRESULT hr;
 
-    if (!layout->recompute)
+    if (!(layout->recompute & RECOMPUTE_NOMINAL_RUNS))
         return S_OK;
 
     /* nominal breakpoints are evaluated only once, because string never changes */
@@ -618,7 +625,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         }
     }
 
-    layout->recompute = FALSE;
+    layout->recompute &= ~RECOMPUTE_NOMINAL_RUNS;
     return hr;
 }
 
@@ -998,7 +1005,7 @@ done:
     if (changed) {
         struct list *next, *i;
 
-        layout->recompute = TRUE;
+        layout->recompute = RECOMPUTE_EVERYTHING;
         i = list_head(ranges);
         while ((next = list_next(ranges, i))) {
             struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, entry);
@@ -1743,11 +1750,60 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
     return max_count >= This->clusters_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
+/* Only to be used with DetermineMinWidth() to find the longest cluster sequence that we don't want to try
+   too hard to break. */
+static inline BOOL is_terminal_cluster(struct dwrite_textlayout *layout, UINT32 index)
+{
+    if (layout->clusters[index].isWhitespace || layout->clusters[index].isNewline ||
+       (index == layout->clusters_count - 1))
+        return TRUE;
+    /* check next one */
+    return (index < layout->clusters_count - 1) && layout->clusters[index+1].isWhitespace;
+}
+
 static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *iface, FLOAT* min_width)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p): stub\n", This, min_width);
-    return E_NOTIMPL;
+    FLOAT width;
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE("(%p)->(%p)\n", This, min_width);
+
+    if (!min_width)
+        return E_INVALIDARG;
+
+    if (!(This->recompute & RECOMPUTE_MINIMAL_WIDTH))
+        goto width_done;
+
+    *min_width = 0.0;
+    hr = layout_compute(This);
+    if (FAILED(hr))
+        return hr;
+
+    for (i = 0; i < This->clusters_count;) {
+        if (is_terminal_cluster(This, i)) {
+            width = This->clusters[i].width;
+            i++;
+        }
+        else {
+            width = 0.0;
+            while (!is_terminal_cluster(This, i)) {
+                width += This->clusters[i].width;
+                i++;
+            }
+            /* count last one too */
+            width += This->clusters[i].width;
+        }
+
+        if (width > This->minwidth)
+            This->minwidth = width;
+    }
+    This->recompute &= ~RECOMPUTE_MINIMAL_WIDTH;
+
+width_done:
+    *min_width = This->minwidth;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_HitTestPoint(IDWriteTextLayout2 *iface,
@@ -2579,11 +2635,12 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->len = len;
     layout->maxwidth = maxwidth;
     layout->maxheight = maxheight;
-    layout->recompute = TRUE;
+    layout->recompute = RECOMPUTE_EVERYTHING;
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
     layout->clusters_count = 0;
     layout->clusters = NULL;
+    layout->minwidth = 0.0;
     list_init(&layout->runs);
     list_init(&layout->ranges);
     memset(&layout->format, 0, sizeof(layout->format));

@@ -1,7 +1,7 @@
 /*
  *    Text layout/format tests
  *
- * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1297,6 +1297,36 @@ if (hr == S_OK) {
     IDWriteFactory_Release(factory);
 }
 
+static void test_DetermineMinWidth(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    FLOAT minwidth;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, lstrlenW(strW), format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_DetermineMinWidth(layout, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    minwidth = 0.0;
+    hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(minwidth > 0.0, "got %.2f\n", minwidth);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -1323,6 +1353,7 @@ START_TEST(layout)
     test_SetPairKerning();
     test_SetVerticalGlyphOrientation();
     test_fallback();
+    test_DetermineMinWidth();
 
     IDWriteFactory_Release(factory);
 }
