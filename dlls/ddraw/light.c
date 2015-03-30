@@ -81,7 +81,6 @@ void light_deactivate(struct d3d_light *light)
     if (!light->active_viewport || !light->active_viewport->active_device) return;
     device = light->active_viewport->active_device;
 
-    /* If was not active, activate it */
     if (light->light.dwFlags & D3DLIGHT_ACTIVE)
     {
         IDirect3DDevice7_LightEnable(&device->IDirect3DDevice7_iface, light->dwLightIndex, FALSE);
@@ -171,6 +170,7 @@ static const float zero_value[] = {
 static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
 {
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
+    DWORD flags = data->dwSize >= sizeof(D3DLIGHT2) ? ((D3DLIGHT2 *)data)->dwFlags : D3DLIGHT_ACTIVE;
     D3DLIGHT7 *light7 = &light->light7;
 
     TRACE("iface %p, data %p.\n", iface, data);
@@ -184,7 +184,7 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     /* Translate D3DLIGHT2 structure to D3DLIGHT7. */
     light7->dltType = data->dltType;
     light7->dcvDiffuse = data->dcvColor;
-    if (data->dwSize >= sizeof(D3DLIGHT2) && (((D3DLIGHT2 *)data)->dwFlags & D3DLIGHT_NO_SPECULAR))
+    if (!(flags & D3DLIGHT_NO_SPECULAR))
         light7->dcvSpecular = data->dcvColor;
     else
         light7->dcvSpecular = *(const D3DCOLORVALUE *)zero_value;
@@ -200,9 +200,10 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     light7->dvPhi = data->dvPhi;
 
     wined3d_mutex_lock();
-    memcpy(&light->light, data, data->dwSize);
-    if (light->light.dwFlags & D3DLIGHT_ACTIVE)
+    memcpy(&light->light, data, sizeof(D3DLIGHT));
+    if (flags & D3DLIGHT_ACTIVE)
         light_update(light);
+    light->light.dwFlags = flags;
     wined3d_mutex_unlock();
 
     return D3D_OK;
