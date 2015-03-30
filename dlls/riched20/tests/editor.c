@@ -7615,12 +7615,12 @@ static void test_EM_SETREADONLY(void)
     res = SendMessageA(richedit, EM_SETREADONLY, TRUE, 0);
     ok(res == 1, "EM_SETREADONLY\n");
     dwStyle = GetWindowLongA(richedit, GWL_STYLE);
-    ok(dwStyle & ES_READONLY, "got wrong value: 0x%x\n", dwStyle & ES_READONLY);
+    ok(dwStyle & ES_READONLY, "got wrong value: 0x%x\n", dwStyle);
 
     res = SendMessageA(richedit, EM_SETREADONLY, FALSE, 0);
     ok(res == 1, "EM_SETREADONLY\n");
     dwStyle = GetWindowLongA(richedit, GWL_STYLE);
-    ok(!(dwStyle & ES_READONLY), "got wrong value: 0x%x\n", dwStyle & ES_READONLY);
+    ok(!(dwStyle & ES_READONLY), "got wrong value: 0x%x\n", dwStyle);
 
     DestroyWindow(richedit);
 }
