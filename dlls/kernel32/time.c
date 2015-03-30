@@ -1105,6 +1105,18 @@ DWORD WINAPI GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION info)
 }
 
 /***********************************************************************
+ *           QueryThreadCycleTime   (KERNEL32.@)
+ */
+BOOL WINAPI QueryThreadCycleTime(HANDLE thread, PULONG64 cycle)
+{
+    static int once;
+    if (!once++)
+        FIXME("(%p,%p,): stub!\n", thread, cycle);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           QueryUnbiasedInterruptTime   (KERNEL32.@)
  */
 BOOL WINAPI QueryUnbiasedInterruptTime(ULONGLONG *time)

@@ -1167,7 +1167,7 @@
 @ stdcall QueryPerformanceFrequency(ptr)
 # @ stub QueryProcessAffinityUpdateMode
 # @ stub QueryProcessCycleTime
-# @ stub QueryThreadCycleTime
+@ stdcall QueryThreadCycleTime(long ptr)
 # @ stub QueryThreadProfiling
 # @ stub QueryThreadpoolStackInformation
 # @ stub -arch=x86_64 QueryUmsThreadInformation
