@@ -44,7 +44,6 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 #endif /* SONAME_LIBXCURSOR */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define OEMRESOURCE
 #include "windef.h"
 #include "winbase.h"
