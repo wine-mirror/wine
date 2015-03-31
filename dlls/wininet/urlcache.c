@@ -23,7 +23,6 @@
  */
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "ws2tcpip.h"
 
