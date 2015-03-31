@@ -24,8 +24,8 @@
 #include "wine/port.h"
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
