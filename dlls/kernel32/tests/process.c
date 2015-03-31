@@ -2208,7 +2208,6 @@ static void test_IsProcessInJob(void)
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
-    todo_wine
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     out = TRUE;
@@ -2219,7 +2218,6 @@ static void test_IsProcessInJob(void)
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, NULL, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
-    todo_wine
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
@@ -2230,7 +2228,6 @@ static void test_IsProcessInJob(void)
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
-    todo_wine
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     CloseHandle(pi.hProcess);

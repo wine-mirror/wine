@@ -4113,6 +4113,12 @@ static void dump_assign_job_request( const struct assign_job_request *req )
     fprintf( stderr, ", process=%04x", req->process );
 }
 
+static void dump_process_in_job_request( const struct process_in_job_request *req )
+{
+    fprintf( stderr, " job=%04x", req->job );
+    fprintf( stderr, ", process=%04x", req->process );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4372,6 +4378,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_suspend_context_request,
     (dump_func)dump_create_job_request,
     (dump_func)dump_assign_job_request,
+    (dump_func)dump_process_in_job_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4632,6 +4639,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_suspend_context_reply,
     NULL,
     (dump_func)dump_create_job_reply,
+    NULL,
     NULL,
 };
 
@@ -4894,6 +4902,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_suspend_context",
     "create_job",
     "assign_job",
+    "process_in_job",
 };
 
 static const struct
@@ -4996,6 +5005,7 @@ static const struct
     { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },
     { "PIPE_NOT_AVAILABLE",          STATUS_PIPE_NOT_AVAILABLE },
     { "PRIVILEGE_NOT_HELD",          STATUS_PRIVILEGE_NOT_HELD },
+    { "PROCESS_IN_JOB",              STATUS_PROCESS_IN_JOB },
     { "PROCESS_IS_TERMINATING",      STATUS_PROCESS_IS_TERMINATING },
     { "SECTION_TOO_BIG",             STATUS_SECTION_TOO_BIG },
     { "SEMAPHORE_LIMIT_EXCEEDED",    STATUS_SEMAPHORE_LIMIT_EXCEEDED },

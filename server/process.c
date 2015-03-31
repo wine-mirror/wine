@@ -1484,3 +1484,25 @@ DECL_HANDLER(assign_job)
     }
     release_object( job );
 }
+
+
+/* check if a process is associated with a job */
+DECL_HANDLER(process_in_job)
+{
+    struct process *process;
+    struct job *job;
+
+    if (!(process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION )))
+        return;
+
+    if (!req->job)
+    {
+        set_error( process->job ? STATUS_PROCESS_IN_JOB : STATUS_PROCESS_NOT_IN_JOB );
+    }
+    else if ((job = get_job_obj( current->process, req->job, JOB_OBJECT_QUERY )))
+    {
+        set_error( process->job == job ? STATUS_PROCESS_IN_JOB : STATUS_PROCESS_NOT_IN_JOB );
+        release_object( job );
+    }
+    release_object( process );
+}

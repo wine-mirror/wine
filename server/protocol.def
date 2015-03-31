@@ -3521,3 +3521,10 @@ enum coords_relative
     obj_handle_t job;             /* handle to the job */
     obj_handle_t process;         /* handle to the process */
 @END
+
+
+/* Check if a process is associated with a job */
+@REQ(process_in_job)
+    obj_handle_t job;             /* handle to the job */
+    obj_handle_t process;         /* handle to the process */
+@END
