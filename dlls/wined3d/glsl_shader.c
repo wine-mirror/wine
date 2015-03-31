@@ -258,6 +258,15 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
     }
 }
 
+static const char *shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_version *version)
+{
+    if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version->major >= 4)
+        return "#version 130";
+    else
+        return "#version 120";
+}
+
 static void shader_glsl_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
 {
     char str[4][17];
@@ -4477,7 +4486,7 @@ static GLuint generate_param_reorder_function(struct wined3d_shader_buffer *buff
 
     shader_buffer_clear(buffer);
 
-    shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &vs->reg_maps.shader_version));
 
     if (ps_major < 3)
     {
@@ -4635,7 +4644,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     priv_ctx.cur_ps_args = args;
     priv_ctx.cur_np2fixup_info = np2fixup_info;
 
-    shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
 
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
@@ -4695,7 +4704,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLuint shader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
 
-    shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
 
     if (gl_info->supported[ARB_DRAW_INSTANCED])
         shader_addline(buffer, "#extension GL_ARB_draw_instanced : enable\n");
@@ -4770,7 +4779,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
 
     shader_id = GL_EXTCALL(glCreateShader(GL_GEOMETRY_SHADER));
 
-    shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
 
     if (gl_info->supported[ARB_GEOMETRY_SHADER4])
         shader_addline(buffer, "#extension GL_ARB_geometry_shader4 : enable\n");
