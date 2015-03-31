@@ -617,7 +617,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         /* Invert the matrix. (Because the matrix is applied to the sampling
          * coordinates. I.e., to scale the bitmap by 2 we need to divide the
          * coordinates by 2.) */
-        d = transform._11 * transform._22 - transform._21 * transform._22;
+        d = transform._11 * transform._22 - transform._21 * transform._12;
         if (d != 0.0f)
         {
             transform_inverse._11 = transform._22 / d;
