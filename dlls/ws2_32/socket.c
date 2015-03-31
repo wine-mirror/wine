@@ -6837,6 +6837,11 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         n = WS2_recv( fd, wsa, flags );
         if (n == -1)
         {
+            /* Unix-like systems return EINVAL when attempting to read OOB data from
+             * an empty socket buffer, convert that to a Windows expected return. */
+            if ((flags & MSG_OOB) && errno == EINVAL)
+                errno = EWOULDBLOCK;
+
             if (errno != EAGAIN)
             {
                 int loc_errno = errno;

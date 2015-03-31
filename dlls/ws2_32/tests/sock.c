@@ -4712,14 +4712,12 @@ static void test_ioctlsocket(void)
     ret = recv(dst, &data, 1, i);
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
     ret = GetLastError();
-todo_wine
     ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
     bufs.len = sizeof(char);
     bufs.buf = &data;
     ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
     ret = GetLastError();
-todo_wine
     ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
     optval = 1;
     ret = setsockopt(dst, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
