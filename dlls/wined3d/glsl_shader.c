@@ -1420,8 +1420,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
      * centers instead of the pixel corners. This code will behave correctly
      * on drivers that returns integer values. */
     if (version->type == WINED3D_SHADER_TYPE_PIXEL && reg_maps->vpos)
-        shader_addline(buffer,
-                "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
+    {
+        if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+            shader_addline(buffer,
+                    "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
+        else
+            shader_addline(buffer,
+                    "vpos = vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1);\n");
+    }
 }
 
 /*****************************************************************************
