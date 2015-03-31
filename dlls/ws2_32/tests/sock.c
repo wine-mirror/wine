@@ -2648,6 +2648,98 @@ static void test_WSADuplicateSocket(void)
     closesocket(source);
 }
 
+static void test_WSAEnumNetworkEvents(void)
+{
+    SOCKET s, s2;
+    int sock_type[] = {SOCK_STREAM, SOCK_DGRAM, SOCK_STREAM}, i, j, k, l;
+    struct sockaddr_in address;
+    HANDLE event;
+    WSANETWORKEVENTS net_events;
+    /* Windows 2000 Pro without SP installed (testbot) will crash if
+     * WSAEnumNetworkEvents have a NULL event, so skip this test in <= 2000 */
+    DWORD ver = GetVersion() & 0xFFFF;
+    BOOL supports_null = ((ver & 0xFF) << 8 | (ver >> 8)) > 0x0500;
+
+    memset(&address, 0, sizeof(address));
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_family = AF_INET;
+
+    /* This test follows the steps from bugs 10204 and 24946 */
+    for (l = 0; l < 2; l++)
+    {
+        if (l == 1 && !supports_null && broken(1)) continue;
+
+        for (i = 0; i < sizeof(sock_type) / sizeof(sock_type[0]); i++)
+        {
+            if (i == 2)
+                ok(!tcp_socketpair(&s, &s2), "Test[%d]: creating socket pair failed\n", i);
+            else
+            {
+                s = socket(AF_INET, sock_type[i], 0);
+                ok (s != SOCKET_ERROR, "Test[%d]: failed to create socket\n", i);
+                ok (!bind(s, (struct sockaddr*) &address, sizeof(address)), "Test[%d]: bind failed\n", i);
+            }
+            event = WSACreateEvent();
+            ok (event != NULL, "Test[%d]: failed to create event\n", i);
+            for (j = 0; j < 5; j++) /* Repeat sometimes and the result must be the same */
+            {
+                /* When the TCP socket is not connected NO events will be returned.
+                 * When connected and no data pending it will get the write event.
+                 * UDP sockets don't have connections so as soon as they are bound
+                 * they can read/write data. Since nobody is sendind us data only
+                 * the write event will be returned and ONLY once.
+                 */
+                ok (!WSAEventSelect(s, event, FD_READ | FD_WRITE), "Test[%d]: WSAEventSelect failed\n", i);
+                memset(&net_events, 0xAB, sizeof(net_events));
+                ok (!WSAEnumNetworkEvents(s, l == 0 ? event : NULL, &net_events),
+                    "Test[%d]: WSAEnumNetworkEvents failed\n", i);
+                if (i >= 1 && j == 0) /* FD_WRITE is SET on first try for UDP and connected TCP */
+                {
+                    if (i == 0) /* Remove when fixed */
+                    {
+                        todo_wine
+                        ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
+                            i, net_events.lNetworkEvents);
+                    }
+                    else
+                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
+                        i, net_events.lNetworkEvents);
+                }
+                else
+                {
+                    if (i != 0) /* Remove when fixed */
+                    {
+                        todo_wine
+                        ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
+                            i, net_events.lNetworkEvents);
+                    }
+                    else
+                    ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
+                        i, net_events.lNetworkEvents);
+                }
+                for (k = 0; k < FD_MAX_EVENTS; k++)
+                {
+                    if (i >= 1 && j == 0 && k == 1) /* first UDP and connected TCP test, FD_WRITE bit no error*/
+                    {
+                        ok (net_events.iErrorCode[k] == 0x0, "Test[%d][%d]: expected 0x0, got 0x%x\n",
+                            i, k, net_events.iErrorCode[k]);
+                    }
+                    else
+                    {
+                        /* Bits that are not set in lNetworkEvents MUST not be changed */
+                        todo_wine
+                        ok (net_events.iErrorCode[k] == 0xABABABAB, "Test[%d][%d]: expected 0xABABABAB, got 0x%x\n",
+                            i, k, net_events.iErrorCode[k]);
+                    }
+                }
+            }
+            closesocket(s);
+            WSACloseEvent(event);
+            if (i == 2) closesocket(s2);
+        }
+    }
+}
+
 static void test_WSAAddressToStringA(void)
 {
     SOCKET v6 = INVALID_SOCKET;
@@ -8454,6 +8546,7 @@ START_TEST( sock )
     test_getservbyname();
     test_WSASocket();
     test_WSADuplicateSocket();
+    test_WSAEnumNetworkEvents();
 
     test_WSAAddressToStringA();
     test_WSAAddressToStringW();
