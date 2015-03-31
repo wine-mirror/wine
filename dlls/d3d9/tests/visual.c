@@ -9511,7 +9511,7 @@ cleanup:
     DestroyWindow(window);
 }
 
-static void vpos_register_test(void)
+static void test_fragment_coords(void)
 {
     IDirect3DSurface9 *surface = NULL, *backbuffer;
     IDirect3DPixelShader9 *shader, *shader_frac;
@@ -18050,7 +18050,7 @@ START_TEST(visual)
     nested_loop_test();
     pretransformed_varying_test();
     vface_register_test();
-    vpos_register_test();
+    test_fragment_coords();
     multiple_rendertargets_test();
     texop_test();
     texop_range_test();
