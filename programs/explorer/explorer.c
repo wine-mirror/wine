@@ -21,7 +21,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
