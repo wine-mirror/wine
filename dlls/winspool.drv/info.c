@@ -102,8 +102,6 @@
 #undef DPRINTF
 #endif
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
