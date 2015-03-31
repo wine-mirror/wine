@@ -144,6 +144,8 @@ static void job_destroy( struct object *obj );
 struct job
 {
     struct object obj;             /* object header */
+    struct list process_list;      /* list of all processes */
+    int num_processes;             /* count of running processes */
 };
 
 static const struct object_ops job_ops =
@@ -180,9 +182,16 @@ static struct job *create_job_object( struct directory *root, const struct unico
                                                    GROUP_SECURITY_INFORMATION |
                                                    DACL_SECURITY_INFORMATION |
                                                    SACL_SECURITY_INFORMATION );
+            list_init( &job->process_list );
+            job->num_processes = 0;
         }
     }
     return job;
+}
+
+static struct job *get_job_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct job *)get_handle_obj( process, handle, access, &job_ops );
 }
 
 static struct object_type *job_get_type( struct object *obj )
@@ -201,15 +210,48 @@ static unsigned int job_map_access( struct object *obj, unsigned int access )
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
+static void add_job_process( struct job *job, struct process *process )
+{
+    if (!process->running_threads)
+    {
+        set_error( STATUS_PROCESS_IS_TERMINATING );
+        return;
+    }
+    if (process->job)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    process->job = (struct job *)grab_object( job );
+    list_add_tail( &job->process_list, &process->job_entry );
+    job->num_processes++;
+}
+
+/* called when a process has terminated, allow one additional process */
+static void release_job_process( struct process *process )
+{
+    struct job *job = process->job;
+
+    if (!job) return;
+
+    assert( job->num_processes );
+    job->num_processes--;
+}
+
 static void job_destroy( struct object *obj )
 {
+    struct job *job = (struct job *)obj;
     assert( obj->ops == &job_ops );
+
+    assert( !job->num_processes );
+    assert( list_empty(&job->process_list) );
 }
 
 static void job_dump( struct object *obj, int verbose )
 {
+    struct job *job = (struct job *)obj;
     assert( obj->ops == &job_ops );
-    fprintf( stderr, "Job\n");
+    fprintf( stderr, "Job processes=%d\n", list_count(&job->process_list) );
 }
 
 static int job_signaled( struct object *obj, struct wait_queue_entry *entry )
@@ -407,6 +449,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->is_system       = 0;
     process->debug_children  = 0;
     process->is_terminating  = 0;
+    process->job             = NULL;
     process->console         = NULL;
     process->startup_state   = STARTUP_IN_PROGRESS;
     process->startup_info    = NULL;
@@ -505,6 +548,12 @@ static void process_destroy( struct object *obj )
 
     close_process_handles( process );
     set_process_startup_state( process, STARTUP_ABORTED );
+
+    if (process->job)
+    {
+        list_remove( &process->job_entry );
+        release_object( process->job );
+    }
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
     if (process->msg_fd) release_object( process->msg_fd );
@@ -742,6 +791,7 @@ static void process_killed( struct process *process )
     remove_process_locks( process );
     set_process_startup_state( process, STARTUP_ABORTED );
     finish_process_tracing( process );
+    release_job_process( process );
     start_sigkill_timer( process );
     wake_up( &process->obj, 0 );
 }
@@ -1417,4 +1467,20 @@ DECL_HANDLER(create_job)
         release_object( job );
     }
     if (root) release_object( root );
+}
+
+/* assign a job object to a process */
+DECL_HANDLER(assign_job)
+{
+    struct process *process;
+    struct job *job = get_job_obj( current->process, req->job, JOB_OBJECT_ASSIGN_PROCESS );
+
+    if (!job) return;
+
+    if ((process = get_process_from_handle( req->process, PROCESS_SET_QUOTA | PROCESS_TERMINATE )))
+    {
+        add_job_process( job, process );
+        release_object( process );
+    }
+    release_object( job );
 }

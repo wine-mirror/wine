@@ -4107,6 +4107,12 @@ static void dump_create_job_reply( const struct create_job_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_assign_job_request( const struct assign_job_request *req )
+{
+    fprintf( stderr, " job=%04x", req->job );
+    fprintf( stderr, ", process=%04x", req->process );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4365,6 +4371,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_suspend_context_request,
     (dump_func)dump_set_suspend_context_request,
     (dump_func)dump_create_job_request,
+    (dump_func)dump_assign_job_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4625,6 +4632,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_suspend_context_reply,
     NULL,
     (dump_func)dump_create_job_reply,
+    NULL,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4885,6 +4893,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_suspend_context",
     "set_suspend_context",
     "create_job",
+    "assign_job",
 };
 
 static const struct

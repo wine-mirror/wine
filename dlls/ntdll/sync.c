@@ -654,8 +654,19 @@ NTSTATUS WINAPI NtIsProcessInJob( HANDLE process, HANDLE job )
  */
 NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
 {
-    FIXME( "stub: %p %p\n", job, process );
-    return STATUS_SUCCESS;
+    NTSTATUS status;
+
+    TRACE( "(%p %p)\n", job, process );
+
+    SERVER_START_REQ( assign_job )
+    {
+        req->job     = wine_server_obj_handle( job );
+        req->process = wine_server_obj_handle( process );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /*

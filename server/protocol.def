@@ -3514,3 +3514,10 @@ enum coords_relative
 @REPLY
     obj_handle_t handle;          /* handle to the job */
 @END
+
+
+/* Assign a job object to a process */
+@REQ(assign_job)
+    obj_handle_t job;             /* handle to the job */
+    obj_handle_t process;         /* handle to the process */
+@END

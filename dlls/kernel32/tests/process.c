@@ -2279,9 +2279,7 @@ static void test_TerminateJobObject(void)
 
     SetLastError(0xdeadbeef);
     ret = pAssignProcessToJobObject(job, pi.hProcess);
-    todo_wine
     ok(!ret, "AssignProcessToJobObject unexpectedly succeeded\n");
-    todo_wine
     expect_eq_d(ERROR_ACCESS_DENIED, GetLastError());
 
     CloseHandle(pi.hProcess);

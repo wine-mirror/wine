@@ -5099,6 +5099,20 @@ struct create_job_reply
 };
 
 
+
+struct assign_job_request
+{
+    struct request_header __header;
+    obj_handle_t job;
+    obj_handle_t process;
+    char __pad_20[4];
+};
+struct assign_job_reply
+{
+    struct reply_header __header;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -5358,6 +5372,7 @@ enum request
     REQ_get_suspend_context,
     REQ_set_suspend_context,
     REQ_create_job,
+    REQ_assign_job,
     REQ_NB_REQUESTS
 };
 
@@ -5622,6 +5637,7 @@ union generic_request
     struct get_suspend_context_request get_suspend_context_request;
     struct set_suspend_context_request set_suspend_context_request;
     struct create_job_request create_job_request;
+    struct assign_job_request assign_job_request;
 };
 union generic_reply
 {
@@ -5884,8 +5900,9 @@ union generic_reply
     struct get_suspend_context_reply get_suspend_context_reply;
     struct set_suspend_context_reply set_suspend_context_reply;
     struct create_job_reply create_job_reply;
+    struct assign_job_reply assign_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 461
+#define SERVER_PROTOCOL_VERSION 462
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
