@@ -671,7 +671,7 @@ static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
 static ULONG WINAPI OleControl_Release(IOleControl *iface)
 {
     WindowsMediaPlayer *This = impl_from_IOleControl(iface);
-    return IOleObject_AddRef(&This->IOleObject_iface);
+    return IOleObject_Release(&This->IOleObject_iface);
 }
 
 static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
