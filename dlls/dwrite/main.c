@@ -54,31 +54,36 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 }
 
 struct renderingparams {
-    IDWriteRenderingParams IDWriteRenderingParams_iface;
+    IDWriteRenderingParams2 IDWriteRenderingParams2_iface;
     LONG ref;
 
     FLOAT gamma;
-    FLOAT enh_contrast;
+    FLOAT contrast;
+    FLOAT grayscalecontrast;
     FLOAT cleartype_level;
     DWRITE_PIXEL_GEOMETRY geometry;
     DWRITE_RENDERING_MODE mode;
+    DWRITE_GRID_FIT_MODE gridfit;
 };
 
-static inline struct renderingparams *impl_from_IDWriteRenderingParams(IDWriteRenderingParams *iface)
+static inline struct renderingparams *impl_from_IDWriteRenderingParams2(IDWriteRenderingParams2 *iface)
 {
-    return CONTAINING_RECORD(iface, struct renderingparams, IDWriteRenderingParams_iface);
+    return CONTAINING_RECORD(iface, struct renderingparams, IDWriteRenderingParams2_iface);
 }
 
-static HRESULT WINAPI renderingparams_QueryInterface(IDWriteRenderingParams *iface, REFIID riid, void **obj)
+static HRESULT WINAPI renderingparams_QueryInterface(IDWriteRenderingParams2 *iface, REFIID riid, void **obj)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteRenderingParams))
+    if (IsEqualIID(riid, &IID_IDWriteRenderingParams2) ||
+        IsEqualIID(riid, &IID_IDWriteRenderingParams1) ||
+        IsEqualIID(riid, &IID_IDWriteRenderingParams) ||
+        IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IDWriteRenderingParams_AddRef(iface);
+        IDWriteRenderingParams2_AddRef(iface);
         return S_OK;
     }
 
@@ -87,17 +92,17 @@ static HRESULT WINAPI renderingparams_QueryInterface(IDWriteRenderingParams *ifa
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI renderingparams_AddRef(IDWriteRenderingParams *iface)
+static ULONG WINAPI renderingparams_AddRef(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p)->(%d)\n", This, ref);
     return ref;
 }
 
-static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams *iface)
+static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(%d)\n", This, ref);
@@ -108,42 +113,56 @@ static ULONG WINAPI renderingparams_Release(IDWriteRenderingParams *iface)
     return ref;
 }
 
-static FLOAT WINAPI renderingparams_GetGamma(IDWriteRenderingParams *iface)
+static FLOAT WINAPI renderingparams_GetGamma(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     TRACE("(%p)\n", This);
     return This->gamma;
 }
 
-static FLOAT WINAPI renderingparams_GetEnhancedContrast(IDWriteRenderingParams *iface)
+static FLOAT WINAPI renderingparams_GetEnhancedContrast(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     TRACE("(%p)\n", This);
-    return This->enh_contrast;
+    return This->contrast;
 }
 
-static FLOAT WINAPI renderingparams_GetClearTypeLevel(IDWriteRenderingParams *iface)
+static FLOAT WINAPI renderingparams_GetClearTypeLevel(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     TRACE("(%p)\n", This);
     return This->cleartype_level;
 }
 
-static DWRITE_PIXEL_GEOMETRY WINAPI renderingparams_GetPixelGeometry(IDWriteRenderingParams *iface)
+static DWRITE_PIXEL_GEOMETRY WINAPI renderingparams_GetPixelGeometry(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     TRACE("(%p)\n", This);
     return This->geometry;
 }
 
-static DWRITE_RENDERING_MODE WINAPI renderingparams_GetRenderingMode(IDWriteRenderingParams *iface)
+static DWRITE_RENDERING_MODE WINAPI renderingparams_GetRenderingMode(IDWriteRenderingParams2 *iface)
 {
-    struct renderingparams *This = impl_from_IDWriteRenderingParams(iface);
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
     TRACE("(%p)\n", This);
     return This->mode;
 }
 
-static const struct IDWriteRenderingParamsVtbl renderingparamsvtbl = {
+static FLOAT WINAPI renderingparams_GetGrayscaleEnhancedContrast(IDWriteRenderingParams2 *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
+    TRACE("(%p)\n", This);
+    return This->grayscalecontrast;
+}
+
+static DWRITE_GRID_FIT_MODE WINAPI renderingparams_GetGridFitMode(IDWriteRenderingParams2 *iface)
+{
+    struct renderingparams *This = impl_from_IDWriteRenderingParams2(iface);
+    TRACE("(%p)\n", This);
+    return This->gridfit;
+}
+
+static const struct IDWriteRenderingParams2Vtbl renderingparamsvtbl = {
     renderingparams_QueryInterface,
     renderingparams_AddRef,
     renderingparams_Release,
@@ -151,11 +170,13 @@ static const struct IDWriteRenderingParamsVtbl renderingparamsvtbl = {
     renderingparams_GetEnhancedContrast,
     renderingparams_GetClearTypeLevel,
     renderingparams_GetPixelGeometry,
-    renderingparams_GetRenderingMode
+    renderingparams_GetRenderingMode,
+    renderingparams_GetGrayscaleEnhancedContrast,
+    renderingparams_GetGridFitMode
 };
 
-static HRESULT create_renderingparams(FLOAT gamma, FLOAT enhancedContrast, FLOAT cleartype_level,
-    DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode, IDWriteRenderingParams **params)
+static HRESULT create_renderingparams(FLOAT gamma, FLOAT contrast, FLOAT grayscalecontrast, FLOAT cleartype_level,
+    DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode, DWRITE_GRID_FIT_MODE gridfit, IDWriteRenderingParams2 **params)
 {
     struct renderingparams *This;
 
@@ -164,16 +185,18 @@ static HRESULT create_renderingparams(FLOAT gamma, FLOAT enhancedContrast, FLOAT
     This = heap_alloc(sizeof(struct renderingparams));
     if (!This) return E_OUTOFMEMORY;
 
-    This->IDWriteRenderingParams_iface.lpVtbl = &renderingparamsvtbl;
+    This->IDWriteRenderingParams2_iface.lpVtbl = &renderingparamsvtbl;
     This->ref = 1;
 
     This->gamma = gamma;
-    This->enh_contrast = enhancedContrast;
+    This->contrast = contrast;
+    This->grayscalecontrast = grayscalecontrast;
     This->cleartype_level = cleartype_level;
     This->geometry = geometry;
     This->mode = mode;
+    This->gridfit = gridfit;
 
-    *params = &This->IDWriteRenderingParams_iface;
+    *params = &This->IDWriteRenderingParams2_iface;
 
     return S_OK;
 }
@@ -871,22 +894,34 @@ static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory2
     IDWriteRenderingParams **params)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
+    IDWriteRenderingParams2 *params2;
     static int fixme_once = 0;
+    HRESULT hr;
 
     TRACE("(%p)->(%p %p)\n", This, monitor, params);
 
     if (!fixme_once++)
         FIXME("(%p): monitor setting ignored\n", monitor);
-    return IDWriteFactory_CreateCustomRenderingParams((IDWriteFactory*)iface, 0.0, 0.0, 0.0, DWRITE_PIXEL_GEOMETRY_FLAT,
-        DWRITE_RENDERING_MODE_DEFAULT, params);
+
+    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, 0.0, 0.0, 1.0, 0.0, DWRITE_PIXEL_GEOMETRY_FLAT, DWRITE_RENDERING_MODE_DEFAULT,
+        DWRITE_GRID_FIT_MODE_DEFAULT, &params2);
+    *params = (IDWriteRenderingParams*)params2;
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory2 *iface, FLOAT gamma, FLOAT enhancedContrast,
     FLOAT cleartype_level, DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode, IDWriteRenderingParams **params)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
+    IDWriteRenderingParams2 *params2;
+    HRESULT hr;
+
     TRACE("(%p)->(%f %f %f %d %d %p)\n", This, gamma, enhancedContrast, cleartype_level, geometry, mode, params);
-    return create_renderingparams(gamma, enhancedContrast, cleartype_level, geometry, mode, params);
+
+    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, gamma, enhancedContrast, 1.0, cleartype_level, geometry,
+        mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params2);
+    *params = (IDWriteRenderingParams*)params2;
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory2 *iface, IDWriteFontFileLoader *loader)
@@ -1072,9 +1107,15 @@ static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory2
     DWRITE_RENDERING_MODE mode, IDWriteRenderingParams1** params)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%.2f %.2f %.2f %.2f %d %d %p): stub\n", This, gamma, enhcontrast, enhcontrast_grayscale,
+    IDWriteRenderingParams2 *params2;
+    HRESULT hr;
+
+    TRACE("(%p)->(%.2f %.2f %.2f %.2f %d %d %p)\n", This, gamma, enhcontrast, enhcontrast_grayscale,
         cleartype_level, geometry, mode, params);
-    return E_NOTIMPL;
+    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, gamma, enhcontrast, enhcontrast_grayscale,
+        cleartype_level, geometry, mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params2);
+    *params = (IDWriteRenderingParams1*)params2;
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory2_GetSystemFontFallback(IDWriteFactory2 *iface, IDWriteFontFallback **fallback)
@@ -1102,13 +1143,13 @@ static HRESULT WINAPI dwritefactory2_TranslateColorGlyphRun(IDWriteFactory2 *ifa
 }
 
 static HRESULT WINAPI dwritefactory2_CreateCustomRenderingParams(IDWriteFactory2 *iface, FLOAT gamma, FLOAT contrast,
-    FLOAT grayscalecontrast, FLOAT cleartypeLevel, DWRITE_PIXEL_GEOMETRY pixelGeometry, DWRITE_RENDERING_MODE renderingMode,
-    DWRITE_GRID_FIT_MODE gridFitMode, IDWriteRenderingParams2 **params)
+    FLOAT grayscalecontrast, FLOAT cleartype_level, DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode,
+    DWRITE_GRID_FIT_MODE gridfit, IDWriteRenderingParams2 **params)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%.2f %.2f %.2f %.2f %d %d %d %p): stub\n", This, gamma, contrast, grayscalecontrast, cleartypeLevel,
-        pixelGeometry, renderingMode, gridFitMode, params);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f %.2f %.2f %.2f %d %d %d %p)\n", This, gamma, contrast, grayscalecontrast, cleartype_level,
+        geometry, mode, gridfit, params);
+    return create_renderingparams(gamma, contrast, grayscalecontrast, cleartype_level, geometry, mode, gridfit, params);
 }
 
 static HRESULT WINAPI dwritefactory2_CreateGlyphRunAnalysis(IDWriteFactory2 *iface, const DWRITE_GLYPH_RUN *run,
