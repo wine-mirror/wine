@@ -20,8 +20,8 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
-IClientSecurity client_security;
-struct list *table_list;
+IClientSecurity client_security DECLSPEC_HIDDEN;
+struct list *table_list DECLSPEC_HIDDEN;
 
 #define SIZEOF(array) (sizeof(array)/sizeof((array)[0]))
 
