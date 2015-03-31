@@ -131,6 +131,7 @@
 @ stdcall DrawShadowText(long wstr long ptr long long long long long)
 @ stdcall DrawStatusText(long ptr ptr long) DrawStatusTextA
 @ stdcall DrawStatusTextW(long ptr wstr long)
+@ stdcall DSA_Clone(ptr)
 @ stdcall FlatSB_EnableScrollBar (long long long)
 @ stdcall FlatSB_GetScrollInfo (long long ptr)
 @ stdcall FlatSB_GetScrollPos (long long)
