@@ -470,3 +470,23 @@ HDSA WINAPI DSA_Clone(HDSA hdsa)
 
     return dest;
 }
+
+/**************************************************************************
+ * DSA_GetSize [COMCTL32.@]
+ *
+ * Returns allocated memory size for this array
+ *
+ * PARAMS
+ *     hdsa [I] handle to the dynamic storage array
+ *
+ * RETURNS
+ *     Size
+ */
+ULONGLONG WINAPI DSA_GetSize(HDSA hdsa)
+{
+    TRACE("(%p)\n", hdsa);
+
+    if (!hdsa) return 0;
+
+    return sizeof(*hdsa) + hdsa->nMaxCount*hdsa->nItemSize;
+}
