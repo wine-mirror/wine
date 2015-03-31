@@ -17,6 +17,7 @@
  */
 
 #define COBJMACROS
+#include <math.h>
 #include "d2d1.h"
 #include "wincrypt.h"
 #include "wine/test.h"
@@ -43,6 +44,45 @@ static void set_color(D2D1_COLOR_F *color, float r, float g, float b, float a)
     color->g = g;
     color->b = b;
     color->a = a;
+}
+
+static void set_matrix_identity(D2D1_MATRIX_3X2_F *matrix)
+{
+    matrix->_11 = 1.0f;
+    matrix->_12 = 0.0f;
+    matrix->_21 = 0.0f;
+    matrix->_22 = 1.0f;
+    matrix->_31 = 0.0f;
+    matrix->_32 = 0.0f;
+}
+
+static void rotate_matrix(D2D1_MATRIX_3X2_F *matrix, float theta)
+{
+    float sin_theta, cos_theta, tmp_11, tmp_12;
+
+    sin_theta = sinf(theta);
+    cos_theta = cosf(theta);
+    tmp_11 = matrix->_11;
+    tmp_12 = matrix->_12;
+
+    matrix->_11 = cos_theta * tmp_11 + sin_theta * matrix->_21;
+    matrix->_12 = cos_theta * tmp_12 + sin_theta * matrix->_22;
+    matrix->_21 = -sin_theta * tmp_11 + cos_theta * matrix->_21;
+    matrix->_22 = -sin_theta * tmp_12 + cos_theta * matrix->_22;
+}
+
+static void scale_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    matrix->_11 *= x;
+    matrix->_12 *= x;
+    matrix->_21 *= y;
+    matrix->_22 *= y;
+}
+
+static void translate_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    matrix->_31 += x * matrix->_11 + y * matrix->_21;
+    matrix->_32 += x * matrix->_12 + y * matrix->_22;
 }
 
 static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
@@ -546,8 +586,108 @@ static void test_state_block(void)
     DestroyWindow(window);
 }
 
+static void test_color_brush(void)
+{
+    D2D1_MATRIX_3X2_F matrix, tmp_matrix;
+    D2D1_BRUSH_PROPERTIES brush_desc;
+    D2D1_COLOR_F color, tmp_color;
+    ID2D1SolidColorBrush *brush;
+    IDXGISwapChain *swapchain;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    D2D1_RECT_F rect;
+    float opacity;
+    HWND window;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
+
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+    opacity = ID2D1SolidColorBrush_GetOpacity(brush);
+    ok(opacity == 1.0f, "Got unexpected opacity %.8e.\n", opacity);
+    set_matrix_identity(&matrix);
+    ID2D1SolidColorBrush_GetTransform(brush, &tmp_matrix);
+    ok(!memcmp(&tmp_matrix, &matrix, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_matrix._11, tmp_matrix._12, tmp_matrix._21,
+            tmp_matrix._22, tmp_matrix._31, tmp_matrix._32);
+    tmp_color = ID2D1SolidColorBrush_GetColor(brush);
+    ok(!memcmp(&tmp_color, &color, sizeof(color)),
+            "Got unexpected color {%.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_color.r, tmp_color.g, tmp_color.b, tmp_color.a);
+    ID2D1SolidColorBrush_Release(brush);
+
+    set_color(&color, 0.0f, 1.0f, 0.0f, 0.8f);
+    brush_desc.opacity = 0.3f;
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 2.0f, 2.0f);
+    brush_desc.transform = matrix;
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, &brush_desc, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+    opacity = ID2D1SolidColorBrush_GetOpacity(brush);
+    ok(opacity == 0.3f, "Got unexpected opacity %.8e.\n", opacity);
+    ID2D1SolidColorBrush_GetTransform(brush, &tmp_matrix);
+    ok(!memcmp(&tmp_matrix, &matrix, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_matrix._11, tmp_matrix._12, tmp_matrix._21,
+            tmp_matrix._22, tmp_matrix._31, tmp_matrix._32);
+    tmp_color = ID2D1SolidColorBrush_GetColor(brush);
+    ok(!memcmp(&tmp_color, &color, sizeof(color)),
+            "Got unexpected color {%.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_color.r, tmp_color.g, tmp_color.b, tmp_color.a);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    ID2D1SolidColorBrush_SetOpacity(brush, 1.0f);
+    set_rect(&rect, 40.0f, 120.0f, 120.0f, 360.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &rect, (ID2D1Brush *)brush);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 0.5f, 2.0f);
+    translate_matrix(&matrix, 320.0f, 240.0f);
+    rotate_matrix(&matrix, M_PI / 4.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_color(&color, 1.0f, 0.0f, 0.0f, 0.625f);
+    ID2D1SolidColorBrush_SetColor(brush, &color);
+    ID2D1SolidColorBrush_SetOpacity(brush, 0.75f);
+    set_rect(&rect, -80.0f, -60.0f, 80.0f, 60.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &rect, (ID2D1Brush *)brush);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    ok(compare_surface(surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb"), "Surface does not match.\n");
+
+    ID2D1SolidColorBrush_Release(brush);
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
     test_state_block();
+    test_color_brush();
 }
