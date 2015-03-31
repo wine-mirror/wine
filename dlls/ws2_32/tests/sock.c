@@ -3741,11 +3741,14 @@ static void test_select(void)
     tmp_buf[0] = 0xAF;
     SetLastError(0xdeadbeef);
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), MSG_OOB);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret); /* can't recv with MSG_OOB if OOBINLINED */
-    ok(GetLastError() == WSAEINVAL, "expected 10022, got %d\n", GetLastError());
-    ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
-    ok(ret == 1, "expected 1, got %d\n", ret);
-    ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
+    if (ret == SOCKET_ERROR) /* can't recv with MSG_OOB if OOBINLINED */
+    {
+        ok(GetLastError() == WSAEINVAL, "expected 10022, got %d\n", GetLastError());
+        ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+        ok(tmp_buf[0] == 'A', "expected 'A', got 0x%02X\n", tmp_buf[0]);
+    }
+    else ok(broken(ret == 1) /* <= NT4 */, "expected error, got 1\n");
 
     /* When the connection is closed the socket is set in the read descriptor */
     ret = closesocket(fdRead);
@@ -4724,15 +4727,18 @@ todo_wine
     i = MSG_OOB;
     SetLastError(0xdeadbeef);
     ret = recv(dst, &data, 1, i);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
-    bufs.len = sizeof(char);
-    bufs.buf = &data;
-    ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
+    if (ret == SOCKET_ERROR)
+    {
+        ret = GetLastError();
+        ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
+        bufs.len = sizeof(char);
+        bufs.buf = &data;
+        ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
+        ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+        ret = GetLastError();
+        ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
+    }
+    else ok(broken(ret == 1) /* <= NT4 */, "expected error, got 1\n");
 
     closesocket(dst);
     optval = 0xdeadbeef;
