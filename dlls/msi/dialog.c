@@ -495,42 +495,17 @@ static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
     return MSI_QueryGetRecord( db, query, name );
 }
 
-static LPWSTR msi_create_tmp_path(void)
-{
-    WCHAR tmp[MAX_PATH];
-    LPWSTR path = NULL;
-    DWORD len, r;
-
-    r = GetTempPathW( MAX_PATH, tmp );
-    if( !r )
-        return path;
-    len = lstrlenW( tmp ) + 20;
-    path = msi_alloc( len * sizeof (WCHAR) );
-    if( path )
-    {
-        r = GetTempFileNameW( tmp, szMsi, 0, path );
-        if (!r)
-        {
-            msi_free( path );
-            path = NULL;
-        }
-    }
-    return path;
-}
-
 static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
                               UINT cx, UINT cy, UINT flags )
 {
-    MSIRECORD *rec = NULL;
+    MSIRECORD *rec;
     HANDLE himage = NULL;
     LPWSTR tmp;
     UINT r;
 
     TRACE("%p %s %u %u %08x\n", db, debugstr_w(name), cx, cy, flags);
 
-    tmp = msi_create_tmp_path();
-    if( !tmp )
-        return himage;
+    if (!(tmp = msi_create_temp_file( db ))) return NULL;
 
     rec = msi_get_binary_record( db, name );
     if( rec )

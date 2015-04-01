@@ -275,33 +275,33 @@ static MSIFILE *find_file( MSIPACKAGE *package, UINT disk_id, const WCHAR *filen
     return NULL;
 }
 
-static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
+static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR filename, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
-    static MSIFILE *f = NULL;
+    static MSIFILE *file = NULL;
     UINT_PTR disk_id = (UINT_PTR)user;
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
-        if (!(f = find_file( package, disk_id, file )))
+        if (!(file = find_file( package, disk_id, filename )))
         {
-            TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
+            TRACE("unknown file in cabinet (%s)\n", debugstr_w(filename));
             return FALSE;
         }
-        if (f->disk_id != disk_id || (f->state != msifs_missing && f->state != msifs_overwrite))
+        if (file->state != msifs_missing && file->state != msifs_overwrite)
             return FALSE;
 
-        if (!msi_is_global_assembly( f->Component ))
+        if (!msi_is_global_assembly( file->Component ))
         {
-            msi_create_directory(package, f->Component->Directory);
+            msi_create_directory( package, file->Component->Directory );
         }
-        *path = strdupW(f->TargetPath);
-        *attrs = f->Attributes;
+        *path = strdupW( file->TargetPath );
+        *attrs = file->Attributes;
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
-        if (!msi_is_global_assembly( f->Component )) f->state = msifs_installed;
-        f = NULL;
+        if (!msi_is_global_assembly( file->Component )) file->state = msifs_installed;
+        file = NULL;
     }
 
     return TRUE;
@@ -378,8 +378,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             data.cb = installfiles_cb;
             data.user = (PVOID)(UINT_PTR)mi->disk_id;
 
-            if (file->IsCompressed &&
-                !msi_cabextract(package, mi, &data))
+            if (file->IsCompressed && !msi_cabextract(package, mi, &data))
             {
                 ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
                 rc = ERROR_INSTALL_FAILURE;
@@ -419,8 +418,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp = file->Component;
 
-        if (!msi_is_global_assembly( comp ) || (file->state != msifs_missing && file->state != msifs_overwrite))
-            continue;
+        if (!msi_is_global_assembly( comp ) || comp->assembly->installed ||
+            (file->state != msifs_missing && file->state != msifs_overwrite)) continue;
 
         rc = msi_install_assembly( package, comp );
         if (rc != ERROR_SUCCESS)
@@ -453,22 +452,18 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                           LPWSTR *path, DWORD *attrs, PVOID user)
 {
     static MSIFILEPATCH *patch;
-    static WCHAR tmpfile[MAX_PATH], tmpdir[MAX_PATH];
     UINT_PTR disk_id = (UINT_PTR)user;
-
-    if (!tmpdir[0]) GetTempPathW( MAX_PATH, tmpdir );
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
         if (!(patch = find_filepatch( package, disk_id, file ))) return FALSE;
 
-        GetTempFileNameW( tmpdir, NULL, 0, tmpfile );
-        *path = strdupW( tmpfile );
+        patch->path = msi_create_temp_file( package->db );
+        *path = strdupW( patch->path );
         *attrs = patch->File->Attributes;
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
-        patch->path = strdupW( tmpfile );
         patch->extracted = TRUE;
         patch = NULL;
     }
@@ -531,14 +526,16 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
 
     LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
     {
-        WCHAR tmpdir[MAX_PATH], tmpfile[MAX_PATH];
+        WCHAR *tmpfile;
         BOOL ret;
 
         if (!patch->path) continue;
 
-        GetTempPathW( MAX_PATH, tmpdir );
-        GetTempFileNameW( tmpdir, NULL, 0, tmpfile );
-
+        if (!(tmpfile = msi_create_temp_file( package->db )))
+        {
+            rc = ERROR_INSTALL_FAILURE;
+            goto done;
+        }
         ret = ApplyPatchToFileW( patch->path, patch->File->TargetPath, tmpfile, 0 );
         if (ret)
         {
@@ -550,7 +547,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
 
         DeleteFileW( patch->path );
         DeleteFileW( tmpfile );
-        RemoveDirectoryW( tmpdir );
+        msi_free( tmpfile );
 
         if (!ret && !(patch->Attributes & msidbPatchAttributesNonVital))
         {

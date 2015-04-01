@@ -100,6 +100,7 @@ typedef struct tagMSIDATABASE
     UINT bytes_per_strref;
     LPWSTR path;
     LPWSTR deletefile;
+    LPWSTR tempfolder;
     LPCWSTR mode;
     UINT media_transform_offset;
     UINT media_transform_disk_id;
@@ -580,12 +581,6 @@ typedef struct tagMSIFILE
     UINT disk_id;
 } MSIFILE;
 
-typedef struct tagMSITEMPFILE
-{
-    struct list entry;
-    LPWSTR Path;
-} MSITEMPFILE;
-
 typedef struct tagMSIFILEPATCH
 {
     struct list entry;
@@ -1025,7 +1020,7 @@ extern MSICOMPONENT *msi_get_loaded_component(MSIPACKAGE *package, const WCHAR *
 extern MSIFEATURE *msi_get_loaded_feature(MSIPACKAGE *package, const WCHAR *Feature) DECLSPEC_HIDDEN;
 extern MSIFILE *msi_get_loaded_file(MSIPACKAGE *package, const WCHAR *file) DECLSPEC_HIDDEN;
 extern MSIFOLDER *msi_get_loaded_folder(MSIPACKAGE *package, const WCHAR *dir) DECLSPEC_HIDDEN;
-extern int msi_track_tempfile(MSIPACKAGE *package, const WCHAR *path) DECLSPEC_HIDDEN;
+extern WCHAR *msi_create_temp_file(MSIDATABASE *db) DECLSPEC_HIDDEN;
 extern void msi_free_action_script(MSIPACKAGE *package, UINT script) DECLSPEC_HIDDEN;
 extern WCHAR *msi_build_icon_path(MSIPACKAGE *, const WCHAR *) DECLSPEC_HIDDEN;
 extern WCHAR *msi_build_directory_name(DWORD , ...) DECLSPEC_HIDDEN;

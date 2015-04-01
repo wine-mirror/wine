@@ -49,22 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static void remove_tracked_tempfiles( MSIPACKAGE *package )
-{
-    struct list *item, *cursor;
-
-    LIST_FOR_EACH_SAFE( item, cursor, &package->tempfiles )
-    {
-        MSITEMPFILE *temp = LIST_ENTRY( item, MSITEMPFILE, entry );
-
-        list_remove( &temp->entry );
-        TRACE("deleting temp file %s\n", debugstr_w( temp->Path ));
-        DeleteFileW( temp->Path );
-        msi_free( temp->Path );
-        msi_free( temp );
-    }
-}
-
 static void free_feature( MSIFEATURE *feature )
 {
     struct list *item, *cursor;
@@ -170,6 +154,22 @@ static void free_package_structures( MSIPACKAGE *package )
         free_folder( folder );
     }
 
+    LIST_FOR_EACH_SAFE( item, cursor, &package->files )
+    {
+        MSIFILE *file = LIST_ENTRY( item, MSIFILE, entry );
+
+        list_remove( &file->entry );
+        msi_free( file->File );
+        msi_free( file->FileName );
+        msi_free( file->ShortName );
+        msi_free( file->LongName );
+        msi_free( file->Version );
+        msi_free( file->Language );
+        if (msi_is_global_assembly( file->Component )) DeleteFileW( file->TargetPath );
+        msi_free( file->TargetPath );
+        msi_free( file );
+    }
+
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )
     {
         MSICOMPONENT *comp = LIST_ENTRY( item, MSICOMPONENT, entry );
@@ -183,21 +183,6 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( comp->FullKeypath );
         if (comp->assembly) free_assembly( comp->assembly );
         msi_free( comp );
-    }
-
-    LIST_FOR_EACH_SAFE( item, cursor, &package->files )
-    {
-        MSIFILE *file = LIST_ENTRY( item, MSIFILE, entry );
-
-        list_remove( &file->entry );
-        msi_free( file->File );
-        msi_free( file->FileName );
-        msi_free( file->ShortName );
-        msi_free( file->LongName );
-        msi_free( file->Version );
-        msi_free( file->Language );
-        msi_free( file->TargetPath );
-        msi_free( file );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->filepatches )
@@ -346,8 +331,6 @@ static void free_package_structures( MSIPACKAGE *package )
     msi_free( package->ActionFormat );
     msi_free( package->LastAction );
     msi_free( package->langids );
-
-    remove_tracked_tempfiles(package);
 
     /* cleanup control event subscriptions */
     msi_event_cleanup_all_subscriptions( package );
@@ -1327,22 +1310,6 @@ static UINT validate_package( MSIPACKAGE *package )
             return ERROR_SUCCESS;
     }
     return ERROR_INSTALL_LANGUAGE_UNSUPPORTED;
-}
-
-int msi_track_tempfile( MSIPACKAGE *package, const WCHAR *path )
-{
-    MSITEMPFILE *temp;
-
-    TRACE("%s\n", debugstr_w(path));
-
-    LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
-    {
-        if (!strcmpW( path, temp->Path )) return 0;
-    }
-    if (!(temp = msi_alloc_zero( sizeof (MSITEMPFILE) ))) return -1;
-    list_add_head( &package->tempfiles, &temp->entry );
-    temp->Path = strdupW( path );
-    return 0;
 }
 
 static WCHAR *get_product_code( MSIDATABASE *db )

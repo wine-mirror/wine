@@ -99,6 +99,7 @@ static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
         DeleteFileW( db->deletefile );
         msi_free( db->deletefile );
     }
+    msi_free( db->tempfolder );
 }
 
 static HRESULT db_initialize( IStorage *stg, const GUID *clsid )

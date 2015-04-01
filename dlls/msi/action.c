@@ -2107,18 +2107,38 @@ BOOL msi_file_hash_matches( MSIFILE *file )
     return !memcmp( &hash, &file->hash, sizeof(MSIFILEHASHINFO) );
 }
 
-static WCHAR *get_temp_dir( void )
+static WCHAR *create_temp_dir( MSIDATABASE *db )
 {
     static UINT id;
-    WCHAR tmp[MAX_PATH], dir[MAX_PATH];
+    WCHAR *ret;
 
-    GetTempPathW( MAX_PATH, tmp );
-    for (;;)
+    if (!db->tempfolder)
     {
-        if (!GetTempFileNameW( tmp, szMsi, ++id, dir )) return NULL;
-        if (CreateDirectoryW( dir, NULL )) break;
+        WCHAR tmp[MAX_PATH];
+        UINT len = sizeof(tmp)/sizeof(tmp[0]);
+
+        if (msi_get_property( db, szTempFolder, tmp, &len ) ||
+            GetFileAttributesW( tmp ) != FILE_ATTRIBUTE_DIRECTORY)
+        {
+            GetTempPathW( MAX_PATH, tmp );
+        }
+        if (!(db->tempfolder = strdupW( tmp ))) return NULL;
     }
-    return strdupW( dir );
+
+    if ((ret = msi_alloc( (strlenW( db->tempfolder ) + 20) * sizeof(WCHAR) )))
+    {
+        for (;;)
+        {
+            if (!GetTempFileNameW( db->tempfolder, szMsi, ++id, ret ))
+            {
+                msi_free( ret );
+                return NULL;
+            }
+            if (CreateDirectoryW( ret, NULL )) break;
+        }
+    }
+
+    return ret;
 }
 
 /*
@@ -2181,9 +2201,8 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
     {
         MSIASSEMBLY *assembly = file->Component->assembly;
 
-        if (!assembly->tempdir) assembly->tempdir = get_temp_dir();
+        if (!assembly->tempdir) assembly->tempdir = create_temp_dir( package->db );
         file->TargetPath = msi_build_directory_name( 2, assembly->tempdir, file->FileName );
-        msi_track_tempfile( package, file->TargetPath );
     }
     else
     {
