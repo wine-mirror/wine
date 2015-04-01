@@ -668,6 +668,21 @@ NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS cla
         SERVER_END_REQ;
         break;
 
+    case JobObjectAssociateCompletionPortInformation:
+        if (len != sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT))
+            return STATUS_INVALID_PARAMETER;
+
+        SERVER_START_REQ( set_job_completion_port )
+        {
+            JOBOBJECT_ASSOCIATE_COMPLETION_PORT *port_info = info;
+            req->job = wine_server_obj_handle( handle );
+            req->port = wine_server_obj_handle( port_info->CompletionPort );
+            req->key = wine_server_client_ptr( port_info->CompletionKey );
+            status = wine_server_call(req);
+        }
+        SERVER_END_REQ;
+        break;
+
     default:
         FIXME( "stub: %p %u %p %u\n", handle, class, info, len );
         return STATUS_NOT_IMPLEMENTED;

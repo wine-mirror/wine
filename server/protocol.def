@@ -3535,3 +3535,11 @@ enum coords_relative
     obj_handle_t handle;          /* handle to the job */
     unsigned int limit_flags;     /* new limit flags */
 @END
+
+
+/* Set new completion port for a job */
+@REQ(set_job_completion_port)
+    obj_handle_t job;             /* handle to the job */
+    obj_handle_t port;            /* handle to the completion port */
+    client_ptr_t key;             /* key to send with completion messages */
+@END

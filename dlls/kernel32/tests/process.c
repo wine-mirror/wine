@@ -2387,7 +2387,6 @@ static void test_CompletionPort(void)
     port_info.CompletionKey = job;
     port_info.CompletionPort = port;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    todo_wine
     ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 
     create_process("wait", &pi);
@@ -2395,16 +2394,13 @@ static void test_CompletionPort(void)
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
 
-    todo_wine
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
 
     TerminateProcess(pi.hProcess, 0);
     dwret = WaitForSingleObject(pi.hProcess, 1000);
     ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
 
-    todo_wine
     test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
-    todo_wine
     test_completion(port, JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, (DWORD_PTR)job, 0, 100);
 
     CloseHandle(pi.hProcess);
