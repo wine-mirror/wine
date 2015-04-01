@@ -6908,7 +6908,7 @@ static void arbfp_blit_free(struct wined3d_device *device)
 }
 
 static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum complex_fixup fixup,
-        GLenum textype, char *luminance)
+        enum wined3d_gl_resource_type res_type, char *luminance)
 {
     char chroma;
     const char *tex, *texinstr;
@@ -6920,9 +6920,19 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum compl
         chroma = 'w';
         *luminance = 'x';
     }
-    switch(textype) {
-        case GL_TEXTURE_2D:             tex = "2D";     texinstr = "TXP"; break;
-        case GL_TEXTURE_RECTANGLE_ARB:  tex = "RECT";   texinstr = "TEX"; break;
+
+    switch(res_type)
+    {
+        case WINED3D_GL_RES_TYPE_TEX_2D:
+            tex = "2D";
+            texinstr = "TXP";
+            break;
+
+        case WINED3D_GL_RES_TYPE_TEX_RECT:
+            tex = "RECT";
+            texinstr = "TEX";
+            break;
+
         default:
             /* This is more tricky than just replacing the texture type - we have to navigate
              * properly in the texture to find the correct chroma values
@@ -6943,10 +6953,13 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum compl
      *
      * So we have to get the sampling x position in non-normalized coordinates in integers
      */
-    if(textype != GL_TEXTURE_RECTANGLE_ARB) {
+    if (res_type != WINED3D_GL_RES_TYPE_TEX_RECT)
+    {
         shader_addline(buffer, "MUL texcrd.xy, fragment.texcoord[0], size.x;\n");
         shader_addline(buffer, "MOV texcrd.w, size.x;\n");
-    } else {
+    }
+    else
+    {
         shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
     }
     /* We must not allow filtering between pixel x and x+1, this would mix U and V
@@ -6995,15 +7008,23 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, enum compl
     return TRUE;
 }
 
-static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, char *luminance)
+static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer,
+        enum wined3d_gl_resource_type res_type, char *luminance)
 {
     const char *tex;
     static const float yv12_coef[]
             = {2.0f / 3.0f, 1.0f / 6.0f, (2.0f / 3.0f) + (1.0f / 6.0f), 1.0f / 3.0f};
 
-    switch(textype) {
-        case GL_TEXTURE_2D:             tex = "2D";     break;
-        case GL_TEXTURE_RECTANGLE_ARB:  tex = "RECT";   break;
+    switch (res_type)
+    {
+        case WINED3D_GL_RES_TYPE_TEX_2D:
+            tex = "2D";
+            break;
+
+        case WINED3D_GL_RES_TYPE_TEX_RECT:
+            tex = "RECT";
+            break;
+
         default:
             FIXME("Implement yv12 correction for non-2d, non-rect textures\n");
             return FALSE;
@@ -7061,7 +7082,8 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
      * Don't forget to clamp the y values in into the range, otherwise we'll get filtering
      * bleeding
      */
-    if(textype == GL_TEXTURE_2D) {
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
+    {
 
         shader_addline(buffer, "RCP chroma.w, size.y;\n");
 
@@ -7081,7 +7103,9 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
         shader_addline(buffer, "MAX texcrd.y, temp.y, texcrd.y;\n");
         shader_addline(buffer, "MAD temp.y, -coef.y, chroma.w, yv12_coef.z;\n");
         shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
-    } else {
+    }
+    else
+    {
         /* Read from [size - size+size/4] */
         shader_addline(buffer, "FLR texcrd.y, texcrd.y;\n");
         shader_addline(buffer, "MAD texcrd.y, texcrd.y, coef.w, size.y;\n");
@@ -7111,11 +7135,10 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
     /* The other chroma value is 1/6th of the texture lower, from 5/6th to 6/6th
      * No need to clamp because we're just reusing the already clamped value from above
      */
-    if(textype == GL_TEXTURE_2D) {
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
         shader_addline(buffer, "ADD texcrd.y, texcrd.y, yv12_coef.y;\n");
-    } else {
+    else
         shader_addline(buffer, "MAD texcrd.y, size.y, coef.w, texcrd.y;\n");
-    }
     shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
     shader_addline(buffer, "MOV chroma.y, temp.w;\n");
 
@@ -7124,13 +7147,16 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
      * values due to filtering
      */
     shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
-    if(textype == GL_TEXTURE_2D) {
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
+    {
         /* Multiply the y coordinate by 2/3 and clamp it */
         shader_addline(buffer, "MUL texcrd.y, texcrd.y, yv12_coef.x;\n");
         shader_addline(buffer, "MAD temp.y, -coef.y, chroma.w, yv12_coef.x;\n");
         shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
         shader_addline(buffer, "TEX luminance, texcrd, texture[0], %s;\n", tex);
-    } else {
+    }
+    else
+    {
         /* Reading from texture_rectangles is pretty straightforward, just use the unmodified
          * texture coordinate. It is still a good idea to clamp it though, since the opengl texture
          * is bigger
@@ -7144,19 +7170,19 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
     return TRUE;
 }
 
-static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, GLenum textype,
+static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, enum wined3d_gl_resource_type res_type,
         char *luminance)
 {
     const char *tex;
     static const float nv12_coef[]
             = {2.0f / 3.0f, 1.0f / 3.0f, 1.0f, 1.0f};
 
-    switch (textype)
+    switch (res_type)
     {
-        case GL_TEXTURE_2D:
+        case WINED3D_GL_RES_TYPE_TEX_2D:
             tex = "2D";
             break;
-        case GL_TEXTURE_RECTANGLE_ARB:
+        case WINED3D_GL_RES_TYPE_TEX_RECT:
             tex = "RECT";
             break;
         default:
@@ -7202,7 +7228,7 @@ static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, GLenum textype,
     /* We only have half the number of chroma pixels. */
     shader_addline(buffer, "MUL texcrd.x, texcrd.x, coef.y;\n");
 
-    if (textype == GL_TEXTURE_2D)
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
     {
         shader_addline(buffer, "RCP chroma.w, size.x;\n");
         shader_addline(buffer, "RCP chroma.z, size.y;\n");
@@ -7251,7 +7277,7 @@ static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, GLenum textype,
     shader_addline(buffer, "TEX temp, texcrd, texture[0], %s;\n", tex);
     shader_addline(buffer, "MOV chroma.y, temp.w;\n");
 
-    if (textype == GL_TEXTURE_2D)
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
     {
         /* Add 1/size.x */
         shader_addline(buffer, "ADD texcrd.x, texcrd.x, chroma.w;\n");
@@ -7268,7 +7294,7 @@ static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, GLenum textype,
      * Clamp the y coordinate to prevent the chroma values from bleeding into the sampled luminance
      * values due to filtering. */
     shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
-    if (textype == GL_TEXTURE_2D)
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_2D)
     {
         /* Multiply the y coordinate by 2/3 and clamp it */
         shader_addline(buffer, "MUL texcrd.y, texcrd.y, nv12_coef.x;\n");
@@ -7293,7 +7319,7 @@ static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, GLenum textype,
 
 /* Context activation is done by the caller. */
 static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
-        const struct wined3d_gl_info *gl_info, GLenum textype)
+        const struct wined3d_gl_info *gl_info, enum wined3d_gl_resource_type res_type)
 {
     GLenum shader;
     struct wined3d_shader_buffer buffer;
@@ -7321,7 +7347,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
     shader_addline(&buffer, "PARAM constants = { 0.996, 0.00195, 0, 0 };\n");
 
     /* The alpha-component contains the palette index */
-    if(textype == GL_TEXTURE_RECTANGLE_ARB)
+    if (res_type == WINED3D_GL_RES_TYPE_TEX_RECT)
         shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], RECT;\n");
     else
         shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], 2D;\n");
@@ -7390,7 +7416,7 @@ static void upload_palette(const struct wined3d_texture *texture, struct wined3d
 
 /* Context activation is done by the caller. */
 static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_gl_info *gl_info,
-        enum complex_fixup yuv_fixup, GLenum textype)
+        enum complex_fixup yuv_fixup, enum wined3d_gl_resource_type res_type)
 {
     GLenum shader;
     struct wined3d_shader_buffer buffer;
@@ -7463,7 +7489,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
     {
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YUY2:
-            if (!gen_planar_yuv_read(&buffer, yuv_fixup, textype, &luminance_component))
+            if (!gen_planar_yuv_read(&buffer, yuv_fixup, res_type, &luminance_component))
             {
                 shader_buffer_free(&buffer);
                 return 0;
@@ -7471,7 +7497,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
             break;
 
         case COMPLEX_FIXUP_YV12:
-            if (!gen_yv12_read(&buffer, textype, &luminance_component))
+            if (!gen_yv12_read(&buffer, res_type, &luminance_component))
             {
                 shader_buffer_free(&buffer);
                 return 0;
@@ -7479,7 +7505,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
             break;
 
         case COMPLEX_FIXUP_NV12:
-            if (!gen_nv12_read(&buffer, textype, &luminance_component))
+            if (!gen_nv12_read(&buffer, res_type, &luminance_component))
             {
                 shader_buffer_free(&buffer);
                 return 0;
@@ -7541,6 +7567,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
+    enum wined3d_gl_resource_type res_type;
 
     if (surface->container->flags & WINED3D_TEXTURE_CONVERTED)
     {
@@ -7561,6 +7588,32 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 
     fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
+    switch (textype)
+    {
+        case GL_TEXTURE_1D:
+            res_type = WINED3D_GL_RES_TYPE_TEX_1D;
+            break;
+
+        case GL_TEXTURE_2D:
+            res_type = WINED3D_GL_RES_TYPE_TEX_2D;
+            break;
+
+        case GL_TEXTURE_3D:
+            res_type = WINED3D_GL_RES_TYPE_TEX_3D;
+            break;
+
+        case GL_TEXTURE_CUBE_MAP_ARB:
+            res_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
+            break;
+
+        case GL_TEXTURE_RECTANGLE_ARB:
+            res_type = WINED3D_GL_RES_TYPE_TEX_RECT;
+            break;
+
+        default:
+            ERR("Unexpected GL texture type %x.\n", textype);
+            res_type = WINED3D_GL_RES_TYPE_TEX_2D;
+    }
     type.fixup = fixup;
     type.textype = textype;
     entry = wine_rb_get(&priv->shaders, &type);
@@ -7574,11 +7627,11 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         switch (fixup)
         {
             case COMPLEX_FIXUP_P8:
-                shader = gen_p8_shader(priv, gl_info, textype);
+                shader = gen_p8_shader(priv, gl_info, res_type);
                 break;
 
             default:
-                shader = gen_yuv_shader(priv, gl_info, fixup, textype);
+                shader = gen_yuv_shader(priv, gl_info, fixup, res_type);
                 break;
         }
 
