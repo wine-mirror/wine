@@ -1045,6 +1045,7 @@ extern UINT msi_install_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
 extern UINT msi_uninstall_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
 extern BOOL msi_init_assembly_caches(MSIPACKAGE *) DECLSPEC_HIDDEN;
 extern void msi_destroy_assembly_caches(MSIPACKAGE *) DECLSPEC_HIDDEN;
+extern BOOL msi_is_global_assembly(MSICOMPONENT *) DECLSPEC_HIDDEN;
 extern WCHAR *msi_font_version_from_file(const WCHAR *) DECLSPEC_HIDDEN;
 extern WCHAR **msi_split_string(const WCHAR *, WCHAR) DECLSPEC_HIDDEN;
 extern UINT msi_set_original_database_property(MSIDATABASE *, const WCHAR *) DECLSPEC_HIDDEN;

@@ -2048,7 +2048,7 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
     GetWindowsDirectoryW( path, MAX_PATH );
     if (component && component[0])
     {
-        if (comp->assembly && !comp->assembly->application) *temp = comp->Cost;
+        if (msi_is_global_assembly( comp )) *temp = comp->Cost;
         if (!comp->Enabled || !comp->KeyPath)
         {
             *cost = 0;

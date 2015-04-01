@@ -80,7 +80,7 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
         TRACE("skipping %s (not part of patch)\n", debugstr_w(file->File));
         return msifs_skipped;
     }
-    if ((comp->assembly && !comp->assembly->application && !comp->assembly->installed) ||
+    if ((msi_is_global_assembly( comp ) && !comp->assembly->installed) ||
         GetFileAttributesW( file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
     {
         TRACE("installing %s (missing)\n", debugstr_w(file->File));
@@ -291,7 +291,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
         if (f->disk_id != disk_id || (f->state != msifs_missing && f->state != msifs_overwrite))
             return FALSE;
 
-        if (!f->Component->assembly || f->Component->assembly->application)
+        if (!msi_is_global_assembly( f->Component ))
         {
             msi_create_directory(package, f->Component->Directory);
         }
@@ -300,7 +300,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
-        f->state = msifs_installed;
+        if (!msi_is_global_assembly( f->Component )) f->state = msifs_installed;
         f = NULL;
     }
 
@@ -393,22 +393,22 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
             TRACE("copying %s to %s\n", debugstr_w(source), debugstr_w(file->TargetPath));
 
-            if (!file->Component->assembly || file->Component->assembly->application)
+            if (!msi_is_global_assembly( file->Component ))
             {
                 msi_create_directory(package, file->Component->Directory);
             }
             rc = copy_install_file(package, file, source);
             if (rc != ERROR_SUCCESS)
             {
-                ERR("Failed to copy %s to %s (%d)\n", debugstr_w(source),
-                    debugstr_w(file->TargetPath), rc);
+                ERR("Failed to copy %s to %s (%u)\n", debugstr_w(source), debugstr_w(file->TargetPath), rc);
                 rc = ERROR_INSTALL_FAILURE;
                 msi_free(source);
                 goto done;
             }
             msi_free(source);
         }
-        else if (file->state != msifs_installed && !(file->Attributes & msidbFileAttributesPatchAdded))
+        else if (!msi_is_global_assembly( file->Component ) &&
+                 file->state != msifs_installed && !(file->Attributes & msidbFileAttributesPatchAdded))
         {
             ERR("compressed file wasn't installed (%s)\n", debugstr_w(file->File));
             rc = ERROR_INSTALL_FAILURE;
@@ -419,7 +419,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp = file->Component;
 
-        if (!comp->assembly || (file->state != msifs_missing && file->state != msifs_overwrite))
+        if (!msi_is_global_assembly( comp ) || (file->state != msifs_missing && file->state != msifs_overwrite))
             continue;
 
         rc = msi_install_assembly( package, comp );
@@ -429,6 +429,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             rc = ERROR_INSTALL_FAILURE;
             break;
         }
+        file->state = msifs_installed;
     }
 
 done:

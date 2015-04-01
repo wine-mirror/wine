@@ -2169,13 +2169,18 @@ WCHAR *msi_build_directory_name( DWORD count, ... )
     return dir;
 }
 
+BOOL msi_is_global_assembly( MSICOMPONENT *comp )
+{
+    return comp->assembly && !comp->assembly->application;
+}
+
 static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
 {
-    MSIASSEMBLY *assembly = file->Component->assembly;
-
     msi_free( file->TargetPath );
-    if (assembly && !assembly->application)
+    if (msi_is_global_assembly( file->Component ))
     {
+        MSIASSEMBLY *assembly = file->Component->assembly;
+
         if (!assembly->tempdir) assembly->tempdir = get_temp_dir();
         file->TargetPath = msi_build_directory_name( 2, assembly->tempdir, file->FileName );
         msi_track_tempfile( package, file->TargetPath );
