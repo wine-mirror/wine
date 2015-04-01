@@ -278,12 +278,11 @@ static MSIFILE *find_file( MSIPACKAGE *package, UINT disk_id, const WCHAR *filen
 static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR filename, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
-    static MSIFILE *file = NULL;
-    UINT_PTR disk_id = (UINT_PTR)user;
+    MSIFILE *file = *(MSIFILE **)user;
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
-        if (!(file = find_file( package, disk_id, filename )))
+        if (!(file = find_file( package, file->disk_id, filename )))
         {
             TRACE("unknown file in cabinet (%s)\n", debugstr_w(filename));
             return FALSE;
@@ -297,11 +296,11 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR filename, DWORD action,
         }
         *path = strdupW( file->TargetPath );
         *attrs = file->Attributes;
+        *(MSIFILE **)user = file;
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
         if (!msi_is_global_assembly( file->Component )) file->state = msifs_installed;
-        file = NULL;
     }
 
     return TRUE;
@@ -372,11 +371,12 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             (file->IsCompressed && !mi->is_extracted))
         {
             MSICABDATA data;
+            MSIFILE *cursor = file;
 
             data.mi = mi;
             data.package = package;
             data.cb = installfiles_cb;
-            data.user = (PVOID)(UINT_PTR)mi->disk_id;
+            data.user = &cursor;
 
             if (file->IsCompressed && !msi_cabextract(package, mi, &data))
             {
@@ -451,21 +451,20 @@ static MSIFILEPATCH *find_filepatch( MSIPACKAGE *package, UINT disk_id, const WC
 static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                           LPWSTR *path, DWORD *attrs, PVOID user)
 {
-    static MSIFILEPATCH *patch;
-    UINT_PTR disk_id = (UINT_PTR)user;
+    MSIFILEPATCH *patch = *(MSIFILEPATCH **)user;
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
-        if (!(patch = find_filepatch( package, disk_id, file ))) return FALSE;
+        if (!(patch = find_filepatch( package, patch->disk_id, file ))) return FALSE;
 
         patch->path = msi_create_temp_file( package->db );
         *path = strdupW( patch->path );
         *attrs = patch->File->Attributes;
+        *(MSIFILEPATCH **)user = patch;
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
         patch->extracted = TRUE;
-        patch = NULL;
     }
 
     return TRUE;
@@ -501,6 +500,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
         if (!patch->extracted)
         {
             MSICABDATA data;
+            MSIFILEPATCH *cursor = patch;
 
             rc = ready_media( package, TRUE, mi );
             if (rc != ERROR_SUCCESS)
@@ -511,7 +511,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
             data.mi      = mi;
             data.package = package;
             data.cb      = patchfiles_cb;
-            data.user    = (PVOID)(UINT_PTR)mi->disk_id;
+            data.user    = &cursor;
 
             if (!msi_cabextract( package, mi, &data ))
             {
