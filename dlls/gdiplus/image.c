@@ -3918,8 +3918,7 @@ static GpStatus decode_image_gif(IStream* stream, GpImage **image)
     if(FAILED(hr))
         return hresult_to_status(hr);
 
-    status = decode_frame_wic(decoder, frame_count>1 ? TRUE : FALSE,
-            0, gif_metadata_reader, image);
+    status = decode_frame_wic(decoder, frame_count > 1, 0, gif_metadata_reader, image);
     IWICBitmapDecoder_Release(decoder);
     if(status != Ok)
         return status;
