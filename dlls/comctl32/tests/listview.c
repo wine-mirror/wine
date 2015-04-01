@@ -3915,7 +3915,6 @@ static void test_getitemrect(void)
     LVCOLUMNA col;
     INT order[2];
     POINT pt;
-    HDC hdc;
 
     /* rectangle isn't empty for empty text items */
     hwnd = create_listview_control(LVS_LIST);
@@ -3929,9 +3928,9 @@ static void test_getitemrect(void)
     expect(TRUE, r);
     expect(0, rect.left);
     expect(0, rect.top);
-    hdc = GetDC(hwnd);
-    todo_wine expect(((GetDeviceCaps(hdc, LOGPIXELSX) + 15) / 16) * 16, rect.right);
-    ReleaseDC(hwnd, hdc);
+    /* estimate it as width / height ratio */
+todo_wine
+    ok((rect.right / rect.bottom) >= 5, "got right %d, bottom %d\n", rect.right, rect.bottom);
     DestroyWindow(hwnd);
 
     hwnd = create_listview_control(LVS_REPORT);
@@ -4833,6 +4832,36 @@ static void test_getitemspacing(void)
     DestroyWindow(hwnd);
 }
 
+static INT get_current_font_height(HWND listview)
+{
+    TEXTMETRICA tm;
+    HFONT hfont;
+    HWND hwnd;
+    HDC hdc;
+
+    hwnd = (HWND)SendMessageA(listview, LVM_GETHEADER, 0, 0);
+    if (!hwnd)
+        hwnd = listview;
+
+    hfont = (HFONT)SendMessageA(hwnd, WM_GETFONT, 0, 0);
+    if (!hfont) {
+        hdc = GetDC(hwnd);
+        GetTextMetricsA(hdc, &tm);
+        ReleaseDC(hwnd, hdc);
+    }
+    else {
+        HFONT oldfont;
+
+        hdc = GetDC(0);
+        oldfont = SelectObject(hdc, hfont);
+        GetTextMetricsA(hdc, &tm);
+        SelectObject(hdc, oldfont);
+        ReleaseDC(0, hdc);
+    }
+
+    return tm.tmHeight;
+}
+
 static void test_getcolumnwidth(void)
 {
     HWND hwnd;
@@ -4840,7 +4869,7 @@ static void test_getcolumnwidth(void)
     DWORD_PTR style;
     LVCOLUMNA col;
     LVITEMA itema;
-    HDC hdc;
+    INT height;
 
     /* default column width */
     hwnd = create_listview_control(LVS_ICON);
@@ -4864,9 +4893,8 @@ static void test_getcolumnwidth(void)
     memset(&itema, 0, sizeof(itema));
     SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&itema);
     ret = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
-    hdc = GetDC(hwnd);
-    todo_wine expect(((GetDeviceCaps(hdc, LOGPIXELSX) + 15) / 16) * 16, ret);
-    ReleaseDC(hwnd, hdc);
+    height = get_current_font_height(hwnd);
+    ok((ret / height) >= 6, "got width %d, height %d\n", ret, height);
     DestroyWindow(hwnd);
 }
 
