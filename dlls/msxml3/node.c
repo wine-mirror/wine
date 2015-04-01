@@ -1617,7 +1617,29 @@ static HRESULT WINAPI unknode_get_nodeType(
 
     FIXME("(%p)->(%p)\n", This, domNodeType);
 
-    *domNodeType = This->node.node->type;
+    switch (This->node.node->type)
+    {
+    case XML_ELEMENT_NODE:
+    case XML_ATTRIBUTE_NODE:
+    case XML_TEXT_NODE:
+    case XML_CDATA_SECTION_NODE:
+    case XML_ENTITY_REF_NODE:
+    case XML_ENTITY_NODE:
+    case XML_PI_NODE:
+    case XML_COMMENT_NODE:
+    case XML_DOCUMENT_NODE:
+    case XML_DOCUMENT_TYPE_NODE:
+    case XML_DOCUMENT_FRAG_NODE:
+    case XML_NOTATION_NODE:
+        /* we only care about this set of types, libxml2 type values are
+           exactly what we need */
+        *domNodeType = (DOMNodeType)This->node.node->type;
+        break;
+    default:
+        *domNodeType = NODE_INVALID;
+        break;
+    }
+
     return S_OK;
 }
 
