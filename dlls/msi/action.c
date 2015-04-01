@@ -1278,7 +1278,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     load_file_hash(package, file);
     load_file_disk_id(package, file);
 
-    TRACE("File Loaded (%s)\n",debugstr_w(file->File));  
+    TRACE("File loaded (file %s sequence %u)\n", debugstr_w(file->File), file->Sequence);
 
     list_add_tail( &package->files, &file->entry );
  
@@ -1336,6 +1336,25 @@ static UINT load_all_media( MSIPACKAGE *package )
     return r;
 }
 
+static UINT load_patch_disk_id( MSIPACKAGE *package, MSIFILEPATCH *patch )
+{
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','`','D','i','s','k','I','d','`',' ', 'F','R','O','M',' ',
+         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',' ','%','u',0};
+    MSIRECORD *rec;
+
+    if (!(rec = MSI_QueryGetRecord( package->db, query, patch->Sequence )))
+    {
+        WARN("query failed\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    patch->disk_id = MSI_RecordGetInteger( rec, 1 );
+    msiobj_release( &rec->hdr );
+    return ERROR_SUCCESS;
+}
+
 static UINT load_patch(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -1364,6 +1383,8 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
      * Header field - for patch validation.
      * _StreamRef   - External key into MsiPatchHeaders (instead of the header field)
      */
+
+    load_patch_disk_id( package, patch );
 
     TRACE("Patch loaded (file %s sequence %u)\n", debugstr_w(patch->File->File), patch->Sequence);
 
