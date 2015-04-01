@@ -43,6 +43,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const WCHAR wszPngInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
 
+static inline ULONG read_ulong_be(BYTE* data)
+{
+    return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+}
+
 static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size)
 {
     BYTE header[8];
@@ -57,7 +62,7 @@ static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *d
         return hr;
     }
 
-    *data_size = header[0] << 24 | header[1] << 16 | header[2] << 8 | header[3];
+    *data_size = read_ulong_be(&header[0]);
 
     memcpy(type, &header[4], 4);
 
@@ -153,6 +158,68 @@ static const MetadataHandlerVtbl TextReader_Vtbl = {
 HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv)
 {
     return MetadataReader_Create(&TextReader_Vtbl, iid, ppv);
+}
+
+static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size;
+    ULONG gamma;
+    static const WCHAR ImageGamma[] = {'I','m','a','g','e','G','a','m','m','a',0};
+    LPWSTR name;
+    MetadataItem *result;
+
+    hr = read_png_chunk(stream, type, &data, &data_size);
+    if (FAILED(hr)) return hr;
+
+    if (data_size < 4)
+    {
+        HeapFree(GetProcessHeap(), 0, data);
+        return E_FAIL;
+    }
+
+    gamma = read_ulong_be(data);
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    name = HeapAlloc(GetProcessHeap(), 0, sizeof(ImageGamma));
+    if (!result || !name)
+    {
+        HeapFree(GetProcessHeap(), 0, result);
+        HeapFree(GetProcessHeap(), 0, name);
+        return E_OUTOFMEMORY;
+    }
+
+    PropVariantInit(&result[0].schema);
+    PropVariantInit(&result[0].id);
+    PropVariantInit(&result[0].value);
+
+    memcpy(name, ImageGamma, sizeof(ImageGamma));
+
+    result[0].id.vt = VT_LPWSTR;
+    result[0].id.u.pwszVal = name;
+    result[0].value.vt = VT_UI4;
+    result[0].value.u.ulVal = gamma;
+
+    *items = result;
+    *item_count = 1;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl GamaReader_Vtbl = {
+    0,
+    &CLSID_WICPngGamaMetadataReader,
+    LoadGamaMetadata
+};
+
+HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&GamaReader_Vtbl, iid, ppv);
 }
 
 #ifdef SONAME_LIBPNG
