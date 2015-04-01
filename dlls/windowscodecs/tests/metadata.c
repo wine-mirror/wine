@@ -137,6 +137,13 @@ static const char metadata_tEXt[] = {
     0x3f,0x64,0x19,0xf3 /* chunk CRC */
 };
 
+static const char metadata_gAMA[] = {
+    0,0,0,4, /* chunk length */
+    'g','A','M','A', /* chunk type */
+    0,0,130,53, /* gamma */
+    0xff,0xff,0xff,0xff /* chunk CRC */
+};
+
 static const char pngimage[285] = {
 0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
@@ -401,6 +408,51 @@ static void test_metadata_tEXt(void)
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetValueByIndex failed, hr=%x\n", hr);
+
+    IWICMetadataReader_Release(reader);
+}
+
+static void test_metadata_gAMA(void)
+{
+    HRESULT hr;
+    IWICMetadataReader *reader;
+    PROPVARIANT schema, id, value;
+    ULONG count;
+    GUID format;
+    static const WCHAR ImageGamma[] = {'I','m','a','g','e','G','a','m','m','a',0};
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+
+    hr = CoCreateInstance(&CLSID_WICPngGamaMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICMetadataReader, (void**)&reader);
+    todo_wine ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /*winxp*/, "CoCreateInstance failed, hr=%x\n", hr);
+    if (FAILED(hr)) return;
+
+    load_stream((IUnknown*)reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionsDefault);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatChunkgAMA), "unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(count == 1, "unexpected count %i\n", count);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, &schema, &id, &value);
+    ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
+
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
+    PropVariantClear(&schema);
+
+    ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
+    ok(!lstrcmpW(U(id).pwszVal, ImageGamma), "unexpected value: %s\n", wine_dbgstr_w(U(id).pwszVal));
+    PropVariantClear(&id);
+
+    ok(value.vt == VT_UI4, "unexpected vt: %i\n", value.vt);
+    ok(value.ulVal == 33333, "unexpected value: %u\n", value.ulVal);
+    PropVariantClear(&value);
 
     IWICMetadataReader_Release(reader);
 }
@@ -1805,6 +1857,7 @@ START_TEST(metadata)
 
     test_metadata_unknown();
     test_metadata_tEXt();
+    test_metadata_gAMA();
     test_metadata_IFD();
     test_metadata_Exif();
     test_create_reader();
