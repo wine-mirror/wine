@@ -316,3 +316,6 @@ IDI_LOGO ICON logo.ico
 
 /* @makedep: idw_testsound.wav */
 IDW_TESTSOUND WAVE idw_testsound.wav
+
+/* @makedep: winecfg.manifest */
+1 RT_MANIFEST winecfg.manifest
