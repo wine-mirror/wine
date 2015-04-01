@@ -3436,6 +3436,29 @@ static PropertyItem* create_prop(PROPID propid, PROPVARIANT* value)
     return item;
 }
 
+static ULONG get_ulong_by_index(IWICMetadataReader* reader, ULONG index)
+{
+    PROPVARIANT value;
+    HRESULT hr;
+    ULONG result=0;
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, index, NULL, NULL, &value);
+    if (SUCCEEDED(hr))
+    {
+        switch (value.vt)
+        {
+        case VT_UI4:
+            result = value.u.ulVal;
+            break;
+        default:
+            ERR("unhandled case %u\n", value.vt);
+            break;
+        }
+        PropVariantClear(&value);
+    }
+    return result;
+}
+
 static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
 {
     HRESULT hr;
@@ -3456,6 +3479,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         { "Source", PropertyTagEquipModel },
         { "Comment", PropertyTagExifUserComment },
     };
+    BOOL seen_gamma=FALSE;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
     if (hr != S_OK) return;
@@ -3500,6 +3524,28 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
 
                             PropVariantClear(&name);
                             PropVariantClear(&value);
+                        }
+                    }
+                    else if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunkgAMA, &format))
+                    {
+                        PropertyItem* item;
+
+                        if (!seen_gamma)
+                        {
+                            item = GdipAlloc(sizeof(PropertyItem) + sizeof(ULONG) * 2);
+                            if (item)
+                            {
+                                ULONG *rational;
+                                item->length = sizeof(ULONG) * 2;
+                                item->type = PropertyTagTypeRational;
+                                item->id = PropertyTagGamma;
+                                rational = item->value = item + 1;
+                                rational[0] = 100000;
+                                rational[1] = get_ulong_by_index(reader, 0);
+                                add_property(bitmap, item);
+                                seen_gamma = TRUE;
+                                GdipFree(item);
+                            }
                         }
                     }
 
