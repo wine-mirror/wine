@@ -97,6 +97,20 @@ static inline obj_handle_t handle_global_to_local( obj_handle_t handle )
     return handle ^ HANDLE_OBFUSCATOR;
 }
 
+/* grab an object and increment its handle count */
+static struct object *grab_object_for_handle( struct object *obj )
+{
+    obj->handle_count++;
+    return grab_object( obj );
+}
+
+/* release an object and decrement its handle count */
+static void release_object_from_handle( struct object *obj )
+{
+    assert( obj->handle_count );
+    obj->handle_count--;
+    release_object( obj );
+}
 
 static void handle_table_dump( struct object *obj, int verbose );
 static void handle_table_destroy( struct object *obj );
@@ -166,7 +180,7 @@ static void handle_table_destroy( struct object *obj )
     {
         struct object *obj = entry->ptr;
         entry->ptr = NULL;
-        if (obj) release_object( obj );
+        if (obj) release_object_from_handle( obj );
     }
     free( table->entries );
 }
@@ -229,7 +243,7 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
     table->last = i;
  found:
     table->free = i + 1;
-    entry->ptr    = grab_object( obj );
+    entry->ptr    = grab_object_for_handle( obj );
     entry->access = access;
     return index_to_handle(i);
 }
@@ -355,7 +369,7 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
         for (i = 0; i <= table->last; i++, ptr++)
         {
             if (!ptr->ptr) continue;
-            if (ptr->access & RESERVED_INHERIT) grab_object( ptr->ptr );
+            if (ptr->access & RESERVED_INHERIT) grab_object_for_handle( ptr->ptr );
             else ptr->ptr = NULL; /* don't inherit this entry */
         }
     }
@@ -379,7 +393,7 @@ unsigned int close_handle( struct process *process, obj_handle_t handle )
     table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
-    release_object( obj );
+    release_object_from_handle( obj );
     return STATUS_SUCCESS;
 }
 
@@ -630,6 +644,7 @@ DECL_HANDLER(get_object_info)
 
     reply->access = get_handle_access( current->process, req->handle );
     reply->ref_count = obj->refcount;
+    reply->handle_count = obj->handle_count;
     if ((name = get_object_full_name( obj, &reply->total )))
         set_reply_data_ptr( name, min( reply->total, get_reply_max_size() ));
     release_object( obj );

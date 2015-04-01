@@ -77,7 +77,7 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
                     memset( p, 0, sizeof(*p) );
                     p->GrantedAccess = reply->access;
                     p->PointerCount = reply->ref_count;
-                    p->HandleCount = 1; /* at least one */
+                    p->HandleCount = reply->handle_count;
                     if (used_len) *used_len = sizeof(*p);
                 }
             }

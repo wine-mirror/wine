@@ -3842,6 +3842,7 @@ static void dump_get_object_info_reply( const struct get_object_info_reply *req 
 {
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", ref_count=%08x", req->ref_count );
+    fprintf( stderr, ", handle_count=%08x", req->handle_count );
     fprintf( stderr, ", total=%u", req->total );
     dump_varargs_unicode_str( ", name=", cur_size );
 }

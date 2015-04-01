@@ -206,10 +206,11 @@ void *alloc_object( const struct object_ops *ops )
     struct object *obj = mem_alloc( ops->size );
     if (obj)
     {
-        obj->refcount = 1;
-        obj->ops      = ops;
-        obj->name     = NULL;
-        obj->sd       = NULL;
+        obj->refcount     = 1;
+        obj->handle_count = 0;
+        obj->ops          = ops;
+        obj->name         = NULL;
+        obj->sd           = NULL;
         list_init( &obj->wait_queue );
 #ifdef DEBUG_OBJECTS
         list_add_head( &object_list, &obj->obj_list );
@@ -306,6 +307,7 @@ void release_object( void *ptr )
     assert( obj->refcount );
     if (!--obj->refcount)
     {
+        assert( !obj->handle_count );
         /* if the refcount is 0, nobody can be in the wait queue */
         assert( list_empty( &obj->wait_queue ));
         obj->ops->destroy( obj );

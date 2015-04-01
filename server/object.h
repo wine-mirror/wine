@@ -95,6 +95,7 @@ struct object_ops
 struct object
 {
     unsigned int              refcount;    /* reference count */
+    unsigned int              handle_count;/* handle count */
     const struct object_ops  *ops;
     struct list               wait_queue;
     struct object_name       *name;
