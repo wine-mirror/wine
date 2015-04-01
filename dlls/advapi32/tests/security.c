@@ -3267,7 +3267,7 @@ static void test_CreateDirectoryA(void)
                         0x1f01ff, FALSE, TRUE, FALSE, __LINE__);
     LocalFree(pSD);
 
-    /* Test inheritance of ACLs */
+    /* Test inheritance of ACLs in CreateFile without security descriptor */
     strcpy(tmpfile, tmpdir);
     lstrcatA(tmpfile, "/tmpfile");
 
@@ -3284,7 +3284,55 @@ static void test_CreateDirectoryA(void)
     LocalFree(pSD);
     CloseHandle(hTemp);
 
-    /* Repeat the same test with ntdll functions */
+    /* Test inheritance of ACLs in CreateFile with security descriptor -
+     * When a security descriptor is set, then inheritance doesn't take effect */
+    pSD = &sd;
+    InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
+    pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
+    bret = InitializeAcl(pDacl, sizeof(ACL), ACL_REVISION);
+    ok(bret, "Failed to initialize ACL\n");
+    bret = SetSecurityDescriptorDacl(pSD, TRUE, pDacl, FALSE);
+    ok(bret, "Failed to add ACL to security desciptor\n");
+
+    strcpy(tmpfile, tmpdir);
+    lstrcatA(tmpfile, "/tmpfile");
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = pSD;
+    sa.bInheritHandle = TRUE;
+    hTemp = CreateFileA(tmpfile, GENERIC_WRITE, FILE_SHARE_READ, &sa,
+                        CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(hTemp != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, pDacl);
+
+    error = pGetSecurityInfo(hTemp, SE_FILE_OBJECT,
+                             OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                             (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    todo_wine
+    ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
+                               acl_size.AceCount);
+    LocalFree(pSD);
+
+    error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
+                                   OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                                   (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    todo_wine
+    ok(error == ERROR_SUCCESS, "GetNamedSecurityInfo failed with error %d\n", error);
+    if (error == ERROR_SUCCESS)
+    {
+        bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+        ok(bret, "GetAclInformation failed\n");
+        todo_wine
+        ok(acl_size.AceCount == 0, "GetAclInformation returned unexpected entry count (%d != 0).\n",
+                                   acl_size.AceCount);
+        LocalFree(pSD);
+    }
+    CloseHandle(hTemp);
+
+    /* Test inheritance of ACLs in NtCreateFile without security descriptor */
     strcpy(tmpfile, tmpdir);
     lstrcatA(tmpfile, "/tmpfile");
     get_nt_pathW(tmpfile, &tmpfileW);
@@ -3310,7 +3358,8 @@ static void test_CreateDirectoryA(void)
     LocalFree(pSD);
     CloseHandle(hTemp);
 
-    /* When a security descriptor is set, then inheritance doesn't take effect */
+    /* Test inheritance of ACLs in NtCreateFile with security descriptor -
+     * When a security descriptor is set, then inheritance doesn't take effect */
     pSD = &sd;
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);
     pDacl = HeapAlloc(GetProcessHeap(), 0, sizeof(ACL));
