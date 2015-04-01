@@ -6824,8 +6824,9 @@ const struct fragment_pipeline arbfp_fragment_pipeline = {
 
 struct arbfp_blit_type
 {
-    enum complex_fixup fixup;
-    GLenum textype;
+    enum complex_fixup fixup : 4;
+    enum wined3d_gl_resource_type res_type : 3;
+    DWORD padding : 25;
 };
 
 struct arbfp_blit_desc
@@ -6846,11 +6847,7 @@ static int arbfp_blit_type_compare(const void *key, const struct wine_rb_entry *
     const struct arbfp_blit_type *ka = key;
     const struct arbfp_blit_type *kb = &WINE_RB_ENTRY_VALUE(entry, const struct arbfp_blit_desc, entry)->type;
 
-    if (ka->fixup != kb->fixup)
-        return ka->fixup < kb->fixup ? -1 : 1;
-    if (ka->textype != kb->textype)
-        return ka->textype < kb->textype ? -1 : 1;
-    return 0;
+    return memcmp(ka, kb, sizeof(*ka));
 }
 
 /* Context activation is done by the caller. */
@@ -7563,16 +7560,15 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLenum textype = surface->container->target;
+    GLenum gl_texture_type = surface->container->target;
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
-    enum wined3d_gl_resource_type res_type;
 
     if (surface->container->flags & WINED3D_TEXTURE_CONVERTED)
     {
-        gl_info->gl_ops.gl.p_glEnable(textype);
-        checkGLcall("glEnable(textype)");
+        gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
+        checkGLcall("glEnable(gl_texture_type)");
         return WINED3D_OK;
     }
 
@@ -7581,41 +7577,42 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         TRACE("Fixup:\n");
         dump_color_fixup_desc(surface->resource.format->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
-        gl_info->gl_ops.gl.p_glEnable(textype);
-        checkGLcall("glEnable(textype)");
+        gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
+        checkGLcall("glEnable(gl_texture_type)");
         return WINED3D_OK;
     }
 
     fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
-    switch (textype)
+    switch (gl_texture_type)
     {
         case GL_TEXTURE_1D:
-            res_type = WINED3D_GL_RES_TYPE_TEX_1D;
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_1D;
             break;
 
         case GL_TEXTURE_2D:
-            res_type = WINED3D_GL_RES_TYPE_TEX_2D;
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_2D;
             break;
 
         case GL_TEXTURE_3D:
-            res_type = WINED3D_GL_RES_TYPE_TEX_3D;
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_3D;
             break;
 
         case GL_TEXTURE_CUBE_MAP_ARB:
-            res_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             break;
 
         case GL_TEXTURE_RECTANGLE_ARB:
-            res_type = WINED3D_GL_RES_TYPE_TEX_RECT;
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_RECT;
             break;
 
         default:
-            ERR("Unexpected GL texture type %x.\n", textype);
-            res_type = WINED3D_GL_RES_TYPE_TEX_2D;
+            ERR("Unexpected GL texture type %x.\n", gl_texture_type);
+            type.res_type = WINED3D_GL_RES_TYPE_TEX_2D;
     }
     type.fixup = fixup;
-    type.textype = textype;
+    type.padding = 0;
+
     entry = wine_rb_get(&priv->shaders, &type);
     if (entry)
     {
@@ -7627,19 +7624,19 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         switch (fixup)
         {
             case COMPLEX_FIXUP_P8:
-                shader = gen_p8_shader(priv, gl_info, res_type);
+                shader = gen_p8_shader(priv, gl_info, type.res_type);
                 break;
 
             default:
-                shader = gen_yuv_shader(priv, gl_info, fixup, res_type);
+                shader = gen_yuv_shader(priv, gl_info, fixup, type.res_type);
                 break;
         }
 
         if (!shader)
         {
             FIXME("Unsupported complex fixup %#x, not setting a shader\n", fixup);
-            gl_info->gl_ops.gl.p_glEnable(textype);
-            checkGLcall("glEnable(textype)");
+            gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
+            checkGLcall("glEnable(gl_texture_type)");
             return E_NOTIMPL;
         }
 
@@ -7647,8 +7644,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         if (!desc)
             goto err_out;
 
-        desc->type.textype = textype;
-        desc->type.fixup = fixup;
+        desc->type = type;
         desc->shader = shader;
         if (wine_rb_put(&priv->shaders, &desc->type, &desc->entry) == -1)
         {
