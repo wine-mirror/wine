@@ -1039,6 +1039,14 @@ DECL_HANDLER(new_process)
         return;
     }
 
+    if (parent->job && (req->create_flags & CREATE_BREAKAWAY_FROM_JOB) &&
+        !(parent->job->limit_flags & (JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK)))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        close( socket_fd );
+        return;
+    }
+
     if (!req->info_size)  /* create an orphaned process */
     {
         create_process( socket_fd, NULL, 0 );
@@ -1108,6 +1116,13 @@ DECL_HANDLER(new_process)
     process->debug_children = (req->create_flags & DEBUG_PROCESS)
         && !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
     process->startup_info = (struct startup_info *)grab_object( info );
+
+    if (parent->job
+       && !(req->create_flags & CREATE_BREAKAWAY_FROM_JOB)
+       && !(parent->job->limit_flags & JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK))
+    {
+        add_job_process( parent->job, process );
+    }
 
     /* connect to the window station */
     connect_process_winstation( process, current );

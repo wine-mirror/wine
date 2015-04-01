@@ -2485,7 +2485,6 @@ static void test_jobInheritance(HANDLE job)
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
-    todo_wine
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     dwret = WaitForSingleObject(pi.hProcess, 1000);
@@ -2513,9 +2512,7 @@ static void test_BreakawayOk(HANDLE job)
     snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, "exit");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
-    todo_wine
     ok(!ret, "CreateProcessA expected failure\n");
-    todo_wine
     expect_eq_d(ERROR_ACCESS_DENIED, GetLastError());
 
     if (ret)
