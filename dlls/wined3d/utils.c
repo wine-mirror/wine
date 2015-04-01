@@ -3637,7 +3637,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
             settings->op[i].aarg0 = settings->op[i].aarg1 = settings->op[i].aarg2 = ARG_UNUSED;
             settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             settings->op[i].dst = resultreg;
-            settings->op[i].tex_type = tex_1d;
+            settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
             settings->op[i].projected = proj_none;
             i++;
             break;
@@ -3648,32 +3648,32 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
             settings->op[i].color_fixup = texture->resource.format->color_fixup;
             if (ignore_textype)
             {
-                settings->op[i].tex_type = tex_1d;
+                settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
             }
             else
             {
                 switch (texture->target)
                 {
                     case GL_TEXTURE_1D:
-                        settings->op[i].tex_type = tex_1d;
+                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
                         break;
                     case GL_TEXTURE_2D:
-                        settings->op[i].tex_type = tex_2d;
+                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_2D;
                         break;
                     case GL_TEXTURE_3D:
-                        settings->op[i].tex_type = tex_3d;
+                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_3D;
                         break;
                     case GL_TEXTURE_CUBE_MAP_ARB:
-                        settings->op[i].tex_type = tex_cube;
+                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
                         break;
                     case GL_TEXTURE_RECTANGLE_ARB:
-                        settings->op[i].tex_type = tex_rect;
+                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_RECT;
                         break;
                 }
             }
         } else {
             settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
-            settings->op[i].tex_type = tex_1d;
+            settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
         }
 
         cop = state->texture_states[i][WINED3D_TSS_COLOR_OP];

@@ -772,14 +772,14 @@ struct shader_caps
     DWORD wined3d_caps;
 };
 
-enum tex_types
+enum wined3d_gl_resource_type
 {
-    tex_1d       = 0,
-    tex_2d       = 1,
-    tex_3d       = 2,
-    tex_cube     = 3,
-    tex_rect     = 4,
-    tex_type_count = 5,
+    WINED3D_GL_RES_TYPE_TEX_1D          = 0,
+    WINED3D_GL_RES_TYPE_TEX_2D          = 1,
+    WINED3D_GL_RES_TYPE_TEX_3D          = 2,
+    WINED3D_GL_RES_TYPE_TEX_CUBE        = 3,
+    WINED3D_GL_RES_TYPE_TEX_RECT        = 4,
+    WINED3D_GL_RES_TYPE_COUNT           = 5,
 };
 
 enum vertexprocessing_mode {
@@ -808,9 +808,8 @@ enum wined3d_ffp_ps_fog_mode
 #define WINED3D_PSARGS_TEXTYPE_SHIFT 2
 #define WINED3D_PSARGS_TEXTYPE_MASK 0x3
 
-/* Similar to tex_types, except that it doesn't have 1d textures
- * (can't be bound), rect textures (handled via np2_fixup) and
- * none / unknown (treated as 2d and handled via dummy textures). */
+/* Used for Shader Model 1 pixel shaders to track the bound texture
+ * type. 2D and RECT textures are separated through NP2 fixup. */
 enum wined3d_shader_tex_types
 {
     WINED3D_SHADER_TEX_2D   = 0,
@@ -855,7 +854,7 @@ struct wined3d_shader_backend_ops
             const struct wined3d_state *state);
     void (*shader_disable)(void *shader_priv, struct wined3d_context *context);
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
-            enum tex_types tex_type, const SIZE *ds_mask_size);
+            enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size);
     void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);

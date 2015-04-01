@@ -96,8 +96,8 @@ struct shader_glsl_priv {
     struct constant_heap vconst_heap;
     struct constant_heap pconst_heap;
     unsigned char *stack;
-    GLuint depth_blt_program_full[tex_type_count];
-    GLuint depth_blt_program_masked[tex_type_count];
+    GLuint depth_blt_program_full[WINED3D_GL_RES_TYPE_COUNT];
+    GLuint depth_blt_program_masked[WINED3D_GL_RES_TYPE_COUNT];
     UINT next_constant_version;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -5570,19 +5570,19 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
         switch (settings->op[stage].tex_type)
         {
-            case tex_1d:
+            case WINED3D_GL_RES_TYPE_TEX_1D:
                 shader_addline(buffer, "uniform sampler1D ps_sampler%u;\n", stage);
                 break;
-            case tex_2d:
+            case WINED3D_GL_RES_TYPE_TEX_2D:
                 shader_addline(buffer, "uniform sampler2D ps_sampler%u;\n", stage);
                 break;
-            case tex_3d:
+            case WINED3D_GL_RES_TYPE_TEX_3D:
                 shader_addline(buffer, "uniform sampler3D ps_sampler%u;\n", stage);
                 break;
-            case tex_cube:
+            case WINED3D_GL_RES_TYPE_TEX_CUBE:
                 shader_addline(buffer, "uniform samplerCube ps_sampler%u;\n", stage);
                 break;
-            case tex_rect:
+            case WINED3D_GL_RES_TYPE_TEX_RECT:
                 shader_addline(buffer, "uniform sampler2DRect ps_sampler%u;\n", stage);
                 break;
             default:
@@ -5647,7 +5647,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
         switch (settings->op[stage].tex_type)
         {
-            case tex_1d:
+            case WINED3D_GL_RES_TYPE_TEX_1D:
                 if (proj)
                 {
                     texture_function = "texture1DProj";
@@ -5659,7 +5659,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
                     coord_mask = "x";
                 }
                 break;
-            case tex_2d:
+            case WINED3D_GL_RES_TYPE_TEX_2D:
                 if (proj)
                 {
                     texture_function = "texture2DProj";
@@ -5671,7 +5671,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
                     coord_mask = "xy";
                 }
                 break;
-            case tex_3d:
+            case WINED3D_GL_RES_TYPE_TEX_3D:
                 if (proj)
                 {
                     texture_function = "texture3DProj";
@@ -5683,11 +5683,11 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
                     coord_mask = "xyz";
                 }
                 break;
-            case tex_cube:
+            case WINED3D_GL_RES_TYPE_TEX_CUBE:
                 texture_function = "textureCube";
                 coord_mask = "xyz";
                 break;
-            case tex_rect:
+            case WINED3D_GL_RES_TYPE_TEX_RECT:
                 if (proj)
                 {
                     texture_function = "texture2DRectProj";
@@ -6249,7 +6249,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 }
 
 /* Context activation is done by the caller. */
-static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum tex_types tex_type, BOOL masked)
+static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum wined3d_gl_resource_type tex_type,
+        BOOL masked)
 {
     GLuint program_id;
     GLuint vshader_id, pshader_id;
@@ -6264,27 +6265,27 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "    gl_TexCoord[0] = gl_MultiTexCoord0;\n"
         "}\n";
 
-    static const char * const blt_pshaders_full[tex_type_count] =
+    static const char * const blt_pshaders_full[WINED3D_GL_RES_TYPE_COUNT] =
     {
-        /* tex_1d */
+        /* WINED3D_GL_RES_TYPE_TEX_1D */
         NULL,
-        /* tex_2d */
+        /* WINED3D_GL_RES_TYPE_TEX_2D */
         "#version 120\n"
         "uniform sampler2D sampler;\n"
         "void main(void)\n"
         "{\n"
         "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
         "}\n",
-        /* tex_3d */
+        /* WINED3D_GL_RES_TYPE_TEX_3D */
         NULL,
-        /* tex_cube */
+        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
         "#version 120\n"
         "uniform samplerCube sampler;\n"
         "void main(void)\n"
         "{\n"
         "    gl_FragDepth = textureCube(sampler, gl_TexCoord[0].xyz).x;\n"
         "}\n",
-        /* tex_rect */
+        /* WINED3D_GL_RES_TYPE_TEX_RECT */
         "#version 120\n"
         "#extension GL_ARB_texture_rectangle : enable\n"
         "uniform sampler2DRect sampler;\n"
@@ -6294,11 +6295,11 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "}\n",
     };
 
-    static const char * const blt_pshaders_masked[tex_type_count] =
+    static const char * const blt_pshaders_masked[WINED3D_GL_RES_TYPE_COUNT] =
     {
-        /* tex_1d */
+        /* WINED3D_GL_RES_TYPE_TEX_1D */
         NULL,
-        /* tex_2d */
+        /* WINED3D_GL_RES_TYPE_TEX_2D */
         "#version 120\n"
         "uniform sampler2D sampler;\n"
         "uniform vec4 mask;\n"
@@ -6307,9 +6308,9 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
         "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
         "}\n",
-        /* tex_3d */
+        /* WINED3D_GL_RES_TYPE_TEX_3D */
         NULL,
-        /* tex_cube */
+        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
         "#version 120\n"
         "uniform samplerCube sampler;\n"
         "uniform vec4 mask;\n"
@@ -6318,7 +6319,7 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
         "    gl_FragDepth = textureCube(sampler, gl_TexCoord[0].xyz).x;\n"
         "}\n",
-        /* tex_rect */
+        /* WINED3D_GL_RES_TYPE_TEX_RECT */
         "#version 120\n"
         "#extension GL_ARB_texture_rectangle : enable\n"
         "uniform sampler2DRect sampler;\n"
@@ -6453,7 +6454,7 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
 
 /* Context activation is done by the caller. */
 static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
-        enum tex_types tex_type, const SIZE *ds_mask_size)
+        enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size)
 {
     BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
     struct shader_glsl_priv *priv = shader_priv;
@@ -6756,7 +6757,7 @@ static void shader_glsl_free(struct wined3d_device *device)
     struct shader_glsl_priv *priv = device->shader_priv;
     int i;
 
-    for (i = 0; i < tex_type_count; ++i)
+    for (i = 0; i < WINED3D_GL_RES_TYPE_COUNT; ++i)
     {
         if (priv->depth_blt_program_full[i])
         {

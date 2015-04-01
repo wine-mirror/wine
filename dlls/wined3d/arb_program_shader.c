@@ -314,8 +314,8 @@ struct shader_arb_priv
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
     GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id_full[tex_type_count];
-    GLuint                  depth_blt_fprogram_id_masked[tex_type_count];
+    GLuint                  depth_blt_fprogram_id_full[WINED3D_GL_RES_TYPE_COUNT];
+    GLuint                  depth_blt_fprogram_id_masked[WINED3D_GL_RES_TYPE_COUNT];
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
     BOOL                    last_ps_const_clamped;
@@ -3320,31 +3320,31 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
 
 /* Context activation is done by the caller. */
 static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info,
-        enum tex_types tex_type, BOOL masked)
+        enum wined3d_gl_resource_type tex_type, BOOL masked)
 {
     GLuint program_id = 0;
     const char *fprogram;
     GLint pos;
 
-    static const char * const blt_fprograms_full[tex_type_count] =
+    static const char * const blt_fprograms_full[WINED3D_GL_RES_TYPE_COUNT] =
     {
-        /* tex_1d */
+        /* WINED3D_GL_RES_TYPE_TEX_1D */
         NULL,
-        /* tex_2d */
+        /* WINED3D_GL_RES_TYPE_TEX_2D */
         "!!ARBfp1.0\n"
         "TEMP R0;\n"
         "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
-        /* tex_3d */
+        /* WINED3D_GL_RES_TYPE_TEX_3D */
         NULL,
-        /* tex_cube */
+        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
         "!!ARBfp1.0\n"
         "TEMP R0;\n"
         "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
-        /* tex_rect */
+        /* WINED3D_GL_RES_TYPE_TEX_RECT */
         "!!ARBfp1.0\n"
         "TEMP R0;\n"
         "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
@@ -3352,11 +3352,11 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "END\n",
     };
 
-    static const char * const blt_fprograms_masked[tex_type_count] =
+    static const char * const blt_fprograms_masked[WINED3D_GL_RES_TYPE_COUNT] =
     {
-        /* tex_1d */
+        /* WINED3D_GL_RES_TYPE_TEX_1D */
         NULL,
-        /* tex_2d */
+        /* WINED3D_GL_RES_TYPE_TEX_2D */
         "!!ARBfp1.0\n"
         "PARAM mask = program.local[0];\n"
         "TEMP R0;\n"
@@ -3366,9 +3366,9 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
-        /* tex_3d */
+        /* WINED3D_GL_RES_TYPE_TEX_3D */
         NULL,
-        /* tex_cube */
+        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
         "!!ARBfp1.0\n"
         "PARAM mask = program.local[0];\n"
         "TEMP R0;\n"
@@ -3378,7 +3378,7 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
-        /* tex_rect */
+        /* WINED3D_GL_RES_TYPE_TEX_RECT */
         "!!ARBfp1.0\n"
         "PARAM mask = program.local[0];\n"
         "TEMP R0;\n"
@@ -3393,8 +3393,8 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
     fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
     if (!fprogram)
     {
-        FIXME("tex_type %#x not supported, falling back to tex_2d\n", tex_type);
-        tex_type = tex_2d;
+        FIXME("tex_type %#x not supported, falling back to 2D\n", tex_type);
+        tex_type = WINED3D_GL_RES_TYPE_TEX_2D;
         fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
     }
 
@@ -4836,7 +4836,7 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
 
 /* Context activation is done by the caller. */
 static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
-        enum tex_types tex_type, const SIZE *ds_mask_size)
+        enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size)
 {
     const float mask[] = {0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy};
     BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
@@ -5039,7 +5039,7 @@ static void shader_arb_free(struct wined3d_device *device)
     if (priv->depth_blt_vprogram_id)
         GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
 
-    for (i = 0; i < tex_type_count; ++i)
+    for (i = 0; i < WINED3D_GL_RES_TYPE_COUNT; ++i)
     {
         if (priv->depth_blt_fprogram_id_full[i])
         {
@@ -6345,13 +6345,26 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         if (!tex_read[stage])
             continue;
 
-        switch(settings->op[stage].tex_type) {
-            case tex_1d:                    textype = "1D";     break;
-            case tex_2d:                    textype = "2D";     break;
-            case tex_3d:                    textype = "3D";     break;
-            case tex_cube:                  textype = "CUBE";   break;
-            case tex_rect:                  textype = "RECT";   break;
-            default: textype = "unexpected_textype";   break;
+        switch(settings->op[stage].tex_type)
+        {
+            case WINED3D_GL_RES_TYPE_TEX_1D:
+                textype = "1D";
+                break;
+            case WINED3D_GL_RES_TYPE_TEX_2D:
+                textype = "2D";
+                break;
+            case WINED3D_GL_RES_TYPE_TEX_3D:
+                textype = "3D";
+                break;
+            case WINED3D_GL_RES_TYPE_TEX_CUBE:
+                textype = "CUBE";
+                break;
+            case WINED3D_GL_RES_TYPE_TEX_RECT:
+                textype = "RECT";
+                break;
+            default:
+                textype = "unexpected_textype";
+                break;
         }
 
         if(settings->op[stage].projected == proj_none) {

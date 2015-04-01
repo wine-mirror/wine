@@ -1837,7 +1837,7 @@ struct shader_none_priv
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
 static void shader_none_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
-        enum tex_types tex_type, const SIZE *ds_mask_size) {}
+        enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size) {}
 static void shader_none_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info) {}
 static void shader_none_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count) {}
 static void shader_none_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count) {}

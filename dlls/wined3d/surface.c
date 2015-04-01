@@ -146,7 +146,7 @@ struct blt_info
 {
     GLenum binding;
     GLenum bind_target;
-    enum tex_types tex_type;
+    enum wined3d_gl_resource_type tex_type;
     GLfloat coords[4][3];
 };
 
@@ -179,7 +179,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_2D:
             info->binding = GL_TEXTURE_BINDING_2D;
             info->bind_target = GL_TEXTURE_2D;
-            info->tex_type = tex_2d;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_2D;
             coords[0][0] = (float)rect->left / w;
             coords[0][1] = (float)rect->top / h;
             coords[0][2] = 0.0f;
@@ -200,7 +200,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_RECTANGLE_ARB:
             info->binding = GL_TEXTURE_BINDING_RECTANGLE_ARB;
             info->bind_target = GL_TEXTURE_RECTANGLE_ARB;
-            info->tex_type = tex_rect;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_RECT;
             coords[0][0] = rect->left;  coords[0][1] = rect->top;       coords[0][2] = 0.0f;
             coords[1][0] = rect->right; coords[1][1] = rect->top;       coords[1][2] = 0.0f;
             coords[2][0] = rect->left;  coords[2][1] = rect->bottom;    coords[2][2] = 0.0f;
@@ -210,7 +210,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] =  1.0f;   coords[0][1] = -f.t;   coords[0][2] = -f.l;
@@ -222,7 +222,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = -1.0f;   coords[0][1] = -f.t;   coords[0][2] = f.l;
@@ -234,7 +234,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] =  1.0f;   coords[0][2] = f.t;
@@ -246,7 +246,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] = -1.0f;   coords[0][2] = -f.t;
@@ -258,7 +258,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = f.l;   coords[0][1] = -f.t;   coords[0][2] =  1.0f;
@@ -270,7 +270,7 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
             info->binding = GL_TEXTURE_BINDING_CUBE_MAP_ARB;
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
-            info->tex_type = tex_cube;
+            info->tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             cube_coords_float(rect, w, h, &f);
 
             coords[0][0] = -f.l;   coords[0][1] = -f.t;   coords[0][2] = -1.0f;
