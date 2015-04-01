@@ -43,12 +43,10 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "patchapi.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
-
-static HMODULE hmspatcha;
-static BOOL (WINAPI *ApplyPatchToFileW)(LPCWSTR, LPCWSTR, LPCWSTR, ULONG);
 
 static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *action )
 {
@@ -438,30 +436,6 @@ done:
     return rc;
 }
 
-static BOOL load_mspatcha(void)
-{
-    hmspatcha = LoadLibraryA("mspatcha.dll");
-    if (!hmspatcha)
-    {
-        ERR("Failed to load mspatcha.dll: %d\n", GetLastError());
-        return FALSE;
-    }
-
-    ApplyPatchToFileW = (void*)GetProcAddress(hmspatcha, "ApplyPatchToFileW");
-    if(!ApplyPatchToFileW)
-    {
-        ERR("GetProcAddress(ApplyPatchToFileW) failed: %d.\n", GetLastError());
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static void unload_mspatch(void)
-{
-    FreeLibrary(hmspatcha);
-}
-
 static MSIFILEPATCH *get_next_filepatch( MSIPACKAGE *package, const WCHAR *key )
 {
     MSIFILEPATCH *patch;
@@ -525,7 +499,6 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
     MSIFILEPATCH *patch;
     MSIMEDIAINFO *mi;
     UINT rc = ERROR_SUCCESS;
-    BOOL mspatcha_loaded = FALSE;
 
     TRACE("%p\n", package);
 
@@ -557,13 +530,6 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
                 goto done;
             }
 
-            if (!mspatcha_loaded && !load_mspatcha())
-            {
-                rc = ERROR_FUNCTION_FAILED;
-                goto done;
-            }
-            mspatcha_loaded = TRUE;
-
             data.mi = mi;
             data.package = package;
             data.cb = patchfiles_cb;
@@ -587,8 +553,6 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
 
 done:
     msi_free_media_info(mi);
-    if (mspatcha_loaded)
-        unload_mspatch();
     return rc;
 }
 
