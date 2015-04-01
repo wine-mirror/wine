@@ -3494,6 +3494,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                                     item = create_prop(keywords[j].propid, &value);
                                     if (item)
                                         add_property(bitmap, item);
+                                    GdipFree(item);
                                 }
                             }
 
