@@ -436,13 +436,14 @@ done:
     return rc;
 }
 
-static MSIFILEPATCH *get_next_filepatch( MSIPACKAGE *package, const WCHAR *key )
+static MSIFILEPATCH *find_filepatch( MSIPACKAGE *package, UINT disk_id, const WCHAR *key )
 {
     MSIFILEPATCH *patch;
 
     LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
     {
-        if (!patch->IsApplied && !strcmpW( key, patch->File->File )) return patch;
+        if (!patch->extracted && patch->disk_id == disk_id && !strcmpW( key, patch->File->File ))
+            return patch;
     }
     return NULL;
 }
@@ -450,45 +451,25 @@ static MSIFILEPATCH *get_next_filepatch( MSIPACKAGE *package, const WCHAR *key )
 static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                           LPWSTR *path, DWORD *attrs, PVOID user)
 {
-    static MSIFILEPATCH *p = NULL;
-    static WCHAR patch_path[MAX_PATH] = {0};
-    static WCHAR temp_folder[MAX_PATH] = {0};
+    static MSIFILEPATCH *patch;
+    static WCHAR tmpfile[MAX_PATH], tmpdir[MAX_PATH];
+    UINT_PTR disk_id = (UINT_PTR)user;
+
+    if (!tmpdir[0]) GetTempPathW( MAX_PATH, tmpdir );
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
-        if (temp_folder[0] == '\0')
-            GetTempPathW(MAX_PATH, temp_folder);
+        if (!(patch = find_filepatch( package, disk_id, file ))) return FALSE;
 
-        if (!(p = get_next_filepatch(package, file)) || !p->File->Component->Enabled)
-            return FALSE;
-
-        GetTempFileNameW(temp_folder, NULL, 0, patch_path);
-
-        *path = strdupW(patch_path);
-        *attrs = p->File->Attributes;
+        GetTempFileNameW( tmpdir, NULL, 0, tmpfile );
+        *path = strdupW( tmpfile );
+        *attrs = patch->File->Attributes;
     }
     else if (action == MSICABEXTRACT_FILEEXTRACTED)
     {
-        WCHAR patched_file[MAX_PATH];
-        BOOL br;
-
-        GetTempFileNameW(temp_folder, NULL, 0, patched_file);
-
-        br = ApplyPatchToFileW(patch_path, p->File->TargetPath, patched_file, 0);
-        if (br)
-        {
-            /* FIXME: baseline cache */
-
-            DeleteFileW( p->File->TargetPath );
-            MoveFileW( patched_file, p->File->TargetPath );
-
-            p->IsApplied = TRUE;
-        }
-        else
-            ERR("Failed patch %s: %d.\n", debugstr_w(p->File->TargetPath), GetLastError());
-
-        DeleteFileW(patch_path);
-        p = NULL;
+        patch->path = strdupW( tmpfile );
+        patch->extracted = TRUE;
+        patch = NULL;
     }
 
     return TRUE;
@@ -503,6 +484,8 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
     TRACE("%p\n", package);
 
     mi = msi_alloc_zero( sizeof(MSIMEDIAINFO) );
+
+    TRACE("extracting files\n");
 
     LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
     {
@@ -519,7 +502,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
         comp->Action = msi_get_component_action( package, comp );
         if (!comp->Enabled || comp->Action != INSTALLSTATE_LOCAL) continue;
 
-        if (!patch->IsApplied)
+        if (!patch->extracted)
         {
             MSICABDATA data;
 
@@ -529,23 +512,48 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
                 ERR("Failed to ready media for %s\n", debugstr_w(file->File));
                 goto done;
             }
-
-            data.mi = mi;
+            data.mi      = mi;
             data.package = package;
-            data.cb = patchfiles_cb;
-            data.user = (PVOID)(UINT_PTR)mi->disk_id;
+            data.cb      = patchfiles_cb;
+            data.user    = (PVOID)(UINT_PTR)mi->disk_id;
 
-            if (!msi_cabextract(package, mi, &data))
+            if (!msi_cabextract( package, mi, &data ))
             {
                 ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
                 rc = ERROR_INSTALL_FAILURE;
                 goto done;
             }
         }
+    }
 
-        if (!patch->IsApplied && !(patch->Attributes & msidbPatchAttributesNonVital))
+    TRACE("applying patches\n");
+
+    LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
+    {
+        WCHAR tmpdir[MAX_PATH], tmpfile[MAX_PATH];
+        BOOL ret;
+
+        if (!patch->path) continue;
+
+        GetTempPathW( MAX_PATH, tmpdir );
+        GetTempFileNameW( tmpdir, NULL, 0, tmpfile );
+
+        ret = ApplyPatchToFileW( patch->path, patch->File->TargetPath, tmpfile, 0 );
+        if (ret)
         {
-            ERR("Failed to apply patch to file: %s\n", debugstr_w(file->File));
+            DeleteFileW( patch->File->TargetPath );
+            MoveFileW( tmpfile, patch->File->TargetPath );
+        }
+        else
+            WARN("failed to patch %s: %08x\n", debugstr_w(patch->File->TargetPath), GetLastError());
+
+        DeleteFileW( patch->path );
+        DeleteFileW( tmpfile );
+        RemoveDirectoryW( tmpdir );
+
+        if (!ret && !(patch->Attributes & msidbPatchAttributesNonVital))
+        {
+            ERR("Failed to apply patch to file: %s\n", debugstr_w(patch->File->File));
             rc = ERROR_INSTALL_FAILURE;
             goto done;
         }

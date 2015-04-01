@@ -200,6 +200,15 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( file );
     }
 
+    LIST_FOR_EACH_SAFE( item, cursor, &package->filepatches )
+    {
+        MSIFILEPATCH *patch = LIST_ENTRY( item, MSIFILEPATCH, entry );
+
+        list_remove( &patch->entry );
+        msi_free( patch->path );
+        msi_free( patch );
+    }
+
     /* clean up extension, progid, class and verb structures */
     LIST_FOR_EACH_SAFE( item, cursor, &package->classes )
     {

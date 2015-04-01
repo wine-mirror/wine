@@ -593,8 +593,9 @@ typedef struct tagMSIFILEPATCH
     INT Sequence;
     INT PatchSize;
     INT Attributes;
-    BOOL IsApplied;
+    BOOL extracted;
     UINT disk_id;
+    WCHAR *path;
 } MSIFILEPATCH;
 
 typedef struct tagMSIAPPID

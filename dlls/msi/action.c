@@ -1377,7 +1377,6 @@ static UINT load_patch(MSIRECORD *row, LPVOID param)
     patch->Sequence = MSI_RecordGetInteger( row, 2 );
     patch->PatchSize = MSI_RecordGetInteger( row, 3 );
     patch->Attributes = MSI_RecordGetInteger( row, 4 );
-    patch->IsApplied = FALSE;
 
     /* FIXME:
      * Header field - for patch validation.
