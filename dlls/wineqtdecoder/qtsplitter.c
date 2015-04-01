@@ -1138,6 +1138,8 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     hr = QT_Process_Movie(impl_from_IBaseFilter(This->pin.pinInfo.pFilter));
     if (FAILED(hr))
     {
+        IAsyncReader_Release(This->pReader);
+        This->pReader = NULL;
         LeaveCriticalSection(&impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->filter.csFilter);
         TRACE("Unable to process movie\n");
         return hr;
