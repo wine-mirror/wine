@@ -6836,6 +6836,8 @@ struct arbfp_blit_desc
     struct wine_rb_entry entry;
 };
 
+#define ARBFP_BLIT_PARAM_SIZE 0
+
 struct arbfp_blit_priv
 {
     struct wine_rb_tree shaders;
@@ -7483,7 +7485,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
     shader_addline(&buffer, "TEMP texcrd2;\n");
     shader_addline(&buffer, "PARAM coef = {1.0, 0.5, 2.0, 0.25};\n");
     shader_addline(&buffer, "PARAM yuv_coef = {1.403, 0.344, 0.714, 1.770};\n");
-    shader_addline(&buffer, "PARAM size = program.local[0];\n");
+    shader_addline(&buffer, "PARAM size = program.local[%u];\n", ARBFP_BLIT_PARAM_SIZE);
 
     switch (type->fixup)
     {
@@ -7669,7 +7671,7 @@ err_out:
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
-    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, size));
+    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARBFP_BLIT_PARAM_SIZE, size));
     checkGLcall("glProgramLocalParameter4fvARB");
 
     return WINED3D_OK;
