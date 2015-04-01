@@ -1306,7 +1306,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     dump_fmt(fmt);
 
-    This->need_remapping = map_channels(This, fmt, &This->alsa_channels, This->alsa_channel_map) == S_OK ? TRUE : FALSE;
+    This->need_remapping = map_channels(This, fmt, &This->alsa_channels, This->alsa_channel_map) == S_OK;
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
