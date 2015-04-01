@@ -2168,7 +2168,7 @@ static void _create_process(int line, const char *command, LPPROCESS_INFORMATION
 
 static void test_IsProcessInJob(void)
 {
-    HANDLE job;
+    HANDLE job, job2;
     PROCESS_INFORMATION pi;
     BOOL ret, out;
     DWORD dwret;
@@ -2182,10 +2182,23 @@ static void test_IsProcessInJob(void)
     job = pCreateJobObjectW(NULL, NULL);
     ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
 
+    job2 = pCreateJobObjectW(NULL, NULL);
+    ok(job2 != NULL, "CreateJobObject error %u\n", GetLastError());
+
     create_process("wait", &pi);
 
     out = TRUE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    out = TRUE;
+    ret = pIsProcessInJob(pi.hProcess, job2, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    out = TRUE;
+    ret = pIsProcessInJob(pi.hProcess, NULL, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
@@ -2194,6 +2207,17 @@ static void test_IsProcessInJob(void)
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    todo_wine
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    out = TRUE;
+    ret = pIsProcessInJob(pi.hProcess, job2, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, NULL, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     todo_wine
     ok(out, "IsProcessInJob returned out=%u\n", out);
@@ -2212,6 +2236,7 @@ static void test_IsProcessInJob(void)
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     CloseHandle(job);
+    CloseHandle(job2);
 }
 
 static void test_TerminateJobObject(void)
