@@ -322,6 +322,130 @@ static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
     }
 }
 
+static inline const char *debugstr_sockopt(int level, int optname)
+{
+    const char *stropt = NULL, *strlevel = NULL;
+
+#define DEBUG_SOCKLEVEL(x) case (x): strlevel = #x
+#define DEBUG_SOCKOPT(x) case (x): stropt = #x; break
+
+    switch(level)
+    {
+        DEBUG_SOCKLEVEL(WS_SOL_SOCKET);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_SO_ACCEPTCONN);
+            DEBUG_SOCKOPT(WS_SO_BROADCAST);
+            DEBUG_SOCKOPT(WS_SO_BSP_STATE);
+            DEBUG_SOCKOPT(WS_SO_CONDITIONAL_ACCEPT);
+            DEBUG_SOCKOPT(WS_SO_CONNECT_TIME);
+            DEBUG_SOCKOPT(WS_SO_DEBUG);
+            DEBUG_SOCKOPT(WS_SO_DONTLINGER);
+            DEBUG_SOCKOPT(WS_SO_DONTROUTE);
+            DEBUG_SOCKOPT(WS_SO_ERROR);
+            DEBUG_SOCKOPT(WS_SO_EXCLUSIVEADDRUSE);
+            DEBUG_SOCKOPT(WS_SO_GROUP_ID);
+            DEBUG_SOCKOPT(WS_SO_GROUP_PRIORITY);
+            DEBUG_SOCKOPT(WS_SO_KEEPALIVE);
+            DEBUG_SOCKOPT(WS_SO_LINGER);
+            DEBUG_SOCKOPT(WS_SO_MAX_MSG_SIZE);
+            DEBUG_SOCKOPT(WS_SO_OOBINLINE);
+            DEBUG_SOCKOPT(WS_SO_OPENTYPE);
+            DEBUG_SOCKOPT(WS_SO_PROTOCOL_INFOA);
+            DEBUG_SOCKOPT(WS_SO_PROTOCOL_INFOW);
+            DEBUG_SOCKOPT(WS_SO_RCVBUF);
+            DEBUG_SOCKOPT(WS_SO_RCVTIMEO);
+            DEBUG_SOCKOPT(WS_SO_REUSEADDR);
+            DEBUG_SOCKOPT(WS_SO_SNDBUF);
+            DEBUG_SOCKOPT(WS_SO_SNDTIMEO);
+            DEBUG_SOCKOPT(WS_SO_TYPE);
+        }
+        break;
+
+        DEBUG_SOCKLEVEL(WS_NSPROTO_IPX);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_IPX_PTYPE);
+            DEBUG_SOCKOPT(WS_IPX_FILTERPTYPE);
+            DEBUG_SOCKOPT(WS_IPX_DSTYPE);
+            DEBUG_SOCKOPT(WS_IPX_RECVHDR);
+            DEBUG_SOCKOPT(WS_IPX_MAXSIZE);
+            DEBUG_SOCKOPT(WS_IPX_ADDRESS);
+            DEBUG_SOCKOPT(WS_IPX_MAX_ADAPTER_NUM);
+        }
+        break;
+
+        DEBUG_SOCKLEVEL(WS_SOL_IRLMP);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_IRLMP_ENUMDEVICES);
+        }
+        break;
+
+        DEBUG_SOCKLEVEL(WS_IPPROTO_TCP);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_TCP_BSDURGENT);
+            DEBUG_SOCKOPT(WS_TCP_EXPEDITED_1122);
+            DEBUG_SOCKOPT(WS_TCP_NODELAY);
+        }
+        break;
+
+        DEBUG_SOCKLEVEL(WS_IPPROTO_IP);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_IP_ADD_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IP_DROP_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IP_HDRINCL);
+            DEBUG_SOCKOPT(WS_IP_MULTICAST_IF);
+            DEBUG_SOCKOPT(WS_IP_MULTICAST_LOOP);
+            DEBUG_SOCKOPT(WS_IP_MULTICAST_TTL);
+            DEBUG_SOCKOPT(WS_IP_OPTIONS);
+            DEBUG_SOCKOPT(WS_IP_PKTINFO);
+            DEBUG_SOCKOPT(WS_IP_TOS);
+            DEBUG_SOCKOPT(WS_IP_TTL);
+            DEBUG_SOCKOPT(WS_IP_UNICAST_IF);
+            DEBUG_SOCKOPT(WS_IP_DONTFRAGMENT);
+        }
+        break;
+
+        DEBUG_SOCKLEVEL(WS_IPPROTO_IPV6);
+        switch(optname)
+        {
+            DEBUG_SOCKOPT(WS_IPV6_ADD_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IPV6_DROP_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IPV6_MULTICAST_IF);
+            DEBUG_SOCKOPT(WS_IPV6_MULTICAST_HOPS);
+            DEBUG_SOCKOPT(WS_IPV6_MULTICAST_LOOP);
+            DEBUG_SOCKOPT(WS_IPV6_UNICAST_HOPS);
+            DEBUG_SOCKOPT(WS_IPV6_V6ONLY);
+            DEBUG_SOCKOPT(WS_IPV6_UNICAST_IF);
+            DEBUG_SOCKOPT(WS_IPV6_DONTFRAG);
+        }
+        break;
+    }
+#undef DEBUG_SOCKLEVEL
+#undef DEBUG_SOCKOPT
+
+    if (!strlevel)
+        strlevel = wine_dbg_sprintf("WS_0x%x", level);
+    if (!stropt)
+        stropt = wine_dbg_sprintf("WS_0x%x", optname);
+
+    return wine_dbg_sprintf("level %s, name %s", strlevel + 3, stropt + 3);
+}
+
+static inline const char *debugstr_optval(const char *optval, int optlenval)
+{
+    if (optval && !IS_INTRESOURCE(optval) && optlenval >= 1 && optlenval <= sizeof(DWORD))
+    {
+        DWORD value = 0;
+        memcpy(&value, optval, optlenval);
+        return wine_dbg_sprintf("%p (%u)", optval, value);
+    }
+    return wine_dbg_sprintf("%p", optval);
+}
+
 /* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
 #define SOCKET2HANDLE(s) ((HANDLE)(s))
 #define HANDLE2SOCKET(h) ((SOCKET)(h))
@@ -3147,8 +3271,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     int fd;
     INT ret = 0;
 
-    TRACE("socket %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
-          s, level, optname, optval, optlen ? *optlen : 0);
+    TRACE("(socket %04lx, %s, optval %s, optlen %p (%d))\n", s,
+          debugstr_sockopt(level, optname), debugstr_optval(optval, 0),
+          optlen, optlen ? *optlen : 0);
 
     switch(level)
     {
@@ -4955,8 +5080,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     struct linger linger;
     struct timeval tval;
 
-    TRACE("socket %04lx, level 0x%x, name 0x%x, ptr %p, len %d\n",
-          s, level, optname, optval, optlen);
+    TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
+          debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
+          optlen);
 
     /* some broken apps pass the value directly instead of a pointer to it */
     if(optlen && IS_INTRESOURCE(optval))
