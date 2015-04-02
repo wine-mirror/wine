@@ -2387,6 +2387,7 @@ static void test_CompletionPort(void)
     port_info.CompletionKey = job;
     port_info.CompletionPort = port;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    todo_wine
     ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 
     create_process("wait", &pi);

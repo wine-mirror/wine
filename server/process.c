@@ -146,6 +146,7 @@ struct job
     struct object obj;             /* object header */
     struct list process_list;      /* list of all processes */
     int num_processes;             /* count of running processes */
+    unsigned int limit_flags;      /* limit flags */
 };
 
 static const struct object_ops job_ops =
@@ -184,6 +185,7 @@ static struct job *create_job_object( struct directory *root, const struct unico
                                                    SACL_SECURITY_INFORMATION );
             list_init( &job->process_list );
             job->num_processes = 0;
+            job->limit_flags = 0;
         }
     }
     return job;
@@ -1505,4 +1507,15 @@ DECL_HANDLER(process_in_job)
         release_object( job );
     }
     release_object( process );
+}
+
+/* update limits of the job object */
+DECL_HANDLER(set_job_limits)
+{
+    struct job *job = get_job_obj( current->process, req->handle, JOB_OBJECT_SET_ATTRIBUTES );
+
+    if (!job) return;
+
+    job->limit_flags = req->limit_flags;
+    release_object( job );
 }

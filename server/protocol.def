@@ -3528,3 +3528,10 @@ enum coords_relative
     obj_handle_t job;             /* handle to the job */
     obj_handle_t process;         /* handle to the process */
 @END
+
+
+/* Set limit flags on a job */
+@REQ(set_job_limits)
+    obj_handle_t handle;          /* handle to the job */
+    unsigned int limit_flags;     /* new limit flags */
+@END
