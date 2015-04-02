@@ -36,7 +36,7 @@
 #include <fcntl.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
+
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
