@@ -1018,10 +1018,10 @@ static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
         table->num_rows_allocated = row_count;
         return TRUE;
     }
-    if (row_count >= table->num_rows_allocated)
+    if (row_count > table->num_rows_allocated)
     {
         BYTE *data;
-        UINT count = table->num_rows_allocated * 2;
+        UINT count = max( row_count, table->num_rows_allocated * 2 );
         if (!(data = heap_realloc( table->data, count * row_size ))) return FALSE;
         table->data = data;
         table->num_rows_allocated = count;
