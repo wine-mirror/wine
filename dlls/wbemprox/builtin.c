@@ -148,6 +148,8 @@ static const WCHAR prop_currenthorizontalresW[] =
     {'C','u','r','r','e','n','t','H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_datawidthW[] =
+    {'D','a','t','a','W','i','d','t','h',0};
 static const WCHAR prop_defaultvalueW[] =
     {'D','e','f','a','u','l','t','V','a','l','u','e',0};
 static const WCHAR prop_descriptionW[] =
@@ -494,8 +496,11 @@ static const struct column col_process[] =
 static const struct column col_processor[] =
 {
     { prop_addresswidthW,         CIM_UINT16, VT_I4 },
+    { prop_captionW,              CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_cpustatusW,            CIM_UINT16 },
     { prop_currentclockspeedW,    CIM_UINT32, VT_I4 },
+    { prop_datawidthW,            CIM_UINT16, VT_I4 },
+    { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { prop_familyW,               CIM_UINT16, VT_I4 },
     { prop_manufacturerW,         CIM_STRING|COL_FLAG_DYNAMIC },
@@ -505,7 +510,8 @@ static const struct column col_processor[] =
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_processoridW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_processortypeW,        CIM_UINT16, VT_I4 },
-    { prop_uniqueidW,             CIM_STRING }
+    { prop_uniqueidW,             CIM_STRING },
+    { prop_versionW,              CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_qualifier[] =
 {
@@ -841,8 +847,11 @@ struct record_process
 struct record_processor
 {
     UINT16       addresswidth;
+    const WCHAR *caption;
     UINT16       cpu_status;
     UINT32       currentclockspeed;
+    UINT16       datawidth;
+    const WCHAR *description;
     const WCHAR *device_id;
     UINT16       family;
     const WCHAR *manufacturer;
@@ -853,6 +862,7 @@ struct record_processor
     const WCHAR *processor_id;
     UINT16       processortype;
     const WCHAR *unique_id;
+    const WCHAR *version;
 };
 struct record_qualifier
 {
@@ -2086,7 +2096,35 @@ static inline void do_cpuid( unsigned int ax, unsigned int *p )
 #endif
 #endif
 }
+static const WCHAR *get_osarchitecture(void)
+{
+    SYSTEM_INFO info;
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
+    return os_32bitW;
+}
+static void get_processor_caption( WCHAR *caption )
+{
+    static const WCHAR fmtW[] =
+        {'%','s',' ','F','a','m','i','l','y',' ','%','u',' ',
+         'M','o','d','e','l',' ','%','u',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
+    static const WCHAR x86W[] = {'x','8','6',0};
+    static const WCHAR intel64W[] = {'I','n','t','e','l','6','4',0};
+    const WCHAR *arch = (get_osarchitecture() == os_32bitW) ? x86W : intel64W;
+    unsigned int regs[4] = {0, 0, 0, 0};
 
+    do_cpuid( 1, regs );
+    sprintfW( caption, fmtW, arch, (regs[0] & (15 << 8)) >> 8, (regs[0] & (15 << 4)) >> 4, regs[0] & 15 );
+}
+static void get_processor_version( WCHAR *version )
+{
+    static const WCHAR fmtW[] =
+        {'M','o','d','e','l',' ','%','u',',',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
+    unsigned int regs[4] = {0, 0, 0, 0};
+
+    do_cpuid( 1, regs );
+    sprintfW( version, fmtW, (regs[0] & (15 << 4)) >> 4, regs[0] & 15 );
+}
 static void get_processor_id( WCHAR *processor_id )
 {
     static const WCHAR fmtW[] = {'%','0','8','X','%','0','8','X',0};
@@ -2157,27 +2195,22 @@ static UINT get_processor_maxclockspeed( UINT index )
     }
     return ret;
 }
-static const WCHAR *get_osarchitecture(void)
-{
-    SYSTEM_INFO info;
-    GetNativeSystemInfo( &info );
-    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return os_64bitW;
-    return os_32bitW;
-}
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
-    WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0};
+    WCHAR caption[100], device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
     struct record_processor *rec;
     UINT i, offset = 0, num_cores, num_logical_processors, count = get_processor_count();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, count, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
+    get_processor_caption( caption );
     get_processor_id( processor_id );
     get_processor_manufacturer( manufacturer );
     get_processor_name( name );
+    get_processor_version( version );
 
     num_logical_processors = get_logical_processor_count( &num_cores ) / count;
     num_cores /= count;
@@ -2186,8 +2219,11 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     {
         rec = (struct record_processor *)(table->data + offset);
         rec->addresswidth           = get_osarchitecture() == os_32bitW ? 32 : 64;
+        rec->caption                = heap_strdupW( caption );
         rec->cpu_status             = 1; /* CPU Enabled */
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
+        rec->datawidth              = get_osarchitecture() == os_32bitW ? 32 : 64;
+        rec->description            = heap_strdupW( caption );
         sprintfW( device_id, fmtW, i );
         rec->device_id              = heap_strdupW( device_id );
         rec->family                 = 2; /* Unknown */
@@ -2199,6 +2235,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->processor_id           = heap_strdupW( processor_id );
         rec->processortype          = 3; /* central processor */
         rec->unique_id              = NULL;
+        rec->version                = heap_strdupW( version );
         if (!match_row( table, i, cond, &status ))
         {
             free_row_values( table, i );
