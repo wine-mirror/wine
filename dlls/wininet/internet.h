@@ -437,7 +437,7 @@ DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value) DECLSPEC
 int sock_send(int fd, const void *msg, size_t len, int flags) DECLSPEC_HIDDEN;
 int sock_recv(int fd, void *msg, size_t len, int flags) DECLSPEC_HIDDEN;
 
-server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL,BOOL);
+server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL,BOOL) DECLSPEC_HIDDEN;
 
 DWORD create_req_file(const WCHAR*,req_file_t**) DECLSPEC_HIDDEN;
 void req_file_release(req_file_t*) DECLSPEC_HIDDEN;
