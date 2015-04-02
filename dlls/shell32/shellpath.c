@@ -2786,7 +2786,7 @@ static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC }, i;
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
-    static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DESKTOP" };
+    static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DOCUMENTS", "DESKTOP" };
     static const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
     WCHAR wszTempPath[MAX_PATH];
     char szPersonalTarget[FILENAME_MAX], *pszPersonal;
@@ -2809,23 +2809,47 @@ static void _SHCreateSymbolicLinks(void)
     if (FAILED(hr)) xdg_results = NULL;
 
     pszHome = getenv("HOME");
-    if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode)) {
-        strcpy(szPersonalTarget, pszHome);
-        if (_SHAppendToUnixPath(szPersonalTarget, MAKEINTRESOURCEW(IDS_PERSONAL)) &&
-            !stat(szPersonalTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+    if (pszHome && !stat(pszHome, &statFolder) && S_ISDIR(statFolder.st_mode))
+    {
+        while (1)
         {
-            /* '$HOME/My Documents' exists. Create 'My Pictures', 'My Videos' and 
-             * 'My Music' subfolders or fail silently if they already exist. */
-            for (i = 0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
-                strcpy(szMyStuffTarget, szPersonalTarget);
-                if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
-                    mkdir(szMyStuffTarget, 0777);
-            }
-        } 
-        else
-        {
-            /* '$HOME/My Documents' doesn't exists, but '$HOME' does. */ 
+            /* Check if there's already a Wine-specific 'My Documents' folder */
             strcpy(szPersonalTarget, pszHome);
+            if (_SHAppendToUnixPath(szPersonalTarget, MAKEINTRESOURCEW(IDS_PERSONAL)) &&
+                !stat(szPersonalTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+            {
+                /* '$HOME/My Documents' exists. Create 'My Pictures',
+                 * 'My Videos' and 'My Music' subfolders or fail silently if
+                 * they already exist.
+                 */
+                for (i = 0; i < sizeof(aidsMyStuff)/sizeof(*aidsMyStuff); i++)
+                {
+                    strcpy(szMyStuffTarget, szPersonalTarget);
+                    if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])))
+                        mkdir(szMyStuffTarget, 0777);
+                }
+                break;
+            }
+
+            /* Try to point to the XDG Documents folder */
+            if (xdg_results && xdg_results[num-2] &&
+               !stat(xdg_results[num-2], &statFolder) &&
+               S_ISDIR(statFolder.st_mode))
+            {
+                strcpy(szPersonalTarget, xdg_results[num-2]);
+                break;
+            }
+
+            /* Or the hardcoded / OS X Documents folder */
+            strcpy(szPersonalTarget, pszHome);
+            if (_SHAppendToUnixPath(szPersonalTarget, DocumentsW) &&
+               !stat(szPersonalTarget, &statFolder) &&
+               S_ISDIR(statFolder.st_mode))
+                break;
+
+            /* As a last resort point to $HOME. */
+            strcpy(szPersonalTarget, pszHome);
+            break;
         }
 
         /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
