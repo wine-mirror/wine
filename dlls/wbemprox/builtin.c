@@ -361,7 +361,7 @@ static const struct column col_compsys[] =
     { prop_numlogicalprocessorsW, CIM_UINT32, VT_I4 },
     { prop_numprocessorsW,        CIM_UINT32, VT_I4 },
     { prop_totalphysicalmemoryW,  CIM_UINT64 },
-    { prop_usernameW,             CIM_STRING }
+    { prop_usernameW,             CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_compsysproduct[] =
 {
