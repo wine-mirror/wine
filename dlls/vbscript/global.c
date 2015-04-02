@@ -544,6 +544,8 @@ static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 {
     WCHAR buf[17], *ptr;
     DWORD n;
+    HRESULT hres;
+    int ret;
 
     TRACE("%s\n", debugstr_variant(arg));
 
@@ -551,19 +553,16 @@ static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     case VT_I2:
         n = (WORD)V_I2(arg);
         break;
-    case VT_I4:
-        n = V_I4(arg);
-        break;
-    case VT_EMPTY:
-        n = 0;
-        break;
     case VT_NULL:
         if(res)
             V_VT(res) = VT_NULL;
         return S_OK;
     default:
-        FIXME("unsupported type %s\n", debugstr_variant(arg));
-        return E_NOTIMPL;
+        hres = to_int(arg, &ret);
+        if(FAILED(hres))
+            return hres;
+        else
+            n = ret;
     }
 
     buf[16] = 0;

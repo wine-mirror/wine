@@ -233,9 +233,30 @@ TestHex -1, "FFFF"
 TestHex -16, "FFF0"
 TestHex -934859845, "C8472BBB"
 TestHex empty, "0"
+TestHex "17", "11"
+TestHex 228.5, "E4"
+TestHex -32767, "8001"
+TestHex -32768, "FFFF8000"
+TestHex 2147483647.49, "7FFFFFFF"
+TestHex -2147483647.5, "80000000"
+newObject.myval = 30.5
+TestHex newObject, "1E"
+newObject.myval = "27"
+TestHex newObject, "1B"
+
 
 Call ok(getVT(hex(null)) = "VT_NULL", "getVT(hex(null)) = " & getVT(hex(null)))
 Call ok(getVT(hex(empty)) = "VT_BSTR", "getVT(hex(empty)) = " & getVT(hex(empty)))
+
+Sub TestHexError(num, err_num)
+    On Error Resume Next
+    Call Hex(num)
+    Call ok(Err.number = err_num, "Hex(" & num & ") returns error number " & Err.number & " expected " & err_num)
+End Sub
+
+TestHexError 2147483647.5, 6
+TestHexError 2147483648.51, 6
+TestHexError "test", 13
 
 Sub TestOct(x, ex, res_type)
     Call ok(Oct(x) = ex, "Oct(" & x & ") = " & Oct(x) & " expected " & ex)
