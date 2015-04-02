@@ -38,7 +38,6 @@
 #include <time.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include "winerror.h"
 #include "windef.h"
