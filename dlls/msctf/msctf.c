@@ -41,8 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
-static LONG MSCTF_refCount;
-
 static HINSTANCE MSCTF_hinstance;
 
 typedef struct
@@ -110,7 +108,6 @@ static void ClassFactory_Destructor(ClassFactory *This)
 {
     TRACE("Destroying class factory %p\n", This);
     HeapFree(GetProcessHeap(),0,This);
-    InterlockedDecrement(&MSCTF_refCount);
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
@@ -163,11 +160,6 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
 
     TRACE("(%p)->(%x)\n", This, fLock);
 
-    if(fLock)
-        InterlockedIncrement(&MSCTF_refCount);
-    else
-        InterlockedDecrement(&MSCTF_refCount);
-
     return S_OK;
 }
 
@@ -190,7 +182,6 @@ static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
     This->ctor = ctor;
     *ppvOut = This;
     TRACE("Created class factory %p\n", This);
-    InterlockedIncrement(&MSCTF_refCount);
     return S_OK;
 }
 
@@ -539,7 +530,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return MSCTF_refCount ? S_FALSE : S_OK;
+    return S_FALSE;
 }
 
 /***********************************************************************
