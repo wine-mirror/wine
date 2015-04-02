@@ -28,7 +28,6 @@
 #define NOIMAGE
 #define NOTAPE
 
-#define NONAMELESSUNION
 #include <windows.h>
 #include <commdlg.h>
 
