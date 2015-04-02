@@ -44,7 +44,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**)
 
 void unregister_wmp_class(void) DECLSPEC_HIDDEN;
 
-extern HINSTANCE wmp_instance;
+extern HINSTANCE wmp_instance DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc(size_t len)
 {
