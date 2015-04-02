@@ -146,6 +146,10 @@ static const WCHAR prop_currentclockspeedW[] =
     {'C','u','r','r','e','n','t','C','l','o','c','k','S','p','e','e','d',0};
 static const WCHAR prop_currenthorizontalresW[] =
     {'C','u','r','r','e','n','t','H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
+static const WCHAR prop_currentrefreshrateW[] =
+    {'C','u','r','r','e','n','t','R','e','f','r','e','s','h','R','a','t','e',0};
+static const WCHAR prop_currentscanmodeW[] =
+    {'C','u','r','r','e','n','t','S','c','a','n','M','o','d','e',0};
 static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_datawidthW[] =
@@ -316,6 +320,10 @@ static const WCHAR prop_varianttypeW[] =
     {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
+static const WCHAR prop_videoarchitectureW[] =
+    {'V','i','d','e','o','A','r','c','h','i','t','e','c','t','u','r','e',0};
+static const WCHAR prop_videomemorytypeW[] =
+    {'V','i','d','e','o','M','e','m','o','r','y','T','y','p','e',0};
 static const WCHAR prop_videoprocessorW[] =
     {'V','i','d','e','o','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR prop_volumenameW[] =
@@ -570,14 +578,19 @@ static const struct column col_videocontroller[] =
     { prop_adapterdactypeW,       CIM_STRING },
     { prop_adapterramW,           CIM_UINT32, VT_I4 },
     { prop_availabilityW,         CIM_UINT16 },
+    { prop_captionW,              CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_currentbitsperpixelW,  CIM_UINT32, VT_I4 },
     { prop_currenthorizontalresW, CIM_UINT32, VT_I4 },
+    { prop_currentrefreshrateW,   CIM_UINT32, VT_I4 },
+    { prop_currentscanmodeW,      CIM_UINT16, VT_I4 },
     { prop_currentverticalresW,   CIM_UINT32, VT_I4 },
     { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_deviceidW,             CIM_STRING|COL_FLAG_KEY },
     { prop_driverversionW,        CIM_STRING },
     { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_videoarchitectureW,    CIM_UINT16, VT_I4 },
+    { prop_videomemorytypeW,      CIM_UINT16, VT_I4 },
     { prop_videoprocessorW,       CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
@@ -921,14 +934,19 @@ struct record_videocontroller
     const WCHAR *adapter_dactype;
     UINT32       adapter_ram;
     UINT16       availability;
+    const WCHAR *caption;
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
+    UINT32       current_refreshrate;
+    UINT16       current_scanmode;
     UINT32       current_verticalres;
     const WCHAR *description;
     const WCHAR *device_id;
     const WCHAR *driverversion;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
+    UINT16       videoarchitecture;
+    UINT16       videomemorytype;
     const WCHAR *videoprocessor;
 };
 #include "poppack.h"
@@ -2659,14 +2677,19 @@ done:
     rec->adapter_dactype       = videocontroller_dactypeW;
     rec->adapter_ram           = vidmem;
     rec->availability          = 3; /* Running or Full Power */
+    rec->caption               = heap_strdupW( name );
     rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
     rec->current_horizontalres = hres;
+    rec->current_refreshrate   = 0; /* default refresh rate */
+    rec->current_scanmode      = 2; /* Unknown */
     rec->current_verticalres   = vres;
     rec->description           = heap_strdupW( name );
     rec->device_id             = videocontroller_deviceidW;
     rec->driverversion         = videocontroller_driverversionW;
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
+    rec->videoarchitecture     = 2; /* Unknown */
+    rec->videomemorytype       = 2; /* Unknown */
     rec->videoprocessor        = heap_strdupW( name );
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
