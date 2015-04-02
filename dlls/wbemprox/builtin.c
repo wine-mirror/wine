@@ -41,6 +41,7 @@
 #include "winver.h"
 #include "sddl.h"
 #include "ntsecapi.h"
+#include "winspool.h"
 
 #include "wine/debug.h"
 #include "wbemprox_private.h"
@@ -84,6 +85,8 @@ static const WCHAR class_physicalmemoryW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR class_qualifiersW[] =
     {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
+static const WCHAR class_printerW[] =
+    {'W','i','n','3','2','_','P','r','i','n','t','e','r',0};
 static const WCHAR class_process_getowner_outW[] =
     {'_','_','W','I','N','3','2','_','P','R','O','C','E','S','S','_','G','E','T','O','W',
      'N','E','R','_','O','U','T',0};
@@ -114,6 +117,8 @@ static const WCHAR prop_adaptertypeW[] =
     {'A','d','a','p','t','e','r','T','y','p','e',0};
 static const WCHAR prop_addresswidthW[] =
     {'A','d','d','r','e','s','s','W','i','d','t','h',0};
+static const WCHAR prop_attributesW[] =
+    {'A','t','t','r','i','b','u','t','e','s',0};
 static const WCHAR prop_availabilityW[] =
     {'A','v','a','i','l','a','b','i','l','i','t','y',0};
 static const WCHAR prop_binaryrepresentationW[] =
@@ -174,6 +179,8 @@ static const WCHAR prop_domainroleW[] =
     {'D','o','m','a','i','n','R','o','l','e',0};
 static const WCHAR prop_driveW[] =
     {'D','r','i','v','e',0};
+static const WCHAR prop_drivernameW[] =
+    {'D','r','i','v','e','r','N','a','m','e',0};
 static const WCHAR prop_driverversionW[] =
     {'D','r','i','v','e','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_drivetypeW[] =
@@ -188,6 +195,8 @@ static const WCHAR prop_freespaceW[] =
     {'F','r','e','e','S','p','a','c','e',0};
 static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
+static const WCHAR prop_horizontalresolutionW[] =
+    {'H','o','r','i','z','o','n','t','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_idW[] =
     {'I','D',0};
 static const WCHAR prop_identificationcodeW[] =
@@ -210,6 +219,8 @@ static const WCHAR prop_ipenabledW[] =
     {'I','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_lastbootuptimeW[] =
     {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
+static const WCHAR prop_localW[] =
+    {'L','o','c','a','l',0};
 static const WCHAR prop_localdatetimeW[] =
     {'L','o','c','a','l','D','a','t','e','T','i','m','e',0};
 static const WCHAR prop_localeW[] =
@@ -230,6 +241,8 @@ static const WCHAR prop_modelW[] =
     {'M','o','d','e','l',0};
 static const WCHAR prop_netconnectionstatusW[] =
     {'N','e','t','C','o','n','n','e','c','t','i','o','n','S','t','a','t','u','s',0};
+static const WCHAR prop_networkW[] =
+    {'N','e','t','w','o','r','k',0};
 static const WCHAR prop_numcoresW[] =
     {'N','u','m','b','e','r','O','f','C','o','r','e','s',0};
 static const WCHAR prop_numlogicalprocessorsW[] =
@@ -487,6 +500,15 @@ static const struct column col_physicalmedia[] =
 static const struct column col_physicalmemory[] =
 {
     { prop_capacityW,   CIM_UINT64 }
+};
+static const struct column col_printer[] =
+{
+    { prop_attributesW,           CIM_UINT32 },
+    { prop_drivernameW,           CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_horizontalresolutionW, CIM_UINT32 },
+    { prop_localW,                CIM_BOOLEAN },
+    { prop_nameW,                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_networkW,              CIM_BOOLEAN }
 };
 static const struct column col_process[] =
 {
@@ -843,6 +865,15 @@ struct record_physicalmedia
 struct record_physicalmemory
 {
     UINT64 capacity;
+};
+struct record_printer
+{
+    UINT32       attributes;
+    const WCHAR *drivername;
+    UINT32       horizontalresolution;
+    int          local;
+    const WCHAR *name;
+    int          network;
 };
 struct record_process
 {
@@ -2043,6 +2074,51 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     return status;
 }
 
+static enum fill_status fill_printer( struct table *table, const struct expr *cond )
+{
+    struct record_printer *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    PRINTER_INFO_2W *info;
+    DWORD i, offset = 0, count = 0, size = 0;
+
+    EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FILL_STATUS_FAILED;
+
+    if (!(info = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (!EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, (BYTE *)info, size, &size, &count ))
+    {
+        heap_free( info );
+        return FILL_STATUS_FAILED;
+    }
+    if (!resize_table( table, count, sizeof(*rec) ))
+    {
+        heap_free( info );
+        return FILL_STATUS_FAILED;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        rec = (struct record_printer *)(table->data + offset);
+        rec->attributes           = info[i].Attributes;
+        rec->drivername           = heap_strdupW( info[i].pDriverName );
+        rec->horizontalresolution = info[i].pDevMode->u1.s1.dmPrintQuality;
+        rec->local                = -1;
+        rec->name                 = heap_strdupW( info[i].pPrinterName );
+        rec->network              = 0;
+        if (!match_row( table, i, cond, &status ))
+        {
+            free_row_values( table, i );
+            continue;
+        }
+        offset += sizeof(*rec);
+    }
+    TRACE("created %u rows\n", count);
+    table->num_rows = count;
+
+    heap_free( info );
+    return status;
+}
+
 static WCHAR *get_cmdline( DWORD process_id )
 {
     if (process_id == GetCurrentProcessId()) return heap_strdupW( GetCommandLineW() );
@@ -2721,6 +2797,7 @@ static struct table builtin_classes[] =
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
     { class_physicalmediaW, SIZEOF(col_physicalmedia), col_physicalmedia, SIZEOF(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
     { class_physicalmemoryW, SIZEOF(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
+    { class_printerW, SIZEOF(col_printer), col_printer, 0, 0, NULL, fill_printer },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
     { class_processor2W, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
