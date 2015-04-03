@@ -574,6 +574,36 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define IDN_ALLOW_UNASSIGNED        0x1
 #define IDN_USE_STD3_ASCII_RULES    0x2
 
+/* MUI defines. */
+#define MUI_LANGUAGE_ID                     0x04
+#define MUI_LANGUAGE_NAME                   0x08
+#define MUI_MERGE_SYSTEM_FALLBACK           0x10
+#define MUI_MERGE_USER_FALLBACK             0x20
+#define MUI_UI_FALLBACK                     MUI_MERGE_SYSTEM_FALLBACK | MUI_MERGE_USER_FALLBACK
+#define MUI_THREAD_LANGUAGES                0x40
+#define MUI_CONSOLE_FILTER                  0x100
+#define MUI_COMPLEX_SCRIPT_FILTER           0x200
+#define MUI_RESET_FILTERS                   0x001
+#define MUI_USER_PREFERRED_UI_LANGUAGES     0x10
+#define MUI_USE_INSTALLED_LANGUAGES         0x20
+#define MUI_USE_SEARCH_ALL_LANGUAGES        0x40
+#define MUI_LANG_NEUTRAL_PE_FILE            0x100
+#define MUI_NON_LANG_NEUTRAL_FILE           0x200
+#define MUI_MACHINE_LANGUAGE_SETTINGS       0x400
+#define MUI_FILETYPE_NOT_LANGUAGE_NEUTRAL   0x001
+#define MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN  0x002
+#define MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI   0x004
+#define MUI_QUERY_TYPE                      0x001
+#define MUI_QUERY_CHECKSUM                  0x002
+#define MUI_QUERY_LANGUAGE_NAME             0x004
+#define MUI_QUERY_RESOURCE_TYPES            0x008
+#define MUI_FILEINFO_VERSION                0x001
+#define MUI_FULL_LANGUAGE                   0x01
+#define MUI_PARTIAL_LANGUAGE                0x02
+#define MUI_LIP_LANGUAGE                    0x04
+#define MUI_LANGUAGE_INSTALLED              0x20
+#define MUI_LANGUAGE_LICENSED               0x40
+
 /* Types
  */
 
