@@ -4883,6 +4883,7 @@ static void test_IsWindowUnicode(void)
     WNDCLASSA classA;
     WNDCLASSW classW;
     HWND hwnd;
+    ATOM atom;
 
     memset(&classW, 0, sizeof(classW));
     classW.hInstance = GetModuleHandleA(0);
@@ -4894,7 +4895,8 @@ static void test_IsWindowUnicode(void)
     classA.hInstance = GetModuleHandleA(0);
     classA.lpfnWndProc = def_window_procA;
     classA.lpszClassName = ansi_class_nameA;
-    assert(RegisterClassA(&classA));
+    atom = RegisterClassA(&classA);
+    assert(atom);
 
     /* unicode class: window proc */
     hwnd = CreateWindowExW(0, unicode_class_nameW, NULL, WS_POPUP,
