@@ -121,6 +121,26 @@ static inline ARGB color_over(ARGB bg, ARGB fg)
     return (a<<24)|(r<<16)|(g<<8)|b;
 }
 
+/* fg is premult, bg and return value are not */
+static inline ARGB color_over_fgpremult(ARGB bg, ARGB fg)
+{
+    BYTE b, g, r, a;
+    BYTE bg_alpha, fg_alpha;
+
+    fg_alpha = (fg>>24)&0xff;
+
+    if (fg_alpha == 0) return bg;
+
+    bg_alpha = (((bg>>24)&0xff) * (0xff-fg_alpha)) / 0xff;
+
+    a = bg_alpha + fg_alpha;
+    b = ((bg&0xff)*bg_alpha + (fg&0xff)*0xff)/a;
+    g = (((bg>>8)&0xff)*bg_alpha + ((fg>>8)&0xff)*0xff)/a;
+    r = (((bg>>16)&0xff)*bg_alpha + ((fg>>16)&0xff)*0xff)/a;
+
+    return (a<<24)|(r<<16)|(g<<8)|b;
+}
+
 extern const char *debugstr_rectf(const RectF* rc) DECLSPEC_HIDDEN;
 
 extern const char *debugstr_pointf(const PointF* pt) DECLSPEC_HIDDEN;
