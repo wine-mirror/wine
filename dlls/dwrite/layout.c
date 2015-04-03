@@ -362,14 +362,34 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
 
 static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos);
 
-static void init_cluster_metrics(const struct layout_run *run, DWRITE_CLUSTER_METRICS *metrics)
+static inline DWRITE_LINE_BREAKPOINT get_effective_breakpoint(const struct dwrite_textlayout *layout, UINT32 pos)
 {
+    if (layout->actual_breakpoints)
+        return layout->actual_breakpoints[pos];
+    return layout->nominal_breakpoints[pos];
+}
+
+static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, const struct layout_run *run,
+    UINT16 start_glyph, UINT16 stop_glyph, UINT32 stop_position, DWRITE_CLUSTER_METRICS *metrics)
+{
+    UINT8 breakcondition;
+    UINT16 j;
+
     metrics->width = 0.0;
-    metrics->length = 1;
-    metrics->canWrapLineAfter = FALSE;
-    metrics->isWhitespace = FALSE;
-    metrics->isNewline = FALSE;
-    metrics->isSoftHyphen = FALSE;
+    for (j = start_glyph; j < stop_glyph; j++)
+        metrics->width += run->run.glyphAdvances[j];
+    metrics->length = 0;
+
+    if (stop_glyph == run->run.glyphCount)
+        breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionAfter;
+    else
+        breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionBefore;
+
+    metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
+                                breakcondition == DWRITE_BREAK_CONDITION_MUST_BREAK;
+    metrics->isWhitespace = FALSE; /* FIXME */
+    metrics->isNewline = FALSE;    /* FIXME */
+    metrics->isSoftHyphen = FALSE; /* FIXME */
     metrics->isRightToLeft = run->run.bidiLevel & 1;
     metrics->padding = 0;
 }
@@ -378,42 +398,34 @@ static void init_cluster_metrics(const struct layout_run *run, DWRITE_CLUSTER_ME
 
   All clusters in a 'run' will be added to 'layout' data, starting at index pointed to by 'cluster'.
   On return 'cluster' is updated to point to next metrics struct to be filled in on next call.
+  Note that there's no need to reallocate anything at this point as we allocate one cluster per
+  codepoint initially.
 
 */
 static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct layout_run *run, UINT32 *cluster)
 {
     DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[*cluster];
-    UINT16 glyph;
-    UINT32 i;
-
-    glyph = run->descr.clusterMap[0];
-    init_cluster_metrics(run, metrics);
+    UINT32 i, start = 0;
 
     for (i = 0; i < run->descr.stringLength; i++) {
-        BOOL newcluster = glyph != run->descr.clusterMap[i];
+        BOOL end = i == run->descr.stringLength - 1;
 
-        /* add new cluster on starting glyph change or simply when run is over */
-        if (newcluster || i == run->descr.stringLength - 1) {
-            UINT8 breakcondition;
-            UINT16 j;
+        if (run->descr.clusterMap[start] != run->descr.clusterMap[i]) {
+            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->descr.clusterMap[i], i, metrics);
+            metrics->length = i - start;
 
-            for (j = glyph; j < run->descr.clusterMap[i]; j++)
-                metrics->width += run->run.glyphAdvances[j];
-
-            /* FIXME: also set isWhitespace, isNewline and isSoftHyphen */
-            breakcondition = newcluster ? layout->nominal_breakpoints[i].breakConditionBefore :
-                                          layout->nominal_breakpoints[i].breakConditionAfter;
-            metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
-                                        breakcondition == DWRITE_BREAK_CONDITION_MUST_BREAK;
-
-            /* advance to next cluster */
-            glyph = run->descr.clusterMap[i];
             *cluster += 1;
             metrics++;
-            init_cluster_metrics(run, metrics);
+            start = i;
         }
-        else
-            metrics->length++;
+
+        if (end) {
+            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->run.glyphCount, i, metrics);
+            metrics->length = i - start + 1;
+
+            *cluster += 1;
+            return;
+        }
     }
 }
 
@@ -583,7 +595,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     }
 
     if (hr == S_OK)
-        layout->clusters_count = cluster + 1;
+        layout->clusters_count = cluster;
 
     IDWriteTextAnalyzer_Release(analyzer);
     return hr;
@@ -612,6 +624,10 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &layout->IDWriteTextAnalysisSource_iface,
             0, layout->len, &layout->IDWriteTextAnalysisSink_iface);
         IDWriteTextAnalyzer_Release(analyzer);
+    }
+    if (layout->actual_breakpoints) {
+        heap_free(layout->actual_breakpoints);
+        layout->actual_breakpoints = NULL;
     }
 
     hr = layout_compute_runs(layout);
