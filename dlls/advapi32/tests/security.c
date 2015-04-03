@@ -3633,6 +3633,22 @@ static void test_GetNamedSecurityInfoA(void)
     ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
     CloseHandle(h);
 
+    /* test setting NULL DACL */
+    error = pSetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL);
+    ok(!error, "SetNamedSecurityInfoA failed with error %d\n", error);
+
+    error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
+                NULL, NULL, &pDacl, NULL, &pSD);
+    ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+    todo_wine ok(!pDacl, "pDacl != NULL\n");
+    LocalFree(pSD);
+
+    h = CreateFileA(tmpfile, GENERIC_READ, FILE_SHARE_DELETE|FILE_SHARE_WRITE|FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    ok(h != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    CloseHandle(h);
+
     /* NtSetSecurityObject doesn't inherit DACL entries */
     pSD = sd+sizeof(void*)-((ULONG_PTR)sd)%sizeof(void*);
     InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION);

@@ -5743,7 +5743,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
         SetSecurityDescriptorGroup(&sd, psidGroup, FALSE);
     if (SecurityInfo & DACL_SECURITY_INFORMATION)
     {
-        if (ObjectType == SE_FILE_OBJECT)
+        if (ObjectType == SE_FILE_OBJECT && pDacl)
         {
             SECURITY_DESCRIPTOR_CONTROL control;
             PSECURITY_DESCRIPTOR psd;
