@@ -1074,6 +1074,7 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
 static void GST_Destroy(GSTImpl *This) {
     IPin *connected = NULL;
     ULONG pinref;
+    HRESULT hr;
 
     TRACE("Destroying\n");
 
@@ -1082,9 +1083,11 @@ static void GST_Destroy(GSTImpl *This) {
     /* Don't need to clean up output pins, disconnecting input pin will do that */
     IPin_ConnectedTo((IPin *)&This->pInputPin, &connected);
     if (connected) {
-        assert(IPin_Disconnect(connected) == S_OK);
+        hr = IPin_Disconnect(connected);
+        assert(hr == S_OK);
         IPin_Release(connected);
-        assert(IPin_Disconnect((IPin *)&This->pInputPin) == S_OK);
+        hr = IPin_Disconnect((IPin *)&This->pInputPin);
+        assert(hr == S_OK);
     }
     pinref = IPin_Release((IPin *)&This->pInputPin);
     if (pinref) {
