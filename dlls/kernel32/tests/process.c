@@ -2255,13 +2255,11 @@ static void test_TerminateJobObject(void)
     ok(ret, "TerminateJobObject error %u\n", GetLastError());
 
     dwret = WaitForSingleObject(pi.hProcess, 1000);
-    todo_wine
     ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", dwret);
     if (dwret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0);
 
     ret = GetExitCodeProcess(pi.hProcess, &dwret);
     ok(ret, "GetExitCodeProcess error %u\n", GetLastError());
-    todo_wine
     ok(dwret == 123 || broken(dwret == 0) /* randomly fails on Win 2000 / XP */,
        "wrong exitcode %u\n", dwret);
 

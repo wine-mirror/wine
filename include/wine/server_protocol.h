@@ -5156,6 +5156,20 @@ struct set_job_completion_port_reply
 };
 
 
+
+struct terminate_job_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    int          status;
+    char __pad_20[4];
+};
+struct terminate_job_reply
+{
+    struct reply_header __header;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -5419,6 +5433,7 @@ enum request
     REQ_process_in_job,
     REQ_set_job_limits,
     REQ_set_job_completion_port,
+    REQ_terminate_job,
     REQ_NB_REQUESTS
 };
 
@@ -5687,6 +5702,7 @@ union generic_request
     struct process_in_job_request process_in_job_request;
     struct set_job_limits_request set_job_limits_request;
     struct set_job_completion_port_request set_job_completion_port_request;
+    struct terminate_job_request terminate_job_request;
 };
 union generic_reply
 {
@@ -5953,8 +5969,9 @@ union generic_reply
     struct process_in_job_reply process_in_job_reply;
     struct set_job_limits_reply set_job_limits_reply;
     struct set_job_completion_port_reply set_job_completion_port_reply;
+    struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 466
+#define SERVER_PROTOCOL_VERSION 467
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

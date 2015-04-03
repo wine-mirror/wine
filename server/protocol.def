@@ -3544,3 +3544,10 @@ enum coords_relative
     obj_handle_t port;            /* handle to the completion port */
     client_ptr_t key;             /* key to send with completion messages */
 @END
+
+
+/* Terminate all processes associated with the job  */
+@REQ(terminate_job)
+    obj_handle_t handle;          /* handle to the job */
+    int          status;          /* process exit code */
+@END

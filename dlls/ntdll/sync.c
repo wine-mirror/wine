@@ -613,8 +613,19 @@ NTSTATUS WINAPI NtOpenJobObject( PHANDLE handle, ACCESS_MASK access, const OBJEC
  */
 NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
 {
-    FIXME( "stub: %p %x\n", handle, status );
-    return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    TRACE( "(%p, %d)\n", handle, status );
+
+    SERVER_START_REQ( terminate_job )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->status = status;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************

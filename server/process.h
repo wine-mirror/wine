@@ -26,6 +26,7 @@
 struct atom_table;
 struct handle_table;
 struct startup_info;
+struct job;
 
 /* process startup state */
 enum startup_state { STARTUP_IN_PROGRESS, STARTUP_DONE, STARTUP_ABORTED };

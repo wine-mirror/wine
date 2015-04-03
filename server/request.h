@@ -367,6 +367,7 @@ DECL_HANDLER(assign_job);
 DECL_HANDLER(process_in_job);
 DECL_HANDLER(set_job_limits);
 DECL_HANDLER(set_job_completion_port);
+DECL_HANDLER(terminate_job);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -634,6 +635,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_process_in_job,
     (req_handler)req_set_job_limits,
     (req_handler)req_set_job_completion_port,
+    (req_handler)req_terminate_job,
 };
 
 C_ASSERT( sizeof(affinity_t) == 8 );
@@ -2233,6 +2235,9 @@ C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, job) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, port) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, key) == 24 );
 C_ASSERT( sizeof(struct set_job_completion_port_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct terminate_job_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct terminate_job_request, status) == 16 );
+C_ASSERT( sizeof(struct terminate_job_request) == 24 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 
