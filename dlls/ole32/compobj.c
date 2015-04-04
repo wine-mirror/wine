@@ -4952,8 +4952,8 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     else
         context->apttype = APTTYPE_STA;
 
-    hr = IUnknown_QueryInterface((IUnknown *)&context->IComThreadingInfo_iface, riid, ppv);
-    IUnknown_Release((IUnknown *)&context->IComThreadingInfo_iface);
+    hr = IComThreadingInfo_QueryInterface(&context->IComThreadingInfo_iface, riid, ppv);
+    IComThreadingInfo_Release(&context->IComThreadingInfo_iface);
 
     return hr;
 }
