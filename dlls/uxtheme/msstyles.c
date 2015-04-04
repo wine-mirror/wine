@@ -674,8 +674,8 @@ static PTHEME_PROPERTY MSSTYLES_AddMetric(PTHEME_FILE tf, int iPropertyPrimitive
 struct PARSECOLORSTATE
 {
     int colorCount;
-    int colorElements[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
-    COLORREF colorRgb[TMT_LASTCOLOR-TMT_FIRSTCOLOR];
+    int colorElements[TMT_LASTCOLOR-TMT_FIRSTCOLOR+1];
+    COLORREF colorRgb[TMT_LASTCOLOR-TMT_FIRSTCOLOR+1];
     int captionColors;
 };
 
