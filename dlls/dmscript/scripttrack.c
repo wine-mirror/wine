@@ -264,7 +264,15 @@ static ULONG WINAPI IPersistStreamImpl_Release(IPersistStream *iface)
 
 static HRESULT WINAPI IPersistStreamImpl_GetClassID(IPersistStream *iface, CLSID *pClassID)
 {
-	return E_NOTIMPL;
+    DirectMusicScriptTrack *This = impl_from_IPersistStream(iface);
+
+    TRACE("(%p, %p)\n", This, pClassID);
+
+    if (!pClassID)
+        return E_POINTER;
+
+    *pClassID = This->desc.guidClass;
+    return S_OK;
 }
 
 static HRESULT WINAPI IPersistStreamImpl_IsDirty(IPersistStream *iface)
@@ -319,7 +327,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ret_iface
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->IPersistStream_iface.lpVtbl = &persist_vtbl;
     track->desc.dwSize = sizeof(track->desc);
-    track->desc.dwValidData |= DMUS_OBJ_CLASS;
+    track->desc.dwValidData = DMUS_OBJ_CLASS;
     track->desc.guidClass = CLSID_DirectMusicScriptTrack;
     track->ref = 1;
 
