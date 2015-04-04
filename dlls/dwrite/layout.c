@@ -110,8 +110,17 @@ struct layout_range {
     WCHAR *fontfamily;
 };
 
-struct layout_run {
-    struct list entry;
+enum layout_run_kind {
+    LAYOUT_RUN_REGULAR,
+    LAYOUT_RUN_INLINE
+};
+
+struct inline_object_run {
+    IDWriteInlineObject *object;
+    UINT16 length;
+};
+
+struct regular_layout_run {
     DWRITE_GLYPH_RUN_DESCRIPTION descr;
     DWRITE_GLYPH_RUN run;
     DWRITE_SCRIPT_ANALYSIS sa;
@@ -119,6 +128,15 @@ struct layout_run {
     UINT16 *clustermap;
     FLOAT  *advances;
     DWRITE_GLYPH_OFFSET *offsets;
+};
+
+struct layout_run {
+    struct list entry;
+    enum layout_run_kind kind;
+    union {
+        struct inline_object_run object;
+        struct regular_layout_run regular;
+    } u;
 };
 
 enum layout_recompute_mask {
@@ -223,7 +241,7 @@ static inline struct dwrite_typography *impl_from_IDWriteTypography(IDWriteTypog
     return CONTAINING_RECORD(iface, struct dwrite_typography, IDWriteTypography_iface);
 }
 
-static inline const char *debugstr_run(const struct layout_run *run)
+static inline const char *debugstr_run(const struct regular_layout_run *run)
 {
     return wine_dbg_sprintf("[%u,%u]", run->descr.textPosition, run->descr.textPosition +
         run->descr.stringLength);
@@ -247,35 +265,19 @@ static HRESULT set_fontfallback_for_format(struct dwrite_textformat_data *format
     return S_OK;
 }
 
-static struct layout_run *alloc_layout_run(void)
+static struct layout_run *alloc_layout_run(enum layout_run_kind kind)
 {
     struct layout_run *ret;
 
     ret = heap_alloc(sizeof(*ret));
     if (!ret) return NULL;
 
-    ret->descr.localeName = NULL;
-    ret->descr.string = NULL;
-    ret->descr.stringLength = 0;
-    ret->descr.clusterMap = NULL;
-    ret->descr.textPosition = 0;
-
-    ret->run.fontFace = NULL;
-    ret->run.fontEmSize = 0.0;
-    ret->run.glyphCount = 0;
-    ret->run.glyphIndices = NULL;
-    ret->run.glyphAdvances = NULL;
-    ret->run.glyphOffsets = NULL;
-    ret->run.isSideways = FALSE;
-    ret->run.bidiLevel = 0;
-
-    ret->sa.script = Script_Unknown;
-    ret->sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
-
-    ret->glyphs = NULL;
-    ret->clustermap = NULL;
-    ret->advances = NULL;
-    ret->offsets = NULL;
+    memset(ret, 0, sizeof(*ret));
+    ret->kind = kind;
+    if (kind == LAYOUT_RUN_REGULAR) {
+        ret->u.regular.sa.script = Script_Unknown;
+        ret->u.regular.sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+    }
 
     return ret;
 }
@@ -285,12 +287,14 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
     struct layout_run *cur, *cur2;
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->runs, struct layout_run, entry) {
         list_remove(&cur->entry);
-        if (cur->run.fontFace)
-            IDWriteFontFace_Release(cur->run.fontFace);
-        heap_free(cur->glyphs);
-        heap_free(cur->clustermap);
-        heap_free(cur->advances);
-        heap_free(cur->offsets);
+        if (cur->kind == LAYOUT_RUN_REGULAR) {
+            if (cur->u.regular.run.fontFace)
+                IDWriteFontFace_Release(cur->u.regular.run.fontFace);
+            heap_free(cur->u.regular.glyphs);
+            heap_free(cur->u.regular.clustermap);
+            heap_free(cur->u.regular.advances);
+            heap_free(cur->u.regular.offsets);
+        }
         heap_free(cur);
     }
 }
@@ -369,7 +373,7 @@ static inline DWRITE_LINE_BREAKPOINT get_effective_breakpoint(const struct dwrit
     return layout->nominal_breakpoints[pos];
 }
 
-static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, const struct layout_run *run,
+static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, const struct regular_layout_run *run,
     UINT16 start_glyph, UINT16 stop_glyph, UINT32 stop_position, DWRITE_CLUSTER_METRICS *metrics)
 {
     UINT8 breakcondition;
@@ -402,7 +406,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
   codepoint initially.
 
 */
-static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct layout_run *run, UINT32 *cluster)
+static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct regular_layout_run *run, UINT32 *cluster)
 {
     DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[*cluster];
     UINT32 i, start = 0;
@@ -433,7 +437,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
     struct layout_range *range;
-    struct layout_run *run;
+    struct layout_run *r;
     UINT32 cluster = 0;
     HRESULT hr;
 
@@ -454,6 +458,14 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             hr = layout_update_breakpoints_range(layout, range);
             if (FAILED(hr))
                 return hr;
+
+            r = alloc_layout_run(LAYOUT_RUN_INLINE);
+            if (!r)
+                return E_OUTOFMEMORY;
+
+            r->u.object.object = range->object;
+            r->u.object.length = range->range.length;
+            list_add_tail(&layout->runs, &r->entry);
             continue;
         }
 
@@ -471,13 +483,42 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     }
 
     /* fill run info */
-    LIST_FOR_EACH_ENTRY(run, &layout->runs, struct layout_run, entry) {
+    LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry) {
         DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props = NULL;
         DWRITE_SHAPING_TEXT_PROPERTIES *text_props = NULL;
+        struct regular_layout_run *run = &r->u.regular;
         IDWriteFontFamily *family;
         UINT32 index, max_count;
         IDWriteFont *font;
         BOOL exists = TRUE;
+
+        /* we need to do very little in case of inline objects */
+        if (r->kind == LAYOUT_RUN_INLINE) {
+            DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[cluster];
+            DWRITE_INLINE_OBJECT_METRICS inlinemetrics;
+
+            metrics->width = 0.0;
+            metrics->length = r->u.object.length;
+            metrics->canWrapLineAfter = FALSE;
+            metrics->isWhitespace = FALSE;
+            metrics->isNewline = FALSE;
+            metrics->isSoftHyphen = FALSE;
+            metrics->isRightToLeft = FALSE;
+            metrics->padding = 0;
+            cluster++;
+
+            /* TODO: is it fatal if GetMetrics() fails? */
+            hr = IDWriteInlineObject_GetMetrics(r->u.object.object, &inlinemetrics);
+            if (FAILED(hr)) {
+                FIXME("failed to get inline object metrics, 0x%08x\n", hr);
+                continue;
+            }
+            metrics->width = inlinemetrics.width;
+
+            /* FIXME: use resolved breakpoints in this case too */
+
+            continue;
+        }
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
 
@@ -575,7 +616,6 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
 
-        /* now set cluster metrics */
         layout_set_cluster_metrics(layout, run, &cluster);
 
         continue;
@@ -636,8 +676,11 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         struct layout_run *cur;
 
         LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
-            TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->descr.textPosition, cur->descr.textPosition+cur->descr.stringLength-1,
-                cur->descr.stringLength, cur->run.bidiLevel);
+            if (cur->kind == LAYOUT_RUN_INLINE)
+                TRACE("run inline object %p, len %u\n", cur->u.object.object, cur->u.object.length);
+            else
+                TRACE("run [%u,%u], len %u, bidilevel %u\n", cur->u.regular.descr.textPosition, cur->u.regular.descr.textPosition +
+                    cur->u.regular.descr.stringLength-1, cur->u.regular.descr.stringLength, cur->u.regular.run.bidiLevel);
         }
     }
 
@@ -2394,15 +2437,15 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
 
     TRACE("%u %u script=%d\n", position, length, sa->script);
 
-    run = alloc_layout_run();
+    run = alloc_layout_run(LAYOUT_RUN_REGULAR);
     if (!run)
         return E_OUTOFMEMORY;
 
-    run->descr.string = &layout->str[position];
-    run->descr.stringLength = length;
-    run->descr.textPosition = position;
-    run->sa = *sa;
-    list_add_head(&layout->runs, &run->entry);
+    run->u.regular.descr.string = &layout->str[position];
+    run->u.regular.descr.stringLength = length;
+    run->u.regular.descr.textPosition = position;
+    run->u.regular.sa = *sa;
+    list_add_tail(&layout->runs, &run->entry);
     return S_OK;
 }
 
@@ -2422,10 +2465,14 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
     UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
-    struct layout_run *cur;
+    struct layout_run *cur_run;
 
-    LIST_FOR_EACH_ENTRY(cur, &layout->runs, struct layout_run, entry) {
+    LIST_FOR_EACH_ENTRY(cur_run, &layout->runs, struct layout_run, entry) {
+        struct regular_layout_run *cur = &cur_run->u.regular;
         struct layout_run *run, *run2;
+
+        if (cur_run->kind == LAYOUT_RUN_INLINE)
+            continue;
 
         /* FIXME: levels are reported in a natural forward direction, so start loop from a run we ended on */
         if (position < cur->descr.textPosition || position > cur->descr.textPosition + cur->descr.stringLength)
@@ -2446,32 +2493,32 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
         }
 
         /* now starting point is in a run, so it splits it */
-        run = alloc_layout_run();
+        run = alloc_layout_run(LAYOUT_RUN_REGULAR);
         if (!run)
             return E_OUTOFMEMORY;
 
-        *run = *cur;
-        run->descr.textPosition = position;
-        run->descr.stringLength = cur->descr.stringLength - position + cur->descr.textPosition;
-        run->descr.string = &layout->str[position];
-        run->run.bidiLevel = resolvedLevel;
+        *run = *cur_run;
+        run->u.regular.descr.textPosition = position;
+        run->u.regular.descr.stringLength = cur->descr.stringLength - position + cur->descr.textPosition;
+        run->u.regular.descr.string = &layout->str[position];
+        run->u.regular.run.bidiLevel = resolvedLevel;
         cur->descr.stringLength -= position - cur->descr.textPosition;
 
-        list_add_after(&cur->entry, &run->entry);
+        list_add_after(&cur_run->entry, &run->entry);
 
-        if (position + length == run->descr.textPosition + run->descr.stringLength)
+        if (position + length == run->u.regular.descr.textPosition + run->u.regular.descr.stringLength)
             break;
 
         /* split second time */
-        run2 = alloc_layout_run();
+        run2 = alloc_layout_run(LAYOUT_RUN_REGULAR);
         if (!run2)
             return E_OUTOFMEMORY;
 
-        *run2 = *cur;
-        run2->descr.textPosition = run->descr.textPosition + run->descr.stringLength;
-        run2->descr.stringLength = cur->descr.textPosition + cur->descr.stringLength - position - length;
-        run2->descr.string = &layout->str[run2->descr.textPosition];
-        run->descr.stringLength -= run2->descr.stringLength;
+        *run2 = *cur_run;
+        run2->u.regular.descr.textPosition = run->u.regular.descr.textPosition + run->u.regular.descr.stringLength;
+        run2->u.regular.descr.stringLength = cur->descr.textPosition + cur->descr.stringLength - position - length;
+        run2->u.regular.descr.string = &layout->str[run2->u.regular.descr.textPosition];
+        run->u.regular.descr.stringLength -= run2->u.regular.descr.stringLength;
 
         list_add_after(&run->entry, &run2->entry);
         break;
@@ -2782,7 +2829,8 @@ static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, 
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
     FIXME("(%p)->(%p): stub\n", This, metrics);
-    return E_NOTIMPL;
+    memset(metrics, 0, sizeof(*metrics));
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_GetOverhangMetrics(IDWriteInlineObject *iface, DWRITE_OVERHANG_METRICS *overhangs)

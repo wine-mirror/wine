@@ -1038,23 +1038,21 @@ static void test_GetClusterMetrics(void)
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 3, "got %u\n", count);
 
     count = 0;
     memset(&metrics, 0, sizeof(metrics));
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 1, &count);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-todo_wine {
     ok(count == 3, "got %u\n", count);
     ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
-}
+
     hr = IDWriteInlineObject_GetMetrics(trimm, &inline_metrics);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(inline_metrics.width == metrics[0].width, "got %.2f, expected %.2f\n", inline_metrics.width,
-        metrics[0].width);
-}
+todo_wine
+    ok(inline_metrics.width > 0.0 && inline_metrics.width == metrics[0].width, "got %.2f, expected %.2f\n",
+        inline_metrics.width, metrics[0].width);
+
     IDWriteInlineObject_Release(trimm);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
