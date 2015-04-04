@@ -147,6 +147,6 @@ HRESULT ACLShellSource_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->refCount = 1;
 
     TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
+    *ppOut = (IUnknown *)&This->IACList2_iface;
     return S_OK;
 }

@@ -325,7 +325,7 @@ HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->refCount = 1;
 
     TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
+    *ppOut = (IUnknown *)&This->IEnumString_iface;
     BROWSEUI_refCount++;
     return S_OK;
 }

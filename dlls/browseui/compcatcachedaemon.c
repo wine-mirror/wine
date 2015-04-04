@@ -158,7 +158,7 @@ HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CompCatCacheDaemon.cs");
 
     TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
+    *ppOut = (IUnknown *)&This->IRunnableTask_iface;
     InterlockedIncrement(&BROWSEUI_refCount);
     return S_OK;
 }
