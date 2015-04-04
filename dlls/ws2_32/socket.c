@@ -146,6 +146,7 @@
 #include "ws2tcpip.h"
 #include "ws2spi.h"
 #include "wsipx.h"
+#include "wsnwlink.h"
 #include "wshisotp.h"
 #include "mstcpip.h"
 #include "af_irda.h"
@@ -156,10 +157,6 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
-
-#ifdef HAS_IPX
-# include "wsnwlink.h"
-#endif
 
 #if defined(linux) && !defined(IP_UNICAST_IF)
 #define IP_UNICAST_IF 50
