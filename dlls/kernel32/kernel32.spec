@@ -677,7 +677,7 @@
 @ stdcall GetFileInformationByHandle(long ptr)
 @ stdcall GetFileInformationByHandleEx(long long ptr long)
 # @ stub GetFileMUIInfo
-# @ stub GetFileMUIPath
+@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
 @ stdcall GetFileSize(long ptr)
 @ stdcall GetFileSizeEx(long ptr)
 @ stdcall GetFileTime(long ptr ptr ptr)

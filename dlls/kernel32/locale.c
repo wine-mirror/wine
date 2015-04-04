@@ -5300,3 +5300,18 @@ BOOL WINAPI GetUserPreferredUILanguages(DWORD flags, PULONG numlangs, PZZWSTR la
     FIXME( "stub: %u %p %p %p\n", flags, numlangs, langbuffer, bufferlen );
     return FALSE;
 }
+
+/******************************************************************************
+ *           GetFileMUIPath (KERNEL32.@)
+ */
+
+BOOL WINAPI GetFileMUIPath(DWORD flags, PCWSTR filepath, PWSTR language, PULONG languagelen,
+                           PWSTR muipath, PULONG muipathlen, PULONGLONG enumerator)
+{
+    FIXME("stub: 0x%x, %s, %s, %p, %p, %p, %p\n", flags, debugstr_w(filepath),
+           debugstr_w(language), languagelen, muipath, muipathlen, enumerator);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+
+    return FALSE;
+}
