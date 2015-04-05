@@ -3511,11 +3511,48 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
     return 0;
 }
 
+static float color_to_float(DWORD color, DWORD size, DWORD offset)
+{
+    DWORD mask = (1 << size) - 1;
+
+    if (!size)
+        return 1.0f;
+
+    color >>= offset;
+    color &= mask;
+
+    return (float)color / (float)mask;
+}
+
 BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
         const struct wined3d_palette *palette, DWORD color, struct wined3d_color *float_color)
 {
     switch (format->id)
     {
+        case WINED3DFMT_B8G8R8_UNORM:
+        case WINED3DFMT_B8G8R8A8_UNORM:
+        case WINED3DFMT_B8G8R8X8_UNORM:
+        case WINED3DFMT_B5G6R5_UNORM:
+        case WINED3DFMT_B5G5R5X1_UNORM:
+        case WINED3DFMT_B5G5R5A1_UNORM:
+        case WINED3DFMT_B4G4R4A4_UNORM:
+        case WINED3DFMT_B2G3R3_UNORM:
+        case WINED3DFMT_R8_UNORM:
+        case WINED3DFMT_A8_UNORM:
+        case WINED3DFMT_B2G3R3A8_UNORM:
+        case WINED3DFMT_B4G4R4X4_UNORM:
+        case WINED3DFMT_R10G10B10A2_UNORM:
+        case WINED3DFMT_R10G10B10A2_SNORM:
+        case WINED3DFMT_R8G8B8A8_UNORM:
+        case WINED3DFMT_R8G8B8X8_UNORM:
+        case WINED3DFMT_R16G16_UNORM:
+        case WINED3DFMT_B10G10R10A2_UNORM:
+            float_color->r = color_to_float(color, format->red_size, format->red_offset);
+            float_color->g = color_to_float(color, format->green_size, format->green_size);
+            float_color->b = color_to_float(color, format->blue_size, format->blue_offset);
+            float_color->a = color_to_float(color, format->alpha_size, format->alpha_offset);
+            return TRUE;
+
         case WINED3DFMT_P8_UINT:
             if (palette)
             {
@@ -3530,36 +3567,12 @@ BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
                 float_color->b = 0.0f;
             }
             float_color->a = color / 255.0f;
-            break;
-
-        case WINED3DFMT_B5G6R5_UNORM:
-            float_color->r = ((color >> 11) & 0x1f) / 31.0f;
-            float_color->g = ((color >> 5) & 0x3f) / 63.0f;
-            float_color->b = (color & 0x1f) / 31.0f;
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = D3DCOLOR_A(color);
-            break;
+            return TRUE;
 
         default:
             ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
             return FALSE;
     }
-
-    return TRUE;
 }
 
 /* DirectDraw stuff */
