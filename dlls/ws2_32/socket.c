@@ -4625,7 +4625,7 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
             }
             else
             {
-                release_sock_fd( readfds->fd_array[i], fds[j].fd );
+                release_sock_fd( writefds->fd_array[i], fds[j].fd );
                 fds[j].fd = -1;
                 fds[j].events = 0;
             }
@@ -4650,7 +4650,7 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
             }
             else
             {
-                release_sock_fd( readfds->fd_array[i], fds[j].fd );
+                release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
                 fds[j].fd = -1;
                 fds[j].events = 0;
             }
