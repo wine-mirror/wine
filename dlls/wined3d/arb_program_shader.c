@@ -7558,6 +7558,54 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
 }
 
 /* Context activation is done by the caller. */
+static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
+        const struct wined3d_gl_info *gl_info, const struct arbfp_blit_type *type)
+{
+    GLenum shader;
+    struct wined3d_shader_buffer buffer;
+    GLint pos;
+
+    /* Shader header */
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
+
+    GL_EXTCALL(glGenProgramsARB(1, &shader));
+    if (!shader)
+    {
+        shader_buffer_free(&buffer);
+        return 0;
+    }
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
+
+    shader_addline(&buffer, "!!ARBfp1.0\n");
+    if (type->res_type == WINED3D_GL_RES_TYPE_TEX_RECT)
+        shader_addline(&buffer, "TEX result.color, fragment.texcoord[0], texture[0], RECT;\n");
+    else
+        shader_addline(&buffer, "TEX result.color, fragment.texcoord[0], texture[0], 2D;\n");
+
+    shader_addline(&buffer, "END\n");
+
+    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+            strlen(buffer.buffer), buffer.buffer));
+    checkGLcall("glProgramStringARB()");
+
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
+    if (pos != -1)
+    {
+        FIXME("Fragment program error at position %d: %s\n\n", pos,
+              debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
+        shader_arb_dump_program_source(buffer.buffer);
+    }
+
+    shader_buffer_free(&buffer);
+
+    return shader;
+}
+
+/* Context activation is done by the caller. */
 static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     GLenum shader;
@@ -7577,17 +7625,10 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         return WINED3D_OK;
     }
 
-    if (!is_complex_fixup(surface->resource.format->color_fixup))
-    {
-        TRACE("Fixup:\n");
-        dump_color_fixup_desc(surface->resource.format->color_fixup);
-        /* Don't bother setting up a shader for unconverted formats */
-        gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
-        checkGLcall("glEnable(gl_texture_type)");
-        return WINED3D_OK;
-    }
-
-    fixup = get_complex_fixup(surface->resource.format->color_fixup);
+    if (is_complex_fixup(surface->resource.format->color_fixup))
+        fixup = get_complex_fixup(surface->resource.format->color_fixup);
+    else
+        fixup = COMPLEX_FIXUP_NONE;
 
     switch (gl_texture_type)
     {
@@ -7628,11 +7669,20 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     {
         switch (fixup)
         {
+            case COMPLEX_FIXUP_NONE:
+                if (!is_identity_fixup(surface->resource.format->color_fixup))
+                    FIXME("Implement support for sign or swizzle fixups.\n");
+                shader = arbfp_gen_plain_shader(priv, gl_info, &type);
+                break;
+
             case COMPLEX_FIXUP_P8:
                 shader = gen_p8_shader(priv, gl_info, &type);
                 break;
 
-            default:
+            case COMPLEX_FIXUP_YUY2:
+            case COMPLEX_FIXUP_UYVY:
+            case COMPLEX_FIXUP_YV12:
+            case COMPLEX_FIXUP_NV12:
                 shader = gen_yuv_shader(priv, gl_info, &type);
                 break;
         }
