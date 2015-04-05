@@ -6199,6 +6199,25 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
         shader_addline(buffer, "MUL_SAT %s%s, %s, const.z;\n", dstreg, dstmask, dstreg);
 }
 
+static const char *arbfp_texture_target(enum wined3d_gl_resource_type type)
+{
+    switch(type)
+    {
+        case WINED3D_GL_RES_TYPE_TEX_1D:
+            return "1D";
+        case WINED3D_GL_RES_TYPE_TEX_2D:
+            return "2D";
+        case WINED3D_GL_RES_TYPE_TEX_3D:
+            return "3D";
+        case WINED3D_GL_RES_TYPE_TEX_CUBE:
+            return "CUBE";
+        case WINED3D_GL_RES_TYPE_TEX_RECT:
+            return "RECT";
+        default:
+            return "unexpected_resource_type";
+    }
+}
+
 static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
 {
     unsigned int stage;
@@ -6345,27 +6364,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         if (!tex_read[stage])
             continue;
 
-        switch(settings->op[stage].tex_type)
-        {
-            case WINED3D_GL_RES_TYPE_TEX_1D:
-                textype = "1D";
-                break;
-            case WINED3D_GL_RES_TYPE_TEX_2D:
-                textype = "2D";
-                break;
-            case WINED3D_GL_RES_TYPE_TEX_3D:
-                textype = "3D";
-                break;
-            case WINED3D_GL_RES_TYPE_TEX_CUBE:
-                textype = "CUBE";
-                break;
-            case WINED3D_GL_RES_TYPE_TEX_RECT:
-                textype = "RECT";
-                break;
-            default:
-                textype = "unexpected_textype";
-                break;
-        }
+        textype = arbfp_texture_target(settings->op[stage].tex_type);
 
         if(settings->op[stage].projected == proj_none) {
             instr = "TEX";
@@ -6910,7 +6909,7 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, const stru
         char *luminance)
 {
     char chroma;
-    const char *tex, *texinstr;
+    const char *tex, *texinstr = "TXP";
 
     if (type->fixup == COMPLEX_FIXUP_UYVY)
     {
@@ -6923,25 +6922,9 @@ static BOOL gen_planar_yuv_read(struct wined3d_shader_buffer *buffer, const stru
         *luminance = 'x';
     }
 
-    switch (type->res_type)
-    {
-        case WINED3D_GL_RES_TYPE_TEX_2D:
-            tex = "2D";
-            texinstr = "TXP";
-            break;
-
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
-            tex = "RECT";
-            texinstr = "TEX";
-            break;
-
-        default:
-            /* This is more tricky than just replacing the texture type - we have to navigate
-             * properly in the texture to find the correct chroma values
-             */
-            FIXME("Implement yuv correction for non-2d, non-rect textures\n");
-            return FALSE;
-    }
+    tex = arbfp_texture_target(type->res_type);
+    if (type->res_type == WINED3D_GL_RES_TYPE_TEX_RECT)
+        texinstr = "TEX";
 
     /* First we have to read the chroma values. This means we need at least two pixels(no filtering),
      * or 4 pixels(with filtering). To get the unmodified chromas, we have to rid ourselves of the
@@ -7017,20 +7000,7 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, const struct arb
     static const float yv12_coef[]
             = {2.0f / 3.0f, 1.0f / 6.0f, (2.0f / 3.0f) + (1.0f / 6.0f), 1.0f / 3.0f};
 
-    switch (type->res_type)
-    {
-        case WINED3D_GL_RES_TYPE_TEX_2D:
-            tex = "2D";
-            break;
-
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
-            tex = "RECT";
-            break;
-
-        default:
-            FIXME("Implement yv12 correction for non-2d, non-rect textures\n");
-            return FALSE;
-    }
+    tex = arbfp_texture_target(type->res_type);
 
     /* YV12 surfaces contain a WxH sized luminance plane, followed by a (W/2)x(H/2)
      * V and a (W/2)x(H/2) U plane, each with 8 bit per pixel. So the effective
@@ -7179,18 +7149,7 @@ static BOOL gen_nv12_read(struct wined3d_shader_buffer *buffer, const struct arb
     static const float nv12_coef[]
             = {2.0f / 3.0f, 1.0f / 3.0f, 1.0f, 1.0f};
 
-    switch (type->res_type)
-    {
-        case WINED3D_GL_RES_TYPE_TEX_2D:
-            tex = "2D";
-            break;
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
-            tex = "RECT";
-            break;
-        default:
-            FIXME("Implement nv12 correction for non-2d, non-rect textures\n");
-            return FALSE;
-    }
+    tex = arbfp_texture_target(type->res_type);
 
     /* NV12 surfaces contain a WxH sized luminance plane, followed by a (W/2)x(H/2)
      * sized plane where each component is an UV pair. So the effective
@@ -7326,6 +7285,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
     GLenum shader;
     struct wined3d_shader_buffer buffer;
     GLint pos;
+    const char *tex_target = arbfp_texture_target(type->res_type);
 
     /* Shader header */
     if (!shader_buffer_init(&buffer))
@@ -7349,10 +7309,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
     shader_addline(&buffer, "PARAM constants = { 0.996, 0.00195, 0, 0 };\n");
 
     /* The alpha-component contains the palette index */
-    if (type->res_type == WINED3D_GL_RES_TYPE_TEX_RECT)
-        shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], RECT;\n");
-    else
-        shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], 2D;\n");
+    shader_addline(&buffer, "TEX index, fragment.texcoord[0], texture[0], %s;\n", tex_target);
 
     /* Scale the index by 255/256 and add a bias of '0.5' in order to sample in the middle */
     shader_addline(&buffer, "MAD index.a, index.a, constants.x, constants.y;\n");
@@ -7564,6 +7521,7 @@ static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
     GLenum shader;
     struct wined3d_shader_buffer buffer;
     GLint pos;
+    const char *tex_target = arbfp_texture_target(type->res_type);
 
     /* Shader header */
     if (!shader_buffer_init(&buffer))
@@ -7581,11 +7539,7 @@ static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
 
     shader_addline(&buffer, "!!ARBfp1.0\n");
-    if (type->res_type == WINED3D_GL_RES_TYPE_TEX_RECT)
-        shader_addline(&buffer, "TEX result.color, fragment.texcoord[0], texture[0], RECT;\n");
-    else
-        shader_addline(&buffer, "TEX result.color, fragment.texcoord[0], texture[0], 2D;\n");
-
+    shader_addline(&buffer, "TEX result.color, fragment.texcoord[0], texture[0], %s;\n", tex_target);
     shader_addline(&buffer, "END\n");
 
     GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
