@@ -1013,62 +1013,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
-        DWORD color, struct wined3d_color *float_color)
-{
-    const struct wined3d_format *format = surface->resource.format;
-    const struct wined3d_palette *palette;
-
-    switch (format->id)
-    {
-        case WINED3DFMT_P8_UINT:
-            palette = surface->container->swapchain ? surface->container->swapchain->palette : NULL;
-
-            if (palette)
-            {
-                float_color->r = palette->colors[color].rgbRed / 255.0f;
-                float_color->g = palette->colors[color].rgbGreen / 255.0f;
-                float_color->b = palette->colors[color].rgbBlue / 255.0f;
-            }
-            else
-            {
-                float_color->r = 0.0f;
-                float_color->g = 0.0f;
-                float_color->b = 0.0f;
-            }
-            float_color->a = color / 255.0f;
-            break;
-
-        case WINED3DFMT_B5G6R5_UNORM:
-            float_color->r = ((color >> 11) & 0x1f) / 31.0f;
-            float_color->g = ((color >> 5) & 0x3f) / 63.0f;
-            float_color->b = (color & 0x1f) / 31.0f;
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = 1.0f;
-            break;
-
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            float_color->r = D3DCOLOR_R(color);
-            float_color->g = D3DCOLOR_G(color);
-            float_color->b = D3DCOLOR_B(color);
-            float_color->a = D3DCOLOR_A(color);
-            break;
-
-        default:
-            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
 static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface, DWORD depth, float *float_depth)
 {
     const struct wined3d_format *format = surface->resource.format;
@@ -5333,10 +5277,12 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         if (flags & WINEDDBLT_COLORFILL)
         {
             struct wined3d_color color;
+            const struct wined3d_palette *palette = dst_swapchain ? dst_swapchain->palette : NULL;
 
             TRACE("Color fill.\n");
 
-            if (!surface_convert_color_to_float(dst_surface, fx->u5.dwFillColor, &color))
+            if (!wined3d_format_convert_color_to_float(dst_surface->resource.format,
+                    palette, fx->u5.dwFillColor, &color))
                 goto fallback;
 
             if (SUCCEEDED(surface_color_fill(dst_surface, &dst_rect, &color)))
