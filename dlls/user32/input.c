@@ -1022,6 +1022,7 @@ INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 		       LPWSTR lpwStr, int size, UINT flags, HKL hkl)
 {
+    if (!lpKeyState) return 0;
     return USER_Driver->pToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, hkl);
 }
 
