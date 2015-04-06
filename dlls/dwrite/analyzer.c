@@ -776,7 +776,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAn
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
     FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeLineBreakpoints(IDWriteTextAnalyzer2 *iface,
