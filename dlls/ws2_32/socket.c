@@ -5367,10 +5367,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 int WINAPI WS_shutdown(SOCKET s, int how)
 {
     int fd, err = WSAENOTSOCK;
-    unsigned int options, clear_flags = 0;
+    unsigned int options = 0, clear_flags = 0;
 
     fd = get_sock_fd( s, 0, &options );
-    TRACE("socket %04lx, how %i %x\n", s, how, options );
+    TRACE("socket %04lx, how 0x%x, options 0x%x\n", s, how, options );
 
     if (fd == -1)
         return SOCKET_ERROR;
