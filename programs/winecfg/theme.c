@@ -635,7 +635,7 @@ static void on_theme_install(HWND dialog)
       title, sizeof (title) / sizeof (title[0]));
 
   ofn.lStructSize = sizeof(OPENFILENAMEW);
-  ofn.hwndOwner = 0;
+  ofn.hwndOwner = dialog;
   ofn.hInstance = 0;
   ofn.lpstrFilter = filter;
   ofn.lpstrCustomFilter = NULL;

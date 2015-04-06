@@ -326,7 +326,7 @@ static void on_add_app_click(HWND dialog)
   static const WCHAR pathC[] = { 'c',':','\\',0 };
 
   OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
-		       0, /*hInst*/0, 0, NULL, 0, 0, NULL,
+		       dialog, /*hInst*/0, 0, NULL, 0, 0, NULL,
 		       0, NULL, 0, pathC, 0,
 		       OFN_SHOWHELP | OFN_HIDEREADONLY | OFN_ENABLESIZING,
                        0, 0, NULL, 0, NULL };
