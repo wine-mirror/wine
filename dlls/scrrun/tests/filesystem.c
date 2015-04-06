@@ -1907,6 +1907,54 @@ static void test_GetExtensionName(void)
     }
 }
 
+static void test_GetSpecialFolder(void)
+{
+    WCHAR pathW[MAX_PATH];
+    IFolder *folder;
+    HRESULT hr;
+    DWORD ret;
+    BSTR path;
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, WindowsFolder, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder+1, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder+1, &folder);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, WindowsFolder, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IFolder_get_Path(folder, &path);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+    ok(!lstrcmpiW(pathW, path), "got %s, expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(pathW));
+    SysFreeString(path);
+    IFolder_Release(folder);
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, SystemFolder, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IFolder_get_Path(folder, &path);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    GetSystemDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+    ok(!lstrcmpiW(pathW, path), "got %s, expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(pathW));
+    SysFreeString(path);
+    IFolder_Release(folder);
+
+    hr = IFileSystem3_GetSpecialFolder(fs3, TemporaryFolder, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IFolder_get_Path(folder, &path);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    if (ret && pathW[ret-1] == '\\')
+        pathW[ret-1] = 0;
+
+    ok(!lstrcmpiW(pathW, path), "got %s, expected %s\n", wine_dbgstr_w(path), wine_dbgstr_w(pathW));
+    SysFreeString(path);
+    IFolder_Release(folder);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1942,6 +1990,7 @@ START_TEST(filesystem)
     test_GetDriveName();
     test_SerialNumber();
     test_GetExtensionName();
+    test_GetSpecialFolder();
 
     IFileSystem3_Release(fs3);
 

@@ -3285,11 +3285,41 @@ static HRESULT WINAPI filesys_GetFolder(IFileSystem3 *iface, BSTR FolderPath,
 
 static HRESULT WINAPI filesys_GetSpecialFolder(IFileSystem3 *iface,
                                             SpecialFolderConst SpecialFolder,
-                                            IFolder **ppfolder)
+                                            IFolder **folder)
 {
-    FIXME("%p %d %p\n", iface, SpecialFolder, ppfolder);
+    WCHAR pathW[MAX_PATH];
+    DWORD ret;
 
-    return E_NOTIMPL;
+    TRACE("%p %d %p\n", iface, SpecialFolder, folder);
+
+    if (!folder)
+        return E_POINTER;
+
+    *folder = NULL;
+
+    switch (SpecialFolder)
+    {
+    case WindowsFolder:
+        ret = GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+        break;
+    case SystemFolder:
+        ret = GetSystemDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+        break;
+    case TemporaryFolder:
+        ret = GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+        /* we don't want trailing backslash */
+        if (ret && pathW[ret-1] == '\\')
+            pathW[ret-1] = 0;
+        break;
+    default:
+        FIXME("unknown special folder type, %d\n", SpecialFolder);
+        return E_INVALIDARG;
+    }
+
+    if (!ret)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return create_folder(pathW, folder);
 }
 
 static inline HRESULT delete_file(const WCHAR *file, DWORD file_len, VARIANT_BOOL force)
