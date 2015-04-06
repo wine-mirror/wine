@@ -1542,7 +1542,7 @@ static void test_ToUnicode(void)
 {
     WCHAR wStr[4];
     BYTE state[256];
-    const BYTE SC_RETURN = 0x1c, SC_TAB = 0x0f;
+    const BYTE SC_RETURN = 0x1c, SC_TAB = 0x0f, SC_A = 0x1e;
     const BYTE HIGHEST_BIT = 0x80;
     int i, ret;
     for(i=0; i<256; i++)
@@ -1564,9 +1564,13 @@ static void test_ToUnicode(void)
         ok(wStr[1]==0 || broken(wStr[1]!=0) /* nt4 */,
            "ToUnicode didn't null-terminate the buffer when there was room.\n");
     }
+
+    ret = ToUnicode('A', SC_A, state, wStr, 4, 0);
+    ok(ret == 1, "ToUnicode for character A didn't return 1 (was %i)\n", ret);
+    ok(wStr[0] == 'a', "ToUnicode for character 'A' was %i (expected %i)\n", wStr[0], 'a');
+
     state[VK_CONTROL] |= HIGHEST_BIT;
     state[VK_LCONTROL] |= HIGHEST_BIT;
-
     ret = ToUnicode(VK_TAB, SC_TAB, state, wStr, 2, 0);
     ok(ret == 0, "ToUnicode for CTRL + Tab didn't return 0 (was %i)\n", ret);
 
@@ -1575,12 +1579,29 @@ static void test_ToUnicode(void)
     if(ret == 1)
         ok(wStr[0]=='\n', "ToUnicode for CTRL + Return was %i (expected 10)\n", wStr[0]);
 
+    ret = ToUnicode('A', SC_A, state, wStr, 4, 0);
+    ok(ret == 1, "ToUnicode for CTRL + character A didn't return 1 (was %i)\n", ret);
+    ok(wStr[0] == 1, "ToUnicode for CTRL + character 'A' was %i (expected 1)\n", wStr[0]);
+
     state[VK_SHIFT] |= HIGHEST_BIT;
     state[VK_LSHIFT] |= HIGHEST_BIT;
     ret = ToUnicode(VK_TAB, SC_TAB, state, wStr, 2, 0);
     ok(ret == 0, "ToUnicode for CTRL + SHIFT + Tab didn't return 0 (was %i)\n", ret);
     ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
     todo_wine ok(ret == 0, "ToUnicode for CTRL + SHIFT + Return didn't return 0 (was %i)\n", ret);
+
+    ret = ToUnicode(VK_TAB, SC_TAB, NULL, wStr, 4, 0);
+    ok(ret == 0, "ToUnicode with NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToUnicode(VK_RETURN, SC_RETURN, NULL, wStr, 4, 0);
+    ok(ret == 0, "ToUnicode with NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToUnicode('A', SC_A, NULL, wStr, 4, 0);
+    ok(ret == 0, "ToUnicode with NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToUnicodeEx(VK_TAB, SC_TAB, NULL, wStr, 4, 0, GetKeyboardLayout(0));
+    ok(ret == 0, "ToUnicodeEx with NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToUnicodeEx(VK_RETURN, SC_RETURN, NULL, wStr, 4, 0, GetKeyboardLayout(0));
+    ok(ret == 0, "ToUnicodeEx with NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToUnicodeEx('A', SC_A, NULL, wStr, 4, 0, GetKeyboardLayout(0));
+    ok(ret == 0, "ToUnicodeEx with NULL keystate didn't return 0 (was %i)\n", ret);
 }
 
 static void test_get_async_key_state(void)
