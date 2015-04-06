@@ -3470,12 +3470,14 @@ WINGDIAPI BOOL        WINAPI GdiAlphaBlend(HDC,int,int,int,int,HDC,int,int,int,i
 WINGDIAPI BOOL        WINAPI GdiComment(HDC,UINT,const BYTE *);
 WINGDIAPI DEVMODEW *  WINAPI GdiConvertToDevmodeW(const DEVMODEA *);
 WINGDIAPI BOOL        WINAPI GdiFlush(void);
+WINGDIAPI DWORD       WINAPI GdiGetBatchLimit(void);
 WINGDIAPI LONG        WINAPI GdiGetCharDimensions(HDC, LPTEXTMETRICW, LONG *);
 WINGDIAPI DWORD       WINAPI GdiGetCodePage(HDC);
 WINGDIAPI BOOL        WINAPI GdiGradientFill(HDC,PTRIVERTEX,ULONG,PVOID,ULONG,ULONG);
 WINGDIAPI BOOL        WINAPI GdiIsMetaFileDC(HDC);
 WINGDIAPI BOOL        WINAPI GdiIsMetaPrintDC(HDC);
 WINGDIAPI BOOL        WINAPI GdiIsPlayMetafileDC(HDC);
+WINGDIAPI DWORD       WINAPI GdiSetBatchLimit(DWORD);
 WINGDIAPI BOOL        WINAPI GdiTransparentBlt(HDC,int,int,int,int,HDC,int,int,int,int,UINT);
 WINGDIAPI INT         WINAPI GetArcDirection(HDC);
 WINGDIAPI BOOL        WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);
