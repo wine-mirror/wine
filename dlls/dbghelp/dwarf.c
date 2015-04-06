@@ -3271,6 +3271,10 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk* csw, ULONG_PTR ip, CONTEXT* co
     if (end) fde_ctx.data = end;
 
     execute_cfa_instructions(&fde_ctx, ip, &info);
+
+    /* if there is no information about retaddr, use default unwinder */
+    if (info.state.rules[info.retaddr_reg] == RULE_UNSET) return FALSE;
+
     apply_frame_state(pair.effective, csw, context, &info.state, cfa);
 
     return TRUE;
