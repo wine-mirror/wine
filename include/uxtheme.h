@@ -97,7 +97,8 @@ HRESULT WINAPI GetThemeFilename(HTHEME,int,int,int,LPWSTR,int);
 HRESULT WINAPI GetThemeFont(HTHEME,HDC,int,int,int,LOGFONTW*);
 HRESULT WINAPI GetThemeInt(HTHEME,int,int,int,int*);
 
-#define MAX_INTLIST_COUNT 10
+/* MAX_INTLIST_COUNT was 10 before Vista */
+#define MAX_INTLIST_COUNT 402
 typedef struct _INTLIST {
     int iValueCount;
     int iValues[MAX_INTLIST_COUNT];
