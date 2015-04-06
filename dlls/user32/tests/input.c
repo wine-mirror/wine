@@ -1604,6 +1604,53 @@ static void test_ToUnicode(void)
     ok(ret == 0, "ToUnicodeEx with NULL keystate didn't return 0 (was %i)\n", ret);
 }
 
+static void test_ToAscii(void)
+{
+    WORD character;
+    BYTE state[256];
+    const BYTE SC_RETURN = 0x1c, SC_A = 0x1e;
+    const BYTE HIGHEST_BIT = 0x80;
+    int ret;
+
+    memset(state, 0, sizeof(state));
+
+    character = 0;
+    ret = ToAscii(VK_RETURN, SC_RETURN, state, &character, 0);
+    ok(ret == 1, "ToAscii for Return key didn't return 1 (was %i)\n", ret);
+    ok(character == '\r', "ToAscii for Return was %i (expected 13)\n", character);
+
+    character = 0;
+    ret = ToAscii('A', SC_A, state, &character, 0);
+    ok(ret == 1, "ToAscii for character 'A' didn't return 1 (was %i)\n", ret);
+    ok(character == 'a', "ToAscii for character 'A' was %i (expected %i)\n", character, 'a');
+
+    state[VK_CONTROL] |= HIGHEST_BIT;
+    state[VK_LCONTROL] |= HIGHEST_BIT;
+    character = 0;
+    ret = ToAscii(VK_RETURN, SC_RETURN, state, &character, 0);
+    ok(ret == 1, "ToAscii for CTRL + Return key didn't return 1 (was %i)\n", ret);
+    ok(character == '\n', "ToAscii for CTRL + Return was %i (expected 10)\n", character);
+
+    character = 0;
+    ret = ToAscii('A', SC_A, state, &character, 0);
+    ok(ret == 1, "ToAscii for CTRL + character 'A' didn't return 1 (was %i)\n", ret);
+    ok(character == 1, "ToAscii for CTRL + character 'A' was %i (expected 1)\n", character);
+
+    state[VK_SHIFT] |= HIGHEST_BIT;
+    state[VK_LSHIFT] |= HIGHEST_BIT;
+    ret = ToAscii(VK_RETURN, SC_RETURN, state, &character, 0);
+    todo_wine ok(ret == 0, "ToAscii for CTRL + Shift + Return key didn't return 0 (was %i)\n", ret);
+
+    ret = ToAscii(VK_RETURN, SC_RETURN, NULL, &character, 0);
+    ok(ret == 0, "ToAscii for NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToAscii('A', SC_A, NULL, &character, 0);
+    ok(ret == 0, "ToAscii for NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToAsciiEx(VK_RETURN, SC_RETURN, NULL, &character, 0, GetKeyboardLayout(0));
+    ok(ret == 0, "ToAsciiEx for NULL keystate didn't return 0 (was %i)\n", ret);
+    ret = ToAsciiEx('A', SC_A, NULL, &character, 0, GetKeyboardLayout(0));
+    ok(ret == 0, "ToAsciiEx for NULL keystate didn't return 0 (was %i)\n", ret);
+}
+
 static void test_get_async_key_state(void)
 {
     /* input value sanity checks */
@@ -1995,6 +2042,7 @@ START_TEST(input)
     test_mouse_ll_hook();
     test_key_map();
     test_ToUnicode();
+    test_ToAscii();
     test_get_async_key_state();
     test_keyboard_layout_name();
     test_key_names();
