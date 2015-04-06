@@ -1412,6 +1412,12 @@ static void oss_write_data(ACImpl *This)
     }else
         in_oss_frames = (This->oss_bufsize_bytes - bi.bytes) / This->fmt->nBlockAlign;
 
+    if(in_oss_frames > This->in_oss_frames){
+        TRACE("Capping reported frames from %u to %u\n",
+                in_oss_frames, This->in_oss_frames);
+        in_oss_frames = This->in_oss_frames;
+    }
+
     write_limit = 0;
     while(write_limit + in_oss_frames < max_period * 3)
         write_limit += max_period;
