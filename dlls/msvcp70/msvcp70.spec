@@ -1503,7 +1503,7 @@
 @ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_time_put_short_vtable
 @ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_time_put_wchar_vtable
 # extern ??_7__non_rtti_object@std@@6B@
-# extern ??_7bad_cast@std@@6B@
+@ extern ??_7bad_cast@std@@6B@ MSVCP_bad_cast_vtable
 # extern ??_7bad_typeid@std@@6B@
 @ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
 @ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
@@ -1775,8 +1775,8 @@
 @ stub ?_Cosh@?$_Ctraits@O@std@@SAOOO@Z
 @ thiscall -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ(ptr) locale_facet__Decref
-@ stub -arch=win32 ?_Doraise@bad_cast@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@bad_cast@std@@MEBAXXZ
+@ thiscall -arch=win32 ?_Doraise@bad_cast@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@bad_cast@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@bad_typeid@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@bad_typeid@std@@MEBAXXZ
 @ thiscall -arch=win32 ?_Endwrite@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAE_NXZ(ptr) basic_filebuf_char__Endwrite
@@ -1947,8 +1947,8 @@
 @ cdecl -arch=win64 ?_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ(ptr ptr) _Locinfo__Gettnames
 @ thiscall -arch=i386 ?_Gettrue@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Gettrue
 @ cdecl -arch=win64 ?_Gettrue@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Gettrue
-# extern -arch=win32 ?_Global@_Locimp@locale@std@@0PAV123@A
-# extern -arch=win64 ?_Global@_Locimp@locale@std@@0PEAV123@EA
+@ extern -arch=win32 ?_Global@_Locimp@locale@std@@0PAV123@A global_locale
+@ extern -arch=win64 ?_Global@_Locimp@locale@std@@0PEAV123@EA global_locale
 @ thiscall -arch=i386 ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ(ptr) basic_streambuf_char__Gndec
 @ cdecl -arch=win64 ?_Gndec@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAPEADXZ(ptr) basic_streambuf_char__Gndec
 @ thiscall -arch=i386 ?_Gndec@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEPAGXZ(ptr) basic_streambuf_wchar__Gndec
@@ -2081,10 +2081,10 @@
 @ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
 @ extern ?_Init_cnt@_Winit@std@@0HA _Winit__Init_cnt
-@ stub -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXXZ
-@ stub -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXXZ
-@ stub -arch=win32 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXXZ
-@ stub -arch=win64 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXXZ
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXXZ(ptr) basic_filebuf_char__Initcvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXXZ(ptr) basic_filebuf_char__Initcvt
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXXZ(ptr) basic_filebuf_wchar__Initcvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXXZ(ptr) basic_filebuf_wchar__Initcvt
 @ stub -arch=win32 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXXZ
 @ stub -arch=win32 ?_Inside@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAE_NPBD@Z
 @ stub -arch=win32 ?_Inside@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAE_NPBG@Z

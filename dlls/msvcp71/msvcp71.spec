@@ -2273,12 +2273,12 @@
 @ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
 @ extern ?_Init_cnt@_Winit@std@@0HA _Winit__Init_cnt
-@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt
-@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt
-@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAV?$codecvt@GDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt
-@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAV?$codecvt@GDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt
-@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$codecvt@_WDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt
-@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$codecvt@_WDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt_cvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$codecvt@DDH@2@@Z(ptr ptr) basic_filebuf_char__Initcvt_cvt
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IAEXPAV?$codecvt@GDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt_cvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@GU?$char_traits@G@std@@@std@@IEAAXPEAV?$codecvt@GDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt_cvt
+@ thiscall -arch=win32 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IAEXPAV?$codecvt@_WDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt_cvt
+@ cdecl -arch=win64 ?_Initcvt@?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEAV?$codecvt@_WDH@2@@Z(ptr ptr) basic_filebuf_wchar__Initcvt_cvt
 @ thiscall -arch=win32 ?_Inside@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAE_NPBD@Z(ptr str) basic_string_char_inside
 @ cdecl -arch=win64 ?_Inside@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAA_NPEBD@Z(ptr str) basic_string_char_inside
 @ thiscall -arch=win32 ?_Inside@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAE_NPBG@Z(ptr ptr) basic_string_wchar_inside

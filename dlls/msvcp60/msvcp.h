@@ -20,6 +20,8 @@
 #include "windef.h"
 #include "cxx.h"
 
+#define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
+
 typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
 typedef SSIZE_T streamoff;
@@ -110,6 +112,7 @@ typedef struct {
 } codecvt_char;
 
 MSVCP_bool __thiscall codecvt_base_always_noconv(const codecvt_base*);
+int __thiscall codecvt_char_unshift(const codecvt_char*, int*, char*, char*, char**);
 int __thiscall codecvt_char_out(const codecvt_char*, int*, const char*,
         const char*, const char**, char*, char*, char**);
 int __thiscall codecvt_char_in(const codecvt_char*, int*, const char*,
@@ -127,6 +130,7 @@ typedef struct {
     _Cvtvec cvt;
 } codecvt_wchar;
 
+int __thiscall codecvt_wchar_unshift(const codecvt_wchar*, int*, char*, char*, char**);
 int __thiscall codecvt_wchar_out(const codecvt_wchar*, int*, const wchar_t*,
         const wchar_t*, const wchar_t**, char*, char*, char**);
 int __thiscall codecvt_wchar_in(const codecvt_wchar*, int*, const char*,
@@ -172,6 +176,7 @@ void __thiscall locale_dtor(locale*);
 void free_locale(void);
 locale* __thiscall locale__Addfac(locale*, locale_facet*, MSVCP_size_t, MSVCP_size_t);
 codecvt_char* codecvt_char_use_facet(const locale*);
+codecvt_wchar* codecvt_wchar_use_facet(const locale*);
 codecvt_wchar* codecvt_short_use_facet(const locale*);
 ctype_char* ctype_char_use_facet(const locale*);
 ctype_wchar* ctype_wchar_use_facet(const locale*);
@@ -384,6 +389,7 @@ istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get*, ist
 istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get*, istreambuf_iterator_char*,
         istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*);
 
+num_get* num_get_wchar_use_facet(const locale*);
 num_get* num_get_short_use_facet(const locale*);
 istreambuf_iterator_wchar* __thiscall num_get_wchar_get_long(const num_get*, istreambuf_iterator_wchar*,
         istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONG*);
@@ -433,6 +439,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put*, ost
 ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put*, ostreambuf_iterator_char*,
         ostreambuf_iterator_char, ios_base*, char, MSVCP_bool);
 
+num_put* num_put_wchar_use_facet(const locale*);
 num_put* num_put_short_use_facet(const locale*);
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put*, ostreambuf_iterator_wchar*,
         ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG);
@@ -455,3 +462,17 @@ void init_exception(void*);
 void init_locale(void*);
 void init_io(void*);
 void free_io(void);
+void init_misc(void*);
+
+/* class complex<float> */
+typedef struct {
+    float real;
+    float imag;
+} complex_float;
+
+/* class complex<double> */
+/* class complex<long double> */
+typedef struct {
+    double real;
+    double imag;
+} complex_double;
