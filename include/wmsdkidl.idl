@@ -1017,6 +1017,7 @@ interface IWMWriterAdvanced3 : IWMWriterAdvanced2
 }
 
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
+cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
 
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_Base,   0x00000000,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
 cpp_quote("EXTERN_GUID(WMMEDIATYPE_Video,     0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")
