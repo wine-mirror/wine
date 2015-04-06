@@ -5436,7 +5436,7 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
 {
     TRACE("af=%d type=%d protocol=%d\n", af, type, protocol);
 
-    return WSASocketA( af, type, protocol, NULL, 0,
+    return WSASocketW( af, type, protocol, NULL, 0,
                        get_per_thread_data()->opentype ? 0 : WSA_FLAG_OVERLAPPED );
 }
 
