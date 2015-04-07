@@ -122,3 +122,14 @@ BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *           PowerClearRequest      (KERNEL32.@)
+ */
+BOOL WINAPI PowerClearRequest(HANDLE request, POWER_REQUEST_TYPE type)
+{
+    FIXME("(%p, %u): stub\n", request, type);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
