@@ -1083,8 +1083,51 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
                                        DWORD level, DWORD options,
                                        LPBYTE *bufptr)
 {
-    TRACE("(%p, %p, %d, %d, %p)\n", server, service, level, options, bufptr);
-    return NERR_InternalError;
+    int res;
+    static const WCHAR SERVICE_WORKSTATION[] = {
+                 'L', 'a', 'n', 'm', 'a', 'n',
+                 'W', 'o', 'r', 'k', 's', 't', 'a', 't', 'i', 'o', 'n', '\0'};
+    static const WCHAR SERVICE_SERVER[] = {
+                 'L', 'a', 'n', 'm', 'a', 'n',
+                 'S', 'e', 'r', 'v', 'e', 'r', '\0'};
+    union
+    {
+        STAT_WORKSTATION_0 workst;
+        STAT_SERVER_0 server;
+    } *stat;
+    void *dataptr;
+
+    TRACE("(server %s, service %s, level %d, options %d, buffer %p): stub\n",
+          debugstr_w(server), debugstr_w(service), level, options, bufptr);
+
+    res = NetApiBufferAllocate(sizeof(*stat), &dataptr);
+    if (res != NERR_Success) return res;
+
+    res = NERR_InternalError;
+    stat = dataptr;
+    switch (level)
+    {
+        case 0:
+            if (!lstrcmpW(service, SERVICE_WORKSTATION))
+            {
+                /* Fill the struct STAT_WORKSTATION_0 properly */
+                memset(&stat->workst, 0, sizeof(stat->workst));
+                res = NERR_Success;
+            }
+            else if (!lstrcmpW(service, SERVICE_SERVER))
+            {
+                /* Fill the struct STAT_SERVER_0 properly */
+                memset(&stat->server, 0, sizeof(stat->server));
+                res = NERR_Success;
+            }
+            break;
+    }
+    if (res != NERR_Success)
+        NetApiBufferFree(dataptr);
+    else
+        *bufptr = dataptr;
+
+    return res;
 }
 
 NET_API_STATUS WINAPI NetUseEnum(LMSTR server, DWORD level, LPBYTE* bufptr, DWORD prefmaxsize,
