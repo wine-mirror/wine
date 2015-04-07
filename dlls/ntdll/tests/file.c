@@ -84,6 +84,16 @@ static inline BOOL is_signaled( HANDLE obj )
     return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
 }
 
+static const char* debugstr_longlong(ULONGLONG ll)
+{
+    static char str[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(str, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(str, "%lx", (unsigned long)ll);
+    return str;
+}
+
 #define PIPENAME "\\\\.\\pipe\\ntdll_tests_file.c"
 #define TEST_BUF_LEN 3
 
@@ -1203,6 +1213,68 @@ static void test_iocp_fileio(HANDLE h)
 
     CloseHandle( hPipeSrv );
     CloseHandle( hPipeClt );
+}
+
+static void test_file_full_size_information(void)
+{
+    IO_STATUS_BLOCK io;
+    FILE_FS_FULL_SIZE_INFORMATION ffsi;
+    FILE_FS_SIZE_INFORMATION fsi;
+    HANDLE h;
+    NTSTATUS res;
+
+    if(!(h = create_temp_file(0))) return ;
+
+    memset(&ffsi,0,sizeof(ffsi));
+    memset(&fsi,0,sizeof(fsi));
+
+    /* Assume No Quota Settings configured on Wine Testbot */
+    res = pNtQueryVolumeInformationFile(h, &io, &ffsi, sizeof ffsi, FileFsFullSizeInformation);
+    todo_wine ok(res == STATUS_SUCCESS, "cannot get attributes, res %x\n", res);
+    res = pNtQueryVolumeInformationFile(h, &io, &fsi, sizeof fsi, FileFsSizeInformation);
+    ok(res == STATUS_SUCCESS, "cannot get attributes, res %x\n", res);
+
+    /* Test for FileFsSizeInformation */
+    ok(fsi.TotalAllocationUnits.QuadPart > 0,
+        "[fsi] TotalAllocationUnits expected positive, got 0x%s\n",
+        debugstr_longlong(fsi.TotalAllocationUnits.QuadPart));
+    ok(fsi.AvailableAllocationUnits.QuadPart > 0,
+        "[fsi] AvailableAllocationUnits expected positive, got 0x%s\n",
+        debugstr_longlong(fsi.AvailableAllocationUnits.QuadPart));
+
+    /* Assume file system is NTFS */
+    ok(fsi.BytesPerSector == 512, "[fsi] BytesPerSector expected 512, got %d\n",fsi.BytesPerSector);
+    ok(fsi.SectorsPerAllocationUnit == 8, "[fsi] SectorsPerAllocationUnit expected 8, got %d\n",fsi.SectorsPerAllocationUnit);
+
+    todo_wine
+    {
+    ok(ffsi.TotalAllocationUnits.QuadPart > 0,
+        "[ffsi] TotalAllocationUnits expected positive, got negative value 0x%s\n",
+        debugstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
+    ok(ffsi.CallerAvailableAllocationUnits.QuadPart > 0,
+        "[ffsi] CallerAvailableAllocationUnits expected positive, got negative value 0x%s\n",
+        debugstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
+    ok(ffsi.ActualAvailableAllocationUnits.QuadPart > 0,
+        "[ffsi] ActualAvailableAllocationUnits expected positive, got negative value 0x%s\n",
+        debugstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart));
+    ok(ffsi.TotalAllocationUnits.QuadPart == fsi.TotalAllocationUnits.QuadPart,
+        "[ffsi] TotalAllocationUnits error fsi:0x%s, ffsi:0x%s\n",
+        debugstr_longlong(fsi.TotalAllocationUnits.QuadPart),
+        debugstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
+    ok(ffsi.CallerAvailableAllocationUnits.QuadPart == fsi.AvailableAllocationUnits.QuadPart,
+        "[ffsi] CallerAvailableAllocationUnits error fsi:0x%s, ffsi: 0x%s\n",
+        debugstr_longlong(fsi.AvailableAllocationUnits.QuadPart),
+        debugstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
+    }
+
+    /* Assume file system is NTFS */
+    todo_wine
+    {
+    ok(ffsi.BytesPerSector == 512, "[ffsi] BytesPerSector expected 512, got %d\n",ffsi.BytesPerSector);
+    ok(ffsi.SectorsPerAllocationUnit == 8, "[ffsi] SectorsPerAllocationUnit expected 8, got %d\n",ffsi.SectorsPerAllocationUnit);
+    }
+
+    CloseHandle( h );
 }
 
 static void test_file_basic_information(void)
@@ -2732,6 +2804,7 @@ START_TEST(file)
     test_file_all_information();
     test_file_both_information();
     test_file_name_information();
+    test_file_full_size_information();
     test_file_all_name_information();
     test_file_disposition_information();
     test_query_volume_information_file();
