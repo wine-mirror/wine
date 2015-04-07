@@ -488,5 +488,5 @@ ULONGLONG WINAPI DSA_GetSize(HDSA hdsa)
 
     if (!hdsa) return 0;
 
-    return sizeof(*hdsa) + hdsa->nMaxCount*hdsa->nItemSize;
+    return sizeof(*hdsa) + (ULONGLONG)hdsa->nMaxCount*hdsa->nItemSize;
 }
