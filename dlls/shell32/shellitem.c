@@ -1314,7 +1314,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     if(cidl == 0)
         return E_INVALIDARG;
 
-    array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellItem*));
+    array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cidl*sizeof(IShellItem*));
     if(!array)
         return E_OUTOFMEMORY;
 
