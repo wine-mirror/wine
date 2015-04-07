@@ -52,6 +52,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
+INT global_key_state_counter = 0;
 
 /***********************************************************************
  *           get_key_state
@@ -369,6 +370,7 @@ static void check_for_events( UINT flags )
 SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
 {
     struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
+    INT counter = global_key_state_counter;
     SHORT ret;
 
     if (key < 0 || key >= 256) return 0;
@@ -379,6 +381,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
     {
         if (key_state_info &&
             !(key_state_info->state[key] & 0xc0) &&
+            key_state_info->counter == counter &&
             GetTickCount() - key_state_info->time < 50)
         {
             /* use cached value */
@@ -401,7 +404,11 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
             {
                 if (reply->state & 0x40) ret |= 0x0001;
                 if (reply->state & 0x80) ret |= 0x8000;
-                if (key_state_info) key_state_info->time = GetTickCount();
+                if (key_state_info)
+                {
+                    key_state_info->time    = GetTickCount();
+                    key_state_info->counter = counter;
+                }
             }
         }
         SERVER_END_REQ;

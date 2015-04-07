@@ -3293,6 +3293,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
     struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
+    INT counter = global_key_state_counter;
     NTSTATUS ret;
     BOOL wait;
 
@@ -3342,7 +3343,11 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
 
     if (!ret)
     {
-        if (key_state_info) key_state_info->time = GetTickCount();
+        if (key_state_info)
+        {
+            key_state_info->time    = GetTickCount();
+            key_state_info->counter = counter;
+        }
         if ((flags & SEND_HWMSG_INJECTED) && (prev_x != new_x || prev_y != new_y))
             USER_Driver->pSetCursorPos( new_x, new_y );
     }
