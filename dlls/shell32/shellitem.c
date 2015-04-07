@@ -1121,12 +1121,8 @@ static HRESULT WINAPI IShellItemArray_fnEnumItems(IShellItemArray *iface,
                                                   IEnumShellItems **ppenumShellItems)
 {
     IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
-    HRESULT hr;
     TRACE("%p (%p)\n", This, ppenumShellItems);
-
-    hr = IEnumShellItems_Constructor(iface, ppenumShellItems);
-
-    return hr;
+    return IEnumShellItems_Constructor(iface, ppenumShellItems);
 }
 
 static const IShellItemArrayVtbl vt_IShellItemArray = {
