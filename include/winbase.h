@@ -865,6 +865,12 @@ typedef struct _SYSTEM_POWER_STATUS
   DWORD   BatteryFullLifeTime;
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
 
+typedef enum _POWER_REQUEST_TYPE
+{
+    PowerRequestDisplayRequired,
+    PowerRequestSystemRequired,
+    PowerRequestAwayModeRequired
+} POWER_REQUEST_TYPE, *PPOWER_REQUEST_TYPE;
 
 typedef struct _SYSTEM_INFO
 {

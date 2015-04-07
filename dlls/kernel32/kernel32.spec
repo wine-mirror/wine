@@ -1136,7 +1136,7 @@
 @ stdcall PostQueuedCompletionStatus(long long ptr ptr)
 # @ stub PowerClearRequest
 @ stdcall PowerCreateRequest(ptr)
-# @ stub PowerSetRequest
+@ stdcall PowerSetRequest(long long)
 @ stdcall PrepareTape(ptr long long)
 @ stub PrivCopyFileExW
 @ stub PrivMoveFileIdentityW

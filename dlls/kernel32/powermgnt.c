@@ -111,3 +111,14 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }
+
+/***********************************************************************
+ *           PowerSetRequest      (KERNEL32.@)
+ */
+BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
+{
+    FIXME("(%p, %u): stub\n", request, type);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
