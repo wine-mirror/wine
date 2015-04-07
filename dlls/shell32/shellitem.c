@@ -548,7 +548,6 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
     IShellFolder *psfParent, LPCITEMIDLIST pidl, IShellItem **ppsi)
 {
-    ShellItem *This;
     LPITEMIDLIST new_pidl;
     HRESULT ret;
 
@@ -597,16 +596,9 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
             return E_OUTOFMEMORY;
     }
 
-    ret = IShellItem_Constructor(NULL, &IID_IShellItem, (void**)&This);
-    if (This)
-    {
-        *ppsi = (IShellItem*)&This->IShellItem2_iface;
-        This->pidl = new_pidl;
-    }
-    else
-    {
-        ILFree(new_pidl);
-    }
+    ret = SHCreateItemFromIDList(new_pidl, &IID_IShellItem, (void**)ppsi);
+    ILFree(new_pidl);
+
     return ret;
 }
 
@@ -621,37 +613,34 @@ HRESULT WINAPI SHCreateItemFromParsingName(PCWSTR pszPath,
     ret = SHParseDisplayName(pszPath, pbc, &pidl, 0, NULL);
     if(SUCCEEDED(ret))
     {
-        ShellItem *This;
-        ret = IShellItem_Constructor(NULL, riid, (void**)&This);
-
-        if(SUCCEEDED(ret))
-        {
-            This->pidl = pidl;
-            *ppv = (void*)This;
-        }
-        else
-        {
-            ILFree(pidl);
-        }
+        ret = SHCreateItemFromIDList(pidl, riid, ppv);
+        ILFree(pidl);
     }
     return ret;
 }
 
 HRESULT WINAPI SHCreateItemFromIDList(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv)
 {
-    ShellItem *psiimpl;
+    IPersistIDList *persist;
     HRESULT ret;
 
     if(!pidl)
         return E_INVALIDARG;
 
-    ret = IShellItem_Constructor(NULL, riid, ppv);
-    if(SUCCEEDED(ret))
+    *ppv = NULL;
+    ret = IShellItem_Constructor(NULL, &IID_IPersistIDList, (void**)&persist);
+    if(FAILED(ret))
+        return ret;
+
+    ret = IPersistIDList_SetIDList(persist, pidl);
+    if(FAILED(ret))
     {
-        psiimpl = (ShellItem*)*ppv;
-        psiimpl->pidl = ILClone(pidl);
+        IPersistIDList_Release(persist);
+        return ret;
     }
 
+    ret = IPersistIDList_QueryInterface(persist, riid, ppv);
+    IPersistIDList_Release(persist);
     return ret;
 }
 
