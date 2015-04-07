@@ -437,7 +437,10 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
 
     if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
-        get_user_thread_info()->key_state_time = 0;  /* force refreshing the key state cache */
+    {
+        struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
+        if (key_state_info) key_state_info->time = 0;  /* force refreshing the key state cache */
+    }
 
     return ret;
 }

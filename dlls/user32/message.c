@@ -3290,7 +3290,7 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
  */
 NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
     NTSTATUS ret;
@@ -3329,7 +3329,8 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
             req->input.hw.lparam = MAKELONG( input->u.hi.wParamL, input->u.hi.wParamH );
             break;
         }
-        if (thread_info->key_state) wine_server_set_reply( req, thread_info->key_state, 256 );
+        if (key_state_info) wine_server_set_reply( req, key_state_info->state,
+                                                   sizeof(key_state_info->state) );
         ret = wine_server_call( req );
         wait = reply->wait;
         prev_x = reply->prev_x;
@@ -3341,7 +3342,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
 
     if (!ret)
     {
-        if (thread_info->key_state) thread_info->key_state_time = GetTickCount();
+        if (key_state_info) key_state_info->time = GetTickCount();
         if ((flags & SEND_HWMSG_INJECTED) && (prev_x != new_x || prev_y != new_y))
             USER_Driver->pSetCursorPos( new_x, new_y );
     }
