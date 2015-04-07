@@ -26,6 +26,8 @@
  *	force feedback
  */
 
+#include <stdio.h>
+
 #include "joystick_private.h"
 #include "wine/debug.h"
 #include "winreg.h"
@@ -608,6 +610,8 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
     LPDIDEVICEINSTANCEA pdidi)
 {
     JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
+    DIPROPDWORD pd;
+    DWORD index = 0;
 
     TRACE("(%p,%p)\n", iface, pdidi);
 
@@ -622,12 +626,20 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
         return DIERR_INVALIDPARAM;
     }
 
+    /* Try to get joystick index */
+    pd.diph.dwSize = sizeof(pd);
+    pd.diph.dwHeaderSize = sizeof(pd.diph);
+    pd.diph.dwObj = 0;
+    pd.diph.dwHow = DIPH_DEVICE;
+    if (SUCCEEDED(IDirectInputDevice2_GetProperty(iface, DIPROP_JOYSTICKID, &pd.diph)))
+        index = pd.dwData;
+
     /* Return joystick */
     pdidi->guidInstance = This->guidInstance;
     pdidi->guidProduct = This->guidProduct;
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;
-    strcpy(pdidi->tszInstanceName, "Joystick");
+    snprintf(pdidi->tszInstanceName, MAX_PATH, "Joystick %d", index);
     strcpy(pdidi->tszProductName, This->name);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
         pdidi->guidFFDriver = GUID_NULL;
@@ -646,6 +658,9 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
     LPDIDEVICEINSTANCEW pdidi)
 {
     JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
+    CHAR buffer[MAX_PATH];
+    DIPROPDWORD pd;
+    DWORD index = 0;
 
     TRACE("(%p,%p)\n", iface, pdidi);
 
@@ -655,12 +670,21 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
         return DIERR_INVALIDPARAM;
     }
 
+    /* Try to get joystick index */
+    pd.diph.dwSize = sizeof(pd);
+    pd.diph.dwHeaderSize = sizeof(pd.diph);
+    pd.diph.dwObj = 0;
+    pd.diph.dwHow = DIPH_DEVICE;
+    if (SUCCEEDED(IDirectInputDevice2_GetProperty(iface, DIPROP_JOYSTICKID, &pd.diph)))
+        index = pd.dwData;
+
     /* Return joystick */
     pdidi->guidInstance = This->guidInstance;
     pdidi->guidProduct = This->guidProduct;
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;
-    MultiByteToWideChar(CP_ACP, 0, "Joystick", -1, pdidi->tszInstanceName, MAX_PATH);
+    snprintf(buffer, sizeof(buffer), "Joystick %d", index);
+    MultiByteToWideChar(CP_ACP, 0, buffer, -1, pdidi->tszInstanceName, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, This->name, -1, pdidi->tszProductName, MAX_PATH);
     if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3W)) {
         pdidi->guidFFDriver = GUID_NULL;
