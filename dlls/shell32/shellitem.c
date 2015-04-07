@@ -1142,29 +1142,31 @@ static const IShellItemArrayVtbl vt_IShellItemArray = {
     IShellItemArray_fnEnumItems
 };
 
-static HRESULT IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
+/* Caller is responsible to AddRef all items */
+static HRESULT create_shellitemarray(IShellItem **items, DWORD count, IShellItemArray **ret)
 {
     IShellItemArrayImpl *This;
-    HRESULT ret;
 
-    TRACE("(%p, %s, %p)\n",pUnkOuter, debugstr_guid(riid), ppv);
-
-    if(pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
+    TRACE("(%p, %d, %p)\n", items, count, ret);
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(IShellItemArrayImpl));
     if(!This)
         return E_OUTOFMEMORY;
 
-    This->ref = 1;
     This->IShellItemArray_iface.lpVtbl = &vt_IShellItemArray;
-    This->array = NULL;
-    This->item_count = 0;
+    This->ref = 1;
 
-    ret = IShellItemArray_QueryInterface(&This->IShellItemArray_iface, riid, ppv);
-    IShellItemArray_Release(&This->IShellItemArray_iface);
+    This->array = HeapAlloc(GetProcessHeap(), 0, count*sizeof(IShellItem*));
+    if (!This->array)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(This->array, items, count*sizeof(IShellItem*));
+    This->item_count = count;
 
-    return ret;
+    *ret = &This->IShellItemArray_iface;
+    return S_OK;
 }
 
 HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
@@ -1173,12 +1175,13 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
                                       PCUITEMID_CHILD_ARRAY ppidl,
                                       IShellItemArray **ppsiItemArray)
 {
-    IShellItemArrayImpl *This;
     IShellItem **array;
     HRESULT ret = E_FAIL;
     UINT i;
 
     TRACE("%p, %p, %d, %p, %p\n", pidlParent, psf, cidl, ppidl, ppsiItemArray);
+
+    *ppsiItemArray = NULL;
 
     if(!pidlParent && !psf)
         return E_POINTER;
@@ -1198,52 +1201,37 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
 
     if(SUCCEEDED(ret))
     {
-        ret = IShellItemArray_Constructor(NULL, &IID_IShellItemArray, (void**)&This);
+        ret = create_shellitemarray(array, cidl, ppsiItemArray);
         if(SUCCEEDED(ret))
-        {
-            This->array = array;
-            This->item_count = cidl;
-            *ppsiItemArray = &This->IShellItemArray_iface;
-
             return ret;
-        }
     }
 
     /* Something failed, clean up. */
     for(i = 0; i < cidl; i++)
         if(array[i]) IShellItem_Release(array[i]);
     HeapFree(GetProcessHeap(), 0, array);
-    *ppsiItemArray = NULL;
     return ret;
 }
 
-HRESULT WINAPI SHCreateShellItemArrayFromShellItem(IShellItem *psi, REFIID riid, void **ppv)
+HRESULT WINAPI SHCreateShellItemArrayFromShellItem(IShellItem *item, REFIID riid, void **ppv)
 {
-    IShellItemArrayImpl *This;
-    IShellItem **array;
+    IShellItemArray *array;
     HRESULT ret;
 
-    TRACE("%p, %s, %p\n", psi, shdebugstr_guid(riid), ppv);
+    TRACE("%p, %s, %p\n", item, shdebugstr_guid(riid), ppv);
 
-    array = HeapAlloc(GetProcessHeap(), 0, sizeof(IShellItem*));
-    if(!array)
-        return E_OUTOFMEMORY;
+    *ppv = NULL;
 
-    ret = IShellItemArray_Constructor(NULL, riid, (void**)&This);
-    if(SUCCEEDED(ret))
+    IShellItem_AddRef(item);
+    ret = create_shellitemarray(&item, 1, &array);
+    if(FAILED(ret))
     {
-        array[0] = psi;
-        IShellItem_AddRef(psi);
-        This->array = array;
-        This->item_count = 1;
-        *ppv = This;
-    }
-    else
-    {
-        HeapFree(GetProcessHeap(), 0, array);
-        *ppv = NULL;
+        IShellItem_Release(item);
+        return ret;
     }
 
+    ret = IShellItemArray_QueryInterface(array, riid, ppv);
+    IShellItemArray_Release(array);
     return ret;
 }
 
@@ -1303,7 +1291,6 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
                                                  PCIDLIST_ABSOLUTE_ARRAY pidl_array,
                                                  IShellItemArray **psia)
 {
-    IShellItemArrayImpl *This;
     IShellItem **array;
     HRESULT ret;
     UINT i;
@@ -1327,14 +1314,9 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
 
     if(SUCCEEDED(ret))
     {
-        ret = IShellItemArray_Constructor(NULL, &IID_IShellItemArray, (void**)psia);
+        ret = create_shellitemarray(array, cidl, psia);
         if(SUCCEEDED(ret))
-        {
-            This = impl_from_IShellItemArray(*psia);
-            This->array = array;
-            This->item_count = cidl;
-            return S_OK;
-        }
+            return ret;
     }
 
     for(i = 0; i < cidl; i++)
