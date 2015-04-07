@@ -4166,7 +4166,7 @@ static void init_output_registers(const struct wined3d_shader *shader,
 
         for (j = 0; j < ps_input_sig->element_count; ++j)
         {
-            const struct wined3d_shader_signature_element *input = &ps_input_sig->elements[i];
+            const struct wined3d_shader_signature_element *input = &ps_input_sig->elements[j];
 
             if (!input->semantic_name)
                 continue;
