@@ -813,6 +813,7 @@ static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s',
 static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
 static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','i','n','g','t','o','n','e','s','\0'};
 static const WCHAR Microsoft_Windows_Start_MenuW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u',0};
+static const WCHAR MoviesW[] = {'M','o','v','i','e','s','\0'};
 static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
 static const WCHAR Music_PlaylistsW[] = {'M','u','s','i','c','\\','P','l','a','y','l','i','s','t','s','\0'};
 static const WCHAR Music_Sample_MusicW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','M','u','s','i','c','\0'};
@@ -2785,6 +2786,7 @@ static inline BOOL _SHAppendToUnixPath(char *szBasePath, LPCWSTR pwszSubPath) {
 static void _SHCreateSymbolicLinks(void)
 {
     UINT aidsMyStuff[] = { IDS_MYPICTURES, IDS_MYVIDEOS, IDS_MYMUSIC }, i;
+    const WCHAR* MyOSXStuffW[] = { PicturesW, MoviesW, MusicW };
     int acsidlMyStuff[] = { CSIDL_MYPICTURES, CSIDL_MYVIDEO, CSIDL_MYMUSIC };
     static const char * const xdg_dirs[] = { "PICTURES", "VIDEOS", "MUSIC", "DOCUMENTS", "DESKTOP" };
     static const unsigned int num = sizeof(xdg_dirs) / sizeof(xdg_dirs[0]);
@@ -2870,36 +2872,47 @@ static void _SHCreateSymbolicLinks(void)
     }
 
     /* Create symbolic links for 'My Pictures', 'My Videos' and 'My Music'. */
-    for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++) {
+    for (i=0; i < sizeof(aidsMyStuff)/sizeof(aidsMyStuff[0]); i++)
+    {
         /* Create the current 'My Whatever' folder and get its unix path. */
         hr = SHGetFolderPathW(NULL, acsidlMyStuff[i]|CSIDL_FLAG_CREATE, NULL,
                               SHGFP_TYPE_DEFAULT, wszTempPath);
         if (FAILED(hr)) continue;
+
         pszMyStuff = wine_get_unix_file_name(wszTempPath);
         if (!pszMyStuff) continue;
         
-        strcpy(szMyStuffTarget, szPersonalTarget);
-        if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])) &&
-            !stat(szMyStuffTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+        while (1)
         {
-            /* If there's a 'My Whatever' directory where 'My Documents' links to, link to it. */
-            rmdir(pszMyStuff);
-            symlink(szMyStuffTarget, pszMyStuff);
-        } 
-        else
-        {
-            rmdir(pszMyStuff);
+            /* Check for the Wine-specific '$HOME/My Documents' subfolder */
+            strcpy(szMyStuffTarget, szPersonalTarget);
+            if (_SHAppendToUnixPath(szMyStuffTarget, MAKEINTRESOURCEW(aidsMyStuff[i])) &&
+                !stat(szMyStuffTarget, &statFolder) && S_ISDIR(statFolder.st_mode))
+                break;
+
+            /* Try the XDG_XXX_DIR folder */
             if (xdg_results && xdg_results[i])
             {
-                /* the folder specified by XDG_XXX_DIR exists, link to it. */
-                symlink(xdg_results[i], pszMyStuff);
+                strcpy(szMyStuffTarget, xdg_results[i]);
+                break;
             }
-            else
+
+            /* Or the OS X folder (these are never localized) */
+            if (pszHome)
             {
-                /* Else link to where 'My Documents' itself links to. */
-                symlink(szPersonalTarget, pszMyStuff);
+                strcpy(szMyStuffTarget, pszHome);
+                if (_SHAppendToUnixPath(szMyStuffTarget, MyOSXStuffW[i]) &&
+                    !stat(szMyStuffTarget, &statFolder) &&
+                    S_ISDIR(statFolder.st_mode))
+                    break;
             }
+
+            /* As a last resort point to the same location as 'My Documents' */
+            strcpy(szMyStuffTarget, szPersonalTarget);
+            break;
         }
+        rmdir(pszMyStuff);
+        symlink(szMyStuffTarget, pszMyStuff);
         HeapFree(GetProcessHeap(), 0, pszMyStuff);
     }
 
