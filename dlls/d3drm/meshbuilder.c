@@ -356,7 +356,9 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
     }
     mesh_builder->nb_materials = 0;
     HeapFree(GetProcessHeap(), 0, mesh_builder->materials);
+    mesh_builder->materials = NULL;
     HeapFree(GetProcessHeap(), 0, mesh_builder->material_indices);
+    mesh_builder->material_indices = NULL;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder2_QueryInterface(IDirect3DRMMeshBuilder2 *iface, REFIID riid, void **out)
