@@ -1075,19 +1075,23 @@ static void _sync_sock_state(SOCKET s)
     (void)_is_blocking(s, &dummy);
 }
 
-static int _get_sock_error(SOCKET s, unsigned int bit)
+static void _get_sock_errors(SOCKET s, int *events)
 {
-    int events[FD_MAX_EVENTS];
-
     SERVER_START_REQ( get_socket_event )
     {
         req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
         req->service = FALSE;
         req->c_event = 0;
-        wine_server_set_reply( req, events, sizeof(events) );
+        wine_server_set_reply( req, events, sizeof(int) * FD_MAX_EVENTS );
         wine_server_call( req );
     }
     SERVER_END_REQ;
+}
+
+static int _get_sock_error(SOCKET s, unsigned int bit)
+{
+    int events[FD_MAX_EVENTS];
+    _get_sock_errors(s, events);
     return events[bit];
 }
 
