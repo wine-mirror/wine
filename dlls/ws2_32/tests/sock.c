@@ -3675,6 +3675,12 @@ static void test_select(void)
     select_timeout.tv_sec = 1;
     select_timeout.tv_usec = 250000;
 
+    /* When no events are pending select returns 0 with no error */
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdListen);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
     /* When a socket is attempting to connect the listening socket receives the read descriptor */
     fdWrite = setup_connector_socket(&address, len, TRUE);
     FD_ZERO_ALL();
@@ -3695,6 +3701,10 @@ static void test_select(void)
     ok(ret == 2, "expected 2, got %d\n", ret);
     ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
     ok(FD_ISSET(fdRead, &writefds), "fdRead socket is not in the set\n");
+    len = sizeof(id);
+    id = 0xdeadbeef;
+    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len), "getsockopt failed with %d\n",WSAGetLastError());
+    ok(id == 0, "expected 0, got %d\n", id);
 
     /* When data is received the receiver gets the read descriptor */
     ret = send(fdWrite, "1234", 4, 0);
@@ -3767,6 +3777,7 @@ static void test_select(void)
     ok(ret == 0, "expected 0, got %d\n", ret);
     ret = closesocket(fdListen);
     ok(ret == 0, "expected 0, got %d\n", ret);
+    len = sizeof(address);
     fdWrite = setup_connector_socket(&address, len, TRUE);
     FD_ZERO_ALL();
     FD_SET(fdWrite, &writefds);
@@ -3774,6 +3785,11 @@ static void test_select(void)
     select_timeout.tv_sec = 2; /* requires more time to realize it will not connect */
     ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
     ok(ret == 1, "expected 1, got %d\n", ret);
+    len = sizeof(id);
+    id = 0xdeadbeef;
+    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len), "getsockopt failed with %d\n",WSAGetLastError());
+todo_wine
+    ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
     ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
     ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
     closesocket(fdWrite);
