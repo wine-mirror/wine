@@ -2312,7 +2312,7 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
 
         shader->u.vs.attributes[input->register_idx].usage =
                 shader_usage_from_semantic_name(input->semantic_name);
-        shader->u.vs.attributes[i].usage_idx = input->semantic_idx;
+        shader->u.vs.attributes[input->register_idx].usage_idx = input->semantic_idx;
     }
 
     shader->load_local_constsF = (reg_maps->usesrelconstF && !list_empty(&shader->constantsF)) ||
