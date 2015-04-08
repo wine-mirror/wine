@@ -830,13 +830,24 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
         break;
     case from_process_name:
         {
-            WCHAR           buffer[256];
+            int len;
+            WCHAR *buffer;
 
-            MultiByteToWideChar(CP_ACP, 0, wci.ptr, -1, buffer, sizeof(buffer) / sizeof(buffer[0]));
+            len = MultiByteToWideChar(CP_ACP, 0, wci.ptr, -1, NULL, 0);
+
+            buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (!buffer)
+                return 0;
+
+            MultiByteToWideChar(CP_ACP, 0, wci.ptr, -1, buffer, len);
 
             if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, wci.backend, nCmdShow)))
+            {
+                HeapFree(GetProcessHeap(), 0, buffer);
                 return 0;
+            }
             ret = WINECON_Spawn(data, buffer);
+            HeapFree(GetProcessHeap(), 0, buffer);
             if (!ret)
             {
                 WINECON_Delete(data);
