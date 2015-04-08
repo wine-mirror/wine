@@ -4178,7 +4178,8 @@ static HRESULT WINAPI foldermanager_GetFolderIds(
 
     TRACE("%p, %p\n", ppKFId, pCount);
 
-    *ppKFId = fm->ids;
+    *ppKFId = CoTaskMemAlloc(fm->num_ids * sizeof(KNOWNFOLDERID));
+    memcpy(*ppKFId, fm->ids, fm->num_ids * sizeof(KNOWNFOLDERID));
     *pCount = fm->num_ids;
     return S_OK;
 }
