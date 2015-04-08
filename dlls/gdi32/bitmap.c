@@ -253,7 +253,7 @@ LONG WINAPI GetBitmapBits(
     dst_stride = get_bitmap_stride( bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmBitsPixel );
     ret = max = dst_stride * bmp->dib.dsBm.bmHeight;
     if (!bits) goto done;
-    if (count > max) count = max;
+    if (count < 0 || count > max) count = max;
     ret = count;
 
     src.visrect.left = 0;
