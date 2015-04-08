@@ -771,6 +771,7 @@ VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
 static const WCHAR szCategory[] = {'C','a','t','e','g','o','r','y',0};
 static const WCHAR szAttributes[] = {'A','t','t','r','i','b','u','t','e','s',0};
 static const WCHAR szName[] = {'N','a','m','e',0};
+static const WCHAR szParsingName[] = {'P','a','r','s','i','n','g','N','a','m','e',0};
 static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','t','h',0};
 static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
 
@@ -3869,6 +3870,8 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
 
     get_known_folder_wstr(knownfolder->registryPath, szRelativePath, &pKFD->pszRelativePath);
 
+    get_known_folder_wstr(knownfolder->registryPath, szParsingName, &pKFD->pszParsingName);
+
     return S_OK;
 }
 
@@ -4092,6 +4095,9 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
 
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szName, 0, REG_SZ, (LPBYTE)pKFD->pszName, (lstrlenW(pKFD->pszName)+1)*sizeof(WCHAR) ));
+
+        if(SUCCEEDED(hr) && pKFD->pszParsingName)
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szParsingName, 0, REG_SZ, (LPBYTE)pKFD->pszParsingName, (lstrlenW(pKFD->pszParsingName)+1)*sizeof(WCHAR) ));
 
         if(SUCCEEDED(hr) && !IsEqualGUID(&pKFD->fidParent, &GUID_NULL))
         {
