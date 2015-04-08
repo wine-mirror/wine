@@ -3788,7 +3788,6 @@ static void test_select(void)
     len = sizeof(id);
     id = 0xdeadbeef;
     ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len), "getsockopt failed with %d\n",WSAGetLastError());
-todo_wine
     ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
     ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
     ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");

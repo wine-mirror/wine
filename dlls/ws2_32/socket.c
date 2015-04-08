@@ -3286,7 +3286,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
          * alphabetically */
         case WS_SO_BROADCAST:
         case WS_SO_DEBUG:
-        case WS_SO_ERROR:
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
         case WS_SO_RCVBUF:
@@ -3449,6 +3448,36 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             *(BOOL *)optval = TRUE;
             *optlen = sizeof(BOOL);
             return 0;
+
+        case WS_SO_ERROR:
+        {
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, optval, (socklen_t *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            release_sock_fd( s, fd );
+
+            /* The wineserver may have swallowed the error before us */
+            if (!ret && *(int*) optval == 0)
+            {
+                int i, events[FD_MAX_EVENTS];
+                _get_sock_errors(s, events);
+                for (i = 0; i < FD_MAX_EVENTS; i++)
+                {
+                    if(events[i])
+                    {
+                        events[i] = NtStatusToWSAError(events[i]);
+                        TRACE("returning SO_ERROR %d from wine server\n", events[i]);
+                        *(int*) optval = events[i];
+                        break;
+                    }
+                }
+            }
+            return ret;
+        }
 
         case WS_SO_LINGER:
         {
