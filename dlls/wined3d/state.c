@@ -528,9 +528,6 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
     context->last_was_ckey = enable_ckey;
 
-    if (context->d3d_info->shader_color_key)
-        enable_ckey = FALSE;
-
     if (state->render_states[WINED3D_RS_ALPHATESTENABLE]
             || (state->render_states[WINED3D_RS_COLORKEYENABLE] && enable_ckey))
     {
