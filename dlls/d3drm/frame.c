@@ -472,6 +472,8 @@ static HRESULT WINAPI d3drm_frame2_QueryInterface(IDirect3DRMFrame2 *iface, REFI
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMFrame2)
             || IsEqualGUID(riid, &IID_IDirect3DRMFrame)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
+            || IsEqualGUID(riid, &IID_IDirect3DRMVisual)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         *out = &frame->IDirect3DRMFrame2_iface;
