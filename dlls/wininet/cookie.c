@@ -341,8 +341,10 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     UnlockUrlCacheEntryStream(cookie, 0);
 
     cookie_container = get_cookie_container(domain, path, TRUE);
-    if(!cookie_container)
+    if(!cookie_container) {
+        heap_free(str);
         return FALSE;
+    }
 
     GetSystemTimeAsFileTime(&time);
     for(pbeg=str; pbeg && *pbeg; name=data=NULL) {
