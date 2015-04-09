@@ -4238,7 +4238,6 @@ static void test_getsockname(void)
             ok(ret == 0, "getsockname failed with %d\n", GetLastError());
             strcpy(ipstr, inet_ntoa(sa_get.sin_addr));
             trace("testing bind on interface %s\n", ipstr);
-todo_wine
             ok(sa_get.sin_addr.s_addr == sa_set.sin_addr.s_addr,
                "address does not match: %s != %s", ipstr, inet_ntoa(sa_set.sin_addr));
 
