@@ -4194,7 +4194,8 @@ const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions =
     wined3d_ffp_vertex_program_key_compare,
 };
 
-const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
+const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
@@ -4208,7 +4209,7 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
 
     for (i = 0; i < sizeof(blitters) / sizeof(*blitters); ++i)
     {
-        if (blitters[i]->blit_supported(gl_info, blit_op,
+        if (blitters[i]->blit_supported(gl_info, d3d_info, blit_op,
                 src_rect, src_usage, src_pool, src_format,
                 dst_rect, dst_usage, dst_pool, dst_format))
             return blitters[i];

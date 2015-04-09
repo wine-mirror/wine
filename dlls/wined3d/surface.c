@@ -1050,7 +1050,7 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
     struct wined3d_device *device = resource->device;
     const struct blit_shader *blitter;
 
-    blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_FILL,
+    blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, WINED3D_BLIT_OP_DEPTH_FILL,
             NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format);
     if (!blitter)
     {
@@ -3445,7 +3445,7 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const st
     struct wined3d_device *device = s->resource.device;
     const struct blit_shader *blitter;
 
-    blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_FILL,
+    blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, WINED3D_BLIT_OP_COLOR_FILL,
             NULL, 0, 0, NULL, rect, s->resource.usage, s->resource.pool, s->resource.format);
     if (!blitter)
     {
@@ -3463,6 +3463,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     struct wined3d_device *device = dst_surface->resource.device;
     const struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]);
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, blt_fx %p, filter %s.\n",
@@ -3591,7 +3592,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
-        if (!device->blitter->blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+        if (!device->blitter->blit_supported(gl_info, d3d_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                 dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
         {
@@ -4318,14 +4319,20 @@ static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
     }
 }
 
-static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
+static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     switch (blit_op)
     {
-        case WINED3D_BLIT_OP_COLOR_BLIT:
         case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
+            if (d3d_info->shader_color_key)
+            {
+                TRACE("Color keying requires converted textures.\n");
+                return FALSE;
+            }
+        case WINED3D_BLIT_OP_COLOR_BLIT:
             if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
                 return FALSE;
 
@@ -4447,7 +4454,8 @@ static void cpu_blit_unset(const struct wined3d_gl_info *gl_info)
 {
 }
 
-static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
+static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
@@ -5367,7 +5375,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3D_OK;
             }
 
-            if (arbfp_blit.blit_supported(&device->adapter->gl_info, blit_op,
+            if (arbfp_blit.blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, blit_op,
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
             {

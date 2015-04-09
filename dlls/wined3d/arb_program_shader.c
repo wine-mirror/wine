@@ -7716,7 +7716,8 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
 }
 
-static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
+static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
@@ -7727,8 +7728,14 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
 
     switch (blit_op)
     {
-        case WINED3D_BLIT_OP_COLOR_BLIT:
         case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
+            if (!d3d_info->shader_color_key)
+            {
+                /* The conversion modifies the alpha channel so the color key might no longer match. */
+                TRACE("Color keying not supported with converted textures.\n");
+                return FALSE;
+            }
+        case WINED3D_BLIT_OP_COLOR_BLIT:
             break;
 
         default:
