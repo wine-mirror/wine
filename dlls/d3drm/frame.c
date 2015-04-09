@@ -483,8 +483,8 @@ static HRESULT WINAPI d3drm_frame2_QueryInterface(IDirect3DRMFrame2 *iface, REFI
     else
     {
         *out = NULL;
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
+        WARN("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(riid));
+        return CLASS_E_CLASSNOTAVAILABLE;
     }
 
     IUnknown_AddRef((IUnknown *)*out);
