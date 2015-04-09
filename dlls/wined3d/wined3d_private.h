@@ -2816,6 +2816,8 @@ void tex_alphaop(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void apply_pixelshader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_alpha_test(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_fogcolor(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_fogdensity(struct wined3d_context *context,
