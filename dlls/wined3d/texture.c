@@ -437,6 +437,12 @@ struct wined3d_resource * CDECL wined3d_texture_get_resource(struct wined3d_text
     return &texture->resource;
 }
 
+static BOOL color_key_equal(const struct wined3d_color_key *c1, struct wined3d_color_key *c2)
+{
+    return c1->color_space_low_value == c2->color_space_low_value
+            && c1->color_space_high_value == c2->color_space_high_value;
+}
+
 /* Context activation is done by the caller */
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
@@ -456,10 +462,10 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
 
-    if (!(texture->flags & WINED3D_TEXTURE_COLOR_KEY) != !(texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
-            || (texture->flags & WINED3D_TEXTURE_COLOR_KEY
-            && (texture->gl_color_key.color_space_low_value != texture->src_blt_color_key.color_space_low_value
-            || texture->gl_color_key.color_space_high_value != texture->src_blt_color_key.color_space_high_value)))
+    if (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
+            != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+            || (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY
+            && !color_key_equal(&texture->async.gl_color_key, &texture->async.src_blt_color_key)))
     {
         unsigned int sub_count = texture->level_count * texture->layer_count;
         unsigned int i;
@@ -469,7 +475,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
             texture->texture_ops->texture_sub_resource_add_dirty_region(texture->sub_resources[i], NULL);
         wined3d_texture_set_dirty(texture);
 
-        texture->gl_color_key = texture->src_blt_color_key;
+        texture->async.gl_color_key = texture->async.src_blt_color_key;
     }
 
     if (texture->flags & flag)
@@ -571,7 +577,17 @@ enum wined3d_texture_filter_type CDECL wined3d_texture_get_autogen_filter_type(c
 HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
         DWORD flags, const struct wined3d_color_key *color_key)
 {
+    struct wined3d_device *device = texture->resource.device;
+    static const DWORD all_flags = WINED3D_CKEY_COLORSPACE | WINED3D_CKEY_DST_BLT
+            | WINED3D_CKEY_DST_OVERLAY | WINED3D_CKEY_SRC_BLT | WINED3D_CKEY_SRC_OVERLAY;
+
     TRACE("texture %p, flags %#x, color_key %p.\n", texture, flags, color_key);
+
+    if (flags & ~all_flags)
+    {
+        WARN("Invalid flags passed, returning WINED3DERR_INVALIDCALL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     if (flags & WINED3D_CKEY_COLORSPACE)
     {
@@ -579,52 +595,7 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (color_key)
-    {
-        switch (flags & ~WINED3D_CKEY_COLORSPACE)
-        {
-            case WINED3D_CKEY_DST_BLT:
-                texture->dst_blt_color_key = *color_key;
-                texture->color_key_flags |= WINED3D_CKEY_DST_BLT;
-                break;
-
-            case WINED3D_CKEY_DST_OVERLAY:
-                texture->dst_overlay_color_key = *color_key;
-                texture->color_key_flags |= WINED3D_CKEY_DST_OVERLAY;
-                break;
-
-            case WINED3D_CKEY_SRC_BLT:
-                texture->src_blt_color_key = *color_key;
-                texture->color_key_flags |= WINED3D_CKEY_SRC_BLT;
-                break;
-
-            case WINED3D_CKEY_SRC_OVERLAY:
-                texture->src_overlay_color_key = *color_key;
-                texture->color_key_flags |= WINED3D_CKEY_SRC_OVERLAY;
-                break;
-        }
-    }
-    else
-    {
-        switch (flags & ~WINED3D_CKEY_COLORSPACE)
-        {
-            case WINED3D_CKEY_DST_BLT:
-                texture->color_key_flags &= ~WINED3D_CKEY_DST_BLT;
-                break;
-
-            case WINED3D_CKEY_DST_OVERLAY:
-                texture->color_key_flags &= ~WINED3D_CKEY_DST_OVERLAY;
-                break;
-
-            case WINED3D_CKEY_SRC_BLT:
-                texture->color_key_flags &= ~WINED3D_CKEY_SRC_BLT;
-                break;
-
-            case WINED3D_CKEY_SRC_OVERLAY:
-                texture->color_key_flags &= ~WINED3D_CKEY_SRC_OVERLAY;
-                break;
-        }
-    }
+    wined3d_cs_emit_set_color_key(device->cs, texture, flags, color_key);
 
     return WINED3D_OK;
 }
@@ -694,14 +665,15 @@ void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct win
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
 
-    if (!(texture->flags & WINED3D_TEXTURE_COLOR_KEY) != !(texture->color_key_flags & WINED3D_CKEY_SRC_BLT))
+    if (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
+            != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
         wined3d_texture_force_reload(texture);
 
     if (texture->flags & alloc_flag)
         return;
 
-    if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT)
-        texture->flags |= WINED3D_TEXTURE_COLOR_KEY;
+    if (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+        texture->async.flags |= WINED3D_TEXTURE_ASYNC_COLOR_KEY;
 
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
     texture->flags |= alloc_flag;
@@ -713,7 +685,8 @@ void wined3d_texture_force_reload(struct wined3d_texture *texture)
     unsigned int i;
 
     texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED
-            | WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_COLOR_KEY);
+            | WINED3D_TEXTURE_CONVERTED);
+    texture->async.flags &= ~WINED3D_TEXTURE_ASYNC_COLOR_KEY;
     for (i = 0; i < sub_count; ++i)
     {
         texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i],

@@ -2187,7 +2187,8 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_PIN_SYSMEM          0x00000100
 #define WINED3D_TEXTURE_DYNAMIC_MAP         0x00000200
 #define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
-#define WINED3D_TEXTURE_COLOR_KEY           0x00000800
+
+#define WINED3D_TEXTURE_ASYNC_COLOR_KEY     0x00000001
 
 struct wined3d_texture
 {
@@ -2205,13 +2206,19 @@ struct wined3d_texture
     DWORD flags;
     GLenum target;
 
-    /* Color keys for DDraw */
-    struct wined3d_color_key dst_blt_color_key;
-    struct wined3d_color_key src_blt_color_key;
-    struct wined3d_color_key dst_overlay_color_key;
-    struct wined3d_color_key src_overlay_color_key;
-    struct wined3d_color_key gl_color_key;
-    DWORD color_key_flags;
+    /* May only be accessed from the command stream worker thread. */
+    struct wined3d_texture_async
+    {
+        DWORD flags;
+
+        /* Color keys for DDraw */
+        struct wined3d_color_key dst_blt_color_key;
+        struct wined3d_color_key src_blt_color_key;
+        struct wined3d_color_key dst_overlay_color_key;
+        struct wined3d_color_key src_overlay_color_key;
+        struct wined3d_color_key gl_color_key;
+        DWORD color_key_flags;
+    } async;
 };
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
@@ -2553,6 +2560,8 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture *texture,
+        WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,

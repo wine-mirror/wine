@@ -843,7 +843,7 @@ const struct wined3d_color_key_conversion * wined3d_format_get_color_key_convers
         WINED3DFMT_B8G8R8A8_UNORM,  convert_p8_uint_b8g8r8a8_unorm
     };
 
-    if (need_alpha_ck && (texture->flags & WINED3D_TEXTURE_COLOR_KEY))
+    if (need_alpha_ck && (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY))
     {
         for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
         {
@@ -3781,7 +3781,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
             {
-                if (texture->color_key_flags & WINED3D_CKEY_SRC_BLT && !texture->resource.format->alpha_size)
+                if (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT && !texture->resource.format->alpha_size)
                 {
                     if (aop == WINED3D_TOP_DISABLE)
                     {

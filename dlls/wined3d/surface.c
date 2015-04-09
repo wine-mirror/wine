@@ -3410,7 +3410,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
          * other cases pixels that should be masked away have alpha set to 0. */
         if (src_surface->resource.format->id == WINED3DFMT_P8_UINT)
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
-                    (float)src_surface->container->src_blt_color_key.color_space_low_value / 255.0f);
+                    (float)src_surface->container->async.src_blt_color_key.color_space_low_value / 255.0f);
         else
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
         checkGLcall("glAlphaFunc");
@@ -3586,8 +3586,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     else if (src_surface)
     {
         /* Blit from offscreen surface to render target */
-        struct wined3d_color_key old_blt_key = src_surface->container->src_blt_color_key;
-        DWORD old_color_key_flags = src_surface->container->color_key_flags;
+        struct wined3d_color_key old_blt_key = src_surface->container->async.src_blt_color_key;
+        DWORD old_color_key_flags = src_surface->container->async.color_key_flags;
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
@@ -4168,7 +4168,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
         conversion->convert(data.addr, src_pitch, mem, dst_pitch,
-                width, height, palette, &texture->gl_color_key);
+                width, height, palette, &texture->async.gl_color_key);
         src_pitch = dst_pitch;
         data.addr = mem;
     }
@@ -4830,8 +4830,8 @@ do { \
                 /* The color keying flags are checked for correctness in ddraw */
                 if (flags & WINEDDBLT_KEYSRC)
                 {
-                    keylow  = src_surface->container->src_blt_color_key.color_space_low_value;
-                    keyhigh = src_surface->container->src_blt_color_key.color_space_high_value;
+                    keylow  = src_surface->container->async.src_blt_color_key.color_space_low_value;
+                    keyhigh = src_surface->container->async.src_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINEDDBLT_KEYSRCOVERRIDE)
                 {
@@ -4842,8 +4842,8 @@ do { \
                 if (flags & WINEDDBLT_KEYDEST)
                 {
                     /* Destination color keys are taken from the source surface! */
-                    destkeylow = src_surface->container->dst_blt_color_key.color_space_low_value;
-                    destkeyhigh = src_surface->container->dst_blt_color_key.color_space_high_value;
+                    destkeylow = src_surface->container->async.dst_blt_color_key.color_space_low_value;
+                    destkeyhigh = src_surface->container->async.dst_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINEDDBLT_KEYDESTOVERRIDE)
                 {
