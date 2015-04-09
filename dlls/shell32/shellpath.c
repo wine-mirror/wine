@@ -776,6 +776,8 @@ static const WCHAR szRelativePath[] = {'R','e','l','a','t','i','v','e','P','a','
 static const WCHAR szParentFolder[] = {'P','a','r','e','n','t','F','o','l','d','e','r',0};
 
 static const WCHAR szCurrentVersion[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0'};
+static const WCHAR AddNewProgramsFolderW[] = {'A','d','d','N','e','w','P','r','o','g','r','a','m','s','F','o','l','d','e','r',0};
+static const WCHAR AppUpdatesFolderW[] = {'A','p','p','U','p','d','a','t','e','s','F','o','l','d','e','r',0};
 static const WCHAR Administrative_ToolsW[] = {'A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR AppDataW[] = {'A','p','p','D','a','t','a','\0'};
 static const WCHAR AppData_RoamingW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\0'};
@@ -784,6 +786,7 @@ static const WCHAR AppData_LocalW[] = {'A','p','p','D','a','t','a','\\','L','o',
 static const WCHAR Application_DataW[] = {'A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
 static const WCHAR CacheW[] = {'C','a','c','h','e','\0'};
 static const WCHAR CD_BurningW[] = {'C','D',' ','B','u','r','n','i','n','g','\0'};
+static const WCHAR ChangeRemoveProgramsFolderW[] = {'C','h','a','n','g','e','R','e','m','o','v','e','P','r','o','g','r','a','m','s','F','o','l','d','e','r',0};
 static const WCHAR Common_Administrative_ToolsW[] = {'C','o','m','m','o','n',' ','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR Common_AppDataW[] = {'C','o','m','m','o','n',' ','A','p','p','D','a','t','a','\0'};
 static const WCHAR Common_DesktopW[] = {'C','o','m','m','o','n',' ','D','e','s','k','t','o','p','\0'};
@@ -799,25 +802,37 @@ static const WCHAR Common_StartupW[] = {'C','o','m','m','o','n',' ','S','t','a',
 static const WCHAR Common_Start_MenuW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t',' ','M','e','n','u','\0'};
 static const WCHAR Common_TemplatesW[] = {'C','o','m','m','o','n',' ','T','e','m','p','l','a','t','e','s','\0'};
 static const WCHAR CommonVideoW[] = {'C','o','m','m','o','n','V','i','d','e','o','\0'};
+static const WCHAR ConflictFolderW[] = {'C','o','n','f','l','i','c','t','F','o','l','d','e','r',0};
 static const WCHAR ConnectionsFolderW[] = {'C','o','n','n','e','c','t','i','o','n','s','F','o','l','d','e','r',0};
 static const WCHAR ContactsW[] = {'C','o','n','t','a','c','t','s','\0'};
 static const WCHAR ControlPanelFolderW[] = {'C','o','n','t','r','o','l','P','a','n','e','l','F','o','l','d','e','r',0};
 static const WCHAR CookiesW[] = {'C','o','o','k','i','e','s','\0'};
 static const WCHAR DesktopW[] = {'D','e','s','k','t','o','p','\0'};
+static const WCHAR Device_Metadata_StoreW[] = {'D','e','v','i','c','e',' ','M','e','t','a','d','a','t','a',' ','S','t','o','r','e',0};
 static const WCHAR DocumentsW[] = {'D','o','c','u','m','e','n','t','s','\0'};
+static const WCHAR DocumentsLibraryW[] = {'D','o','c','u','m','e','n','t','s','L','i','b','r','a','r','y','\0'};
+static const WCHAR Documents_librarymsW[] = {'D','o','c','u','m','e','n','t','s','.','l','i','b','r','a','r','y','-','m','s',0};
 static const WCHAR DownloadsW[] = {'D','o','w','n','l','o','a','d','s','\0'};
 static const WCHAR FavoritesW[] = {'F','a','v','o','r','i','t','e','s','\0'};
 static const WCHAR FontsW[] = {'F','o','n','t','s','\0'};
+static const WCHAR GamesW[] = {'G','a','m','e','s',0};
+static const WCHAR GameTasksW[] = {'G','a','m','e','T','a','s','k','s',0};
 static const WCHAR HistoryW[] = {'H','i','s','t','o','r','y','\0'};
+static const WCHAR HomeGroupFolderW[] = {'H','o','m','e','G','r','o','u','p','F','o','l','d','e','r',0};
+static const WCHAR ImplicitAppShortcutsW[] = {'I','m','p','l','i','c','i','t','A','p','p','S','h','o','r','t','c','u','t','s',0};
 static const WCHAR InternetFolderW[] = {'I','n','t','e','r','n','e','t','F','o','l','d','e','r',0};
+static const WCHAR LibrariesW[] = {'L','i','b','r','a','r','i','e','s',0};
 static const WCHAR LinksW[] = {'L','i','n','k','s','\0'};
 static const WCHAR Local_AppDataW[] = {'L','o','c','a','l',' ','A','p','p','D','a','t','a','\0'};
 static const WCHAR Local_Settings_Application_DataW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
 static const WCHAR Local_Settings_CD_BurningW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\\','M','i','c','r','o','s','o','f','t','\\','C','D',' ','B','u','r','n','i','n','g','\0'};
 static const WCHAR Local_Settings_HistoryW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','H','i','s','t','o','r','y','\0'};
 static const WCHAR Local_Settings_Temporary_Internet_FilesW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s','\0'};
+static const WCHAR LocalizedResourcesDirW[] = {'L','o','c','a','l','i','z','e','d','R','e','s','o','u','r','c','e','s','D','i','r',0};
+static const WCHAR Microsoft_Windows_Burn_BurnW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','B','u','r','n','\\','B','u','r','n',0};
 static const WCHAR Microsoft_Windows_CookiesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','o','o','k','i','e','s',0};
 static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p','l','o','r','e','r','\0'};
+static const WCHAR Microsoft_Windows_DeviceMetadataStoreW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','D','e','v','i','c','e','M','e','t','a','d','a','t','a','S','t','o','r','e',0};
 static const WCHAR Microsoft_Windows_HistoryW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','H','i','s','t','o','r','y',0};
 static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
 static const WCHAR Microsoft_Windows_Network_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','N','e','t','w','o','r','k',' ','S','h','o','r','t','c','u','t','s',0};
@@ -861,6 +876,7 @@ static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i',
 static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
 static const WCHAR RecentW[] = {'R','e','c','e','n','t','\0'};
 static const WCHAR RecycleBinFolderW[] = {'R','e','c','y','c','l','e','B','i','n','F','o','l','d','e','r',0};
+static const WCHAR ResourceDirW[] = {'R','e','s','o','u','r','c','e','D','i','r','\0'};
 static const WCHAR ResourcesW[] = {'R','e','s','o','u','r','c','e','s','\0'};
 static const WCHAR Saved_GamesW[] = {'S','a','v','e','d',' ','G','a','m','e','s','\0'};
 static const WCHAR SearchesW[] = {'S','e','a','r','c','h','e','s','\0'};
@@ -895,6 +911,9 @@ static const WCHAR szKnownFolderDescriptions[] = {'S','o','f','t','w','a','r','e
 static const WCHAR szKnownFolderRedirections[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','E','x','p','l','o','r','e','r','\\','U','s','e','r',' ','S','h','e','l','l',' ','F','o','l','d','e','r','s',0};
 static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 
+#define CHANGEREMOVEPROGRAMS_PARSING_GUID '{','7','b','8','1','b','e','6','a','-','c','e','2','b','-','4','6','7','6','-','a','2','9','e','-','e','b','9','0','7','a','5','1','2','6','c','5','}'
+#define COMPUTERFOLDER_PARSING_GUID '{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}'
+#define SYNCMANAGER_PARSING_GUID '{','9','C','7','3','F','5','E','5','-','7','A','E','7','-','4','E','3','2','-','A','8','E','8','-','8','D','2','3','B','8','5','2','5','5','B','F','}'
 #define SYSTEMFOLDERS_PARSING_GUID '{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}'
 #define USERFOLDERS_PARSING_GUID '{','5','9','0','3','1','a','4','7','-','3','f','7','2','-','4','4','a','7','-','8','9','c','5','-','5','5','9','5','f','e','6','b','3','0','e','e','}'
 #define USERSLIBRARIES_PARSING_GUID '{','0','3','1','E','4','8','2','5','-','7','B','9','4','-','4','d','c','3','-','B','1','3','1','-','E','9','4','6','B','4','4','C','8','D','D','5','}'
@@ -902,15 +921,23 @@ static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 static const WCHAR ComputerFolderParsingNameW[] = {':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
 static const WCHAR ControlPanelFolderParsingNameW[] = {':',':','{','2','6','E','E','0','6','6','8','-','A','0','0','A','-','4','4','D','7','-','9','3','7','1','-','B','E','B','0','6','4','C','9','8','6','8','3','}','\\','0',0};
 static const WCHAR ControlPanelFolderRelativePathW[] = {':',':','{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
+static const WCHAR GamesParsingNameW[] = {':',':','{','E','D','2','2','8','F','D','F','-','9','E','A','8','-','4','8','7','0','-','8','3','b','1','-','9','6','b','0','2','C','F','E','0','D','5','2','}',0};
+static const WCHAR HomeGroupParsingNameW[] = {':',':','{','B','4','F','B','3','F','9','8','-','C','1','E','A','-','4','2','8','d','-','A','7','8','A','-','D','1','F','5','6','5','9','C','B','A','9','3','}',0};
 static const WCHAR InternetFolderParsingNameW[] = {':',':','{','8','7','1','C','5','3','8','0','-','4','2','A','0','-','1','0','6','9','-','A','2','E','A','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
 static const WCHAR NetworkFolderParsingNameW[] = {':',':','{','F','0','2','C','1','A','0','D','-','B','E','2','1','-','4','3','5','0','-','8','8','B','0','-','7','3','6','7','F','C','9','6','E','F','3','C','}',0};
 static const WCHAR RecycleBinFolderParsingNameW[] = {':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-','1','0','1','B','-','9','F','0','8','-','0','0','A','A','0','0','2','F','9','5','4','E','}',0};
+static const WCHAR AddNewProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','1','5','e','a','e','9','2','e','-','f','1','7','a','-','4','4','3','1','-','9','f','2','8','-','8','0','5','e','4','8','2','d','a','f','d','4','}',0};
 static const WCHAR ConnectionsFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','7','0','0','7','A','C','C','7','-','3','2','0','2','-','1','1','D','1','-','A','A','D','2','-','0','0','8','0','5','F','C','1','2','7','0','E','}',0};
 static const WCHAR PrintersFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID ,'\\',':',':','{','2','2','2','7','A','2','8','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','E','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
+static const WCHAR AppUpdatesParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, '\\',':',':','{','d','4','5','0','a','8','a','1','-','9','5','6','8','-','4','5','c','7','-','9','c','0','e','-','b','4','f','9','f','b','4','5','3','7','b','d','}',0};
+static const WCHAR ChangeRemoveProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, 0};
+static const WCHAR ConflictFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, '\\',':',':','{','E','4','1','3','D','0','4','0','-','6','7','8','8','-','4','C','2','2','-','9','5','7','E','-','1','7','5','D','1','C','5','1','3','A','3','4','}',',',0};
+static const WCHAR ContactsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','5','6','7','8','4','8','5','4','-','C','6','C','B','-','4','6','2','B','-','8','1','6','9','-','8','8','E','3','5','0','A','C','B','8','8','2','}',0};
 static const WCHAR DocumentsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID ,'\\','{','F','D','D','3','9','A','D','0','-','2','3','8','F','-','4','6','A','F','-','A','D','B','4','-','6','C','8','5','4','8','0','3','6','9','C','7','}',0};
 static const WCHAR MusicParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','4','B','D','8','D','5','7','1','-','6','D','1','9','-','4','8','D','3','-','B','E','9','7','-','4','2','2','2','2','0','0','8','0','E','4','3','}',0};
 static const WCHAR PicturesParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','3','3','E','2','8','1','3','0','-','4','E','1','E','-','4','6','7','6','-','8','3','5','A','-','9','8','3','9','5','C','3','B','C','3','B','B','}',0};
 static const WCHAR VideosParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','1','8','9','8','9','B','1','D','-','9','9','B','5','-','4','5','5','B','-','8','4','1','C','-','A','B','7','C','7','4','E','4','D','D','F','C','}',0};
+static const WCHAR DocumentsLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','7','b','0','d','b','1','7','d','-','9','c','d','2','-','4','a','9','3','-','9','7','3','3','-','4','6','c','c','8','9','0','2','2','e','7','c','}',0};
 static const WCHAR VideosLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','4','9','1','E','9','2','2','F','-','5','6','4','3','-','4','a','f','4','-','A','7','E','B','-','4','E','7','A','1','3','8','D','8','1','7','4','}',0};
 
 typedef enum _CSIDL_Type {
@@ -1922,43 +1949,141 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PublicMusic,
         CSIDL_Type_AllUsers,
         CommonMusicW,
-        MusicW
+        MusicW,
+
+        KF_CATEGORY_COMMON, /* category */
+        CommonMusicW, /* name */
+        NULL, /* description */
+        &FOLDERID_Public, /* parent */
+        MusicW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x36 - CSIDL_COMMON_PICTURES */
         &FOLDERID_PublicPictures,
         CSIDL_Type_AllUsers,
         CommonPicturesW,
-        PicturesW
+        PicturesW,
+
+        KF_CATEGORY_COMMON, /* category */
+        CommonPicturesW, /* name */
+        NULL, /* description */
+        &FOLDERID_Public, /* parent */
+        PicturesW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x37 - CSIDL_COMMON_VIDEO */
         &FOLDERID_PublicVideos,
         CSIDL_Type_AllUsers,
         CommonVideoW,
-        VideosW
+        VideosW,
+
+        KF_CATEGORY_COMMON, /* category */
+        CommonVideoW, /* name */
+        NULL, /* description */
+        &FOLDERID_Public, /* parent */
+        VideosW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x38 - CSIDL_RESOURCES */
         &FOLDERID_ResourceDir,
         CSIDL_Type_WindowsPath,
         NULL,
-        ResourcesW
+        ResourcesW,
+
+        KF_CATEGORY_FIXED, /* category */
+        ResourceDirW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x39 - CSIDL_RESOURCES_LOCALIZED */
         &FOLDERID_LocalizedResourcesDir,
         CSIDL_Type_NonExistent,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_FIXED, /* category */
+        LocalizedResourcesDirW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x3a - CSIDL_COMMON_OEM_LINKS */
         &FOLDERID_CommonOEMLinks,
         CSIDL_Type_AllUsers,
         NULL,
-        OEM_LinksW
+        OEM_LinksW,
+
+        KF_CATEGORY_COMMON, /* category */
+        OEM_LinksW, /* name */
+        NULL, /* description */
+        &FOLDERID_ProgramData, /* parent */
+        OEM_LinksW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x3b - CSIDL_CDBURN_AREA */
         &FOLDERID_CDBurning,
         CSIDL_Type_User,
         CD_BurningW,
-        Local_Settings_CD_BurningW
+        Local_Settings_CD_BurningW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        CD_BurningW, /* name */
+        NULL, /* description */
+        &FOLDERID_LocalAppData, /* parent */
+        Microsoft_Windows_Burn_BurnW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x3c unassigned */
         &GUID_NULL,
@@ -1982,37 +2107,121 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_AddNewPrograms,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        AddNewProgramsFolderW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        AddNewProgramsParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x40 */
         &FOLDERID_AppUpdates,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        AppUpdatesFolderW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        AppUpdatesParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x41 */
         &FOLDERID_ChangeRemovePrograms,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        ChangeRemoveProgramsFolderW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        ChangeRemoveProgramsParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x42 */
         &FOLDERID_ConflictFolder,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        ConflictFolderW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        ConflictFolderParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x43 - CSIDL_CONTACTS */
         &FOLDERID_Contacts,
         CSIDL_Type_User,
         NULL,
-        ContactsW
+        ContactsW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        ContactsW, /* name */
+        NULL, /* description */
+        &FOLDERID_Profile, /* parent */
+        ContactsW, /* relative path */
+        ContactsParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x44 */
         &FOLDERID_DeviceMetadataStore,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_COMMON, /* category */
+        Device_Metadata_StoreW, /* name */
+        NULL, /* description */
+        &FOLDERID_ProgramData, /* parent */
+        Microsoft_Windows_DeviceMetadataStoreW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x45 */
         &GUID_NULL,
@@ -2024,43 +2233,141 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_DocumentsLibrary,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        DocumentsLibraryW, /* name */
+        NULL, /* description */
+        &FOLDERID_Libraries, /* parent */
+        Documents_librarymsW, /* relative path */
+        DocumentsLibraryParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE | KFDF_STREAM, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x47 - CSIDL_DOWNLOADS */
         &FOLDERID_Downloads,
         CSIDL_Type_User,
         NULL,
-        DownloadsW
+        DownloadsW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        DownloadsW, /* name */
+        NULL, /* description */
+        &FOLDERID_Profile, /* parent */
+        DownloadsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x48 */
         &FOLDERID_Games,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        GamesW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        GamesParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x49 */
         &FOLDERID_GameTasks,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        GameTasksW, /* name */
+        NULL, /* description */
+        &FOLDERID_LocalAppData, /* parent */
+        Microsoft_Windows_GameExplorerW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4a */
         &FOLDERID_HomeGroup,
         CSIDL_Type_Disallowed,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_VIRTUAL, /* category */
+        HomeGroupFolderW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        HomeGroupParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4b */
         &FOLDERID_ImplicitAppShortcuts,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        ImplicitAppShortcutsW, /* name */
+        NULL, /* description */
+        &FOLDERID_UserPinned, /* parent */
+        ImplicitAppShortcutsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4c */
         &FOLDERID_Libraries,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        LibrariesW, /* name */
+        NULL, /* description */
+        &FOLDERID_RoamingAppData, /* parent */
+        Microsoft_Windows_LibrariesW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4d - CSIDL_LINKS */
         &FOLDERID_Links,
