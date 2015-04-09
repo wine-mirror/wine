@@ -4165,6 +4165,7 @@ static void test_getsockname(void)
     int sa_get_len = sa_set_len;
     static const unsigned char null_padding[] = {0,0,0,0,0,0,0,0};
     int ret;
+    struct hostent *h;
 
     if(WSAStartup(MAKEWORD(2,0), &wsa)){
         trace("Winsock failed: %d. Aborting test\n", WSAGetLastError());
@@ -4212,6 +4213,39 @@ static void test_getsockname(void)
             "getsockname did not zero the sockaddr_in structure\n");
 
     closesocket(sock);
+
+    h = gethostbyname("");
+    if (h && h->h_length == 4) /* this test is only meaningful in IPv4 */
+    {
+        int i;
+        for (i = 0; h->h_addr_list[i]; i++)
+        {
+            char ipstr[32];
+            struct in_addr ip;
+            ip.s_addr = *(ULONG *) h->h_addr_list[i];
+
+            sock = socket(AF_INET, SOCK_DGRAM, 0);
+            ok(sock != INVALID_SOCKET, "socket failed with %d\n", GetLastError());
+
+            memset(&sa_set, 0, sizeof(sa_set));
+            sa_set.sin_family = AF_INET;
+            sa_set.sin_addr.s_addr = ip.s_addr;
+            /* The same address we bind must be the same address we get */
+            ret = bind(sock, (struct sockaddr*)&sa_set, sizeof(sa_set));
+            ok(ret == 0, "bind failed with %d\n", GetLastError());
+            sa_get_len = sizeof(sa_get);
+            ret = getsockname(sock, (struct sockaddr*)&sa_get, &sa_get_len);
+            ok(ret == 0, "getsockname failed with %d\n", GetLastError());
+            strcpy(ipstr, inet_ntoa(sa_get.sin_addr));
+            trace("testing bind on interface %s\n", ipstr);
+todo_wine
+            ok(sa_get.sin_addr.s_addr == sa_set.sin_addr.s_addr,
+               "address does not match: %s != %s", ipstr, inet_ntoa(sa_set.sin_addr));
+
+            closesocket(sock);
+        }
+    }
+
     WSACleanup();
 }
 
