@@ -7572,13 +7572,6 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
 
-    if (surface->container->flags & WINED3D_TEXTURE_CONVERTED)
-    {
-        gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
-        checkGLcall("glEnable(gl_texture_type)");
-        return WINED3D_OK;
-    }
-
     if (is_complex_fixup(surface->resource.format->color_fixup))
         fixup = get_complex_fixup(surface->resource.format->color_fixup);
     else
@@ -7644,8 +7637,6 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         if (!shader)
         {
             FIXME("Unsupported complex fixup %#x, not setting a shader\n", fixup);
-            gl_info->gl_ops.gl.p_glEnable(gl_texture_type);
-            checkGLcall("glEnable(gl_texture_type)");
             return E_NOTIMPL;
         }
 
@@ -7686,18 +7677,6 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
 {
     gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
-    checkGLcall("glDisable(GL_TEXTURE_2D)");
-    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-    }
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-    }
 }
 
 static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
