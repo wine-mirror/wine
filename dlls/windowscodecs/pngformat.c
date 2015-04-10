@@ -442,7 +442,8 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
-        IStream_Release(This->stream);
+        if (This->stream)
+            IStream_Release(This->stream);
         if (This->png_ptr)
             ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
         This->lock.DebugInfo->Spare[0] = 0;
@@ -1218,6 +1219,7 @@ HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
     This->png_ptr = NULL;
     This->info_ptr = NULL;
     This->end_info = NULL;
+    This->stream = NULL;
     This->initialized = FALSE;
     This->image_bits = NULL;
     InitializeCriticalSection(&This->lock);
