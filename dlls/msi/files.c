@@ -32,6 +32,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -493,6 +495,78 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
     return TRUE;
 }
 
+static UINT patch_file( MSIPACKAGE *package, MSIFILEPATCH *patch )
+{
+    UINT r = ERROR_SUCCESS;
+    WCHAR *tmpfile = msi_create_temp_file( package->db );
+
+    if (!tmpfile) return ERROR_INSTALL_FAILURE;
+    if (ApplyPatchToFileW( patch->path, patch->File->TargetPath, tmpfile, 0 ))
+    {
+        DeleteFileW( patch->File->TargetPath );
+        MoveFileW( tmpfile, patch->File->TargetPath );
+    }
+    else
+    {
+        WARN("failed to patch %s: %08x\n", debugstr_w(patch->File->TargetPath), GetLastError());
+        r = ERROR_INSTALL_FAILURE;
+    }
+    DeleteFileW( patch->path );
+    DeleteFileW( tmpfile );
+    msi_free( tmpfile );
+    return r;
+}
+
+static UINT patch_assembly( MSIPACKAGE *package, MSIASSEMBLY *assembly, MSIFILEPATCH *patch )
+{
+    UINT r = ERROR_FUNCTION_FAILED;
+    IAssemblyName *name;
+    IAssemblyEnum *iter;
+
+    if (!(iter = msi_create_assembly_enum( package, assembly->display_name )))
+        return ERROR_FUNCTION_FAILED;
+
+    while ((IAssemblyEnum_GetNextAssembly( iter, NULL, &name, 0 ) == S_OK))
+    {
+        WCHAR *displayname, *path;
+        UINT len = 0;
+        HRESULT hr;
+
+        hr = IAssemblyName_GetDisplayName( name, NULL, &len, 0 );
+        if (hr != E_NOT_SUFFICIENT_BUFFER || !(displayname = msi_alloc( len * sizeof(WCHAR) )))
+            break;
+
+        hr = IAssemblyName_GetDisplayName( name, displayname, &len, 0 );
+        if (FAILED( hr ))
+        {
+            msi_free( displayname );
+            break;
+        }
+
+        if ((path = msi_get_assembly_path( package, displayname )))
+        {
+            if (!CopyFileW( path, patch->File->TargetPath, FALSE ))
+            {
+                ERR("Failed to copy file %s -> %s (%u)\n", debugstr_w(path),
+                    debugstr_w(patch->File->TargetPath), GetLastError() );
+                msi_free( path );
+                msi_free( displayname );
+                IAssemblyName_Release( name );
+                break;
+            }
+            r = patch_file( package, patch );
+            msi_free( path );
+        }
+
+        msi_free( displayname );
+        IAssemblyName_Release( name );
+        if (r == ERROR_SUCCESS) break;
+    }
+
+    IAssemblyEnum_Release( iter );
+    return r;
+}
+
 UINT ACTION_PatchFiles( MSIPACKAGE *package )
 {
     MSIFILEPATCH *patch;
@@ -549,34 +623,28 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
 
     LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
     {
-        WCHAR *tmpfile;
-        BOOL ret;
+        MSICOMPONENT *comp = patch->File->Component;
 
         if (!patch->path) continue;
 
-        if (!(tmpfile = msi_create_temp_file( package->db )))
-        {
-            rc = ERROR_INSTALL_FAILURE;
-            goto done;
-        }
-        ret = ApplyPatchToFileW( patch->path, patch->File->TargetPath, tmpfile, 0 );
-        if (ret)
-        {
-            DeleteFileW( patch->File->TargetPath );
-            MoveFileW( tmpfile, patch->File->TargetPath );
-        }
+        if (msi_is_global_assembly( comp ))
+            rc = patch_assembly( package, comp->assembly, patch );
         else
-            WARN("failed to patch %s: %08x\n", debugstr_w(patch->File->TargetPath), GetLastError());
+            rc = patch_file( package, patch );
 
-        DeleteFileW( patch->path );
-        DeleteFileW( tmpfile );
-        msi_free( tmpfile );
-
-        if (!ret && !(patch->Attributes & msidbPatchAttributesNonVital))
+        if (rc && !(patch->Attributes & msidbPatchAttributesNonVital))
         {
             ERR("Failed to apply patch to file: %s\n", debugstr_w(patch->File->File));
-            rc = ERROR_INSTALL_FAILURE;
-            goto done;
+            break;
+        }
+
+        if (msi_is_global_assembly( comp ))
+        {
+            if ((rc = msi_install_assembly( package, comp )))
+            {
+                ERR("Failed to install patched assembly\n");
+                break;
+            }
         }
     }
 
