@@ -421,12 +421,12 @@ static void test_CreateAssemblyNameObject(void)
        broken(hr == E_INVALIDARG), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
 
+    str[0] = 'a';
     size = MAX_PATH;
-    str[0] = '\0';
     hr = IAssemblyName_GetName(name, &size, str);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!str[0], "Expected empty name\n");
-    ok(size == 0, "Expected 0, got %d\n", size);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(str[0] == 'a', "got %c\n", str[0]);
+    ok(!size, "got %u\n", size);
 
     hi = 0xbeefcace;
     lo = 0xcafebabe;
@@ -456,6 +456,26 @@ static void test_CreateAssemblyNameObject(void)
     ok(hr == FUSION_E_INVALID_NAME ||
        broken(hr == S_OK), /* .NET 1.x */
        "Expected FUSION_E_INVALID_NAME, got %08x\n", hr);
+
+    size = 0;
+    hr = IAssemblyName_GetName(name, &size, NULL);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
+    ok(size == 1, "got %u\n", size);
+
+    if (0) /* crash */
+    {
+    str[0] = '\0';
+    hr = IAssemblyName_GetName(name, NULL, str);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
+    ok(!str[0], "got %c\n", str[0]);
+    }
+
+    size = 0;
+    str[0] = '\0';
+    hr = IAssemblyName_GetName(name, &size, str);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
+    ok(!str[0], "got %c\n", str[0]);
+    ok(size == 1, "got %u\n", size);
 
     size = MAX_PATH;
     str[0] = '\0';
@@ -493,6 +513,13 @@ static void test_CreateAssemblyNameObject(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok_aw("wine", str);
     ok(size == 5, "Expected 5, got %d\n", size);
+
+    size = 0;
+    str[0] = 0;
+    hr = IAssemblyName_GetName(name, &size, str);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
+    ok(!str[0], "got %c\n", str[0]);
+    ok(size == 5, "got %u\n", size);
 
     size = MAX_PATH;
     str[0] = '\0';

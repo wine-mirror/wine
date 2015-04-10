@@ -369,19 +369,24 @@ static HRESULT WINAPI IAssemblyNameImpl_GetName(IAssemblyName *iface,
                                                 WCHAR *pwzName)
 {
     IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
+    DWORD len;
 
     TRACE("(%p, %p, %p)\n", iface, lpcwBuffer, pwzName);
 
-    if (!name->name)
+    if (name->name)
+        len = strlenW(name->name) + 1;
+    else
+        len = 0;
+
+    if (*lpcwBuffer < len)
     {
-        *pwzName = '\0';
-        *lpcwBuffer = 0;
-        return S_OK;
+        *lpcwBuffer = len;
+        return E_NOT_SUFFICIENT_BUFFER;
     }
+    if (!name->name) lpcwBuffer[0] = 0;
+    else strcpyW(pwzName, name->name);
 
-    lstrcpyW(pwzName, name->name);
-    *lpcwBuffer = lstrlenW(pwzName) + 1;
-
+    *lpcwBuffer = len;
     return S_OK;
 }
 
