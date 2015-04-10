@@ -487,7 +487,7 @@ UINT WINAPI MsiApplyMultiplePatchesW(LPCWSTR szPatchPackages,
         r = MSI_ApplyPatchW(patch, szProductCode, szPropertiesList);
         msi_free(patch);
 
-        if (r != ERROR_SUCCESS)
+        if (r != ERROR_SUCCESS || !*end)
             break;
 
         beg = ++end;
