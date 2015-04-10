@@ -791,12 +791,14 @@ static const WCHAR Common_Administrative_ToolsW[] = {'C','o','m','m','o','n',' '
 static const WCHAR Common_AppDataW[] = {'C','o','m','m','o','n',' ','A','p','p','D','a','t','a','\0'};
 static const WCHAR Common_DesktopW[] = {'C','o','m','m','o','n',' ','D','e','s','k','t','o','p','\0'};
 static const WCHAR Common_DocumentsW[] = {'C','o','m','m','o','n',' ','D','o','c','u','m','e','n','t','s','\0'};
+static const WCHAR CommonDownloadsW[] = {'C','o','m','m','o','n','D','o','w','n','l','o','a','d','s',0};
 static const WCHAR Common_FavoritesW[] = {'C','o','m','m','o','n',' ','F','a','v','o','r','i','t','e','s','\0'};
 static const WCHAR CommonFilesDirW[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r','\0'};
 static const WCHAR CommonFilesDirX86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR CommonMusicW[] = {'C','o','m','m','o','n','M','u','s','i','c','\0'};
 static const WCHAR CommonPicturesW[] = {'C','o','m','m','o','n','P','i','c','t','u','r','e','s','\0'};
 static const WCHAR Common_ProgramsW[] = {'C','o','m','m','o','n',' ','P','r','o','g','r','a','m','s','\0'};
+static const WCHAR CommonRingtonesW[] = {'C','o','m','m','o','n','R','i','n','g','t','o','n','e','s',0};
 static const WCHAR Common_StartUpW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t','U','p','\0'};
 static const WCHAR Common_StartupW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t','u','p','\0'};
 static const WCHAR Common_Start_MenuW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t',' ','M','e','n','u','\0'};
@@ -828,6 +830,7 @@ static const WCHAR Local_Settings_Application_DataW[] = {'L','o','c','a','l',' '
 static const WCHAR Local_Settings_CD_BurningW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\\','M','i','c','r','o','s','o','f','t','\\','C','D',' ','B','u','r','n','i','n','g','\0'};
 static const WCHAR Local_Settings_HistoryW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','H','i','s','t','o','r','y','\0'};
 static const WCHAR Local_Settings_Temporary_Internet_FilesW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s','\0'};
+static const WCHAR LocalAppDataLowW[] = {'L','o','c','a','l','A','p','p','D','a','t','a','L','o','w',0};
 static const WCHAR LocalizedResourcesDirW[] = {'L','o','c','a','l','i','z','e','d','R','e','s','o','u','r','c','e','s','D','i','r',0};
 static const WCHAR Microsoft_Windows_Burn_BurnW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','B','u','r','n','\\','B','u','r','n',0};
 static const WCHAR Microsoft_Windows_CookiesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','o','o','k','i','e','s',0};
@@ -836,6 +839,7 @@ static const WCHAR Microsoft_Windows_DeviceMetadataStoreW[] = {'M','i','c','r','
 static const WCHAR Microsoft_Windows_HistoryW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','H','i','s','t','o','r','y',0};
 static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
 static const WCHAR Microsoft_Windows_Network_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','N','e','t','w','o','r','k',' ','S','h','o','r','t','c','u','t','s',0};
+static const WCHAR Microsoft_Windows_Photo_Gallery_Original_ImagesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','P','h','o','t','o',' ','G','a','l','l','e','r','y','\\','O','r','i','g','i','n','a','l',' ','I','m','a','g','e','s',0};
 static const WCHAR Microsoft_Windows_Printer_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','P','r','i','n','t','e','r',' ','S','h','o','r','t','c','u','t','s',0};
 static const WCHAR Microsoft_Windows_RecentW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','e','c','e','n','t','\0'};
 static const WCHAR Microsoft_Windows_RingtonesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','i','n','g','t','o','n','e','s','\0'};
@@ -845,6 +849,8 @@ static const WCHAR Microsoft_Windows_TemplatesW[] = {'M','i','c','r','o','s','o'
 static const WCHAR Microsoft_Windows_Temporary_Internet_FilesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s',0};
 static const WCHAR MoviesW[] = {'M','o','v','i','e','s','\0'};
 static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
+static const WCHAR MusicLibraryW[] = {'M','u','s','i','c','L','i','b','r','a','r','y',0};
+static const WCHAR Music_librarymsW[] = {'M','u','s','i','c','.','l','i','b','r','a','r','y','-','m','s',0};
 static const WCHAR Music_PlaylistsW[] = {'M','u','s','i','c','\\','P','l','a','y','l','i','s','t','s','\0'};
 static const WCHAR Music_Sample_MusicW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','M','u','s','i','c','\0'};
 static const WCHAR Music_Sample_PlaylistsW[] = {'M','u','s','i','c','\\','S','a','m','p','l','e',' ','P','l','a','y','l','i','s','t','s','\0'};
@@ -856,24 +862,34 @@ static const WCHAR MyComputerFolderW[] = {'M','y','C','o','m','p','u','t','e','r
 static const WCHAR NetHoodW[] = {'N','e','t','H','o','o','d','\0'};
 static const WCHAR NetworkPlacesFolderW[] = {'N','e','t','w','o','r','k','P','l','a','c','e','s','F','o','l','d','e','r',0};
 static const WCHAR OEM_LinksW[] = {'O','E','M',' ','L','i','n','k','s','\0'};
+static const WCHAR Original_ImagesW[] = {'O','r','i','g','i','n','a','l',' ','I','m','a','g','e','s',0};
 static const WCHAR PersonalW[] = {'P','e','r','s','o','n','a','l','\0'};
+static const WCHAR PhotoAlbumsW[] = {'P','h','o','t','o','A','l','b','u','m','s',0};
 static const WCHAR PicturesW[] = {'P','i','c','t','u','r','e','s','\0'};
+static const WCHAR PicturesLibraryW[] = {'P','i','c','t','u','r','e','s','L','i','b','r','a','r','y',0};
+static const WCHAR Pictures_librarymsW[] = {'P','i','c','t','u','r','e','s','.','l','i','b','r','a','r','y','-','m','s',0};
 static const WCHAR Pictures_Sample_PicturesW[] = {'P','i','c','t','u','r','e','s','\\','S','a','m','p','l','e',' ','P','i','c','t','u','r','e','s','\0'};
 static const WCHAR Pictures_Slide_ShowsW[] = {'P','i','c','t','u','r','e','s','\\','S','l','i','d','e',' ','S','h','o','w','s','\0'};
+static const WCHAR PlaylistsW[] = {'P','l','a','y','l','i','s','t','s',0};
 static const WCHAR PrintersFolderW[] = {'P','r','i','n','t','e','r','s','F','o','l','d','e','r',0};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
 static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
 static const WCHAR Program_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','X','8','6','\0'};
+static const WCHAR ProgramFilesX64W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','X','6','4','\0'};
 static const WCHAR Program_Files_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
 static const WCHAR Program_Files_x86W[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\0'};
 static const WCHAR Program_Files_x86_Common_FilesW[] = {'P','r','o','g','r','a','m',' ','F','i','l','e','s',' ','(','x','8','6',')','\\','C','o','m','m','o','n',' ','F','i','l','e','s','\0'};
 static const WCHAR ProgramFilesCommonW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n',0};
 static const WCHAR ProgramFilesCommonX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n','X','8','6',0};
+static const WCHAR ProgramFilesCommonX64W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','C','o','m','m','o','n','X','6','4',0};
 static const WCHAR ProgramFilesDirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r','\0'};
 static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
+static const WCHAR PublicW[] = {'P','u','b','l','i','c',0};
+static const WCHAR PublicGameTasksW[] = {'P','u','b','l','i','c','G','a','m','e','T','a','s','k','s',0};
+static const WCHAR PublicLibrariesW[] = {'P','u','b','l','i','c','L','i','b','r','a','r','i','e','s',0};
 static const WCHAR RecentW[] = {'R','e','c','e','n','t','\0'};
 static const WCHAR RecycleBinFolderW[] = {'R','e','c','y','c','l','e','B','i','n','F','o','l','d','e','r',0};
 static const WCHAR ResourceDirW[] = {'R','e','s','o','u','r','c','e','D','i','r','\0'};
@@ -881,6 +897,7 @@ static const WCHAR ResourcesW[] = {'R','e','s','o','u','r','c','e','s','\0'};
 static const WCHAR Saved_GamesW[] = {'S','a','v','e','d',' ','G','a','m','e','s','\0'};
 static const WCHAR SearchesW[] = {'S','e','a','r','c','h','e','s','\0'};
 static const WCHAR SendToW[] = {'S','e','n','d','T','o','\0'};
+static const WCHAR Slide_ShowsW[] = {'S','l','i','d','e',' ','S','h','o','w','s',0};
 static const WCHAR StartUpW[] = {'S','t','a','r','t','U','p','\0'};
 static const WCHAR StartupW[] = {'S','t','a','r','t','u','p','\0'};
 static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'};
@@ -912,7 +929,6 @@ static const WCHAR szKnownFolderRedirections[] = {'S','o','f','t','w','a','r','e
 static const WCHAR AllUsersW[] = {'P','u','b','l','i','c',0};
 
 #define CHANGEREMOVEPROGRAMS_PARSING_GUID '{','7','b','8','1','b','e','6','a','-','c','e','2','b','-','4','6','7','6','-','a','2','9','e','-','e','b','9','0','7','a','5','1','2','6','c','5','}'
-#define COMPUTERFOLDER_PARSING_GUID '{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}'
 #define SYNCMANAGER_PARSING_GUID '{','9','C','7','3','F','5','E','5','-','7','A','E','7','-','4','E','3','2','-','A','8','E','8','-','8','D','2','3','B','8','5','2','5','5','B','F','}'
 #define SYSTEMFOLDERS_PARSING_GUID '{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}'
 #define USERFOLDERS_PARSING_GUID '{','5','9','0','3','1','a','4','7','-','3','f','7','2','-','4','4','a','7','-','8','9','c','5','-','5','5','9','5','f','e','6','b','3','0','e','e','}'
@@ -925,19 +941,23 @@ static const WCHAR GamesParsingNameW[] = {':',':','{','E','D','2','2','8','F','D
 static const WCHAR HomeGroupParsingNameW[] = {':',':','{','B','4','F','B','3','F','9','8','-','C','1','E','A','-','4','2','8','d','-','A','7','8','A','-','D','1','F','5','6','5','9','C','B','A','9','3','}',0};
 static const WCHAR InternetFolderParsingNameW[] = {':',':','{','8','7','1','C','5','3','8','0','-','4','2','A','0','-','1','0','6','9','-','A','2','E','A','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
 static const WCHAR NetworkFolderParsingNameW[] = {':',':','{','F','0','2','C','1','A','0','D','-','B','E','2','1','-','4','3','5','0','-','8','8','B','0','-','7','3','6','7','F','C','9','6','E','F','3','C','}',0};
+static const WCHAR PublicParsingNameW[] = {':',':','{','4','3','3','6','a','5','4','d','-','0','3','8','b','-','4','6','8','5','-','a','b','0','2','-','9','9','b','b','5','2','d','3','f','b','8','b','}',0};
 static const WCHAR RecycleBinFolderParsingNameW[] = {':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-','1','0','1','B','-','9','F','0','8','-','0','0','A','A','0','0','2','F','9','5','4','E','}',0};
 static const WCHAR AddNewProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','1','5','e','a','e','9','2','e','-','f','1','7','a','-','4','4','3','1','-','9','f','2','8','-','8','0','5','e','4','8','2','d','a','f','d','4','}',0};
 static const WCHAR ConnectionsFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','7','0','0','7','A','C','C','7','-','3','2','0','2','-','1','1','D','1','-','A','A','D','2','-','0','0','8','0','5','F','C','1','2','7','0','E','}',0};
-static const WCHAR PrintersFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID ,'\\',':',':','{','2','2','2','7','A','2','8','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','E','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
-static const WCHAR AppUpdatesParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, '\\',':',':','{','d','4','5','0','a','8','a','1','-','9','5','6','8','-','4','5','c','7','-','9','c','0','e','-','b','4','f','9','f','b','4','5','3','7','b','d','}',0};
+static const WCHAR PrintersFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':','{','2','2','2','7','A','2','8','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','E','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0};
 static const WCHAR ChangeRemoveProgramsParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, 0};
+static const WCHAR AppUpdatesParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', CHANGEREMOVEPROGRAMS_PARSING_GUID, '\\',':',':','{','d','4','5','0','a','8','a','1','-','9','5','6','8','-','4','5','c','7','-','9','c','0','e','-','b','4','f','9','f','b','4','5','3','7','b','d','}',0};
 static const WCHAR ConflictFolderParsingNameW[] = {':',':', SYSTEMFOLDERS_PARSING_GUID, '\\',':',':', SYNCMANAGER_PARSING_GUID, '\\',':',':','{','E','4','1','3','D','0','4','0','-','6','7','8','8','-','4','C','2','2','-','9','5','7','E','-','1','7','5','D','1','C','5','1','3','A','3','4','}',',',0};
 static const WCHAR ContactsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','5','6','7','8','4','8','5','4','-','C','6','C','B','-','4','6','2','B','-','8','1','6','9','-','8','8','E','3','5','0','A','C','B','8','8','2','}',0};
 static const WCHAR DocumentsParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID ,'\\','{','F','D','D','3','9','A','D','0','-','2','3','8','F','-','4','6','A','F','-','A','D','B','4','-','6','C','8','5','4','8','0','3','6','9','C','7','}',0};
+static const WCHAR LinksParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','b','f','b','9','d','5','e','0','-','c','6','a','9','-','4','0','4','c','-','b','2','b','2','-','a','e','6','d','b','6','a','f','4','9','6','8','}',0};
 static const WCHAR MusicParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','4','B','D','8','D','5','7','1','-','6','D','1','9','-','4','8','D','3','-','B','E','9','7','-','4','2','2','2','2','0','0','8','0','E','4','3','}',0};
 static const WCHAR PicturesParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','3','3','E','2','8','1','3','0','-','4','E','1','E','-','4','6','7','6','-','8','3','5','A','-','9','8','3','9','5','C','3','B','C','3','B','B','}',0};
 static const WCHAR VideosParsingNameW[] = {':',':', USERFOLDERS_PARSING_GUID, '\\','{','1','8','9','8','9','B','1','D','-','9','9','B','5','-','4','5','5','B','-','8','4','1','C','-','A','B','7','C','7','4','E','4','D','D','F','C','}',0};
 static const WCHAR DocumentsLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','7','b','0','d','b','1','7','d','-','9','c','d','2','-','4','a','9','3','-','9','7','3','3','-','4','6','c','c','8','9','0','2','2','e','7','c','}',0};
+static const WCHAR MusicLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','2','1','1','2','A','B','0','A','-','C','8','6','A','-','4','f','f','e','-','A','3','6','8','-','0','D','E','9','6','E','4','7','0','1','2','E','}',0};
+static const WCHAR PicturesLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','A','9','9','0','A','E','9','F','-','A','0','3','B','-','4','e','8','0','-','9','4','B','C','-','9','9','1','2','D','7','5','0','4','1','0','4','}',0};
 static const WCHAR VideosLibraryParsingNameW[] = {':',':', USERSLIBRARIES_PARSING_GUID, '\\','{','4','9','1','E','9','2','2','F','-','5','6','4','3','-','4','a','f','4','-','A','7','E','B','-','4','E','7','A','1','3','8','D','8','1','7','4','}',0};
 
 typedef enum _CSIDL_Type {
@@ -2373,85 +2393,281 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Links,
         CSIDL_Type_User,
         NULL,
-        LinksW
+        LinksW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        LinksW, /* name */
+        NULL, /* description */
+        &FOLDERID_Profile, /* parent */
+        LinksW, /* relative path */
+        LinksParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_ROAMABLE | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4e - CSIDL_APPDATA_LOCALLOW */
         &FOLDERID_LocalAppDataLow,
         CSIDL_Type_User,
         NULL,
-        AppData_LocalLowW
+        AppData_LocalLowW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        LocalAppDataLowW, /* name */
+        NULL, /* description */
+        &FOLDERID_Profile, /* parent */
+        AppData_LocalLowW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, /* attributes */
+        KFDF_LOCAL_REDIRECT_ONLY | KFDF_PRECREATE | KFDF_PUBLISHEXPANDEDPATH, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x4f */
         &FOLDERID_MusicLibrary,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        MusicLibraryW, /* name */
+        NULL, /* description */
+        &FOLDERID_Libraries, /* parent */
+        Music_librarymsW, /* relative path */
+        MusicLibraryParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE | KFDF_STREAM, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x50 */
         &FOLDERID_OriginalImages,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        Original_ImagesW, /* name */
+        NULL, /* description */
+        &FOLDERID_LocalAppData, /* parent */
+        Microsoft_Windows_Photo_Gallery_Original_ImagesW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x51 */
         &FOLDERID_PhotoAlbums,
         CSIDL_Type_User,
         NULL,
-        Pictures_Slide_ShowsW
+        Pictures_Slide_ShowsW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        PhotoAlbumsW, /* name */
+        NULL, /* description */
+        &FOLDERID_Pictures, /* parent */
+        Slide_ShowsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x52 */
         &FOLDERID_PicturesLibrary,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_PERUSER, /* category */
+        PicturesLibraryW, /* name */
+        NULL, /* description */
+        &FOLDERID_Libraries, /* parent */
+        Pictures_librarymsW, /* relative path */
+        PicturesLibraryParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE | KFDF_STREAM, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x53 */
         &FOLDERID_Playlists,
         CSIDL_Type_User,
         NULL,
-        Music_PlaylistsW
+        Music_PlaylistsW,
+
+        KF_CATEGORY_PERUSER, /* category */
+        PlaylistsW, /* name */
+        NULL, /* description */
+        &FOLDERID_Music, /* parent */
+        PlaylistsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x54 */
         &FOLDERID_ProgramFilesX64,
         CSIDL_Type_NonExistent,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_FIXED, /* category */
+        ProgramFilesX64W, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x55 */
         &FOLDERID_ProgramFilesCommonX64,
         CSIDL_Type_NonExistent,
         NULL,
-        NULL
+        NULL,
+
+        KF_CATEGORY_FIXED, /* category */
+        ProgramFilesCommonX64W, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        0, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x56 */
         &FOLDERID_Public,
         CSIDL_Type_CurrVer, /* FIXME */
         NULL,
-        UsersPublicW
+        UsersPublicW,
+
+        KF_CATEGORY_FIXED, /* category */
+        PublicW, /* name */
+        NULL, /* description */
+        &GUID_NULL, /* parent */
+        NULL, /* relative path */
+        PublicParsingNameW, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x57 */
         &FOLDERID_PublicDownloads,
         CSIDL_Type_AllUsers,
         NULL,
-        DownloadsW
+        DownloadsW,
+
+        KF_CATEGORY_COMMON, /* category */
+        CommonDownloadsW, /* name */
+        NULL, /* description */
+        &FOLDERID_Public, /* parent */
+        DownloadsW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x58 */
         &FOLDERID_PublicGameTasks,
         CSIDL_Type_AllUsers,
         NULL,
-        Microsoft_Windows_GameExplorerW
+        Microsoft_Windows_GameExplorerW,
+
+        KF_CATEGORY_COMMON, /* category */
+        PublicGameTasksW, /* name */
+        NULL, /* description */
+        &FOLDERID_ProgramData, /* parent */
+        Microsoft_Windows_GameExplorerW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_LOCAL_REDIRECT_ONLY, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x59 */
         &FOLDERID_PublicLibraries,
         CSIDL_Type_AllUsers,
         NULL,
-        Microsoft_Windows_LibrariesW
+        Microsoft_Windows_LibrariesW,
+
+        KF_CATEGORY_COMMON, /* category */
+        PublicLibrariesW, /* name */
+        NULL, /* description */
+        &FOLDERID_Public, /* parent */
+        LibrariesW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x5a */
         &FOLDERID_PublicRingtones,
         CSIDL_Type_AllUsers,
         NULL,
-        Microsoft_Windows_RingtonesW
+        Microsoft_Windows_RingtonesW,
+
+        KF_CATEGORY_COMMON, /* category */
+        CommonRingtonesW, /* name */
+        NULL, /* description */
+        &FOLDERID_ProgramData, /* parent */
+        Microsoft_Windows_RingtonesW, /* relative path */
+        NULL, /* parsing */
+        NULL, /* tooltip */
+        NULL, /* localized */
+        NULL, /* icon */
+        NULL, /* security */
+        0, /* attributes */
+        KFDF_PRECREATE, /* flags */
+        &GUID_NULL /* typeid */
     },
     { /* 0x5b */
         &FOLDERID_QuickLaunch,
