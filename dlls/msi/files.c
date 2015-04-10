@@ -455,7 +455,18 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
 
     if (action == MSICABEXTRACT_BEGINEXTRACT)
     {
+        MSICOMPONENT *comp;
+
         if (!(patch = find_filepatch( package, patch->disk_id, file ))) return FALSE;
+
+        comp = patch->File->Component;
+        comp->Action = msi_get_component_action( package, comp );
+        if (!comp->Enabled || comp->Action != INSTALLSTATE_LOCAL)
+        {
+            TRACE("file %s component %s not installed or disabled\n",
+                  debugstr_w(patch->File->File), debugstr_w(comp->Component));
+            return FALSE;
+        }
 
         patch->path = msi_create_temp_file( package->db );
         *path = strdupW( patch->path );
