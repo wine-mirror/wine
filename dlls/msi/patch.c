@@ -918,6 +918,7 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, const WCHAR *file )
         goto done;
 
     r = ERROR_OUTOFMEMORY;
+    patch->registered = FALSE;
     if (!(patch->filename = strdupW( file ))) goto done;
     if (!(patch->localfile = strdupW( localfile ))) goto done;
 
@@ -1034,6 +1035,7 @@ UINT msi_apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
         msiobj_release( &patch_db->hdr );
         return r;
     }
+    patch_info->registered = TRUE;
     patch_info->localfile = strdupW( patch_file );
     if (!patch_info->localfile)
     {

@@ -193,6 +193,7 @@ typedef struct tagMSIPATCHINFO
     LPWSTR localfile;
     MSIPATCHSTATE state;
     BOOL delete_on_close;
+    BOOL registered;
     UINT disk_id;
 } MSIPATCHINFO;
 

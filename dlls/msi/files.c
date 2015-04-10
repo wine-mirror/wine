@@ -448,6 +448,17 @@ static MSIFILEPATCH *find_filepatch( MSIPACKAGE *package, UINT disk_id, const WC
     return NULL;
 }
 
+static BOOL is_registered_patch_media( MSIPACKAGE *package, UINT disk_id )
+{
+    MSIPATCHINFO *patch;
+
+    LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
+    {
+        if (patch->disk_id == disk_id && patch->registered) return TRUE;
+    }
+    return FALSE;
+}
+
 static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                           LPWSTR *path, DWORD *attrs, PVOID user)
 {
@@ -457,7 +468,8 @@ static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
     {
         MSICOMPONENT *comp;
 
-        if (!(patch = find_filepatch( package, patch->disk_id, file ))) return FALSE;
+        if (is_registered_patch_media( package, patch->disk_id ) ||
+            !(patch = find_filepatch( package, patch->disk_id, file ))) return FALSE;
 
         comp = patch->File->Component;
         comp->Action = msi_get_component_action( package, comp );
