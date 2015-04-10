@@ -58,6 +58,8 @@ static inline BOOL heap_free(void *mem)
 
 static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+static const WCHAR tahomaUppercaseW[] = {'T','A','H','O','M','A',0};
+static const WCHAR tahomaStrangecaseW[] = {'t','A','h','O','m','A',0};
 static const WCHAR blahW[]  = {'B','l','a','h','!',0};
 
 static IDWriteFactory *create_factory(void)
@@ -1372,6 +1374,20 @@ static void test_system_fontcollection(void)
     ret = FALSE;
     i = (UINT32)-1;
     hr = IDWriteFontCollection_FindFamilyName(collection, tahomaW, &i, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret, "got %d\n", ret);
+    ok(i != (UINT32)-1, "got %u\n", i);
+
+    ret = FALSE;
+    i = (UINT32)-1;
+    hr = IDWriteFontCollection_FindFamilyName(collection, tahomaUppercaseW, &i, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret, "got %d\n", ret);
+    ok(i != (UINT32)-1, "got %u\n", i);
+
+    ret = FALSE;
+    i = (UINT32)-1;
+    hr = IDWriteFontCollection_FindFamilyName(collection, tahomaStrangecaseW, &i, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(ret, "got %d\n", ret);
     ok(i != (UINT32)-1, "got %u\n", i);
