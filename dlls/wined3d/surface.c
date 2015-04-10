@@ -3398,7 +3398,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
-    device->blitter->set_shader(device->blit_priv, context, src_surface);
+    device->blitter->set_shader(device->blit_priv, context, src_surface, NULL);
 
     if (alpha_test)
     {
@@ -4290,7 +4290,8 @@ static HRESULT ffp_blit_alloc(struct wined3d_device *device) { return WINED3D_OK
 static void ffp_blit_free(struct wined3d_device *device) { }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
+static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
+        const struct wined3d_color_key *color_key)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -4324,6 +4325,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
+        case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
             if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
                 return FALSE;
 
@@ -4434,7 +4436,8 @@ static void cpu_blit_free(struct wined3d_device *device)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
+static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
+        const struct wined3d_color_key *color_key)
 {
     return WINED3D_OK;
 }
@@ -5078,6 +5081,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
 
     static const DWORD simple_blit = WINEDDBLT_ASYNC
             | WINEDDBLT_COLORFILL
+            | WINEDDBLT_KEYSRC
+            | WINEDDBLT_KEYSRCOVERRIDE
             | WINEDDBLT_WAIT
             | WINEDDBLT_DEPTHFILL
             | WINEDDBLT_DONOTWAIT;
@@ -5290,12 +5295,24 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         }
         else
         {
-            TRACE("Color blit.\n");
+            enum wined3d_blit_op blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
+            const struct wined3d_color_key *color_key = NULL;
 
-            /* Upload */
-            if ((src_surface->locations & WINED3D_LOCATION_SYSMEM)
+            TRACE("Color blit.\n");
+            if (flags & WINEDDBLT_KEYSRCOVERRIDE)
+            {
+                color_key = &fx->ddckSrcColorkey;
+                blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
+            }
+            else if (flags & WINEDDBLT_KEYSRC)
+            {
+                color_key = &src_surface->container->async.src_blt_color_key;
+                blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
+            }
+            else if ((src_surface->locations & WINED3D_LOCATION_SYSMEM)
                     && !(dst_surface->locations & WINED3D_LOCATION_SYSMEM))
             {
+                /* Upload */
                 if (scale)
                     TRACE("Not doing upload because of scaling.\n");
                 else if (convert)
@@ -5312,17 +5329,16 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     }
                 }
             }
-
-            /* Use present for back -> front blits. The idea behind this is
-             * that present is potentially faster than a blit, in particular
-             * when FBO blits aren't available. Some ddraw applications like
-             * Half-Life and Prince of Persia 3D use Blt() from the backbuffer
-             * to the frontbuffer instead of doing a Flip(). D3D8 and D3D9
-             * applications can't blit directly to the frontbuffer. */
-            if (dst_swapchain && dst_swapchain->back_buffers
+            else if (dst_swapchain && dst_swapchain->back_buffers
                     && dst_surface->container == dst_swapchain->front_buffer
                     && src_surface->container == dst_swapchain->back_buffers[0])
             {
+                /* Use present for back -> front blits. The idea behind this is
+                 * that present is potentially faster than a blit, in particular
+                 * when FBO blits aren't available. Some ddraw applications like
+                 * Half-Life and Prince of Persia 3D use Blt() from the backbuffer
+                 * to the frontbuffer instead of doing a Flip(). D3D8 and D3D9
+                 * applications can't blit directly to the frontbuffer. */
                 enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;
 
                 TRACE("Using present for backbuffer -> frontbuffer blit.\n");
@@ -5336,7 +5352,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3D_OK;
             }
 
-            if (fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+            if (fbo_blit_supported(&device->adapter->gl_info, blit_op,
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
             {
@@ -5351,13 +5367,14 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3D_OK;
             }
 
-            if (arbfp_blit.blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+            if (arbfp_blit.blit_supported(&device->adapter->gl_info, blit_op,
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
             {
                 TRACE("Using arbfp blit.\n");
 
-                if (SUCCEEDED(arbfp_blit_surface(device, filter, src_surface, &src_rect, dst_surface, &dst_rect)))
+                if (SUCCEEDED(arbfp_blit_surface(device, filter, src_surface, &src_rect,
+                        dst_surface, &dst_rect, color_key)))
                     return WINED3D_OK;
             }
         }

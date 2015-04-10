@@ -1323,6 +1323,7 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
 enum wined3d_blit_op
 {
     WINED3D_BLIT_OP_COLOR_BLIT,
+    WINED3D_BLIT_OP_COLOR_BLIT_CKEY,
     WINED3D_BLIT_OP_COLOR_FILL,
     WINED3D_BLIT_OP_DEPTH_FILL,
     WINED3D_BLIT_OP_DEPTH_BLIT,
@@ -1334,7 +1335,8 @@ struct blit_shader
 {
     HRESULT (*alloc_private)(struct wined3d_device *device);
     void (*free_private)(struct wined3d_device *device);
-    HRESULT (*set_shader)(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface);
+    HRESULT (*set_shader)(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
+            const struct wined3d_color_key *color_key);
     void (*unset_shader)(const struct wined3d_gl_info *gl_info);
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
             const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
@@ -1357,7 +1359,8 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
 /* Temporary blit_shader helper functions */
 HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
         struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect) DECLSPEC_HIDDEN;
+        struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(const struct wined3d_device *device,
         struct wined3d_surface *target) DECLSPEC_HIDDEN;
