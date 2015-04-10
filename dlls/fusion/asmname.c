@@ -228,12 +228,10 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
                                                        LPDWORD pccDisplayName,
                                                        DWORD dwDisplayFlags)
 {
-    IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
-    WCHAR verstr[30];
-    DWORD size;
-    LPWSTR cultureval = 0;
-
     static const WCHAR equals[] = {'=',0};
+    IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
+    WCHAR verstr[30], *cultureval = NULL;
+    DWORD size;
 
     TRACE("(%p, %p, %p, %d)\n", iface, szDisplayName,
           pccDisplayName, dwDisplayFlags);
@@ -243,9 +241,15 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
         if (!name->displayname || !*name->displayname)
             return FUSION_E_INVALID_NAME;
 
-        size = min(*pccDisplayName, lstrlenW(name->displayname) + 1);
+        size = strlenW(name->displayname) + 1;
 
-        lstrcpynW(szDisplayName, name->displayname, size);
+        if (*pccDisplayName < size)
+        {
+            *pccDisplayName = size;
+            return E_NOT_SUFFICIENT_BUFFER;
+        }
+
+        if (szDisplayName) strcpyW(szDisplayName, name->displayname);
         *pccDisplayName = size;
 
         return S_OK;
