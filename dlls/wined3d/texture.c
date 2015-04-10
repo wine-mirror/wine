@@ -449,6 +449,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
 {
     UINT sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     DWORD flag;
     UINT i;
 
@@ -462,10 +463,11 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
 
-    if (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
+    if (!d3d_info->shader_color_key
+            && (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
             != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
             || (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY
-            && !color_key_equal(&texture->async.gl_color_key, &texture->async.src_blt_color_key)))
+            && !color_key_equal(&texture->async.gl_color_key, &texture->async.src_blt_color_key))))
     {
         unsigned int sub_count = texture->level_count * texture->layer_count;
         unsigned int i;
@@ -664,16 +666,20 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
-    if (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
+    if (!d3d_info->shader_color_key
+            && !(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
             != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
+    {
         wined3d_texture_force_reload(texture);
+
+        if (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+            texture->async.flags |= WINED3D_TEXTURE_ASYNC_COLOR_KEY;
+    }
 
     if (texture->flags & alloc_flag)
         return;
-
-    if (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-        texture->async.flags |= WINED3D_TEXTURE_ASYNC_COLOR_KEY;
 
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
     texture->flags |= alloc_flag;

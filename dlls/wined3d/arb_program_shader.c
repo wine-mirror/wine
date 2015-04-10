@@ -7556,10 +7556,10 @@ static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
         shader_addline(&buffer, "TEMP compare;\n");
         shader_addline(&buffer, "PARAM color_key = program.local[%u];\n", ARBFP_BLIT_PARAM_COLOR_KEY);
         shader_addline(&buffer, "TEX color, fragment.texcoord[0], texture[0], %s;\n", tex_target);
-        shader_addline(&buffer, "SGE compare.r, color.a, color_key.a;\n");
-        shader_addline(&buffer, "SGE compare.g, -color.a, -color_key.a;\n");
-        shader_addline(&buffer, "MUL compare, compare.r, -compare.g;\n");
-        shader_addline(&buffer, "KIL compare;\n");
+        shader_addline(&buffer, "SUB compare, color, color_key;\n");
+        shader_addline(&buffer, "DP4 compare.r, compare, compare;\n");
+        shader_addline(&buffer, "SGE compare, -compare.r, 0.0;\n");
+        shader_addline(&buffer, "KIL -compare;\n");
         shader_addline(&buffer, "MOV result.color, color;\n");
     }
     else
@@ -7599,7 +7599,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
-    float float_color_key[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    struct wined3d_color float_color_key;
 
     if (is_complex_fixup(surface->resource.format->color_fixup))
         fixup = get_complex_fixup(surface->resource.format->color_fixup);
@@ -7699,10 +7699,10 @@ err_out:
     checkGLcall("glProgramLocalParameter4fvARB");
     if (type.use_color_key)
     {
-        if (surface->resource.format->id == WINED3DFMT_P8_UINT)
-            float_color_key[3] = color_key->color_space_low_value / 255.0f;
-
-        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARBFP_BLIT_PARAM_COLOR_KEY, float_color_key));
+        wined3d_format_convert_color_to_float(surface->resource.format, NULL,
+                surface->container->async.src_blt_color_key.color_space_high_value, &float_color_key);
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                ARBFP_BLIT_PARAM_COLOR_KEY, &float_color_key.r));
         checkGLcall("glProgramLocalParameter4fvARB");
     }
 
@@ -7790,10 +7790,6 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     struct wined3d_context *context;
     RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
-    struct wined3d_color_key old_color_key = src_surface->container->async.src_blt_color_key;
-    DWORD old_color_key_flags = src_surface->container->async.color_key_flags;
-
-    wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT, color_key);
 
     /* Activate the destination context, set it up for blitting */
     context = context_acquire(device, dst_surface);
@@ -7839,9 +7835,6 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
     surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
-
-    wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT,
-            (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_color_key : NULL);
 
     return WINED3D_OK;
 }

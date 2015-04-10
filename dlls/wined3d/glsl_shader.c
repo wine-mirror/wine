@@ -143,6 +143,7 @@ struct glsl_ps_program
     GLint specular_enable_location;
     GLint ycorrection_location;
     GLint np2_fixup_location;
+    GLint color_key_location;
     const struct ps_np2fixup_info *np2_fixup_info;
 };
 
@@ -834,6 +835,18 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
 }
 
 /* Context activation is done by the caller (state handler). */
+static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
+{
+    struct wined3d_color float_key;
+    const struct wined3d_texture *texture = state->textures[0];
+
+    wined3d_format_convert_color_to_float(texture->resource.format, NULL,
+            texture->async.src_blt_color_key.color_space_high_value, &float_key);
+    GL_EXTCALL(glUniform4fv(ps->color_key_location, 1, &float_key.r));
+}
+
+/* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
@@ -947,6 +960,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
     if (update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
         shader_glsl_load_np2fixup_constants(&prog->ps, gl_info, state);
+    if (update_mask & WINED3D_SHADER_CONST_FFP_COLOR_KEY)
+        shader_glsl_load_color_key_constant(&prog->ps, gl_info, state);
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
@@ -5499,7 +5514,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
         arg1 = settings->op[stage].carg1 & WINED3DTA_SELECTMASK;
         arg2 = settings->op[stage].carg2 & WINED3DTA_SELECTMASK;
 
-        if (arg0 == WINED3DTA_TEXTURE || arg1 == WINED3DTA_TEXTURE || arg2 == WINED3DTA_TEXTURE)
+        if (arg0 == WINED3DTA_TEXTURE || arg1 == WINED3DTA_TEXTURE || arg2 == WINED3DTA_TEXTURE
+                || (stage == 0 && settings->color_key_enabled))
             tex_map |= 1 << stage;
         if (arg0 == WINED3DTA_TFACTOR || arg1 == WINED3DTA_TFACTOR || arg2 == WINED3DTA_TFACTOR)
             tfactor_used = TRUE;
@@ -5603,6 +5619,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
     }
     if (tfactor_used)
         shader_addline(buffer, "uniform vec4 tex_factor;\n");
+    if (settings->color_key_enabled)
+        shader_addline(buffer, "uniform vec4 color_key;\n");
     shader_addline(buffer, "uniform vec4 specular_enable;\n");
 
     if (settings->sRGB_write)
@@ -5758,6 +5776,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
         shader_glsl_color_correction_ext(buffer, tex_reg_name, WINED3DSP_WRITEMASK_ALL,
                 settings->op[stage].color_fixup);
     }
+
+    if (settings->color_key_enabled)
+        shader_addline(buffer, "if (all(equal(tex0, color_key))) discard;\n");
 
     /* Generate the main shader */
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
@@ -5949,6 +5970,7 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     ps->specular_enable_location = GL_EXTCALL(glGetUniformLocation(program_id, "specular_enable"));
     ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "ps_samplerNP2Fixup"));
     ps->ycorrection_location = GL_EXTCALL(glGetUniformLocation(program_id, "ycorrection"));
+    ps->color_key_location = GL_EXTCALL(glGetUniformLocation(program_id, "color_key"));
 }
 
 static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info, GLuint program_id,
@@ -6245,6 +6267,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
         if (entry->ps.np2_fixup_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
+        if (entry->ps.color_key_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_COLOR_KEY;
     }
 }
 
@@ -7405,7 +7429,8 @@ static void glsl_fragment_pipe_enable(const struct wined3d_gl_info *gl_info, BOO
 static void glsl_fragment_pipe_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
     caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
-            | WINED3D_FRAGMENT_CAP_SRGB_WRITE;
+            | WINED3D_FRAGMENT_CAP_SRGB_WRITE
+            | WINED3D_FRAGMENT_CAP_COLOR_KEY;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP
             | WINED3DPMISCCAPS_PERSTAGECONSTANT;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE

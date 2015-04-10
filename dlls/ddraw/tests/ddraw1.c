@@ -1329,14 +1329,9 @@ static void test_ck_rgba(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        if (i == 2)
-            todo_wine ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
-                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                    tests[i].result1, i, color);
-        else
-            ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
-                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                    tests[i].result1, i, color);
+        ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
+                "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                tests[i].result1, i, color);
 
         U5(fx).dwFillColor = 0xff0000ff;
         hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
@@ -1353,14 +1348,9 @@ static void test_ck_rgba(void)
         /* This tests that fragments that are masked out by the color key are
          * discarded, instead of just fully transparent. */
         color = get_surface_color(rt, 320, 240);
-        if (i == 2)
-            todo_wine ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
-                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                    tests[i].result2, i, color);
-        else
-            ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
-                    "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                    tests[i].result2, i, color);
+        ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
+                "Expected color 0x%08x for test %u, got 0x%08x.\n",
+                tests[i].result2, i, color);
     }
 
     IDirectDrawSurface_Release(rt);

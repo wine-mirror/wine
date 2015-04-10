@@ -931,6 +931,9 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
                 break;
         }
     }
+
+    if (texture->resource.bind_count && op->flags & WINED3D_CKEY_SRC_BLT)
+        device_invalidate_state(cs->device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
 }
 
 void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture *texture,

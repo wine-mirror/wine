@@ -309,6 +309,7 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_FFP_MODELVIEW  0x00000400
 #define WINED3D_SHADER_CONST_FFP_PROJ       0x00000800
 #define WINED3D_SHADER_CONST_FFP_PS         0x00001000
+#define WINED3D_SHADER_CONST_FFP_COLOR_KEY  0x00002000
 
 enum wined3d_shader_register_type
 {
@@ -1258,6 +1259,7 @@ struct StateEntryTemplate
 
 #define WINED3D_FRAGMENT_CAP_PROJ_CONTROL   0x00000001
 #define WINED3D_FRAGMENT_CAP_SRGB_WRITE     0x00000002
+#define WINED3D_FRAGMENT_CAP_COLOR_KEY      0x00000004
 
 struct fragment_caps
 {
@@ -1744,6 +1746,7 @@ struct wined3d_d3d_info
     struct wined3d_ffp_attrib_ops ffp_attrib_ops;
     BOOL xyzrhw;
     BOOL vs_clipping;
+    BOOL shader_color_key;
     DWORD valid_rt_mask;
 };
 
@@ -1816,9 +1819,10 @@ struct ffp_frag_settings
 {
     struct texture_stage_op op[MAX_TEXTURES];
     enum wined3d_ffp_ps_fog_mode fog;
-    /* Use shorts instead of chars to get dword alignment */
-    unsigned short sRGB_write;
-    unsigned short emul_clipplanes;
+    unsigned char sRGB_write;
+    unsigned char emul_clipplanes;
+    unsigned char color_key_enabled;
+    unsigned char padding;
 };
 
 struct ffp_frag_desc

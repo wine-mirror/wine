@@ -3688,6 +3688,8 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
 
+    settings->padding = 0;
+
     for (i = 0; i < d3d_info->limits.ffp_blend_stages; ++i)
     {
         const struct wined3d_texture *texture;
@@ -3915,6 +3917,13 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
     } else {
         settings->emul_clipplanes = 1;
     }
+
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && state->textures[0]
+            && state->textures[0]->async.color_key_flags & WINED3D_CKEY_SRC_BLT
+            && settings->op[0].cop != WINED3D_TOP_DISABLE)
+        settings->color_key_enabled = 1;
+    else
+        settings->color_key_enabled = 0;
 }
 
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
