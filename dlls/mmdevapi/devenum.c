@@ -485,6 +485,7 @@ static HRESULT set_format(MMDevice *dev)
             &PKEY_AudioEngine_DeviceFormat, &pv);
     MMDevice_SetPropValue(&dev->devguid, dev->flow,
             &PKEY_AudioEngine_OEMFormat, &pv);
+    CoTaskMemFree(fmt);
 
     return S_OK;
 }
