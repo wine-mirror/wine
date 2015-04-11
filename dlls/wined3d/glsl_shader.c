@@ -7208,6 +7208,11 @@ void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d
 
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW;
 
+    /* Light settings are affected by the ModelView transform in OpenGL, the View transform in Direct3D. */
+    gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
+    gl_info->gl_ops.gl.p_glPushMatrix();
+    gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW]._11);
+
     for (k = 0; k < gl_info->limits.lights; ++k)
     {
         if (!(light = state->lights[k]))
@@ -7217,6 +7222,8 @@ void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d
         gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, light->lightDirn);
         checkGLcall("glLightfv dirn");
     }
+
+    gl_info->gl_ops.gl.p_glPopMatrix();
 
     for (k = 0; k < gl_info->limits.clipplanes; ++k)
     {
