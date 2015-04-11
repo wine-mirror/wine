@@ -451,7 +451,7 @@ static void test_metadata_gAMA(void)
     PropVariantClear(&id);
 
     ok(value.vt == VT_UI4, "unexpected vt: %i\n", value.vt);
-    ok(value.ulVal == 33333, "unexpected value: %u\n", value.ulVal);
+    ok(U(value).ulVal == 33333, "unexpected value: %u\n", U(value).ulVal);
     PropVariantClear(&value);
 
     IWICMetadataReader_Release(reader);
