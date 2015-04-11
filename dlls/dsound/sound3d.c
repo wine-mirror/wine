@@ -242,7 +242,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			if (flAngle > dwOutsideConeAngle)
 				flAngle = dwOutsideConeAngle;
 			/* this probably isn't the right thing, but it's ok for the time being */
-			lVolume += ((dsb->ds3db_ds3db.lConeOutsideVolume)/((dwOutsideConeAngle) - (dwInsideConeAngle))) * flAngle;
+			lVolume += ((flAngle - dwInsideConeAngle)/(dwOutsideConeAngle - dwInsideConeAngle)) * dsb->ds3db_ds3db.lConeOutsideVolume;
 		}
 		TRACE("conning: Angle = %f deg; InsideConeAngle(/2) = %d deg; OutsideConeAngle(/2) = %d deg; ConeOutsideVolume = %d => adjusting volume to %f\n",
 		       flAngle, dsb->ds3db_ds3db.dwInsideConeAngle/2, dsb->ds3db_ds3db.dwOutsideConeAngle/2, dsb->ds3db_ds3db.lConeOutsideVolume, lVolume);
