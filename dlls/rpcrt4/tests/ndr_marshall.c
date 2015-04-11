@@ -1590,6 +1590,7 @@ todo_wine {
        "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 12 );
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 }
+    HeapFree(GetProcessHeap(), 0, mem_orig);
 
     my_alloc_called = 0;
     mem = mem_orig = HeapAlloc(GetProcessHeap(), 0, sizeof(memsrc));
