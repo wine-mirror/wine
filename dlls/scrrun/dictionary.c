@@ -154,10 +154,11 @@ static struct keyitem_pair *get_keyitem_pair(dictionary *dict, VARIANT *key)
     if (FAILED(hr))
         return NULL;
 
-    entry = head = get_bucket_head(dict, V_I4(&hash));
+    head = get_bucket_head(dict, V_I4(&hash));
     if (!head->next || list_empty(head))
         return NULL;
 
+    entry = list_head(head);
     do {
         pair = LIST_ENTRY(entry, struct keyitem_pair, bucket);
         if (is_matching_key(dict, pair, key, V_I4(&hash))) return pair;
