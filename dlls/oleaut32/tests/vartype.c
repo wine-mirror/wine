@@ -6318,6 +6318,11 @@ static void test_bstr_cache(void)
 
     static const WCHAR testW[] = {'t','e','s','t',0};
 
+    if (GetEnvironmentVariableA("OANOCACHE", NULL, 0)) {
+        skip("BSTR cache is disabled, some tests will be skipped.\n");
+        return;
+    }
+
     str = SysAllocString(testW);
     /* This should put the string into cache */
     SysFreeString(str);
