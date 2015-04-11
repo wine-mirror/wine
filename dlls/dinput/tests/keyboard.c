@@ -91,6 +91,26 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
     for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
         ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
 
+    /* simulate some keyboard input */
+    SetFocus(hwnd);
+    keybd_event('Q', 0, 0, 0);
+    hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+    if (!custom_state[0])
+        win_skip("Keyboard event not processed, skipping test\n");
+    else
+    {
+        /* unacquiring should reset the device state */
+        hr = IDirectInputDevice_Unacquire(pKeyboard);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+        hr = IDirectInputDevice_Acquire(pKeyboard);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+        hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(custom_state), custom_state);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState failed: %08x\n", hr);
+        for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
+            ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
+    }
+
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 
