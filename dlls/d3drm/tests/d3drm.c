@@ -33,7 +33,7 @@
         ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
     }
 
-static int get_refcount(IUnknown *object)
+static ULONG get_refcount(IUnknown *object)
 {
     IUnknown_AddRef( object );
     return IUnknown_Release( object );
