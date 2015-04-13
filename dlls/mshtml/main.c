@@ -42,6 +42,7 @@
 #define INIT_GUID
 #include "mshtml_private.h"
 #include "resource.h"
+#include "pluginhost.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -540,6 +541,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(DIID_HTMLDocumentEvents2);
     X(DIID_HTMLTableEvents);
     X(DIID_HTMLTextContainerEvents);
+    X(IID_HTMLPluginContainer);
     X(IID_IConnectionPoint);
     X(IID_IConnectionPointContainer);
     X(IID_ICustomDoc);

@@ -227,14 +227,13 @@ static HRESULT HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
     HTMLEmbedElement *This = impl_from_HTMLDOMNode(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLEmbedElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IHTMLEmbedElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLEmbedElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLEmbedElement %p)\n", This, ppv);
         *ppv = &This->IHTMLEmbedElement_iface;
     }else {
         return HTMLElement_QI(&This->element.node, riid, ppv);

@@ -58,6 +58,8 @@ struct HTMLPluginContainer {
     DWORD props_len;
 };
 
+DEFINE_GUID(IID_HTMLPluginContainer, 0xbd7a6050,0xb373,0x4f6f,0xa4,0x93,0xdd,0x40,0xc5,0x23,0xa8,0x6a);
+
 extern const IID IID_HTMLPluginContainer DECLSPEC_HIDDEN;
 
 HRESULT create_plugin_host(HTMLDocumentNode*,HTMLPluginContainer*) DECLSPEC_HIDDEN;

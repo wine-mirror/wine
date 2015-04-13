@@ -645,21 +645,18 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 {
     HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLObjectElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLObjectElement %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement_iface;
     }else if(IsEqualGUID(&IID_IHTMLObjectElement2, riid)) {
-        TRACE("(%p)->(IID_IHTMLObjectElement2 %p)\n", This, ppv);
         *ppv = &This->IHTMLObjectElement2_iface;
     }else if(IsEqualGUID(&IID_HTMLPluginContainer, riid)) {
         /* Special pseudo-interface returning HTMLPluginContainse struct. */
-        TRACE("(%p)->(IID_HTMLPluginContainer %p)\n", This, ppv);
         *ppv = &This->plugin_container;
         node_addref(&This->plugin_container.element.node);
         return S_OK;
