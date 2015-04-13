@@ -3368,6 +3368,14 @@ static DWORD WINAPI SelectReadThread(void *param)
     return 0;
 }
 
+static DWORD WINAPI SelectCloseThread(void *param)
+{
+    SOCKET s = *(SOCKET*)param;
+    Sleep(500);
+    closesocket(s);
+    return 0;
+}
+
 static void test_errors(void)
 {
     SOCKET sock;
@@ -3792,6 +3800,49 @@ static void test_select(void)
     ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
     ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
     closesocket(fdWrite);
+
+    /* Try select() on a closed socket after connection */
+    ok(!tcp_socketpair(&fdRead, &fdWrite), "creating socket pair failed\n");
+    closesocket(fdRead);
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdWrite);
+    FD_SET_ALL(fdRead);
+    SetLastError(0xdeadbeef);
+    ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
+    ok(ret == SOCKET_ERROR, "expected 1, got %d\n", ret);
+todo_wine
+    ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
+    /* descriptor sets are unchanged */
+    ok(readfds.fd_count == 2, "expected 2, got %d\n", readfds.fd_count);
+    ok(exceptfds.fd_count == 2, "expected 2, got %d\n", exceptfds.fd_count);
+    closesocket(fdWrite);
+
+    /* Close the socket currently being selected in a thread - bug 38399 */
+    ok(!tcp_socketpair(&fdRead, &fdWrite), "creating socket pair failed\n");
+    thread_handle = CreateThread(NULL, 0, SelectCloseThread, &fdWrite, 0, &id);
+    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdWrite);
+    ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
+todo_wine
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
+    WaitForSingleObject (thread_handle, 1000);
+    closesocket(fdRead);
+    /* test again with only the except descriptor */
+    ok(!tcp_socketpair(&fdRead, &fdWrite), "creating socket pair failed\n");
+    thread_handle = CreateThread(NULL, 0, SelectCloseThread, &fdWrite, 0, &id);
+    ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
+    FD_ZERO_ALL();
+    FD_SET(fdWrite, &exceptfds);
+    SetLastError(0xdeadbeef);
+    ret = select(0, NULL, NULL, &exceptfds, &select_timeout);
+todo_wine
+    ok(ret == SOCKET_ERROR, "expected 1, got %d\n", ret);
+todo_wine
+    ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
+    WaitForSingleObject (thread_handle, 1000);
+    closesocket(fdRead);
 }
 #undef FD_SET_ALL
 #undef FD_ZERO_ALL
