@@ -1509,8 +1509,11 @@ void bind_event_scripts(HTMLDocumentNode *doc)
                 else
                     bind_node_event(doc, event_target, target_node, event, event_disp);
 
-                if(target_node)
+                if(target_node) {
                     IHTMLDOMNode_Release(&target_node->IHTMLDOMNode_iface);
+                    if(plugin_container)
+                        node_release(&plugin_container->element.node);
+                }
             }
 
             heap_free(event);
