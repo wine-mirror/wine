@@ -470,17 +470,32 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
     } else {
         IDirectSoundBufferImpl * dsb;
-        WAVEFORMATEXTENSIBLE *pwfxe;
 
         if (dsbd->lpwfxFormat == NULL) {
             WARN("invalid parameter: dsbd->lpwfxFormat can't be NULL for "
                  "secondary buffer\n");
             return DSERR_INVALIDPARAM;
         }
-        pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
 
-        if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        if(dsbd->lpwfxFormat->wFormatTag != WAVE_FORMAT_PCM &&
+                dsbd->lpwfxFormat->wFormatTag != WAVE_FORMAT_IEEE_FLOAT &&
+                dsbd->lpwfxFormat->wFormatTag != WAVE_FORMAT_EXTENSIBLE) {
+            WARN("We can't mix this format: 0x%x\n", dsbd->lpwfxFormat->wFormatTag);
+            return E_NOTIMPL;
+        }
+
+        if(dsbd->lpwfxFormat->wBitsPerSample < 8 || dsbd->lpwfxFormat->wBitsPerSample % 8 != 0 ||
+                dsbd->lpwfxFormat->nChannels == 0 || dsbd->lpwfxFormat->nSamplesPerSec == 0 ||
+                dsbd->lpwfxFormat->nAvgBytesPerSec == 0 ||
+                dsbd->lpwfxFormat->nBlockAlign != dsbd->lpwfxFormat->nChannels * dsbd->lpwfxFormat->wBitsPerSample / 8) {
+            WARN("Format inconsistency\n");
+            return DSERR_INVALIDPARAM;
+        }
+
+        if (dsbd->lpwfxFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
+            WAVEFORMATEXTENSIBLE *pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;
+
             /* check if cbSize is at least 22 bytes */
             if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
             {
@@ -510,8 +525,7 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
             }
             if (pwfxe->Samples.wValidBitsPerSample && pwfxe->Samples.wValidBitsPerSample < dsbd->lpwfxFormat->wBitsPerSample)
             {
-                FIXME("Non-packed formats not supported right now: %d/%d\n", pwfxe->Samples.wValidBitsPerSample, dsbd->lpwfxFormat->wBitsPerSample);
-                return DSERR_CONTROLUNAVAIL;
+                WARN("Non-packed formats may not function : %d/%d\n", pwfxe->Samples.wValidBitsPerSample, dsbd->lpwfxFormat->wBitsPerSample);
             }
         }
 
