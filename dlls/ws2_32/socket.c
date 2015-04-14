@@ -863,7 +863,6 @@ static UINT sock_get_error( int err )
 	switch(err)
     {
 	case EINTR:		return WSAEINTR;
-	case EBADF:		return WSAEBADF;
 	case EPERM:
 	case EACCES:		return WSAEACCES;
 	case EFAULT:		return WSAEFAULT;
@@ -872,6 +871,7 @@ static UINT sock_get_error( int err )
 	case EWOULDBLOCK:	return WSAEWOULDBLOCK;
 	case EINPROGRESS:	return WSAEINPROGRESS;
 	case EALREADY:		return WSAEALREADY;
+	case EBADF:
 	case ENOTSOCK:		return WSAENOTSOCK;
 	case EDESTADDRREQ:	return WSAEDESTADDRREQ;
 	case EMSGSIZE:		return WSAEMSGSIZE;
@@ -2901,9 +2901,6 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                     errno = loc_errno;
                     switch (errno)
                     {
-                    case EBADF:
-                        SetLastError(WSAENOTSOCK);
-                        break;
                     case EADDRNOTAVAIL:
                         SetLastError(WSAEINVAL);
                         break;
@@ -3360,7 +3357,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             convert_sockopt(&level, &optname);
             if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             release_sock_fd( s, fd );
@@ -3370,7 +3367,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 return SOCKET_ERROR;
             if (getsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
@@ -3467,7 +3464,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
             if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
@@ -3519,7 +3516,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 return SOCKET_ERROR;
             if (getsockopt(fd, SOL_SOCKET, SO_ERROR, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             release_sock_fd( s, fd );
@@ -3565,7 +3562,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             else if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0)
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
@@ -3643,7 +3640,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             convert_sockopt(&level, &optname);
             if (getsockopt(fd, level, optname, &tv, &len) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
@@ -3668,7 +3665,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
             if (getsockopt(fd, SOL_SOCKET, SO_TYPE, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
@@ -3829,7 +3826,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             convert_sockopt(&level, &optname);
             if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             release_sock_fd( s, fd );
@@ -3863,7 +3860,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             convert_sockopt(&level, &optname);
             if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             release_sock_fd( s, fd );
@@ -3898,7 +3895,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             convert_sockopt(&level, &optname);
             if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
             {
-                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             release_sock_fd( s, fd );
@@ -4164,7 +4161,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
         if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
         if (ioctl(fd, FIONREAD, out_buff ) == -1)
-            status = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+            status = wsaErrno();
         release_sock_fd( s, fd );
         break;
     }
@@ -4182,7 +4179,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         /* SO_OOBINLINE sockets must always return TRUE to SIOCATMARK */
         if ((getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, &oob, &oobsize ) == -1)
            || (!oob && ioctl(fd, SIOCATMARK, &atmark ) == -1))
-            status = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+            status = wsaErrno();
         else
         {
             /* The SIOCATMARK value read from ioctl() is reversed
