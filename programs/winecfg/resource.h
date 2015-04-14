@@ -149,12 +149,14 @@
 #define IDS_AUDIO_TEST_FAILED           1309
 #define IDS_AUDIO_TEST_FAILED_TITLE     1310
 #define IDS_AUDIO_SYSDEFAULT            1311
-#define IDC_SPEAKERCONFIG_DEVICE        1312
+#define IDS_AUDIO_DEVICE                1312
 #define IDC_SPEAKERCONFIG_SPEAKERS      1313
 #define IDS_AUDIO_SPEAKER_5POINT1       1314
 #define IDS_AUDIO_SPEAKER_QUAD          1315
 #define IDS_AUDIO_SPEAKER_STEREO        1316
 #define IDS_AUDIO_SPEAKER_MONO          1317
+#define IDC_LIST_AUDIO_DEVICES          1318
+#define IDS_AUDIO_SPEAKER_CONFIG        1319
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

@@ -47,8 +47,8 @@ msgstr "Informação de &Suporte"
 msgid "&Modify..."
 msgstr "&Modificar..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:198
-#: winecfg.rc:235 wordpad.rc:248
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:200
+#: winecfg.rc:237 wordpad.rc:248
 msgid "&Remove"
 msgstr "&Remover"
 
@@ -67,7 +67,7 @@ msgstr "Informação de Suporte"
 #: oleview.rc:175 progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158
 #: progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258
 #: regedit.rc:271 regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442
-#: taskmgr.rc:517 winecfg.rc:212 winecfg.rc:222 wineconsole.rc:134
+#: taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224 wineconsole.rc:134
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:71
 #: winemine.rc:81 winemine.rc:95 wordpad.rc:207 wordpad.rc:218 wordpad.rc:236
 #: wordpad.rc:249
@@ -151,7 +151,7 @@ msgstr "&Instalar"
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
 #: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
-#: winecfg.rc:213 winecfg.rc:223 wineconsole.rc:135 winefile.rc:132
+#: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:135 winefile.rc:132
 #: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:208
 #: wordpad.rc:219 wordpad.rc:237 wordpad.rc:250
 msgid "Cancel"
@@ -542,7 +542,7 @@ msgstr "&Fonte:"
 msgid "Font St&yle:"
 msgstr "&Estilo da Fonte:"
 
-#: comdlg32.rc:258 comdlg32.rc:435 winecfg.rc:292
+#: comdlg32.rc:258 comdlg32.rc:435 winecfg.rc:294
 msgid "&Size:"
 msgstr "Taman&ho:"
 
@@ -558,7 +558,7 @@ msgstr "&Riscado"
 msgid "&Underline"
 msgstr "&Sublinhado"
 
-#: comdlg32.rc:268 winecfg.rc:290
+#: comdlg32.rc:268 winecfg.rc:292
 msgid "&Color:"
 msgstr "&Cor:"
 
@@ -725,7 +725,7 @@ msgstr "&de:"
 msgid "&to:"
 msgstr "&até:"
 
-#: comdlg32.rc:415 winecfg.rc:298
+#: comdlg32.rc:415 winecfg.rc:300
 msgid "Si&ze:"
 msgstr "Ta&manho:"
 
@@ -2205,7 +2205,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "Nome do &arquivo:"
 
-#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:307
+#: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
 msgid "B&rowse..."
 msgstr "&Navegar..."
 
@@ -2967,7 +2967,7 @@ msgstr "Reiniciar"
 msgid "Player"
 msgstr "Tocador"
 
-#: dinput.rc:52
+#: dinput.rc:52 winecfg.rc:89
 msgid "Device"
 msgstr "Dispositivo"
 
@@ -3485,7 +3485,7 @@ msgstr "Alta"
 msgid "Joysticks"
 msgstr "Controles"
 
-#: joy.rc:39 winecfg.rc:211
+#: joy.rc:39 winecfg.rc:213
 msgid "&Disable"
 msgstr "&Desativar"
 
@@ -6764,7 +6764,7 @@ msgstr "Hiperlink"
 msgid "Hyperlink Information"
 msgstr "Informação do Hiperlink"
 
-#: mshtml.rc:43 winecfg.rc:243
+#: mshtml.rc:43 winecfg.rc:245
 msgid "&Type:"
 msgstr "&Tipo:"
 
@@ -7551,7 +7551,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:181
+#: sane.rc:34 wineps.rc:49 winecfg.rc:183
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "ppp"
@@ -8051,7 +8051,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Abrir:"
 
-#: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
+#: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
 #: winefile.rc:133
 msgid "&Browse..."
 msgstr "&Procurar..."
@@ -8096,7 +8096,7 @@ msgstr "Localização original"
 msgid "Date deleted"
 msgstr "Data de exclusão"
 
-#: shell32.rc:156 winecfg.rc:99 winefile.rc:100
+#: shell32.rc:156 winecfg.rc:101 winefile.rc:100
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Área de Trabalho"
@@ -9548,7 +9548,7 @@ msgstr "&Analógico"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:301 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fonte..."
 
@@ -12957,7 +12957,7 @@ msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
 "A configuração do Wine em %s está sendo atualizada, por favor, aguarde..."
 
-#: winecfg.rc:139
+#: winecfg.rc:141
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -12969,23 +12969,23 @@ msgstr ""
 "Software Foundation; tanto na versão 2.1 desta licença ou (à sua escolha) "
 "qualquer versão posterior."
 
-#: winecfg.rc:141
+#: winecfg.rc:143
 msgid "Windows registration information"
 msgstr "Informações de registro do Windows"
 
-#: winecfg.rc:142
+#: winecfg.rc:144
 msgid "&Owner:"
 msgstr "&Proprietário:"
 
-#: winecfg.rc:144
+#: winecfg.rc:146
 msgid "Organi&zation:"
 msgstr "&Organização:"
 
-#: winecfg.rc:152
+#: winecfg.rc:154
 msgid "Application settings"
 msgstr "Configurações de Aplicativo"
 
-#: winecfg.rc:153
+#: winecfg.rc:155
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -12995,55 +12995,55 @@ msgstr ""
 "aba é ligada às abas Bibliotecas e Gráficos para permitir alterar "
 "configurações globais ou por aplicativo também nessas abas."
 
-#: winecfg.rc:157
+#: winecfg.rc:159
 msgid "&Add application..."
 msgstr "&Adicionar aplicativo..."
 
-#: winecfg.rc:158
+#: winecfg.rc:160
 msgid "&Remove application"
 msgstr "&Remover aplicativo"
 
-#: winecfg.rc:159
+#: winecfg.rc:161
 msgid "&Windows Version:"
 msgstr "Versão do &Windows:"
 
-#: winecfg.rc:167
+#: winecfg.rc:169
 msgid "Window settings"
 msgstr "Configurações de Janela"
 
-#: winecfg.rc:168
+#: winecfg.rc:170
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Capturar o &mouse automaticamente em janelas em tela cheia"
 
-#: winecfg.rc:169
+#: winecfg.rc:171
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Permitir que o gerenciador de janelas &decore as janelas"
 
-#: winecfg.rc:170
+#: winecfg.rc:172
 msgid "Allow the &window manager to control the windows"
 msgstr "Permitir que o gerenciador de janelas &controle as janelas"
 
-#: winecfg.rc:171
+#: winecfg.rc:173
 msgid "&Emulate a virtual desktop"
 msgstr "&Emular uma área de trabalho virtual"
 
-#: winecfg.rc:173
+#: winecfg.rc:175
 msgid "Desktop &size:"
 msgstr "Tamanho da Tela:"
 
-#: winecfg.rc:178
+#: winecfg.rc:180
 msgid "Screen resolution"
 msgstr "Resolução da Tela"
 
-#: winecfg.rc:182
+#: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Este é um texto exemplo usando Tahoma 10 pontos"
 
-#: winecfg.rc:189
+#: winecfg.rc:191
 msgid "DLL overrides"
 msgstr "Substituições de DLL"
 
-#: winecfg.rc:190
+#: winecfg.rc:192
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -13053,55 +13053,55 @@ msgstr ""
 "embutidas (fornecidas pelo Wine) ou nativas (tiradas do Windows ou "
 "fornecidas pelo aplicativo)."
 
-#: winecfg.rc:192
+#: winecfg.rc:194
 msgid "&New override for library:"
 msgstr "&Nova substituição para a biblioteca:"
 
-#: winecfg.rc:194 wordpad.rc:247
+#: winecfg.rc:196 wordpad.rc:247
 msgid "&Add"
 msgstr "&Adicionar"
 
-#: winecfg.rc:195
+#: winecfg.rc:197
 msgid "Existing &overrides:"
 msgstr "Substituições e&xistentes:"
 
-#: winecfg.rc:197
+#: winecfg.rc:199
 msgid "&Edit..."
 msgstr "&Editar..."
 
-#: winecfg.rc:203
+#: winecfg.rc:205
 msgid "Edit Override"
 msgstr "Editar Substituição"
 
-#: winecfg.rc:206
+#: winecfg.rc:208
 msgid "Load order"
 msgstr "Ordem de Carregamento"
 
-#: winecfg.rc:207
+#: winecfg.rc:209
 msgid "&Builtin (Wine)"
 msgstr "&Embutida (Wine)"
 
-#: winecfg.rc:208
+#: winecfg.rc:210
 msgid "&Native (Windows)"
 msgstr "&Nativa (Windows)"
 
-#: winecfg.rc:209
+#: winecfg.rc:211
 msgid "Bui&ltin then Native"
 msgstr "E&mbutida depois Nativa"
 
-#: winecfg.rc:210
+#: winecfg.rc:212
 msgid "Nati&ve then Builtin"
 msgstr "Nati&va depois Embutida"
 
-#: winecfg.rc:218
+#: winecfg.rc:220
 msgid "Select Drive Letter"
 msgstr "Selecione a Letra"
 
-#: winecfg.rc:230
+#: winecfg.rc:232
 msgid "Drive configuration"
 msgstr "Configuração de unidades"
 
-#: winecfg.rc:231
+#: winecfg.rc:233
 msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
@@ -13109,111 +13109,105 @@ msgstr ""
 "Falha de conexão com o gerenciador de montagem, a configuração da unidade "
 "não pôde ser alterada."
 
-#: winecfg.rc:234
+#: winecfg.rc:236
 msgid "&Add..."
 msgstr "&Adicionar..."
 
-#: winecfg.rc:236
+#: winecfg.rc:238
 msgid "Auto&detect"
 msgstr "Auto &Detectar"
 
-#: winecfg.rc:239
+#: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Caminho:"
 
-#: winecfg.rc:246 winecfg.rc:38
+#: winecfg.rc:248 winecfg.rc:38
 msgid "Show &Advanced"
 msgstr "&Avançado"
 
-#: winecfg.rc:247
+#: winecfg.rc:249
 msgid "De&vice:"
 msgstr "Dispositi&vo:"
 
-#: winecfg.rc:249
+#: winecfg.rc:251
 msgid "Bro&wse..."
 msgstr "Nave&gar..."
 
-#: winecfg.rc:251
+#: winecfg.rc:253
 msgid "&Label:"
 msgstr "&Rótulo:"
 
-#: winecfg.rc:253
+#: winecfg.rc:255
 msgid "S&erial:"
 msgstr "&Serial:"
 
-#: winecfg.rc:256
+#: winecfg.rc:258
 msgid "Show &dot files"
 msgstr "&Mostrar arquivos com ponto"
 
-#: winecfg.rc:263
+#: winecfg.rc:265
 msgid "Driver diagnostics"
 msgstr "Diagnósticos de driver"
 
-#: winecfg.rc:265
+#: winecfg.rc:267
 msgid "Defaults"
 msgstr "Dispositivos Padrões"
 
-#: winecfg.rc:266
+#: winecfg.rc:268
 msgid "Output device:"
 msgstr "Saída:"
 
-#: winecfg.rc:267
+#: winecfg.rc:269
 msgid "Voice output device:"
 msgstr "Saída de voz:"
 
-#: winecfg.rc:268
+#: winecfg.rc:270
 msgid "Input device:"
 msgstr "Entrada:"
 
-#: winecfg.rc:269
+#: winecfg.rc:271
 msgid "Voice input device:"
 msgstr "Entrada de voz:"
 
-#: winecfg.rc:274
+#: winecfg.rc:276
 msgid "&Test Sound"
 msgstr "&Testar Som"
 
-#: winecfg.rc:275
+#: winecfg.rc:277 winecfg.rc:90
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "Configuração do Wine"
 
-#: winecfg.rc:276
-#, fuzzy
-#| msgid "De&vice:"
-msgid "Device:"
-msgstr "Dispositi&vo:"
-
-#: winecfg.rc:278
+#: winecfg.rc:280
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:286
+#: winecfg.rc:288
 msgid "Appearance"
 msgstr "Aparência"
 
-#: winecfg.rc:287
+#: winecfg.rc:289
 msgid "&Theme:"
 msgstr "&Tema:"
 
-#: winecfg.rc:289
+#: winecfg.rc:291
 msgid "&Install theme..."
 msgstr "&Instalar tema..."
 
-#: winecfg.rc:294
+#: winecfg.rc:296
 msgid "It&em:"
 msgstr "It&em:"
 
-#: winecfg.rc:296
+#: winecfg.rc:298
 msgid "C&olor:"
 msgstr "C&or:"
 
-#: winecfg.rc:302
+#: winecfg.rc:304
 msgid "Folders"
 msgstr "Pastas"
 
-#: winecfg.rc:305
+#: winecfg.rc:307
 msgid "&Link to:"
 msgstr "&Atalho para:"
 
@@ -13293,21 +13287,21 @@ msgstr "Falha no teste de áudio!"
 msgid "(System default)"
 msgstr "(Padrão do sistema)"
 
-#: winecfg.rc:89
+#: winecfg.rc:91
 msgid "5.1 Surround"
 msgstr ""
 
-#: winecfg.rc:90
+#: winecfg.rc:92
 #, fuzzy
 #| msgid "graphic"
 msgid "Quadraphonic"
 msgstr "gráfico"
 
-#: winecfg.rc:91
+#: winecfg.rc:93
 msgid "Stereo"
 msgstr ""
 
-#: winecfg.rc:92
+#: winecfg.rc:94
 msgid "Mono"
 msgstr ""
 
@@ -13425,127 +13419,127 @@ msgstr ""
 "\n"
 "Lembre-se de clicar em 'Adicionar' na aba Unidades para criar uma!\n"
 
-#: winecfg.rc:97
+#: winecfg.rc:99
 msgid "Controls Background"
 msgstr "Fundo do Botão"
 
-#: winecfg.rc:98
+#: winecfg.rc:100
 msgid "Controls Text"
 msgstr "Texto do Botão"
 
-#: winecfg.rc:100
+#: winecfg.rc:102
 msgid "Menu Background"
 msgstr "Fundo do Menu"
 
-#: winecfg.rc:101
+#: winecfg.rc:103
 msgid "Menu Text"
 msgstr "Texto do Menu"
 
-#: winecfg.rc:102
+#: winecfg.rc:104
 msgid "Scrollbar"
 msgstr "Barra de Rolagem"
 
-#: winecfg.rc:103
+#: winecfg.rc:105
 msgid "Selection Background"
 msgstr "Fundo de Seleção"
 
-#: winecfg.rc:104
+#: winecfg.rc:106
 msgid "Selection Text"
 msgstr "Texto de Seleção"
 
-#: winecfg.rc:105
+#: winecfg.rc:107
 msgid "Tooltip Background"
 msgstr "Fundo da Dica"
 
-#: winecfg.rc:106
+#: winecfg.rc:108
 msgid "Tooltip Text"
 msgstr "Texto da Dica"
 
-#: winecfg.rc:107
+#: winecfg.rc:109
 msgid "Window Background"
 msgstr "Fundo da Janela"
 
-#: winecfg.rc:108
+#: winecfg.rc:110
 msgid "Window Text"
 msgstr "Texto da Janela"
 
-#: winecfg.rc:109
+#: winecfg.rc:111
 msgid "Active Title Bar"
 msgstr "Barra de Título Ativa"
 
-#: winecfg.rc:110
+#: winecfg.rc:112
 msgid "Active Title Text"
 msgstr "Texto de Título Ativo"
 
-#: winecfg.rc:111
+#: winecfg.rc:113
 msgid "Inactive Title Bar"
 msgstr "Barra de Título Inativa"
 
-#: winecfg.rc:112
+#: winecfg.rc:114
 msgid "Inactive Title Text"
 msgstr "Texto de Título Inativo"
 
-#: winecfg.rc:113
+#: winecfg.rc:115
 msgid "Message Box Text"
 msgstr "Texto da Caixa de Mensagens"
 
-#: winecfg.rc:114
+#: winecfg.rc:116
 msgid "Application Workspace"
 msgstr "Área do Aplicativo"
 
-#: winecfg.rc:115
+#: winecfg.rc:117
 msgid "Window Frame"
 msgstr "Corpo da Janela"
 
-#: winecfg.rc:116
+#: winecfg.rc:118
 msgid "Active Border"
 msgstr "Borda Ativa"
 
-#: winecfg.rc:117
+#: winecfg.rc:119
 msgid "Inactive Border"
 msgstr "Borda Inativa"
 
-#: winecfg.rc:118
+#: winecfg.rc:120
 msgid "Controls Shadow"
 msgstr "Sombra dos Botões"
 
-#: winecfg.rc:119
+#: winecfg.rc:121
 msgid "Gray Text"
 msgstr "Texto Inativo"
 
-#: winecfg.rc:120
+#: winecfg.rc:122
 msgid "Controls Highlight"
 msgstr "Realce do Botão"
 
-#: winecfg.rc:121
+#: winecfg.rc:123
 msgid "Controls Dark Shadow"
 msgstr "Sombra Escura do Botão"
 
-#: winecfg.rc:122
+#: winecfg.rc:124
 msgid "Controls Light"
 msgstr "Luz do Botão"
 
-#: winecfg.rc:123
+#: winecfg.rc:125
 msgid "Controls Alternate Background"
 msgstr "Fundo Alternativo do Botão"
 
-#: winecfg.rc:124
+#: winecfg.rc:126
 msgid "Hot Tracked Item"
 msgstr "Elemento Ativo"
 
-#: winecfg.rc:125
+#: winecfg.rc:127
 msgid "Active Title Bar Gradient"
 msgstr "Gradiente da Barra Ativa"
 
-#: winecfg.rc:126
+#: winecfg.rc:128
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradiente da Barra Inativa"
 
-#: winecfg.rc:127
+#: winecfg.rc:129
 msgid "Menu Highlight"
 msgstr "Realce de Menu"
 
-#: winecfg.rc:128
+#: winecfg.rc:130
 msgid "Menu Bar"
 msgstr "Barra de Menu"
 

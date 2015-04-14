@@ -225,6 +225,10 @@ static void initAudioDlg (HWND hDlg)
     BOOL have_driver = FALSE;
     HRESULT hr;
     UINT i;
+    LVCOLUMNW lvcol;
+    WCHAR colW[64], speaker_str[256];
+    RECT rect;
+    DWORD width;
 
     WINE_TRACE("\n");
 
@@ -271,8 +275,6 @@ static void initAudioDlg (HWND hDlg)
 
     i = 0;
     while (speaker_configs[i].text_id != 0) {
-        WCHAR speaker_str[256];
-
         LoadStringW(GetModuleHandleW(NULL), speaker_configs[i].text_id,
             speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
 
@@ -282,19 +284,35 @@ static void initAudioDlg (HWND hDlg)
         i++;
     }
 
+    GetClientRect(GetDlgItem(hDlg, IDC_LIST_AUDIO_DEVICES), &rect);
+    width = (rect.right - rect.left) * 3 / 5;
+
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_DEVICE, colW, sizeof(colW)/sizeof(*colW));
+    lvcol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+    lvcol.pszText = colW;
+    lvcol.cchTextMax = lstrlenW(colW);
+    lvcol.cx = width;
+    SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_INSERTCOLUMNW, 0, (LPARAM)&lvcol);
+
+    LoadStringW(GetModuleHandleW(NULL), IDS_AUDIO_SPEAKER_CONFIG, colW, sizeof(colW)/sizeof(*colW));
+    lvcol.pszText = colW;
+    lvcol.cchTextMax = lstrlenW(colW);
+    lvcol.cx = rect.right - rect.left - width;
+    SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_INSERTCOLUMNW, 1, (LPARAM)&lvcol);
+
+    EnableWindow(GetDlgItem(hDlg, IDC_SPEAKERCONFIG_SPEAKERS), 0);
+
     if(have_driver){
         WCHAR *reg_out_dev, *reg_vout_dev, *reg_in_dev, *reg_vin_dev;
-        BOOL default_dev_found = FALSE;
 
         reg_out_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_out_nameW, NULL);
         reg_vout_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_vout_nameW, NULL);
         reg_in_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_in_nameW, NULL);
         reg_vin_dev = get_reg_keyW(HKEY_CURRENT_USER, g_drv_keyW, reg_vin_nameW, NULL);
 
-        SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, i, 0);
-        SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[i].speaker_config, 0);
-
         for(i = 0; i < num_render_devs; ++i){
+            LVITEMW lvitem;
+
             if(!render_devs[i].id)
                 continue;
 
@@ -303,14 +321,9 @@ static void initAudioDlg (HWND hDlg)
             SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
 
-            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_ADDSTRING,
-                    0, (LPARAM)render_devs[i].name.u.pwszVal);
-
             if(reg_out_dev && !lstrcmpW(render_devs[i].id, reg_out_dev)){
                 SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
-                SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, i, 0);
                 SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[i].speaker_config, 0);
-                default_dev_found = TRUE;
             }
 
             SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_ADDSTRING,
@@ -319,11 +332,26 @@ static void initAudioDlg (HWND hDlg)
                     i + 1, (LPARAM)&render_devs[i]);
             if(reg_vout_dev && !lstrcmpW(render_devs[i].id, reg_vout_dev))
                 SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_SETCURSEL, i + 1, 0);
-        }
 
-        if(!default_dev_found && num_render_devs > 0){
-            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_SETCURSEL, 0, 0);
-            SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[0].speaker_config, 0);
+            lvitem.mask = LVIF_TEXT | LVIF_PARAM;
+            lvitem.iItem = i;
+            lvitem.iSubItem = 0;
+            lvitem.pszText = render_devs[i].name.u.pwszVal;
+            lvitem.cchTextMax = lstrlenW(lvitem.pszText);
+            lvitem.lParam = (LPARAM)&render_devs[i];
+
+            SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_INSERTITEMW, 0, (LPARAM)&lvitem);
+
+            LoadStringW(GetModuleHandleW(NULL), speaker_configs[render_devs[i].speaker_config].text_id,
+                speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+
+            lvitem.mask = LVIF_TEXT;
+            lvitem.iItem = i;
+            lvitem.iSubItem = 1;
+            lvitem.pszText = speaker_str;
+            lvitem.cchTextMax = lstrlenW(lvitem.pszText);
+
+            SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_SETITEMW, 0, (LPARAM)&lvitem);
         }
 
         for(i = 0; i < num_capture_devs; ++i){
@@ -436,6 +464,22 @@ static void apply_speaker_configs(void)
     IMMDeviceEnumerator_Release(devenum);
 }
 
+static void listview_changed(HWND hDlg)
+{
+    int idx;
+
+    idx = SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    if(idx < 0) {
+        EnableWindow(GetDlgItem(hDlg, IDC_SPEAKERCONFIG_SPEAKERS), 0);
+        return;
+    }
+
+    SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL,
+            render_devs[idx].speaker_config, 0);
+
+    EnableWindow(GetDlgItem(hDlg, IDC_SPEAKERCONFIG_SPEAKERS), 1);
+}
+
 INT_PTR CALLBACK
 AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -469,26 +513,30 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
               }
               break;
-          case IDC_SPEAKERCONFIG_DEVICE:
-              if(HIWORD(wParam) == CBN_SELCHANGE){
-                  UINT idx;
-
-                  idx = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_GETCURSEL, 0, 0);
-
-                  if(idx < num_render_devs){
-                      SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_SETCURSEL, render_devs[idx].speaker_config, 0);
-                  }
-              }
-              break;
           case IDC_SPEAKERCONFIG_SPEAKERS:
               if(HIWORD(wParam) == CBN_SELCHANGE){
                   UINT dev, idx;
 
                   idx = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_SPEAKERS, CB_GETCURSEL, 0, 0);
-                  dev = SendDlgItemMessageW(hDlg, IDC_SPEAKERCONFIG_DEVICE, CB_GETCURSEL, 0, 0);
+                  dev = SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
                   if(dev < num_render_devs){
+                      WCHAR speaker_str[256];
+                      LVITEMW lvitem;
+
                       render_devs[dev].speaker_config = idx;
+
+                      LoadStringW(GetModuleHandleW(NULL), speaker_configs[idx].text_id,
+                          speaker_str, sizeof(speaker_str) / sizeof(*speaker_str));
+
+                      lvitem.mask = LVIF_TEXT;
+                      lvitem.iItem = dev;
+                      lvitem.iSubItem = 1;
+                      lvitem.pszText = speaker_str;
+                      lvitem.cchTextMax = lstrlenW(lvitem.pszText);
+
+                      SendDlgItemMessageW(hDlg, IDC_LIST_AUDIO_DEVICES, LVM_SETITEMW, 0, (LPARAM)&lvitem);
+
                       SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                   }
               }
@@ -511,6 +559,9 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               SetWindowLongPtrW(hDlg, DWLP_MSGRESULT, PSNRET_NOERROR);
               break;
             case PSN_SETACTIVE:
+              break;
+            case LVN_ITEMCHANGED:
+              listview_changed(hDlg);
               break;
         }
         break;
