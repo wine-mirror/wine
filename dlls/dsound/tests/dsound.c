@@ -1391,25 +1391,27 @@ static void perform_invalid_fmt_tests(const char *testname, IDirectSound *dso, I
     ok(wfx.nAvgBytesPerSec == 44100 * 4 + 1, "%s: avgbytes: %u\n", testname, wfx.nAvgBytesPerSec);
     IDirectSoundBuffer_Release(got_buf);
 
-    wfx.wFormatTag = WAVE_FORMAT_ALAW;
-    wfx.nChannels = 2;
-    wfx.nSamplesPerSec = 44100;
-    wfx.wBitsPerSample = 16;
-    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
-    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
-    rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
-    ok(buf ? rc == S_OK : (rc == E_NOTIMPL || rc == DSERR_INVALIDCALL /* winxp */), "%s: SetFormat: %08x\n", testname, rc);
+    if(buf){
+        wfx.wFormatTag = WAVE_FORMAT_ALAW;
+        wfx.nChannels = 2;
+        wfx.nSamplesPerSec = 44100;
+        wfx.wBitsPerSample = 16;
+        wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+        wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+        rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
+        ok(rc == S_OK, "%s: SetFormat: %08x\n", testname, rc);
 
-    if(got_buf){
-        rc = IDirectSoundBuffer_GetFormat(got_buf, &wfx, sizeof(wfx), NULL);
-        ok(rc == S_OK, "%s: GetFormat: %08x\n", testname, rc);
-        ok(wfx.wFormatTag == WAVE_FORMAT_ALAW, "%s: format: 0x%x\n", testname, wfx.wFormatTag);
-        ok(wfx.nChannels == 2, "%s: channels: %u\n", testname, wfx.nChannels);
-        ok(wfx.nSamplesPerSec == 44100, "%s: rate: %u\n", testname, wfx.nSamplesPerSec);
-        ok(wfx.wBitsPerSample == 16, "%s: bps: %u\n", testname, wfx.wBitsPerSample);
-        ok(wfx.nBlockAlign == 4, "%s: blockalign: %u\n", testname, wfx.nBlockAlign);
-        ok(wfx.nAvgBytesPerSec == 44100 * 4, "%s: avgbytes: %u\n", testname, wfx.nAvgBytesPerSec);
-        IDirectSoundBuffer_Release(got_buf);
+        if(got_buf){
+            rc = IDirectSoundBuffer_GetFormat(got_buf, &wfx, sizeof(wfx), NULL);
+            ok(rc == S_OK, "%s: GetFormat: %08x\n", testname, rc);
+            ok(wfx.wFormatTag == WAVE_FORMAT_ALAW, "%s: format: 0x%x\n", testname, wfx.wFormatTag);
+            ok(wfx.nChannels == 2, "%s: channels: %u\n", testname, wfx.nChannels);
+            ok(wfx.nSamplesPerSec == 44100, "%s: rate: %u\n", testname, wfx.nSamplesPerSec);
+            ok(wfx.wBitsPerSample == 16, "%s: bps: %u\n", testname, wfx.wBitsPerSample);
+            ok(wfx.nBlockAlign == 4, "%s: blockalign: %u\n", testname, wfx.nBlockAlign);
+            ok(wfx.nAvgBytesPerSec == 44100 * 4, "%s: avgbytes: %u\n", testname, wfx.nAvgBytesPerSec);
+            IDirectSoundBuffer_Release(got_buf);
+        }
     }
 
     if(!gotdx8){
