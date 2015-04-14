@@ -4409,6 +4409,7 @@ const struct blit_shader ffp_blit =  {
     ffp_blit_supported,
     ffp_blit_color_fill,
     ffp_blit_depth_fill,
+    ffp_blit_blit_surface,
 };
 
 static HRESULT cpu_blit_alloc(struct wined3d_device *device)
@@ -5046,6 +5047,15 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
     return WINED3DERR_INVALIDCALL;
 }
 
+static void cpu_blit_blit_surface(struct wined3d_device *device, DWORD filter,
+        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        const struct wined3d_color_key *color_key)
+{
+    /* FIXME: Remove error returns from surface_blt_cpu. */
+    ERR("Blit method not implemented by cpu_blit.\n");
+}
+
 const struct blit_shader cpu_blit =  {
     cpu_blit_alloc,
     cpu_blit_free,
@@ -5054,6 +5064,7 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_supported,
     cpu_blit_color_fill,
     cpu_blit_depth_fill,
+    cpu_blit_blit_surface,
 };
 
 HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
@@ -5253,6 +5264,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     }
     else
     {
+        const struct blit_shader *blitter;
+
         /* In principle this would apply to depth blits as well, but we don't
          * implement those in the CPU blitter at the moment. */
         if ((dst_surface->locations & dst_surface->resource.map_binding)
@@ -5354,23 +5367,12 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3D_OK;
             }
 
-            if (arbfp_blit.blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, blit_op,
+            blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, blit_op,
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format);
+            if (blitter)
             {
-                TRACE("Using arbfp blit.\n");
-
-                if (SUCCEEDED(arbfp_blit_surface(device, filter, src_surface, &src_rect,
-                        dst_surface, &dst_rect, color_key)))
-                    return WINED3D_OK;
-            }
-
-            if (ffp_blit.blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, blit_op,
-                    &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
-            {
-                TRACE("Using FFP blit.\n");
-                ffp_blit_blit_surface(device, filter, src_surface, &src_rect, dst_surface, &dst_rect, color_key);
+                blitter->blit_surface(device, filter, src_surface, &src_rect, dst_surface, &dst_rect, color_key);
                 return WINED3D_OK;
             }
         }

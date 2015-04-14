@@ -7870,7 +7870,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
+static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
         const struct wined3d_color_key *color_key)
@@ -7923,8 +7923,6 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
     surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
-
-    return WINED3D_OK;
 }
 
 static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
@@ -7949,4 +7947,5 @@ const struct blit_shader arbfp_blit = {
     arbfp_blit_supported,
     arbfp_blit_color_fill,
     arbfp_blit_depth_fill,
+    arbfp_blit_surface,
 };

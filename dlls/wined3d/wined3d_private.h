@@ -1351,6 +1351,10 @@ struct blit_shader
             const RECT *dst_rect, const struct wined3d_color *color);
     HRESULT (*depth_fill)(struct wined3d_device *device,
             struct wined3d_surface *surface, const RECT *rect, float depth);
+    void (*blit_surface)(struct wined3d_device *device, DWORD filter,
+            struct wined3d_surface *src_surface, const RECT *src_rect,
+            struct wined3d_surface *dst_surface, const RECT *dst_rect,
+            const struct wined3d_color_key *color_key);
 };
 
 extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
@@ -1362,12 +1366,6 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
         DECLSPEC_HIDDEN;
-
-/* Temporary blit_shader helper functions */
-HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(const struct wined3d_device *device,
         struct wined3d_surface *target) DECLSPEC_HIDDEN;
