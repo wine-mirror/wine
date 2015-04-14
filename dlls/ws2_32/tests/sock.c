@@ -1387,6 +1387,16 @@ todo_wine
         err, WSAGetLastError());
 
     closesocket(s);
+    /* Test with the closed socket */
+    SetLastError(0xdeadbeef);
+    size = sizeof(i);
+    i = 1234;
+    err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
+todo_wine
+    ok( (err == SOCKET_ERROR) && (WSAGetLastError() == WSAENOTSOCK),
+        "got %d with %d (expected SOCKET_ERROR with WSAENOTSOCK)\n",
+        err, WSAGetLastError());
+    ok (i == 1234, "expected 1234, got %d\n", i);
 
     /* Test WS_IP_MULTICAST_TTL with 8, 16, 24 and 32 bits values */
     s = socket(AF_INET, SOCK_DGRAM, 0);
