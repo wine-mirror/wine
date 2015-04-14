@@ -1062,11 +1062,11 @@ static void test_reset(void)
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected cooperative level %#x.\n", hr);
 
-    todo_wine ok(d3dpp.BackBufferWidth == 200, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
-    todo_wine ok(d3dpp.BackBufferHeight == 150, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    ok(d3dpp.BackBufferWidth == 200, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    ok(d3dpp.BackBufferHeight == 150, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
     todo_wine ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
             d3dpp.BackBufferFormat, d3ddm.Format);
-    todo_wine ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
     ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
     ok(!d3dpp.MultiSampleQuality, "Got unexpected MultiSampleQuality %u.\n", d3dpp.MultiSampleQuality);
     ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);

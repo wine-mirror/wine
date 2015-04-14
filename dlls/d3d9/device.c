@@ -667,9 +667,22 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
     wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             mode ? &wined3d_mode : NULL, reset_enum_callback, !device->d3d_parent->extended)))
+    {
+        struct wined3d_swapchain *wined3d_swapchain;
+
+        wined3d_swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0);
+        wined3d_swapchain_get_desc(wined3d_swapchain, &swapchain_desc);
+        present_parameters->BackBufferWidth = swapchain_desc.backbuffer_width;
+        present_parameters->BackBufferHeight = swapchain_desc.backbuffer_height;
+        present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc.backbuffer_format);
+        present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
+
         device->device_state = D3D9_DEVICE_STATE_OK;
+    }
     else if (!device->d3d_parent->extended)
+    {
         device->device_state = D3D9_DEVICE_STATE_NOT_RESET;
+    }
 
     wined3d_mutex_unlock();
 
