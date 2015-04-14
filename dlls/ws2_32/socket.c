@@ -3091,6 +3091,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
     if (ret <= 0)
     {
         SetLastError(ret == -1 ? wsaErrno() : WSAEINVAL);
+        release_sock_fd( s, fd );
         return FALSE;
     }
 
