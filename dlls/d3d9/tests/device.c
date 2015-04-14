@@ -1651,7 +1651,6 @@ static void test_reset(void)
     D3DVIEWPORT9                 vp;
     DWORD                        width, orig_width = GetSystemMetrics(SM_CXSCREEN);
     DWORD                        height, orig_height = GetSystemMetrics(SM_CYSCREEN);
-    IDirect3DSwapChain9          *pSwapchain;
     IDirect3DSurface9            *surface;
     IDirect3DTexture9            *texture;
     IDirect3DVertexShader9       *shader;
@@ -1659,6 +1658,8 @@ static void test_reset(void)
     D3DLOCKED_RECT               lockrect;
     IDirect3DDevice9 *device1 = NULL;
     IDirect3DDevice9 *device2 = NULL;
+    IDirect3DSwapChain9 *swapchain;
+    struct device_desc device_desc;
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
     DWORD value;
@@ -1716,20 +1717,13 @@ static void test_reset(void)
     i = 0;
     if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
 
-    ZeroMemory( &d3dpp, sizeof(d3dpp) );
-    d3dpp.Windowed         = FALSE;
-    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-    d3dpp.BackBufferWidth  = modes[i].w;
-    d3dpp.BackBufferHeight = modes[i].h;
-    d3dpp.BackBufferFormat = d3ddm.Format;
-    d3dpp.EnableAutoDepthStencil = TRUE;
-    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
-
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device1);
-    if (FAILED(hr))
+    device_desc.width = modes[i].w;
+    device_desc.height = modes[i].h;
+    device_desc.device_window = hwnd;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN | CREATE_DEVICE_SWVP_ONLY;
+    if (!(device1 = create_device(d3d, hwnd, &device_desc)))
     {
-        skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        skip("Failed to create a D3D device, skipping tests.\n");
         goto cleanup;
     }
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
@@ -1802,28 +1796,23 @@ static void test_reset(void)
     ok(width == modes[i].w, "Screen width is %u, expected %u\n", width, modes[i].w);
     ok(height == modes[i].h, "Screen height is %u, expected %u\n", height, modes[i].h);
 
-    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        ZeroMemory(&d3dpp, sizeof(d3dpp));
-        hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
-        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            ok(d3dpp.BackBufferWidth == modes[i].w, "Back buffer width is %u, expected %u\n",
-                    d3dpp.BackBufferWidth, modes[i].w);
-            ok(d3dpp.BackBufferHeight == modes[i].h, "Back buffer height is %u, expected %u\n",
-                    d3dpp.BackBufferHeight, modes[i].h);
-        }
-        IDirect3DSwapChain9_Release(pSwapchain);
-    }
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x.\n", hr);
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &d3dpp);
+    ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
+    ok(d3dpp.BackBufferWidth == modes[i].w, "Got unexpected BackBufferWidth %u, expected %u.\n",
+            d3dpp.BackBufferWidth, modes[i].w);
+    ok(d3dpp.BackBufferHeight == modes[i].h, "Got unexpected BackBufferHeight %u, expected %u.\n",
+            d3dpp.BackBufferHeight, modes[i].h);
+    IDirect3DSwapChain9_Release(swapchain);
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = TRUE;
     d3dpp.BackBufferWidth  = 400;
     d3dpp.BackBufferHeight = 300;
+    d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;
     hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
@@ -1847,20 +1836,14 @@ static void test_reset(void)
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
-    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        ZeroMemory(&d3dpp, sizeof(d3dpp));
-        hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
-        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            ok(d3dpp.BackBufferWidth == 400, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
-            ok(d3dpp.BackBufferHeight == 300, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
-        }
-        IDirect3DSwapChain9_Release(pSwapchain);
-    }
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x.\n", hr);
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &d3dpp);
+    ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
+    ok(d3dpp.BackBufferWidth == 400, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    ok(d3dpp.BackBufferHeight == 300, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    IDirect3DSwapChain9_Release(swapchain);
 
     winrect.left = 0;
     winrect.top = 0;
@@ -1878,10 +1861,28 @@ static void test_reset(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.BackBufferWidth  = 0;
     d3dpp.BackBufferHeight = 0;
+    d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
     hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+
+    todo_wine ok(d3dpp.BackBufferWidth == 200, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    todo_wine ok(d3dpp.BackBufferHeight == 150, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    todo_wine ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
+            d3dpp.BackBufferFormat, d3ddm.Format);
+    todo_wine ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
+    ok(!d3dpp.MultiSampleQuality, "Got unexpected MultiSampleQuality %u.\n", d3dpp.MultiSampleQuality);
+    ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);
+    ok(!d3dpp.hDeviceWindow, "Got unexpected hDeviceWindow %p.\n", d3dpp.hDeviceWindow);
+    ok(d3dpp.Windowed, "Got unexpected Windowed %#x.\n", d3dpp.Windowed);
+    ok(!d3dpp.EnableAutoDepthStencil, "Got unexpected EnableAutoDepthStencil %#x.\n", d3dpp.EnableAutoDepthStencil);
+    ok(!d3dpp.AutoDepthStencilFormat, "Got unexpected AutoDepthStencilFormat %#x.\n", d3dpp.AutoDepthStencilFormat);
+    ok(!d3dpp.Flags, "Got unexpected Flags %#x.\n", d3dpp.Flags);
+    ok(!d3dpp.FullScreen_RefreshRateInHz, "Got unexpected FullScreen_RefreshRateInHz %u.\n",
+            d3dpp.FullScreen_RefreshRateInHz);
+    ok(!d3dpp.PresentationInterval, "Got unexpected PresentationInterval %#x.\n", d3dpp.PresentationInterval);
 
     ZeroMemory(&vp, sizeof(vp));
     hr = IDirect3DDevice9_GetViewport(device1, &vp);
@@ -1896,20 +1897,28 @@ static void test_reset(void)
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
-    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
-    if(SUCCEEDED(hr))
-    {
-        ZeroMemory(&d3dpp, sizeof(d3dpp));
-        hr = IDirect3DSwapChain9_GetPresentParameters(pSwapchain, &d3dpp);
-        ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            ok(d3dpp.BackBufferWidth == 200, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
-            ok(d3dpp.BackBufferHeight == 150, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
-        }
-        IDirect3DSwapChain9_Release(pSwapchain);
-    }
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x.\n", hr);
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &d3dpp);
+    ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
+    ok(d3dpp.BackBufferWidth == 200, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    ok(d3dpp.BackBufferHeight == 150, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    todo_wine ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
+            d3dpp.BackBufferFormat, d3ddm.Format);
+    ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
+    ok(!d3dpp.MultiSampleQuality, "Got unexpected MultiSampleQuality %u.\n", d3dpp.MultiSampleQuality);
+    ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);
+    ok(d3dpp.hDeviceWindow == hwnd, "Got unexpected hDeviceWindow %p, expected %p.\n", d3dpp.hDeviceWindow, hwnd);
+    ok(d3dpp.Windowed, "Got unexpected Windowed %#x.\n", d3dpp.Windowed);
+    ok(!d3dpp.EnableAutoDepthStencil, "Got unexpected EnableAutoDepthStencil %#x.\n", d3dpp.EnableAutoDepthStencil);
+    ok(!d3dpp.AutoDepthStencilFormat, "Got unexpected AutoDepthStencilFormat %#x.\n", d3dpp.AutoDepthStencilFormat);
+    ok(!d3dpp.Flags, "Got unexpected Flags %#x.\n", d3dpp.Flags);
+    ok(!d3dpp.FullScreen_RefreshRateInHz, "Got unexpected FullScreen_RefreshRateInHz %u.\n",
+            d3dpp.FullScreen_RefreshRateInHz);
+    ok(!d3dpp.PresentationInterval, "Got unexpected PresentationInterval %#x.\n", d3dpp.PresentationInterval);
+    IDirect3DSwapChain9_Release(swapchain);
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;

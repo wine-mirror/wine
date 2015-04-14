@@ -1012,6 +1012,7 @@ static void test_reset(void)
     d3dpp.Windowed = TRUE;
     d3dpp.BackBufferWidth = 400;
     d3dpp.BackBufferHeight = 300;
+    d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;
     hr = IDirect3DDevice9Ex_Reset(device, &d3dpp);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
@@ -1055,10 +1056,28 @@ static void test_reset(void)
     d3dpp.Windowed = TRUE;
     d3dpp.BackBufferWidth = 0;
     d3dpp.BackBufferHeight = 0;
+    d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
     hr = IDirect3DDevice9Ex_Reset(device, &d3dpp);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected cooperative level %#x.\n", hr);
+
+    todo_wine ok(d3dpp.BackBufferWidth == 200, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    todo_wine ok(d3dpp.BackBufferHeight == 150, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    todo_wine ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
+            d3dpp.BackBufferFormat, d3ddm.Format);
+    todo_wine ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
+    ok(!d3dpp.MultiSampleQuality, "Got unexpected MultiSampleQuality %u.\n", d3dpp.MultiSampleQuality);
+    ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);
+    ok(!d3dpp.hDeviceWindow, "Got unexpected hDeviceWindow %p.\n", d3dpp.hDeviceWindow);
+    ok(d3dpp.Windowed, "Got unexpected Windowed %#x.\n", d3dpp.Windowed);
+    ok(!d3dpp.EnableAutoDepthStencil, "Got unexpected EnableAutoDepthStencil %#x.\n", d3dpp.EnableAutoDepthStencil);
+    ok(!d3dpp.AutoDepthStencilFormat, "Got unexpected AutoDepthStencilFormat %#x.\n", d3dpp.AutoDepthStencilFormat);
+    ok(!d3dpp.Flags, "Got unexpected Flags %#x.\n", d3dpp.Flags);
+    ok(!d3dpp.FullScreen_RefreshRateInHz, "Got unexpected FullScreen_RefreshRateInHz %u.\n",
+            d3dpp.FullScreen_RefreshRateInHz);
+    ok(!d3dpp.PresentationInterval, "Got unexpected PresentationInterval %#x.\n", d3dpp.PresentationInterval);
 
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
@@ -1081,6 +1100,20 @@ static void test_reset(void)
     ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x.\n", hr);
     ok(d3dpp.BackBufferWidth == 200, "Got unexpected backbuffer width %u.\n", d3dpp.BackBufferWidth);
     ok(d3dpp.BackBufferHeight == 150, "Got unexpected backbuffer height %u.\n", d3dpp.BackBufferHeight);
+    todo_wine ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
+            d3dpp.BackBufferFormat, d3ddm.Format);
+    ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
+    ok(!d3dpp.MultiSampleQuality, "Got unexpected MultiSampleQuality %u.\n", d3dpp.MultiSampleQuality);
+    ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);
+    ok(d3dpp.hDeviceWindow == window, "Got unexpected hDeviceWindow %p, expected %p.\n", d3dpp.hDeviceWindow, window);
+    ok(d3dpp.Windowed, "Got unexpected Windowed %#x.\n", d3dpp.Windowed);
+    ok(!d3dpp.EnableAutoDepthStencil, "Got unexpected EnableAutoDepthStencil %#x.\n", d3dpp.EnableAutoDepthStencil);
+    ok(!d3dpp.AutoDepthStencilFormat, "Got unexpected AutoDepthStencilFormat %#x.\n", d3dpp.AutoDepthStencilFormat);
+    ok(!d3dpp.Flags, "Got unexpected Flags %#x.\n", d3dpp.Flags);
+    ok(!d3dpp.FullScreen_RefreshRateInHz, "Got unexpected FullScreen_RefreshRateInHz %u.\n",
+            d3dpp.FullScreen_RefreshRateInHz);
+    ok(!d3dpp.PresentationInterval, "Got unexpected PresentationInterval %#x.\n", d3dpp.PresentationInterval);
     IDirect3DSwapChain9_Release(swapchain);
 
     memset(&d3dpp, 0, sizeof(d3dpp));
