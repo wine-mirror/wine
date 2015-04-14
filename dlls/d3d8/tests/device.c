@@ -1119,6 +1119,7 @@ static void test_reset(void)
     UINT height, orig_height = GetSystemMetrics(SM_CYSCREEN);
     IDirect3DDevice8 *device1 = NULL;
     IDirect3DDevice8 *device2 = NULL;
+    struct device_desc device_desc;
     D3DDISPLAYMODE d3ddm, d3ddm2;
     D3DSURFACE_DESC surface_desc;
     D3DPRESENT_PARAMETERS d3dpp;
@@ -1202,20 +1203,13 @@ static void test_reset(void)
     i = 0;
     if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
 
-    memset(&d3dpp, 0, sizeof(d3dpp));
-    d3dpp.Windowed = FALSE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    d3dpp.BackBufferWidth = modes[i].w;
-    d3dpp.BackBufferHeight = modes[i].h;
-    d3dpp.BackBufferFormat = d3ddm.Format;
-    d3dpp.EnableAutoDepthStencil = TRUE;
-    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
-
-    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device1);
-    if (FAILED(hr))
+    device_desc.width = modes[i].w;
+    device_desc.height = modes[i].h;
+    device_desc.device_window = window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN | CREATE_DEVICE_SWVP_ONLY;
+    if (!(device1 = create_device(d3d8, window, &device_desc)))
     {
-        skip("Failed to create device, hr %#x.\n", hr);
+        skip("Failed to create a D3D device, skipping tests.\n");
         goto cleanup;
     }
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
@@ -1305,7 +1299,7 @@ static void test_reset(void)
     d3dpp.Windowed = TRUE;
     d3dpp.BackBufferWidth = 400;
     d3dpp.BackBufferHeight = 300;
-    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
     ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
@@ -1361,6 +1355,23 @@ static void test_reset(void)
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
     ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
 
+    ok(!d3dpp.BackBufferWidth, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    ok(!d3dpp.BackBufferHeight, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    ok(d3dpp.BackBufferFormat == d3ddm.Format, "Got unexpected BackBufferFormat %#x, expected %#x.\n",
+            d3dpp.BackBufferFormat, d3ddm.Format);
+    todo_wine ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
+    ok(d3dpp.SwapEffect == D3DSWAPEFFECT_DISCARD, "Got unexpected SwapEffect %#x.\n", d3dpp.SwapEffect);
+    ok(!d3dpp.hDeviceWindow, "Got unexpected hDeviceWindow %p.\n", d3dpp.hDeviceWindow);
+    ok(d3dpp.Windowed, "Got unexpected Windowed %#x.\n", d3dpp.Windowed);
+    ok(!d3dpp.EnableAutoDepthStencil, "Got unexpected EnableAutoDepthStencil %#x.\n", d3dpp.EnableAutoDepthStencil);
+    ok(!d3dpp.AutoDepthStencilFormat, "Got unexpected AutoDepthStencilFormat %#x.\n", d3dpp.AutoDepthStencilFormat);
+    ok(!d3dpp.Flags, "Got unexpected Flags %#x.\n", d3dpp.Flags);
+    ok(!d3dpp.FullScreen_RefreshRateInHz, "Got unexpected FullScreen_RefreshRateInHz %u.\n",
+            d3dpp.FullScreen_RefreshRateInHz);
+    ok(!d3dpp.FullScreen_PresentationInterval, "Got unexpected FullScreen_PresentationInterval %#x.\n",
+            d3dpp.FullScreen_PresentationInterval);
+
     memset(&vp, 0, sizeof(vp));
     hr = IDirect3DDevice8_GetViewport(device1, &vp);
     ok(SUCCEEDED(hr), "GetViewport failed, hr %#x.\n", hr);
@@ -1378,6 +1389,9 @@ static void test_reset(void)
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
     hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
     ok(hr == D3D_OK, "GetDesc failed, hr %#x.\n", hr);
+    ok(surface_desc.Format == d3ddm.Format, "Got unexpected Format %#x, expected %#x.\n",
+            surface_desc.Format, d3ddm.Format);
+    ok(!surface_desc.MultiSampleType, "Got unexpected MultiSampleType %u.\n", d3dpp.MultiSampleType);
     ok(surface_desc.Width == 200, "Back buffer width is %u, expected 200.\n", surface_desc.Width);
     ok(surface_desc.Height == 150, "Back buffer height is %u, expected 150.\n", surface_desc.Height);
     IDirect3DSurface8_Release(surface);
