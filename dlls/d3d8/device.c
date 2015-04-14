@@ -670,6 +670,7 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             NULL, reset_enum_callback, TRUE)))
     {
+        present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
         device->device_state = D3D8_DEVICE_STATE_OK;
     }
