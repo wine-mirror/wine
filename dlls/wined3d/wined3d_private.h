@@ -1068,7 +1068,10 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 #define STATE_POINT_SIZE_ENABLE (STATE_FRAMEBUFFER + 1)
 #define STATE_IS_POINT_SIZE_ENABLE(a) ((a) == STATE_POINT_SIZE_ENABLE)
 
-#define STATE_HIGHEST (STATE_POINT_SIZE_ENABLE)
+#define STATE_COLOR_KEY (STATE_POINT_SIZE_ENABLE + 1)
+#define STATE_IS_COLOR_KEY(a) ((a) == STATE_COLOR_KEY)
+
+#define STATE_HIGHEST (STATE_COLOR_KEY)
 
 enum fogsource {
     FOGSOURCE_FFP,
@@ -2825,6 +2828,8 @@ void state_fogdensity(struct wined3d_context *context,
 void state_fogstartend(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_fog_fragpart(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_nop(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_srgbwrite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;

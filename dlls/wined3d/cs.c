@@ -640,6 +640,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
     const struct wined3d_d3d_info *d3d_info = &cs->device->adapter->d3d_info;
     const struct wined3d_cs_set_texture *op = data;
     struct wined3d_texture *prev;
+    BOOL old_use_color_key = FALSE, new_use_color_key = FALSE;
 
     prev = cs->state.textures[op->stage];
     cs->state.textures[op->stage] = op->texture;
@@ -665,6 +666,9 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
             device_invalidate_state(cs->device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_COLOR_OP));
             device_invalidate_state(cs->device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_ALPHA_OP));
         }
+
+        if (!op->stage && op->texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+            new_use_color_key = TRUE;
     }
 
     if (prev)
@@ -692,9 +696,18 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
             device_invalidate_state(cs->device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_COLOR_OP));
             device_invalidate_state(cs->device, STATE_TEXTURESTAGE(op->stage, WINED3D_TSS_ALPHA_OP));
         }
+
+        if (!op->stage && prev->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
+            old_use_color_key = TRUE;
     }
 
     device_invalidate_state(cs->device, STATE_SAMPLER(op->stage));
+
+    if (new_use_color_key != old_use_color_key)
+        device_invalidate_state(cs->device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
+
+    if (new_use_color_key)
+        device_invalidate_state(cs->device, STATE_COLOR_KEY);
 }
 
 void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined3d_texture *texture)

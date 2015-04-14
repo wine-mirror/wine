@@ -45,7 +45,7 @@ static void state_undefined(struct wined3d_context *context, const struct wined3
     ERR("Undefined state.\n");
 }
 
-static void state_nop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+void state_nop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     TRACE("%s: nop in current pipe config.\n", debug_d3dstate(state_id));
 }
@@ -3741,32 +3741,12 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
             gl_tex->base_level = base_level;
         }
 
-        if (!use_ps(state) && sampler_idx < context->lowest_disabled_stage)
-        {
-            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler_idx)
-            {
-                /* If color keying is enabled update the alpha test, it
-                 * depends on the existence of a color key in stage 0. */
-                context_apply_state(context, state, WINED3D_RS_COLORKEYENABLE);
-            }
-        }
-
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             context->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
     }
     else
     {
-        if (sampler_idx < context->lowest_disabled_stage)
-        {
-            /* TODO: What should I do with pixel shaders here ??? */
-            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler_idx)
-            {
-                /* If color keying is enabled update the alpha test, it
-                 * depends on the existence of a color key in stage 0. */
-                context_apply_state(context, state, WINED3D_RS_COLORKEYENABLE);
-            }
-        } /* Otherwise tex_colorop disables the stage */
         context_bind_texture(context, GL_NONE, 0);
     }
 }
@@ -5674,6 +5654,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_RENDER(WINED3D_RS_ALPHAREF),                  { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           state_alpha_test    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORKEYENABLE),            { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_COLOR_KEY,                                    { STATE_COLOR_KEY,                                    state_nop           }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  state_fogcolor      }, WINED3D_GL_EXT_NONE             },
@@ -5951,6 +5932,7 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_BASEVERTEXINDEX,
         STATE_FRAMEBUFFER,
         STATE_POINT_SIZE_ENABLE,
+        STATE_COLOR_KEY,
     };
     unsigned int i, current;
 

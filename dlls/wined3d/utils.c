@@ -3001,6 +3001,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_FRAMEBUFFER";
     if (STATE_IS_POINT_SIZE_ENABLE(state))
         return "STATE_POINT_SIZE_ENABLE";
+    if (STATE_IS_COLOR_KEY(state))
+        return "STATE_COLOR_KEY";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
