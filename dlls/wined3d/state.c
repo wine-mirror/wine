@@ -3717,7 +3717,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
             if (sampler)
             {
-                GL_EXTCALL(glBindSampler(sampler_idx, sampler->name));
+                GL_EXTCALL(glBindSampler(mapped_stage, sampler->name));
                 checkGLcall("glBindSampler");
             }
         }
