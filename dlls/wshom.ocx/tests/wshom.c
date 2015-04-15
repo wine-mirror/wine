@@ -406,6 +406,7 @@ static void test_registry(void)
     hr = IWshShell3_RegRead(sh3, name, &value);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&value) == (VT_ARRAY|VT_VARIANT), "got 0x%x\n", V_VT(&value));
+    SysFreeString(name);
 
     dim = SafeArrayGetDim(V_ARRAY(&value));
     ok(dim == 1, "got %u\n", dim);
