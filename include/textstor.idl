@@ -66,6 +66,9 @@ const DWORD TS_IAS_QUERYONLY  = 0x2;
 
 const DWORD TS_ST_CORRECTION = 0x1;
 
+const DWORD GXFPF_ROUND_NEAREST  = 0x1;
+const DWORD GXFPF_NEAREST        = 0x2;
+
 typedef [uuid(05fcf85b-5e9c-4c3e-ab71-29471d4f38e7)]  enum { TS_AE_NONE, TS_AE_START, TS_AE_END } TsActiveSelEnd;
 typedef [uuid(033b0df0-f193-4170-b47b-141afc247878)]  enum { TS_RT_PLAIN, TS_RT_HIDDEN, TS_RT_OPAQUE } TsRunType;
 typedef [uuid(ef3457d9-8446-49a7-a9e6-b50d9d5f3fd9)]  GUID TS_ATTRID;
