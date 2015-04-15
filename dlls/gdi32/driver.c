@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
+#include "winternl.h"
 
 #include "gdi_private.h"
 #include "wine/unicode.h"
@@ -1152,4 +1153,22 @@ ULONG WINAPI DdQueryDisplaySettingsUniqueness(VOID)
     if (!warn_once++)
         FIXME("stub\n");
     return 0;
+}
+
+/******************************************************************************
+ *		D3DKMTOpenAdapterFromHdc [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTOpenAdapterFromHdc( void *pData )
+{
+    FIXME("(%p): stub\n", pData);
+    return STATUS_NO_MEMORY;
+}
+
+/******************************************************************************
+ *		D3DKMTEscape [GDI32.@]
+ */
+NTSTATUS WINAPI D3DKMTEscape( const void *pData )
+{
+    FIXME("(%p): stub\n", pData);
+    return STATUS_NO_MEMORY;
 }
