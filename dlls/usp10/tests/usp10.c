@@ -756,7 +756,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     else if (hr != S_OK)
         winetest_trace("ScriptShapeOpenType failed (%x)\n",hr);
     if (FAILED(hr))
-        return;
+        goto cleanup;
 
     for (x = 0; x < cchString; x++)
     {
@@ -808,6 +808,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
             winetest_trace("%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
     }
 
+cleanup:
     HeapFree(GetProcessHeap(),0,logclust);
     HeapFree(GetProcessHeap(),0,charProp);
     HeapFree(GetProcessHeap(),0,glyphs);
