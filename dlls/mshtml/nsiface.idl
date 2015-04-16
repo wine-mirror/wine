@@ -227,21 +227,6 @@ interface nsIFactory : nsISupports
 
 [
     object,
-    uuid(6aef11c4-8615-44a6-9711-98f43805693d),
-    local
-]
-interface nsIMemory : nsISupports
-{
-    void *Alloc(/*size_t*/ int size);
-    void *Realloc(void *_ptr, /*size_t*/ int newSize);
-    void Free(void *_ptr);
-    nsresult HeapMinimize(bool immediate);
-    nsresult IsLowMemory(bool *_retval);
-    nsresult IsLowMemoryPlatform(bool *_retval);
-}
-
-[
-    object,
     uuid(9188bc85-f92e-11d2-81ef-0060083a0bcf),
     local
 ]

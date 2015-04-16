@@ -42,7 +42,6 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 
 #define NS_APPSTARTUPNOTIFIER_CONTRACTID "@mozilla.org/embedcomp/appstartup-notifier;1"
 #define NS_WEBBROWSER_CONTRACTID "@mozilla.org/embedding/browser/nsWebBrowser;1"
-#define NS_MEMORY_CONTRACTID "@mozilla.org/xpcom/memory-service;1"
 #define NS_COMMANDPARAMS_CONTRACTID "@mozilla.org/embedcomp/command-params;1"
 #define NS_HTMLSERIALIZER_CONTRACTID "@mozilla.org/layout/contentserializer;1?mimetype=text/html"
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
@@ -69,13 +68,14 @@ static nsresult (CDECL *NS_CStringSetData)(nsACString*,const char*,PRUint32);
 static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,cpp_bool,nsIFile**);
 static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,cpp_bool*);
 static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,cpp_bool*);
+static void* (CDECL *NS_Alloc)(SIZE_T);
+static void (CDECL *NS_Free)(void*);
 
 static HINSTANCE xul_handle = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
 static nsICategoryManager *cat_mgr;
-static nsIMemory *nsmem = NULL;
 static nsIFile *profile_directory, *plugin_directory;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
@@ -516,6 +516,8 @@ static BOOL load_xul(const PRUnichar *gre_path)
     NS_DLSYM(NS_NewLocalFile);
     NS_DLSYM(NS_StringGetData);
     NS_DLSYM(NS_CStringGetData);
+    NS_DLSYM(NS_Alloc);
+    NS_DLSYM(NS_Free);
 
 #undef NS_DLSYM
 
@@ -733,11 +735,6 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     init_mutation(pCompMgr);
     set_preferences();
 
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
-            NULL, &IID_nsIMemory, (void**)&nsmem);
-    if(NS_FAILED(nsres))
-        ERR("Could not get nsIMemory: %08x\n", nsres);
-
     nsres = nsIServiceManager_GetServiceByContractID(pServMgr, NS_CATEGORYMANAGER_CONTRACTID,
             &IID_nsICategoryManager, (void**)&cat_mgr);
     if(NS_FAILED(nsres))
@@ -796,12 +793,12 @@ BOOL load_gecko(void)
 
 void *nsalloc(size_t size)
 {
-    return nsIMemory_Alloc(nsmem, size);
+    return NS_Alloc(size);
 }
 
 void nsfree(void *mem)
 {
-    nsIMemory_Free(nsmem, mem);
+    NS_Free(mem);
 }
 
 static BOOL nsACString_Init(nsACString *str, const char *data)
@@ -1117,9 +1114,6 @@ void close_gecko(void)
 
     if(cat_mgr)
         nsICategoryManager_Release(cat_mgr);
-
-    if(nsmem)
-        nsIMemory_Release(nsmem);
 
     /* Gecko doesn't really support being unloaded */
     /* if (hXPCOM) FreeLibrary(hXPCOM); */
