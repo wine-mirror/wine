@@ -437,10 +437,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     ok( hr == S_OK, "IWbemServices_ExecQuery failed %08x\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    todo_wine
     ok( hr == S_OK, "IEnumWbemClassObject_Next failed %08x\n", hr );
-    if (hr != S_OK)
-        goto done;
 
     type = 0xdeadbeef;
     VariantInit( &val );
@@ -455,6 +452,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, chassistypesW, 0, &val, &type, NULL );
     ok( hr == S_OK, "failed to get chassis types %08x\n", hr );
+    todo_wine
     ok( V_VT( &val ) == (VT_I4|VT_ARRAY), "unexpected variant type 0x%x\n", V_VT( &val ) );
     ok( type == (CIM_UINT16|CIM_FLAG_ARRAY), "unexpected type 0x%x\n", type );
     hr = SafeArrayAccessData( V_ARRAY( &val ), (void **)&data );
@@ -467,8 +465,11 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
         ok( hr == S_OK, "SafeArrayGetLBound failed %x\n", hr );
         hr = SafeArrayGetUBound( V_ARRAY( &val ), 1, &upper );
         ok( hr == S_OK, "SafeArrayGetUBound failed %x\n", hr );
-        for (i = 0; i < upper - lower + 1; i++)
-            trace( "chassis type: %u\n", data[i] );
+        if (V_VT( &val ) == (VT_I4|VT_ARRAY))
+        {
+            for (i = 0; i < upper - lower + 1; i++)
+                trace( "chassis type: %u\n", data[i] );
+        }
         hr = SafeArrayUnaccessData( V_ARRAY( &val ) );
         ok( hr == S_OK, "SafeArrayUnaccessData failed %x\n", hr );
     }
@@ -520,7 +521,6 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     VariantClear( &val );
 
     IWbemClassObject_Release( obj );
-done:
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );

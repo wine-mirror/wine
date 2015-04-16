@@ -98,6 +98,8 @@ static const WCHAR class_sidW[] =
     {'W','i','n','3','2','_','S','I','D',0};
 static const WCHAR class_sounddeviceW[] =
     {'W','i','n','3','2','_','S','o','u','n','d','D','e','v','i','c','e',0};
+static const WCHAR class_systemenclosureW[] =
+    {'W','i','n','3','2','_','S','y','s','t','e','m','E','n','c','l','o','s','u','r','e',0};
 static const WCHAR class_videocontrollerW[] =
     {'W','i','n','3','2','_','V','i','d','e','o','C','o','n','t','r','o','l','l','e','r',0};
 
@@ -133,6 +135,8 @@ static const WCHAR prop_capacityW[] =
     {'C','a','p','a','c','i','t','y',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
+static const WCHAR prop_chassistypesW[] =
+    {'C','h','a','s','s','i','s','T','y','p','e','s',0};
 static const WCHAR prop_classW[] =
     {'C','l','a','s','s',0};
 static const WCHAR prop_codesetW[] =
@@ -225,6 +229,8 @@ static const WCHAR prop_localdatetimeW[] =
     {'L','o','c','a','l','D','a','t','e','T','i','m','e',0};
 static const WCHAR prop_localeW[] =
     {'L','o','c','a','l','e',0};
+static const WCHAR prop_lockpresentW[] =
+    {'L','o','c','k','P','r','e','s','e','n','t',0};
 static const WCHAR prop_macaddressW[] =
     {'M','A','C','A','d','d','r','e','s','s',0};
 static const WCHAR prop_manufacturerW[] =
@@ -590,6 +596,16 @@ static const struct column col_stdregprov[] =
     { method_enumvaluesW,     CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { method_getstringvalueW, CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
+static const struct column col_systemenclosure[] =
+{
+    { prop_captionW,      CIM_STRING },
+    { prop_chassistypesW, CIM_UINT16|CIM_FLAG_ARRAY },
+    { prop_descriptionW,  CIM_STRING },
+    { prop_lockpresentW,  CIM_BOOLEAN },
+    { prop_manufacturerW, CIM_STRING },
+    { prop_nameW,         CIM_STRING },
+    { prop_tagW,          CIM_STRING },
+};
 static const struct column col_systemsecurity[] =
 {
     { method_getsdW,                    CIM_FLAG_ARRAY|COL_FLAG_METHOD },
@@ -702,6 +718,12 @@ static const WCHAR physicalmedia_tagW[] =
     {'\\','\\','.','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
 static const WCHAR sounddevice_productnameW[] =
     {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
+static const WCHAR systemenclosure_systemenclosureW[] =
+    {'S','y','s','t','e','m',' ','E','n','c','l','o','s','u','r','e',0};
+static const WCHAR systemenclosure_tagW[] =
+    {'S','y','s','t','e','m',' ','E','n','c','l','o','s','u','r','e',' ','0',0};
+static const WCHAR systemenclosure_manufacturerW[] =
+    {'W','i','n','e',0};
 static const WCHAR videocontroller_dactypeW[] =
     {'I','n','t','e','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
 static const WCHAR videocontroller_deviceidW[] =
@@ -960,6 +982,16 @@ struct record_systemsecurity
     class_method *getsd;
     class_method *setsd;
 };
+struct record_systemenclosure
+{
+    const WCHAR *caption;
+    const struct array *chassistypes;
+    const WCHAR *description;
+    int         lockpresent;
+    const WCHAR *manufacturer;
+    const WCHAR *name;
+    const WCHAR *tag;
+};
 struct record_videocontroller
 {
     const WCHAR *adapter_dactype;
@@ -1043,6 +1075,27 @@ static const struct record_sounddevice data_sounddevice[] =
 static const struct record_stdregprov data_stdregprov[] =
 {
     { reg_enum_key, reg_enum_values, reg_get_stringvalue }
+};
+static UINT16 systemenclosure_chassistypes[] =
+{
+    1,
+};
+static const struct array systemenclosure_chassistypes_array =
+{
+    SIZEOF(systemenclosure_chassistypes),
+    &systemenclosure_chassistypes
+};
+static const struct record_systemenclosure data_systemenclosure[] =
+{
+    {
+        systemenclosure_systemenclosureW,
+        &systemenclosure_chassistypes_array,
+        systemenclosure_systemenclosureW,
+        FALSE,
+        systemenclosure_manufacturerW,
+        systemenclosure_systemenclosureW,
+        systemenclosure_tagW,
+    }
 };
 static const struct record_systemsecurity data_systemsecurity[] =
 {
@@ -2817,6 +2870,7 @@ static struct table builtin_classes[] =
     { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), 0, (BYTE *)data_sounddevice },
     { class_stdregprovW, SIZEOF(col_stdregprov), col_stdregprov, SIZEOF(data_stdregprov), 0, (BYTE *)data_stdregprov },
     { class_systemsecurityW, SIZEOF(col_systemsecurity), col_systemsecurity, SIZEOF(data_systemsecurity), 0, (BYTE *)data_systemsecurity },
+    { class_systemenclosureW, SIZEOF(col_systemenclosure), col_systemenclosure, SIZEOF(data_systemenclosure), 0, (BYTE *)data_systemenclosure },
     { class_videocontrollerW, SIZEOF(col_videocontroller), col_videocontroller, 0, 0, NULL, fill_videocontroller }
 };
 
