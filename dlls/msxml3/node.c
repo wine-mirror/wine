@@ -2038,9 +2038,11 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         pUnk = create_doc_fragment( node );
         break;
     case XML_DTD_NODE:
+    case XML_DOCUMENT_TYPE_NODE:
         pUnk = create_doc_type( node );
         break;
-    default: {
+    case XML_ENTITY_NODE:
+    case XML_NOTATION_NODE: {
         unknode *new_node;
 
         FIXME("only creating basic node for type %d\n", node->type);
@@ -2054,6 +2056,9 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         init_xmlnode(&new_node->node, node, &new_node->IXMLDOMNode_iface, NULL);
         pUnk = (IUnknown*)&new_node->IXMLDOMNode_iface;
     }
+    default:
+        ERR("Called for unsupported node type %d\n", node->type);
+        return NULL;
     }
 
     hr = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMNode, (LPVOID*)&ret);
