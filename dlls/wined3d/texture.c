@@ -749,7 +749,7 @@ static void wined3d_texture_upload_data(struct wined3d_texture *texture, const s
     context = context_acquire(texture->resource.device, NULL);
 
     wined3d_texture_prepare_texture(texture, context, FALSE);
-    wined3d_texture_bind(texture, context, FALSE);
+    wined3d_texture_bind_and_dirtify(texture, context, FALSE);
 
     for (i = 0; i < sub_count; ++i)
     {
