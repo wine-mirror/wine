@@ -2114,8 +2114,6 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
   {
     if(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))
       FIXME(": pmode 0x%04x ignored\n", pmode);
-    else
-      WARN(": pmode 0x%04x ignored\n", pmode);
 
     if (oflags & MSVCRT__O_EXCL)
       creation = CREATE_NEW;
@@ -2150,7 +2148,11 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
       ERR( "Unhandled shflags 0x%x\n", shflags );
       return MSVCRT_EINVAL;
   }
-  attrib = FILE_ATTRIBUTE_NORMAL;
+
+  if (!(pmode & ~MSVCRT_umask & MSVCRT__S_IWRITE))
+      attrib = FILE_ATTRIBUTE_READONLY;
+  else
+      attrib = FILE_ATTRIBUTE_NORMAL;
 
   if (oflags & MSVCRT__O_TEMPORARY)
   {
