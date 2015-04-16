@@ -54,8 +54,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
 {
-    WCHAR volume_name[MAX_PATH + 1];
-    WCHAR root[MAX_PATH + 1];
+    WCHAR volume_name[MAX_PATH + 1], root[MAX_PATH + 1];
+    const WCHAR *p;
+    int len, len2;
 
     strcpyW(root, source_root);
     PathStripToRootW(root);
@@ -66,7 +67,13 @@ static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
         WARN("failed to get volume information for %s (%u)\n", debugstr_w(root), GetLastError());
         return FALSE;
     }
-    return !strcmpiW( mi->volume_label, volume_name );
+
+    len = strlenW( volume_name );
+    len2 = strlenW( mi->volume_label );
+    if (len2 > len) return FALSE;
+    p = volume_name + len - len2;
+
+    return !strcmpiW( mi->volume_label, p );
 }
 
 static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
