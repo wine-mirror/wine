@@ -2090,13 +2090,6 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
     return context->isStateDirty[idx] & (1 << shift);
 }
 
-static inline void context_invalidate_active_texture(struct wined3d_context *context)
-{
-    DWORD sampler = context->rev_tex_unit_map[context->active_texture];
-    if (sampler != WINED3D_UNMAPPED_STAGE)
-        context_invalidate_state(context, STATE_SAMPLER(sampler));
-}
-
 #define WINED3D_RESOURCE_ACCESS_GPU     0x1
 #define WINED3D_RESOURCE_ACCESS_CPU     0x2
 

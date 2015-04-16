@@ -1638,15 +1638,13 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         wined3d_texture_prepare_texture(dst_surface->container, context, FALSE);
     else
         surface_load_location(dst_surface, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_bind(dst_surface->container, context, FALSE);
+    wined3d_texture_bind_and_dirtify(dst_surface->container, context, FALSE);
 
     surface_get_memory(src_surface, &data, src_surface->locations);
     src_pitch = wined3d_surface_get_pitch(src_surface);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
             src_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
-
-    context_invalidate_active_texture(context);
 
     context_release(context);
 
