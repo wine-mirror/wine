@@ -129,6 +129,16 @@ static const char *ntoa( DWORD ip )
     return buffer;
 }
 
+static inline const char* debugstr_longlong(ULONGLONG ll)
+{
+    static char string[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(string, "%lx", (unsigned long)ll);
+    return string;
+}
+
 /*
 still-to-be-tested 98-only functions:
 GetUniDirectionalAdapterInfo
@@ -1298,7 +1308,7 @@ static void testWin2KFunctions(void)
 
 static void test_GetAdaptersAddresses(void)
 {
-    ULONG ret, size;
+    ULONG ret, size, osize, i;
     IP_ADAPTER_ADDRESSES *aa, *ptr;
     IP_ADAPTER_UNICAST_ADDRESS *ua;
 
@@ -1320,16 +1330,29 @@ static void test_GetAdaptersAddresses(void)
     ptr = HeapAlloc(GetProcessHeap(), 0, size);
     ret = pGetAdaptersAddresses(AF_UNSPEC, 0, NULL, ptr, &size);
     ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
+    HeapFree(GetProcessHeap(), 0, ptr);
+
+    /* higher size must not be changed to lower size */
+    size *= 2;
+    osize = size;
+    ptr = HeapAlloc(GetProcessHeap(), 0, osize);
+    ret = pGetAdaptersAddresses(AF_UNSPEC, 0, NULL, ptr, &osize);
+    ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
+todo_wine
+    ok(osize == size, "expected %d, got %d\n", size, osize);
 
     for (aa = ptr; !ret && aa; aa = aa->Next)
     {
+        char temp[128];
+
+        ok(S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_LH) ||
+           S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_XP),
+           "Unknown structure size of %u bytes\n", S(U(*aa)).Length);
         ok(aa->DnsSuffix != NULL, "DnsSuffix is not a valid pointer\n");
         ok(aa->Description != NULL, "Description is not a valid pointer\n");
         ok(aa->FriendlyName != NULL, "FriendlyName is not a valid pointer\n");
 
-        if (winetest_debug <= 1)
-            continue;
-
+        trace("\n");
         trace("Length:                %u\n", S(U(*aa)).Length);
         trace("IfIndex:               %u\n", S(U(*aa)).IfIndex);
         trace("Next:                  %p\n", aa->Next);
@@ -1338,6 +1361,24 @@ static void test_GetAdaptersAddresses(void)
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
+todo_wine
+            ok(ua->PrefixOrigin != IpPrefixOriginOther,
+               "bad address config value %d\n", ua->PrefixOrigin);
+todo_wine
+            ok(ua->SuffixOrigin != IpSuffixOriginOther,
+               "bad address config value %d\n", ua->PrefixOrigin);
+            /* Address configured manually or from DHCP server? */
+            if (ua->PrefixOrigin == IpPrefixOriginManual ||
+                ua->PrefixOrigin == IpPrefixOriginDhcp)
+            {
+                ok(ua->ValidLifetime, "expected non-zero value\n");
+                ok(ua->PreferredLifetime, "expected non-zero value\n");
+                ok(ua->LeaseLifetime, "expected non-zero\n");
+            }
+            /* Is the address ok in the network (not duplicated)? */
+todo_wine
+            ok(ua->DadState != IpDadStateInvalid && ua->DadState != IpDadStateDuplicate,
+               "bad address duplication value %d\n", ua->DadState);
             trace("\tLength:                  %u\n", S(U(*ua)).Length);
             trace("\tFlags:                   0x%08x\n", S(U(*ua)).Flags);
             trace("\tNext:                    %p\n", ua->Next);
@@ -1346,24 +1387,51 @@ static void test_GetAdaptersAddresses(void)
             trace("\tPrefixOrigin:            %u\n", ua->PrefixOrigin);
             trace("\tSuffixOrigin:            %u\n", ua->SuffixOrigin);
             trace("\tDadState:                %u\n", ua->DadState);
-            trace("\tValidLifetime:           0x%08x\n", ua->ValidLifetime);
-            trace("\tPreferredLifetime:       0x%08x\n", ua->PreferredLifetime);
-            trace("\tLeaseLifetime:           0x%08x\n", ua->LeaseLifetime);
+            trace("\tValidLifetime:           %u seconds\n", ua->ValidLifetime);
+            trace("\tPreferredLifetime:       %u seconds\n", ua->PreferredLifetime);
+            trace("\tLeaseLifetime:           %u seconds\n", ua->LeaseLifetime);
             trace("\n");
             ua = ua->Next;
         }
         trace("FirstAnycastAddress:   %p\n", aa->FirstAnycastAddress);
         trace("FirstMulticastAddress: %p\n", aa->FirstMulticastAddress);
         trace("FirstDnsServerAddress: %p\n", aa->FirstDnsServerAddress);
-        trace("DnsSuffix:             %p\n", aa->DnsSuffix);
-        trace("Description:           %p\n", aa->Description);
-        trace("FriendlyName:          %p\n", aa->FriendlyName);
-        trace("PhysicalAddress:       %02x\n", aa->PhysicalAddress[0]);
+        trace("DnsSuffix:             %s %p\n", wine_dbgstr_w(aa->DnsSuffix), aa->DnsSuffix);
+        trace("Description:           %s %p\n", wine_dbgstr_w(aa->Description), aa->Description);
+        trace("FriendlyName:          %s %p\n", wine_dbgstr_w(aa->FriendlyName), aa->FriendlyName);
         trace("PhysicalAddressLength: %u\n", aa->PhysicalAddressLength);
+        for (i = 0; i < aa->PhysicalAddressLength; i++)
+            sprintf(temp + i * 3, "%02X-", aa->PhysicalAddress[i]);
+        temp[i ? i * 3 - 1 : 0] = '\0';
+        trace("PhysicalAddress:       %s\n", temp);
         trace("Flags:                 0x%08x\n", aa->Flags);
         trace("Mtu:                   %u\n", aa->Mtu);
         trace("IfType:                %u\n", aa->IfType);
         trace("OperStatus:            %u\n", aa->OperStatus);
+        trace("Ipv6IfIndex:           %u\n", aa->Ipv6IfIndex);
+        for (i = 0, temp[0] = '\0'; i < sizeof(aa->ZoneIndices) / sizeof(aa->ZoneIndices[0]); i++)
+            sprintf(temp + strlen(temp), "%d ", aa->ZoneIndices[i]);
+        trace("ZoneIndices:           %s\n", temp);
+        trace("FirstPrefix:           %p\n", aa->FirstPrefix);
+
+        if (S(U(*aa)).Length < sizeof(IP_ADAPTER_ADDRESSES_LH)) continue;
+        trace("TransmitLinkSpeed:     %s\n", debugstr_longlong(aa->TransmitLinkSpeed));
+        trace("ReceiveLinkSpeed:      %s\n", debugstr_longlong(aa->ReceiveLinkSpeed));
+        trace("FirstWinsServerAddress:%p\n", aa->FirstWinsServerAddress);
+        trace("FirstGatewayAddress:   %p\n", aa->FirstGatewayAddress);
+        trace("Ipv4Metric:            %u\n", aa->Ipv4Metric);
+        trace("Ipv6Metric:            %u\n", aa->Ipv6Metric);
+        trace("Luid:                  %p\n", &aa->Luid);
+        trace("Dhcpv4Server:          %p\n", &aa->Dhcpv4Server);
+        trace("CompartmentId:         %u\n", aa->CompartmentId);
+        trace("NetworkGuid:           %s\n", wine_dbgstr_guid((GUID*) &aa->NetworkGuid));
+        trace("ConnectionType:        %u\n", aa->ConnectionType);
+        trace("TunnelType:            %u\n", aa->TunnelType);
+        trace("Dhcpv6Server:          %p\n", &aa->Dhcpv6Server);
+        trace("Dhcpv6ClientDuidLength:%u\n", aa->Dhcpv6ClientDuidLength);
+        trace("Dhcpv6ClientDuid:      %p\n", aa->Dhcpv6ClientDuid);
+        trace("Dhcpv6Iaid:            %u\n", aa->Dhcpv6Iaid);
+        trace("FirstDnsSuffix:        %p\n", aa->FirstDnsSuffix);
         trace("\n");
     }
     HeapFree(GetProcessHeap(), 0, ptr);
