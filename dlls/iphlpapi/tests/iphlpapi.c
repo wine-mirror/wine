@@ -1360,10 +1360,8 @@ static void test_GetAdaptersAddresses(void)
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
-todo_wine
             ok(ua->PrefixOrigin != IpPrefixOriginOther,
                "bad address config value %d\n", ua->PrefixOrigin);
-todo_wine
             ok(ua->SuffixOrigin != IpSuffixOriginOther,
                "bad address config value %d\n", ua->PrefixOrigin);
             /* Address configured manually or from DHCP server? */
@@ -1375,7 +1373,6 @@ todo_wine
                 ok(ua->LeaseLifetime, "expected non-zero\n");
             }
             /* Is the address ok in the network (not duplicated)? */
-todo_wine
             ok(ua->DadState != IpDadStateInvalid && ua->DadState != IpDadStateDuplicate,
                "bad address duplication value %d\n", ua->DadState);
             trace("\tLength:                  %u\n", S(U(*ua)).Length);

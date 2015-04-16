@@ -784,6 +784,31 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
     return row;
 }
 
+static void fill_unicast_addr_data(IP_ADAPTER_ADDRESSES *aa, IP_ADAPTER_UNICAST_ADDRESS *ua)
+{
+    /* Actually this information should be read somewhere from the system
+     * but it doesn't matter much for the bugs found so far.
+     * This information is required for DirectPlay8 games. */
+    if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK)
+    {
+        ua->PrefixOrigin = IpPrefixOriginDhcp;
+        ua->SuffixOrigin = IpSuffixOriginDhcp;
+    }
+    else
+    {
+        ua->PrefixOrigin = IpPrefixOriginManual;
+        ua->SuffixOrigin = IpSuffixOriginManual;
+    }
+
+    /* The address is not duplicated in the network */
+    ua->DadState = IpDadStatePreferred;
+
+    /* Some address life time values, required even for non-dhcp addresses */
+    ua->ValidLifetime = 60000;
+    ua->PreferredLifetime = 60000;
+    ua->LeaseLifetime = 60000;
+}
+
 static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
                                        IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
@@ -884,6 +909,13 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
         TRACE("%s: %d IPv4 addresses, %d IPv6 addresses:\n", name, num_v4addrs,
               num_v6addrs);
+
+        buflen = MAX_INTERFACE_PHYSADDR;
+        getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
+        aa->PhysicalAddressLength = buflen;
+        aa->IfType = typeFromMibType(type);
+        aa->ConnectionType = connectionTypeFromMibType(type);
+
         if (num_v4_gateways)
         {
             PMIB_IPFORWARDROW adapterRow;
@@ -930,6 +962,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 sa->sin_port             = 0;
                 TRACE("IPv4 %d/%d: %s\n", i + 1, num_v4addrs,
                       debugstr_ipv4(&sa->sin_addr.S_un.S_addr, addr_buf));
+                fill_unicast_addr_data(aa, ua);
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
@@ -967,6 +1000,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 memcpy(sa, v6addrs[i].lpSockaddr, sizeof(*sa));
                 TRACE("IPv6 %d/%d: %s\n", i + 1, num_v6addrs,
                       debugstr_ipv6(sa, addr_buf));
+                fill_unicast_addr_data(aa, ua);
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v6addrs - 1)
@@ -1070,12 +1104,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 }
             }
         }
-
-        buflen = MAX_INTERFACE_PHYSADDR;
-        getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
-        aa->PhysicalAddressLength = buflen;
-        aa->IfType = typeFromMibType(type);
-        aa->ConnectionType = connectionTypeFromMibType(type);
 
         getInterfaceMtuByName(name, &aa->Mtu);
 
