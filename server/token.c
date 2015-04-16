@@ -265,6 +265,10 @@ static int acl_is_valid( const ACL *acl, data_size_t size )
             sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
             sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
             break;
+        case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
+            sid = (const SID *)&((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->SidStart;
+            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart);
+            break;
         default:
             return FALSE;
         }

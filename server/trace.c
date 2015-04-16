@@ -914,6 +914,12 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
                 fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%x",
                          ((const SYSTEM_ALARM_ACE *)ace)->Mask );
                 break;
+            case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
+                sid = (const SID *)&((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->SidStart;
+                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_MANDATORY_LABEL_ACE, SidStart);
+                fprintf( stderr, "SYSTEM_MANDATORY_LABEL_ACE_TYPE,Mask=%x",
+                         ((const SYSTEM_MANDATORY_LABEL_ACE *)ace)->Mask );
+                break;
             default:
                 fprintf( stderr, "unknown<%d>", ace->AceType );
                 break;
