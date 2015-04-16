@@ -1338,7 +1338,6 @@ static void test_GetAdaptersAddresses(void)
     ptr = HeapAlloc(GetProcessHeap(), 0, osize);
     ret = pGetAdaptersAddresses(AF_UNSPEC, 0, NULL, ptr, &osize);
     ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
-todo_wine
     ok(osize == size, "expected %d, got %d\n", size, osize);
 
     for (aa = ptr; !ret && aa; aa = aa->Next)

@@ -1382,8 +1382,10 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses(ULONG family, ULONG flags, P
         ret = ERROR_SUCCESS;
     }
     else
+    {
         ret = ERROR_BUFFER_OVERFLOW;
-    *buflen = total_size;
+        *buflen = total_size;
+    }
 
     TRACE("num adapters %u\n", table->numIndexes);
     HeapFree(GetProcessHeap(), 0, table);
