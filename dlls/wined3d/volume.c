@@ -64,6 +64,8 @@ void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pit
     TRACE("Returning row pitch %u, slice pitch %u.\n", *row_pitch, *slice_pitch);
 }
 
+/* This call just uploads data, the caller is responsible for binding the
+ * correct texture. */
 /* Context activation is done by the caller. */
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
         const struct wined3d_const_bo_address *data)
@@ -273,11 +275,15 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
             else if (volume->locations & WINED3D_LOCATION_SYSMEM)
             {
                 struct wined3d_const_bo_address data = {0, volume->resource.heap_memory};
+                wined3d_texture_bind_and_dirtify(volume->container, context,
+                        location == WINED3D_LOCATION_TEXTURE_SRGB);
                 wined3d_volume_upload_data(volume, context, &data);
             }
             else if (volume->locations & WINED3D_LOCATION_BUFFER)
             {
                 struct wined3d_const_bo_address data = {volume->pbo, NULL};
+                wined3d_texture_bind_and_dirtify(volume->container, context,
+                        location == WINED3D_LOCATION_TEXTURE_SRGB);
                 wined3d_volume_upload_data(volume, context, &data);
             }
             else if (volume->locations & WINED3D_LOCATION_TEXTURE_RGB)
