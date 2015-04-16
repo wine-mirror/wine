@@ -63,6 +63,28 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     msi_ui_progress( package, 2, f->FileSize, 0, 0 );
 }
 
+static BOOL is_registered_patch_media( MSIPACKAGE *package, UINT disk_id )
+{
+    MSIPATCHINFO *patch;
+
+    LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
+    {
+        if (patch->disk_id == disk_id && patch->registered) return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL is_obsoleted_by_patch( MSIPACKAGE *package, MSIFILE *file )
+{
+    if (!list_empty( &package->patches ) && file->disk_id < MSI_INITIAL_MEDIA_TRANSFORM_DISKID)
+    {
+        if (!msi_get_property_int( package->db, szInstalled, 0 )) return FALSE;
+        return TRUE;
+    }
+    if (is_registered_patch_media( package, file->disk_id )) return TRUE;
+    return FALSE;
+}
+
 static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *file )
 {
     MSICOMPONENT *comp = file->Component;
@@ -77,9 +99,9 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
         TRACE("skipping %s (not scheduled for install)\n", debugstr_w(file->File));
         return msifs_skipped;
     }
-    if (!list_empty( &package->patches ) && file->disk_id < MSI_INITIAL_MEDIA_TRANSFORM_DISKID)
+    if (is_obsoleted_by_patch( package, file ))
     {
-        TRACE("skipping %s (not part of patch)\n", debugstr_w(file->File));
+        TRACE("skipping %s (obsoleted by patch)\n", debugstr_w(file->File));
         return msifs_skipped;
     }
     if ((msi_is_global_assembly( comp ) && !comp->assembly->installed) ||
@@ -448,17 +470,6 @@ static MSIFILEPATCH *find_filepatch( MSIPACKAGE *package, UINT disk_id, const WC
             return patch;
     }
     return NULL;
-}
-
-static BOOL is_registered_patch_media( MSIPACKAGE *package, UINT disk_id )
-{
-    MSIPATCHINFO *patch;
-
-    LIST_FOR_EACH_ENTRY( patch, &package->patches, MSIPATCHINFO, entry )
-    {
-        if (patch->disk_id == disk_id && patch->registered) return TRUE;
-    }
-    return FALSE;
 }
 
 static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
