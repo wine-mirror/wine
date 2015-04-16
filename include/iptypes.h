@@ -188,6 +188,11 @@ typedef struct _IP_ADAPTER_GATEWAY_ADDRESS_LH {
 typedef IP_ADAPTER_GATEWAY_ADDRESS_LH IP_ADAPTER_GATEWAY_ADDRESS;
 typedef IP_ADAPTER_GATEWAY_ADDRESS_LH *PIP_ADAPTER_GATEWAY_ADDRESS;
 
+typedef struct _IP_ADAPTER_DNS_SUFFIX {
+    struct _IP_ADAPTER_DNS_SUFFIX *Next;
+    WCHAR String[MAX_DNS_SUFFIX_STRING_LENGTH];
+} IP_ADAPTER_DNS_SUFFIX, *PIP_ADAPTER_DNS_SUFFIX;
+
 #define IP_ADAPTER_DDNS_ENABLED               0x1
 #define IP_ADAPTER_REGISTER_ADAPTER_SUFFIX    0x2
 #define IP_ADAPTER_DHCP_ENABLED               0x4
@@ -241,6 +246,7 @@ typedef struct _IP_ADAPTER_ADDRESSES_LH {
     BYTE                            Dhcpv6ClientDuid[MAX_DHCPV6_DUID_LENGTH];
     ULONG                           Dhcpv6ClientDuidLength;
     ULONG                           Dhcpv6Iaid;
+    PIP_ADAPTER_DNS_SUFFIX          FirstDnsSuffix;
 } IP_ADAPTER_ADDRESSES_LH, *PIP_ADAPTER_ADDRESSES_LH;
 
 typedef struct _IP_ADAPTER_ADDRESSES_XP {
