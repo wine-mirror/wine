@@ -28,10 +28,13 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "fileapi.h"
 
@@ -48,6 +51,10 @@ static HRESULT (WINAPI *pCopyFile2)(PCWSTR,PCWSTR,COPYFILE2_EXTENDED_PARAMETERS*
 static HANDLE (WINAPI *pCreateFile2)(LPCWSTR, DWORD, DWORD, DWORD, CREATEFILE2_EXTENDED_PARAMETERS*);
 static DWORD (WINAPI *pGetFinalPathNameByHandleA)(HANDLE, LPSTR, DWORD, DWORD);
 static DWORD (WINAPI *pGetFinalPathNameByHandleW)(HANDLE, LPWSTR, DWORD, DWORD);
+static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
+                                        PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR*);
+static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);
 
 static const char filename[] = "testfile.xxx";
 static const char sillytext[] =
@@ -72,7 +79,12 @@ struct test_list {
 
 static void InitFunctionPointers(void)
 {
+    HMODULE hntdll = GetModuleHandleA("ntdll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32");
+
+    pNtCreateFile = (void *)GetProcAddress(hntdll, "NtCreateFile");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
+    pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
 
     pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
     pReplaceFileA=(void*)GetProcAddress(hkernel32, "ReplaceFileA");
@@ -243,15 +255,36 @@ static void test__lclose( void )
     ok( ret != 0, "DeleteFile failed (%d)\n", GetLastError(  ) );
 }
 
+/* helper function for test__lcreat */
+static void get_nt_pathW( const char *name, UNICODE_STRING *nameW )
+{
+    UNICODE_STRING strW;
+    ANSI_STRING str;
+    NTSTATUS status;
+    BOOLEAN ret;
+    RtlInitAnsiString( &str, name );
+
+    status = pRtlAnsiStringToUnicodeString( &strW, &str, TRUE );
+    ok( !status, "RtlAnsiStringToUnicodeString failed with %08x\n", status );
+
+    ret = pRtlDosPathNameToNtPathName_U( strW.Buffer, nameW, NULL, NULL );
+    ok( ret, "RtlDosPathNameToNtPathName_U failed\n" );
+
+    RtlFreeUnicodeString( &strW );
+}
 
 static void test__lcreat( void )
 {
+    UNICODE_STRING filenameW;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
     HFILE filehandle;
     char buffer[10000];
     WIN32_FIND_DATAA search_results;
     char slashname[] = "testfi/";
     int err;
-    HANDLE find;
+    HANDLE find, file;
+    NTSTATUS status;
     BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
@@ -287,11 +320,53 @@ static void test__lcreat( void )
     ok( INVALID_HANDLE_VALUE != find, "should be able to find file\n" );
     FindClose( find );
 
+    SetLastError( 0xdeadbeef );
     ok( 0 == DeleteFileA( filename ), "shouldn't be able to delete a readonly file\n" );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError() );
 
     ok( SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL ) != 0, "couldn't change attributes on file\n" );
 
     ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file!\n" );
+
+    filehandle = _lcreat( filename, 1 ); /* readonly */
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)\n", filename, GetLastError() );
+    ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen(sillytext) ),
+        "_hwrite shouldn't be able to write never the less\n" );
+    ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
+
+    find = FindFirstFileA( filename, &search_results );
+    ok( INVALID_HANDLE_VALUE != find, "should be able to find file\n" );
+    FindClose( find );
+
+    get_nt_pathW( filename, &filenameW );
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &filenameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateFile( &file, GENERIC_READ | GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %08x\n", status );
+    ok( GetFileAttributesA( filename ) != INVALID_FILE_ATTRIBUTES, "file was deleted\n" );
+
+    status = NtCreateFile( &file, DELETE, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0 );
+    todo_wine
+    ok( status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %08x\n", status );
+    if (!status) CloseHandle( file );
+
+    RtlFreeUnicodeString( &filenameW );
+
+    todo_wine
+    ok( GetFileAttributesA( filename ) != INVALID_FILE_ATTRIBUTES, "file was deleted\n" );
+    todo_wine
+    ok( SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL ) != 0, "couldn't change attributes on file\n" );
+    todo_wine
+    ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file\n" );
 
     filehandle = _lcreat( filename, 2 );
     ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)\n", filename, GetLastError(  ) );
