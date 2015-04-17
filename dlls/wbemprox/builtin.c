@@ -938,7 +938,7 @@ struct record_service
 struct record_sid
 {
     const WCHAR *accountname;
-    const UINT8 *binaryrepresentation;
+    const struct array *binaryrepresentation;
     const WCHAR *referenceddomainname;
     const WCHAR *sid;
     UINT32       sidlength;
@@ -2614,12 +2614,22 @@ static WCHAR *get_accountname( LSA_TRANSLATED_NAME *name )
     if (!name || !name->Name.Buffer) return NULL;
     return heap_strdupW( name->Name.Buffer );
 }
-static UINT8 *get_binaryrepresentation( PSID sid, UINT len )
+static struct array *get_binaryrepresentation( PSID sid, UINT len )
 {
-    UINT8 *ret = heap_alloc( len );
-    if (!ret) return NULL;
-    memcpy( ret, sid, len );
-    return ret;
+    struct array *array = heap_alloc( sizeof(struct array) );
+    if (array)
+    {
+        UINT8 *ret = heap_alloc( len );
+        if (ret)
+        {
+            memcpy( ret, sid, len );
+            array->count = len;
+            array->ptr = ret;
+            return array;
+        }
+        heap_free( array );
+    }
+    return NULL;
 }
 static WCHAR *get_referenceddomainname( LSA_REFERENCED_DOMAIN_LIST *domain )
 {
