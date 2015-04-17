@@ -383,7 +383,7 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
         return;
     }
 
-    IEnumWbemClassObject_Next( result, 10000, 1, &service, &count );
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &service, &count );
     ok( hr == S_OK, "got %08x\n", hr );
 
     type = 0xdeadbeef;
