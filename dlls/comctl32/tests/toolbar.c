@@ -748,7 +748,7 @@ static void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right
 
 static tbsize_result_t *tbsize_results;
 
-#define tbsize_results_num 24
+#define tbsize_results_num 28
 
 static void init_tbsize_results(void) {
     int fontheight = system_font_height();
@@ -991,6 +991,18 @@ static void init_tbsize_results(void) {
     tbsize_results[23] = init_tbsize_result(2, 0, 0, 672, 42, 67, 41);
     tbsize_addbutton(&tbsize_results[23],   0,   2, 672,  25 + fontheight);
     tbsize_addbutton(&tbsize_results[23],   0,  25 + fontheight, 672,  48 + 2*fontheight);
+
+    tbsize_results[24] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
+    tbsize_addbutton(&tbsize_results[24],   0,   2,  11 + string_width(STRING2),  24);
+
+    tbsize_results[25] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
+    tbsize_addbutton(&tbsize_results[25],   0,   2,  40,  24);
+
+    tbsize_results[26] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
+    tbsize_addbutton(&tbsize_results[26],   0,   2,  40,  24);
+
+    tbsize_results[27] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
+    tbsize_addbutton(&tbsize_results[27],   0,   2,  40,  24);
 }
 
 static void free_tbsize_results(void) {
@@ -1061,6 +1073,11 @@ static TBBUTTON buttons3[] = {
     {0, 31, TBSTATE_ENABLED, 0, {0, }, 0, 1},
     {0, 32, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, 1},
     {0, 33, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, (UINT_PTR)STRING2}
+};
+static TBBUTTON buttons4[] = {
+    {0, 40, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, (UINT_PTR)STRING2},
+    {0, 41, TBSTATE_ENABLED, 0, {0, }, 0, (UINT_PTR)STRING2},
+    {0, 41, TBSTATE_ENABLED, BTNS_SHOWTEXT, {0, }, 0, (UINT_PTR)STRING2}
 };
 
 static void test_sizes(void)
@@ -1300,7 +1317,40 @@ static void test_sizes(void)
     {
         tbinfo.dwMask = TBIF_SIZE;
         ok(SendMessageA(hToolbar, TB_SETBUTTONINFOA, 33, (LPARAM)&tbinfo) != 0, "TB_SETBUTTONINFOA failed\n");
+        tbsize_numtests++;
     }
+
+    /* Single BTNS_AUTOSIZE button with string. */
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&buttons4[0]) == 1, "TB_ADDBUTTONSA failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(40, 20)) == 1, "TB_SETBUTTONSIZE failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
+    check_sizes();
+
+    /* Single non-BTNS_AUTOSIZE button with string. */
+    rebuild_toolbar(&hToolbar);
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&buttons4[1]) == 1, "TB_ADDBUTTONSA failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(40, 20)) == 1, "TB_SETBUTTONSIZE failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
+    check_sizes();
+
+    /* Single non-BTNS_AUTOSIZE button with string with TBSTYLE_EX_MIXEDBUTTONS set. */
+    rebuild_toolbar(&hToolbar);
+    SendMessageA(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&buttons4[1]) == 1, "TB_ADDBUTTONSA failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(40, 20)) == 1, "TB_SETBUTTONSIZE failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
+    check_sizes();
+
+    /* Single non-BTNS_AUTOSIZE, BTNS_SHOWTEXT button with string with TBSTYLE_EX_MIXEDBUTTONS set. */
+    rebuild_toolbar(&hToolbar);
+    SendMessageA(hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS);
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    ok(SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&buttons4[2]) == 1, "TB_ADDBUTTONSA failed\n");
+    ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(40, 20)) == 1, "TB_SETBUTTONSIZE failed\n");
+    SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
+    check_sizes();
 
     free_tbsize_results();
     DestroyWindow(hToolbar);

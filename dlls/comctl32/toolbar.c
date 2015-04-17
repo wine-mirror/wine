@@ -1689,8 +1689,7 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
 	{
             if (btnPtr->cx)
               cx = btnPtr->cx;
-            else if ((infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || 
-                (btnPtr->fsStyle & BTNS_AUTOSIZE))
+            else if (btnPtr->fsStyle & BTNS_AUTOSIZE)
             {
               SIZE sz;
 	      HDC hdc;
