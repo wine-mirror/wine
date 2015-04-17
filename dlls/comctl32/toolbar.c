@@ -4364,6 +4364,7 @@ static LRESULT
 TOOLBAR_SetButtonSize (TOOLBAR_INFO *infoPtr, LPARAM lParam)
 {
     INT cx = (short)LOWORD(lParam), cy = (short)HIWORD(lParam);
+    int top = default_top_margin(infoPtr);
 
     if ((cx < 0) || (cy < 0))
     {
@@ -4386,15 +4387,20 @@ TOOLBAR_SetButtonSize (TOOLBAR_INFO *infoPtr, LPARAM lParam)
      */
     if (cx == 0) cx = 24;
     if (cy == 0) cy = 22;
-    
+
     cx = max(cx, infoPtr->szPadding.cx + infoPtr->nBitmapWidth);
     cy = max(cy, infoPtr->szPadding.cy + infoPtr->nBitmapHeight);
 
-    infoPtr->nButtonWidth = cx;
-    infoPtr->nButtonHeight = cy;
-    
-    infoPtr->iTopMargin = default_top_margin(infoPtr);
-    TOOLBAR_LayoutToolbar(infoPtr);
+    if (cx != infoPtr->nButtonWidth || cy != infoPtr->nButtonHeight ||
+        top != infoPtr->iTopMargin)
+    {
+        infoPtr->nButtonWidth = cx;
+        infoPtr->nButtonHeight = cy;
+        infoPtr->iTopMargin = top;
+
+        TOOLBAR_LayoutToolbar( infoPtr );
+        InvalidateRect( infoPtr->hwndSelf, NULL, TRUE );
+    }
     return TRUE;
 }
 
