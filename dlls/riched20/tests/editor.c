@@ -3412,7 +3412,7 @@ static DWORD CALLBACK test_esCallback_written_1(DWORD_PTR dwCookie,
                                                 LONG *pcb)
 {
   char** str = (char**)dwCookie;
-  ok(cb == *pcb, "cb %d, *pcb %d\n", cb, *pcb);
+  ok(*pcb == cb || *pcb == 0, "cb %d, *pcb %d\n", cb, *pcb);
   *pcb = 0;
   if (cb > 0) {
     memcpy(*str, pbBuff, cb);
