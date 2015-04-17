@@ -518,14 +518,6 @@ static BOOL load_xul(const PRUnichar *gre_path)
     NS_DLSYM(NS_CStringGetData);
     NS_DLSYM(NS_Alloc);
     NS_DLSYM(NS_Free);
-
-#undef NS_DLSYM
-
-#define NS_DLSYM(func) \
-    func = (void *)GetProcAddress(xul_handle, #func); \
-    if(!func) \
-        ERR("Could not GetProcAddress(" #func ") failed\n")
-
     NS_DLSYM(ccref_incr);
     NS_DLSYM(ccref_decr);
     NS_DLSYM(ccref_init);
