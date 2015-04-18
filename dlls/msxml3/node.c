@@ -2055,6 +2055,7 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         new_node->ref = 1;
         init_xmlnode(&new_node->node, node, &new_node->IXMLDOMNode_iface, NULL);
         pUnk = (IUnknown*)&new_node->IXMLDOMNode_iface;
+        break;
     }
     default:
         ERR("Called for unsupported node type %d\n", node->type);
