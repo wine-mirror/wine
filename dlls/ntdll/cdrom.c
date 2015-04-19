@@ -3090,8 +3090,11 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(DVD_REGION);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        TRACE("doing DVD_Get_REGION\n");
-        status = DVD_GetRegion(fd, lpOutBuffer);
+        else
+        {
+            TRACE("doing DVD_Get_REGION\n");
+            status = DVD_GetRegion(fd, lpOutBuffer);
+        }
         break;
     case IOCTL_DVD_READ_STRUCTURE:
         sz = sizeof(DVD_LAYER_DESCRIPTOR);
