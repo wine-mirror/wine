@@ -34,7 +34,7 @@
 #define STACKOFFSET 0xc0  /* FIELD_OFFSET(TEB,WOW32Reserved) */
 
 /* fix this if the ntdll_thread_regs structure is changed */
-#define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SystemReserved2) + FIELD_OFFSET(ntdll_thread_data,gs) */
+#define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SpareBytes1) + FIELD_OFFSET(ntdll_thread_data,gs) */
 
 #define DPMI_VIF_OFFSET      (0x1fc + 0) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,dpmi_vif) */
 #define VM86_PENDING_OFFSET  (0x1fc + 4) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,vm86_pending) */

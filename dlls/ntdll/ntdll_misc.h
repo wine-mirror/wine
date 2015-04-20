@@ -214,7 +214,7 @@ struct debug_info
     char  output[1024];  /* current output line */
 };
 
-/* thread private data, stored in NtCurrentTeb()->SystemReserved2 */
+/* thread private data, stored in NtCurrentTeb()->SpareBytes1 */
 struct ntdll_thread_data
 {
 #ifdef __i386__
