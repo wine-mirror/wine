@@ -276,7 +276,7 @@ static void test_registry(void)
 {
     static const WCHAR keypathW[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\',
         'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','T','e','s','t','\\',0};
-
+    static const WCHAR regsz2W[] = {'r','e','g','s','z','2',0};
     static const WCHAR regszW[] = {'r','e','g','s','z',0};
     static const WCHAR regdwordW[] = {'r','e','g','d','w','o','r','d',0};
     static const WCHAR regbinaryW[] = {'r','e','g','b','i','n','a','r','y',0};
@@ -332,6 +332,9 @@ static void test_registry(void)
     ret = RegSetValueExA(root, "regsz", 0, REG_SZ, (const BYTE*)"foobar", 7);
     ok(ret == 0, "got %d\n", ret);
 
+    ret = RegSetValueExA(root, "regsz2", 0, REG_SZ, (const BYTE*)"foobar\0f", 9);
+    ok(ret == 0, "got %d\n", ret);
+
     ret = RegSetValueExA(root, "regmultisz", 0, REG_MULTI_SZ, (const BYTE*)"foo\0bar\0", 9);
     ok(ret == 0, "got %d\n", ret);
 
@@ -352,6 +355,18 @@ static void test_registry(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
     ok(!lstrcmpW(V_BSTR(&value), foobarW), "got %s\n", wine_dbgstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+    SysFreeString(name);
+
+    /* REG_SZ with embedded NULL */
+    lstrcpyW(pathW, keypathW);
+    lstrcatW(pathW, regsz2W);
+    name = SysAllocString(pathW);
+    VariantInit(&value);
+    hr = IWshShell3_RegRead(sh3, name, &value);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
+    ok(SysStringLen(V_BSTR(&value)) == 6, "len %d\n", SysStringLen(V_BSTR(&value)));
     VariantClear(&value);
     SysFreeString(name);
 

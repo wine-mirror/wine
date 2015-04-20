@@ -1376,7 +1376,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR name, VARIANT *v
         case REG_SZ:
         case REG_EXPAND_SZ:
             V_VT(value) = VT_BSTR;
-            V_BSTR(value) = SysAllocStringLen((WCHAR*)data, datalen - sizeof(WCHAR));
+            V_BSTR(value) = SysAllocString((WCHAR*)data);
             if (!V_BSTR(value))
                 hr = E_OUTOFMEMORY;
             break;
