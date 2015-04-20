@@ -1,7 +1,6 @@
 MODULE    = inseng.dll
 IMPORTS   = uuid ole32 advapi32
 
-C_SRCS = \
-	inseng_main.c
+C_SRCS = inseng_main.c
 
 IDL_SRCS = inseng.idl

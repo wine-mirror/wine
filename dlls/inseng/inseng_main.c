@@ -30,12 +30,66 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "initguid.h"
+#include "inseng.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inseng);
 
 static HINSTANCE instance;
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveSetupEngCF_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **ppv)
+{
+    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static const IClassFactoryVtbl ActiveSetupEngCFVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ActiveSetupEngCF_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory ActiveSetupEngCF = { &ActiveSetupEngCFVtbl };
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -56,8 +110,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+    if(IsEqualGUID(rclsid, &CLSID_ActiveSetupEng)) {
+        TRACE("(CLSID_ActiveSetupEng %s %p)\n", debugstr_guid(iid), ppv);
+        return IClassFactory_QueryInterface(&ActiveSetupEngCF, iid, ppv);
+    }
 
+    FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
