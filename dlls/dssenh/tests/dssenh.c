@@ -20,6 +20,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -186,6 +188,7 @@ struct keylength_test {
     DWORD expectedError;
     BOOL brokenResult;
     DWORD brokenError;
+    DWORD altError;
 };
 
 static const struct keylength_test baseDSS_keylength[] = {
@@ -197,7 +200,7 @@ static const struct keylength_test baseDSS_keylength[] = {
     /* min 512 max 1024 increment by 64 */
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
@@ -214,7 +217,7 @@ static const struct keylength_test baseDSS_keylength[] = {
     /* min 512 max 1024, increment by 64 */
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 513 << 16, FALSE, NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -230,7 +233,7 @@ static const struct keylength_test dssDH_keylength[] = {
     {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
@@ -248,7 +251,7 @@ static const struct keylength_test dssDH_keylength[] = {
     {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -269,7 +272,7 @@ static const struct keylength_test dssENH_keylength[] = {
     {AT_KEYEXCHANGE, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
-    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {AT_SIGNATURE, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {AT_SIGNATURE, 768 << 16, TRUE},
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1032 << 16, FALSE, NTE_BAD_FLAGS},
@@ -287,7 +290,7 @@ static const struct keylength_test dssENH_keylength[] = {
     {CALG_DH_SF, 1032 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
-    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS}, /* WinNT4 and Win2k */
+    {CALG_DSS_SIGN, 513 << 16, FALSE,  NTE_FAIL, FALSE, NTE_BAD_FLAGS, STATUS_INVALID_PARAMETER}, /* WinNT4 and Win2k */
     {CALG_DSS_SIGN, 768 << 16, TRUE},
     {CALG_DSS_SIGN, 1024 << 16, TRUE},
     {CALG_DSS_SIGN, 1088 << 16, FALSE, NTE_BAD_FLAGS}
@@ -307,7 +310,7 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
         /* success */
         if(tests[i].expectedResult)
         {
-            ok(result, "Expected a key, got %08x\n", GetLastError());
+            ok(result, "%d: Expected a key, got %08x\n", i, GetLastError());
             result = CryptDestroyKey(key);
             ok(result, "Expected no errors.\n");
         }
@@ -315,19 +318,21 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
         {   /* error but success on older system */
             if(tests[i].brokenResult)
                 ok((!result && GetLastError() == tests[i].expectedError) ||
-                    broken(result), "Expected a key, got %x.\n", GetLastError());
+                   broken(result), "%d: Didn't really expect a key, got %x, %d\n",
+                   i, GetLastError(), result);
             else
             {
                 /* error */
                 if(!tests[i].brokenError)
                     ok(!result && GetLastError() == tests[i].expectedError,
-                        "Expected a key, got %x.\n", GetLastError());
+                       "%d: Expected an error, got %x, %d.\n", i, GetLastError(), result);
 
                 /* error but different error on older system */
                 else
                     ok(!result && (GetLastError() == tests[i].expectedError ||
-                        broken(GetLastError() == tests[i].brokenError)),
-                        "Expected a key, got %x.\n", GetLastError());
+                                   GetLastError() == tests[i].altError ||
+                                   broken(GetLastError() == tests[i].brokenError) ),
+                       "%d: Expected an error, got %x, %d.\n", i, GetLastError(), result);
             }
         }
     }
