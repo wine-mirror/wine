@@ -14238,10 +14238,9 @@ todo_wine
     ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
     ok(ret, "AttachThreadInput error %d\n", GetLastError());
 
-todo_wine {
     ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
     ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());
-}
+
     flush_events();
     flush_sequence();
 

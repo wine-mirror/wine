@@ -1063,6 +1063,12 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
     }
     release_object( desktop );
 
+    if (thread_from->queue)
+    {
+        if (!input->focus) input->focus = thread_from->queue->input->focus;
+        if (!input->active) input->active = thread_from->queue->input->active;
+    }
+
     ret = assign_thread_input( thread_from, input );
     if (ret) memset( input->keystate, 0, sizeof(input->keystate) );
     release_object( input );

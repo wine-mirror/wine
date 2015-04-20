@@ -2025,6 +2025,138 @@ static void test_Input_mouse(void)
     DestroyWindow(button_win);
 }
 
+
+static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+struct wnd_event
+{
+    HWND hwnd;
+    HANDLE start_event;
+    BOOL setWindows;
+};
+
+static DWORD WINAPI thread_proc(void *param)
+{
+    MSG msg;
+    struct wnd_event *wnd_event = param;
+
+    wnd_event->hwnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
+                                      100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(wnd_event->hwnd != 0, "Failed to create overlapped window\n");
+
+    if (wnd_event->setWindows)
+    {
+        SetFocus(wnd_event->hwnd);
+        SetActiveWindow(wnd_event->hwnd);
+    }
+
+    SetEvent(wnd_event->start_event);
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+
+    return 0;
+}
+
+static void test_attach_input(void)
+{
+    HANDLE hThread;
+    HWND ourWnd;
+    DWORD ret, tid;
+    struct wnd_event wnd_event;
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = MsgCheckProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW);
+    cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "TestWindowClass";
+    if(!RegisterClassA(&cls)) return;
+
+    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
+    wnd_event.setWindows = FALSE;
+    if (!wnd_event.start_event)
+    {
+        win_skip("skipping interthread message test under win9x\n");
+        return;
+    }
+
+    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
+    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
+
+    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(wnd_event.start_event);
+
+    ourWnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                            0, 0, 0, 0, 0, 0, 0, NULL);
+    ok(ourWnd!= 0, "failed to create ourWnd window\n");
+
+    SetFocus(ourWnd);
+    SetActiveWindow(ourWnd);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
+    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
+    ok(ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
+
+    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hThread);
+
+    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
+    wnd_event.setWindows = TRUE;
+    if (!wnd_event.start_event)
+    {
+        win_skip("skipping interthread message test under win9x\n");
+        return;
+    }
+
+    hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
+    ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
+
+    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(wnd_event.start_event);
+
+    ourWnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
+                                      100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(ourWnd!= 0, "failed to create ourWnd window\n");
+
+    SetFocus(ourWnd);
+    SetActiveWindow(ourWnd);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == wnd_event.hwnd, "expected active %p, got %p\n", wnd_event.hwnd, GetActiveWindow());
+    ok(GetFocus() == wnd_event.hwnd, "expected focus %p, got %p\n", wnd_event.hwnd, GetFocus());
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
+    ok(ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
+
+    ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hThread);
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -2046,6 +2178,7 @@ START_TEST(input)
     test_get_async_key_state();
     test_keyboard_layout_name();
     test_key_names();
+    test_attach_input();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
