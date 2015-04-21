@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa)
 {
@@ -324,4 +325,13 @@ void * __cdecl _lfind( const void *key, const void *base, unsigned int *nmemb,
         if (!compar(key,(char*)base+(size*i)))
             return (char*)base+(size*i);
     return NULL;
+}
+
+/*********************************************************************
+ *                  WinSqmIsOptedIn   (NTDLL.@)
+ */
+BOOL WINAPI WinSqmIsOptedIn(void)
+{
+    FIXME("() stub\n");
+    return FALSE;
 }
