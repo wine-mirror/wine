@@ -137,18 +137,14 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
         {
             if (msi_compare_font_versions( font_version, file->Version ) < 0)
             {
-                TRACE("overwriting %s (new version %s old version %u.%u.%u.%u)\n",
-                      debugstr_w(file->File), debugstr_w(file->Version),
-                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
-                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
+                TRACE("overwriting %s (new version %s old version %s)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version), debugstr_w(font_version));
                 state = msifs_overwrite;
             }
             else
             {
-                TRACE("keeping %s (new version %s old version %u.%u.%u.%u)\n",
-                      debugstr_w(file->File), debugstr_w(file->Version),
-                      HIWORD(file_version->dwFileVersionMS), LOWORD(file_version->dwFileVersionMS),
-                      HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
+                TRACE("keeping %s (new version %s old version %s)\n",
+                      debugstr_w(file->File), debugstr_w(file->Version), debugstr_w(font_version));
                 state = msifs_present;
             }
             msi_free( font_version );
