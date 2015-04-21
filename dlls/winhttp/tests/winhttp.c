@@ -889,6 +889,7 @@ static void test_secure_connection(void)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
@@ -943,6 +944,7 @@ static void test_request_parameter_defaults(void)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
@@ -977,6 +979,7 @@ static void test_request_parameter_defaults(void)
     ok(lstrlenW(version) == size / sizeof(WCHAR), "unexpected size %u\n", size);
     HeapFree(GetProcessHeap(), 0, version);
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
@@ -1952,6 +1955,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
@@ -2052,6 +2056,7 @@ static void test_basic_authentication(int port)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
@@ -2106,6 +2111,7 @@ static void test_basic_authentication(int port)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
@@ -2186,6 +2192,7 @@ static void test_no_content(int port)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "expected success\n");
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &status, &size, NULL);
@@ -2320,6 +2327,7 @@ static void test_not_modified(int port)
     ret = WinHttpReceiveResponse(request, NULL);
     ok(ret, "WinHttpReceiveResponse failed: %u\n", GetLastError());
 
+    status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &status, &size, NULL);
