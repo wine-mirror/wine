@@ -2686,6 +2686,17 @@ NET_API_STATUS WINAPI NetGetAnyDCName(LPCWSTR servername, LPCWSTR domainname, LP
 }
 
 /************************************************************
+ *                NetGroupAddUser  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI
+NetGroupAddUser(LPCWSTR servername, LPCWSTR groupname, LPCWSTR username)
+{
+    FIXME("(%s, %s, %s) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), debugstr_w(username));
+    return NERR_Success;
+}
+
+/************************************************************
  *                NetGroupEnum  (NETAPI32.@)
  *
  */

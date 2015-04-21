@@ -95,7 +95,7 @@
 @ stub NetGetDisplayInformationIndex
 @ stdcall NetGetJoinInformation(wstr ptr ptr)
 @ stub NetGroupAdd
-@ stub NetGroupAddUser
+@ stdcall NetGroupAddUser(wstr wstr wstr)
 @ stub NetGroupDel
 @ stub NetGroupDelUser
 @ stdcall NetGroupEnum(wstr long ptr long ptr ptr ptr)
