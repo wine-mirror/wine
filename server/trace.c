@@ -2546,7 +2546,7 @@ static void dump_set_queue_mask_reply( const struct set_queue_mask_reply *req )
 
 static void dump_get_queue_status_request( const struct get_queue_status_request *req )
 {
-    fprintf( stderr, " clear=%d", req->clear );
+    fprintf( stderr, " clear_bits=%08x", req->clear_bits );
 }
 
 static void dump_get_queue_status_reply( const struct get_queue_status_reply *req )

@@ -434,7 +434,7 @@ DWORD WINAPI GetQueueStatus( UINT flags )
 
     SERVER_START_REQ( get_queue_status )
     {
-        req->clear = 1;
+        req->clear_bits = flags;
         wine_server_call( req );
         ret = MAKELONG( reply->changed_bits & flags, reply->wake_bits & flags );
     }
@@ -454,7 +454,7 @@ BOOL WINAPI GetInputState(void)
 
     SERVER_START_REQ( get_queue_status )
     {
-        req->clear = 0;
+        req->clear_bits = 0;
         wine_server_call( req );
         ret = reply->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
     }

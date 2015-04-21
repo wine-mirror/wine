@@ -2822,7 +2822,7 @@ struct set_queue_mask_reply
 struct get_queue_status_request
 {
     struct request_header __header;
-    int          clear;
+    unsigned int clear_bits;
 };
 struct get_queue_status_reply
 {
@@ -5972,6 +5972,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 467
+#define SERVER_PROTOCOL_VERSION 468
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

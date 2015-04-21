@@ -2059,7 +2059,7 @@ enum char_info_mode
 
 /* Get the current message queue status */
 @REQ(get_queue_status)
-    int          clear;        /* should we clear the change bits? */
+    unsigned int clear_bits;   /* should we clear the change bits? */
 @REPLY
     unsigned int wake_bits;    /* wake bits */
     unsigned int changed_bits; /* changed bits since last time */

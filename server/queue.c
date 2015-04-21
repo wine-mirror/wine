@@ -2198,7 +2198,7 @@ DECL_HANDLER(get_queue_status)
     {
         reply->wake_bits    = queue->wake_bits;
         reply->changed_bits = queue->changed_bits;
-        if (req->clear) queue->changed_bits = 0;
+        queue->changed_bits &= ~req->clear_bits;
     }
     else reply->wake_bits = reply->changed_bits = 0;
 }

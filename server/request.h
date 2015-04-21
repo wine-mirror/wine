@@ -1416,7 +1416,7 @@ C_ASSERT( sizeof(struct set_queue_mask_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_queue_mask_reply, wake_bits) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_queue_mask_reply, changed_bits) == 12 );
 C_ASSERT( sizeof(struct set_queue_mask_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_queue_status_request, clear) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_queue_status_request, clear_bits) == 12 );
 C_ASSERT( sizeof(struct get_queue_status_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_queue_status_reply, wake_bits) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_queue_status_reply, changed_bits) == 12 );

@@ -14699,7 +14699,6 @@ static void test_SendMessage_other_thread(int thread_n)
     }
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
-todo_wine
     ok(ret == MAKELONG(QS_POSTMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE), "wrong status %08x\n", ret);
 
     trace("main: call GetMessage\n");
