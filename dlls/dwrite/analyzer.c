@@ -676,19 +676,66 @@ static ULONG WINAPI dwritetextanalyzer_Release(IDWriteTextAnalyzer2 *iface)
     return 1;
 }
 
-static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *iface,
-    IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
+/* This helper tries to get 'length' chars from a source, allocating a buffer only if source failed to provide enough
+   data after a first request. */
+static HRESULT get_text_source_ptr(IDWriteTextAnalysisSource *source, UINT32 position, UINT32 length, const WCHAR **text, WCHAR **buff)
 {
-    const WCHAR *text;
     HRESULT hr;
     UINT32 len;
 
-    TRACE("(%p %u %u %p)\n", source, position, length, sink);
-
-    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, &text, &len);
+    *buff = NULL;
+    *text = NULL;
+    len = 0;
+    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, text, &len);
     if (FAILED(hr)) return hr;
 
-    return analyze_script(text, len, sink);
+    if (len < length) {
+        UINT32 read;
+
+        *buff = heap_alloc(length*sizeof(WCHAR));
+        if (!*buff)
+            return E_OUTOFMEMORY;
+        memcpy(*buff, *text, len*sizeof(WCHAR));
+        read = len;
+
+        while (read < length && *text) {
+            *text = NULL;
+            len = 0;
+            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, text, &len);
+            if (FAILED(hr)) {
+                heap_free(*buff);
+                return hr;
+            }
+            memcpy(*buff + read, *text, min(len, length-read)*sizeof(WCHAR));
+            read += len;
+        }
+
+        *text = *buff;
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *iface,
+    IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
+{
+    WCHAR *buff = NULL;
+    const WCHAR *text;
+    HRESULT hr;
+
+    TRACE("(%p %u %u %p)\n", source, position, length, sink);
+
+    if (length == 0)
+        return S_OK;
+
+    hr = get_text_source_ptr(source, position, length, &text, &buff);
+    if (FAILED(hr))
+        return hr;
+
+    hr = analyze_script(text, length, sink);
+    heap_free(buff);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface,
@@ -698,7 +745,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
     UINT8 baselevel, level, explicit_level;
     WCHAR *buff = NULL;
     const WCHAR *text;
-    UINT32 len, pos, i;
+    UINT32 pos, i;
     HRESULT hr;
 
     TRACE("(%p %u %u %p)\n", source, position, length, sink);
@@ -706,33 +753,9 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
     if (length == 0)
         return S_OK;
 
-    /* get some, check for length */
-    text = NULL;
-    len = 0;
-    hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, position, &text, &len);
-    if (FAILED(hr)) return hr;
-
-    if (len < length) {
-        UINT32 read;
-
-        buff = heap_alloc(length*sizeof(WCHAR));
-        if (!buff)
-            return E_OUTOFMEMORY;
-        memcpy(buff, text, len*sizeof(WCHAR));
-        read = len;
-
-        while (read < length && text) {
-            text = NULL;
-            len = 0;
-            hr = IDWriteTextAnalysisSource_GetTextAtPosition(source, read, &text, &len);
-            if (FAILED(hr))
-                goto done;
-            memcpy(&buff[read], text, min(len, length-read)*sizeof(WCHAR));
-            read += len;
-        }
-
-        text = buff;
-    }
+    hr = get_text_source_ptr(source, position, length, &text, &buff);
+    if (FAILED(hr))
+        return hr;
 
     levels = heap_alloc(length*sizeof(*levels));
     explicit = heap_alloc(length*sizeof(*explicit));
