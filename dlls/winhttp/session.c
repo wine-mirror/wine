@@ -566,6 +566,7 @@ static void request_destroy( object_header_t *hdr )
         CloseHandle( request->task_thread );
         CloseHandle( request->task_cancel );
         CloseHandle( request->task_wait );
+        request->task_cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &request->task_cs );
     }
     release_object( &request->connect->hdr );
