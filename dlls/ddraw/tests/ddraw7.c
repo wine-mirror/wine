@@ -3398,6 +3398,230 @@ static void test_draw_strided(void)
     DestroyWindow(window);
 }
 
+static void test_lighting(void)
+{
+    static D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    },
+    mat_singular =
+    {
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 1.0f,
+    },
+    mat_transf =
+    {
+         0.0f,  0.0f,  1.0f, 0.0f,
+         0.0f,  1.0f,  0.0f, 0.0f,
+        -1.0f,  0.0f,  0.0f, 0.0f,
+         10.f, 10.0f, 10.0f, 1.0f,
+    },
+    mat_nonaffine =
+    {
+        1.0f,  0.0f,  0.0f,  0.0f,
+        0.0f,  1.0f,  0.0f,  0.0f,
+        0.0f,  0.0f,  1.0f, -1.0f,
+        10.f, 10.0f, 10.0f,  0.0f,
+    };
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    unlitquad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xffff0000},
+        {{-1.0f,  0.0f, 0.1f}, 0xffff0000},
+        {{ 0.0f,  0.0f, 0.1f}, 0xffff0000},
+        {{ 0.0f, -1.0f, 0.1f}, 0xffff0000},
+    },
+    litquad[] =
+    {
+        {{-1.0f,  0.0f, 0.1f}, 0xff00ff00},
+        {{-1.0f,  1.0f, 0.1f}, 0xff00ff00},
+        {{ 0.0f,  1.0f, 0.1f}, 0xff00ff00},
+        {{ 0.0f,  0.0f, 0.1f}, 0xff00ff00},
+    };
+    static struct
+    {
+        struct vec3 position;
+        struct vec3 normal;
+        DWORD diffuse;
+    }
+    unlitnquad[] =
+    {
+        {{0.0f, -1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xff0000ff},
+        {{0.0f,  0.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xff0000ff},
+        {{1.0f,  0.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xff0000ff},
+        {{1.0f, -1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xff0000ff},
+    },
+    litnquad[] =
+    {
+        {{0.0f,  0.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
+        {{0.0f,  1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
+        {{1.0f,  1.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
+        {{1.0f,  0.0f, 0.1f}, {1.0f, 1.0f, 1.0f}, 0xffffff00},
+    },
+    nquad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+    },
+    rotatedquad[] =
+    {
+        {{-10.0f, -11.0f,  11.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f,  -9.0f,  11.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f,  -9.0f,   9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+        {{-10.0f, -11.0f,   9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+    },
+    translatedquad[] =
+    {
+        {{-11.0f, -11.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{-11.0f,  -9.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f,  -9.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f, -11.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+    };
+    static WORD indices[] = {0, 1, 2, 2, 3, 0};
+    static const struct
+    {
+        D3DMATRIX *world_matrix;
+        void *quad;
+        DWORD expected;
+        const char *message;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {&mat, nquad, 0x000000ff, "Lit quad with light", FALSE},
+        {&mat_singular, nquad, 0x000000ff, "Lit quad with singular world matrix", FALSE},
+        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix", FALSE},
+        {&mat_nonaffine, translatedquad, 0x00000000, "Lit quad with non-affine matrix", TRUE},
+    };
+
+    HWND window;
+    IDirect3DDevice7 *device;
+    IDirectDrawSurface7 *rt;
+    HRESULT hr;
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    D3DCOLOR color;
+    ULONG refcount;
+    unsigned int i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat);
+    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_STENCILENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable stencil buffering, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    /* No lights are defined... That means, lit vertices should be entirely black. */
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, unlitquad, 4,
+            indices, 6, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, litquad, 4,
+            indices, 6, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, unlitnquad, 4,
+            indices, 6, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, litnquad, 4,
+            indices, 6, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 160, 360);
+    ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x, expected 0x00ff0000.\n", color);
+    color = get_surface_color(rt, 160, 120);
+    ok(color == 0x00000000, "Lit quad without normals has color 0x%08x, expected 0x00000000.\n", color);
+    color = get_surface_color(rt, 480, 360);
+    ok(color == 0x000000ff, "Unlit quad with normals has color 0x%08x, expected 0x000000ff.\n", color);
+    color = get_surface_color(rt, 480, 120);
+    ok(color == 0x00000000, "Lit quad with normals has color 0x%08x, expected 0x00000000.\n", color);
+
+    hr = IDirect3DDevice7_LightEnable(device, 0, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable light 0, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, tests[i].world_matrix);
+        ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, tests[i].quad,
+                4, indices, 6, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice7_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 320, 240);
+        if (tests[i].todo)
+            todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        else
+            ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+    }
+
+    IDirectDrawSurface7_Release(rt);
+
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_clear_rect_count(void)
 {
     IDirectDrawSurface7 *rt;
@@ -9076,6 +9300,7 @@ START_TEST(ddraw7)
     test_vb_discard();
     test_coop_level_multi_window();
     test_draw_strided();
+    test_lighting();
     test_clear_rect_count();
     test_coop_level_versions();
     test_fog_special();
