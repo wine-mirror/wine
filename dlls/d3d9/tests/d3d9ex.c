@@ -2160,10 +2160,11 @@ static void test_wndproc(void)
         }
     }
 
+    IDirect3D9Ex_Release(d3d9ex);
+
     if (!d3d_width)
     {
         skip("Could not find adequate modes, skipping mode tests.\n");
-        IDirect3D9Ex_Release(d3d9ex);
         return;
     }
 
