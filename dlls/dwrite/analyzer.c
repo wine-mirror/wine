@@ -204,7 +204,7 @@ static inline UINT16 get_char_script(WCHAR c)
     return script;
 }
 
-static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysisSink *sink)
+static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 len, IDWriteTextAnalysisSink *sink)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
     UINT32 pos, i, length;
@@ -213,7 +213,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
 
     sa.script = get_char_script(*text);
 
-    pos = 0;
+    pos = position;
     length = 1;
 
     for (i = 1; i < len; i++)
@@ -233,7 +233,7 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 len, IDWriteTextAnalysis
             sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
             hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
             if (FAILED(hr)) return hr;
-            pos = i;
+            pos = position + i;
             length = 1;
             sa.script = script;
         }
@@ -732,7 +732,7 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeScript(IDWriteTextAnalyzer2 *ifa
     if (FAILED(hr))
         return hr;
 
-    hr = analyze_script(text, length, sink);
+    hr = analyze_script(text, position, length, sink);
     heap_free(buff);
 
     return hr;
