@@ -944,17 +944,15 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
     if (update_mask & WINED3D_SHADER_CONST_PS_Y_CORR)
     {
-        float correction_params[4];
-
-        if (context->render_offscreen)
+        float correction_params[] =
         {
-            correction_params[0] = 0.0f;
-            correction_params[1] = 1.0f;
-        } else {
             /* position is window relative, not viewport relative */
-            correction_params[0] = (float) context->current_rt->resource.height;
-            correction_params[1] = -1.0f;
-        }
+            context->render_offscreen ? 0.0f : (float)context->current_rt->resource.height,
+            context->render_offscreen ? 1.0f : -1.0f,
+            0.0f,
+            0.0f,
+        };
+
         GL_EXTCALL(glUniform4fv(prog->ps.ycorrection_location, 1, correction_params));
     }
 
