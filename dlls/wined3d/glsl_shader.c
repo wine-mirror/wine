@@ -279,11 +279,9 @@ static void shader_glsl_append_imm_vec4(struct wined3d_shader_buffer *buffer, co
     shader_addline(buffer, "vec4(%s, %s, %s, %s)", str[0], str[1], str[2], str[3]);
 }
 
-/* Extract a line from the info log.
- * Note that this modifies the source string. */
-static char *get_info_log_line(char **ptr)
+static const char *get_info_log_line(const char **ptr)
 {
-    char *p, *q;
+    const char *p, *q;
 
     p = *ptr;
     if (!(q = strstr(p, "\n")))
@@ -292,7 +290,6 @@ static char *get_info_log_line(char **ptr)
         *ptr += strlen(p);
         return p;
     }
-    *q = '\0';
     *ptr = q + 1;
 
     return p;
@@ -316,7 +313,7 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id
      * that if there are errors. */
     if (length > 1)
     {
-        char *ptr, *line;
+        const char *ptr, *line;
 
         log = HeapAlloc(GetProcessHeap(), 0, length);
         /* The info log is supposed to be zero-terminated, but at least some
@@ -333,12 +330,12 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id
         if (gl_info->quirks & WINED3D_QUIRK_INFO_LOG_SPAM)
         {
             WARN("Info log received from GLSL shader #%u:\n", id);
-            while ((line = get_info_log_line(&ptr))) WARN("    %s\n", line);
+            while ((line = get_info_log_line(&ptr))) WARN("    %.*s", (int)(ptr - line), line);
         }
         else
         {
             FIXME("Info log received from GLSL shader #%u:\n", id);
-            while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
+            while ((line = get_info_log_line(&ptr))) FIXME("    %.*s", (int)(ptr - line), line);
         }
         HeapFree(GetProcessHeap(), 0, log);
     }
@@ -373,7 +370,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
     GL_EXTCALL(glGetAttachedShaders(program, shader_count, NULL, shaders));
     for (i = 0; i < shader_count; ++i)
     {
-        char *ptr, *line;
+        const char *ptr, *line;
         GLint tmp;
 
         GL_EXTCALL(glGetShaderiv(shaders[i], GL_SHADER_SOURCE_LENGTH, &tmp));
@@ -401,7 +398,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
 
         ptr = source;
         GL_EXTCALL(glGetShaderSource(shaders[i], source_size, NULL, source));
-        while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
+        while ((line = get_info_log_line(&ptr))) FIXME("    %.*s", (int)(ptr - line), line);
         FIXME("\n");
     }
 
