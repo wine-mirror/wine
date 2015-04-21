@@ -4201,7 +4201,7 @@ UINT WINAPI MsiProvideComponentA( LPCSTR product, LPCSTR feature, LPCSTR compone
 {
     WCHAR *productW = NULL, *componentW = NULL, *featureW = NULL, *bufW = NULL;
     UINT r = ERROR_OUTOFMEMORY;
-    DWORD lenW;
+    DWORD lenW = 0;
     int len;
 
     TRACE("%s, %s, %s, %x, %p, %p\n", debugstr_a(product), debugstr_a(component), debugstr_a(feature), mode, buf, buflen);
