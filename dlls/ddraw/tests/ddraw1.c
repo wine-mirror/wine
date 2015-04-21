@@ -146,6 +146,21 @@ static void emit_process_vertices(void **ptr, DWORD flags, WORD base_idx, DWORD 
     *ptr = pv + 1;
 }
 
+static void emit_set_ts(void **ptr, D3DTRANSFORMSTATETYPE state, DWORD value)
+{
+    D3DINSTRUCTION *inst = *ptr;
+    D3DSTATE *ts = (D3DSTATE *)(inst + 1);
+
+    inst->bOpcode = D3DOP_STATETRANSFORM;
+    inst->bSize = sizeof(*ts);
+    inst->wCount = 1;
+
+    U1(*ts).dtstTransformStateType = state;
+    U2(*ts).dwArg[0] = value;
+
+    *ptr = ts + 1;
+}
+
 static void emit_set_ls(void **ptr, D3DLIGHTSTATETYPE state, DWORD value)
 {
     D3DINSTRUCTION *inst = *ptr;
@@ -195,6 +210,30 @@ static void emit_tquad(void **ptr, WORD base_idx)
     U2(*tri).v2 = base_idx + 1;
     U3(*tri).v3 = base_idx + 3;
     tri->wFlags = D3DTRIFLAG_ODD;
+    ++tri;
+
+    *ptr = tri;
+}
+
+static void emit_tquad_tlist(void **ptr, WORD base_idx)
+{
+    D3DINSTRUCTION *inst = *ptr;
+    D3DTRIANGLE *tri = (D3DTRIANGLE *)(inst + 1);
+
+    inst->bOpcode = D3DOP_TRIANGLE;
+    inst->bSize = sizeof(*tri);
+    inst->wCount = 2;
+
+    U1(*tri).v1 = base_idx;
+    U2(*tri).v2 = base_idx + 1;
+    U3(*tri).v3 = base_idx + 2;
+    tri->wFlags = D3DTRIFLAG_START;
+    ++tri;
+
+    U1(*tri).v1 = base_idx + 2;
+    U2(*tri).v2 = base_idx + 3;
+    U3(*tri).v3 = base_idx;
+    tri->wFlags = D3DTRIFLAG_START;
     ++tri;
 
     *ptr = tri;
@@ -5310,6 +5349,334 @@ static void test_material(void)
     DestroyWindow(window);
 }
 
+static void test_lighting(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    },
+    mat_singular =
+    {
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 1.0f,
+    },
+    mat_transf =
+    {
+         0.0f,  0.0f,  1.0f, 0.0f,
+         0.0f,  1.0f,  0.0f, 0.0f,
+        -1.0f,  0.0f,  0.0f, 0.0f,
+         10.f, 10.0f, 10.0f, 1.0f,
+    },
+    mat_nonaffine =
+    {
+        1.0f,  0.0f,  0.0f,  0.0f,
+        0.0f,  1.0f,  0.0f,  0.0f,
+        0.0f,  0.0f,  1.0f, -1.0f,
+        10.f, 10.0f, 10.0f,  0.0f,
+    };
+    static D3DLVERTEX unlitquad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.1f}, 0, {0xffff0000}, {0}, {0.0f}, {0.0f}},
+        {{-1.0f}, { 0.0f}, {0.1f}, 0, {0xffff0000}, {0}, {0.0f}, {0.0f}},
+        {{ 0.0f}, { 0.0f}, {0.1f}, 0, {0xffff0000}, {0}, {0.0f}, {0.0f}},
+        {{ 0.0f}, {-1.0f}, {0.1f}, 0, {0xffff0000}, {0}, {0.0f}, {0.0f}},
+    },
+    litquad[] =
+    {
+        {{-1.0f}, { 0.0f}, {0.1f}, 0, {0xff00ff00}, {0}, {0.0f}, {0.0f}},
+        {{-1.0f}, { 1.0f}, {0.1f}, 0, {0xff00ff00}, {0}, {0.0f}, {0.0f}},
+        {{ 0.0f}, { 1.0f}, {0.1f}, 0, {0xff00ff00}, {0}, {0.0f}, {0.0f}},
+        {{ 0.0f}, { 0.0f}, {0.1f}, 0, {0xff00ff00}, {0}, {0.0f}, {0.0f}},
+    };
+    static D3DVERTEX unlitnquad[] =
+    {
+        {{0.0f}, {-1.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, { 0.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{1.0f}, { 0.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{1.0f}, {-1.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+    },
+    litnquad[] =
+    {
+        {{0.0f}, { 0.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{0.0f}, { 1.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{1.0f}, { 1.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{1.0f}, { 0.0f}, {0.1f}, {1.0f}, {1.0f}, {1.0f}, {0.0f}, {0.0f}},
+    },
+    nquad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{-1.0f}, { 1.0f}, {0.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+    },
+    rotatedquad[] =
+    {
+        {{-10.0f}, {-11.0f}, {11.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {0.0f}},
+        {{-10.0f}, { -9.0f}, {11.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {0.0f}},
+        {{-10.0f}, { -9.0f}, { 9.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {0.0f}},
+        {{-10.0f}, {-11.0f}, { 9.0f}, {-1.0f}, {0.0f}, {0.0f}, {0.0f}, {0.0f}},
+    },
+    translatedquad[] =
+    {
+        {{-11.0f}, {-11.0f}, {-10.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{-11.0f}, { -9.0f}, {-10.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{ -9.0f}, { -9.0f}, {-10.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+        {{ -9.0f}, {-11.0f}, {-10.0f}, {0.0f}, {0.0f}, {-1.0f}, {0.0f}, {0.0f}},
+    };
+    static const struct
+    {
+        D3DMATRIX *world_matrix;
+        void *quad;
+        DWORD expected;
+        const char *message;
+    }
+    tests[] =
+    {
+        {&mat, nquad, 0x000000ff, "Lit quad with light"},
+        {&mat_singular, nquad, 0x000000b4, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, 0x000000ff, "Lit quad with non-affine matrix"},
+    };
+
+    HWND window;
+    IDirect3D *d3d;
+    IDirect3DDevice *device;
+    IDirectDraw *ddraw;
+    IDirectDrawSurface *rt;
+    IDirect3DViewport *viewport;
+    IDirect3DMaterial *material;
+    IDirect3DLight *light;
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    D3DMATERIALHANDLE mat_handle;
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
+    D3DLIGHT light_desc;
+    HRESULT hr;
+    D3DCOLOR color;
+    void *ptr;
+    UINT inst_length;
+    ULONG refcount;
+    unsigned int i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    material = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    viewport_set_background(device, viewport, material);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, unlitquad, sizeof(unlitquad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitquad);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_WORLD, world_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_VIEW, view_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_PROJECTION, proj_handle);
+    emit_set_rs(&ptr, D3DRENDERSTATE_CLIPPING, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_FOGENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, 4);
+    emit_tquad_tlist(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(unlitquad);
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 4, sizeof(unlitquad), inst_length);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, litquad, sizeof(litquad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(litquad);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, 4);
+    emit_tquad_tlist(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(litquad);
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 4, sizeof(litquad), inst_length);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, unlitnquad, sizeof(unlitnquad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(unlitnquad);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
+    emit_tquad_tlist(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(unlitnquad);
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 4, sizeof(unlitnquad), inst_length);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+    memcpy(exec_desc.lpData, litnquad, sizeof(litnquad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(litnquad);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
+    emit_tquad_tlist(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(litnquad);
+
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 4, sizeof(litnquad), inst_length);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 160, 360);
+    ok(color == 0x00ff0000, "Unlit quad without normals has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 160, 120);
+    ok(color == 0x0000ff00, "Lit quad without normals has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 360);
+    ok(color == 0x00ffffff, "Unlit quad with normals has color 0x%08x.\n", color);
+    color = get_surface_color(rt, 480, 120);
+    ok(color == 0x00ffffff, "Lit quad with normals has color 0x%08x.\n", color);
+
+    hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+
+    hr = IDirect3D_CreateLight(d3d, &light, NULL);
+    ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
+    memset(&light_desc, 0, sizeof(light_desc));
+    light_desc.dwSize = sizeof(light_desc);
+    light_desc.dltType = D3DLIGHT_DIRECTIONAL;
+    U1(U(light_desc).dcvColor).r = 0.0f;
+    U2(U(light_desc).dcvColor).g = 0.0f;
+    U3(U(light_desc).dcvColor).b = 1.0f;
+    U4(U(light_desc).dcvColor).a = 1.0f;
+    light_desc.dvDirection.z = 1.0f;
+    hr = IDirect3DLight_SetLight(light, &light_desc);
+    ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+    hr = IDirect3DViewport_AddLight(viewport, light);
+    ok(SUCCEEDED(hr), "Failed to add a light to the viewport, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        hr = IDirect3DDevice_SetMatrix(device, world_handle, tests[i].world_matrix);
+        ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+
+        hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+        memcpy(exec_desc.lpData, tests[i].quad, sizeof(nquad));
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(nquad);
+        emit_set_ls(&ptr, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
+        emit_tquad_tlist(&ptr, 0);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        inst_length -= sizeof(nquad);
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+        set_execute_data(execute_buffer, 4, sizeof(nquad), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color = get_surface_color(rt, 320, 240);
+        todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+    }
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DDevice_DeleteMatrix(device, world_handle);
+    IDirect3DDevice_DeleteMatrix(device, view_handle);
+    IDirect3DDevice_DeleteMatrix(device, proj_handle);
+    hr = IDirect3DViewport_DeleteLight(viewport, light);
+    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
+    IDirect3DLight_Release(light);
+    destroy_material(material);
+    destroy_viewport(device, viewport);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D_Release(d3d);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Ddraw object has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_palette_gdi(void)
 {
     IDirectDrawSurface *surface, *primary;
@@ -6929,6 +7296,7 @@ START_TEST(ddraw1)
     test_palette_complex();
     test_p8_rgb_blit();
     test_material();
+    test_lighting();
     test_palette_gdi();
     test_palette_alpha();
     test_lost_device();
