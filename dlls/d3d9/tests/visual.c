@@ -262,6 +262,7 @@ static void lighting_test(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    unsigned int i;
 
     static const D3DMATRIX mat =
     {{{
@@ -275,7 +276,7 @@ static void lighting_test(void)
         1.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 0.5f, 1.0f,
     }}},
     mat_transf =
     {{{
@@ -283,6 +284,13 @@ static void lighting_test(void)
          0.0f,  1.0f,  0.0f, 0.0f,
         -1.0f,  0.0f,  0.0f, 0.0f,
          10.f, 10.0f, 10.0f, 1.0f,
+    }}},
+    mat_nonaffine =
+    {{{
+        1.0f,  0.0f,  0.0f,  0.0f,
+        0.0f,  1.0f,  0.0f,  0.0f,
+        0.0f,  0.0f,  1.0f, -1.0f,
+        10.f, 10.0f, 10.0f,  0.0f,
     }}};
     static const struct
     {
@@ -343,8 +351,35 @@ static void lighting_test(void)
         {{-10.0f,  -9.0f, 11.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
         {{-10.0f,  -9.0f,  9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
         {{-10.0f, -11.0f,  9.0f}, {-1.0f, 0.0f, 0.0f}, 0xff0000ff},
+    },
+    translatedquad[] =
+    {
+        {{-11.0f, -11.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{-11.0f,  -9.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f,  -9.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
+        {{ -9.0f, -11.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 0xff0000ff},
     };
     static const WORD indices[] = {0, 1, 2, 2, 3, 0};
+    static const struct
+    {
+        const D3DMATRIX *world_matrix;
+        const void *quad;
+        unsigned int size;
+        DWORD expected;
+        const char *message;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {&mat, nquad, sizeof(nquad[0]), 0x000000ff,
+         "Lit quad with light", FALSE},
+        {&mat_singular, nquad, sizeof(nquad[0]), 0x000000ff,
+         "Lit quad with singular world matrix", FALSE},
+        {&mat_transf, rotatedquad, sizeof(rotatedquad[0]), 0x000000ff,
+         "Lit quad with transformation matrix", FALSE},
+        {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000,
+         "Lit quad with non-affine matrix", TRUE},
+    };
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -424,66 +459,33 @@ static void lighting_test(void)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_LightEnable(device, 0, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable light 0, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, tests[i].world_matrix);
+        ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
-            2, indices, D3DFMT_INDEX16, nquad, sizeof(nquad[0]));
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
+                2, indices, D3DFMT_INDEX16, tests[i].quad, tests[i].size);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
-    color = getPixelColor(device, 320, 240);
-    ok(color == 0x000000ff, "Lit quad with light has color 0x%08x.\n", color);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat_singular);
-    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
-            2, indices, D3DFMT_INDEX16, nquad, sizeof(nquad[0]));
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    color = getPixelColor(device, 160, 240);
-    ok(color == 0x00ffffff, "Cleared area has color 0x%08x.\n", color);
-    color = getPixelColor(device, 480, 240);
-    ok(color == 0x000000ff, "Lit quad with singular world matrix has color 0x%08x.\n", color);
-
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat_transf);
-    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4,
-            2, indices, D3DFMT_INDEX16, rotatedquad, sizeof(rotatedquad[0]));
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-    color = getPixelColor(device, 320, 240);
-    ok(color == 0x000000ff, "Lit quad with transformation matrix has color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 240);
+        if (tests[i].todo)
+            todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        else
+            ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+    }
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat);
     ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
