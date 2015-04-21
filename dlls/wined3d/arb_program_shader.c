@@ -7715,6 +7715,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     }
     type.fixup = fixup;
     type.use_color_key = !!color_key;
+    type.padding = 0;
 
     entry = wine_rb_get(&priv->shaders, &type);
     if (entry)
