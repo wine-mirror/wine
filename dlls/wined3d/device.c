@@ -1925,7 +1925,7 @@ static void resolve_depth_buffer(struct wined3d_state *state)
     struct wined3d_surface *depth_stencil, *surface;
 
     if (!texture || texture->resource.type != WINED3D_RTYPE_TEXTURE
-            || !(texture->resource.format->flags & WINED3DFMT_FLAG_DEPTH))
+            || !(texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
         return;
     surface = surface_from_resource(texture->sub_resources[0]);
     if (!(depth_stencil = wined3d_rendertarget_view_get_surface(state->fb->depth_stencil)))
@@ -3674,7 +3674,7 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
 
         texture = state->textures[i];
-        if (!texture || texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING) continue;
+        if (!texture || texture->resource.format_flags & WINED3DFMT_FLAG_FILTERING) continue;
 
         if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_POINT)
         {

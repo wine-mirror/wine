@@ -3632,11 +3632,11 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
                 && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
             || (texture->flags & WINED3D_TEXTURE_COND_NP2))
         desc->max_anisotropy = 1;
-    desc->compare = texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW;
+    desc->compare = texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
     desc->srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
 
-    if (!(texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING))
+    if (!(texture->resource.format_flags & WINED3DFMT_FLAG_FILTERING))
     {
         desc->mag_filter = WINED3D_TEXF_POINT;
         desc->min_filter = WINED3D_TEXF_POINT;

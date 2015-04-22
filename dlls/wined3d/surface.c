@@ -359,6 +359,7 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
 static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 {
     const struct wined3d_format *format = surface->resource.format;
+    unsigned int format_flags = surface->resource.format_flags;
     SYSTEM_INFO sysInfo;
     BITMAPINFO *b_info;
     int extraline = 0;
@@ -366,7 +367,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (!(format->flags & WINED3DFMT_FLAG_GETDC))
+    if (!(format_flags & WINED3DFMT_FLAG_GETDC))
     {
         WARN("Cannot use GetDC on a %s surface.\n", debug_d3dformat(format->id));
         return WINED3DERR_INVALIDCALL;
@@ -664,7 +665,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     if (pow2Width > surface->resource.width || pow2Height > surface->resource.height)
     {
         /* TODO: Add support for non power two compressed textures. */
-        if (surface->resource.format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
+        if (surface->resource.format_flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
         {
             FIXME("(%p) Compressed or height scaled non-power-two textures are not supported w(%d) h(%d)\n",
                   surface, surface->resource.width, surface->resource.height);
@@ -751,7 +752,7 @@ static void surface_unmap(struct wined3d_surface *surface)
 
     if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface->container)
         surface_load_location(surface, surface->container->resource.draw_binding);
-    else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    else if (surface->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         FIXME("Depth / stencil buffer locking is not implemented.\n");
 }
 
@@ -779,8 +780,8 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
             dst_surface, wined3d_debug_location(dst_location), wine_dbgstr_rect(dst_rect));
 
-    src_mask = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    dst_mask = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    src_mask = src_surface->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    dst_mask = dst_surface->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
 
     if (src_mask != dst_mask)
     {
@@ -1276,7 +1277,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     surface_get_memory(surface, &data, dst_location);
 
-    if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (surface->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImage level %d, format %#x, type %#x, data %p.\n",
                 surface, surface->texture_level, format->glFormat, format->glType, data.addr);
@@ -1549,6 +1550,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 {
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
+    unsigned int src_fmt_flags, dst_fmt_flags;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_bo_address data;
@@ -1564,6 +1566,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     src_format = src_surface->resource.format;
     dst_format = dst_surface->resource.format;
+    src_fmt_flags = src_surface->resource.format_flags;
+    dst_fmt_flags = dst_surface->resource.format_flags;
 
     if (src_format->id != dst_format->id)
     {
@@ -1611,14 +1615,14 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((src_format->flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(src_surface, src_rect))
+    if ((src_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(src_surface, src_rect))
     {
         WARN("Source rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
-    if ((dst_format->flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(dst_surface, &dst_rect))
+    if ((dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(dst_surface, &dst_rect))
     {
         WARN("Destination rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
@@ -2507,6 +2511,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
+    unsigned int fmt_flags = surface->resource.format_flags;
     struct wined3d_device *device = surface->resource.device;
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
@@ -2521,7 +2526,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((format->flags & WINED3DFMT_FLAG_BLOCKS) && rect
+    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && rect
             && !surface_check_block_align(surface, rect))
     {
         WARN("Map rect %s is misaligned for %ux%u blocks.\n",
@@ -2600,7 +2605,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             base_memory = NULL;
     }
 
-    if (format->flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
         map_desc->row_pitch = surface->resource.width * format->byte_count;
     else
         map_desc->row_pitch = wined3d_surface_get_pitch(surface);
@@ -2616,7 +2621,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
     else
     {
-        if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
@@ -3981,7 +3986,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
-            && (surface->resource.format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
+            && (surface->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
@@ -3997,7 +4002,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
-            && (!srgb || (surface->resource.format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
+            && (!srgb || (surface->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
@@ -4554,6 +4559,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 {
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     const struct wined3d_format *src_format, *dst_format;
+    unsigned int src_fmt_flags, dst_fmt_flags;
     struct wined3d_texture *src_texture = NULL;
     struct wined3d_map_desc dst_map, src_map;
     const BYTE *sbase = NULL;
@@ -4572,10 +4578,13 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         src_map = dst_map;
         src_format = dst_surface->resource.format;
         dst_format = src_format;
+        dst_fmt_flags = dst_surface->resource.format_flags;
+        src_fmt_flags = dst_fmt_flags;
     }
     else
     {
         dst_format = dst_surface->resource.format;
+        dst_fmt_flags = dst_surface->resource.format_flags;
         if (src_surface)
         {
             if (dst_surface->resource.format->id != src_surface->resource.format->id)
@@ -4590,10 +4599,12 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             }
             wined3d_surface_map(src_surface, &src_map, NULL, WINED3D_MAP_READONLY);
             src_format = src_surface->resource.format;
+            src_fmt_flags = src_surface->resource.format_flags;
         }
         else
         {
             src_format = dst_format;
+            src_fmt_flags = dst_fmt_flags;
         }
 
         wined3d_surface_map(dst_surface, &dst_map, dst_rect, 0);
@@ -4617,7 +4628,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                 + ((dst_rect->top / dst_format->block_height) * dst_map.row_pitch)
                 + ((dst_rect->left / dst_format->block_width) * dst_format->block_byte_count);
 
-    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_BLOCKS)
+    if (src_fmt_flags & dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS)
     {
         TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 
@@ -5227,9 +5238,9 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             || src_rect.bottom - src_rect.top != dst_rect.bottom - dst_rect.top);
     convert = src_surface && src_surface->resource.format->id != dst_surface->resource.format->id;
 
-    dst_ds_flags = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    dst_ds_flags = dst_surface->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
-        src_ds_flags = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+        src_ds_flags = src_surface->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     else
         src_ds_flags = 0;
 

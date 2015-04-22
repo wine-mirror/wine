@@ -128,7 +128,7 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
     if (depth_stencil)
     {
-        DWORD format_flags = depth_stencil->resource.format->flags;
+        DWORD format_flags = depth_stencil->resource.format_flags;
 
         if (depth_stencil->current_renderbuffer)
         {
@@ -3168,11 +3168,12 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
         {
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_size && !new->alpha_size) || (!old->alpha_size && new->alpha_size)
-                    || !(new->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+                    || !(target->resource.format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE));
 
             /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
-            if ((old->flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->flags & WINED3DFMT_FLAG_SRGB_WRITE))
+            if ((context->current_rt->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE)
+                    != (target->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE))
                 context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
         }
 

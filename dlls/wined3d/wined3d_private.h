@@ -2108,6 +2108,7 @@ struct wined3d_resource
     struct wined3d_device *device;
     enum wined3d_resource_type type;
     const struct wined3d_format *format;
+    unsigned int format_flags;
     enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
     DWORD usage;
