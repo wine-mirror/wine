@@ -325,38 +325,37 @@ lend:
 /***************************************************************
  * DMOGetName (MSDMO.@)
  *
- * Get DMP Name from the registry
+ * Get DMO Name from the registry
  */
-HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR szName[])
+HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR name[])
 {
+    static const INT max_name_len = 80*sizeof(WCHAR);
+    DWORD count = max_name_len;
     WCHAR szguid[64];
-    HKEY hrkey = 0;
-    HKEY hkey = 0;
-    static const INT max_name_len = 80;
-    DWORD count;
+    HKEY hrkey, hkey;
     LONG ret;
 
-    TRACE("%s\n", debugstr_guid(clsidDMO));
+    TRACE("%s %p\n", debugstr_guid(clsidDMO), name);
 
-    ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_READ, &hrkey);
-    if (ERROR_SUCCESS != ret)
-        goto lend;
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, KEY_READ, &hrkey))
+        return E_FAIL;
 
     ret = RegOpenKeyExW(hrkey, GUIDToString(szguid, clsidDMO), 0, KEY_READ, &hkey);
-    if (ERROR_SUCCESS != ret)
-        goto lend;
+    RegCloseKey(hrkey);
+    if (ret)
+        return E_FAIL;
 
-    count = max_name_len * sizeof(WCHAR);
-    ret = RegQueryValueExW(hkey, NULL, NULL, NULL, (LPBYTE) szName, &count);
+    ret = RegQueryValueExW(hkey, NULL, NULL, NULL, (LPBYTE)name, &count);
+    RegCloseKey(hkey);
 
-    TRACE(" szName=%s\n", debugstr_w(szName));
-lend:
-    if (hkey)
-        RegCloseKey(hrkey);
-    if (hkey)
-        RegCloseKey(hkey);
+    if (!ret && count > 1)
+    {
+        TRACE("name=%s\n", debugstr_w(name));
+        return S_OK;
+    }
 
-    return HRESULT_FROM_WIN32(ret);
+    name[0] = 0;
+    return S_FALSE;
 }
 
 /**************************************************************************

@@ -25,6 +25,7 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 static const GUID GUID_unknowndmo = {0x14d99047,0x441f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
 static const GUID GUID_unknowncategory = {0x14d99048,0x441f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
+static const GUID GUID_wmp1 = {0x13a7995e,0x7d8f,0x45b4,{0x9c,0x77,0x81,0x92,0x65,0x22,0x57,0x63}};
 
 static void test_DMOUnregister(void)
 {
@@ -54,7 +55,23 @@ static void test_DMOUnregister(void)
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 }
 
+static void test_DMOGetName(void)
+{
+    WCHAR name[80];
+    HRESULT hr;
+
+    hr = DMOGetName(&GUID_unknowndmo, NULL);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    /* no such DMO */
+    name[0] = 'a';
+    hr = DMOGetName(&GUID_wmp1, name);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(name[0] == 'a', "got %x\n", name[0]);
+}
+
 START_TEST(msdmo)
 {
     test_DMOUnregister();
+    test_DMOGetName();
 }
