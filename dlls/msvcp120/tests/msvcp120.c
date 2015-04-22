@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <locale.h>
+
 #include "wine/test.h"
 #include "winbase.h"
 
@@ -27,13 +29,27 @@ typedef struct {
     MSVCRT_long nsec;
 } xtime;
 
+typedef struct {
+    unsigned page;
+    int mb_max;
+    int unk;
+    BYTE isleadbyte[32];
+} _Cvtvec;
+
+static char* (__cdecl *p_setlocale)(int, const char*);
+static int (__cdecl *p__setmbcp)(int);
+static int (__cdecl *p_isleadbyte)(int);
+
 static MSVCRT_long (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
+static _Cvtvec* (__cdecl *p__Getcvt)(_Cvtvec*);
 
 static HMODULE msvcp;
 
 static BOOL init(void)
 {
+    HANDLE msvcr;
+
     msvcp = LoadLibraryA("msvcp120.dll");
     if(!msvcp)
     {
@@ -43,7 +59,12 @@ static BOOL init(void)
 
     p__Xtime_diff_to_millis2 = (void*)GetProcAddress(msvcp, "_Xtime_diff_to_millis2");
     p_xtime_get = (void*)GetProcAddress(msvcp, "xtime_get");
+    p__Getcvt = (void*)GetProcAddress(msvcp, "_Getcvt");
 
+    msvcr = GetModuleHandleA("msvcr120.dll");
+    p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
+    p__setmbcp = (void*)GetProcAddress(msvcr, "_setmbcp");
+    p_isleadbyte = (void*)GetProcAddress(msvcr, "isleadbyte");
     return TRUE;
 }
 
@@ -131,9 +152,48 @@ static void test_xtime_get(void)
             "xtime_get() should have modified the xtime struct with the given option\n");
 }
 
+static void test__Getcvt(void)
+{
+    _Cvtvec cvtvec;
+    int i;
+
+    p__Getcvt(&cvtvec);
+    ok(cvtvec.page == 0, "cvtvec.page = %d\n", cvtvec.page);
+    ok(cvtvec.mb_max == 1, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
+    todo_wine ok(cvtvec.unk == 1, "cvtvec.unk = %d\n", cvtvec.unk);
+    for(i=0; i<32; i++)
+        ok(cvtvec.isleadbyte[i] == 0, "cvtvec.isleadbyte[%d] = %x\n", i, cvtvec.isleadbyte[i]);
+
+    if(!p_setlocale(LC_ALL, ".936")) {
+        win_skip("_Getcvt tests\n");
+        return;
+    }
+    p__Getcvt(&cvtvec);
+    ok(cvtvec.page == 936, "cvtvec.page = %d\n", cvtvec.page);
+    ok(cvtvec.mb_max == 2, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
+    ok(cvtvec.unk == 0, "cvtvec.unk = %d\n", cvtvec.unk);
+    for(i=0; i<32; i++)
+        ok(cvtvec.isleadbyte[i] == 0, "cvtvec.isleadbyte[%d] = %x\n", i, cvtvec.isleadbyte[i]);
+
+    p__setmbcp(936);
+    p__Getcvt(&cvtvec);
+    ok(cvtvec.page == 936, "cvtvec.page = %d\n", cvtvec.page);
+    ok(cvtvec.mb_max == 2, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
+    ok(cvtvec.unk == 0, "cvtvec.unk = %d\n", cvtvec.unk);
+    for(i=0; i<32; i++) {
+        BYTE b = 0;
+        int j;
+
+        for(j=0; j<8; j++)
+            b |= (p_isleadbyte(i*8+j) ? 1 : 0) << j;
+        ok(cvtvec.isleadbyte[i] ==b, "cvtvec.isleadbyte[%d] = %x (%x)\n", i, cvtvec.isleadbyte[i], b);
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
     test__Xtime_diff_to_millis2();
     test_xtime_get();
+    test__Getcvt();
 }
