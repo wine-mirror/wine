@@ -59,6 +59,7 @@ PUBLIC_IDL_H_SRCS = \
 	imnxport.idl \
 	indexsrv.idl \
 	inputscope.idl \
+	inseng.idl \
 	mediaobj.idl \
 	metahost.idl \
 	mimeinfo.idl \

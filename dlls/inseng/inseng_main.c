@@ -110,8 +110,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    if(IsEqualGUID(rclsid, &CLSID_ActiveSetupEng)) {
-        TRACE("(CLSID_ActiveSetupEng %s %p)\n", debugstr_guid(iid), ppv);
+    if(IsEqualGUID(rclsid, &CLSID_InstallEngine)) {
+        TRACE("(CLSID_InstallEngine %s %p)\n", debugstr_guid(iid), ppv);
         return IClassFactory_QueryInterface(&ActiveSetupEngCF, iid, ppv);
     }
 

@@ -1,7 +1,5 @@
 /*
- * COM Classes for inseng
- *
- * Copyright 2010 Alexandre Julliard
+ * Copyright 2015 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +16,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+#ifndef __WIDL__
+#define threading(model)
+#endif
 
 [
     helpstring("Microsoft Active Setup Engine"),
     threading(apartment),
     uuid(6e449686-c509-11cf-aafa-00aa00b6015c)
 ]
-coclass ActiveSetupEng { }
+coclass InstallEngine { }
 
 [
     helpstring("Download Site Manager"),
     threading(apartment),
     uuid(bfc880f1-7484-11d0-8309-00aa00b6015c)
 ]
-coclass DLManager { }
+coclass DownloadSiteMgr { }

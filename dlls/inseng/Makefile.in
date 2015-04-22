@@ -3,4 +3,4 @@ IMPORTS   = uuid ole32 advapi32
 
 C_SRCS = inseng_main.c
 
-IDL_SRCS = inseng.idl
+IDL_SRCS = inseng_classes.idl
