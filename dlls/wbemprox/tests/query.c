@@ -267,6 +267,7 @@ static void test_Win32_Process( IWbemServices *services )
     }
     hr = IWbemClassObject_GetMethod( process, getownerW, 0, NULL, NULL );
     ok( hr == S_OK, "failed to get GetOwner method %08x\n", hr );
+    IWbemClassObject_Release( process );
 
     out = NULL;
     method = SysAllocString( getownerW );
