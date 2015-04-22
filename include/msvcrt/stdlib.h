@@ -119,8 +119,8 @@ extern unsigned int _fmode;
 
 #endif  /* __i386__ */
 
-extern int*           __cdecl ___mb_cur_max_func(void);
-#define __mb_cur_max        (*___mb_cur_max_func())
+extern int            __cdecl ___mb_cur_max_func(void);
+#define __mb_cur_max        ___mb_cur_max_func()
 extern __msvcrt_ulong* __cdecl __doserrno(void);
 #define _doserrno           (*__doserrno())
 extern int*           __cdecl _errno(void);

@@ -192,8 +192,15 @@ int __thiscall codecvt_char_in(const codecvt_char*, int*, const char*,
 int __thiscall codecvt_base_max_length(const codecvt_base*);
 
 typedef struct {
+#if _MSVCP_VER < 110
     LCID handle;
+#endif
     unsigned page;
+#if _MSVCP_VER >= 110
+    int mb_max;
+    int unk;
+    BYTE isleadbyte[32];
+#endif
 } _Cvtvec;
 
 /* class codecvt<wchar> */

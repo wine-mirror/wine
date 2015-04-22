@@ -24,6 +24,7 @@
 #include "errno.h"
 #include "limits.h"
 #include "math.h"
+#include "mbctype.h"
 #include "stdio.h"
 #include "wchar.h"
 #include "wctype.h"
@@ -684,6 +685,7 @@ _Ctypevec* __thiscall _Locinfo__Getctype(const _Locinfo *this, _Ctypevec *ret)
 }
 
 /* _Getcvt */
+#if _MSVCP_VER < 110
 ULONGLONG __cdecl _Getcvt(void)
 {
     union {
@@ -697,14 +699,38 @@ ULONGLONG __cdecl _Getcvt(void)
     ret.cvtvec.handle = ___lc_handle_func()[LC_CTYPE];
     return ret.ull;
 }
+#else
+_Cvtvec* __cdecl _Getcvt(_Cvtvec *ret)
+{
+    int i;
+
+    TRACE("\n");
+
+    memset(ret, 0, sizeof(*ret));
+    ret->page = ___lc_codepage_func();
+    ret->mb_max = ___mb_cur_max_func();
+
+    if(ret->mb_max > 1) {
+        for(i=0; i<256; i++)
+            if(_ismbblead(i)) ret->isleadbyte[i/8] |= 1 << (i&7);
+    }
+    return ret;
+}
+#endif
 
 /* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */
 /* ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 8)
 _Cvtvec* __thiscall _Locinfo__Getcvt(const _Locinfo *this, _Cvtvec *ret)
 {
+#if _MSVCP_VER < 110
     ULONGLONG ull = _Getcvt();
     memcpy(ret, &ull, sizeof(ull));
+#else
+    _Cvtvec cvtvec;
+    _Getcvt(&cvtvec);
+    memcpy(ret, &cvtvec, sizeof(cvtvec));
+#endif
     return ret;
 }
 

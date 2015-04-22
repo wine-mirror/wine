@@ -3723,7 +3723,7 @@
 # extern _FZero
 @ cdecl -ret64 _Getcoll() msvcp120._Getcoll
 @ cdecl _Getctype(ptr) msvcp120._Getctype
-@ cdecl -ret64 _Getcvt() msvcp120._Getcvt
+@ cdecl _Getcvt(ptr) msvcp120._Getcvt
 @ cdecl _Getdateorder() msvcp120._Getdateorder
 @ cdecl _Getwctype(long ptr) msvcp120._Getwctype
 @ cdecl _Getwctypes(ptr ptr ptr ptr) msvcp120._Getwctypes
