@@ -163,12 +163,9 @@ static HRESULT WINAPI d3d_light_Initialize(IDirect3DLight *iface, IDirect3D *d3d
     return D3D_OK;
 }
 
-static const float zero_value[] = {
-    0.0, 0.0, 0.0, 0.0
-};
-
 static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
 {
+    static const D3DCOLORVALUE zero_value = {{0.0f}, {0.0f}, {0.0f}, {0.0f}};
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
     DWORD flags = data->dwSize >= sizeof(D3DLIGHT2) ? ((D3DLIGHT2 *)data)->dwFlags : D3DLIGHT_ACTIVE;
     D3DLIGHT7 *light7 = &light->light7;
@@ -184,10 +181,10 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     /* Translate D3DLIGHT2 structure to D3DLIGHT7. */
     light7->dltType = data->dltType;
     light7->dcvDiffuse = data->dcvColor;
-    if (!(flags & D3DLIGHT_NO_SPECULAR))
-        light7->dcvSpecular = data->dcvColor;
+    if (flags & D3DLIGHT_NO_SPECULAR)
+        light7->dcvSpecular = zero_value;
     else
-        light7->dcvSpecular = *(const D3DCOLORVALUE *)zero_value;
+        light7->dcvSpecular = data->dcvColor;
     light7->dcvAmbient = data->dcvColor;
     light7->dvPosition = data->dvPosition;
     light7->dvDirection = data->dvDirection;
@@ -200,7 +197,7 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     light7->dvPhi = data->dvPhi;
 
     wined3d_mutex_lock();
-    memcpy(&light->light, data, sizeof(D3DLIGHT));
+    memcpy(&light->light, data, sizeof(*data));
     if (!(light->light.dwFlags & D3DLIGHT_ACTIVE) && flags & D3DLIGHT_ACTIVE)
         light_activate(light);
     else if (light->light.dwFlags & D3DLIGHT_ACTIVE && !(flags & D3DLIGHT_ACTIVE))
