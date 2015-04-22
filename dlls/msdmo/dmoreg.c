@@ -19,6 +19,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -359,23 +361,6 @@ HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR name[])
 }
 
 /**************************************************************************
-*   IEnumDMOImpl_Destructor
-*/
-static BOOL IEnumDMOImpl_Destructor(IEnumDMOImpl* This)
-{
-    TRACE("%p\n", This);
-
-    if (This->hkey)
-        RegCloseKey(This->hkey);
-
-    HeapFree(GetProcessHeap(), 0, This->pInTypes);
-    HeapFree(GetProcessHeap(), 0, This->pOutTypes);
-
-    return TRUE;
-}
-
-
-/**************************************************************************
  *  IEnumDMO_Constructor
  */
 static HRESULT IEnumDMO_Constructor(
@@ -450,10 +435,7 @@ static HRESULT IEnumDMO_Constructor(
 lerr:
 
     if (FAILED(hr))
-    {
-        IEnumDMOImpl_Destructor(lpedmo);
-        HeapFree(GetProcessHeap(), 0, lpedmo);
-    }
+        IEnumDMO_Release(&lpedmo->IEnumDMO_iface);
     else
     {
         TRACE("returning %p\n", lpedmo);
@@ -489,7 +471,7 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(IEnumDMO* iface, REFIID riid, vo
         IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObj = iface;
-        IEnumDMO_fnAddRef(iface);
+        IEnumDMO_AddRef(iface);
     }
 
     return *ppvObj ? S_OK : E_NOINTERFACE;
@@ -507,8 +489,11 @@ static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
 
     if (!refCount)
     {
-        IEnumDMOImpl_Destructor(This);
-        HeapFree(GetProcessHeap(),0,This);
+        if (This->hkey)
+            RegCloseKey(This->hkey);
+        HeapFree(GetProcessHeap(), 0, This->pInTypes);
+        HeapFree(GetProcessHeap(), 0, This->pOutTypes);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;
 }
