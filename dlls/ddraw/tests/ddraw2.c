@@ -6639,6 +6639,8 @@ static void test_lighting(void)
         ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
+    hr = IDirect3DViewport2_DeleteLight(viewport, light);
+    ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
     IDirect3DLight_Release(light);
     destroy_material(material);
     destroy_viewport(device, viewport);
@@ -6646,7 +6648,7 @@ static void test_lighting(void)
     refcount = IDirect3DDevice2_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D2_Release(d3d);
-    IDirectDraw2_Release(ddraw);
+    refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "Ddraw object has %u references left.\n", refcount);
     DestroyWindow(window);
 }
