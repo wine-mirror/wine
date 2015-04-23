@@ -377,6 +377,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     UINT16 start_glyph, UINT16 stop_glyph, UINT32 stop_position, DWRITE_CLUSTER_METRICS *metrics)
 {
     UINT8 breakcondition;
+    UINT32 position;
     UINT16 j;
 
     metrics->width = 0.0;
@@ -384,16 +385,29 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
         metrics->width += run->run.glyphAdvances[j];
     metrics->length = 0;
 
+    position = stop_position;
     if (stop_glyph == run->run.glyphCount)
         breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionAfter;
-    else
+    else {
         breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionBefore;
+        if (stop_position) position = stop_position - 1;
+    }
 
     metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
                                 breakcondition == DWRITE_BREAK_CONDITION_MUST_BREAK;
-    metrics->isWhitespace = FALSE; /* FIXME */
-    metrics->isNewline = FALSE;    /* FIXME */
-    metrics->isSoftHyphen = FALSE; /* FIXME */
+    if (metrics->length == 1) {
+        WORD type;
+
+        GetStringTypeW(CT_CTYPE1, &layout->str[position], 1, &type);
+        metrics->isWhitespace = type == C1_SPACE;
+        metrics->isNewline = FALSE /* FIXME */;
+        metrics->isSoftHyphen = layout->str[position] == 0x00ad /* Unicode Soft Hyphen */;
+    }
+    else {
+        metrics->isWhitespace = FALSE;
+        metrics->isNewline = FALSE;
+        metrics->isSoftHyphen = FALSE;
+    }
     metrics->isRightToLeft = run->run.bidiLevel & 1;
     metrics->padding = 0;
 }
