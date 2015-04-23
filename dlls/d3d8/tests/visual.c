@@ -283,18 +283,13 @@ static void lighting_test(void)
         unsigned int size;
         DWORD expected;
         const char *message;
-        BOOL todo;
     }
     tests[] =
     {
-        {&mat, nquad, sizeof(nquad[0]), 0x000000ff,
-         "Lit quad with light", FALSE},
-        {&mat_singular, nquad, sizeof(nquad[0]), 0x000000ff,
-         "Lit quad with singular world matrix", FALSE},
-        {&mat_transf, rotatedquad, sizeof(rotatedquad[0]), 0x000000ff,
-         "Lit quad with transformation matrix", FALSE},
-        {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000,
-         "Lit quad with non-affine matrix", TRUE},
+        {&mat, nquad, sizeof(nquad[0]), 0x000000ff, "Lit quad with light"},
+        {&mat_singular, nquad, sizeof(nquad[0]), 0x000000ff, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, sizeof(rotatedquad[0]), 0x000000ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000, "Lit quad with non-affine matrix"},
     };
 
     window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -397,10 +392,7 @@ static void lighting_test(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        if (tests[i].todo)
-            todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
-        else
-            ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
     refcount = IDirect3DDevice8_Release(device);

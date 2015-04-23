@@ -3495,14 +3495,13 @@ static void test_lighting(void)
         void *quad;
         DWORD expected;
         const char *message;
-        BOOL todo;
     }
     tests[] =
     {
-        {&mat, nquad, 0x000000ff, "Lit quad with light", FALSE},
-        {&mat_singular, nquad, 0x000000ff, "Lit quad with singular world matrix", FALSE},
-        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix", FALSE},
-        {&mat_nonaffine, translatedquad, 0x00000000, "Lit quad with non-affine matrix", TRUE},
+        {&mat, nquad, 0x000000ff, "Lit quad with light"},
+        {&mat_singular, nquad, 0x000000ff, "Lit quad with singular world matrix"},
+        {&mat_transf, rotatedquad, 0x000000ff, "Lit quad with transformation matrix"},
+        {&mat_nonaffine, translatedquad, 0x00000000, "Lit quad with non-affine matrix"},
     };
 
     HWND window;
@@ -3609,10 +3608,7 @@ static void test_lighting(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        if (tests[i].todo)
-            todo_wine ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
-        else
-            ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
+        ok(color == tests[i].expected, "%s has color 0x%08x.\n", tests[i].message, color);
     }
 
     IDirectDrawSurface7_Release(rt);

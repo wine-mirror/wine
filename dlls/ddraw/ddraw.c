@@ -4832,7 +4832,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
     device_parent_create_swapchain,
 };
 
-HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
+HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type device_type)
 {
     WINED3DCAPS caps;
     HRESULT hr;
@@ -4849,9 +4849,11 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 
-    if (!(ddraw->wined3d = wined3d_create(DDRAW_WINED3D_FLAGS)))
+    flags |= DDRAW_WINED3D_FLAGS;
+    if (!(ddraw->wined3d = wined3d_create(flags)))
     {
-        if (!(ddraw->wined3d = wined3d_create(DDRAW_WINED3D_FLAGS | WINED3D_NO3D)))
+        flags |= WINED3D_NO3D;
+        if (!(ddraw->wined3d = wined3d_create(flags)))
         {
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;

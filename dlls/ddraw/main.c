@@ -230,15 +230,13 @@ DDRAW_Create(const GUID *guid,
     enum wined3d_device_type device_type;
     struct ddraw *ddraw;
     HRESULT hr;
+    DWORD flags = 0;
 
     TRACE("driver_guid %s, ddraw %p, outer_unknown %p, interface_iid %s.\n",
             debugstr_guid(guid), DD, UnkOuter, debugstr_guid(iid));
 
     *DD = NULL;
 
-    /* We don't care about this guids. Well, there's no special guid anyway
-     * OK, we could
-     */
     if (guid == (GUID *) DDCREATE_EMULATIONONLY)
     {
         /* Use the reference device id. This doesn't actually change anything,
@@ -260,6 +258,9 @@ DDRAW_Create(const GUID *guid,
     if (UnkOuter != NULL)
         return CLASS_E_NOAGGREGATION;
 
+    if (!IsEqualGUID(iid, &IID_IDirectDraw7))
+        flags = WINED3D_LEGACY_FFP_LIGHTING;
+
     /* DirectDraw creation comes here */
     ddraw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ddraw));
     if (!ddraw)
@@ -268,7 +269,7 @@ DDRAW_Create(const GUID *guid,
         return E_OUTOFMEMORY;
     }
 
-    hr = ddraw_init(ddraw, device_type);
+    hr = ddraw_init(ddraw, flags, device_type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize ddraw object, hr %#x.\n", hr);
