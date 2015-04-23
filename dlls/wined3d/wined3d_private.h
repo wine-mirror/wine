@@ -2692,6 +2692,7 @@ struct wined3d_rendertarget_view
     const struct wined3d_parent_ops *parent_ops;
 
     const struct wined3d_format *format;
+    unsigned int format_flags;
     unsigned int sub_resource_idx;
     unsigned int buffer_offset;
 
