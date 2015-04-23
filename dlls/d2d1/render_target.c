@@ -777,12 +777,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawBitmap(ID2D1RenderTarget
     bitmap_brush_desc.interpolationMode = interpolation_mode;
 
     brush_desc.opacity = opacity;
-    brush_desc.transform._11 = (d.right - d.left) / (s.right - s.left);
+    brush_desc.transform._11 = fabsf((d.right - d.left) / (s.right - s.left));
     brush_desc.transform._21 = 0.0f;
-    brush_desc.transform._31 = d.left - s.left;
+    brush_desc.transform._31 = min(d.left, d.right) - min(s.left, s.right);
     brush_desc.transform._12 = 0.0f;
-    brush_desc.transform._22 = (d.bottom - d.top) / (s.bottom - s.top);
-    brush_desc.transform._32 = d.top - s.top;
+    brush_desc.transform._22 = fabsf((d.bottom - d.top) / (s.bottom - s.top));
+    brush_desc.transform._32 = min(d.top, d.bottom) - min(s.top, s.bottom);
 
     if (FAILED(hr = ID2D1RenderTarget_CreateBitmapBrush(iface, bitmap, &bitmap_brush_desc, &brush_desc, &brush)))
     {
