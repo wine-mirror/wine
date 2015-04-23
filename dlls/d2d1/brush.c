@@ -596,7 +596,12 @@ static D2D1_BITMAP_INTERPOLATION_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetInte
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_GetBitmap(ID2D1BitmapBrush *iface, ID2D1Bitmap **bitmap)
 {
-    FIXME("iface %p, bitmap %p stub!\n", iface, bitmap);
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+
+    TRACE("iface %p, bitmap %p.\n", iface, bitmap);
+
+    if ((*bitmap = &brush->u.bitmap.bitmap->ID2D1Bitmap_iface))
+        ID2D1Bitmap_AddRef(*bitmap);
 }
 
 static const struct ID2D1BitmapBrushVtbl d2d_bitmap_brush_vtbl =
