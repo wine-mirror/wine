@@ -4300,7 +4300,7 @@ static void test_getsockname(void)
             strcpy(ipstr, inet_ntoa(sa_get.sin_addr));
             trace("testing bind on interface %s\n", ipstr);
             ok(sa_get.sin_addr.s_addr == sa_set.sin_addr.s_addr,
-               "address does not match: %s != %s", ipstr, inet_ntoa(sa_set.sin_addr));
+               "address does not match: %s != %s\n", ipstr, inet_ntoa(sa_set.sin_addr));
 
             closesocket(sock);
         }
