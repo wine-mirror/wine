@@ -663,7 +663,6 @@ static HRESULT WINAPI dwritetextanalyzer_QueryInterface(IDWriteTextAnalyzer2 *if
 
     *obj = NULL;
     return E_NOINTERFACE;
-
 }
 
 static ULONG WINAPI dwritetextanalyzer_AddRef(IDWriteTextAnalyzer2 *iface)
@@ -1032,7 +1031,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     HRESULT hr;
     UINT32 i;
 
-    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %p %s %p %p %u %p %p)\n", debugstr_w(text),
+    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %p %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
         is_rtl, analysis, debugstr_w(locale), features, feature_range_len, feature_ranges, advances, offsets);
 
@@ -1070,7 +1069,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
     UINT32 const* feature_range_lengths, UINT32 feature_ranges, FLOAT* glyph_advances, DWRITE_GLYPH_OFFSET* glyph_offsets)
 {
-    FIXME("(%s %p %p %u %p %p %u %p %f %f %p %d %d %d %p %s %p %p %u %p %p): stub\n", debugstr_w(text),
+    FIXME("(%s %p %p %u %p %p %u %p %f %f %p %d %d %d %p %s %p %p %u %p %p): stub\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyph_indices, glyph_props, glyph_count, font_face, fontEmSize, pixels_per_dip,
         transform, use_gdi_natural, is_sideways, is_rtl, analysis, debugstr_w(locale), features, feature_range_lengths,
         feature_ranges, glyph_advances, glyph_offsets);
@@ -1184,7 +1183,7 @@ static HRESULT WINAPI dwritetextanalyzer1_GetJustificationOpportunities(IDWriteT
     const WCHAR *text, const UINT16 *clustermap, const DWRITE_SHAPING_GLYPH_PROPERTIES *prop, DWRITE_JUSTIFICATION_OPPORTUNITY *jo)
 {
     FIXME("(%p %.2f %u %u %u %s %p %p %p): stub\n", face, font_em_size, sa.script, length, glyph_count,
-        debugstr_w(text), clustermap, prop, jo);
+        debugstr_wn(text, length), clustermap, prop, jo);
     return E_NOTIMPL;
 }
 

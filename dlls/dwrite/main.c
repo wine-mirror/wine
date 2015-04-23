@@ -1027,7 +1027,7 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory2 *iface, WCH
     UINT32 len, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, IDWriteTextLayout **layout)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    TRACE("(%p)->(%s %u %p %f %f %p)\n", This, debugstr_w(string), len, format, max_width, max_height, layout);
+    TRACE("(%p)->(%s:%u %p %f %f %p)\n", This, debugstr_wn(string, len), len, format, max_width, max_height, layout);
 
     if (!format) return E_INVALIDARG;
     return create_textlayout(string, len, format, max_width, max_height, layout);
