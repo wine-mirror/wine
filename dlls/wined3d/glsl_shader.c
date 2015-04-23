@@ -344,7 +344,16 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id
 /* Context activation is done by the caller. */
 static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLuint shader, const char *src)
 {
+    const char *ptr, *line;
+
     TRACE("Compiling shader object %u.\n", shader);
+
+    if (TRACE_ON(d3d_shader))
+    {
+        ptr = src;
+        while ((line = get_info_log_line(&ptr))) TRACE_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+    }
+
     GL_EXTCALL(glShaderSource(shader, 1, &src, NULL));
     checkGLcall("glShaderSource");
     GL_EXTCALL(glCompileShader(shader));

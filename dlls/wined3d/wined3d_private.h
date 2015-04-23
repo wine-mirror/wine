@@ -440,8 +440,6 @@ struct wined3d_shader_buffer
     char *buffer;
     unsigned int buffer_size;
     unsigned int content_size;
-    unsigned int lineNo;
-    BOOL newline;
 };
 
 enum WINED3D_SHADER_INSTRUCTION_HANDLER

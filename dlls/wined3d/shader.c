@@ -249,8 +249,6 @@ void shader_buffer_clear(struct wined3d_shader_buffer *buffer)
 {
     buffer->buffer[0] = '\0';
     buffer->content_size = 0;
-    buffer->lineNo = 0;
-    buffer->newline = TRUE;
 }
 
 BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
@@ -273,48 +271,28 @@ void shader_buffer_free(struct wined3d_shader_buffer *buffer)
 
 int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *format, va_list args)
 {
-    char *base = buffer->buffer + buffer->content_size;
+    unsigned int rem;
     int rc;
     char *new_buffer;
 
-    while(1)
+    for (;;)
     {
-        rc = vsnprintf(base, buffer->buffer_size - buffer->content_size, format, args);
-        if (rc < 0 /* C89 */ || (unsigned int)rc >= buffer->buffer_size - buffer->content_size /* C99 */)
-        {
-            new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, buffer->buffer_size * 2);
-            if (!new_buffer)
-            {
-                ERR("The buffer allocated for the shader program string is too small at %d bytes.\n", buffer->buffer_size);
-                buffer->content_size = buffer->buffer_size - 1;
-                return -1;
-            }
-            buffer->buffer = new_buffer;
-            buffer->buffer_size = buffer->buffer_size * 2;
-            base = buffer->buffer + buffer->content_size;
-        }
-        else
-        {
+        rem = buffer->buffer_size - buffer->content_size;
+        rc = vsnprintf(&buffer->buffer[buffer->content_size], rem, format, args);
+
+        if (rc >= 0 /* C89 */ && (unsigned int)rc < rem /* C99 */)
             break;
+
+        if (!(new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, buffer->buffer_size * 2)))
+        {
+            ERR("Failed to grow buffer.\n");
+            buffer->buffer[buffer->content_size] = '\0';
+            return -1;
         }
+        buffer->buffer = new_buffer;
+        buffer->buffer_size = buffer->buffer_size * 2;
     }
-
-    if (buffer->newline)
-    {
-        TRACE("GL HW (%u, %u) : %s", buffer->lineNo + 1, buffer->content_size, base);
-        buffer->newline = FALSE;
-    }
-    else
-    {
-        TRACE("%s", base);
-    }
-
     buffer->content_size += rc;
-    if (buffer->buffer[buffer->content_size-1] == '\n')
-    {
-        ++buffer->lineNo;
-        buffer->newline = TRUE;
-    }
 
     return 0;
 }

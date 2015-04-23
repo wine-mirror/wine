@@ -3262,6 +3262,12 @@ static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum tar
     const char *ptr, *line;
     GLint native, pos;
 
+    if (TRACE_ON(d3d_shader))
+    {
+        ptr = src;
+        while ((line = get_line(&ptr))) TRACE_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+    }
+
     GL_EXTCALL(glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(src), src));
     checkGLcall("glProgramStringARB()");
 
