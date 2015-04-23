@@ -50,10 +50,9 @@ static BOOL shader_is_vshader_version(enum wined3d_shader_type type)
     return type == WINED3D_SHADER_TYPE_VERTEX;
 }
 
-/* Extract a line. Note that this modifies the source string. */
-static char *get_line(char **ptr)
+static const char *get_line(const char **ptr)
 {
-    char *p, *q;
+    const char *p, *q;
 
     p = *ptr;
     if (!(q = strstr(p, "\n")))
@@ -62,31 +61,9 @@ static char *get_line(char **ptr)
         *ptr += strlen(p);
         return p;
     }
-    *q = '\0';
     *ptr = q + 1;
 
     return p;
-}
-
-static void shader_arb_dump_program_source(const char *source)
-{
-    ULONG source_size;
-    char *ptr, *line, *tmp;
-
-    source_size = strlen(source) + 1;
-    tmp = HeapAlloc(GetProcessHeap(), 0, source_size);
-    if (!tmp)
-    {
-        ERR("Failed to allocate %u bytes for shader source.\n", source_size);
-        return;
-    }
-    memcpy(tmp, source, source_size);
-
-    ptr = tmp;
-    while ((line = get_line(&ptr))) FIXME("    %s\n", line);
-    FIXME("\n");
-
-    HeapFree(GetProcessHeap(), 0, tmp);
 }
 
 enum arb_helper_value
@@ -3282,6 +3259,7 @@ static void shader_hw_call(const struct wined3d_shader_instruction *ins)
 
 static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum target, const char *src)
 {
+    const char *ptr, *line;
     GLint native, pos;
 
     GL_EXTCALL(glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(src), src));
@@ -3294,7 +3272,10 @@ static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum tar
         {
             FIXME_(d3d_shader)("Program error at position %d: %s\n\n", pos,
                     debugstr_a((const char *)gl_info->gl_ops.gl.p_glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-            shader_arb_dump_program_source(src);
+            ptr = src;
+            while ((line = get_line(&ptr))) FIXME_(d3d_shader)("    %.*s", (int)(ptr - line), line);
+            FIXME_(d3d_shader)("\n");
+
             return FALSE;
         }
     }
