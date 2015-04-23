@@ -139,6 +139,11 @@ struct layout_run {
     } u;
 };
 
+struct layout_cluster {
+    const struct layout_run *run; /* link to run this cluster belongs to */
+    UINT32 position;        /* relative to run, first cluster has 0 position */
+};
+
 enum layout_recompute_mask {
     RECOMPUTE_NOMINAL_RUNS  = 1 << 0,
     RECOMPUTE_MINIMAL_WIDTH = 1 << 1,
@@ -164,7 +169,8 @@ struct dwrite_textlayout {
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
     DWRITE_LINE_BREAKPOINT *actual_breakpoints;
 
-    DWRITE_CLUSTER_METRICS *clusters;
+    struct layout_cluster *clusters;
+    DWRITE_CLUSTER_METRICS *clustermetrics;
     UINT32 clusters_count;
     FLOAT  minwidth;
 
@@ -420,9 +426,11 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
   codepoint initially.
 
 */
-static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct regular_layout_run *run, UINT32 *cluster)
+static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 *cluster)
 {
-    DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[*cluster];
+    DWRITE_CLUSTER_METRICS *metrics = &layout->clustermetrics[*cluster];
+    struct layout_cluster *c = &layout->clusters[*cluster];
+    const struct regular_layout_run *run = &r->u.regular;
     UINT32 i, start = 0;
 
     for (i = 0; i < run->descr.stringLength; i++) {
@@ -431,15 +439,20 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
         if (run->descr.clusterMap[start] != run->descr.clusterMap[i]) {
             init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->descr.clusterMap[i], i, metrics);
             metrics->length = i - start;
+            c->position = start;
+            c->run = r;
 
             *cluster += 1;
             metrics++;
+            c++;
             start = i;
         }
 
         if (end) {
             init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->run.glyphCount, i, metrics);
             metrics->length = i - start + 1;
+            c->position = start;
+            c->run = r;
 
             *cluster += 1;
             return;
@@ -456,11 +469,18 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     HRESULT hr;
 
     free_layout_runs(layout);
-    heap_free(layout->clusters);
+
+    /* Cluster data arrays are allocated once, assuming one text position per cluster. */
+    if (!layout->clustermetrics) {
+        layout->clustermetrics = heap_alloc(layout->len*sizeof(*layout->clustermetrics));
+        layout->clusters = heap_alloc(layout->len*sizeof(*layout->clusters));
+        if (!layout->clustermetrics || !layout->clusters) {
+            heap_free(layout->clustermetrics);
+            heap_free(layout->clusters);
+            return E_OUTOFMEMORY;
+        }
+    }
     layout->clusters_count = 0;
-    layout->clusters = heap_alloc(layout->len*sizeof(DWRITE_CLUSTER_METRICS));
-    if (!layout->clusters)
-        return E_OUTOFMEMORY;
 
     hr = get_textanalyzer(&analyzer);
     if (FAILED(hr))
@@ -508,7 +528,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         /* we need to do very little in case of inline objects */
         if (r->kind == LAYOUT_RUN_INLINE) {
-            DWRITE_CLUSTER_METRICS *metrics = &layout->clusters[cluster];
+            DWRITE_CLUSTER_METRICS *metrics = &layout->clustermetrics[cluster];
+            struct layout_cluster *c = &layout->clusters[cluster];
             DWRITE_INLINE_OBJECT_METRICS inlinemetrics;
 
             metrics->width = 0.0;
@@ -519,6 +540,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             metrics->isSoftHyphen = FALSE;
             metrics->isRightToLeft = FALSE;
             metrics->padding = 0;
+            c->run = r;
+            c->position = 0; /* there's always one cluster per inline object, so 0 is valid value */
             cluster++;
 
             /* TODO: is it fatal if GetMetrics() fails? */
@@ -630,7 +653,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
 
-        layout_set_cluster_metrics(layout, run, &cluster);
+        layout_set_cluster_metrics(layout, r, &cluster);
 
         continue;
 
@@ -1203,6 +1226,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
         release_format_data(&This->format);
         heap_free(This->nominal_breakpoints);
         heap_free(This->actual_breakpoints);
+        heap_free(This->clustermetrics);
         heap_free(This->clusters);
         heap_free(This->str);
         heap_free(This);
@@ -1817,7 +1841,7 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
         return hr;
 
     if (metrics)
-        memcpy(metrics, This->clusters, sizeof(DWRITE_CLUSTER_METRICS)*min(max_count, This->clusters_count));
+        memcpy(metrics, This->clustermetrics, sizeof(DWRITE_CLUSTER_METRICS)*min(max_count, This->clusters_count));
 
     *count = This->clusters_count;
     return max_count >= This->clusters_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
@@ -1827,11 +1851,11 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
    too hard to break. */
 static inline BOOL is_terminal_cluster(struct dwrite_textlayout *layout, UINT32 index)
 {
-    if (layout->clusters[index].isWhitespace || layout->clusters[index].isNewline ||
+    if (layout->clustermetrics[index].isWhitespace || layout->clustermetrics[index].isNewline ||
        (index == layout->clusters_count - 1))
         return TRUE;
     /* check next one */
-    return (index < layout->clusters_count - 1) && layout->clusters[index+1].isWhitespace;
+    return (index < layout->clusters_count - 1) && layout->clustermetrics[index+1].isWhitespace;
 }
 
 static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *iface, FLOAT* min_width)
@@ -1856,17 +1880,17 @@ static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *ifa
 
     for (i = 0; i < This->clusters_count;) {
         if (is_terminal_cluster(This, i)) {
-            width = This->clusters[i].width;
+            width = This->clustermetrics[i].width;
             i++;
         }
         else {
             width = 0.0;
             while (!is_terminal_cluster(This, i)) {
-                width += This->clusters[i].width;
+                width += This->clustermetrics[i].width;
                 i++;
             }
             /* count last one too */
-            width += This->clusters[i].width;
+            width += This->clustermetrics[i].width;
         }
 
         if (width > This->minwidth)
@@ -2716,6 +2740,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
     layout->clusters_count = 0;
+    layout->clustermetrics = NULL;
     layout->clusters = NULL;
     layout->minwidth = 0.0;
     list_init(&layout->runs);
