@@ -90,7 +90,7 @@ typedef struct
     IEnumDMO                    IEnumDMO_iface;
     LONG			ref;
     DWORD			index;
-    const GUID*                 guidCategory;
+    GUID                        category;
     DWORD                       dwFlags;
     DWORD                       cInTypes;
     DMO_PARTIAL_MEDIATYPE       *pInTypes;
@@ -386,7 +386,7 @@ static HRESULT IEnumDMO_Constructor(
     lpedmo->IEnumDMO_iface.lpVtbl = &edmovt;
     lpedmo->ref = 1;
     lpedmo->index = -1;
-    lpedmo->guidCategory = guidCategory;
+    lpedmo->category = *guidCategory;
     lpedmo->dwFlags = dwFlags;
 
     if (cInTypes > 0)
@@ -692,7 +692,7 @@ static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO *iface, IEnumDMO **ppEnum)
 {
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
     TRACE("(%p)->(%p)\n", This, ppEnum);
-    return IEnumDMO_Constructor(This->guidCategory, This->dwFlags, This->cInTypes, This->pInTypes,
+    return IEnumDMO_Constructor(&This->category, This->dwFlags, This->cInTypes, This->pInTypes,
         This->cOutTypes, This->pOutTypes, ppEnum);
 }
 
@@ -703,18 +703,35 @@ static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO *iface, IEnumDMO **ppEnum)
  * Enumerate DirectX Media Objects in the registry.
  */
 HRESULT WINAPI DMOEnum(
-    REFGUID guidCategory,
-    DWORD dwFlags,
+    REFGUID category,
+    DWORD flags,
     DWORD cInTypes,
     const DMO_PARTIAL_MEDIATYPE *pInTypes,
     DWORD cOutTypes,
     const DMO_PARTIAL_MEDIATYPE *pOutTypes,
     IEnumDMO **ppEnum)
 {
-    TRACE("guidCategory=%p dwFlags=0x%08x cInTypes=%d cOutTypes=%d\n",
-        guidCategory, dwFlags, cInTypes, cOutTypes);
+    TRACE("%s 0x%08x %d %p %d %p %p\n", debugstr_guid(category), flags, cInTypes, pInTypes,
+        cOutTypes, pOutTypes, ppEnum);
 
-    return IEnumDMO_Constructor(guidCategory, dwFlags, cInTypes,
+    if (TRACE_ON(msdmo))
+    {
+        DWORD i;
+        if (cInTypes)
+        {
+            for (i = 0; i < cInTypes; i++)
+                TRACE("intype %d - type %s, subtype %s\n", i, debugstr_guid(&pInTypes[i].type),
+                    debugstr_guid(&pInTypes[i].subtype));
+        }
+
+        if (cOutTypes) {
+            for (i = 0; i < cOutTypes; i++)
+                TRACE("outtype %d - type %s, subtype %s\n", i, debugstr_guid(&pOutTypes[i].type),
+                    debugstr_guid(&pOutTypes[i].subtype));
+        }
+    }
+
+    return IEnumDMO_Constructor(category, flags, cInTypes,
         pInTypes, cOutTypes, pOutTypes, ppEnum);
 }
 
