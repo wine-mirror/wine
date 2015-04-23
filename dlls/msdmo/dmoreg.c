@@ -506,7 +506,6 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     WCHAR ** Names,
     DWORD * pcItemsFetched)
 {
-    FILETIME ft;
     HKEY hkey;
     WCHAR szNextKey[MAX_PATH];
     WCHAR szGuidKey[64];
@@ -529,7 +528,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         This->index++;
 
         len = MAX_PATH;
-        ret = RegEnumKeyExW(This->hkey, This->index, szNextKey, &len, NULL, NULL, NULL, &ft);
+        ret = RegEnumKeyExW(This->hkey, This->index, szNextKey, &len, NULL, NULL, NULL, NULL);
         if (ret != ERROR_SUCCESS)
         {
             hres = HRESULT_FROM_WIN32(ret);
@@ -552,6 +551,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         wsprintfW(szKey, szCat2Fmt, szDMORootKey, szNextKey);
         ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &hkey);
+        TRACE("testing %s\n", debugstr_w(szKey));
 
         if (This->pInTypes)
         {
@@ -570,6 +570,12 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             }
 
 	    pInTypes = (DMO_PARTIAL_MEDIATYPE*) szValue;
+
+            TRACE("read %d intypes for %s:\n", cInTypes, debugstr_w(szKey));
+            for (i = 0; i < cInTypes; i++) {
+                TRACE("intype %d: type %s, subtype %s\n", i, debugstr_guid(&pInTypes[i].type),
+                    debugstr_guid(&pInTypes[i].subtype));
+            }
 
             for (i = 0; i < This->cInTypes; i++)
             {
@@ -607,6 +613,12 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             }
 
 	    pOutTypes = (DMO_PARTIAL_MEDIATYPE*) szValue;
+
+            TRACE("read %d outtypes for %s:\n", cOutTypes, debugstr_w(szKey));
+            for (i = 0; i < cOutTypes; i++) {
+                TRACE("outtype %d: type %s, subtype %s\n", i, debugstr_guid(&pOutTypes[i].type),
+                    debugstr_guid(&pOutTypes[i].subtype));
+            }
 
             for (i = 0; i < This->cOutTypes; i++)
             {
