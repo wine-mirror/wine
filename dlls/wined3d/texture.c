@@ -187,13 +187,6 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         return;
     }
 
-    if (texture->resource.pool == WINED3D_POOL_DEFAULT)
-    {
-        /* Tell OpenGL to try and keep this texture in video ram (well mostly). */
-        GLclampf tmp = 0.9f;
-        gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &gl_tex->name, &tmp);
-    }
-
     /* Initialise the state of the texture object to the OpenGL defaults, not
      * the wined3d defaults. */
     gl_tex->sampler_desc.address_u = WINED3D_TADDRESS_WRAP;
