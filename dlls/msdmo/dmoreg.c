@@ -636,7 +636,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         ret = RegQueryValueExW(hkey, NULL, NULL, NULL, (LPBYTE)szValue, &len);
         if (ERROR_SUCCESS == ret)
 	{
-            Names[count] = HeapAlloc(GetProcessHeap(), 0, (strlenW(szValue) + 1) * sizeof(WCHAR));
+            Names[count] = CoTaskMemAlloc((strlenW(szValue) + 1) * sizeof(WCHAR));
 	    if (Names[count])
                 strcpyW(Names[count], szValue);
 	}
