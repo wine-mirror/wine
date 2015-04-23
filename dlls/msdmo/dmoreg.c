@@ -360,6 +360,21 @@ HRESULT WINAPI DMOGetName(REFCLSID clsidDMO, WCHAR name[])
     return S_FALSE;
 }
 
+static HRESULT dup_partial_mediatype(const DMO_PARTIAL_MEDIATYPE *types, DWORD count, DMO_PARTIAL_MEDIATYPE **ret)
+{
+    *ret = NULL;
+
+    if (count == 0)
+        return S_OK;
+
+    *ret = HeapAlloc(GetProcessHeap(), 0, count*sizeof(*types));
+    if (!*ret)
+        return E_OUTOFMEMORY;
+
+    memcpy(*ret, types, count*sizeof(*types));
+    return S_OK;
+}
+
 /**************************************************************************
  *  IEnumDMO_Constructor
  */
@@ -373,8 +388,7 @@ static HRESULT IEnumDMO_Constructor(
     IEnumDMO **obj)
 {
     IEnumDMOImpl* lpedmo;
-    HRESULT hr = S_OK;
-    UINT size;
+    HRESULT hr;
     LONG ret;
 
     *obj = NULL;
@@ -388,32 +402,16 @@ static HRESULT IEnumDMO_Constructor(
     lpedmo->index = -1;
     lpedmo->category = *guidCategory;
     lpedmo->dwFlags = dwFlags;
+    lpedmo->cInTypes = cInTypes;
+    lpedmo->cOutTypes = cOutTypes;
 
-    if (cInTypes > 0)
-    {
-        size = cInTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
-        lpedmo->pInTypes = HeapAlloc(GetProcessHeap(), 0, size);
-        if (!lpedmo->pInTypes)
-        {
-            hr = E_OUTOFMEMORY;
-            goto lerr;
-        }
-        memcpy(lpedmo->pInTypes, pInTypes, size);
-        lpedmo->cInTypes = cInTypes;
-    }
+    hr = dup_partial_mediatype(pInTypes, cInTypes, &lpedmo->pInTypes);
+    if (FAILED(hr))
+        goto lerr;
 
-    if (cOutTypes > 0)
-    {
-        size = cOutTypes * sizeof(DMO_PARTIAL_MEDIATYPE);
-        lpedmo->pOutTypes = HeapAlloc(GetProcessHeap(), 0, size);
-        if (!lpedmo->pOutTypes)
-        {
-            hr = E_OUTOFMEMORY;
-            goto lerr;
-        }
-        memcpy(lpedmo->pOutTypes, pOutTypes, size);
-        lpedmo->cOutTypes = cOutTypes;
-    }
+    hr = dup_partial_mediatype(pOutTypes, cOutTypes, &lpedmo->pOutTypes);
+    if (FAILED(hr))
+        goto lerr;
 
     /* If not filtering by category enum from media objects root */
     if (IsEqualGUID(guidCategory, &GUID_NULL))
@@ -426,8 +424,7 @@ static HRESULT IEnumDMO_Constructor(
         WCHAR szguid[64];
         WCHAR szKey[MAX_PATH];
 
-        wsprintfW(szKey, szCat3Fmt, szDMORootKey, szDMOCategories,
-            GUIDToString(szguid, guidCategory));
+        wsprintfW(szKey, szCat3Fmt, szDMORootKey, szDMOCategories, GUIDToString(szguid, guidCategory));
         if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &lpedmo->hkey)))
             hr = HRESULT_FROM_WIN32(ret);
     }
