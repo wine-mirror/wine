@@ -778,7 +778,8 @@ enum wined3d_gl_resource_type
     WINED3D_GL_RES_TYPE_TEX_3D          = 2,
     WINED3D_GL_RES_TYPE_TEX_CUBE        = 3,
     WINED3D_GL_RES_TYPE_TEX_RECT        = 4,
-    WINED3D_GL_RES_TYPE_COUNT           = 5,
+    WINED3D_GL_RES_TYPE_BUFFER          = 5,
+    WINED3D_GL_RES_TYPE_COUNT           = 6,
 };
 
 enum vertexprocessing_mode {
@@ -2105,6 +2106,7 @@ struct wined3d_resource
     LONG map_count;
     struct wined3d_device *device;
     enum wined3d_resource_type type;
+    enum wined3d_gl_resource_type gl_type;
     const struct wined3d_format *format;
     unsigned int format_flags;
     enum wined3d_multisample_type multisample_type;
@@ -2139,7 +2141,7 @@ static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
-        enum wined3d_resource_type type, const struct wined3d_format *format,
+        enum wined3d_resource_type type, enum wined3d_gl_resource_type gl_type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -3170,7 +3172,7 @@ struct wined3d_format
     GLint glFormat;
     GLint glType;
     UINT  conv_byte_count;
-    unsigned int flags;
+    unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
     struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
     void (*convert)(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,

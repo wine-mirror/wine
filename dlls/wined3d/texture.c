@@ -29,8 +29,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, DWORD surface_flags,
-        struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,
-        const struct wined3d_resource_ops *resource_ops)
+        enum wined3d_gl_resource_type gl_type, struct wined3d_device *device, void *parent,
+        const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
 {
     const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
     HRESULT hr;
@@ -43,7 +43,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             debug_d3dusage(desc->usage), debug_d3dpool(desc->pool), desc->width, desc->height, desc->depth,
             surface_flags, device, parent, parent_ops, resource_ops);
 
-    if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY)) == WINED3DFMT_FLAG_BLOCKS)
+    if ((format->flags[gl_type] & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY))
+            == WINED3DFMT_FLAG_BLOCKS)
     {
         UINT width_mask = format->block_width - 1;
         UINT height_mask = format->block_height - 1;
@@ -51,15 +52,17 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             return WINED3DERR_INVALIDCALL;
     }
 
-    if (FAILED(hr = resource_init(&texture->resource, device, desc->resource_type, format,
+    if (FAILED(hr = resource_init(&texture->resource, device, desc->resource_type, gl_type, format,
             desc->multisample_type, desc->multisample_quality, desc->usage, desc->pool,
             desc->width, desc->height, desc->depth, 0, parent, parent_ops, resource_ops)))
     {
         static unsigned int once;
 
+        /* DXTn 3D textures are not supported. Do not write the ERR for them. */
         if ((desc->format == WINED3DFMT_DXT1 || desc->format == WINED3DFMT_DXT2 || desc->format == WINED3DFMT_DXT3
                 || desc->format == WINED3DFMT_DXT4 || desc->format == WINED3DFMT_DXT5)
-                && !(format->flags & WINED3DFMT_FLAG_TEXTURE) && !once++)
+                && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE) && gl_type != WINED3D_GL_RES_TYPE_TEX_3D
+                && !once++)
             ERR_(winediag)("The application tried to create a DXTn texture, but the driver does not support them.\n");
 
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1020,7 +1023,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels, desc,
-            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
+            surface_flags, WINED3D_GL_RES_TYPE_TEX_CUBE, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x\n", hr);
         return hr;
@@ -1138,7 +1141,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels, desc,
-            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
+            surface_flags, WINED3D_GL_RES_TYPE_TEX_2D, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1377,7 +1380,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels, desc,
-            0, device, parent, parent_ops, &texture_resource_ops)))
+            0, WINED3D_GL_RES_TYPE_TEX_3D, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;

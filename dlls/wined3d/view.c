@@ -101,7 +101,7 @@ static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *vie
     view->parent_ops = parent_ops;
 
     view->format = wined3d_get_format(gl_info, desc->format_id);
-    view->format_flags = view->format->flags;
+    view->format_flags = view->format->flags[resource->gl_type];
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         view->sub_resource_idx = 0;

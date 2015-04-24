@@ -4095,7 +4095,8 @@ static BOOL wined3d_check_pixel_format_color(const struct wined3d_gl_info *gl_in
     BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+        return FALSE;
 
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
         if (!getColorBits(format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
@@ -4136,7 +4137,8 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_in
     }
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+        return FALSE;
 
     if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))
         lockable = TRUE;
@@ -4176,8 +4178,8 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
     ds_format = wined3d_get_format(&adapter->gl_info, depth_stencil_format_id);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        if ((rt_format->flags & WINED3DFMT_FLAG_RENDERTARGET)
-                && (ds_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+        if ((rt_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_RENDERTARGET)
+                && (ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
         {
             TRACE("Formats match.\n");
             return WINED3D_OK;
@@ -4268,7 +4270,8 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         /* With FBOs WGL limitations do not apply, but the format needs to be FBO attachable */
-        if (ds_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) return TRUE;
+        if (ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+            return TRUE;
     }
     else
     {
@@ -4292,7 +4295,8 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format, const struct wined3d_format *check_format)
 {
     /* Filter out non-RT formats */
-    if (!(check_format->flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
+    if (!(check_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_RENDERTARGET))
+        return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
         BYTE AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
@@ -4371,7 +4375,7 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
 
     /* All formats that are supported for textures are supported for surfaces
      * as well. */
-    if (check_format->flags & WINED3DFMT_FLAG_TEXTURE)
+    if (check_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE)
         return TRUE;
     /* All depth stencil formats are supported on surfaces */
     if (CheckDepthStencilCapability(adapter, adapter_format, check_format)) return TRUE;
@@ -4454,7 +4458,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             break;
 
         case WINED3D_RTYPE_TEXTURE:
-            if ((usage & WINED3DUSAGE_DEPTHSTENCIL) && (format->flags & WINED3DFMT_FLAG_SHADOW)
+            if ((usage & WINED3DUSAGE_DEPTHSTENCIL)
+                    && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SHADOW)
                     && !gl_info->supported[ARB_SHADOW])
             {
                 TRACE("[FAILED] - No shadow sampler support.\n");
@@ -4542,10 +4547,10 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
         format_flags |= WINED3DFMT_FLAG_BUMPMAP;
 
-    if ((format->flags & format_flags) != format_flags)
+    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & format_flags) != format_flags)
     {
         TRACE("Requested format flags %#x, but format %s only has %#x.\n",
-                format_flags, debug_d3dformat(check_format_id), format->flags);
+                format_flags, debug_d3dformat(check_format_id), format->flags[WINED3D_GL_RES_TYPE_TEX_2D]);
         return WINED3DERR_NOTAVAILABLE;
     }
 

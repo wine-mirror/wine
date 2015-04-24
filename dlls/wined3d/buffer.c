@@ -1145,9 +1145,8 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&buffer->resource, device, WINED3D_RTYPE_BUFFER, format,
-            WINED3D_MULTISAMPLE_NONE, 0, usage, pool, size, 1, 1, size,
-            parent, parent_ops, &buffer_resource_ops);
+    hr = resource_init(&buffer->resource, device, WINED3D_RTYPE_BUFFER, WINED3D_GL_RES_TYPE_BUFFER, format,
+            WINED3D_MULTISAMPLE_NONE, 0, usage, pool, size, 1, 1, size, parent, parent_ops, &buffer_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, hr %#x\n", hr);

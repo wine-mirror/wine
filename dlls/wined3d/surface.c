@@ -989,16 +989,18 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
-            if (!((src_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET)))
+            if (!((src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+                    || (src_usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
-            if (!((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+            if (!((dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+                    || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
             break;
 
         case WINED3D_BLIT_OP_DEPTH_BLIT:
-            if (!(src_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            if (!(src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
                 return FALSE;
-            if (!(dst_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
                 return FALSE;
             break;
 
@@ -1430,7 +1432,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         surface->container->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
     }
 
-    if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_HEIGHT_SCALE)
     {
         update_h *= format->height_scale.numerator;
         update_h /= format->height_scale.denominator;
@@ -1442,7 +1444,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         checkGLcall("glBindBuffer");
     }
 
-    if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
     {
         UINT row_length = wined3d_format_calculate_size(format, 1, update_w, 1, 1);
         UINT row_count = (update_h + format->block_height - 1) / format->block_height;
@@ -4316,7 +4318,8 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
         case WINED3D_BLIT_OP_COLOR_FILL:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
             {
-                if (!((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+                if (!((dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+                        || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
                     return FALSE;
             }
             else if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
@@ -5457,9 +5460,9 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     else
         surface->surface_ops = &surface_ops;
 
-    if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE, format,
-            desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height, 1,
-            resource_size, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
+    if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE, container->resource.gl_type,
+            format, desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height,
+            1, resource_size, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;

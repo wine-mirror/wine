@@ -2195,8 +2195,11 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 {
     BYTE existing_depth, existing_stencil, required_depth, required_stencil;
 
-    if (existing == required) return TRUE;
-    if ((existing->flags & WINED3DFMT_FLAG_FLOAT) != (required->flags & WINED3DFMT_FLAG_FLOAT)) return FALSE;
+    if (existing == required)
+        return TRUE;
+    if ((existing->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+            != (required->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT))
+        return FALSE;
 
     getDepthStencilBits(existing, &existing_depth, &existing_stencil);
     getDepthStencilBits(required, &required_depth, &required_stencil);
