@@ -46,6 +46,12 @@ static void set_color(D2D1_COLOR_F *color, float r, float g, float b, float a)
     color->a = a;
 }
 
+static void set_size_u(D2D1_SIZE_U *size, unsigned int w, unsigned int h)
+{
+    size->width = w;
+    size->height = h;
+}
+
 static void set_matrix_identity(D2D1_MATRIX_3X2_F *matrix)
 {
     matrix->_11 = 1.0f;
@@ -685,9 +691,143 @@ static void test_color_brush(void)
     DestroyWindow(window);
 }
 
+static void test_bitmap_brush(void)
+{
+    D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
+    D2D1_MATRIX_3X2_F matrix, tmp_matrix;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    ID2D1Bitmap *bitmap, *tmp_bitmap;
+    D2D1_RECT_F src_rect, dst_rect;
+    D2D1_EXTEND_MODE extend_mode;
+    IDXGISwapChain *swapchain;
+    ID2D1BitmapBrush *brush;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    D2D1_COLOR_F color;
+    D2D1_SIZE_U size;
+    ULONG refcount;
+    float opacity;
+    HWND window;
+    HRESULT hr;
+
+    static const DWORD bitmap_data[] =
+    {
+        0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff,
+        0xff0000ff, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
+
+    set_size_u(&size, 4, 4);
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    /* Creating a brush with a NULL bitmap crashes on Vista, but works fine on
+     * Windows 7+. */
+    hr = ID2D1RenderTarget_CreateBitmapBrush(rt, bitmap, NULL, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+    ID2D1BitmapBrush_GetBitmap(brush, &tmp_bitmap);
+    ok(tmp_bitmap == bitmap, "Got unexpected bitmap %p, expected %p.\n", tmp_bitmap, bitmap);
+    ID2D1Bitmap_Release(tmp_bitmap);
+    opacity = ID2D1BitmapBrush_GetOpacity(brush);
+    ok(opacity == 1.0f, "Got unexpected opacity %.8e.\n", opacity);
+    set_matrix_identity(&matrix);
+    ID2D1BitmapBrush_GetTransform(brush, &tmp_matrix);
+    ok(!memcmp(&tmp_matrix, &matrix, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_matrix._11, tmp_matrix._12, tmp_matrix._21,
+            tmp_matrix._22, tmp_matrix._31, tmp_matrix._32);
+    extend_mode = ID2D1BitmapBrush_GetExtendModeX(brush);
+    ok(extend_mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %#x.\n", extend_mode);
+    extend_mode = ID2D1BitmapBrush_GetExtendModeY(brush);
+    ok(extend_mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %#x.\n", extend_mode);
+    interpolation_mode = ID2D1BitmapBrush_GetInterpolationMode(brush);
+    ok(interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+            "Got unexpected interpolation mode %#x.\n", interpolation_mode);
+    ID2D1BitmapBrush_Release(brush);
+
+    hr = ID2D1RenderTarget_CreateBitmapBrush(rt, bitmap, NULL, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 40.0f, 120.0f);
+    scale_matrix(&matrix, 20.0f, 60.0f);
+    ID2D1BitmapBrush_SetTransform(brush, &matrix);
+    ID2D1BitmapBrush_SetInterpolationMode(brush, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_rect(&dst_rect, 40.0f, 120.0f, 120.0f, 360.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &dst_rect, (ID2D1Brush *)brush);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 0.5f, 2.0f);
+    translate_matrix(&matrix, 320.0f, 240.0f);
+    rotate_matrix(&matrix, M_PI / 4.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, -80.0f, -60.0f);
+    scale_matrix(&matrix, 40.0f, 30.0f);
+    ID2D1BitmapBrush_SetTransform(brush, &matrix);
+    ID2D1BitmapBrush_SetOpacity(brush, 0.75f);
+    set_rect(&dst_rect, -80.0f, -60.0f, 80.0f, 60.0f);
+    ID2D1RenderTarget_FillRectangle(rt, &dst_rect, (ID2D1Brush *)brush);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 200.0f, 120.0f);
+    scale_matrix(&matrix, 20.0f, 60.0f);
+    ID2D1RenderTarget_SetTransform(rt, &matrix);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, NULL, 0.25f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+    set_rect(&dst_rect, -4.0f, 12.0f, -8.0f, 8.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 0.75f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, NULL);
+    set_rect(&dst_rect, 0.0f, 8.0f, 4.0f, 12.0f);
+    set_rect(&src_rect, 2.0f, 1.0f, 4.0f, 3.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    ok(compare_surface(surface, "393636185359a550d459e1e5f0e25411814f724c"), "Surface does not match.\n");
+
+    ID2D1BitmapBrush_Release(brush);
+    refcount = ID2D1Bitmap_Release(bitmap);
+    ok(!refcount, "Bitmap has %u references left.\n", refcount);
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
     test_state_block();
     test_color_brush();
+    test_bitmap_brush();
 }
