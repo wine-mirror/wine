@@ -540,7 +540,7 @@ done:
 static void test_specular_lighting(void)
 {
     static const unsigned int vertices_side = 5;
-    static const unsigned int indices_count = (vertices_side - 1) * (vertices_side - 1) * 2 * 3;
+    const unsigned int indices_count = (vertices_side - 1) * (vertices_side - 1) * 2 * 3;
     static const DWORD fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
     static const D3DMATRIX mat =
     {{{
