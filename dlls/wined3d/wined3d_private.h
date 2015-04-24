@@ -435,7 +435,7 @@ enum wined3d_shader_rel_op
  * Shader model 3 according to msdn (and for software shaders) */
 #define MAX_LABELS 16
 
-struct wined3d_shader_buffer
+struct wined3d_string_buffer
 {
     char *buffer;
     unsigned int buffer_size;
@@ -663,7 +663,7 @@ struct wined3d_shader_context
     const struct wined3d_shader *shader;
     const struct wined3d_gl_info *gl_info;
     const struct wined3d_shader_reg_maps *reg_maps;
-    struct wined3d_shader_buffer *buffer;
+    struct wined3d_string_buffer *buffer;
     struct wined3d_shader_tex_mx *tex_mx;
     struct wined3d_shader_loop_state *loop_state;
     void *backend_data;
@@ -2894,9 +2894,8 @@ struct wined3d_shader_limits
 #define PRINTF_ATTR(fmt,args)
 #endif
 
-/* Base Shader utility functions. */
-int shader_addline(struct wined3d_shader_buffer *buffer, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
-int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
+int shader_addline(struct wined3d_string_buffer *buffer, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
+int shader_vaddline(struct wined3d_string_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 
 /* Vertex shader utility functions */
 BOOL vshader_get_input(const struct wined3d_shader *shader,
@@ -2974,16 +2973,16 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args) DECLSPEC_HIDDEN;
 
-void shader_buffer_clear(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
-BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
-void shader_buffer_free(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
+void string_buffer_clear(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
+BOOL string_buffer_init(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
+void string_buffer_free(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
 void shader_dump_src_param(const struct wined3d_shader_src_param *param,
         const struct wined3d_shader_version *shader_version) DECLSPEC_HIDDEN;
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
         const struct wined3d_shader_version *shader_version) DECLSPEC_HIDDEN;
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps,
         unsigned int max) DECLSPEC_HIDDEN;
-void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 

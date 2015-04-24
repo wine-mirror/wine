@@ -245,13 +245,13 @@ static const struct wined3d_shader_frontend *shader_select_frontend(DWORD versio
     }
 }
 
-void shader_buffer_clear(struct wined3d_shader_buffer *buffer)
+void string_buffer_clear(struct wined3d_string_buffer *buffer)
 {
     buffer->buffer[0] = '\0';
     buffer->content_size = 0;
 }
 
-BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
+BOOL string_buffer_init(struct wined3d_string_buffer *buffer)
 {
     buffer->buffer_size = 16384;
     if (!(buffer->buffer = HeapAlloc(GetProcessHeap(), 0, buffer->buffer_size)))
@@ -260,16 +260,16 @@ BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
         return FALSE;
     }
 
-    shader_buffer_clear(buffer);
+    string_buffer_clear(buffer);
     return TRUE;
 }
 
-void shader_buffer_free(struct wined3d_shader_buffer *buffer)
+void string_buffer_free(struct wined3d_string_buffer *buffer)
 {
     HeapFree(GetProcessHeap(), 0, buffer->buffer);
 }
 
-int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *format, va_list args)
+int shader_vaddline(struct wined3d_string_buffer *buffer, const char *format, va_list args)
 {
     unsigned int rem;
     int rc;
@@ -297,7 +297,7 @@ int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *format, va
     return 0;
 }
 
-int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...)
+int shader_addline(struct wined3d_string_buffer *buffer, const char *format, ...)
 {
     va_list args;
     int ret;
@@ -1533,7 +1533,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
-void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
     struct wined3d_device *device = shader->device;
