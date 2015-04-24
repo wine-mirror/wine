@@ -122,6 +122,11 @@ struct glsl_vs_program
     GLint projection_matrix_location;
     GLint normal_matrix_location;
     GLint texture_matrix_location[MAX_TEXTURES];
+    GLint material_ambient_location;
+    GLint material_diffuse_location;
+    GLint material_specular_location;
+    GLint material_emission_location;
+    GLint material_shininess_location;
 };
 
 struct glsl_gs_program
@@ -1071,6 +1076,28 @@ static void shader_glsl_ffp_vertex_texmatrix_uniform(const struct wined3d_contex
     checkGLcall("glUniformMatrix4fv");
 }
 
+static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (state->render_states[WINED3D_RS_SPECULARENABLE])
+    {
+        GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, &state->material.specular.r));
+        GL_EXTCALL(glUniform1f(prog->vs.material_shininess_location, state->material.power));
+    }
+    else
+    {
+        static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+        GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, black));
+    }
+    GL_EXTCALL(glUniform4fv(prog->vs.material_ambient_location, 1, &state->material.ambient.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_diffuse_location, 1, &state->material.diffuse.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_emission_location, 1, &state->material.emissive.r));
+    checkGLcall("setting FFP material uniforms");
+}
+
 /* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
@@ -1150,6 +1177,9 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         for (i = 0; i < MAX_TEXTURES; ++i)
             shader_glsl_ffp_vertex_texmatrix_uniform(context, state, i, prog);
     }
+
+    if (update_mask & WINED3D_SHADER_CONST_FFP_MATERIAL)
+        shader_glsl_ffp_vertex_material_uniform(context, state, prog);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
         shader_glsl_load_constantsF(pshader, gl_info, state->ps_consts_f,
@@ -5279,10 +5309,10 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
     shader_addline(buffer, "vec3 dir, dst;\n");
     shader_addline(buffer, "float att, t;\n");
 
-    ambient = shader_glsl_ffp_mcs(settings->ambient_source, "gl_FrontMaterial.ambient");
-    diffuse = shader_glsl_ffp_mcs(settings->diffuse_source, "gl_FrontMaterial.diffuse");
-    specular = shader_glsl_ffp_mcs(settings->specular_source, "gl_FrontMaterial.specular");
-    emission = shader_glsl_ffp_mcs(settings->emission_source, "gl_FrontMaterial.emission");
+    ambient = shader_glsl_ffp_mcs(settings->ambient_source, "ffp_material.ambient");
+    diffuse = shader_glsl_ffp_mcs(settings->diffuse_source, "ffp_material.diffuse");
+    specular = shader_glsl_ffp_mcs(settings->specular_source, "ffp_material.specular");
+    emission = shader_glsl_ffp_mcs(settings->emission_source, "ffp_material.emission");
 
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
     {
@@ -5306,7 +5336,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                     shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 else
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, gl_FrontMaterial.shininess)"
+                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
                         " * gl_LightSource[%u].specular) / att;\n", i);
                 break;
 
@@ -5331,7 +5361,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                     shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 else
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, gl_FrontMaterial.shininess)"
+                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
                         " * gl_LightSource[%u].specular) * att;\n", i);
                 break;
 
@@ -5348,7 +5378,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                     shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 else
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += pow(t, gl_FrontMaterial.shininess)"
+                shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
                         " * gl_LightSource[%u].specular;\n", i);
                 break;
 
@@ -5381,6 +5411,14 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     shader_addline(buffer, "uniform mat4 ffp_projection_matrix;\n");
     shader_addline(buffer, "uniform mat3 ffp_normal_matrix;\n");
     shader_addline(buffer, "uniform mat4 ffp_texture_matrix[%u];\n", MAX_TEXTURES);
+
+    shader_addline(buffer, "uniform struct\n{\n");
+    shader_addline(buffer, "    vec4 emission;\n");
+    shader_addline(buffer, "    vec4 ambient;\n");
+    shader_addline(buffer, "    vec4 diffuse;\n");
+    shader_addline(buffer, "    vec4 specular;\n");
+    shader_addline(buffer, "    float shininess;\n");
+    shader_addline(buffer, "} ffp_material;\n");
 
     shader_addline(buffer, "\nvoid main()\n{\n");
     shader_addline(buffer, "float m;\n");
@@ -6176,6 +6214,11 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
         string_buffer_sprintf(name, "ffp_texture_matrix[%u]", i);
         vs->texture_matrix_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
+    vs->material_ambient_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.ambient"));
+    vs->material_diffuse_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.diffuse"));
+    vs->material_specular_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.specular"));
+    vs->material_emission_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.emission"));
+    vs->material_shininess_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.shininess"));
 
     string_buffer_release(&priv->string_buffers, name);
 }
@@ -6497,6 +6540,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 break;
             }
         }
+        if (entry->vs.material_ambient_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
     }
 
     if (gshader)
@@ -7534,12 +7579,18 @@ static void glsl_vertex_pipe_texmatrix(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 }
 
+static void glsl_vertex_pipe_material(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
+}
+
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_vertex_pipe_vs    }, WINED3D_GL_EXT_NONE          },
     {STATE_MATERIAL,                                             {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    state_specularenable   }, WINED3D_GL_EXT_NONE          },
+    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
     /* Clip planes */
     {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
     {STATE_CLIPPLANE(1),                                         {STATE_CLIPPLANE(1),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
