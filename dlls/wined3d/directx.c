@@ -4250,7 +4250,8 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
 static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
-        const struct wined3d_format *display_format, const struct wined3d_format *ds_format)
+        const struct wined3d_format *display_format, const struct wined3d_format *ds_format,
+        enum wined3d_gl_resource_type gl_type)
 {
     /* Only allow depth/stencil formats */
     if (!(ds_format->depth_size || ds_format->stencil_size)) return FALSE;
@@ -4270,7 +4271,7 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         /* With FBOs WGL limitations do not apply, but the format needs to be FBO attachable */
-        if (ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        if (ds_format->flags[gl_type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
             return TRUE;
     }
     else
@@ -4292,10 +4293,11 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
 
 /* Check the render target capabilities of a format */
 static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
-        const struct wined3d_format *adapter_format, const struct wined3d_format *check_format)
+        const struct wined3d_format *adapter_format, const struct wined3d_format *check_format,
+        enum wined3d_gl_resource_type gl_type)
 {
     /* Filter out non-RT formats */
-    if (!(check_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_RENDERTARGET))
+    if (!(check_format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
         return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
@@ -4378,7 +4380,8 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
     if (check_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE)
         return TRUE;
     /* All depth stencil formats are supported on surfaces */
-    if (CheckDepthStencilCapability(adapter, adapter_format, check_format)) return TRUE;
+    if (CheckDepthStencilCapability(adapter, adapter_format, check_format, WINED3D_GL_RES_TYPE_TEX_2D))
+        return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
     if (adapter->blitter->blit_supported(&adapter->gl_info, &adapter->d3d_info,
@@ -4413,6 +4416,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     const struct wined3d_format *format = wined3d_get_format(gl_info, check_format_id);
     DWORD format_flags = 0;
     DWORD allowed_usage;
+    enum wined3d_gl_resource_type gl_type;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, adapter_format %s, usage %s, %s,\n"
             "resource_type %s, check_format %s.\n",
@@ -4443,6 +4447,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
+            gl_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
             break;
 
         case WINED3D_RTYPE_SURFACE:
@@ -4455,6 +4460,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             allowed_usage = WINED3DUSAGE_DEPTHSTENCIL
                     | WINED3DUSAGE_RENDERTARGET
                     | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+            gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
             break;
 
         case WINED3D_RTYPE_TEXTURE:
@@ -4479,6 +4485,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
+            gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
             break;
 
         case WINED3D_RTYPE_VOLUME_TEXTURE:
@@ -4520,6 +4527,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
+            gl_type = WINED3D_GL_RES_TYPE_TEX_3D;
             break;
 
         default:
@@ -4547,10 +4555,10 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
         format_flags |= WINED3DFMT_FLAG_BUMPMAP;
 
-    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & format_flags) != format_flags)
+    if ((format->flags[gl_type] & format_flags) != format_flags)
     {
         TRACE("Requested format flags %#x, but format %s only has %#x.\n",
-                format_flags, debug_d3dformat(check_format_id), format->flags[WINED3D_GL_RES_TYPE_TEX_2D]);
+                format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
         return WINED3DERR_NOTAVAILABLE;
     }
 
@@ -4561,7 +4569,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     }
 
     if ((usage & WINED3DUSAGE_DEPTHSTENCIL)
-            && !CheckDepthStencilCapability(adapter, adapter_format, format))
+            && !CheckDepthStencilCapability(adapter, adapter_format, format, gl_type))
     {
         TRACE("Requested WINED3DUSAGE_DEPTHSTENCIL, but format %s is not supported for depth / stencil buffers.\n",
                 debug_d3dformat(check_format_id));
@@ -4569,7 +4577,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     }
 
     if ((usage & WINED3DUSAGE_RENDERTARGET)
-            && !CheckRenderTargetCapability(adapter, adapter_format, format))
+            && !CheckRenderTargetCapability(adapter, adapter_format, format, gl_type))
     {
         TRACE("Requested WINED3DUSAGE_RENDERTARGET, but format %s is not supported for render targets.\n",
                 debug_d3dformat(check_format_id));
