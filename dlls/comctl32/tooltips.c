@@ -111,6 +111,7 @@ static HICON hTooltipIcons[TTI_ERROR+1];
 typedef struct
 {
     UINT      uFlags;
+    UINT      uInternalFlags;
     HWND      hwnd;
     BOOL      bNotifyUnicode;
     UINT_PTR  uId;
@@ -1057,11 +1058,12 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     infoPtr->uNumTools++;
 
     /* copy tool data */
-    toolPtr->uFlags = ti->uFlags;
-    toolPtr->hwnd   = ti->hwnd;
-    toolPtr->uId    = ti->uId;
-    toolPtr->rect   = ti->rect;
-    toolPtr->hinst  = ti->hinst;
+    toolPtr->uFlags         = ti->uFlags;
+    toolPtr->uInternalFlags = (ti->uFlags & (TTF_SUBCLASS | TTF_IDISHWND));
+    toolPtr->hwnd           = ti->hwnd;
+    toolPtr->uId            = ti->uId;
+    toolPtr->rect           = ti->rect;
+    toolPtr->hinst          = ti->hinst;
 
     if (ti->cbSize >= TTTOOLINFOW_V1_SIZE) {
         if (IS_INTRESOURCE(ti->lpszText)) {
@@ -1092,8 +1094,8 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	toolPtr->lParam = ti->lParam;
 
     /* install subclassing hook */
-    if (toolPtr->uFlags & TTF_SUBCLASS) {
-	if (toolPtr->uFlags & TTF_IDISHWND) {
+    if (toolPtr->uInternalFlags & TTF_SUBCLASS) {
+	if (toolPtr->uInternalFlags & TTF_IDISHWND) {
 	    SetWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1,
 			      (DWORD_PTR)infoPtr->hwndSelf);
 	}
@@ -1152,8 +1154,8 @@ TOOLTIPS_DelToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     }
 
     /* remove subclassing */
-    if (toolPtr->uFlags & TTF_SUBCLASS) {
-	if (toolPtr->uFlags & TTF_IDISHWND) {
+    if (toolPtr->uInternalFlags & TTF_SUBCLASS) {
+	if (toolPtr->uInternalFlags & TTF_IDISHWND) {
 	    RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
 	}
 	else {
@@ -1918,8 +1920,8 @@ TOOLTIPS_Destroy (TOOLTIPS_INFO *infoPtr)
 	    }
 
 	    /* remove subclassing */
-        if (toolPtr->uFlags & TTF_SUBCLASS) {
-            if (toolPtr->uFlags & TTF_IDISHWND) {
+        if (toolPtr->uInternalFlags & TTF_SUBCLASS) {
+            if (toolPtr->uInternalFlags & TTF_IDISHWND) {
                 RemoveWindowSubclass((HWND)toolPtr->uId, TOOLTIPS_SubclassProc, 1);
             }
             else {
