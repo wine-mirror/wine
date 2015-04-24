@@ -772,6 +772,17 @@ ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
     FIXME("(%p, %p, %s, %u, %p, %s, %s, %p): stub\n", RequestAddress, RequestContext,
           debugstr_guid(ControlGuid), GuidCount, TraceGuidReg, debugstr_w(MofImagePath),
           debugstr_w(MofResourceName), RegistrationHandle);
+
+    if (TraceGuidReg)
+    {
+        ULONG i;
+        for (i = 0; i < GuidCount; i++)
+        {
+            FIXME("  register trace class %s\n", debugstr_guid(TraceGuidReg[i].Guid));
+            TraceGuidReg[i].RegHandle = (HANDLE)0xdeadbeef;
+        }
+    }
+    *RegistrationHandle = (TRACEHANDLE)0xdeadbeef;
     return ERROR_SUCCESS;
 }
 
