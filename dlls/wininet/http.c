@@ -5827,8 +5827,8 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         session->password = heap_strdupW(lpszPassword);
     session->hostPort = serverPort;
     session->connect_timeout = hIC->connect_timeout;
-    session->send_timeout = INFINITE;
-    session->receive_timeout = INFINITE;
+    session->send_timeout = 0;
+    session->receive_timeout = 0;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(session->hdr.dwInternalFlags & INET_OPENURL))
