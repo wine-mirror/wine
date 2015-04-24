@@ -313,6 +313,71 @@ int shader_addline(struct wined3d_string_buffer *buffer, const char *format, ...
     return ret;
 }
 
+struct wined3d_string_buffer *string_buffer_get(struct wined3d_string_buffer_list *list)
+{
+    struct wined3d_string_buffer *buffer;
+
+    if (list_empty(&list->list))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer));
+        if (!buffer || !string_buffer_init(buffer))
+        {
+            ERR("Couldn't allocate buffer for temporary string.\n");
+            if (buffer)
+                HeapFree(GetProcessHeap(), 0, buffer);
+            return NULL;
+        }
+    }
+    else
+    {
+        buffer = LIST_ENTRY(list_head(&list->list), struct wined3d_string_buffer, entry);
+        list_remove(&buffer->entry);
+    }
+    string_buffer_clear(buffer);
+    return buffer;
+}
+
+static void string_buffer_vsprintf(struct wined3d_string_buffer *buffer, const char *format, va_list args)
+{
+    if (!buffer)
+        return;
+    string_buffer_clear(buffer);
+    shader_vaddline(buffer, format, args);
+}
+
+void string_buffer_sprintf(struct wined3d_string_buffer *buffer, const char *format, ...)
+{
+    va_list args;
+
+    va_start(args, format);
+    string_buffer_vsprintf(buffer, format, args);
+    va_end(args);
+}
+
+void string_buffer_release(struct wined3d_string_buffer_list *list, struct wined3d_string_buffer *buffer)
+{
+    if (!buffer)
+        return;
+    list_add_head(&list->list, &buffer->entry);
+}
+
+void string_buffer_list_init(struct wined3d_string_buffer_list *list)
+{
+    list_init(&list->list);
+}
+
+void string_buffer_list_cleanup(struct wined3d_string_buffer_list *list)
+{
+    struct wined3d_string_buffer *buffer, *buffer_next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(buffer, buffer_next, &list->list, struct wined3d_string_buffer, entry)
+    {
+        string_buffer_free(buffer);
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    list_init(&list->list);
+}
+
 /* Convert floating point offset relative to a register file to an absolute
  * offset for float constants. */
 static unsigned int shader_get_float_offset(enum wined3d_shader_register_type register_type, UINT register_idx)

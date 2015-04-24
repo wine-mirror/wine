@@ -437,6 +437,7 @@ enum wined3d_shader_rel_op
 
 struct wined3d_string_buffer
 {
+    struct list entry;
     char *buffer;
     unsigned int buffer_size;
     unsigned int content_size;
@@ -2893,6 +2894,17 @@ struct wined3d_shader_limits
 #else
 #define PRINTF_ATTR(fmt,args)
 #endif
+
+struct wined3d_string_buffer_list
+{
+    struct list list;
+};
+
+struct wined3d_string_buffer *string_buffer_get(struct wined3d_string_buffer_list *list) DECLSPEC_HIDDEN;
+void string_buffer_sprintf(struct wined3d_string_buffer *buffer, const char *format, ...) PRINTF_ATTR(2, 3) DECLSPEC_HIDDEN;
+void string_buffer_release(struct wined3d_string_buffer_list *list, struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
+void string_buffer_list_init(struct wined3d_string_buffer_list *list) DECLSPEC_HIDDEN;
+void string_buffer_list_cleanup(struct wined3d_string_buffer_list *list) DECLSPEC_HIDDEN;
 
 int shader_addline(struct wined3d_string_buffer *buffer, const char *fmt, ...) PRINTF_ATTR(2,3) DECLSPEC_HIDDEN;
 int shader_vaddline(struct wined3d_string_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;

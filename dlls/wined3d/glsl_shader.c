@@ -92,6 +92,7 @@ struct constant_heap
 /* GLSL shader private data */
 struct shader_glsl_priv {
     struct wined3d_string_buffer shader_buffer;
+    struct wined3d_string_buffer_list string_buffers;
     struct wine_rb_tree program_lookup;
     struct constant_heap vconst_heap;
     struct constant_heap pconst_heap;
@@ -435,10 +436,10 @@ static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLu
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
-        const DWORD *tex_unit_map, GLuint program_id)
+        struct shader_glsl_priv *priv, const DWORD *tex_unit_map, GLuint program_id)
 {
     unsigned int mapped_unit;
-    char sampler_name[20];
+    struct wined3d_string_buffer *sampler_name = string_buffer_get(&priv->string_buffers);
     const char *prefix;
     unsigned int i, j;
     GLint name_loc;
@@ -461,23 +462,24 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
 
         for (j = 0; j < sampler_info[i].count; ++j)
         {
-            snprintf(sampler_name, sizeof(sampler_name), "%s_sampler%u", prefix, j);
-            name_loc = GL_EXTCALL(glGetUniformLocation(program_id, sampler_name));
+            string_buffer_sprintf(sampler_name, "%s_sampler%u", prefix, j);
+            name_loc = GL_EXTCALL(glGetUniformLocation(program_id, sampler_name->buffer));
             if (name_loc == -1)
                 continue;
 
             mapped_unit = tex_unit_map[sampler_info[i].base_idx + j];
             if (mapped_unit == WINED3D_UNMAPPED_STAGE || mapped_unit >= gl_info->limits.combined_samplers)
             {
-                ERR("Trying to load sampler %s on unsupported unit %u.\n", sampler_name, mapped_unit);
+                ERR("Trying to load sampler %s on unsupported unit %u.\n", sampler_name->buffer, mapped_unit);
                 continue;
             }
 
-            TRACE("Loading sampler %s on unit %u.\n", sampler_name, mapped_unit);
+            TRACE("Loading sampler %s on unit %u.\n", sampler_name->buffer, mapped_unit);
             GL_EXTCALL(glUniform1i(name_loc, mapped_unit));
         }
     }
     checkGLcall("glUniform1i");
+    string_buffer_release(&priv->string_buffers, sampler_name);
 }
 
 /* Context activation is done by the caller. */
@@ -6113,31 +6115,31 @@ static struct glsl_ffp_fragment_shader *shader_glsl_find_ffp_fragment_shader(str
 
 
 static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *gl_info,
-        GLuint program_id, struct glsl_vs_program *vs, unsigned int vs_c_count)
+        struct shader_glsl_priv *priv, GLuint program_id, struct glsl_vs_program *vs, unsigned int vs_c_count)
 {
     unsigned int i;
-    char name[32];
+    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
 
     vs->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLuint) * gl_info->limits.glsl_vs_float_constants);
     for (i = 0; i < vs_c_count; ++i)
     {
-        snprintf(name, sizeof(name), "vs_c[%u]", i);
-        vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "vs_c[%u]", i);
+        vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
     memset(&vs->uniform_f_locations[vs_c_count], 0xff,
             (gl_info->limits.glsl_vs_float_constants - vs_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
-        snprintf(name, sizeof(name), "vs_i[%u]", i);
-        vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "vs_i[%u]", i);
+        vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
     for (i = 0; i < MAX_CONST_B; ++i)
     {
-        snprintf(name, sizeof(name), "vs_b[%u]", i);
-        vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "vs_b[%u]", i);
+        vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
     vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "posFixup"));
@@ -6145,46 +6147,48 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->modelview_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_modelview_matrix"));
     vs->projection_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_projection_matrix"));
     vs->normal_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_normal_matrix"));
+
+    string_buffer_release(&priv->string_buffers, name);
 }
 
 static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *gl_info,
-        GLuint program_id, struct glsl_ps_program *ps, unsigned int ps_c_count)
+        struct shader_glsl_priv *priv, GLuint program_id, struct glsl_ps_program *ps, unsigned int ps_c_count)
 {
     unsigned int i;
-    char name[32];
+    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
 
     ps->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
             sizeof(GLuint) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < ps_c_count; ++i)
     {
-        snprintf(name, sizeof(name), "ps_c[%u]", i);
-        ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "ps_c[%u]", i);
+        ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
     memset(&ps->uniform_f_locations[ps_c_count], 0xff,
             (gl_info->limits.glsl_ps_float_constants - ps_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
-        snprintf(name, sizeof(name), "ps_i[%u]", i);
-        ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "ps_i[%u]", i);
+        ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
     for (i = 0; i < MAX_CONST_B; ++i)
     {
-        snprintf(name, sizeof(name), "ps_b[%u]", i);
-        ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "ps_b[%u]", i);
+        ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
-        snprintf(name, sizeof(name), "bumpenv_mat%u", i);
-        ps->bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
-        snprintf(name, sizeof(name), "bumpenv_lum_scale%u", i);
-        ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
-        snprintf(name, sizeof(name), "bumpenv_lum_offset%u", i);
-        ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
-        snprintf(name, sizeof(name), "tss_const%u", i);
-        ps->tss_constant_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name));
+        string_buffer_sprintf(name, "bumpenv_mat%u", i);
+        ps->bumpenv_mat_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
+        string_buffer_sprintf(name, "bumpenv_lum_scale%u", i);
+        ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
+        string_buffer_sprintf(name, "bumpenv_lum_offset%u", i);
+        ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
+        string_buffer_sprintf(name, "tss_const%u", i);
+        ps->tss_constant_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
     ps->tex_factor_location = GL_EXTCALL(glGetUniformLocation(program_id, "tex_factor"));
@@ -6192,26 +6196,30 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "ps_samplerNP2Fixup"));
     ps->ycorrection_location = GL_EXTCALL(glGetUniformLocation(program_id, "ycorrection"));
     ps->color_key_location = GL_EXTCALL(glGetUniformLocation(program_id, "color_key"));
+
+    string_buffer_release(&priv->string_buffers, name);
 }
 
-static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info, GLuint program_id,
+static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info,
+        struct shader_glsl_priv *priv, GLuint program_id,
         const struct wined3d_shader_reg_maps *reg_maps, unsigned int base, unsigned int count)
 {
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
     GLuint block_idx;
     unsigned int i;
-    char name[16];
+    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
 
     for (i = 0; i < count; ++i)
     {
         if (!reg_maps->cb_sizes[i])
             continue;
 
-        snprintf(name, sizeof(name), "block_%s_cb%u", prefix, i);
-        block_idx = GL_EXTCALL(glGetUniformBlockIndex(program_id, name));
+        string_buffer_sprintf(name, "block_%s_cb%u", prefix, i);
+        block_idx = GL_EXTCALL(glGetUniformBlockIndex(program_id, name->buffer));
         GL_EXTCALL(glUniformBlockBinding(program_id, block_idx, base + i));
     }
     checkGLcall("glUniformBlockBinding");
+    string_buffer_release(&priv->string_buffers, name);
 }
 
 /* Context activation is done by the caller. */
@@ -6337,7 +6345,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     if (vshader)
     {
         WORD map = vshader->reg_maps.input_registers;
-        char tmp_name[10];
+        struct wined3d_string_buffer *tmp_name = string_buffer_get(&priv->string_buffers);
 
         reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
@@ -6361,10 +6369,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         {
             if (!(map & 1)) continue;
 
-            snprintf(tmp_name, sizeof(tmp_name), "vs_in%u", i);
-            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name));
+            string_buffer_sprintf(tmp_name, "vs_in%u", i);
+            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
         }
         checkGLcall("glBindAttribLocation");
+        string_buffer_release(&priv->string_buffers, tmp_name);
     }
 
     if (gshader)
@@ -6403,9 +6412,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     GL_EXTCALL(glLinkProgram(program_id));
     shader_glsl_validate_link(gl_info, program_id);
 
-    shader_glsl_init_vs_uniform_locations(gl_info, program_id, &entry->vs,
+    shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
             vshader ? min(vshader->limits->constant_float, gl_info->limits.glsl_vs_float_constants) : 0);
-    shader_glsl_init_ps_uniform_locations(gl_info, program_id, &entry->ps,
+    shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
             pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
     checkGLcall("Find glsl program uniform locations");
 
@@ -6431,7 +6440,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
      * supports enough samplers to allow the max number of vertex samplers with all possible
      * fixed function fragment processing setups. So once the program is linked these samplers
      * won't change. */
-    shader_glsl_load_samplers(gl_info, context->tex_unit_map, program_id);
+    shader_glsl_load_samplers(gl_info, priv, context->tex_unit_map, program_id);
 
     entry->constant_update_mask = 0;
     if (vshader)
@@ -6443,7 +6452,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_B;
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
 
-        shader_glsl_init_uniform_block_bindings(gl_info, program_id, &vshader->reg_maps,
+        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &vshader->reg_maps,
                 0, gl_info->limits.vertex_uniform_blocks);
     }
     else
@@ -6453,7 +6462,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 
     if (gshader)
-        shader_glsl_init_uniform_block_bindings(gl_info, program_id, &gshader->reg_maps,
+        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps,
                 gl_info->limits.vertex_uniform_blocks, gl_info->limits.geometry_uniform_blocks);
 
     if (ps_id)
@@ -6468,7 +6477,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             if (entry->ps.ycorrection_location != -1)
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
 
-            shader_glsl_init_uniform_block_bindings(gl_info, program_id, &pshader->reg_maps,
+            shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &pshader->reg_maps,
                     gl_info->limits.vertex_uniform_blocks + gl_info->limits.geometry_uniform_blocks,
                     gl_info->limits.fragment_uniform_blocks);
         }
@@ -6926,6 +6935,8 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
     struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
 
+    string_buffer_list_init(&priv->string_buffers);
+
     if (!(vertex_priv = vertex_pipe->vp_alloc(&glsl_shader_backend, priv)))
     {
         ERR("Failed to initialize vertex pipe.\n");
@@ -7018,6 +7029,7 @@ static void shader_glsl_free(struct wined3d_device *device)
     constant_heap_free(&priv->pconst_heap);
     constant_heap_free(&priv->vconst_heap);
     HeapFree(GetProcessHeap(), 0, priv->stack);
+    string_buffer_list_cleanup(&priv->string_buffers);
     string_buffer_free(&priv->shader_buffer);
     priv->fragment_pipe->free_private(device);
     priv->vertex_pipe->vp_free(device);
