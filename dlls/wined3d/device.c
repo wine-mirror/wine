@@ -1086,6 +1086,12 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
 
+    /* Release the context again as soon as possible. In particular,
+     * releasing the render target views below may release the last reference
+     * to the swapchain associated with this context, which in turn will
+     * destroy the context. */
+    context_release(context);
+
     /* Release the buffers (with sanity checks)*/
     if (device->onscreen_depth_stencil)
     {
@@ -1122,8 +1128,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         wined3d_rendertarget_view_decref(device->back_buffer_view);
         device->back_buffer_view = NULL;
     }
-
-    context_release(context);
 
     for (i = 0; i < device->swapchain_count; ++i)
     {
