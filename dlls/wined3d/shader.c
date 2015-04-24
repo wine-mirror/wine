@@ -1862,6 +1862,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 static void shader_cleanup(struct wined3d_shader *shader)
 {
     HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
+    HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
     shader->device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
