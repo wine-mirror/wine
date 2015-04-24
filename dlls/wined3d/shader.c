@@ -253,7 +253,7 @@ void string_buffer_clear(struct wined3d_string_buffer *buffer)
 
 BOOL string_buffer_init(struct wined3d_string_buffer *buffer)
 {
-    buffer->buffer_size = 16384;
+    buffer->buffer_size = 32;
     if (!(buffer->buffer = HeapAlloc(GetProcessHeap(), 0, buffer->buffer_size)))
     {
         ERR("Failed to allocate shader buffer memory.\n");
@@ -274,6 +274,7 @@ int shader_vaddline(struct wined3d_string_buffer *buffer, const char *format, va
     unsigned int rem;
     int rc;
     char *new_buffer;
+    unsigned int new_buffer_size;
 
     for (;;)
     {
@@ -283,14 +284,17 @@ int shader_vaddline(struct wined3d_string_buffer *buffer, const char *format, va
         if (rc >= 0 /* C89 */ && (unsigned int)rc < rem /* C99 */)
             break;
 
-        if (!(new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, buffer->buffer_size * 2)))
+        new_buffer_size = buffer->buffer_size * 2;
+        while (rc > 0 && (unsigned int)rc >= new_buffer_size - buffer->content_size)
+            new_buffer_size *= 2;
+        if (!(new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, new_buffer_size)))
         {
             ERR("Failed to grow buffer.\n");
             buffer->buffer[buffer->content_size] = '\0';
             return -1;
         }
         buffer->buffer = new_buffer;
-        buffer->buffer_size = buffer->buffer_size * 2;
+        buffer->buffer_size = new_buffer_size;
     }
     buffer->content_size += rc;
 
