@@ -121,6 +121,7 @@ struct glsl_vs_program
     GLint modelview_matrix_location;
     GLint projection_matrix_location;
     GLint normal_matrix_location;
+    GLint texture_matrix_location[MAX_TEXTURES];
 };
 
 struct glsl_gs_program
@@ -1054,6 +1055,22 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
     checkGLcall("glUniformMatrix3fv");
 }
 
+static void shader_glsl_ffp_vertex_texmatrix_uniform(const struct wined3d_context *context,
+        const struct wined3d_state *state, unsigned int tex, struct glsl_shader_prog_link *prog)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_matrix mat;
+
+    if (tex >= MAX_TEXTURES)
+        return;
+    if (prog->vs.texture_matrix_location[tex] == -1)
+        return;
+
+    get_texture_matrix(context, state, tex, &mat);
+    GL_EXTCALL(glUniformMatrix4fv(prog->vs.texture_matrix_location[tex], 1, FALSE, &mat._11));
+    checkGLcall("glUniformMatrix4fv");
+}
+
 /* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
@@ -1126,6 +1143,12 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         get_projection_matrix(context, state, &projection);
         GL_EXTCALL(glUniformMatrix4fv(prog->vs.projection_matrix_location, 1, FALSE, &projection._11));
         checkGLcall("glUniformMatrix4fv");
+    }
+
+    if (update_mask & WINED3D_SHADER_CONST_FFP_TEXMATRIX)
+    {
+        for (i = 0; i < MAX_TEXTURES; ++i)
+            shader_glsl_ffp_vertex_texmatrix_uniform(context, state, i, prog);
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
@@ -5357,6 +5380,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     shader_addline(buffer, "uniform mat4 ffp_modelview_matrix;\n");
     shader_addline(buffer, "uniform mat4 ffp_projection_matrix;\n");
     shader_addline(buffer, "uniform mat3 ffp_normal_matrix;\n");
+    shader_addline(buffer, "uniform mat4 ffp_texture_matrix[%u];\n", MAX_TEXTURES);
 
     shader_addline(buffer, "\nvoid main()\n{\n");
     shader_addline(buffer, "float m;\n");
@@ -5392,27 +5416,27 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
         {
             case WINED3DTSS_TCI_PASSTHRU:
                 if (settings->texcoords & (1 << i))
-                    shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u] * gl_MultiTexCoord%d;\n",
+                    shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * gl_MultiTexCoord%d;\n",
                             i, i, i);
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACENORMAL:
-                shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u] * vec4(normal, 1.0);\n", i, i);
+                shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * vec4(normal, 1.0);\n", i, i);
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACEPOSITION:
-                shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u] * ec_pos;\n", i, i);
+                shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * ec_pos;\n", i, i);
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
-                shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u]"
+                shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u]"
                         " * vec4(reflect(normalize(ec_pos.xyz), normal), 1.0);\n", i, i);
                 break;
 
             case WINED3DTSS_TCI_SPHEREMAP:
                 shader_addline(buffer, "r = reflect(normalize(ec_pos.xyz), normal);\n");
                 shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z + 1.0));\n");
-                shader_addline(buffer, "gl_TexCoord[%u] = gl_TextureMatrix[%u]"
+                shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u]"
                         " * vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0);\n", i, i);
                 break;
 
@@ -6147,6 +6171,11 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->modelview_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_modelview_matrix"));
     vs->projection_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_projection_matrix"));
     vs->normal_matrix_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_normal_matrix"));
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        string_buffer_sprintf(name, "ffp_texture_matrix[%u]", i);
+        vs->texture_matrix_location[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
+    }
 
     string_buffer_release(&priv->string_buffers, name);
 }
@@ -6459,6 +6488,15 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     {
         entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
                 | WINED3D_SHADER_CONST_FFP_PROJ;
+
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
+            if (entry->vs.texture_matrix_location[i] != -1)
+            {
+                entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
+                break;
+            }
+        }
     }
 
     if (gshader)
@@ -7383,11 +7421,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         if (transformed != wasrhw)
             context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
 
-        for (i = 0; i < MAX_TEXTURES; ++i)
-        {
-            if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + i)))
-                transform_texture(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
-        }
+        context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 
         if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_LIGHTING)))
             state_lighting(context, state, STATE_RENDER(WINED3D_RS_LIGHTING));
@@ -7494,6 +7528,12 @@ static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
 }
 
+static void glsl_vertex_pipe_texmatrix(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
+}
+
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
@@ -7557,14 +7597,14 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE6),                       {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_TEXTURE7),                       {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)),                {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)),                glsl_vertex_pipe_world }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), transform_texture      }, WINED3D_GL_EXT_NONE          },
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(3, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(4, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
@@ -7605,35 +7645,34 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_TWEENFACTOR),                       {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_INDEXEDVERTEXBLENDENABLE),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
-    /* Samplers for NP2 texture matrix adjustions. They are not needed if
-     * GL_ARB_texture_non_power_of_two is supported, so register a NULL state
-     * handler in that case to get the vertex part of sampler() skipped (VTF
-     * is handled in the misc states). Otherwise, register
-     * sampler_texmatrix(), which takes care of updating the texture matrix. */
+    /* NP2 texture matrix fixups. They are not needed if
+     * GL_ARB_texture_non_power_of_two is supported. Otherwise, register
+     * glsl_vertex_pipe_texmatrix(), which takes care of updating the texture
+     * matrix. */
     {STATE_SAMPLER(0),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(0),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(0),                                           {STATE_SAMPLER(0),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(0),                                           {STATE_SAMPLER(0),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(1),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(1),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(1),                                           {STATE_SAMPLER(1),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(1),                                           {STATE_SAMPLER(1),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(2),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(2),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(2),                                           {STATE_SAMPLER(2),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(2),                                           {STATE_SAMPLER(2),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(3),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(3),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(3),                                           {STATE_SAMPLER(3),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(3),                                           {STATE_SAMPLER(3),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(4),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(4),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(4),                                           {STATE_SAMPLER(4),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(4),                                           {STATE_SAMPLER(4),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(5),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(5),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(5),                                           {STATE_SAMPLER(5),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(5),                                           {STATE_SAMPLER(5),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(6),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(6),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(6),                                           {STATE_SAMPLER(6),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(6),                                           {STATE_SAMPLER(6),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, ARB_TEXTURE_NON_POWER_OF_TWO },
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
-    {STATE_SAMPLER(7),                                           {STATE_SAMPLER(7),                                           sampler_texmatrix      }, WINED3D_GL_EXT_NONE          },
+    {STATE_SAMPLER(7),                                           {STATE_SAMPLER(7),                                           glsl_vertex_pipe_texmatrix}, WINED3D_GL_EXT_NONE       },
     {STATE_POINT_SIZE_ENABLE,                                    {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {0 /* Terminate */,                                          {0,                                                          NULL                   }, WINED3D_GL_EXT_NONE          },
 };

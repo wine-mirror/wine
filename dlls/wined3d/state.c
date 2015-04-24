@@ -3277,7 +3277,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
     }
 }
 
-void transform_texture(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void transform_texture(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int tex = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
@@ -3549,7 +3549,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
     }
 }
 
-void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void sampler_texmatrix(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const DWORD sampler = state_id - STATE_SAMPLER(0);
     const struct wined3d_texture *texture = state->textures[sampler];
