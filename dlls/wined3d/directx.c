@@ -4490,15 +4490,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
         case WINED3D_RTYPE_VOLUME_TEXTURE:
         case WINED3D_RTYPE_VOLUME:
-            /* Volume is to VolumeTexture what Surface is to Texture, but its
-             * usage caps are not documented. Most driver seem to offer
-             * (nearly) the same on Volume and VolumeTexture, so do that too. */
-            if (!gl_info->supported[EXT_TEXTURE3D])
-            {
-                TRACE("[FAILED] - No volume texture support.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
             /* The GL_EXT_texture_compression_s3tc spec requires that loading
              * an s3tc compressed texture results in an error. While the D3D
              * refrast does support s3tc volumes, at least the nvidia Windows

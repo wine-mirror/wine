@@ -1852,9 +1852,16 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         format->glFormat = format_texture_info[i].gl_format;
         format->glType = format_texture_info[i].gl_type;
         format->color_fixup = COLOR_FIXUP_IDENTITY;
-        format_set_flag(format, format_texture_info[i].flags);
         format->height_scale.numerator = 1;
         format->height_scale.denominator = 1;
+
+        format->flags[WINED3D_GL_RES_TYPE_TEX_1D] |= format_texture_info[i].flags;
+        format->flags[WINED3D_GL_RES_TYPE_TEX_2D] |= format_texture_info[i].flags;
+        if (gl_info->supported[EXT_TEXTURE3D])
+            format->flags[WINED3D_GL_RES_TYPE_TEX_3D] |= format_texture_info[i].flags;
+        format->flags[WINED3D_GL_RES_TYPE_TEX_CUBE] |= format_texture_info[i].flags;
+        format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] |= format_texture_info[i].flags;
+        format->flags[WINED3D_GL_RES_TYPE_BUFFER] |= format_texture_info[i].flags;
 
         if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
         {

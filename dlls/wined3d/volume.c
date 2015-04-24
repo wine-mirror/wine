@@ -748,11 +748,6 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
     HRESULT hr;
     UINT size;
 
-    if (!gl_info->supported[EXT_TEXTURE3D])
-    {
-        WARN("Volume cannot be created - no volume texture support.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
     /* TODO: Write tests for other resources and move this check
      * to resource_init, if applicable. */
     if (desc->usage & WINED3DUSAGE_DYNAMIC
