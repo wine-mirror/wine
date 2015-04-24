@@ -24,6 +24,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 
 #include "msvcrt.h"
 #include "wine/unicode.h"
@@ -769,6 +770,8 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
  */
 int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
 {
+  if (!str || !cmp) return INT_MAX;
+
   if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;

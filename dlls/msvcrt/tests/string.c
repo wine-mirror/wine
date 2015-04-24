@@ -2874,6 +2874,36 @@ static void test__wcsset_s(void)
     ok(str[2] == 'b', "str[2] = %d\n", str[2]);
 }
 
+static void test__mbscmp(void)
+{
+    static const unsigned char a[] = {'a',0}, b[] = {'b',0};
+    int ret;
+
+    if (!p_mbrlen)
+    {
+        win_skip("_mbscmp tests\n");
+        return;
+    }
+
+    ret = _mbscmp(NULL, NULL);
+    ok(ret == INT_MAX, "got %d\n", ret);
+
+    ret = _mbscmp(a, NULL);
+    ok(ret == INT_MAX, "got %d\n", ret);
+
+    ret = _mbscmp(NULL, a);
+    ok(ret == INT_MAX, "got %d\n", ret);
+
+    ret = _mbscmp(a, a);
+    ok(!ret, "got %d\n", ret);
+
+    ret = _mbscmp(a, b);
+    ok(ret == -1, "got %d\n", ret);
+
+    ret = _mbscmp(b, a);
+    ok(ret == 1, "got %d\n", ret);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2981,4 +3011,5 @@ START_TEST(string)
     test_strxfrm();
     test__strnset_s();
     test__wcsset_s();
+    test__mbscmp();
 }
