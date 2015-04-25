@@ -6587,11 +6587,11 @@ static void test_lighting(void)
     memset(&light_desc, 0, sizeof(light_desc));
     light_desc.dwSize = sizeof(light_desc);
     light_desc.dltType = D3DLIGHT_DIRECTIONAL;
-    U1(U(light_desc).dcvColor).r = 0.0f;
-    U2(U(light_desc).dcvColor).g = 0.0f;
-    U3(U(light_desc).dcvColor).b = 1.0f;
-    U4(U(light_desc).dcvColor).a = 1.0f;
-    light_desc.dvDirection.z = 1.0f;
+    U1(light_desc.dcvColor).r = 0.0f;
+    U2(light_desc.dcvColor).g = 0.0f;
+    U3(light_desc.dcvColor).b = 1.0f;
+    U4(light_desc.dcvColor).a = 1.0f;
+    U3(light_desc.dvDirection).z = 1.0f;
     hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)&light_desc);
     ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
     hr = IDirect3DViewport2_AddLight(viewport, light);
