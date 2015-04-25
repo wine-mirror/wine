@@ -2656,7 +2656,7 @@ static void test_BreakawayOk(HANDLE job)
     ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 }
 
-void test_StartupNoConsole(void)
+static void test_StartupNoConsole(void)
 {
 #ifndef _WIN64
     char                buffer[MAX_PATH];
