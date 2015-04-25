@@ -76,10 +76,10 @@ static inline StorageBaseImpl *impl_from_IDirectWriterLock( IDirectWriterLock *i
 }
 
 /****************************************************************************
- * Storage32InternalImpl definitions.
+ * StorageInternalImpl definitions.
  *
- * Definition of the implementation structure for the IStorage32 interface.
- * This one implements the IStorage32 interface for storage that are
+ * Definition of the implementation structure for the IStorage interface.
+ * This one implements the IStorage interface for storage that are
  * inside another storage.
  */
 struct StorageInternalImpl
@@ -96,9 +96,9 @@ struct StorageInternalImpl
 typedef struct StorageInternalImpl StorageInternalImpl;
 
 static const IStorageVtbl TransactedSnapshotImpl_Vtbl;
-static const IStorageVtbl Storage32InternalImpl_Vtbl;
+static const IStorageVtbl StorageInternalImpl_Vtbl;
 
-/* Method definitions for the Storage32InternalImpl class. */
+/* Method definitions for the StorageInternalImpl class. */
 static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* parentStorage,
                                                           DWORD openFlags, DirRef storageDirEntry);
 static HRESULT StorageImpl_Refresh(StorageImpl *This, BOOL new_object, BOOL create);
@@ -358,7 +358,7 @@ static ULONGLONG StorageImpl_GetBigBlockOffset(StorageImpl* This, ULONG index)
 }
 
 /************************************************************************
-** Storage32BaseImpl implementation
+** StorageImpl implementation
 */
 static HRESULT StorageImpl_ReadAt(StorageImpl* This,
   ULARGE_INTEGER offset,
@@ -379,9 +379,9 @@ static HRESULT StorageImpl_WriteAt(StorageImpl* This,
 }
 
 /************************************************************************
- * Storage32BaseImpl_QueryInterface (IUnknown)
+ * StorageBaseImpl_QueryInterface (IUnknown)
  *
- * This method implements the common QueryInterface for all IStorage32
+ * This method implements the common QueryInterface for all IStorage
  * implementations contained in this file.
  *
  * See Windows documentation for more details on IUnknown methods.
@@ -421,9 +421,9 @@ static HRESULT WINAPI StorageBaseImpl_QueryInterface(
 }
 
 /************************************************************************
- * Storage32BaseImpl_AddRef (IUnknown)
+ * StorageBaseImpl_AddRef (IUnknown)
  *
- * This method implements the common AddRef for all IStorage32
+ * This method implements the common AddRef for all IStorage
  * implementations contained in this file.
  *
  * See Windows documentation for more details on IUnknown methods.
@@ -440,9 +440,9 @@ static ULONG WINAPI StorageBaseImpl_AddRef(
 }
 
 /************************************************************************
- * Storage32BaseImpl_Release (IUnknown)
+ * StorageBaseImpl_Release (IUnknown)
  *
- * This method implements the common Release for all IStorage32
+ * This method implements the common Release for all IStorage
  * implementations contained in this file.
  *
  * See Windows documentation for more details on IUnknown methods.
@@ -470,7 +470,7 @@ static ULONG WINAPI StorageBaseImpl_Release(
 }
 
 /************************************************************************
- * Storage32BaseImpl_OpenStream (IStorage)
+ * StorageBaseImpl_OpenStream (IStorage)
  *
  * This method will open the specified stream object from the current storage.
  *
@@ -584,7 +584,7 @@ end:
 }
 
 /************************************************************************
- * Storage32BaseImpl_OpenStorage (IStorage)
+ * StorageBaseImpl_OpenStorage (IStorage)
  *
  * This method will open a new storage object from the current storage.
  *
@@ -721,7 +721,7 @@ end:
 }
 
 /************************************************************************
- * Storage32BaseImpl_EnumElements (IStorage)
+ * StorageBaseImpl_EnumElements (IStorage)
  *
  * This method will create an enumerator object that can be used to
  * retrieve information about all the elements in the storage object.
@@ -761,7 +761,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
 }
 
 /************************************************************************
- * Storage32BaseImpl_Stat (IStorage)
+ * StorageBaseImpl_Stat (IStorage)
  *
  * This method will retrieve information about this storage object.
  *
@@ -818,7 +818,7 @@ end:
 }
 
 /************************************************************************
- * Storage32BaseImpl_RenameElement (IStorage)
+ * StorageBaseImpl_RenameElement (IStorage)
  *
  * This method will rename the specified element.
  *
@@ -899,7 +899,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
 }
 
 /************************************************************************
- * Storage32BaseImpl_CreateStream (IStorage)
+ * StorageBaseImpl_CreateStream (IStorage)
  *
  * This method will create a stream object within this storage
  *
@@ -1053,7 +1053,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
 }
 
 /************************************************************************
- * Storage32BaseImpl_SetClass (IStorage)
+ * StorageBaseImpl_SetClass (IStorage)
  *
  * This method will write the specified CLSID in the directory entry of this
  * storage.
@@ -1092,11 +1092,11 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
 }
 
 /************************************************************************
-** Storage32Impl implementation
+** StorageBaseImpl implementation
 */
 
 /************************************************************************
- * Storage32BaseImpl_CreateStorage (IStorage)
+ * StorageBaseImpl_CreateStorage (IStorage)
  *
  * This method will create the storage object within the provided storage.
  *
@@ -1832,7 +1832,7 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 
         pstgDestAncestor = &snapshot->transactedParent->IStorage_iface;
       }
-      else if (pstgDestAncestor->lpVtbl == &Storage32InternalImpl_Vtbl)
+      else if (pstgDestAncestor->lpVtbl == &StorageInternalImpl_Vtbl)
       {
         StorageInternalImpl *internal = (StorageInternalImpl*) pstgDestAncestor;
 
@@ -2825,9 +2825,9 @@ static const IDirectWriterLockVtbl DirectWriterLockVtbl =
 };
 
 /*
- * Virtual function table for the IStorage32Impl class.
+ * Virtual function table for the IStorageImpl class.
  */
-static const IStorageVtbl Storage32Impl_Vtbl =
+static const IStorageVtbl StorageImpl_Vtbl =
 {
     StorageBaseImpl_QueryInterface,
     StorageBaseImpl_AddRef,
@@ -3288,7 +3288,7 @@ static HRESULT StorageImpl_Construct(
 
   list_init(&This->base.storageHead);
 
-  This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
+  This->base.IStorage_iface.lpVtbl = &StorageImpl_Vtbl;
   This->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
   This->base.IDirectWriterLock_iface.lpVtbl = &DirectWriterLockVtbl;
   This->base.baseVtbl = &StorageImpl_BaseVtbl;
@@ -3408,7 +3408,7 @@ static HRESULT StorageImpl_Flush(StorageBaseImpl *storage)
 }
 
 /******************************************************************************
- *      Storage32Impl_GetNextFreeBigBlock
+ *      StorageImpl_GetNextFreeBigBlock
  *
  * Returns the index of the next free big block.
  * If the big block depot is filled, this method will enlarge it.
@@ -3721,7 +3721,7 @@ static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
 }
 
 /******************************************************************************
- *      Storage32Impl_FreeBigBlock
+ *      StorageImpl_FreeBigBlock
  *
  * This method will flag the specified block as free in the big block depot.
  */
@@ -3736,7 +3736,7 @@ static void StorageImpl_FreeBigBlock(
 }
 
 /************************************************************************
- * Storage32Impl_GetNextBlockInChain
+ * StorageImpl_GetNextBlockInChain
  *
  * This method will retrieve the block index of the next big block in
  * in the chain.
@@ -3846,7 +3846,7 @@ static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIn
 }
 
 /******************************************************************************
- *      Storage32Impl_SetNextBlockInChain
+ *      StorageImpl_SetNextBlockInChain
  *
  * This method will write the index of the specified block's next block
  * in the big block depot.
@@ -3854,9 +3854,9 @@ static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIn
  * For example: to create the chain 3 -> 1 -> 7 -> End of Chain
  *              do the following
  *
- * Storage32Impl_SetNextBlockInChain(This, 3, 1);
- * Storage32Impl_SetNextBlockInChain(This, 1, 7);
- * Storage32Impl_SetNextBlockInChain(This, 7, BLOCK_END_OF_CHAIN);
+ * StorageImpl_SetNextBlockInChain(This, 3, 1);
+ * StorageImpl_SetNextBlockInChain(This, 1, 7);
+ * StorageImpl_SetNextBlockInChain(This, 7, BLOCK_END_OF_CHAIN);
  *
  */
 static void StorageImpl_SetNextBlockInChain(
@@ -3903,7 +3903,7 @@ static void StorageImpl_SetNextBlockInChain(
 }
 
 /******************************************************************************
- *      Storage32Impl_LoadFileHeader
+ *      StorageImpl_LoadFileHeader
  *
  * This method will read in the file header
  */
@@ -4024,7 +4024,7 @@ static HRESULT StorageImpl_LoadFileHeader(
 }
 
 /******************************************************************************
- *      Storage32Impl_SaveFileHeader
+ *      StorageImpl_SaveFileHeader
  *
  * This method will save to the file the header
  */
@@ -4303,7 +4303,7 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 }
 
 /******************************************************************************
- *      Storage32Impl_ReadDirEntry
+ *      StorageImpl_ReadDirEntry
  *
  * This method will read the specified directory entry.
  */
@@ -6255,7 +6255,7 @@ static HRESULT StorageInternalImpl_UnlockTransaction(StorageBaseImpl *base, BOOL
 
 /******************************************************************************
 **
-** Storage32InternalImpl_Commit
+** StorageInternalImpl_Commit
 **
 */
 static HRESULT WINAPI StorageInternalImpl_Commit(
@@ -6269,7 +6269,7 @@ static HRESULT WINAPI StorageInternalImpl_Commit(
 
 /******************************************************************************
 **
-** Storage32InternalImpl_Revert
+** StorageInternalImpl_Revert
 **
 */
 static HRESULT WINAPI StorageInternalImpl_Revert(
@@ -6566,9 +6566,9 @@ static IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
 }
 
 /*
- * Virtual function table for the Storage32InternalImpl class.
+ * Virtual function table for the StorageInternalImpl class.
  */
-static const IStorageVtbl Storage32InternalImpl_Vtbl =
+static const IStorageVtbl StorageInternalImpl_Vtbl =
 {
     StorageBaseImpl_QueryInterface,
     StorageBaseImpl_AddRef,
@@ -6611,7 +6611,7 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 };
 
 /******************************************************************************
-** Storage32InternalImpl implementation
+** StorageInternalImpl implementation
 */
 
 static StorageInternalImpl* StorageInternalImpl_Construct(
@@ -6632,7 +6632,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Initialize the virtual function table.
      */
-    newStorage->base.IStorage_iface.lpVtbl = &Storage32InternalImpl_Vtbl;
+    newStorage->base.IStorage_iface.lpVtbl = &StorageInternalImpl_Vtbl;
     newStorage->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
     newStorage->base.baseVtbl = &StorageInternalImpl_BaseVtbl;
     newStorage->base.openFlags = (openFlags & ~STGM_CREATE);
@@ -8309,7 +8309,7 @@ static HRESULT create_storagefile(
   }
 
   /*
-   * Allocate and initialize the new IStorage32object.
+   * Allocate and initialize the new IStorage object.
    */
   hr = Storage_Construct(
          hFile,
@@ -8630,7 +8630,7 @@ HRESULT WINAPI StgOpenStorage(
   }
 
   /*
-   * Allocate and initialize the new IStorage32object.
+   * Allocate and initialize the new IStorage object.
    */
   hr = Storage_Construct(
          hFile,
