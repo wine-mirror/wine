@@ -213,4 +213,32 @@ HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER);
 HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER);
 HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER, RECT *prc);
 
+/* double-buffered animation functions */
+
+typedef HANDLE HANIMATIONBUFFER;
+
+typedef enum _BP_ANIMATIONSTYLE
+{
+    BPAS_NONE,
+    BPAS_LINEAR,
+    BPAS_CUBIC,
+    BPAS_SINE
+} BP_ANIMATIONSTYLE;
+
+typedef struct _BP_ANIMATIONPARAMS
+{
+    DWORD cbSize;
+    DWORD dwFlags;
+    BP_ANIMATIONSTYLE style;
+    DWORD dwDuration;
+} BP_ANIMATIONPARAMS, *PBP_ANIMATIONPARAMS;
+
+HANIMATIONBUFFER WINAPI BeginBufferedAnimation(HWND, HDC, const RECT *,
+                                               BP_BUFFERFORMAT, BP_PAINTPARAMS *,
+                                               BP_ANIMATIONPARAMS *, HDC *, HDC *);
+
+BOOL WINAPI BufferedPaintRenderAnimation(HWND, HDC);
+HRESULT WINAPI BufferedPaintStopAllAnimations(HWND);
+HRESULT WINAPI EndBufferedAnimation(HANIMATIONBUFFER, BOOL);
+
 #endif
