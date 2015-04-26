@@ -470,27 +470,7 @@ static HRESULT WINAPI d3drm_frame2_QueryInterface(IDirect3DRMFrame2 *iface, REFI
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame2)
-            || IsEqualGUID(riid, &IID_IDirect3DRMFrame)
-            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
-            || IsEqualGUID(riid, &IID_IDirect3DRMVisual)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *out = &frame->IDirect3DRMFrame2_iface;
-    }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
-    {
-        *out = &frame->IDirect3DRMFrame3_iface;
-    }
-    else
-    {
-        *out = NULL;
-        WARN("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(riid));
-        return CLASS_E_CLASSNOTAVAILABLE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
+    return IDirect3DRMFrame3_QueryInterface(&frame->IDirect3DRMFrame3_iface, riid, out);
 }
 
 static ULONG WINAPI d3drm_frame2_AddRef(IDirect3DRMFrame2 *iface)
@@ -1233,7 +1213,27 @@ static HRESULT WINAPI d3drm_frame3_QueryInterface(IDirect3DRMFrame3 *iface, REFI
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    return d3drm_frame2_QueryInterface(&frame->IDirect3DRMFrame2_iface, riid, out);
+    if (IsEqualGUID(riid, &IID_IDirect3DRMFrame2)
+            || IsEqualGUID(riid, &IID_IDirect3DRMFrame)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
+            || IsEqualGUID(riid, &IID_IDirect3DRMVisual)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &frame->IDirect3DRMFrame2_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMFrame3))
+    {
+        *out = &frame->IDirect3DRMFrame3_iface;
+    }
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(riid));
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI d3drm_frame3_AddRef(IDirect3DRMFrame3 *iface)
