@@ -476,11 +476,10 @@ static HRESULT WINAPI d3drm_frame2_QueryInterface(IDirect3DRMFrame2 *iface, REFI
 static ULONG WINAPI d3drm_frame2_AddRef(IDirect3DRMFrame2 *iface)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
-    ULONG refcount = InterlockedIncrement(&frame->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("iface %p.\n", iface);
 
-    return refcount;
+    return IDirect3DRMFrame3_AddRef(&frame->IDirect3DRMFrame3_iface);
 }
 
 static ULONG WINAPI d3drm_frame2_Release(IDirect3DRMFrame2 *iface)
@@ -1239,10 +1238,11 @@ static HRESULT WINAPI d3drm_frame3_QueryInterface(IDirect3DRMFrame3 *iface, REFI
 static ULONG WINAPI d3drm_frame3_AddRef(IDirect3DRMFrame3 *iface)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    ULONG refcount = InterlockedIncrement(&frame->ref);
 
-    TRACE("iface %p.\n", iface);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    return d3drm_frame2_AddRef(&frame->IDirect3DRMFrame2_iface);
+    return refcount;
 }
 
 static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
