@@ -81,6 +81,7 @@ static void test_COM_audiopath(void)
 
     hr = IDirectMusicAudioPath_QueryInterface(dmap, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    ok(unk == (IUnknown*)dmap, "got %p, %p\n", unk, dmap);
     refcount = IUnknown_AddRef(unk);
     ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
     refcount = IUnknown_Release(unk);
