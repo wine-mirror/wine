@@ -4430,12 +4430,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     switch (resource_type)
     {
         case WINED3D_RTYPE_CUBE_TEXTURE:
-            if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-            {
-                TRACE("[FAILED] - No cube texture support.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
             format_flags |= WINED3DFMT_FLAG_TEXTURE;
             allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
                     | WINED3DUSAGE_DYNAMIC

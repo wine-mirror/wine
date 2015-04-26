@@ -979,12 +979,6 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (!gl_info->supported[ARB_TEXTURE_CUBE_MAP] && desc->pool != WINED3D_POOL_SCRATCH)
-    {
-        WARN("(%p) : Tried to create not supported cube texture.\n", texture);
-        return WINED3DERR_INVALIDCALL;
-    }
-
     /* Calculate levels for mip mapping */
     if (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP)
     {
