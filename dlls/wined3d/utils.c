@@ -2293,6 +2293,22 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
                 || !adapter->fragment_pipe->color_fixup_supported(format->color_fixup))
             format_clear_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
     }
+
+    /* GL_EXT_texture_compression_s3tc does not support 3D textures. Some Windows drivers
+     * for dx9 GPUs support it, some do not, so not supporting DXTn volumes is OK for d3d9.
+     *
+     * Note that GL_NV_texture_compression_vtc adds this functionality to OpenGL, but the
+     * block layout is not compatible with the one used by d3d. See volume_dxt5_test. */
+    idx = getFmtIdx(WINED3DFMT_DXT1);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = getFmtIdx(WINED3DFMT_DXT2);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = getFmtIdx(WINED3DFMT_DXT3);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = getFmtIdx(WINED3DFMT_DXT4);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = getFmtIdx(WINED3DFMT_DXT5);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
 }
 
 static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)

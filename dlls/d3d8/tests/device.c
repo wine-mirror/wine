@@ -5953,7 +5953,7 @@ static void test_volume_blocks(void)
     D3DLOCKED_BOX locked_box;
     BYTE *base;
     INT expected_row_pitch, expected_slice_pitch;
-    BOOL support, support_2d;
+    BOOL support;
     BOOL pow2;
     unsigned int offset, expected_offset;
 
@@ -5977,9 +5977,6 @@ static void test_volume_blocks(void)
         hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 0, D3DRTYPE_VOLUMETEXTURE, formats[i].fmt);
         support = SUCCEEDED(hr);
-        hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-                0, D3DRTYPE_TEXTURE, formats[i].fmt);
-        support_2d = SUCCEEDED(hr);
 
         /* Test creation restrictions */
         for (w = 1; w <= 8; w++)
@@ -6000,7 +5997,6 @@ static void test_volume_blocks(void)
                     for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
                     {
                         BOOL may_succeed = FALSE;
-                        BOOL todo = FALSE;
 
                         if (create_tests[j].need_runtime_support && !formats[i].core_fmt && !support)
                             expect_hr = D3DERR_INVALIDCALL;
@@ -6009,10 +6005,7 @@ static void test_volume_blocks(void)
                         else if (pow2 && !size_is_pow2 && create_tests[j].need_driver_support)
                             expect_hr = D3DERR_INVALIDCALL;
                         else if (create_tests[j].need_driver_support && !support)
-                        {
-                            todo = support_2d;
                             expect_hr = D3DERR_INVALIDCALL;
-                        }
                         else
                             expect_hr = D3D_OK;
 
@@ -6028,18 +6021,9 @@ static void test_volume_blocks(void)
                         if (!formats[i].core_fmt && !support && FAILED(expect_hr))
                             may_succeed = TRUE;
 
-                        if (todo)
-                        {
-                            todo_wine ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
-                                    "Got unexpected hr %#x for format %s, pool %s, size %ux%ux%u.\n",
-                                    hr, formats[i].name, create_tests[j].name, w, h, d);
-                        }
-                        else
-                        {
-                            ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
-                                    "Got unexpected hr %#x for format %s, pool %s, size %ux%ux%u.\n",
-                                    hr, formats[i].name, create_tests[j].name, w, h, d);
-                        }
+                        ok(hr == expect_hr || ((SUCCEEDED(hr) && may_succeed)),
+                                "Got unexpected hr %#x for format %s, pool %s, size %ux%ux%u.\n",
+                                hr, formats[i].name, create_tests[j].name, w, h, d);
 
                         if (FAILED(hr))
                             ok(texture == NULL, "Got texture ptr %p, expected NULL.\n", texture);
