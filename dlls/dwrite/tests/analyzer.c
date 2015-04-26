@@ -1449,6 +1449,167 @@ static void test_GetGlyphPlacements(void)
     DELETE_FONTFILE(path);
 }
 
+struct spacing_test {
+    FLOAT leading;
+    FLOAT trailing;
+    FLOAT min_advance;
+    FLOAT advances[3];
+    FLOAT offsets[3];
+    FLOAT modified_advances[3];
+    FLOAT modified_offsets[3];
+    BOOL  single_cluster;
+    BOOL  is_ZWS[3];
+};
+
+static const struct spacing_test spacing_tests[] = {
+    {   0.0,   0.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0,  3.0 } }, /* 0 */
+    {   0.0,   0.0,  2.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0,  3.0 } },
+    {   1.0,   0.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 11.0, 12.0 }, {  3.0,  4.0 } },
+    {   1.0,   1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 12.0, 13.0 }, {  3.0,  4.0 } },
+    {   1.0,  -1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  3.0,  4.0 } },
+    {   0.0, -10.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  0.0,  1.0 }, {  2.0,  3.0 } }, /* 5 */
+    {  -5.0,  -4.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  5.0,  5.0 }, { -1.0, -0.5 } },
+    {  -5.0,  -5.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  5.0,  5.0 }, { -0.5,  0.0 } },
+    {   2.0,   0.0,  5.0, {  1.0,  2.0 }, { 2.0, 3.0 }, {  7.0,  7.0 }, {  6.0,  6.5 } },
+    {   2.0,   1.0,  5.0, {  1.0,  2.0 }, { 2.0, 3.0 }, {  8.0,  8.0 }, {  6.0,  6.5 } },
+    {   2.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  7.0,  7.0 }, {  4.0,  5.0 } }, /* 10 */
+    {   1.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  6.0,  6.0 }, {  3.0,  4.0 } },
+    { -10.0,   1.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  6.0,  6.0 }, { -3.0, -3.0 } },
+    {   0.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  5.0,  5.0 }, {  2.0,  3.0 } },
+    {   1.0, -10.0, -5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  0.0,  0.0 }, {  2.0,  3.0 } },
+    { -10.0,   1.0,  5.0, {  8.0, 11.0 }, { 2.0, 3.0 }, {  6.0,  6.0 }, { -1.0, -3.0 } }, /* 15 */
+    /* cluster of more than 1 glyph */
+    {   0.0,   0.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0, 3.0 }, TRUE },
+    {   1.0,   0.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.5 }, { 11.0, 11.0 }, {  3.0, 3.5 }, TRUE },
+    {   1.0,   1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 11.0, 12.0 }, {  3.0, 3.0 }, TRUE },
+    {   1.0,  -1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 11.0, 10.0 }, {  3.0, 3.0 }, TRUE },
+    {   0.0, -10.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0,  1.0 }, {  2.0, 3.0 }, TRUE }, /* 20 */
+    {   0.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0,  1.0 }, {  2.0, 3.0 }, TRUE },
+    {   1.0, -10.0, -5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  0.0,  0.0 }, {  2.0, 3.0 }, TRUE },
+    {  -5.0, -10.0,  4.0, { 10.0, 11.0, 12.0 }, { 2.0, 3.0, 4.0 }, { 5.0, 11.0, 2.0 }, { -3.0, 3.0, 4.0 }, TRUE },
+    { -10.0, -10.0,  4.0, { 10.0, 11.0, 12.0 }, { 2.0, 3.0, 4.0 }, { 0.0, 11.0, 2.0 }, { -8.0, 3.0, 4.0 }, TRUE },
+    { -10.0, -10.0,  5.0, { 10.0,  1.0, 12.0 }, { 2.0, 3.0, 4.0 }, { 1.0,  1.0, 3.0 }, { -7.0, 3.0, 4.0 }, TRUE }, /* 25 */
+    { -10.0,   1.0,  5.0, { 10.0,  1.0,  2.0 }, { 2.0, 3.0, 4.0 }, { 2.0,  1.0, 3.0 }, { -6.0, 3.0, 4.0 }, TRUE },
+    {   1.0, -10.0,  5.0, {  2.0,  1.0, 10.0 }, { 2.0, 3.0, 4.0 }, { 3.0,  1.0, 2.0 }, {  3.0, 3.0, 4.0 }, TRUE },
+    { -10.0, -10.0,  5.0, { 11.0,  1.0, 11.0 }, { 2.0, 3.0, 4.0 }, { 2.0,  1.0, 2.0 }, { -7.0, 3.0, 4.0 }, TRUE },
+    /* isZeroWidthSpace set */
+    {   1.0,   0.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 12.0 }, {  2.0,  4.0 }, FALSE, {  TRUE, FALSE } },
+    {   1.0,   1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 13.0 }, {  2.0,  4.0 }, FALSE, {  TRUE, FALSE } }, /* 30 */
+    {   1.0,  -1.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  3.0,  3.0 }, FALSE, { FALSE, TRUE  } },
+    {   0.0, -10.0,  0.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0,  1.0 }, {  2.0,  3.0 }, FALSE, {  TRUE, FALSE } },
+    {  -5.0,  -4.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  5.0, 11.0 }, { -1.0,  3.0 }, FALSE, { FALSE, TRUE } },
+    {  -5.0,  -5.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0,  3.0 }, FALSE, { TRUE, TRUE } },
+    {   2.0,   0.0,  5.0, {  1.0,  2.0 }, { 2.0, 3.0 }, {  7.0,  2.0 }, {  6.0,  3.0 }, FALSE, { FALSE, TRUE } }, /* 35 */
+    {   2.0,   1.0,  5.0, {  1.0,  2.0 }, { 2.0, 3.0 }, {  8.0,  2.0 }, {  6.0,  3.0 }, FALSE, { FALSE, TRUE } },
+    {   2.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0,  3.0 }, FALSE, { TRUE, TRUE } },
+    {   1.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  6.0, 11.0 }, {  3.0,  3.0 }, FALSE, { FALSE, TRUE } },
+    { -10.0,   1.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, { 10.0, 11.0 }, {  2.0,  3.0 }, FALSE, { TRUE, TRUE } },
+    {   0.0, -10.0,  5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  5.0, 11.0 }, {  2.0,  3.0 }, FALSE, { FALSE, TRUE } }, /* 40 */
+    {   1.0, -10.0, -5.0, { 10.0, 11.0 }, { 2.0, 3.0 }, {  0.0,  0.0 }, {  2.0,  3.0 }, FALSE, { TRUE, FALSE } },
+    { -10.0,   1.0,  5.0, {  8.0, 11.0 }, { 2.0, 3.0 }, {  6.0, 11.0 }, { -1.0,  3.0 }, FALSE, { FALSE, TRUE } },
+};
+
+static void test_ApplyCharacterSpacing(void)
+{
+    DWRITE_SHAPING_GLYPH_PROPERTIES props[3];
+    IDWriteTextAnalyzer1 *analyzer1;
+    IDWriteTextAnalyzer *analyzer;
+    UINT16 clustermap[2];
+    HRESULT hr;
+    int i;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
+    IDWriteTextAnalyzer_Release(analyzer);
+    if (hr != S_OK) {
+        win_skip("ApplyCharacterSpacing() is not supported.\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(spacing_tests)/sizeof(spacing_tests[0]); i++) {
+        const struct spacing_test *ptr = spacing_tests + i;
+        DWRITE_GLYPH_OFFSET offsets[3];
+        UINT32 glyph_count;
+        FLOAT advances[3];
+
+        offsets[0].advanceOffset = ptr->offsets[0];
+        offsets[1].advanceOffset = ptr->offsets[1];
+        offsets[2].advanceOffset = ptr->offsets[2];
+        /* Ascender offsets are never thouched as spacing applies in reading direction only,
+           we'll only test them to see if they are not changed */
+        offsets[0].ascenderOffset = 23.0;
+        offsets[1].ascenderOffset = 32.0;
+        offsets[2].ascenderOffset = 31.0;
+
+        glyph_count = ptr->advances[2] > 0.0 ? 3 : 2;
+        if (ptr->single_cluster) {
+            clustermap[0] = 0;
+            clustermap[1] = 0;
+        }
+        else {
+            /* trivial case with one glyph per cluster */
+            clustermap[0] = 0;
+            clustermap[1] = 1;
+        }
+
+        advances[0] = advances[1] = 123.45;
+        memset(props, 0, sizeof(props));
+        props[0].isZeroWidthSpace = ptr->is_ZWS[0];
+        props[1].isZeroWidthSpace = ptr->is_ZWS[1];
+        props[2].isZeroWidthSpace = ptr->is_ZWS[2];
+
+        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer1,
+            ptr->leading,
+            ptr->trailing,
+            ptr->min_advance,
+            sizeof(clustermap)/sizeof(clustermap[0]),
+            glyph_count,
+            clustermap,
+            ptr->advances,
+            offsets,
+            props,
+            advances,
+            offsets);
+        /* invalid argument cases */
+        if (ptr->min_advance < 0.0)
+            ok(hr == E_INVALIDARG, "%d: got 0x%08x\n", i, hr);
+        else
+            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        if (hr == S_OK) {
+            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
+            if (glyph_count > 2)
+                ok(ptr->modified_advances[2] == advances[2], "%d: got advance[2] %.2f, expected %.2f\n", i, advances[2], ptr->modified_advances[2]);
+
+            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+                offsets[0].advanceOffset, ptr->modified_offsets[0]);
+            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+                offsets[1].advanceOffset, ptr->modified_offsets[1]);
+            if (glyph_count > 2)
+                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "%d: got offset[2] %.2f, expected %.2f\n", i,
+                    offsets[2].advanceOffset, ptr->modified_offsets[2]);
+
+            ok(offsets[0].ascenderOffset == 23.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+            ok(offsets[2].ascenderOffset == 31.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[2].ascenderOffset);
+        }
+        else {
+            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
+            ok(ptr->offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+                offsets[0].advanceOffset, ptr->modified_offsets[0]);
+            ok(ptr->offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+                offsets[1].advanceOffset, ptr->modified_offsets[1]);
+            ok(offsets[0].ascenderOffset == 23.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+        }
+    }
+
+    IDWriteTextAnalyzer1_Release(analyzer1);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -1472,6 +1633,7 @@ START_TEST(analyzer)
     test_numbersubstitution();
     test_GetTypographicFeatures();
     test_GetGlyphPlacements();
+    test_ApplyCharacterSpacing();
 
     IDWriteFactory_Release(factory);
 }
