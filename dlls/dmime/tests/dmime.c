@@ -421,8 +421,8 @@ static void test_graph(void)
     hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicGraph),
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicGraph),
             "Expected class CLSID_DirectMusicGraph got %s\n", wine_dbgstr_guid(&class));
 
     /* Unimplemented IPersistStream methods */

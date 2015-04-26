@@ -439,8 +439,9 @@ static ULONG WINAPI PersistStream_Release(IPersistStream *iface)
 static HRESULT WINAPI PersistStream_GetClassID(IPersistStream *iface, CLSID *clsid)
 {
     IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    FIXME("(%p) %p: stub\n", This, clsid);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n", This, clsid);
+    *clsid = CLSID_DirectMusicGraph;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
