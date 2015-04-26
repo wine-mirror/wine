@@ -29,7 +29,7 @@ struct IDirectMusicGraphImpl {
   LONG ref;
 
   /* IDirectMusicGraphImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
+  DMUS_OBJECTDESC   desc;
   WORD              num_tools;
   struct list       Tools;
 };
@@ -218,8 +218,7 @@ static HRESULT WINAPI DirectMusicObject_GetDescriptor(IDirectMusicObject *iface,
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
     TRACE("(%p, %p)\n", This, desc);
-    /* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-    memcpy(desc, This->pDesc, This->pDesc->dwSize);
+    *desc = This->desc;
     return S_OK;
 }
 
@@ -231,31 +230,31 @@ static HRESULT WINAPI DirectMusicObject_SetDescriptor(IDirectMusicObject *iface,
 
     /* According to MSDN, we should copy only given values, not whole struct */
     if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
-        This->pDesc->guidObject = pDesc->guidObject;
+        This->desc.guidObject = pDesc->guidObject;
     if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-        This->pDesc->guidClass = pDesc->guidClass;
+        This->desc.guidClass = pDesc->guidClass;
     if (pDesc->dwValidData & DMUS_OBJ_NAME)
-        lstrcpynW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
+        lstrcpynW (This->desc.wszName, pDesc->wszName, DMUS_MAX_NAME);
     if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-        lstrcpynW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
+        lstrcpynW (This->desc.wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
     if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-        lstrcpynW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
+        lstrcpynW (This->desc.wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
     if (pDesc->dwValidData & DMUS_OBJ_VERSION)
-        This->pDesc->vVersion = pDesc->vVersion;
+        This->desc.vVersion = pDesc->vVersion;
     if (pDesc->dwValidData & DMUS_OBJ_DATE)
-        This->pDesc->ftDate = pDesc->ftDate;
+        This->desc.ftDate = pDesc->ftDate;
     if (pDesc->dwValidData & DMUS_OBJ_MEMORY)
     {
-        This->pDesc->llMemLength = pDesc->llMemLength;
-        memcpy(This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
+        This->desc.llMemLength = pDesc->llMemLength;
+        memcpy(This->desc.pbMemData, pDesc->pbMemData, pDesc->llMemLength);
     }
 
     /* according to MSDN, we copy the stream */
     if (pDesc->dwValidData & DMUS_OBJ_STREAM)
-        IStream_Clone(pDesc->pStream, &This->pDesc->pStream);
+        IStream_Clone(pDesc->pStream, &This->desc.pStream);
 
     /* add new flags */
-    This->pDesc->dwValidData |= pDesc->dwValidData;
+    This->desc.dwValidData |= pDesc->dwValidData;
     return S_OK;
 }
 
@@ -479,20 +478,20 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 						switch (chunkID) {
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->pDesc->guidObject, chunkSize, NULL);
+								This->desc.dwValidData |= DMUS_OBJ_OBJECT;
+								IStream_Read (pStm, &This->desc.guidObject, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->pDesc->vVersion, chunkSize, NULL);
+								This->desc.dwValidData |= DMUS_OBJ_VERSION;
+								IStream_Read (pStm, &This->desc.vVersion, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->pDesc->wszCategory, chunkSize, NULL);
+								This->desc.dwValidData |= DMUS_OBJ_CATEGORY;
+								IStream_Read (pStm, This->desc.wszCategory, chunkSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
@@ -514,8 +513,8 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													This->pDesc->dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->pDesc->wszName, chunkSize, NULL);
+													This->desc.dwValidData |= DMUS_OBJ_NAME;
+													IStream_Read (pStm, This->desc.wszName, chunkSize, NULL);
 													break;
 												}
 												case mmioFOURCC('I','A','R','T'):
@@ -639,10 +638,9 @@ HRESULT WINAPI create_dmgraph(REFIID riid, void **ret_iface)
     obj->IDirectMusicGraph_iface.lpVtbl = &DirectMusicGraphVtbl;
     obj->IDirectMusicObject_iface.lpVtbl = &DirectMusicObjectVtbl;
     obj->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
-    obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-    DM_STRUCT_INIT(obj->pDesc);
-    obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-    obj->pDesc->guidClass = CLSID_DirectMusicGraph;
+    DM_STRUCT_INIT(&obj->desc);
+    obj->desc.dwValidData |= DMUS_OBJ_CLASS;
+    obj->desc.guidClass = CLSID_DirectMusicGraph;
     obj->ref = 1;
     list_init(&obj->Tools);
 
