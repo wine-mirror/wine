@@ -22,6 +22,43 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+struct IDirectMusicAudioPathImpl {
+  /* IUnknown fields */
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicAudioPathVtbl *AudioPathVtbl;
+  const IDirectMusicObjectVtbl *ObjectVtbl;
+  const IPersistStreamVtbl *PersistStreamVtbl;
+  LONG           ref;
+
+  /* IDirectMusicAudioPathImpl fields */
+  LPDMUS_OBJECTDESC pDesc;
+
+  IDirectMusicPerformance8* pPerf;
+  IDirectMusicGraph*        pToolGraph;
+  IDirectSoundBuffer*       pDSBuffer;
+  IDirectSoundBuffer*       pPrimary;
+
+  BOOL fActive;
+};
+
+void set_audiopath_perf_pointer(IDirectMusicAudioPath *iface, IDirectMusicPerformance8 *performance)
+{
+    ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+    This->pPerf = performance;
+}
+
+void set_audiopath_dsound_buffer(IDirectMusicAudioPath *iface, IDirectSoundBuffer *buffer)
+{
+    ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+    This->pDSBuffer = buffer;
+}
+
+void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath *iface, IDirectSoundBuffer *buffer)
+{
+    ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+    This->pPrimary = buffer;
+}
+
 /*****************************************************************************
  * IDirectMusicAudioPathImpl implementation
  */
@@ -72,6 +109,7 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface)
     if (This->pDSBuffer) {
       IDirectSoundBuffer8_Release(This->pDSBuffer);
     }
+    This->pPerf = NULL;
     HeapFree(GetProcessHeap(), 0, This);
   }
 

@@ -987,7 +987,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath(IDirectMusicP
         IUnknown *pSourceConfig, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
 {
         IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
-	IDirectMusicAudioPathImpl *default_path;
 	IDirectMusicAudioPath *pPath;
 
 	FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ppNewPath);
@@ -997,8 +996,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath(IDirectMusicP
 	}
 
         create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
-	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
-        default_path->pPerf = &This->IDirectMusicPerformance8_iface;
+        set_audiopath_perf_pointer(pPath, iface);
 
 	/** TODO */
 	
@@ -1011,11 +1009,10 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
         DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
 {
         IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
-	IDirectMusicAudioPathImpl *default_path;
 	IDirectMusicAudioPath *pPath;
 	DSBUFFERDESC desc;
 	WAVEFORMATEX format;
-	LPDIRECTSOUNDBUFFER buffer;
+	IDirectSoundBuffer *buffer, *primary_buffer;
 	HRESULT hr = S_OK;
 
 	FIXME("(%p)->(%d, %d, %d, %p): semi-stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
@@ -1024,9 +1021,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	  return E_POINTER;
 	}
 
-        create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
-	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
-        default_path->pPerf = &This->IDirectMusicPerformance8_iface;
+        *ppNewPath = NULL;
 
 	/* Secondary buffer description */
 	memset(&format, 0, sizeof(format));
@@ -1064,33 +1059,29 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 		format.nAvgBytesPerSec *=2;
 		break;
 	default:
-	        HeapFree(GetProcessHeap(), 0, default_path); 
-	        *ppNewPath = NULL;
 	        return E_INVALIDARG;
 	}
 
 	/* FIXME: Should we create one secondary buffer for each PChannel? */
 	hr = IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
-	if (FAILED(hr)) {
-	        HeapFree(GetProcessHeap(), 0, default_path); 
-	        *ppNewPath = NULL;
+	if (FAILED(hr))
 	        return DSERR_BUFFERLOST;
-	}
-	default_path->pDSBuffer = buffer;
 
 	/* Update description for creating primary buffer */
 	desc.dwFlags |= DSBCAPS_PRIMARYBUFFER;
 	desc.dwBufferBytes = 0;
 	desc.lpwfxFormat = NULL;
 
-	hr = IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	hr = IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &primary_buffer, NULL);
 	if (FAILED(hr)) {
-                IDirectSoundBuffer_Release(default_path->pDSBuffer);
-	        HeapFree(GetProcessHeap(), 0, default_path); 
-	        *ppNewPath = NULL;
+                IDirectSoundBuffer_Release(buffer);
 	        return DSERR_BUFFERLOST;
 	}
-	default_path->pPrimary = buffer;
+
+	create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
+	set_audiopath_perf_pointer(pPath, iface);
+	set_audiopath_dsound_buffer(pPath, buffer);
+	set_audiopath_primary_dsound_buffer(pPath, buffer);
 
 	*ppNewPath = pPath;
 	
@@ -1105,15 +1096,15 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_SetDefaultAudioPath(IDirectMu
         IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
 	FIXME("(%p, %p): semi-stub\n", This, pAudioPath);
-	if (NULL != This->pDefaultPath) {
+
+	if (This->pDefaultPath) {
 		IDirectMusicAudioPath_Release(This->pDefaultPath);
-		((IDirectMusicAudioPathImpl*) This->pDefaultPath)->pPerf = NULL;
 		This->pDefaultPath = NULL;
 	}
 	This->pDefaultPath = pAudioPath;
-	if (NULL != This->pDefaultPath) {
+	if (This->pDefaultPath) {
 		IDirectMusicAudioPath_AddRef(This->pDefaultPath);
-		((IDirectMusicAudioPathImpl*)This->pDefaultPath)->pPerf = &This->IDirectMusicPerformance8_iface;
+		set_audiopath_perf_pointer(This->pDefaultPath, iface);
 	}
 
 	return S_OK;

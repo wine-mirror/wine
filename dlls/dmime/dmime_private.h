@@ -78,6 +78,9 @@ extern HRESULT WINAPI create_dmtempotrack(REFIID riid, void **ret_iface) DECLSPE
 extern HRESULT WINAPI create_dmtimesigtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmwavetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
+extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerformance8*) DECLSPEC_HIDDEN;
+extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*) DECLSPEC_HIDDEN;
+extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Auxiliary definitions
@@ -119,28 +122,6 @@ typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
 	DWORD group; /* ... in this group ... */
 	IDirectMusicPort *port; /* ... at this port */
 } DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
-
-/*****************************************************************************
- * IDirectMusicAudioPathImpl implementation structure
- */
-struct IDirectMusicAudioPathImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicAudioPathVtbl *AudioPathVtbl;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicAudioPathImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
-	
-  IDirectMusicPerformance8* pPerf;
-  IDirectMusicGraph*        pToolGraph;
-  IDirectSoundBuffer*       pDSBuffer;
-  IDirectSoundBuffer*       pPrimary;
-
-  BOOL fActive;
-};
 
 /*****************************************************************************
  * IDirectMusicLyricsTrack implementation structure
