@@ -1076,6 +1076,9 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     UINT pow2_width, pow2_height;
     unsigned int i;
     HRESULT hr;
+    enum wined3d_gl_resource_type gl_type;
+    unsigned int required_flags = 0, ds_flags = WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL;
+    const struct wined3d_format *format;
 
     /* TODO: It should only be possible to create textures for formats
      * that are reported as supported. */
@@ -1084,6 +1087,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN.\n", texture);
         return WINED3DERR_INVALIDCALL;
     }
+    format = wined3d_get_format(gl_info, desc->format);
 
     /* Non-power2 support. */
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
@@ -1134,6 +1138,23 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         }
     }
 
+    if (desc->usage & WINED3DUSAGE_TEXTURE)
+        required_flags |= WINED3DFMT_FLAG_TEXTURE;
+    if (desc->usage & WINED3DUSAGE_RENDERTARGET)
+        required_flags |= WINED3DFMT_FLAG_RENDERTARGET;
+    /* WINED3DUSAGE_DEPTHSTENCIL needs WINED3DFMT_FLAG_DEPTH or WINED3DFMT_FLAG_STENCIL, not both. */
+
+    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & required_flags) == required_flags
+            && (!(desc->usage & WINED3DUSAGE_DEPTHSTENCIL) || (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & ds_flags))
+            && (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
+            || (desc->width == pow2_width && desc->height == pow2_height)))
+        gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
+    else if ((format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] & required_flags) == required_flags
+            && (!(desc->usage & WINED3DUSAGE_DEPTHSTENCIL) || (format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] & ds_flags)))
+        gl_type = WINED3D_GL_RES_TYPE_TEX_RECT;
+    else
+        gl_type = WINED3D_GL_RES_TYPE_TEX_2D; /* No error, may be SCRATCH pool or emulated conditional np2. */
+
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels, desc,
             surface_flags, WINED3D_GL_RES_TYPE_TEX_2D, device, parent, parent_ops, &texture_resource_ops)))
     {
@@ -1142,18 +1163,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
 
     /* Precalculated scaling for 'faked' non power of two texture coords. */
-    if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
-            && (desc->width != pow2_width || desc->height != pow2_height))
-    {
-        texture->pow2_matrix[0] = 1.0f;
-        texture->pow2_matrix[5] = 1.0f;
-        texture->pow2_matrix[10] = 1.0f;
-        texture->pow2_matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_2D;
-        texture->flags |= WINED3D_TEXTURE_COND_NP2;
-    }
-    else if (gl_info->supported[ARB_TEXTURE_RECTANGLE]
-            && (desc->width != pow2_width || desc->height != pow2_height))
+    if (gl_type == WINED3D_GL_RES_TYPE_TEX_RECT)
     {
         texture->pow2_matrix[0] = (float)desc->width;
         texture->pow2_matrix[5] = (float)desc->height;
@@ -1165,21 +1175,26 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
     else
     {
-        if ((desc->width != pow2_width) || (desc->height != pow2_height))
+        texture->target = GL_TEXTURE_2D;
+        if (desc->width == pow2_width && desc->height == pow2_height)
+        {
+            texture->pow2_matrix[0] = 1.0f;
+            texture->pow2_matrix[5] = 1.0f;
+        }
+        else if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+        {
+            texture->pow2_matrix[0] = 1.0f;
+            texture->pow2_matrix[5] = 1.0f;
+            texture->flags |= WINED3D_TEXTURE_COND_NP2;
+        }
+        else
         {
             texture->pow2_matrix[0] = (((float)desc->width) / ((float)pow2_width));
             texture->pow2_matrix[5] = (((float)desc->height) / ((float)pow2_height));
             texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
         }
-        else
-        {
-            texture->pow2_matrix[0] = 1.0f;
-            texture->pow2_matrix[5] = 1.0f;
-        }
-
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_2D;
     }
     TRACE("xf(%f) yf(%f)\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
 
