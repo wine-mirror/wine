@@ -485,32 +485,10 @@ static ULONG WINAPI d3drm_frame2_AddRef(IDirect3DRMFrame2 *iface)
 static ULONG WINAPI d3drm_frame2_Release(IDirect3DRMFrame2 *iface)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
-    ULONG refcount = InterlockedDecrement(&frame->ref);
-    ULONG i;
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (!refcount)
-    {
-        for (i = 0; i < frame->nb_children; ++i)
-        {
-            IDirect3DRMFrame3_Release(frame->children[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, frame->children);
-        for (i = 0; i < frame->nb_visuals; ++i)
-        {
-            IDirect3DRMVisual_Release(frame->visuals[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, frame->visuals);
-        for (i = 0; i < frame->nb_lights; ++i)
-        {
-            IDirect3DRMLight_Release(frame->lights[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, frame->lights);
-        HeapFree(GetProcessHeap(), 0, frame);
-    }
-
-    return refcount;
+    return IDirect3DRMFrame3_Release(&frame->IDirect3DRMFrame3_iface);
 }
 
 static HRESULT WINAPI d3drm_frame2_Clone(IDirect3DRMFrame2 *iface,
@@ -1248,10 +1226,32 @@ static ULONG WINAPI d3drm_frame3_AddRef(IDirect3DRMFrame3 *iface)
 static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+    ULONG refcount = InterlockedDecrement(&frame->ref);
+    ULONG i;
 
-    TRACE("iface %p.\n", iface);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
-    return d3drm_frame2_Release(&frame->IDirect3DRMFrame2_iface);
+    if (!refcount)
+    {
+        for (i = 0; i < frame->nb_children; ++i)
+        {
+            IDirect3DRMFrame3_Release(frame->children[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->children);
+        for (i = 0; i < frame->nb_visuals; ++i)
+        {
+            IDirect3DRMVisual_Release(frame->visuals[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->visuals);
+        for (i = 0; i < frame->nb_lights; ++i)
+        {
+            IDirect3DRMLight_Release(frame->lights[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, frame->lights);
+        HeapFree(GetProcessHeap(), 0, frame);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI d3drm_frame3_Clone(IDirect3DRMFrame3 *iface,
