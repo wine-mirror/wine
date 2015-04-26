@@ -600,14 +600,14 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *stream, BOOL clear_dirty)
 {
     IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    FIXME("(%p) %p %d\n", This, stream, clear_dirty);
+    TRACE("(%p) %p %d\n", This, stream, clear_dirty);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI PersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *size)
 {
     IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    FIXME("(%p) %p\n", This, size);
+    TRACE("(%p) %p\n", This, size);
     return E_NOTIMPL;
 }
 
