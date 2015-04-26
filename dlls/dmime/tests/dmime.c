@@ -421,9 +421,10 @@ static void test_graph(void)
     hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-    ok(IsEqualGUID(&class, &CLSID_DirectMusicGraph),
-            "Expected class CLSID_DirectMusicGraph got %s\n", wine_dbgstr_guid(&class));
+    ok(hr == S_OK || broken(hr == E_NOTIMPL) /* win2k */, "IPersistStream_GetClassID failed: %08x\n", hr);
+    if (hr == S_OK)
+        ok(IsEqualGUID(&class, &CLSID_DirectMusicGraph),
+                "Expected class CLSID_DirectMusicGraph got %s\n", wine_dbgstr_guid(&class));
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
@@ -452,9 +453,10 @@ static void test_segment(void)
     hr = IDirectMusicSegment_QueryInterface(dms, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-    ok(IsEqualGUID(&class, &CLSID_DirectMusicSegment),
-            "Expected class CLSID_DirectMusicSegment got %s\n", wine_dbgstr_guid(&class));
+    ok(hr == S_OK || broken(hr == E_NOTIMPL) /* win2k */, "IPersistStream_GetClassID failed: %08x\n", hr);
+    if (hr == S_OK)
+        ok(IsEqualGUID(&class, &CLSID_DirectMusicSegment),
+                "Expected class CLSID_DirectMusicSegment got %s\n", wine_dbgstr_guid(&class));
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
