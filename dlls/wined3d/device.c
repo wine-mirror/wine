@@ -1531,10 +1531,10 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 
         case WINED3D_LIGHT_DIRECTIONAL:
             /* Direction */
-            object->lightPosn[0] = -light->direction.x;
-            object->lightPosn[1] = -light->direction.y;
-            object->lightPosn[2] = -light->direction.z;
-            object->lightPosn[3] = 0.0f;
+            object->lightDirn[0] = -light->direction.x;
+            object->lightDirn[1] = -light->direction.y;
+            object->lightDirn[2] = -light->direction.z;
+            object->lightDirn[3] = 0.0f;
             object->exponent = 0.0f;
             object->cutoff = 180.0f;
             break;
