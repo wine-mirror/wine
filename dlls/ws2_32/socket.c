@@ -3619,16 +3619,10 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             return ret ? 0 : SOCKET_ERROR;
         }
-#ifdef SO_RCVTIMEO
         case WS_SO_RCVTIMEO:
-#endif
-#ifdef SO_SNDTIMEO
         case WS_SO_SNDTIMEO:
-#endif
-#if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
         {
-            struct timeval tv;
-            socklen_t len = sizeof(struct timeval);
+            INT64 timeout;
 
             if (!optlen || *optlen < sizeof(int)|| !optval)
             {
@@ -3638,22 +3632,12 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
 
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, &tv, &len) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            else
-            {
-                *(int *)optval = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-                *optlen = sizeof(int);
-            }
+            timeout = get_rcvsnd_timeo(fd, optname == WS_SO_RCVTIMEO);
+            *(int *)optval = timeout <= UINT32_MAX ? timeout : UINT32_MAX;
 
             release_sock_fd( s, fd );
             return ret;
         }
-#endif
         case WS_SO_TYPE:
         {
             if (!optlen || *optlen < sizeof(int) || !optval)
