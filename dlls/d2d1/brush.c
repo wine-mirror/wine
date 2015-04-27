@@ -594,9 +594,11 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetBitmap(ID2D1BitmapBrush *iface
 
 static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetExtendModeX(ID2D1BitmapBrush *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
 
-    return D2D1_EXTEND_MODE_CLAMP;
+    TRACE("iface %p.\n", iface);
+
+    return brush->u.bitmap.extend_mode_x;
 }
 
 static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetExtendModeY(ID2D1BitmapBrush *iface)
