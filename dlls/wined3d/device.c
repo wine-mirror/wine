@@ -1550,7 +1550,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             object->lightDirn[0] = light->direction.x;
             object->lightDirn[1] = light->direction.y;
             object->lightDirn[2] = light->direction.z;
-            object->lightDirn[3] = 1.0f;
+            object->lightDirn[3] = 0.0f;
 
             /* opengl-ish and d3d-ish spot lights use too different models
              * for the light "intensity" as a function of the angle towards
