@@ -555,7 +555,16 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_GetTransform(ID2D1BitmapBrush *if
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeX(ID2D1BitmapBrush *iface, D2D1_EXTEND_MODE mode)
 {
-    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+
+    TRACE("iface %p, mode %#x.\n", iface, mode);
+
+    brush->u.bitmap.extend_mode_x = mode;
+    if (brush->u.bitmap.sampler_state)
+    {
+        ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
+        brush->u.bitmap.sampler_state = NULL;
+    }
 }
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeY(ID2D1BitmapBrush *iface, D2D1_EXTEND_MODE mode)
@@ -646,9 +655,15 @@ HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, struct d2d_d3d_render_tar
             brush_desc, (ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
     brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap);
     if (bitmap_brush_desc)
+    {
+        brush->u.bitmap.extend_mode_x = bitmap_brush_desc->extendModeX;
         brush->u.bitmap.interpolation_mode = bitmap_brush_desc->interpolationMode;
+    }
     else
+    {
+        brush->u.bitmap.extend_mode_x = D2D1_EXTEND_MODE_CLAMP;
         brush->u.bitmap.interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
+    }
 
     return S_OK;
 }
@@ -661,6 +676,22 @@ struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
             || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl
             || iface->lpVtbl == (const ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
+}
+
+static D3D10_TEXTURE_ADDRESS_MODE texture_addres_mode_from_extend_mode(D2D1_EXTEND_MODE mode)
+{
+    switch (mode)
+    {
+        case D2D1_EXTEND_MODE_CLAMP:
+            return D3D10_TEXTURE_ADDRESS_CLAMP;
+        case D2D1_EXTEND_MODE_WRAP:
+            return D3D10_TEXTURE_ADDRESS_WRAP;
+        case D2D1_EXTEND_MODE_MIRROR:
+            return D3D10_TEXTURE_ADDRESS_MIRROR;
+        default:
+            FIXME("Unhandled extend mode %#x.\n", mode);
+            return D3D10_TEXTURE_ADDRESS_CLAMP;
+    }
 }
 
 void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device)
@@ -678,7 +709,7 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device)
                 sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
             else
                 sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
-            sampler_desc.AddressU = D3D10_TEXTURE_ADDRESS_CLAMP;
+            sampler_desc.AddressU = texture_addres_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
             sampler_desc.AddressV = D3D10_TEXTURE_ADDRESS_CLAMP;
             sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
             sampler_desc.MipLODBias = 0.0f;
