@@ -40,7 +40,6 @@ typedef struct IDirectMusicScriptImpl {
     struct dmobject dmobj;
     LONG ref;
     IDirectMusicPerformance *pPerformance;
-    DMUS_OBJECTDESC *pDesc;
     DMUS_IO_SCRIPT_HEADER *pHeader;
     DMUS_IO_VERSION *pVersion;
     WCHAR *pwzLanguage;
@@ -98,7 +97,6 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
         HeapFree(GetProcessHeap(), 0, This->pVersion);
         HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
         HeapFree(GetProcessHeap(), 0, This->pwzSource);
-        HeapFree(GetProcessHeap(), 0, This->pDesc);
         HeapFree(GetProcessHeap(), 0, This);
         DMSCRIPT_UnlockModule();
     }
@@ -439,20 +437,20 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 						        }
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->pDesc->guidObject, Chunk.dwSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
+								IStream_Read (pStm, &This->dmobj.desc.guidObject, Chunk.dwSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->pDesc->vVersion, Chunk.dwSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
+								IStream_Read (pStm, &This->dmobj.desc.vVersion, Chunk.dwSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->pDesc->wszCategory, Chunk.dwSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
+								IStream_Read (pStm, This->dmobj.desc.wszCategory, Chunk.dwSize, NULL);
 								break;
 							}
 						        case FOURCC_RIFF: {
@@ -520,8 +518,8 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													This->pDesc->dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->pDesc->wszName, Chunk.dwSize, NULL);
+													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
+													IStream_Read (pStm, This->dmobj.desc.wszName, Chunk.dwSize, NULL);
 													break;
 												}
 												case mmioFOURCC('I','A','R','T'):
@@ -635,7 +633,6 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, 
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicScript, (IUnknown*)&obj->IDirectMusicScript_iface);
   obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
   obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-  obj->pDesc = &obj->dmobj.desc;
 
   DMSCRIPT_LockModule();
   hr = IDirectMusicScript_QueryInterface(&obj->IDirectMusicScript_iface, lpcGUID, ppobj);
