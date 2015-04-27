@@ -74,7 +74,7 @@ static void state_fillmode(struct wined3d_context *context, const struct wined3d
     }
 }
 
-void state_lighting(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_lighting(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -257,7 +257,7 @@ static void state_zfunc(struct wined3d_context *context, const struct wined3d_st
     checkGLcall("glDepthFunc");
 }
 
-void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
@@ -624,7 +624,7 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
     checkGLcall("clip plane disable");
 }
 
-void state_specularenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_specularenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
@@ -1393,7 +1393,7 @@ static void state_linepattern(struct wined3d_context *context, const struct wine
     }
 }
 
-void state_normalize(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void state_normalize(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -4700,7 +4700,7 @@ static void viewport_vertexpart(struct wined3d_context *context, const struct wi
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
 }
 
-void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT Index = state_id - STATE_ACTIVELIGHT(0);

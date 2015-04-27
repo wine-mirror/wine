@@ -310,8 +310,9 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_FFP_PROJ       0x00000800
 #define WINED3D_SHADER_CONST_FFP_TEXMATRIX  0x00001000
 #define WINED3D_SHADER_CONST_FFP_MATERIAL   0x00002000
-#define WINED3D_SHADER_CONST_FFP_PS         0x00004000
-#define WINED3D_SHADER_CONST_FFP_COLOR_KEY  0x00008000
+#define WINED3D_SHADER_CONST_FFP_LIGHTS     0x00004000
+#define WINED3D_SHADER_CONST_FFP_PS         0x00008000
+#define WINED3D_SHADER_CONST_FFP_COLOR_KEY  0x00010000
 
 enum wined3d_shader_register_type
 {
@@ -2830,13 +2831,7 @@ void state_nop(struct wined3d_context *context,
 void state_srgbwrite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
-void state_specularenable(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_ambient(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_clipping(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void light(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void clipplane(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
@@ -2851,10 +2846,6 @@ void state_pointsprite_w(struct wined3d_context *context,
 void state_pointsprite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_pscale(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_lighting(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_normalize(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,
