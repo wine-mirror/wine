@@ -44,7 +44,9 @@
 
 # Standard functions
 @ stdcall BeginBufferedPaint(ptr ptr long ptr ptr)
+@ stdcall BufferedPaintClear(ptr ptr)
 @ stdcall BufferedPaintInit()
+@ stdcall BufferedPaintSetAlpha(ptr ptr long)
 @ stdcall BufferedPaintUnInit()
 @ stdcall CloseThemeData(ptr)
 @ stdcall DrawThemeBackground(ptr ptr long long ptr ptr)
@@ -56,6 +58,10 @@
 @ stdcall EnableThemeDialogTexture(ptr long)
 @ stdcall EnableTheming(long)
 @ stdcall EndBufferedPaint(ptr long)
+@ stdcall GetBufferedPaintBits(ptr ptr ptr)
+@ stdcall GetBufferedPaintDC(ptr)
+@ stdcall GetBufferedPaintTargetDC(ptr)
+@ stdcall GetBufferedPaintTargetRect(ptr ptr)
 @ stdcall GetCurrentThemeName(wstr long wstr long wstr long)
 @ stdcall GetThemeAppProperties()
 @ stdcall GetThemeBackgroundContentRect(ptr ptr long long ptr ptr)

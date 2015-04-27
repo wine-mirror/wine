@@ -81,3 +81,58 @@ HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER hPaintBuffer, BOOL fUpdateTarget)
     FIXME("Stub (%p %d)\n", hPaintBuffer, fUpdateTarget);
     return S_OK;
 }
+
+/***********************************************************************
+ *      BufferedPaintClear                                 (UXTHEME.@)
+ */
+HRESULT WINAPI BufferedPaintClear(HPAINTBUFFER hBufferedPaint, const RECT *prc)
+{
+    FIXME("Stub (%p %p)\n", hBufferedPaint, prc);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      BufferedPaintSetAlpha                              (UXTHEME.@)
+ */
+HRESULT WINAPI BufferedPaintSetAlpha(HPAINTBUFFER hBufferedPaint, const RECT *prc, BYTE alpha)
+{
+    FIXME("Stub (%p %p %u)\n", hBufferedPaint, prc, alpha);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      GetBufferedPaintBits                               (UXTHEME.@)
+ */
+HRESULT WINAPI GetBufferedPaintBits(HPAINTBUFFER hBufferedPaint, RGBQUAD **ppbBuffer,
+                                    int *pcxRow)
+{
+    FIXME("Stub (%p %p %p)\n", hBufferedPaint, ppbBuffer, pcxRow);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      GetBufferedPaintDC                                 (UXTHEME.@)
+ */
+HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER hBufferedPaint)
+{
+    FIXME("Stub (%p)\n", hBufferedPaint);
+    return NULL;
+}
+
+/***********************************************************************
+ *      GetBufferedPaintTargetDC                           (UXTHEME.@)
+ */
+HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER hBufferedPaint)
+{
+    FIXME("Stub (%p)\n", hBufferedPaint);
+    return NULL;
+}
+
+/***********************************************************************
+ *      GetBufferedPaintTargetRect                         (UXTHEME.@)
+ */
+HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER hBufferedPaint, RECT *prc)
+{
+    FIXME("Stub (%p %p)\n", hBufferedPaint, prc);
+    return E_NOTIMPL;
+}
