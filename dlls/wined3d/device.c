@@ -1521,36 +1521,36 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     {
         case WINED3D_LIGHT_POINT:
             /* Position */
-            object->lightPosn[0] = light->position.x;
-            object->lightPosn[1] = light->position.y;
-            object->lightPosn[2] = light->position.z;
-            object->lightPosn[3] = 1.0f;
+            object->position.x = light->position.x;
+            object->position.y = light->position.y;
+            object->position.z = light->position.z;
+            object->position.w = 1.0f;
             object->cutoff = 180.0f;
             /* FIXME: Range */
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:
             /* Direction */
-            object->lightDirn[0] = -light->direction.x;
-            object->lightDirn[1] = -light->direction.y;
-            object->lightDirn[2] = -light->direction.z;
-            object->lightDirn[3] = 0.0f;
+            object->direction.x = -light->direction.x;
+            object->direction.y = -light->direction.y;
+            object->direction.z = -light->direction.z;
+            object->direction.w = 0.0f;
             object->exponent = 0.0f;
             object->cutoff = 180.0f;
             break;
 
         case WINED3D_LIGHT_SPOT:
             /* Position */
-            object->lightPosn[0] = light->position.x;
-            object->lightPosn[1] = light->position.y;
-            object->lightPosn[2] = light->position.z;
-            object->lightPosn[3] = 1.0f;
+            object->position.x = light->position.x;
+            object->position.y = light->position.y;
+            object->position.z = light->position.z;
+            object->position.w = 1.0f;
 
             /* Direction */
-            object->lightDirn[0] = light->direction.x;
-            object->lightDirn[1] = light->direction.y;
-            object->lightDirn[2] = light->direction.z;
-            object->lightDirn[3] = 0.0f;
+            object->direction.x = light->direction.x;
+            object->direction.y = light->direction.y;
+            object->direction.z = light->direction.z;
+            object->direction.w = 0.0f;
 
             /* opengl-ish and d3d-ish spot lights use too different models
              * for the light "intensity" as a function of the angle towards

@@ -7530,11 +7530,11 @@ static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct 
         if (!(light = state->lights[k]))
             continue;
         if (light->OriginalParms.type == WINED3D_LIGHT_DIRECTIONAL)
-            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightDirn);
+            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, &light->direction.x);
         else
-            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightPosn);
+            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, &light->position.x);
         checkGLcall("glLightfv posn");
-        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, light->lightDirn);
+        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, &light->direction.x);
         checkGLcall("glLightfv dirn");
     }
 

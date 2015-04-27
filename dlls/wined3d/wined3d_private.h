@@ -1421,10 +1421,10 @@ struct wined3d_light_info
     BOOL         enabled;
 
     /* Converted parms to speed up swapping lights */
-    float                         lightPosn[4];
-    float                         lightDirn[4];
-    float                         exponent;
-    float                         cutoff;
+    struct wined3d_vec4 position;
+    struct wined3d_vec4 direction;
+    float exponent;
+    float cutoff;
 
     struct list entry;
 };

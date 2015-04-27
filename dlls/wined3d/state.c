@@ -3974,11 +3974,11 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
         if (!(light = state->lights[k]))
             continue;
         if (light->OriginalParms.type == WINED3D_LIGHT_DIRECTIONAL)
-            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightDirn);
+            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, &light->direction.x);
         else
-            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightPosn);
+            gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, &light->position.x);
         checkGLcall("glLightfv posn");
-        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, light->lightDirn);
+        gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, &light->direction.x);
         checkGLcall("glLightfv dirn");
     }
 
@@ -4759,7 +4759,7 @@ void light(struct wined3d_context *context, const struct wined3d_state *state, D
         {
             case WINED3D_LIGHT_POINT:
                 /* Position */
-                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, lightInfo->lightPosn);
+                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->position.x);
                 checkGLcall("glLightfv");
                 gl_info->gl_ops.gl.p_glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
                 checkGLcall("glLightf");
@@ -4778,10 +4778,10 @@ void light(struct wined3d_context *context, const struct wined3d_state *state, D
 
             case WINED3D_LIGHT_SPOT:
                 /* Position */
-                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, lightInfo->lightPosn);
+                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->position.x);
                 checkGLcall("glLightfv");
                 /* Direction */
-                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_SPOT_DIRECTION, lightInfo->lightDirn);
+                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_SPOT_DIRECTION, &lightInfo->direction.x);
                 checkGLcall("glLightfv");
                 gl_info->gl_ops.gl.p_glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, lightInfo->exponent);
                 checkGLcall("glLightf");
@@ -4803,7 +4803,7 @@ void light(struct wined3d_context *context, const struct wined3d_state *state, D
             case WINED3D_LIGHT_DIRECTIONAL:
                 /* Direction */
                 /* Note GL uses w position of 0 for direction! */
-                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, lightInfo->lightDirn);
+                gl_info->gl_ops.gl.p_glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->direction.x);
                 checkGLcall("glLightfv");
                 gl_info->gl_ops.gl.p_glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
                 checkGLcall("glLightf");
