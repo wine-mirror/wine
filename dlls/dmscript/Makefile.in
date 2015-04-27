@@ -2,6 +2,7 @@ MODULE    = dmscript.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
+	dmobject.c \
 	dmscript_main.c \
 	script.c \
 	scripttrack.c
