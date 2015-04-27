@@ -1866,6 +1866,7 @@ static void shader_cleanup(struct wined3d_shader *shader)
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
     shader->device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
+    HeapFree(GetProcessHeap(), 0, shader->reg_maps.sampler_map.entries);
     HeapFree(GetProcessHeap(), 0, shader->function);
     shader_delete_constant_list(&shader->constantsF);
     shader_delete_constant_list(&shader->constantsB);
