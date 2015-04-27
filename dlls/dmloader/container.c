@@ -184,7 +184,9 @@ static inline IDirectMusicContainerImpl *impl_from_IDirectMusicObject(IDirectMus
     return CONTAINING_RECORD(iface, IDirectMusicContainerImpl, dmobj.IDirectMusicObject_iface);
 }
 
-static HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor(IDirectMusicObject *iface,
+        IStream *pStream, DMUS_OBJECTDESC *pDesc)
+{
         IDirectMusicContainerImpl *This = impl_from_IDirectMusicObject(iface);
 	WINE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
@@ -359,7 +361,7 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     dmobj_IDirectMusicObject_Release,
     dmobj_IDirectMusicObject_GetDescriptor,
     dmobj_IDirectMusicObject_SetDescriptor,
-	IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor
+    IDirectMusicObjectImpl_ParseDescriptor
 };
 
 /* IPersistStream part: */
@@ -368,7 +370,8 @@ static inline IDirectMusicContainerImpl *impl_from_IPersistStream(IPersistStream
     return CONTAINING_RECORD(iface, IDirectMusicContainerImpl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+{
         IDirectMusicContainerImpl *This = impl_from_IPersistStream(iface);
 	WINE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -792,7 +795,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-	IDirectMusicContainerImpl_IPersistStream_Load,
+    IPersistStreamImpl_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };
