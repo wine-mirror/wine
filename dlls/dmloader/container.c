@@ -368,19 +368,6 @@ static inline IDirectMusicContainerImpl *impl_from_IPersistStream(IPersistStream
     return CONTAINING_RECORD(iface, IDirectMusicContainerImpl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-        IDirectMusicContainerImpl *This = impl_from_IPersistStream(iface);
-
-	TRACE("(%p, %p)\n", This, pClassID);
-	if (IsBadWritePtr (pClassID, sizeof(CLSID))) {
-		ERR(": pClassID bad write pointer\n");
-		return E_POINTER;
-	}
-	
-	*pClassID = CLSID_DirectMusicContainer;
-	return S_OK;
-}
-
 static HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
         IDirectMusicContainerImpl *This = impl_from_IPersistStream(iface);
 	WINE_CHUNK Chunk;
@@ -803,7 +790,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_QueryInterface,
     dmobj_IPersistStream_AddRef,
     dmobj_IPersistStream_Release,
-	IDirectMusicContainerImpl_IPersistStream_GetClassID,
+    dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
 	IDirectMusicContainerImpl_IPersistStream_Load,
     unimpl_IPersistStream_Save,
