@@ -126,6 +126,7 @@ struct d2d_brush
         {
             struct d2d_bitmap *bitmap;
             D2D1_EXTEND_MODE extend_mode_x;
+            D2D1_EXTEND_MODE extend_mode_y;
             D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
             ID3D10SamplerState *sampler_state;
         } bitmap;
