@@ -5,6 +5,7 @@ C_SRCS = \
 	container.c \
 	debug.c \
 	dmloader_main.c \
+	dmobject.c \
 	loader.c \
 	loaderstream.c
 
