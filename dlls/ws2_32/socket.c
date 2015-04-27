@@ -1252,28 +1252,30 @@ static char *strdup_lower(const char *str)
 /* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
  * from an fd and return the value converted to milli seconds
  * or 0 if there is an infinite time out */
-static inline INT64 get_rcvsnd_timeo( int fd, int optname)
+static inline INT64 get_rcvsnd_timeo( int fd, BOOL is_recv)
 {
   struct timeval tv;
   socklen_t len = sizeof(tv);
-  int res = getsockopt(fd, SOL_SOCKET, optname, &tv, &len);
+  int optname, res;
+
+  if (is_recv)
+#ifdef SO_RCVTIMEO
+      optname = SO_RCVTIMEO;
+#else
+      return 0;
+#endif
+  else
+#ifdef SO_SNDTIMEO
+      optname = SO_SNDTIMEO;
+#else
+      return 0;
+#endif
+
+  res = getsockopt(fd, SOL_SOCKET, optname, &tv, &len);
   if (res < 0)
       return 0;
   return (UINT64)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
-
-/* macro wrappers for portability */
-#ifdef SO_RCVTIMEO
-#define GET_RCVTIMEO(fd) get_rcvsnd_timeo( (fd), SO_RCVTIMEO)
-#else
-#define GET_RCVTIMEO(fd) (0)
-#endif
-
-#ifdef SO_SNDTIMEO
-#define GET_SNDTIMEO(fd) get_rcvsnd_timeo( (fd), SO_SNDTIMEO)
-#else
-#define GET_SNDTIMEO(fd) (0)
-#endif
 
 /* utility: given an fd, will block until one of the events occurs */
 static inline int do_block( int fd, int events, int timeout )
@@ -5075,7 +5077,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         {
             struct pollfd pfd;
             int poll_timeout = -1;
-            INT64 timeout = GET_SNDTIMEO(fd);
+            INT64 timeout = get_rcvsnd_timeo(fd, FALSE);
 
             if (timeout)
             {
@@ -7131,7 +7133,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         {
             struct pollfd pfd;
             int poll_timeout = -1;
-            INT64 timeout = GET_RCVTIMEO(fd);
+            INT64 timeout = get_rcvsnd_timeo(fd, TRUE);
 
             if (timeout)
             {
