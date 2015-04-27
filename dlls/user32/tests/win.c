@@ -8008,28 +8008,28 @@ static void test_GetMessagePos(void)
     GetMessageA(&msg, button, 0, 0);
     ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
 
     PostMessageA(button, WM_APP, 0, 0);
     SetCursorPos(350, 330);
     GetMessageA(&msg, button, 0, 0);
     ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
 
     PostMessageA(button, WM_APP, 0, 0);
     SetCursorPos(320, 340);
     PostMessageA(button, WM_APP+1, 0, 0);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(340, 320), "pos = %08x\n", pos);
     GetMessageA(&msg, button, 0, 0);
     ok(msg.message == WM_APP, "msg.message = %x\n", msg.message);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(350, 330), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(350, 330), "pos = %08x\n", pos);
     GetMessageA(&msg, button, 0, 0);
     ok(msg.message == WM_APP+1, "msg.message = %x\n", msg.message);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(320, 340), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(320, 340), "pos = %08x\n", pos);
 
     SetTimer(button, 1, 250, NULL);
     SetCursorPos(330, 350);
@@ -8041,7 +8041,7 @@ static void test_GetMessagePos(void)
     }
     ok(msg.message == WM_TIMER, "msg.message = %x\n", msg.message);
     pos = GetMessagePos();
-    todo_wine ok(pos == MAKELONG(330, 350), "pos = %08x\n", pos);
+    ok(pos == MAKELONG(330, 350), "pos = %08x\n", pos);
     KillTimer(button, 1);
 
     DestroyWindow(button);

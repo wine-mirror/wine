@@ -77,6 +77,8 @@ struct message
     unsigned int           msg;       /* message code */
     lparam_t               wparam;    /* parameters */
     lparam_t               lparam;    /* parameters */
+    int                    x;         /* message position */
+    int                    y;
     unsigned int           time;      /* message time */
     void                  *data;      /* message data for sent messages */
     unsigned int           data_size; /* size of message data */
@@ -352,13 +354,23 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
     msg->msg       = WM_MOUSEMOVE;
     msg->wparam    = 0;
     msg->lparam    = 0;
+    msg->x         = x;
+    msg->y         = y;
     msg->time      = get_tick_count();
     msg->result    = NULL;
     msg->data      = msg_data;
     msg->data_size = sizeof(*msg_data);
-    msg_data->x    = x;
-    msg_data->y    = y;
     queue_hardware_message( desktop, msg, 1 );
+}
+
+/* retrieve default position and time for synthesized messages */
+static void get_message_defaults( struct msg_queue *queue, int *x, int *y, unsigned int *time )
+{
+    struct desktop *desktop = queue->input->desktop;
+
+    *x = desktop->cursor.x;
+    *y = desktop->cursor.y;
+    *time = get_tick_count();
 }
 
 /* set the cursor clip rectangle */
@@ -506,14 +518,14 @@ static int merge_message( struct thread_input *input, const struct message *msg 
     /* now we can merge it */
     prev->wparam  = msg->wparam;
     prev->lparam  = msg->lparam;
+    prev->x       = msg->x;
+    prev->y       = msg->y;
     prev->time    = msg->time;
     if (msg->type == MSG_HARDWARE && prev->data && msg->data)
     {
         struct hardware_msg_data *prev_data = prev->data;
         struct hardware_msg_data *msg_data = msg->data;
-        prev_data->x     = msg_data->x;
-        prev_data->y     = msg_data->y;
-        prev_data->info  = msg_data->info;
+        prev_data->info = msg_data->info;
     }
     list_remove( ptr );
     list_add_tail( &input->msg_list, ptr );
@@ -713,6 +725,8 @@ static void receive_message( struct msg_queue *queue, struct message *msg,
     reply->msg    = msg->msg;
     reply->wparam = msg->wparam;
     reply->lparam = msg->lparam;
+    reply->x      = msg->x;
+    reply->y      = msg->y;
     reply->time   = msg->time;
 
     if (msg->data) set_reply_data_ptr( msg->data, msg->data_size );
@@ -789,6 +803,8 @@ found:
     reply->msg    = msg->msg;
     reply->wparam = msg->wparam;
     reply->lparam = msg->lparam;
+    reply->x      = msg->x;
+    reply->y      = msg->y;
     reply->time   = msg->time;
 
     if (flags & PM_REMOVE)
@@ -817,7 +833,8 @@ static int get_quit_message( struct msg_queue *queue, unsigned int flags,
         reply->msg    = WM_QUIT;
         reply->wparam = queue->exit_code;
         reply->lparam = 0;
-        reply->time   = get_tick_count();
+
+        get_message_defaults( queue, &reply->x, &reply->y, &reply->time );
 
         if (flags & PM_REMOVE)
         {
@@ -1363,7 +1380,6 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
                                                    struct message *msg, unsigned int *msg_code,
                                                    struct thread **thread )
 {
-    struct hardware_msg_data *data = msg->data;
     user_handle_t win = 0;
 
     *thread = NULL;
@@ -1383,9 +1399,9 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     else if (!input || !(win = input->capture)) /* mouse message */
     {
         if (is_window_visible( msg->win ) && !is_window_transparent( msg->win )) win = msg->win;
-        else win = shallow_window_from_point( desktop, data->x, data->y );
+        else win = shallow_window_from_point( desktop, msg->x, msg->y );
 
-        *thread = window_thread_from_point( win, data->x, data->y );
+        *thread = window_thread_from_point( win, msg->x, msg->y );
     }
 
     if (!*thread)
@@ -1434,7 +1450,6 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     struct thread *thread;
     struct thread_input *input;
     unsigned int msg_code;
-    struct hardware_msg_data *data = msg->data;
 
     update_input_key_state( desktop, desktop->keystate, msg );
     last_input_time = get_tick_count();
@@ -1451,8 +1466,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         if (msg->msg == WM_MOUSEMOVE)
         {
-            int x = min( max( data->x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
-            int y = min( max( data->y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
+            int x = min( max( msg->x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
+            int y = min( max( msg->y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
             if (desktop->cursor.x != x || desktop->cursor.y != y) always_queue = 1;
             desktop->cursor.x = x;
             desktop->cursor.y = y;
@@ -1466,8 +1481,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         if (desktop->keystate[VK_XBUTTON1] & 0x80) msg->wparam |= MK_XBUTTON1;
         if (desktop->keystate[VK_XBUTTON2] & 0x80) msg->wparam |= MK_XBUTTON2;
     }
-    data->x = desktop->cursor.x;
-    data->y = desktop->cursor.y;
+    msg->x = desktop->cursor.x;
+    msg->y = desktop->cursor.y;
 
     if (msg->win && (thread = get_window_thread( msg->win )))
     {
@@ -1518,6 +1533,8 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
     msg->win       = 0;
     msg->msg       = id;
     msg->wparam    = hardware_msg->msg;
+    msg->x         = hardware_msg->x;
+    msg->y         = hardware_msg->y;
     msg->time      = hardware_msg->time;
     msg->data_size = hardware_msg->data_size;
     msg->result    = NULL;
@@ -1645,12 +1662,12 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         msg->msg       = messages[i];
         msg->wparam    = input->mouse.data << 16;
         msg->lparam    = 0;
+        msg->x         = x;
+        msg->y         = y;
         msg->time      = time;
         msg->result    = NULL;
         msg->data      = msg_data;
         msg->data_size = sizeof(*msg_data);
-        msg_data->x    = x;
-        msg_data->y    = y;
         msg_data->info = input->mouse.info;
         if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLMHF_INJECTED;
 
@@ -1834,6 +1851,8 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
     msg->msg       = input->hw.msg;
     msg->wparam    = 0;
     msg->lparam    = input->hw.lparam;
+    msg->x         = desktop->cursor.x;
+    msg->y         = desktop->cursor.y;
     msg->time      = get_tick_count();
     msg->result    = NULL;
     msg->data      = msg_data;
@@ -1956,6 +1975,8 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         reply->msg    = msg_code;
         reply->wparam = msg->wparam;
         reply->lparam = msg->lparam;
+        reply->x      = msg->x;
+        reply->y      = msg->y;
         reply->time   = msg->time;
 
         data->hw_id = msg->unique_id;
@@ -2051,10 +2072,11 @@ void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lpa
         msg->msg       = message;
         msg->wparam    = wparam;
         msg->lparam    = lparam;
-        msg->time      = get_tick_count();
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = 0;
+
+        get_message_defaults( thread->queue, &msg->x, &msg->y, &msg->time );
 
         list_add_tail( &thread->queue->msg_list[POST_MESSAGE], &msg->entry );
         set_queue_bits( thread->queue, QS_POSTMESSAGE|QS_ALLPOSTMESSAGE );
@@ -2240,10 +2262,11 @@ DECL_HANDLER(send_message)
         msg->msg       = req->msg;
         msg->wparam    = req->wparam;
         msg->lparam    = req->lparam;
-        msg->time      = get_tick_count();
         msg->result    = NULL;
         msg->data      = NULL;
         msg->data_size = get_req_data_size();
+
+        get_message_defaults( recv_queue, &msg->x, &msg->y, &msg->time );
 
         if (msg->data_size && !(msg->data = memdup( get_req_data(), msg->data_size )))
         {
@@ -2410,7 +2433,7 @@ DECL_HANDLER(get_message)
         reply->msg    = WM_PAINT;
         reply->wparam = 0;
         reply->lparam = 0;
-        reply->time   = get_tick_count();
+        get_message_defaults( queue, &reply->x, &reply->y, &reply->time );
         return;
     }
 
@@ -2424,7 +2447,7 @@ DECL_HANDLER(get_message)
         reply->msg    = timer->msg;
         reply->wparam = timer->id;
         reply->lparam = timer->lparam;
-        reply->time   = get_tick_count();
+        get_message_defaults( queue, &reply->x, &reply->y, &reply->time );
         if (!(req->flags & PM_NOYIELD) && current->process->idle_event)
             set_event( current->process->idle_event );
         return;

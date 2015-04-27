@@ -263,8 +263,6 @@ typedef struct
 struct hardware_msg_data
 {
     lparam_t        info;
-    int             x;
-    int             y;
     unsigned int    hw_id;
     unsigned int    flags;
     union
@@ -2934,6 +2932,8 @@ struct get_message_reply
     lparam_t        wparam;
     lparam_t        lparam;
     int             type;
+    int             x;
+    int             y;
     unsigned int    time;
     unsigned int    active_hooks;
     data_size_t     total;
@@ -5972,6 +5972,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 468
+#define SERVER_PROTOCOL_VERSION 469
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

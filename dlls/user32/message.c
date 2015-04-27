@@ -2765,8 +2765,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                 info.msg.wParam  = reply->wparam;
                 info.msg.lParam  = reply->lparam;
                 info.msg.time    = reply->time;
-                info.msg.pt.x    = 0;
-                info.msg.pt.y    = 0;
+                info.msg.pt.x    = reply->x;
+                info.msg.pt.y    = reply->y;
                 hw_id            = 0;
                 thread_info->active_hooks = reply->active_hooks;
             }
@@ -2871,8 +2871,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             {
                 MSLLHOOKSTRUCT hook;
 
-                hook.pt.x        = msg_data->hardware.x;
-                hook.pt.y        = msg_data->hardware.y;
+                hook.pt          = info.msg.pt;
                 hook.mouseData   = info.msg.lParam;
                 hook.flags       = msg_data->hardware.flags;
                 hook.time        = info.msg.time;
@@ -2896,9 +2895,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         case MSG_HARDWARE:
             if (size >= sizeof(msg_data->hardware))
             {
-                info.msg.pt.x = msg_data->hardware.x;
-                info.msg.pt.y = msg_data->hardware.y;
-                hw_id         = msg_data->hardware.hw_id;
+                hw_id = msg_data->hardware.hw_id;
                 if (!process_hardware_message( &info.msg, hw_id, &msg_data->hardware,
                                                hwnd, first, last, flags & PM_REMOVE ))
                 {
@@ -2940,8 +2937,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     continue;  /* ignore it */
 	    }
             *msg = info.msg;
-            msg->pt.x = (short)LOWORD( thread_info->GetMessagePosVal );
-            msg->pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
+            thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
             thread_info->GetMessageTimeVal = info.msg.time;
             thread_info->GetMessageExtraInfoVal = 0;
             HeapFree( GetProcessHeap(), 0, buffer );

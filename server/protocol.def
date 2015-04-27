@@ -279,8 +279,6 @@ typedef struct
 struct hardware_msg_data
 {
     lparam_t        info;      /* extra info */
-    int             x;         /* x position */
-    int             y;         /* y position */
     unsigned int    hw_id;     /* unique id */
     unsigned int    flags;     /* hook flags */
     union
@@ -2138,6 +2136,8 @@ enum message_type
     lparam_t        wparam;    /* parameters */
     lparam_t        lparam;    /* parameters */
     int             type;      /* message type */
+    int             x;         /* message x position */
+    int             y;         /* message y position */
     unsigned int    time;      /* message time */
     unsigned int    active_hooks; /* active hooks bitmap */
     data_size_t     total;     /* total size of extra data */

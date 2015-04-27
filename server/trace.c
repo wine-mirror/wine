@@ -2618,6 +2618,8 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     dump_uint64( ", wparam=", &req->wparam );
     dump_uint64( ", lparam=", &req->lparam );
     fprintf( stderr, ", type=%d", req->type );
+    fprintf( stderr, ", x=%d", req->x );
+    fprintf( stderr, ", y=%d", req->y );
     fprintf( stderr, ", time=%08x", req->time );
     fprintf( stderr, ", active_hooks=%08x", req->active_hooks );
     fprintf( stderr, ", total=%u", req->total );
