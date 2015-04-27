@@ -222,7 +222,9 @@ static void test_COM_container(void)
 static void test_container(void)
 {
     IDirectMusicContainer *dmc;
+    IDirectMusicObject *dmo;
     IPersistStream *ps;
+    DMUS_OBJECTDESC desc;
     CLSID class = { 0 };
     ULARGE_INTEGER size;
     HRESULT hr;
@@ -230,6 +232,37 @@ static void test_container(void)
     hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicContainer, (void**)&dmc);
     ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+
+    /* IDirectMusicObject */
+    hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IDirectMusicObject, (void**)&dmo);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    hr = IDirectMusicObject_GetDescriptor(dmo, NULL);
+    ok(hr == E_POINTER, "IDirectMusicObject_GetDescriptor: expected E_POINTER, got  %08x\n", hr);
+    hr = IDirectMusicObject_SetDescriptor(dmo, NULL);
+    ok(hr == E_POINTER, "IDirectMusicObject_SetDescriptor: expected E_POINTER, got  %08x\n", hr);
+    ZeroMemory(&desc, sizeof(desc));
+    hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ZeroMemory(&desc, sizeof(desc));
+    desc.dwSize = 1;  /* size is ignored */
+    hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ok(desc.dwValidData == DMUS_OBJ_CLASS,
+            "Fresh object has more valid data (%08x) than DMUS_OBJ_CLASS\n", desc.dwValidData);
+    /* DMUS_OBJ_CLASS is immutable */
+    desc.dwValidData = DMUS_OBJ_CLASS;
+    desc.dwSize = 1;  /* size is ignored */
+    hr = IDirectMusicObject_SetDescriptor(dmo, &desc);
+    ok(hr == S_FALSE , "IDirectMusicObject_SetDescriptor failed: %08x\n", hr);
+    ok(!desc.dwValidData, "dwValidData wasn't cleared:  %08x\n", desc.dwValidData);
+    desc.dwValidData = DMUS_OBJ_CLASS;
+    desc.guidClass = CLSID_DirectMusicSegment;
+    hr = IDirectMusicObject_SetDescriptor(dmo, &desc);
+    ok(hr == S_FALSE && !desc.dwValidData, "IDirectMusicObject_SetDescriptor failed: %08x\n", hr);
+    hr = IDirectMusicObject_GetDescriptor(dmo, &desc);
+    ok(hr == S_OK, "IDirectMusicObject_GetDescriptor failed: %08x\n", hr);
+    ok(IsEqualGUID(&desc.guidClass, &CLSID_DirectMusicContainer),
+            "guidClass changed, should be CLSID_DirectMusicContainer\n");
 
     /* IPersistStream */
     hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IPersistStream, (void**)&ps);
