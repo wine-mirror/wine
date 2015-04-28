@@ -2811,7 +2811,7 @@ HKLM,%CurrentVersionNT%\Time Zones\N. Central Asia Standard Time,"TZI",1,98,fe,f
 HKLM,%CurrentVersionNT%\Time Zones\Namibia Standard Time,"Display",,"Africa/Windhoek"
 HKLM,%CurrentVersionNT%\Time Zones\Namibia Standard Time,"Dlt",,"Namibia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Namibia Standard Time,"Std",,"Namibia Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Namibia Standard Time,"TZI",1,c4,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,09,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Namibia Standard Time,"TZI",1,c4,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,09,00,00,00,01,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Nepal Standard Time,"Display",,"Asia/Katmandu"
 HKLM,%CurrentVersionNT%\Time Zones\Nepal Standard Time,"Dlt",,"Nepal Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Nepal Standard Time,"Std",,"Nepal Standard Time"
