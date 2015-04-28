@@ -1744,6 +1744,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_depthstencil_state *object;
+    D3D10_DEPTH_STENCIL_DESC tmp_desc;
     struct wine_rb_entry *entry;
     HRESULT hr;
 
@@ -1752,7 +1753,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     if (!desc)
         return E_INVALIDARG;
 
-    if ((entry = wine_rb_get(&device->depthstencil_states, desc)))
+    /* D3D10_DEPTH_STENCIL_DESC has a hole, which is a problem because we use
+     * it as a key in the rbtree. */
+    memset(&tmp_desc, 0, sizeof(tmp_desc));
+    tmp_desc.DepthEnable = desc->DepthEnable;
+    tmp_desc.DepthWriteMask = desc->DepthWriteMask;
+    tmp_desc.DepthFunc = desc->DepthFunc;
+    tmp_desc.StencilEnable = desc->StencilEnable;
+    tmp_desc.StencilReadMask = desc->StencilReadMask;
+    tmp_desc.StencilWriteMask = desc->StencilWriteMask;
+    tmp_desc.FrontFace = desc->FrontFace;
+    tmp_desc.BackFace = desc->BackFace;
+
+    if ((entry = wine_rb_get(&device->depthstencil_states, &tmp_desc)))
     {
         object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_depthstencil_state, entry);
 
@@ -1767,7 +1780,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_depthstencil_state_init(object, device, desc)))
+    if (FAILED(hr = d3d10_depthstencil_state_init(object, device, &tmp_desc)))
     {
         WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
