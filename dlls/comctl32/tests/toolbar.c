@@ -1388,12 +1388,12 @@ static void restore_recalc_state(HWND hToolbar)
     RECT rect;
     /* return to style with a 2px top margin */
     SetWindowLongA(hToolbar, GWL_STYLE,
-        GetWindowLongA(hToolbar, GWL_STYLE) & ~TBSTYLE_FLAT);
+                   SendMessageA(hToolbar, TB_GETSTYLE, 0, 0) & ~TBSTYLE_FLAT);
     /* recalc */
     SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)&buttons3[3]);
     /* top margin will be 0px if a recalc occurs */
     SetWindowLongA(hToolbar, GWL_STYLE,
-        GetWindowLongA(hToolbar, GWL_STYLE) | TBSTYLE_FLAT);
+                   SendMessageA(hToolbar, TB_GETSTYLE, 0, 0) | TBSTYLE_FLAT);
     /* safety check */
     SendMessageA(hToolbar, TB_GETITEMRECT, 1, (LPARAM)&rect);
     ok(rect.top == 2, "Test will make no sense because initial top is %d instead of 2\n",
@@ -1408,6 +1408,7 @@ static void test_recalc(void)
     const int EX_STYLES_COUNT = 5;
     int i;
     BOOL recalc;
+    DWORD style;
 
     /* Like TB_ADDBUTTONSA tested in test_sized, inserting a button without text
      * results in a relayout, while adding one with text forces a recalc */
@@ -1467,6 +1468,47 @@ static void test_recalc(void)
 
     /* undocumented exstyle 0x2 seems to change the top margin, which
      * interferes with these tests */
+
+    /* Show that a change in TBSTYLE_WRAPABLE causes a recalc */
+    prepare_recalc_test(&hToolbar);
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style);
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "recalc %d\n", recalc);
+
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style | TBSTYLE_TOOLTIPS | TBSTYLE_TRANSPARENT | CCS_BOTTOM);
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "recalc %d\n", recalc);
+
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style | TBSTYLE_WRAPABLE);
+    recalc = did_recalc(hToolbar);
+    ok(recalc, "recalc %d\n", recalc);
+    restore_recalc_state(hToolbar);
+
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style | TBSTYLE_WRAPABLE);
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "recalc %d\n", recalc);
+
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style);
+    recalc = did_recalc(hToolbar);
+    ok(recalc, "recalc %d\n", recalc);
+    restore_recalc_state(hToolbar);
+
+    /* Changing CCS_VERT does not recalc */
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style | CCS_VERT);
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "recalc %d\n", recalc);
+    restore_recalc_state(hToolbar);
+
+    SendMessageA(hToolbar, TB_SETSTYLE, 0, style);
+    recalc = did_recalc(hToolbar);
+    ok(!recalc, "recalc %d\n", recalc);
+    restore_recalc_state(hToolbar);
+
+    /* Setting the window's style directly also causes recalc */
+    SetWindowLongA(hToolbar, GWL_STYLE, style | TBSTYLE_WRAPABLE);
+    recalc = did_recalc(hToolbar);
+    ok(recalc, "recalc %d\n", recalc);
 
     DestroyWindow(hToolbar);
 }

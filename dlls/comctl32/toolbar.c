@@ -4934,7 +4934,9 @@ TOOLBAR_SetStyle (TOOLBAR_INFO *infoPtr, DWORD style)
     infoPtr->dwStyle = style;
     TOOLBAR_CheckStyle(infoPtr);
 
-    if ((dwOldStyle ^ style) & (TBSTYLE_WRAPABLE | CCS_VERT))
+    if ((dwOldStyle ^ style) & TBSTYLE_WRAPABLE)
+        TOOLBAR_CalcToolbar(infoPtr);
+    else if ((dwOldStyle ^ style) & CCS_VERT)
         TOOLBAR_LayoutToolbar(infoPtr);
 
     /* only resize if one of the CCS_* styles was changed */
