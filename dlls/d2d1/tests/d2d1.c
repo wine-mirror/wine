@@ -706,11 +706,32 @@ static void test_bitmap_brush(void)
     IDXGISurface *surface;
     D2D1_COLOR_F color;
     D2D1_SIZE_U size;
+    unsigned int i;
     ULONG refcount;
     float opacity;
     HWND window;
     HRESULT hr;
 
+    static const struct
+    {
+        D2D1_EXTEND_MODE extend_mode_x;
+        D2D1_EXTEND_MODE extend_mode_y;
+        float translate_x;
+        float translate_y;
+        D2D1_RECT_F rect;
+    }
+    extend_mode_tests[] =
+    {
+        {D2D1_EXTEND_MODE_MIRROR, D2D1_EXTEND_MODE_MIRROR, -7.0f, 1.0f, {-4.0f,  0.0f, -8.0f,  4.0f}},
+        {D2D1_EXTEND_MODE_WRAP,   D2D1_EXTEND_MODE_MIRROR, -3.0f, 1.0f, {-4.0f,  4.0f,  0.0f,  0.0f}},
+        {D2D1_EXTEND_MODE_CLAMP,  D2D1_EXTEND_MODE_MIRROR,  1.0f, 1.0f, { 4.0f,  0.0f,  0.0f,  4.0f}},
+        {D2D1_EXTEND_MODE_MIRROR, D2D1_EXTEND_MODE_WRAP,   -7.0f, 5.0f, {-8.0f,  8.0f, -4.0f,  4.0f}},
+        {D2D1_EXTEND_MODE_WRAP,   D2D1_EXTEND_MODE_WRAP,   -3.0f, 5.0f, { 0.0f,  4.0f, -4.0f,  8.0f}},
+        {D2D1_EXTEND_MODE_CLAMP,  D2D1_EXTEND_MODE_WRAP,    1.0f, 5.0f, { 0.0f,  8.0f,  4.0f,  4.0f}},
+        {D2D1_EXTEND_MODE_MIRROR, D2D1_EXTEND_MODE_CLAMP,  -7.0f, 9.0f, {-4.0f,  8.0f, -8.0f, 12.0f}},
+        {D2D1_EXTEND_MODE_WRAP,   D2D1_EXTEND_MODE_CLAMP,  -3.0f, 9.0f, {-4.0f, 12.0f,  0.0f,  8.0f}},
+        {D2D1_EXTEND_MODE_CLAMP,  D2D1_EXTEND_MODE_CLAMP,   1.0f, 9.0f, { 4.0f,  8.0f,  0.0f, 12.0f}},
+    };
     static const DWORD bitmap_data[] =
     {
         0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff,
@@ -813,6 +834,34 @@ static void test_bitmap_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ok(compare_surface(surface, "393636185359a550d459e1e5f0e25411814f724c"), "Surface does not match.\n");
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    ID2D1BitmapBrush_SetOpacity(brush, 1.0f);
+    for (i = 0; i < sizeof(extend_mode_tests) / sizeof(*extend_mode_tests); ++i)
+    {
+        ID2D1BitmapBrush_SetExtendModeX(brush, extend_mode_tests[i].extend_mode_x);
+        extend_mode = ID2D1BitmapBrush_GetExtendModeX(brush);
+        ok(extend_mode == extend_mode_tests[i].extend_mode_x,
+                "Test %u: Got unexpected extend mode %#x, expected %#x.\n",
+                i, extend_mode, extend_mode_tests[i].extend_mode_x);
+        ID2D1BitmapBrush_SetExtendModeY(brush, extend_mode_tests[i].extend_mode_y);
+        extend_mode = ID2D1BitmapBrush_GetExtendModeY(brush);
+        ok(extend_mode == extend_mode_tests[i].extend_mode_y,
+                "Test %u: Got unexpected extend mode %#x, expected %#x.\n",
+                i, extend_mode, extend_mode_tests[i].extend_mode_y);
+        set_matrix_identity(&matrix);
+        translate_matrix(&matrix, extend_mode_tests[i].translate_x, extend_mode_tests[i].translate_y);
+        scale_matrix(&matrix, 0.5f, 0.5f);
+        ID2D1BitmapBrush_SetTransform(brush, &matrix);
+        ID2D1RenderTarget_FillRectangle(rt, &extend_mode_tests[i].rect, (ID2D1Brush *)brush);
+    }
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    ok(compare_surface(surface, "b4b775afecdae2d26642001f4faff73663bb8b31"), "Surface does not match.\n");
 
     ID2D1BitmapBrush_Release(brush);
     refcount = ID2D1Bitmap_Release(bitmap);
