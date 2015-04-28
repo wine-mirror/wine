@@ -2728,7 +2728,43 @@ HKLM,%CurrentVersionNT%\Time Zones\Ekaterinburg Standard Time,"TZI",1,d4,fe,ff,f
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Display",,"Pacific/Fiji"
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Dlt",,"Fiji Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"Std",,"Fiji Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"TZI",1,30,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time,"TZI",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,01,00,00,00,03,00,03,00,00,00,00,00,00,00,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2016",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,e0,07,01,00,00,00,18,00,03,00,00,00,00,00,00,00,e0,07,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2017",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,e1,07,01,00,00,00,16,00,03,00,00,00,00,00,00,00,e1,07,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2021",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,e5,07,01,00,00,00,18,00,03,00,00,00,00,00,00,00,e5,07,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2022",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,e6,07,01,00,00,00,17,00,03,00,00,00,00,00,00,00,e6,07,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2023",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,e7,07,01,00,00,00,16,00,03,00,00,00,00,00,00,00,e7,07,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2027",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,eb,07,01,00,00,00,18,00,03,00,00,00,00,00,00,00,eb,07,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2028",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,ec,07,01,00,00,00,17,00,03,00,00,00,00,00,00,00,ec,07,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2033",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,f1,07,01,00,00,00,17,00,03,00,00,00,00,00,00,00,f1,07,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2034",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,f2,07,01,00,00,00,16,00,03,00,00,00,00,00,00,00,f2,07,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2038",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,f6,07,01,00,00,00,18,00,03,00,00,00,00,00,00,00,f6,07,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2039",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,f7,07,01,00,00,00,17,00,03,00,00,00,00,00,00,00,f7,07,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2040",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,f8,07,01,00,00,00,16,00,03,00,00,00,00,00,00,00,f8,07,0b,00,00,00,04,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2044",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,fc,07,01,00,00,00,18,00,03,00,00,00,00,00,00,00,fc,07,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2045",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,fd,07,01,00,00,00,16,00,03,00,00,00,00,00,00,00,fd,07,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2049",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,01,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,01,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2050",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,02,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,02,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2051",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,03,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,03,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2055",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,07,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,07,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2056",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,08,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,08,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2061",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,0d,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,0d,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2062",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,0e,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,0e,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2066",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,12,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,12,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2067",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,13,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,13,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2068",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,14,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,14,08,0b,00,00,00,04,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2072",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,18,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,18,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2073",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,19,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,19,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2077",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,1d,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,1d,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2078",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,1e,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,1e,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2079",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,1f,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,1f,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2083",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,23,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,23,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2084",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,24,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,24,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2089",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,29,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,29,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2090",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,2a,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,2a,08,0b,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2094",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,2e,08,01,00,00,00,18,00,03,00,00,00,00,00,00,00,2e,08,0b,00,00,00,07,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2095",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,2f,08,01,00,00,00,17,00,03,00,00,00,00,00,00,00,2f,08,0b,00,00,00,06,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Fiji Standard Time\Dynamic DST,"2096",1,30,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,30,08,01,00,00,00,16,00,03,00,00,00,00,00,00,00,30,08,0b,00,00,00,04,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Display",,"Europe/Helsinki"
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Dlt",,"FLE Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\FLE Standard Time,"Std",,"FLE Standard Time"
