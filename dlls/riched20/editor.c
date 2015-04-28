@@ -4409,10 +4409,12 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return 0;
   case WM_SETREDRAW:
     goto do_default;
-  case WM_SIZE:
+  case WM_WINDOWPOSCHANGED:
   {
     RECT clientRect;
+    WINDOWPOS *winpos = (WINDOWPOS *)lParam;
 
+    if (winpos->flags & SWP_NOCLIENTSIZE) goto do_default;
     ITextHost_TxGetClientRect(editor->texthost, &clientRect);
     if (editor->bDefaultFormatRect) {
       ME_SetDefaultFormatRect(editor);
