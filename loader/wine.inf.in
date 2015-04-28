@@ -2707,7 +2707,12 @@ HKLM,%CurrentVersionNT%\Time Zones\E. Europe Standard Time,"TZI",1,4c,ff,ff,ff,0
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Display",,"America/Sao_Paulo"
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Dlt",,"E. South America Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"Std",,"E. South America Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2015",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,df,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,df,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2023",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,e7,07,02,00,00,00,1a,00,00,00,00,00,00,00,00,00,e7,07,0a,00,00,00,0f,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2026",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,ea,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,ea,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2034",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f2,07,02,00,00,00,1a,00,00,00,00,00,00,00,00,00,f2,07,0a,00,00,00,0f,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2037",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f5,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,f5,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Display",,"America/New_York"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Dlt",,"Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Std",,"Eastern Standard Time"
