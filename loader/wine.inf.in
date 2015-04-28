@@ -2829,7 +2829,19 @@ HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"TZI",1,2e,ff,ff,ff,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Display",,"Asia/Jerusalem"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Dlt",,"Israel Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Std",,"Israel Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,04,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2019",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,e3,07,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,e3,07,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2024",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,e8,07,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,e8,07,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2030",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,ee,07,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,ee,07,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2041",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,f9,07,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,f9,07,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2047",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,ff,07,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,ff,07,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2052",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,04,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,04,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2058",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,0a,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,0a,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2069",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,15,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,15,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2075",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,1b,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,1b,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2080",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,20,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,20,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2086",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,26,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,26,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2097",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,31,08,0a,00,00,00,1b,00,02,00,00,00,00,00,00,00,31,08,03,00,05,00,1d,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Display",,"Asia/Amman"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Dlt",,"Jordan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Std",,"Jordan Standard Time"
