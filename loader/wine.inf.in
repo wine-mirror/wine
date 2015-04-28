@@ -2823,7 +2823,7 @@ HKLM,%CurrentVersionNT%\Time Zones\New Zealand Standard Time,"TZI",1,30,fd,ff,ff
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Display",,"America/St_Johns"
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Dlt",,"Newfoundland Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"Std",,"Newfoundland Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"TZI",1,d2,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,00,00,01,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,01,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Newfoundland Standard Time,"TZI",1,d2,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\North Asia East Standard Time,"Display",,"Asia/Irkutsk"
 HKLM,%CurrentVersionNT%\Time Zones\North Asia East Standard Time,"Dlt",,"North Asia East Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\North Asia East Standard Time,"Std",,"North Asia East Standard Time"
