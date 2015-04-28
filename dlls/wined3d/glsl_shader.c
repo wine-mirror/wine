@@ -5910,9 +5910,10 @@ static void shader_glsl_ffp_fragment_op(struct wined3d_string_buffer *buffer, un
 }
 
 /* Context activation is done by the caller. */
-static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_string_buffer *buffer,
+static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *priv,
         const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     BYTE lum_map = 0, bump_map = 0, tex_map = 0, tss_const_map = 0;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     const char *final_combiner_src = "ret";
@@ -5920,6 +5921,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_string_buf
     GLuint shader_id;
     DWORD arg0, arg1, arg2;
     unsigned int stage;
+    struct wined3d_string_buffer *tex_reg_name = string_buffer_get(&priv->string_buffers);
 
     string_buffer_clear(buffer);
 
@@ -6061,7 +6063,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_string_buf
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {
         const char *texture_function, *coord_mask;
-        char tex_reg_name[8];
         BOOL proj;
 
         if (!(tex_map & (1 << stage)))
@@ -6191,8 +6192,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_string_buf
                     stage, texture_function, stage, stage, coord_mask);
         }
 
-        sprintf(tex_reg_name, "tex%u", stage);
-        shader_glsl_color_correction_ext(buffer, tex_reg_name, WINED3DSP_WRITEMASK_ALL,
+        string_buffer_sprintf(tex_reg_name, "tex%u", stage);
+        shader_glsl_color_correction_ext(buffer, tex_reg_name->buffer, WINED3DSP_WRITEMASK_ALL,
                 settings->op[stage].color_fixup);
     }
 
@@ -6265,6 +6266,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_string_buf
 
     shader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
     shader_glsl_compile(gl_info, shader_id, buffer->buffer);
+
+    string_buffer_release(&priv->string_buffers, tex_reg_name);
     return shader_id;
 }
 
@@ -6302,7 +6305,7 @@ static struct glsl_ffp_fragment_shader *shader_glsl_find_ffp_fragment_shader(str
         return NULL;
 
     glsl_desc->entry.settings = *args;
-    glsl_desc->id = shader_glsl_generate_ffp_fragment_shader(&priv->shader_buffer, args, gl_info);
+    glsl_desc->id = shader_glsl_generate_ffp_fragment_shader(priv, args, gl_info);
     list_init(&glsl_desc->linked_programs);
     add_ffp_frag_shader(&priv->ffp_fragment_shaders, &glsl_desc->entry);
 
