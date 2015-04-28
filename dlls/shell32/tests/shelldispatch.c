@@ -364,6 +364,27 @@ static void test_service(void)
     IShellDispatch2_Release(sd);
 }
 
+static void test_ShellFolderView(void)
+{
+    IShellFolderViewDual *viewdual;
+    IShellFolder *desktop;
+    IShellView *view;
+    HRESULT hr;
+
+    /* IShellFolderViewDual is not an IShellView extension */
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellView_QueryInterface(view, &IID_IShellFolderViewDual, (void**)&viewdual);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    IShellView_Release(view);
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shelldispatch)
 {
     HRESULT r;
@@ -376,6 +397,7 @@ START_TEST(shelldispatch)
     init_function_pointers();
     test_namespace();
     test_service();
+    test_ShellFolderView();
 
     CoUninitialize();
 }
