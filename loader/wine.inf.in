@@ -2845,7 +2845,19 @@ HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time\Dynamic DST,"2097",1,88,
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Display",,"Asia/Amman"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Dlt",,"Jordan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Std",,"Jordan Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,04,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2016",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,e0,07,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,e0,07,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2022",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,e6,07,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,e6,07,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2033",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,f1,07,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,f1,07,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2039",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,f7,07,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,f7,07,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2044",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,fc,07,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,fc,07,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2050",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,02,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,02,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2061",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,0d,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,0d,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2067",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,13,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,13,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2072",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,18,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,18,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2078",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,1e,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,1e,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2089",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,29,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,29,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2095",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,2f,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,2f,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Display",,"Asia/Seoul"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Dlt",,"Korea Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Std",,"Korea Standard Time"
