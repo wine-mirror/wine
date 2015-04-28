@@ -1315,6 +1315,7 @@ enable_vbscript
 enable_vcomp
 enable_vcomp100
 enable_vcomp110
+enable_vcomp120
 enable_vcomp90
 enable_vdmdbg
 enable_version
@@ -17848,6 +17849,7 @@ wine_fn_config_dll vcomp enable_vcomp
 wine_fn_config_test dlls/vcomp/tests vcomp_test
 wine_fn_config_dll vcomp100 enable_vcomp100
 wine_fn_config_dll vcomp110 enable_vcomp110
+wine_fn_config_dll vcomp120 enable_vcomp120
 wine_fn_config_dll vcomp90 enable_vcomp90
 wine_fn_config_dll vdhcp.vxd enable_win16
 wine_fn_config_dll vdmdbg enable_vdmdbg implib
