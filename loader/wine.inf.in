@@ -2780,7 +2780,32 @@ HKLM,%CurrentVersionNT%\Time Zones\GMT Standard Time,"TZI",1,00,00,00,00,00,00,0
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Display",,"America/Godthab"
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Dlt",,"Greenland Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"Std",,"Greenland Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,04,00,17,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,05,00,17,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2015",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,df,07,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,df,07,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2018",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,e2,07,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,e2,07,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2020",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,e4,07,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,e4,07,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2026",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,ea,07,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,ea,07,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2029",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,ed,07,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,ed,07,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2035",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f3,07,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,f3,07,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2037",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f5,07,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,f5,07,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2040",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f8,07,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,f8,07,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2043",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,fb,07,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,fb,07,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2046",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,fe,07,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,fe,07,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2048",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,00,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2054",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,06,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,06,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2057",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,09,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,09,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2063",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,0f,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,0f,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2065",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,11,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,11,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2068",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,14,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,14,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2071",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,17,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,17,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2074",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,1a,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,1a,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2076",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,1c,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,1c,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2082",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,22,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,22,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2085",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,25,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,25,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2091",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,2b,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,2b,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2093",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,2d,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,2d,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2096",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,30,08,0a,00,06,00,1b,00,17,00,00,00,00,00,00,00,30,08,03,00,06,00,18,00,16,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Greenland Standard Time\Dynamic DST,"2099",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,33,08,0a,00,06,00,18,00,17,00,00,00,00,00,00,00,33,08,03,00,06,00,1c,00,16,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Greenwich Standard Time,"Display",,"Greenwich"
 HKLM,%CurrentVersionNT%\Time Zones\Greenwich Standard Time,"Dlt",,"Greenwich Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Greenwich Standard Time,"Std",,"Greenwich Standard Time"
