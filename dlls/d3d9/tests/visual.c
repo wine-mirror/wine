@@ -28,6 +28,8 @@
  * causes visible results in games can be tested in a way that does not depend on pixel exactness
  */
 
+#include <math.h>
+
 #define COBJMACROS
 #include <d3d9.h>
 #include "wine/test.h"
@@ -569,6 +571,33 @@ static void test_specular_lighting(void)
         100.0f,
         0.0f,
         0.0f, 0.0f, 1.0f,
+    },
+    spot =
+    {
+        D3DLIGHT_SPOT,
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {1.0f, 1.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f},
+        100.0f,
+        1.0f,
+        0.0f, 0.0f, 1.0f,
+        M_PI / 12.0f, M_PI / 3.0f
+    },
+    /* The chosen range value makes the test fail when using a manhattan
+     * distance metric vs the correct euclidean distance. */
+    point_range =
+    {
+        D3DLIGHT_POINT,
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {1.0f, 1.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f},
+        1.2f,
+        0.0f,
+        0.0f, 0.0f, 1.0f,
     };
     static const struct expected_color
     {
@@ -622,6 +651,42 @@ static void test_specular_lighting(void)
         {160, 360, 0x00000000},
         {320, 360, 0x00070707},
         {480, 360, 0x00000000},
+    },
+    expected_spot[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00141414},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00141414},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00141414},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00141414},
+        {480, 360, 0x00000000},
+    },
+    expected_spot_local[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00020202},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00020202},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00020202},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00020202},
+        {480, 360, 0x00000000},
+    },
+    expected_point_range[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x005a5a5a},
+        {480, 120, 0x00000000},
+        {160, 240, 0x005a5a5a},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x005a5a5a},
+        {160, 360, 0x00000000},
+        {320, 360, 0x005a5a5a},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
@@ -640,6 +705,12 @@ static void test_specular_lighting(void)
                 sizeof(expected_point) / sizeof(expected_point[0])},
         {&point, TRUE, expected_point_local,
                 sizeof(expected_point_local) / sizeof(expected_point_local[0])},
+        {&spot, FALSE, expected_spot,
+                sizeof(expected_spot) / sizeof(expected_spot[0])},
+        {&spot, TRUE, expected_spot_local,
+                sizeof(expected_spot_local) / sizeof(expected_spot_local[0])},
+        {&point_range, FALSE, expected_point_range,
+                sizeof(expected_point_range) / sizeof(expected_point_range[0])},
     };
     IDirect3DDevice9 *device;
     D3DMATERIAL9 material;
