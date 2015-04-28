@@ -4766,19 +4766,20 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void handle_ps3_input(struct wined3d_string_buffer *buffer,
+static void handle_ps3_input(struct shader_glsl_priv *priv,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature *input_signature,
         const struct wined3d_shader_reg_maps *reg_maps_in,
         const struct wined3d_shader_signature *output_signature,
         const struct wined3d_shader_reg_maps *reg_maps_out)
 {
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     unsigned int i, j;
     DWORD *set;
     DWORD in_idx;
     unsigned int in_count = vec4_varyings(3, gl_info);
     char reg_mask[6];
-    char destination[50];
+    struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (in_count + 2));
 
@@ -4800,11 +4801,11 @@ static void handle_ps3_input(struct wined3d_string_buffer *buffer,
         }
 
         if (in_idx == in_count)
-            sprintf(destination, "gl_FrontColor");
+            string_buffer_sprintf(destination, "gl_FrontColor");
         else if (in_idx == in_count + 1)
-            sprintf(destination, "gl_FrontSecondaryColor");
+            string_buffer_sprintf(destination, "gl_FrontSecondaryColor");
         else
-            sprintf(destination, "ps_link[%u]", in_idx);
+            string_buffer_sprintf(destination, "ps_link[%u]", in_idx);
 
         if (!set[in_idx])
             set[in_idx] = ~0u;
@@ -4827,7 +4828,7 @@ static void handle_ps3_input(struct wined3d_string_buffer *buffer,
             shader_glsl_write_mask_to_str(mask, reg_mask);
 
             shader_addline(buffer, "%s%s = vs_out[%u]%s;\n",
-                    destination, reg_mask, output->register_idx, reg_mask);
+                    destination->buffer, reg_mask, output->register_idx, reg_mask);
         }
     }
 
@@ -4848,24 +4849,26 @@ static void handle_ps3_input(struct wined3d_string_buffer *buffer,
         reg_mask[size] = '\0';
 
         if (i == in_count)
-            sprintf(destination, "gl_FrontColor");
+            string_buffer_sprintf(destination, "gl_FrontColor");
         else if (i == in_count + 1)
-            sprintf(destination, "gl_FrontSecondaryColor");
+            string_buffer_sprintf(destination, "gl_FrontSecondaryColor");
         else
-            sprintf(destination, "ps_link[%u]", i);
+            string_buffer_sprintf(destination, "ps_link[%u]", i);
 
-        if (size == 1) shader_addline(buffer, "%s.%s = 0.0;\n", destination, reg_mask);
-        else shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination, reg_mask, size);
+        if (size == 1) shader_addline(buffer, "%s.%s = 0.0;\n", destination->buffer, reg_mask);
+        else shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination->buffer, reg_mask, size);
     }
 
     HeapFree(GetProcessHeap(), 0, set);
+    string_buffer_release(&priv->string_buffers, destination);
 }
 
 /* Context activation is done by the caller. */
-static GLuint generate_param_reorder_function(struct wined3d_string_buffer *buffer,
+static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
         const struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     GLuint ret = 0;
     DWORD ps_major = ps ? ps->reg_maps.shader_version.major : 0;
     unsigned int i;
@@ -4964,7 +4967,7 @@ static GLuint generate_param_reorder_function(struct wined3d_string_buffer *buff
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(buffer, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
+        handle_ps3_input(priv, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
                 &ps->reg_maps, &vs->output_signature, &vs->reg_maps);
 
         shader_addline(buffer, "}\n");
@@ -6578,7 +6581,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         WORD map = vshader->reg_maps.input_registers;
         struct wined3d_string_buffer *tmp_name = string_buffer_get(&priv->string_buffers);
 
-        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
+        reorder_shader_id = generate_param_reorder_function(priv, vshader, pshader, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
         GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
         checkGLcall("glAttachShader");
