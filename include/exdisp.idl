@@ -229,7 +229,7 @@ interface IWebBrowserApp : IWebBrowser
     [id(301)] HRESULT ClientToWindow([in,out] int* pcx, [in,out] int* pcy);
     [id(302)] HRESULT PutProperty([in] BSTR Property, [in] VARIANT vtValue);
     [id(303)] HRESULT GetProperty([in] BSTR Property, [out, retval] VARIANT *pvtValue);
-    [id(0), propget] HRESULT Name([out, retval] BSTR* Name);
+    [id(DISPID_VALUE), propget] HRESULT Name([out, retval] BSTR* Name);
     [id(DISPID_HWND), propget] HRESULT HWND([out, retval] SHANDLE_PTR *pHWND);
     [id(400), propget] HRESULT FullName([out, retval] BSTR* FullName);
     [id(401), propget] HRESULT Path([out, retval] BSTR* Path);
@@ -581,11 +581,13 @@ interface IShellWindows : IDispatch
 {
     [propget] HRESULT Count([out, retval] long *Count);
 
-    [id(0)] HRESULT Item(
+    [id(DISPID_VALUE)]
+    HRESULT Item(
             [in, optional] VARIANT index,
             [out, retval] IDispatch **Folder);
 
-    [id(-4)] HRESULT _NewEnum([out, retval] IUnknown **ppunk);
+    [id(DISPID_NEWENUM)]
+    HRESULT _NewEnum([out, retval] IUnknown **ppunk);
 
     [hidden] HRESULT Register(
             [in] IDispatch *pid,
@@ -916,7 +918,8 @@ interface ISearches : IDispatch {
             [in, optional] VARIANT index,
             [out, retval] ISearch **ppid);
 
-    [id(-4)] HRESULT _NewEnum([out, retval] IUnknown **ppunk);
+    [id(DISPID_NEWENUM)]
+    HRESULT _NewEnum([out, retval] IUnknown **ppunk);
 }
 
 [
