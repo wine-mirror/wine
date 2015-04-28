@@ -228,7 +228,9 @@ interface IAccessibleHandler : IUnknown
 ]
 interface IAccIdentity : IUnknown
 {
-    HRESULT GetIdentityString ([in] DWORD dwIDChild, [out] BYTE **ppIDString, [out] DWORD *pdwIDStringLen);
+    HRESULT GetIdentityString([in] DWORD idchild,
+                              [out, size_is(*string_len)] BYTE **str,
+                              [out] DWORD *string_len);
 }
 
 [
@@ -238,8 +240,11 @@ interface IAccIdentity : IUnknown
 ]
 interface IAccPropServer: IUnknown
 {
-    HRESULT GetPropValue ([in] const BYTE *pIDString, [in] DWORD  dwIDStringLen, [in] MSAAPROPID idProp,
-        [out] VARIANT *pvarValue, [out] BOOL *pfHasProp);
+    HRESULT GetPropValue([in, size_is(string_len)] const BYTE *str,
+                         [in] DWORD string_len,
+                         [in] MSAAPROPID idProp,
+                         [out] VARIANT *value,
+                         [out] BOOL *has_prop);
 }
 
 [
@@ -249,45 +254,80 @@ interface IAccPropServer: IUnknown
 ]
 interface IAccPropServices : IUnknown
 {
-    HRESULT SetPropValue([in] const BYTE *pIDString, [in] DWORD dwIDStringLen, [in] MSAAPROPID idProp, [in] VARIANT var);
+    HRESULT SetPropValue([in, size_is(string_len)] const BYTE *str,
+                         [in] DWORD string_len,
+                         [in] MSAAPROPID idProp,
+                         [in] VARIANT var);
 
-    HRESULT SetPropServer([in] const BYTE * pIDString, [in] DWORD dwIDStringLen, [in] const MSAAPROPID* paProps,
-                    [in] int cProps, [in] IAccPropServer* pServer, [in] AnnoScope AnnoScope);
+    HRESULT SetPropServer([in, size_is(string_len)] const BYTE *str,
+                          [in] DWORD string_len,
+                          [in, size_is(cProps)] const MSAAPROPID *props,
+                          [in] int cProps,
+                          [in] IAccPropServer* pServer,
+                          [in] AnnoScope AnnoScope);
 
-    HRESULT ClearProps([in] const BYTE *pIDString, [in] DWORD dwIDStringLen, [in] const MSAAPROPID* paProps, [in] int cProps);
+    HRESULT ClearProps([in, size_is(string_len)] const BYTE *str,
+                       [in] DWORD string_len,
+                       [in, size_is(cProps)] const MSAAPROPID *props,
+                       [in] int cProps);
 
     HRESULT SetHwndProp([in] HWND hwnd, [in] DWORD idObject, [in] DWORD idChild,
                     [in] MSAAPROPID idProp, [in] VARIANT var);
 
     HRESULT SetHwndPropStr([in] HWND hwnd, [in] DWORD idObject, [in] DWORD idChild,
-                    [in] MSAAPROPID idProp, [in] LPWSTR str);
+                    [in] MSAAPROPID idProp, [in, string] LPWSTR str);
 
-    HRESULT SetHwndPropServer([in] HWND hwnd, [in] DWORD idObject, [in] DWORD idChild,
-                    [in] const MSAAPROPID* paProps, [in] int cProps, [in] IAccPropServer* pServer, [in] AnnoScope AnnoScope);
+    HRESULT SetHwndPropServer([in] HWND hwnd,
+                              [in] DWORD idObject,
+                              [in] DWORD idChild,
+                              [in, size_is(cProps)] const MSAAPROPID *props,
+                              [in] int cProps,
+                              [in] IAccPropServer *server,
+                              [in] AnnoScope scope);
 
-    HRESULT ClearHwndProps([in] HWND hwnd, [in] DWORD idObject, [in] DWORD idChild,
-                    [in] const MSAAPROPID* paProps, [in] int cProps);
+    HRESULT ClearHwndProps([in] HWND hwnd,
+                           [in] DWORD idObject,
+                           [in] DWORD idChild,
+                           [in, size_is(cProps)] const MSAAPROPID *props,
+                           [in] int cProps);
 
-    HRESULT ComposeHwndIdentityString([in] HWND hwnd, [in] DWORD idObject, [in] DWORD idChild,
-                    [out] BYTE **ppIDString, [out] DWORD* pdwIDStringLen);
+    HRESULT ComposeHwndIdentityString([in] HWND hwnd,
+                                      [in] DWORD idObject,
+                                      [in] DWORD idChild,
+                                      [out, size_is(*string_len)] BYTE **str,
+                                      [out] DWORD *string_len);
 
-    HRESULT DecomposeHwndIdentityString([in] const BYTE *pIDString, [in] DWORD dwIDStringLen,
-                    [out] HWND* phwnd, [out] DWORD* pidObject, [out] DWORD* pidChild);
+    HRESULT DecomposeHwndIdentityString([in, size_is(string_len)] const BYTE *str,
+                                        [in] DWORD string_len,
+                                        [out] HWND *phwnd,
+                                        [out] DWORD *pidObject,
+                                        [out] DWORD *pidChild);
 
     HRESULT SetHmenuProp([in] HMENU hmenu, [in] DWORD idChild, [in] MSAAPROPID idProp, [in] VARIANT var);
 
-    HRESULT SetHmenuPropStr([in] HMENU hmenu, [in] DWORD idChild, [in] MSAAPROPID idProp, [in] LPWSTR str);
+    HRESULT SetHmenuPropStr([in] HMENU hmenu, [in] DWORD idChild, [in] MSAAPROPID idProp, [in, string] LPWSTR str);
 
-    HRESULT SetHmenuPropServer([in] HMENU hmenu, [in] DWORD idChild, [in] const MSAAPROPID* paProps,
-                    [in] int cProps, [in] IAccPropServer* pServer, [in] AnnoScope AnnoScope);
+    HRESULT SetHmenuPropServer([in] HMENU hmenu,
+                               [in] DWORD idChild,
+                               [in, size_is(cProps)] const MSAAPROPID *props,
+                               [in] int cProps,
+                               [in] IAccPropServer *server,
+                               [in] AnnoScope scope);
 
-    HRESULT ClearHmenuProps([in] HMENU hmenu, [in] DWORD idChild, [in] const MSAAPROPID* paProps, [in] int cProps);
+    HRESULT ClearHmenuProps([in] HMENU hmenu,
+                            [in] DWORD idChild,
+                            [in, size_is(cProps)] const MSAAPROPID *props,
+                            [in] int cProps);
 
-    HRESULT ComposeHmenuIdentityString([in] HMENU hmenu, [in] DWORD idChild,
-                    [out] BYTE **ppIDString, [out] DWORD *pdwIDStringLen);
+    HRESULT ComposeHmenuIdentityString([in] HMENU hmenu,
+                                       [in] DWORD idChild,
+                                       [out, size_is(*string_len)] BYTE **str,
+                                       [out] DWORD *string_len);
 
-    HRESULT DecomposeHmenuIdentityString([in] const BYTE *pIDString, [in] DWORD dwIDStringLen,
-                    [out] HMENU *phmenu, [out] DWORD *pidChild);
+    HRESULT DecomposeHmenuIdentityString([in, size_is(string_len)] const BYTE *str,
+                                         [in] DWORD string_len,
+                                         [out] HMENU *phmenu,
+                                         [out] DWORD *pidChild);
 }
 
 [
