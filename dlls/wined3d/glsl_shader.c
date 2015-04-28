@@ -2765,7 +2765,10 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 
     shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
-    if (version->type == WINED3D_SHADER_TYPE_PIXEL)
+    /* FIXME: We currently don't support fixups for vertex shaders or anything
+     * above SM3. Note that for SM4+ the sampler index doesn't have to match
+     * the resource index. */
+    if (version->type == WINED3D_SHADER_TYPE_PIXEL && version->major < 4)
     {
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         fixup = priv->cur_ps_args->color_fixup[sampler];
@@ -2780,7 +2783,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     }
     else
     {
-        fixup = COLOR_FIXUP_IDENTITY; /* FIXME: Vshader color fixup */
+        fixup = COLOR_FIXUP_IDENTITY;
     }
 
     shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], sample_function->data_type);
