@@ -385,6 +385,102 @@ static void test_ShellFolderView(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_ShellWindows(void)
+{
+    IShellWindows *shellwindows;
+    LONG cookie, cookie2, ret;
+    IDispatch *disp;
+    VARIANT v, v2;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = CoCreateInstance(&CLSID_ShellWindows, NULL, CLSCTX_LOCAL_SERVER,
+        &IID_IShellWindows, (void**)&shellwindows);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr != S_OK) return;
+
+    /* NULL out argument */
+    hr = IShellWindows_Register(shellwindows, NULL, 0, SWC_EXPLORER, NULL);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "got 0x%08x\n", hr);
+
+    hr = IShellWindows_Register(shellwindows, NULL, 0, SWC_EXPLORER, &cookie);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IShellWindows_Register(shellwindows, (IDispatch*)shellwindows, 0, SWC_EXPLORER, &cookie);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IShellWindows_Register(shellwindows, (IDispatch*)shellwindows, 0, SWC_EXPLORER, &cookie);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hwnd = CreateWindowExA(0, "button", "test", BS_CHECKBOX | WS_VISIBLE | WS_POPUP,
+                           0, 0, 50, 14, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "got %p, error %d\n", hwnd, GetLastError());
+
+    cookie = 0;
+    hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_EXPLORER, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie != 0, "got %d\n", cookie);
+
+    cookie2 = 0;
+    hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_EXPLORER, &cookie2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie2 != 0 && cookie2 != cookie, "got %d\n", cookie2);
+
+    hr = IShellWindows_Revoke(shellwindows, cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellWindows_Revoke(shellwindows, cookie2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellWindows_Revoke(shellwindows, 0);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    /* we can register ourselves as desktop, but FindWindowSW still returns real desktop window */
+    cookie = 0;
+    hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_DESKTOP, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie != 0, "got %d\n", cookie);
+
+    disp = (void*)0xdeadbeef;
+    ret = 0xdead;
+    VariantInit(&v);
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v, SWC_DESKTOP, &ret, SWFO_NEEDDISPATCH, &disp);
+    ok(hr == S_OK || broken(hr == S_FALSE), "got 0x%08x\n", hr);
+    if (hr == S_FALSE) /* winxp and earlier */ {
+        /* older versions allowed to regiser SWC_DESKTOP and access it with FindWindowSW */
+        ok(disp == NULL, "got %p\n", disp);
+        ok(ret == 0, "got %d\n", ret);
+    }
+    else {
+        ok(disp != NULL, "got %p\n", disp);
+        ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
+        if (disp) IDispatch_Release(disp);
+    }
+
+    disp = (void*)0xdeadbeef;
+    ret = 0xdead;
+    VariantInit(&v);
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v, SWC_DESKTOP, &ret, 0, &disp);
+    ok(hr == S_OK || broken(hr == S_FALSE) /* winxp */, "got 0x%08x\n", hr);
+    ok(disp == NULL, "got %p\n", disp);
+    ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
+
+    disp = (void*)0xdeadbeef;
+    ret = 0xdead;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = cookie;
+    VariantInit(&v2);
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_BROWSER, &ret, SWFO_COOKIEPASSED, &disp);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(disp == NULL, "got %p\n", disp);
+    ok(ret == 0, "got %d\n", ret);
+
+    hr = IShellWindows_Revoke(shellwindows, cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    DestroyWindow(hwnd);
+    IShellWindows_Release(shellwindows);
+}
+
 START_TEST(shelldispatch)
 {
     HRESULT r;
@@ -398,6 +494,7 @@ START_TEST(shelldispatch)
     test_namespace();
     test_service();
     test_ShellFolderView();
+    test_ShellWindows();
 
     CoUninitialize();
 }
