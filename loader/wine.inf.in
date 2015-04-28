@@ -2843,7 +2843,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time,"TZI",1,e0,01,00,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"America/Tijuana"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Std",,"Pacific Standard Time (Mexico)"
-HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Display",,"Europe/Paris"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Dlt",,"Romance Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Std",,"Romance Standard Time"
