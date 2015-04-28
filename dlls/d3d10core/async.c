@@ -66,16 +66,17 @@ static ULONG STDMETHODCALLTYPE d3d10_query_AddRef(ID3D10Query *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
 {
-    struct d3d10_query *This = impl_from_ID3D10Query(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d10_query *query = impl_from_ID3D10Query(iface);
+    ULONG refcount = InterlockedDecrement(&query->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", query, refcount);
 
     if (!refcount)
     {
-        ID3D10Device1_Release(This->device);
-        wined3d_private_store_cleanup(&This->private_store);
-        HeapFree(GetProcessHeap(), 0, This);
+        ID3D10Device1_Release(query->device);
+        wined3d_query_decref(query->wined3d_query);
+        wined3d_private_store_cleanup(&query->private_store);
+        HeapFree(GetProcessHeap(), 0, query);
     }
 
     return refcount;
