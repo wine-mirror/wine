@@ -580,12 +580,12 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     transform.pad1 = 0.0f;
 
     /* Translate from world space to object space. */
-    tmp_x = rect->left + (rect->right - rect->left) / 2.0f;
-    tmp_y = rect->top + (rect->bottom - rect->top) / 2.0f;
+    tmp_x = min(rect->left, rect->right) + fabsf(rect->right - rect->left) / 2.0f;
+    tmp_y = min(rect->top, rect->bottom) + fabsf(rect->bottom - rect->top) / 2.0f;
     transform._31 += tmp_x * transform._11 + tmp_y * transform._21;
     transform._32 += tmp_x * transform._12 + tmp_y * transform._22;
-    tmp_x = (rect->right - rect->left) / 2.0f;
-    tmp_y = (rect->bottom - rect->top) / 2.0f;
+    tmp_x = fabsf(rect->right - rect->left) / 2.0f;
+    tmp_y = fabsf(rect->bottom - rect->top) / 2.0f;
     transform._11 *= tmp_x;
     transform._12 *= tmp_x;
     transform._21 *= tmp_y;
