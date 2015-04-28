@@ -29,6 +29,7 @@
 #include <rpc.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include "exdisp.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -63,6 +64,18 @@ static int desktop_width, launcher_size, launchers_per_row;
 
 static struct launcher **launchers;
 static unsigned int nb_launchers, nb_allocated;
+
+struct shellwindows
+{
+    IShellWindows IShellWindows_iface;
+};
+
+static inline struct shellwindows *impl_from_IShellWindows(IShellWindows *iface)
+{
+    return CONTAINING_RECORD(iface, struct shellwindows, IShellWindows_iface);
+}
+
+static void shellwindows_init(void);
 
 static RECT get_icon_rect( unsigned int index )
 {
@@ -912,6 +925,8 @@ void manage_desktop( WCHAR *arg )
         }
     }
 
+    shellwindows_init();
+
     /* run the desktop message loop */
     if (hwnd)
     {
@@ -921,4 +936,258 @@ void manage_desktop( WCHAR *arg )
     }
 
     ExitProcess( 0 );
+}
+
+/* IShellWindows implementation */
+static HRESULT WINAPI shellwindows_QueryInterface(IShellWindows *iface, REFIID riid, void **ppvObject)
+{
+    struct shellwindows *This = impl_from_IShellWindows(iface);
+
+    TRACE("%s %p\n", debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID(riid, &IID_IShellWindows) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *ppvObject = &This->IShellWindows_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI shellwindows_AddRef(IShellWindows *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI shellwindows_Release(IShellWindows *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI shellwindows_GetTypeInfoCount(IShellWindows *iface, UINT *pctinfo)
+{
+    FIXME("%p\n", pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_GetTypeInfo(IShellWindows *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    FIXME("%u 0x%x %p\n", iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_GetIDsOfNames(IShellWindows *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid,
+        DISPID *rgDispId)
+{
+    FIXME("%s %p %u 0x%x %p\n", debugstr_guid(riid), rgszNames, cNames,
+            lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_Invoke(IShellWindows *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    FIXME("0x%x %s 0x%x 0x%x %p %p %p %p\n", dispIdMember, debugstr_guid(riid),
+        lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_get_Count(IShellWindows *iface, LONG *count)
+{
+    FIXME("%p\n", count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_Item(IShellWindows *iface, VARIANT index,
+    IDispatch **folder)
+{
+    FIXME("%s %p\n", debugstr_variant(&index), folder);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows__NewEnum(IShellWindows *iface, IUnknown **ppunk)
+{
+    FIXME("%p\n", ppunk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_Register(IShellWindows *iface,
+        IDispatch *disp, LONG hWnd, int class, LONG *cookie)
+{
+    FIXME("%p 0x%x 0x%x %p\n", disp, hWnd, class, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_RegisterPending(IShellWindows *iface,
+    LONG threadid, VARIANT *loc, VARIANT *root, int class, LONG *cookie)
+{
+    FIXME("0x%x %s %s 0x%x %p\n", threadid, debugstr_variant(loc), debugstr_variant(root),
+            class, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_Revoke(IShellWindows *iface, LONG cookie)
+{
+    FIXME("0x%x\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_OnNavigate(IShellWindows *iface, LONG cookie, VARIANT *loc)
+{
+    FIXME("0x%x %p\n", cookie, debugstr_variant(loc));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_OnActivated(IShellWindows *iface, LONG cookie, VARIANT_BOOL active)
+{
+    FIXME("0x%x 0x%x\n", cookie, active);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_FindWindowSW(IShellWindows *iface, VARIANT *loc,
+    VARIANT *root, int class, LONG *hwnd, int options, IDispatch **disp)
+{
+    FIXME("%s %p 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
+        class, hwnd, options, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_OnCreated(IShellWindows *iface, LONG cookie, IUnknown *punk)
+{
+    FIXME("0x%x %p\n", cookie, punk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellwindows_ProcessAttachDetach(IShellWindows *iface, VARIANT_BOOL attach)
+{
+    FIXME("0x%x\n", attach);
+    return E_NOTIMPL;
+}
+
+static const IShellWindowsVtbl shellwindowsvtbl =
+{
+    shellwindows_QueryInterface,
+    shellwindows_AddRef,
+    shellwindows_Release,
+    shellwindows_GetTypeInfoCount,
+    shellwindows_GetTypeInfo,
+    shellwindows_GetIDsOfNames,
+    shellwindows_Invoke,
+    shellwindows_get_Count,
+    shellwindows_Item,
+    shellwindows__NewEnum,
+    shellwindows_Register,
+    shellwindows_RegisterPending,
+    shellwindows_Revoke,
+    shellwindows_OnNavigate,
+    shellwindows_OnActivated,
+    shellwindows_FindWindowSW,
+    shellwindows_OnCreated,
+    shellwindows_ProcessAttachDetach
+};
+
+static struct shellwindows shellwindows;
+
+struct shellwindows_classfactory
+{
+    IClassFactory IClassFactory_iface;
+    DWORD classreg;
+};
+
+static inline struct shellwindows_classfactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct shellwindows_classfactory, IClassFactory_iface);
+}
+
+static HRESULT WINAPI swclassfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppvObject)
+{
+    struct shellwindows_classfactory *This = impl_from_IClassFactory(iface);
+
+    TRACE("%s %p\n", debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObject = &This->IClassFactory_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
+    }
+
+    if (*ppvObject)
+    {
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI swclassfactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI swclassfactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI swclassfactory_CreateInstance(IClassFactory *iface,
+    IUnknown *pUnkOuter, REFIID riid, void **ppvObject)
+{
+    TRACE("%p %s %p\n", pUnkOuter, debugstr_guid(riid), ppvObject);
+    return IShellWindows_QueryInterface(&shellwindows.IShellWindows_iface, riid, ppvObject);
+}
+
+static HRESULT WINAPI swclassfactory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    TRACE("%u\n", lock);
+    return E_NOTIMPL;
+}
+
+static const IClassFactoryVtbl swclassfactoryvtbl =
+{
+    swclassfactory_QueryInterface,
+    swclassfactory_AddRef,
+    swclassfactory_Release,
+    swclassfactory_CreateInstance,
+    swclassfactory_LockServer
+};
+
+static struct shellwindows_classfactory shellwindows_classfactory = { { &swclassfactoryvtbl } };
+
+static void shellwindows_init(void)
+{
+    HRESULT hr;
+
+    CoInitialize(NULL);
+
+    shellwindows.IShellWindows_iface.lpVtbl = &shellwindowsvtbl;
+
+    hr = CoRegisterClassObject(&CLSID_ShellWindows,
+        (IUnknown*)&shellwindows_classfactory.IClassFactory_iface,
+        CLSCTX_LOCAL_SERVER,
+        REGCLS_MULTIPLEUSE,
+        &shellwindows_classfactory.classreg);
+
+    if (FAILED(hr))
+        WARN("Failed to register ShellWindows object: %08x\n", hr);
 }
