@@ -196,4 +196,6 @@ START_TEST(msvcp120)
     test__Xtime_diff_to_millis2();
     test_xtime_get();
     test__Getcvt();
+
+    FreeLibrary(msvcp);
 }
