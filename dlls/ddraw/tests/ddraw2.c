@@ -521,6 +521,7 @@ static void test_clipper_blt(void)
     IDirectDraw2 *ddraw;
     RGNDATA *rgn_data;
     D3DCOLOR color;
+    ULONG refcount;
     HRGN r1, r2;
     HWND window;
     DDBLTFX fx;
@@ -713,7 +714,8 @@ static void test_clipper_blt(void)
 
     IDirectDrawSurface_Release(dst_surface);
     IDirectDrawSurface_Release(src_surface);
-    IDirectDrawClipper_Release(clipper);
+    refcount = IDirectDrawClipper_Release(clipper);
+    ok(!refcount, "Clipper has %u references left.\n", refcount);
     IDirectDraw2_Release(ddraw);
 }
 

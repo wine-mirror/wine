@@ -5615,6 +5615,9 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
     /* Reduce the ddraw surface count. */
     list_remove(&surface->surface_list_entry);
 
+    if (surface->clipper)
+        IDirectDrawClipper_Release(&surface->clipper->IDirectDrawClipper_iface);
+
     if (surface == surface->ddraw->primary)
         surface->ddraw->primary = NULL;
 
