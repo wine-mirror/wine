@@ -2887,10 +2887,18 @@ HKLM,%CurrentVersionNT%\Time Zones\Libya Standard Time,"Display",,"Africa/Tripol
 HKLM,%CurrentVersionNT%\Time Zones\Libya Standard Time,"Dlt",,"Libya Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Libya Standard Time,"Std",,"Libya Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Libya Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"Display",,"Pacific/Kiritimati"
+HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"Dlt",,"Line Islands Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"Std",,"Line Islands Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"TZI",1,b8,fc,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Display",,"Asia/Magadan"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Dlt",,"Magadan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Std",,"Magadan Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Display",,"Indian/Mauritius"
+HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Dlt",,"Mauritius Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Std",,"Mauritius Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Display",,"America/Mexico_City"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Dlt",,"Mexico Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Std",,"Mexico Standard Time"
