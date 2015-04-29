@@ -4918,6 +4918,13 @@ TOOLBAR_SetState (TOOLBAR_INFO *infoPtr, INT Id, LPARAM lParam)
     return TRUE;
 }
 
+static inline void unwrap(TOOLBAR_INFO *info)
+{
+    int i;
+
+    for (i = 0; i < info->nNumButtons; i++)
+	info->buttons[i].fsState &= ~TBSTATE_WRAP;
+}
 
 static LRESULT
 TOOLBAR_SetStyle (TOOLBAR_INFO *infoPtr, DWORD style)
@@ -4935,7 +4942,11 @@ TOOLBAR_SetStyle (TOOLBAR_INFO *infoPtr, DWORD style)
     TOOLBAR_CheckStyle(infoPtr);
 
     if ((dwOldStyle ^ style) & TBSTYLE_WRAPABLE)
+    {
+        if (dwOldStyle & TBSTYLE_WRAPABLE)
+            unwrap(infoPtr);
         TOOLBAR_CalcToolbar(infoPtr);
+    }
     else if ((dwOldStyle ^ style) & CCS_VERT)
         TOOLBAR_LayoutToolbar(infoPtr);
 

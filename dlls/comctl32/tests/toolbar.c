@@ -1085,6 +1085,7 @@ static void test_sizes(void)
     HWND hToolbar = NULL;
     HIMAGELIST himl, himl2;
     TBBUTTONINFOA tbinfo;
+    TBBUTTON button;
     int style;
     int i;
     int fontheight = system_font_height();
@@ -1100,9 +1101,13 @@ static void test_sizes(void)
     check_sizes();
     SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0);
     check_sizes();
+    SendMessageA(hToolbar, TB_GETBUTTON, 5, (LPARAM)&button);
+    ok(button.fsState == (TBSTATE_WRAP|TBSTATE_ENABLED), "got %08x\n", button.fsState);
     /* after setting the TBSTYLE_WRAPABLE the TBSTATE_WRAP is ignored */
     SetWindowLongA(hToolbar, GWL_STYLE, style|TBSTYLE_WRAPABLE);
     check_sizes();
+    SendMessageA(hToolbar, TB_GETBUTTON, 5, (LPARAM)&button);
+    ok(button.fsState == TBSTATE_ENABLED, "got %08x\n", button.fsState);
     /* adding new buttons with TBSTYLE_WRAPABLE doesn't add a new row */
     SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons1);
     check_sizes();
@@ -1111,6 +1116,11 @@ static void test_sizes(void)
     for (i=0; i<15; i++)
         SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons1);
     check_sizes_todo(0x4);
+    SendMessageA(hToolbar, TB_GETBUTTON, 31, (LPARAM)&button);
+    ok(button.fsState == (TBSTATE_WRAP|TBSTATE_ENABLED), "got %08x\n", button.fsState);
+    SetWindowLongA(hToolbar, GWL_STYLE, style);
+    SendMessageA(hToolbar, TB_GETBUTTON, 31, (LPARAM)&button);
+    ok(button.fsState == TBSTATE_ENABLED, "got %08x\n", button.fsState);
 
     rebuild_toolbar_with_buttons(&hToolbar);
     SendMessageA(hToolbar, TB_ADDBUTTONSA, 2, (LPARAM)buttons1);
