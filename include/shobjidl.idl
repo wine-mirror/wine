@@ -801,6 +801,35 @@ cpp_quote("#include <poppack.h>")
     );
 }
 
+[
+    object,
+    uuid(ec39fa88-f8af-41c5-8421-38bed28f4673),
+    pointer_default(unique)
+]
+interface IShellView3 : IShellView2
+{
+    [v1_enum] enum _SV3CVW3_FLAGS
+    {
+        SV3CVW3_DEFAULT          = 0x00000000,
+        SV3CVW3_NONINTERACTIVE   = 0x00000001,
+        SV3CVW3_FORCEVIEWMODE    = 0x00000002,
+        SV3CVW3_FORCEFOLDERFLAGS = 0x00000004
+    };
+
+    typedef DWORD SV3CVW3_FLAGS;
+
+    HRESULT CreateViewWindow3(
+        [in] IShellBrowser *owner,
+        [in, unique] IShellView *prev_view,
+        [in] SV3CVW3_FLAGS view_flags,
+        [in] FOLDERFLAGS mask,
+        [in] FOLDERFLAGS flags,
+        [in] FOLDERVIEWMODE mode,
+        [in, unique] const SHELLVIEWID *view_id,
+        [in] const RECT *rect,
+        [out] HWND *hwnd);
+}
+
 /*****************************************************************************
  * IFolderView interface
  */
