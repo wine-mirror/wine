@@ -2612,6 +2612,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Display",,"Asia/Baghdad
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Dlt",,"Arabic Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"Std",,"Arabic Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Arabic Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Display",,"America/Buenos_Aires"
+HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Dlt",,"Argentina Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"Std",,"Argentina Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Argentina Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Display",,"Asia/Yerevan"
 HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Dlt",,"Armenian Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Armenian Standard Time,"Std",,"Armenian Standard Time"
@@ -2636,6 +2640,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Display",,"Atlantic/Azo
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Dlt",,"Azores Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Std",,"Azores Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"TZI",1,3c,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Display",,"America/Bahia"
+HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Dlt",,"Bahia Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Std",,"Bahia Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Display",,"Europe/Minsk"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Dlt",,"Belarus Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Std",,"Belarus Standard Time"
@@ -2939,6 +2947,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"Am
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Std",,"Pacific Standard Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Display",,"America/Asuncion"
+HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Dlt",,"Paraguay Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Std",,"Paraguay Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Display",,"Europe/Paris"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Dlt",,"Romance Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Romance Standard Time,"Std",,"Romance Standard Time"
