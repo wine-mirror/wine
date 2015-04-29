@@ -364,11 +364,14 @@ static void test_service(void)
     IShellDispatch2_Release(sd);
 }
 
-static void test_ShellFolderView(void)
+static void test_ShellFolderViewDual(void)
 {
     IShellFolderViewDual *viewdual;
-    IShellFolder *desktop;
-    IShellView *view;
+    IShellFolder *desktop, *tmpdir;
+    IShellView *view, *view2;
+    IDispatch *disp, *disp2;
+    WCHAR pathW[MAX_PATH];
+    LPITEMIDLIST pidl;
     HRESULT hr;
 
     /* IShellFolderViewDual is not an IShellView extension */
@@ -381,7 +384,51 @@ static void test_ShellFolderView(void)
     hr = IShellView_QueryInterface(view, &IID_IShellFolderViewDual, (void**)&viewdual);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
+    hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IDispatch, (void**)&disp);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IDispatch, (void**)&disp2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(disp2 == disp, "got %p, %p\n", disp2, disp);
+    IDispatch_Release(disp2);
+
+    hr = IDispatch_QueryInterface(disp, &IID_IShellFolderViewDual, (void**)&viewdual);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(disp == (IDispatch*)viewdual, "got %p, expected %p\n", viewdual, disp);
+
+    hr = IShellFolderViewDual_QueryInterface(viewdual, &IID_IShellView, (void**)&view2);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    IShellFolderViewDual_Release(viewdual);
+    IDispatch_Release(disp);
+
+    disp = (void*)0xdeadbeef;
+    hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IShellFolderViewDual, (void**)&disp);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(disp == NULL, "got %p\n", disp);
     IShellView_Release(view);
+
+    /* Try with some other folder, that's not a desktop */
+    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, pathW, NULL, &pidl, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellFolder_BindToObject(desktop, pidl, NULL, &IID_IShellFolder, (void**)&tmpdir);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CoTaskMemFree(pidl);
+
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellView_QueryInterface(view, &IID_IShellFolderViewDual, (void**)&viewdual);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IDispatch, (void**)&disp);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDispatch_Release(disp);
+    IShellView_Release(view);
+
+    IShellFolder_Release(tmpdir);
     IShellFolder_Release(desktop);
 }
 
@@ -505,7 +552,7 @@ START_TEST(shelldispatch)
     init_function_pointers();
     test_namespace();
     test_service();
-    test_ShellFolderView();
+    test_ShellFolderViewDual();
     test_ShellWindows();
 
     CoUninitialize();

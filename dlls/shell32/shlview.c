@@ -85,6 +85,7 @@ typedef struct
         IViewObject       IViewObject_iface;
         IFolderView       IFolderView_iface;
         IShellFolderView  IShellFolderView_iface;
+        IShellFolderViewDual3 IShellFolderViewDual3_iface;
         LONG              ref;
 	IShellFolder*	pSFParent;
 	IShellFolder2*	pSF2Parent;
@@ -118,6 +119,7 @@ static const IDropSourceVtbl dsvt;
 static const IViewObjectVtbl vovt;
 static const IFolderViewVtbl fviewvt;
 static const IShellFolderViewVtbl shellfolderviewvt;
+static const IShellFolderViewDual3Vtbl shellfolderviewdualvtbl;
 
 static inline IShellViewImpl *impl_from_IShellView2(IShellView2 *iface)
 {
@@ -152,6 +154,11 @@ static inline IShellViewImpl *impl_from_IFolderView(IFolderView *iface)
 static inline IShellViewImpl *impl_from_IShellFolderView(IShellFolderView *iface)
 {
     return CONTAINING_RECORD(iface, IShellViewImpl, IShellFolderView_iface);
+}
+
+static inline IShellViewImpl *impl_from_IShellFolderViewDual3(IShellFolderViewDual3 *iface)
+{
+    return CONTAINING_RECORD(iface, IShellViewImpl, IShellFolderViewDual3_iface);
 }
 
 /* ListView Header IDs */
@@ -212,6 +219,7 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv->IViewObject_iface.lpVtbl = &vovt;
 	sv->IFolderView_iface.lpVtbl = &fviewvt;
 	sv->IShellFolderView_iface.lpVtbl = &shellfolderviewvt;
+	sv->IShellFolderViewDual3_iface.lpVtbl = &shellfolderviewdualvtbl;
 
 	sv->pSFParent = pFolder;
 	if(pFolder) IShellFolder_AddRef(pFolder);
@@ -2048,6 +2056,11 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView2 *iface, UINT uItem,
 
         if (IsEqualIID(&IID_IContextMenu, riid))
             return BackgroundMenu_Constructor(This->pSFParent, FALSE, riid, ppvOut);
+        else if (IsEqualIID(&IID_IDispatch, riid)) {
+            *ppvOut = &This->IShellFolderViewDual3_iface;
+            IShellFolderViewDual3_AddRef(&This->IShellFolderViewDual3_iface);
+            return S_OK;
+        }
         else
             FIXME("unsupported interface requested %s\n", debugstr_guid(riid));
 
@@ -3327,4 +3340,254 @@ static const IShellFolderViewVtbl shellfolderviewvt =
     IShellFolderView_fnSelect,
     IShellFolderView_fnQuerySupport,
     IShellFolderView_fnSetAutomationObject
+};
+
+static HRESULT WINAPI shellfolderviewdual_QueryInterface(IShellFolderViewDual3 *iface, REFIID riid, void **ppvObj)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+
+    TRACE("(%p)->(IID:%s,%p)\n", This, debugstr_guid(riid), ppvObj);
+
+    if (IsEqualIID(riid, &IID_IShellFolderViewDual3) ||
+        IsEqualIID(riid, &IID_IShellFolderViewDual2) ||
+        IsEqualIID(riid, &IID_IShellFolderViewDual) ||
+        IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObj = iface;
+        IShellFolderViewDual3_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI shellfolderviewdual_AddRef(IShellFolderViewDual3 *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    return IShellView2_AddRef(&This->IShellView2_iface);
+}
+
+static ULONG WINAPI shellfolderviewdual_Release(IShellFolderViewDual3 *iface)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    return IShellView2_Release(&This->IShellView2_iface);
+}
+
+static HRESULT WINAPI shellfolderviewdual_GetTypeInfoCount(IShellFolderViewDual3 *iface, UINT *pctinfo)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_GetTypeInfo(IShellFolderViewDual3 *iface,
+        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_GetIDsOfNames(
+        IShellFolderViewDual3 *iface, REFIID riid, LPOLESTR *rgszNames, UINT
+        cNames, LCID lcid, DISPID *rgDispId)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_Invoke(IShellFolderViewDual3 *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_Application(IShellFolderViewDual3 *iface,
+    IDispatch **disp)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_Parent(IShellFolderViewDual3 *iface, IDispatch **disp)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_Folder(IShellFolderViewDual3 *iface, Folder **folder)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, folder);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_SelectedItems(IShellFolderViewDual3 *iface, FolderItems **items)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, items);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_FocusedItem(IShellFolderViewDual3 *iface,
+    FolderItem **item)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_SelectItem(IShellFolderViewDual3 *iface,
+    VARIANT *v, int flags)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %s %x\n", This, debugstr_variant(v), flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_PopupItemMenu(IShellFolderViewDual3 *iface,
+    FolderItem *item, VARIANT vx, VARIANT vy, BSTR *command)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p %s %s %p\n", This, item, debugstr_variant(&vx), debugstr_variant(&vy), command);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_Script(IShellFolderViewDual3 *iface, IDispatch **disp)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_ViewOptions(IShellFolderViewDual3 *iface, LONG *options)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, options);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_CurrentViewMode(IShellFolderViewDual3 *iface, UINT *mode)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_put_CurrentViewMode(IShellFolderViewDual3 *iface, UINT mode)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %u\n", This, mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_SelectItemRelative(IShellFolderViewDual3 *iface, int relative)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %d\n", This, relative);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_GroupBy(IShellFolderViewDual3 *iface, BSTR *groupby)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, groupby);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_put_GroupBy(IShellFolderViewDual3 *iface, BSTR groupby)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %s\n", This, debugstr_w(groupby));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_FolderFlags(IShellFolderViewDual3 *iface, DWORD *flags)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_put_FolderFlags(IShellFolderViewDual3 *iface, DWORD flags)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p 0x%08x\n", This, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_SortColumns(IShellFolderViewDual3 *iface, BSTR *sortcolumns)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, sortcolumns);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_put_SortColumns(IShellFolderViewDual3 *iface, BSTR sortcolumns)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %s\n", This, debugstr_w(sortcolumns));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_put_IconSize(IShellFolderViewDual3 *iface, int icon_size)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %d\n", This, icon_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_get_IconSize(IShellFolderViewDual3 *iface, int *icon_size)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %p\n", This, icon_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellfolderviewdual_FilterView(IShellFolderViewDual3 *iface, BSTR filter_text)
+{
+    IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
+    FIXME("%p %s\n", This, debugstr_w(filter_text));
+    return E_NOTIMPL;
+}
+
+static const IShellFolderViewDual3Vtbl shellfolderviewdualvtbl =
+{
+    shellfolderviewdual_QueryInterface,
+    shellfolderviewdual_AddRef,
+    shellfolderviewdual_Release,
+    shellfolderviewdual_GetTypeInfoCount,
+    shellfolderviewdual_GetTypeInfo,
+    shellfolderviewdual_GetIDsOfNames,
+    shellfolderviewdual_Invoke,
+    shellfolderviewdual_get_Application,
+    shellfolderviewdual_get_Parent,
+    shellfolderviewdual_get_Folder,
+    shellfolderviewdual_SelectedItems,
+    shellfolderviewdual_get_FocusedItem,
+    shellfolderviewdual_SelectItem,
+    shellfolderviewdual_PopupItemMenu,
+    shellfolderviewdual_get_Script,
+    shellfolderviewdual_get_ViewOptions,
+    shellfolderviewdual_get_CurrentViewMode,
+    shellfolderviewdual_put_CurrentViewMode,
+    shellfolderviewdual_SelectItemRelative,
+    shellfolderviewdual_get_GroupBy,
+    shellfolderviewdual_put_GroupBy,
+    shellfolderviewdual_get_FolderFlags,
+    shellfolderviewdual_put_FolderFlags,
+    shellfolderviewdual_get_SortColumns,
+    shellfolderviewdual_put_SortColumns,
+    shellfolderviewdual_put_IconSize,
+    shellfolderviewdual_get_IconSize,
+    shellfolderviewdual_FilterView
 };

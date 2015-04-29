@@ -707,7 +707,7 @@ static void test_GetItemObject(void)
 
     unk = NULL;
     hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IDispatch, (void**)&unk);
-    todo_wine ok(hr == S_OK || broken(hr == E_NOTIMPL) /* NT4 */, "got (0x%08x)\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOTIMPL) /* NT4 */, "got (0x%08x)\n", hr);
     if (unk) IUnknown_Release(unk);
 
     unk = NULL;
