@@ -2311,6 +2311,11 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     idx = getFmtIdx(WINED3DFMT_DXT5);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    /* Similarly with ATI1N / ATI2N and GL_ARB_texture_compression_rgtc. */
+    idx = getFmtIdx(WINED3DFMT_ATI1N);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = getFmtIdx(WINED3DFMT_ATI2N);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
 }
 
 static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
