@@ -3533,7 +3533,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture)
 {
     enum wined3d_resource_type type;
-    unsigned int level_count, i;
+    unsigned int level_count, i, j, src_size, dst_size, src_skip_levels = 0;
     HRESULT hr;
     struct wined3d_context *context;
 
@@ -3565,12 +3565,20 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Check that both textures have the identical numbers of levels. */
-    level_count = wined3d_texture_get_level_count(src_texture);
-    if (wined3d_texture_get_level_count(dst_texture) != level_count)
+    level_count = min(wined3d_texture_get_level_count(src_texture),
+            wined3d_texture_get_level_count(dst_texture));
+
+    src_size = max(src_texture->resource.width, src_texture->resource.height);
+    dst_size = max(dst_texture->resource.width, dst_texture->resource.height);
+    if (type == WINED3D_RTYPE_VOLUME)
     {
-        WARN("Source and destination have different level counts, returning WINED3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
+        src_size = max(src_size, src_texture->resource.depth);
+        dst_size = max(dst_size, dst_texture->resource.depth);
+    }
+    while (src_size > dst_size)
+    {
+        src_size >>= 1;
+        ++src_skip_levels;
     }
 
     /* Make sure that the destination texture is loaded. */
@@ -3588,7 +3596,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
 
             for (i = 0; i < level_count; ++i)
             {
-                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
+                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture,
+                        i + src_skip_levels));
                 dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
                 hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL);
                 if (FAILED(hr))
@@ -3604,16 +3613,23 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         {
             struct wined3d_surface *src_surface;
             struct wined3d_surface *dst_surface;
+            unsigned int src_levels = wined3d_texture_get_level_count(src_texture);
+            unsigned int dst_levels = wined3d_texture_get_level_count(dst_texture);
 
-            for (i = 0; i < level_count * 6; ++i)
+            for (i = 0; i < 6; ++i)
             {
-                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
-                dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
-                hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL);
-                if (FAILED(hr))
+                for (j = 0; j < level_count; ++j)
                 {
-                    WARN("Failed to update surface, hr %#x.\n", hr);
-                    return hr;
+                    src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture,
+                            i * src_levels + j + src_skip_levels));
+                    dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture,
+                            i * dst_levels + j));
+                    hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL);
+                    if (FAILED(hr))
+                    {
+                        WARN("Failed to update surface, hr %#x.\n", hr);
+                        return hr;
+                    }
                 }
             }
             break;
@@ -3624,7 +3640,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             for (i = 0; i < level_count; ++i)
             {
                 hr = device_update_volume(device,
-                        volume_from_resource(wined3d_texture_get_sub_resource(src_texture, i)),
+                        volume_from_resource(wined3d_texture_get_sub_resource(src_texture,
+                                i + src_skip_levels)),
                         volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i)));
                 if (FAILED(hr))
                 {
