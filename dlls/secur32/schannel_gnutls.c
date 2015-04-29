@@ -400,30 +400,31 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
                                SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
-    ssize_t ret;
+    ssize_t ret, total = 0;
 
-again:
-    ret = pgnutls_record_send(s, buffer, *length);
-
-    if (ret >= 0)
-        *length = ret;
-    else if (ret == GNUTLS_E_AGAIN)
+    for (;;)
     {
-        struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
-        SIZE_T count = 0;
+        ret = pgnutls_record_send(s, (const char *)buffer + total, *length - total);
+        if (ret >= 0)
+        {
+            total += ret;
+            TRACE( "sent %d now %d/%ld\n", ret, total, *length );
+            if (total == *length) return SEC_E_OK;
+        }
+        else if (ret == GNUTLS_E_AGAIN)
+        {
+            struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
+            SIZE_T count = 0;
 
-        if (schan_get_buffer(t, &t->out, &count))
-            goto again;
-
-        return SEC_I_CONTINUE_NEEDED;
+            if (schan_get_buffer(t, &t->out, &count)) continue;
+            return SEC_I_CONTINUE_NEEDED;
+        }
+        else
+        {
+            pgnutls_perror(ret);
+            return SEC_E_INTERNAL_ERROR;
+        }
     }
-    else
-    {
-        pgnutls_perror(ret);
-        return SEC_E_INTERNAL_ERROR;
-    }
-
-    return SEC_E_OK;
 }
 
 SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
