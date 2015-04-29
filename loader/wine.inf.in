@@ -2664,10 +2664,15 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Asia Standard Time,"Display",,"Asia/D
 HKLM,%CurrentVersionNT%\Time Zones\Central Asia Standard Time,"Dlt",,"Central Asia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Asia Standard Time,"Std",,"Central Asia Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Asia Standard Time,"TZI",1,98,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"Display",,"America/Manaus"
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"Display",,"America/Campo_Grande"
 HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"Dlt",,"Central Brazilian Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"Std",,"Central Brazilian Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time,"TZI",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time\Dynamic DST,"2015",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,df,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,df,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time\Dynamic DST,"2023",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,e7,07,02,00,00,00,1a,00,00,00,00,00,00,00,00,00,e7,07,0a,00,00,00,0f,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time\Dynamic DST,"2026",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,ea,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,ea,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time\Dynamic DST,"2034",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,f2,07,02,00,00,00,1a,00,00,00,00,00,00,00,00,00,f2,07,0a,00,00,00,0f,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Central Brazilian Standard Time\Dynamic DST,"2037",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,f5,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,f5,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Central Europe Standard Time,"Display",,"Europe/Belgrade"
 HKLM,%CurrentVersionNT%\Time Zones\Central Europe Standard Time,"Dlt",,"Central Europe Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central Europe Standard Time,"Std",,"Central Europe Standard Time"
