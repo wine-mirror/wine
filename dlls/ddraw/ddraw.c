@@ -435,6 +435,9 @@ static void ddraw_destroy(struct ddraw *This)
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wined3d);
 
+    if (This->d3ddevice)
+        This->d3ddevice->ddraw = NULL;
+
     /* Now free the object */
     HeapFree(GetProcessHeap(), 0, This);
 }

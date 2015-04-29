@@ -316,7 +316,10 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
             IUnknown_Release(rt_iface);
         TRACE("Render target release done.\n");
 
-        This->ddraw->d3ddevice = NULL;
+        /* Releasing the render target above may have released the last
+         * reference to the ddraw object. */
+        if (This->ddraw)
+            This->ddraw->d3ddevice = NULL;
 
         /* Now free the structure */
         HeapFree(GetProcessHeap(), 0, This);
