@@ -269,35 +269,35 @@ void string_buffer_free(struct wined3d_string_buffer *buffer)
     HeapFree(GetProcessHeap(), 0, buffer->buffer);
 }
 
+BOOL string_buffer_resize(struct wined3d_string_buffer *buffer, int rc)
+{
+    char *new_buffer;
+    unsigned int new_buffer_size = buffer->buffer_size * 2;
+
+    while (rc > 0 && (unsigned int)rc >= new_buffer_size - buffer->content_size)
+        new_buffer_size *= 2;
+    if (!(new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, new_buffer_size)))
+    {
+        ERR("Failed to grow buffer.\n");
+        buffer->buffer[buffer->content_size] = '\0';
+        return FALSE;
+    }
+    buffer->buffer = new_buffer;
+    buffer->buffer_size = new_buffer_size;
+    return TRUE;
+}
+
 int shader_vaddline(struct wined3d_string_buffer *buffer, const char *format, va_list args)
 {
     unsigned int rem;
     int rc;
-    char *new_buffer;
-    unsigned int new_buffer_size;
 
-    for (;;)
-    {
-        rem = buffer->buffer_size - buffer->content_size;
-        rc = vsnprintf(&buffer->buffer[buffer->content_size], rem, format, args);
+    rem = buffer->buffer_size - buffer->content_size;
+    rc = vsnprintf(&buffer->buffer[buffer->content_size], rem, format, args);
+    if (rc < 0 /* C89 */ || (unsigned int)rc >= rem /* C99 */)
+        return rc;
 
-        if (rc >= 0 /* C89 */ && (unsigned int)rc < rem /* C99 */)
-            break;
-
-        new_buffer_size = buffer->buffer_size * 2;
-        while (rc > 0 && (unsigned int)rc >= new_buffer_size - buffer->content_size)
-            new_buffer_size *= 2;
-        if (!(new_buffer = HeapReAlloc(GetProcessHeap(), 0, buffer->buffer, new_buffer_size)))
-        {
-            ERR("Failed to grow buffer.\n");
-            buffer->buffer[buffer->content_size] = '\0';
-            return -1;
-        }
-        buffer->buffer = new_buffer;
-        buffer->buffer_size = new_buffer_size;
-    }
     buffer->content_size += rc;
-
     return 0;
 }
 
@@ -306,11 +306,16 @@ int shader_addline(struct wined3d_string_buffer *buffer, const char *format, ...
     va_list args;
     int ret;
 
-    va_start(args, format);
-    ret = shader_vaddline(buffer, format, args);
-    va_end(args);
-
-    return ret;
+    for (;;)
+    {
+        va_start(args, format);
+        ret = shader_vaddline(buffer, format, args);
+        va_end(args);
+        if (!ret)
+            return ret;
+        if (!string_buffer_resize(buffer, ret))
+            return -1;
+    }
 }
 
 struct wined3d_string_buffer *string_buffer_get(struct wined3d_string_buffer_list *list)
@@ -337,21 +342,29 @@ struct wined3d_string_buffer *string_buffer_get(struct wined3d_string_buffer_lis
     return buffer;
 }
 
-static void string_buffer_vsprintf(struct wined3d_string_buffer *buffer, const char *format, va_list args)
+static int string_buffer_vsprintf(struct wined3d_string_buffer *buffer, const char *format, va_list args)
 {
     if (!buffer)
-        return;
+        return 0;
     string_buffer_clear(buffer);
-    shader_vaddline(buffer, format, args);
+    return shader_vaddline(buffer, format, args);
 }
 
 void string_buffer_sprintf(struct wined3d_string_buffer *buffer, const char *format, ...)
 {
     va_list args;
+    int ret;
 
-    va_start(args, format);
-    string_buffer_vsprintf(buffer, format, args);
-    va_end(args);
+    for (;;)
+    {
+        va_start(args, format);
+        ret = string_buffer_vsprintf(buffer, format, args);
+        va_end(args);
+        if (!ret)
+            return;
+        if (!string_buffer_resize(buffer, ret))
+            return;
+    }
 }
 
 void string_buffer_release(struct wined3d_string_buffer_list *list, struct wined3d_string_buffer *buffer)

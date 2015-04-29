@@ -2762,6 +2762,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     struct color_fixup_desc fixup;
     BOOL np2_fixup = FALSE;
     va_list args;
+    int ret;
 
     shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
@@ -2791,9 +2792,16 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     shader_addline(ins->ctx->buffer, "%s(%s_sampler%u, ",
             sample_function->name, shader_glsl_get_prefix(version->type), sampler);
 
-    va_start(args, coord_reg_fmt);
-    shader_vaddline(ins->ctx->buffer, coord_reg_fmt, args);
-    va_end(args);
+    for (;;)
+    {
+        va_start(args, coord_reg_fmt);
+        ret = shader_vaddline(ins->ctx->buffer, coord_reg_fmt, args);
+        va_end(args);
+        if (!ret)
+            break;
+        if (!string_buffer_resize(ins->ctx->buffer, ret))
+            break;
+    }
 
     if(bias) {
         shader_addline(ins->ctx->buffer, ", %s)%s);\n", bias, dst_swizzle);
