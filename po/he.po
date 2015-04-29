@@ -758,10 +758,6 @@ msgstr "מ&גש:"
 msgid "&Portrait"
 msgstr "ל&אורך"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "גבולות"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&שמאליים:"

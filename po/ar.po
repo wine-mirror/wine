@@ -745,10 +745,6 @@ msgstr "ال&صينية:"
 msgid "&Portrait"
 msgstr "&عمودي"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "الحدود"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "ال&يسار:"

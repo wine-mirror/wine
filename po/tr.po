@@ -753,10 +753,6 @@ msgstr "&Tepsi:"
 msgid "&Portrait"
 msgstr "&Düşey"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Kenarlıklar"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "S&ol:"

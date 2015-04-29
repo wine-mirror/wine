@@ -769,10 +769,6 @@ msgstr "&Vir:"
 msgid "&Portrait"
 msgstr "P&okončna"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Robovi"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Levo:"

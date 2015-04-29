@@ -753,10 +753,6 @@ msgstr ""
 msgid "&Portrait"
 msgstr ""
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr ""
-
 #: comdlg32.rc:443
 #, fuzzy
 msgid "L&eft:"

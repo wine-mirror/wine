@@ -740,10 +740,6 @@ msgstr "進紙匣(&T)："
 msgid "&Portrait"
 msgstr "縱向(&P)"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "邊框"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "左(&E)："

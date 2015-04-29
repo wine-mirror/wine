@@ -753,10 +753,6 @@ msgstr "給紙方法(&T):"
 msgid "&Portrait"
 msgstr "縦(&P)"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "余白"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "左(&E):"

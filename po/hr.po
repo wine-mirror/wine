@@ -750,10 +750,6 @@ msgstr "La&dica:"
 msgid "&Portrait"
 msgstr "&Portret"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Granice"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Lijevo:"

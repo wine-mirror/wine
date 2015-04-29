@@ -735,10 +735,6 @@ msgstr "托盘(&T)："
 msgid "&Portrait"
 msgstr "纵向(&P)"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "边距"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "左(&E)："

@@ -751,10 +751,6 @@ msgstr "트레이(&T):"
 msgid "&Portrait"
 msgstr "세로(&P)"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "가장자리"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "왼쪽(&E):"

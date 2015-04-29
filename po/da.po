@@ -760,10 +760,6 @@ msgstr "&Bakke:"
 msgid "&Portrait"
 msgstr "&Portræt"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Kanter"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Venstre:"

@@ -759,10 +759,6 @@ msgstr "&Контейнер:"
 msgid "&Portrait"
 msgstr "Пор&трет"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Рамки"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Лява:"

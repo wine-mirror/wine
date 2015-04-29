@@ -750,10 +750,6 @@ msgstr "&Fack:"
 msgid "&Portrait"
 msgstr "&Stående"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "Marginaler"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Vänster:"

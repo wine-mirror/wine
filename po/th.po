@@ -737,10 +737,6 @@ msgstr "ถาด:"
 msgid "&Portrait"
 msgstr "การตั้ง"
 
-#: comdlg32.rc:442
-msgid "Borders"
-msgstr "ขอบกระดาษ"
-
 #: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "ซ้าย:"
