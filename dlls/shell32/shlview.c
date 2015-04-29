@@ -1912,25 +1912,13 @@ static HRESULT WINAPI IShellView_fnRefresh(IShellView3 *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnCreateViewWindow(IShellView3 *iface, IShellView *lpPrevView,
-        LPCFOLDERSETTINGS lpfs, IShellBrowser *psb, RECT *prcView, HWND *phWnd)
+static HRESULT WINAPI IShellView_fnCreateViewWindow(IShellView3 *iface, IShellView *prev_view,
+        const FOLDERSETTINGS *settings, IShellBrowser *owner, RECT *rect, HWND *hWnd)
 {
-    HRESULT hr;
-    SV2CVW2_PARAMS view_params;
-    view_params.cbSize = sizeof(view_params);
-    view_params.psvPrev = lpPrevView;
-    view_params.pfs = lpfs;
-    view_params.psbOwner = psb;
-    view_params.prcView = prcView;
-    view_params.pvid = NULL;
-    view_params.hwndView = 0;
-
-    TRACE("(%p) Forwarding to CreateViewWindow2\n", iface);
-
-    hr = IShellView3_CreateViewWindow2(iface, &view_params);
-    *phWnd = view_params.hwndView;
-
-    return hr;
+    IShellViewImpl *This = impl_from_IShellView3(iface);
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, prev_view, settings, owner, rect, hWnd);
+    return IShellView3_CreateViewWindow3(iface, owner, prev_view, SV3CVW3_DEFAULT,
+        settings->fFlags, settings->fFlags, settings->ViewMode, NULL, rect, hWnd);
 }
 
 static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView3 *iface)
@@ -2041,51 +2029,74 @@ static HRESULT WINAPI IShellView2_fnGetView(IShellView3 *iface, SHELLVIEWID *vie
 static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView3 *iface, SV2CVW2_PARAMS *view_params)
 {
     IShellViewImpl *This = impl_from_IShellView3(iface);
+    TRACE("(%p)->(%p)\n", This, view_params);
+    return IShellView3_CreateViewWindow3(iface, view_params->psbOwner, view_params->psvPrev,
+        SV3CVW3_DEFAULT, view_params->pfs->fFlags, view_params->pfs->fFlags,
+        view_params->pfs->ViewMode, view_params->pvid, view_params->prcView, &view_params->hwndView);
+}
+
+static HRESULT WINAPI IShellView2_fnHandleRename(IShellView3 *iface, LPCITEMIDLIST new_pidl)
+{
+    FIXME("(%p)->(new_pidl %p) stub!\n", iface, new_pidl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellView2_fnSelectAndPositionItem(IShellView3 *iface, LPCITEMIDLIST item,
+        UINT flags, POINT *point)
+{
+    IShellViewImpl *This = impl_from_IShellView3(iface);
+    TRACE("(%p)->(item %p, flags %#x, point %p)\n", This, item, flags, point);
+    return IFolderView2_SelectAndPositionItems(&This->IFolderView2_iface, 1, &item, point, flags);
+}
+
+static HRESULT WINAPI IShellView3_fnCreateViewWindow3(IShellView3 *iface, IShellBrowser *owner,
+    IShellView *prev_view, SV3CVW3_FLAGS view_flags, FOLDERFLAGS mask, FOLDERFLAGS flags,
+    FOLDERVIEWMODE mode, const SHELLVIEWID *view_id, const RECT *rect, HWND *hwnd)
+{
+    IShellViewImpl *This = impl_from_IShellView3(iface);
     INITCOMMONCONTROLSEX icex;
     WNDCLASSW wc;
     HRESULT hr;
     HWND wnd;
 
-    icex.dwSize = sizeof( icex );
+    TRACE("(%p)->(%p %p 0x%08x 0x%08x 0x%08x %d %s %s %p)\n", This, owner, prev_view, view_flags,
+        mask, flags, mode, debugstr_guid(view_id), wine_dbgstr_rect(rect), hwnd);
+
+    icex.dwSize = sizeof(icex);
     icex.dwICC = ICC_LISTVIEW_CLASSES;
-    InitCommonControlsEx( &icex );
+    InitCommonControlsEx(&icex);
 
-    TRACE("(%p)->(view_params %p)\n", iface, view_params);
+    *hwnd = NULL;
 
-    if (view_params->cbSize != sizeof(*view_params))
-    {
-        FIXME("Got unexpected cbSize %#x\n", view_params->cbSize);
-        return E_FAIL;
-    }
+    if (!owner)
+        return E_UNEXPECTED;
 
-    TRACE("-- psvPrev %p, pfs %p, psbOwner %p, prcView %p\n",
-            view_params->psvPrev, view_params->pfs, view_params->psbOwner, view_params->prcView);
-    TRACE("-- vmode %#x, flags %#x, view %s\n", view_params->pfs->ViewMode, view_params->pfs->fFlags, wine_dbgstr_rect(view_params->prcView));
-
-    if (!view_params->psbOwner) return E_UNEXPECTED;
+    if (view_flags != SV3CVW3_DEFAULT)
+        FIXME("unsupported view flags 0x%08x\n", view_flags);
 
     /* Set up the member variables */
-    This->pShellBrowser = view_params->psbOwner;
-    This->FolderSettings = *view_params->pfs;
+    This->pShellBrowser = owner;
+    This->FolderSettings.ViewMode = mode;
+    This->FolderSettings.fFlags = mask & flags;
 
-    if (view_params->pvid)
+    if (view_id)
     {
-        if (IsEqualGUID(view_params->pvid, &VID_LargeIcons))
+        if (IsEqualGUID(view_id, &VID_LargeIcons))
             This->FolderSettings.ViewMode = FVM_ICON;
-        else if (IsEqualGUID(view_params->pvid, &VID_SmallIcons))
+        else if (IsEqualGUID(view_id, &VID_SmallIcons))
             This->FolderSettings.ViewMode = FVM_SMALLICON;
-        else if (IsEqualGUID(view_params->pvid, &VID_List))
+        else if (IsEqualGUID(view_id, &VID_List))
             This->FolderSettings.ViewMode = FVM_LIST;
-        else if (IsEqualGUID(view_params->pvid, &VID_Details))
+        else if (IsEqualGUID(view_id, &VID_Details))
             This->FolderSettings.ViewMode = FVM_DETAILS;
-        else if (IsEqualGUID(view_params->pvid, &VID_Thumbnails))
+        else if (IsEqualGUID(view_id, &VID_Thumbnails))
             This->FolderSettings.ViewMode = FVM_THUMBNAIL;
-        else if (IsEqualGUID(view_params->pvid, &VID_Tile))
+        else if (IsEqualGUID(view_id, &VID_Tile))
             This->FolderSettings.ViewMode = FVM_TILE;
-        else if (IsEqualGUID(view_params->pvid, &VID_ThumbStrip))
+        else if (IsEqualGUID(view_id, &VID_ThumbStrip))
             This->FolderSettings.ViewMode = FVM_THUMBSTRIP;
         else
-            FIXME("Ignoring unrecognized VID %s\n", debugstr_guid(view_params->pvid));
+            FIXME("Ignoring unrecognized VID %s\n", debugstr_guid(view_id));
     }
 
     /* Get our parent window */
@@ -2116,9 +2127,9 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView3 *iface, SV2CVW
     }
 
     wnd = CreateWindowExW(0, SV_CLASS_NAME, NULL, WS_CHILD | WS_TABSTOP,
-            view_params->prcView->left, view_params->prcView->top,
-            view_params->prcView->right - view_params->prcView->left,
-            view_params->prcView->bottom - view_params->prcView->top,
+            rect->left, rect->top,
+            rect->right - rect->left,
+            rect->bottom - rect->top,
             This->hWndParent, 0, shell32_hInstance, This);
 
     CheckToolbar(This);
@@ -2132,33 +2143,9 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView3 *iface, SV2CVW
     SetWindowPos(wnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
     UpdateWindow(wnd);
 
-    view_params->hwndView = wnd;
+    *hwnd = wnd;
 
     return S_OK;
-}
-
-static HRESULT WINAPI IShellView2_fnHandleRename(IShellView3 *iface, LPCITEMIDLIST new_pidl)
-{
-    FIXME("(%p)->(new_pidl %p) stub!\n", iface, new_pidl);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IShellView2_fnSelectAndPositionItem(IShellView3 *iface, LPCITEMIDLIST item,
-        UINT flags, POINT *point)
-{
-    IShellViewImpl *This = impl_from_IShellView3(iface);
-    TRACE("(%p)->(item %p, flags %#x, point %p)\n", This, item, flags, point);
-    return IFolderView2_SelectAndPositionItems(&This->IFolderView2_iface, 1, &item, point, flags);
-}
-
-static HRESULT WINAPI IShellView3_fnCreateViewWindow3(IShellView3 *iface, IShellBrowser *owner,
-    IShellView *prev_view, SV3CVW3_FLAGS view_flags, FOLDERFLAGS mask, FOLDERFLAGS flags,
-    FOLDERVIEWMODE mode, const SHELLVIEWID *view_id, const RECT *rect, HWND *hwnd)
-{
-    IShellViewImpl *This = impl_from_IShellView3(iface);
-    FIXME("(%p)->(%p %p 0x%08x 0x%08x 0x%08x %d %s %s %p): stub\n", This, owner, prev_view, view_flags,
-        mask, flags, mode, debugstr_guid(view_id), wine_dbgstr_rect(rect), hwnd);
-    return E_NOTIMPL;
 }
 
 static const IShellView3Vtbl shellviewvtbl =
