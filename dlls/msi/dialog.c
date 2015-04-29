@@ -121,7 +121,6 @@ typedef struct
 {
     msi_dialog* dialog;
     msi_control *parent;
-    DWORD       attributes;
     LPWSTR      propval;
 } radio_button_group_descr;
 
@@ -2261,15 +2260,10 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
     msi_dialog *dialog = group->dialog;
     msi_control *control;
     LPCWSTR prop, text, name;
-    DWORD style, attributes = group->attributes;
+    DWORD style = WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_MULTILINE;
 
-    style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE | WS_TABSTOP;
     name = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 8 );
-    if( attributes & msidbControlAttributesVisible )
-        style |= WS_VISIBLE;
-    if( ~attributes & msidbControlAttributesEnabled )
-        style |= WS_DISABLED;
 
     control = dialog_create_window( dialog, rec, 0, szButton, name, text, style,
                                     group->parent->hwnd );
@@ -2332,6 +2326,10 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     TRACE("%p %p %s\n", dialog, rec, debugstr_w( prop ));
 
     attr = MSI_RecordGetInteger( rec, 8 );
+    if (attr & msidbControlAttributesVisible)
+        style |= WS_VISIBLE;
+    if (~attr & msidbControlAttributesEnabled)
+        style |= WS_DISABLED;
     if (attr & msidbControlAttributesHasBorder)
         style |= BS_GROUPBOX;
     else
@@ -2361,7 +2359,6 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
 
     group.dialog = dialog;
     group.parent = control;
-    group.attributes = MSI_RecordGetInteger( rec, 8 );
     group.propval = msi_dup_property( dialog->package->db, control->property );
 
     r = MSI_IterateRecords( view, 0, msi_dialog_create_radiobutton, &group );
