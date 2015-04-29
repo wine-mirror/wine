@@ -2875,6 +2875,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2072",1,88,
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2078",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,1e,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,1e,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2089",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,29,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,29,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time\Dynamic DST,"2095",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,2f,08,0a,00,05,00,1c,00,01,00,00,00,00,00,00,00,2f,08,04,00,05,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Kaliningrad Standard Time,"Display",,"Europe/Kaliningrad"
+HKLM,%CurrentVersionNT%\Time Zones\Kaliningrad Standard Time,"Dlt",,"Kaliningrad Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Kaliningrad Standard Time,"Std",,"Kaliningrad Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Kaliningrad Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Display",,"Asia/Seoul"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Dlt",,"Korea Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Std",,"Korea Standard Time"
@@ -3023,6 +3027,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Display",,"Pacific/Tonga
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Dlt",,"Tonga Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Std",,"Tonga Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"TZI",1,f4,fc,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Turkey Standard Time,"Display",,"Europe/Istanbul"
+HKLM,%CurrentVersionNT%\Time Zones\Turkey Standard Time,"Dlt",,"Turkey Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Turkey Standard Time,"Std",,"Turkey Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Turkey Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,04,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Display",,"Asia/Ulaanbaatar"
 HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Dlt",,"Ulaanbaatar Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Std",,"Ulaanbaatar Standard Time"
