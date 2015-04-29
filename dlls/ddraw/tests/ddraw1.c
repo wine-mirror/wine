@@ -5195,10 +5195,10 @@ static void test_p8_rgb_blit(void)
 
 static void test_material(void)
 {
+    IDirect3DMaterial *background, *material;
     IDirect3DExecuteBuffer *execute_buffer;
     D3DMATERIALHANDLE mat_handle, tmp;
     D3DEXECUTEBUFFERDESC exec_desc;
-    IDirect3DMaterial *material;
     IDirect3DViewport *viewport;
     IDirect3DDevice *device;
     IDirectDrawSurface *rt;
@@ -5245,11 +5245,10 @@ static void test_material(void)
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
-    material = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
+    background = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
     viewport = create_viewport(device, 0, 0, 640, 480);
-    viewport_set_background(device, viewport, material);
+    viewport_set_background(device, viewport, background);
 
-    destroy_material(material);
     material = create_emissive_material(device, 0.0f, 1.0f, 0.0f, 0.0f);
     hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
@@ -5342,6 +5341,7 @@ static void test_material(void)
 
     IDirect3DExecuteBuffer_Release(execute_buffer);
     destroy_viewport(device, viewport);
+    destroy_material(background);
     destroy_material(material);
     IDirectDrawSurface_Release(rt);
     refcount = IDirect3DDevice_Release(device);
