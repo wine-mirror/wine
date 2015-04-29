@@ -2263,6 +2263,7 @@ static void PaletteTest(void)
 
     hr = IDirectDrawSurface_GetPalette(backbuffer, &palette);
     ok(hr == DD_OK, "CreateSurface returned: %x\n",hr);
+    IDirectDrawPalette_Release(palette);
 
     IDirectDrawSurface_Release(backbuffer);
     IDirectDrawSurface_Release(lpSurf);
