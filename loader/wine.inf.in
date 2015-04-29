@@ -2644,6 +2644,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Display",,"America/Bahia
 HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Dlt",,"Bahia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"Std",,"Bahia Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Bahia Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bangladesh Standard Time,"Display",,"Asia/Dhaka"
+HKLM,%CurrentVersionNT%\Time Zones\Bangladesh Standard Time,"Dlt",,"Bangladesh Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bangladesh Standard Time,"Std",,"Bangladesh Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bangladesh Standard Time,"TZI",1,98,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Display",,"Europe/Minsk"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Dlt",,"Belarus Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Std",,"Belarus Standard Time"
@@ -2875,6 +2879,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Display",,"Asia/Seoul"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Dlt",,"Korea Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"Std",,"Korea Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Korea Standard Time,"TZI",1,e4,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Display",,"Asia/Magadan"
+HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Dlt",,"Magadan Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Std",,"Magadan Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Display",,"America/Mexico_City"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Dlt",,"Mexico Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mexico Standard Time,"Std",,"Mexico Standard Time"
@@ -2947,6 +2955,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Display",,"Am
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Dlt",,"Pacific Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"Std",,"Pacific Standard Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific Standard Time (Mexico),"TZI",1,e0,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Pakistan Standard Time,"Display",,"Asia/Karachi"
+HKLM,%CurrentVersionNT%\Time Zones\Pakistan Standard Time,"Dlt",,"Pakistan Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Pakistan Standard Time,"Std",,"Pakistan Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Pakistan Standard Time,"TZI",1,d4,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Display",,"America/Asuncion"
 HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Dlt",,"Paraguay Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Paraguay Standard Time,"Std",,"Paraguay Standard Time"
@@ -2991,6 +3003,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Sri Lanka Standard Time,"Display",,"Asia/Colo
 HKLM,%CurrentVersionNT%\Time Zones\Sri Lanka Standard Time,"Dlt",,"Sri Lanka Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Sri Lanka Standard Time,"Std",,"Sri Lanka Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Sri Lanka Standard Time,"TZI",1,b6,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Syria Standard Time,"Display",,"Asia/Damascus"
+HKLM,%CurrentVersionNT%\Time Zones\Syria Standard Time,"Dlt",,"Syria Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Syria Standard Time,"Std",,"Syria Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Syria Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,00,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Taipei Standard Time,"Display",,"Asia/Taipei"
 HKLM,%CurrentVersionNT%\Time Zones\Taipei Standard Time,"Dlt",,"Taipei Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Taipei Standard Time,"Std",,"Taipei Standard Time"
@@ -3007,6 +3023,10 @@ HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Display",,"Pacific/Tonga
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Dlt",,"Tonga Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"Std",,"Tonga Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tonga Standard Time,"TZI",1,f4,fc,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Display",,"Asia/Ulaanbaatar"
+HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Dlt",,"Ulaanbaatar Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"Std",,"Ulaanbaatar Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Ulaanbaatar Standard Time,"TZI",1,20,fe,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,09,00,06,00,05,00,00,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Display",,"America/Indianapolis"
 HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Dlt",,"US Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\US Eastern Standard Time,"Std",,"US Eastern Standard Time"
