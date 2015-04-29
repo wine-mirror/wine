@@ -536,6 +536,7 @@ static void test_IFolderView(void)
     FOLDERSETTINGS settings;
     IShellView *view;
     IShellBrowser *browser;
+    IFolderView2 *fv2;
     IFolderView *fv;
     HWND hwnd_view, hwnd_list;
     PITEMID_CHILD pidl;
@@ -679,6 +680,11 @@ if (0)
     ok(ref1 == ref2 || ref1 + 1 == ref2, /* >= vista */
        "expected same refcount, got %d\n", ref2);
     ok(desktop == folder, "\n");
+
+    hr = IFolderView_QueryInterface(fv, &IID_IFolderView2, (void**)&fv2);
+    if (hr != S_OK)
+        win_skip("IFolderView2 is not supported.\n");
+    if (fv2) IFolderView2_Release(fv2);
 
     IShellBrowser_Release(browser);
     IFolderView_Release(fv);
