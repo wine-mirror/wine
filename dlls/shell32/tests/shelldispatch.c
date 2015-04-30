@@ -546,11 +546,9 @@ todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IWebBrowser2_get_Application(wb, &app);
-todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(disp == app, "got %p, %p\n", app, disp);
-}
-        if (hr == S_OK) IDispatch_Release(app);
+        IDispatch_Release(app);
 
         hr = IWebBrowser2_get_Document(wb, &doc);
 todo_wine

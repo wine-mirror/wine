@@ -1430,8 +1430,13 @@ static HRESULT WINAPI webbrowser_Stop(IWebBrowser2 *iface)
 static HRESULT WINAPI webbrowser_get_Application(IWebBrowser2 *iface, IDispatch **ppDisp)
 {
     struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%p)\n", This, ppDisp);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppDisp);
+
+    *ppDisp = (IDispatch*)iface;
+    IDispatch_AddRef(*ppDisp);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI webbrowser_get_Parent(IWebBrowser2 *iface, IDispatch **ppDisp)
