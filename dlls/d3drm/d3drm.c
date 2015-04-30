@@ -1173,32 +1173,29 @@ static HRESULT load_data(IDirect3DRM3 *iface, IDirectXFileData *data_object, IID
                     IDirectXFileDataReference *reference;
                     IDirectXFileBinary *binary;
 
-                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileBinary, (void **)&binary);
-                    if (SUCCEEDED(hr))
+                    if (SUCCEEDED(IDirectXFileObject_QueryInterface(child,
+                            &IID_IDirectXFileBinary, (void **)&binary)))
                     {
                         FIXME("Binary Object not supported yet\n");
                         IDirectXFileBinary_Release(binary);
-                        continue;
                     }
-
-                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileData, (void **)&data);
-                    if (SUCCEEDED(hr))
+                    else if (SUCCEEDED(IDirectXFileObject_QueryInterface(child,
+                            &IID_IDirectXFileData, (void **)&data)))
                     {
                         TRACE("Found Data Object\n");
                         hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
                         IDirectXFileData_Release(data);
-                        continue;
                     }
-                    hr = IDirectXFileObject_QueryInterface(child, &IID_IDirectXFileDataReference, (void **)&reference);
-                    if (SUCCEEDED(hr))
+                    else if (SUCCEEDED(IDirectXFileObject_QueryInterface(child,
+                            &IID_IDirectXFileDataReference, (void **)&reference)))
                     {
                         TRACE("Found Data Object Reference\n");
                         IDirectXFileDataReference_Resolve(reference, &data);
                         hr = load_data(iface, data, GUIDs, nb_GUIDs, LoadProc, ArgLP, LoadTextureProc, ArgLTP, frame);
                         IDirectXFileData_Release(data);
                         IDirectXFileDataReference_Release(reference);
-                        continue;
                     }
+                    IDirectXFileObject_Release(child);
                 }
 
                 if (hr != DXFILEERR_NOMOREOBJECTS)
