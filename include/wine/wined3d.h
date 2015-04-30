@@ -76,8 +76,8 @@ enum wined3d_light_type
     WINED3D_LIGHT_POINT                     = 1,
     WINED3D_LIGHT_SPOT                      = 2,
     WINED3D_LIGHT_DIRECTIONAL               = 3,
-    WINED3D_LIGHT_PARALLELPOINT             = 4, /* D3D7 */
-    WINED3D_LIGHT_GLSPOT                    = 5, /* D3D7 */
+    WINED3D_LIGHT_PARALLELPOINT             = 4, /* < D3D7 */
+    WINED3D_LIGHT_GLSPOT                    = 5, /* < D3D5, not actually usable */
 };
 
 enum wined3d_primitive_type
