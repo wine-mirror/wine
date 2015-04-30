@@ -2321,6 +2321,20 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
+        if (strstr(buffer, "HEAD /upload.txt"))
+        {
+            if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, noauthmsg, sizeof noauthmsg-1, 0);
+        }
+        if (strstr(buffer, "PUT /upload2.txt"))
+        {
+            if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
         shutdown(c, 2);
         closesocket(c);
         c = -1;
@@ -4212,6 +4226,59 @@ static void test_accept_encoding(int port)
     InternetCloseHandle(ses);
 }
 
+static void test_basic_auth_credentials_reuse(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD status, size;
+    BOOL ret;
+
+    ses = InternetOpenA( "winetest", 0, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, "user", "pwd",
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "HEAD", "/upload.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+
+    ses = InternetOpenA( "winetest", 0, NULL, NULL, 0 );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL,
+                            INTERNET_SERVICE_HTTP, 0, 0 );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+
+    req = HttpOpenRequestA( con, "PUT", "/upload2.txt", NULL, NULL, NULL, 0, 0 );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( ret, "HttpSendRequestA failed %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+    ok( status == 200, "got %u\n", status );
+
+    InternetCloseHandle( req );
+    InternetCloseHandle( con );
+    InternetCloseHandle( ses );
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -4259,6 +4326,7 @@ static void test_http_connection(void)
     test_head_request(si.port);
     test_request_content_length(si.port);
     test_accept_encoding(si.port);
+    test_basic_auth_credentials_reuse(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");

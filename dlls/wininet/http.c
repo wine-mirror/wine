@@ -863,7 +863,7 @@ static void destroy_authinfo( struct HttpAuthInfo *authinfo )
     heap_free(authinfo);
 }
 
-static UINT retrieve_cached_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR *auth_data)
+static UINT retrieve_cached_basic_authorization(const WCHAR *host, const WCHAR *realm, char **auth_data)
 {
     basicAuthorizationData *ad;
     UINT rc = 0;
@@ -873,7 +873,7 @@ static UINT retrieve_cached_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR
     EnterCriticalSection(&authcache_cs);
     LIST_FOR_EACH_ENTRY(ad, &basicAuthorizationCache, basicAuthorizationData, entry)
     {
-        if (!strcmpiW(host,ad->host) && !strcmpW(realm,ad->realm))
+        if (!strcmpiW(host, ad->host) && (!realm || !strcmpW(realm, ad->realm)))
         {
             TRACE("Authorization found in cache\n");
             *auth_data = heap_alloc(ad->authorizationLen);
@@ -1620,6 +1620,21 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
     return n;
 }
 
+static WCHAR *encode_auth_data( const WCHAR *scheme, const char *data, UINT data_len )
+{
+    WCHAR *ret;
+    UINT len, scheme_len = strlenW( scheme );
+
+    /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
+    len = scheme_len + 1 + ((data_len + 2) * 4) / 3;
+    if (!(ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+    memcpy( ret, scheme, scheme_len * sizeof(WCHAR) );
+    ret[scheme_len] = ' ';
+    HTTP_EncodeBase64( data, data_len, ret + scheme_len + 1 );
+    return ret;
+}
+
+
 /***********************************************************************
  *  HTTP_InsertAuthorization
  *
@@ -1627,26 +1642,15 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
  */
 static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
 {
+    static const WCHAR wszBasic[] = {'B','a','s','i','c',0};
+    WCHAR *host, *authorization = NULL;
+
     if (pAuthInfo)
     {
-        static const WCHAR wszSpace[] = {' ',0};
-        static const WCHAR wszBasic[] = {'B','a','s','i','c',0};
-        unsigned int len;
-        WCHAR *authorization = NULL;
-
         if (pAuthInfo->auth_data_len)
         {
-            /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
-            len = strlenW(pAuthInfo->scheme)+1+((pAuthInfo->auth_data_len+2)*4)/3;
-            authorization = heap_alloc((len+1)*sizeof(WCHAR));
-            if (!authorization)
+            if (!(authorization = encode_auth_data(pAuthInfo->scheme, pAuthInfo->auth_data, pAuthInfo->auth_data_len)))
                 return FALSE;
-
-            strcpyW(authorization, pAuthInfo->scheme);
-            strcatW(authorization, wszSpace);
-            HTTP_EncodeBase64(pAuthInfo->auth_data,
-                              pAuthInfo->auth_data_len,
-                              authorization+strlenW(authorization));
 
             /* clear the data as it isn't valid now that it has been sent to the
              * server, unless it's Basic authentication which doesn't do
@@ -1663,6 +1667,30 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
 
         HTTP_ProcessHeader(request, header, authorization, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
         heap_free(authorization);
+    }
+    else if (!strcmpW(header, szAuthorization) && (host = get_host_header(request)))
+    {
+        UINT data_len;
+        char *data;
+
+        if ((data_len = retrieve_cached_basic_authorization(host, NULL, &data)))
+        {
+            TRACE("Found cached basic authorization for %s\n", debugstr_w(host));
+
+            if (!(authorization = encode_auth_data(wszBasic, data, data_len)))
+            {
+                heap_free(data);
+                heap_free(host);
+                return FALSE;
+            }
+
+            TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
+
+            HTTP_ProcessHeader(request, header, authorization, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+            heap_free(data);
+            heap_free(authorization);
+        }
+        heap_free(host);
     }
     return TRUE;
 }
