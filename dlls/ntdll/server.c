@@ -75,6 +75,8 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "windef.h"
+#include "winnt.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -126,6 +128,17 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION fd_cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+/* atomically exchange a 64-bit value */
+static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
+{
+#ifdef _WIN64
+    return (LONG64)interlocked_xchg_ptr( (void **)dest, (void *)val );
+#else
+    LONG64 tmp = *dest;
+    while (interlocked_cmpxchg64( dest, val, tmp ) != tmp) tmp = *dest;
+    return tmp;
+#endif
+}
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -790,19 +803,27 @@ static int receive_fd( obj_handle_t *handle )
 /***********************************************************************/
 /* fd cache support */
 
-struct fd_cache_entry
+#include "pshpack1.h"
+union fd_cache_entry
 {
-    int fd;
-    enum server_fd_type type : 5;
-    unsigned int        access : 3;
-    unsigned int        options : 24;
+    LONG64 data;
+    struct
+    {
+        int fd;
+        enum server_fd_type type : 5;
+        unsigned int        access : 3;
+        unsigned int        options : 24;
+    } s;
 };
+#include "poppack.h"
 
-#define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(struct fd_cache_entry))
+C_ASSERT( sizeof(union fd_cache_entry) == sizeof(LONG64) );
+
+#define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(union fd_cache_entry))
 #define FD_CACHE_ENTRIES     128
 
-static struct fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
-static struct fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
+static union fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
+static union fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
 
 static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
 {
@@ -821,6 +842,7 @@ static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
                             unsigned int access, unsigned int options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
+    union fd_cache_entry cache;
 
     if (entry >= FD_CACHE_ENTRIES)
     {
@@ -833,26 +855,26 @@ static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
         if (!entry) fd_cache[0] = fd_cache_initial_block;
         else
         {
-            void *ptr = wine_anon_mmap( NULL, FD_CACHE_BLOCK_SIZE * sizeof(struct fd_cache_entry),
+            void *ptr = wine_anon_mmap( NULL, FD_CACHE_BLOCK_SIZE * sizeof(union fd_cache_entry),
                                         PROT_READ | PROT_WRITE, 0 );
             if (ptr == MAP_FAILED) return FALSE;
             fd_cache[entry] = ptr;
         }
     }
+
     /* store fd+1 so that 0 can be used as the unset value */
-    fd = interlocked_xchg( &fd_cache[entry][idx].fd, fd + 1 );
-    fd_cache[entry][idx].type = type;
-    fd_cache[entry][idx].access = access;
-    fd_cache[entry][idx].options = options;
-    assert( !fd );
+    cache.s.fd = fd + 1;
+    cache.s.type = type;
+    cache.s.access = access;
+    cache.s.options = options;
+    cache.data = interlocked_xchg64( &fd_cache[entry][idx].data, cache.data );
+    assert( !cache.s.fd );
     return TRUE;
 }
 
 
 /***********************************************************************
  *           get_cached_fd
- *
- * Caller must hold fd_cache_section.
  */
 static inline int get_cached_fd( HANDLE handle, enum server_fd_type *type,
                                  unsigned int *access, unsigned int *options )
@@ -862,10 +884,12 @@ static inline int get_cached_fd( HANDLE handle, enum server_fd_type *type,
 
     if (entry < FD_CACHE_ENTRIES && fd_cache[entry])
     {
-        fd = fd_cache[entry][idx].fd - 1;
-        if (type) *type = fd_cache[entry][idx].type;
-        if (access) *access = fd_cache[entry][idx].access;
-        if (options) *options = fd_cache[entry][idx].options;
+        union fd_cache_entry cache;
+        cache.data = interlocked_cmpxchg64( &fd_cache[entry][idx].data, 0, 0 );
+        fd = cache.s.fd - 1;
+        if (type) *type = cache.s.type;
+        if (access) *access = cache.s.access;
+        if (options) *options = cache.s.options;
     }
     return fd;
 }
@@ -880,7 +904,11 @@ int server_remove_fd_from_cache( HANDLE handle )
     int fd = -1;
 
     if (entry < FD_CACHE_ENTRIES && fd_cache[entry])
-        fd = interlocked_xchg( &fd_cache[entry][idx].fd, 0 ) - 1;
+    {
+        union fd_cache_entry cache;
+        cache.data = interlocked_xchg64( &fd_cache[entry][idx].data, 0 );
+        fd = cache.s.fd - 1;
+    }
 
     return fd;
 }
@@ -903,33 +931,36 @@ int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
     *needs_close = 0;
     wanted_access &= FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA;
 
-    server_enter_uninterrupted_section( &fd_cache_section, &sigset );
-
     fd = get_cached_fd( handle, type, &access, options );
     if (fd != -1) goto done;
 
-    SERVER_START_REQ( get_handle_fd )
+    server_enter_uninterrupted_section( &fd_cache_section, &sigset );
+    fd = get_cached_fd( handle, type, &access, options );
+    if (fd == -1)
     {
-        req->handle = wine_server_obj_handle( handle );
-        if (!(ret = wine_server_call( req )))
+        SERVER_START_REQ( get_handle_fd )
         {
-            if (type) *type = reply->type;
-            if (options) *options = reply->options;
-            access = reply->access;
-            if ((fd = receive_fd( &fd_handle )) != -1)
+            req->handle = wine_server_obj_handle( handle );
+            if (!(ret = wine_server_call( req )))
             {
-                assert( wine_server_ptr_handle(fd_handle) == handle );
-                *needs_close = (!reply->cacheable ||
-                                !add_fd_to_cache( handle, fd, reply->type,
-                                                  reply->access, reply->options ));
+                if (type) *type = reply->type;
+                if (options) *options = reply->options;
+                access = reply->access;
+                if ((fd = receive_fd( &fd_handle )) != -1)
+                {
+                    assert( wine_server_ptr_handle(fd_handle) == handle );
+                    *needs_close = (!reply->cacheable ||
+                                    !add_fd_to_cache( handle, fd, reply->type,
+                                                      reply->access, reply->options ));
+                }
+                else ret = STATUS_TOO_MANY_OPENED_FILES;
             }
-            else ret = STATUS_TOO_MANY_OPENED_FILES;
         }
+        SERVER_END_REQ;
     }
-    SERVER_END_REQ;
+    server_leave_uninterrupted_section( &fd_cache_section, &sigset );
 
 done:
-    server_leave_uninterrupted_section( &fd_cache_section, &sigset );
     if (!ret && ((access & wanted_access) != wanted_access))
     {
         ret = STATUS_ACCESS_DENIED;
