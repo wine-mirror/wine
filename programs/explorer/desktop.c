@@ -139,6 +139,7 @@ struct shellwindows
 struct shellbrowserwindow
 {
     IWebBrowser2 IWebBrowser2_iface;
+    IServiceProvider IServiceProvider_iface;
 };
 
 static struct shellwindows shellwindows;
@@ -152,6 +153,11 @@ static inline struct shellwindows *impl_from_IShellWindows(IShellWindows *iface)
 static inline struct shellbrowserwindow *impl_from_IWebBrowser2(IWebBrowser2 *iface)
 {
     return CONTAINING_RECORD(iface, struct shellbrowserwindow, IWebBrowser2_iface);
+}
+
+static inline struct shellbrowserwindow *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct shellbrowserwindow, IServiceProvider_iface);
 }
 
 static void shellwindows_init(void);
@@ -1281,6 +1287,10 @@ static HRESULT WINAPI webbrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     {
         *ppv = &This->IWebBrowser2_iface;
     }
+    else if (IsEqualGUID(&IID_IServiceProvider, riid))
+    {
+        *ppv = &This->IServiceProvider_iface;
+    }
 
     if (*ppv)
     {
@@ -1908,9 +1918,43 @@ static const IWebBrowser2Vtbl webbrowser2vtbl =
     webbrowser_put_Resizable
 };
 
+static HRESULT WINAPI serviceprovider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    struct shellbrowserwindow *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser2_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
+}
+
+static ULONG WINAPI serviceprovider_AddRef(IServiceProvider *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser2_AddRef(&This->IWebBrowser2_iface);
+}
+
+static ULONG WINAPI serviceprovider_Release(IServiceProvider *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser2_Release(&This->IWebBrowser2_iface);
+}
+
+static HRESULT WINAPI serviceprovider_QueryService(IServiceProvider *iface, REFGUID service,
+    REFIID riid, void **ppv)
+{
+    FIXME("%s %s %p\n", debugstr_guid(service), debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static const IServiceProviderVtbl serviceprovidervtbl =
+{
+    serviceprovider_QueryInterface,
+    serviceprovider_AddRef,
+    serviceprovider_Release,
+    serviceprovider_QueryService
+};
+
 static void desktopshellbrowserwindow_init(void)
 {
     desktopshellbrowserwindow.IWebBrowser2_iface.lpVtbl = &webbrowser2vtbl;
+    desktopshellbrowserwindow.IServiceProvider_iface.lpVtbl = &serviceprovidervtbl;
 }
 
 static void shellwindows_init(void)

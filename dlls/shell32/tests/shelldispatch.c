@@ -572,12 +572,12 @@ if (hr == S_OK) {
         ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
         hr = IDispatch_QueryInterface(disp, &IID_IServiceProvider, (void**)&sp);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb);
 todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 if (hr == S_OK) {
-        hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-
         hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb2);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(sb == sb2, "got %p, %p\n", sb, sb2);
