@@ -1250,20 +1250,21 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                     IDirectXFileData *data;
                     char **filename;
 
-                    hr = IDirectXFileObject_QueryInterface(material_child, &IID_IDirectXFileData, (void **)&data);
-                    if (FAILED(hr))
+                    if (FAILED(hr = IDirectXFileObject_QueryInterface(material_child,
+                            &IID_IDirectXFileData, (void **)&data)))
                     {
                         IDirectXFileDataReference *reference;
 
-                        hr = IDirectXFileObject_QueryInterface(material_child, &IID_IDirectXFileDataReference, (void **)&reference);
-                        if (FAILED(hr))
-                            goto end;
-
-                        hr = IDirectXFileDataReference_Resolve(reference, &data);
-                        IDirectXFileDataReference_Release(reference);
-                        if (FAILED(hr))
-                            goto end;
+                        if (SUCCEEDED(IDirectXFileObject_QueryInterface(material_child,
+                                &IID_IDirectXFileDataReference, (void **)&reference)))
+                        {
+                            hr = IDirectXFileDataReference_Resolve(reference, &data);
+                            IDirectXFileDataReference_Release(reference);
+                        }
                     }
+                    IDirectXFileObject_Release(material_child);
+                    if (FAILED(hr))
+                        goto end;
 
                     hr = IDirectXFileData_GetType(data, &guid);
                     if (hr != DXFILE_OK)
@@ -1308,6 +1309,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                             }
                         }
                     }
+                    IDirectXFileData_Release(data);
                 }
                 else if (hr != DXFILEERR_NOMOREOBJECTS)
                 {
