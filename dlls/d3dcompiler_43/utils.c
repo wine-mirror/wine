@@ -2445,12 +2445,12 @@ void free_instr(struct hlsl_ir_node *node)
     }
 }
 
-static void free_function_decl(struct hlsl_ir_function_decl *func)
+static void free_function_decl(struct hlsl_ir_function_decl *decl)
 {
-    d3dcompiler_free((void *)func->semantic);
-    d3dcompiler_free(func->parameters);
-    free_instr_list(func->body);
-    d3dcompiler_free(func);
+    d3dcompiler_free((void *)decl->semantic);
+    d3dcompiler_free(decl->parameters);
+    free_instr_list(decl->body);
+    d3dcompiler_free(decl);
 }
 
 static void free_function_decl_rb(struct wine_rb_entry *entry, void *context)
