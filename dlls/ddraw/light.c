@@ -175,9 +175,6 @@ static HRESULT WINAPI d3d_light_SetLight(IDirect3DLight *iface, D3DLIGHT *data)
     if ((!data->dltType) || (data->dltType > D3DLIGHT_PARALLELPOINT))
          return DDERR_INVALIDPARAMS;
 
-    if (data->dltType == D3DLIGHT_PARALLELPOINT)
-        FIXME("D3DLIGHT_PARALLELPOINT not implemented.\n");
-
     /* Translate D3DLIGHT2 structure to D3DLIGHT7. */
     light7->dltType = data->dltType;
     light7->dcvDiffuse = data->dcvColor;

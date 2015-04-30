@@ -1455,7 +1455,6 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     {
         case WINED3D_LIGHT_POINT:
         case WINED3D_LIGHT_SPOT:
-        case WINED3D_LIGHT_PARALLELPOINT:
         case WINED3D_LIGHT_GLSPOT:
             /* Incorrect attenuation values can cause the gl driver to crash.
              * Happens with Need for speed most wanted. */
@@ -1467,6 +1466,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:
+        case WINED3D_LIGHT_PARALLELPOINT:
             /* Ignores attenuation */
             break;
 
@@ -1580,6 +1580,13 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 
             object->cutoff = (float)(light->phi * 90 / M_PI);
             /* FIXME: Range */
+            break;
+
+        case WINED3D_LIGHT_PARALLELPOINT:
+            object->position.x = light->position.x;
+            object->position.y = light->position.y;
+            object->position.z = light->position.z;
+            object->position.w = 1.0f;
             break;
 
         default:

@@ -1186,6 +1186,11 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context *c
             GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &vec4.x));
             break;
 
+        case WINED3D_LIGHT_PARALLELPOINT:
+            multiply_vector_matrix(&vec4, &light_info->position, view);
+            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
+            break;
+
         default:
             FIXME("Unrecognized light type %#x.\n", light_info->OriginalParms.type);
     }
@@ -5534,6 +5539,18 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                     shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 else
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
+                shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
+                        " * ffp_light[%u].specular;\n", i);
+                break;
+
+            case WINED3D_LIGHT_PARALLELPOINT:
+                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz;\n", i);
+                if (!settings->normal)
+                    break;
+                shader_addline(buffer, "dir = normalize(ffp_light[%u].position.xyz);\n", i);
+                shader_addline(buffer, "diffuse += clamp(dot(dir, normal), 0.0, 1.0)"
+                        " * ffp_light[%u].diffuse.xyz;\n", i);
+                shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
                         " * ffp_light[%u].specular;\n", i);
                 break;
