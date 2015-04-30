@@ -3834,7 +3834,6 @@ todo_wine
     FD_ZERO_ALL();
     FD_SET_ALL(fdWrite);
     ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
-todo_wine
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
     WaitForSingleObject (thread_handle, 1000);

@@ -4773,7 +4773,18 @@ static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefd
     if (exceptfds)
     {
         for (i = 0; i < exceptfds->fd_count; i++, j++)
-            if (fds[j].fd != -1) release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
+        {
+            if (fds[j].fd == -1) continue;
+            release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
+            if (fds[j].revents & POLLHUP)
+            {
+                int fd = get_sock_fd( exceptfds->fd_array[i], 0, NULL );
+                if (fd != -1)
+                    release_sock_fd( exceptfds->fd_array[i], fd );
+                else
+                    fds[j].revents = 0;
+            }
+        }
     }
 }
 
