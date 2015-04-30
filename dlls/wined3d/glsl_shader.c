@@ -106,6 +106,7 @@ struct shader_glsl_priv {
     struct wine_rb_tree ffp_vertex_shaders;
     struct wine_rb_tree ffp_fragment_shaders;
     BOOL ffp_proj_control;
+    BOOL legacy_lighting;
 };
 
 struct glsl_vs_program
@@ -5404,7 +5405,8 @@ static const char *shader_glsl_ffp_mcs(enum wined3d_material_color_source mcs, c
 }
 
 static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer,
-        const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info,
+        BOOL legacy_lighting)
 {
     const char *diffuse, *specular, *emission, *ambient;
     enum wined3d_light_type light_type;
@@ -5438,25 +5440,37 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                 shader_addline(buffer, "dst.z = dot(dir, dir);\n");
                 shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
                 shader_addline(buffer, "dst.x = 1.0;\n");
-                shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
+                if (legacy_lighting)
+                {
+                    shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", i, i);
+                    shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
+                }
+                else
+                {
+                    shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
+                }
                 shader_addline(buffer, "att = dot(dst.xyz, vec3(ffp_light[%u].c_att,"
                         " ffp_light[%u].l_att, ffp_light[%u].q_att));\n", i, i, i);
-                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz / att;\n", i);
+                if (!legacy_lighting)
+                    shader_addline(buffer, "att = 1.0 / att;");
+                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", i);
                 if (!settings->normal)
                 {
-                    shader_addline(buffer, "}\n");
+                    if (!legacy_lighting)
+                        shader_addline(buffer, "}\n");
                     break;
                 }
                 shader_addline(buffer, "dir = normalize(dir);\n");
                 shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
-                        " * ffp_light[%u].diffuse.xyz) / att;\n", i);
+                        " * ffp_light[%u].diffuse.xyz) * att;\n", i);
                 if (settings->localviewer)
                     shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
                 else
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
                 shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
-                        " * ffp_light[%u].specular) / att;\n", i);
-                shader_addline(buffer, "}\n");
+                        " * ffp_light[%u].specular) * att;\n", i);
+                if (!legacy_lighting)
+                    shader_addline(buffer, "}\n");
                 break;
 
             case WINED3D_LIGHT_SPOT:
@@ -5464,20 +5478,35 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                 shader_addline(buffer, "dst.z = dot(dir, dir);\n");
                 shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
                 shader_addline(buffer, "dst.x = 1.0;\n");
-                shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
+                if (legacy_lighting)
+                {
+                    shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", i, i);
+                    shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
+                }
+                else
+                {
+                    shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
+                }
                 shader_addline(buffer, "dir = normalize(dir);\n");
                 shader_addline(buffer, "t = dot(-dir, normalize(ffp_light[%u].direction));\n", i);
                 shader_addline(buffer, "if (t > ffp_light[%u].cos_htheta) att = 1.0;\n", i);
                 shader_addline(buffer, "else if (t <= ffp_light[%u].cos_hphi) att = 0.0;\n", i);
                 shader_addline(buffer, "else att = pow((t - ffp_light[%u].cos_hphi)"
-                        " / (ffp_light[%u].cos_htheta - ffp_light[%u].cos_hphi), ffp_light[%u].falloff)"
-                        " / dot(dst.xyz, vec3(ffp_light[%u].c_att,"
-                        " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
-                        i, i, i, i, i, i, i);
+                        " / (ffp_light[%u].cos_htheta - ffp_light[%u].cos_hphi), ffp_light[%u].falloff);\n",
+                        i, i, i, i);
+                if (legacy_lighting)
+                    shader_addline(buffer, "att *= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
+                            " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
+                            i, i, i);
+                else
+                    shader_addline(buffer, "att /= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
+                            " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
+                            i, i, i);
                 shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", i);
                 if (!settings->normal)
                 {
-                    shader_addline(buffer, "}\n");
+                    if (!legacy_lighting)
+                        shader_addline(buffer, "}\n");
                     break;
                 }
                 shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
@@ -5488,7 +5517,8 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                     shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
                 shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
                         " * ffp_light[%u].specular) * att;\n", i);
-                shader_addline(buffer, "}\n");
+                if (!legacy_lighting)
+                    shader_addline(buffer, "}\n");
                 break;
 
             case WINED3D_LIGHT_DIRECTIONAL:
@@ -5523,7 +5553,8 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
 
 /* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffer *buffer,
-        const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info,
+        BOOL legacy_lighting)
 {
     GLuint shader_obj;
     unsigned int i;
@@ -5588,7 +5619,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     else
         shader_addline(buffer, "vec3 normal = ffp_normal_matrix * gl_Normal;\n");
 
-    shader_glsl_ffp_vertex_lighting(buffer, settings, gl_info);
+    shader_glsl_ffp_vertex_lighting(buffer, settings, gl_info, legacy_lighting);
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
@@ -6292,7 +6323,7 @@ static struct glsl_ffp_vertex_shader *shader_glsl_find_ffp_vertex_shader(struct 
         return NULL;
 
     shader->desc.settings = *settings;
-    shader->id = shader_glsl_generate_ffp_vertex_shader(&priv->shader_buffer, settings, gl_info);
+    shader->id = shader_glsl_generate_ffp_vertex_shader(&priv->shader_buffer, settings, gl_info, priv->legacy_lighting);
     list_init(&shader->linked_programs);
     if (wine_rb_put(&priv->ffp_vertex_shaders, &shader->desc.settings, &shader->desc.entry) == -1)
         ERR("Failed to insert ffp vertex shader.\n");
@@ -7246,6 +7277,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
     priv->fragment_pipe = fragment_pipe;
     fragment_pipe->get_caps(gl_info, &fragment_caps);
     priv->ffp_proj_control = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_PROJ_CONTROL;
+    priv->legacy_lighting = device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING;
 
     device->vertex_priv = vertex_priv;
     device->fragment_priv = fragment_priv;
