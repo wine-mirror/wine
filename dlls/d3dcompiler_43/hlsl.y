@@ -1097,20 +1097,23 @@ hlsl_prog:                /* empty */
 
 preproc_directive:        PRE_LINE STRING
                             {
+                                const char **new_array = NULL;
+
                                 TRACE("Updating line information to file %s, line %u\n", debugstr_a($2), $1);
                                 hlsl_ctx.line_no = $1;
                                 if (strcmp($2, hlsl_ctx.source_file))
-                                {
-                                    const char **new_array;
-
-                                    hlsl_ctx.source_file = $2;
                                     new_array = d3dcompiler_realloc(hlsl_ctx.source_files,
                                             sizeof(*hlsl_ctx.source_files) * hlsl_ctx.source_files_count + 1);
-                                    if (new_array)
-                                    {
-                                        hlsl_ctx.source_files = new_array;
-                                        hlsl_ctx.source_files[hlsl_ctx.source_files_count++] = $2;
-                                    }
+
+                                if (new_array)
+                                {
+                                    hlsl_ctx.source_files = new_array;
+                                    hlsl_ctx.source_files[hlsl_ctx.source_files_count++] = $2;
+                                    hlsl_ctx.source_file = $2;
+                                }
+                                else
+                                {
+                                    d3dcompiler_free($2);
                                 }
                             }
 
