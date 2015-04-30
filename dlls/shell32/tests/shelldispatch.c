@@ -575,12 +575,28 @@ if (hr == S_OK) {
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
+
         hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb2);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(sb == sb2, "got %p, %p\n", sb, sb2);
+
+        hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IOleWindow, (void**)&unk);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IUnknown_Release(unk);
+
+        hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IExplorerBrowser, (void**)&unk);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+        hr = IShellBrowser_QueryInterface(sb, &IID_IExplorerBrowser, (void**)&unk);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+        hr = IShellBrowser_QueryInterface(sb, &IID_IWebBrowser2, (void**)&unk);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+        hr = IShellBrowser_QueryInterface(sb, &IID_IDispatch, (void**)&unk);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
         IShellBrowser_Release(sb2);
         IShellBrowser_Release(sb);
 
@@ -596,7 +612,6 @@ if (hr == S_OK) {
         ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
         IServiceProvider_Release(sp);
-}
         IDispatch_Release(disp);
     }
 
