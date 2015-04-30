@@ -70,12 +70,32 @@ struct shellwindows
     IShellWindows IShellWindows_iface;
 };
 
+/* This is not limited to desktop itself, every file browser window that
+   explorer creates supports that. Desktop instance is special in some
+   aspects, for example navigation is not possible, you can't show/hide it,
+   or bring up a menu. CLSID_ShellBrowserWindow class could be used to
+   create instances like that, and they should be registered with
+   IShellWindows as well. */
+struct shellbrowserwindow
+{
+    IWebBrowser2 IWebBrowser2_iface;
+};
+
+static struct shellwindows shellwindows;
+static struct shellbrowserwindow desktopshellbrowserwindow;
+
 static inline struct shellwindows *impl_from_IShellWindows(IShellWindows *iface)
 {
     return CONTAINING_RECORD(iface, struct shellwindows, IShellWindows_iface);
 }
 
+static inline struct shellbrowserwindow *impl_from_IWebBrowser2(IWebBrowser2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct shellbrowserwindow, IWebBrowser2_iface);
+}
+
 static void shellwindows_init(void);
+static void desktopshellbrowserwindow_init(void);
 
 static RECT get_icon_rect( unsigned int index )
 {
@@ -925,6 +945,7 @@ void manage_desktop( WCHAR *arg )
         }
     }
 
+    desktopshellbrowserwindow_init();
     shellwindows_init();
 
     /* run the desktop message loop */
@@ -1063,9 +1084,23 @@ static HRESULT WINAPI shellwindows_OnActivated(IShellWindows *iface, LONG cookie
 static HRESULT WINAPI shellwindows_FindWindowSW(IShellWindows *iface, VARIANT *loc,
     VARIANT *root, int class, LONG *hwnd, int options, IDispatch **disp)
 {
-    FIXME("%s %p 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
+    TRACE("%s %p 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
         class, hwnd, options, disp);
-    return E_NOTIMPL;
+
+    if (class != SWC_DESKTOP)
+    {
+        WARN("only SWC_DESKTOP class supported.\n");
+        return E_NOTIMPL;
+    }
+
+    *hwnd = HandleToLong(GetDesktopWindow());
+    if (options & SWFO_NEEDDISPATCH)
+    {
+        *disp = (IDispatch*)&desktopshellbrowserwindow.IWebBrowser2_iface;
+        IDispatch_AddRef(*disp);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI shellwindows_OnCreated(IShellWindows *iface, LONG cookie, IUnknown *punk)
@@ -1101,8 +1136,6 @@ static const IShellWindowsVtbl shellwindowsvtbl =
     shellwindows_OnCreated,
     shellwindows_ProcessAttachDetach
 };
-
-static struct shellwindows shellwindows;
 
 struct shellwindows_classfactory
 {
@@ -1173,6 +1206,623 @@ static const IClassFactoryVtbl swclassfactoryvtbl =
 };
 
 static struct shellwindows_classfactory shellwindows_classfactory = { { &swclassfactoryvtbl } };
+
+static HRESULT WINAPI webbrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, void **ppv)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+
+    *ppv = NULL;
+
+    if (IsEqualGUID(&IID_IWebBrowser2, riid) ||
+        IsEqualGUID(&IID_IWebBrowserApp, riid) ||
+        IsEqualGUID(&IID_IWebBrowser, riid) ||
+        IsEqualGUID(&IID_IDispatch, riid) ||
+        IsEqualGUID(&IID_IUnknown, riid))
+    {
+        *ppv = &This->IWebBrowser2_iface;
+    }
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p) interface not supported\n", This, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI webbrowser_AddRef(IWebBrowser2 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI webbrowser_Release(IWebBrowser2 *iface)
+{
+    return 1;
+}
+
+/* IDispatch methods */
+static HRESULT WINAPI webbrowser_GetTypeInfoCount(IWebBrowser2 *iface, UINT *pctinfo)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, pctinfo);
+
+    *pctinfo = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, LCID lcid,
+                                     LPTYPEINFO *ppTInfo)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d %d %p): stub\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid,
+                                       LPOLESTR *rgszNames, UINT cNames,
+                                       LCID lcid, DISPID *rgDispId)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %p %d %d %p): stub\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember,
+                                REFIID riid, LCID lcid, WORD wFlags,
+                                DISPPARAMS *pDispParams, VARIANT *pVarResult,
+                                EXCEPINFO *pExepInfo, UINT *puArgErr)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d %s %d %08x %p %p %p %p): stub\n", This, dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+/* IWebBrowser methods */
+static HRESULT WINAPI webbrowser_GoBack(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GoForward(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GoHome(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GoSearch(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl,
+                                  VARIANT *Flags, VARIANT *TargetFrameName,
+                                  VARIANT *PostData, VARIANT *Headers)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %s %s %s %s): stub\n", This, debugstr_w(szUrl), debugstr_variant(Flags),
+          debugstr_variant(TargetFrameName), debugstr_variant(PostData),
+          debugstr_variant(Headers));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Refresh(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Refresh2(IWebBrowser2 *iface, VARIANT *Level)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(Level));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Stop(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Application(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Parent(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Container(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Document(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, ppDisp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_TopLevelContainer(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pBool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Type(IWebBrowser2 *iface, BSTR *Type)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Left(IWebBrowser2 *iface, LONG *pl)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Left(IWebBrowser2 *iface, LONG Left)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d)\n", This, Left);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Top(IWebBrowser2 *iface, LONG *pl)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Top(IWebBrowser2 *iface, LONG Top)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d)\n", This, Top);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Width(IWebBrowser2 *iface, LONG *pl)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Width(IWebBrowser2 *iface, LONG Width)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d)\n", This, Width);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Height(IWebBrowser2 *iface, LONG *pl)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Height(IWebBrowser2 *iface, LONG Height)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d)\n", This, Height);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_LocationName(IWebBrowser2 *iface, BSTR *LocationName)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, LocationName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *LocationURL)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, LocationURL);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pBool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Quit(IWebBrowser2 *iface)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_ClientToWindow(IWebBrowser2 *iface, int *pcx, int *pcy)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p %p)\n", This, pcx, pcy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_PutProperty(IWebBrowser2 *iface, BSTR szProperty, VARIANT vtValue)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %s)\n", This, debugstr_w(szProperty), debugstr_variant(&vtValue));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_GetProperty(IWebBrowser2 *iface, BSTR szProperty, VARIANT *pvtValue)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %s)\n", This, debugstr_w(szProperty), debugstr_variant(pvtValue));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Name(IWebBrowser2 *iface, BSTR *Name)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_HWND(IWebBrowser2 *iface, SHANDLE_PTR *pHWND)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pHWND);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_FullName(IWebBrowser2 *iface, BSTR *FullName)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, FullName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Path(IWebBrowser2 *iface, BSTR *Path)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Path);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Visible(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pBool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pBool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_StatusText(IWebBrowser2 *iface, BSTR *StatusText)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, StatusText);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_StatusText(IWebBrowser2 *iface, BSTR StatusText)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(StatusText));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_ToolBar(IWebBrowser2 *iface, int *Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_FullScreen(IWebBrowser2 *iface, VARIANT_BOOL *pbFullScreen)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbFullScreen);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_FullScreen(IWebBrowser2 *iface, VARIANT_BOOL bFullScreen)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, bFullScreen);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VARIANT *Flags,
+        VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %s %s %s %s)\n", This, debugstr_variant(URL), debugstr_variant(Flags),
+          debugstr_variant(TargetFrameName), debugstr_variant(PostData), debugstr_variant(Headers));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d %p)\n", This, cmdID, pcmdf);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_ExecWB(IWebBrowser2 *iface, OLECMDID cmdID,
+        OLECMDEXECOPT cmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%d %d %s %p)\n", This, cmdID, cmdexecopt, debugstr_variant(pvaIn), pvaOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_ShowBrowserBar(IWebBrowser2 *iface, VARIANT *pvaClsid,
+        VARIANT *pvarShow, VARIANT *pvarSize)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%s %s %s)\n", This, debugstr_variant(pvaClsid), debugstr_variant(pvarShow),
+          debugstr_variant(pvarSize));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_ReadyState(IWebBrowser2 *iface, READYSTATE *lpReadyState)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, lpReadyState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Offline(IWebBrowser2 *iface, VARIANT_BOOL *pbOffline)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbOffline);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Offline(IWebBrowser2 *iface, VARIANT_BOOL bOffline)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, bOffline);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Silent(IWebBrowser2 *iface, VARIANT_BOOL *pbSilent)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbSilent);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Silent(IWebBrowser2 *iface, VARIANT_BOOL bSilent)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, bSilent);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_RegisterAsBrowser(IWebBrowser2 *iface,
+        VARIANT_BOOL *pbRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_RegisterAsBrowser(IWebBrowser2 *iface,
+        VARIANT_BOOL bRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, bRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_RegisterAsDropTarget(IWebBrowser2 *iface,
+        VARIANT_BOOL *pbRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_RegisterAsDropTarget(IWebBrowser2 *iface,
+        VARIANT_BOOL bRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, bRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL *pbRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, pbRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL bRegister)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    TRACE("(%p)->(%x)\n", This, bRegister);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_get_Resizable(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%p)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI webbrowser_put_Resizable(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    struct shellbrowserwindow *This = impl_from_IWebBrowser2(iface);
+    FIXME("(%p)->(%x)\n", This, Value);
+    return E_NOTIMPL;
+}
+
+static const IWebBrowser2Vtbl webbrowser2vtbl =
+{
+    webbrowser_QueryInterface,
+    webbrowser_AddRef,
+    webbrowser_Release,
+    webbrowser_GetTypeInfoCount,
+    webbrowser_GetTypeInfo,
+    webbrowser_GetIDsOfNames,
+    webbrowser_Invoke,
+    webbrowser_GoBack,
+    webbrowser_GoForward,
+    webbrowser_GoHome,
+    webbrowser_GoSearch,
+    webbrowser_Navigate,
+    webbrowser_Refresh,
+    webbrowser_Refresh2,
+    webbrowser_Stop,
+    webbrowser_get_Application,
+    webbrowser_get_Parent,
+    webbrowser_get_Container,
+    webbrowser_get_Document,
+    webbrowser_get_TopLevelContainer,
+    webbrowser_get_Type,
+    webbrowser_get_Left,
+    webbrowser_put_Left,
+    webbrowser_get_Top,
+    webbrowser_put_Top,
+    webbrowser_get_Width,
+    webbrowser_put_Width,
+    webbrowser_get_Height,
+    webbrowser_put_Height,
+    webbrowser_get_LocationName,
+    webbrowser_get_LocationURL,
+    webbrowser_get_Busy,
+    webbrowser_Quit,
+    webbrowser_ClientToWindow,
+    webbrowser_PutProperty,
+    webbrowser_GetProperty,
+    webbrowser_get_Name,
+    webbrowser_get_HWND,
+    webbrowser_get_FullName,
+    webbrowser_get_Path,
+    webbrowser_get_Visible,
+    webbrowser_put_Visible,
+    webbrowser_get_StatusBar,
+    webbrowser_put_StatusBar,
+    webbrowser_get_StatusText,
+    webbrowser_put_StatusText,
+    webbrowser_get_ToolBar,
+    webbrowser_put_ToolBar,
+    webbrowser_get_MenuBar,
+    webbrowser_put_MenuBar,
+    webbrowser_get_FullScreen,
+    webbrowser_put_FullScreen,
+    webbrowser_Navigate2,
+    webbrowser_QueryStatusWB,
+    webbrowser_ExecWB,
+    webbrowser_ShowBrowserBar,
+    webbrowser_get_ReadyState,
+    webbrowser_get_Offline,
+    webbrowser_put_Offline,
+    webbrowser_get_Silent,
+    webbrowser_put_Silent,
+    webbrowser_get_RegisterAsBrowser,
+    webbrowser_put_RegisterAsBrowser,
+    webbrowser_get_RegisterAsDropTarget,
+    webbrowser_put_RegisterAsDropTarget,
+    webbrowser_get_TheaterMode,
+    webbrowser_put_TheaterMode,
+    webbrowser_get_AddressBar,
+    webbrowser_put_AddressBar,
+    webbrowser_get_Resizable,
+    webbrowser_put_Resizable
+};
+
+static void desktopshellbrowserwindow_init(void)
+{
+    desktopshellbrowserwindow.IWebBrowser2_iface.lpVtbl = &webbrowser2vtbl;
+}
 
 static void shellwindows_init(void)
 {

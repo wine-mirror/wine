@@ -499,7 +499,6 @@ todo_wine {
     ret = 0xdead;
     VariantInit(&v);
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v, SWC_DESKTOP, &ret, SWFO_NEEDDISPATCH, &disp);
-todo_wine
     ok(hr == S_OK || broken(hr == S_FALSE), "got 0x%08x\n", hr);
     if (hr == S_FALSE) /* winxp and earlier */ {
         win_skip("SWC_DESKTOP is not supported, some tests will be skipped.\n");
@@ -519,41 +518,46 @@ todo_wine
         IUnknown *unk;
         UINT count;
 
-todo_wine
         ok(disp != NULL, "got %p\n", disp);
-        if (disp) {
+        ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
 
         /* IDispatch-related tests */
         count = 10;
         hr = IDispatch_GetTypeInfoCount(disp, &count);
+todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 1, "got %u\n", count);
-
+}
         hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
+todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-
+if (hr == S_OK) {
         hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(IsEqualGUID(&typeattr->guid, &IID_IWebBrowser2), "type guid %s\n", wine_dbgstr_guid(&typeattr->guid));
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
         ITypeInfo_Release(typeinfo);
-
+}
         /* IWebBrowser2 */
         hr = IDispatch_QueryInterface(disp, &IID_IWebBrowser2, (void**)&wb);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IWebBrowser2_Refresh(wb);
+todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IWebBrowser2_get_Application(wb, &app);
+todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(disp == app, "got %p, %p\n", app, disp);
-        IDispatch_Release(app);
+}
+        if (hr == S_OK) IDispatch_Release(app);
 
         hr = IWebBrowser2_get_Document(wb, &doc);
+todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-
+if (hr == S_OK) {
         hr = IDispatch_GetTypeInfo(doc, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -564,7 +568,7 @@ todo_wine
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
         ITypeInfo_Release(typeinfo);
-
+}
         IWebBrowser2_Release(wb);
 
         /* IServiceProvider */
@@ -572,8 +576,9 @@ todo_wine
         ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
         hr = IDispatch_QueryInterface(disp, &IID_IServiceProvider, (void**)&sp);
+todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-
+if (hr == S_OK) {
         hr = IServiceProvider_QueryService(sp, &SID_STopLevelBrowser, &IID_IShellBrowser, (void**)&sb);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -595,16 +600,14 @@ todo_wine
         ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
         IServiceProvider_Release(sp);
-        }
-        ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
-        if (disp) IDispatch_Release(disp);
+}
+        IDispatch_Release(disp);
     }
 
     disp = (void*)0xdeadbeef;
     ret = 0xdead;
     VariantInit(&v);
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v, SWC_DESKTOP, &ret, 0, &disp);
-todo_wine
     ok(hr == S_OK || broken(hr == S_FALSE) /* winxp */, "got 0x%08x\n", hr);
     ok(disp == NULL, "got %p\n", disp);
     ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
