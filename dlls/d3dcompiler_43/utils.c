@@ -2462,6 +2462,7 @@ static void free_function(struct hlsl_ir_function *func)
 {
     wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
     d3dcompiler_free((void *)func->name);
+    d3dcompiler_free(func);
 }
 
 void free_function_rb(struct wine_rb_entry *entry, void *context)
