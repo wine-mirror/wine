@@ -146,6 +146,7 @@ HRESULT WINAPI GetThemeSysString(HTHEME,int,LPWSTR,int);
 HRESULT WINAPI GetThemeTextExtent(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,
                                   const RECT*,RECT*);
 HRESULT WINAPI GetThemeTextMetrics(HTHEME,HDC,int,int,TEXTMETRICW*);
+HRESULT WINAPI GetThemeTransitionDuration(HTHEME,int,int,int,int,DWORD*);
 HTHEME WINAPI GetWindowTheme(HWND);
 
 #define HTTB_BACKGROUNDSEG          0x0000
