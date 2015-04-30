@@ -524,21 +524,19 @@ todo_wine {
         /* IDispatch-related tests */
         count = 10;
         hr = IDispatch_GetTypeInfoCount(disp, &count);
-todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 1, "got %u\n", count);
-}
+
         hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
+
         hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(IsEqualGUID(&typeattr->guid, &IID_IWebBrowser2), "type guid %s\n", wine_dbgstr_guid(&typeattr->guid));
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
         ITypeInfo_Release(typeinfo);
-}
+
         /* IWebBrowser2 */
         hr = IDispatch_QueryInterface(disp, &IID_IWebBrowser2, (void**)&wb);
         ok(hr == S_OK, "got 0x%08x\n", hr);

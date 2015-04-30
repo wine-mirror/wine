@@ -1,7 +1,7 @@
 MODULE    = explorer.exe
 APPMODE   = -mwindows -municode
 IMPORTS   = rpcrt4 user32 gdi32 advapi32
-DELAYIMPORTS = comctl32  shell32 ole32 shlwapi
+DELAYIMPORTS = comctl32 shell32 oleaut32 ole32 shlwapi
 
 C_SRCS = \
 	appbar.c \
