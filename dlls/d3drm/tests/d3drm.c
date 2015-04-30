@@ -1761,8 +1761,8 @@ static void test_d3drm_qi(void)
 {
     static const struct qi_test tests[] =
     {
-        { &IID_IDirect3DRM3,               &IID_IDirect3DRM3,      S_OK,                            TRUE  },
-        { &IID_IDirect3DRM2,               &IID_IDirect3DRM2,      S_OK,                            TRUE  },
+        { &IID_IDirect3DRM3,               &IID_IDirect3DRM3,      S_OK,                            FALSE },
+        { &IID_IDirect3DRM2,               &IID_IDirect3DRM2,      S_OK,                            FALSE },
         { &IID_IDirect3DRM,                &IID_IDirect3DRM,       S_OK,                            FALSE },
         { &IID_IDirect3DRMDevice,          NULL,                   CLASS_E_CLASSNOTAVAILABLE,       FALSE },
         { &IID_IDirect3DRMObject,          NULL,                   CLASS_E_CLASSNOTAVAILABLE,       FALSE },
