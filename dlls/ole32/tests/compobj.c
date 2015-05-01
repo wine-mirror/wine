@@ -1554,7 +1554,7 @@ static void test_registered_object_thread_affinity(void)
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
     GetExitCodeThread(thread, &exitcode);
     hr = exitcode;
-    ok(hr == RPC_E_WRONG_THREAD, "CoRevokeClassObject called from different "
+    ok(hr == RPC_E_WRONG_THREAD || broken(hr == S_OK) /* win8 */, "CoRevokeClassObject called from different "
        "thread to where registered should return RPC_E_WRONG_THREAD instead of 0x%08x\n", hr);
 
     thread = CreateThread(NULL, 0, register_class_object_thread, NULL, 0, &tid);
