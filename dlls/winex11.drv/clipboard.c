@@ -3506,6 +3506,7 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
     else
     {
         LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, event->target);
+        BOOL success = FALSE;
 
         if (lpFormat && lpFormat->lpDrvExportFunc)
         {
@@ -3536,9 +3537,13 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
                     GlobalUnlock(hClipData);
                     GlobalFree(hClipData);
+                    success = TRUE;
                 }
             }
         }
+
+        if (!success)
+            rprop = None;  /* report failure to client */
     }
 
 END:
