@@ -2132,6 +2132,8 @@ static void SETUPDI_EnumerateInterfaces(HDEVINFO DeviceInfoSet,
 
                         interfaceGuidStr[37] = 0;
                         UuidFromStringW(&interfaceGuidStr[1], &interfaceGuid);
+                        interfaceGuidStr[37] = '}';
+                        interfaceGuidStr[38] = 0;
                         l = RegOpenKeyExW(interfacesKey, interfaceGuidStr, 0,
                                 KEY_READ, &interfaceKey);
                         if (!l)
