@@ -249,7 +249,7 @@ static inline struct dwrite_typography *impl_from_IDWriteTypography(IDWriteTypog
 
 static inline const char *debugstr_run(const struct regular_layout_run *run)
 {
-    return wine_dbg_sprintf("[%u,%u]", run->descr.textPosition, run->descr.textPosition +
+    return wine_dbg_sprintf("[%u,%u)", run->descr.textPosition, run->descr.textPosition +
         run->descr.stringLength);
 }
 
