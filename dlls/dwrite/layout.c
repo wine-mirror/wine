@@ -1533,7 +1533,7 @@ static HRESULT WINAPI dwritetextlayout_SetStrikethrough(IDWriteTextLayout2 *ifac
     TRACE("(%p)->(%d %s)\n", This, strikethrough, debugstr_range(&range));
 
     value.range = range;
-    value.u.underline = strikethrough;
+    value.u.strikethrough = strikethrough;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STRIKETHROUGH, &value);
 }
 
