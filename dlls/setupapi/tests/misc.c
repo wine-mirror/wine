@@ -787,8 +787,9 @@ static void test_SetupLogError(void)
     ok(!ret, "SetupLogError succeeded\n");
     ok(error == ERROR_FILE_INVALID, "got wrong error: %d\n", error);
 
+    SetLastError(0xdeadbeef);
     ret = SetupOpenLog(FALSE);
-    ok(ret, "SetupOpenLog failed\n");
+    ok(ret, "SetupOpenLog failed, error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupLogErrorA("Test with wrong log severity\r\n", LogSevMaximum);
@@ -803,8 +804,9 @@ static void test_SetupLogError(void)
     ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER /* Win Vista+ */),
         "SetupLogError failed: %08x\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = SetupOpenLog(FALSE);
-    ok(ret, "SetupOpenLog failed\n");
+    ok(ret, "SetupOpenLog failed, error %d\n", GetLastError());
 
     SetupCloseLog();
 }
