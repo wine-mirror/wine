@@ -1964,7 +1964,12 @@ static void test_TreatAsClass(void)
     ok(lr == ERROR_SUCCESS, "Couldn't open CLSID key\n");
 
     lr = RegCreateKeyExA(clsidkey, deadbeefA, 0, NULL, 0, KEY_WRITE, NULL, &deadbeefkey, NULL);
-    ok(lr == ERROR_SUCCESS, "Couldn't create class key\n");
+    if (lr) {
+        win_skip("CoGetTreatAsClass() tests will be skipped (failed to create a test key, error %d)\n",
+            GetLastError());
+        RegCloseKey(clsidkey);
+        return;
+    }
 
     hr = pCoTreatAsClass(&deadbeef, &deadbeef);
     ok(hr == REGDB_E_WRITEREGDB, "CoTreatAsClass gave wrong error: %08x\n", hr);
