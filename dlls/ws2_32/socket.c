@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <limits.h>
 #ifdef HAVE_SYS_IPC_H
 # include <sys/ipc.h>
 #endif
@@ -3633,7 +3634,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                 return SOCKET_ERROR;
 
             timeout = get_rcvsnd_timeo(fd, optname == WS_SO_RCVTIMEO);
-            *(int *)optval = timeout <= UINT32_MAX ? timeout : UINT32_MAX;
+            *(int *)optval = timeout <= UINT_MAX ? timeout : UINT_MAX;
 
             release_sock_fd( s, fd );
             return ret;
