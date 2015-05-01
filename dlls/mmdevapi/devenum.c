@@ -143,12 +143,12 @@ static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *pr
     LONG ret;
     HKEY key;
     StringFromGUID2(guid, buffer, 39);
-    if ((ret = RegOpenKeyExW(flow == eRender ? key_render : key_capture, buffer, 0, KEY_READ|KEY_WRITE, &key)) != ERROR_SUCCESS)
+    if ((ret = RegOpenKeyExW(flow == eRender ? key_render : key_capture, buffer, 0, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, &key)) != ERROR_SUCCESS)
     {
         WARN("Opening key %s failed with %u\n", debugstr_w(buffer), ret);
         return E_FAIL;
     }
-    ret = RegOpenKeyExW(key, reg_properties, 0, KEY_READ|KEY_WRITE, propkey);
+    ret = RegOpenKeyExW(key, reg_properties, 0, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, propkey);
     RegCloseKey(key);
     if (ret != ERROR_SUCCESS)
     {
@@ -345,11 +345,11 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
     else
         root = key_capture;
 
-    if (RegCreateKeyExW(root, guidstr, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &key, NULL) == ERROR_SUCCESS)
+    if (RegCreateKeyExW(root, guidstr, 0, NULL, 0, KEY_WRITE|KEY_READ|KEY_WOW64_64KEY, NULL, &key, NULL) == ERROR_SUCCESS)
     {
         HKEY keyprop;
         RegSetValueExW(key, reg_devicestate, 0, REG_DWORD, (const BYTE*)&state, sizeof(DWORD));
-        if (!RegCreateKeyExW(key, reg_properties, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &keyprop, NULL))
+        if (!RegCreateKeyExW(key, reg_properties, 0, NULL, 0, KEY_WRITE|KEY_READ|KEY_WOW64_64KEY, NULL, &keyprop, NULL))
         {
             PROPVARIANT pv;
 
@@ -406,11 +406,11 @@ static HRESULT load_devices_from_reg(void)
     LONG ret;
     DWORD curflow;
 
-    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &root, NULL);
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, NULL, 0, KEY_WRITE|KEY_READ|KEY_WOW64_64KEY, NULL, &root, NULL);
     if (ret == ERROR_SUCCESS)
-        ret = RegCreateKeyExW(root, reg_capture, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_capture, NULL);
+        ret = RegCreateKeyExW(root, reg_capture, 0, NULL, 0, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, NULL, &key_capture, NULL);
     if (ret == ERROR_SUCCESS)
-        ret = RegCreateKeyExW(root, reg_render, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_render, NULL);
+        ret = RegCreateKeyExW(root, reg_render, 0, NULL, 0, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, NULL, &key_render, NULL);
     RegCloseKey(root);
     cur = key_capture;
     curflow = eCapture;
