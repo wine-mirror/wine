@@ -363,9 +363,9 @@ void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm) D
 #define BLOCKCHAIN_CACHE_SIZE 4
 
 /****************************************************************************
- * Storage32Impl definitions.
+ * StorageImpl definitions.
  *
- * This implementation of the IStorage32 interface represents a root
+ * This implementation of the IStorage interface represents a root
  * storage. Basically, a document file.
  */
 struct StorageImpl
