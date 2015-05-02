@@ -47,6 +47,7 @@ static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
 static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
+static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
 
 /* ############################### */
 
@@ -2478,6 +2479,9 @@ static void test_VirtualProtect(void)
     DWORD ret, old_prot, rw_prot, exec_prot, i, j;
     MEMORY_BASIC_INFORMATION info;
     SYSTEM_INFO si;
+    void *addr;
+    SIZE_T size;
+    NTSTATUS status;
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);
@@ -2485,6 +2489,31 @@ static void test_VirtualProtect(void)
     SetLastError(0xdeadbeef);
     base = VirtualAlloc(0, si.dwPageSize, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
     ok(base != NULL, "VirtualAlloc failed %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = VirtualProtect(base, si.dwPageSize, PAGE_READONLY, NULL);
+    todo_wine
+    ok(!ret, "VirtualProtect should fail\n");
+    todo_wine
+    ok(GetLastError() == ERROR_NOACCESS, "expected ERROR_NOACCESS, got %d\n", GetLastError());
+    old_prot = 0xdeadbeef;
+    ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+    ok(ret, "VirtualProtect failed %d\n", GetLastError());
+    todo_wine
+    ok(old_prot == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", old_prot);
+
+    addr = base;
+    size = si.dwPageSize;
+    status = pNtProtectVirtualMemory(GetCurrentProcess(), &addr, &size, PAGE_READONLY, NULL);
+    todo_wine
+    ok(status == STATUS_ACCESS_VIOLATION, "NtProtectVirtualMemory should fail, got %08x\n", status);
+    addr = base;
+    size = si.dwPageSize;
+    old_prot = 0xdeadbeef;
+    status = pNtProtectVirtualMemory(GetCurrentProcess(), &addr, &size, PAGE_NOACCESS, &old_prot);
+    ok(status == STATUS_SUCCESS, "NtProtectVirtualMemory should succeed, got %08x\n", status);
+    todo_wine
+    ok(old_prot == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", old_prot);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
@@ -3477,6 +3506,7 @@ START_TEST(virtual)
     pNtCurrentTeb = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
+    pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
 
     test_shared_memory(FALSE);
     test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
