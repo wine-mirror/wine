@@ -416,39 +416,6 @@ struct StorageImpl
   ULONG locked_bytes[8];
 };
 
-HRESULT StorageImpl_ReadRawDirEntry(
-            StorageImpl *This,
-            ULONG index,
-            BYTE *buffer) DECLSPEC_HIDDEN;
-
-void UpdateRawDirEntry(
-    BYTE *buffer,
-    const DirEntry *newData) DECLSPEC_HIDDEN;
-
-HRESULT StorageImpl_WriteRawDirEntry(
-            StorageImpl *This,
-            ULONG index,
-            const BYTE *buffer) DECLSPEC_HIDDEN;
-
-HRESULT StorageImpl_ReadDirEntry(
-            StorageImpl*    This,
-            DirRef          index,
-            DirEntry*       buffer) DECLSPEC_HIDDEN;
-
-HRESULT StorageImpl_WriteDirEntry(
-            StorageImpl*        This,
-            DirRef              index,
-            const DirEntry*     buffer) DECLSPEC_HIDDEN;
-
-BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
-                      StorageImpl* This,
-                      SmallBlockChainStream** ppsbChain) DECLSPEC_HIDDEN;
-
-SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
-                      StorageImpl* This,
-                      BlockChainStream** ppbbChain,
-                      ULARGE_INTEGER newSize) DECLSPEC_HIDDEN;
-
 /****************************************************************************
  * StgStreamImpl definitions.
  *
@@ -628,6 +595,15 @@ struct BlockChainStream
 /*
  * Methods for the BlockChainStream class.
  */
+
+/* Returns the number of blocks that comprises this chain.
+ * This is not the size of the stream as the last block may not be full!
+ */
+static inline ULONG BlockChainStream_GetCount(BlockChainStream* This)
+{
+  return This->numBlocks;
+}
+
 BlockChainStream* BlockChainStream_Construct(
 		StorageImpl* parentStorage,
 		ULONG*         headOfStreamPlaceHolder,
