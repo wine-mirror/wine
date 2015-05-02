@@ -2492,27 +2492,22 @@ static void test_VirtualProtect(void)
 
     SetLastError(0xdeadbeef);
     ret = VirtualProtect(base, si.dwPageSize, PAGE_READONLY, NULL);
-    todo_wine
     ok(!ret, "VirtualProtect should fail\n");
-    todo_wine
     ok(GetLastError() == ERROR_NOACCESS, "expected ERROR_NOACCESS, got %d\n", GetLastError());
     old_prot = 0xdeadbeef;
     ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
     ok(ret, "VirtualProtect failed %d\n", GetLastError());
-    todo_wine
     ok(old_prot == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", old_prot);
 
     addr = base;
     size = si.dwPageSize;
     status = pNtProtectVirtualMemory(GetCurrentProcess(), &addr, &size, PAGE_READONLY, NULL);
-    todo_wine
     ok(status == STATUS_ACCESS_VIOLATION, "NtProtectVirtualMemory should fail, got %08x\n", status);
     addr = base;
     size = si.dwPageSize;
     old_prot = 0xdeadbeef;
     status = pNtProtectVirtualMemory(GetCurrentProcess(), &addr, &size, PAGE_NOACCESS, &old_prot);
     ok(status == STATUS_SUCCESS, "NtProtectVirtualMemory should succeed, got %08x\n", status);
-    todo_wine
     ok(old_prot == PAGE_NOACCESS, "got %#x != expected PAGE_NOACCESS\n", old_prot);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
