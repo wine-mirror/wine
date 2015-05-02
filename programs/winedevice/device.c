@@ -98,14 +98,14 @@ static HMODULE load_driver_module( const WCHAR *name )
                 VirtualProtect( page, info.PageSize, PAGE_EXECUTE_READWRITE, &old );
                 rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                                  (USHORT *)(rel + 1), delta );
-                if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, info.PageSize, old, NULL );
+                if (old != PAGE_EXECUTE_READWRITE) VirtualProtect( page, info.PageSize, old, &old );
                 if (!rel) goto error;
             }
             /* make sure we don't try again */
             size = FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader ) + nt->FileHeader.SizeOfOptionalHeader;
             VirtualProtect( nt, size, PAGE_READWRITE, &old );
             nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = 0;
-            VirtualProtect( nt, size, old, NULL );
+            VirtualProtect( nt, size, old, &old );
         }
     }
 
