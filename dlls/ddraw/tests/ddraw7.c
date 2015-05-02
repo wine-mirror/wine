@@ -3862,7 +3862,7 @@ static void test_specular_lighting(void)
     ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
 
     memset(&material, 0, sizeof(material));
-    U(U2(material).specular).r = 1.0f;
+    U1(U2(material).specular).r = 1.0f;
     U2(U2(material).specular).g = 1.0f;
     U3(U2(material).specular).b = 1.0f;
     U4(U2(material).specular).a = 1.0f;
