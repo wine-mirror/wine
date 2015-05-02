@@ -64,6 +64,7 @@ static const BYTE STORAGE_oldmagic[8] ={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d}
 
 extern const IPropertySetStorageVtbl IPropertySetStorage_Vtbl;
 
+
 /****************************************************************************
  * StorageInternalImpl definitions.
  *
@@ -124,6 +125,7 @@ typedef struct TransactedDirEntry
   DirRef newTransactedParentEntry;
 } TransactedDirEntry;
 
+
 /****************************************************************************
  * Transacted storage object.
  */
@@ -173,9 +175,81 @@ typedef struct TransactedSharedImpl
 } TransactedSharedImpl;
 
 
-static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream*);
-static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream*);
+/****************************************************************************
+ * BlockChainStream definitions.
+ *
+ * The BlockChainStream class is a utility class that is used to create an
+ * abstraction of the big block chains in the storage file.
+ */
 
+struct BlockChainRun
+{
+  /* This represents a range of blocks that happen reside in consecutive sectors. */
+  ULONG firstSector;
+  ULONG firstOffset;
+  ULONG lastOffset;
+};
+
+typedef struct BlockChainBlock
+{
+  ULONG index;
+  ULONG sector;
+  BOOL  read;
+  BOOL  dirty;
+  BYTE data[MAX_BIG_BLOCK_SIZE];
+} BlockChainBlock;
+
+struct BlockChainStream
+{
+  StorageImpl* parentStorage;
+  ULONG*       headOfStreamPlaceHolder;
+  DirRef       ownerDirEntry;
+  struct BlockChainRun* indexCache;
+  ULONG        indexCacheLen;
+  ULONG        indexCacheSize;
+  BlockChainBlock cachedBlocks[2];
+  ULONG        blockToEvict;
+  ULONG        tailIndex;
+  ULONG        numBlocks;
+};
+
+/* Returns the number of blocks that comprises this chain.
+ * This is not the size of the stream as the last block may not be full!
+ */
+static inline ULONG BlockChainStream_GetCount(BlockChainStream* This)
+{
+  return This->numBlocks;
+}
+
+static BlockChainStream* BlockChainStream_Construct(StorageImpl*,ULONG*,DirRef);
+static void BlockChainStream_Destroy(BlockChainStream*);
+static HRESULT BlockChainStream_ReadAt(BlockChainStream*,ULARGE_INTEGER,ULONG,void*,ULONG*);
+static HRESULT BlockChainStream_WriteAt(BlockChainStream*,ULARGE_INTEGER,ULONG,const void*,ULONG*);
+static HRESULT BlockChainStream_Flush(BlockChainStream*);
+static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream*);
+static BOOL BlockChainStream_SetSize(BlockChainStream*,ULARGE_INTEGER);
+
+
+/****************************************************************************
+ * SmallBlockChainStream definitions.
+ *
+ * The SmallBlockChainStream class is a utility class that is used to create an
+ * abstraction of the small block chains in the storage file.
+ */
+
+struct SmallBlockChainStream
+{
+  StorageImpl* parentStorage;
+  DirRef         ownerDirEntry;
+  ULONG*         headOfStreamPlaceHolder;
+};
+
+static SmallBlockChainStream* SmallBlockChainStream_Construct(StorageImpl*,ULONG*,DirRef);
+static void SmallBlockChainStream_Destroy(SmallBlockChainStream*);
+static HRESULT SmallBlockChainStream_ReadAt(SmallBlockChainStream*,ULARGE_INTEGER,ULONG,void*,ULONG*);
+static HRESULT SmallBlockChainStream_WriteAt(SmallBlockChainStream*,ULARGE_INTEGER,ULONG,const void*,ULONG*);
+static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream*);
+static BOOL SmallBlockChainStream_SetSize(SmallBlockChainStream*,ULARGE_INTEGER);
 
 
 /************************************************************************
@@ -3034,7 +3108,7 @@ static void StorageImpl_SaveFileHeader(
  *
  * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
-HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer)
+static HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer)
 {
   ULARGE_INTEGER offset;
   HRESULT hr;
@@ -3062,7 +3136,7 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
  *
  * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
-HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE *buffer)
+static HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE *buffer)
 {
   ULARGE_INTEGER offset;
   ULONG bytesRead;
@@ -3102,7 +3176,7 @@ static HRESULT StorageImpl_DestroyDirEntry(
  *
  * buffer must be RAW_DIRENTRY_SIZE bytes long.
  */
-void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
+static void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
 {
   memset(buffer, 0, RAW_DIRENTRY_SIZE);
 
@@ -3291,7 +3365,7 @@ static HRESULT StorageImpl_CreateDirEntry(
  *
  * This method will read the specified directory entry.
  */
-HRESULT StorageImpl_ReadDirEntry(
+static HRESULT StorageImpl_ReadDirEntry(
   StorageImpl* This,
   DirRef         index,
   DirEntry*      buffer)
@@ -3379,7 +3453,7 @@ HRESULT StorageImpl_ReadDirEntry(
 /*********************************************************************
  * Write the specified directory entry to the file
  */
-HRESULT StorageImpl_WriteDirEntry(
+static HRESULT StorageImpl_WriteDirEntry(
   StorageImpl*          This,
   DirRef                index,
   const DirEntry*       buffer)
@@ -3481,7 +3555,7 @@ static BOOL StorageImpl_WriteDWordToBigBlock(
  * This method will convert a small block chain to a big block chain.
  * The small block chain will be destroyed.
  */
-BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
+static BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                       StorageImpl* This,
                       SmallBlockChainStream** ppsbChain)
 {
@@ -3601,7 +3675,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
  * This method will convert a big block chain to a small block chain.
  * The big block chain will be destroyed on success.
  */
-SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
+static SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
                            StorageImpl* This,
                            BlockChainStream** ppbbChain,
                            ULARGE_INTEGER newSize)
@@ -6901,7 +6975,7 @@ static ULONG BlockChainStream_GetHeadOfChain(BlockChainStream* This)
 }
 
 /* Read and save the index of all blocks in this stream. */
-HRESULT BlockChainStream_UpdateIndexCache(BlockChainStream* This)
+static HRESULT BlockChainStream_UpdateIndexCache(BlockChainStream* This)
 {
   ULONG  next_sector, next_offset;
   HRESULT hr;
@@ -6978,7 +7052,7 @@ HRESULT BlockChainStream_UpdateIndexCache(BlockChainStream* This)
 }
 
 /* Locate the nth block in this stream. */
-ULONG BlockChainStream_GetSectorOfOffset(BlockChainStream *This, ULONG offset)
+static ULONG BlockChainStream_GetSectorOfOffset(BlockChainStream *This, ULONG offset)
 {
   ULONG min_offset = 0, max_offset = This->numBlocks-1;
   ULONG min_run = 0, max_run = This->indexCacheLen-1;
@@ -7007,7 +7081,7 @@ ULONG BlockChainStream_GetSectorOfOffset(BlockChainStream *This, ULONG offset)
   return This->indexCache[min_run].firstSector + offset - This->indexCache[min_run].firstOffset;
 }
 
-HRESULT BlockChainStream_GetBlockAtOffset(BlockChainStream *This,
+static HRESULT BlockChainStream_GetBlockAtOffset(BlockChainStream *This,
     ULONG index, BlockChainBlock **block, ULONG *sector, BOOL create)
 {
   BlockChainBlock *result=NULL;
