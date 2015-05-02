@@ -827,6 +827,7 @@ LPVOID DOSVM_AllocDataUMB( DWORD size, WORD *segment, WORD *selector )
  */
 void DOSVM_InitSegments(void)
 {
+    DWORD old_prot;
     LPSTR ptr;
     int   i;
 
@@ -966,7 +967,7 @@ void DOSVM_InitSegments(void)
     /*
      * As we store code in UMB we should make sure it is executable
      */
-    VirtualProtect((void *)DOSVM_UMB_BOTTOM, DOSVM_UMB_TOP - DOSVM_UMB_BOTTOM, PAGE_EXECUTE_READWRITE, NULL);
+    VirtualProtect((void *)DOSVM_UMB_BOTTOM, DOSVM_UMB_TOP - DOSVM_UMB_BOTTOM, PAGE_EXECUTE_READWRITE, &old_prot);
 
     event_notifier = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
