@@ -5457,7 +5457,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
                 shader_addline(buffer, "att = dot(dst.xyz, vec3(ffp_light[%u].c_att,"
                         " ffp_light[%u].l_att, ffp_light[%u].q_att));\n", i, i, i);
                 if (!legacy_lighting)
-                    shader_addline(buffer, "att = 1.0 / att;");
+                    shader_addline(buffer, "att = 1.0 / att;\n");
                 shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", i);
                 if (!settings->normal)
                 {
