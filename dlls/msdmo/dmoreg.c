@@ -189,25 +189,26 @@ HRESULT WINAPI DMORegister(
     HKEY hkey = 0;
     HKEY hckey = 0;
     HKEY hclskey = 0;
+    LONG ret;
 
     TRACE("%s %s %s\n", debugstr_w(szName), debugstr_guid(clsidDMO), debugstr_guid(guidCategory));
 
     if (IsEqualGUID(guidCategory, &GUID_NULL))
         return E_INVALIDARG;
 
-    hres = RegCreateKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, NULL,
+    ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, szDMORootKey, 0, NULL,
         REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hrkey, NULL);
-    if (ERROR_SUCCESS != hres)
-        goto lend;
+    if (ret)
+        return HRESULT_FROM_WIN32(ret);
 
     /* Create clsidDMO key under MediaObjects */ 
-    hres = RegCreateKeyExW(hrkey, GUIDToString(szguid, clsidDMO), 0, NULL,
+    ret = RegCreateKeyExW(hrkey, GUIDToString(szguid, clsidDMO), 0, NULL,
         REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
-    if (ERROR_SUCCESS != hres)
+    if (ret)
         goto lend;
 
     /* Set default Name value */
-    hres = RegSetValueExW(hkey, NULL, 0, REG_SZ, (const BYTE*) szName, 
+    ret = RegSetValueExW(hkey, NULL, 0, REG_SZ, (const BYTE*) szName,
         (strlenW(szName) + 1) * sizeof(WCHAR));
 
     /* Set InputTypes */
@@ -219,28 +220,28 @@ HRESULT WINAPI DMORegister(
     if (dwFlags & DMO_REGISTERF_IS_KEYED)
     {
         /* Create Keyed key */ 
-        hres = RegCreateKeyExW(hkey, szDMOKeyed, 0, NULL,
+        ret = RegCreateKeyExW(hkey, szDMOKeyed, 0, NULL,
             REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hckey, NULL);
-        if (ERROR_SUCCESS != hres)
+        if (ret)
             goto lend;
         RegCloseKey(hckey);
     }
 
     /* Register the category */
-    hres = RegCreateKeyExW(hrkey, szDMOCategories, 0, NULL,
+    ret = RegCreateKeyExW(hrkey, szDMOCategories, 0, NULL,
             REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hckey, NULL);
-    if (ERROR_SUCCESS != hres)
+    if (ret)
         goto lend;
 
     RegCloseKey(hkey);
 
-    hres = RegCreateKeyExW(hckey, GUIDToString(szguid, guidCategory), 0, NULL,
+    ret = RegCreateKeyExW(hckey, GUIDToString(szguid, guidCategory), 0, NULL,
             REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkey, NULL);
-    if (ERROR_SUCCESS != hres)
+    if (ret)
         goto lend;
-    hres = RegCreateKeyExW(hkey, GUIDToString(szguid, clsidDMO), 0, NULL,
+    ret = RegCreateKeyExW(hkey, GUIDToString(szguid, clsidDMO), 0, NULL,
         REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hclskey, NULL);
-    if (ERROR_SUCCESS != hres)
+    if (ret)
         goto lend;
 
 lend:
@@ -253,6 +254,7 @@ lend:
     if (hrkey)
         RegCloseKey(hrkey);
 
+    hres = HRESULT_FROM_WIN32(ret);
     TRACE(" hresult=0x%08x\n", hres);
     return hres;
 }
