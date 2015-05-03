@@ -485,13 +485,153 @@ static const struct message folderview_getfocused_seq[] = {
     { 0 }
 };
 
-static void test_IShellView_CreateViewWindow(void)
+static HRESULT WINAPI shellbrowser_QueryInterface(IShellBrowser *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID(&IID_IShellBrowser, riid) ||
+        IsEqualGUID(&IID_IOleWindow, riid) ||
+        IsEqualGUID(&IID_IUnknown, riid))
+    {
+        *ppv = iface;
+    }
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI shellbrowser_AddRef(IShellBrowser *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI shellbrowser_Release(IShellBrowser *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI shellbrowser_GetWindow(IShellBrowser *iface, HWND *phwnd)
+{
+    *phwnd = GetDesktopWindow();
+    return S_OK;
+}
+
+static HRESULT WINAPI shellbrowser_ContextSensitiveHelp(IShellBrowser *iface, BOOL mode)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_InsertMenusSB(IShellBrowser *iface, HMENU hmenuShared,
+    OLEMENUGROUPWIDTHS *menuwidths)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_SetMenuSB(IShellBrowser *iface, HMENU hmenuShared,
+    HOLEMENU holemenuReserved, HWND hwndActiveObject)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_RemoveMenusSB(IShellBrowser *iface, HMENU hmenuShared)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_SetStatusTextSB(IShellBrowser *iface, LPCOLESTR text)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_EnableModelessSB(IShellBrowser *iface, BOOL enable)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_TranslateAcceleratorSB(IShellBrowser *iface, MSG *pmsg, WORD wID)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_BrowseObject(IShellBrowser *iface, LPCITEMIDLIST pidl, UINT flags)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_GetViewStateStream(IShellBrowser *iface, DWORD mode, IStream **stream)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_GetControlWindow(IShellBrowser *iface, UINT id, HWND *phwnd)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_SendControlMsg(IShellBrowser *iface, UINT id, UINT uMsg,
+    WPARAM wParam, LPARAM lParam, LRESULT *pret)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_QueryActiveShellView(IShellBrowser *iface, IShellView **view)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_OnViewWindowActive(IShellBrowser *iface, IShellView *view)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI shellbrowser_SetToolbarItems(IShellBrowser *iface, LPTBBUTTONSB buttons,
+    UINT count, UINT flags)
+{
+    return E_NOTIMPL;
+}
+
+static const IShellBrowserVtbl shellbrowservtbl = {
+    shellbrowser_QueryInterface,
+    shellbrowser_AddRef,
+    shellbrowser_Release,
+    shellbrowser_GetWindow,
+    shellbrowser_ContextSensitiveHelp,
+    shellbrowser_InsertMenusSB,
+    shellbrowser_SetMenuSB,
+    shellbrowser_RemoveMenusSB,
+    shellbrowser_SetStatusTextSB,
+    shellbrowser_EnableModelessSB,
+    shellbrowser_TranslateAcceleratorSB,
+    shellbrowser_BrowseObject,
+    shellbrowser_GetViewStateStream,
+    shellbrowser_GetControlWindow,
+    shellbrowser_SendControlMsg,
+    shellbrowser_QueryActiveShellView,
+    shellbrowser_OnViewWindowActive,
+    shellbrowser_SetToolbarItems
+};
+
+static IShellBrowser test_shellbrowser = { &shellbrowservtbl };
+
+static void test_CreateViewWindow(void)
 {
     IShellFolder *desktop;
+    HWND hwnd_view, hwnd2;
     FOLDERSETTINGS settings;
     IShellView *view;
     IDropTarget *dt;
-    HWND hwnd_view;
     HRESULT hr;
     RECT r = {0};
 
@@ -518,6 +658,16 @@ if (0)
     hr = IShellView_CreateViewWindow(view, NULL, &settings, NULL, &r, &hwnd_view);
     ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
     ok(hwnd_view == 0, "got %p\n", hwnd_view);
+
+    hwnd_view = NULL;
+    hr = IShellView_CreateViewWindow(view, NULL, &settings, &test_shellbrowser, &r, &hwnd_view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hwnd_view != 0, "got %p\n", hwnd_view);
+
+    hwnd2 = (HWND)0xdeadbeef;
+    hr = IShellView_CreateViewWindow(view, NULL, &settings, &test_shellbrowser, &r, &hwnd2);
+    ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
+    ok(hwnd2 == NULL, "got %p\n", hwnd_view);
 
     /* ::DragLeave without drag operation */
     hr = IShellView_QueryInterface(view, &IID_IDropTarget, (void**)&dt);
@@ -1158,7 +1308,7 @@ START_TEST(shlview)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    test_IShellView_CreateViewWindow();
+    test_CreateViewWindow();
     test_IFolderView();
     test_GetItemObject();
     test_IShellFolderView();

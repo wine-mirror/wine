@@ -1923,22 +1923,29 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(IShellView3 *iface, IShellVi
 
 static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView3 *iface)
 {
-	IShellViewImpl *This = impl_from_IShellView3(iface);
+    IShellViewImpl *This = impl_from_IShellView3(iface);
 
-	TRACE("(%p)\n",This);
+    TRACE("(%p)\n", This);
 
-	/*Make absolutely sure all our UI is cleaned up.*/
-	IShellView3_UIActivate(iface, SVUIA_DEACTIVATE);
+    if (!This->hWnd)
+        return S_OK;
 
-	if(This->hMenu)
-	  DestroyMenu(This->hMenu);
+    /* Make absolutely sure all our UI is cleaned up. */
+    IShellView3_UIActivate(iface, SVUIA_DEACTIVATE);
 
-	DestroyWindow(This->hWnd);
-	if(This->pShellBrowser) IShellBrowser_Release(This->pShellBrowser);
-	if(This->pCommDlgBrowser) ICommDlgBrowser_Release(This->pCommDlgBrowser);
+    if (This->hMenu)
+        DestroyMenu(This->hMenu);
 
+    DestroyWindow(This->hWnd);
+    if (This->pShellBrowser) IShellBrowser_Release(This->pShellBrowser);
+    if (This->pCommDlgBrowser) ICommDlgBrowser_Release(This->pCommDlgBrowser);
 
-	return S_OK;
+    This->hMenu = NULL;
+    This->hWnd = NULL;
+    This->pShellBrowser = NULL;
+    This->pCommDlgBrowser = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView3 *iface, LPFOLDERSETTINGS lpfs)
@@ -2068,7 +2075,7 @@ static HRESULT WINAPI IShellView3_fnCreateViewWindow3(IShellView3 *iface, IShell
 
     *hwnd = NULL;
 
-    if (!owner)
+    if (!owner || This->hWnd)
         return E_UNEXPECTED;
 
     if (view_flags != SV3CVW3_DEFAULT)
