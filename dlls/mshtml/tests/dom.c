@@ -1806,6 +1806,24 @@ static void _test_attr_expando(unsigned line, IHTMLDOMAttribute *attr, VARIANT_B
     IHTMLDOMAttribute2_Release(attr2);
 }
 
+#define test_attr_value(a,b) _test_attr_value(__LINE__,a,b)
+static void _test_attr_value(unsigned line, IHTMLDOMAttribute *attr, const char *exval)
+{
+    IHTMLDOMAttribute2 *attr2 = _get_attr2_iface(line, (IUnknown*)attr);
+    BSTR val;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute2_get_value(attr2, &val);
+    ok_(__FILE__,line)(hres == S_OK, "get_value failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(val, exval), "value = %s, expected %s\n", wine_dbgstr_w(val), exval);
+    else
+        ok_(__FILE__,line)(!val, "value = %s, expected NULL\n", wine_dbgstr_w(val));
+
+    IHTMLDOMAttribute2_Release(attr2);
+    SysFreeString(val);
+}
+
 #define test_comment_attrs(c) _test_comment_attrs(__LINE__,c)
 static void _test_comment_attrs(unsigned line, IUnknown *unk)
 {
@@ -3251,6 +3269,7 @@ static void test_attr_collection(IHTMLElement *elem)
             ok(V_VT(&val) == VT_BSTR, "id: V_VT(&val) = %d\n", V_VT(&val));
             ok(!strcmp_wa(V_BSTR(&val), "attr"), "id: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
             test_attr_expando(dom_attr, VARIANT_FALSE);
+            test_attr_value(dom_attr, "attr");
         } else if(!strcmp_wa(name, "attr1")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
@@ -3258,24 +3277,28 @@ static void test_attr_collection(IHTMLElement *elem)
             ok(V_VT(&val) == VT_BSTR, "attr1: V_VT(&val) = %d\n", V_VT(&val));
             ok(!strcmp_wa(V_BSTR(&val), "attr1"), "attr1: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
             test_attr_expando(dom_attr, VARIANT_TRUE);
+            test_attr_value(dom_attr, "attr1");
         } else if(!strcmp_wa(name, "attr2")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
             ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
             ok(V_VT(&val) == VT_BSTR, "attr2: V_VT(&val) = %d\n", V_VT(&val));
             ok(!V_BSTR(&val), "attr2: V_BSTR(&val) != NULL\n");
+            test_attr_value(dom_attr, "");
         } else if(!strcmp_wa(name, "attr3")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
             ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
             ok(V_VT(&val) == VT_BSTR, "attr3: V_VT(&val) = %d\n", V_VT(&val));
             ok(!strcmp_wa(V_BSTR(&val), "attr3"), "attr3: V_BSTR(&val) = %s\n", wine_dbgstr_w(V_BSTR(&val)));
+            test_attr_value(dom_attr, "attr3");
         } else if(!strcmp_wa(name, "test")) {
             checked++;
             hres = IHTMLDOMAttribute_get_nodeValue(dom_attr, &val);
             ok(hres == S_OK, "%d) get_nodeValue failed: %08x\n", i, hres);
             ok(V_VT(&val) == VT_I4, "test: V_VT(&val) = %d\n", V_VT(&val));
             ok(V_I4(&val) == 1, "test: V_I4(&val) = %d\n", V_I4(&val));
+            test_attr_value(dom_attr, "1");
         }
 
         IHTMLDOMAttribute_Release(dom_attr);
