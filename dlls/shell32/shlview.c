@@ -2249,19 +2249,20 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 {
 	IShellViewImpl *This = impl_from_IOleCommandTarget(iface);
 
-	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08x Opt:0x%08x %p %p)\n",
-              This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, pvaIn, pvaOut);
+	FIXME("(%p)->(%s %d 0x%08x %s %p)\n",
+              This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
 
 	if (!pguidCmdGroup)
 	    return OLECMDERR_E_UNKNOWNGROUP;
+
 	if (IsEqualIID(pguidCmdGroup, &CGID_Explorer) &&
-	   (nCmdID == 0x29) &&
+	   (nCmdID == OLECMDID_SHOWMESSAGE) &&
 	   (nCmdexecopt == 4) && pvaOut)
 	   return S_OK;
 	if (IsEqualIID(pguidCmdGroup, &CGID_ShellDocView) &&
-	   (nCmdID == 9) &&
-	   (nCmdexecopt == 0))
-	   return 1;
+	   (nCmdID == OLECMDID_SPELL) &&
+	   (nCmdexecopt == OLECMDEXECOPT_DODEFAULT))
+	   return S_FALSE;
 
 	return OLECMDERR_E_UNKNOWNGROUP;
 }
