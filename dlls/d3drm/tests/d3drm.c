@@ -447,21 +447,19 @@ static void test_MeshBuilder(void)
         hr = IDirect3DRMMesh_GetGroupMaterial(mesh, 0, &material);
         ok(hr == D3DRM_OK, "GetCroupMaterial failed returning hr = %x\n", hr);
         ok(material != NULL, "No material present\n");
-        if ((hr == D3DRM_OK) && material)
-        {
-            hr = IDirect3DRMMaterial_GetEmissive(material, &values[0], &values[1], &values[2]);
-            ok(hr == D3DRM_OK, "GetMaterialEmissive failed returning hr = %x\n", hr);
-            ok(values[0] == 0.5f, "Emissive red component should be %f instead of %f\n", 0.5f, values[0]);
-            ok(values[1] == 0.5f, "Emissive green component should be %f instead of %f\n", 0.5f, values[1]);
-            ok(values[2] == 0.5f, "Emissive blue component should be %f instead of %f\n", 0.5f, values[2]);
-            hr = IDirect3DRMMaterial_GetSpecular(material, &values[0], &values[1], &values[2]);
-            ok(hr == D3DRM_OK, "GetMaterialEmissive failed returning hr = %x\n", hr);
-            ok(values[0] == 1.0f, "Specular red component should be %f instead of %f\n", 1.0f, values[0]);
-            ok(values[1] == 0.0f, "Specular green component should be %f instead of %f\n", 0.0f, values[1]);
-            ok(values[2] == 0.0f, "Specular blue component should be %f instead of %f\n", 0.0f, values[2]);
-            values[0] = IDirect3DRMMaterial_GetPower(material);
-            ok(values[0] == 30.0f, "Power value should be %f instead of %f\n", 30.0f, values[0]);
-        }
+        hr = IDirect3DRMMaterial_GetEmissive(material, &values[0], &values[1], &values[2]);
+        ok(hr == D3DRM_OK, "Failed to get emissive color, hr %#x.\n", hr);
+        ok(values[0] == 0.5f, "Got unexpected red component %.8e.\n", values[0]);
+        ok(values[1] == 0.5f, "Got unexpected green component %.8e.\n", values[1]);
+        ok(values[2] == 0.5f, "Got unexpected blue component %.8e.\n", values[2]);
+        hr = IDirect3DRMMaterial_GetSpecular(material, &values[0], &values[1], &values[2]);
+        ok(hr == D3DRM_OK, "Failed to get specular color, hr %#x.\n", hr);
+        ok(values[0] == 1.0f, "Got unexpected red component %.8e.\n", values[0]);
+        ok(values[1] == 0.0f, "Got unexpected green component %.8e.\n", values[1]);
+        ok(values[2] == 0.0f, "Got unexpected blue component %.8e.\n", values[2]);
+        values[0] = IDirect3DRMMaterial_GetPower(material);
+        ok(values[0] == 30.0f, "Got unexpected power value %.8e.\n", values[0]);
+        IDirect3DRMMaterial_Release(material);
 
         IDirect3DRMMesh_Release(mesh);
     }
