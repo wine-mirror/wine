@@ -360,7 +360,7 @@ DECLARE_INTERFACE_(IDirect3DRMVisual,IDirect3DRMObject)
 #undef GetClassName
 #endif
 #define INTERFACE IDirect3DRMDevice
-DECLARE_INTERFACE_(IDirect3DRMDevice,IUnknown)
+DECLARE_INTERFACE_(IDirect3DRMDevice,IDirect3DRMObject)
 {
     /*** IUnknown methods ***/
     STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
