@@ -164,8 +164,6 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, V
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, VARIANT *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    DISPPARAMS dp = {NULL, NULL, 0, 0};
-    EXCEPINFO ei;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -174,9 +172,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, V
         return E_UNEXPECTED;
     }
 
-    memset(&ei, 0, sizeof(ei));
-    return IDispatchEx_InvokeEx(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
-            DISPATCH_PROPERTYGET, &dp, p, &ei, NULL);
+    return get_elem_attr_value_by_dispid(This->elem, This->dispid, 0, p);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, VARIANT_BOOL *p)

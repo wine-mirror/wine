@@ -606,10 +606,6 @@ static HRESULT WINAPI HTMLElement_Invoke(IHTMLElement *iface, DISPID dispIdMembe
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-#define ATTRFLAG_CASESENSITIVE  0x0001
-#define ATTRFLAG_ASSTRING       0x0002
-#define ATTRFLAG_EXPANDURL      0x0004
-
 static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttributeName,
                                                VARIANT AttributeValue, LONG lFlags)
 {
@@ -640,14 +636,42 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
             LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYPUT, &dispParams, NULL, &excep, NULL);
 }
 
+HRESULT get_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, DWORD flags, VARIANT *ret)
+{
+    DISPPARAMS dispParams = {NULL, NULL, 0, 0};
+    EXCEPINFO excep;
+    HRESULT hres;
+
+    hres = IDispatchEx_InvokeEx(&elem->node.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &dispParams, ret, &excep, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    if(flags & ATTRFLAG_ASSTRING) {
+        switch(V_VT(ret)) {
+        case VT_BSTR:
+            break;
+        case VT_DISPATCH:
+            IDispatch_Release(V_DISPATCH(ret));
+            V_VT(ret) = VT_BSTR;
+            V_BSTR(ret) = SysAllocString(NULL);
+            break;
+        default:
+            hres = VariantChangeType(ret, ret, 0, VT_BSTR);
+            if(FAILED(hres))
+                return hres;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttributeName,
                                                LONG lFlags, VARIANT *AttributeValue)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
     DISPID dispid;
     HRESULT hres;
-    DISPPARAMS dispParams = {NULL, NULL, 0, 0};
-    EXCEPINFO excep;
 
     TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, AttributeValue);
 
@@ -666,28 +690,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
         return hres;
     }
 
-    hres = IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
-            DISPATCH_PROPERTYGET, &dispParams, AttributeValue, &excep, NULL);
-    if(FAILED(hres))
-        return hres;
-
-    if(lFlags & ATTRFLAG_ASSTRING) {
-        switch(V_VT(AttributeValue)) {
-        case VT_BSTR:
-            break;
-        case VT_DISPATCH:
-            IDispatch_Release(V_DISPATCH(AttributeValue));
-            V_VT(AttributeValue) = VT_BSTR;
-            V_BSTR(AttributeValue) = SysAllocString(NULL);
-            break;
-        default:
-            hres = VariantChangeType(AttributeValue, AttributeValue, 0, VT_BSTR);
-            if(FAILED(hres))
-                return hres;
-        }
-    }
-
-    return S_OK;
+    return get_elem_attr_value_by_dispid(This, dispid, lFlags, AttributeValue);
 }
 
 static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strAttributeName,
