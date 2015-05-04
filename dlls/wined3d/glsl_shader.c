@@ -126,7 +126,7 @@ struct glsl_vs_program
     GLint material_ambient_location;
     GLint material_diffuse_location;
     GLint material_specular_location;
-    GLint material_emission_location;
+    GLint material_emissive_location;
     GLint material_shininess_location;
     GLint light_ambient_location;
     struct
@@ -1111,7 +1111,7 @@ static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context
     }
     GL_EXTCALL(glUniform4fv(prog->vs.material_ambient_location, 1, &state->material.ambient.r));
     GL_EXTCALL(glUniform4fv(prog->vs.material_diffuse_location, 1, &state->material.diffuse.r));
-    GL_EXTCALL(glUniform4fv(prog->vs.material_emission_location, 1, &state->material.emissive.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_emissive_location, 1, &state->material.emissive.r));
     checkGLcall("setting FFP material uniforms");
 }
 
@@ -5413,7 +5413,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info,
         BOOL legacy_lighting)
 {
-    const char *diffuse, *specular, *emission, *ambient;
+    const char *diffuse, *specular, *emissive, *ambient;
     enum wined3d_light_type light_type;
     unsigned int i;
 
@@ -5433,7 +5433,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
     ambient = shader_glsl_ffp_mcs(settings->ambient_source, "ffp_material.ambient");
     diffuse = shader_glsl_ffp_mcs(settings->diffuse_source, "ffp_material.diffuse");
     specular = shader_glsl_ffp_mcs(settings->specular_source, "ffp_material.specular");
-    emission = shader_glsl_ffp_mcs(settings->emission_source, "ffp_material.emission");
+    emissive = shader_glsl_ffp_mcs(settings->emissive_source, "ffp_material.emissive");
 
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
     {
@@ -5563,7 +5563,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
     }
 
     shader_addline(buffer, "gl_FrontColor.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
-            ambient, diffuse, emission);
+            ambient, diffuse, emissive);
     shader_addline(buffer, "gl_FrontColor.w = %s.w;\n", diffuse);
     shader_addline(buffer, "gl_FrontSecondaryColor = %s * specular;\n", specular);
 }
@@ -5587,7 +5587,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     shader_addline(buffer, "uniform mat4 ffp_texture_matrix[%u];\n", MAX_TEXTURES);
 
     shader_addline(buffer, "uniform struct\n{\n");
-    shader_addline(buffer, "    vec4 emission;\n");
+    shader_addline(buffer, "    vec4 emissive;\n");
     shader_addline(buffer, "    vec4 ambient;\n");
     shader_addline(buffer, "    vec4 diffuse;\n");
     shader_addline(buffer, "    vec4 specular;\n");
@@ -6410,7 +6410,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->material_ambient_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.ambient"));
     vs->material_diffuse_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.diffuse"));
     vs->material_specular_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.specular"));
-    vs->material_emission_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.emission"));
+    vs->material_emissive_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.emissive"));
     vs->material_shininess_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_material.shininess"));
     vs->light_ambient_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_light_ambient"));
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)

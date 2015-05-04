@@ -1870,7 +1870,7 @@ struct wined3d_ffp_vs_settings
 {
     DWORD light_type      : 24; /* MAX_ACTIVE_LIGHTS, 8 * 3 */
     DWORD diffuse_source  : 2;
-    DWORD emission_source : 2;
+    DWORD emissive_source : 2;
     DWORD ambient_source  : 2;
     DWORD specular_source : 2;
 

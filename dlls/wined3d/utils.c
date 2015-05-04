@@ -4232,14 +4232,14 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     if (state->render_states[WINED3D_RS_COLORVERTEX] && (si->use_map & (1 << WINED3D_FFP_DIFFUSE)))
     {
         settings->diffuse_source = state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE];
-        settings->emission_source = state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE];
+        settings->emissive_source = state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE];
         settings->ambient_source = state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE];
         settings->specular_source = state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE];
     }
     else
     {
         settings->diffuse_source = WINED3D_MCS_MATERIAL;
-        settings->emission_source = WINED3D_MCS_MATERIAL;
+        settings->emissive_source = WINED3D_MCS_MATERIAL;
         settings->ambient_source = WINED3D_MCS_MATERIAL;
         settings->specular_source = WINED3D_MCS_MATERIAL;
     }
