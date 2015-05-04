@@ -1057,6 +1057,7 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     IHTMLEventObj *event;
+    VARIANT v;
     HRESULT hres;
 
     CHECK_EXPECT(submit_onclick_setret);
@@ -1068,9 +1069,19 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
     ok(hres == S_OK, "get_event failed: %08x\n", hres);
     ok(event != NULL, "event == NULL\n");
 
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLEventObj_get_returnValue(event, &v);
+    ok(hres == S_OK, "get_returnValue failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(returnValue) = %d\n", V_VT(&v));
+
     hres = IHTMLEventObj_put_returnValue(event, onclick_event_retval);
     ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
     IHTMLEventObj_Release(event);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLEventObj_get_returnValue(event, &v);
+    ok(hres == S_OK, "get_returnValue failed: %08x\n", hres);
+    ok(VarCmp(&v, &onclick_event_retval, 0, 0) == VARCMP_EQ, "unexpected returnValue\n");
 
     *pvarRes = onclick_retval;
     return S_OK;

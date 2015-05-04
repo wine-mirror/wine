@@ -265,6 +265,7 @@ typedef struct {
     HTMLDOMNode *target;
     const event_info_t *type;
     nsIDOMEvent *nsevent;
+    VARIANT return_value;
     BOOL prevent_default;
     BOOL cancel_bubble;
 } HTMLEventObj;
@@ -469,6 +470,7 @@ static HRESULT WINAPI HTMLEventObj_put_returnValue(IHTMLEventObj *iface, VARIANT
         return DISP_E_BADVARTYPE;
     }
 
+    This->return_value = v;
     if(!V_BOOL(&v))
         This->prevent_default = TRUE;
     return S_OK;
@@ -478,10 +480,9 @@ static HRESULT WINAPI HTMLEventObj_get_returnValue(IHTMLEventObj *iface, VARIANT
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    V_VT(p) = VT_EMPTY;
-    return S_OK;
+    return VariantCopy(p, &This->return_value);
 }
 
 static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIANT_BOOL v)
