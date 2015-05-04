@@ -938,6 +938,7 @@ static void test_IOleWindow(void)
 {
     IShellFolder *desktop;
     IShellView *view;
+    IOleWindow *wnd;
     HRESULT hr;
 
     hr = SHGetDesktopFolder(&desktop);
@@ -945,6 +946,9 @@ static void test_IOleWindow(void)
 
     hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellView_QueryInterface(view, &IID_IOleWindow, (void**)&wnd);
+    ok(hr == E_NOINTERFACE, "got (0x%08x)\n", hr);
 
     /* IShellView::ContextSensitiveHelp */
     hr = IShellView_ContextSensitiveHelp(view, TRUE);
