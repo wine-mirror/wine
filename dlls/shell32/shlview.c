@@ -3145,8 +3145,8 @@ static HRESULT WINAPI IShellFolderView_fnArrangeGrid(IShellFolderView *iface)
 static HRESULT WINAPI IShellFolderView_fnAutoArrange(IShellFolderView *iface)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p) stub\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    return IFolderView2_SetCurrentFolderFlags(&This->IFolderView2_iface, FWF_AUTOARRANGE, FWF_AUTOARRANGE);
 }
 
 static HRESULT WINAPI IShellFolderView_fnGetAutoArrange(IShellFolderView *iface)
