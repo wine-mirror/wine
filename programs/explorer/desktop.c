@@ -67,13 +67,13 @@ static unsigned int nb_launchers, nb_allocated;
 
 static REFIID tid_ids[] =
 {
-    &IID_NULL,
+    &IID_IShellWindows,
     &IID_IWebBrowser2
 };
 
 typedef enum
 {
-    NULL_tid,
+    IShellWindows_tid,
     IWebBrowser2_tid,
     LAST_tid
 } tid_t;
@@ -1071,24 +1071,39 @@ static ULONG WINAPI shellwindows_Release(IShellWindows *iface)
 
 static HRESULT WINAPI shellwindows_GetTypeInfoCount(IShellWindows *iface, UINT *pctinfo)
 {
-    FIXME("%p\n", pctinfo);
-    return E_NOTIMPL;
+    TRACE("%p\n", pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI shellwindows_GetTypeInfo(IShellWindows *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    FIXME("%u 0x%x %p\n", iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    TRACE("%d %d %p\n", iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IShellWindows_tid, ppTInfo);
 }
 
 static HRESULT WINAPI shellwindows_GetIDsOfNames(IShellWindows *iface,
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid,
         DISPID *rgDispId)
 {
-    FIXME("%s %p %u 0x%x %p\n", debugstr_guid(riid), rgszNames, cNames,
-            lcid, rgDispId);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%s %p %d %d %p\n", debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    if (!rgszNames || cNames == 0 || !rgDispId)
+        return E_INVALIDARG;
+
+    hr = get_typeinfo(IShellWindows_tid, &typeinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI shellwindows_Invoke(IShellWindows *iface,
@@ -1096,9 +1111,21 @@ static HRESULT WINAPI shellwindows_Invoke(IShellWindows *iface,
         DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    FIXME("0x%x %s 0x%x 0x%x %p %p %p %p\n", dispIdMember, debugstr_guid(riid),
-        lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%d %s %d %08x %p %p %p %p\n", dispIdMember, debugstr_guid(riid),
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IShellWindows_tid, &typeinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI shellwindows_get_Count(IShellWindows *iface, LONG *count)
