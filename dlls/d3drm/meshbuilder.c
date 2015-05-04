@@ -1368,7 +1368,10 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
         if (!This->nb_normals)
         {
             /* Compute face normal */
-            if (nb_face_indexes > 2)
+            if (nb_face_indexes > 2
+                    && faces_vertex_idx_ptr[0] < This->nb_vertices
+                    && faces_vertex_idx_ptr[1] < This->nb_vertices
+                    && faces_vertex_idx_ptr[2] < This->nb_vertices)
             {
                 D3DVECTOR a, b;
 
