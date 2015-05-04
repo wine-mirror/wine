@@ -3254,8 +3254,19 @@ static HRESULT WINAPI IShellFolderView_fnGetSelectedCount(
     UINT *count)
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
-    FIXME("(%p)->(%p) stub\n", This, count);
-    return E_NOTIMPL;
+    IShellItemArray *selection;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, count);
+
+    *count = 0;
+    hr = IFolderView2_GetSelection(&This->IFolderView2_iface, FALSE, &selection);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IShellItemArray_GetCount(selection, count);
+    IShellItemArray_Release(selection);
+    return hr;
 }
 
 static HRESULT WINAPI IShellFolderView_fnGetSelectedObjects(
