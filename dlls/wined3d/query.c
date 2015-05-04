@@ -650,7 +650,7 @@ static HRESULT wined3d_timestamp_disjoint_query_ops_get_data(struct wined3d_quer
 
     if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
     {
-        static const struct wined3d_query_data_timestamp_disjoint disjoint_data = {FALSE, 1000 * 1000 * 1000};
+        static const struct wined3d_query_data_timestamp_disjoint disjoint_data = {1000 * 1000 * 1000, FALSE};
 
         if (query->state == QUERY_BUILDING)
         {
