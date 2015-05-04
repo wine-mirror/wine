@@ -625,7 +625,7 @@ static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
 
 static HRESULT ShellView_FillList(IShellViewImpl *This)
 {
-    IShellFolderView *folderview = &This->IShellFolderView_iface;
+    IFolderView2 *folderview = &This->IFolderView2_iface;
     LPENUMIDLIST pEnumIDList;
     LPITEMIDLIST pidl;
     DWORD fetched;
@@ -658,9 +658,9 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
     /* sort the array */
     DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
 
-    IShellFolderView_SetRedraw(folderview, FALSE);
+    IFolderView2_SetRedraw(folderview, FALSE);
     DPA_DestroyCallback(hdpa, fill_list, This);
-    IShellFolderView_SetRedraw(folderview, TRUE);
+    IFolderView2_SetRedraw(folderview, TRUE);
 
     IEnumIDList_Release(pEnumIDList);
 
@@ -3038,8 +3038,9 @@ static HRESULT WINAPI FolderView2_GetGroupSubsetCount(IFolderView2 *iface, UINT 
 static HRESULT WINAPI FolderView2_SetRedraw(IFolderView2 *iface, BOOL redraw)
 {
     IShellViewImpl *This = impl_from_IFolderView2(iface);
-    FIXME("(%p)->(%d), stub\n", This, redraw);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, redraw);
+    SendMessageW(This->hWndList, WM_SETREDRAW, redraw, 0);
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderView2_IsMoveInSameFolder(IFolderView2 *iface)
@@ -3245,10 +3246,7 @@ static HRESULT WINAPI IShellFolderView_fnSetRedraw(
 {
     IShellViewImpl *This = impl_from_IShellFolderView(iface);
     TRACE("(%p)->(%d)\n", This, redraw);
-
-    SendMessageW(This->hWndList, WM_SETREDRAW, redraw, 0);
-
-    return S_OK;
+    return IFolderView2_SetRedraw(&This->IFolderView2_iface, redraw);
 }
 
 static HRESULT WINAPI IShellFolderView_fnGetSelectedCount(
