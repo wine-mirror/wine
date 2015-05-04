@@ -99,15 +99,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
 
-typedef struct
-{
-    HWND hWndOpen;
-    HWND hWndOwner;
-    HWND hWndViewer;
-    UINT seqno;
-    UINT flags;
-} CLIPBOARDINFO, *LPCLIPBOARDINFO;
-
 struct tagWINE_CLIPDATA; /* Forward */
 
 typedef HANDLE (*DRVEXPORTFUNC)(Display *display, Window requestor, Atom aTarget, Atom rprop,
@@ -168,8 +159,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, A
 static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(UINT id, Atom prop);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
-static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void);
-static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO lpcbinfo);
+static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display);
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData);
 static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     unsigned char** data, unsigned long* datasize);
@@ -483,34 +473,24 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat( UINT id, Atom pr
 
 
 /**************************************************************************
- *                      X11DRV_CLIPBOARD_GetClipboardInfo
+ *                      X11DRV_CLIPBOARD_IsProcessOwner
  */
-static BOOL X11DRV_CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
+static BOOL X11DRV_CLIPBOARD_IsProcessOwner( HWND *owner )
 {
-    BOOL bRet = FALSE;
+    BOOL ret = FALSE;
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = 0;
-
-        if (wine_server_call_err( req ))
+        if (!wine_server_call_err( req ))
         {
-            ERR("Failed to get clipboard owner.\n");
-        }
-        else
-        {
-            cbInfo->hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
-            cbInfo->hWndOwner = wine_server_ptr_handle( reply->old_owner );
-            cbInfo->hWndViewer = wine_server_ptr_handle( reply->old_viewer );
-            cbInfo->seqno = reply->seqno;
-            cbInfo->flags = reply->flags;
-
-            bRet = TRUE;
+            *owner = wine_server_ptr_handle( reply->old_owner );
+            ret = (reply->flags & CB_PROCESS);
         }
     }
     SERVER_END_REQ;
 
-    return bRet;
+    return ret;
 }
 
 
@@ -519,24 +499,16 @@ static BOOL X11DRV_CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
  */
 static BOOL X11DRV_CLIPBOARD_ReleaseOwnership(void)
 {
-    BOOL bRet = FALSE;
+    BOOL ret;
 
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_RELOWNER | SET_CB_SEQNO;
-
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard.\n");
-        }
-        else
-        {
-            bRet = TRUE;
-        }
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
-    return bRet;
+    return ret;
 }
 
 
@@ -634,22 +606,24 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
 /**************************************************************************
  *			X11DRV_CLIPBOARD_UpdateCache
  */
-static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
+static BOOL X11DRV_CLIPBOARD_UpdateCache(void)
 {
     BOOL bret = TRUE;
 
-    if (!X11DRV_CLIPBOARD_IsSelectionOwner())
+    if (!selectionAcquired)
     {
-        if (!X11DRV_CLIPBOARD_GetClipboardInfo(lpcbinfo))
+        DWORD seqno = GetClipboardSequenceNumber();
+
+        if (!seqno)
         {
             ERR("Failed to retrieve clipboard information.\n");
             bret = FALSE;
         }
-        else if (wSeqNo < lpcbinfo->seqno)
+        else if (wSeqNo < seqno)
         {
             X11DRV_EmptyClipboard(TRUE);
 
-            if (X11DRV_CLIPBOARD_QueryAvailableData(thread_init_display(), lpcbinfo) < 0)
+            if (X11DRV_CLIPBOARD_QueryAvailableData(thread_init_display()) < 0)
             {
                 ERR("Failed to cache clipboard data owned by another process.\n");
                 bret = FALSE;
@@ -659,7 +633,7 @@ static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
                 X11DRV_EndClipboardUpdate();
             }
 
-            wSeqNo = lpcbinfo->seqno;
+            wSeqNo = seqno;
         }
     }
 
@@ -680,7 +654,7 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpDa
 
     if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
         bret = X11DRV_CLIPBOARD_RenderSynthesizedFormat(display, lpData);
-    else if (!X11DRV_CLIPBOARD_IsSelectionOwner())
+    else if (!selectionAcquired)
     {
         if (!X11DRV_CLIPBOARD_ReadSelectionData(display, lpData))
         {
@@ -691,15 +665,15 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpDa
     }
     else
     {
-        CLIPBOARDINFO cbInfo;
+        HWND owner = GetClipboardOwner();
 
-        if (X11DRV_CLIPBOARD_GetClipboardInfo(&cbInfo) && cbInfo.hWndOwner)
+        if (owner)
         {
             /* Send a WM_RENDERFORMAT message to notify the owner to render the
              * data requested into the clipboard.
              */
-            TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", cbInfo.hWndOwner);
-            SendMessageW(cbInfo.hWndOwner, WM_RENDERFORMAT, lpData->wFormatID, 0);
+            TRACE("Sending WM_RENDERFORMAT message to hwnd(%p)\n", owner);
+            SendMessageW(owner, WM_RENDERFORMAT, lpData->wFormatID, 0);
 
             if (!lpData->hData) bret = FALSE;
         }
@@ -2400,7 +2374,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
  * This queries the selection owner for the TARGETS property and saves all
  * reported property types.
  */
-static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display, LPCLIPBOARDINFO lpcbinfo)
+static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
 {
     XEvent         xe;
     Atom           atype=AnyPropertyType;
@@ -2841,21 +2815,19 @@ static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Wi
 
     if (selectionAcquired && (w == selectionWindow))
     {
-        CLIPBOARDINFO cbinfo;
+        HWND owner;
 
         /* completely give up the selection */
         TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
 
-        X11DRV_CLIPBOARD_GetClipboardInfo(&cbinfo);
-
-        if (cbinfo.flags & CB_PROCESS)
+        if (X11DRV_CLIPBOARD_IsProcessOwner( &owner ))
         {
             /* Since we're still the owner, this wasn't initiated by
                another Wine process */
             if (OpenClipboard(hwnd))
             {
                 /* Destroy private objects */
-                SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
+                SendMessageW(owner, WM_DESTROYCLIPBOARD, 0, 0);
 
                 /* Give up ownership of the windows clipboard */
                 X11DRV_CLIPBOARD_ReleaseOwnership();
@@ -2895,17 +2867,6 @@ static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Wi
         /* Reset the selection flags now that we are done */
         selectionAcquired = S_NOSELECTION;
     }
-}
-
-
-/**************************************************************************
- *		IsSelectionOwner (X11DRV.@)
- *
- * Returns: TRUE if the selection is owned by this process, FALSE otherwise
- */
-static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
-{
-    return selectionAcquired;
 }
 
 
@@ -3056,10 +3017,9 @@ BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
        and its rendering is not delayed */
     if (!owner)
     {
-        CLIPBOARDINFO cbinfo;
         LPWINE_CLIPDATA lpRender;
 
-        X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+        X11DRV_CLIPBOARD_UpdateCache();
 
         if (!hData ||
             ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)) &&
@@ -3080,9 +3040,7 @@ BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
  */
 INT CDECL X11DRV_CountClipboardFormats(void)
 {
-    CLIPBOARDINFO cbinfo;
-
-    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+    X11DRV_CLIPBOARD_UpdateCache();
 
     TRACE(" count=%d\n", ClipDataCount);
 
@@ -3095,12 +3053,11 @@ INT CDECL X11DRV_CountClipboardFormats(void)
  */
 UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 {
-    CLIPBOARDINFO cbinfo;
     struct list *ptr = NULL;
 
     TRACE("(%04X)\n", wFormat);
 
-    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+    X11DRV_CLIPBOARD_UpdateCache();
 
     if (!wFormat)
     {
@@ -3123,11 +3080,10 @@ UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 BOOL CDECL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
     BOOL bRet = FALSE;
-    CLIPBOARDINFO cbinfo;
 
     TRACE("(%04X)\n", wFormat);
 
-    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+    X11DRV_CLIPBOARD_UpdateCache();
 
     if (wFormat != 0 && X11DRV_CLIPBOARD_LookupData(wFormat))
         bRet = TRUE;
@@ -3143,12 +3099,11 @@ BOOL CDECL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
  */
 HANDLE CDECL X11DRV_GetClipboardData(UINT wFormat)
 {
-    CLIPBOARDINFO cbinfo;
     LPWINE_CLIPDATA lpRender;
 
     TRACE("(%04X)\n", wFormat);
 
-    X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+    X11DRV_CLIPBOARD_UpdateCache();
 
     if ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)))
     {
