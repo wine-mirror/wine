@@ -6761,7 +6761,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 break;
             }
         }
-        if (entry->vs.material_ambient_location != -1)
+        if (entry->vs.material_ambient_location != -1 || entry->vs.material_diffuse_location != -1
+                || entry->vs.material_specular_location != -1
+                || entry->vs.material_emissive_location != -1
+                || entry->vs.material_shininess_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
         if (entry->vs.light_ambient_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_LIGHTS;
