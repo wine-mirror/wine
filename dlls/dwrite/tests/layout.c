@@ -994,6 +994,7 @@ static void test_GetClusterMetrics(void)
     static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[4];
+    IDWriteTextLayout1 *layout1;
     IDWriteInlineObject *trimm;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
@@ -1025,6 +1026,49 @@ static void test_GetClusterMetrics(void)
         ok(metrics[i].width > 0.0, "%u: got width %.2f\n", i, metrics[i].width);
         ok(metrics[i].length == 1, "%u: got length %u\n", i, metrics[i].length);
     }
+
+    /* apply spacing and check widths again */
+    if (IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout1, (void**)&layout1) == S_OK) {
+        DWRITE_CLUSTER_METRICS metrics2[4];
+        FLOAT leading, trailing, min_advance;
+        DWRITE_TEXT_RANGE r;
+
+        leading = trailing = min_advance = 2.0;
+        hr = IDWriteTextLayout1_GetCharacterSpacing(layout1, 0, &leading, &trailing,
+            &min_advance, NULL);
+todo_wine {
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(leading == 0.0 && trailing == 0.0 && min_advance == 0.0,
+            "got %.2f, %.2f, %.2f\n", leading, trailing, min_advance);
+}
+        r.startPosition = 0;
+        r.length = 4;
+        hr = IDWriteTextLayout1_SetCharacterSpacing(layout1, 10.0, 15.0, 0.0, r);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        count = 0;
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics2, sizeof(metrics2)/sizeof(metrics2[0]), &count);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(count == 4, "got %u\n", count);
+        for (i = 0; i < count; i++) {
+todo_wine
+            ok(metrics2[i].width > metrics[i].width, "%u: got width %.2f, was %.2f\n", i, metrics2[i].width,
+                metrics[i].width);
+            ok(metrics2[i].length == 1, "%u: got length %u\n", i, metrics2[i].length);
+        }
+
+        /* back to defaults */
+        r.startPosition = 0;
+        r.length = 4;
+        hr = IDWriteTextLayout1_SetCharacterSpacing(layout1, 0.0, 0.0, 0.0, r);
+todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IDWriteTextLayout1_Release(layout1);
+    }
+    else
+        win_skip("IDWriteTextLayout1 is not supported, cluster spacing test skipped.\n");
 
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &trimm);
     ok(hr == S_OK, "got 0x%08x\n", hr);
