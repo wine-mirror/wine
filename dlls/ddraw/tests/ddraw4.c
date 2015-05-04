@@ -4321,7 +4321,8 @@ static void test_clear_rect_count(void)
     ok(SUCCEEDED(hr), "Failed to clear the viewport, hr %#x.\n", hr);
 
     color = get_surface_color(rt, 320, 240);
-    ok(compare_color(color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ffffff, 1) || broken(compare_color(color, 0x000000ff, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     IDirect3DViewport3_Release(viewport);
     IDirectDrawSurface4_Release(rt);

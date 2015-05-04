@@ -3942,7 +3942,7 @@ static void test_clear_rect_count(void)
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
 
     color = get_surface_color(rt, 320, 240);
-    ok(compare_color(color, 0x00ffffff, 1),
+    ok(compare_color(color, 0x00ffffff, 1) || broken(compare_color(color, 0x00ff0000, 1)),
             "Clear with count = 0, rect != NULL has color %#08x.\n", color);
 
     hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ffffff, 1.0f, 0);
