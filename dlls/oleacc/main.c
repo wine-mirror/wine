@@ -49,6 +49,11 @@ static const WCHAR richedit20wW[] = {'R','i','c','h','E','d','i','t','2','0','W'
 
 typedef HRESULT (WINAPI *accessible_create)(HWND, const IID*, void**);
 
+extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
+extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLEACC_DllRegisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI OLEACC_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+
 static struct {
     const WCHAR *name;
     DWORD idx;
@@ -406,19 +411,34 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
             DisableThreadLibraryCalls(hinstDLL);
             break;
     }
-    return TRUE;
+
+    return OLEACC_DllMain(hinstDLL, fdwReason, lpvReserved);
 }
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    TRACE("()\n");
-    return __wine_register_resources(oleacc_handle);
+    return OLEACC_DllRegisterServer();
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    TRACE("()\n");
-    return __wine_unregister_resources(oleacc_handle);
+    return OLEACC_DllUnregisterServer();
+}
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, void **ppv)
+{
+    if(IsEqualGUID(&CLSID_CAccPropServices, rclsid)) {
+        TRACE("(CLSID_CAccPropServices %s %p)\n", debugstr_guid(iid), ppv);
+        return get_accpropservices_factory(iid, ppv);
+    }
+
+    if(IsEqualGUID(&CLSID_PSFactoryBuffer, rclsid)) {
+        TRACE("(CLSID_PSFactoryBuffer %s %p)\n", debugstr_guid(iid), ppv);
+        return OLEACC_DllGetClassObject(rclsid, iid, ppv);
+    }
+
+    FIXME("%s %s %p: stub\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+    return E_NOTIMPL;
 }
 
 void WINAPI GetOleaccVersionInfo(DWORD* pVersion, DWORD* pBuild)

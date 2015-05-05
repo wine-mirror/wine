@@ -1,6 +1,6 @@
 MODULE    = oleacc.dll
 IMPORTLIB = oleacc
-IMPORTS   = uuid oleaut32 ole32 user32
+IMPORTS   = uuid oleaut32 ole32 user32 rpcrt4
 
 C_SRCS = \
 	client.c \
@@ -11,3 +11,5 @@ C_SRCS = \
 IDL_SRCS = oleacc_classes.idl
 
 RC_SRCS = oleacc.rc
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=OLEACC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

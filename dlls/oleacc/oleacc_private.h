@@ -16,10 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <oleacc.h>
+#include "oleacc_classes.h"
 
 HRESULT create_client_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 HRESULT create_window_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
+HRESULT get_accpropservices_factory(REFIID, void**) DECLSPEC_HIDDEN;
 
 int convert_child_id(VARIANT *v) DECLSPEC_HIDDEN;
 
