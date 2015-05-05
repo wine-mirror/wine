@@ -549,16 +549,30 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     PIRP irp;
     PIO_STACK_LOCATION irpsp;
 
-    FIXME("(%d %p %p %d %p %p %p) stub\n", majorfunc, device, buffer, length, startoffset, event, iosb);
+    TRACE("(%d %p %p %d %p %p %p)\n", majorfunc, device, buffer, length, startoffset, event, iosb);
 
-    irp = IoAllocateIrp( device->StackSize, FALSE );
-    if (irp == NULL)
-        return NULL;
+    if (!(irp = IoAllocateIrp( device->StackSize, FALSE ))) return NULL;
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = majorfunc;
-    /*irpsp->Parameters.DeviceIoControl.IoControlCode = IoControlCode;*/
+    irpsp->DeviceObject = device;
+    irpsp->CompletionRoutine = NULL;
 
+    irp->AssociatedIrp.SystemBuffer = buffer;
+    if (device->Flags & DO_DIRECT_IO) IoAllocateMdl( buffer, length, FALSE, FALSE, irp );
+
+    switch (majorfunc)
+    {
+    case IRP_MJ_READ:
+        irpsp->Parameters.Read.Length = length;
+        irpsp->Parameters.Read.ByteOffset = *startoffset;
+        break;
+    case IRP_MJ_WRITE:
+        irpsp->Parameters.Write.Length = length;
+        irpsp->Parameters.Write.ByteOffset = *startoffset;
+        break;
+    }
+    irp->RequestorMode = KernelMode;
     irp->UserIosb = iosb;
     irp->UserEvent = event;
     irp->UserBuffer = buffer;
