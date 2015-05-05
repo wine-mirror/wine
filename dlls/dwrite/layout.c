@@ -139,15 +139,27 @@ struct layout_run {
     } u;
 };
 
+struct layout_effective_run {
+    struct list entry;
+    const struct layout_run *run; /* nominal run this one is based on */
+    UINT32 start;           /* relative text position, 0 means first text position of a nominal run */
+    UINT32 length;          /* length in codepoints that this run covers */
+    UINT32 glyphcount;      /* total glyph count in this run */
+    FLOAT origin_x;         /* baseline X position */
+    FLOAT origin_y;         /* baseline Y position */
+    UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
+};
+
 struct layout_cluster {
-    const struct layout_run *run; /* link to run this cluster belongs to */
+    const struct layout_run *run; /* link to nominal run this cluster belongs to */
     UINT32 position;        /* relative to run, first cluster has 0 position */
 };
 
 enum layout_recompute_mask {
-    RECOMPUTE_NOMINAL_RUNS  = 1 << 0,
-    RECOMPUTE_MINIMAL_WIDTH = 1 << 1,
-    RECOMPUTE_EVERYTHING    = 0xffff
+    RECOMPUTE_NOMINAL_RUNS   = 1 << 0,
+    RECOMPUTE_MINIMAL_WIDTH  = 1 << 1,
+    RECOMPUTE_EFFECTIVE_RUNS = 1 << 2,
+    RECOMPUTE_EVERYTHING     = 0xffff
 };
 
 struct dwrite_textlayout {
@@ -163,6 +175,7 @@ struct dwrite_textlayout {
     FLOAT  maxwidth;
     FLOAT  maxheight;
     struct list ranges;
+    struct list eruns;
     struct list runs;
     USHORT recompute;
 
@@ -171,8 +184,12 @@ struct dwrite_textlayout {
 
     struct layout_cluster *clusters;
     DWRITE_CLUSTER_METRICS *clustermetrics;
-    UINT32 clusters_count;
+    UINT32 cluster_count;
     FLOAT  minwidth;
+
+    DWRITE_LINE_METRICS *lines;
+    UINT32 line_count;
+    UINT32 line_alloc;
 
     /* gdi-compatible layout specifics */
     BOOL   gdicompatible;
@@ -301,6 +318,16 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
             heap_free(cur->u.regular.advances);
             heap_free(cur->u.regular.offsets);
         }
+        heap_free(cur);
+    }
+}
+
+static void free_layout_eruns(struct dwrite_textlayout *layout)
+{
+    struct layout_effective_run *cur, *cur2;
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry) {
+        list_remove(&cur->entry);
+        heap_free(cur->clustermap);
         heap_free(cur);
     }
 }
@@ -480,7 +507,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             return E_OUTOFMEMORY;
         }
     }
-    layout->clusters_count = 0;
+    layout->cluster_count = 0;
 
     hr = get_textanalyzer(&analyzer);
     if (FAILED(hr))
@@ -672,7 +699,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     }
 
     if (hr == S_OK)
-        layout->clusters_count = cluster;
+        layout->cluster_count = cluster;
 
     IDWriteTextAnalyzer_Release(analyzer);
     return hr;
@@ -722,6 +749,163 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     }
 
     layout->recompute &= ~RECOMPUTE_NOMINAL_RUNS;
+    return hr;
+}
+
+static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 start,
+    UINT32 length, FLOAT origin_x)
+{
+    struct layout_effective_run *run;
+    UINT32 i;
+
+    run = heap_alloc(sizeof(*run));
+    if (!run)
+        return E_OUTOFMEMORY;
+
+    run->clustermap = heap_alloc(sizeof(UINT16)*length);
+    if (!run->clustermap) {
+        heap_free(run);
+        return E_OUTOFMEMORY;
+    }
+
+    run->run = r;
+    run->start = start;
+    run->length = length;
+    run->origin_x = origin_x;
+    run->origin_y = 0.0; /* FIXME: set after line is built */
+
+    /* trim from the left */
+    run->glyphcount = r->u.regular.run.glyphCount - r->u.regular.clustermap[start];
+    /* trim from the right */
+    if (length < r->u.regular.descr.stringLength)
+        run->glyphcount -= r->u.regular.clustermap[start + length];
+
+    /* cluster map needs to be shifted */
+    for (i = 0; i < length; i++)
+        run->clustermap[i] = r->u.regular.clustermap[start] - start;
+
+    list_add_tail(&layout->eruns, &run->entry);
+    return S_OK;
+}
+
+static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS *metrics, UINT32 *line)
+{
+    if (!layout->line_alloc) {
+        layout->line_alloc = 5;
+        layout->lines = heap_alloc(layout->line_alloc*sizeof(*layout->lines));
+        if (!layout->lines)
+            return E_OUTOFMEMORY;
+    }
+
+    if (layout->line_count == layout->line_alloc) {
+        DWRITE_LINE_METRICS *l = heap_realloc(layout->lines, layout->line_alloc*2*sizeof(*layout->lines));
+        if (!l)
+            return E_OUTOFMEMORY;
+        layout->lines = l;
+        layout->line_alloc *= 2;
+    }
+
+    layout->lines[*line] = *metrics;
+    *line += 1;
+    return S_OK;
+}
+
+static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UINT32 start, UINT32 end)
+{
+    FLOAT width = 0.0;
+    for (; start < end; start++)
+        width += layout->clustermetrics[start].width;
+    return width;
+}
+
+static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
+{
+    DWRITE_LINE_METRICS metrics;
+    const struct layout_run *run;
+    FLOAT width, origin_x;
+    UINT32 i, start, line;
+    BOOL can_wrap_after;
+    HRESULT hr;
+
+    if (!(layout->recompute & RECOMPUTE_EFFECTIVE_RUNS))
+        return S_OK;
+
+    hr = layout_compute(layout);
+    if (FAILED(hr))
+        return hr;
+
+    layout->line_count = 0;
+    origin_x = 0.0;
+    line = 0;
+    run = layout->clusters[0].run;
+    can_wrap_after = layout->clustermetrics[0].canWrapLineAfter;
+    memset(&metrics, 0, sizeof(metrics));
+
+    for (i = 0, start = 0, width = 0.0; i < layout->cluster_count; i++) {
+        if (run != layout->clusters[i].run) {
+            /* switched to next nominal run */
+            hr = layout_add_effective_run(layout, run, start, i - start, origin_x);
+            if (FAILED(hr))
+                return hr;
+            origin_x += get_cluster_range_width(layout, start, i);
+            start = i;
+        }
+
+        /* check if we got new line */
+        if (((can_wrap_after && (width + layout->clustermetrics[i].width > layout->maxwidth)) ||
+              layout->clustermetrics[i].isNewline || /* always wrap on new line */
+              i == layout->cluster_count - 1)) /* end of the text */ {
+
+            UINT32 strlength = metrics.length, index = i;
+
+            if (i > start) {
+                hr = layout_add_effective_run(layout, run, start, i - start, origin_x);
+                if (FAILED(hr))
+                    return hr;
+                /* we don't need to update origin for next run as we're going to wrap */
+            }
+
+            /* take a look at clusters we got for this line in reverse order */
+            while (strlength) {
+                DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+
+                if (!cluster->isNewline && !cluster->isWhitespace)
+                    break;
+
+                if (cluster->isNewline) {
+                    metrics.trailingWhitespaceLength += cluster->length;
+                    metrics.newlineLength += cluster->length;
+                }
+
+                if (cluster->isWhitespace)
+                    metrics.trailingWhitespaceLength += cluster->length;
+
+                strlength -= cluster->length;
+                index--;
+            }
+
+            metrics.height = 0.0;   /* FIXME */
+            metrics.baseline = 0.0; /* FIXME */
+            metrics.isTrimmed = width > layout->maxwidth;
+            hr = layout_set_line_metrics(layout, &metrics, &line);
+            if (FAILED(hr))
+                return hr;
+
+            width = layout->clustermetrics[i].width;
+            memset(&metrics, 0, sizeof(metrics));
+            origin_x = 0.0;
+            start = i;
+        }
+        else {
+            metrics.length += layout->clustermetrics[i].length;
+            width += layout->clustermetrics[i].width;
+        }
+
+        can_wrap_after = layout->clustermetrics[i].canWrapLineAfter;
+    }
+
+    layout->line_count = line;
+    layout->recompute &= ~RECOMPUTE_EFFECTIVE_RUNS;
     return hr;
 }
 
@@ -1222,12 +1406,14 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
 
     if (!ref) {
         free_layout_ranges_list(This);
+        free_layout_eruns(This);
         free_layout_runs(This);
         release_format_data(&This->format);
         heap_free(This->nominal_breakpoints);
         heap_free(This->actual_breakpoints);
         heap_free(This->clustermetrics);
         heap_free(This->clusters);
+        heap_free(This->lines);
         heap_free(This->str);
         heap_free(This);
     }
@@ -1791,19 +1977,78 @@ static HRESULT WINAPI dwritetextlayout_layout_GetLocaleName(IDWriteTextLayout2 *
 }
 
 static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
-    void *context, IDWriteTextRenderer* renderer, FLOAT originX, FLOAT originY)
+    void *context, IDWriteTextRenderer* renderer, FLOAT origin_x, FLOAT origin_y)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p %p %f %f): stub\n", This, context, renderer, originX, originY);
-    return E_NOTIMPL;
+    struct layout_effective_run *run;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p %.2f %.2f)\n", This, context, renderer, origin_x, origin_y);
+
+    hr = layout_compute_effective_runs(This);
+    if (FAILED(hr))
+        return hr;
+
+    /* 1. Regular runs */
+    LIST_FOR_EACH_ENTRY(run, &This->eruns, struct layout_effective_run, entry) {
+        const struct regular_layout_run *regular = &run->run->u.regular;
+        UINT32 start_glyph = regular->clustermap[run->start];
+        DWRITE_GLYPH_RUN_DESCRIPTION descr;
+        DWRITE_GLYPH_RUN glyph_run;
+
+        /* Everything but cluster map will be reused from nominal run, as we only need
+           to adjust some pointers. Cluster map however is rebuilt when effective run is added,
+           it can't be reused because it has to start with 0 index for each reported run. */
+        glyph_run = regular->run;
+        glyph_run.glyphCount = run->glyphcount;
+
+        /* fixup glyph data arrays */
+        glyph_run.glyphIndices += start_glyph;
+        glyph_run.glyphAdvances += start_glyph;
+        glyph_run.glyphOffsets += start_glyph;
+
+        /* description */
+        descr = regular->descr;
+        descr.stringLength = run->length;
+        descr.string += run->start;
+        descr.clusterMap = run->clustermap;
+        descr.textPosition += run->start;
+
+        /* return value is ignored */
+        IDWriteTextRenderer_DrawGlyphRun(renderer,
+            context,
+            run->origin_x + origin_x,
+            run->origin_y + origin_y,
+            DWRITE_MEASURING_MODE_NATURAL,
+            &glyph_run,
+            &descr,
+            NULL /* FIXME */);
+    }
+
+    /* TODO: 2. Inline objects */
+    /* TODO: 3. Underlines */
+    /* TODO: 4. Strikethrough */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout2 *iface,
-    DWRITE_LINE_METRICS *metrics, UINT32 max_count, UINT32 *actual_count)
+    DWRITE_LINE_METRICS *metrics, UINT32 max_count, UINT32 *count)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p %u %p): stub\n", This, metrics, max_count, actual_count);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %u %p)\n", This, metrics, max_count, count);
+
+    hr = layout_compute_effective_runs(This);
+    if (FAILED(hr))
+        return hr;
+
+    if (metrics)
+        memcpy(metrics, This->lines, sizeof(DWRITE_LINE_METRICS)*min(max_count, This->line_count));
+
+    *count = This->line_count;
+    return max_count >= This->line_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetMetrics(IDWriteTextLayout2 *iface, DWRITE_TEXT_METRICS *metrics)
@@ -1841,10 +2086,10 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
         return hr;
 
     if (metrics)
-        memcpy(metrics, This->clustermetrics, sizeof(DWRITE_CLUSTER_METRICS)*min(max_count, This->clusters_count));
+        memcpy(metrics, This->clustermetrics, sizeof(DWRITE_CLUSTER_METRICS)*min(max_count, This->cluster_count));
 
-    *count = This->clusters_count;
-    return max_count >= This->clusters_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
+    *count = This->cluster_count;
+    return max_count >= This->cluster_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 /* Only to be used with DetermineMinWidth() to find the longest cluster sequence that we don't want to try
@@ -1852,10 +2097,10 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
 static inline BOOL is_terminal_cluster(struct dwrite_textlayout *layout, UINT32 index)
 {
     if (layout->clustermetrics[index].isWhitespace || layout->clustermetrics[index].isNewline ||
-       (index == layout->clusters_count - 1))
+       (index == layout->cluster_count - 1))
         return TRUE;
     /* check next one */
-    return (index < layout->clusters_count - 1) && layout->clustermetrics[index+1].isWhitespace;
+    return (index < layout->cluster_count - 1) && layout->clustermetrics[index+1].isWhitespace;
 }
 
 static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *iface, FLOAT* min_width)
@@ -1878,7 +2123,7 @@ static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *ifa
     if (FAILED(hr))
         return hr;
 
-    for (i = 0; i < This->clusters_count;) {
+    for (i = 0; i < This->cluster_count;) {
         if (is_terminal_cluster(This, i)) {
             width = This->clustermetrics[i].width;
             i++;
@@ -2739,10 +2984,14 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->recompute = RECOMPUTE_EVERYTHING;
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
-    layout->clusters_count = 0;
+    layout->cluster_count = 0;
     layout->clustermetrics = NULL;
     layout->clusters = NULL;
+    layout->lines = NULL;
+    layout->line_count = 0;
+    layout->line_alloc = 0;
     layout->minwidth = 0.0;
+    list_init(&layout->eruns);
     list_init(&layout->runs);
     list_init(&layout->ranges);
     memset(&layout->format, 0, sizeof(layout->format));

@@ -931,7 +931,6 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
 
