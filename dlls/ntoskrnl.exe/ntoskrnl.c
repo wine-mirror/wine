@@ -1028,8 +1028,11 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
             req->manager = wine_server_obj_handle( manager );
             req->handle  = wine_server_obj_handle( handle );
             req->status  = irp->IoStatus.u.Status;
-            if (irp->IoStatus.u.Status >= 0 && out_buff)
-                wine_server_add_data( req, out_buff, irp->IoStatus.Information );
+            if (irp->IoStatus.u.Status >= 0)
+            {
+                req->size = irp->IoStatus.Information;
+                if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
+            }
             wine_server_call( req );
         }
         SERVER_END_REQ;

@@ -2745,6 +2745,7 @@ static void dump_set_irp_result_request( const struct set_irp_result_request *re
     fprintf( stderr, " manager=%04x", req->manager );
     fprintf( stderr, ", handle=%04x", req->handle );
     fprintf( stderr, ", status=%08x", req->status );
+    fprintf( stderr, ", size=%u", req->size );
     dump_varargs_bytes( ", data=", cur_size );
 }
 
@@ -2756,7 +2757,8 @@ static void dump_get_irp_result_request( const struct get_irp_result_request *re
 
 static void dump_get_irp_result_reply( const struct get_irp_result_reply *req )
 {
-    dump_varargs_bytes( " out_data=", cur_size );
+    fprintf( stderr, " size=%u", req->size );
+    dump_varargs_bytes( ", out_data=", cur_size );
 }
 
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )

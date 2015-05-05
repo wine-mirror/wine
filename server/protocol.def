@@ -2267,6 +2267,7 @@ enum message_type
     obj_handle_t manager;         /* handle to the device manager */
     obj_handle_t handle;          /* handle to the irp */
     unsigned int status;          /* status of the irp */
+    data_size_t  size;            /* result size (input or output depending on the operation) */
     VARARG(data,bytes);           /* output data of the irp */
 @END
 
@@ -2276,6 +2277,7 @@ enum message_type
     obj_handle_t   handle;        /* handle to the device */
     client_ptr_t   user_arg;      /* user arg used to identify the request */
 @REPLY
+    data_size_t    size;          /* result size (input or output depending on the operation) */
     VARARG(out_data,bytes);       /* irp output data */
 @END
 

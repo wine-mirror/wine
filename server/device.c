@@ -47,6 +47,7 @@ struct irp_call
     unsigned int           type;          /* request type (IRP_MJ_*) */
     unsigned int           status;        /* resulting status (or STATUS_PENDING) */
     ioctl_code_t           code;          /* ioctl code */
+    data_size_t            result;        /* size of result (input or output depending on the type) */
     data_size_t            in_size;       /* size of input data */
     void                  *in_data;       /* input data */
     data_size_t            out_size;      /* size of output data */
@@ -203,6 +204,7 @@ static struct irp_call *create_irp( struct device *device, unsigned int type, co
         irp->type     = type;
         irp->code     = 0;
         irp->status   = STATUS_PENDING;
+        irp->result   = 0;
         irp->in_size  = in_size;
         irp->in_data  = NULL;
         irp->out_size = out_size;
@@ -218,7 +220,7 @@ static struct irp_call *create_irp( struct device *device, unsigned int type, co
 }
 
 static void set_irp_result( struct irp_call *irp, unsigned int status,
-                            const void *out_data, data_size_t out_size )
+                            const void *out_data, data_size_t out_size, data_size_t result )
 {
     struct device *device = irp->device;
 
@@ -226,6 +228,7 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
 
     /* FIXME: handle the STATUS_PENDING case */
     irp->status = status;
+    irp->result = result;
     irp->out_size = min( irp->out_size, out_size );
     if (irp->out_size && !(irp->out_data = memdup( out_data, irp->out_size )))
         irp->out_size = 0;
@@ -233,7 +236,7 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     irp->device = NULL;
     if (irp->async)
     {
-        if (irp->out_size) status = STATUS_ALERTED;
+        if (result) status = STATUS_ALERTED;
         async_terminate( irp->async, status );
         release_object( irp->async );
         irp->async = NULL;
@@ -385,7 +388,7 @@ static void delete_device( struct device *device )
     LIST_FOR_EACH_ENTRY_SAFE( irp, next, &device->requests, struct irp_call, dev_entry )
     {
         list_remove( &irp->mgr_entry );
-        set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0 );
+        set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0, 0 );
     }
     unlink_named_object( &device->obj );
     list_remove( &device->entry );
@@ -503,7 +506,7 @@ DECL_HANDLER(get_next_device_request)
         if ((irp = (struct irp_call *)get_handle_obj( current->process, req->prev,
                                                           0, &irp_call_ops )))
         {
-            set_irp_result( irp, req->status, NULL, 0 );
+            set_irp_result( irp, req->status, NULL, 0, 0 );
             close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
             release_object( irp );
         }
@@ -548,7 +551,7 @@ DECL_HANDLER(set_irp_result)
 
     if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
-        set_irp_result( irp, req->status, get_req_data(), get_req_data_size() );
+        set_irp_result( irp, req->status, get_req_data(), get_req_data_size(), req->size );
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );
     }
@@ -576,6 +579,7 @@ DECL_HANDLER(get_irp_result)
                 irp->out_data = NULL;
             }
         }
+        reply->size = irp->result;
         set_error( irp->status );
         list_remove( &irp->dev_entry );
         release_object( irp );  /* no longer on the device queue */

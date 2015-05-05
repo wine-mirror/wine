@@ -3134,7 +3134,9 @@ struct set_irp_result_request
     obj_handle_t manager;
     obj_handle_t handle;
     unsigned int status;
+    data_size_t  size;
     /* VARARG(data,bytes); */
+    char __pad_28[4];
 };
 struct set_irp_result_reply
 {
@@ -3152,7 +3154,9 @@ struct get_irp_result_request
 struct get_irp_result_reply
 {
     struct reply_header __header;
+    data_size_t    size;
     /* VARARG(out_data,bytes); */
+    char __pad_12[4];
 };
 
 
@@ -5973,6 +5977,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 470
+#define SERVER_PROTOCOL_VERSION 471
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
