@@ -61,6 +61,7 @@ const char *get_machine_str(int mach)
     case IMAGE_FILE_MACHINE_POWERPC:	return "PowerPC";
     case IMAGE_FILE_MACHINE_AMD64:      return "AMD64";
     case IMAGE_FILE_MACHINE_IA64:       return "IA64";
+    case IMAGE_FILE_MACHINE_ARM64:      return "ARM64";
     case IMAGE_FILE_MACHINE_ARM:        return "ARM";
     case IMAGE_FILE_MACHINE_ARMNT:      return "ARMNT";
     case IMAGE_FILE_MACHINE_THUMB:      return "ARM Thumb";
