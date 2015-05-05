@@ -128,6 +128,10 @@ static void device_destroy( struct object *obj );
 static struct object *device_open_file( struct object *obj, unsigned int access,
                                         unsigned int sharing, unsigned int options );
 static enum server_fd_type device_get_fd_type( struct fd *fd );
+static obj_handle_t device_read( struct fd *fd, const async_data_t *async_data, int blocking,
+                                 file_pos_t pos );
+static obj_handle_t device_write( struct fd *fd, const async_data_t *async_data, int blocking,
+                                  file_pos_t pos, data_size_t *written );
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                   int blocking );
 
@@ -156,8 +160,8 @@ static const struct fd_ops device_fd_ops =
     default_fd_get_poll_events,       /* get_poll_events */
     default_poll_event,               /* poll_event */
     device_get_fd_type,               /* get_fd_type */
-    no_fd_read,                       /* read */
-    no_fd_write,                      /* write */
+    device_read,                      /* read */
+    device_write,                     /* write */
     no_fd_flush,                      /* flush */
     device_ioctl,                     /* ioctl */
     default_fd_queue_async,           /* queue_async */
@@ -198,6 +202,12 @@ static struct irp_call *create_irp( struct device *device, unsigned int type, co
                                     data_size_t in_size, data_size_t out_size )
 {
     struct irp_call *irp;
+
+    if (!device->manager)  /* it has been deleted */
+    {
+        set_error( STATUS_FILE_DELETED );
+        return NULL;
+    }
 
     if ((irp = alloc_object( &irp_call_ops )))
     {
@@ -315,45 +325,76 @@ static struct irp_call *find_irp_call( struct device *device, struct thread *thr
     return NULL;
 }
 
+/* queue an irp to the device */
+static obj_handle_t queue_irp( struct device *device, struct irp_call *irp,
+                               const async_data_t *async_data, int blocking )
+{
+    obj_handle_t handle = 0;
+
+    if (blocking && !(handle = alloc_handle( current->process, irp, SYNCHRONIZE, 0 ))) return 0;
+
+    if (!(irp->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
+    {
+        if (handle) close_handle( current->process, handle );
+        return 0;
+    }
+    irp->thread   = (struct thread *)grab_object( current );
+    irp->user_arg = async_data->arg;
+    grab_object( irp );  /* grab reference for queued irp */
+
+    list_add_tail( &device->requests, &irp->dev_entry );
+    list_add_tail( &device->manager->requests, &irp->mgr_entry );
+    if (list_head( &device->manager->requests ) == &irp->mgr_entry)  /* first one */
+        wake_up( &device->manager->obj, 0 );
+    set_error( STATUS_PENDING );
+    return handle;
+}
+
+static obj_handle_t device_read( struct fd *fd, const async_data_t *async_data, int blocking,
+                                 file_pos_t pos )
+{
+    struct device *device = get_fd_user( fd );
+    struct irp_call *irp;
+    obj_handle_t handle;
+
+    irp = create_irp( device, IRP_MJ_READ, NULL, 0, get_reply_max_size() );
+    if (!irp) return 0;
+
+    handle = queue_irp( device, irp, async_data, blocking );
+    release_object( irp );
+    return handle;
+}
+
+static obj_handle_t device_write( struct fd *fd, const async_data_t *async_data, int blocking,
+                                  file_pos_t pos, data_size_t *written )
+{
+    struct device *device = get_fd_user( fd );
+    struct irp_call *irp;
+    obj_handle_t handle;
+
+    irp = create_irp( device, IRP_MJ_WRITE, get_req_data(), get_req_data_size(), 0 );
+    if (!irp) return 0;
+
+    handle = queue_irp( device, irp, async_data, blocking );
+    release_object( irp );
+    return handle;
+}
+
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                   int blocking )
 {
     struct device *device = get_fd_user( fd );
     struct irp_call *irp;
-    obj_handle_t handle = 0;
+    obj_handle_t handle;
 
-    if (!device->manager)  /* it has been deleted */
-    {
-        set_error( STATUS_FILE_DELETED );
-        return 0;
-    }
+    irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, get_req_data(), get_req_data_size(),
+                      get_reply_max_size() );
+    if (!irp) return 0;
 
-    if (!(irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, get_req_data(), get_req_data_size(),
-                            get_reply_max_size() )))
-        return 0;
+    irp->code = code;
 
-    irp->code     = code;
-    irp->thread   = (struct thread *)grab_object( current );
-    irp->user_arg = async_data->arg;
-
-    if (blocking && !(handle = alloc_handle( current->process, irp, SYNCHRONIZE, 0 )))
-    {
-        release_object( irp );
-        return 0;
-    }
-
-    if (!(irp->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
-    {
-        if (handle) close_handle( current->process, handle );
-        release_object( irp );
-        return 0;
-    }
-    list_add_tail( &device->requests, &irp->dev_entry );
-    list_add_tail( &device->manager->requests, &irp->mgr_entry );
-    if (list_head( &device->manager->requests ) == &irp->mgr_entry)  /* first one */
-        wake_up( &device->manager->obj, 0 );
-    /* don't release irp since it is now queued in the device */
-    set_error( STATUS_PENDING );
+    handle = queue_irp( device, irp, async_data, blocking );
+    release_object( irp );
     return handle;
 }
 
