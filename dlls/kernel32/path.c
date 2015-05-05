@@ -440,7 +440,7 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath, DWORD longlen )
  */
 DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
 {
-    WCHAR               tmpshortpath[MAX_PATHNAME_LEN];
+    WCHAR               *tmpshortpath;
     LPCWSTR             p;
     DWORD               sp = 0, lp = 0;
     DWORD               tmplen;
@@ -460,12 +460,28 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         return 0;
     }
 
-    /* check for drive letter */
-    if (longpath[0] != '/' && longpath[1] == ':' )
+    /* code below only removes characters from string, never adds, so this is
+     * the largest buffer that tmpshortpath will need to have */
+    tmpshortpath = HeapAlloc(GetProcessHeap(), 0, (strlenW(longpath) + 1) * sizeof(WCHAR));
+    if (!tmpshortpath)
     {
-        tmpshortpath[0] = longpath[0];
-        tmpshortpath[1] = ':';
-        sp = lp = 2;
+        SetLastError(ERROR_OUTOFMEMORY);
+        return 0;
+    }
+
+    if (longpath[0] == '\\' && longpath[1] == '\\' && longpath[2] == '?' && longpath[3] == '\\')
+    {
+        memcpy(tmpshortpath, longpath, 4 * sizeof(WCHAR));
+        sp = lp = 4;
+    }
+
+    /* check for drive letter */
+    if (longpath[lp] != '/' && longpath[lp + 1] == ':' )
+    {
+        tmpshortpath[sp] = longpath[lp];
+        tmpshortpath[sp + 1] = ':';
+        sp += 2;
+        lp += 2;
     }
 
     while (longpath[lp])
@@ -522,9 +538,11 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         tmplen--; /* length without 0 */
     }
 
+    HeapFree(GetProcessHeap(), 0, tmpshortpath);
     return tmplen;
 
  notfound:
+    HeapFree(GetProcessHeap(), 0, tmpshortpath);
     TRACE("not found!\n" );
     SetLastError ( ERROR_FILE_NOT_FOUND );
     return 0;

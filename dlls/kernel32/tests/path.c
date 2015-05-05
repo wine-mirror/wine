@@ -1343,29 +1343,44 @@ static void test_GetLongPathNameW(void)
 
 static void test_GetShortPathNameW(void)
 {
-    WCHAR test_path[] = { 'L', 'o', 'n', 'g', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'N', 'a', 'm', 'e',  0 };
-    WCHAR path[MAX_PATH];
+    static const WCHAR extended_prefix[] = {'\\','\\','?','\\',0};
+    static const WCHAR test_path[] = { 'L', 'o', 'n', 'g', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'N', 'a', 'm', 'e',  0 };
+    static const WCHAR name[] = { 't', 'e', 's', 't', 0 };
+    static const WCHAR backSlash[] = { '\\', 0 };
+    WCHAR path[MAX_PATH], tmppath[MAX_PATH];
     WCHAR short_path[MAX_PATH];
     DWORD length;
     HANDLE file;
     int ret;
-    WCHAR name[] = { 't', 'e', 's', 't', 0 };
-    WCHAR backSlash[] = { '\\', 0 };
 
     SetLastError(0xdeadbeef);
-    GetTempPathW( MAX_PATH, path );
+    GetTempPathW( MAX_PATH, tmppath );
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("GetTempPathW is not implemented\n");
         return;
     }
 
+    lstrcpyW( path, tmppath );
     lstrcatW( path, test_path );
     lstrcatW( path, backSlash );
     ret = CreateDirectoryW( path, NULL );
     ok( ret, "Directory was not created. LastError = %d\n", GetLastError() );
 
     /* Starting a main part of test */
+
+    /* extended path \\?\C:\path\ */
+    lstrcpyW( path, extended_prefix );
+    lstrcatW( path, tmppath );
+    lstrcatW( path, test_path );
+    lstrcatW( path, backSlash );
+    short_path[0] = 0;
+    length = GetShortPathNameW( path, short_path, sizeof(short_path) / sizeof(*short_path) );
+    ok( length, "GetShortPathNameW returned 0.\n" );
+
+    lstrcpyW( path, tmppath );
+    lstrcatW( path, test_path );
+    lstrcatW( path, backSlash );
     length = GetShortPathNameW( path, short_path, 0 );
     ok( length, "GetShortPathNameW returned 0.\n" );
     ret = GetShortPathNameW( path, short_path, length );
