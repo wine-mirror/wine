@@ -2164,16 +2164,14 @@ static void unmount_device( struct fd *device_fd )
     release_object( device );
 }
 
-obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                          int blocking, const void *data, data_size_t size )
+obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 /* default ioctl() routine */
-obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                               int blocking, const void *data, data_size_t size )
+obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking )
 {
     switch(code)
     {
@@ -2301,8 +2299,7 @@ DECL_HANDLER(ioctl)
 
     if (fd)
     {
-        reply->wait = fd->fd_ops->ioctl( fd, req->code, &req->async, req->blocking,
-                                         get_req_data(), get_req_data_size() );
+        reply->wait    = fd->fd_ops->ioctl( fd, req->code, &req->async, req->blocking );
         reply->options = fd->options;
         release_object( fd );
     }

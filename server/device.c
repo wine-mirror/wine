@@ -128,7 +128,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
                                         unsigned int sharing, unsigned int options );
 static enum server_fd_type device_get_fd_type( struct fd *fd );
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
-                                  int blocking, const void *data, data_size_t size );
+                                  int blocking );
 
 static const struct object_ops device_ops =
 {
@@ -311,7 +311,7 @@ static struct irp_call *find_irp_call( struct device *device, struct thread *thr
 }
 
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
-                                  int blocking, const void *data, data_size_t size )
+                                  int blocking )
 {
     struct device *device = get_fd_user( fd );
     struct irp_call *irp;
@@ -323,7 +323,8 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
         return 0;
     }
 
-    if (!(irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, data, size, get_reply_max_size() )))
+    if (!(irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, get_req_data(), get_req_data_size(),
+                            get_reply_max_size() )))
         return 0;
 
     irp->code     = code;

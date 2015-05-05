@@ -130,8 +130,7 @@ static void sock_destroy_ifchange_q( struct sock *sock );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
-static obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
-                                int blocking, const void *data, data_size_t size );
+static obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 static void sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
@@ -534,8 +533,7 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
     return FD_TYPE_SOCKET;
 }
 
-obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
-                         int blocking, const void *data, data_size_t size )
+obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data, int blocking )
 {
     struct sock *sock = get_fd_user( fd );
     obj_handle_t wait_handle = 0;
