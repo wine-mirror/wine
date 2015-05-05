@@ -1398,12 +1398,13 @@ enum server_fd_type
 
 
 
-struct flush_file_request
+struct flush_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    int            blocking;
+    async_data_t   async;
 };
-struct flush_file_reply
+struct flush_reply
 {
     struct reply_header __header;
     obj_handle_t event;
@@ -5220,7 +5221,7 @@ enum request
     REQ_alloc_file_handle,
     REQ_get_handle_unix_name,
     REQ_get_handle_fd,
-    REQ_flush_file,
+    REQ_flush,
     REQ_lock_file,
     REQ_unlock_file,
     REQ_create_socket,
@@ -5489,7 +5490,7 @@ union generic_request
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_unix_name_request get_handle_unix_name_request;
     struct get_handle_fd_request get_handle_fd_request;
-    struct flush_file_request flush_file_request;
+    struct flush_request flush_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
     struct create_socket_request create_socket_request;
@@ -5756,7 +5757,7 @@ union generic_reply
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_unix_name_reply get_handle_unix_name_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
-    struct flush_file_reply flush_file_reply;
+    struct flush_reply flush_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
     struct create_socket_reply create_socket_reply;
@@ -5977,6 +5978,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 471
+#define SERVER_PROTOCOL_VERSION 472
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

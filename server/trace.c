@@ -1635,12 +1635,13 @@ static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
     fprintf( stderr, ", options=%08x", req->options );
 }
 
-static void dump_flush_file_request( const struct flush_file_request *req )
+static void dump_flush_request( const struct flush_request *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, " blocking=%d", req->blocking );
+    dump_async_data( ", async=", &req->async );
 }
 
-static void dump_flush_file_reply( const struct flush_file_reply *req )
+static void dump_flush_reply( const struct flush_reply *req )
 {
     fprintf( stderr, " event=%04x", req->event );
 }
@@ -4193,7 +4194,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_unix_name_request,
     (dump_func)dump_get_handle_fd_request,
-    (dump_func)dump_flush_file_request,
+    (dump_func)dump_flush_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_create_socket_request,
@@ -4458,7 +4459,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_unix_name_reply,
     (dump_func)dump_get_handle_fd_reply,
-    (dump_func)dump_flush_file_reply,
+    (dump_func)dump_flush_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
     (dump_func)dump_create_socket_reply,
@@ -4723,7 +4724,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_file_handle",
     "get_handle_unix_name",
     "get_handle_fd",
-    "flush_file",
+    "flush",
     "lock_file",
     "unlock_file",
     "create_socket",

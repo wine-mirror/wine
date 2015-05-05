@@ -70,7 +70,7 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
-static void file_flush( struct fd *fd, struct event **event );
+static obj_handle_t file_flush( struct fd *fd, const async_data_t *async, int blocking );
 static enum server_fd_type file_get_fd_type( struct fd *fd );
 
 static const struct object_ops file_ops =
@@ -283,10 +283,11 @@ static int file_get_poll_events( struct fd *fd )
     return events;
 }
 
-static void file_flush( struct fd *fd, struct event **event )
+static obj_handle_t file_flush( struct fd *fd, const async_data_t *async, int blocking )
 {
     int unix_fd = get_unix_fd( fd );
     if (unix_fd != -1 && fsync( unix_fd ) == -1) file_set_error();
+    return 0;
 }
 
 static enum server_fd_type file_get_fd_type( struct fd *fd )

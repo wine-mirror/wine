@@ -3145,17 +3145,21 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
     }
     else
     {
-        SERVER_START_REQ( flush_file )
+        SERVER_START_REQ( flush )
         {
-            req->handle = wine_server_obj_handle( hFile );
+            req->blocking     = 1;  /* always blocking */
+            req->async.handle = wine_server_obj_handle( hFile );
+            req->async.iosb   = wine_server_client_ptr( IoStatusBlock );
             ret = wine_server_call( req );
             hEvent = wine_server_ptr_handle( reply->event );
         }
         SERVER_END_REQ;
-        if (!ret && hEvent)
+
+        if (hEvent)
         {
-            ret = NtWaitForSingleObject( hEvent, FALSE, NULL );
+            NtWaitForSingleObject( hEvent, FALSE, NULL );
             NtClose( hEvent );
+            ret = STATUS_SUCCESS;
         }
     }
 

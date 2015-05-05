@@ -1149,8 +1149,9 @@ enum server_fd_type
 
 
 /* Flush a file buffers */
-@REQ(flush_file)
-    obj_handle_t handle;        /* handle to the file */
+@REQ(flush)
+    int            blocking;    /* whether it's a blocking flush */
+    async_data_t   async;       /* async I/O parameters */
 @REPLY
     obj_handle_t event;         /* event set when finished */
 @END

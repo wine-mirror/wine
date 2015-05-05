@@ -2174,9 +2174,10 @@ obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking
 }
 
 /* default flush() routine */
-void no_fd_flush( struct fd *fd, struct event **event )
+obj_handle_t no_fd_flush( struct fd *fd, const async_data_t *async, int blocking )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
 }
 
 /* default ioctl() routine */
@@ -2228,18 +2229,13 @@ void fd_copy_completion( struct fd *src, struct fd *dst )
 }
 
 /* flush a file buffers */
-DECL_HANDLER(flush_file)
+DECL_HANDLER(flush)
 {
-    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
-    struct event * event = NULL;
+    struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, 0 );
 
     if (fd)
     {
-        fd->fd_ops->flush( fd, &event );
-        if ( event )
-        {
-            reply->event = alloc_handle( current->process, event, SYNCHRONIZE, 0 );
-        }
+        reply->event = fd->fd_ops->flush( fd, &req->async, req->blocking );
         release_object( fd );
     }
 }

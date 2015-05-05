@@ -149,7 +149,7 @@ DECL_HANDLER(open_file_object);
 DECL_HANDLER(alloc_file_handle);
 DECL_HANDLER(get_handle_unix_name);
 DECL_HANDLER(get_handle_fd);
-DECL_HANDLER(flush_file);
+DECL_HANDLER(flush);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
 DECL_HANDLER(create_socket);
@@ -417,7 +417,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_alloc_file_handle,
     (req_handler)req_get_handle_unix_name,
     (req_handler)req_get_handle_fd,
-    (req_handler)req_flush_file,
+    (req_handler)req_flush,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,
     (req_handler)req_create_socket,
@@ -949,10 +949,11 @@ C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, cacheable) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, options) == 20 );
 C_ASSERT( sizeof(struct get_handle_fd_reply) == 24 );
-C_ASSERT( FIELD_OFFSET(struct flush_file_request, handle) == 12 );
-C_ASSERT( sizeof(struct flush_file_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct flush_file_reply, event) == 8 );
-C_ASSERT( sizeof(struct flush_file_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct flush_request, blocking) == 12 );
+C_ASSERT( FIELD_OFFSET(struct flush_request, async) == 16 );
+C_ASSERT( sizeof(struct flush_request) == 56 );
+C_ASSERT( FIELD_OFFSET(struct flush_reply, event) == 8 );
+C_ASSERT( sizeof(struct flush_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct lock_file_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct lock_file_request, offset) == 16 );
 C_ASSERT( FIELD_OFFSET(struct lock_file_request, count) == 24 );
