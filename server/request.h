@@ -247,6 +247,8 @@ DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
 DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
+DECL_HANDLER(read);
+DECL_HANDLER(write);
 DECL_HANDLER(ioctl);
 DECL_HANDLER(set_irp_result);
 DECL_HANDLER(get_irp_result);
@@ -515,6 +517,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_serial_info,
     (req_handler)req_register_async,
     (req_handler)req_cancel_async,
+    (req_handler)req_read,
+    (req_handler)req_write,
     (req_handler)req_ioctl,
     (req_handler)req_set_irp_result,
     (req_handler)req_get_irp_result,
@@ -1521,6 +1525,21 @@ C_ASSERT( FIELD_OFFSET(struct cancel_async_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct cancel_async_request, iosb) == 16 );
 C_ASSERT( FIELD_OFFSET(struct cancel_async_request, only_thread) == 24 );
 C_ASSERT( sizeof(struct cancel_async_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct read_request, blocking) == 12 );
+C_ASSERT( FIELD_OFFSET(struct read_request, async) == 16 );
+C_ASSERT( FIELD_OFFSET(struct read_request, pos) == 56 );
+C_ASSERT( sizeof(struct read_request) == 64 );
+C_ASSERT( FIELD_OFFSET(struct read_reply, wait) == 8 );
+C_ASSERT( FIELD_OFFSET(struct read_reply, options) == 12 );
+C_ASSERT( sizeof(struct read_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct write_request, blocking) == 12 );
+C_ASSERT( FIELD_OFFSET(struct write_request, async) == 16 );
+C_ASSERT( FIELD_OFFSET(struct write_request, pos) == 56 );
+C_ASSERT( sizeof(struct write_request) == 64 );
+C_ASSERT( FIELD_OFFSET(struct write_reply, wait) == 8 );
+C_ASSERT( FIELD_OFFSET(struct write_reply, options) == 12 );
+C_ASSERT( FIELD_OFFSET(struct write_reply, size) == 16 );
+C_ASSERT( sizeof(struct write_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct ioctl_request, code) == 12 );
 C_ASSERT( FIELD_OFFSET(struct ioctl_request, async) == 16 );
 C_ASSERT( FIELD_OFFSET(struct ioctl_request, blocking) == 56 );

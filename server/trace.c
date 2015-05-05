@@ -2726,6 +2726,35 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
     fprintf( stderr, ", only_thread=%d", req->only_thread );
 }
 
+static void dump_read_request( const struct read_request *req )
+{
+    fprintf( stderr, " blocking=%d", req->blocking );
+    dump_async_data( ", async=", &req->async );
+    dump_uint64( ", pos=", &req->pos );
+}
+
+static void dump_read_reply( const struct read_reply *req )
+{
+    fprintf( stderr, " wait=%04x", req->wait );
+    fprintf( stderr, ", options=%08x", req->options );
+    dump_varargs_bytes( ", data=", cur_size );
+}
+
+static void dump_write_request( const struct write_request *req )
+{
+    fprintf( stderr, " blocking=%d", req->blocking );
+    dump_async_data( ", async=", &req->async );
+    dump_uint64( ", pos=", &req->pos );
+    dump_varargs_bytes( ", data=", cur_size );
+}
+
+static void dump_write_reply( const struct write_reply *req )
+{
+    fprintf( stderr, " wait=%04x", req->wait );
+    fprintf( stderr, ", options=%08x", req->options );
+    fprintf( stderr, ", size=%u", req->size );
+}
+
 static void dump_ioctl_request( const struct ioctl_request *req )
 {
     dump_ioctl_code( " code=", &req->code );
@@ -4292,6 +4321,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
+    (dump_func)dump_read_request,
+    (dump_func)dump_write_request,
     (dump_func)dump_ioctl_request,
     (dump_func)dump_set_irp_result_request,
     (dump_func)dump_get_irp_result_request,
@@ -4557,6 +4588,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     NULL,
+    (dump_func)dump_read_reply,
+    (dump_func)dump_write_reply,
     (dump_func)dump_ioctl_reply,
     NULL,
     (dump_func)dump_get_irp_result_reply,
@@ -4822,6 +4855,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_serial_info",
     "register_async",
     "cancel_async",
+    "read",
+    "write",
     "ioctl",
     "set_irp_result",
     "get_irp_result",

@@ -3110,6 +3110,42 @@ struct cancel_async_reply
 
 
 
+struct read_request
+{
+    struct request_header __header;
+    int            blocking;
+    async_data_t   async;
+    file_pos_t     pos;
+};
+struct read_reply
+{
+    struct reply_header __header;
+    obj_handle_t   wait;
+    unsigned int   options;
+    /* VARARG(data,bytes); */
+};
+
+
+
+struct write_request
+{
+    struct request_header __header;
+    int            blocking;
+    async_data_t   async;
+    file_pos_t     pos;
+    /* VARARG(data,bytes); */
+};
+struct write_reply
+{
+    struct reply_header __header;
+    obj_handle_t   wait;
+    unsigned int   options;
+    data_size_t    size;
+    char __pad_20[4];
+};
+
+
+
 struct ioctl_request
 {
     struct request_header __header;
@@ -5319,6 +5355,8 @@ enum request
     REQ_set_serial_info,
     REQ_register_async,
     REQ_cancel_async,
+    REQ_read,
+    REQ_write,
     REQ_ioctl,
     REQ_set_irp_result,
     REQ_get_irp_result,
@@ -5588,6 +5626,8 @@ union generic_request
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
+    struct read_request read_request;
+    struct write_request write_request;
     struct ioctl_request ioctl_request;
     struct set_irp_result_request set_irp_result_request;
     struct get_irp_result_request get_irp_result_request;
@@ -5855,6 +5895,8 @@ union generic_reply
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
+    struct read_reply read_reply;
+    struct write_reply write_reply;
     struct ioctl_reply ioctl_reply;
     struct set_irp_result_reply set_irp_result_reply;
     struct get_irp_result_reply get_irp_result_reply;
@@ -5978,6 +6020,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 472
+#define SERVER_PROTOCOL_VERSION 473
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

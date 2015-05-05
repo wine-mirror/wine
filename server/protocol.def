@@ -2250,6 +2250,31 @@ enum message_type
 @END
 
 
+/* Perform a read on a file object */
+@REQ(read)
+    int            blocking;      /* whether it's a blocking read */
+    async_data_t   async;         /* async I/O parameters */
+    file_pos_t     pos;           /* read position */
+@REPLY
+    obj_handle_t   wait;          /* handle to wait on for blocking read */
+    unsigned int   options;       /* device open options */
+    VARARG(data,bytes);           /* read data */
+@END
+
+
+/* Perform a write on a file object */
+@REQ(write)
+    int            blocking;      /* whether it's a blocking write */
+    async_data_t   async;         /* async I/O parameters */
+    file_pos_t     pos;           /* write position */
+    VARARG(data,bytes);           /* write data */
+@REPLY
+    obj_handle_t   wait;          /* handle to wait on for blocking write */
+    unsigned int   options;       /* device open options */
+    data_size_t    size;          /* size written */
+@END
+
+
 /* Perform an ioctl on a file */
 @REQ(ioctl)
     ioctl_code_t   code;          /* ioctl code */

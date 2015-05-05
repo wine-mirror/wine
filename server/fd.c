@@ -2303,6 +2303,32 @@ DECL_HANDLER(get_handle_fd)
     }
 }
 
+/* perform a read on a file object */
+DECL_HANDLER(read)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_READ_DATA );
+
+    if (fd)
+    {
+        reply->wait    = fd->fd_ops->read( fd, &req->async, req->blocking, req->pos );
+        reply->options = fd->options;
+        release_object( fd );
+    }
+}
+
+/* perform a write on a file object */
+DECL_HANDLER(write)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_WRITE_DATA );
+
+    if (fd)
+    {
+        reply->wait    = fd->fd_ops->write( fd, &req->async, req->blocking, req->pos, &reply->size );
+        reply->options = fd->options;
+        release_object( fd );
+    }
+}
+
 /* perform an ioctl on a file */
 DECL_HANDLER(ioctl)
 {
