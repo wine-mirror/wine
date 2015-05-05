@@ -2262,21 +2262,21 @@ enum message_type
 @END
 
 
-/* Store results of an async ioctl */
-@REQ(set_ioctl_result)
+/* Store results of an async irp */
+@REQ(set_irp_result)
     obj_handle_t manager;         /* handle to the device manager */
-    obj_handle_t handle;          /* handle to the ioctl */
-    unsigned int status;          /* status of the ioctl */
-    VARARG(data,bytes);           /* output data of the ioctl */
+    obj_handle_t handle;          /* handle to the irp */
+    unsigned int status;          /* status of the irp */
+    VARARG(data,bytes);           /* output data of the irp */
 @END
 
 
-/* Retrieve results of an async ioctl */
-@REQ(get_ioctl_result)
+/* Retrieve results of an async irp */
+@REQ(get_irp_result)
     obj_handle_t   handle;        /* handle to the device */
     client_ptr_t   user_arg;      /* user arg used to identify the request */
 @REPLY
-    VARARG(out_data,bytes);       /* ioctl output data */
+    VARARG(out_data,bytes);       /* irp output data */
 @END
 
 
@@ -3323,21 +3323,21 @@ enum coords_relative
 @END
 
 
-/* Retrieve the next pending device ioctl request */
+/* Retrieve the next pending device irp request */
 @REQ(get_next_device_request)
     obj_handle_t manager;         /* handle to the device manager */
-    obj_handle_t prev;            /* handle to the previous ioctl */
-    unsigned int status;          /* status of the previous ioctl */
-    VARARG(prev_data,bytes);      /* output data of the previous ioctl */
+    obj_handle_t prev;            /* handle to the previous irp */
+    unsigned int status;          /* status of the previous irp */
 @REPLY
-    obj_handle_t next;            /* handle to the next ioctl */
-    ioctl_code_t code;            /* ioctl code */
+    obj_handle_t next;            /* handle to the next irp */
+    unsigned int type;            /* irp type (IRP_MJ_*) */
     client_ptr_t user_ptr;        /* opaque ptr for the device */
-    process_id_t client_pid;      /* pid of process calling ioctl */
-    thread_id_t  client_tid;      /* tid of thread calling ioctl */
+    ioctl_code_t code;            /* ioctl code */
+    process_id_t client_pid;      /* pid of process calling irp */
+    thread_id_t  client_tid;      /* tid of thread calling irp */
     data_size_t  in_size;         /* total needed input size */
     data_size_t  out_size;        /* needed output size */
-    VARARG(next_data,bytes);      /* input data of the next ioctl */
+    VARARG(next_data,bytes);      /* input data of the next irp */
 @END
 
 

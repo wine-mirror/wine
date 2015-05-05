@@ -186,9 +186,9 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
 NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 {
     HANDLE manager = get_device_manager();
-    HANDLE ioctl = 0;
+    HANDLE irp = 0;
     NTSTATUS status = STATUS_SUCCESS;
-    ULONG code = 0;
+    ULONG type, code;
     void *in_buff;
     DEVICE_OBJECT *device = NULL;
     ULONG in_size = 4096, out_size = 0;
@@ -210,13 +210,14 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         SERVER_START_REQ( get_next_device_request )
         {
             req->manager = wine_server_obj_handle( manager );
-            req->prev = wine_server_obj_handle( ioctl );
+            req->prev = wine_server_obj_handle( irp );
             req->status = status;
             wine_server_set_reply( req, in_buff, in_size );
             if (!(status = wine_server_call( req )))
             {
+                type       = reply->type;
                 code       = reply->code;
-                ioctl      = wine_server_ptr_handle( reply->next );
+                irp        = wine_server_ptr_handle( reply->next );
                 device     = wine_server_get_ptr( reply->user_ptr );
                 client_tid = reply->client_tid;
                 client_pid = reply->client_pid;
@@ -225,7 +226,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             }
             else
             {
-                ioctl = 0; /* no previous ioctl */
+                irp = 0; /* no previous irp */
                 out_size = 0;
                 in_size = reply->in_size;
             }
@@ -235,8 +236,17 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         switch(status)
         {
         case STATUS_SUCCESS:
-            status = process_ioctl( device, code, in_buff, in_size, out_size, ioctl );
-            if (status == STATUS_SUCCESS) ioctl = 0;  /* status reported by IoCompleteRequest */
+            switch (type)
+            {
+            case IRP_MJ_DEVICE_CONTROL:
+                status = process_ioctl( device, code, in_buff, in_size, out_size, irp );
+                break;
+            default:
+                FIXME( "unsupported request %u\n", type );
+                status = STATUS_NOT_SUPPORTED;
+                break;
+            }
+            if (status == STATUS_SUCCESS) irp = 0;  /* status reported by IoCompleteRequest */
             break;
         case STATUS_BUFFER_OVERFLOW:
             HeapFree( GetProcessHeap(), 0, in_buff );
@@ -975,7 +985,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
     NTSTATUS status, stat;
-    HANDLE ioctl;
+    HANDLE handle;
     int call_flag = 0;
 
     TRACE( "%p %u\n", irp, priority_boost );
@@ -1007,16 +1017,16 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         }
     }
 
-    ioctl = (HANDLE)irp->UserIosb;
-    if (ioctl)
+    handle = (HANDLE)irp->UserIosb;
+    if (handle)
     {
         HANDLE manager = get_device_manager();
         void *out_buff = irp->UserBuffer;
 
-        SERVER_START_REQ( set_ioctl_result )
+        SERVER_START_REQ( set_irp_result )
         {
             req->manager = wine_server_obj_handle( manager );
-            req->handle  = wine_server_obj_handle( ioctl );
+            req->handle  = wine_server_obj_handle( handle );
             req->status  = irp->IoStatus.u.Status;
             if (irp->IoStatus.u.Status >= 0 && out_buff)
                 wine_server_add_data( req, out_buff, irp->IoStatus.Information );

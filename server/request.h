@@ -248,8 +248,8 @@ DECL_HANDLER(set_serial_info);
 DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
 DECL_HANDLER(ioctl);
-DECL_HANDLER(set_ioctl_result);
-DECL_HANDLER(get_ioctl_result);
+DECL_HANDLER(set_irp_result);
+DECL_HANDLER(get_irp_result);
 DECL_HANDLER(create_named_pipe);
 DECL_HANDLER(get_named_pipe_info);
 DECL_HANDLER(set_named_pipe_info);
@@ -516,8 +516,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_register_async,
     (req_handler)req_cancel_async,
     (req_handler)req_ioctl,
-    (req_handler)req_set_ioctl_result,
-    (req_handler)req_get_ioctl_result,
+    (req_handler)req_set_irp_result,
+    (req_handler)req_get_irp_result,
     (req_handler)req_create_named_pipe,
     (req_handler)req_get_named_pipe_info,
     (req_handler)req_set_named_pipe_info,
@@ -1527,14 +1527,14 @@ C_ASSERT( sizeof(struct ioctl_request) == 64 );
 C_ASSERT( FIELD_OFFSET(struct ioctl_reply, wait) == 8 );
 C_ASSERT( FIELD_OFFSET(struct ioctl_reply, options) == 12 );
 C_ASSERT( sizeof(struct ioctl_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_ioctl_result_request, manager) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_ioctl_result_request, handle) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_ioctl_result_request, status) == 20 );
-C_ASSERT( sizeof(struct set_ioctl_result_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_ioctl_result_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct get_ioctl_result_request, user_arg) == 16 );
-C_ASSERT( sizeof(struct get_ioctl_result_request) == 24 );
-C_ASSERT( sizeof(struct get_ioctl_result_reply) == 8 );
+C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, manager) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, handle) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_irp_result_request, status) == 20 );
+C_ASSERT( sizeof(struct set_irp_result_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_irp_result_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_irp_result_request, user_arg) == 16 );
+C_ASSERT( sizeof(struct get_irp_result_request) == 24 );
+C_ASSERT( sizeof(struct get_irp_result_reply) == 8 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_named_pipe_request, options) == 20 );
@@ -2124,13 +2124,14 @@ C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, prev) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_request, status) == 20 );
 C_ASSERT( sizeof(struct get_next_device_request_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, next) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, code) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, type) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, user_ptr) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_pid) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_tid) == 28 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, in_size) == 32 );
-C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, out_size) == 36 );
-C_ASSERT( sizeof(struct get_next_device_request_reply) == 40 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, code) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_pid) == 28 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, client_tid) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, in_size) == 36 );
+C_ASSERT( FIELD_OFFSET(struct get_next_device_request_reply, out_size) == 40 );
+C_ASSERT( sizeof(struct get_next_device_request_reply) == 48 );
 C_ASSERT( sizeof(struct make_process_system_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct make_process_system_reply, event) == 8 );
 C_ASSERT( sizeof(struct make_process_system_reply) == 16 );

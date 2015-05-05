@@ -27,6 +27,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 
 #include "object.h"
 #include "file.h"
@@ -34,35 +35,36 @@
 #include "request.h"
 #include "process.h"
 
-struct ioctl_call
+struct irp_call
 {
     struct object          obj;           /* object header */
     struct list            dev_entry;     /* entry in device queue */
     struct list            mgr_entry;     /* entry in manager queue */
-    struct device         *device;        /* device containing this ioctl */
-    struct thread         *thread;        /* thread that queued the ioctl */
+    struct device         *device;        /* device containing this irp */
+    struct thread         *thread;        /* thread that queued the irp */
     client_ptr_t           user_arg;      /* user arg used to identify the request */
     struct async          *async;         /* pending async op */
-    ioctl_code_t           code;          /* ioctl code */
+    unsigned int           type;          /* request type (IRP_MJ_*) */
     unsigned int           status;        /* resulting status (or STATUS_PENDING) */
+    ioctl_code_t           code;          /* ioctl code */
     data_size_t            in_size;       /* size of input data */
     void                  *in_data;       /* input data */
     data_size_t            out_size;      /* size of output data */
     void                  *out_data;      /* output data */
 };
 
-static void ioctl_call_dump( struct object *obj, int verbose );
-static int ioctl_call_signaled( struct object *obj, struct wait_queue_entry *entry );
-static void ioctl_call_destroy( struct object *obj );
+static void irp_call_dump( struct object *obj, int verbose );
+static int irp_call_signaled( struct object *obj, struct wait_queue_entry *entry );
+static void irp_call_destroy( struct object *obj );
 
-static const struct object_ops ioctl_call_ops =
+static const struct object_ops irp_call_ops =
 {
-    sizeof(struct ioctl_call),        /* size */
-    ioctl_call_dump,                  /* dump */
+    sizeof(struct irp_call),          /* size */
+    irp_call_dump,                    /* dump */
     no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
-    ioctl_call_signaled,              /* signaled */
+    irp_call_signaled,                /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
@@ -72,7 +74,7 @@ static const struct object_ops ioctl_call_ops =
     no_lookup_name,                   /* lookup_name */
     no_open_file,                     /* open_file */
     no_close_handle,                  /* close_handle */
-    ioctl_call_destroy                /* destroy */
+    irp_call_destroy                  /* destroy */
 };
 
 
@@ -80,7 +82,7 @@ struct device_manager
 {
     struct object          obj;           /* object header */
     struct list            devices;       /* list of devices */
-    struct list            requests;      /* list of pending ioctls across all devices */
+    struct list            requests;      /* list of pending irps across all devices */
 };
 
 static void device_manager_dump( struct object *obj, int verbose );
@@ -112,10 +114,10 @@ struct device
 {
     struct object          obj;           /* object header */
     struct device_manager *manager;       /* manager for this device (or NULL if deleted) */
-    struct fd             *fd;            /* file descriptor for ioctl */
+    struct fd             *fd;            /* file descriptor for irp */
     client_ptr_t           user_ptr;      /* opaque ptr for client side */
     struct list            entry;         /* entry in device manager list */
-    struct list            requests;      /* list of pending ioctl requests */
+    struct list            requests;      /* list of pending irp requests */
 };
 
 static void device_dump( struct object *obj, int verbose );
@@ -161,89 +163,89 @@ static const struct fd_ops device_fd_ops =
 };
 
 
-static void ioctl_call_dump( struct object *obj, int verbose )
+static void irp_call_dump( struct object *obj, int verbose )
 {
-    struct ioctl_call *ioctl = (struct ioctl_call *)obj;
-    fprintf( stderr, "Ioctl call code=%08x device=%p\n", ioctl->code, ioctl->device );
+    struct irp_call *irp = (struct irp_call *)obj;
+    fprintf( stderr, "IRP call device=%p\n", irp->device );
 }
 
-static int ioctl_call_signaled( struct object *obj, struct wait_queue_entry *entry )
+static int irp_call_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
-    struct ioctl_call *ioctl = (struct ioctl_call *)obj;
+    struct irp_call *irp = (struct irp_call *)obj;
 
-    return !ioctl->device;  /* device is cleared once the ioctl has completed */
+    return !irp->device;  /* device is cleared once the irp has completed */
 }
 
-static void ioctl_call_destroy( struct object *obj )
+static void irp_call_destroy( struct object *obj )
 {
-    struct ioctl_call *ioctl = (struct ioctl_call *)obj;
+    struct irp_call *irp = (struct irp_call *)obj;
 
-    free( ioctl->in_data );
-    free( ioctl->out_data );
-    if (ioctl->async)
+    free( irp->in_data );
+    free( irp->out_data );
+    if (irp->async)
     {
-        async_terminate( ioctl->async, STATUS_CANCELLED );
-        release_object( ioctl->async );
+        async_terminate( irp->async, STATUS_CANCELLED );
+        release_object( irp->async );
     }
-    if (ioctl->device) release_object( ioctl->device );
-    release_object( ioctl->thread );
+    if (irp->device) release_object( irp->device );
+    release_object( irp->thread );
 }
 
-static struct ioctl_call *create_ioctl( struct device *device, ioctl_code_t code,
-                                        const void *in_data, data_size_t in_size,
-                                        data_size_t out_size )
+static struct irp_call *create_irp( struct device *device, unsigned int type, const void *in_data,
+                                    data_size_t in_size, data_size_t out_size )
 {
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
 
-    if ((ioctl = alloc_object( &ioctl_call_ops )))
+    if ((irp = alloc_object( &irp_call_ops )))
     {
-        ioctl->device   = (struct device *)grab_object( device );
-        ioctl->code     = code;
-        ioctl->async    = NULL;
-        ioctl->status   = STATUS_PENDING;
-        ioctl->in_size  = in_size;
-        ioctl->in_data  = NULL;
-        ioctl->out_size = out_size;
-        ioctl->out_data = NULL;
+        irp->device   = (struct device *)grab_object( device );
+        irp->async    = NULL;
+        irp->type     = type;
+        irp->code     = 0;
+        irp->status   = STATUS_PENDING;
+        irp->in_size  = in_size;
+        irp->in_data  = NULL;
+        irp->out_size = out_size;
+        irp->out_data = NULL;
 
-        if (ioctl->in_size && !(ioctl->in_data = memdup( in_data, in_size )))
+        if (irp->in_size && !(irp->in_data = memdup( in_data, in_size )))
         {
-            release_object( ioctl );
-            ioctl = NULL;
+            release_object( irp );
+            irp = NULL;
         }
     }
-    return ioctl;
+    return irp;
 }
 
-static void set_ioctl_result( struct ioctl_call *ioctl, unsigned int status,
-                              const void *out_data, data_size_t out_size )
+static void set_irp_result( struct irp_call *irp, unsigned int status,
+                            const void *out_data, data_size_t out_size )
 {
-    struct device *device = ioctl->device;
+    struct device *device = irp->device;
 
     if (!device) return;  /* already finished */
 
     /* FIXME: handle the STATUS_PENDING case */
-    ioctl->status = status;
-    ioctl->out_size = min( ioctl->out_size, out_size );
-    if (ioctl->out_size && !(ioctl->out_data = memdup( out_data, ioctl->out_size )))
-        ioctl->out_size = 0;
+    irp->status = status;
+    irp->out_size = min( irp->out_size, out_size );
+    if (irp->out_size && !(irp->out_data = memdup( out_data, irp->out_size )))
+        irp->out_size = 0;
     release_object( device );
-    ioctl->device = NULL;
-    if (ioctl->async)
+    irp->device = NULL;
+    if (irp->async)
     {
-        if (ioctl->out_size) status = STATUS_ALERTED;
-        async_terminate( ioctl->async, status );
-        release_object( ioctl->async );
-        ioctl->async = NULL;
+        if (irp->out_size) status = STATUS_ALERTED;
+        async_terminate( irp->async, status );
+        release_object( irp->async );
+        irp->async = NULL;
     }
-    wake_up( &ioctl->obj, 0 );
+    wake_up( &irp->obj, 0 );
 
     if (status != STATUS_ALERTED)
     {
         /* remove it from the device queue */
-        /* (for STATUS_ALERTED this will be done in get_ioctl_result) */
-        list_remove( &ioctl->dev_entry );
-        release_object( ioctl );  /* no longer on the device queue */
+        /* (for STATUS_ALERTED this will be done in get_irp_result) */
+        list_remove( &irp->dev_entry );
+        release_object( irp );  /* no longer on the device queue */
     }
 }
 
@@ -274,12 +276,12 @@ static struct fd *device_get_fd( struct object *obj )
 static void device_destroy( struct object *obj )
 {
     struct device *device = (struct device *)obj;
-    struct ioctl_call *ioctl, *next;
+    struct irp_call *irp, *next;
 
-    LIST_FOR_EACH_ENTRY_SAFE( ioctl, next, &device->requests, struct ioctl_call, dev_entry )
+    LIST_FOR_EACH_ENTRY_SAFE( irp, next, &device->requests, struct irp_call, dev_entry )
     {
-        list_remove( &ioctl->dev_entry );
-        release_object( ioctl );  /* no longer on the device queue */
+        list_remove( &irp->dev_entry );
+        release_object( irp );  /* no longer on the device queue */
     }
     if (device->fd) release_object( device->fd );
     if (device->manager) list_remove( &device->entry );
@@ -296,13 +298,13 @@ static enum server_fd_type device_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-static struct ioctl_call *find_ioctl_call( struct device *device, struct thread *thread,
-                                           client_ptr_t user_arg )
+static struct irp_call *find_irp_call( struct device *device, struct thread *thread,
+                                       client_ptr_t user_arg )
 {
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
 
-    LIST_FOR_EACH_ENTRY( ioctl, &device->requests, struct ioctl_call, dev_entry )
-        if (ioctl->thread == thread && ioctl->user_arg == user_arg) return ioctl;
+    LIST_FOR_EACH_ENTRY( irp, &device->requests, struct irp_call, dev_entry )
+        if (irp->thread == thread && irp->user_arg == user_arg) return irp;
 
     set_error( STATUS_INVALID_PARAMETER );
     return NULL;
@@ -312,7 +314,7 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
                                   int blocking, const void *data, data_size_t size )
 {
     struct device *device = get_fd_user( fd );
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
     obj_handle_t handle = 0;
 
     if (!device->manager)  /* it has been deleted */
@@ -321,29 +323,30 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
         return 0;
     }
 
-    if (!(ioctl = create_ioctl( device, code, data, size, get_reply_max_size() )))
+    if (!(irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, data, size, get_reply_max_size() )))
         return 0;
 
-    ioctl->thread   = (struct thread *)grab_object( current );
-    ioctl->user_arg = async_data->arg;
+    irp->code     = code;
+    irp->thread   = (struct thread *)grab_object( current );
+    irp->user_arg = async_data->arg;
 
-    if (blocking && !(handle = alloc_handle( current->process, ioctl, SYNCHRONIZE, 0 )))
+    if (blocking && !(handle = alloc_handle( current->process, irp, SYNCHRONIZE, 0 )))
     {
-        release_object( ioctl );
+        release_object( irp );
         return 0;
     }
 
-    if (!(ioctl->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
+    if (!(irp->async = fd_queue_async( device->fd, async_data, ASYNC_TYPE_WAIT )))
     {
         if (handle) close_handle( current->process, handle );
-        release_object( ioctl );
+        release_object( irp );
         return 0;
     }
-    list_add_tail( &device->requests, &ioctl->dev_entry );
-    list_add_tail( &device->manager->requests, &ioctl->mgr_entry );
-    if (list_head( &device->manager->requests ) == &ioctl->mgr_entry)  /* first one */
+    list_add_tail( &device->requests, &irp->dev_entry );
+    list_add_tail( &device->manager->requests, &irp->mgr_entry );
+    if (list_head( &device->manager->requests ) == &irp->mgr_entry)  /* first one */
         wake_up( &device->manager->obj, 0 );
-    /* don't release ioctl since it is now queued in the device */
+    /* don't release irp since it is now queued in the device */
     set_error( STATUS_PENDING );
     return handle;
 }
@@ -373,15 +376,15 @@ static struct device *create_device( struct directory *root, const struct unicod
 
 static void delete_device( struct device *device )
 {
-    struct ioctl_call *ioctl, *next;
+    struct irp_call *irp, *next;
 
     if (!device->manager) return;  /* already deleted */
 
     /* terminate all pending requests */
-    LIST_FOR_EACH_ENTRY_SAFE( ioctl, next, &device->requests, struct ioctl_call, dev_entry )
+    LIST_FOR_EACH_ENTRY_SAFE( irp, next, &device->requests, struct irp_call, dev_entry )
     {
-        list_remove( &ioctl->mgr_entry );
-        set_ioctl_result( ioctl, STATUS_FILE_DELETED, NULL, 0 );
+        list_remove( &irp->mgr_entry );
+        set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0 );
     }
     unlink_named_object( &device->obj );
     list_remove( &device->entry );
@@ -483,10 +486,10 @@ DECL_HANDLER(delete_device)
 }
 
 
-/* retrieve the next pending device ioctl request */
+/* retrieve the next pending device irp request */
 DECL_HANDLER(get_next_device_request)
 {
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
     struct device_manager *manager;
     struct list *ptr;
 
@@ -496,33 +499,34 @@ DECL_HANDLER(get_next_device_request)
 
     if (req->prev)
     {
-        if ((ioctl = (struct ioctl_call *)get_handle_obj( current->process, req->prev,
-                                                          0, &ioctl_call_ops )))
+        if ((irp = (struct irp_call *)get_handle_obj( current->process, req->prev,
+                                                          0, &irp_call_ops )))
         {
-            set_ioctl_result( ioctl, req->status, get_req_data(), get_req_data_size() );
+            set_irp_result( irp, req->status, NULL, 0 );
             close_handle( current->process, req->prev );  /* avoid an extra round-trip for close */
-            release_object( ioctl );
+            release_object( irp );
         }
         clear_error();
     }
 
     if ((ptr = list_head( &manager->requests )))
     {
-        ioctl = LIST_ENTRY( ptr, struct ioctl_call, mgr_entry );
-        reply->code = ioctl->code;
-        reply->user_ptr = ioctl->device->user_ptr;
-        reply->client_pid = get_process_id( ioctl->thread->process );
-        reply->client_tid = get_thread_id( ioctl->thread );
-        reply->in_size = ioctl->in_size;
-        reply->out_size = ioctl->out_size;
-        if (ioctl->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
-        else if ((reply->next = alloc_handle( current->process, ioctl, 0, 0 )))
+        irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
+        reply->type = irp->type;
+        reply->code = irp->code;
+        reply->user_ptr = irp->device->user_ptr;
+        reply->client_pid = get_process_id( irp->thread->process );
+        reply->client_tid = get_thread_id( irp->thread );
+        reply->in_size = irp->in_size;
+        reply->out_size = irp->out_size;
+        if (irp->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+        else if ((reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
-            set_reply_data_ptr( ioctl->in_data, ioctl->in_size );
-            ioctl->in_data = NULL;
-            ioctl->in_size = 0;
-            list_remove( &ioctl->mgr_entry );
-            list_init( &ioctl->mgr_entry );
+            set_reply_data_ptr( irp->in_data, irp->in_size );
+            irp->in_data = NULL;
+            irp->in_size = 0;
+            list_remove( &irp->mgr_entry );
+            list_init( &irp->mgr_entry );
         }
     }
     else set_error( STATUS_PENDING );
@@ -531,49 +535,49 @@ DECL_HANDLER(get_next_device_request)
 }
 
 
-/* store results of an async ioctl */
-DECL_HANDLER(set_ioctl_result)
+/* store results of an async irp */
+DECL_HANDLER(set_irp_result)
 {
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
     struct device_manager *manager;
 
     if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
                                                              0, &device_manager_ops )))
         return;
 
-    if ((ioctl = (struct ioctl_call *)get_handle_obj( current->process, req->handle, 0, &ioctl_call_ops )))
+    if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
-        set_ioctl_result( ioctl, req->status, get_req_data(), get_req_data_size() );
+        set_irp_result( irp, req->status, get_req_data(), get_req_data_size() );
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
-        release_object( ioctl );
+        release_object( irp );
     }
     release_object( manager );
 }
 
 
-/* retrieve results of an async ioctl */
-DECL_HANDLER(get_ioctl_result)
+/* retrieve results of an async irp */
+DECL_HANDLER(get_irp_result)
 {
     struct device *device;
-    struct ioctl_call *ioctl;
+    struct irp_call *irp;
 
     if (!(device = (struct device *)get_handle_obj( current->process, req->handle, 0, &device_ops )))
         return;
 
-    if ((ioctl = find_ioctl_call( device, current, req->user_arg )))
+    if ((irp = find_irp_call( device, current, req->user_arg )))
     {
-        if (ioctl->out_data)
+        if (irp->out_data)
         {
-            data_size_t size = min( ioctl->out_size, get_reply_max_size() );
+            data_size_t size = min( irp->out_size, get_reply_max_size() );
             if (size)
             {
-                set_reply_data_ptr( ioctl->out_data, size );
-                ioctl->out_data = NULL;
+                set_reply_data_ptr( irp->out_data, size );
+                irp->out_data = NULL;
             }
         }
-        set_error( ioctl->status );
-        list_remove( &ioctl->dev_entry );
-        release_object( ioctl );  /* no longer on the device queue */
+        set_error( irp->status );
+        list_remove( &irp->dev_entry );
+        release_object( irp );  /* no longer on the device queue */
     }
     release_object( device );
 }

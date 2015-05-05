@@ -1368,7 +1368,7 @@ static NTSTATUS ioctl_completion( void *user, IO_STATUS_BLOCK *io,
 
     if (status == STATUS_ALERTED)
     {
-        SERVER_START_REQ( get_ioctl_result )
+        SERVER_START_REQ( get_irp_result )
         {
             req->handle   = wine_server_obj_handle( async->io.handle );
             req->user_arg = wine_server_client_ptr( async );

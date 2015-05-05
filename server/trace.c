@@ -2740,7 +2740,7 @@ static void dump_ioctl_reply( const struct ioctl_reply *req )
     dump_varargs_bytes( ", out_data=", cur_size );
 }
 
-static void dump_set_ioctl_result_request( const struct set_ioctl_result_request *req )
+static void dump_set_irp_result_request( const struct set_irp_result_request *req )
 {
     fprintf( stderr, " manager=%04x", req->manager );
     fprintf( stderr, ", handle=%04x", req->handle );
@@ -2748,13 +2748,13 @@ static void dump_set_ioctl_result_request( const struct set_ioctl_result_request
     dump_varargs_bytes( ", data=", cur_size );
 }
 
-static void dump_get_ioctl_result_request( const struct get_ioctl_result_request *req )
+static void dump_get_irp_result_request( const struct get_irp_result_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
     dump_uint64( ", user_arg=", &req->user_arg );
 }
 
-static void dump_get_ioctl_result_reply( const struct get_ioctl_result_reply *req )
+static void dump_get_irp_result_reply( const struct get_irp_result_reply *req )
 {
     dump_varargs_bytes( " out_data=", cur_size );
 }
@@ -3915,14 +3915,14 @@ static void dump_get_next_device_request_request( const struct get_next_device_r
     fprintf( stderr, " manager=%04x", req->manager );
     fprintf( stderr, ", prev=%04x", req->prev );
     fprintf( stderr, ", status=%08x", req->status );
-    dump_varargs_bytes( ", prev_data=", cur_size );
 }
 
 static void dump_get_next_device_request_reply( const struct get_next_device_request_reply *req )
 {
     fprintf( stderr, " next=%04x", req->next );
-    dump_ioctl_code( ", code=", &req->code );
+    fprintf( stderr, ", type=%08x", req->type );
     dump_uint64( ", user_ptr=", &req->user_ptr );
+    dump_ioctl_code( ", code=", &req->code );
     fprintf( stderr, ", client_pid=%04x", req->client_pid );
     fprintf( stderr, ", client_tid=%04x", req->client_tid );
     fprintf( stderr, ", in_size=%u", req->in_size );
@@ -4290,8 +4290,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
     (dump_func)dump_ioctl_request,
-    (dump_func)dump_set_ioctl_result_request,
-    (dump_func)dump_get_ioctl_result_request,
+    (dump_func)dump_set_irp_result_request,
+    (dump_func)dump_get_irp_result_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_set_named_pipe_info_request,
@@ -4556,7 +4556,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_ioctl_reply,
     NULL,
-    (dump_func)dump_get_ioctl_result_reply,
+    (dump_func)dump_get_irp_result_reply,
     (dump_func)dump_create_named_pipe_reply,
     (dump_func)dump_get_named_pipe_info_reply,
     NULL,
@@ -4820,8 +4820,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "register_async",
     "cancel_async",
     "ioctl",
-    "set_ioctl_result",
-    "get_ioctl_result",
+    "set_irp_result",
+    "get_irp_result",
     "create_named_pipe",
     "get_named_pipe_info",
     "set_named_pipe_info",
