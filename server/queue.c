@@ -1095,10 +1095,29 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 /* detach two thread input data structures */
 void detach_thread_input( struct thread *thread_from )
 {
-    struct thread_input *input;
+    struct thread *thread;
+    struct thread_input *input, *old_input = thread_from->queue->input;
 
     if ((input = create_thread_input( thread_from )))
     {
+        if (old_input->focus && (thread = get_window_thread( old_input->focus )))
+        {
+            if (thread == thread_from)
+            {
+                input->focus = old_input->focus;
+                old_input->focus = 0;
+            }
+            release_object( thread );
+        }
+        if (old_input->active && (thread = get_window_thread( old_input->active )))
+        {
+            if (thread == thread_from)
+            {
+                input->active = old_input->active;
+                old_input->active = 0;
+            }
+            release_object( thread );
+        }
         assign_thread_input( thread_from, input );
         release_object( input );
     }

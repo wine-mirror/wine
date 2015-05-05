@@ -2028,6 +2028,12 @@ static void test_Input_mouse(void)
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (message == WM_USER+1)
+    {
+        HWND hwnd = (HWND)lParam;
+        ok(GetFocus() == hwnd, "thread expected focus %p, got %p\n", hwnd, GetFocus());
+        ok(GetActiveWindow() == hwnd, "thread expected active %p, got %p\n", hwnd, GetActiveWindow());
+    }
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
@@ -2067,7 +2073,7 @@ static DWORD WINAPI thread_proc(void *param)
 static void test_attach_input(void)
 {
     HANDLE hThread;
-    HWND ourWnd;
+    HWND ourWnd, Wnd2;
     DWORD ret, tid;
     struct wnd_event wnd_event;
     WNDCLASSA cls;
@@ -2102,6 +2108,10 @@ static void test_attach_input(void)
                             0, 0, 0, 0, 0, 0, 0, NULL);
     ok(ourWnd!= 0, "failed to create ourWnd window\n");
 
+    Wnd2 = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                            0, 0, 0, 0, 0, 0, 0, NULL);
+    ok(Wnd2!= 0, "failed to create Wnd2 window\n");
+
     SetFocus(ourWnd);
     SetActiveWindow(ourWnd);
 
@@ -2111,8 +2121,35 @@ static void test_attach_input(void)
     ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
     ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
 
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)ourWnd);
+
     ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
     ok(ret, "AttachThreadInput error %d\n", GetLastError());
+    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
+    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == ourWnd, "expected active %p, got %p\n", ourWnd, GetActiveWindow());
+    ok(GetFocus() == ourWnd, "expected focus %p, got %p\n", ourWnd, GetFocus());
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)ourWnd);
+
+    SetActiveWindow(Wnd2);
+    SetFocus(Wnd2);
+    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
+    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)Wnd2);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
+    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
 
     ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
     ok(ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
@@ -2122,21 +2159,12 @@ static void test_attach_input(void)
 
     wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
     wnd_event.setWindows = TRUE;
-    if (!wnd_event.start_event)
-    {
-        win_skip("skipping interthread message test under win9x\n");
-        return;
-    }
 
     hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
     ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
     ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(wnd_event.start_event);
-
-    ourWnd = CreateWindowExA(0, "TestWindowClass", "window caption text", WS_OVERLAPPEDWINDOW,
-                                      100, 100, 200, 200, 0, 0, 0, NULL);
-    ok(ourWnd!= 0, "failed to create ourWnd window\n");
 
     SetFocus(ourWnd);
     SetActiveWindow(ourWnd);
@@ -2147,14 +2175,46 @@ static void test_attach_input(void)
     ok(GetActiveWindow() == wnd_event.hwnd, "expected active %p, got %p\n", wnd_event.hwnd, GetActiveWindow());
     ok(GetFocus() == wnd_event.hwnd, "expected focus %p, got %p\n", wnd_event.hwnd, GetFocus());
 
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+
     ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
     ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == 0, "expected active 0, got %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, TRUE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == wnd_event.hwnd, "expected active %p, got %p\n", wnd_event.hwnd, GetActiveWindow());
+    ok(GetFocus() == wnd_event.hwnd, "expected focus %p, got %p\n", wnd_event.hwnd, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)wnd_event.hwnd);
+
+    SetFocus(Wnd2);
+    SetActiveWindow(Wnd2);
+    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
+    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, (LPARAM)Wnd2);
+
+    ret = AttachThreadInput(GetCurrentThreadId(), tid, FALSE);
+    ok(ret, "AttachThreadInput error %d\n", GetLastError());
+
+    ok(GetActiveWindow() == Wnd2, "expected active %p, got %p\n", Wnd2, GetActiveWindow());
+    ok(GetFocus() == Wnd2, "expected focus %p, got %p\n", Wnd2, GetFocus());
+
+    SendMessageA(wnd_event.hwnd, WM_USER+1, 0, 0);
 
     ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
     ok(ret, "PostMessageA(WM_QUIT) error %d\n", GetLastError());
 
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
+    DestroyWindow(ourWnd);
+    DestroyWindow(Wnd2);
 }
 
 START_TEST(input)
