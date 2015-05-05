@@ -170,8 +170,10 @@ static const struct fd_ops pipe_server_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_server_flush,            /* flush */
     pipe_server_get_fd_type,      /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    pipe_server_flush,            /* flush */
     pipe_server_ioctl,            /* ioctl */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
@@ -210,8 +212,10 @@ static const struct fd_ops pipe_client_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_client_flush,            /* flush */
     pipe_client_get_fd_type,      /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    pipe_client_flush,            /* flush */
     default_fd_ioctl,             /* ioctl */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async,    /* reselect_async */
@@ -254,8 +258,10 @@ static const struct fd_ops named_pipe_device_fd_ops =
 {
     default_fd_get_poll_events,       /* get_poll_events */
     default_poll_event,               /* poll_event */
-    no_flush,                         /* flush */
     named_pipe_device_get_fd_type,    /* get_fd_type */
+    no_fd_read,                       /* read */
+    no_fd_write,                      /* write */
+    no_fd_flush,                      /* flush */
     named_pipe_device_ioctl,          /* ioctl */
     default_fd_queue_async,           /* queue_async */
     default_fd_reselect_async,        /* reselect_async */

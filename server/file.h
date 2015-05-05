@@ -37,10 +37,14 @@ struct fd_ops
     int  (*get_poll_events)(struct fd *);
     /* a poll() event occurred */
     void (*poll_event)(struct fd *,int event);
-    /* flush the object buffers */
-    void (*flush)(struct fd *, struct event **);
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
+    /* perform a read on the file */
+    obj_handle_t (*read)(struct fd *, const async_data_t *, int, file_pos_t );
+    /* perform a write on the file */
+    obj_handle_t (*write)(struct fd *, const async_data_t *, int, file_pos_t, data_size_t * );
+    /* flush the object buffers */
+    void (*flush)(struct fd *, struct event **);
     /* perform an ioctl on the file */
     obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
     /* queue an async operation */
@@ -85,13 +89,16 @@ extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
+extern obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos );
+extern obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
+                                 file_pos_t pos, data_size_t *written );
+extern void no_fd_flush( struct fd *fd, struct event **event );
 extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 extern void no_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern void default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
-extern void no_flush( struct fd *fd, struct event **event );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
 

@@ -2111,12 +2111,6 @@ void default_fd_cancel_async( struct fd *fd, struct process *process, struct thr
         set_error( STATUS_NOT_FOUND );
 }
 
-/* default flush() routine */
-void no_flush( struct fd *fd, struct event **event )
-{
-    set_error( STATUS_OBJECT_TYPE_MISMATCH );
-}
-
 static inline int is_valid_mounted_device( struct stat *st )
 {
 #if defined(linux) || defined(__sun__)
@@ -2164,6 +2158,28 @@ static void unmount_device( struct fd *device_fd )
     release_object( device );
 }
 
+/* default read() routine */
+obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
+}
+
+/* default write() routine */
+obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
+                          file_pos_t pos, data_size_t *written )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
+}
+
+/* default flush() routine */
+void no_fd_flush( struct fd *fd, struct event **event )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+}
+
+/* default ioctl() routine */
 obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );

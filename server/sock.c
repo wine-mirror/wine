@@ -163,8 +163,10 @@ static const struct fd_ops sock_fd_ops =
 {
     sock_get_poll_events,         /* get_poll_events */
     sock_poll_event,              /* poll_event */
-    no_flush,                     /* flush */
     sock_get_fd_type,             /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
     sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */
     sock_reselect_async,          /* reselect_async */
@@ -1026,9 +1028,11 @@ static const struct fd_ops ifchange_fd_ops =
 {
     ifchange_get_poll_events, /* get_poll_events */
     ifchange_poll_event,      /* poll_event */
-    NULL,                     /* flush */
     NULL,                     /* get_fd_type */
-    NULL,                     /* ioctl */
+    no_fd_read,               /* read */
+    no_fd_write,              /* write */
+    no_fd_flush,              /* flush */
+    no_fd_ioctl,              /* ioctl */
     NULL,                     /* queue_async */
     ifchange_reselect_async,  /* reselect_async */
     NULL                      /* cancel_async */
