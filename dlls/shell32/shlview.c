@@ -3518,8 +3518,13 @@ static HRESULT WINAPI shellfolderviewdual_get_Application(IShellFolderViewDual3 
     IDispatch **disp)
 {
     IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
-    FIXME("%p %p\n", This, disp);
-    return E_NOTIMPL;
+
+    TRACE("%p %p\n", This, disp);
+
+    if (!disp)
+        return E_INVALIDARG;
+
+    return IShellDispatch_Constructor(NULL, &IID_IDispatch, (void**)disp);
 }
 
 static HRESULT WINAPI shellfolderviewdual_get_Parent(IShellFolderViewDual3 *iface, IDispatch **disp)

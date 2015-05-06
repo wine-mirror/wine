@@ -364,8 +364,42 @@ static void test_service(void)
     IShellDispatch2_Release(sd);
 }
 
+static void test_dispatch_typeinfo(IDispatch *disp, REFIID *riid)
+{
+    ITypeInfo *typeinfo;
+    TYPEATTR *typeattr;
+    UINT count;
+    HRESULT hr;
+
+    count = 10;
+    hr = IDispatch_GetTypeInfoCount(disp, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    while (!IsEqualGUID(*riid, &IID_NULL)) {
+        if (IsEqualGUID(&typeattr->guid, *riid))
+            break;
+        riid++;
+    }
+    ok(IsEqualGUID(&typeattr->guid, *riid), "unexpected type guid %s\n", wine_dbgstr_guid(&typeattr->guid));
+
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
+}
+
 static void test_ShellFolderViewDual(void)
 {
+    static const REFIID shelldisp_riids[] = {
+        &IID_IShellDispatch6,
+        &IID_IShellDispatch5,
+        &IID_IShellDispatch4,
+        &IID_NULL
+    };
     IShellFolderViewDual *viewdual;
     IShellFolder *desktop, *tmpdir;
     IShellView *view, *view2;
@@ -398,6 +432,18 @@ static void test_ShellFolderViewDual(void)
 
     hr = IShellFolderViewDual_QueryInterface(viewdual, &IID_IShellView, (void**)&view2);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    /* get_Application() */
+
+if (0) /* crashes on pre-vista */ {
+    hr = IShellFolderViewDual_get_Application(viewdual, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+    hr = IShellFolderViewDual_get_Application(viewdual, &disp2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(disp2 != (IDispatch*)viewdual, "got %p, %p\n", disp2, viewdual);
+    test_dispatch_typeinfo(disp2, shelldisp_riids);
+    IDispatch_Release(disp2);
 
     IShellFolderViewDual_Release(viewdual);
     IDispatch_Release(disp);
@@ -510,35 +556,29 @@ todo_wine {
         ok(ret == 0, "got %d\n", ret);
     }
     else {
+        static const REFIID browser_riids[] = {
+            &IID_IWebBrowser2,
+            &IID_NULL
+        };
+
+        static const REFIID viewdual_riids[] = {
+            &IID_IShellFolderViewDual3,
+            &IID_NULL
+        };
+
         IShellFolderViewDual *view;
         IShellBrowser *sb, *sb2;
         IServiceProvider *sp;
         IDispatch *doc, *app;
-        ITypeInfo *typeinfo;
-        TYPEATTR *typeattr;
         IWebBrowser2 *wb;
         IShellView *sv;
         IUnknown *unk;
-        UINT count;
 
         ok(disp != NULL, "got %p\n", disp);
         ok(ret != HandleToUlong(hwnd), "got %d\n", ret);
 
         /* IDispatch-related tests */
-        count = 10;
-        hr = IDispatch_GetTypeInfoCount(disp, &count);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(count == 1, "got %u\n", count);
-
-        hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-
-        hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&typeattr->guid, &IID_IWebBrowser2), "type guid %s\n", wine_dbgstr_guid(&typeattr->guid));
-
-        ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
-        ITypeInfo_Release(typeinfo);
+        test_dispatch_typeinfo(disp, browser_riids);
 
         /* IWebBrowser2 */
         hr = IDispatch_QueryInterface(disp, &IID_IWebBrowser2, (void**)&wb);
@@ -556,18 +596,9 @@ todo_wine
         hr = IWebBrowser2_get_Document(wb, &doc);
 todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
-        hr = IDispatch_GetTypeInfo(doc, 0, LOCALE_SYSTEM_DEFAULT, &typeinfo);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK)
+        test_dispatch_typeinfo(doc, viewdual_riids);
 
-        hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&typeattr->guid, &IID_IShellFolderViewDual3), "type guid %s\n", wine_dbgstr_guid(&typeattr->guid));
-        IDispatch_Release(doc);
-
-        ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
-        ITypeInfo_Release(typeinfo);
-}
         IWebBrowser2_Release(wb);
 
         /* IServiceProvider */
