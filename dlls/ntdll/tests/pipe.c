@@ -469,13 +469,12 @@ static void test_cancelio(void)
     ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
 
     res = pNtCancelIoFile(hPipe, &cancel_sb);
-    todo_wine ok(!res, "NtCancelIoFile returned %x\n", res);
+    ok(!res, "NtCancelIoFile returned %x\n", res);
 
-    todo_wine {
-        ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
-        ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
-    }
+    ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
+    todo_wine
     ok(!ioapc_called, "IOAPC ran too early\n");
 
     SleepEx(0, TRUE); /* alertable wait state */
