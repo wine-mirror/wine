@@ -39,6 +39,8 @@
 #include "winuser.h"
 #include "winioctl.h"
 #include "ddk/wdm.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
 #include "file.h"
 #include "request.h"
 #include "unicode.h"
@@ -115,6 +117,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
         CASE(FSCTL_PIPE_DISCONNECT);
         CASE(FSCTL_PIPE_LISTEN);
         CASE(FSCTL_PIPE_WAIT);
+        CASE(WS_SIO_ADDRESS_LIST_CHANGE);
         default: fprintf( stderr, "%s%08x", prefix, *code ); break;
 #undef CASE
     }
