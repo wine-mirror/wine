@@ -203,6 +203,22 @@ static NTSTATUS dispatch_write( DEVICE_OBJECT *device, const irp_params_t *param
     return dispatch_irp( device, irp );
 }
 
+/* process a flush request for a given device */
+static NTSTATUS dispatch_flush( DEVICE_OBJECT *device, const irp_params_t *params,
+                                void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
+{
+    IRP *irp;
+
+    TRACE( "device %p\n", device );
+
+    /* note: we abuse UserIosb to store the server irp handle */
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_FLUSH_BUFFERS, device, in_buff, in_size,
+                                              NULL, NULL, irp_handle )))
+        return STATUS_NO_MEMORY;
+
+    return dispatch_irp( device, irp );
+}
+
 /* process an ioctl request for a given device */
 static NTSTATUS dispatch_ioctl( DEVICE_OBJECT *device, const irp_params_t *params,
                                 void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
@@ -249,7 +265,7 @@ static const dispatch_func dispatch_funcs[IRP_MJ_MAXIMUM_FUNCTION + 1] =
     NULL,              /* IRP_MJ_SET_INFORMATION */
     NULL,              /* IRP_MJ_QUERY_EA */
     NULL,              /* IRP_MJ_SET_EA */
-    NULL,              /* IRP_MJ_FLUSH_BUFFERS */
+    dispatch_flush,    /* IRP_MJ_FLUSH_BUFFERS */
     NULL,              /* IRP_MJ_QUERY_VOLUME_INFORMATION */
     NULL,              /* IRP_MJ_SET_VOLUME_INFORMATION */
     NULL,              /* IRP_MJ_DIRECTORY_CONTROL */
