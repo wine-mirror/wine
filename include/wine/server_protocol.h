@@ -631,6 +631,28 @@ typedef union
     } create_thread;
 } apc_result_t;
 
+typedef union
+{
+    unsigned int         major;
+    struct
+    {
+        unsigned int     major;
+        unsigned int     key;
+        file_pos_t       pos;
+    } read;
+    struct
+    {
+        unsigned int     major;
+        unsigned int     key;
+        file_pos_t       pos;
+    } write;
+    struct
+    {
+        unsigned int     major;
+        ioctl_code_t     code;
+    } ioctl;
+} irp_params_t;
+
 struct rawinput_device
 {
     unsigned short usage_page;
@@ -4834,16 +4856,15 @@ struct get_next_device_request_request
 struct get_next_device_request_reply
 {
     struct reply_header __header;
-    obj_handle_t next;
-    unsigned int type;
     client_ptr_t user_ptr;
-    ioctl_code_t code;
+    irp_params_t params;
+    obj_handle_t next;
     process_id_t client_pid;
     thread_id_t  client_tid;
     data_size_t  in_size;
     data_size_t  out_size;
     /* VARARG(next_data,bytes); */
-    char __pad_44[4];
+    char __pad_52[4];
 };
 
 
@@ -6020,6 +6041,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 473
+#define SERVER_PROTOCOL_VERSION 474
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -48,6 +48,7 @@ my %formats =
     "apc_call_t"    => [  40,  8,  "&dump_apc_call" ],
     "apc_result_t"  => [  40,  8,  "&dump_apc_result" ],
     "async_data_t"  => [  40,  8,  "&dump_async_data" ],
+    "irp_params_t"  => [  16,  8,  "&dump_irp_params" ],
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
     "cpu_type_t"    => [  4,   4,  "&dump_cpu_type" ],

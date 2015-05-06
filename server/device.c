@@ -44,9 +44,8 @@ struct irp_call
     struct thread         *thread;        /* thread that queued the irp */
     client_ptr_t           user_arg;      /* user arg used to identify the request */
     struct async          *async;         /* pending async op */
-    unsigned int           type;          /* request type (IRP_MJ_*) */
     unsigned int           status;        /* resulting status (or STATUS_PENDING) */
-    ioctl_code_t           code;          /* ioctl code */
+    irp_params_t           params;        /* irp parameters */
     data_size_t            result;        /* size of result (input or output depending on the type) */
     data_size_t            in_size;       /* size of input data */
     void                  *in_data;       /* input data */
@@ -198,8 +197,8 @@ static void irp_call_destroy( struct object *obj )
     release_object( irp->thread );
 }
 
-static struct irp_call *create_irp( struct device *device, unsigned int type, const void *in_data,
-                                    data_size_t in_size, data_size_t out_size )
+static struct irp_call *create_irp( struct device *device, const irp_params_t *params,
+                                    const void *in_data, data_size_t in_size, data_size_t out_size )
 {
     struct irp_call *irp;
 
@@ -213,8 +212,7 @@ static struct irp_call *create_irp( struct device *device, unsigned int type, co
     {
         irp->device   = (struct device *)grab_object( device );
         irp->async    = NULL;
-        irp->type     = type;
-        irp->code     = 0;
+        irp->params   = *params;
         irp->status   = STATUS_PENDING;
         irp->result   = 0;
         irp->in_size  = in_size;
@@ -356,8 +354,13 @@ static obj_handle_t device_read( struct fd *fd, const async_data_t *async_data, 
     struct device *device = get_fd_user( fd );
     struct irp_call *irp;
     obj_handle_t handle;
+    irp_params_t params;
 
-    irp = create_irp( device, IRP_MJ_READ, NULL, 0, get_reply_max_size() );
+    params.major = IRP_MJ_READ;
+    params.read.key = 0;
+    params.read.pos = pos;
+
+    irp = create_irp( device, &params, NULL, 0, get_reply_max_size() );
     if (!irp) return 0;
 
     handle = queue_irp( device, irp, async_data, blocking );
@@ -371,8 +374,13 @@ static obj_handle_t device_write( struct fd *fd, const async_data_t *async_data,
     struct device *device = get_fd_user( fd );
     struct irp_call *irp;
     obj_handle_t handle;
+    irp_params_t params;
 
-    irp = create_irp( device, IRP_MJ_WRITE, get_req_data(), get_req_data_size(), 0 );
+    params.major = IRP_MJ_WRITE;
+    params.write.key = 0;
+    params.write.pos = pos;
+
+    irp = create_irp( device, &params, get_req_data(), get_req_data_size(), 0 );
     if (!irp) return 0;
 
     handle = queue_irp( device, irp, async_data, blocking );
@@ -386,12 +394,14 @@ static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_
     struct device *device = get_fd_user( fd );
     struct irp_call *irp;
     obj_handle_t handle;
+    irp_params_t params;
 
-    irp = create_irp( device, IRP_MJ_DEVICE_CONTROL, get_req_data(), get_req_data_size(),
+    params.major = IRP_MJ_DEVICE_CONTROL;
+    params.ioctl.code = code;
+
+    irp = create_irp( device, &params, get_req_data(), get_req_data_size(),
                       get_reply_max_size() );
     if (!irp) return 0;
-
-    irp->code = code;
 
     handle = queue_irp( device, irp, async_data, blocking );
     release_object( irp );
@@ -559,8 +569,7 @@ DECL_HANDLER(get_next_device_request)
     if ((ptr = list_head( &manager->requests )))
     {
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
-        reply->type = irp->type;
-        reply->code = irp->code;
+        reply->params = irp->params;
         reply->user_ptr = irp->device->user_ptr;
         reply->client_pid = get_process_id( irp->thread->process );
         reply->client_tid = get_thread_id( irp->thread );

@@ -647,6 +647,28 @@ typedef union
     } create_thread;
 } apc_result_t;
 
+typedef union
+{
+    unsigned int         major;     /* irp major function */
+    struct
+    {
+        unsigned int     major;     /* IRP_MJ_READ */
+        unsigned int     key;       /* driver key */
+        file_pos_t       pos;       /* file position */
+    } read;
+    struct
+    {
+        unsigned int     major;     /* IRP_MJ_WRITE */
+        unsigned int     key;       /* driver key */
+        file_pos_t       pos;       /* file position */
+    } write;
+    struct
+    {
+        unsigned int     major;     /* IRP_MJ_DEVICE_CONTROL */
+        ioctl_code_t     code;      /* ioctl code */
+    } ioctl;
+} irp_params_t;
+
 struct rawinput_device
 {
     unsigned short usage_page;
@@ -3357,10 +3379,9 @@ enum coords_relative
     obj_handle_t prev;            /* handle to the previous irp */
     unsigned int status;          /* status of the previous irp */
 @REPLY
-    obj_handle_t next;            /* handle to the next irp */
-    unsigned int type;            /* irp type (IRP_MJ_*) */
     client_ptr_t user_ptr;        /* opaque ptr for the device */
-    ioctl_code_t code;            /* ioctl code */
+    irp_params_t params;          /* irp parameters */
+    obj_handle_t next;            /* handle to the next irp */
     process_id_t client_pid;      /* pid of process calling irp */
     thread_id_t  client_tid;      /* tid of thread calling irp */
     data_size_t  in_size;         /* total needed input size */

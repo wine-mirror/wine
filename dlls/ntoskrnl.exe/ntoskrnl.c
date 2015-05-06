@@ -188,7 +188,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     HANDLE manager = get_device_manager();
     HANDLE irp = 0;
     NTSTATUS status = STATUS_SUCCESS;
-    ULONG type, code;
+    irp_params_t irp_params;
     void *in_buff;
     DEVICE_OBJECT *device = NULL;
     ULONG in_size = 4096, out_size = 0;
@@ -215,10 +215,9 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             wine_server_set_reply( req, in_buff, in_size );
             if (!(status = wine_server_call( req )))
             {
-                type       = reply->type;
-                code       = reply->code;
                 irp        = wine_server_ptr_handle( reply->next );
                 device     = wine_server_get_ptr( reply->user_ptr );
+                irp_params = reply->params;
                 client_tid = reply->client_tid;
                 client_pid = reply->client_pid;
                 in_size    = reply->in_size;
@@ -236,13 +235,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         switch(status)
         {
         case STATUS_SUCCESS:
-            switch (type)
+            switch (irp_params.major)
             {
             case IRP_MJ_DEVICE_CONTROL:
-                status = process_ioctl( device, code, in_buff, in_size, out_size, irp );
+                status = process_ioctl( device, irp_params.ioctl.code, in_buff, in_size, out_size, irp );
                 break;
             default:
-                FIXME( "unsupported request %u\n", type );
+                FIXME( "unsupported request %u\n", irp_params.major );
                 status = STATUS_NOT_SUPPORTED;
                 break;
             }
