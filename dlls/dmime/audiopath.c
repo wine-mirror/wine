@@ -132,6 +132,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
     REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void** ppObject)
 {
 	struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
+	HRESULT hr;
 
 	FIXME("(%p, %d, %d, %d, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject),
             dwIndex, debugstr_dmguid(iidInterface), ppObject);
@@ -169,7 +170,9 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
 	    if (IsEqualIID (iidInterface, &IID_IDirectMusicGraph)) {
 	      if (NULL == This->pToolGraph) {
 		IDirectMusicGraphImpl* pGraph;
-                create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
+		hr = create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
+		if (FAILED(hr))
+		  return hr;
 		This->pToolGraph = (IDirectMusicGraph*) pGraph;
 	      }
 	      *ppObject = This->pToolGraph;
@@ -200,7 +203,9 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
 	    IDirectMusicPerformance8_GetGraph(This->pPerf, &pPerfoGraph);
 	    if (NULL == pPerfoGraph) {
 	      IDirectMusicGraphImpl* pGraph = NULL; 
-              create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
+	      hr = create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
+	      if (FAILED(hr))
+		return hr;
 	      IDirectMusicPerformance8_SetGraph(This->pPerf, (IDirectMusicGraph*) pGraph);
 	      /* we need release as SetGraph do an AddRef */
 	      IDirectMusicGraph_Release((LPDIRECTMUSICGRAPH) pGraph);
