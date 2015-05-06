@@ -131,6 +131,7 @@ static obj_handle_t device_read( struct fd *fd, const async_data_t *async_data, 
                                  file_pos_t pos );
 static obj_handle_t device_write( struct fd *fd, const async_data_t *async_data, int blocking,
                                   file_pos_t pos, data_size_t *written );
+static obj_handle_t device_flush( struct fd *fd, const async_data_t *async_data, int blocking );
 static obj_handle_t device_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                   int blocking );
 
@@ -161,7 +162,7 @@ static const struct fd_ops device_fd_ops =
     device_get_fd_type,               /* get_fd_type */
     device_read,                      /* read */
     device_write,                     /* write */
-    no_fd_flush,                      /* flush */
+    device_flush,                     /* flush */
     device_ioctl,                     /* ioctl */
     default_fd_queue_async,           /* queue_async */
     default_fd_reselect_async,        /* reselect_async */
@@ -381,6 +382,23 @@ static obj_handle_t device_write( struct fd *fd, const async_data_t *async_data,
     params.write.pos = pos;
 
     irp = create_irp( device, &params, get_req_data(), get_req_data_size(), 0 );
+    if (!irp) return 0;
+
+    handle = queue_irp( device, irp, async_data, blocking );
+    release_object( irp );
+    return handle;
+}
+
+static obj_handle_t device_flush( struct fd *fd, const async_data_t *async_data, int blocking )
+{
+    struct device *device = get_fd_user( fd );
+    struct irp_call *irp;
+    obj_handle_t handle;
+    irp_params_t params;
+
+    params.major = IRP_MJ_FLUSH_BUFFERS;
+
+    irp = create_irp( device, &params, NULL, 0, 0 );
     if (!irp) return 0;
 
     handle = queue_irp( device, irp, async_data, blocking );

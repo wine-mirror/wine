@@ -326,6 +326,9 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         dump_uint64( ",pos=", &data->write.pos );
         fputc( '}', stderr );
         break;
+    case IRP_MJ_FLUSH_BUFFERS:
+        fprintf( stderr, "%s{major=FLUSH_BUFFERS}", prefix );
+        break;
     case IRP_MJ_DEVICE_CONTROL:
         fprintf( stderr, "%s{major=DEVICE_CONTROL", prefix );
         dump_ioctl_code( ",code=", &data->ioctl.code );
