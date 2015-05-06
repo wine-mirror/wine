@@ -4291,9 +4291,6 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
                 return FALSE;
             }
         case WINED3D_BLIT_OP_COLOR_BLIT:
-            if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
-                return FALSE;
-
             if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
             {
                 TRACE("Checking support for fixup:\n");
