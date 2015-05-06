@@ -145,8 +145,6 @@ static void async_queue_destroy( struct object *obj )
 /* notifies client thread of new status of its async request */
 void async_terminate( struct async *async, unsigned int status )
 {
-    apc_call_t data;
-
     assert( status != STATUS_PENDING );
 
     if (async->status != STATUS_PENDING)
@@ -156,14 +154,22 @@ void async_terminate( struct async *async, unsigned int status )
         return;
     }
 
-    memset( &data, 0, sizeof(data) );
-    data.type            = APC_ASYNC_IO;
-    data.async_io.func   = async->data.callback;
-    data.async_io.user   = async->data.arg;
-    data.async_io.sb     = async->data.iosb;
-    data.async_io.status = status;
-    thread_queue_apc( async->thread, &async->obj, &data );
     async->status = status;
+
+    if (async->data.callback)
+    {
+        apc_call_t data;
+
+        memset( &data, 0, sizeof(data) );
+        data.type            = APC_ASYNC_IO;
+        data.async_io.func   = async->data.callback;
+        data.async_io.user   = async->data.arg;
+        data.async_io.sb     = async->data.iosb;
+        data.async_io.status = status;
+        thread_queue_apc( async->thread, &async->obj, &data );
+    }
+    else async_set_result( &async->obj, STATUS_SUCCESS, 0, 0, 0 );
+
     async_reselect( async );
     release_object( async );  /* so that it gets destroyed when the async is done */
 }
