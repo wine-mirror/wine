@@ -1621,10 +1621,12 @@ static void create_wav_file(char *temp_file)
     ok(h != NULL, "Can't open temp_file\n");
 
     riff_chunk.fccType = mmioFOURCC('W','A','V','E');
+    riff_chunk.cksize = 0;
     rc = mmioCreateChunk(h, &riff_chunk, MMIO_CREATERIFF);
     ok(rc == MMSYSERR_NOERROR, "mmioCreateChunk failed, got %u\n", rc);
 
     chunk.ckid = mmioFOURCC('f','m','t',' ');
+    chunk.cksize = 0;
     rc = mmioCreateChunk(h, &chunk, 0);
     ok(rc == MMSYSERR_NOERROR, "mmioCreateChunk failed, got %u\n", rc);
     written = mmioWrite(h, (char*)&format, sizeof(format));
