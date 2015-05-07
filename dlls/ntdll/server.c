@@ -1503,7 +1503,7 @@ size_t server_init_thread( void *entry_point )
     }
     SERVER_END_REQ;
 
-    is_wow64 = !is_win64 && (server_cpus & (1 << CPU_x86_64)) != 0;
+    is_wow64 = !is_win64 && (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64))) != 0;
     ntdll_get_thread_data()->wow64_redir = is_wow64;
 
     switch (ret)

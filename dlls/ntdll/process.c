@@ -419,12 +419,13 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             ULONG_PTR val = 0;
 
             if (ProcessHandle == GetCurrentProcess()) val = is_wow64;
-            else if (server_cpus & (1 << CPU_x86_64))
+            else if (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64)))
             {
                 SERVER_START_REQ( get_process_info )
                 {
                     req->handle = wine_server_obj_handle( ProcessHandle );
-                    if (!(ret = wine_server_call( req ))) val = (reply->cpu != CPU_x86_64);
+                    if (!(ret = wine_server_call( req )))
+                        val = (reply->cpu != CPU_x86_64 && reply->cpu != CPU_ARM64);
                 }
                 SERVER_END_REQ;
             }
