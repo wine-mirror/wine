@@ -877,6 +877,7 @@ enable_api_ms_win_core_interlocked_l1_1_0
 enable_api_ms_win_core_interlocked_l1_2_0
 enable_api_ms_win_core_io_l1_1_1
 enable_api_ms_win_core_kernel32_legacy_l1_1_0
+enable_api_ms_win_core_libraryloader_l1_1_0
 enable_api_ms_win_core_libraryloader_l1_1_1
 enable_api_ms_win_core_localization_l1_2_0
 enable_api_ms_win_core_localization_l1_2_1
@@ -17016,6 +17017,7 @@ wine_fn_config_dll api-ms-win-core-interlocked-l1-1-0 enable_api_ms_win_core_int
 wine_fn_config_dll api-ms-win-core-interlocked-l1-2-0 enable_api_ms_win_core_interlocked_l1_2_0
 wine_fn_config_dll api-ms-win-core-io-l1-1-1 enable_api_ms_win_core_io_l1_1_1
 wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-0 enable_api_ms_win_core_kernel32_legacy_l1_1_0
+wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-0 enable_api_ms_win_core_libraryloader_l1_1_0
 wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-1 enable_api_ms_win_core_libraryloader_l1_1_1
 wine_fn_config_dll api-ms-win-core-localization-l1-2-0 enable_api_ms_win_core_localization_l1_2_0
 wine_fn_config_dll api-ms-win-core-localization-l1-2-1 enable_api_ms_win_core_localization_l1_2_1
