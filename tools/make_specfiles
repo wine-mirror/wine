@@ -162,6 +162,7 @@ my @dll_groups =
   "api-ms-win-core-kernel32-legacy-l1-1-0",
   "api-ms-win-core-localization-l1-2-0",
   "api-ms-win-core-localization-obsolete-l1-1-0",
+  "api-ms-win-core-memory-l1-1-0",
   "api-ms-win-core-memory-l1-1-1",
   "api-ms-win-core-namedpipe-l1-2-0",
   "api-ms-win-core-processenvironment-l1-2-0",
