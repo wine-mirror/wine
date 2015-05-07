@@ -66,9 +66,6 @@ typedef struct ConnectionPointImpl {
   DWORD nSinks;
 } ConnectionPointImpl;
 
-static const IConnectionPointVtbl ConnectionPointImpl_VTable;
-
-
 /************************************************************************
  * Implementation of IEnumConnections
  */
@@ -102,26 +99,6 @@ static inline ConnectionPointImpl *impl_from_IConnectionPoint(IConnectionPoint *
 static inline EnumConnectionsImpl *impl_from_IEnumConnections(IEnumConnections *iface)
 {
   return CONTAINING_RECORD(iface, EnumConnectionsImpl, IEnumConnections_iface);
-}
-
-/************************************************************************
- * ConnectionPointImpl_Construct
- */
-static ConnectionPointImpl *ConnectionPointImpl_Construct(IUnknown *pUnk,
-							  REFIID riid)
-{
-  ConnectionPointImpl *Obj;
-
-  Obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*Obj));
-  Obj->IConnectionPoint_iface.lpVtbl = &ConnectionPointImpl_VTable;
-  Obj->Obj = pUnk;
-  Obj->ref = 1;
-  Obj->iid =  *riid;
-  Obj->maxSinks = MAXSINKS;
-  Obj->sinks = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			 sizeof(IUnknown*) * MAXSINKS);
-  Obj->nSinks = 0;
-  return Obj;
 }
 
 /************************************************************************
@@ -615,13 +592,22 @@ HRESULT CreateConnectionPoint(IUnknown *pUnk, REFIID riid,
 			      IConnectionPoint **pCP)
 {
   ConnectionPointImpl *Obj;
-  HRESULT hr;
 
-  Obj = ConnectionPointImpl_Construct(pUnk, riid);
-  if(!Obj) return E_OUTOFMEMORY;
+  TRACE("(%p %s %p)\n", pUnk, debugstr_guid(riid), pCP);
 
-  hr = IConnectionPoint_QueryInterface(&Obj->IConnectionPoint_iface,
-                                       &IID_IConnectionPoint, (void**)pCP);
-  IConnectionPoint_Release(&Obj->IConnectionPoint_iface);
-  return hr;
+  *pCP = NULL;
+  Obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*Obj));
+  if (!Obj)
+    return E_OUTOFMEMORY;
+
+  Obj->IConnectionPoint_iface.lpVtbl = &ConnectionPointImpl_VTable;
+  Obj->Obj = pUnk;
+  Obj->ref = 1;
+  Obj->iid = *riid;
+  Obj->maxSinks = MAXSINKS;
+  Obj->sinks = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IUnknown*) * MAXSINKS);
+  Obj->nSinks = 0;
+
+  *pCP = &Obj->IConnectionPoint_iface;
+  return S_OK;
 }
