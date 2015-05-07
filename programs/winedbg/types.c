@@ -697,6 +697,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         }
         else
         {
+            subtype.module = 0;
             dbg_printf("<ret_type=self>");
         }
         dbg_printf(" (*%s)(", name);
