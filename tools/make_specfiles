@@ -164,7 +164,6 @@ my @dll_groups =
   "api-ms-win-core-localization-obsolete-l1-1-0",
   "api-ms-win-core-memory-l1-1-0",
   "api-ms-win-core-memory-l1-1-1",
-  "api-ms-win-core-namedpipe-l1-2-0",
   "api-ms-win-core-processenvironment-l1-2-0",
   "api-ms-win-core-psapi-l1-1-0",
   "api-ms-win-core-threadpool-legacy-l1-1-0",
@@ -186,6 +185,12 @@ my @dll_groups =
   "user32",
   "api-ms-win-core-libraryloader-l1-1-0",
   "api-ms-win-core-libraryloader-l1-1-1",
+ ],
+ [
+  "kernel32",
+  "advapi32",
+  "api-ms-win-core-namedpipe-l1-1-0",
+  "api-ms-win-core-namedpipe-l1-2-0",
  ],
  [
   "ole32",
