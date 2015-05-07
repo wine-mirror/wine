@@ -3656,7 +3656,7 @@ BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
         case WINED3DFMT_R16G16_UNORM:
         case WINED3DFMT_B10G10R10A2_UNORM:
             float_color->r = color_to_float(color, format->red_size, format->red_offset);
-            float_color->g = color_to_float(color, format->green_size, format->green_size);
+            float_color->g = color_to_float(color, format->green_size, format->green_offset);
             float_color->b = color_to_float(color, format->blue_size, format->blue_offset);
             float_color->a = color_to_float(color, format->alpha_size, format->alpha_offset);
             return TRUE;
