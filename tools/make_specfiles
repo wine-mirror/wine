@@ -223,6 +223,7 @@ my @dll_groups =
   "msvcrt",
   "ntdll",
   "ntoskrnl.exe",
+  "api-ms-win-core-rtlsupport-l1-1-0",
   "api-ms-win-core-rtlsupport-l1-2-0",
  ],
  [
