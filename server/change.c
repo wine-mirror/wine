@@ -272,7 +272,7 @@ void sigio_callback(void)
     LIST_FOR_EACH_ENTRY( dir, &change_list, struct dir, entry )
     {
         if (interlocked_xchg( &dir->notified, 0 ))
-            fd_async_wake_up( dir->fd, ASYNC_TYPE_WAIT, STATUS_NOTIFY_ENUM_DIR );
+            fd_async_wake_up( dir->fd, ASYNC_TYPE_WAIT, STATUS_ALERTED );
     }
 }
 

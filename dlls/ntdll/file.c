@@ -1805,73 +1805,78 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb,
                                   NTSTATUS status, void **apc, void **arg )
 {
     struct read_changes_fileio *fileio = user;
-    NTSTATUS ret;
-    int size;
+    int size = 0;
 
-    SERVER_START_REQ( read_change )
+    if (status == STATUS_ALERTED)
     {
-        req->handle = wine_server_obj_handle( fileio->io.handle );
-        wine_server_set_reply( req, fileio->data, fileio->data_size );
-        ret = wine_server_call( req );
-        size = wine_server_reply_size( reply );
-    }
-    SERVER_END_REQ;
-
-    if (ret == STATUS_SUCCESS && fileio->buffer)
-    {
-        FILE_NOTIFY_INFORMATION *pfni = fileio->buffer;
-        int i, left = fileio->buffer_size;
-        DWORD *last_entry_offset = NULL;
-        struct filesystem_event *event = (struct filesystem_event*)fileio->data;
-
-        while (size && left >= sizeof(*pfni))
+        SERVER_START_REQ( read_change )
         {
-            /* convert to an NT style path */
-            for (i=0; i<event->len; i++)
-                if (event->name[i] == '/') event->name[i] = '\\';
-
-            pfni->Action = event->action;
-            pfni->FileNameLength = ntdll_umbstowcs( 0, event->name, event->len, pfni->FileName,
-                    (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
-            last_entry_offset = &pfni->NextEntryOffset;
-
-            if (pfni->FileNameLength == -1 || pfni->FileNameLength == -2) break;
-
-            i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
-            pfni->FileNameLength *= sizeof(WCHAR);
-            pfni->NextEntryOffset = i;
-            pfni = (FILE_NOTIFY_INFORMATION*)((char*)pfni + i);
-            left -= i;
-
-            i = (offsetof(struct filesystem_event, name[event->len])
-                    + sizeof(int)-1) / sizeof(int) * sizeof(int);
-            event = (struct filesystem_event*)((char*)event + i);
-            size -= i;
+            req->handle = wine_server_obj_handle( fileio->io.handle );
+            wine_server_set_reply( req, fileio->data, fileio->data_size );
+            status = wine_server_call( req );
+            size = wine_server_reply_size( reply );
         }
+        SERVER_END_REQ;
 
-        if (size)
+        if (status == STATUS_SUCCESS && fileio->buffer)
         {
-            ret = STATUS_NOTIFY_ENUM_DIR;
-            size = 0;
+            FILE_NOTIFY_INFORMATION *pfni = fileio->buffer;
+            int i, left = fileio->buffer_size;
+            DWORD *last_entry_offset = NULL;
+            struct filesystem_event *event = (struct filesystem_event*)fileio->data;
+
+            while (size && left >= sizeof(*pfni))
+            {
+                /* convert to an NT style path */
+                for (i = 0; i < event->len; i++)
+                    if (event->name[i] == '/') event->name[i] = '\\';
+
+                pfni->Action = event->action;
+                pfni->FileNameLength = ntdll_umbstowcs( 0, event->name, event->len, pfni->FileName,
+                             (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR));
+                last_entry_offset = &pfni->NextEntryOffset;
+
+                if (pfni->FileNameLength == -1 || pfni->FileNameLength == -2) break;
+
+                i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
+                pfni->FileNameLength *= sizeof(WCHAR);
+                pfni->NextEntryOffset = i;
+                pfni = (FILE_NOTIFY_INFORMATION*)((char*)pfni + i);
+                left -= i;
+
+                i = (offsetof(struct filesystem_event, name[event->len])
+                     + sizeof(int)-1) / sizeof(int) * sizeof(int);
+                event = (struct filesystem_event*)((char*)event + i);
+                size -= i;
+            }
+
+            if (size)
+            {
+                status = STATUS_NOTIFY_ENUM_DIR;
+                size = 0;
+            }
+            else
+            {
+                if (last_entry_offset) *last_entry_offset = 0;
+                size = fileio->buffer_size - left;
+            }
         }
         else
         {
-            *last_entry_offset = 0;
-            size = fileio->buffer_size - left;
+            status = STATUS_NOTIFY_ENUM_DIR;
+            size = 0;
         }
     }
-    else
-    {
-        ret = STATUS_NOTIFY_ENUM_DIR;
-        size = 0;
-    }
 
-    iosb->u.Status = ret;
-    iosb->Information = size;
-    *apc = fileio->io.apc;
-    *arg = fileio->io.apc_arg;
-    release_fileio( &fileio->io );
-    return ret;
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = size;
+        *apc = fileio->io.apc;
+        *arg = fileio->io.apc_arg;
+        release_fileio( &fileio->io );
+    }
+    return status;
 }
 
 #define FILE_NOTIFY_ALL        (  \
