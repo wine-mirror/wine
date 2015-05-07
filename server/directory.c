@@ -369,7 +369,7 @@ void init_directories(void)
     static const WCHAR dir_basenamedW[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const WCHAR dir_named_pipeW[] = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e'};
     static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
-    static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s',};
+    static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s'};
     static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
     static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
