@@ -873,6 +873,7 @@ enable_api_ms_win_core_handle_l1_1_0
 enable_api_ms_win_core_heap_l1_1_0
 enable_api_ms_win_core_heap_l1_2_0
 enable_api_ms_win_core_heap_obsolete_l1_1_0
+enable_api_ms_win_core_interlocked_l1_1_0
 enable_api_ms_win_core_interlocked_l1_2_0
 enable_api_ms_win_core_io_l1_1_1
 enable_api_ms_win_core_kernel32_legacy_l1_1_0
@@ -17011,6 +17012,7 @@ wine_fn_config_dll api-ms-win-core-handle-l1-1-0 enable_api_ms_win_core_handle_l
 wine_fn_config_dll api-ms-win-core-heap-l1-1-0 enable_api_ms_win_core_heap_l1_1_0
 wine_fn_config_dll api-ms-win-core-heap-l1-2-0 enable_api_ms_win_core_heap_l1_2_0
 wine_fn_config_dll api-ms-win-core-heap-obsolete-l1-1-0 enable_api_ms_win_core_heap_obsolete_l1_1_0
+wine_fn_config_dll api-ms-win-core-interlocked-l1-1-0 enable_api_ms_win_core_interlocked_l1_1_0
 wine_fn_config_dll api-ms-win-core-interlocked-l1-2-0 enable_api_ms_win_core_interlocked_l1_2_0
 wine_fn_config_dll api-ms-win-core-io-l1-1-1 enable_api_ms_win_core_io_l1_1_1
 wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-0 enable_api_ms_win_core_kernel32_legacy_l1_1_0
