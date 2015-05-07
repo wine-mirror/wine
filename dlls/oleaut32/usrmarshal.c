@@ -2201,8 +2201,14 @@ HRESULT CALLBACK IEnumConnections_Next_Proxy(
     LPCONNECTDATA rgcd,
     ULONG *pcFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ULONG fetched;
+
+    TRACE("(%u, %p %p)\n", cConnections, rgcd, pcFetched);
+
+    if (!pcFetched)
+        pcFetched = &fetched;
+
+    return IEnumConnections_RemoteNext_Proxy(This, cConnections, rgcd, pcFetched);
 }
 
 HRESULT __RPC_STUB IEnumConnections_Next_Stub(
@@ -2211,8 +2217,16 @@ HRESULT __RPC_STUB IEnumConnections_Next_Stub(
     LPCONNECTDATA rgcd,
     ULONG *pcFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%u, %p, %p)\n", cConnections, rgcd, pcFetched);
+
+    *pcFetched = 0;
+    hr = IEnumConnections_Next(This, cConnections, rgcd, pcFetched);
+    if (hr == S_OK)
+        *pcFetched = cConnections;
+
+    return hr;
 }
 
 HRESULT CALLBACK IEnumConnectionPoints_Next_Proxy(
