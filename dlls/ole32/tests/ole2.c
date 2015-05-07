@@ -2074,14 +2074,90 @@ static const IUnknownVtbl UnknownVtbl =
     Unknown_Release
 };
 
+static HRESULT WINAPI OleRun_QueryInterface(IRunnableObject *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IRunnableObject)) {
+        *ppv = iface;
+    }
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown *)*ppv);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI OleRun_AddRef(IRunnableObject *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleRun_Release(IRunnableObject *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleRun_GetRunningClass(IRunnableObject *iface, CLSID *clsid)
+{
+    ok(0, "unxpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleRun_Run(IRunnableObject *iface, LPBINDCTX ctx)
+{
+    ok(ctx == NULL, "got %p\n", ctx);
+    return 0xdeadc0de;
+}
+
+static BOOL WINAPI OleRun_IsRunning(IRunnableObject *iface)
+{
+    ok(0, "unxpected\n");
+    return FALSE;
+}
+
+static HRESULT WINAPI OleRun_LockRunning(IRunnableObject *iface, BOOL lock,
+    BOOL last_unlock_closes)
+{
+    ok(0, "unxpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleRun_SetContainedObject(IRunnableObject *iface, BOOL contained)
+{
+    ok(0, "unxpected\n");
+    return E_NOTIMPL;
+}
+
+static const IRunnableObjectVtbl oleruntestvtbl =
+{
+    OleRun_QueryInterface,
+    OleRun_AddRef,
+    OleRun_Release,
+    OleRun_GetRunningClass,
+    OleRun_Run,
+    OleRun_IsRunning,
+    OleRun_LockRunning,
+    OleRun_SetContainedObject
+};
+
 static IUnknown unknown = { &UnknownVtbl };
+static IRunnableObject testrunnable = { &oleruntestvtbl };
 
 static void test_OleRun(void)
 {
     HRESULT hr;
 
+    /* doesn't support IRunnableObject */
     hr = OleRun(&unknown);
     ok(hr == S_OK, "OleRun failed 0x%08x\n", hr);
+
+    hr = OleRun((IUnknown*)&testrunnable);
+    ok(hr == 0xdeadc0de, "got 0x%08x\n", hr);
 }
 
 static void test_OleLockRunning(void)
