@@ -148,6 +148,7 @@ my @dll_groups =
   "api-ms-win-core-interlocked-l1-2-0",
   "api-ms-win-core-profile-l1-1-0",
   "api-ms-win-core-string-l1-1-0",
+  "api-ms-win-core-sysinfo-l1-1-0",
   "api-ms-win-core-sysinfo-l1-2-0",
   "api-ms-win-core-util-l1-1-0",
   "api-ms-win-core-synch-l1-1-0",
