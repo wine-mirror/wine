@@ -668,7 +668,7 @@ static void read_file_test(void)
     ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
-    todo_wine ok( !apc_count, "apc was called\n" );
+    ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( apc_count == 1, "apc was not called\n" );
 
@@ -694,7 +694,7 @@ static void read_file_test(void)
     ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
-    todo_wine ok( !apc_count, "apc was called\n" );
+    ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( apc_count == 1, "apc was not called\n" );
     CloseHandle( handle );
@@ -720,7 +720,7 @@ static void read_file_test(void)
         ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
         ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
         ok( is_signaled( event ), "event is signaled\n" );
-        todo_wine ok( !apc_count, "apc was called\n" );
+        ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
         ok( apc_count == 1, "apc was not called\n" );
 
@@ -746,7 +746,7 @@ static void read_file_test(void)
         ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
         ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
         ok( is_signaled( event ), "event is signaled\n" );
-        todo_wine ok( !apc_count, "apc was called\n" );
+        ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
         ok( apc_count == 2, "apc was not called\n" );
 
@@ -2521,7 +2521,6 @@ static void test_read_write(void)
     ret = ReadFile(hfile, buf, 0, &bytes, &ovl);
     /* ReadFile return value depends on Windows version and testing it is not practical */
     if (!ret)
-todo_wine
         ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ret = GetLastError();
     ok(bytes == 0, "bytes %u\n", bytes);
@@ -2552,7 +2551,6 @@ todo_wine
     ret = ReadFile(hfile, NULL, 0, &bytes, &ovl);
     /* ReadFile return value depends on Windows version and testing it is not practical */
     if (!ret)
-todo_wine
         ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
     ret = GetLastError();
     ok(bytes == 0, "bytes %u\n", bytes);

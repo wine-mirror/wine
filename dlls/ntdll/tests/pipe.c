@@ -474,7 +474,6 @@ static void test_cancelio(void)
     ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
-    todo_wine
     ok(!ioapc_called, "IOAPC ran too early\n");
 
     SleepEx(0, TRUE); /* alertable wait state */

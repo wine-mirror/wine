@@ -3457,8 +3457,6 @@ NTSTATUS WINAPI NtDeleteFile( POBJECT_ATTRIBUTES ObjectAttributes )
  */
 NTSTATUS WINAPI NtCancelIoFileEx( HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATUS_BLOCK io_status )
 {
-    LARGE_INTEGER timeout;
-
     TRACE("%p %p %p\n", hFile, iosb, io_status );
 
     SERVER_START_REQ( cancel_async )
@@ -3469,16 +3467,7 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATU
         io_status->u.Status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (io_status->u.Status)
-        return io_status->u.Status;
 
-    /* Let some APC be run, so that we can run the remaining APCs on hFile
-     * either the cancelation of the pending one, but also the execution
-     * of the queued APC, but not yet run. This is needed to ensure proper
-     * clean-up of allocated data.
-     */
-    timeout.QuadPart = 0;
-    NtDelayExecution( TRUE, &timeout );
     return io_status->u.Status;
 }
 
@@ -3489,8 +3478,6 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATU
  */
 NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
 {
-    LARGE_INTEGER timeout;
-
     TRACE("%p %p\n", hFile, io_status );
 
     SERVER_START_REQ( cancel_async )
@@ -3501,16 +3488,7 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
         io_status->u.Status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (io_status->u.Status)
-        return io_status->u.Status;
 
-    /* Let some APC be run, so that we can run the remaining APCs on hFile
-     * either the cancelation of the pending one, but also the execution
-     * of the queued APC, but not yet run. This is needed to ensure proper
-     * clean-up of allocated data.
-     */
-    timeout.QuadPart = 0;
-    NtDelayExecution( TRUE, &timeout );
     return io_status->u.Status;
 }
 
