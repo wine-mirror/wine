@@ -118,7 +118,6 @@ static void ConnectionPointImpl_Destroy(ConnectionPointImpl *Obj)
   return;
 }
 
-static ULONG WINAPI ConnectionPointImpl_AddRef(IConnectionPoint* iface);
 /************************************************************************
  * ConnectionPointImpl_QueryInterface (IUnknown)
  *
@@ -135,7 +134,7 @@ static HRESULT WINAPI ConnectionPointImpl_QueryInterface(
   /*
    * Perform a sanity check on the parameters.
    */
-  if ( (This==0) || (ppvObject==0) )
+  if (!ppvObject)
     return E_INVALIDARG;
 
   /*
@@ -143,28 +142,20 @@ static HRESULT WINAPI ConnectionPointImpl_QueryInterface(
    */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
-  if (IsEqualIID(&IID_IUnknown, riid))
-    *ppvObject = This;
-  else if (IsEqualIID(&IID_IConnectionPoint, riid))
-    *ppvObject = This;
+
+  if (IsEqualIID(&IID_IConnectionPoint, riid) || IsEqualIID(&IID_IUnknown, riid))
+    *ppvObject = iface;
 
   /*
    * Check that we obtained an interface.
    */
   if ((*ppvObject)==0)
   {
-    FIXME("() : asking for un supported interface %s\n",debugstr_guid(riid));
+    FIXME("() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
-  ConnectionPointImpl_AddRef(&This->IConnectionPoint_iface);
+  IUnknown_AddRef((IUnknown*)*ppvObject);
 
   return S_OK;
 }
@@ -320,9 +311,9 @@ static HRESULT WINAPI ConnectionPointImpl_EnumConnections(
 
   /* Bump the ref count of this object up by one.  It gets Released in
      IEnumConnections_Release */
-  IUnknown_AddRef((IUnknown*)This);
+  IConnectionPoint_AddRef(iface);
 
-  EnumObj = EnumConnectionsImpl_Construct((IUnknown*)This, This->nSinks, pCD);
+  EnumObj = EnumConnectionsImpl_Construct((IUnknown*)iface, This->nSinks, pCD);
   hr = IEnumConnections_QueryInterface(&EnumObj->IEnumConnections_iface,
                                        &IID_IEnumConnections, (void**)ppEnum);
   IEnumConnections_Release(&EnumObj->IEnumConnections_iface);
@@ -345,7 +336,6 @@ static const IConnectionPointVtbl ConnectionPointImpl_VTable =
 
 
 static const IEnumConnectionsVtbl EnumConnectionsImpl_VTable;
-static ULONG WINAPI EnumConnectionsImpl_AddRef(IEnumConnections* iface);
 
 /************************************************************************
  * EnumConnectionsImpl_Construct
@@ -402,7 +392,7 @@ static HRESULT WINAPI EnumConnectionsImpl_QueryInterface(
   /*
    * Perform a sanity check on the parameters.
    */
-  if ( (This==0) || (ppvObject==0) )
+  if (!ppvObject)
     return E_INVALIDARG;
 
   /*
@@ -410,28 +400,19 @@ static HRESULT WINAPI EnumConnectionsImpl_QueryInterface(
    */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
-  if (IsEqualIID(&IID_IUnknown, riid))
-    *ppvObject = This;
-  else if (IsEqualIID(&IID_IEnumConnections, riid))
-    *ppvObject = This;
+  if (IsEqualIID(&IID_IEnumConnections, riid) || IsEqualIID(&IID_IUnknown, riid))
+    *ppvObject = iface;
 
   /*
    * Check that we obtained an interface.
    */
   if ((*ppvObject)==0)
   {
-    FIXME("() : asking for un supported interface %s\n",debugstr_guid(riid));
+    FIXME("() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
-  EnumConnectionsImpl_AddRef((IEnumConnections*)This);
+  IUnknown_AddRef((IUnknown*)*ppvObject);
 
   return S_OK;
 }
@@ -558,7 +539,7 @@ static HRESULT WINAPI EnumConnectionsImpl_Clone(IEnumConnections* iface,
 
   newObj = EnumConnectionsImpl_Construct(This->pUnk, This->nConns, This->pCD);
   newObj->nCur = This->nCur;
-  *ppEnum = (LPENUMCONNECTIONS)newObj;
+  *ppEnum = &newObj->IEnumConnections_iface;
   IUnknown_AddRef(This->pUnk);
   return S_OK;
 }
