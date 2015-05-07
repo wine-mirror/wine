@@ -164,6 +164,7 @@ my @dll_groups =
   "api-ms-win-core-localization-obsolete-l1-1-0",
   "api-ms-win-core-memory-l1-1-0",
   "api-ms-win-core-memory-l1-1-1",
+  "api-ms-win-core-processenvironment-l1-1-0",
   "api-ms-win-core-processenvironment-l1-2-0",
   "api-ms-win-core-psapi-l1-1-0",
   "api-ms-win-core-threadpool-legacy-l1-1-0",
