@@ -213,9 +213,6 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
 
-    if (!lpOpenParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
-
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
@@ -439,9 +436,6 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
-
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
@@ -498,9 +492,6 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     LONGLONG newpos;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
-
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -593,9 +584,6 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
     WINE_MCIQTZ* wma;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
-
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -693,9 +681,6 @@ static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpPar
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
-
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
@@ -749,9 +734,6 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
     DWORD ret = MCI_INTEGER_RETURNED;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
-
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -853,9 +835,6 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
-
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
@@ -918,8 +897,6 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
     if (dwFlags & MCI_TEST)
@@ -962,9 +939,6 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
     DWORD res = 0;
 
     TRACE("%04x, %08x, %p\n", wDevID, dwFlags, lpParms);
-
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -1026,9 +1000,6 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
     DWORD ret = 0;
 
     TRACE("(%04x, %08x, %p)\n", wDevID, dwFlags, lpParms);
-
-    if (!lpParms)
-        return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
@@ -1170,20 +1141,23 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     switch (wMsg) {
         case MCI_OPEN_DRIVER:
-        case MCI_CLOSE_DRIVER:
         case MCI_PLAY:
         case MCI_SEEK:
-        case MCI_STOP:
-        case MCI_PAUSE:
         case MCI_GETDEVCAPS:
         case MCI_SET:
         case MCI_STATUS:
         case MCI_WHERE:
+            if (!dwParam2) return MCIERR_NULL_PARAMETER_BLOCK;
+            return MCIQTZ_relayTaskMessage(dwDevID, wMsg, dwParam1, dwParam2);
+        case MCI_CLOSE_DRIVER:
+        case MCI_STOP:
+        case MCI_PAUSE:
             return MCIQTZ_relayTaskMessage(dwDevID, wMsg, dwParam1, dwParam2);
         /* Digital Video specific */
         case MCI_SETAUDIO:
         case MCI_UPDATE:
         case MCI_WINDOW:
+            if (!dwParam2) return MCIERR_NULL_PARAMETER_BLOCK;
             return MCIQTZ_relayTaskMessage(dwDevID, wMsg, dwParam1, dwParam2);
         case MCI_PUT:
         case MCI_RECORD:
