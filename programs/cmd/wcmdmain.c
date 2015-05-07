@@ -2593,8 +2593,6 @@ int wmain (int argc, WCHAR *argvW[])
       return errorlevel;
   }
 
-  SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT |
-                 ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
   SetConsoleTitleW(WCMD_LoadMessage(WCMD_CONSTITLE));
 
   /* Note: cmd.exe /c dir does not get a new color, /k dir does */
