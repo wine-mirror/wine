@@ -201,7 +201,9 @@ const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   NdrUserMarshalMarshall,
   0, 0,
   /* 0xb7 */
-  NdrRangeMarshall
+  NdrRangeMarshall,
+  NdrBaseTypeMarshall,
+  NdrBaseTypeMarshall
 };
 const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   0,
@@ -243,7 +245,9 @@ const NDR_UNMARSHALL NdrUnmarshaller[NDR_TABLE_SIZE] = {
   NdrUserMarshalUnmarshall,
   0, 0,
   /* 0xb7 */
-  NdrRangeUnmarshall
+  NdrRangeUnmarshall,
+  NdrBaseTypeUnmarshall,
+  NdrBaseTypeUnmarshall
 };
 const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   0,
@@ -285,7 +289,9 @@ const NDR_BUFFERSIZE NdrBufferSizer[NDR_TABLE_SIZE] = {
   NdrUserMarshalBufferSize,
   0, 0,
   /* 0xb7 */
-  NdrRangeBufferSize
+  NdrRangeBufferSize,
+  NdrBaseTypeBufferSize,
+  NdrBaseTypeBufferSize
 };
 const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   0,
@@ -327,7 +333,9 @@ const NDR_MEMORYSIZE NdrMemorySizer[NDR_TABLE_SIZE] = {
   NdrUserMarshalMemorySize,
   0, 0,
   /* 0xb7 */
-  NdrRangeMemorySize
+  NdrRangeMemorySize,
+  NdrBaseTypeMemorySize,
+  NdrBaseTypeMemorySize
 };
 const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   0,
@@ -368,7 +376,9 @@ const NDR_FREE NdrFreer[NDR_TABLE_SIZE] = {
   NdrUserMarshalFree,
   0, 0,
   /* 0xb7 */
-  NdrRangeFree
+  NdrRangeFree,
+  NdrBaseTypeFree,
+  NdrBaseTypeFree
 };
 
 typedef struct _NDR_MEMORY_LIST
