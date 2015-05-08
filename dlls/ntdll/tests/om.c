@@ -724,7 +724,7 @@ static void test_query_object(void)
     todo_wine ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
     str = (UNICODE_STRING *)buffer;
     todo_wine ok( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
-    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_event, sizeof(type_file) ),
+    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_event, sizeof(type_event) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
 
     len -= sizeof(WCHAR);
