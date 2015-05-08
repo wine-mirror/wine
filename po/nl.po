@@ -8683,6 +8683,12 @@ msgstr "Papier&formaat:"
 msgid "Duplex:"
 msgstr "Dubbelzijdig:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Eigenschappen"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Realm"

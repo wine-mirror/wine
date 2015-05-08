@@ -8607,6 +8607,12 @@ msgstr "종이 크기(&Z):"
 msgid "Duplex:"
 msgstr "양방향 통신:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "설정(&S)"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "영역"

@@ -8822,6 +8822,12 @@ msgstr "&Mărimea foii:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Setează"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Domeniu"

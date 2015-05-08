@@ -8455,6 +8455,12 @@ msgstr "Papera &Grando:"
 msgid "Duplex:"
 msgstr "Duobla:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Agordi"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Regno"

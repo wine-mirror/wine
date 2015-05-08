@@ -8400,6 +8400,10 @@ msgstr ""
 msgid "Duplex:"
 msgstr ""
 
+#: wineps.rc:50
+msgid "Setup"
+msgstr ""
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr ""

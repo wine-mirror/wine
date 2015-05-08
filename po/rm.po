@@ -8464,6 +8464,11 @@ msgstr ""
 msgid "Duplex:"
 msgstr ""
 
+#: wineps.rc:50
+#, fuzzy
+msgid "Setup"
+msgstr "&Installaziun dal stampader..."
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr ""

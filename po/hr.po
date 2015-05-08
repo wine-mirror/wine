@@ -8610,6 +8610,12 @@ msgstr "Veličina papira:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Postavke"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Domena"

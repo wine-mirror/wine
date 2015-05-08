@@ -8565,6 +8565,12 @@ msgstr "Popieriaus &dydis:"
 msgid "Duplex:"
 msgstr "Dvigubas:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Nuostatos"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Sritis"

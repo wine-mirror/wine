@@ -8705,6 +8705,12 @@ msgstr "&Tamaño de papel:"
 msgid "Duplex:"
 msgstr "Dúplex:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Configuración"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Dominio"

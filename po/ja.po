@@ -8551,6 +8551,12 @@ msgstr "用紙サイズ(&Z):"
 msgid "Duplex:"
 msgstr "両面印刷:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "プリンタの設定(&S)"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "領域"

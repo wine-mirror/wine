@@ -8459,6 +8459,12 @@ msgstr "纸张大小(&Z):"
 msgid "Duplex:"
 msgstr "双面:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "设置(&S)"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Realm"

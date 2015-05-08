@@ -32,5 +32,6 @@
 #define IDD_QUALITY 112
 
 #define IDS_DPI 1000
+#define IDS_SETUP 1001
 
 #endif /* __WINE_PSDLG_H */

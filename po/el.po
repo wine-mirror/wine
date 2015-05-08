@@ -8557,6 +8557,12 @@ msgstr ""
 msgid "Duplex:"
 msgstr ""
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Εγκατάσταση"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr ""

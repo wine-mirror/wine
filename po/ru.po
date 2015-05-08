@@ -8564,6 +8564,12 @@ msgstr "&Размер бумаги:"
 msgid "Duplex:"
 msgstr "Двухсторонняя печать:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "Сво&йства"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Домен"

@@ -8691,6 +8691,12 @@ msgstr "&Papirstørrelse:"
 msgid "Duplex:"
 msgstr "Retninger:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Indstilling"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Realm"

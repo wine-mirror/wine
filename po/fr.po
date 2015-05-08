@@ -8616,6 +8616,12 @@ msgstr "&Taille du papier :"
 msgid "Duplex:"
 msgstr "Recto verso :"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Configurer"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Domaine"

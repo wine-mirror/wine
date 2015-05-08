@@ -8720,6 +8720,12 @@ msgstr "&Dimensione del foglio:"
 msgid "Duplex:"
 msgstr "Fronte retro:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Configura"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Dominio"

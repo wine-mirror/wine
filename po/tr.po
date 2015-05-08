@@ -8622,6 +8622,12 @@ msgstr "Kağıt &Boyutu:"
 msgid "Duplex:"
 msgstr "Çift Yönlü:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Ayarla"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Realm"

@@ -8561,6 +8561,10 @@ msgstr "Paper Si&ze:"
 msgid "Duplex:"
 msgstr "Duplex:"
 
+#: wineps.rc:50
+msgid "Setup"
+msgstr "Setup"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Realm"

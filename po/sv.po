@@ -8591,6 +8591,12 @@ msgstr "Papperssto&rlek:"
 msgid "Duplex:"
 msgstr "Dubbelsidig:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Inställningar"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Domän"

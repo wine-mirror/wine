@@ -8554,6 +8554,12 @@ msgstr "Paperi&koko:"
 msgid "Duplex:"
 msgstr "Kaksipuolinen:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Asetukset"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Alue"

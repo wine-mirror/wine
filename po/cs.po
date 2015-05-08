@@ -8534,6 +8534,12 @@ msgstr "&Velikost papíru:"
 msgid "Duplex:"
 msgstr "Oboustranně:"
 
+#: wineps.rc:50
+#, fuzzy
+#| msgid "&Setup"
+msgid "Setup"
+msgstr "&Nastavit"
+
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
 msgstr "Oblast"

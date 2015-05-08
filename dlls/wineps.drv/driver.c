@@ -554,9 +554,10 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     PROPSHEETHEADERW psh;
     PSDRV_DLGINFO di;
     PSDRV_DEVMODE dlgdm;
+    WCHAR SetupW[64];
     static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
-    static const WCHAR SetupW[] = {'S','e','t','u','p','\0'};
 
+    LoadStringW(PSDRV_hInstance, IDS_SETUP, SetupW, sizeof(SetupW)/sizeof(SetupW[0]));
     hinstComctl32 = LoadLibraryA("comctl32.dll");
     pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
 						    "CreatePropertySheetPageW");
