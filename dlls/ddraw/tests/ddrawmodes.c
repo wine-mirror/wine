@@ -337,9 +337,10 @@ static void flushdisplaymodes(void)
 
 static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 {
-    trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
-        lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
-          U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
+    if (winetest_debug > 1)
+        trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
+              lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
+              U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
 
     /* Check that the pitch is valid if applicable */
     if(lpddsd->dwFlags & DDSD_PITCH)
@@ -366,9 +367,10 @@ static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 
 static HRESULT WINAPI enummodescallback_16bit(DDSURFACEDESC *lpddsd, void *lpContext)
 {
-    trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
-        lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
-          U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
+    if (winetest_debug > 1)
+        trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
+              lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
+              U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
 
     ok(lpddsd->dwFlags == (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE),
             "Wrong surface description flags %02X\n", lpddsd->dwFlags);
