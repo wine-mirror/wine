@@ -1099,6 +1099,63 @@ static void test_CopyFile2(void)
     DeleteFileW(dest);
 }
 
+static DWORD WINAPI copy_progress_cb(LARGE_INTEGER total_size, LARGE_INTEGER total_transferred,
+                                     LARGE_INTEGER stream_size, LARGE_INTEGER stream_transferred,
+                                     DWORD stream, DWORD reason, HANDLE source, HANDLE dest, LPVOID userdata)
+{
+    ok(reason == CALLBACK_STREAM_SWITCH, "expected CALLBACK_STREAM_SWITCH, got %u\n", reason);
+    CloseHandle(userdata);
+    return PROGRESS_CANCEL;
+}
+
+static void test_CopyFileEx(void)
+{
+    char temp_path[MAX_PATH];
+    char source[MAX_PATH], dest[MAX_PATH];
+    static const char prefix[] = "pfx";
+    HANDLE hfile;
+    DWORD ret;
+    BOOL retok;
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, source);
+    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, dest);
+    ok(ret != 0, "GetTempFileNameA error %d\n", GetLastError());
+
+    hfile = CreateFileA(dest, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    retok = CopyFileExA(source, dest, copy_progress_cb, hfile, NULL, 0);
+    todo_wine
+    ok(!retok, "CopyFileExA unexpectedly succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_REQUEST_ABORTED, "expected ERROR_REQUEST_ABORTED, got %d\n", GetLastError());
+    ok(GetFileAttributesA(dest) != INVALID_FILE_ATTRIBUTES, "file was deleted\n");
+
+    hfile = CreateFileA(dest, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, 0, 0);
+    todo_wine
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    retok = CopyFileExA(source, dest, copy_progress_cb, hfile, NULL, 0);
+    todo_wine
+    ok(!retok, "CopyFileExA unexpectedly succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_REQUEST_ABORTED, "expected ERROR_REQUEST_ABORTED, got %d\n", GetLastError());
+    todo_wine
+    ok(GetFileAttributesA(dest) == INVALID_FILE_ATTRIBUTES, "file was not deleted\n");
+
+    ret = DeleteFileA(source);
+    ok(ret, "DeleteFileA failed with error %d\n", GetLastError());
+    ret = DeleteFileA(dest);
+    ok(!ret, "DeleteFileA unexpectedly succeeded\n");
+}
+
 /*
  *   Debugging routine to dump a buffer in a hexdump-like fashion.
  */
@@ -4447,6 +4504,7 @@ START_TEST(file)
     test_CopyFileA();
     test_CopyFileW();
     test_CopyFile2();
+    test_CopyFileEx();
     test_CreateFile();
     test_CreateFileA();
     test_CreateFileW();
