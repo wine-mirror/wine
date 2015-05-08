@@ -34,23 +34,18 @@
 #include "shldisp.h"
 #include "debughlp.h"
 
+#include "shell32_main.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
-
-enum tid_t {
-    NULL_tid,
-    IShellDispatch6_tid,
-    Folder3_tid,
-    FolderItem2_tid,
-    LAST_tid
-};
 
 static ITypeLib *typelib;
 static const IID * const tid_ids[] =
 {
     &IID_NULL,
     &IID_IShellDispatch6,
+    &IID_IShellFolderViewDual3,
     &IID_Folder3,
     &IID_FolderItem2
 };
@@ -118,7 +113,7 @@ void release_typelib(void)
     ITypeLib_Release(typelib);
 }
 
-static HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
+HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
 {
     HRESULT hr;
 

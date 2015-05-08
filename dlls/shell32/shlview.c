@@ -3483,16 +3483,23 @@ static ULONG WINAPI shellfolderviewdual_Release(IShellFolderViewDual3 *iface)
 static HRESULT WINAPI shellfolderviewdual_GetTypeInfoCount(IShellFolderViewDual3 *iface, UINT *pctinfo)
 {
     IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    TRACE("%p %p\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI shellfolderviewdual_GetTypeInfo(IShellFolderViewDual3 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p,%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(IShellFolderViewDual3_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI shellfolderviewdual_GetIDsOfNames(
@@ -3500,8 +3507,16 @@ static HRESULT WINAPI shellfolderviewdual_GetIDsOfNames(
         cNames, LCID lcid, DISPID *rgDispId)
 {
     IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(IShellFolderViewDual3_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI shellfolderviewdual_Invoke(IShellFolderViewDual3 *iface,
@@ -3510,8 +3525,18 @@ static HRESULT WINAPI shellfolderviewdual_Invoke(IShellFolderViewDual3 *iface,
         UINT *puArgErr)
 {
     IShellViewImpl *This = impl_from_IShellFolderViewDual3(iface);
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IShellFolderViewDual3_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, &This->IShellFolderViewDual3_iface, dispIdMember, wFlags, pDispParams,
+            pVarResult, pExcepInfo, puArgErr);
+    return hr;
+
 }
 
 static HRESULT WINAPI shellfolderviewdual_get_Application(IShellFolderViewDual3 *iface,

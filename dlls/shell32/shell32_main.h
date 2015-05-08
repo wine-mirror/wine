@@ -229,6 +229,16 @@ BOOL AddToEnumList(IEnumIDListImpl *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
  */
 BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags) DECLSPEC_HIDDEN;
 
+enum tid_t {
+    NULL_tid,
+    IShellDispatch6_tid,
+    IShellFolderViewDual3_tid,
+    Folder3_tid,
+    FolderItem2_tid,
+    LAST_tid
+};
+
+HRESULT get_typeinfo(enum tid_t, ITypeInfo**) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 void release_desktop_folder(void) DECLSPEC_HIDDEN;
 
