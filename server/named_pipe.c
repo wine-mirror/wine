@@ -563,6 +563,7 @@ static obj_handle_t pipe_server_flush( struct fd *fd, const async_data_t *async_
         if (!server->flush_poll)
             server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
         if (blocking) handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
+        release_object( async );
         set_error( STATUS_PENDING );
     }
     return handle;
