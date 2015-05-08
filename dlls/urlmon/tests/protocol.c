@@ -580,7 +580,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
 {
     HRESULT hres;
 
-    trace("continue in state %d\n", state);
+    if (winetest_debug > 1)
+        trace("continue in state %d\n", state);
 
     if(state == STATE_CONNECTING) {
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
@@ -761,10 +762,13 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         '0','0','0','0','-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0','}',0};
     static const WCHAR text_plain[] = {'t','e','x','t','/','p','l','a','i','n',0};
 
-    if (ulStatusCode < sizeof(status_names)/sizeof(status_names[0]))
-        trace( "progress: %s %s\n", status_names[ulStatusCode], wine_dbgstr_w(szStatusText) );
-    else
-        trace( "progress: %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText) );
+    if (winetest_debug > 1)
+    {
+        if (ulStatusCode < sizeof(status_names)/sizeof(status_names[0]))
+            trace( "progress: %s %s\n", status_names[ulStatusCode], wine_dbgstr_w(szStatusText) );
+        else
+            trace( "progress: %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText) );
+    }
 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
