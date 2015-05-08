@@ -761,7 +761,7 @@ uninstall::
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")
-    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-pagezero_size,0x1000,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     WINE_TRY_CFLAGS([-Wl,-no_pie],
                     [LDEXECFLAGS="-Wl,-no_pie $LDEXECFLAGS"])
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"

@@ -7862,7 +7862,7 @@ uninstall::
 
     APPKIT_LIBS="-framework AppKit"
 
-    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-pagezero_size,0x1000,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-no_pie... " >&6; }
 if ${ac_cv_cflags__Wl__no_pie+:} false; then :
