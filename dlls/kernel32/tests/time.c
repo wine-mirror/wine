@@ -27,6 +27,7 @@ static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, 
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
 static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
+static DWORD (WINAPI *pGetDynamicTimeZoneInformation)(DYNAMIC_TIME_ZONE_INFORMATION*);
 
 #define SECSPERMIN         60
 #define SECSPERDAY        86400
@@ -730,7 +731,34 @@ static void test_GetCalendarInfo(void)
     ok( ret2, "GetCalendarInfoW failed err %u\n", GetLastError() );
     ret2 = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
     ok( ret == ret2, "got %d, expected %d\n", ret, ret2 );
+}
 
+static void test_GetDynamicTimeZoneInformation(void)
+{
+    DYNAMIC_TIME_ZONE_INFORMATION dyninfo;
+    TIME_ZONE_INFORMATION tzinfo;
+    DWORD ret, ret2;
+
+    if (!pGetDynamicTimeZoneInformation)
+    {
+        win_skip("GetDynamicTimeZoneInformation() is not supported.\n");
+        return;
+    }
+
+    ret = pGetDynamicTimeZoneInformation(&dyninfo);
+    ret2 = GetTimeZoneInformation(&tzinfo);
+    ok(ret == ret2, "got %d, %d\n", ret, ret2);
+
+    ok(dyninfo.Bias == tzinfo.Bias, "got %d, %d\n", dyninfo.Bias, tzinfo.Bias);
+    ok(!lstrcmpW(dyninfo.StandardName, tzinfo.StandardName), "got std name %s, %s\n",
+        wine_dbgstr_w(dyninfo.StandardName), wine_dbgstr_w(tzinfo.StandardName));
+    ok(!memcmp(&dyninfo.StandardDate, &tzinfo.StandardDate, sizeof(dyninfo.StandardDate)), "got different StandardDate\n");
+    ok(dyninfo.StandardBias == tzinfo.StandardBias, "got %d, %d\n", dyninfo.StandardBias, tzinfo.StandardBias);
+    ok(!lstrcmpW(dyninfo.DaylightName, tzinfo.DaylightName), "got daylight name %s, %s\n",
+        wine_dbgstr_w(dyninfo.DaylightName), wine_dbgstr_w(tzinfo.DaylightName));
+    ok(!memcmp(&dyninfo.DaylightDate, &tzinfo.DaylightDate, sizeof(dyninfo.DaylightDate)), "got different DaylightDate\n");
+    ok(dyninfo.TimeZoneKeyName[0] != 0, "got empty tz keyname\n");
+    trace("Dyn TimeZoneKeyName %s\n", wine_dbgstr_w(dyninfo.TimeZoneKeyName));
 }
 
 START_TEST(time)
@@ -740,6 +768,7 @@ START_TEST(time)
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
     pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
     pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");
+    pGetDynamicTimeZoneInformation = (void *)GetProcAddress(hKernel, "GetDynamicTimeZoneInformation");
 
     test_conversions();
     test_invalid_arg();
@@ -749,4 +778,5 @@ START_TEST(time)
     test_TzSpecificLocalTimeToSystemTime();
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();
+    test_GetDynamicTimeZoneInformation();
 }

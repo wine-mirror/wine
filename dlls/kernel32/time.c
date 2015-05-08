@@ -1097,11 +1097,17 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
 /***********************************************************************
  *           GetDynamicTimeZoneInformation   (KERNEL32.@)
  */
-DWORD WINAPI GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION info)
+DWORD WINAPI GetDynamicTimeZoneInformation(DYNAMIC_TIME_ZONE_INFORMATION *tzinfo)
 {
-    FIXME("(%p) stub!\n", info);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return TIME_ZONE_ID_INVALID;
+    NTSTATUS status;
+
+    status = RtlQueryDynamicTimeZoneInformation( (RTL_DYNAMIC_TIME_ZONE_INFORMATION*)tzinfo );
+    if ( status != STATUS_SUCCESS )
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return TIME_ZONE_ID_INVALID;
+    }
+    return TIME_ZoneID( (TIME_ZONE_INFORMATION*)tzinfo );
 }
 
 /***********************************************************************

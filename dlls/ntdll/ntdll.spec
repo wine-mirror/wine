@@ -783,6 +783,7 @@
 # @ stub RtlPushFrame
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stdcall RtlQueryDepthSList(ptr)
+@ stdcall RtlQueryDynamicTimeZoneInformation(ptr)
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
 @ stdcall RtlQueryHeapInformation(long long ptr long ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
