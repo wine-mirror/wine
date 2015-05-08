@@ -3137,8 +3137,9 @@ static void test_ConvertDefaultLocale(void)
 static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
                                     DWORD dwFlags, LONG_PTR lParam)
 {
-  trace("%08x, %s, %s, %08x, %08lx\n",
-        lgrpid, lpszNum, lpszName, dwFlags, lParam);
+  if (winetest_debug > 1)
+    trace("%08x, %s, %s, %08x, %08lx\n",
+          lgrpid, lpszNum, lpszName, dwFlags, lParam);
 
   ok(pIsValidLanguageGroup(lgrpid, dwFlags) == TRUE,
      "Enumerated grp %d not valid (flags %d)\n", lgrpid, dwFlags);
@@ -3187,7 +3188,8 @@ static void test_EnumSystemLanguageGroupsA(void)
 
 static BOOL CALLBACK enum_func( LPWSTR name, DWORD flags, LPARAM lparam )
 {
-    trace( "%s %x\n", wine_dbgstr_w(name), flags );
+    if (winetest_debug > 1)
+        trace( "%s %x\n", wine_dbgstr_w(name), flags );
     return TRUE;
 }
 
@@ -3212,7 +3214,8 @@ static void test_EnumSystemLocalesEx(void)
 static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
                                       LONG_PTR lParam)
 {
-  trace("%08x, %08x, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
+  if (winetest_debug > 1)
+    trace("%08x, %08x, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
 
   /* invalid locale enumerated on some platforms */
   if (lcid == 0)
@@ -3293,7 +3296,8 @@ static void test_SetLocaleInfoA(void)
 
 static BOOL CALLBACK luilocale_proc1A(LPSTR value, LONG_PTR lParam)
 {
-  trace("%s %08lx\n", value, lParam);
+  if (winetest_debug > 1)
+    trace("%s %08lx\n", value, lParam);
   return(TRUE);
 }
 

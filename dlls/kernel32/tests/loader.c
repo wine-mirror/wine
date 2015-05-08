@@ -1411,7 +1411,8 @@ static DWORD WINAPI semaphore_thread_proc(void *param)
 
     while (1)
     {
-        trace("%04u: semaphore_thread_proc: still alive\n", GetCurrentThreadId());
+        if (winetest_debug > 1)
+            trace("%04u: semaphore_thread_proc: still alive\n", GetCurrentThreadId());
         if (WaitForSingleObject(stop_event, 50) != WAIT_TIMEOUT) break;
     }
 
