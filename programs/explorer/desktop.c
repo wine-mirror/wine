@@ -141,6 +141,7 @@ struct shellbrowserwindow
     IWebBrowser2 IWebBrowser2_iface;
     IServiceProvider IServiceProvider_iface;
     IShellBrowser IShellBrowser_iface;
+    IShellView *view;
 };
 
 static struct shellwindows shellwindows;
@@ -2103,8 +2104,11 @@ static HRESULT WINAPI shellbrowser_SendControlMsg(IShellBrowser *iface, UINT id,
 
 static HRESULT WINAPI shellbrowser_QueryActiveShellView(IShellBrowser *iface, IShellView **view)
 {
-    FIXME("%p\n", view);
-    return E_NOTIMPL;
+    TRACE("%p\n", view);
+
+    *view = desktopshellbrowserwindow.view;
+    IShellView_AddRef(*view);
+    return S_OK;
 }
 
 static HRESULT WINAPI shellbrowser_OnViewWindowActive(IShellBrowser *iface, IShellView *view)
@@ -2143,9 +2147,16 @@ static const IShellBrowserVtbl shellbrowservtbl = {
 
 static void desktopshellbrowserwindow_init(void)
 {
+    IShellFolder *folder;
+
     desktopshellbrowserwindow.IWebBrowser2_iface.lpVtbl = &webbrowser2vtbl;
     desktopshellbrowserwindow.IServiceProvider_iface.lpVtbl = &serviceprovidervtbl;
     desktopshellbrowserwindow.IShellBrowser_iface.lpVtbl = &shellbrowservtbl;
+
+    if (FAILED(SHGetDesktopFolder(&folder)))
+        return;
+
+    IShellFolder_CreateViewObject(folder, NULL, &IID_IShellView, (void**)&desktopshellbrowserwindow.view);
 }
 
 static void shellwindows_init(void)

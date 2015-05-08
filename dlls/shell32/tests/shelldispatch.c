@@ -631,6 +631,10 @@ if (hr == S_OK)
         hr = IShellBrowser_QueryInterface(sb, &IID_IDispatch, (void**)&unk);
         ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
+        hr = IShellBrowser_QueryActiveShellView(sb, &sv);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IShellView_Release(sv);
+
         IShellBrowser_Release(sb2);
         IShellBrowser_Release(sb);
 
