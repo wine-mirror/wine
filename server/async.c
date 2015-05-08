@@ -41,11 +41,13 @@ struct async
     unsigned int         status;          /* current status */
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
+    int                  signaled;
     struct event        *event;
     async_data_t         data;            /* data for async I/O call */
 };
 
 static void async_dump( struct object *obj, int verbose );
+static int async_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void async_destroy( struct object *obj );
 
 static const struct object_ops async_ops =
@@ -53,10 +55,10 @@ static const struct object_ops async_ops =
     sizeof(struct async),      /* size */
     async_dump,                /* dump */
     no_get_type,               /* get_type */
-    no_add_queue,              /* add_queue */
-    NULL,                      /* remove_queue */
-    NULL,                      /* signaled */
-    NULL,                      /* satisfied */
+    add_queue,                 /* add_queue */
+    remove_queue,              /* remove_queue */
+    async_signaled,            /* signaled */
+    no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
     no_map_access,             /* map_access */
@@ -112,6 +114,13 @@ static void async_dump( struct object *obj, int verbose )
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
     fprintf( stderr, "Async thread=%p\n", async->thread );
+}
+
+static int async_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct async *async = (struct async *)obj;
+    assert( obj->ops == &async_ops );
+    return async->signaled;
 }
 
 static void async_destroy( struct object *obj )
@@ -228,6 +237,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->data    = *data;
     async->timeout = NULL;
     async->queue   = (struct async_queue *)grab_object( queue );
+    async->signaled = 0;
 
     list_add_tail( &queue->queue, &async->queue_entry );
     grab_object( async );
@@ -306,6 +316,8 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         }
         if (async->event) set_event( async->event );
         else if (async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
+        async->signaled = 1;
+        wake_up( &async->obj, 0 );
     }
 }
 

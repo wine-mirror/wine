@@ -614,21 +614,9 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
         {
         case ps_idle_server:
         case ps_wait_connect:
-            if (blocking)
+            if ((async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT )))
             {
-                async_data_t new_data = *async_data;
-                if (!(wait_handle = alloc_wait_event( current->process ))) break;
-                new_data.event = wait_handle;
-                if (!(async = fd_queue_async( server->ioctl_fd, &new_data, ASYNC_TYPE_WAIT )))
-                {
-                    close_handle( current->process, wait_handle );
-                    break;
-                }
-            }
-            else async = fd_queue_async( server->ioctl_fd, async_data, ASYNC_TYPE_WAIT );
-
-            if (async)
-            {
+                if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
                 set_server_state( server, ps_wait_open );
                 if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
                 release_object( async );
@@ -913,23 +901,11 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code,
 
                 if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL ))) goto done;
 
-                if (blocking)
-                {
-                    async_data_t new_data = *async_data;
-                    if (!(wait_handle = alloc_wait_event( current->process ))) goto done;
-                    new_data.event = wait_handle;
-                    if (!(async = create_async( current, pipe->waiters, &new_data )))
-                    {
-                        close_handle( current->process, wait_handle );
-                        wait_handle = 0;
-                    }
-                }
-                else async = create_async( current, pipe->waiters, async_data );
-
-                if (async)
+                if ((async = create_async( current, pipe->waiters, async_data )))
                 {
                     timeout_t when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
                     async_set_timeout( async, when, STATUS_IO_TIMEOUT );
+                    if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
                     release_object( async );
                     set_error( STATUS_PENDING );
                 }
