@@ -67,7 +67,7 @@ static RTL_ATOM_TABLE get_local_table(DWORD entries)
 /***********************************************************************
  *           InitAtomTable   (KERNEL32.@)
  *
- * Initialise the global atom table.
+ * Initialise local atom table.
  *
  * PARAMS
  *  entries [I] The number of entries to reserve in the table.
@@ -142,7 +142,7 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 /***********************************************************************
  *           AddAtomA   (KERNEL32.@)
  *
- * Add a character string to the global atom table and return a unique
+ * Add a character string to local atom table and return a unique
  * value identifying it.
  *
  * RETURNS
