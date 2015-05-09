@@ -939,6 +939,16 @@ ULONG WINAPI EventWrite( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, ULONG 
 }
 
 /******************************************************************************
+ * EventSetInformation [ADVAPI32.@]
+ */
+ULONG WINAPI EventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, PVOID info,
+                                  ULONG length )
+{
+    FIXME("%u, %p, %u\n", class, info, length);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * QueryTraceW [ADVAPI32.@]
  */
 ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_PROPERTIES properties )

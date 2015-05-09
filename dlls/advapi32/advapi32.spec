@@ -273,6 +273,7 @@
 @ stdcall EventEnabled(int64 ptr)
 @ stdcall EventProviderEnabled(int64 long int64)
 @ stdcall EventRegister(ptr ptr ptr ptr)
+@ stdcall EventSetInformation(int64 long ptr long)
 @ stdcall EventUnregister(int64)
 @ stdcall EventWrite(int64 ptr long ptr)
 # @ stub EventWriteEndScenario
