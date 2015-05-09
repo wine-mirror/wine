@@ -42,6 +42,21 @@ extern "C" {
 DECLARE_HANDLE(HPSXA);
 #endif
 
+typedef enum
+{
+    KF_FLAG_DEFAULT                     = 0x00000000,
+    KF_FLAG_SIMPLE_IDLIST               = 0x00000100,
+    KF_FLAG_NOT_PARENT_RELATIVE         = 0x00000200,
+    KF_FLAG_DEFAULT_PATH                = 0x00000400,
+    KF_FLAG_INIT                        = 0x00000800,
+    KF_FLAG_NO_ALIAS                    = 0x00001000,
+    KF_FLAG_DONT_UNEXPAND               = 0x00002000,
+    KF_FLAG_DONT_VERIFY                 = 0x00004000,
+    KF_FLAG_CREATE                      = 0x00008000,
+    KF_FLAG_NO_APPCONTAINER_REDIRECTION = 0x00010000,
+    KF_FLAG_ALIAS_ONLY                  = 0x80000000
+} KNOWN_FOLDER_FLAG;
+
 UINT         WINAPI SHAddFromPropSheetExtArray(HPSXA,LPFNADDPROPSHEETPAGE,LPARAM);
 LPVOID       WINAPI SHAlloc(ULONG) __WINE_ALLOC_SIZE(1);
 HRESULT      WINAPI SHCoCreateInstance(LPCWSTR,const CLSID*,IUnknown*,REFIID,LPVOID*);
@@ -62,6 +77,8 @@ HRESULT      WINAPI SHGetInstanceExplorer(IUnknown**);
 HRESULT      WINAPI SHGetFolderPathAndSubDirA(HWND,int,HANDLE,DWORD,LPCSTR,LPSTR);
 HRESULT      WINAPI SHGetFolderPathAndSubDirW(HWND,int,HANDLE,DWORD,LPCWSTR,LPWSTR);
 #define             SHGetFolderPathAndSubDir WINELIB_NAME_AW(SHGetFolderPathAndSubDir)
+HRESULT      WINAPI SHGetKnownFolderIDList(REFKNOWNFOLDERID,DWORD,HANDLE,PIDLIST_ABSOLUTE*);
+HRESULT      WINAPI SHGetKnownFolderItem(REFKNOWNFOLDERID,KNOWN_FOLDER_FLAG,HANDLE,REFIID,void**);
 HRESULT      WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID,DWORD,HANDLE,PWSTR*);
 BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST,LPSTR);
 BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST,LPWSTR);
@@ -91,15 +108,6 @@ UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
 BOOL         WINAPI Shell_GetImageLists(HIMAGELIST*,HIMAGELIST*);
 BOOL         WINAPI SignalFileOpen(PCIDLIST_ABSOLUTE);
 BOOL         WINAPI ImportPrivacySettings(LPCWSTR, BOOL*, BOOL*);
-
-#define KF_FLAG_SIMPLE_IDLIST       0x00000100
-#define KF_FLAG_NOT_PARENT_RELATIVE 0x00000200
-#define KF_FLAG_DEFAULT_PATH        0x00000400
-#define KF_FLAG_INIT                0x00000800
-#define KF_FLAG_NO_ALIAS            0x00001000
-#define KF_FLAG_DONT_UNEXPAND       0x00002000
-#define KF_FLAG_DONT_VERIFY         0x00004000
-#define KF_FLAG_CREATE              0x00008000
 
 #define SHFMT_ERROR     __MSABI_LONG(0xFFFFFFFF)  /* Error on last format, drive may be formattable */
 #define SHFMT_CANCEL    __MSABI_LONG(0xFFFFFFFE)  /* Last format was cancelled */

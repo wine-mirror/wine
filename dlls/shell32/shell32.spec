@@ -379,6 +379,7 @@
 @ stdcall SHGetItemFromDataObject(ptr long ptr ptr)
 @ stdcall SHGetItemFromObject(ptr ptr ptr)
 @ stdcall SHGetKnownFolderIDList(ptr long ptr ptr)
+@ stdcall SHGetKnownFolderItem(ptr long long ptr ptr)
 @ stdcall SHGetKnownFolderPath(ptr long ptr ptr)
 @ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
