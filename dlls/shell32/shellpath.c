@@ -5024,10 +5024,16 @@ static HRESULT WINAPI knownfolder_QueryInterface(
 
     TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppv );
 
+    *ppv = NULL;
     if ( IsEqualGUID( riid, &IID_IKnownFolder ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppv = iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IMarshal ) )
+    {
+        TRACE("IID_IMarshal returning NULL.\n");
+        return E_NOINTERFACE;
     }
     else
     {
@@ -5416,10 +5422,16 @@ static HRESULT WINAPI foldermanager_QueryInterface(
 
     TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppv );
 
+    *ppv = NULL;
     if ( IsEqualGUID( riid, &IID_IKnownFolderManager ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppv = iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IMarshal ) )
+    {
+        TRACE("IID_IMarshal returning NULL.\n");
+        return E_NOINTERFACE;
     }
     else
     {

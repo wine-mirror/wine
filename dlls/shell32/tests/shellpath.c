@@ -2075,7 +2075,12 @@ static void test_knownFolders(void)
         win_skip("IKnownFolderManager unavailable\n");
     else
     {
+        IUnknown *unk;
+
         ok(hr == S_OK, "failed to create KnownFolderManager instance: 0x%08x\n", hr);
+
+        hr = IKnownFolderManager_QueryInterface(mgr, &IID_IMarshal, (void**)&unk);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
         hr = IKnownFolderManager_FolderIdFromCsidl(mgr, CSIDL_WINDOWS, &folderId);
         ok(hr == S_OK, "failed to convert CSIDL to KNOWNFOLDERID: 0x%08x\n", hr);
@@ -2089,6 +2094,9 @@ static void test_knownFolders(void)
         ok(hr == S_OK, "failed to get known folder: 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
+            hr = IKnownFolder_QueryInterface(folder, &IID_IMarshal, (void**)&unk);
+            ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
             hr = IKnownFolder_GetCategory(folder, &cat);
             ok(hr == S_OK, "failed to get folder category: 0x%08x\n", hr);
             ok(cat==KF_CATEGORY_FIXED, "invalid folder category: %d\n", cat);
