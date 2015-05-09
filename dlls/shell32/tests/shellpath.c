@@ -102,6 +102,7 @@ static HRESULT (WINAPI *pSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, 
 static HRESULT (WINAPI *pSHSetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR);
 static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
 static BOOL (WINAPI *pPathYetAnotherMakeUniqueName)(PWSTR, PCWSTR, PCWSTR, PCWSTR);
+static HRESULT (WINAPI *pSHGetKnownFolderIDList)(REFKNOWNFOLDERID, DWORD, HANDLE, PIDLIST_ABSOLUTE*);
 
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
@@ -209,6 +210,7 @@ static void loadShell32(void)
     GET_PROC(SHFileOperationA)
     GET_PROC(SHGetMalloc)
     GET_PROC(PathYetAnotherMakeUniqueName)
+    GET_PROC(SHGetKnownFolderIDList)
 
     ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
     if (pSHGetMalloc)
@@ -2728,6 +2730,38 @@ if (0)
     ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
 }
 
+static void test_SHGetKnownFolderIDList(void)
+{
+    PIDLIST_ABSOLUTE pidl;
+    HRESULT hr;
+
+    if (!pSHGetKnownFolderIDList)
+    {
+        win_skip("SHGetKnownFolderIDList is not available.\n");
+        return;
+    }
+
+    hr = pSHGetKnownFolderIDList(NULL, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+if (0) { /* crashes on native */
+    pidl = (void*)0xdeadbeef;
+    hr = pSHGetKnownFolderIDList(NULL, 0, NULL, &pidl);
+}
+    /* not a known folder */
+    pidl = (void*)0xdeadbeef;
+    hr = pSHGetKnownFolderIDList(&IID_IUnknown, 0, NULL, &pidl);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    ok(pidl == NULL, "got %p\n", pidl);
+
+    hr = pSHGetKnownFolderIDList(&FOLDERID_Desktop, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = pSHGetKnownFolderIDList(&FOLDERID_Desktop, 0, NULL, &pidl);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CoTaskMemFree(pidl);
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -2757,5 +2791,6 @@ START_TEST(shellpath)
         test_knownFolders();
         test_DoEnvironmentSubst();
         test_PathYetAnotherMakeUniqueName();
+        test_SHGetKnownFolderIDList();
     }
 }

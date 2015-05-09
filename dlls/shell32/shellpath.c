@@ -5727,8 +5727,48 @@ HRESULT WINAPI KnownFolderManager_Constructor( IUnknown *punk, REFIID riid, void
 
 HRESULT WINAPI SHGetKnownFolderIDList(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, PIDLIST_ABSOLUTE *pidl)
 {
-        FIXME("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, pidl);
-        return E_NOTIMPL;
+    TRACE("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, pidl);
+
+    if (!pidl)
+        return E_INVALIDARG;
+
+    if (flags)
+        FIXME("unsupported flags: 0x%08x\n", flags);
+
+    if (token)
+        FIXME("user token is not used.\n");
+
+    *pidl = NULL;
+    if (IsEqualIID(rfid, &FOLDERID_Desktop))
+        *pidl = _ILCreateDesktop();
+    else if (IsEqualIID(rfid, &FOLDERID_RecycleBinFolder))
+        *pidl = _ILCreateBitBucket();
+    else if (IsEqualIID(rfid, &FOLDERID_ComputerFolder))
+        *pidl = _ILCreateMyComputer();
+    else if (IsEqualIID(rfid, &FOLDERID_PrintersFolder))
+        *pidl = _ILCreatePrinters();
+    else if (IsEqualIID(rfid, &FOLDERID_ControlPanelFolder))
+        *pidl = _ILCreateControlPanel();
+    else if (IsEqualIID(rfid, &FOLDERID_NetworkFolder))
+        *pidl = _ILCreateNetwork();
+    else if (IsEqualIID(rfid, &FOLDERID_Documents))
+        *pidl = _ILCreateMyDocuments();
+    else
+    {
+        DWORD attributes = 0;
+        WCHAR *pathW;
+        HRESULT hr;
+
+        hr = SHGetKnownFolderPath(rfid, flags, token, &pathW);
+        if (FAILED(hr))
+            return hr;
+
+        hr = SHILCreateFromPathW(pathW, pidl, &attributes);
+        CoTaskMemFree(pathW);
+        return hr;
+    }
+
+    return *pidl ? S_OK : E_FAIL;
 }
 
 HRESULT WINAPI SHGetKnownFolderItem(REFKNOWNFOLDERID rfid, KNOWN_FOLDER_FLAG flags, HANDLE hToken,
