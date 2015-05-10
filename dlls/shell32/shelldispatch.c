@@ -460,6 +460,8 @@ static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
     FolderItemImpl *This;
     HRESULT ret;
 
+    TRACE("%s\n", debugstr_variant(dir));
+
     *ppfi = NULL;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemImpl));
@@ -637,13 +639,39 @@ static HRESULT WINAPI FolderImpl_Items(Folder3 *iface, FolderItems **ppid)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR bName,
-        FolderItem **ppid)
+static HRESULT WINAPI FolderImpl_ParseName(Folder3 *iface, BSTR name, FolderItem **item)
 {
-    FIXME("(%p,%s,%p)\n", iface, debugstr_w(bName), ppid);
+    FolderItem *self;
+    BSTR str;
+    WCHAR pathW[MAX_PATH];
+    VARIANT v;
+    HRESULT hr;
 
-    *ppid = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_w(name), item);
+
+    *item = NULL;
+
+    if (!name || !name[0])
+        return S_FALSE;
+
+    hr = Folder3_get_Self(iface, &self);
+    if (FAILED(hr))
+        return hr;
+
+    hr = FolderItem_get_Path(self, &str);
+    FolderItem_Release(self);
+
+    PathCombineW(pathW, str, name);
+    SysFreeString(str);
+
+    if (!PathFileExistsW(pathW))
+        return S_FALSE;
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(pathW);
+    hr = FolderItem_Constructor(&v, item);
+    VariantClear(&v);
+    return hr;
 }
 
 static HRESULT WINAPI FolderImpl_NewFolder(Folder3 *iface, BSTR bName,

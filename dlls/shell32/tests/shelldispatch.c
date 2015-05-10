@@ -679,6 +679,70 @@ todo_wine
     IShellWindows_Release(shellwindows);
 }
 
+static void test_ParseName(void)
+{
+    static const WCHAR cadabraW[] = {'c','a','d','a','b','r','a',0};
+    WCHAR pathW[MAX_PATH];
+    IShellDispatch *sd;
+    FolderItem *item;
+    Folder *folder;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IShellDispatch, (void**)&sd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(pathW);
+    hr = IShellDispatch_NameSpace(sd, v, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&v);
+
+    item = (void*)0xdeadbeef;
+    hr = Folder_ParseName(folder, NULL, &item);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(item == NULL, "got %p\n", item);
+
+    /* empty name */
+    str = SysAllocStringLen(NULL, 0);
+    item = (void*)0xdeadbeef;
+    hr = Folder_ParseName(folder, str, &item);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(item == NULL, "got %p\n", item);
+    SysFreeString(str);
+
+    /* path doesn't exist */
+    str = SysAllocString(cadabraW);
+    item = (void*)0xdeadbeef;
+    hr = Folder_ParseName(folder, str, &item);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(item == NULL, "got %p\n", item);
+    SysFreeString(str);
+
+    lstrcatW(pathW, cadabraW);
+    CreateDirectoryW(pathW, NULL);
+
+    str = SysAllocString(cadabraW);
+    item = NULL;
+    hr = Folder_ParseName(folder, str, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(item != NULL, "got %p\n", item);
+    SysFreeString(str);
+
+    hr = FolderItem_get_Path(item, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(str[0] != 0, "path %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    RemoveDirectoryW(pathW);
+    FolderItem_Release(item);
+    Folder_Release(folder);
+    IShellDispatch_Release(sd);
+}
+
 START_TEST(shelldispatch)
 {
     HRESULT r;
@@ -693,6 +757,7 @@ START_TEST(shelldispatch)
     test_service();
     test_ShellFolderViewDual();
     test_ShellWindows();
+    test_ParseName();
 
     CoUninitialize();
 }
