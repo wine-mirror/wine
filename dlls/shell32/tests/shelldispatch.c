@@ -784,10 +784,8 @@ if (0) { /* crashes on some systems */
 
     count = 0;
     hr = FolderItemVerbs_get_Count(verbs, &count);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count > 0, "got count %d\n", count);
-}
 
     FolderItem_Release(item);
     IShellDispatch_Release(sd);
