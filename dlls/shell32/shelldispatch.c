@@ -74,13 +74,17 @@ typedef struct {
     FolderItemVerbs FolderItemVerbs_iface;
     LONG ref;
 
-    IContextMenu *menu;
+    IContextMenu *contextmenu;
+    HMENU hMenu;
     LONG count;
 } FolderItemVerbsImpl;
 
 typedef struct {
     FolderItemVerb FolderItemVerb_iface;
     LONG ref;
+
+    IContextMenu *contextmenu;
+    BSTR name;
 } FolderItemVerbImpl;
 
 static inline ShellDispatch *impl_from_IShellDispatch6(IShellDispatch6 *iface)
@@ -209,7 +213,11 @@ static ULONG WINAPI FolderItemVerbImpl_Release(FolderItemVerb *iface)
     TRACE("(%p), new refcount=%i\n", iface, ref);
 
     if (!ref)
+    {
+        IContextMenu_Release(This->contextmenu);
+        SysFreeString(This->name);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -280,8 +288,12 @@ static HRESULT WINAPI FolderItemVerbImpl_get_Parent(FolderItemVerb *iface, IDisp
 
 static HRESULT WINAPI FolderItemVerbImpl_get_Name(FolderItemVerb *iface, BSTR *name)
 {
-    FIXME("(%p, %p)\n", iface, name);
-    return E_NOTIMPL;
+    FolderItemVerbImpl *This = impl_from_FolderItemVerb(iface);
+
+    TRACE("(%p, %p)\n", iface, name);
+
+    *name = SysAllocString(This->name);
+    return *name ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI FolderItemVerbImpl_DoIt(FolderItemVerb *iface)
@@ -304,11 +316,11 @@ static FolderItemVerbVtbl folderitemverbvtbl = {
     FolderItemVerbImpl_DoIt
 };
 
-static HRESULT FolderItemVerb_Constructor(FolderItemVerb **verb)
+static HRESULT FolderItemVerb_Constructor(IContextMenu *contextmenu, BSTR name, FolderItemVerb **verb)
 {
     FolderItemVerbImpl *This;
 
-    *verb = NULL;
+    TRACE("%p, %s\n", contextmenu, debugstr_w(name));
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemVerbImpl));
     if (!This)
@@ -316,6 +328,9 @@ static HRESULT FolderItemVerb_Constructor(FolderItemVerb **verb)
 
     This->FolderItemVerb_iface.lpVtbl = &folderitemverbvtbl;
     This->ref = 1;
+    This->contextmenu = contextmenu;
+    IContextMenu_AddRef(contextmenu);
+    This->name = name;
 
     *verb = &This->FolderItemVerb_iface;
     return S_OK;
@@ -365,7 +380,8 @@ static ULONG WINAPI FolderItemVerbsImpl_Release(FolderItemVerbs *iface)
 
     if (!ref)
     {
-        IContextMenu_Release(This->menu);
+        IContextMenu_Release(This->contextmenu);
+        DestroyMenu(This->hMenu);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -430,6 +446,9 @@ static HRESULT WINAPI FolderItemVerbsImpl_get_Count(FolderItemVerbs *iface, LONG
 
     TRACE("(%p, %p)\n", iface, count);
 
+    if (!count)
+        return E_INVALIDARG;
+
     *count = This->count;
     return S_OK;
 }
@@ -448,8 +467,56 @@ static HRESULT WINAPI FolderItemVerbsImpl_get_Parent(FolderItemVerbs *iface, IDi
 
 static HRESULT WINAPI FolderItemVerbsImpl_Item(FolderItemVerbs *iface, VARIANT index, FolderItemVerb **verb)
 {
-    FIXME("(%p, %s, %p)\n", iface, debugstr_variant(&index), verb);
-    return FolderItemVerb_Constructor(verb);
+    FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
+    MENUITEMINFOW info;
+    HRESULT hr;
+    VARIANT v;
+    BSTR name;
+
+    TRACE("(%p, %s, %p)\n", iface, debugstr_variant(&index), verb);
+
+    if (!verb)
+        return E_INVALIDARG;
+
+    *verb = NULL;
+
+    VariantInit(&v);
+    VariantCopyInd(&v, &index);
+
+    hr = VariantChangeType(&v, &v, 0, VT_I4);
+    if (FAILED(hr))
+    {
+        FIXME("failed to coerce to VT_I4, %s\n", debugstr_variant(&v));
+        return hr;
+    }
+
+    if (V_I4(&v) > This->count)
+        return S_OK;
+
+    if (V_I4(&v) == This->count)
+        name = SysAllocStringLen(NULL, 0);
+    else
+    {
+        /* get item name */
+        memset(&info, 0, sizeof(info));
+        info.cbSize = sizeof(info);
+        info.fMask = MIIM_STRING;
+        if (!GetMenuItemInfoW(This->hMenu, V_I4(&v), TRUE, &info))
+            return E_FAIL;
+
+        name = SysAllocStringLen(NULL, info.cch);
+        if (name)
+        {
+            info.dwTypeData = name;
+            info.cch++;
+            GetMenuItemInfoW(This->hMenu, V_I4(&v), TRUE, &info);
+        }
+    }
+
+    if (!name)
+        return E_OUTOFMEMORY;
+
+    return FolderItemVerb_Constructor(This->contextmenu, name, verb);
 }
 
 static HRESULT WINAPI FolderItemVerbsImpl__NewEnum(FolderItemVerbs *iface, IUnknown **ret)
@@ -480,7 +547,6 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     LPCITEMIDLIST child;
     LPITEMIDLIST pidl;
     HRESULT hr;
-    HMENU menu;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemVerbsImpl));
     if (!This)
@@ -488,7 +554,6 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
 
     This->FolderItemVerbs_iface.lpVtbl = &folderitemverbsvtbl;
     This->ref = 1;
-    This->count = 0;
 
     /* build context menu for this path */
     hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
@@ -500,17 +565,20 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     if (FAILED(hr))
         goto failed;
 
-    hr = IShellFolder_GetUIObjectOf(folder, NULL, 1, &child, &IID_IContextMenu, NULL, (void**)&This->menu);
+    hr = IShellFolder_GetUIObjectOf(folder, NULL, 1, &child, &IID_IContextMenu, NULL, (void**)&This->contextmenu);
     IShellFolder_Release(folder);
     if (FAILED(hr))
         goto failed;
 
-    menu = CreatePopupMenu();
-    hr = IContextMenu_QueryContextMenu(This->menu, menu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, CMF_NORMAL);
-    if (SUCCEEDED(hr))
-        This->count = GetMenuItemCount(menu);
-    DestroyMenu(menu);
+    This->hMenu = CreatePopupMenu();
+    hr = IContextMenu_QueryContextMenu(This->contextmenu, This->hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, CMF_NORMAL);
+    if (FAILED(hr))
+    {
+        FolderItemVerbs_Release(&This->FolderItemVerbs_iface);
+        return hr;
+    }
 
+    This->count = GetMenuItemCount(This->hMenu);
     *verbs = &This->FolderItemVerbs_iface;
     return S_OK;
 

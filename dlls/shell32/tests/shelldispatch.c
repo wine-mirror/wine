@@ -747,13 +747,15 @@ static void test_Verbs(void)
 {
     FolderItemVerbs *verbs;
     WCHAR pathW[MAX_PATH];
+    FolderItemVerb *verb;
     IShellDispatch *sd;
     FolderItem *item;
     Folder2 *folder2;
     Folder *folder;
     HRESULT hr;
-    LONG count;
+    LONG count, i;
     VARIANT v;
+    BSTR str;
 
     hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
         &IID_IShellDispatch, (void**)&sd);
@@ -778,14 +780,47 @@ if (0) { /* crashes on some systems */
     hr = FolderItem_Verbs(item, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 }
-
     hr = FolderItem_Verbs(item, &verbs);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+if (0) { /* crashes on winxp/win2k3 */
+    hr = FolderItemVerbs_get_Count(verbs, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
     count = 0;
     hr = FolderItemVerbs_get_Count(verbs, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count > 0, "got count %d\n", count);
+
+if (0) { /* crashes on winxp/win2k3 */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    hr = FolderItemVerbs_Item(verbs, v, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+    /* there's always one item more, so you can access [0,count],
+       instead of actual [0,count) */
+    for (i = 0; i <= count; i++) {
+        V_VT(&v) = VT_I4;
+        V_I4(&v) = i;
+        hr = FolderItemVerbs_Item(verbs, v, &verb);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = FolderItemVerb_get_Name(verb, &str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(str != NULL, "%d: name %s\n", i, wine_dbgstr_w(str));
+        if (i == count)
+            ok(str[0] == 0, "%d: got teminating item %s\n", i, wine_dbgstr_w(str));
+
+        SysFreeString(str);
+        FolderItemVerb_Release(verb);
+    }
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = count+1;
+    verb = NULL;
+    hr = FolderItemVerbs_Item(verbs, v, &verb);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(verb == NULL, "got %p\n", verb);
 
     FolderItem_Release(item);
     IShellDispatch_Release(sd);
