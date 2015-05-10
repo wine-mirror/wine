@@ -47,7 +47,8 @@ static const IID * const tid_ids[] =
     &IID_IShellDispatch6,
     &IID_IShellFolderViewDual3,
     &IID_Folder3,
-    &IID_FolderItem2
+    &IID_FolderItem2,
+    &IID_FolderItemVerbs
 };
 static ITypeInfo *typeinfos[LAST_tid];
 
@@ -68,6 +69,11 @@ typedef struct {
     VARIANT dir;
 } FolderItemImpl;
 
+typedef struct {
+    FolderItemVerbs FolderItemVerbs_iface;
+    LONG ref;
+} FolderItemVerbsImpl;
+
 static inline ShellDispatch *impl_from_IShellDispatch6(IShellDispatch6 *iface)
 {
     return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch6_iface);
@@ -81,6 +87,11 @@ static inline FolderImpl *impl_from_Folder(Folder3 *iface)
 static inline FolderItemImpl *impl_from_FolderItem(FolderItem2 *iface)
 {
     return CONTAINING_RECORD(iface, FolderItemImpl, FolderItem2_iface);
+}
+
+static inline FolderItemVerbsImpl *impl_from_FolderItemVerbs(FolderItemVerbs *iface)
+{
+    return CONTAINING_RECORD(iface, FolderItemVerbsImpl, FolderItemVerbs_iface);
 }
 
 static HRESULT load_typelib(void)
@@ -138,6 +149,168 @@ HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     }
 
     *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+/* FolderItemVerbs */
+static HRESULT WINAPI FolderItemVerbsImpl_QueryInterface(FolderItemVerbs *iface,
+    REFIID riid, void **ppv)
+{
+    FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
+
+    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+
+    *ppv = NULL;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IDispatch, riid) ||
+        IsEqualIID(&IID_FolderItemVerbs, riid))
+        *ppv = &This->FolderItemVerbs_iface;
+    else
+    {
+        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI FolderItemVerbsImpl_AddRef(FolderItemVerbs *iface)
+{
+    FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI FolderItemVerbsImpl_Release(FolderItemVerbs *iface)
+{
+    FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_GetTypeInfoCount(FolderItemVerbs *iface, UINT *pctinfo)
+{
+    TRACE("(%p,%p)\n", iface, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_GetTypeInfo(FolderItemVerbs *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HRESULT hr;
+
+    TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(FolderItemVerbs_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_GetIDsOfNames(FolderItemVerbs *iface,
+        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(FolderItemVerbs_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_Invoke(FolderItemVerbs *iface,
+        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
+{
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(FolderItemVerbs_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_get_Count(FolderItemVerbs *iface, LONG *count)
+{
+    FIXME("(%p, %p)\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_get_Application(FolderItemVerbs *iface, IDispatch **disp)
+{
+    FIXME("(%p, %p)\n", iface, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_get_Parent(FolderItemVerbs *iface, IDispatch **disp)
+{
+    FIXME("(%p, %p)\n", iface, disp);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl_Item(FolderItemVerbs *iface, VARIANT index, FolderItemVerb **verb)
+{
+    FIXME("(%p, %s, %p)\n", iface, debugstr_variant(&index), verb);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderItemVerbsImpl__NewEnum(FolderItemVerbs *iface, IUnknown **ret)
+{
+    FIXME("(%p, %p)\n", iface, ret);
+    return E_NOTIMPL;
+}
+
+static FolderItemVerbsVtbl folderitemverbsvtbl = {
+    FolderItemVerbsImpl_QueryInterface,
+    FolderItemVerbsImpl_AddRef,
+    FolderItemVerbsImpl_Release,
+    FolderItemVerbsImpl_GetTypeInfoCount,
+    FolderItemVerbsImpl_GetTypeInfo,
+    FolderItemVerbsImpl_GetIDsOfNames,
+    FolderItemVerbsImpl_Invoke,
+    FolderItemVerbsImpl_get_Count,
+    FolderItemVerbsImpl_get_Application,
+    FolderItemVerbsImpl_get_Parent,
+    FolderItemVerbsImpl_Item,
+    FolderItemVerbsImpl__NewEnum
+};
+
+static HRESULT FolderItemVerbs_Constructor(FolderItemVerbs **verbs)
+{
+    FolderItemVerbsImpl *This;
+
+    *verbs = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemVerbsImpl));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->FolderItemVerbs_iface.lpVtbl = &folderitemverbsvtbl;
+    This->ref = 1;
+
+    *verbs = &This->FolderItemVerbs_iface;
     return S_OK;
 }
 
@@ -395,13 +568,14 @@ static HRESULT WINAPI FolderItemImpl_get_Type(FolderItem2 *iface, BSTR *pbs)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem2 *iface,
-        FolderItemVerbs **ppfic)
+static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem2 *iface, FolderItemVerbs **verbs)
 {
-    FIXME("(%p,%p)\n", iface, ppfic);
+    TRACE("(%p, %p)\n", iface, verbs);
 
-    *ppfic = NULL;
-    return E_NOTIMPL;
+    if (!verbs)
+        return E_INVALIDARG;
+
+    return FolderItemVerbs_Constructor(verbs);
 }
 
 static HRESULT WINAPI FolderItemImpl_InvokeVerb(FolderItem2 *iface,

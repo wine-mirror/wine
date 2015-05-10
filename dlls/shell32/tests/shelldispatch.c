@@ -743,6 +743,56 @@ static void test_ParseName(void)
     IShellDispatch_Release(sd);
 }
 
+static void test_Verbs(void)
+{
+    FolderItemVerbs *verbs;
+    WCHAR pathW[MAX_PATH];
+    IShellDispatch *sd;
+    FolderItem *item;
+    Folder2 *folder2;
+    Folder *folder;
+    HRESULT hr;
+    LONG count;
+    VARIANT v;
+
+    hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IShellDispatch, (void**)&sd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    GetTempPathW(sizeof(pathW)/sizeof(pathW[0]), pathW);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(pathW);
+    hr = IShellDispatch_NameSpace(sd, v, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&v);
+
+    hr = Folder_QueryInterface(folder, &IID_Folder2, (void**)&folder2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    Folder_Release(folder);
+
+    hr = Folder2_get_Self(folder2, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    Folder2_Release(folder2);
+
+if (0) { /* crashes on some systems */
+    hr = FolderItem_Verbs(item, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+
+    hr = FolderItem_Verbs(item, &verbs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = FolderItemVerbs_get_Count(verbs, &count);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count > 0, "got count %d\n", count);
+}
+
+    FolderItem_Release(item);
+    IShellDispatch_Release(sd);
+}
+
 START_TEST(shelldispatch)
 {
     HRESULT r;
@@ -758,6 +808,7 @@ START_TEST(shelldispatch)
     test_ShellFolderViewDual();
     test_ShellWindows();
     test_ParseName();
+    test_Verbs();
 
     CoUninitialize();
 }
