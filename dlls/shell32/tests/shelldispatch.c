@@ -394,7 +394,7 @@ static void test_dispatch_typeinfo(IDispatch *disp, REFIID *riid)
 
 static void test_ShellFolderViewDual(void)
 {
-    static const REFIID shelldisp_riids[] = {
+    static const IID *shelldisp_riids[] = {
         &IID_IShellDispatch6,
         &IID_IShellDispatch5,
         &IID_IShellDispatch4,
@@ -556,12 +556,12 @@ todo_wine {
         ok(ret == 0, "got %d\n", ret);
     }
     else {
-        static const REFIID browser_riids[] = {
+        static const IID *browser_riids[] = {
             &IID_IWebBrowser2,
             &IID_NULL
         };
 
-        static const REFIID viewdual_riids[] = {
+        static const IID *viewdual_riids[] = {
             &IID_IShellFolderViewDual3,
             &IID_NULL
         };
