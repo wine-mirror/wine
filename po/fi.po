@@ -8873,8 +8873,12 @@ msgstr ""
 "verkkoyhteys toimii."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Annettua laitetta ei löydy. Tarkista, että se on asennettu tai sen nimi on "

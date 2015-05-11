@@ -8916,8 +8916,12 @@ msgstr ""
 "em disco suficiente ou que ainda esteja conectado a rede."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Não é possível encontrar o dispositivo especificado. Certifique-se que está "

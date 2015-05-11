@@ -8970,8 +8970,12 @@ msgstr ""
 "вільного місця, або що комп'ютер ще підключений до мережі."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Неможливо знайти вказаний пристрій. Переконайтеся, що він установлений, або "

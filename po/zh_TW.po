@@ -8854,8 +8854,12 @@ msgid ""
 msgstr "無法儲存指定的檔案。請確定您有足夠的磁碟空間，或是仍然連線到網路。"
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr "找不到指定的裝置。請確定它已安裝，或是該裝置名稱的拼寫正確。"
 

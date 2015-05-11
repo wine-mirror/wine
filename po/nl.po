@@ -9020,8 +9020,12 @@ msgstr ""
 "schijfruimte is of dat u nog steeds met het netwerk verbonden bent."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Kan het opgegeven apparaat niet vinden. Verzeker u ervan dat het correct "

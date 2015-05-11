@@ -8956,8 +8956,12 @@ msgstr ""
 "at du fortsatt er tilkoblet nettverket."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Fant ikke den oppgitte enheten. Kontroller at den er installert eller at "

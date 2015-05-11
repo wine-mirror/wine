@@ -81,7 +81,7 @@ MCIERR_EXTENSION_NOT_FOUND, 	"Cannot determine the device type from the given fi
 MCIERR_OUTOFRANGE, 		"The specified parameter is out of range for the specified command."
 MCIERR_FLAGS_NOT_COMPATIBLE, 	"The specified parameters cannot be used together."
 MCIERR_FILE_NOT_SAVED, 		"Cannot save the specified file. Make sure you have enough disk space or are still connected to the network."
-MCIERR_DEVICE_TYPE_REQUIRED, 	"Cannot find the specified device. Make sure it is installed or that the device name is spelled correctly."
+MCIERR_DEVICE_TYPE_REQUIRED, 	"Cannot find the specified device. Make sure it is installed and that the device name is spelled correctly."
 MCIERR_DEVICE_LOCKED, 		"The specified device is now being closed. Wait a few seconds, and then try again."
 MCIERR_DUPLICATE_ALIAS, 	"The specified alias is already being used in this application. Use a unique alias."
 MCIERR_BAD_CONSTANT, 		"The specified parameter is invalid for this command."

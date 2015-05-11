@@ -8862,8 +8862,12 @@ msgstr ""
 "síťové připojení průchozí."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Nemohu najít požadované zařízení. Ujistěte se, že je nainstalováno, nebo že "

@@ -8954,8 +8954,12 @@ msgstr ""
 "assez d'espace disque ou que vous êtes toujours connecté au réseau."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Le périphérique spécifié est introuvable. Vérifiez s'il est installé ou si "

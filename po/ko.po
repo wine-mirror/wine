@@ -8930,8 +8930,12 @@ msgstr ""
 "연결되어있는지 확인하세요."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "지정된 장치를 찾을 수 없습니다.이것이 설치된게 확실하다면 장치이름이 올바른"

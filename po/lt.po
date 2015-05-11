@@ -8889,8 +8889,12 @@ msgstr ""
 "vietos, ar vis dar prisijungę prie tinklo."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Nepavyko rasti nurodyto įrenginio. Įsitikinkite, kad jis įdiegtas ir ar "

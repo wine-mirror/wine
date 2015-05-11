@@ -9020,8 +9020,12 @@ msgstr ""
 "diskplads eller at du fortsat er tilkoblet netværket."
 
 #: winmm.rc:85
+#, fuzzy
+#| msgid ""
+#| "Cannot find the specified device. Make sure it is installed or that the "
+#| "device name is spelled correctly."
 msgid ""
-"Cannot find the specified device. Make sure it is installed or that the "
+"Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Fandt ikke den specificerede enhed. Kontroller at den er installeret eller "
