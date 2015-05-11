@@ -136,3 +136,47 @@ HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER hBufferedPaint, RECT *prc
     FIXME("Stub (%p %p)\n", hBufferedPaint, prc);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *      BeginBufferedAnimation                             (UXTHEME.@)
+ */
+HANIMATIONBUFFER WINAPI BeginBufferedAnimation(HWND hwnd, HDC hdcTarget, const RECT *rcTarget,
+                                               BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams,
+                                               BP_ANIMATIONPARAMS *pAnimationParams, HDC *phdcFrom,
+                                               HDC *phdcTo)
+{
+    FIXME("Stub (%p %p %p %u %p %p %p %p)\n", hwnd, hdcTarget, rcTarget, dwFormat,
+          pPaintParams, pAnimationParams, phdcFrom, phdcTo);
+
+    return NULL;
+}
+
+/***********************************************************************
+ *      BufferedPaintRenderAnimation                       (UXTHEME.@)
+ */
+BOOL WINAPI BufferedPaintRenderAnimation(HWND hwnd, HDC hdcTarget)
+{
+    FIXME("Stub (%p %p)\n", hwnd, hdcTarget);
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *      BufferedPaintStopAllAnimations                     (UXTHEME.@)
+ */
+HRESULT WINAPI BufferedPaintStopAllAnimations(HWND hwnd)
+{
+    FIXME("Stub (%p)\n", hwnd);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      EndBufferedAnimation                               (UXTHEME.@)
+ */
+HRESULT WINAPI EndBufferedAnimation(HANIMATIONBUFFER hbpAnimation, BOOL fUpdateTarget)
+{
+    FIXME("Stub (%p %u)\n", hbpAnimation, fUpdateTarget);
+
+    return E_NOTIMPL;
+}

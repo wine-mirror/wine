@@ -43,10 +43,13 @@
 63 stub -noname MarkSelection
 
 # Standard functions
+@ stdcall BeginBufferedAnimation(ptr ptr ptr long ptr ptr ptr ptr)
 @ stdcall BeginBufferedPaint(ptr ptr long ptr ptr)
 @ stdcall BufferedPaintClear(ptr ptr)
 @ stdcall BufferedPaintInit()
+@ stdcall BufferedPaintRenderAnimation(ptr ptr)
 @ stdcall BufferedPaintSetAlpha(ptr ptr long)
+@ stdcall BufferedPaintStopAllAnimations(ptr)
 @ stdcall BufferedPaintUnInit()
 @ stdcall CloseThemeData(ptr)
 @ stdcall DrawThemeBackground(ptr ptr long long ptr ptr)
@@ -57,6 +60,7 @@
 @ stdcall DrawThemeText(ptr ptr long long wstr long long long ptr)
 @ stdcall EnableThemeDialogTexture(ptr long)
 @ stdcall EnableTheming(long)
+@ stdcall EndBufferedAnimation(ptr long)
 @ stdcall EndBufferedPaint(ptr long)
 @ stdcall GetBufferedPaintBits(ptr ptr ptr)
 @ stdcall GetBufferedPaintDC(ptr)
