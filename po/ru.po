@@ -8546,7 +8546,7 @@ msgstr "По&вторить"
 
 #: user32.rc:88
 msgid "&Continue"
-msgstr "П&роложить"
+msgstr "П&родолжить"
 
 #: user32.rc:94
 msgid "Select Window"
@@ -8565,10 +8565,8 @@ msgid "Duplex:"
 msgstr "Двухсторонняя печать:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "Сво&йства"
+msgstr "Настройка"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
