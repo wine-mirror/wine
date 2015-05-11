@@ -11,7 +11,7 @@
 @ stdcall GetCPInfoExW(long long ptr) kernel32.GetCPInfoExW
 @ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernel32.GetCalendarInfoEx
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) kernel32.GetCalendarInfoW
-@ stub GetFileMUIInfo
+@ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
 @ stdcall GetGeoInfoW(long long ptr long long) kernel32.GetGeoInfoW
 @ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA

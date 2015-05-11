@@ -676,7 +676,7 @@
 # @ stub GetFileBandwidthReservation
 @ stdcall GetFileInformationByHandle(long ptr)
 @ stdcall GetFileInformationByHandleEx(long long ptr long)
-# @ stub GetFileMUIInfo
+@ stdcall GetFileMUIInfo(long wstr ptr ptr)
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
 @ stdcall GetFileSize(long ptr)
 @ stdcall GetFileSizeEx(long ptr)

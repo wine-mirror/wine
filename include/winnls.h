@@ -604,6 +604,22 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define MUI_LANGUAGE_INSTALLED              0x20
 #define MUI_LANGUAGE_LICENSED               0x40
 
+typedef struct _FILEMUIINFO {
+    DWORD dwSize;
+    DWORD dwVersion;
+    DWORD dwFileType;
+    BYTE pChecksum[16];
+    BYTE pServiceChecksum[16];
+    DWORD dwLanguageNameOffset;
+    DWORD dwTypeIDMainSize;
+    DWORD dwTypeIDMainOffset;
+    DWORD dwTypeNameMainOffset;
+    DWORD dwTypeIDMUISize;
+    DWORD dwTypeIDMUIOffset;
+    DWORD dwTypeNameMUIOffset;
+    BYTE abBuffer[8];
+} FILEMUIINFO, *PFILEMUIINFO;
+
 /* Types
  */
 
@@ -860,6 +876,7 @@ WINBASEAPI INT         WINAPI GetDateFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR
 WINBASEAPI INT         WINAPI GetDateFormatEx(LPCWSTR,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT,LPCWSTR);
 WINBASEAPI INT         WINAPI GetDateFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
 #define                       GetDateFormat WINELIB_NAME_AW(GetDateFormat)
+WINBASEAPI BOOL        WINAPI GetFileMUIInfo(DWORD,PCWSTR,PFILEMUIINFO,DWORD*);
 WINBASEAPI INT         WINAPI GetGeoInfoA(GEOID,GEOTYPE,LPSTR,INT,LANGID);
 WINBASEAPI INT         WINAPI GetGeoInfoW(GEOID,GEOTYPE,LPWSTR,INT,LANGID);
 #define                       GetGeoInfo WINELIB_NAME_AW(GetGeoInfo)
