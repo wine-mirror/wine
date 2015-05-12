@@ -2193,14 +2193,18 @@ void macdrv_window_drag_begin(HWND hwnd)
 
     while (GetMessageW(&msg, 0, 0, 0))
     {
+        if (msg.message == WM_EXITSIZEMOVE)
+        {
+            SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+            break;
+        }
+
         if (!CallMsgFilterW(&msg, MSGF_SIZE) && msg.message != WM_KEYDOWN &&
             msg.message != WM_MOUSEMOVE && msg.message != WM_LBUTTONDOWN && msg.message != WM_LBUTTONUP)
         {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
-
-        if (msg.message == WM_EXITSIZEMOVE) break;
     }
 
     TRACE("done\n");
