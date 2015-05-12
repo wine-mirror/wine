@@ -75,6 +75,9 @@ static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static void   (WINAPI *pReleaseActCtx)(HANDLE);
 
+static BOOL (WINAPI *pCheckNameLegalDOS8Dot3W)(const WCHAR *, char *, DWORD, BOOL *, BOOL *);
+static BOOL (WINAPI *pCheckNameLegalDOS8Dot3A)(const char *, char *, DWORD, BOOL *, BOOL *);
+
 /* a structure to deal with wine todos somewhat cleanly */
 typedef struct {
   DWORD shortlen;
@@ -2058,6 +2061,8 @@ static void init_pointers(void)
     MAKEFUNC(DeactivateActCtx);
     MAKEFUNC(GetCurrentActCtx);
     MAKEFUNC(ReleaseActCtx);
+    MAKEFUNC(CheckNameLegalDOS8Dot3W);
+    MAKEFUNC(CheckNameLegalDOS8Dot3A);
 #undef MAKEFUNC
 }
 
@@ -2119,6 +2124,73 @@ static void test_relative_path(void)
     RemoveDirectoryA("bar");
 }
 
+static void test_CheckNameLegalDOS8Dot3(void)
+{
+    static const WCHAR has_driveW[] = {'C',':','\\','a','.','t','x','t',0};
+    static const WCHAR has_pathW[] = {'b','\\','a','.','t','x','t',0};
+    static const WCHAR too_longW[] = {'a','l','o','n','g','f','i','l','e','n','a','m','e','.','t','x','t',0};
+    static const WCHAR twodotsW[] = {'t','e','s','t','.','e','s','t','.','t','x','t',0};
+    static const WCHAR longextW[] = {'t','e','s','t','.','t','x','t','t','x','t',0};
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR funnycharsW[] = {'!','#','$','%','&','\'','(',')','.','-','@','^',0};
+    static const WCHAR length8W[] = {'t','e','s','t','t','e','s','t','.','t','x','t',0};
+    static const WCHAR length1W[] = {'t',0};
+    static const WCHAR withspaceW[] = {'t','e','s','t',' ','e','s','t','.','t','x','t',0};
+
+    static const struct {
+        const WCHAR *name;
+        BOOL should_be_legal, has_space;
+    } cases[] = {
+        {has_driveW, FALSE, FALSE},
+        {has_pathW, FALSE, FALSE},
+        {too_longW, FALSE, FALSE},
+        {twodotsW, FALSE, FALSE},
+        {longextW, FALSE, FALSE},
+        {emptyW, TRUE /* ! */, FALSE},
+        {funnycharsW, TRUE, FALSE},
+        {length8W, TRUE, FALSE},
+        {length1W, TRUE, FALSE},
+        {withspaceW, TRUE, TRUE},
+    };
+
+    BOOL br, is_legal, has_space;
+    char astr[64];
+    DWORD i;
+
+    if(!pCheckNameLegalDOS8Dot3W){
+        win_skip("Missing CheckNameLegalDOS8Dot3, skipping tests\n");
+        return;
+    }
+
+    br = pCheckNameLegalDOS8Dot3W(NULL, NULL, 0, NULL, &is_legal);
+    ok(br == FALSE, "CheckNameLegalDOS8Dot3W should have failed\n");
+
+    br = pCheckNameLegalDOS8Dot3A(NULL, NULL, 0, NULL, &is_legal);
+    ok(br == FALSE, "CheckNameLegalDOS8Dot3A should have failed\n");
+
+    br = pCheckNameLegalDOS8Dot3W(length8W, NULL, 0, NULL, NULL);
+    ok(br == FALSE, "CheckNameLegalDOS8Dot3W should have failed\n");
+
+    br = pCheckNameLegalDOS8Dot3A("testtest.txt", NULL, 0, NULL, NULL);
+    ok(br == FALSE, "CheckNameLegalDOS8Dot3A should have failed\n");
+
+    for(i = 0; i < sizeof(cases)/sizeof(*cases); ++i){
+        br = pCheckNameLegalDOS8Dot3W(cases[i].name, NULL, 0, &has_space, &is_legal);
+        ok(br == TRUE, "CheckNameLegalDOS8Dot3W failed for %s\n", wine_dbgstr_w(cases[i].name));
+        ok(is_legal == cases[i].should_be_legal, "Got wrong legality for %s\n", wine_dbgstr_w(cases[i].name));
+        if(is_legal)
+            ok(has_space == cases[i].has_space, "Got wrong space for %s\n", wine_dbgstr_w(cases[i].name));
+
+        WideCharToMultiByte(CP_ACP, 0, cases[i].name, -1, astr, sizeof(astr), NULL, NULL);
+
+        br = pCheckNameLegalDOS8Dot3A(astr, NULL, 0, &has_space, &is_legal);
+        ok(br == TRUE, "CheckNameLegalDOS8Dot3W failed for %s\n", astr);
+        ok(is_legal == cases[i].should_be_legal, "Got wrong legality for %s\n", astr);
+        if(is_legal)
+            ok(has_space == cases[i].has_space, "Got wrong space for %s\n", wine_dbgstr_w(cases[i].name));
+    }
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -2151,4 +2223,5 @@ START_TEST(path)
     test_SearchPathW();
     test_GetFullPathNameA();
     test_GetFullPathNameW();
+    test_CheckNameLegalDOS8Dot3();
 }

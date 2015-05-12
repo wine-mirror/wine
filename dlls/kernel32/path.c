@@ -2012,3 +2012,52 @@ BOOL WINAPI CreateHardLinkTransactedW(LPCWSTR link, LPCWSTR target, LPSECURITY_A
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*************************************************************************
+ *           CheckNameLegalDOS8Dot3A   (KERNEL32.@)
+ */
+BOOL WINAPI CheckNameLegalDOS8Dot3A(const char *name, char *oemname, DWORD oemname_len,
+        BOOL *contains_spaces, BOOL *is_legal)
+{
+    WCHAR *nameW;
+
+    TRACE("(%s %p %u %p %p)\n", name, oemname,
+            oemname_len, contains_spaces, is_legal);
+
+    if (!name || !is_legal)
+        return FALSE;
+
+    if (!(nameW = FILE_name_AtoW( name, FALSE ))) return FALSE;
+
+    return CheckNameLegalDOS8Dot3W( nameW, oemname, oemname_len, contains_spaces, is_legal );
+}
+
+/*************************************************************************
+ *           CheckNameLegalDOS8Dot3W   (KERNEL32.@)
+ */
+BOOL WINAPI CheckNameLegalDOS8Dot3W(const WCHAR *name, char *oemname, DWORD oemname_len,
+        BOOL *contains_spaces_ret, BOOL *is_legal)
+{
+    OEM_STRING oem_str;
+    UNICODE_STRING nameW;
+    BOOLEAN contains_spaces;
+
+    TRACE("(%s %p %u %p %p)\n", wine_dbgstr_w(name), oemname,
+          oemname_len, contains_spaces_ret, is_legal);
+
+    if (!name || !is_legal)
+        return FALSE;
+
+    RtlInitUnicodeString( &nameW, name );
+
+    if (oemname) {
+        oem_str.Length = oemname_len;
+        oem_str.MaximumLength = oemname_len;
+        oem_str.Buffer = oemname;
+    }
+
+    *is_legal = RtlIsNameLegalDOS8Dot3( &nameW, oemname ? &oem_str : NULL, &contains_spaces );
+    if (contains_spaces_ret) *contains_spaces_ret = contains_spaces;
+
+    return TRUE;
+}
