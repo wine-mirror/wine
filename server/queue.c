@@ -2765,7 +2765,14 @@ DECL_HANDLER(attach_thread_input)
     }
     if (thread_from != thread_to)
     {
-        if (req->attach) attach_thread_input( thread_from, thread_to );
+        if (req->attach)
+        {
+            if ((thread_to->queue || thread_to == current) &&
+                (thread_from->queue || thread_from == current))
+                attach_thread_input( thread_from, thread_to );
+            else
+                set_error( STATUS_INVALID_PARAMETER );
+        }
         else
         {
             if (thread_from->queue && thread_to->queue &&
