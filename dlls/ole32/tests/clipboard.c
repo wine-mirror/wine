@@ -129,7 +129,8 @@ static HRESULT WINAPI EnumFormatImpl_Next(IEnumFORMATETC *iface, ULONG celt,
     EnumFormatImpl *This = impl_from_IEnumFORMATETC(iface);
     ULONG count, i;
 
-    trace("next: count %d cur %d\n", celt, This->cur);
+    if (winetest_debug > 1)
+        trace("next: count %d cur %d\n", celt, This->cur);
 
     if(!rgelt)
         return E_INVALIDARG;
