@@ -302,6 +302,7 @@ void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
     return compare;
 }
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
 __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
 {
     pthread_mutex_lock( &interlocked_mutex );
@@ -314,6 +315,7 @@ __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
     pthread_mutex_unlock( &interlocked_mutex );
     return compare;
 }
+#endif
 
 #ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_xchg( int *dest, int val )

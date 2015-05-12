@@ -367,8 +367,6 @@ extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
-
 static inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
     int ret;
@@ -459,7 +457,6 @@ extern int interlocked_xchg( int *dest, int val );
 #endif
 
 extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
-extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
 extern void *interlocked_xchg_ptr( void **dest, void *val );
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
 extern unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
@@ -467,6 +464,15 @@ extern unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
 #endif
 
 #endif  /* __GNUC__ */
+
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+static inline __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+#else
+extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
+#endif
 
 #else /* NO_LIBWINE_PORT */
 
