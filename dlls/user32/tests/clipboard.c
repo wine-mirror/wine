@@ -150,8 +150,8 @@ todo_wine
 
         if (format_id < 0xc000)
             ok(!len, "GetClipboardFormatNameA should fail, but it returned %d (%s)\n", len, buf);
-        else
-            if (len) trace("%04x: %s\n", format_id, len ? buf : "");
+        else if (len && winetest_debug > 1)
+            trace("%04x: %s\n", format_id, len ? buf : "");
     }
 
     ret = OpenClipboard(0);
