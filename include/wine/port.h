@@ -435,12 +435,32 @@ static inline unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_
 
 #else  /* __GNUC__ */
 
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+static inline int interlocked_cmpxchg( int *dest, int xchg, int compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg );
+}
+
+static inline int interlocked_xchg_add( int *dest, int incr )
+{
+    return __sync_fetch_and_add( dest, incr );
+}
+
+static inline int interlocked_xchg( int *dest, int val )
+{
+    int ret;
+    do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
+    return ret;
+}
+#else
 extern int interlocked_cmpxchg( int *dest, int xchg, int compare );
+extern int interlocked_xchg_add( int *dest, int incr );
+extern int interlocked_xchg( int *dest, int val );
+#endif
+
 extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
 extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
-extern int interlocked_xchg( int *dest, int val );
 extern void *interlocked_xchg_ptr( void **dest, void *val );
-extern int interlocked_xchg_add( int *dest, int incr );
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
 extern unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high,
                                              __int64 xchg_low, __int64 *compare );

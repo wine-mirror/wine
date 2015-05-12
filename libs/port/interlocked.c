@@ -274,6 +274,7 @@ void* interlocked_xchg_ptr( void** dest, void* val )
 
 static pthread_mutex_t interlocked_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_cmpxchg( int *dest, int xchg, int compare )
 {
     pthread_mutex_lock( &interlocked_mutex );
@@ -286,6 +287,7 @@ int interlocked_cmpxchg( int *dest, int xchg, int compare )
     pthread_mutex_unlock( &interlocked_mutex );
     return compare;
 }
+#endif
 
 void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
 {
@@ -313,6 +315,7 @@ __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
     return compare;
 }
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_xchg( int *dest, int val )
 {
     int retv;
@@ -322,6 +325,7 @@ int interlocked_xchg( int *dest, int val )
     pthread_mutex_unlock( &interlocked_mutex );
     return retv;
 }
+#endif
 
 void *interlocked_xchg_ptr( void **dest, void *val )
 {
@@ -333,6 +337,7 @@ void *interlocked_xchg_ptr( void **dest, void *val )
     return retv;
 }
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_xchg_add( int *dest, int incr )
 {
     int retv;
@@ -342,6 +347,7 @@ int interlocked_xchg_add( int *dest, int incr )
     pthread_mutex_unlock( &interlocked_mutex );
     return retv;
 }
+#endif
 
 unsigned char interlocked_cmpxchg128( __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
 {
