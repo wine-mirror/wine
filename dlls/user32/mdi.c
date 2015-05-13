@@ -864,7 +864,11 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     /* The system menu is replaced by the child icon */
     hIcon = (HICON)SendMessageW(hChild, WM_GETICON, ICON_SMALL, 0);
     if (!hIcon)
+        hIcon = (HICON)GetClassLongPtrW(hChild, GCLP_HICONSM);
+    if (!hIcon)
         hIcon = (HICON)SendMessageW(hChild, WM_GETICON, ICON_BIG, 0);
+    if (!hIcon)
+        hIcon = (HICON)GetClassLongPtrW(hChild, GCLP_HICON);
     if (!hIcon)
         hIcon = LoadImageW(0, (LPWSTR)IDI_WINLOGO, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
                            GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
