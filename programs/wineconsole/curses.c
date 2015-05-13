@@ -1001,6 +1001,7 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
 #endif
     endwin();
 
+    if (data->hWnd) DestroyWindow(data->hWnd);
     HeapFree(GetProcessHeap(), 0, PRIVATE(data)->line);
     HeapFree(GetProcessHeap(), 0, PRIVATE(data));
     data->private = NULL;
@@ -1042,6 +1043,8 @@ static int WCCURSES_MainLoop(struct inner_data* data)
  */
 enum init_return WCCURSES_InitBackend(struct inner_data* data)
 {
+    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
+
     if( !WCCURSES_bind_libcurses() )
         return init_not_supported;
 
@@ -1058,7 +1061,8 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     data->fnScroll             = WCCURSES_Scroll;
     data->fnSetFont            = WCCURSES_SetFont;
     data->fnDeleteBackend      = WCCURSES_DeleteBackend;
-    data->hWnd                 = NULL;
+    data->hWnd                 = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
+                                               GetModuleHandleW(0), NULL);
 
     /* FIXME: should find a good way to enable buffer scrolling
      * For the time being, setting this to 1 will allow scrolling up/down 
