@@ -599,7 +599,8 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
     classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
                                             CopyImage( wc->hIcon, IMAGE_ICON,
                                                 GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
+                                                GetSystemMetrics( SM_CYSMICON ),
+                                                LR_COPYFROMRESOURCE ) : NULL;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
     classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, FALSE );
@@ -643,7 +644,8 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     classPtr->hIconSmIntern = wc->hIcon && !wc->hIconSm ?
                                             CopyImage( wc->hIcon, IMAGE_ICON,
                                                 GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
+                                                GetSystemMetrics( SM_CYSMICON ),
+                                                LR_COPYFROMRESOURCE ) : NULL;
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
     classPtr->winproc       = WINPROC_AllocProc( wc->lpfnWndProc, TRUE );
@@ -981,7 +983,8 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         }
         if (newval && !class->hIconSm)
             class->hIconSmIntern = CopyImage( (HICON)newval, IMAGE_ICON,
-                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ),
+                      LR_COPYFROMRESOURCE );
         class->hIcon = (HICON)newval;
         break;
     case GCLP_HICONSM:
@@ -989,7 +992,8 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         if (retval && !newval)
             class->hIconSmIntern = class->hIcon ? CopyImage( class->hIcon, IMAGE_ICON,
                                                 GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ), 0 ) : NULL;
+                                                GetSystemMetrics( SM_CYSMICON ),
+                                                LR_COPYFROMRESOURCE ) : NULL;
         else if (!retval && newval && class->hIconSmIntern)
         {
             DestroyIcon(class->hIconSmIntern);
