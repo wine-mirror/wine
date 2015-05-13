@@ -640,8 +640,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 break;
             case ICON_SMALL2:
                 ret = wndPtr->hIconSmall;
-                if (!ret) ret = (HICON)GetClassLongPtrW( hwnd, GCLP_HICONSM );
-                /* FIXME: should have a default here if class icon is null */
                 break;
             default:
                 ret = 0;
