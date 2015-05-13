@@ -539,7 +539,7 @@ static HRESULT WINAPI BrowserService_GetSetCodePage(
         VARIANT *pvarOut)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %p %p\n", This, pvarIn, pvarOut);
+    FIXME("%p %s %p\n", This, debugstr_variant(pvarIn), pvarOut);
     return E_NOTIMPL;
 }
 
@@ -551,7 +551,7 @@ static HRESULT WINAPI BrowserService_OnHttpEquiv(
         VARIANT *pvarargOut)
 {
     ShellBrowser *This = impl_from_IBrowserService(iface);
-    FIXME("%p %p %d %p %p\n", This, psv, fDone, pvarargIn, pvarargOut);
+    FIXME("%p %p %d %s %p\n", This, psv, fDone, debugstr_variant(pvarargIn), pvarargOut);
     return E_NOTIMPL;
 }
 
