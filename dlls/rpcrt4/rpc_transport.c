@@ -1855,7 +1855,7 @@ typedef struct _RpcHttpAsyncData
     LONG refs;
     HANDLE completion_event;
     WORD async_result;
-    INTERNET_BUFFERSA inet_buffers;
+    INTERNET_BUFFERSW inet_buffers;
     CRITICAL_SECTION cs;
 } RpcHttpAsyncData;
 
@@ -1962,7 +1962,7 @@ static RpcConnection *rpcrt4_ncacn_http_alloc(void)
     TRACE("async data = %p\n", httpc->async_data);
     httpc->cancel_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     httpc->async_data->refs = 1;
-    httpc->async_data->inet_buffers.dwStructSize = sizeof(INTERNET_BUFFERSA);
+    httpc->async_data->inet_buffers.dwStructSize = sizeof(INTERNET_BUFFERSW);
     httpc->async_data->inet_buffers.lpvBuffer = NULL;
     InitializeCriticalSection(&httpc->async_data->cs);
     httpc->async_data->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcHttpAsyncData.cs");
@@ -3027,7 +3027,7 @@ static int rpcrt4_ncacn_http_read(RpcConnection *Connection,
   {
     httpc->async_data->inet_buffers.dwBufferLength = bytes_left;
     prepare_async_request(httpc->async_data);
-    ret = InternetReadFileExA(httpc->out_request, &httpc->async_data->inet_buffers, IRF_ASYNC, 0);
+    ret = InternetReadFileExW(httpc->out_request, &httpc->async_data->inet_buffers, IRF_ASYNC, 0);
     status = wait_async_request(httpc->async_data, ret, httpc->cancel_event);
     if(status != RPC_S_OK) {
         if(status == RPC_S_CALL_CANCELLED)
