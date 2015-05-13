@@ -2230,6 +2230,17 @@ static RPC_STATUS send_echo_request(HINTERNET req, RpcHttpAsyncData *async_data,
     return RPC_S_OK;
 }
 
+static RPC_STATUS insert_content_length_header(HINTERNET request, DWORD len)
+{
+    static const WCHAR fmtW[] =
+        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
+    WCHAR header[sizeof(fmtW) / sizeof(fmtW[0]) + 10];
+
+    sprintfW(header, fmtW, len);
+    if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE))) return RPC_S_OK;
+    return RPC_S_SERVER_UNAVAILABLE;
+}
+
 /* prepare the in pipe for use by RPC packets */
 static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsyncData *async_data, HANDLE cancel_event,
                                               const UUID *connection_uuid, const UUID *in_pipe_uuid,
@@ -2251,6 +2262,9 @@ static RPC_STATUS rpcrt4_http_prepare_in_pipe(HINTERNET in_request, RpcHttpAsync
     buffers_in.dwStructSize = sizeof(buffers_in);
     /* FIXME: get this from the registry */
     buffers_in.dwBufferTotal = 1024 * 1024 * 1024; /* 1Gb */
+    status = insert_content_length_header(in_request, buffers_in.dwBufferTotal);
+    if (status != RPC_S_OK) return status;
+
     prepare_async_request(async_data);
     ret = HttpSendRequestExW(in_request, &buffers_in, NULL, 0, 0);
     status = wait_async_request(async_data, ret, cancel_event);
@@ -2321,17 +2335,14 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
                                                const UUID *out_pipe_uuid, ULONG *flow_control_increment,
                                                BOOL authorized)
 {
-    static const WCHAR fmtW[] =
-        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
     BOOL ret;
     RPC_STATUS status;
     RpcPktHdr *hdr;
     BYTE *data_from_server;
     RpcPktHdr pkt_from_server;
     ULONG field1, field3;
-    DWORD bytes_read, len;
+    DWORD bytes_read;
     BYTE buf[20];
-    WCHAR header[sizeof(fmtW) / sizeof(fmtW[0]) + 10];
 
     if (!authorized)
     {
@@ -2345,10 +2356,16 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
     hdr = RPCRT4_BuildHttpConnectHeader(TRUE, connection_uuid, out_pipe_uuid, NULL);
     if (!hdr) return RPC_S_OUT_OF_RESOURCES;
 
+    status = insert_content_length_header(out_request, hdr->common.frag_len);
+    if (status != RPC_S_OK)
+    {
+        RPCRT4_FreeHeader(hdr);
+        return status;
+    }
+
     TRACE("sending HTTP connect header to server\n");
     prepare_async_request(async_data);
-    len = sprintfW(header, fmtW, hdr->common.frag_len);
-    ret = HttpSendRequestW(out_request, header, len, hdr, hdr->common.frag_len);
+    ret = HttpSendRequestW(out_request, NULL, 0, hdr, hdr->common.frag_len);
     status = wait_async_request(async_data, ret, cancel_event);
     RPCRT4_FreeHeader(hdr);
     if (status != RPC_S_OK) return status;
