@@ -2699,6 +2699,8 @@ static void test_read_write(void)
     {
         ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
         ok(bytes == 0, "bytes %u\n", bytes);
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
     }
     else ok(bytes == 4, "bytes %u\n", bytes);
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
@@ -2730,6 +2732,8 @@ static void test_read_write(void)
     {
         ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %d\n", GetLastError());
         ok(bytes == 0, "bytes %u\n", bytes);
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
     }
     else ok(bytes == 14, "bytes %u\n", bytes);
     ok((NTSTATUS)ovl.Internal == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx\n", ovl.Internal);
