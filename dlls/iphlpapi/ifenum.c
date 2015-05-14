@@ -807,7 +807,11 @@ static DWORD getIPAddrRowByName(PMIB_IPADDRROW ipAddrRow, const char *ifName,
   /* FIXME: hardcoded reasm size, not sure where to get it */
   ipAddrRow->dwReasmSize = 65535;
   ipAddrRow->unused1 = 0;
-  ipAddrRow->wType = 0;
+  /* wType is a bit field composed of MIB_IPADDR_* flags. Windows <= XP seems
+   * to like returning undocumented values 0x20 + 0x02 but for our current
+   * needs returning MIB_IPADDR_PRIMARY is enough.
+   */
+  ipAddrRow->wType = MIB_IPADDR_PRIMARY;
   return ret;
 }
 

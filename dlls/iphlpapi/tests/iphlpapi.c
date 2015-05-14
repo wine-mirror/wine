@@ -226,7 +226,16 @@ static void testGetIpAddrTable(void)
        "GetIpAddrTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
       if (apiReturn == NO_ERROR && buf->dwNumEntries)
+      {
+        int i;
         testGetIfEntry(buf->table[0].dwIndex);
+        for (i = 0; i < buf->dwNumEntries; i++)
+        {
+          ok (buf->table[i].wType != 0, "Test[%d]: expected wType > 0\n", i);
+          trace("Entry[%d]: addr %s, dwIndex %u, wType 0x%x\n", i,
+                ntoa(buf->table[i].dwAddr), buf->table[i].dwIndex, buf->table[i].wType);
+        }
+      }
       HeapFree(GetProcessHeap(), 0, buf);
     }
   }
