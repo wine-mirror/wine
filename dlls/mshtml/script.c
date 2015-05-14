@@ -1335,8 +1335,8 @@ static event_target_t **find_event_target(HTMLDocumentNode *doc, HTMLScriptEleme
     if(!*target_id) {
         FIXME("Empty for attribute\n");
     }else if(!strcmpW(target_id, documentW)) {
-        target = &doc->node.event_target;
-        target_dispex = &doc->node.dispex;
+        target = &doc->node.event_target.ptr;
+        target_dispex = &doc->node.event_target.dispex;
         htmldoc_addref(&doc->basedoc);
     }else if(!strcmpW(target_id, windowW)) {
         if(doc->window) {
@@ -1349,8 +1349,8 @@ static event_target_t **find_event_target(HTMLDocumentNode *doc, HTMLScriptEleme
 
         hres = get_doc_elem_by_id(doc, target_id, &target_elem);
         if(SUCCEEDED(hres) && target_elem) {
-            target_dispex = &target_elem->node.dispex;
-            target = &target_elem->node.event_target;
+            target_dispex = &target_elem->node.event_target.dispex;
+            target = &target_elem->node.event_target.ptr;
         }
     }
     nsAString_Finish(&target_id_str);

@@ -74,7 +74,7 @@ static ULONG WINAPI HTMLObjectElement_Release(IHTMLObjectElement *iface)
 static HRESULT WINAPI HTMLObjectElement_GetTypeInfoCount(IHTMLObjectElement *iface, UINT *pctinfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetTypeInfoCount(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             pctinfo);
 }
 
@@ -82,7 +82,7 @@ static HRESULT WINAPI HTMLObjectElement_GetTypeInfo(IHTMLObjectElement *iface, U
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetTypeInfo(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetTypeInfo(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             iTInfo, lcid, ppTInfo);
 }
 
@@ -91,7 +91,7 @@ static HRESULT WINAPI HTMLObjectElement_GetIDsOfNames(IHTMLObjectElement *iface,
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_GetIDsOfNames(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetIDsOfNames(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -100,7 +100,7 @@ static HRESULT WINAPI HTMLObjectElement_Invoke(IHTMLObjectElement *iface, DISPID
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement(iface);
-    return IDispatchEx_Invoke(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_Invoke(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -535,7 +535,7 @@ static ULONG WINAPI HTMLObjectElement2_Release(IHTMLObjectElement2 *iface)
 static HRESULT WINAPI HTMLObjectElement2_GetTypeInfoCount(IHTMLObjectElement2 *iface, UINT *pctinfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetTypeInfoCount(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             pctinfo);
 }
 
@@ -543,7 +543,7 @@ static HRESULT WINAPI HTMLObjectElement2_GetTypeInfo(IHTMLObjectElement2 *iface,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
-    return IDispatchEx_GetTypeInfo(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetTypeInfo(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             iTInfo, lcid, ppTInfo);
 }
 
@@ -551,7 +551,7 @@ static HRESULT WINAPI HTMLObjectElement2_GetIDsOfNames(IHTMLObjectElement2 *ifac
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_GetIDsOfNames(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             riid, rgszNames, cNames, lcid, rgDispId);
 }
 
@@ -560,7 +560,7 @@ static HRESULT WINAPI HTMLObjectElement2_Invoke(IHTMLObjectElement2 *iface, DISP
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLObjectElement *This = impl_from_IHTMLObjectElement2(iface);
-    return IDispatchEx_Invoke(&This->plugin_container.element.node.dispex.IDispatchEx_iface,
+    return IDispatchEx_Invoke(&This->plugin_container.element.node.event_target.dispex.IDispatchEx_iface,
             dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 

@@ -1146,7 +1146,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             }
         }
 
-        call_event_handlers(doc, event_obj, doc->node.event_target, &doc->basedoc.cp_container, eid,
+        call_event_handlers(doc, event_obj, doc->node.event_target.ptr, &doc->basedoc.cp_container, eid,
                 script_this ? script_this : (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
         break;
 
@@ -1583,7 +1583,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
             if(disp) {
                 hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
                 if(SUCCEEDED(hres)) {
-                    set_event_handler_disp(&node->dispex, get_node_event_target(node), node->doc, i, disp);
+                    set_event_handler_disp(&node->event_target.dispex, get_node_event_target(node), node->doc, i, disp);
                     node_release(node);
                 }
                 IDispatch_Release(disp);

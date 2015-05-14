@@ -137,7 +137,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
-    return IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, p);
+    return IDispatchEx_GetMemberName(&This->elem->node.event_target.dispex.IDispatchEx_iface, This->dispid, p);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, VARIANT v)
@@ -157,7 +157,7 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, V
 
     memset(&ei, 0, sizeof(ei));
 
-    return IDispatchEx_InvokeEx(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
+    return IDispatchEx_InvokeEx(&This->elem->node.event_target.dispex.IDispatchEx_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
             DISPATCH_PROPERTYPUT, &dp, &ret, &ei, NULL);
 }
 
@@ -196,7 +196,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
         return S_OK;
     }
 
-    hres = IDispatchEx_GetMemberName(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, &name);
+    hres = IDispatchEx_GetMemberName(&This->elem->node.event_target.dispex.IDispatchEx_iface, This->dispid, &name);
     if(FAILED(hres))
         return hres;
 

@@ -578,14 +578,14 @@ static ULONG WINAPI HTMLElement_Release(IHTMLElement *iface)
 static HRESULT WINAPI HTMLElement_GetTypeInfoCount(IHTMLElement *iface, UINT *pctinfo)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLElement_GetTypeInfo(IHTMLElement *iface, UINT iTInfo,
                                               LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLElement_GetIDsOfNames(IHTMLElement *iface, REFIID riid,
@@ -593,7 +593,7 @@ static HRESULT WINAPI HTMLElement_GetIDsOfNames(IHTMLElement *iface, REFIID riid
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -602,7 +602,7 @@ static HRESULT WINAPI HTMLElement_Invoke(IHTMLElement *iface, DISPID dispIdMembe
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -617,7 +617,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
 
     TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
-    hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
+    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
     if(FAILED(hres))
         return hres;
@@ -632,7 +632,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     dispParams.rgdispidNamedArgs = &dispidNamed;
     dispParams.rgvarg = &AttributeValue;
 
-    return IDispatchEx_InvokeEx(&This->node.dispex.IDispatchEx_iface, dispid,
+    return IDispatchEx_InvokeEx(&This->node.event_target.dispex.IDispatchEx_iface, dispid,
             LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYPUT, &dispParams, NULL, &excep, NULL);
 }
 
@@ -642,7 +642,7 @@ HRESULT get_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, DWORD fl
     EXCEPINFO excep;
     HRESULT hres;
 
-    hres = IDispatchEx_InvokeEx(&elem->node.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
+    hres = IDispatchEx_InvokeEx(&elem->node.event_target.dispex.IDispatchEx_iface, dispid, LOCALE_SYSTEM_DEFAULT,
             DISPATCH_PROPERTYGET, &dispParams, ret, &excep, NULL);
     if(FAILED(hres))
         return hres;
@@ -678,7 +678,7 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     if(lFlags & ~(ATTRFLAG_CASESENSITIVE|ATTRFLAG_ASSTRING))
         FIXME("Unsupported flags %x\n", lFlags);
 
-    hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
+    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(AttributeValue) = VT_NULL;
@@ -702,7 +702,7 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    hres = IDispatchEx_GetDispID(&This->node.dispex.IDispatchEx_iface, strAttributeName,
+    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
     if(hres == DISP_E_UNKNOWNNAME) {
         *pfSuccess = VARIANT_FALSE;
@@ -729,7 +729,7 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
         return S_OK;
     }
 
-    return remove_attribute(&This->node.dispex, id, pfSuccess);
+    return remove_attribute(&This->node.event_target.dispex, id, pfSuccess);
 }
 
 static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
@@ -1096,7 +1096,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
         VARIANT *var;
         HRESULT hres;
 
-        hres = dispex_get_dprop_ref(&This->node.dispex, titleW, TRUE, &var);
+        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, titleW, TRUE, &var);
         if(FAILED(hres))
             return hres;
 
@@ -1127,7 +1127,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
         VARIANT *var;
         HRESULT hres;
 
-        hres = dispex_get_dprop_ref(&This->node.dispex, titleW, FALSE, &var);
+        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, titleW, FALSE, &var);
         if(hres == DISP_E_UNKNOWNNAME) {
             *p = NULL;
         }else if(V_VT(var) != VT_BSTR) {
@@ -2009,14 +2009,14 @@ static ULONG WINAPI HTMLElement2_Release(IHTMLElement2 *iface)
 static HRESULT WINAPI HTMLElement2_GetTypeInfoCount(IHTMLElement2 *iface, UINT *pctinfo)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLElement2_GetTypeInfo(IHTMLElement2 *iface, UINT iTInfo,
                                                LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLElement2_GetIDsOfNames(IHTMLElement2 *iface, REFIID riid,
@@ -2024,7 +2024,7 @@ static HRESULT WINAPI HTMLElement2_GetIDsOfNames(IHTMLElement2 *iface, REFIID ri
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -2033,7 +2033,7 @@ static HRESULT WINAPI HTMLElement2_Invoke(IHTMLElement2 *iface, DISPID dispIdMem
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElement *This = impl_from_IHTMLElement2(iface);
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -3127,14 +3127,14 @@ static ULONG WINAPI HTMLElement3_Release(IHTMLElement3 *iface)
 static HRESULT WINAPI HTMLElement3_GetTypeInfoCount(IHTMLElement3 *iface, UINT *pctinfo)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLElement3_GetTypeInfo(IHTMLElement3 *iface, UINT iTInfo,
                                                LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLElement3_GetIDsOfNames(IHTMLElement3 *iface, REFIID riid,
@@ -3142,7 +3142,7 @@ static HRESULT WINAPI HTMLElement3_GetIDsOfNames(IHTMLElement3 *iface, REFIID ri
                                                 LCID lcid, DISPID *rgDispId)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -3151,7 +3151,7 @@ static HRESULT WINAPI HTMLElement3_Invoke(IHTMLElement3 *iface, DISPID dispIdMem
                             VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -3306,7 +3306,7 @@ static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BO
     if(This->node.vtbl->put_disabled)
         return This->node.vtbl->put_disabled(&This->node, v);
 
-    hres = dispex_get_dprop_ref(&This->node.dispex, disabledW, TRUE, &var);
+    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, disabledW, TRUE, &var);
     if(FAILED(hres))
         return hres;
 
@@ -3327,7 +3327,7 @@ static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BO
     if(This->node.vtbl->get_disabled)
         return This->node.vtbl->get_disabled(&This->node, p);
 
-    hres = dispex_get_dprop_ref(&This->node.dispex, disabledW, FALSE, &var);
+    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, disabledW, FALSE, &var);
     if(hres == DISP_E_UNKNOWNNAME) {
         *p = VARIANT_FALSE;
         return S_OK;
@@ -3596,21 +3596,21 @@ static ULONG WINAPI HTMLElement4_Release(IHTMLElement4 *iface)
 static HRESULT WINAPI HTMLElement4_GetTypeInfoCount(IHTMLElement4 *iface, UINT *pctinfo)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLElement4_GetTypeInfo(IHTMLElement4 *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLElement4_GetIDsOfNames(IHTMLElement4 *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
             lcid, rgDispId);
 }
 
@@ -3618,7 +3618,7 @@ static HRESULT WINAPI HTMLElement4_Invoke(IHTMLElement4 *iface, DISPID dispIdMem
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
@@ -3878,7 +3878,7 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
 
 static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLElement, node.dispex);
+    return CONTAINING_RECORD(iface, HTMLElement, node.event_target.dispex);
 }
 
 static HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name,
@@ -4016,7 +4016,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
 
     if(dispex_data && !dispex_data->vtbl)
         dispex_data->vtbl = &HTMLElement_dispex_vtbl;
-    init_dispex(&This->node.dispex, (IUnknown*)&This->IHTMLElement_iface,
+    init_dispex(&This->node.event_target.dispex, (IUnknown*)&This->IHTMLElement_iface,
             dispex_data ? dispex_data : &HTMLElement_dispex);
 
     if(nselem) {
@@ -4365,7 +4365,7 @@ static HRESULT WINAPI HTMLAttributeCollection_Invoke(IHTMLAttributeCollection *i
 
 static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
 {
-    IDispatchEx *dispex = &This->elem->node.dispex.IDispatchEx_iface;
+    IDispatchEx *dispex = &This->elem->node.event_target.dispex.IDispatchEx_iface;
     DISPID id = DISPID_STARTENUM;
     LONG len = -1;
     HRESULT hres;
@@ -4414,7 +4414,7 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
         return E_UNEXPECTED;
     }
 
-    hres = IDispatchEx_GetDispID(&This->elem->node.dispex.IDispatchEx_iface,
+    hres = IDispatchEx_GetDispID(&This->elem->node.event_target.dispex.IDispatchEx_iface,
             name, fdexNameCaseInsensitive, id);
     return hres;
 }

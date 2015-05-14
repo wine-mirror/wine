@@ -73,17 +73,17 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 {
-    return node->vtbl->get_event_target ? node->vtbl->get_event_target(node) : &node->event_target;
+    return node->vtbl->get_event_target ? node->vtbl->get_event_target(node) : &node->event_target.ptr;
 }
 
 static inline HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
 {
-    return set_event_handler(&node->dispex, get_node_event_target(node), node->doc, eid, var);
+    return set_event_handler(&node->event_target.dispex, get_node_event_target(node), node->doc, eid, var);
 }
 
 static inline HRESULT get_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
 {
-    return get_event_handler(&node->dispex, get_node_event_target(node), eid, var);
+    return get_event_handler(&node->event_target.dispex, get_node_event_target(node), eid, var);
 }
 
 static inline HRESULT set_doc_event(HTMLDocument *doc, eventid_t eid, VARIANT *var)

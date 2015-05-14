@@ -327,6 +327,11 @@ typedef struct {
 
 typedef struct {
     DispatchEx dispex;
+    event_target_t *ptr;
+} EventTarget;
+
+typedef struct {
+    DispatchEx dispex;
     IHTMLOptionElementFactory IHTMLOptionElementFactory_iface;
 
     LONG ref;
@@ -652,7 +657,7 @@ typedef struct {
 } NodeImplVtbl;
 
 struct HTMLDOMNode {
-    DispatchEx dispex;
+    EventTarget   event_target;
     IHTMLDOMNode  IHTMLDOMNode_iface;
     IHTMLDOMNode2 IHTMLDOMNode2_iface;
     const NodeImplVtbl *vtbl;
@@ -661,7 +666,6 @@ struct HTMLDOMNode {
 
     nsIDOMNode *nsnode;
     HTMLDocumentNode *doc;
-    event_target_t *event_target;
     ConnectionPointContainer *cp_container;
 };
 
