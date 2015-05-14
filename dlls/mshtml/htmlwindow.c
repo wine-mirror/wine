@@ -1669,7 +1669,7 @@ static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, I
         return E_FAIL;
     }
 
-    return detach_event(window->doc->body_event_target, &window->doc->basedoc, event, pDisp);
+    return detach_event(&window->event_target, &window->doc->basedoc, event, pDisp);
 }
 
 static HRESULT window_set_timer(HTMLInnerWindow *This, VARIANT *expr, LONG msec, VARIANT *language,

@@ -1518,13 +1518,11 @@ HRESULT attach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name,
     return ensure_nsevent_handler(doc->doc_node, data, eid);
 }
 
-HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
+HRESULT detach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
 {
+    event_target_t *data;
     eventid_t eid;
     DWORD i = 0;
-
-    if(!event_target)
-        return S_OK;
 
     eid = attr_to_eid(name);
     if(eid == EVENTID_LAST) {
@@ -1532,13 +1530,17 @@ HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name,
         return S_OK;
     }
 
-    if(!event_target->event_table[eid])
+    data = get_event_target_data(event_target, FALSE);
+    if(!data)
         return S_OK;
 
-    while(i < event_target->event_table[eid]->handler_cnt) {
-        if(event_target->event_table[eid]->handlers[i] == disp) {
-            IDispatch_Release(event_target->event_table[eid]->handlers[i]);
-            event_target->event_table[eid]->handlers[i] = NULL;
+    if(!data->event_table[eid])
+        return S_OK;
+
+    while(i < data->event_table[eid]->handler_cnt) {
+        if(data->event_table[eid]->handlers[i] == disp) {
+            IDispatch_Release(data->event_table[eid]->handlers[i]);
+            data->event_table[eid]->handlers[i] = NULL;
         }
         i++;
     }
