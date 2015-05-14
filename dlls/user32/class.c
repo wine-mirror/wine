@@ -977,7 +977,7 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         break;
     case GCLP_HICON:
         retval = (ULONG_PTR)class->hIcon;
-        if (retval && class->hIconSmIntern)
+        if (class->hIconSmIntern)
         {
             DestroyIcon(class->hIconSmIntern);
             class->hIconSmIntern = NULL;
@@ -990,12 +990,11 @@ static ULONG_PTR CLASS_SetClassLong( HWND hwnd, INT offset, LONG_PTR newval,
         break;
     case GCLP_HICONSM:
         retval = (ULONG_PTR)class->hIconSm;
-        if (retval && !newval)
-            class->hIconSmIntern = class->hIcon ? CopyImage( class->hIcon, IMAGE_ICON,
-                                                GetSystemMetrics( SM_CXSMICON ),
-                                                GetSystemMetrics( SM_CYSMICON ),
-                                                LR_COPYFROMRESOURCE ) : NULL;
-        else if (!retval && newval && class->hIconSmIntern)
+        if (retval && !newval && class->hIcon)
+            class->hIconSmIntern = CopyImage( class->hIcon, IMAGE_ICON,
+                      GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ),
+                      LR_COPYFROMRESOURCE );
+        else if (newval && class->hIconSmIntern)
         {
             DestroyIcon(class->hIconSmIntern);
             class->hIconSmIntern = NULL;
