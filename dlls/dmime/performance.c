@@ -1081,7 +1081,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
 	set_audiopath_perf_pointer(pPath, iface);
 	set_audiopath_dsound_buffer(pPath, buffer);
-	set_audiopath_primary_dsound_buffer(pPath, buffer);
+	set_audiopath_primary_dsound_buffer(pPath, primary_buffer);
 
 	*ppNewPath = pPath;
 	
