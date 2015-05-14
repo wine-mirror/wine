@@ -2007,23 +2007,20 @@ static void test_icons(void)
 
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == 0, "wrong small icon %p/0\n", res );
-    /* this test is XP specific */
-    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res != 0, "wrong small icon %p\n", res );*/
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( (res && res != small_icon && res != icon2) || broken(!res), "wrong small2 icon %p\n", res );
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon );
     ok( res == 0, "wrong previous small icon %p/0\n", res );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
-    /* this test is XP specific */
-    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );*/
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == icon || broken(!res), "wrong small2 icon after set %p/%p\n", res, icon );
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon );
     ok( res == icon, "wrong previous small icon %p/%p\n", res, icon );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
-    /* this test is XP specific */
-    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );*/
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == small_icon || broken(!res), "wrong small2 icon after set %p/%p\n", res, small_icon );
 
     /* make sure the big icon hasn't changed */
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );

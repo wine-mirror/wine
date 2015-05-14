@@ -60,6 +60,7 @@ typedef struct tagWND
     HMENU          hSysMenu;      /* window's copy of System Menu */
     HICON          hIcon;         /* window's icon */
     HICON          hIconSmall;    /* window's small icon */
+    HICON          hIconSmall2;   /* window's secondary small icon, derived from hIcon */
     struct window_surface *surface; /* Window surface if any */
     struct tagDIALOGINFO *dlgInfo;/* Dialog additional info (dialogs only) */
     int            pixel_format;  /* Pixel format set by the graphics driver */

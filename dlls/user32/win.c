@@ -978,6 +978,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     wndPtr->text = NULL;
     HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
     wndPtr->pScroll = NULL;
+    DestroyIcon( wndPtr->hIconSmall2 );
     surface = wndPtr->surface;
     wndPtr->surface = NULL;
     WIN_ReleasePtr( wndPtr );
@@ -1468,6 +1469,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     wndPtr->userdata       = 0;
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;
+    wndPtr->hIconSmall2    = 0;
     wndPtr->hSysMenu       = 0;
 
     wndPtr->min_pos.x = wndPtr->min_pos.y = -1;

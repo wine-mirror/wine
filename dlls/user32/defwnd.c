@@ -605,10 +605,32 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             {
             case ICON_SMALL:
                 ret = wndPtr->hIconSmall;
+                if (ret && !lParam && wndPtr->hIcon)
+                {
+                    wndPtr->hIconSmall2 = CopyImage( wndPtr->hIcon, IMAGE_ICON,
+                                                     GetSystemMetrics( SM_CXSMICON ),
+                                                     GetSystemMetrics( SM_CYSMICON ), 0 );
+                }
+                else if (lParam && wndPtr->hIconSmall2)
+                {
+                    DestroyIcon( wndPtr->hIconSmall2 );
+                    wndPtr->hIconSmall2 = NULL;
+                }
                 wndPtr->hIconSmall = (HICON)lParam;
                 break;
             case ICON_BIG:
                 ret = wndPtr->hIcon;
+                if (wndPtr->hIconSmall2)
+                {
+                    DestroyIcon( wndPtr->hIconSmall2 );
+                    wndPtr->hIconSmall2 = NULL;
+                }
+                if (lParam && !wndPtr->hIconSmall)
+                {
+                    wndPtr->hIconSmall2 = CopyImage( (HICON)lParam, IMAGE_ICON,
+                                                     GetSystemMetrics( SM_CXSMICON ),
+                                                     GetSystemMetrics( SM_CYSMICON ), 0 );
+                }
                 wndPtr->hIcon = (HICON)lParam;
                 break;
             default:
@@ -639,7 +661,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 ret = wndPtr->hIcon;
                 break;
             case ICON_SMALL2:
-                ret = wndPtr->hIconSmall;
+                ret = wndPtr->hIconSmall ? wndPtr->hIconSmall : wndPtr->hIconSmall2;
                 break;
             default:
                 ret = 0;
