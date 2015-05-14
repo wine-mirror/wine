@@ -3819,7 +3819,7 @@ static void test_select(void)
     FD_SET_ALL(fdRead);
     SetLastError(0xdeadbeef);
     ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
-    ok(ret == SOCKET_ERROR, "expected 1, got %d\n", ret);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
 todo_wine
     ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
     /* descriptor sets are unchanged */
@@ -3847,7 +3847,7 @@ todo_wine
     SetLastError(0xdeadbeef);
     ret = select(0, NULL, NULL, &exceptfds, &select_timeout);
 todo_wine
-    ok(ret == SOCKET_ERROR, "expected 1, got %d\n", ret);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
 todo_wine
     ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
     WaitForSingleObject (thread_handle, 1000);
