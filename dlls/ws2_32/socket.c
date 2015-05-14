@@ -3049,6 +3049,7 @@ connect_success:
     _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
                   FD_WINE_CONNECTED|FD_READ|FD_WRITE,
                   FD_CONNECT|FD_WINE_LISTENING);
+    TRACE("\tconnected %04lx\n", s);
     return 0;
 }
 
