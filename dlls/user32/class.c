@@ -292,6 +292,7 @@ static void CLASS_FreeClass( CLASS *classPtr )
     list_remove( &classPtr->entry );
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
+    DestroyIcon( classPtr->hIconSmIntern );
     HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     HeapFree( GetProcessHeap(), 0, classPtr );
     USER_Unlock();
