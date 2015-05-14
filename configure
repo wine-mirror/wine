@@ -17488,6 +17488,7 @@ wine_fn_config_dll olecli32 enable_olecli32 implib
 wine_fn_config_dll oledb32 enable_oledb32 clean
 wine_fn_config_test dlls/oledb32/tests oledb32_test clean
 wine_fn_config_dll oledlg enable_oledlg implib,po
+wine_fn_config_test dlls/oledlg/tests oledlg_test
 wine_fn_config_dll olepro32 enable_olepro32 implib
 wine_fn_config_dll olesvr.dll16 enable_win16
 wine_fn_config_dll olesvr32 enable_olesvr32 implib

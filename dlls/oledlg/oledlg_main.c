@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -30,6 +32,7 @@
 #include "oledlg_private.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -122,21 +125,120 @@ BOOL WINAPI OleUIAddVerbMenuA(IOleObject *object, LPCSTR shorttype,
     return ret;
 }
 
+static inline BOOL is_verb_in_range(const OLEVERB *verb, UINT idmin, UINT idmax)
+{
+    if (idmax == 0) return TRUE;
+    return (verb->lVerb + idmin <= idmax);
+}
+
+static HRESULT get_next_insertable_verb(IEnumOLEVERB *enumverbs, UINT idmin, UINT idmax, OLEVERB *verb)
+{
+    memset(verb, 0, sizeof(*verb));
+
+    while (IEnumOLEVERB_Next(enumverbs, 1, verb, NULL) == S_OK) {
+        if (is_verb_in_range(verb, idmin, idmax) && (verb->grfAttribs & OLEVERBATTRIB_ONCONTAINERMENU))
+            return S_OK;
+
+        CoTaskMemFree(verb->lpszVerbName);
+        memset(verb, 0, sizeof(*verb));
+    }
+
+    return S_FALSE;
+}
+
+static void insert_verb_to_menu(HMENU menu, UINT idmin, const OLEVERB *verb)
+{
+    InsertMenuW(menu, ~0, verb->fuFlags | MF_BYPOSITION | MF_STRING, verb->lVerb + idmin, verb->lpszVerbName);
+}
+
 /***********************************************************************
  *           OleUIAddVerbMenuW (OLEDLG.14)
  */
-BOOL WINAPI OleUIAddVerbMenuW(
-  LPOLEOBJECT lpOleObj, LPCWSTR lpszShortType,
-  HMENU hMenu, UINT uPos, UINT uIDVerbMin, UINT uIDVerbMax,
-  BOOL bAddConvert, UINT idConvert, HMENU *lphMenu)
+BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
+    HMENU hMenu, UINT uPos, UINT idmin, UINT idmax, BOOL addConvert, UINT idConvert, HMENU *ret_submenu)
 {
-  FIXME("(%p, %s, %p, %d, %d, %d, %d, %d, %p): stub\n",
-    lpOleObj, debugstr_w(lpszShortType),
-    hMenu, uPos, uIDVerbMin, uIDVerbMax,
-    bAddConvert, idConvert, lphMenu
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    static const WCHAR objectW[] = {'O','b','j','e','c','t',0}; /* FIXME: this should be localized */
+    static const WCHAR spaceW[] = {' ',0};
+    IEnumOLEVERB *enumverbs = NULL;
+    WCHAR *rootname, *objecttype;
+    LPOLESTR usertype = NULL;
+    OLEVERB firstverb, verb;
+    HMENU submenu;
+
+    TRACE("(%p, %s, %p, %d, %d, %d, %d, %d, %p)\n", object, debugstr_w(shorttype),
+        hMenu, uPos, idmin, idmax, addConvert, idConvert, ret_submenu);
+
+    if (addConvert)
+        FIXME("convert menu item is not supported.\n");
+
+    if (ret_submenu)
+        *ret_submenu = NULL;
+
+    if (!hMenu || !ret_submenu)
+        return FALSE;
+
+    /* check if we can get verbs at all */
+    if (object)
+        IOleObject_EnumVerbs(object, &enumverbs);
+
+    /* no object, or object without enumeration support */
+    if (!object || (object && !enumverbs)) {
+        InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_STRING|MF_GRAYED, idmin, objectW);
+        return FALSE;
+    }
+
+    /* root entry string */
+    if (!shorttype && (IOleObject_GetUserType(object, USERCLASSTYPE_SHORT, &usertype) == S_OK))
+        objecttype = usertype;
+    else
+        objecttype = (WCHAR*)shorttype;
+
+    rootname = CoTaskMemAlloc((strlenW(objecttype) + strlenW(objectW) + 2)*sizeof(WCHAR));
+    strcpyW(rootname, objecttype);
+    strcatW(rootname, spaceW);
+    strcatW(rootname, objectW);
+    CoTaskMemFree(usertype);
+
+    /* iterate through verbs */
+
+    /* find first suitable verb */
+    get_next_insertable_verb(enumverbs, idmin, idmax, &firstverb);
+
+    if (get_next_insertable_verb(enumverbs, idmin, idmax, &verb) != S_OK) {
+        WCHAR *str = CoTaskMemAlloc((strlenW(rootname) + strlenW(firstverb.lpszVerbName) + 2)*sizeof(WCHAR));
+
+        strcpyW(str, firstverb.lpszVerbName);
+        strcatW(str, spaceW);
+        strcatW(str, rootname);
+
+        RemoveMenu(hMenu, uPos, MF_BYPOSITION);
+        InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_STRING, idmin, str);
+        CoTaskMemFree(firstverb.lpszVerbName);
+        CoTaskMemFree(rootname);
+        CoTaskMemFree(str);
+        IEnumOLEVERB_Release(enumverbs);
+        return TRUE;
+    }
+
+    submenu = CreatePopupMenu();
+    insert_verb_to_menu(submenu, idmin, &firstverb);
+    insert_verb_to_menu(submenu, idmin, &verb);
+    CoTaskMemFree(firstverb.lpszVerbName);
+    CoTaskMemFree(verb.lpszVerbName);
+
+    while (get_next_insertable_verb(enumverbs, idmin, idmax, &verb) == S_OK) {
+        insert_verb_to_menu(submenu, idmin, &verb);
+        CoTaskMemFree(verb.lpszVerbName);
+    }
+
+    if (submenu)
+        *ret_submenu = submenu;
+
+    /* now submenu is ready, add root entry to original menu, attach submenu */
+    InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_POPUP|MF_STRING, (UINT_PTR)submenu, rootname);
+    IEnumOLEVERB_Release(enumverbs);
+    CoTaskMemFree(rootname);
+    return TRUE;
 }
 
 /***********************************************************************
