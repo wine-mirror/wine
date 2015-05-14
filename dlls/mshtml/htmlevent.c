@@ -1484,10 +1484,10 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
     return S_OK;
 }
 
-HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR name,
+HRESULT attach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name,
         IDispatch *disp, VARIANT_BOOL *res)
 {
-    event_target_t *event_target;
+    event_target_t *data;
     eventid_t eid;
     DWORD i = 0;
 
@@ -1498,24 +1498,24 @@ HRESULT attach_event(event_target_t **event_target_ptr, HTMLDocument *doc, BSTR 
         return S_OK;
     }
 
-    event_target = get_event_target(event_target_ptr);
-    if(!event_target)
+    data = get_event_target_data(event_target, TRUE);
+    if(!data)
         return E_OUTOFMEMORY;
 
-    if(event_target->event_table[eid]) {
-        while(i < event_target->event_table[eid]->handler_cnt && event_target->event_table[eid]->handlers[i])
+    if(data->event_table[eid]) {
+        while(i < data->event_table[eid]->handler_cnt && data->event_table[eid]->handlers[i])
             i++;
-        if(i == event_target->event_table[eid]->handler_cnt && !alloc_handler_vector(event_target, eid, i+1))
+        if(i == data->event_table[eid]->handler_cnt && !alloc_handler_vector(data, eid, i+1))
             return E_OUTOFMEMORY;
-    }else if(!alloc_handler_vector(event_target, eid, i+1)) {
+    }else if(!alloc_handler_vector(data, eid, i+1)) {
         return E_OUTOFMEMORY;
     }
 
     IDispatch_AddRef(disp);
-    event_target->event_table[eid]->handlers[i] = disp;
+    data->event_table[eid]->handlers[i] = disp;
 
     *res = VARIANT_TRUE;
-    return ensure_nsevent_handler(doc->doc_node, event_target, eid);
+    return ensure_nsevent_handler(doc->doc_node, data, eid);
 }
 
 HRESULT detach_event(event_target_t *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)

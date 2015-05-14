@@ -1654,7 +1654,7 @@ static HRESULT WINAPI HTMLWindow3_attachEvent(IHTMLWindow3 *iface, BSTR event, I
         return E_FAIL;
     }
 
-    return attach_event(&window->doc->body_event_target, &window->doc->basedoc, event, pDisp, pfResult);
+    return attach_event(&window->event_target, &window->doc->basedoc, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLWindow3_detachEvent(IHTMLWindow3 *iface, BSTR event, IDispatch *pDisp)

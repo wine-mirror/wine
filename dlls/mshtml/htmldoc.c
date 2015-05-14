@@ -2032,7 +2032,7 @@ static HRESULT WINAPI HTMLDocument3_attachEvent(IHTMLDocument3 *iface, BSTR even
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
 
-    return attach_event(&This->doc_node->node.event_target.ptr, This, event, pDisp, pfResult);
+    return attach_event(&This->doc_node->node.event_target, This, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLDocument3_detachEvent(IHTMLDocument3 *iface, BSTR event,
