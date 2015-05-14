@@ -1340,7 +1340,7 @@ static event_target_t **find_event_target(HTMLDocumentNode *doc, HTMLScriptEleme
         htmldoc_addref(&doc->basedoc);
     }else if(!strcmpW(target_id, windowW)) {
         if(doc->window) {
-            target_dispex = &doc->window->dispex;
+            target_dispex = &doc->window->event_target.dispex;
             IDispatchEx_AddRef(&target_dispex->IDispatchEx_iface);
             target = &doc->body_event_target;
         }

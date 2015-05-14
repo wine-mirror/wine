@@ -426,7 +426,7 @@ struct HTMLOuterWindow {
 
 struct HTMLInnerWindow {
     HTMLWindow base;
-    DispatchEx dispex;
+    EventTarget event_target;
 
     HTMLDocumentNode *doc;
 
