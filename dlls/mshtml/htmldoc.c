@@ -3962,7 +3962,7 @@ static void HTMLDocument_on_advise(IUnknown *iface, cp_static_data_t *cp)
     HTMLDocument *This = impl_from_IHTMLDocument2((IHTMLDocument2*)iface);
 
     if(This->window)
-        update_cp_events(This->window->base.inner_window, &This->doc_node->node.event_target.ptr, cp);
+        update_cp_events(This->window->base.inner_window, &This->doc_node->node.event_target, cp);
 }
 
 static inline HTMLDocument *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)

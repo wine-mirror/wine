@@ -1563,18 +1563,18 @@ void bind_target_event(HTMLDocumentNode *doc, EventTarget *event_target, const W
     set_event_handler_disp(event_target, doc, eid, disp);
 }
 
-void update_cp_events(HTMLInnerWindow *window, event_target_t **event_target_ptr, cp_static_data_t *cp)
+void update_cp_events(HTMLInnerWindow *window, EventTarget *event_target, cp_static_data_t *cp)
 {
-    event_target_t *event_target;
+    event_target_t *data;
     int i;
 
-    event_target = get_event_target(event_target_ptr);
-    if(!event_target)
+    data = get_event_target_data(event_target, FALSE);
+    if(!data)
         return; /* FIXME */
 
     for(i=0; i < EVENTID_LAST; i++) {
         if((event_info[i].flags & EVENT_DEFAULTLISTENER) && is_cp_event(cp, event_info[i].dispid))
-            ensure_nsevent_handler(window->doc, event_target, i);
+            ensure_nsevent_handler(window->doc, data, i);
     }
 }
 
