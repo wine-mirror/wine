@@ -54,7 +54,7 @@ eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMHTMLElement*) DECLSPEC_HIDDEN;
 void release_event_target(event_target_t*) DECLSPEC_HIDDEN;
 void fire_event(HTMLDocumentNode*,eventid_t,BOOL,nsIDOMNode*,nsIDOMEvent*,IDispatch*) DECLSPEC_HIDDEN;
-HRESULT set_event_handler(DispatchEx*,event_target_t**,HTMLDocumentNode*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT set_event_handler(EventTarget*,HTMLDocumentNode*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT get_event_handler(DispatchEx*,event_target_t**,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT attach_event(event_target_t**,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
 HRESULT detach_event(event_target_t*,HTMLDocument*,BSTR,IDispatch*) DECLSPEC_HIDDEN;
@@ -64,7 +64,7 @@ void update_cp_events(HTMLInnerWindow*,event_target_t**,cp_static_data_t*) DECLS
 HRESULT doc_init_events(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_events(HTMLDocumentNode *doc) DECLSPEC_HIDDEN;
 HRESULT create_event_obj(IHTMLEventObj**) DECLSPEC_HIDDEN;
-void bind_target_event(HTMLDocumentNode*,event_target_t**,DispatchEx*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
+void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*) DECLSPEC_HIDDEN;
 
 void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
@@ -80,7 +80,7 @@ static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 
 static inline HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
 {
-    return set_event_handler(&node->event_target.dispex, get_node_event_target(node), node->doc, eid, var);
+    return set_event_handler(&node->event_target, node->doc, eid, var);
 }
 
 static inline HRESULT get_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)
