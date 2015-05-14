@@ -105,7 +105,7 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
         return E_FAIL;
     }
 
-    return get_event_handler(&window->inner_window->event_target.dispex, &window->inner_window->doc->body_event_target, eid, var);
+    return get_event_handler(&window->inner_window->event_target, eid, var);
 }
 
 static void detach_inner_window(HTMLInnerWindow *window)

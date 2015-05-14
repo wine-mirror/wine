@@ -1462,18 +1462,20 @@ HRESULT set_event_handler(EventTarget *event_target, HTMLDocumentNode *doc, even
     return S_OK;
 }
 
-HRESULT get_event_handler(DispatchEx *dispex, event_target_t **event_target, eventid_t eid, VARIANT *var)
+HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var)
 {
+    event_target_t *data;
     VARIANT *v;
     HRESULT hres;
 
-    hres = dispex_get_dprop_ref(dispex, event_info[eid].attr_name, FALSE, &v);
+    hres = dispex_get_dprop_ref(&event_target->dispex, event_info[eid].attr_name, FALSE, &v);
     if(SUCCEEDED(hres) && V_VT(v) != VT_EMPTY)
         return VariantCopy(var, v);
 
-    if(*event_target && (*event_target)->event_table[eid] && (*event_target)->event_table[eid]->handler_prop) {
+    data = get_event_target_data(event_target, FALSE);
+    if(data && data->event_table[eid] && data->event_table[eid]->handler_prop) {
         V_VT(var) = VT_DISPATCH;
-        V_DISPATCH(var) = (*event_target)->event_table[eid]->handler_prop;
+        V_DISPATCH(var) = data->event_table[eid]->handler_prop;
         IDispatch_AddRef(V_DISPATCH(var));
     }else {
         V_VT(var) = VT_NULL;
