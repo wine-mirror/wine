@@ -883,6 +883,19 @@ HRESULT create_event_obj(IHTMLEventObj **ret)
     return S_OK;
 }
 
+static inline event_target_t *get_event_target_data(EventTarget *event_target, BOOL alloc)
+{
+    event_target_t **ptr;
+
+    ptr = event_target->dispex.data->vtbl && event_target->dispex.data->vtbl->get_event_target_ptr
+        ? event_target->dispex.data->vtbl->get_event_target_ptr(&event_target->dispex)
+        : &event_target->ptr;
+    if(*ptr || !alloc)
+        return *ptr;
+
+    return *ptr = heap_alloc_zero(sizeof(event_target_t));
+}
+
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
 {
     IDispatchEx *dispex;
@@ -1107,7 +1120,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         do {
             hres = get_node(doc, nsnode, FALSE, &node);
             if(SUCCEEDED(hres) && node) {
-                call_event_handlers(doc, event_obj, *get_node_event_target(node),
+                call_event_handlers(doc, event_obj, get_event_target_data(&node->event_target, FALSE),
                         node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                 node_release(node);
             }
@@ -1136,7 +1149,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             if(NS_SUCCEEDED(nsres) && nsbody) {
                 hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
                 if(SUCCEEDED(hres) && node) {
-                    call_event_handlers(doc, event_obj, *get_node_event_target(node),
+                    call_event_handlers(doc, event_obj, get_event_target_data(&node->event_target, FALSE),
                             node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                     node_release(node);
                 }
@@ -1299,26 +1312,6 @@ HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
 
     fire_event(node->doc, eid, TRUE, node->nsnode, NULL, NULL);
     return S_OK;
-}
-
-static inline event_target_t *get_event_target(event_target_t **event_target_ptr)
-{
-    if(!*event_target_ptr)
-        *event_target_ptr = heap_alloc_zero(sizeof(event_target_t));
-    return *event_target_ptr;
-}
-
-static inline event_target_t *get_event_target_data(EventTarget *event_target, BOOL alloc)
-{
-    event_target_t **ptr;
-
-    ptr = event_target->dispex.data->vtbl && event_target->dispex.data->vtbl->get_event_target_ptr
-        ? event_target->dispex.data->vtbl->get_event_target_ptr(&event_target->dispex)
-        : &event_target->ptr;
-    if(*ptr || !alloc)
-        return *ptr;
-
-    return *ptr = heap_alloc_zero(sizeof(event_target_t));
 }
 
 static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, int cnt)
