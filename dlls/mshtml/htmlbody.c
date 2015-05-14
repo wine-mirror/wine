@@ -824,13 +824,13 @@ static void HTMLBodyElement_unlink(HTMLDOMNode *iface)
     }
 }
 
-static event_target_t **HTMLBodyElement_get_event_target(HTMLDOMNode *iface)
+static event_target_t **HTMLBodyElement_get_event_target_ptr(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
     return This->textcont.element.node.doc
         ? &This->textcont.element.node.doc->body_event_target
-        : &This->textcont.element.node.event_target;
+        : &This->textcont.element.node.event_target.ptr;
 }
 
 static BOOL HTMLBodyElement_is_text_edit(HTMLDOMNode *iface)
@@ -852,7 +852,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     HTMLElement_clone,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col,
-    HTMLBodyElement_get_event_target,
+    HTMLBodyElement_get_event_target_ptr,
     NULL,
     NULL,
     NULL,

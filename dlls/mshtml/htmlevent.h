@@ -73,7 +73,9 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*) DECLSPEC_HIDDEN;
 
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 {
-    return node->vtbl->get_event_target ? node->vtbl->get_event_target(node) : &node->event_target.ptr;
+    return node->event_target.dispex.data->vtbl->get_event_target_ptr
+        ? node->event_target.dispex.data->vtbl->get_event_target_ptr(&node->event_target.dispex)
+        : &node->event_target.ptr;
 }
 
 static inline HRESULT set_node_event(HTMLDOMNode *node, eventid_t eid, VARIANT *var)

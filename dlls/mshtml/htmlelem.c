@@ -3988,6 +3988,14 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     return S_OK;
 }
 
+static event_target_t **HTMLElement_get_event_target_ptr(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    return This->node.vtbl->get_event_target_ptr
+        ? This->node.vtbl->get_event_target_ptr(&This->node)
+        : &This->node.event_target.ptr;
+}
+
 static const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     0
@@ -3997,7 +4005,8 @@ static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     NULL,
     HTMLElement_get_dispid,
     HTMLElement_invoke,
-    HTMLElement_populate_props
+    HTMLElement_populate_props,
+    HTMLElement_get_event_target_ptr
 };
 
 static dispex_static_data_t HTMLElement_dispex = {
