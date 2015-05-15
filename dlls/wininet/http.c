@@ -4244,7 +4244,6 @@ static void HTTP_InsertCookies(http_request_t *request)
     if(res != ERROR_SUCCESS || !cookies)
         return;
 
-    get_cookie_header(request->server->name, request->path, &cookies);
     HTTP_HttpAddRequestHeadersW(request, cookies, strlenW(cookies), HTTP_ADDREQ_FLAG_REPLACE);
     heap_free(cookies);
 }
