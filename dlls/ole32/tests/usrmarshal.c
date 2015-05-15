@@ -768,6 +768,99 @@ static void test_marshal_STGMEDIUM(void)
     HeapFree(GetProcessHeap(), 0, expect_buffer);
 }
 
+static void test_marshal_SNB(void)
+{
+    static const WCHAR str1W[] = {'s','t','r','i','n','g','1',0};
+    static const WCHAR str2W[] = {'s','t','r','2',0};
+    unsigned char *buffer, *src, *mbuf;
+    MIDL_STUB_MESSAGE stub_msg;
+    WCHAR **ptrW, *dataW;
+    USER_MARSHAL_CB umcb;
+    RPC_MESSAGE rpc_msg;
+    RemSNB *wiresnb;
+    SNB snb, snb2;
+    ULONG size;
+
+    /* 4 bytes alignment */
+    snb = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = SNB_UserSize(&umcb.Flags, 3, &snb);
+    ok(size == 16, "Size should be 16, instead of %d\n", size);
+
+    /* NULL block */
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = SNB_UserSize(&umcb.Flags, 0, &snb);
+    ok(size == 12, "Size should be 12, instead of %d\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    mbuf = SNB_UserMarshal(&umcb.Flags, buffer, &snb);
+    ok(mbuf == buffer + size, "got %p, %p\n", mbuf, buffer + size);
+
+    wiresnb = (RemSNB*)buffer;
+    ok(wiresnb->ulCntStr == 0, "got %u\n", wiresnb->ulCntStr);
+    ok(wiresnb->ulCntChar == 0, "got %u\n", wiresnb->ulCntChar);
+    ok(*(ULONG*)wiresnb->rgString == 0, "got %u\n", *(ULONG*)wiresnb->rgString);
+
+    snb2 = NULL;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    SNB_UserUnmarshal(&umcb.Flags, buffer, &snb2);
+    ok(snb2 == NULL, "got %p\n", snb2);
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    SNB_UserFree(&umcb.Flags, &snb2);
+
+    /* block with actual data */
+
+    /* allocate source block, n+1 pointers first, then data */
+    src = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*)*3 + sizeof(str1W) + sizeof(str2W));
+    ptrW = (WCHAR**)src;
+    dataW = *ptrW = (WCHAR*)(src + 3*sizeof(WCHAR*));
+    ptrW++;
+    *ptrW = (WCHAR*)(src + 3*sizeof(WCHAR*) + sizeof(str1W));
+    ptrW++;
+    *ptrW = NULL;
+    lstrcpyW(dataW, str1W);
+    dataW += lstrlenW(str1W) + 1;
+    lstrcpyW(dataW, str2W);
+
+    snb = (SNB)src;
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = SNB_UserSize(&umcb.Flags, 0, &snb);
+    ok(size == 38, "Size should be 38, instead of %d\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    SNB_UserMarshal(&umcb.Flags, buffer, &snb);
+
+    wiresnb = (RemSNB*)buffer;
+    ok(wiresnb->ulCntStr == 13, "got %u\n", wiresnb->ulCntStr);
+    ok(wiresnb->ulCntChar == 2, "got %u\n", wiresnb->ulCntChar);
+    /* payload length is stored one more time, as ULONG */
+    ok(*(ULONG*)wiresnb->rgString == wiresnb->ulCntStr, "got %u\n", *(ULONG*)wiresnb->rgString);
+    dataW = &wiresnb->rgString[2];
+    ok(!lstrcmpW(dataW, str1W), "marshalled string 0: %s\n", wine_dbgstr_w(dataW));
+    dataW += sizeof(str1W)/sizeof(WCHAR);
+    ok(!lstrcmpW(dataW, str2W), "marshalled string 1: %s\n", wine_dbgstr_w(dataW));
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+
+    snb2 = NULL;
+    SNB_UserUnmarshal(&umcb.Flags, buffer, &snb2);
+
+    ptrW = snb2;
+    ok(!lstrcmpW(*ptrW, str1W), "unmarshalled string 0: %s\n", wine_dbgstr_w(*ptrW));
+    ptrW++;
+    ok(!lstrcmpW(*ptrW, str2W), "unmarshalled string 1: %s\n", wine_dbgstr_w(*ptrW));
+    ptrW++;
+    ok(*ptrW == NULL, "expected terminating NULL ptr, got %p, start %p\n", *ptrW, snb2);
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    SNB_UserFree(&umcb.Flags, &snb2);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -780,6 +873,7 @@ START_TEST(usrmarshal)
     test_marshal_HMETAFILEPICT();
     test_marshal_WdtpInterfacePointer();
     test_marshal_STGMEDIUM();
+    test_marshal_SNB();
 
     CoUninitialize();
 }

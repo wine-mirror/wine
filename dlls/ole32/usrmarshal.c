@@ -2160,25 +2160,117 @@ void __RPC_USER FLAG_STGMEDIUM_UserFree(ULONG *pFlags, FLAG_STGMEDIUM *pStgMediu
 
 ULONG __RPC_USER SNB_UserSize(ULONG *pFlags, ULONG StartingSize, SNB *pSnb)
 {
-    FIXME(":stub\n");
-    return StartingSize;
+    ULONG size = StartingSize;
+
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pSnb);
+
+    ALIGN_LENGTH(size, 3);
+
+    /* two counters from RemSNB header, plus one more ULONG */
+    size += 3*sizeof(ULONG);
+
+    /* now actual data length */
+    if (*pSnb)
+    {
+        WCHAR **ptrW = *pSnb;
+
+        while (*ptrW)
+        {
+            size += (strlenW(*ptrW) + 1)*sizeof(WCHAR);
+            ptrW++;
+        }
+    }
+
+    return size;
 }
 
-unsigned char * __RPC_USER SNB_UserMarshal(  ULONG *pFlags, unsigned char *pBuffer, SNB *pSnb)
+struct SNB_wire {
+    ULONG charcnt;
+    ULONG strcnt;
+    ULONG datalen;
+    WCHAR data[1];
+};
+
+unsigned char * __RPC_USER SNB_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, SNB *pSnb)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    struct SNB_wire *wire;
+    ULONG size;
+
+    TRACE("(%s, %p, %p)\n", debugstr_user_flags(pFlags), pBuffer, pSnb);
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    wire = (struct SNB_wire*)pBuffer;
+    wire->charcnt = wire->strcnt = 0;
+    size = 3*sizeof(ULONG);
+
+    if (*pSnb)
+    {
+        WCHAR **ptrW = *pSnb;
+        WCHAR *dataW = wire->data;
+
+        while (*ptrW)
+        {
+            ULONG len = strlenW(*ptrW) + 1;
+
+            wire->strcnt++;
+            wire->charcnt += len;
+            memcpy(dataW, *ptrW, len*sizeof(WCHAR));
+            dataW += len;
+
+            size += len*sizeof(WCHAR);
+            ptrW++;
+        }
+    }
+
+    wire->datalen = wire->charcnt;
+    return pBuffer + size;
 }
 
 unsigned char * __RPC_USER SNB_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, SNB *pSnb)
 {
-    FIXME(":stub\n");
-    return pBuffer;
+    USER_MARSHAL_CB *umcb = (USER_MARSHAL_CB*)pFlags;
+    struct SNB_wire *wire;
+
+    TRACE("(%s, %p, %p)\n", debugstr_user_flags(pFlags), pBuffer, pSnb);
+
+    wire = (struct SNB_wire*)pBuffer;
+
+    if (*pSnb)
+        umcb->pStubMsg->pfnFree(*pSnb);
+
+    if (wire->datalen == 0)
+        *pSnb = NULL;
+    else
+    {
+        WCHAR *src = wire->data, *dest;
+        WCHAR **ptrW;
+        ULONG i;
+
+        ptrW = *pSnb = umcb->pStubMsg->pfnAllocate((wire->strcnt+1)*sizeof(WCHAR*) + wire->datalen);
+        dest = (WCHAR*)(*pSnb + wire->strcnt + 1);
+
+        for (i = 0; i < wire->strcnt; i++)
+        {
+            ULONG len = strlenW(src);
+            memcpy(dest, src, (len + 1)*sizeof(WCHAR));
+            *ptrW = dest;
+            src += len + 1;
+            dest += len + 1;
+            ptrW++;
+        }
+        *ptrW = NULL;
+    }
+
+    return pBuffer + 3*sizeof(ULONG) + wire->datalen*sizeof(WCHAR);
 }
 
 void __RPC_USER SNB_UserFree(ULONG *pFlags, SNB *pSnb)
 {
-    FIXME(":stub\n");
+    USER_MARSHAL_CB *umcb = (USER_MARSHAL_CB*)pFlags;
+    TRACE("(%p)\n", pSnb);
+    if (*pSnb)
+        umcb->pStubMsg->pfnFree(*pSnb);
 }
 
 /* call_as/local stubs for unknwn.idl */
