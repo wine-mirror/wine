@@ -2232,21 +2232,35 @@ HRESULT __RPC_STUB IEnumConnections_Next_Stub(
 HRESULT CALLBACK IEnumConnectionPoints_Next_Proxy(
     IEnumConnectionPoints* This,
     ULONG cConnections,
-    LPCONNECTIONPOINT *ppCP,
+    IConnectionPoint **ppCP,
     ULONG *pcFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ULONG fetched;
+
+    TRACE("(%u, %p %p)\n", cConnections, ppCP, pcFetched);
+
+    if (!pcFetched)
+        pcFetched = &fetched;
+
+    return IEnumConnectionPoints_RemoteNext_Proxy(This, cConnections, ppCP, pcFetched);
 }
 
 HRESULT __RPC_STUB IEnumConnectionPoints_Next_Stub(
     IEnumConnectionPoints* This,
     ULONG cConnections,
-    LPCONNECTIONPOINT *ppCP,
+    IConnectionPoint **ppCP,
     ULONG *pcFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%u, %p, %p)\n", cConnections, ppCP, pcFetched);
+
+    *pcFetched = 0;
+    hr = IEnumConnectionPoints_Next(This, cConnections, ppCP, pcFetched);
+    if (hr == S_OK)
+        *pcFetched = cConnections;
+
+    return hr;
 }
 
 HRESULT CALLBACK IPersistMemory_Load_Proxy(
