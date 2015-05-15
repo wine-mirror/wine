@@ -60,7 +60,7 @@ HRESULT attach_event(EventTarget*,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*) D
 HRESULT detach_event(EventTarget*,HTMLDocument*,BSTR,IDispatch*) DECLSPEC_HIDDEN;
 HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
 HRESULT call_fire_event(HTMLDOMNode*,eventid_t) DECLSPEC_HIDDEN;
-void update_cp_events(HTMLInnerWindow*,EventTarget*,cp_static_data_t*) DECLSPEC_HIDDEN;
+void update_doc_cp_events(HTMLDocumentNode*,cp_static_data_t*) DECLSPEC_HIDDEN;
 HRESULT doc_init_events(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_events(HTMLDocumentNode *doc) DECLSPEC_HIDDEN;
 HRESULT create_event_obj(IHTMLEventObj**) DECLSPEC_HIDDEN;

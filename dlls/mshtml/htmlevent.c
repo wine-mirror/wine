@@ -1336,7 +1336,7 @@ static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, in
     return TRUE;
 }
 
-static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *event_target, eventid_t eid)
+static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
 {
     nsIDOMNode *nsnode = NULL;
 
@@ -1410,7 +1410,7 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, HTMLDocumentNod
     data->event_table[eid]->handler_prop = disp;
     IDispatch_AddRef(disp);
 
-    return ensure_nsevent_handler(doc, data, eid);
+    return ensure_nsevent_handler(doc, eid);
 }
 
 HRESULT set_event_handler(EventTarget *event_target, HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
@@ -1509,7 +1509,7 @@ HRESULT attach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name,
     data->event_table[eid]->handlers[i] = disp;
 
     *res = VARIANT_TRUE;
-    return ensure_nsevent_handler(doc->doc_node, data, eid);
+    return ensure_nsevent_handler(doc->doc_node, eid);
 }
 
 HRESULT detach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
@@ -1557,18 +1557,13 @@ void bind_target_event(HTMLDocumentNode *doc, EventTarget *event_target, const W
     set_event_handler_disp(event_target, doc, eid, disp);
 }
 
-void update_cp_events(HTMLInnerWindow *window, EventTarget *event_target, cp_static_data_t *cp)
+void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
 {
-    event_target_t *data;
     int i;
-
-    data = get_event_target_data(event_target, FALSE);
-    if(!data)
-        return; /* FIXME */
 
     for(i=0; i < EVENTID_LAST; i++) {
         if((event_info[i].flags & EVENT_DEFAULTLISTENER) && is_cp_event(cp, event_info[i].dispid))
-            ensure_nsevent_handler(window->doc, data, i);
+            ensure_nsevent_handler(doc, i);
     }
 }
 
@@ -1617,7 +1612,7 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
 
     for(i=0; i < EVENTID_LAST; i++) {
         if(event_info[i].flags & EVENT_HASDEFAULTHANDLERS) {
-            hres = ensure_nsevent_handler(doc, NULL, i);
+            hres = ensure_nsevent_handler(doc, i);
             if(FAILED(hres))
                 return hres;
         }
