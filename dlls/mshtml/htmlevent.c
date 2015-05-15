@@ -482,6 +482,7 @@ static HRESULT WINAPI HTMLEventObj_get_returnValue(IHTMLEventObj *iface, VARIANT
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    V_VT(p) = VT_EMPTY;
     return VariantCopy(p, &This->return_value);
 }
 
