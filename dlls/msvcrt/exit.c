@@ -280,7 +280,7 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
       UNLOCK_EXIT;
       return NULL;
     }
-    memcpy (newtable, MSVCRT_atexit_table, MSVCRT_atexit_table_size);
+    memcpy (newtable, MSVCRT_atexit_table, MSVCRT_atexit_table_size*sizeof(void *));
     MSVCRT_atexit_table_size += 32;
     MSVCRT_free (MSVCRT_atexit_table);
     MSVCRT_atexit_table = newtable;
