@@ -2732,6 +2732,12 @@ BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype 
         C2_OTHERNEUTRAL        /* LRE, LRO, RLE, RLO, PDF */
     };
 
+    if (!src)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if (count == -1) count = strlenW(src) + 1;
     switch(type)
     {

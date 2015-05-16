@@ -3582,8 +3582,25 @@ static void test_GetStringTypeW(void)
     static const WCHAR space_special[] = {0x09, 0x0d, 0x85};
 
     WORD types[20];
+    BOOL ret;
     WCHAR ch;
     int i;
+
+    /* NULL src */
+    SetLastError(0xdeadbeef);
+    ret = GetStringTypeW(CT_CTYPE1, NULL, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetStringTypeW(CT_CTYPE1, NULL, 0, types);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetStringTypeW(CT_CTYPE1, NULL, 5, types);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
 
     memset(types,0,sizeof(types));
     GetStringTypeW(CT_CTYPE1, blanks, 5, types);
