@@ -15544,6 +15544,8 @@ static void resz_test(void)
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, ps);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
@@ -15564,10 +15566,6 @@ static void resz_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
-    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
-    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
-    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
     IDirect3DSurface9_Release(ds);
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
@@ -15579,7 +15577,6 @@ static void resz_test(void)
     IDirect3DSurface9_Release(original_rt);
     IDirect3DSurface9_Release(rt);
     cleanup_device(device);
-
 
     ZeroMemory(&present_parameters, sizeof(present_parameters));
     present_parameters.Windowed = TRUE;
@@ -15682,6 +15679,8 @@ static void resz_test(void)
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, readback);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, ps);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
 
@@ -15710,6 +15709,10 @@ static void resz_test(void)
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
