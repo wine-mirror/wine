@@ -190,11 +190,13 @@ BOOL WINAPI ReadDirectoryChangesW( HANDLE handle, LPVOID buffer, DWORD len, BOOL
             return TRUE;
 
         WaitForSingleObjectEx( ov.hEvent, INFINITE, TRUE );
-        CloseHandle( ov.hEvent );
         if (returned)
             *returned = ios->Information;
         status = ios->u.Status;
     }
+
+    if (!overlapped)
+        CloseHandle( ov.hEvent );
 
     if (status != STATUS_SUCCESS)
     {
