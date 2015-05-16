@@ -1040,6 +1040,16 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
     return FALSE;
 }
 
+/**************************************************************************
+ *           SetFileCompletionNotificationModes   (KERNEL32.@)
+ */
+BOOL WINAPI SetFileCompletionNotificationModes( HANDLE handle, UCHAR flags )
+{
+    FIXME("%p %x - stub\n", handle, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 
 /***********************************************************************
  *           SetFileInformationByHandle   (KERNEL32.@)

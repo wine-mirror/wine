@@ -1393,7 +1393,7 @@
 # @ stub SetFileAttributesTransactedW
 @ stdcall SetFileAttributesW(wstr long)
 # @ stub SetFileBandwidthReservation
-# @ stub SetFileCompletionNotificationModes
+@ stdcall SetFileCompletionNotificationModes(long long)
 @ stdcall SetFileInformationByHandle(long long ptr long)
 # @ stub SetFileIoOverlappedRange
 @ stdcall SetFilePointer(long long ptr long)

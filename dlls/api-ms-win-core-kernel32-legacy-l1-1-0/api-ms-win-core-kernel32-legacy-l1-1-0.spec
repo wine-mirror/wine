@@ -45,7 +45,7 @@
 @ stub RaiseFailFastException
 @ stdcall RegisterWaitForSingleObject(ptr long ptr ptr long long) kernel32.RegisterWaitForSingleObject
 @ stdcall SetConsoleTitleA(str) kernel32.SetConsoleTitleA
-@ stub SetFileCompletionNotificationModes
+@ stdcall SetFileCompletionNotificationModes(long long) kernel32.SetFileCompletionNotificationModes
 @ stdcall SetHandleCount(long) kernel32.SetHandleCount
 @ stdcall SetMailslotInfo(long long) kernel32.SetMailslotInfo
 @ stdcall SetVolumeLabelW(wstr wstr) kernel32.SetVolumeLabelW
