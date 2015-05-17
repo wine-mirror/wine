@@ -905,14 +905,34 @@ static HRESULT WINAPI ITextRange_fnGetStart(ITextRange *me, LONG *pcpFirst)
     return S_OK;
 }
 
-static HRESULT WINAPI ITextRange_fnSetStart(ITextRange *me, LONG cpFirst)
+static HRESULT WINAPI ITextRange_fnSetStart(ITextRange *me, LONG start)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+    int len;
+
+    TRACE("(%p)->(%d)\n", This, start);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (start == This->start)
+        return S_FALSE;
+
+    if (start < 0) {
+        This->start = 0;
+        return S_OK;
+    }
+
+    len = ME_GetTextLength(This->reOle->editor);
+    if (start > This->end)
+        This->end = len;
+
+    if (start > len)
+        This->start = len;
+    else
+        This->start = start;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnGetEnd(ITextRange *me, LONG *pcpLim)

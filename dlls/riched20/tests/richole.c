@@ -711,6 +711,54 @@ static void test_ITextRange_GetStart_GetEnd(void)
   hres = ITextRange_GetEnd(txtRge, &end);
   ok(hres == S_OK, "ITextRange_GetEnd\n");
   ok(end == 12, "got wrong end value: %d\n", end);
+
+  /* SetStart */
+  hres = ITextRange_SetStart(txtRge, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* same value */
+  hres = ITextRange_SetStart(txtRge, 0);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetStart(txtRge, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* negative resets to 0 */
+  hres = ITextRange_SetStart(txtRge, -1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = -1;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  /* greater than initial end, but less than total char count */
+  hres = ITextRange_SetStart(txtRge, 10);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 10, "got %d\n", start);
+
+  end = 0;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 12, "got %d\n", end);
+
+  hres = ITextRange_SetStart(txtRge, 50);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 12, "got %d\n", start);
+
+  end = 0;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 12, "got %d\n", end);
+
   ITextRange_Release(txtRge);
 
   release_interfaces(&w, &reOle, &txtDoc, NULL);
