@@ -1140,6 +1140,56 @@ static void test_GetFont(void)
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 }
 
+static void test_GetPara(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range = NULL;
+  ITextPara *para, *para2;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 1);
+
+  hr = ITextRange_GetPara(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetPara(range, &para);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 2);
+  EXPECT_REF(para, 1);
+
+  hr = ITextRange_GetPara(range, &para2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(para != para2, "got %p, %p\n", para, para2);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 3);
+  EXPECT_REF(para, 1);
+  EXPECT_REF(para2, 1);
+
+  ITextPara_Release(para);
+  ITextPara_Release(para2);
+  ITextRange_Release(range);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1162,4 +1212,5 @@ START_TEST(richole)
   test_IOleWindow_GetWindow();
   test_IOleInPlaceSite_GetWindow();
   test_GetFont();
+  test_GetPara();
 }
