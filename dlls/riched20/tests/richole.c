@@ -759,6 +759,76 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 12, "got %d\n", end);
 
+  /* SetEnd */
+  hres = ITextRange_SetStart(txtRge, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* same value */
+  hres = ITextRange_SetEnd(txtRge, 5);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetEnd(txtRge, 5);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  /* negative resets to 0 */
+  hres = ITextRange_SetEnd(txtRge, -1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  end = -1;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 0, "got %d\n", end);
+
+  start = -1;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  /* greater than initial end, but less than total char count */
+  hres = ITextRange_SetStart(txtRge, 3);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetEnd(txtRge, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 1, "got %d\n", start);
+
+  end = 0;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 1, "got %d\n", end);
+
+  /* more than total count */
+  hres = ITextRange_SetEnd(txtRge, 50);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 1, "got %d\n", start);
+
+  end = 0;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 13, "got %d\n", end);
+
+  /* zero */
+  hres = ITextRange_SetEnd(txtRge, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  end = 0;
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 0, "got %d\n", end);
+
   ITextRange_Release(txtRge);
 
   release_interfaces(&w, &reOle, &txtDoc, NULL);

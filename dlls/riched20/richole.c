@@ -948,14 +948,31 @@ static HRESULT WINAPI ITextRange_fnGetEnd(ITextRange *me, LONG *pcpLim)
     return S_OK;
 }
 
-static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG cpLim)
+static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG end)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+    int len;
+
+    TRACE("(%p)->(%d)\n", This, end);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (end == This->end)
+        return S_FALSE;
+
+    if (end < This->start) {
+        This->start = This->end = max(0, end);
+        return S_OK;
+    }
+
+    len = ME_GetTextLength(This->reOle->editor);
+    if (end > len)
+        This->end = len + 1;
+    else
+        This->end = end;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnGetFont(ITextRange *me, ITextFont **font)
