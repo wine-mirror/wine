@@ -45,6 +45,7 @@ DEFINE_GUID(IID_ITextHost2, 0x13e670f5,0x1a5a,0x11cf,0xab,0xeb,0x00,0xaa,0x00,0x
 DEFINE_GUID(IID_ITextDocument, 0x8cc497c0, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextRange, 0x8cc497c2, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextSelection, 0x8cc497c1, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
+DEFINE_GUID(IID_ITextFont, 0x8cc497c3, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 
 typedef struct ITextSelectionImpl ITextSelectionImpl;
 typedef struct IOleClientSiteImpl IOleClientSiteImpl;
@@ -79,6 +80,13 @@ struct ITextSelectionImpl {
     IRichEditOleImpl *reOle;
 };
 
+typedef struct ITextFontImpl {
+    ITextFont ITextFont_iface;
+    LONG ref;
+
+    ITextRange *range;
+} ITextFontImpl;
+
 struct IOleClientSiteImpl {
     IOleClientSite IOleClientSite_iface;
     IOleWindow IOleWindow_iface;
@@ -102,6 +110,28 @@ static inline IRichEditOleImpl *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, IRichEditOleImpl, IUnknown_inner);
 }
+
+static inline IOleClientSiteImpl *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleWindow_iface);
+}
+
+static inline IOleClientSiteImpl *impl_from_IOleInPlaceSite(IOleInPlaceSite *iface)
+{
+    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleInPlaceSite_iface);
+}
+
+static inline ITextSelectionImpl *impl_from_ITextSelection(ITextSelection *iface)
+{
+    return CONTAINING_RECORD(iface, ITextSelectionImpl, ITextSelection_iface);
+}
+
+static inline ITextFontImpl *impl_from_ITextFont(ITextFont *iface)
+{
+    return CONTAINING_RECORD(iface, ITextFontImpl, ITextFont_iface);
+}
+
+static HRESULT create_textfont(ITextRange*, ITextFont**);
 
 static HRESULT WINAPI IRichEditOleImpl_inner_fnQueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
 {
@@ -332,11 +362,6 @@ static const IOleClientSiteVtbl ocst = {
 };
 
 /* IOleWindow interface */
-static inline IOleClientSiteImpl *impl_from_IOleWindow(IOleWindow *iface)
-{
-    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleWindow_iface);
-}
-
 static HRESULT WINAPI IOleWindow_fnQueryInterface(IOleWindow *iface, REFIID riid, void **ppvObj)
 {
     IOleClientSiteImpl *This = impl_from_IOleWindow(iface);
@@ -383,11 +408,6 @@ static const IOleWindowVtbl olewinvt = {
 };
 
 /* IOleInPlaceSite interface */
-static inline IOleClientSiteImpl *impl_from_IOleInPlaceSite(IOleInPlaceSite *iface)
-{
-    return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleInPlaceSite_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnQueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppvObj)
 {
     IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
@@ -904,14 +924,19 @@ static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG cpLim)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnGetFont(ITextRange *me, ITextFont **pFont)
+static HRESULT WINAPI ITextRange_fnGetFont(ITextRange *me, ITextFont **font)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, font);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (!font)
+        return E_INVALIDARG;
+
+    return create_textfont(me, font);
 }
 
 static HRESULT WINAPI ITextRange_fnSetFont(ITextRange *me, ITextFont *pFont)
@@ -1392,8 +1417,556 @@ static const ITextRangeVtbl trvt = {
     ITextRange_fnScrollIntoView,
     ITextRange_fnGetEmbeddedObject
 };
-/* ITextRange interface */
 
+/* ITextFont */
+static HRESULT WINAPI TextFont_QueryInterface(ITextFont *iface, REFIID riid, void **ppv)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_ITextFont) ||
+        IsEqualIID(riid, &IID_IDispatch) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        ITextFont_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextFont_AddRef(ITextFont *iface)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI TextFont_Release(ITextFont *iface)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+    {
+        ITextRange_Release(This->range);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TextFont_GetTypeInfoCount(ITextFont *iface, UINT *pctinfo)
+{
+    FIXME("stub\n");
+    *pctinfo = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetTypeInfo(ITextFont *iface, UINT iTInfo, LCID lcid,
+    ITypeInfo **ppTInfo)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetIDsOfNames(ITextFont *iface, REFIID riid,
+    LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_Invoke(
+    ITextFont *iface,
+    DISPID dispIdMember,
+    REFIID riid,
+    LCID lcid,
+    WORD wFlags,
+    DISPPARAMS *pDispParams,
+    VARIANT *pVarResult,
+    EXCEPINFO *pExcepInfo,
+    UINT *puArgErr)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetDuplicate(ITextFont *iface, ITextFont **ret)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetDuplicate(ITextFont *iface, ITextFont *pFont)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, pFont);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_CanChange(ITextFont *iface, LONG *ret)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_IsEqual(ITextFont *iface, ITextFont *font, LONG *ret)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetStyle(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetStyle(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetAllCaps(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetAllCaps(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetAnimation(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetAnimation(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetBackColor(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetBackColor(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetBold(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetBold(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetEmboss(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetEmboss(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetForeColor(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetForeColor(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetHidden(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetHidden(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetEngrave(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetEngrave(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetItalic(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetItalic(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetKerning(ITextFont *iface, FLOAT *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetKerning(ITextFont *iface, FLOAT value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%.2f): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetLanguageID(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetLanguageID(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetName(ITextFont *iface, BSTR value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_w(value));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetOutline(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetOutline(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetPosition(ITextFont *iface, FLOAT *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetPosition(ITextFont *iface, FLOAT value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%.2f): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetProtected(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetProtected(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetShadow(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetShadow(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetSize(ITextFont *iface, FLOAT *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetSize(ITextFont *iface, FLOAT value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%.2f): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetSmallCaps(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetSmallCaps(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetSpacing(ITextFont *iface, FLOAT *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetSpacing(ITextFont *iface, FLOAT value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%.2f): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetStrikeThrough(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetStrikeThrough(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetSubscript(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetSubscript(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetSuperscript(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetSuperscript(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetUnderline(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetUnderline(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_GetWeight(ITextFont *iface, LONG *value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextFont_SetWeight(ITextFont *iface, LONG value)
+{
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
+    return E_NOTIMPL;
+}
+
+static ITextFontVtbl textfontvtbl = {
+    TextFont_QueryInterface,
+    TextFont_AddRef,
+    TextFont_Release,
+    TextFont_GetTypeInfoCount,
+    TextFont_GetTypeInfo,
+    TextFont_GetIDsOfNames,
+    TextFont_Invoke,
+    TextFont_GetDuplicate,
+    TextFont_SetDuplicate,
+    TextFont_CanChange,
+    TextFont_IsEqual,
+    TextFont_Reset,
+    TextFont_GetStyle,
+    TextFont_SetStyle,
+    TextFont_GetAllCaps,
+    TextFont_SetAllCaps,
+    TextFont_GetAnimation,
+    TextFont_SetAnimation,
+    TextFont_GetBackColor,
+    TextFont_SetBackColor,
+    TextFont_GetBold,
+    TextFont_SetBold,
+    TextFont_GetEmboss,
+    TextFont_SetEmboss,
+    TextFont_GetForeColor,
+    TextFont_SetForeColor,
+    TextFont_GetHidden,
+    TextFont_SetHidden,
+    TextFont_GetEngrave,
+    TextFont_SetEngrave,
+    TextFont_GetItalic,
+    TextFont_SetItalic,
+    TextFont_GetKerning,
+    TextFont_SetKerning,
+    TextFont_GetLanguageID,
+    TextFont_SetLanguageID,
+    TextFont_GetName,
+    TextFont_SetName,
+    TextFont_GetOutline,
+    TextFont_SetOutline,
+    TextFont_GetPosition,
+    TextFont_SetPosition,
+    TextFont_GetProtected,
+    TextFont_SetProtected,
+    TextFont_GetShadow,
+    TextFont_SetShadow,
+    TextFont_GetSize,
+    TextFont_SetSize,
+    TextFont_GetSmallCaps,
+    TextFont_SetSmallCaps,
+    TextFont_GetSpacing,
+    TextFont_SetSpacing,
+    TextFont_GetStrikeThrough,
+    TextFont_SetStrikeThrough,
+    TextFont_GetSubscript,
+    TextFont_SetSubscript,
+    TextFont_GetSuperscript,
+    TextFont_SetSuperscript,
+    TextFont_GetUnderline,
+    TextFont_SetUnderline,
+    TextFont_GetWeight,
+    TextFont_SetWeight
+};
+
+static HRESULT create_textfont(ITextRange *range, ITextFont **ret)
+{
+    ITextFontImpl *font;
+
+    *ret = NULL;
+    font = heap_alloc(sizeof(*font));
+    if (!font)
+        return E_OUTOFMEMORY;
+
+    font->ITextFont_iface.lpVtbl = &textfontvtbl;
+    font->ref = 1;
+    font->range = range;
+    ITextRange_AddRef(range);
+
+    *ret = &font->ITextFont_iface;
+    return S_OK;
+}
+
+/* ITextDocument */
 static HRESULT WINAPI
 ITextDocument_fnQueryInterface(ITextDocument* me, REFIID riid,
     void** ppvObject)
@@ -1679,11 +2252,7 @@ static const ITextDocumentVtbl tdvt = {
     ITextDocument_fnRangeFromPoint
 };
 
-static inline ITextSelectionImpl *impl_from_ITextSelection(ITextSelection *iface)
-{
-    return CONTAINING_RECORD(iface, ITextSelectionImpl, ITextSelection_iface);
-}
-
+/* ITextSelection */
 static HRESULT WINAPI ITextSelection_fnQueryInterface(
     ITextSelection *me,
     REFIID riid,

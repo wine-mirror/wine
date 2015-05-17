@@ -35,6 +35,15 @@
 
 static HMODULE hmoduleRichEdit;
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent)
 {
   HWND hwnd = CreateWindowA(lpClassName, NULL,
@@ -1081,6 +1090,56 @@ static void test_IOleInPlaceSite_GetWindow(void)
   release_interfaces(&w, &reOle, &txtDoc, NULL);
 }
 
+static void test_GetFont(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range = NULL;
+  ITextFont *font, *font2;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 1);
+
+  hr = ITextRange_GetFont(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetFont(range, &font);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 2);
+  EXPECT_REF(font, 1);
+
+  hr = ITextRange_GetFont(range, &font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(font != font2, "got %p, %p\n", font, font2);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(range, 3);
+  EXPECT_REF(font, 1);
+  EXPECT_REF(font2, 1);
+
+  ITextFont_Release(font);
+  ITextFont_Release(font2);
+  ITextRange_Release(range);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1102,4 +1161,5 @@ START_TEST(richole)
   test_IOleClientSite_QueryInterface();
   test_IOleWindow_GetWindow();
   test_IOleInPlaceSite_GetWindow();
+  test_GetFont();
 }
