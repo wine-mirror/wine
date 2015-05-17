@@ -31,6 +31,7 @@
 #include "ole2.h"
 #include "richole.h"
 #include "editor.h"
+#include "richedit.h"
 #include "tom.h"
 #include "wine/debug.h"
 
@@ -129,6 +130,11 @@ static inline IOleClientSiteImpl *impl_from_IOleInPlaceSite(IOleInPlaceSite *ifa
     return CONTAINING_RECORD(iface, IOleClientSiteImpl, IOleInPlaceSite_iface);
 }
 
+static inline ITextRangeImpl *impl_from_ITextRange(ITextRange *iface)
+{
+    return CONTAINING_RECORD(iface, ITextRangeImpl, ITextRange_iface);
+}
+
 static inline ITextSelectionImpl *impl_from_ITextSelection(ITextSelection *iface)
 {
     return CONTAINING_RECORD(iface, ITextSelectionImpl, ITextSelection_iface);
@@ -146,6 +152,126 @@ static inline ITextParaImpl *impl_from_ITextPara(ITextPara *iface)
 
 static HRESULT create_textfont(ITextRange*, ITextFont**);
 static HRESULT create_textpara(ITextRange*, ITextPara**);
+
+enum textfont_prop_id {
+    FONT_ALLCAPS = 0,
+    FONT_ANIMATION,
+    FONT_BACKCOLOR,
+    FONT_BOLD,
+    FONT_EMBOSS,
+    FONT_FORECOLOR,
+    FONT_HIDDEN,
+    FONT_ENGRAVE,
+    FONT_ITALIC,
+    FONT_KERNING,
+    FONT_LANGID,
+    FONT_NAME,
+    FONT_OUTLINE,
+    FONT_POSITION,
+    FONT_PROTECTED,
+    FONT_SHADOW,
+    FONT_SIZE,
+    FONT_SMALLCAPS,
+    FONT_SPACING,
+    FONT_STRIKETHROUGH,
+    FONT_SUBSCRIPT,
+    FONT_SUPERSCRIPT,
+    FONT_UNDERLINE,
+    FONT_WEIGHT,
+    FONT_PROPID_LAST
+};
+
+static const DWORD textfont_prop_masks[] = {
+    CFM_ALLCAPS,
+    CFM_ANIMATION,
+    CFM_BACKCOLOR,
+    CFM_BOLD,
+    CFM_EMBOSS,
+    CFM_COLOR,
+    CFM_HIDDEN,
+    CFM_IMPRINT,
+    CFM_ITALIC,
+    CFM_KERNING,
+    CFM_LCID,
+    CFM_FACE,
+    CFM_OUTLINE,
+    CFM_OFFSET,
+    CFM_PROTECTED,
+    CFM_SHADOW,
+    CFM_SIZE,
+    CFM_SMALLCAPS,
+    CFM_SPACING,
+    CFM_STRIKEOUT,
+    CFM_SUBSCRIPT,
+    CFM_SUPERSCRIPT,
+    CFM_UNDERLINE,
+    CFM_WEIGHT
+};
+
+static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos, enum textfont_prop_id propid, LONG *value)
+{
+    ME_Cursor from, to;
+    CHARFORMAT2W fmt;
+
+    memset(&fmt, 0, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = textfont_prop_masks[propid];
+
+    ME_CursorFromCharOfs(reole->editor, pos, &from);
+    to = from;
+    ME_MoveCursorChars(reole->editor, &to, 1);
+    ME_GetCharFormat(reole->editor, &from, &to, &fmt);
+
+    switch (propid)
+    {
+    case FONT_BOLD:
+        *value = fmt.dwEffects & CFE_BOLD ? tomTrue : tomFalse;
+        break;
+    case FONT_ITALIC:
+        *value = fmt.dwEffects & CFE_ITALIC ? tomTrue : tomFalse;
+        break;
+    default:
+        FIXME("unhandled font property %d\n", propid);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid, LONG *value)
+{
+    ITextRangeImpl *rng = impl_from_ITextRange(range);
+    HRESULT hr;
+    LONG v;
+    int i;
+
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = tomUndefined;
+
+    if (!rng->reOle)
+        return CO_E_RELEASED;
+
+    /* iterate trough a range to see if property value is consistent */
+    hr = get_textfont_prop_for_pos(rng->reOle, rng->start, propid, &v);
+    if (FAILED(hr))
+        return hr;
+
+    for (i = rng->start + 1; i < rng->end; i++) {
+        LONG cur;
+
+        hr = get_textfont_prop_for_pos(rng->reOle, i, propid, &cur);
+        if (FAILED(hr))
+            return hr;
+
+        if (cur != v)
+            return S_OK;
+    }
+
+    *value = v;
+    return S_OK;
+}
 
 static HRESULT WINAPI IRichEditOleImpl_inner_fnQueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
 {
@@ -713,11 +839,6 @@ static const IRichEditOleVtbl revt = {
 };
 
 /* ITextRange interface */
-static inline ITextRangeImpl *impl_from_ITextRange(ITextRange *iface)
-{
-    return CONTAINING_RECORD(iface, ITextRangeImpl, ITextRange_iface);
-}
-
 static HRESULT WINAPI ITextRange_fnQueryInterface(ITextRange *me, REFIID riid, void **ppvObj)
 {
     *ppvObj = NULL;
@@ -1648,8 +1769,8 @@ static HRESULT WINAPI TextFont_SetBackColor(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetBold(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_prop(This->range, FONT_BOLD, value);
 }
 
 static HRESULT WINAPI TextFont_SetBold(ITextFont *iface, LONG value)
@@ -1718,8 +1839,8 @@ static HRESULT WINAPI TextFont_SetEngrave(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetItalic(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_prop(This->range, FONT_ITALIC, value);
 }
 
 static HRESULT WINAPI TextFont_SetItalic(ITextFont *iface, LONG value)

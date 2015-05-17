@@ -1217,8 +1217,11 @@ static void test_GetFont(void)
   ITextDocument *doc = NULL;
   ITextRange *range = NULL;
   ITextFont *font, *font2;
+  CHARFORMAT2A cf;
+  LONG value;
   HRESULT hr;
   HWND hwnd;
+  BOOL ret;
 
   create_interfaces(&hwnd, &reOle, &doc, NULL);
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
@@ -1254,8 +1257,33 @@ static void test_GetFont(void)
   EXPECT_REF(font, 1);
   EXPECT_REF(font2, 1);
 
-  ITextFont_Release(font);
   ITextFont_Release(font2);
+
+  /* set different font style within a range */
+  hr = ITextFont_GetItalic(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  /* range is non-italic */
+  value = tomTrue;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  cf.cbSize = sizeof(CHARFORMAT2A);
+  cf.dwMask = CFM_ITALIC;
+  cf.dwEffects = CFE_ITALIC;
+
+  SendMessageA(hwnd, EM_SETSEL, 2, 3);
+  ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+
+  /* now range is partially italicized */
+  value = tomFalse;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  ITextFont_Release(font);
   ITextRange_Release(range);
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 }
