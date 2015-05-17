@@ -35,6 +35,8 @@
 
 static HMODULE hmoduleRichEdit;
 
+DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -1308,6 +1310,43 @@ static void test_GetPara(void)
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 }
 
+static void test_dispatch(void)
+{
+  static const WCHAR testnameW[] = {'G','e','t','T','e','x','t',0};
+  static const WCHAR testname2W[] = {'T','e','x','t',0};
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range = NULL;
+  WCHAR *nameW;
+  DISPID dispid;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  range = NULL;
+  hr = ITextDocument_Range(doc, 0, 0, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(range != NULL, "got %p\n", range);
+
+  dispid = 123;
+  nameW = (WCHAR*)testnameW;
+  hr = ITextRange_GetIDsOfNames(range, &IID_NULL, &nameW, 1, LOCALE_USER_DEFAULT, &dispid);
+todo_wine {
+  ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+  ok(dispid == DISPID_UNKNOWN, "got %d\n", dispid);
+}
+  dispid = 123;
+  nameW = (WCHAR*)testname2W;
+  hr = ITextRange_GetIDsOfNames(range, &IID_NULL, &nameW, 1, LOCALE_USER_DEFAULT, &dispid);
+todo_wine {
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(dispid == DISPID_VALUE, "got %d\n", dispid);
+}
+  ITextRange_Release(range);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1331,4 +1370,5 @@ START_TEST(richole)
   test_IOleInPlaceSite_GetWindow();
   test_GetFont();
   test_GetPara();
+  test_dispatch();
 }

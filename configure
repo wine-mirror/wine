@@ -17527,7 +17527,7 @@ wine_fn_config_test dlls/rasapi32/tests rasapi32_test
 wine_fn_config_dll rasdlg enable_rasdlg implib
 wine_fn_config_dll regapi enable_regapi
 wine_fn_config_dll resutils enable_resutils implib
-wine_fn_config_dll riched20 enable_riched20 implib
+wine_fn_config_dll riched20 enable_riched20 clean,implib
 wine_fn_config_test dlls/riched20/tests riched20_test
 wine_fn_config_dll riched32 enable_riched32
 wine_fn_config_test dlls/riched32/tests riched32_test
