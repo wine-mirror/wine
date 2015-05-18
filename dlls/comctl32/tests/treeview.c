@@ -1767,9 +1767,9 @@ static void test_TVS_SINGLEEXPAND(void)
     {
         { &alpha,    parent_singleexpand_seq0,  FALSE },
         { &bravo,    parent_singleexpand_seq1,  FALSE },
-        { &delta,    parent_singleexpand_seq2,  TRUE },
-        { &foxtrot,  parent_singleexpand_seq3,  TRUE },
-        { &alpha,    parent_singleexpand_seq4,  TRUE },
+        { &delta,    parent_singleexpand_seq2,  FALSE },
+        { &foxtrot,  parent_singleexpand_seq3,  FALSE },
+        { &alpha,    parent_singleexpand_seq4,  FALSE },
         { &golf,     parent_singleexpand_seq5,  TRUE },
         { &hotel,    parent_singleexpand_seq6,  FALSE },
         { &india,    parent_singleexpand_seq7,  FALSE },
@@ -1801,12 +1801,8 @@ static void test_TVS_SINGLEEXPAND(void)
     for (i = 0; i < sizeof(items)/sizeof(items[0]); i++)
     {
         ret = SendMessageA(hTree, TVM_GETITEMSTATE, (WPARAM)(*items[i].handle), 0xFFFF);
-        if (i == 0)
-            todo_wine ok(ret == items[i].final_state, "singleexpand items[%d]: expected state 0x%x got 0x%x\n",
-                         i, items[i].final_state, ret);
-        else
-            ok(ret == items[i].final_state, "singleexpand items[%d]: expected state 0x%x got 0x%x\n",
-               i, items[i].final_state, ret);
+        ok(ret == items[i].final_state, "singleexpand items[%d]: expected state 0x%x got 0x%x\n",
+           i, items[i].final_state, ret);
     }
 
     /* a workaround for NT4 that sends expand notifications when nothing is about to expand */
