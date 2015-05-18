@@ -1828,7 +1828,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     }
 
     if(max_channels > 6)
-        fmt->Format.nChannels = 6;
+        fmt->Format.nChannels = 2;
     else
         fmt->Format.nChannels = max_channels;
 
@@ -4068,7 +4068,9 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
 
         out->vt = VT_UI4;
 
-        if (num_speakers >= 6)
+        if (num_speakers > 6)
+            out->u.ulVal = KSAUDIO_SPEAKER_STEREO;
+        else if (num_speakers == 6)
             out->u.ulVal = KSAUDIO_SPEAKER_5POINT1;
         else if (num_speakers >= 4)
             out->u.ulVal = KSAUDIO_SPEAKER_QUAD;
