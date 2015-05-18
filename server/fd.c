@@ -1865,11 +1865,6 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     }
     else  /* special file */
     {
-        if (options & FILE_DIRECTORY_FILE)
-        {
-            set_error( STATUS_NOT_A_DIRECTORY );
-            goto error;
-        }
         if (unlink_name[0])  /* we can't unlink special files */
         {
             set_error( STATUS_INVALID_PARAMETER );
