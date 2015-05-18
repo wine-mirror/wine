@@ -58,7 +58,7 @@ msgstr "技術支援資訊"
 #: comdlg32.rc:304 comdlg32.rc:358 comdlg32.rc:397 comdlg32.rc:451
 #: credui.rc:52 cryptui.rc:263 cryptui.rc:275 cryptui.rc:365 dinput.rc:46
 #: ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53
-#: mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:58 oledlg.rc:90
+#: mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:59 oledlg.rc:91
 #: serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322
 #: shell32.rc:340 shlwapi.rc:44 user32.rc:80 user32.rc:98 wininet.rc:51
 #: wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162
@@ -139,7 +139,7 @@ msgstr "安裝(&I)"
 #: comdlg32.rc:477 comdlg32.rc:495 credui.rc:53 cryptui.rc:264 cryptui.rc:276
 #: cryptui.rc:366 dinput.rc:47 ieframe.rc:97 inetcpl.rc:81 localui.rc:45
 #: localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48 mshtml.rc:58
-#: msvfw32.rc:37 oledlg.rc:59 oledlg.rc:91 serialui.rc:42 setupapi.rc:42
+#: msvfw32.rc:37 oledlg.rc:60 oledlg.rc:92 serialui.rc:42 setupapi.rc:42
 #: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:341
 #: shlwapi.rc:45 user32.rc:81 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
@@ -337,7 +337,7 @@ msgstr "重置(&e)"
 
 #: comctl32.rc:86 comdlg32.rc:171 comdlg32.rc:193 comdlg32.rc:264
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:478
-#: comdlg32.rc:496 ieframe.rc:58 msacm32.rc:52 oledlg.rc:92 shell32.rc:128
+#: comdlg32.rc:496 ieframe.rc:58 msacm32.rc:52 oledlg.rc:93 shell32.rc:128
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
@@ -7364,72 +7364,72 @@ msgstr "開"
 msgid "Off"
 msgstr "關"
 
-#: oledlg.rc:51
+#: oledlg.rc:52
 msgid "Insert Object"
 msgstr "插入物件"
 
-#: oledlg.rc:57
+#: oledlg.rc:58
 msgid "Object Type:"
 msgstr "物件類型："
 
-#: oledlg.rc:60 oledlg.rc:98
+#: oledlg.rc:61 oledlg.rc:99
 msgid "Result"
 msgstr "結果"
 
-#: oledlg.rc:61
+#: oledlg.rc:62
 msgid "Create New"
 msgstr "新增"
 
-#: oledlg.rc:63
+#: oledlg.rc:64
 msgid "Create Control"
 msgstr "建立控制項"
 
-#: oledlg.rc:65
+#: oledlg.rc:66
 msgid "Create From File"
 msgstr "建立於檔案"
 
-#: oledlg.rc:68
+#: oledlg.rc:69
 msgid "&Add Control..."
 msgstr "新增控制項(&A)..."
 
-#: oledlg.rc:69
+#: oledlg.rc:70
 msgid "Display As Icon"
 msgstr "顯示為圖示"
 
-#: oledlg.rc:71 setupapi.rc:61
+#: oledlg.rc:72 setupapi.rc:61
 msgid "Browse..."
 msgstr "瀏覽..."
 
-#: oledlg.rc:72
+#: oledlg.rc:73
 msgid "File:"
 msgstr "檔案："
 
-#: oledlg.rc:78
+#: oledlg.rc:79
 msgid "Paste Special"
 msgstr "特殊貼上"
 
-#: oledlg.rc:81 setupapi.rc:43
+#: oledlg.rc:82 setupapi.rc:43
 msgid "Source:"
 msgstr "原始檔案："
 
-#: oledlg.rc:82 shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:95 shdoclc.rc:135
+#: oledlg.rc:83 shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:95 shdoclc.rc:135
 #: shdoclc.rc:162 shdoclc.rc:186 user32.rc:62 wineconsole.rc:33 wordpad.rc:106
 msgid "&Paste"
 msgstr "貼上(&P)"
 
-#: oledlg.rc:84
+#: oledlg.rc:85
 msgid "Paste &Link"
 msgstr "貼上連結(&L)"
 
-#: oledlg.rc:86
+#: oledlg.rc:87
 msgid "&As:"
 msgstr "為(&A)："
 
-#: oledlg.rc:93
+#: oledlg.rc:94
 msgid "&Display As Icon"
 msgstr "顯示為圖示(&D)"
 
-#: oledlg.rc:95
+#: oledlg.rc:96
 msgid "Change &Icon..."
 msgstr "變更圖示(&I)..."
 
@@ -7457,23 +7457,27 @@ msgstr "該檔案不像是一個有效的 OLE 模組。 無法註冊 OLE 元件�
 msgid "Add Control"
 msgstr "加入控制項"
 
-#: oledlg.rc:37
+#: oledlg.rc:33 oleview.rc:40
+msgid "&Object"
+msgstr "物件(&O)"
+
+#: oledlg.rc:38
 msgid "Inserts the contents of the clipboard into your document as %s."
 msgstr "將剪貼簿的內容以 %s 插入至您的檔案。"
 
-#: oledlg.rc:38
+#: oledlg.rc:39
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr "將剪貼簿的內容插入到您的檔案以便您可以使用 %s。"
 
-#: oledlg.rc:39
+#: oledlg.rc:40
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr "將剪貼簿的內容插入到您的文件以便您可以用 %s 啟動它, 一般顯示為圖示。"
 
-#: oledlg.rc:40
+#: oledlg.rc:41
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7482,7 +7486,7 @@ msgstr ""
 "將剪貼簿的內容以 %s 插入到您的文件。 資料是連結到來源檔案的, 對來源檔案的任何"
 "變更都會影響到您的文件。"
 
-#: oledlg.rc:41
+#: oledlg.rc:42
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7491,7 +7495,7 @@ msgstr ""
 "將剪貼簿的圖片插入到您的文件。 圖片是連結到來源檔案的, 對來源檔案的任何變更都"
 "會影響到您的文件。"
 
-#: oledlg.rc:42
+#: oledlg.rc:43
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7500,19 +7504,19 @@ msgstr ""
 "將剪貼簿的捷徑插入到您的檔案。 捷徑是連結到來源檔案的, 對來源檔案的任何變更都"
 "會影響到您的檔案。"
 
-#: oledlg.rc:43
+#: oledlg.rc:44
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "將剪貼簿的內容插入到您的文件。"
 
-#: oledlg.rc:44
+#: oledlg.rc:45
 msgid "Unknown Type"
 msgstr "不明類型"
 
-#: oledlg.rc:45
+#: oledlg.rc:46
 msgid "Unknown Source"
 msgstr "不明來源"
 
-#: oledlg.rc:46
+#: oledlg.rc:47
 msgid "the program which created it"
 msgstr "不明應用程式"
 
@@ -10862,10 +10866,6 @@ msgstr "系統設定(&S)"
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
 msgstr "執行註冊表編輯器(&R)"
-
-#: oleview.rc:40
-msgid "&Object"
-msgstr "物件(&O)"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"

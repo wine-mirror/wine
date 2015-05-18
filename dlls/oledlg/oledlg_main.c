@@ -30,6 +30,7 @@
 #include "oledlg.h"
 #include "ole2.h"
 #include "oledlg_private.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -157,12 +158,12 @@ static void insert_verb_to_menu(HMENU menu, UINT idmin, const OLEVERB *verb)
 BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
     HMENU hMenu, UINT uPos, UINT idmin, UINT idmax, BOOL addConvert, UINT idConvert, HMENU *ret_submenu)
 {
-    static const WCHAR objectW[] = {'O','b','j','e','c','t',0}; /* FIXME: this should be localized */
     static const WCHAR spaceW[] = {' ',0};
     IEnumOLEVERB *enumverbs = NULL;
     WCHAR *rootname, *objecttype;
     LPOLESTR usertype = NULL;
     OLEVERB firstverb, verb;
+    WCHAR objectW[32]; /* should be enough */
     HMENU submenu;
 
     TRACE("(%p, %s, %p, %d, %d, %d, %d, %d, %p)\n", object, debugstr_w(shorttype),
@@ -181,6 +182,7 @@ BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
     if (object)
         IOleObject_EnumVerbs(object, &enumverbs);
 
+    LoadStringW(OLEDLG_hInstance, IDS_VERBMENU_OBJECT, objectW, sizeof(objectW)/sizeof(WCHAR));
     /* no object, or object without enumeration support */
     if (!object || (object && !enumverbs)) {
         InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_STRING|MF_GRAYED, idmin, objectW);
