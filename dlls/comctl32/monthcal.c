@@ -1018,13 +1018,7 @@ static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, cons
 
   if(infoPtr->dwStyle & MCS_NOTODAY) return;
 
-  if (!LoadStringW(COMCTL32_hModule, IDM_TODAY, buf_todayW, countof(buf_todayW)))
-  {
-    static const WCHAR todayW[] = { 'T','o','d','a','y',':',0 };
-    WARN("Can't load resource\n");
-    strcpyW(buf_todayW, todayW);
-  }
-
+  LoadStringW(COMCTL32_hModule, IDM_TODAY, buf_todayW, countof(buf_todayW));
   col = infoPtr->dwStyle & MCS_NOTODAYCIRCLE ? 0 : 1;
   if (infoPtr->dwStyle & MCS_WEEKNUMBERS) col--;
   /* label is located below first calendar last row */
@@ -1984,17 +1978,12 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
 static LRESULT
 MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 {
-  static const WCHAR todayW[] = { 'G','o',' ','t','o',' ','T','o','d','a','y',':',0 };
   HMENU hMenu;
   POINT menupoint;
   WCHAR buf[32];
 
   hMenu = CreatePopupMenu();
-  if (!LoadStringW(COMCTL32_hModule, IDM_GOTODAY, buf, countof(buf)))
-  {
-      WARN("Can't load resource\n");
-      strcpyW(buf, todayW);
-  }
+  LoadStringW(COMCTL32_hModule, IDM_GOTODAY, buf, countof(buf));
   AppendMenuW(hMenu, MF_STRING|MF_ENABLED, 1, buf);
   menupoint.x = (short)LOWORD(lParam);
   menupoint.y = (short)HIWORD(lParam);
