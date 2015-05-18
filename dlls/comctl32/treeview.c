@@ -4475,6 +4475,9 @@ TREEVIEW_SelectItem(TREEVIEW_INFO *infoPtr, INT wParam, HTREEITEM item)
     if (item && !TREEVIEW_ValidItem(infoPtr, item))
 	return FALSE;
 
+    if (item == infoPtr->selectedItem)
+	return TRUE;
+
     TRACE("%p (%s) %d\n", item, TREEVIEW_ItemName(item), wParam);
 
     if (!TREEVIEW_DoSelectItem(infoPtr, wParam, item, TVC_UNKNOWN))

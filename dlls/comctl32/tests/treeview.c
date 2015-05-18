@@ -1773,7 +1773,7 @@ static void test_TVS_SINGLEEXPAND(void)
         { &golf,     parent_singleexpand_seq5,  TRUE },
         { &hotel,    parent_singleexpand_seq6,  FALSE },
         { &india,    parent_singleexpand_seq7,  FALSE },
-        { &india,    empty_seq,  TRUE }
+        { &india,    empty_seq,  FALSE }
     };
 
     hTree = create_treeview_control(0);
