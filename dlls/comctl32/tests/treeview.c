@@ -1761,19 +1761,18 @@ static void test_TVS_SINGLEEXPAND(void)
     {
         HTREEITEM *select;
         const struct message *sequence;
-        BOOL todo;
     }
     sequence_tests[] =
     {
-        { &alpha,    parent_singleexpand_seq0,  FALSE },
-        { &bravo,    parent_singleexpand_seq1,  FALSE },
-        { &delta,    parent_singleexpand_seq2,  FALSE },
-        { &foxtrot,  parent_singleexpand_seq3,  FALSE },
-        { &alpha,    parent_singleexpand_seq4,  FALSE },
-        { &golf,     parent_singleexpand_seq5,  TRUE },
-        { &hotel,    parent_singleexpand_seq6,  FALSE },
-        { &india,    parent_singleexpand_seq7,  FALSE },
-        { &india,    empty_seq,  FALSE }
+        { &alpha,    parent_singleexpand_seq0 },
+        { &bravo,    parent_singleexpand_seq1 },
+        { &delta,    parent_singleexpand_seq2 },
+        { &foxtrot,  parent_singleexpand_seq3 },
+        { &alpha,    parent_singleexpand_seq4 },
+        { &golf,     parent_singleexpand_seq5 },
+        { &hotel,    parent_singleexpand_seq6 },
+        { &india,    parent_singleexpand_seq7 },
+        { &india,    empty_seq }
     };
 
     hTree = create_treeview_control(0);
@@ -1795,7 +1794,7 @@ static void test_TVS_SINGLEEXPAND(void)
         ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)(*sequence_tests[i].select));
         ok(ret, "got %d\n", ret);
         sprintf(context, "singleexpand notifications %d", i);
-        ok_sequence(sequences, PARENT_SEQ_INDEX, sequence_tests[i].sequence, context, sequence_tests[i].todo);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, sequence_tests[i].sequence, context, FALSE);
     }
 
     for (i = 0; i < sizeof(items)/sizeof(items[0]); i++)

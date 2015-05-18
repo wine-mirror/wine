@@ -4663,7 +4663,7 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
 	while (parent != infoPtr->root)
 	{
 	    if (!(parent->state & TVIS_EXPANDED))
-		TREEVIEW_Expand(infoPtr, parent, FALSE, FALSE);
+		TREEVIEW_Expand(infoPtr, parent, FALSE, TRUE);
 
 	    parent = parent->parent;
 	}
