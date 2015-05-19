@@ -97,6 +97,11 @@ struct dwrite_fonttable {
     UINT32 size;
 };
 
+struct dwrite_glyphrunanalysis {
+    IDWriteGlyphRunAnalysis IDWriteGlyphRunAnalysis_iface;
+    LONG ref;
+};
+
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
@@ -153,6 +158,11 @@ static inline struct dwrite_fontfamily *impl_from_IDWriteFontFamily(IDWriteFontF
 static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection(IDWriteFontCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_fontcollection, IDWriteFontCollection_iface);
+}
+
+static inline struct dwrite_glyphrunanalysis *impl_from_IDWriteGlyphRunAnalysis(IDWriteGlyphRunAnalysis *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_glyphrunanalysis, IDWriteGlyphRunAnalysis_iface);
 }
 
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
@@ -2567,5 +2577,99 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
 
     *key = refkey;
 
+    return S_OK;
+}
+
+/* IDWriteGlyphRunAnalysis */
+static HRESULT WINAPI glyphrunanalysis_QueryInterface(IDWriteGlyphRunAnalysis *iface, REFIID riid, void **ppv)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_IDWriteGlyphRunAnalysis) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IDWriteGlyphRunAnalysis_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI glyphrunanalysis_AddRef(IDWriteGlyphRunAnalysis *iface)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref) {
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT* bounds)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    FIXME("(%p)->(%d %p): stub\n", This, type, bounds);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
+    RECT const* bounds, BYTE* alphaValues, UINT32 bufferSize)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    FIXME("(%p)->(%d %p %p %u): stub\n", This, type, bounds, alphaValues, bufferSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalysis *iface, IDWriteRenderingParams *params,
+    FLOAT *blendGamma, FLOAT *blendEnhancedContrast, FLOAT *blendClearTypeLevel)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, params, blendGamma, blendEnhancedContrast, blendClearTypeLevel);
+    return E_NOTIMPL;
+}
+
+static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
+    glyphrunanalysis_QueryInterface,
+    glyphrunanalysis_AddRef,
+    glyphrunanalysis_Release,
+    glyphrunanalysis_GetAlphaTextureBounds,
+    glyphrunanalysis_CreateAlphaTexture,
+    glyphrunanalysis_GetAlphaBlendParams
+};
+
+HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, IDWriteGlyphRunAnalysis **ret)
+{
+    struct dwrite_glyphrunanalysis *analysis;
+
+    *ret = NULL;
+
+    /* check for valid rendering mode */
+    if ((UINT32)rendering_mode >= DWRITE_RENDERING_MODE_OUTLINE || rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
+        return E_INVALIDARG;
+
+    analysis = heap_alloc(sizeof(*analysis));
+    if (!analysis)
+        return E_OUTOFMEMORY;
+
+    analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
+    analysis->ref = 1;
+
+    *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;
 }

@@ -1075,9 +1075,11 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory2 *ifac
     DWRITE_MEASURING_MODE measuring_mode, FLOAT baseline_x, FLOAT baseline_y, IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%p %f %p %d %d %f %f %p): stub\n", This, glyph_run, pixels_per_dip, transform, rendering_mode,
+
+    TRACE("(%p)->(%p %f %p %d %d %f %f %p)\n", This, glyph_run, pixels_per_dip, transform, rendering_mode,
         measuring_mode, baseline_x, baseline_y, analysis);
-    return E_NOTIMPL;
+
+    return create_glyphrunanalysis(rendering_mode, analysis);
 }
 
 static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory2 *iface, IDWriteFontCollection **collection,

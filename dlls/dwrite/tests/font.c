@@ -70,6 +70,37 @@ static IDWriteFactory *create_factory(void)
     return factory;
 }
 
+static IDWriteFontFace *create_fontface(IDWriteFactory *factory)
+{
+    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
+    IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFont_Release(font);
+    IDWriteGdiInterop_Release(interop);
+
+    return fontface;
+}
+
 static WCHAR *create_testfontfile(const WCHAR *filename)
 {
     static WCHAR pathW[MAX_PATH];
@@ -3238,6 +3269,55 @@ static void test_CreateRenderingParams(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_CreateGlyphRunAnalysis(void)
+{
+    IDWriteGlyphRunAnalysis *analysis;
+    IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
+    IDWriteFontFace *face;
+    UINT16 index;
+    FLOAT advance;
+    HRESULT hr;
+    UINT32 ch;
+
+    factory = create_factory();
+    face = create_fontface(factory);
+
+    ch = 'A';
+    hr = IDWriteFontFace_GetGlyphIndices(face, &ch, 1, &index);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    run.fontFace = face;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 1;
+    run.glyphIndices = &index;
+    run.glyphAdvances = &advance;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    /* default mode is not allowed */
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_DEFAULT, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* outline too */
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_OUTLINE, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_GDI_CLASSIC, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    IDWriteFontFace_Release(face);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -3280,6 +3360,7 @@ START_TEST(font)
     test_GetGlyphCount();
     test_GetKerningPairAdjustments();
     test_CreateRenderingParams();
+    test_CreateGlyphRunAnalysis();
 
     IDWriteFactory_Release(factory);
 }
