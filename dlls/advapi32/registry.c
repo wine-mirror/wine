@@ -849,7 +849,7 @@ LSTATUS WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPD
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    if (class)
+    if (class && class_len && *class_len)
     {
         /* retry with a dynamically allocated buffer */
         while (status == STATUS_BUFFER_OVERFLOW)
@@ -1052,7 +1052,8 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
         RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength);
         if (class_len)
         {
-            if (len + 1 > *class_len) status = STATUS_BUFFER_OVERFLOW;
+            if (*class_len == 0) class = NULL;
+            if (class && len + 1 > *class_len) status = STATUS_BUFFER_OVERFLOW;
             *class_len = len;
         }
         if (class && !status)
