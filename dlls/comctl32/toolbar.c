@@ -259,6 +259,12 @@ static inline BOOL TOOLBAR_HasDropDownArrows(DWORD exStyle)
     return (exStyle & TBSTYLE_EX_DRAWDDARROWS) != 0;
 }
 
+static inline BOOL button_has_ddarrow(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
+{
+    return (TOOLBAR_HasDropDownArrows( infoPtr->dwExStyle ) && (btnPtr->fsStyle & BTNS_DROPDOWN)) ||
+        (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
+}
+
 static LPWSTR
 TOOLBAR_GetText(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
 {
@@ -823,9 +829,7 @@ static void
 TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDraw)
 {
     DWORD dwStyle = infoPtr->dwStyle;
-    BOOL hasDropDownArrow = (TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
-                            (btnPtr->fsStyle & BTNS_DROPDOWN)) ||
-                            (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
+    BOOL hasDropDownArrow = button_has_ddarrow( infoPtr, btnPtr );
     BOOL drawSepDropDownArrow = hasDropDownArrow && 
                                 (~btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
     RECT rc, rcArrow, rcBitmap, rcText;
@@ -1316,6 +1320,9 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 	else
 	    cx = infoPtr->nButtonWidth;
 
+        if (!btnPtr[i].cx && button_has_ddarrow( infoPtr, btnPtr + i ))
+            cx += DDARROW_WIDTH;
+
 	/* Two or more adjacent separators form a separator group.   */
 	/* The first separator in a group should be wrapped to the   */
 	/* next row if the previous wrapping is on a button.	     */
@@ -1628,7 +1635,6 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
     INT x, y, cx, cy;
     BOOL bWrap;
     BOOL validImageList = TOOLBAR_IsValidImageList(infoPtr, 0);
-    BOOL hasDropDownArrows = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle);
 
     TOOLBAR_WrapToolbar(infoPtr);
 
@@ -1696,11 +1702,10 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
 
             /* if size has been set manually then don't add on extra space
              * for the drop down arrow */
-	    if (!btnPtr->cx && hasDropDownArrows && 
-                ((btnPtr->fsStyle & BTNS_DROPDOWN) || (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)))
-	      cx += DDARROW_WIDTH;
+            if (!btnPtr->cx && button_has_ddarrow( infoPtr, btnPtr ))
+              cx += DDARROW_WIDTH;
 	}
-	if (btnPtr->fsState & TBSTATE_WRAP )
+	if (btnPtr->fsState & TBSTATE_WRAP)
 		    bWrap = TRUE;
 
 	SetRect (&btnPtr->rect, x, y, x + cx, y + cy);
