@@ -2065,8 +2065,9 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     int unix_len, ret, used_default;
     char *unix_name;
     struct stat st;
+    BOOL case_sensitive = get_dir_case_sensitivity(".");
 
-    TRACE("trying optimisation for file %s\n", debugstr_us( mask ));
+    TRACE("looking up file %s\n", debugstr_us( mask ));
 
     unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len + 1)))
@@ -2091,7 +2092,7 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
         }
 
         ret = stat( unix_name, &st );
-        if (!ret)
+        if (case_sensitive && !ret)
         {
             union file_directory_info *info = append_entry( buffer, io, length, unix_name, NULL, NULL, class );
             if (info)
@@ -2100,6 +2101,19 @@ static int read_directory_stat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                 if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
             }
             else io->u.Status = STATUS_NO_MORE_FILES;
+        }
+        else if (!case_sensitive && ret && (errno == ENOENT || errno == ENOTDIR))
+        {
+            /* If the file does not exist, return that info.
+             * If the file DOES exist, return failure and fallback to the next
+             * read_directory_* function (we need to return the case-preserved
+             * filename stored on the filesystem). */
+            ret = 0;
+            io->u.Status = STATUS_NO_MORE_FILES;
+        }
+        else
+        {
+            ret = -1;
         }
     }
     else ret = -1;
