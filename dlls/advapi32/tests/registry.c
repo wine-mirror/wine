@@ -1823,7 +1823,7 @@ static void test_reg_query_info(void)
     memset(classbufferW, 0x55, sizeof(classbufferW));
     classlen = 1;
     ret = RegQueryInfoKeyW(subkey, classbufferW, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine ok(ret == ERROR_INSUFFICIENT_BUFFER, "ret = %d\n", ret);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "ret = %d\n", ret);
     ok(classlen == 0 /* win8 */ ||
        classlen == strlen(subkey_class), "classlen = %u\n", classlen);
     memset(expectbufferW, 0x55, sizeof(expectbufferW));
@@ -1846,7 +1846,7 @@ static void test_reg_query_info(void)
     memset(classbufferW, 0x55, sizeof(classbufferW));
     classlen = sizeof(subkey_class) - 1;
     ret = RegQueryInfoKeyW(subkey, classbufferW, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    todo_wine ok(ret == ERROR_INSUFFICIENT_BUFFER, "ret = %d\n", ret);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "ret = %d\n", ret);
     ok(classlen == sizeof(subkey_class) - 2 /* win8 */ ||
        classlen == strlen(subkey_class), "classlen = %u\n", classlen);
     memset(expectbufferW, 0x55, sizeof(expectbufferW));

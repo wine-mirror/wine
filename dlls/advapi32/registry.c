@@ -865,7 +865,7 @@ LSTATUS WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPD
 
         if (class_len && (info->ClassLength/sizeof(WCHAR) + 1 > *class_len))
         {
-            status = STATUS_BUFFER_OVERFLOW;
+            status = STATUS_BUFFER_TOO_SMALL;
         }
         else
         {
