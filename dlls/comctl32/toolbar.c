@@ -119,7 +119,6 @@ typedef struct
 typedef struct
 {
     DWORD    dwStructSize;    /* size of TBBUTTON struct */
-    INT      nWidth;          /* width of the toolbar */
     RECT     client_rect;
     RECT     rcBound;         /* bounding rectangle */
     INT      nButtonHeight;
@@ -1282,7 +1281,7 @@ static void
 TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 {
     TBUTTON_INFO *btnPtr;
-    INT x, cx, i, j;
+    INT x, cx, i, j, width;
     RECT rc;
     BOOL bButtonWrap;
 
@@ -1302,18 +1301,18 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
          * toolbars in a rebar control
          */
         GetClientRect( GetParent(infoPtr->hwndSelf), &rc );
-        infoPtr->nWidth = rc.right - rc.left;
+        width = rc.right - rc.left;
     }
     else
     {
         GetWindowRect( infoPtr->hwndSelf, &rc );
-        infoPtr->nWidth = rc.right - rc.left;
+        width = rc.right - rc.left;
     }
 
     bButtonWrap = FALSE;
 
-    TRACE("start ButtonWidth=%d, BitmapWidth=%d, nWidth=%d, nIndent=%d\n",
-	  infoPtr->nButtonWidth, infoPtr->nBitmapWidth, infoPtr->nWidth,
+    TRACE("start ButtonWidth=%d, BitmapWidth=%d, width=%d, nIndent=%d\n",
+	  infoPtr->nButtonWidth, infoPtr->nBitmapWidth, width,
 	  infoPtr->nIndent);
 
     for (i = 0; i < infoPtr->nNumButtons; i++ )
@@ -1351,9 +1350,8 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 	/* The layout makes sure the bitmap is visible, but not the button. */
 	/* Test added to also wrap after a button that starts a row but     */
 	/* is bigger than the area.  - GA  8/01                             */
-	if (( x + cx - (infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2
-	   > infoPtr->nWidth ) ||
-	    ((x == infoPtr->nIndent) && (cx > infoPtr->nWidth)))
+        if ((x + cx - (infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2 > width) ||
+            ((x == infoPtr->nIndent) && (cx > width)))
 	{
 	    BOOL bFound = FALSE;
 
@@ -5946,7 +5944,6 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, const CREATESTRUCTW *lpcs)
     /* paranoid!! */
     infoPtr->dwStructSize = sizeof(TBBUTTON);
     infoPtr->nRows = 1;
-    infoPtr->nWidth = 0;
 
     /* initialize info structure */
     infoPtr->nButtonWidth = 23;
