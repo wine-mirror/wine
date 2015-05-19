@@ -1271,55 +1271,86 @@ static const char *shader_arb_get_fixup_swizzle(enum fixup_channel_source channe
     }
 }
 
-static void gen_color_correction(struct wined3d_string_buffer *buffer, const char *reg,
-        DWORD dst_mask, const char *one, const char *two, struct color_fixup_desc fixup)
+struct color_fixup_masks
 {
-    DWORD mask;
+    DWORD source;
+    DWORD sign;
+};
+
+static struct color_fixup_masks calc_color_correction(struct color_fixup_desc fixup, DWORD dst_mask)
+{
+    struct color_fixup_masks masks = {0, 0};
 
     if (is_complex_fixup(fixup))
     {
         enum complex_fixup complex_fixup = get_complex_fixup(fixup);
         FIXME("Complex fixup (%#x) not supported\n", complex_fixup);
-        return;
+        return masks;
     }
 
-    mask = 0;
-    if (fixup.x_source != CHANNEL_SOURCE_X) mask |= WINED3DSP_WRITEMASK_0;
-    if (fixup.y_source != CHANNEL_SOURCE_Y) mask |= WINED3DSP_WRITEMASK_1;
-    if (fixup.z_source != CHANNEL_SOURCE_Z) mask |= WINED3DSP_WRITEMASK_2;
-    if (fixup.w_source != CHANNEL_SOURCE_W) mask |= WINED3DSP_WRITEMASK_3;
-    mask &= dst_mask;
+    if (fixup.x_source != CHANNEL_SOURCE_X)
+        masks.source |= WINED3DSP_WRITEMASK_0;
+    if (fixup.y_source != CHANNEL_SOURCE_Y)
+        masks.source |= WINED3DSP_WRITEMASK_1;
+    if (fixup.z_source != CHANNEL_SOURCE_Z)
+        masks.source |= WINED3DSP_WRITEMASK_2;
+    if (fixup.w_source != CHANNEL_SOURCE_W)
+        masks.source |= WINED3DSP_WRITEMASK_3;
+    masks.source &= dst_mask;
 
-    if (mask)
+    if (fixup.x_sign_fixup)
+        masks.sign |= WINED3DSP_WRITEMASK_0;
+    if (fixup.y_sign_fixup)
+        masks.sign |= WINED3DSP_WRITEMASK_1;
+    if (fixup.z_sign_fixup)
+        masks.sign |= WINED3DSP_WRITEMASK_2;
+    if (fixup.w_sign_fixup)
+        masks.sign |= WINED3DSP_WRITEMASK_3;
+    masks.sign &= dst_mask;
+
+    return masks;
+}
+
+static void gen_color_correction(struct wined3d_string_buffer *buffer, const char *dst,
+        const char *src, const char *one, const char *two,
+        struct color_fixup_desc fixup, struct color_fixup_masks masks)
+{
+    const char *sign_fixup_src = dst;
+
+    if (masks.source)
     {
-        shader_addline(buffer, "SWZ %s, %s, %s, %s, %s, %s;\n", reg, reg,
+        if (masks.sign)
+            sign_fixup_src = "TA";
+
+        shader_addline(buffer, "SWZ %s, %s, %s, %s, %s, %s;\n", sign_fixup_src, src,
                 shader_arb_get_fixup_swizzle(fixup.x_source), shader_arb_get_fixup_swizzle(fixup.y_source),
                 shader_arb_get_fixup_swizzle(fixup.z_source), shader_arb_get_fixup_swizzle(fixup.w_source));
     }
+    else if (masks.sign)
+    {
+        sign_fixup_src = src;
+    }
 
-    mask = 0;
-    if (fixup.x_sign_fixup) mask |= WINED3DSP_WRITEMASK_0;
-    if (fixup.y_sign_fixup) mask |= WINED3DSP_WRITEMASK_1;
-    if (fixup.z_sign_fixup) mask |= WINED3DSP_WRITEMASK_2;
-    if (fixup.w_sign_fixup) mask |= WINED3DSP_WRITEMASK_3;
-    mask &= dst_mask;
-
-    if (mask)
+    if (masks.sign)
     {
         char reg_mask[6];
         char *ptr = reg_mask;
 
-        if (mask != WINED3DSP_WRITEMASK_ALL)
+        if (masks.sign != WINED3DSP_WRITEMASK_ALL)
         {
             *ptr++ = '.';
-            if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
-            if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
-            if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
-            if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
+            if (masks.sign & WINED3DSP_WRITEMASK_0)
+                *ptr++ = 'x';
+            if (masks.sign & WINED3DSP_WRITEMASK_1)
+                *ptr++ = 'y';
+            if (masks.sign & WINED3DSP_WRITEMASK_2)
+                *ptr++ = 'z';
+            if (masks.sign & WINED3DSP_WRITEMASK_3)
+                *ptr++ = 'w';
         }
         *ptr = '\0';
 
-        shader_addline(buffer, "MAD %s%s, %s, %s, -%s;\n", reg, reg_mask, reg, two, one);
+        shader_addline(buffer, "MAD %s%s, %s, %s, -%s;\n", dst, reg_mask, sign_fixup_src, two, one);
     }
 }
 
@@ -1378,6 +1409,8 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     const struct wined3d_shader *shader;
     const struct wined3d_device *device;
     const struct wined3d_gl_info *gl_info;
+    const char *tex_dst = dst_str;
+    struct color_fixup_masks masks;
 
     /* D3D vertex shader sampler IDs are vertex samplers(0-3), not global d3d samplers */
     if(!pshader) sampler_idx += MAX_FRAGMENT_SAMPLERS;
@@ -1433,18 +1466,27 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         sampler_idx = priv->cur_vs_args->vertex.samplers[sampler_idx - MAX_FRAGMENT_SAMPLERS];
     }
 
+    if (pshader)
+    {
+        masks = calc_color_correction(priv->cur_ps_args->super.color_fixup[sampler_idx],
+                ins->dst[0].write_mask);
+
+        if (masks.source || masks.sign)
+            tex_dst = "TA";
+    }
+
     if (flags & TEX_DERIV)
     {
         if(flags & TEX_PROJ) FIXME("Projected texture sampling with custom derivatives\n");
         if(flags & TEX_BIAS) FIXME("Biased texture sampling with custom derivatives\n");
-        shader_addline(buffer, "TXD%s %s, %s, %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg,
-                       dsx, dsy,sampler_idx, tex_type);
+        shader_addline(buffer, "TXD%s %s, %s, %s, %s, texture[%u], %s;\n", mod, tex_dst, coord_reg,
+                       dsx, dsy, sampler_idx, tex_type);
     }
     else if(flags & TEX_LOD)
     {
         if(flags & TEX_PROJ) FIXME("Projected texture sampling with explicit lod\n");
         if(flags & TEX_BIAS) FIXME("Biased texture sampling with explicit lod\n");
-        shader_addline(buffer, "TXL%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg,
+        shader_addline(buffer, "TXL%s %s, %s, texture[%u], %s;\n", mod, tex_dst, coord_reg,
                        sampler_idx, tex_type);
     }
     else if (flags & TEX_BIAS)
@@ -1452,11 +1494,11 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         /* Shouldn't be possible, but let's check for it */
         if(flags & TEX_PROJ) FIXME("Biased and Projected texture sampling\n");
         /* TXB takes the 4th component of the source vector automatically, as d3d. Nothing more to do */
-        shader_addline(buffer, "TXB%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TXB%s %s, %s, texture[%u], %s;\n", mod, tex_dst, coord_reg, sampler_idx, tex_type);
     }
     else if (flags & TEX_PROJ)
     {
-        shader_addline(buffer, "TXP%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TXP%s %s, %s, texture[%u], %s;\n", mod, tex_dst, coord_reg, sampler_idx, tex_type);
     }
     else
     {
@@ -1466,18 +1508,18 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             shader_addline(buffer, "MUL TA, np2fixup[%u].%s, %s;\n", idx >> 1,
                            (idx % 2) ? "zwxy" : "xyzw", coord_reg);
 
-            shader_addline(buffer, "TEX%s %s, TA, texture[%u], %s;\n", mod, dst_str, sampler_idx, tex_type);
+            shader_addline(buffer, "TEX%s %s, TA, texture[%u], %s;\n", mod, tex_dst, sampler_idx, tex_type);
         }
         else
-            shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
+            shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, tex_dst, coord_reg, sampler_idx, tex_type);
     }
 
     if (pshader)
     {
-        gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
+        gen_color_correction(buffer, dst_str, tex_dst,
                 arb_get_helper_value(WINED3D_SHADER_TYPE_PIXEL, ARB_ONE),
                 arb_get_helper_value(WINED3D_SHADER_TYPE_PIXEL, ARB_TWO),
-                priv->cur_ps_args->super.color_fixup[sampler_idx]);
+                priv->cur_ps_args->super.color_fixup[sampler_idx], masks);
     }
 }
 
@@ -6238,6 +6280,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     BOOL op_equal;
     const char *final_combiner_src = "ret";
     BOOL custom_linear_fog = FALSE;
+    struct color_fixup_masks masks;
 
     if (!string_buffer_init(&buffer))
     {
@@ -6426,8 +6469,9 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         }
 
         sprintf(colorcor_dst, "tex%u", stage);
-        gen_color_correction(&buffer, colorcor_dst, WINED3DSP_WRITEMASK_ALL, "const.x", "const.y",
-                settings->op[stage].color_fixup);
+        masks = calc_color_correction(settings->op[stage].color_fixup, WINED3DSP_WRITEMASK_ALL);
+        gen_color_correction(&buffer, colorcor_dst, colorcor_dst, "const.x", "const.y",
+                settings->op[stage].color_fixup, masks);
     }
 
     if (settings->color_key_enabled)
