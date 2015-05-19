@@ -1815,10 +1815,10 @@ static void test_reg_query_info(void)
     classlen = 1;
     ret = RegQueryInfoKeyA(subkey, classbuffer, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     ok(ret == ERROR_MORE_DATA, "ret = %d\n", ret);
-    todo_wine ok(classlen == 0, "classlen = %u\n", classlen);
+    ok(classlen == 0, "classlen = %u\n", classlen);
     memset(expectbuffer, 0x55, sizeof(expectbuffer));
     expectbuffer[0] = 0;
-    todo_wine ok(!memcmp(classbuffer, expectbuffer, sizeof(classbuffer)), "classbuffer was modified\n");
+    ok(!memcmp(classbuffer, expectbuffer, sizeof(classbuffer)), "classbuffer was modified\n");
 
     memset(classbufferW, 0x55, sizeof(classbufferW));
     classlen = 1;
@@ -1834,12 +1834,12 @@ static void test_reg_query_info(void)
     classlen = sizeof(subkey_class) - 1;
     ret = RegQueryInfoKeyA(subkey, classbuffer, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     ok(ret == ERROR_MORE_DATA, "ret = %d\n", ret);
-    todo_wine ok(classlen == sizeof(subkey_class) - 2, "classlen = %u\n", classlen);
+    ok(classlen == sizeof(subkey_class) - 2, "classlen = %u\n", classlen);
     memset(expectbuffer, 0x55, sizeof(expectbuffer));
     strcpy(expectbuffer, subkey_class);
     expectbuffer[sizeof(subkey_class) - 2] = 0;
     expectbuffer[sizeof(subkey_class) - 1] = 0x55;
-    todo_wine ok(!memcmp(classbuffer, expectbuffer, sizeof(classbuffer)),
+    ok(!memcmp(classbuffer, expectbuffer, sizeof(classbuffer)),
        "classbuffer = %.*s, expected %s\n",
        (int)sizeof(classbuffer), classbuffer, expectbuffer);
 

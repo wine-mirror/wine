@@ -1049,18 +1049,18 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
 
         if (status) goto done;
 
-        RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength);
-        if (class_len)
+        len = 0;
+        if (class && class_len) len = *class_len;
+        RtlUnicodeToMultiByteN( class, len, class_len,
+                                (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength );
+        if (len)
         {
-            if (*class_len == 0) class = NULL;
-            if (class && len + 1 > *class_len) status = STATUS_BUFFER_OVERFLOW;
-            *class_len = len;
-        }
-        if (class && !status)
-        {
-            RtlUnicodeToMultiByteN( class, len, NULL, (WCHAR *)(buf_ptr + info->ClassOffset),
-                                    info->ClassLength );
-            class[len] = 0;
+            class[len - 1] = 0;
+            if (*class_len + 1 > len)
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+                *class_len -= 1;
+            }
         }
     }
     else status = STATUS_SUCCESS;
