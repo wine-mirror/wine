@@ -1282,7 +1282,6 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 {
     TBUTTON_INFO *btnPtr;
     INT x, cx, i, j, width;
-    RECT rc;
     BOOL bButtonWrap;
 
     /* 	When the toolbar window style is not TBSTYLE_WRAPABLE,	*/
@@ -1293,21 +1292,7 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 
     btnPtr = infoPtr->buttons;
     x  = infoPtr->nIndent;
-
-    if (GetParent(infoPtr->hwndSelf))
-    {
-        /* this can get the parents width, to know how far we can extend
-         * this toolbar.  We cannot use its height, as there may be multiple
-         * toolbars in a rebar control
-         */
-        GetClientRect( GetParent(infoPtr->hwndSelf), &rc );
-        width = rc.right - rc.left;
-    }
-    else
-    {
-        GetWindowRect( infoPtr->hwndSelf, &rc );
-        width = rc.right - rc.left;
-    }
+    width = infoPtr->client_rect.right - infoPtr->client_rect.left;
 
     bButtonWrap = FALSE;
 

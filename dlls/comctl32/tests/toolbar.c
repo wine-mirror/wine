@@ -2024,6 +2024,61 @@ static void test_TB_GET_SET_EXTENDEDSTYLE(void)
     DestroyWindow(hwnd);
 }
 
+static void test_noresize(void)
+{
+    HWND wnd;
+    int i;
+    TBBUTTON button = {0, 10, TBSTATE_ENABLED, 0, {0, }, 0, -1};
+
+    wnd = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE | CCS_NORESIZE | TBSTYLE_WRAPABLE, 0, 0, 100, 20,
+                          hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
+    SendMessageA(wnd, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+
+    for (i=0; i<30; i++)
+    {
+        button.idCommand = 10 + i;
+        SendMessageA(wnd, TB_ADDBUTTONSA, 1, (LPARAM)&button);
+    }
+
+    SendMessageA(wnd, TB_SETSTATE, 10, TBSTATE_WRAP|TBSTATE_ENABLED);
+
+    /* autosize clears the wrap on button 0 */
+    SendMessageA(wnd, TB_AUTOSIZE, 0, 0);
+    for (i=0; i<30; i++)
+    {
+        SendMessageA(wnd, TB_GETBUTTON, i, (LPARAM)&button);
+        if (i % 4 == 3)
+            ok(button.fsState == (TBSTATE_WRAP|TBSTATE_ENABLED), "%d: got %08x\n", i, button.fsState);
+        else
+            ok(button.fsState == TBSTATE_ENABLED, "%d: got %08x\n", i, button.fsState);
+    }
+
+    /* changing the parent doesn't do anything */
+    MoveWindow(hMainWnd, 0,0, 400, 200, FALSE);
+    for (i=0; i<30; i++)
+    {
+        SendMessageA(wnd, TB_GETBUTTON, i, (LPARAM)&button);
+        if (i % 4 == 3)
+            ok(button.fsState == (TBSTATE_WRAP|TBSTATE_ENABLED), "%d: got %08x\n", i, button.fsState);
+        else
+            ok(button.fsState == TBSTATE_ENABLED, "%d: got %08x\n", i, button.fsState);
+    }
+
+    /* again nothing here */
+    SendMessageA(wnd, TB_AUTOSIZE, 0, 0);
+    for (i=0; i<30; i++)
+    {
+        SendMessageA(wnd, TB_GETBUTTON, i, (LPARAM)&button);
+        if (i % 4 == 3)
+            ok(button.fsState == (TBSTATE_WRAP|TBSTATE_ENABLED), "%d: got %08x\n", i, button.fsState);
+        else
+            ok(button.fsState == TBSTATE_ENABLED, "%d: got %08x\n", i, button.fsState);
+    }
+
+    DestroyWindow(wnd);
+
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -2066,6 +2121,7 @@ START_TEST(toolbar)
     test_get_set_style();
     test_create();
     test_TB_GET_SET_EXTENDEDSTYLE();
+    test_noresize();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
