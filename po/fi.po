@@ -8610,23 +8610,23 @@ msgid ""
 msgstr ""
 "Tässä varmenteessa on ainakin yksi määrittelemätön turvallisuusongelma."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Määritelty komento suoritettiin."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Määrittelemätön ulkoinen virhe."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr "Käytettiin laitteen ID:tä, jota ei ole tässä järjestelmässä."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Ajuri ei ollut käytössä."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8634,15 +8634,15 @@ msgstr ""
 "Valittu laite on jo käytössä. Odota, että se vapautuu, ja yritä sitten "
 "uudelleen."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Määritelty laitteen kahva ei kelpaa."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Järjestelmääsi ei ole asennettu ajuria!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8650,7 +8650,7 @@ msgstr ""
 "Tätä tehtävää varten ei ole riittävästi muistia. Sulje yksi tai useampi "
 "ohjelma vapauttaaksesi muistia ja yritä sitten uudelleen."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8658,19 +8658,19 @@ msgstr ""
 "Tätä funktiota ei tueta. Käytä Capabilities-funktiota selvittääksesi, mitä "
 "funktioita ja viestejä ajuri tukee."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Vastaanotettiin virhenumero, jota ei ole määritelty."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Järjestelmäfunktiolle kulkeutui viallinen lippu."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Järjestelmäfunktiolle kulkeutui viallinen parametri."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8678,7 +8678,7 @@ msgstr ""
 "Valittua muotoa ei tueta tai voida kääntää. Käytä Capabilities-funktiota "
 "selvittääksesi tuetut muodot."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8686,7 +8686,7 @@ msgstr ""
 "Tätä toimintoa ei voida suorittaa, kun mediadataa käytetään vielä. Nollaa "
 "laite tai odota, kunnes dataa ei enää käytetä."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8694,7 +8694,7 @@ msgstr ""
 "Aaltoäänen otsikko oli valmistelematta. Valmistele se funktiolla Prepare ja "
 "yritä uudelleen."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8702,7 +8702,7 @@ msgstr ""
 "Laitetta ei voi avata käyttämättä WAVE_ALLOWSYNC-lippua. Käytä lippua ja "
 "yritä uudelleen."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8710,7 +8710,7 @@ msgstr ""
 "MIDI-otsikko oli valmistelematta. Valmistele se funktiolla Prepare ja yritä "
 "uudelleen."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8718,7 +8718,7 @@ msgstr ""
 "MIDI-karttaa ei löytynyt. Joko vika on ajurissa tai MIDIMAP.CFG on viallinen "
 "tai puuttuu."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8726,7 +8726,7 @@ msgstr ""
 "Portti siirtää dataa laitteelle. Odota, kunnes data on siirretty, ja yritä "
 "uudelleen."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
@@ -8734,7 +8734,7 @@ msgstr ""
 "Nykyiset MIDI Mapper -asetukset viittaavat laitteeseen, jota ei ole "
 "asennettu järjestelmään."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8742,21 +8742,21 @@ msgstr ""
 "MIDI-asetukset ovat vioittuneet. Kopioi alkuperäinen MIDIMAP.CFG Windowsin "
 "hakemistoon SYSTEM ja yritä uudelleen."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Virheellinen MCI-laitteen ID. Käytä ID:tä, joka palautettiin, kun MCI-laite "
 "avattiin."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Ajuri ei tunnista annettua komentoparametria."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Ajuri ei tunnista annettua komentoa."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8764,27 +8764,27 @@ msgstr ""
 "Medialaitteessasi on ongelma. Tarkista, että se toimii oikein, tai ota "
 "yhteyttä laitteen valmistajaan."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Määritelty laite ei ole auki, tai MCI ei tunnista sitä."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
 "Laitteen nimeä käytetään jo aliaksena tässä ohjelmassa. Käytä eri aliasta."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr "Määritellyn laiteajurin lataamisessa on selvittämätön ongelma."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Komentoa ei määritelty."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8792,17 +8792,17 @@ msgstr ""
 "Tulostemerkkijono oli liian suuri mahtuakseen palautuspuskuriin. Kasvata "
 "puskurin kokoa."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr "Annettu komento vaatii merkkijonoparametrin. Anna sellainen."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Määritelty kokonaisluku ei kelpaa tälle komennolle."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8810,47 +8810,47 @@ msgstr ""
 "Laiteajuri palautti vääräntyyppistä dataa. Pyydä laitteen valmistajalta uusi "
 "laite."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr "Laiteajurissa on ongelma. Pyydä laitteen valmistajalta uusi laite."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Määritelty komento vaatii parametrin. Anna sellainen."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Käyttämäsi MCI-laite ei tue annettua komentoa."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Määriteltyä tiedostoa ei löydy. Tarkista, että polku ja tiedostonimi ovat "
 "oikein."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Laiteajuri ei ole valmis."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "MCI:n alustamisessa tapahtui virhe. Yritä käynnistää Windows uudelleen."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr "Laiteajurissa on ongelma. Ajuri on suljettu. Virheeseen ei päästä."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Laitenimeä 'all' ei voi käyttää valitun komennon kanssa."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8858,19 +8858,19 @@ msgstr ""
 "Virheitä tapahtui useammassa kuin yhdessä laitteessa. Määritä jokainen "
 "komento ja laite erikseen selvittääksesi, mikä laite aiheutti virheen."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "Annetusta tiedostopäätteestä ei voida päätellä laitetyyppiä."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "Annettu parametri ei ole annetun komennon alueella."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Annettuja parametreja ei voida käyttää yhdessä."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8878,7 +8878,7 @@ msgstr ""
 "Annettua tiedostoa ei voida tallentaa. Tarkista, että levytila riittää tai "
 "verkkoyhteys toimii."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -8890,24 +8890,24 @@ msgstr ""
 "Annettua laitetta ei löydy. Tarkista, että se on asennettu tai sen nimi on "
 "kirjoitettu oikein."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
 "Annettu laite suljetaan nyt. Odota joitakin sekunteja ja yritä uudelleen."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr "Annettu alias on jo käytössä tässä ohjelmassa. Käytä eri aliasta."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Annettu parametri ei sovi tähän komentoon."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -8915,7 +8915,7 @@ msgstr ""
 "Laiteajuri on jo käytössä. Jos haluat jakaa sen, käytä parametria "
 "'shareable' jokaisen 'open'-komennon yhteydessä."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -8923,7 +8923,7 @@ msgstr ""
 "Annettu komento vaatii aliaksen, tiedoston, ajurin tai laitteen nimen. Anna "
 "sellainen."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -8931,17 +8931,17 @@ msgstr ""
 "Ajan muodoksi annettu arvo ei kelpaa. Katso kelvolliset muodot MCI:n "
 "ohjeista."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr "Parametrin arvosta puuttuu sulkeva lainausmerkki. Ole hyvä ja anna se."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr "Parametri tai arvo annettiin kahdesti. Anna se vain kerran."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -8949,27 +8949,27 @@ msgstr ""
 "Annettua tiedostoa ei voi toistaa annetulla MCI-laitteella. Tiedosto voi "
 "olla vioittunut tai väärässä tiedostomuodossa."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "MCI:lle annettu parametrilohko oli NULL."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Nimetöntä tiedostoa ei voi tallentaa. Anna tiedostonimi."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Parametrin 'new' kanssa täytyy antaa alias."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "Valintaa 'notify' ei voi käyttää automaattisesti avatulla laitteella."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Annetulla laitteella ei voi käyttää tiedostonimeä."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -8977,7 +8977,7 @@ msgstr ""
 "Komentoja ei voi suorittaa annetussa järjestyksessä. Korjaa komentojen "
 "järjestys ja yritä uudelleen."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -8985,7 +8985,7 @@ msgstr ""
 "Määrättyä komentoa ei voi suorittaa automaattisesti avatulla laitteella. "
 "Odota, että laite suljetaan, ja yritä uudelleen."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -8993,12 +8993,12 @@ msgstr ""
 "Tiedostonimi ei sovi. Tarkista, että tiedostonimessä on enintään 8 merkkiä, "
 "joita seuraa piste ja tiedostopääte."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr "Lainausmerkeissä olevan merkkijonon perässä ei voi olla lisämerkkejä."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9006,7 +9006,7 @@ msgstr ""
 "Määriteltyä laitetta ei ole asennettu järjestelmään. Käytä Ohjauspaneelin "
 "Ajurit-kohtaa asentaaksesi laitteen."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9014,7 +9014,7 @@ msgstr ""
 "Annettuun tiedostoon tai MCI-laitteeseen ei päästä. Kokeile vaihtaa "
 "hakemistoja tai käynnistää tietokoneesi uudelleen."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9022,7 +9022,7 @@ msgstr ""
 "Annettuun tiedostoon tai MCI-laitteeseen ei päästä, koska ohjelma ei voi "
 "vaihtaa hakemistoja."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9030,20 +9030,20 @@ msgstr ""
 "Annettuun tiedostoon tai MCI-laitteeseen ei päästä, koska ohjelma ei voi "
 "vaihtaa ajureita."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "Anna laitteen tai ajurin nimi, joka on alle 79 merkkiä pitkä."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "Anna laitteen tai ajurin nimi, joka on alle 69 merkkiä pitkä."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr "Annettu komento vaatii kokonaislukuparametrin. Anna sellainen."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9051,7 +9051,7 @@ msgstr ""
 "Kaikki äänilaitteet, jotka osaisivat soittaa tiedostoja nykyisessä muodossa,"
 "ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä uudelleen."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9059,7 +9059,7 @@ msgstr ""
 "Nykyistä äänilaitetta ei voida käyttää soittamiseen, koska se on jo "
 "käytössä. Odota, että laite vapautuu, ja yritä uudelleen."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9067,7 +9067,7 @@ msgstr ""
 "Kaikki äänilaitteet, jotka osaisivat äänittää tiedostoja nykyisessä muodossa,"
 "ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä uudelleen."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9075,15 +9075,15 @@ msgstr ""
 "Nykyistä äänilaitetta ei voida käyttää äänittämiseen, koska se on jo "
 "käytössä. Odota, että laite vapautuu, ja yritä uudelleen."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Käytä mitä tahansa yhteensopivaa äänentoistolaitetta."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Käytä mitä tahansa yhteensopivaa äänityslaitetta."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9091,13 +9091,13 @@ msgstr ""
 "Mikään asennetuista laitteista ei pysty soittamaan tiedostoja valitussa "
 "muodossa. Käytä Ajurit-kohtaa asentaaksesi laitteen."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr "Laite, johon yrität soittaa, ei tunnista nykyistä tiedostomuotoa."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9105,13 +9105,13 @@ msgstr ""
 "Mikään asennetuista laitteista ei pysty äänittämään tiedostoja valitussa "
 "muodossa. Käytä Ajurit-kohtaa asentaaksesi laitteen."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr "Laite, josta yrität äänittää, ei tunnista nykyistä tiedostomuotoa."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9119,7 +9119,7 @@ msgstr ""
 "SMPTE:n ja \"lauluosoittimen\" aikojen muodot ovat keskenään vaihtoehtoiset. "
 "Niitä ei voi käyttää yhdessä."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9127,7 +9127,7 @@ msgstr ""
 "Annettu MIDI-portti on jo käytössä. Odota, että se vapautuu ja yritä "
 "uudelleen."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9135,11 +9135,11 @@ msgstr ""
 "Annettua MIDI-porttia ei ole asennettu järjestelmään. Käytä Ohjauspaneelin "
 "Ajurit-kohtaa asentaaksesi MIDI-laitteen."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Annetun portin käytössä tapahtui virhe."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9147,11 +9147,11 @@ msgstr ""
 "Kaikki multimedia-ajastimet ovat toisten ohjelmien käytössä. Sulje yksi "
 "näistä ohjelmista ja yritä uudelleen."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Järjestelmälle ei ole määritelty tämänhetkistä MIDI-porttia."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9159,15 +9159,15 @@ msgstr ""
 "Järjestelmään ei ole asennettu MIDI-laitteita. Käytä Ohjauspaneelin Ajurit-"
 "kohtaa asentaaksesi MIDI-ajurin."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Näyttöikkunaa ei ole."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Ei voitu luoda tai käyttää ikkunaa."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9175,13 +9175,33 @@ msgstr ""
 "Annettua tiedostoa ei voida lukea. Varmista, että tiedosto on yhä olemassa, "
 "tai tarkista levysi tai verkkoyhteytesi."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Annettuun tiedostoon ei voida kirjoittaa. Tarkista, että levytilaa on "
 "riittävästi tai verkkoyhteys on toiminnassa."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Wine Mono -asennusohjelma"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "sarake"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

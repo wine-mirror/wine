@@ -8709,39 +8709,39 @@ msgstr ""
 "Legalább egy nem meghatározott biztonsági probléma van ezzel a "
 "tanusítvánnyal."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "A megadott parancs végrehajtódott."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Meghatározhatatlan külső hiba."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
 "Egy eszköz ID fel van használva, de értékhatárokon kívül esik a rendszerben."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "A driver nem volt engedélyezve."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
 "A megadott eszköz foglalt. Várjon a felszabadulásáig és akkor próbálja ismét."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "A megadott eszköz leíró érvénytelen."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Nincs driver telepítve a rendszerben!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8750,7 +8750,7 @@ msgstr ""
 "alkalmazásból, hogy növelje a rendelkezésre álló memóriát és próbája meg "
 "újból."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8758,19 +8758,19 @@ msgstr ""
 "Ez a funkció nem támogatott. Használja a Képességek funkciót, hogy "
 "meghatározza mely funkciókat és üzeneteket támogat a driver."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Egy hibaszám volt meghatározva, amely nincs létrehozva a rendszerben."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Egy érvénytelen flag volt átadva egy rendszer funkciónak."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Egy érvénytelen paraméter volt átadva egy rendszer funkciónak."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8779,7 +8779,7 @@ msgstr ""
 "Használja a Képességek funkcitó, hogy meghatározza mely formátumok "
 "támogatottak."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8787,7 +8787,7 @@ msgstr ""
 "Ez a művelet nem hajtható végre, amíg a lemez lejátszás alatt van. "
 "Reszetelje az eszköt vagy várjon míg a lejátszás befejeződik."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8795,7 +8795,7 @@ msgstr ""
 "A wav fejléc nincs előkészítve. Használja az Előkészítés funkciót, hogy "
 "elkészüljön vagy próbálja újból."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8803,7 +8803,7 @@ msgstr ""
 "Nem nyitható meg az eszköz a WAVE_ALLOWSYNC flag használata nélkül. "
 "Használja a flag-et és próbálja újból."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8811,7 +8811,7 @@ msgstr ""
 "A MIDI fejléc nincs előkészítve. Használja az Előkészítés funkciót, hogy "
 "elkészüljön vagy próbálja újból."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8819,7 +8819,7 @@ msgstr ""
 "Egy MIDI map nem található. Lehet a driver-el gond vagy a MIDIMAP.CFG fájl "
 "megsérülhetett vagy hiányozhat."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8827,7 +8827,7 @@ msgstr ""
 "A port adatokat továbbít az eszköznek. Várjon míg az adat továbbítás "
 "befejeződik és próbálja meg újból."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 #, fuzzy
 #| msgid ""
 #| "The current MIDI Mapper setup refers to a MIDI device that is not "
@@ -8840,7 +8840,7 @@ msgstr ""
 "telepítve a rendszerben. Használja a MIDI Mapper-t, hogy szerkessze a "
 "beállítást."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8848,21 +8848,21 @@ msgstr ""
 "Az aktuális MIDI beállítás megsérült. Másolja az seredeti MIDIMAP.CFG fájlt "
 "a Windows SYSTEM mappába és próbálja meg újból."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Érvénytelen MCI eszköz ID. Használja a visszatérési ID-t, mikor megnyit egy "
 "MCI eszközt."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "A driver nem ismerte fel a megadott parancs paramétert."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "A driver nem ismerte fel a megadott parancsot."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8870,11 +8870,11 @@ msgstr ""
 "Probléma van a lemezmeghajtó eszközzel. Gyűződjön meg, hogy jól működik vagy "
 "lépjen kapcsolatban az eszköz gyártójával."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "A megadott eszköz nincs nyitva vagy nem ismeri fel az MCI."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -8882,17 +8882,17 @@ msgstr ""
 "Az eszköznév már használja az alkalmazás alias névként. Használjon egyedi "
 "alias nevet."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
 "Van egy nem meghatározható hiba a megadott eszköz driver betöltődésekor."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Nem volt parancs meghatározva."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8900,7 +8900,7 @@ msgstr ""
 "A kimeneti karakterlánc túl hosszú, hogy igazodjon a visszatérési pufferhez. "
 "Növelje a pufferméretet."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
@@ -8908,11 +8908,11 @@ msgstr ""
 "A megadott parancsnak szükséges egy karakterlánc paraméter. Kérem, "
 "szolgáltassa ezt."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "A megadott egész szám érvénytelen ennél a parancsnál."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8920,7 +8920,7 @@ msgstr ""
 "Az eszköz driver valótlan visszatérési típust adott vissza. Ellenőrizze az "
 "eszköz gyártójával egy új driver telepítését."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8928,32 +8928,32 @@ msgstr ""
 "Az eszkör driver-el probléma van. Ellenőrizze az eszköz gyártójával egy új "
 "driver telepítését."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "A megadott parancsnak szükséges egy paraméter. Kérem biztsoítsa."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Az MCI eszköz amit használ nem támogatja a megadott parancsot."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Nem található a megadott fáljl. Gyűződjön meg az útvonal és fáljnév "
 "valódiságáról."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Az eszköz driver nincs kész."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "Probléma történt az MCI inicializálásakor. Próbálja meg újraindítani a "
 "Windows-t."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -8961,11 +8961,11 @@ msgstr ""
 "Probléma történt az eszköz driver-rel. A driver bezáródott. A hibakód nem "
 "elérhető."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Nem használhajta az 'all'-t eszköz névként a megadott parancs."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8973,19 +8973,19 @@ msgstr ""
 "Több, mint egy eszköznél történt hiba. Adja meg parancsonként és "
 "eszközönként elkülönítve, hogy meghatározza mely eszköz okozta a hibát."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "Nem határozható meg az eszköztípus a fájlnév kiterjesztésből."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "A megadott paraméter határon kívül esik a megadott parancsnál."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "A megadott paramétereket nem lehet együtt használni."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8993,7 +8993,7 @@ msgstr ""
 "Nem lehet elmenteni a megadott fájlt. Győződjön meg, hogy van elég szabad "
 "diszk hely vagy hogy még kapcsolódik a hálózathoz."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -9005,7 +9005,7 @@ msgstr ""
 "A megadott eszköz nem található. Győződjön meg, hogy telepítve van vagy hogy "
 "az eszköznév nincs elírva."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
@@ -9013,18 +9013,18 @@ msgstr ""
 "A megadott eszköz most bezárul. Várjon néhány másodpercet és azután próbája "
 "újból."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
 "A megadott alias már foglalt az alkalmazás által. Használjon egyedi aliast."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "A megadott paraméter érvénytelen ehhez a parancsnál."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -9032,7 +9032,7 @@ msgstr ""
 "Az eszköz driver már foglalt. Hogy megossza, használja a megosztható "
 "paramétert minden egyes 'open' parancsnál."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -9040,7 +9040,7 @@ msgstr ""
 "A megadott parancsnak szüksége van alias névre, fájlra, driverre, vagy  "
 "eszköz névre. Kérem szolgáltassa."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -9048,19 +9048,19 @@ msgstr ""
 "A megadott érték ehhez az időformátumhoz érvénytelen. Hivatkozva az MCI "
 "dokumentáció valós formátumok lapjára."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
 "Egy lezáruló dupla idézőjel hiányzik a paraméter értéknél. Kérem pótolja."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
 "Egy paraméter vagy érték kétszer van megadva. Csak egyszer szolgáltassa."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9068,28 +9068,28 @@ msgstr ""
 "A megadott fájlt nem lehet lejátszani az MCI eszközön. A fájl sérült lehet "
 "vagy nem megfelelő formátumú."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "Egy null paraméter bolkk került átadásra MCI-nek."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Nem lehet elmenteni, ha nincs fájlnév megadva. Kérem pótolja."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr ""
 "Meg kell határozni egy alias nevet amikor a 'new' paramétert használja."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "Nem használható a 'notify' flag automatikusan nyíló eszközöknél."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Nem használható a fájlnév a megadott eszközhöz."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9097,7 +9097,7 @@ msgstr ""
 "Nem lehet végrehajtani a megadott parancsokat ilyen sorrendben. Javítsa ki a "
 "parancs sorrendet és próbálja újból."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9105,7 +9105,7 @@ msgstr ""
 "Nem lehet végrehajtani a megadott parancsot egy automatikusan nyíló "
 "eszköznél. Várjon míg az eszköz lezárul és azurán próbálja újból."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9113,14 +9113,14 @@ msgstr ""
 "A fájlnév érvénytelen. Győződjön meg a fájlnév nem hosszabb 8 karakternél, "
 "követve egy pont és egy kiterjesztés."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
 "Nem lehet megadni több karaktert a karakterlánc idézőjellel történő lezárása "
 "után."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9128,7 +9128,7 @@ msgstr ""
 "A megadott eszköz nincs telepítve a rendszerben. Használja a Driver ablakot "
 "A Vezérlőpultban, hgoy feltelepítse az eszközt."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9136,7 +9136,7 @@ msgstr ""
 "Nem lehet hozzáférni a megadott fájlhoz vagy MCI eszközhöz. Próbálja meg "
 "megváltoztatni a mappákat vagy indítsa újra a számítógépet."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9144,7 +9144,7 @@ msgstr ""
 "Nem lehet hozzáférni a fájlhoz vagy MCI eszközhöz, mert az alkalmazás nem "
 "tud mappát váltani."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9152,21 +9152,21 @@ msgstr ""
 "Nem lehet hozzáférni a fájlhoz vagy MCI eszközhöz, mert az alkalmazás nem "
 "tud meghajtót váltani."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "Adjon meg egy eszköz vagy driver nevet, ami kisebb 79 karakternél."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "Adjon meg egy eszköz vagy driver nevet, ami kisebb 69 karakternél."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "A megadott parancsnak szüksége van egész szám paraméterre. Kérem, pótolja."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9174,7 +9174,7 @@ msgstr ""
 "Minden wave eszköz, ami le tud játszani fájlokat az aktuális formátumban, "
 "foglalt. Várjon a wave eszköz felszabadulására és próbálja meg újból."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9182,7 +9182,7 @@ msgstr ""
 "Nem lehet beállítani az aktuális wave eszközt visszajátszára, mert "
 "használatban van. Várjon míg az eszköz felszabadul és próbálja meg újból."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9190,7 +9190,7 @@ msgstr ""
 "Minden wave eszköz ami rögzíteni tud az aktuális formátumban, használatban "
 "van.Várjon míg a wave eszköz felszabadul és próbálja meg újból."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9198,15 +9198,15 @@ msgstr ""
 "Nem lehet beállíteni az aktuális wave eszközt felvételre, mert használatban "
 "van. Várjon míg az eszköz felszabadul és próbálja meg újból."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Valamelyik kompaktibilis wave lejátszó eszköz használatban lehet."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Valamelyik kompaktibilis wave lejátszó eszköz használatban lehet."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9215,7 +9215,7 @@ msgstr ""
 "formátumban. Használja a Driver ablakot, hogy telepítsen wave lejátszó "
 "eszközt."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
@@ -9223,7 +9223,7 @@ msgstr ""
 "Az eszköz amivel lejátszani próbál, nem ismeri fel az aktuális fájl "
 "formátumot."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9232,7 +9232,7 @@ msgstr ""
 "formátumokban. Használja a Driver ablakot, hogy telepítsen wave felvevő "
 "eszközt."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9240,7 +9240,7 @@ msgstr ""
 "Az eszköz, amivel rögzíteni próbál nem ismeri fel az aktuális fálj "
 "formátumot."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9248,7 +9248,7 @@ msgstr ""
 "A \"song pointer\" és az SMPTE időformátuma kölcsönösen kizárják egymást. "
 "Nem használhatja együtt ezeket."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9256,7 +9256,7 @@ msgstr ""
 "A megadott MIDI port már foglalt. Várjon a felszabadulásáig, azután próbálja "
 "újból."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9264,11 +9264,11 @@ msgstr ""
 "A megadott MIDI eszköz nincs telepítve a rendszerben. Használja a Driverek "
 "ablakot a Vezérlőpultból, hogy telepítsen MIDI eszközt."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Egy hiba keletkezett a megadott porton."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9276,11 +9276,11 @@ msgstr ""
 "Minden multimédia időzítőt egyéb alkalmazások foglalják le. Lépjen ki "
 "egyikből, azután próálja újból."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "A rendszerben nincs MIDI port megadva."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9288,15 +9288,15 @@ msgstr ""
 "A rendszerben nincs MIDI eszköz telepítve. Használja a Driver ablakot a "
 "Vezérlőpultból, hogy telepítsen egy MIDI driver-t."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Nincs megjelenő ablak."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Nem hozható létre, vagy nem használható ablak."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9304,13 +9304,33 @@ msgstr ""
 "Nem lehet olvani a megadott fájlt. Győződjön meg, hogy a fájl még létezik, "
 "vagy ellenőrizze a merevlemezt vagy hálózati kapcsolatot."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Nem lehet írni a megadott fájlt. Győződjön meg, hogy van elegendő szabad "
 "hely, vagy hogy még kapcsolódik a hálózathoz."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Gecko Installer"
+msgid "Wine Sound Mapper"
+msgstr "Wine Gecko telepítő"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "oszlop"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

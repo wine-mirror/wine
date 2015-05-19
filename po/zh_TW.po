@@ -8616,37 +8616,37 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "有至少一個未指定的安全問題與這個憑證相關。"
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "指定的命令被帶出。"
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "未定義的外部錯誤。"
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr "裝置識別號已被用於超出您的系統範圍。"
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "驅動程式未被啟用。"
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr "指定的裝置已在使用中。等到它可用時，然後再試一次。"
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "指定的裝置控柄無效。"
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "沒有任何驅動程式已安裝於您的系統！"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8654,70 +8654,70 @@ msgstr ""
 "可用於這個任務的記憶體不足。離開一或多個應用程式以增加可用記憶體，然後再試一"
 "次。"
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr "這個函式未被支援。使用功能函式以決定驅動程式支援何項函式和訊息。"
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "被指定的錯誤代號未被定義於系統中。"
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "無效的旗標被傳遞到系統函式。"
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "無效的參數被傳遞到系統函式。"
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr "指定的格式未被支援或無法翻譯。使用功能函式以決定支援的格式。"
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
 "當媒體資料仍在播放中將無法進行這個作業。請重置裝置，或是等到資料已完成播放。"
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr "wave 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
 "無法在不使用 WAVE_ALLOWSYNC 旗標的狀態下開啟裝置。使用旗標，然後再試一次。"
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr "MIDI 標頭尚未就緒。使用「準備功能」以準備標頭，然後再試一次。"
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
 "找不到 MIDI 對映。也許是驅動程式的問題，或者 MIDIMAP.CFG 檔案已損壞或缺少。"
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr "通訊埠正在傳送資料給裝置。等到資料傳輸完成，然後再試一次。"
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 #, fuzzy
 #| msgid ""
 #| "The current MIDI Mapper setup refers to a MIDI device that is not "
@@ -8729,7 +8729,7 @@ msgstr ""
 "目前的 MIDI 對映表設定，參照了未被安裝於系統上的 MIDI 裝置。使用 MIDI 對映表"
 "以編輯設定。"
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8737,129 +8737,129 @@ msgstr ""
 "目前的 MIDI 設定已受損。複製原來的 MIDIMAP.CFG 檔案到 Windows 系統目錄，然後"
 "再試一次。"
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "無效的多媒體控制介面裝置識別號。開啟多媒體控制介面裝置時使用回傳的識別號。"
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "驅動程式無法識別指定的命令參數。"
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "驅動程式無法識別指定的命令。"
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr "您的媒體裝置有問題。請確定它作用正確或與裝置製造商聯絡。"
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "指定的裝置未開啟或未被多媒體控制介面辨識出來。"
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr "裝置名稱已被這個應用程式用做別名。請使用唯一的別名。"
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr "載入指定的裝置驅動程式時發生無法偵測的問題。"
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "沒有任何命令被指定。"
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr "輸出字串太大而不適合回傳緩衝區。請增加緩衝區的大小。"
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr "指定的命令需要字串參數。請提供一個。"
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "指定的整數對於這個命令無效。"
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr "裝置驅動程式回傳無效的類型。請詢問裝置製造商以得到新的驅動程式。"
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr "裝置驅動程式有問題。請詢問裝置製造商以得到新的驅動程式。"
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "指定的命令需要參數。請提供一個。"
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "您正在使用的多媒體控制介面裝置不支援指定的命令。"
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr "找不到指定的檔案。請確定路徑和檔名正確。"
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "裝置驅動程式未就緒。"
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr "初始化多媒體控制介面時發生問題。嘗試重新啟動 Windows。"
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr "裝置驅動程式有問題。驅動程式已關閉。發生無法存取的錯誤。"
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "無法使用 all 做為指定命令的裝置名稱。"
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
 "在一個以上的裝置中發生錯誤。每個命令分別指定裝置以決定何項裝置造成了錯誤。"
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "無法從給定的副檔名決定裝置類型。"
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "指定的參數超出指定命令的範圍。"
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "指定的參數無法一起使用。"
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr "無法儲存指定的檔案。請確定您有足夠的磁碟空間，或是仍然連線到網路。"
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -8869,52 +8869,52 @@ msgid ""
 "device name is spelled correctly."
 msgstr "找不到指定的裝置。請確定它已安裝，或是該裝置名稱的拼寫正確。"
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr "指定的裝置現在被關閉。請等待數秒，然後再試一次。"
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr "指定的別名已被用於這個應用程式。使用唯一的別名。"
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "指定的參數對於這個命令無效。"
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
 "裝置驅動程式已在使用中。要分享它，請使用 shareable 參數於每個 open 命令。"
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr "指定的命令需要一個別名、檔案、驅動程式或裝置名稱。請提供一個。"
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr "指定的值用於時間格式無效。參考多媒體控制介面文件用於有效格式。"
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr "參數值缺少一個右側的雙引號。請提供一個。"
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr "參數或值被指定了兩次。只要指定它一次。"
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -8922,88 +8922,88 @@ msgstr ""
 "指定的檔案無法在指定的多媒體控制介面裝置上播放。檔案也許已經損壞，或者並非正"
 "確格式。"
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "空的參數區塊被傳遞到多媒體控制介面。"
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "無法儲存未命名的檔案。請提供一個檔名。"
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "使用 new 參數時，您必須指定別名。"
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "無法於自動開啟的裝置使用 notify 旗標。"
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "無法於指定裝置使用檔名。"
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
 msgstr "無法以指定的順多帶出命令。請修正命令序列，然後再試一次。"
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr "無法於自動開啟的裝置帶出指定的命令。請等到裝置關閉，然後再試一次。"
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr "檔名無效。請確定檔名長度不超過 8 個字元，然後接著句點和延伸檔名。"
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr "夾於引號的字串之後無法指定額外字元。"
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr "指定的裝置未被安裝在系統上。請使用控制面板中的驅動程式選項以安裝裝置。"
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
 "無法存取指定的檔案或多媒體控制介面裝置。請嘗試變更目錄或重新啟動您的電腦。"
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr "無法存取指定的檔案或多媒體控制介面裝置，因為應用程式無法變更目錄。"
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr "無法存取指定的檔案或多媒體控制介面裝置，因為應用程式無法變更磁碟。"
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "請指定少於 79 個字元的裝置或驅動程式名稱。"
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "請指定少於 69 個字元的裝置或驅動程式名稱。"
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr "指定的命令需要整數參數。請提供一個。"
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9011,7 +9011,7 @@ msgstr ""
 "所有可以用目前格式播放檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
 "後再試一次。"
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9019,7 +9019,7 @@ msgstr ""
 "無法設定目前的 wave 裝置去播放，因為它正在使用中。請等到裝置有空時，然後再試"
 "一次。"
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9027,7 +9027,7 @@ msgstr ""
 "所有可以用目前格式記錄檔案的 wave 裝置都在使用中。請等到 wave 裝置有空時，然"
 "後再試一次。"
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9035,15 +9035,15 @@ msgstr ""
 "無法設定目前的 wave 裝置去記錄，因為它正在使用中。請等到裝置有空時，然後再試"
 "一次。"
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "也許可以使用任何相容的波形播放控制裝置。"
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "也許可以使用任何相容的波形記錄裝置。"
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9051,13 +9051,13 @@ msgstr ""
 "沒有任何可以用目前格式播放檔案的 wave 裝置已被安裝。請使用驅動程式選項以安裝 "
 "wave 裝置。"
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr "您正在嘗試用以播放的裝置無法識別目前的檔案格式。"
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9065,25 +9065,25 @@ msgstr ""
 "沒有安裝任何能以目前的格式記錄檔案的 wave 裝置。使用「驅動程式」選項以安裝 "
 "wave 裝置。"
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr "您正在嘗試記錄的裝置無法識別目前的檔案格式。"
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr "「歌曲指標」的時間格式和 SMPTE 彼此互斥。您無法一起使用它們。"
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr "指定的 MIDI 通訊埠已在使用中。等到它可用時；然後再試一次。"
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9091,11 +9091,11 @@ msgstr ""
 "指定的 MIDI 裝置未被安裝在系統上。使用「控制面板」中的「驅動程式」選項以安裝 "
 "MIDI 裝置。"
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "指定的通訊埠發生了錯誤。"
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9103,11 +9103,11 @@ msgstr ""
 "所有多媒體計時器正被其他應用程式使用中。離開其中某一個應用程式；然後再試一"
 "次。"
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "系統尚未指定當前的 MIDI 通訊埠。"
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9115,25 +9115,45 @@ msgstr ""
 "系統沒有任何已安裝的 MIDI 裝置。使用「控制面板」中的「驅動程式」選項以安裝 "
 "MIDI 驅動程式。"
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "沒有任何顯示視窗。"
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "無法建立或使用視窗。"
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
 msgstr "無法讀取指定的檔案。確定檔案仍然存在，或者檢查看看您的磁碟或網路連線。"
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr "無法寫入指定的檔案。確定您有足夠的磁碟空間或是仍然連線到網路。"
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Wine Mono 安裝程式"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "行"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

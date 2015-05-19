@@ -8655,24 +8655,24 @@ msgid ""
 msgstr ""
 "Hi ha almenys un problema de seguretat no especificat amb aquest certificat."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "S'ha realitzat l'ordre especificat."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Hi ha hagut un error extern indefinit."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
 "Un ID de dispositiu s'ha utilitzat que és fora de l'abast del vostre sistema."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "El controlador no estava habilitat."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8680,15 +8680,15 @@ msgstr ""
 "El dispositiu especificat ja està en ús. Espereu fins que estigui lliure i "
 "després torneu a intentar."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "L'identificador del dispositiu especificat és invàlid."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "No hi ha cap controlador instal·lat en el vostre sistema!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8697,7 +8697,7 @@ msgstr ""
 "aplicacions per a augmentar la memòria disponible i després torneu a "
 "intentar."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8705,19 +8705,19 @@ msgstr ""
 "No s'admet aquesta funció. Utilitzeu la funció Capacitats per a determinar "
 "quines funcions i missatges són compatibles amb el controlador."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Un número d'error s'ha especificat que no està definit en el sistema."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "S'ha passat una bandera invàlida a una funció de sistema."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "S'ha passat un paràmetre invàlid a una funció de sistema."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8725,7 +8725,7 @@ msgstr ""
 "El format especificat no s'admet o no es pot traduir. Utilitzeu la funció "
 "Capacitats per a determinar els formats compatibles."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8734,7 +8734,7 @@ msgstr ""
 "s'estan reproduint. Reinicialitzeu el dispositiu, o espereu fins que les "
 "dades terminin de reproduir."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8742,7 +8742,7 @@ msgstr ""
 "La capçalera d'ona no estava preparada. Utilitzeu la funció Preparar per a "
 "preparar la capçalera i després torneu a intentar."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8750,7 +8750,7 @@ msgstr ""
 "No es pot obrir el dispositiu sense utilitzar la bandera WAVE_ALLOWSYNC. "
 "Utilitzeu la bandera i després torneu a intentar."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8758,7 +8758,7 @@ msgstr ""
 "La capçalera MIDI no estava preparada. Utilitzeu la funció Preparar per a "
 "preparar la capçalera i després torneu a intentar."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8766,7 +8766,7 @@ msgstr ""
 "No s'ha trobat cap mapa MIDI. Hi pot haver un problema amb el controlador, o "
 "pot que el fitxer MIDIMAP.CFG estigui danyat o manqui."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8774,7 +8774,7 @@ msgstr ""
 "El port està transmetent dades al dispositiu. Espereu fins que les dades "
 "s'hagin transmès i després torneu a intentar."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
@@ -8782,7 +8782,7 @@ msgstr ""
 "La configuració actual del MIDI Mapper es refereix a un dispositiu MIDI que "
 "no està instal·lat en el sistema."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8790,21 +8790,21 @@ msgstr ""
 "La configuració MIDI actual està danyada. Copieu el fitxer MIDIMAP.CFG "
 "original al directori SYSTEM de Windows i després torneu a intentar."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "L'ID del dispositiu MCI és invàlida. Utilitzeu l'ID retornada en obrir el "
 "dispositiu MCI."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "El controlador no pot reconèixer el paràmetre d'ordre especificat."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "El controlador no pot reconèixer l'ordre especificat."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8813,11 +8813,11 @@ msgstr ""
 "estigui funcionant correctament o feu contacte amb el fabricant del "
 "dispositiu."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "El dispositiu especificat no està obert o l'MCI no el reconeix."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -8825,18 +8825,18 @@ msgstr ""
 "Aquesta aplicació ja utilitza el nom de dispositiu com a àlies. Utilitzeu un "
 "àlies únic."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
 "Hi ha un problema no detectable en carregar el controlador de dispositiu "
 "especificat."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "No s'ha especificat cap ordre."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8844,7 +8844,7 @@ msgstr ""
 "La cadena de sortida estava massa gran per a cabre en la memòria intermèdia "
 "de retorn. Augmenteu la mida de la memòria intermèdia."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
@@ -8852,11 +8852,11 @@ msgstr ""
 "L'ordre especificat requereix un paràmetre de cadena de caràcters. Si us "
 "plau, proveïu un."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "El nombre enter especificat es invàlid per a aquest ordre."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8864,7 +8864,7 @@ msgstr ""
 "El controlador de dispositiu ha donat un tipus de retorn invàlid. Consulteu "
 "amb el fabricant del dispositiu sobre com obtenir un controlador nou."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8872,31 +8872,31 @@ msgstr ""
 "Hi ha un problema amb el controlador de dispositiu. Consulteu amb el "
 "fabricant del dispositiu sobre com obtenir un controlador nou."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "L'ordre especificat requereix un paràmetre. Si us plau, proveïu un."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "El dispositiu MCI que utilitzeu no admet l'ordre especificat."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "No es pot trobar el fitxer especificat. Assegureu-vos que el camí i el nom "
 "siguin correctes."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "El controlador de dispositiu no està llest."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "Hi ha hagut un problema en inicialitzar l'MCI. Proveu reiniciar el Windows."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -8904,12 +8904,12 @@ msgstr ""
 "Hi ha un problema amb el controlador de dispositiu. El conductor s'ha "
 "tancat. No es pot accedir al error."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
 "No es pot utilitzar 'all' com al nom de dispositiu amb l'ordre especificat."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8918,21 +8918,21 @@ msgstr ""
 "dispositiu separadament per a determinar quins dispositius han causat "
 "l'error."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
 "No es pot determinar el tipus de dispositiu de l'extensió del nom de fitxer "
 "donat."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "El paràmetre especificat és fora de l'interval de l'ordre especificat."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Els paràmetres especificats no es poden utilitzar juntament."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8940,7 +8940,7 @@ msgstr ""
 "No es pot desar el fitxer especificat. Assegureu-vos que tingueu prou espai "
 "de disc o que encara estigueu connectat a la xarxa."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -8952,7 +8952,7 @@ msgstr ""
 "No es pot trobar el dispositiu especificat. Assegureu-vos que estigui "
 "instal·lat o que el nom de dispositiu estigui escrit correctament."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
@@ -8960,7 +8960,7 @@ msgstr ""
 "El dispositiu especificat s'està tancant. Espereu uns segons i després "
 "torneu a intentar."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
@@ -8968,11 +8968,11 @@ msgstr ""
 "L'àlies especificat ja s'utilitza en aquesta aplicació. Utilitzeu un àlies "
 "únic."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "El paràmetre especificat no és vàlid per a aquest ordre."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -8980,7 +8980,7 @@ msgstr ""
 "El controlador de dispositiu ja està en ús. Per a compartir-lo, useu el "
 "paràmetre 'shareable' amb cada ordre 'open'."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -8988,7 +8988,7 @@ msgstr ""
 "L'ordre especificat requereix un àlies, fitxer, controlador o nom de "
 "dispositiu. Si us plau, proveïu un."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -8996,7 +8996,7 @@ msgstr ""
 "El valor especificat per al format d'hora no és vàlid. Consulteu la "
 "documentació MCI pels formats vàlids."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
@@ -9004,13 +9004,13 @@ msgstr ""
 "Manca una cometa doble tancant del valor de paràmetre. Si us plau, proveïu "
 "una."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
 "Un paràmetre o valor s'ha especificat dues vegades. Només especifiqueu-lo "
 "una vegada."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9018,29 +9018,29 @@ msgstr ""
 "No es pot reproduir el fitxer especificat en el dispositiu MCI especificat. "
 "Pot que el fitxer estigui danyat o no en el format correcte."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "S'ha passat un bloc de paràmetres nul a l'MCI."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "No es pot desar un fitxer sense nom. Proveïu un nom de fitxer."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Heu d'especificar un àlies quan s'utilitza el paràmetre 'new'."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
 "No es pot utilitzar la bandera 'notify' amb els dispositius oberts "
 "automàticament."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "No es pot utilitzar un nom de fitxer amb el dispositiu especificat."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9048,7 +9048,7 @@ msgstr ""
 "No es pot dur a terme els ordres en l'ordre especificat. Corregiu la "
 "seqüència de ordres i després torneu a intentar."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9057,7 +9057,7 @@ msgstr ""
 "automàticament. Espereu fins que es tanqui el dispositiu i després torneu a "
 "intentar."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9065,14 +9065,14 @@ msgstr ""
 "El nom de fitxer és invàlid. Assegureu-vos que el nom del fitxer no estigui "
 "més llarg de 8 caràcters, seguit d'un període i una extensió."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
 "No es pot especificar caràcters addicionals després d'una cadena entre "
 "cometes."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9080,7 +9080,7 @@ msgstr ""
 "El dispositiu especificat no està instal·lat al sistema. Utilitzeu l'opció "
 "Controladors al Tauler de Control per a instal·lar el dispositiu."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9088,7 +9088,7 @@ msgstr ""
 "No es pot accedir al fitxer o dispositiu MCI. Intenteu canviar els "
 "directoris o reiniciar el vostre ordinador."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9096,7 +9096,7 @@ msgstr ""
 "No es pot accedir al fitxer o dispositiu MCI perquè l'aplicació no pot "
 "canviar de directori."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9104,26 +9104,26 @@ msgstr ""
 "No es pot accedir al fitxer o dispositiu MCI perquè l'aplicació no pot "
 "canviar d'unitat."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr ""
 "Especifiqueu un nom de dispositiu o controlador que sigui menys de 79 "
 "caràcters."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr ""
 "Especifiqueu un nom de dispositiu o controlador que sigui menys de 69 "
 "caràcters."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "L'ordre especificat requereix un paràmetre de nombre sencer. Si us plau, "
 "proveïu un."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9132,7 +9132,7 @@ msgstr ""
 "estan en ús. Espereu fins que un dispositiu d'ona estigui lliure i després "
 "torneu a intentar."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9141,7 +9141,7 @@ msgstr ""
 "està en ús. Espereu fins que el dispositiu estigui lliure i després torneu a "
 "intentar."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9150,7 +9150,7 @@ msgstr ""
 "estan en ús. Espereu fins que un dispositiu d'ona estigui lliure i després "
 "torneu a intentar."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9159,18 +9159,18 @@ msgstr ""
 "està en ús. Espereu que el dispositiu estigui lliure i després torneu a "
 "intentar."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr ""
 "Es pot utilitzar qualsevol dispositiu de reproducció de formes d'ona "
 "compatible."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr ""
 "Es pot utilitzar qualsevol dispositiu de gravació de formes d'ona compatible."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9179,7 +9179,7 @@ msgstr ""
 "instal·lat. Utilitzeu l'opció Controladors per a instal·lar el dispositiu "
 "d'ona."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
@@ -9187,7 +9187,7 @@ msgstr ""
 "El dispositiu que esteu intentant reproduir no pot reconèixer el format de "
 "fitxer actual."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9196,7 +9196,7 @@ msgstr ""
 "instal·lat. Utilitzeu l'opció Controladors per a instal·lar el dispositiu "
 "d'ona."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9204,7 +9204,7 @@ msgstr ""
 "El dispositiu del qual esteu intentant gravar no pot reconèixer el format de "
 "fitxer actual."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9212,7 +9212,7 @@ msgstr ""
 "Els formats d'hora de la \"punter de cançó\" i SMPTE són mútuament "
 "excloents. No es poden utilitzar junts."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9220,7 +9220,7 @@ msgstr ""
 "El port MIDI especificat ja està en ús. Espereu fins que estigui lliure; "
 "llavors torneu a intentar."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9229,11 +9229,11 @@ msgstr ""
 "l'opció Controladors al Tauler de Control per a instal·lar un dispositiu "
 "MIDI."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "S'ha ocorregut un error amb el port especificat."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9241,11 +9241,11 @@ msgstr ""
 "Les altres aplicacions estan utilitzant tots els temporitzadors de "
 "multimèdia. Tanqueu una d'aquestes aplicacions, llavors torneu a intentar."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "El sistema no té un port MIDI actual especificat."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9253,15 +9253,15 @@ msgstr ""
 "El sistema no té cap dispositiu MIDI instal·lat. Utilitzeu l'opció "
 "Controladors del Tauler de Control per a instal·lar un controlador MIDI."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "No hi ha cap finestra de mostra."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "No s'ha pogut crear o utilitzar la finestra."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9269,13 +9269,33 @@ msgstr ""
 "No es pot llegir el fitxer especificat. Assegureu-vos que el fitxer encara "
 "sigui present, o comproveu el vostre disc o la connexió de xarxa."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "No es pot escriure al fitxer especificat. Assegureu-vos que tingueu prou "
 "espai de disc o que encara estigueu connectat a la xarxa."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Instal·lador del Wine Mono"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "columna"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

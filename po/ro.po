@@ -8882,23 +8882,23 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Comanda specificată a fost executată."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Eroare externă nedeterminată."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr "A fost utilizat un ID de dispozitiv incompatibil cu sistemul dvs."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Driverul nu a fost activat."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8906,15 +8906,15 @@ msgstr ""
 "Dispozitivul specificat se află deja în uz. Așteptați până se eliberează și "
 "încercați din nou."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Handle specificat pentru dispozitiv nu este valid."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Nu este instalat nici un driver în sistem!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8923,7 +8923,7 @@ msgstr ""
 "sau mai multe aplicații pentru a mări memoria disponibilă, apoi încercați "
 "din nou."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8931,19 +8931,19 @@ msgstr ""
 "Această funcție nu este suportată. Utilizați funcția Capabilities pentru a "
 "determina funcțiile și mesajele suportate de driver."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "A fost specificat un număr de eroare care nu este definit în sistem."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Sa pasat un fanion nevalid unei funcții a sistemului."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Sa pasat un parametru nevalid unei funcții a sistemului."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8951,7 +8951,7 @@ msgstr ""
 "Formatul specificat nu este suportat sau nu poate fi interpretat. Utilizați "
 "funcția Capabilities pentru a determina formatele suportate."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8959,7 +8959,7 @@ msgstr ""
 "Nu se poate realiza această operațiune în timp ce se redau datele media. "
 "Resetați dispozitivul sau așteptați finalizarea redării."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8967,7 +8967,7 @@ msgstr ""
 "Antetul wave nu a fost pregătit. Utilizați funcția Prepare pentru a pregăti "
 "antetul, apoi încercați din nou."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8975,7 +8975,7 @@ msgstr ""
 "Nu se poate deschide dispozitivul fără utilizarea fanionului WAVE_ALLOWSYNC. "
 "Utilizați fanionul și apoi încercați din nou."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8983,7 +8983,7 @@ msgstr ""
 "Antetul MIDI nu a fost pregătit. Utilizați funcția Prepare pentru a pregăti "
 "antetul, apoi încercați din nou."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8991,7 +8991,7 @@ msgstr ""
 "Nu a fost găsită o mapare MIDI. Poate exista o problemă la driver sau "
 "fișierul MIDIMAP.CFG poate să fie corupt sau să lipsească."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8999,7 +8999,7 @@ msgstr ""
 "Portul transmite date către dispozitiv. Așteptați finalizarea transmiterii "
 "și apoi încercați din nou."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 #, fuzzy
 #| msgid ""
 #| "The current MIDI Mapper setup refers to a MIDI device that is not "
@@ -9012,7 +9012,7 @@ msgstr ""
 "nu este instalat în sistem. Utilizați MIDI Mapper pentru a edita "
 "configurația."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -9020,21 +9020,21 @@ msgstr ""
 "Configurația curentă MIDI este deteriorată. Copiați fișierul MIDIMAP.CFG "
 "original în directorul Windows SYSTEM și apoi încercați din nou."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "ID-ul pentru dispozitivul MCI nu este valid. Utilizați ID-ul primit la "
 "deschiderea dispozitivului MCI."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Driverul nu poate recunoaște parametrul de comandă specificat."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Driverul nu poate recunoaște comanda specificată."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -9042,11 +9042,11 @@ msgstr ""
 "Există o problemă la dispozitivul media. Asigurați-vă că acesta funcționează "
 "corect sau contactați producătorul său."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Dispozitivul specificat nu este deschis sau nu este recunoscut de MCI."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -9054,18 +9054,18 @@ msgstr ""
 "Numele dispozitivului este deja utilizat ca alias de către această "
 "aplicație. Utilizați un alias unic."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
 "Există o problemă nedetectabilă la încărcarea driverului pentru dispozitivul "
 "specificat."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Nu a fost specificată nici o comandă."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -9073,18 +9073,18 @@ msgstr ""
 "Șirul rezultant era prea mare pentru memoria tampon. Măriți zona de memorie "
 "tampon."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
 "Comanda specificată necesită un parametru șir de caractere. Furnizați unul."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Numărul întreg specificat nu este valid pentru această comandă."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -9092,7 +9092,7 @@ msgstr ""
 "Driverul dispozitivului a returnat un tip nevalid de răspuns. Încercați să "
 "obțineți un nou driver de la producătorul dispozitivului."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -9100,31 +9100,31 @@ msgstr ""
 "Există o problemă la driverul dispozitivului. Încercați să obțineți un nou "
 "driver de la producătorul dispozitivului."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Comanda specificată necesită un parametru. Furnizați unul."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Dispozitivul MCI pe care îl utilizați nu suportă comanda specificată."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Fișierul specificat nu poate fi găsit. Asigurați-vă că numele fișierului și "
 "calea sunt corecte."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Driverul dispozitivului nu este pregătit."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "A intervenit o problemă la inițializarea MCI. Încercați să reporniți Windows."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -9132,12 +9132,12 @@ msgstr ""
 "Există o problemă la driverul dispozitivului. Driverul s-a închis și eroarea "
 "nu poate fi accesată."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
 "Nu se poate utiliza „toate” ca nume de dispozitiv pentru comanda specificată."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -9146,22 +9146,22 @@ msgstr ""
 "comandă și dispozitiv pentru a determina care dispozitive au provocat "
 "eroarea."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
 "Nu se poate determina tipul dispozitivului după extensia numelui fișierului "
 "dat."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr ""
 "Parametrul specificat nu se încadrează în domeniul comenzii specificate."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Parametrii specificați nu pot fi utilizați împreună."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -9169,7 +9169,7 @@ msgstr ""
 "Fișierul specificat nu poate fi salvat. Asigurați-vă că aveți suficient "
 "spațiu pe disc sau că mai sunteți conectat la rețea."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -9181,7 +9181,7 @@ msgstr ""
 "Dispozitivul specificat nu poate fi găsit. Asigurați-vă că este instalat sau "
 "că numele său este scris corect."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
@@ -9189,7 +9189,7 @@ msgstr ""
 "Dispozitivul specificat este în curs de închidere. Așteptați câteva secunde, "
 "apoi încercați din nou."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
@@ -9197,11 +9197,11 @@ msgstr ""
 "Aliasul specificat este deja utilizat de către această aplicație. Utilizați "
 "un alias unic."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Parametrul specificat nu este valid pentru această comandă."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -9209,7 +9209,7 @@ msgstr ""
 "Driverul dispozitivului este deja utilizat. Pentru a-l partaja, utilizați "
 "parametrul „partajabil” pentru fiecare comandă „deschide”."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -9217,7 +9217,7 @@ msgstr ""
 "Comanda specificată necesită un alias, fișier, driver sau nume de "
 "dispozitiv. Furnizați unul."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -9225,7 +9225,7 @@ msgstr ""
 "Valoarea specificată pentru formatul orei nu este validă. Consultați "
 "documentația MCI pentru formatele valide."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
@@ -9233,13 +9233,13 @@ msgstr ""
 "Din valoarea parametrului lipsesc ghilimelele duble de închidere. Furnizați-"
 "le."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
 "Un parametru sau o valoare a fost specificat(ă) de două ori. Specificați-"
 "l(o) o singură dată."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9247,29 +9247,29 @@ msgstr ""
 "Fișierul specificat nu poate fi redat pe dispozitivul MCI specificat. "
 "Fișierul poate fi corupt sau într-un format incorect."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "Un parametru de block nul a fost pasat la MCI."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Nu se poate salva un fișier nedenumit. Specificați un nume de fișier."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Trebuie să specificați un alias când utilizați parametrul „nou”."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
 "Nu se poate utiliza fanionul „notificare” pentru dispozitive cu deschidere "
 "automată."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Nu se poate utiliza un nume de fișier pentru dispozitivul specificat."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9277,7 +9277,7 @@ msgstr ""
 "Comenzile nu pot fi executate în ordinea specificată. Corectați ordinea "
 "comenzilor, apoi încercați din nou."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9285,7 +9285,7 @@ msgstr ""
 "Comanda specificată nu se poate executa pe un dispozitiv cu deschidere "
 "automată. Așteptați închiderea dispozitivului, apoi încercați din nou."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9293,14 +9293,14 @@ msgstr ""
 "Numele de fișier nu este valid. Asigurați-vă că nu este mai mare de 8 "
 "caractere, urmate de un punct și o extensie."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
 "Nu pot fi specificate caractere suplimentare după un șir încadrat între "
 "ghilimele."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9308,7 +9308,7 @@ msgstr ""
 "Dispozitivul specificat nu este instalat în sistem. Utilizați opțiunea "
 "Drivere din Panoul de control pentru a instala dispozitivul."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9316,7 +9316,7 @@ msgstr ""
 "Fișierul sau dispozitivul MCI specificat nu poate fi accesat. Încercați să "
 "schimbați directoarele sau să reporniți calculatorul."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9324,7 +9324,7 @@ msgstr ""
 "Fișierul sau dispozitivul MCI specificat nu poate fi accesat pentru că "
 "aplicația nu poate schimba directoarele."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9332,25 +9332,25 @@ msgstr ""
 "Fișierul sau dispozitivul MCI specificat nu poate fi accesat pentru că "
 "aplicația nu poate schimba unitățile."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr ""
 "Specificați un nume de dispozitiv sau de driver cu mai puțin de 79 de "
 "caractere."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr ""
 "Specificați un nume de dispozitiv sau de driver cu mai puțin de 69 de "
 "caractere."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "Comanda specificată necesită un parametru de număr integral. Furnizați unul."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9358,7 +9358,7 @@ msgstr ""
 "Toate dispozitivele wave care pot reda fișiere în formatul curent sunt deja "
 "în uz. Așteptați eliberarea unuia dintre ele, apoi încercați din nou."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9366,7 +9366,7 @@ msgstr ""
 "Dispozitivul wave curent nu poate fi configurat pentru redare pentru că este "
 "deja în uz. Așteptați să se elibereze, apoi încercați din nou."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9374,7 +9374,7 @@ msgstr ""
 "Toate dispozitivele wave care pot înregistra fișiere în formatul curent sunt "
 "deja în uz. Așteptați eliberarea unuia dintre ele, apoi încercați din nou."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9382,18 +9382,18 @@ msgstr ""
 "Dispozitivul wave curent nu poate fi configurat pentru înregistrare pentru "
 "că este deja în uz. Așteptați să se elibereze, apoi încercați din nou."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr ""
 "Orice dispozitiv compatibil de redare poate fi utilizat pentru formatul wave."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr ""
 "Orice dispozitiv compatibil de înregistrare poate fi utilizat pentru "
 "formatul wave."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9401,7 +9401,7 @@ msgstr ""
 "Nu este instalat nici un dispozitiv care poate reda fișierele în formatul "
 "curent. Utilizați opțiunea „Drivere” pentru a instala dispozitivul wave."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
@@ -9409,7 +9409,7 @@ msgstr ""
 "Dispozitivul cu care încercați redarea nu poate recunoaște formatul de "
 "fișier curent."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9418,7 +9418,7 @@ msgstr ""
 "formatul curent. Utilizați opțiunea „Drivere” pentru a instala dispozitivul "
 "wave."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9426,7 +9426,7 @@ msgstr ""
 "Dispozitivul de pe care încercați înregistrarea nu poate recunoaște formatul "
 "de fișier curent."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9434,7 +9434,7 @@ msgstr ""
 "Formatele de timp ale \"song pointer\" și SMPTE se exclud reciproc. Nu le "
 "puteți utiliza împreună."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9442,7 +9442,7 @@ msgstr ""
 "Portul MIDI specificat este deja utilizat. Așteptați până când va fi liber, "
 "apoi încercați din nou."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9450,11 +9450,11 @@ msgstr ""
 "Dispozitivul MIDI specificat nu este instalat în sistem. Utilizați opțiunea "
 "Drivere din Panoul de control pentru a instala un dispozitiv MIDI."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "A apărut o eroare la portul specificat."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9462,11 +9462,11 @@ msgstr ""
 "Toate cronometrele multimedia sunt utilizate de alte aplicații. Închideți "
 "una dintre aceste aplicații, apoi încercați din nou."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Sistemul nu are specificat un port MIDI curent."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9474,15 +9474,15 @@ msgstr ""
 "Sistemul nu are instalate dispozitive MIDI. Utilizați opțiunea Drivere din "
 "Panoul de control pentru a instala un driver MIDI."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Nu există fereastră de afișare."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Fereastra nu a putut fi creată sau utilizată."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9490,13 +9490,33 @@ msgstr ""
 "Fișierul specificat nu poate fi citit. Asigurați-vă că acesta mai este "
 "prezent sau verificați discul sau conexiunea la rețea."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Nu se poate scrie în fișierul specificat. Asigurați-vă că aveți suficient "
 "spațiu pe disc sau că mai sunteți conectat la rețea."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Instalator Wine Mono"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "coloană"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

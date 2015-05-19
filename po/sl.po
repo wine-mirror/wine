@@ -8762,23 +8762,23 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "S tem potrdilom obstaja vsaj ena nedoločena varnostna težava."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Navedeni ukaz je bil uspešno izveden."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Neznana zunanja napaka."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr "Uporabljena ID naprave je zunaj dopustnega obsega za vaš sistem."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Gonilnik ni bil omogočen."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8786,15 +8786,15 @@ msgstr ""
 "Navedena naprava je že v uporabi. Počakajte, da bo prosta ter poskusite "
 "znova."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Navedeni ročnik naprave je neveljaven."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Na vašem sistemu ni nameščen noben gonilnik!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8802,7 +8802,7 @@ msgstr ""
 "Za opravilo ni na voljo dovolj pomnilnika. Zaprite enega ali več programov "
 "in poskusite znova."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8810,19 +8810,19 @@ msgstr ""
 "Ta zmožnost ni podprta. Če želite ugotoviti, katere zmožnosti gonilnik "
 "podpira, uporabite možnost 'Zmožnosti'."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Navedena je bila številka napake, ki v sistemu ni določena."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Sistemski funkciji je bila posredovana neveljavna zastavica."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Sistemski funkciji je bil posredovan neveljaven parameter."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8830,7 +8830,7 @@ msgstr ""
 "Navedena oblika zapisa ni podprta ali pa je ni mogoče prevesti. Če želite "
 "ugotoviti, katere oblike so podprte, uporabite možnost Zmožnosti."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8838,7 +8838,7 @@ msgstr ""
 "Predvajanje še poteka. Ponastavite napravo ali pa počakajte do konca "
 "predvajanja."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8846,7 +8846,7 @@ msgstr ""
 "Glava wave ni bila pripravljena. Pripravite glavo tako, da uporabite "
 "zmožnost Pripravi, in poskusite znova."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8854,7 +8854,7 @@ msgstr ""
 "Naprave ni mogoče odpreti brez zastavice WAVE_ALLOWSYNC. Uporabite zastavico "
 "in poskusite znova."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8862,7 +8862,7 @@ msgstr ""
 "Glava MIDI ni bila pripravljena. Pripravite glavo tako, da uporabite "
 "zmožnost Pripravi, in poskusite znova."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8870,7 +8870,7 @@ msgstr ""
 "Preslikave MIDI ni mogoče najti. To je lahko posledica težav z gonilnikom "
 "ali manjkajoče oziroma poškodovane datoteke MIDIMAP.CFG."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8878,7 +8878,7 @@ msgstr ""
 "Prek vrat trenutno poteka prenos podatkov na napravo. Počakajte na konec "
 "prenosa in poskusite znova."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 #, fuzzy
 #| msgid ""
 #| "The current MIDI Mapper setup refers to a MIDI device that is not "
@@ -8890,7 +8890,7 @@ msgstr ""
 "Trenutna nastavitev MIDI se sklicuje na napravo MIDI, ki ni prisotna. "
 "Uporabite Preslikovalnik MIDI za urejanje nastavitev."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8898,21 +8898,21 @@ msgstr ""
 "Trenutna nastavitev MIDI je poškodovana. Namestite izvirno datoteko MIDIMAP."
 "CFG v sistemsko mapo Windows in poskusite znova."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Neveljaven ID naprave MCI. Uporabite ID, ki je vrnjen ob odpiranju naprave "
 "MCI."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Gonilnik ne more prepoznati določenega parametra ukaza."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Gonilnik ne more prepoznati določenega ukaza."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8920,29 +8920,29 @@ msgstr ""
 "Z vašo predstavno napravo so težave. Preverite, ali naprava deluje pravilno "
 "ali pa se posvetujte z izdelovalcem."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Navedena naprava ni odprta ali ni poznana naprava MCI."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
 "Ta program ime naprave že uporablja kot vzdevek. Uporabite edinstven vzdevek."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
 "Med nalaganju določenega gonilnika naprave je prišlo do napake, ki je ni "
 "mogoče zaznati."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Ukaz ni bil naveden."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8950,17 +8950,17 @@ msgstr ""
 "Izhodni niz je bil prevelik, da bi ga bilo mogoče shraniti v povratni "
 "medpomnilnik. Povečajte ga."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr "Navedeni ukaz zahteva parameter (niz znakov). Vnesite ga."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Vneseno celo število za ta ukaz je neveljavno."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8968,7 +8968,7 @@ msgstr ""
 "Gonilnik naprave je vrnil neveljavno vrsto vrednosti. Od izdelovalca naprave "
 "poskusite dobiti nov gonilnik."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8976,31 +8976,31 @@ msgstr ""
 "Prišlo je do težav z gonilnikom naprave. Od izdelovalca naprave poskusite "
 "dobiti nov gonilnik."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Navedeni ukaz zahteva parameter. Vnesite ga."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Naprava MCI, ki jo uporabljate, ne podpira navedenega ukaza."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Navedene datoteke ni mogoče najti. Preverite ali ste pravilno vnesli ime in "
 "pot do datoteke."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Gonilnik naprave ni pripravljen."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "Med začenjanjem naprave MCI je prišlo do težav. Znova zaženite Windows."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -9008,11 +9008,11 @@ msgstr ""
 "Prišlo je do težave z gonilnikom naprave, zato se je zaprl. Do napake ni "
 "mogoče dostopati."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Z navedenim ukazom kot imena naprave ni mogoče uporabiti 'vse'."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -9020,19 +9020,19 @@ msgstr ""
 "V več napravah je prišlo do napak. Ločeno vnesite vsak ukaz in vsako "
 "napravo. Tako boste lahko ugotovili, katere naprave povzročajo napake."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "Iz pripone datoteke ni mogoče določiti vrste zahtevane naprave."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "Navedeni parameter je zunaj obsega za naveden ukaz."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Navedenih parametrov ni mogoče uporabiti skupaj."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -9040,7 +9040,7 @@ msgstr ""
 "Navedene datoteke ni mogoče shraniti. Preverite, ali je na disku dovolj "
 "prostora in ali je vaš računalnik še povezan z omrežjem."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -9052,24 +9052,24 @@ msgstr ""
 "Navedene naprave ni mogoče najti. Preverite, ali je naprava nameščena in ali "
 "je bilo njeno ime pravilno črkovano."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
 "Poteka zapiranje navedene naprave. Počakajte nekaj sekund in poskusite znova."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr "Program že uporablja navedeni vzdevek. Uporabite edinstven vzdevek."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Navedeni parameter je neveljaven za ta ukaz."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -9077,7 +9077,7 @@ msgstr ""
 "Gonilnik naprave je že v uporabi. Če ga želite dati v skupno rabo, z vsakim "
 "ukazom 'open' uporabite parameter 'shareable'."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -9085,7 +9085,7 @@ msgstr ""
 "Navedeni ukaz zahteva vzdevek, datoteko, gonilnik ali ime naprave. Vnesite "
 "ga."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -9093,17 +9093,17 @@ msgstr ""
 "Navedena vrednost je za to obliko časa je neveljavna. Veljavne oblike "
 "poiščite v dokumentaciji naprave MCI."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr "V vrednosti parametra manjka zaključni dvojni narekovaj. Vnesite ga."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr "Parameter ali vrednost ste navedli dvakrat. Navedite ga samo enkrat."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9111,27 +9111,27 @@ msgstr ""
 "Te datoteke ne morete predvajati z navedeno napravo MCI. Datoteka je morda "
 "poškodovana ali pa ima napačno vrsto zapisa."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "Napravi MCI je bil podan nični blok parametrov."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Datoteke brez imena ni mogoče shraniti. Vnesite ime datoteke."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Pri uporabi parametra 'new' morate navesti vzdevek."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "Zastavice 'notify' ni mogoče uporabiti s samodejno odprtimi napravami."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Imena datoteke ni mogoče uporabiti z navedeno napravo."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9139,7 +9139,7 @@ msgstr ""
 "Ukazov ni mogoče izvesti v navedenem zaporedju. Spremenite zaporedje in "
 "poskusite znova."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9147,7 +9147,7 @@ msgstr ""
 "Ukaza ni mogoče izvesti v povezavi s samodejno odprto napravo. Počakajte, da "
 "se naprava zapre, in poskusite znova."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9155,13 +9155,13 @@ msgstr ""
 "Ime datoteke je neveljavno. Preverite ali ime datoteke vsebuje največ 8 "
 "znakov, ki jim sledita pika in pripona."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
 "Za znaki, ki so obdani z narekovaji, ni mogoče zapisati dodatnih znakov."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9169,7 +9169,7 @@ msgstr ""
 "Naprava ni nameščena. Če želite namestiti nov gonilnik uporabite možnost "
 "Gonilniki na Nadzorni plošči."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9177,7 +9177,7 @@ msgstr ""
 "Dostop do navedene datoteke ali naprave MCI ni mogoč. Zamenjajte mapo ali "
 "znova zaženite računalnik."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9185,7 +9185,7 @@ msgstr ""
 "Dostop do navedene datoteke ali naprave MCI ni mogoč, ker program ne more "
 "zamenjati map."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9193,20 +9193,20 @@ msgstr ""
 "Dostop do navedene datoteke ali naprave MCI ni mogoč, ker program ne more "
 "zamenjati pogonov."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "Navedite ime naprave ali gonilnika, ki je krajše od 79 znakov."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "Navedite ime naprave ali gonilnika, ki je krajše od 69 znakov."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr "Navedeni ukaz zahteva celoštevilčen parameter. Vnesite ga."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9214,7 +9214,7 @@ msgstr ""
 "Vse naprave, ki lahko predvajajo datoteke vrste wave, so v uporabi. "
 "Poskusite znova, ko bo katera od njih na voljo."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9222,7 +9222,7 @@ msgstr ""
 "Trenutna naprava wave za predvajanje je v uporabi. Počakajte, da bo prosta, "
 "in poskusite znova."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9230,7 +9230,7 @@ msgstr ""
 "Vse naprave wave, ki lahko snemajo datoteke v trenutni vrsti, so v uporabi. "
 "Poskusite znova, ko bo katera od njih na voljo."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9238,15 +9238,15 @@ msgstr ""
 "Trenutne naprave wave ni mogoče nastaviti za snemanje, ker je v uporabi. "
 "Počakajte, da bo prosta, in poskusite znova."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Uporabite lahko katerokoli združljivo napravo predvajanja oblike wave."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Uporabite lahko katerokoli združljivo napravo snemanja oblike wave."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9254,7 +9254,7 @@ msgstr ""
 "Nameščena ni nobena naprava wave, ki bi lahko predvajala datoteke trenutne "
 "vrste. Za namestitev naprave wave uporabite možnost Gonilniki."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
@@ -9262,7 +9262,7 @@ msgstr ""
 "Naprava ne prepozna trenutne vrste datoteke. Izberite drugo napravo in "
 "poskusite znova."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9270,7 +9270,7 @@ msgstr ""
 "Nameščena ni nobena naprava wave, ki bi lahko snemala datoteke v trenutni "
 "obliki. Za namestitev naprave wave uporabite možnost Gonilniki."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9278,13 +9278,13 @@ msgstr ""
 "Naprava iz katere poskušate snemati ne prepozna trenutne oblike zapisa "
 "datoteke."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr "Sočasna uporaba oblik zapisa časa \"song-pointer\" in SMPTE ni mogoča."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9292,7 +9292,7 @@ msgstr ""
 "Navedena MIDI naprava je že v uporabi. Počakajte, da bo prosta, in poskusite "
 "znova."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9300,11 +9300,11 @@ msgstr ""
 "Navedena naprava MIDI ni nameščena. Če želite namestiti nov gonilnik, "
 "uporabite možnost Gonilniki na Nadzorni plošči."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Na navedenih vratih je prišlo do napake."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9312,11 +9312,11 @@ msgstr ""
 "Vse predstavne števce uporabljajo drugi programi. Zaprite enega od teh "
 "programov in poskusite znova."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Sistem nima navedenih trenutnih vrat MIDI."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9324,15 +9324,15 @@ msgstr ""
 "Nameščena ni nobena naprava MIDI. Za namestitev gonilnika MIDI uporabite "
 "možnost Gonilniki na Nadzorni plošči."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Ni okna za prikaz."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Okna ni bilo mogoče ustvariti ali uporabiti."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9340,13 +9340,33 @@ msgstr ""
 "Iz navedene datoteke ni mogoče brati. Preverite, ali datoteka še vedno "
 "obstaja ter preverite svoj disk in omrežno povezavo."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "V navedeno datoteko ni mogoče pisati. Preverite, ali je na disku še dovolj "
 "prostora in ali je vaš računalnik še povezan z omrežjem."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Gecko Installer"
+msgid "Wine Sound Mapper"
+msgstr "Namestitev Wine Gecko"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "stolpec"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

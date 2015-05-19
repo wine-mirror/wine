@@ -18,6 +18,7 @@
 
 #include "windef.h"
 #include "mmddk.h"
+#include "resource.h"
 
 #pragma makedep po
 
@@ -129,5 +130,11 @@ MCIERR_SEQ_PORT_MISCERROR, 	"An error occurred with the specified port."
 MCIERR_SEQ_PORT_NONEXISTENT, 	"The specified MIDI device is not installed on the system. Use the Drivers option from the Control Panel to install a MIDI device."
 MCIERR_SEQ_PORTUNSPECIFIED, 	"The system doesn't have a current MIDI port specified."
 MCIERR_SEQ_TIMER, 		"All multimedia timers are being used by other applications. Quit one of these applications; then, try again."
+
+/* mixer UI */
+IDS_MAPPER_NAME,		"Wine Sound Mapper"
+IDS_VOLUME,			"Volume"
+IDS_MASTER_VOLUME,		"Master Volume"
+IDS_MUTE,			"Mute"
 
 END

@@ -8620,25 +8620,25 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Nurodyta komanda įvykdyta."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Neapibrėžta išorinė klaida."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
 "Buvo panaudotas įrenginio identifikatorius, kuris nepatenka į sistemos "
 "rėžius."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Tvarkyklė nebuvo įjungta."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8646,15 +8646,15 @@ msgstr ""
 "Nurodytas įrenginys jau naudojamas. Palaukite, kol jis atsilaisvins, tada "
 "mėginkite vėl."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Nurodyta įrenginio rodyklė netinkama."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Sistemoje nėra įdiegta tvarkyklė!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8662,7 +8662,7 @@ msgstr ""
 "Trūksta atminties šiai užduočiai. Baikite vieną ar daugiau programų laisvos "
 "atminties kiekiui padidinti ir mėginkite vėl."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8670,19 +8670,19 @@ msgstr ""
 "Ši funkcija nepalaikoma. Naudokite gebėjimų („Capabilities“) funkciją, kad "
 "nustatytumėte, kurias funkcijas ir pranešimus tvarkyklė palaiko."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Nurodytas klaidos kodas, kuris nėra apibrėžtas sistemoje."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Sisteminei funkcijai perduotas neteisingas žymos bitas."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Sisteminei funkcijai perduotas neteisingas parametras."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8690,7 +8690,7 @@ msgstr ""
 "Nurodytas formatas nepalaikomas arba negali būti perskaičiuotas. Naudokite "
 "gebėjimų (Capabilities) funkciją palaikomiems formatams nustatyti."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8698,7 +8698,7 @@ msgstr ""
 "Negalima įvykdyti šios operacijos kol medijos duomenys dar groja. Paleiskite "
 "įrenginį iš naujo arba laukite kol duomenys bus baigti groti."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8706,7 +8706,7 @@ msgstr ""
 "„Wave“ antraštė neparuošta. Naudokite paruošimo („Prepare“) funkciją "
 "antraštei paruošti ir mėginkite vėl."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8714,7 +8714,7 @@ msgstr ""
 "Negalima atverti įrenginio nenaudojat „WAVE_ALLOWSYNC“ žymos bito. Naudokite "
 "žymos bitą ir mėginkite vėl."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8722,7 +8722,7 @@ msgstr ""
 "MIDI antraštė nebuvo paruošta. Naudokite paruošimo (Prepare) funkciją "
 "antraštei paruošti ir mėginkite vėl."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8730,7 +8730,7 @@ msgstr ""
 "MIDI atvaizdis nerastas. Tai gali būti problema su tvarkykle arba trūksta "
 "MIDIMAP.CFG failo, arba jis pažeistas."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8738,7 +8738,7 @@ msgstr ""
 "Prievadas perduoda duomenis įrenginiui. Palaukite kol duomenys bus perduoti "
 "ir mėginkite vėl."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
@@ -8746,7 +8746,7 @@ msgstr ""
 "Dabartinė MIDI atvaizdžio konfigūracija rodo į MIDI įrenginį, kuris nėra "
 "įdiegtas sistemoje."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8754,21 +8754,21 @@ msgstr ""
 "Dabartinė MIDI konfigūracija pažeista. Nukopijuokite originalų MIDIMAP.CFG "
 "failą į „Windows“ SYSTEM katalogą ir mėginkite vėl."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Klaidingas MCI įrenginio identifikatorius. Naudokite identifikatorių "
 "grąžintą atveriant MCI įrenginį."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Tvarkyklė negali atpažinti nurodyto komandos parametro."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Tvarkyklė negali atpažinti nurodytos komandos."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8776,11 +8776,11 @@ msgstr ""
 "Iškilo problema su medijos įrenginiu. Įsitikinkite, kad jis veikia teisingai "
 "arba kreipkitės į įrenginio gamintoją."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Nurodytas įrenginys nėra atvertas arba yra neatpažintas MCI."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -8788,34 +8788,34 @@ msgstr ""
 "Įrenginio vardas jau naudojamas programos kaip alternatyvusis vardas. "
 "Naudokite unikalų alternatyvųjį vardą."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr "Iškilo neaptinkama klaida įkeliant nurodytą įrenginio tvarkyklę."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Nenurodyta jokia komanda."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
 "Išvedimo eilutė per ilga, kad tilptų į buferį. Padidinkite buferio dydį."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
 "Nurodytai komandai reikalingas simbolių eilutės parametras. Jį nurodykite."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Nurodytas sveikasis skaičius klaidingas šiai komandai."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8823,7 +8823,7 @@ msgstr ""
 "Įrenginio tvarkyklė grąžino klaidingą atsakymo tipą. Susisiekite su "
 "įrenginio gamintoju dėl naujos tvarkyklės gavimo."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8831,30 +8831,30 @@ msgstr ""
 "Yra problema su įrenginio tvarkykle. Susisiekite su įrenginio gamintoju dėl "
 "naujos tvarkyklės gavimo."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Nurodytai komandai reikia parametro. Jį pateikite."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "MCI įrenginys, kurį naudojate, nepalaiko nurodytos komandos."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Nepavyko rasti nurodyto failo. Įsitikinkite, kad kelias ir failo vardas "
 "teisingi."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Įrenginio tvarkyklė neparengta."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr "Įvyko klaida inicijuojant MCI. Mėginkite paleisti „Windows“ iš naujo."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -8862,11 +8862,11 @@ msgstr ""
 "Yra problema su įrenginio tvarkykle. Tvarkyklė užverta. Nepavyko gauti "
 "klaidos."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Negalima naudoti „all“ kaip įrenginio vardo nurodytai komandai."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8874,19 +8874,19 @@ msgstr ""
 "Įvyko klaidų daugiau kaip viename įrenginyje. Nurodykite kiekvieną komandą "
 "ir įrenginį atskirai, kad nustatytumėte, kurie įrenginiai sukėlė klaidą."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "Nepavyko nustatyti įrenginio tipo iš duoto failo prievardžio."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "Nurodytas parametras nepatenka į rėžius nurodytai komandai."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Nurodyti parametrai negali būti naudojami kartu."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8894,7 +8894,7 @@ msgstr ""
 "Nepavyko išsaugoti nurodyto failo. Įsitikinkite, kad diske yra pakankamai "
 "vietos, ar vis dar prisijungę prie tinklo."
 
-#: winmm.rc:85
+#: winmm.rc:86
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
@@ -8902,14 +8902,14 @@ msgstr ""
 "Nepavyko rasti nurodyto įrenginio. Įsitikinkite, kad jis įdiegtas ir "
 "teisingai įrašytas įrenginio vardas."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
 "Nurodytas įrenginys užveriamas. Palaukite kelias sekundes ir mėginkite vėl."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
@@ -8917,11 +8917,11 @@ msgstr ""
 "Nurodytas alternatyvusis vardas jau naudojamas šioje programoje. Naudokite "
 "unikalų alternatyvųjį vardą."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Nurodytas parametras klaidingas šiai komandai."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -8929,7 +8929,7 @@ msgstr ""
 "Įrenginio tvarkyklė jau naudojama. Norėdami naudoti bendrai, naudokite "
 "parametrą „shareable“ su kiekviena „open“ komanda."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -8937,7 +8937,7 @@ msgstr ""
 "Nurodytai komandai reikalingas alternatyvusis vardas, failo, tvarkyklės ar "
 "įrenginio vardas. Jį pateikite."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -8945,7 +8945,7 @@ msgstr ""
 "Nurodyta klaidinga reikšmė laiko formatui. Skaitykite MCI dokumentaciją "
 "tinkamiems formatams rasti."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
@@ -8953,11 +8953,11 @@ msgstr ""
 "Parametro reikšmei trūksta reikalingų užveriančių dvigubų kabučių. Jas "
 "pateikite."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr "Parametras ar reikšmė nurodyta du kartus. Nurodykite tik vieną kartą."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -8965,28 +8965,28 @@ msgstr ""
 "Nurodytas failas negali būti grojamas per nurodytą MCI įrenginį. Failas gali "
 "būti sugadintas arba netinkamo formato."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "Nulinis parametrų blokas perduotas į MCI."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Negalima išsaugoti bevardžio failo. Nurodykite failo vardą."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Privalote pateikti alternatyvųjį vardą, kai naudojate parametrą „new“."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr ""
 "Negalima naudoti „notify“ žymos bito su automatiškai atvertais įrenginiais."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Negalima naudoti failo vardo su nurodytu įrenginiu."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -8994,7 +8994,7 @@ msgstr ""
 "Negalima įvykdyti komandų nurodyta tvarka. Ištaisykite komandų seką ir "
 "mėginkite vėl."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9002,7 +9002,7 @@ msgstr ""
 "Negalima įvykdyti nurodytos komandos automatiškai atvertam įrenginiui. "
 "Palaukite, kol įrenginys bus užvertas ir tada mėginkite vėl."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9010,12 +9010,12 @@ msgstr ""
 "Netinkamas failo vardas. Įsitikinkite, kad failo vardas neilgesnis kaip 8 "
 "simbolių, o po jų seka taškas ir plėtinys."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr "Negalima nurodyti papildomų simbolių po eilutės apsuptos kabutėmis."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9023,7 +9023,7 @@ msgstr ""
 "Nurodytas įrenginys neįdiegtas sistemoje. Naudokite tvarkyklių parinktį "
 "valdymo skydelyje įrenginiui įdiegti."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9031,7 +9031,7 @@ msgstr ""
 "Nepavyko kreiptis į nurodytą failą ar MCI įrenginį. Mėginkite keisti "
 "katalogus ar perkrauti kompiuterį."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9039,7 +9039,7 @@ msgstr ""
 "Nepavyko kreiptis į nurodytą failą ar MCI įrenginį, nes programa negali "
 "pakeisti katalogų."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9047,24 +9047,24 @@ msgstr ""
 "Nepavyko kreiptis į nurodytą failą ar MCI įrenginį, nes programa negali "
 "pakeisti diskų."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr ""
 "Nurodykite įrenginio ar tvarkyklės vardą, kuris yra trumpesnis nei 79 "
 "simboliai."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr ""
 "Nurodykite įrenginio ar tvarkyklės vardą, kuris trumpesnis nei 69 simboliai."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "Nurodytai komandai reikalingas sveikojo skaičiaus parametras. Jį pateikite."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9072,7 +9072,7 @@ msgstr ""
 "Visi „wave“ įrenginiai, kurie gali groti dabartinio formato failus, "
 "naudojami. Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9080,7 +9080,7 @@ msgstr ""
 "Negalima nustatyti dabartinio „wave“ įrenginio grojimui, nes jis naudojamas. "
 "Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9088,7 +9088,7 @@ msgstr ""
 "Visi „wave“ įrenginiai, kurie gali įrašyti failus dabartiniu formatu, "
 "naudojami. Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9096,15 +9096,15 @@ msgstr ""
 "Negalima nustatyti dabartinio „wave“ įrenginio įrašymui, nes jis naudojamas. "
 "Palaukite kol „wave“ įrenginys bus laisvas ir mėginkite vėl."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Bet kuris derantis „wave“ tipo grojimo įrenginys gali būti naudojamas."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Bet kuris derantis „wave“ tipo įrašymo įrenginys gali būti naudojamas."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9112,14 +9112,14 @@ msgstr ""
 "Nėra įdiegtas joks „wave“ įrenginys galintis groti dabartinio formato "
 "failus. Naudokite tvarkyklių parinktį „wave“ įrenginiui įdiegti."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
 "Įrenginys per kurį mėginate groti negali atpažinti dabartinio failo formato."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9127,7 +9127,7 @@ msgstr ""
 "Nėra įdiegtas joks „wave“ įrenginys galintis įrašyti dabartinio formato "
 "failus. Naudokite tvarkyklių parinktį „wave“ įrenginiui įdiegti."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9135,7 +9135,7 @@ msgstr ""
 "Įrenginys iš kurio mėginate įrašyti negali atpažinti dabartinio failo "
 "formato."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9143,7 +9143,7 @@ msgstr ""
 "„Dainos rodyklės“ ir SMPTE laiko formatai nesuderinami. Negalite jų naudoti "
 "kartu."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9151,7 +9151,7 @@ msgstr ""
 "Nurodytas MIDI prievadas jau naudojamas. Palaukite, kol jis bus laisvas ir "
 "mėginkite vėl."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9159,11 +9159,11 @@ msgstr ""
 "Nurodytas MIDI įrenginys neįdiegtas sistemoje. Naudokite tvarkyklių nuostatą "
 "valdymo skydelyje MIDI įrenginiui įdiegti."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Įvyko klaida su nurodytu prievadu."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9171,11 +9171,11 @@ msgstr ""
 "Visi įvairialypės terpės laikmačiai yra naudojami kitų programų. Išeikite iš "
 "vienos tokios programos ir mėginkite vėl."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Sistemoje nėra nurodytas dabartinis MIDI prievadas."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9183,15 +9183,15 @@ msgstr ""
 "Sistemoje nėra įdiegtų MIDI įrenginių. Naudokite tvarkyklių parinktį valdymo "
 "skydelyje MIDI tvarkyklei įdiegti."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Nėra rodymo lango."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Nepavyko sukurti ar naudoti lango."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9199,13 +9199,33 @@ msgstr ""
 "Nepavyko skaityti nurodyto failo. Įsitikinkite, kad failas vis dar "
 "egzistuoja arba patikrinkite diską ar tinklo ryšį."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Nepavyko rašyti į nurodytą failą. Įsitikinkite, kad yra pakankamai laisvos "
 "vietos diske, ar vis dar prisijungę prie tinklo."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "„Wine“ „Mono“ diegimo programa"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "stulpelis"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

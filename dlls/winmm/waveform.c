@@ -36,6 +36,7 @@
 #include "winternl.h"
 
 #include "winemm.h"
+#include "resource.h"
 
 #include "ole2.h"
 #include "initguid.h"
@@ -47,12 +48,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
-
-/* FIXME: Should be localized */
-static const WCHAR volumeW[] = {'V','o','l','u','m','e',0};
-static const WCHAR mastervolumeW[] = {'M','a','s','t','e','r',' ','V','o','l',
-    'u','m','e',0};
-static const WCHAR muteW[] = {'M','u','t','e',0};
 
 /* HWAVE (and HMIXER) format:
  *
@@ -2657,10 +2652,6 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
     if (lpCaps == NULL)	return MMSYSERR_INVALPARAM;
 
     if(WINMM_IsMapper(uDeviceID)){
-        /* FIXME: Should be localized */
-        static const WCHAR mapper_pnameW[] = {'W','i','n','e',' ','S','o','u',
-            'n','d',' ','M','a','p','p','e','r',0};
-
         mapper_caps.wMid = 0xFF;
         mapper_caps.wPid = 0xFF;
         mapper_caps.vDriverVersion = 0x00010001;
@@ -2669,7 +2660,7 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
         mapper_caps.dwSupport = WAVECAPS_LRVOLUME | WAVECAPS_VOLUME |
             WAVECAPS_SAMPLEACCURATE;
         mapper_caps.wChannels = 2;
-        lstrcpyW(mapper_caps.szPname, mapper_pnameW);
+        LoadStringW(hWinMM32Instance, IDS_MAPPER_NAME, mapper_caps.szPname, MAXPNAMELEN);
 
         caps = &mapper_caps;
     }else{
@@ -3318,17 +3309,13 @@ UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSi
         return MMSYSERR_INVALPARAM;
 
     if(WINMM_IsMapper(uDeviceID)){
-        /* FIXME: Should be localized */
-        static const WCHAR mapper_pnameW[] = {'W','i','n','e',' ','S','o','u',
-            'n','d',' ','M','a','p','p','e','r',0};
-
         mapper_caps.wMid = 0xFF;
         mapper_caps.wPid = 0xFF;
         mapper_caps.vDriverVersion = 0x00010001;
         mapper_caps.dwFormats = 0xFFFFFFFF;
         mapper_caps.wReserved1 = 0;
         mapper_caps.wChannels = 2;
-        lstrcpyW(mapper_caps.szPname, mapper_pnameW);
+        LoadStringW(hWinMM32Instance, IDS_MAPPER_NAME, mapper_caps.szPname, MAXPNAMELEN);
 
         caps = &mapper_caps;
     }else{
@@ -4016,8 +4003,8 @@ static UINT WINMM_GetVolumeLineControl(WINMM_MMDevice *mmdevice, DWORD line,
     ctl->dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
     ctl->fdwControl = MIXERCONTROL_CONTROLF_UNIFORM;
     ctl->cMultipleItems = 0;
-    lstrcpyW(ctl->szShortName, volumeW);
-    lstrcpyW(ctl->szName, volumeW);
+    LoadStringW(hWinMM32Instance, IDS_VOLUME, ctl->szShortName, MIXER_SHORT_NAME_CHARS);
+    LoadStringW(hWinMM32Instance, IDS_VOLUME, ctl->szName, MIXER_LONG_NAME_CHARS);
     ctl->Bounds.s1.dwMinimum = 0;
     ctl->Bounds.s1.dwMaximum = 0xFFFF;
     ctl->Metrics.cSteps = 192;
@@ -4032,8 +4019,8 @@ static UINT WINMM_GetMuteLineControl(WINMM_MMDevice *mmdevice, DWORD line,
     ctl->dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
     ctl->fdwControl = MIXERCONTROL_CONTROLF_UNIFORM;
     ctl->cMultipleItems = 0;
-    lstrcpyW(ctl->szShortName, muteW);
-    lstrcpyW(ctl->szName, muteW);
+    LoadStringW(hWinMM32Instance, IDS_MUTE, ctl->szShortName, MIXER_SHORT_NAME_CHARS);
+    LoadStringW(hWinMM32Instance, IDS_MUTE, ctl->szName, MIXER_LONG_NAME_CHARS);
     ctl->Bounds.s1.dwMinimum = 0;
     ctl->Bounds.s1.dwMaximum = 1;
     ctl->Metrics.cSteps = 0;
@@ -4144,8 +4131,8 @@ static UINT WINMM_GetSourceLineInfo(WINMM_MMDevice *mmdevice, UINT mmdev_index,
     info->Target.wPid = ~0;
     info->Target.vDriverVersion = 0;
 
-    lstrcpyW(info->szShortName, volumeW);
-    lstrcpyW(info->szName, mastervolumeW);
+    LoadStringW(hWinMM32Instance, IDS_VOLUME, info->szShortName, MIXER_SHORT_NAME_CHARS);
+    LoadStringW(hWinMM32Instance, IDS_MASTER_VOLUME, info->szName, MIXER_LONG_NAME_CHARS);
 
     if(is_out){
         info->dwComponentType = MIXERLINE_COMPONENTTYPE_SRC_WAVEOUT;
@@ -4177,8 +4164,8 @@ static UINT WINMM_GetDestinationLineInfo(WINMM_MMDevice *mmdevice,
     info->cConnections = 1;
     info->cControls = 2;
 
-    lstrcpyW(info->szShortName, volumeW);
-    lstrcpyW(info->szName, mastervolumeW);
+    LoadStringW(hWinMM32Instance, IDS_VOLUME, info->szShortName, MIXER_SHORT_NAME_CHARS);
+    LoadStringW(hWinMM32Instance, IDS_MASTER_VOLUME, info->szName, MIXER_LONG_NAME_CHARS);
 
     info->Target.dwDeviceID = mmdev_index;
     info->Target.wMid = ~0;

@@ -8648,24 +8648,24 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "Wystąpił przynajmniej jeden nieokreślony problem z tym certyfikatem."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Wydane polecenie zostało wykonane."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Niezdefiniowany błąd zewnętrzny."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
 "Użyto identyfikatora urządzenia, który jest poza zakresem tego systemu."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Sterownik nie został włączony."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
@@ -8673,15 +8673,15 @@ msgstr ""
 "Określone urządzenie jest już używane. Poczekaj, aż będzie wolne i spróbuj "
 "ponownie."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Podane dojście urządzenia jest nieprawidłowe."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Nie ma zainstalowanego żadnego sterownika na twoim systemie!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8689,7 +8689,7 @@ msgstr ""
 "Brak dostępnej pamięci do wykonania tego zadania. Zakończ jedną lub więcej "
 "aplikacji, aby zwiększyć dostępną pamięć. Następnie spróbuj ponownie."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8697,19 +8697,19 @@ msgstr ""
 "Ta funkcja nie jest obsługiwana. Użyj funkcji Możliwości, aby ustalić, jakie "
 "funkcje i komunikaty obsługuje ten sterownik."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Podano numer błędu, który nie jest zdefiniowany w systemie."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Nieprawidłowa flaga została przekazana do funkcji systemowej."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Nieprawidłowy parametr został przekazany do funkcji systemowej."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8717,7 +8717,7 @@ msgstr ""
 "Określony format nie jest obsługiwany i nie można go przetłumaczyć. Użyj "
 "funkcji Możliwości, aby ustalić obsługiwane formaty."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8726,7 +8726,7 @@ msgstr ""
 "odtwarzane. Zresetuj urządzenie lub poczekaj, aż zakończy się odtwarzanie "
 "danych."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8734,7 +8734,7 @@ msgstr ""
 "Nagłówek WAVE nie został przygotowany. Przygotuj nagłówek używając funkcji "
 "Przygotuj i spróbuj ponownie."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8742,7 +8742,7 @@ msgstr ""
 "Nie można otworzyć urządzenia bez użycia flagi WAVE_ALLOWSYNC. Użyj tej "
 "flagi i spróbuj ponownie."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8750,7 +8750,7 @@ msgstr ""
 "Nagłówek MIDI nie został przygotowany. Przygotuj nagłówek używając funkcji "
 "Przygotuj i spróbuj ponownie."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8758,7 +8758,7 @@ msgstr ""
 "Nie można odnaleźć mapowania urządzenia MIDI. Może to być spowodowane "
 "problemem ze sterownikiem albo brakiem lub uszkodzeniem pliku MIDIMAP.CFG."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8766,7 +8766,7 @@ msgstr ""
 "Port przesyła dane do urządzenia. Poczekaj, aż dane zostaną przesłane  i "
 "spróbuj ponownie."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
@@ -8774,7 +8774,7 @@ msgstr ""
 "Bieżące ustawienia mapowania MIDI odwołują się do urządzenia MIDI, które nie "
 "jest zainstalowane w systemie."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8782,21 +8782,21 @@ msgstr ""
 "Bieżące ustawienia MIDI są uszkodzone. Skopiuj oryginalny plik MIDIMAP.CFG "
 "do katalogu Windows SYSTEM, a następnie spróbuj ponownie."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Nieprawidłowy identyfikator urządzenia MCI. Użyj identyfikatora zwróconego "
 "podczas otwierania urządzenia MCI."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Sterownik nie może rozpoznać podanego parametru w poleceniu."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Sterownik nie może rozpoznać podanego polecenia."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8804,12 +8804,12 @@ msgstr ""
 "Wystąpił problem z urządzeniem multimedialnym. Sprawdź, czy działa ono "
 "poprawnie lub skontaktuj się z producentem urządzenia."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr ""
 "Podane urządzenie nie jest otwarte lub nie jest rozpoznawane przez MCI."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -8817,16 +8817,16 @@ msgstr ""
 "Nazwa urządzenia jest już używana jako alias przez tę aplikację. Użyj "
 "unikatowego aliasu."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr "Nieznany problem przy ładowaniu określonego sterownika urządzenia."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Nie określono polecenia."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8834,17 +8834,17 @@ msgstr ""
 "Wyjściowy ciąg znaków był za duży, aby zmieścić się w buforze. Zwiększ "
 "rozmiar buforu."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr "Określone polecenie wymaga parametru. Podaj ten parametr."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Określona liczba całkowita jest nieprawidłowa dla tego polecenia."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8852,7 +8852,7 @@ msgstr ""
 "Sterownik urządzenia zwrócił nieprawidłowy typ zwrotny. Skontaktuj się z "
 "producentem urządzenia w celu otrzymania nowego sterownika."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8860,32 +8860,32 @@ msgstr ""
 "Wystąpił problem ze sterownikiem tego urządzenia. Skontaktuj się z "
 "producentem urządzenia w celu otrzymania nowego sterownika."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Określone polecenie wymaga parametru. Podaj ten parametr."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Używane urządzenie MCI nie obsługuje określonego polecenia."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Nie można znaleźć określonego pliku. Sprawdź, czy ścieżka i nazwa pliku są "
 "poprawne."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Sterownik urządzenia nie jest gotowy."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "Wystąpił problem podczas inicjowania MCI. Spróbuj uruchomić ponownie "
 "Windowsa."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
@@ -8893,12 +8893,12 @@ msgstr ""
 "Wystąpił problem ze sterownikiem tego urządzenia. Sterownik został "
 "zamknięty. Nie ma dostępu do informacji o błędach."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
 "W określonym poleceniu nie można użyć parametru „all” jako nazwy urządzenia."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8906,20 +8906,20 @@ msgstr ""
 "Wystąpił błąd w więcej niż jednym urządzeniu. Określ każde polecenie i "
 "urządzenie oddzielnie, aby ustalić, które urządzenie spowodowało błędy."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
 "Nie można ustalić typu urządzenia na podstawie podanego rozszerzenia pliku."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "Określony parametr przekracza zakres przewidziany dla tego polecenia."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Określonych parametrów nie można używać razem."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8927,7 +8927,7 @@ msgstr ""
 "Nie można zapisać określonego pliku. Sprawdź, czy jest dość miejsca na dysku "
 "lub czy połączenie sieciowe jest wciąż aktywne."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -8939,7 +8939,7 @@ msgstr ""
 "Nie można odnaleźć określonego urządzenia. Sprawdź, czy jest ono "
 "zainstalowane i czy jego nazwa jest napisana poprawnie."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
@@ -8947,18 +8947,18 @@ msgstr ""
 "Określone urządzenie jest właśnie zamykane. Poczekaj kilka sekund i spróbuj "
 "ponownie."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
 "Podany alias jest już używany w tej aplikacji. Użyj unikatowego aliasu."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Określony parametr jest nieprawidłowy dla tego polecenia."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -8966,7 +8966,7 @@ msgstr ""
 "Sterownik urządzenia jest już używany. Aby go udostępnić, zastosuj parametr "
 "„shareable” dla każdego polecenia „open”."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -8974,7 +8974,7 @@ msgstr ""
 "Określone polecenie wymaga podania nazwy aliasu, pliku, sterownika lub "
 "urządzenia. Podaj tę nazwę."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -8982,17 +8982,17 @@ msgstr ""
 "Określona wartość formatu czasu jest nieprawidłowa. Sprawdź prawidłowe "
 "formaty w dokumentacji MCI."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr "W wartości parametru brak cudzysłowu zamykającego. Proszę dodaj go."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr "Parametr lub wartość określono dwukrotnie. Określ je tylko raz."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9001,27 +9001,27 @@ msgstr ""
 "być uszkodzony, mieć zły format lub może nie być dostępna obsługa tego "
 "formatu."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "Do MCI przekazano blok parametrów zerowych."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Nie można zapisać pliku bez nazwy. Podaj nazwę."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "Podczas używania parametru „new” należy podać jakiś alias."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "Dla automatycznie otwieranych urządzeń nie można użyć flagi „notify”."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Z określonym urządzeniem nie można używać nazwy pliku."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9029,7 +9029,7 @@ msgstr ""
 "Nie można wykonać poleceń w podanej kolejności. Popraw kolejność poleceń i "
 "spróbuj ponownie."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9037,7 +9037,7 @@ msgstr ""
 "Nie można wykonać tego polecenia na urządzeniu otwieranym automatycznie. "
 "Odczekaj ,aż urządzenie zostanie zamknięte i spróbuj ponownie."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9045,12 +9045,12 @@ msgstr ""
 "Nazwa pliku jest nieprawidłowa. Upewnij się, że nazwa pliku nie jest dłuższa "
 "niż 8 znaków i zakończona jest kropką oraz rozszerzeniem."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr "Nie można określać dodatkowych znaków po ciągu ujętym w cudzysłowy."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9059,7 +9059,7 @@ msgstr ""
 "urządzenie, przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj "
 "sprzęt."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9067,7 +9067,7 @@ msgstr ""
 "Nie można uzyskać dostępu do określonego pliku lub urządzenia MCI. Spróbuj "
 "zmienić katalogi lub ponownie uruchomić komputer."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9075,7 +9075,7 @@ msgstr ""
 "Nie można uzyskać dostępu do podanego pliku lub urządzenia MCI, gdyż "
 "aplikacja ta nie może zmieniać katalogów."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9083,22 +9083,22 @@ msgstr ""
 "Nie można uzyskać dostępu do podanego pliku lub urządzenia MCI, gdyż "
 "aplikacja ta nie może zmieniać dysków."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "Podaj nazwę urządzenia lub sterownika krótszą niż 79 znaków."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "Podaj nazwę urządzenia lub sterownika krótszą niż 69 znaków."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "Określone polecenie wymaga parametru w postaci liczby całkowitej. Podaj taki "
 "parametr."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9107,7 +9107,7 @@ msgstr ""
 "formacie, są już używane. Zaczekaj na zwolnienie jednego z nich i spróbuj "
 "ponownie."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9116,7 +9116,7 @@ msgstr ""
 "ponieważ urządzenie jest używane. Zaczekaj, aż urządzenie zostanie zwolnione "
 "i spróbuj ponownie."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9125,7 +9125,7 @@ msgstr ""
 "formacie, są już używane. Zaczekaj na zwolnienie jednego z nich i spróbuj "
 "ponownie."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9134,15 +9134,15 @@ msgstr ""
 "ponieważ urządzenie jest używane. Zaczekaj, aż urządzenie zostanie zwolnione "
 "i spróbuj ponownie."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Można użyć dowolnego zgodnego urządzenia odtwarzającego Wave."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Można użyć dowolnego zgodnego urządzenia nagrywającego Wave."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9151,7 +9151,7 @@ msgstr ""
 "odtwarzać pliki w bieżącym formacie. Aby zainstalować urządzenie wave, "
 "przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj sprzęt."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
@@ -9159,7 +9159,7 @@ msgstr ""
 "Urządzenie, którego próbujesz użyć do odtwarzania, nie może rozpoznać "
 "bieżącego formatu pliku."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9168,7 +9168,7 @@ msgstr ""
 "nagrywać pliki w bieżącym formacie. Aby zainstalować urządzenie wave, "
 "przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj sprzęt."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
@@ -9176,7 +9176,7 @@ msgstr ""
 "Urządzenie, którego próbujesz użyć do nagrywania, nie może rozpoznać "
 "bieżącego formatu pliku."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9184,7 +9184,7 @@ msgstr ""
 "Formaty czasu dla \"wskaźnika piosenki\" i SMPTE są wzajemnie wykluczające "
 "się. Nie możesz użyć ich razem."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9192,7 +9192,7 @@ msgstr ""
 "Określone urządzenie MIDI jest zajęte. Poczekaj, aż będzie wolne i spróbuj "
 "ponownie."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9201,11 +9201,11 @@ msgstr ""
 "zainstalować sterownik, przejdź do Panelu sterowania, a następnie kliknij "
 "ikonę Dodaj sprzęt."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Wystąpił błąd podczas korzystania z określonego portu."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9213,11 +9213,11 @@ msgstr ""
 "Wszystkie czasomierze multimediów są używane przez inne aplikacje. Zamknij "
 "jedną z nich i spróbuj ponownie."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Brak bieżącego portu MIDI."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9225,15 +9225,15 @@ msgstr ""
 "W systemie nie ma zainstalowanych urządzeń MIDI.Aby zainstalować sterownik, "
 "przejdź do Panelu sterowania, a następnie kliknij ikonę Dodaj sprzęt."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Brak okna wyświetlania."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Nie można utworzyć lub użyć okna."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9241,13 +9241,33 @@ msgstr ""
 "Nie można odczytać określonego pliku. Upewnij się, że plik nadal istnieje i "
 "sprawdź dysk lub połączenie sieciowe."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Nie można zapisać określonego pliku. Sprawdź, czy jest miejsce na dysku lub "
 "czy połączenie sieciowe jest aktywne."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Instalator Wine Mono"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "kolumna"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"

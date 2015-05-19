@@ -8680,38 +8680,38 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr "Bu sertifika ile en az bir belirtilmemiş güvenlik problemi var."
 
-#: winmm.rc:31
+#: winmm.rc:32
 msgid "The specified command was carried out."
 msgstr "Belirtilen komut gerçekleştirildi."
 
-#: winmm.rc:32
+#: winmm.rc:33
 msgid "Undefined external error."
 msgstr "Tanımlanamayan dış hata."
 
-#: winmm.rc:33
+#: winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr "Sisteminiz için geçerli olmayan bir aygıt kimliği kullanıldı."
 
-#: winmm.rc:34
+#: winmm.rc:35
 msgid "The driver was not enabled."
 msgstr "Sürücü etkinleştirilmemiş."
 
-#: winmm.rc:35
+#: winmm.rc:36
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
 "Belirtilen aygıt kullanımda. Boş kalana kadar bekleyip yeniden deneyin."
 
-#: winmm.rc:36
+#: winmm.rc:37
 msgid "The specified device handle is invalid."
 msgstr "Belirtilen aygıt işleyici geçersiz."
 
-#: winmm.rc:37
+#: winmm.rc:38
 msgid "There is no driver installed on your system!"
 msgstr "Sisteminizde yüklü sürücü yok!"
 
-#: winmm.rc:38 winmm.rc:64
+#: winmm.rc:39 winmm.rc:65
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8719,7 +8719,7 @@ msgstr ""
 "Bu görev için yeterli kullanılabilir bellek yok. Kullanılabilen belleği "
 "arttırmak için bir veya daha fazla uygulamadan çıkıp yeniden deneyin."
 
-#: winmm.rc:39
+#: winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
@@ -8727,19 +8727,19 @@ msgstr ""
 "Bu işlev desteklenmiyor. Sürücünün hangi işlevleri ve iletileri "
 "desteklediğini belirlemek için Kapasite işlevini kullanın."
 
-#: winmm.rc:40
+#: winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
 msgstr "Sistemde tanımlanmamış bir hata numarası belirtilmiş."
 
-#: winmm.rc:41
+#: winmm.rc:42
 msgid "An invalid flag was passed to a system function."
 msgstr "Bir sistem işlevine geçersiz bir bayrak geçilmiş."
 
-#: winmm.rc:42
+#: winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
 msgstr "Bir sistem işlevine geçersiz bir parametre geçilmiş."
 
-#: winmm.rc:45
+#: winmm.rc:46
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -8747,7 +8747,7 @@ msgstr ""
 "Belirtilen biçim desteklenmiyor veya çevrilemiyor. Desteklenen biçimleri "
 "belirlemek için Yetenekler işlevini kullanın."
 
-#: winmm.rc:46 winmm.rc:52
+#: winmm.rc:47 winmm.rc:53
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
@@ -8755,7 +8755,7 @@ msgstr ""
 "Ortam verisi yürütülürken bu işlem yürütülemez. Aygıtı sıfırlayın veya "
 "verinin yürütülmesinin tamamlanmasını bekleyin."
 
-#: winmm.rc:47
+#: winmm.rc:48
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8763,7 +8763,7 @@ msgstr ""
 "Dalga başlığı hazırlanmamış. Başlığı hazırlamak için Hazırla işlevini "
 "kullanıp yeniden deneyin."
 
-#: winmm.rc:48
+#: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
@@ -8771,7 +8771,7 @@ msgstr ""
 "WAVE_ALLOWSYNC bayrağı kullanılmadan aygıt açılamıyor. Bayrağı kullanıp "
 "yeniden deneyin."
 
-#: winmm.rc:51
+#: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
@@ -8779,7 +8779,7 @@ msgstr ""
 "MIDI başlığı hazırlanmamış. Başlığı hazırlamak için Hazırla işlevini "
 "kullanıp yeniden deneyin."
 
-#: winmm.rc:53
+#: winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
@@ -8787,7 +8787,7 @@ msgstr ""
 "MIDI haritası bulunmadı. Sürücüde bir sorun olabilir veya MIDIMAP.CFG "
 "dosyası bozuk veya eksik olabilir."
 
-#: winmm.rc:54
+#: winmm.rc:55
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
@@ -8795,7 +8795,7 @@ msgstr ""
 "Bağlantı noktası aygıta veri gönderiyor. Veri gönderilene kadar bekleyip "
 "yeniden deneyin."
 
-#: winmm.rc:55 winmm.rc:128
+#: winmm.rc:56 winmm.rc:129
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
@@ -8803,7 +8803,7 @@ msgstr ""
 "Geçerli MIDI Eşleyicisi kurulumu sistemde yüklü olmayan bir MIDI aygıtını "
 "gösteriyor."
 
-#: winmm.rc:56
+#: winmm.rc:57
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
@@ -8811,21 +8811,21 @@ msgstr ""
 "Geçerli MIDI kurulumu zarar görmüş. Özgün MIDIMAP.CFG dosyasını Windows "
 "SYSTEM dizinine kopyalayın ve yeniden deneyin."
 
-#: winmm.rc:59
+#: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
 "Geçersiz MCI aygıt tanıtıcısı. MCI aygıtı açıldığında döndürülen tanıtıcıyı "
 "kullanın."
 
-#: winmm.rc:60
+#: winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
 msgstr "Sürücü kullanılan komut parametresini tanımıyor."
 
-#: winmm.rc:61
+#: winmm.rc:62
 msgid "The driver cannot recognize the specified command."
 msgstr "Sürücü kullanılan komutu tanımıyor."
 
-#: winmm.rc:62
+#: winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
@@ -8833,11 +8833,11 @@ msgstr ""
 "Ortam aygıtınızda bir sorun var. Doğru çalıştığından emin olun veya aygıt "
 "üreticisine başvurun."
 
-#: winmm.rc:63
+#: winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Belirtilen aygıt açık değil veya MCI tarafından tanınmıyor."
 
-#: winmm.rc:65
+#: winmm.rc:66
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
@@ -8845,16 +8845,16 @@ msgstr ""
 "Aygıt adı bu uygulama tarafından zaten bir takma ad olarak kullanılıyor. "
 "Benzersiz bir takma ad kullanın."
 
-#: winmm.rc:66
+#: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr "Belirtilen aygıt sürücüsü yüklenirken bilinmeyen bir sorun oluştu."
 
-#: winmm.rc:67
+#: winmm.rc:68
 msgid "No command was specified."
 msgstr "Komut belirtilmemiş."
 
-#: winmm.rc:68
+#: winmm.rc:69
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
@@ -8862,7 +8862,7 @@ msgstr ""
 "Çıkış dizesi dönüş arabelleğine sığmayacak kadar büyük. Arabelleğin boyutunu "
 "büyütün."
 
-#: winmm.rc:69
+#: winmm.rc:70
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
@@ -8870,11 +8870,11 @@ msgstr ""
 "Belirtilen komut karakter dizisinden oluşan bir parametre gerektiriyor. "
 "Lütfen bir tane sağlayın."
 
-#: winmm.rc:70
+#: winmm.rc:71
 msgid "The specified integer is invalid for this command."
 msgstr "Girilen tamsayı bu komut için geçersiz."
 
-#: winmm.rc:71
+#: winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8882,7 +8882,7 @@ msgstr ""
 "Aygıt sürücüsü geçersiz bir tür döndürdü. Yeni sürücüyü edinmek için aygıt "
 "üreticisine başvurun."
 
-#: winmm.rc:72
+#: winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
@@ -8890,41 +8890,41 @@ msgstr ""
 "Aygıt sürücüsünde bir sorun var. Yeni bir sürücü edinmek için aygıtın "
 "üreticisiyle bağlantı kurun."
 
-#: winmm.rc:73
+#: winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
 msgstr "Belirtilen komut için bir parametre gerekir. Lütfen bir tane girin."
 
-#: winmm.rc:74
+#: winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
 msgstr "Kullandığınız MCI aygıtı belirtilen komutu desteklemiyor."
 
-#: winmm.rc:75
+#: winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
 "Belirtilen dosya bulunamıyor. Yol ve dosya adının doğru olduğundan emin olun."
 
-#: winmm.rc:76
+#: winmm.rc:77
 msgid "The device driver is not ready."
 msgstr "Aygıt sürücüsü hazır değil."
 
-#: winmm.rc:77
+#: winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
 msgstr ""
 "MCI başlatılırken bir sorun oluştu. Windows'u yeniden başlatmayı deneyin."
 
-#: winmm.rc:78
+#: winmm.rc:79
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
 "Aygıt sürücüsünde bir sorun var. Sürücü kapatıldı. Hataya ulaşılamıyor."
 
-#: winmm.rc:79
+#: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Belirtilen komut ile 'all' aygıt adı kullanılamaz."
 
-#: winmm.rc:80
+#: winmm.rc:81
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -8932,19 +8932,19 @@ msgstr ""
 "Birden fazla aygıtta hatalar oluştu. Hangi aygıtların hataya neden olduğunu "
 "belirlemek için her komutu ve aygıtı ayrı ayrı belirleyin."
 
-#: winmm.rc:81
+#: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
 msgstr "Verilen dosya uzantısından aygıt türü belirlenemiyor."
 
-#: winmm.rc:82
+#: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
 msgstr "Belirtilen parametre kullanılan komut için aralık dışında."
 
-#: winmm.rc:83
+#: winmm.rc:84
 msgid "The specified parameters cannot be used together."
 msgstr "Belirtilen parametreler birlikte kullanılamaz."
 
-#: winmm.rc:84
+#: winmm.rc:85
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
@@ -8952,7 +8952,7 @@ msgstr ""
 "Belirtilen dosya kaydedilemiyor. Yeterli boş disk alanına sahip olduğunuzdan "
 "ya da ağa bağlı olduğunuzdan emin olun."
 
-#: winmm.rc:85
+#: winmm.rc:86
 #, fuzzy
 #| msgid ""
 #| "Cannot find the specified device. Make sure it is installed or that the "
@@ -8964,7 +8964,7 @@ msgstr ""
 "Belirtilen aygıt bulunamadı. Aygıtın kurulu olduğundan ya da adının doğru "
 "yazıldığından emin olun."
 
-#: winmm.rc:86
+#: winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
@@ -8972,7 +8972,7 @@ msgstr ""
 "Belirtilen aygıt şimdi kapatılıyor. Lütfen birkaç saniye bekleyip yeniden "
 "deneyin."
 
-#: winmm.rc:87
+#: winmm.rc:88
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
@@ -8980,11 +8980,11 @@ msgstr ""
 "Belirtilen takma ad bu uygulamada zaten kullanılıyor. Benzersiz bir takma ad "
 "kullanın."
 
-#: winmm.rc:88
+#: winmm.rc:89
 msgid "The specified parameter is invalid for this command."
 msgstr "Belirtilen parametre bu komut için geçersiz."
 
-#: winmm.rc:89
+#: winmm.rc:90
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
@@ -8992,7 +8992,7 @@ msgstr ""
 "Aygıt sürücüsü zaten kullanımda. Paylaşmak için her 'open' komutuyla beraber "
 "'shareable' parametresini kullanın."
 
-#: winmm.rc:90
+#: winmm.rc:91
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
@@ -9000,7 +9000,7 @@ msgstr ""
 "Belirtilen komut bir takma ad, dosya, sürücü veya aygıt adı gerektiriyor. "
 "Lütfen bir tane sağlayın."
 
-#: winmm.rc:91
+#: winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
@@ -9008,7 +9008,7 @@ msgstr ""
 "Saat biçimi için verilen değer geçersiz. Geçerli biçimler için MCI "
 "belgelerine başvurun."
 
-#: winmm.rc:92
+#: winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
@@ -9016,12 +9016,12 @@ msgstr ""
 "Parametre değerinde çift tırnak kapatma işareti eksik. Lütfen tırnağı "
 "kapatın."
 
-#: winmm.rc:93
+#: winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
 msgstr ""
 "Bir parametre veya değer iki kez belirtilmiş. Sadece bir kez tanımlayın."
 
-#: winmm.rc:94
+#: winmm.rc:95
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
@@ -9029,27 +9029,27 @@ msgstr ""
 "Belirtilen dosya belirtilen MCI aygıtı üzerinde yürütülemez. Dosya bozulmuş "
 "olabilir veya doğru biçimde olmayabilir."
 
-#: winmm.rc:95
+#: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
 msgstr "'MCI'ya bir boş parametre bloğu geçildi."
 
-#: winmm.rc:96
+#: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
 msgstr "Adsız bir dosya kaydedilemez. Bir dosya adı yazın."
 
-#: winmm.rc:97
+#: winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
 msgstr "'yeni' parametresini kullanırken bir takma ad kullanın."
 
-#: winmm.rc:98
+#: winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
 msgstr "Otomatik açılan aygıtlarla 'bildir' bayrağı kullanılamaz."
 
-#: winmm.rc:99
+#: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
 msgstr "Belirtilen aygıtla bir dosya adı kullanılamaz."
 
-#: winmm.rc:100
+#: winmm.rc:101
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
@@ -9057,7 +9057,7 @@ msgstr ""
 "Komutlar belirtilen sırada gerçekleştirilemiyor. Komut sıralamasını düzeltip "
 "yeniden deneyin."
 
-#: winmm.rc:101
+#: winmm.rc:102
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
@@ -9065,7 +9065,7 @@ msgstr ""
 "Otomatik açılan aygıtta belirtilen komut çalıştırılamaz. Aygıt kapanana "
 "kadar bekleyin ve yeniden deneyin."
 
-#: winmm.rc:102
+#: winmm.rc:103
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
@@ -9073,14 +9073,14 @@ msgstr ""
 "Dosya adı geçersiz. Dosya adının 8 karakterden uzun olmadığından ve nokta ve "
 "uzantı içerdiğinden emin olun."
 
-#: winmm.rc:103
+#: winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
 "Tırnak işaretleri içindeki bir dizeden sonra fazladan karakterler "
 "belirtemezsiniz."
 
-#: winmm.rc:104
+#: winmm.rc:105
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
@@ -9088,7 +9088,7 @@ msgstr ""
 "Belirtilen aygıt sistemde yüklü değil. Aygıtı yüklemek için Denetim "
 "Masası'ndan Sürücüler seçeneğini seçin."
 
-#: winmm.rc:105
+#: winmm.rc:106
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
@@ -9096,7 +9096,7 @@ msgstr ""
 "Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Dizinleri değiştirmeyi "
 "veya bilgisayarınızı yeniden başlatmayı deneyin."
 
-#: winmm.rc:106
+#: winmm.rc:107
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
@@ -9104,7 +9104,7 @@ msgstr ""
 "Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Çünkü uygulama dizinleri "
 "değiştiremiyor."
 
-#: winmm.rc:107
+#: winmm.rc:108
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
@@ -9112,22 +9112,22 @@ msgstr ""
 "Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Çünkü uygulama sürücüleri "
 "değiştiremiyor."
 
-#: winmm.rc:108
+#: winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr "79 karakterden daha az bir aygıt veya sürücü adı belirtin."
 
-#: winmm.rc:109
+#: winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr "69 karakterden daha az bir aygıt veya sürücü adı belirtin."
 
-#: winmm.rc:110
+#: winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
 "Belirtilen komut bir tamsayı parametre gerektiriyor. Lütfen bir tamsayı "
 "girin."
 
-#: winmm.rc:111
+#: winmm.rc:112
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
@@ -9135,7 +9135,7 @@ msgstr ""
 "Geçerli biçimdeki dosyaları yürüten tüm dalga aygıtları kullanımda. Bir "
 "dalga aygıtı boşalana kadar bekleyin ve yeniden deneyin."
 
-#: winmm.rc:112
+#: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9143,7 +9143,7 @@ msgstr ""
 "Geçerli dalga aygıtı kullanımda olduğundan yürütme için açılamıyor. Aygıt "
 "boşalana kadar bekleyin ve yeniden deneyin."
 
-#: winmm.rc:113
+#: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
@@ -9151,7 +9151,7 @@ msgstr ""
 "Geçerli biçimdeki dosyaları kaydedebilen tüm dalga aygıtları kullanımda. Bir "
 "dalga aygıtı boşalana kadar bekleyin ve yeniden deneyin."
 
-#: winmm.rc:114
+#: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
@@ -9159,15 +9159,15 @@ msgstr ""
 "Geçerli dalga aygıtı kullanımda olduğundan kaydetme işlemi için açılamıyor. "
 "Aygıt boşalana kadar bekleyin ve yeniden deneyin."
 
-#: winmm.rc:115
+#: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
 msgstr "Herhangi bir uyumlu dalga çıkış aygıtı belirlenmemiş."
 
-#: winmm.rc:116
+#: winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
 msgstr "Herhangi bir uyumlu dalga giriş aygıtı belirlenmemiş."
 
-#: winmm.rc:117
+#: winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9175,13 +9175,13 @@ msgstr ""
 "Geçerli biçimdeki dosyaları yürütebilen dalga aygıtı bulunamadı. Dalga "
 "aygıtını yüklemek için Sürücüler seçeneğini kullanın."
 
-#: winmm.rc:118
+#: winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr "Yürütmeye çalıştığınız aygıt geçerli dosya biçimini tanımıyor."
 
-#: winmm.rc:119
+#: winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
@@ -9189,13 +9189,13 @@ msgstr ""
 "Geçerli biçimdeki dosyaları kaydedebilen dalga aygıtı bulunamadı. Dalga "
 "aygıtını yüklemek için Sürücüler seçeneğini kullanın."
 
-#: winmm.rc:120
+#: winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr "Kaydetmeye çalıştığınız aygıt geçerli dosya biçimini tanımıyor."
 
-#: winmm.rc:125
+#: winmm.rc:126
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
@@ -9203,7 +9203,7 @@ msgstr ""
 "\"Şarkı işaretçisi\" saat biçimini ve SMPTE saat biçimini birlikte "
 "kullanamazsınız."
 
-#: winmm.rc:127
+#: winmm.rc:128
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
@@ -9211,7 +9211,7 @@ msgstr ""
 "Belirtilen MIDI aygıtı şu an kullanımda. Boşalana kadar bekleyip yeniden "
 "deneyin."
 
-#: winmm.rc:130
+#: winmm.rc:131
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
@@ -9219,11 +9219,11 @@ msgstr ""
 "Belirtilen MIDI aygıtı sistemde yüklü değil. Bir MIDI aygıtı yüklemek için "
 "Denetim Masası'ndan Sürücüler seçeneğini kullanın."
 
-#: winmm.rc:129
+#: winmm.rc:130
 msgid "An error occurred with the specified port."
 msgstr "Belirtilen bağlantı noktasında hata oluştu."
 
-#: winmm.rc:132
+#: winmm.rc:133
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
@@ -9231,11 +9231,11 @@ msgstr ""
 "Tüm çokluortam zamanlayıcıları diğer uygulamalar tarafından kullanılıyor. Bu "
 "uygulamalardan birini kapatıp yeniden deneyin."
 
-#: winmm.rc:131
+#: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
 msgstr "Sistemde belirtilen MIDI bağlantı noktası yok."
 
-#: winmm.rc:126
+#: winmm.rc:127
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
@@ -9243,15 +9243,15 @@ msgstr ""
 "Sistemde MIDI aygıtı yüklü değil. Bir MIDI sürücüsü yüklemek için Denetim "
 "Masası'ndan Sürücüler seçeneğini kullanın."
 
-#: winmm.rc:121
+#: winmm.rc:122
 msgid "There is no display window."
 msgstr "Hiç görüntü penceresi yok."
 
-#: winmm.rc:122
+#: winmm.rc:123
 msgid "Could not create or use window."
 msgstr "Pencere oluşturulamıyor veya kullanılamıyor."
 
-#: winmm.rc:123
+#: winmm.rc:124
 msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
@@ -9259,13 +9259,33 @@ msgstr ""
 "Belirtilen dosya okunamadı. Dosyanın var olduğundan emin olun ya da "
 "diskinizi veya ağ bağlantızı denetleyin."
 
-#: winmm.rc:124
+#: winmm.rc:125
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
 "Belirtilen dosyaya yazılamıyor. Yeterli kullanılabilir disk alanına sahip "
 "olduğunuzdan veya ağa bağlı olduğunuzdan emin olun."
+
+#: winmm.rc:136
+#, fuzzy
+#| msgid "Wine Mono Installer"
+msgid "Wine Sound Mapper"
+msgstr "Wine Mono Kurucusu"
+
+#: winmm.rc:137
+#, fuzzy
+#| msgid "column"
+msgid "Volume"
+msgstr "sütun"
+
+#: winmm.rc:138
+msgid "Master Volume"
+msgstr ""
+
+#: winmm.rc:139
+msgid "Mute"
+msgstr ""
 
 #: winspool.rc:37
 msgid "Print to File"
