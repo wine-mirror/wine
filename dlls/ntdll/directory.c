@@ -2112,6 +2112,77 @@ done:
     return ret;
 }
 
+#ifdef HAVE_GETATTRLIST
+/***********************************************************************
+ *           read_directory_getattrlist
+ *
+ * Read a single file from a directory by determining whether the file
+ * identified by mask exists using getattrlist.
+ */
+static int read_directory_getattrlist( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                       BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                       BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
+{
+    int unix_len, ret, used_default;
+    char *unix_name;
+    struct attrlist attrlist;
+    struct
+    {
+        u_int32_t length;
+        struct attrreference name_reference;
+        char name[NAME_MAX + 1];
+    } attrlist_buffer;
+
+    TRACE("looking up file %s\n", debugstr_us( mask ));
+
+    unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len + 1)))
+    {
+        io->u.Status = STATUS_NO_MEMORY;
+        return 0;
+    }
+    ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), unix_name, unix_len,
+                           NULL, &used_default );
+    if (ret > 0 && !used_default)
+    {
+        unix_name[ret] = 0;
+        if (restart_scan)
+        {
+            lseek( fd, 0, SEEK_SET );
+        }
+        else if (lseek( fd, 0, SEEK_CUR ) != 0)
+        {
+            io->u.Status = STATUS_NO_MORE_FILES;
+            ret = 0;
+            goto done;
+        }
+
+        memset( &attrlist, 0, sizeof(attrlist) );
+        attrlist.bitmapcount = ATTR_BIT_MAP_COUNT;
+        attrlist.commonattr = ATTR_CMN_NAME;
+        ret = getattrlist( unix_name, &attrlist, &attrlist_buffer, sizeof(attrlist_buffer), 0 );
+        if (!ret)
+        {
+            union file_directory_info *info = append_entry( buffer, io, length, attrlist_buffer.name, NULL, NULL, class );
+            if (info)
+            {
+                info->next = 0;
+                if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
+            }
+            else io->u.Status = STATUS_NO_MORE_FILES;
+        }
+    }
+    else ret = -1;
+
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+
+    TRACE("returning %d\n", ret);
+
+    return ret;
+}
+#endif
+
 
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
@@ -2173,9 +2244,15 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         if ((read_directory_vfat( fd, io, buffer, length, single_entry,
                                   mask, restart_scan, info_class )) != -1) goto done;
 #endif
-        if (!has_wildcard( mask ) &&
-            read_directory_stat( fd, io, buffer, length, single_entry,
+        if (!has_wildcard( mask ))
+        {
+#ifdef HAVE_GETATTRLIST
+            if (read_directory_getattrlist( fd, io, buffer, length, single_entry,
                                  mask, restart_scan, info_class ) != -1) goto done;
+#endif
+            if (read_directory_stat( fd, io, buffer, length, single_entry,
+                                 mask, restart_scan, info_class ) != -1) goto done;
+        }
 #ifdef USE_GETDENTS
         if ((read_directory_getdents( fd, io, buffer, length, single_entry,
                                       mask, restart_scan, info_class )) != -1) goto done;
