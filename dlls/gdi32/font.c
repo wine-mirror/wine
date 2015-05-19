@@ -2109,6 +2109,18 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     return ret;
 }
 
+/***********************************************************************
+ *           get_line_width
+ *
+ * Scale the underline / strikeout line width.
+ */
+static inline int get_line_width( DC *dc, int metric_size )
+{
+    int width = abs( INTERNAL_YWSTODS( dc, metric_size ));
+    if (width == 0) width = 1;
+    if (metric_size < 0) width = -width;
+    return width;
+}
 
 /***********************************************************************
  *           ExtTextOutW    (GDI32.@)
@@ -2473,11 +2485,10 @@ done:
             GetOutlineTextMetricsW(hdc, size, otm);
             underlinePos = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscorePosition ));
             if (otm->otmsUnderscorePosition < 0) underlinePos = -underlinePos;
-            underlineWidth = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscoreSize ));
-            if (otm->otmsUnderscoreSize < 0) underlineWidth = -underlineWidth;
+            underlineWidth = get_line_width( dc, otm->otmsUnderscoreSize );
             strikeoutPos = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutPosition ));
             if (otm->otmsStrikeoutPosition < 0) strikeoutPos = -strikeoutPos;
-            strikeoutWidth = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutSize ));
+            strikeoutWidth = get_line_width( dc, otm->otmsStrikeoutSize );
             HeapFree(GetProcessHeap(), 0, otm);
         }
 
