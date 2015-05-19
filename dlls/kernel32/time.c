@@ -548,6 +548,21 @@ VOID WINAPI GetSystemTimeAsFileTime(
 }
 
 
+/***********************************************************************
+ *              GetSystemTimePreciseAsFileTime  (KERNEL32.@)
+ *
+ *  Get the current time in utc format, with <1 us precision.
+ *
+ *  RETURNS
+ *   Nothing.
+ */
+VOID WINAPI GetSystemTimePreciseAsFileTime(
+    LPFILETIME time) /* [out] Destination for the current utc time */
+{
+    GetSystemTimeAsFileTime(time);
+}
+
+
 /*********************************************************************
  *      TIME_ClockTimeToFileTime    (olorin@fandra.org, 20-Sep-1998)
  *

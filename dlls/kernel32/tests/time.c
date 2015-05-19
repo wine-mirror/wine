@@ -28,6 +28,7 @@ static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, 
 static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
 static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
 static DWORD (WINAPI *pGetDynamicTimeZoneInformation)(DYNAMIC_TIME_ZONE_INFORMATION*);
+static void (WINAPI *pGetSystemTimePreciseAsFileTime)(LPFILETIME);
 
 #define SECSPERMIN         60
 #define SECSPERDAY        86400
@@ -761,6 +762,45 @@ static void test_GetDynamicTimeZoneInformation(void)
     trace("Dyn TimeZoneKeyName %s\n", wine_dbgstr_w(dyninfo.TimeZoneKeyName));
 }
 
+static ULONGLONG get_longlong_time(FILETIME *time)
+{
+    ULARGE_INTEGER uli;
+    uli.LowPart = time->dwLowDateTime;
+    uli.HighPart = time->dwHighDateTime;
+    return uli.QuadPart;
+}
+
+static void test_GetSystemTimePreciseAsFileTime(void)
+{
+    FILETIME ft;
+    ULONGLONG time1, time2;
+    LONGLONG diff;
+
+    if (!pGetSystemTimePreciseAsFileTime)
+    {
+        win_skip("GetSystemTimePreciseAsFileTime() is not supported.\n");
+        return;
+    }
+
+    GetSystemTimeAsFileTime(&ft);
+    time1 = get_longlong_time(&ft);
+    pGetSystemTimePreciseAsFileTime(&ft);
+    time2 = get_longlong_time(&ft);
+    diff = time2 - time1;
+    if (diff < 0)
+        diff = -diff;
+    ok(diff < 1000000, "Difference between GetSystemTimeAsFileTime and GetSystemTimePreciseAsFileTime more than 100 ms\n");
+
+    pGetSystemTimePreciseAsFileTime(&ft);
+    time1 = get_longlong_time(&ft);
+    do {
+        pGetSystemTimePreciseAsFileTime(&ft);
+        time2 = get_longlong_time(&ft);
+    } while (time2 == time1);
+    diff = time2 - time1;
+    ok(diff < 10000 && diff > 0, "GetSystemTimePreciseAsFileTime incremented by more than 1 ms\n");
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandleA("kernel32");
@@ -769,6 +809,7 @@ START_TEST(time)
     pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
     pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");
     pGetDynamicTimeZoneInformation = (void *)GetProcAddress(hKernel, "GetDynamicTimeZoneInformation");
+    pGetSystemTimePreciseAsFileTime = (void *)GetProcAddress(hKernel, "GetSystemTimePreciseAsFileTime");
 
     test_conversions();
     test_invalid_arg();
@@ -779,4 +820,5 @@ START_TEST(time)
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();
     test_GetDynamicTimeZoneInformation();
+    test_GetSystemTimePreciseAsFileTime();
 }
