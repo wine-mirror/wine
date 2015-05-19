@@ -59,7 +59,8 @@ typedef enum
     XmlWriterState_PIDocStarted, /* document was started with manually added 'xml' PI */
     XmlWriterState_DocStarted,   /* document was started with WriteStartDocument() */
     XmlWriterState_ElemStarted,  /* writing element */
-    XmlWriterState_Content       /* content is accepted at this point */
+    XmlWriterState_Content,      /* content is accepted at this point */
+    XmlWriterState_DocClosed     /* WriteEndDocument was called */
 } XmlWriterState;
 
 typedef struct
@@ -608,6 +609,8 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     case XmlWriterState_ElemStarted:
         writer_close_starttag(This);
         break;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
     default:
         ;
     }
@@ -631,10 +634,34 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
 static HRESULT WINAPI xmlwriter_WriteEndDocument(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    HRESULT hr = S_OK;
 
-    FIXME("%p\n", This);
+    TRACE("%p\n", This);
 
-    return E_NOTIMPL;
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        hr = E_UNEXPECTED;
+        break;
+    case XmlWriterState_Ready:
+    case XmlWriterState_DocClosed:
+        hr = WR_E_INVALIDACTION;
+        break;
+    default:
+        ;
+    }
+
+    if (FAILED(hr)) {
+        This->state = XmlWriterState_DocClosed;
+        return hr;
+    }
+
+    /* empty element stack */
+    while (IXmlWriter_WriteEndElement(iface) == S_OK)
+        ;
+
+    This->state = XmlWriterState_DocClosed;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
@@ -749,6 +776,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
             return WR_E_INVALIDACTION;
         break;
     case XmlWriterState_ElemStarted:
+    case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     default:
         ;
@@ -812,6 +840,7 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
         return S_OK;
     case XmlWriterState_DocStarted:
     case XmlWriterState_ElemStarted:
+    case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     default:
         ;
@@ -853,8 +882,15 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
     TRACE("(%p)->(%s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
 
-    if (This->state == XmlWriterState_Initial)
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
 
     if (!local_name)
         return E_INVALIDARG;
