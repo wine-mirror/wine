@@ -3015,38 +3015,28 @@ TOOLBAR_AddStringA (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
 static LRESULT
 TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
 {
-    RECT parent_rect;
-    HWND parent;
-    INT  x, y;
-    INT  cx, cy;
-
     TRACE("auto sizing, style=%x!\n", infoPtr->dwStyle);
-
-    parent = GetParent (infoPtr->hwndSelf);
-
-    if (!parent || !infoPtr->bDoRedraw)
-        return 0;
-
-    GetClientRect(parent, &parent_rect);
-
-    x = parent_rect.left;
-    y = parent_rect.top;
-
     TRACE("nRows: %d, infoPtr->nButtonHeight: %d\n", infoPtr->nRows, infoPtr->nButtonHeight);
-
-    cy = TOP_BORDER + infoPtr->nRows * infoPtr->nButtonHeight + BOTTOM_BORDER;
-    cx = parent_rect.right - parent_rect.left;
-
-    if ((infoPtr->dwStyle & TBSTYLE_WRAPABLE) || (infoPtr->dwExStyle & TBSTYLE_EX_VERTICAL))
-    {
-        TOOLBAR_LayoutToolbar(infoPtr);
-        InvalidateRect( infoPtr->hwndSelf, NULL, TRUE );
-    }
 
     if (!(infoPtr->dwStyle & CCS_NORESIZE))
     {
-        RECT window_rect;
+        RECT window_rect, parent_rect;
         UINT uPosFlags = SWP_NOZORDER | SWP_NOACTIVATE;
+        HWND parent;
+        INT  x, y, cx, cy;
+
+        parent = GetParent (infoPtr->hwndSelf);
+
+        if (!parent || !infoPtr->bDoRedraw)
+            return 0;
+
+        GetClientRect(parent, &parent_rect);
+
+        x = parent_rect.left;
+        y = parent_rect.top;
+
+        cy = TOP_BORDER + infoPtr->nRows * infoPtr->nButtonHeight + BOTTOM_BORDER;
+        cx = parent_rect.right - parent_rect.left;
 
         if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_NOMOVEY)
         {
@@ -3073,6 +3063,12 @@ TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
         }
 
         SetWindowPos(infoPtr->hwndSelf, NULL, x, y, cx, cy, uPosFlags);
+    }
+
+    if ((infoPtr->dwStyle & TBSTYLE_WRAPABLE) || (infoPtr->dwExStyle & TBSTYLE_EX_VERTICAL))
+    {
+        TOOLBAR_LayoutToolbar(infoPtr);
+        InvalidateRect( infoPtr->hwndSelf, NULL, TRUE );
     }
 
     return 0;
