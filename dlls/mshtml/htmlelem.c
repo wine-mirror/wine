@@ -2575,7 +2575,7 @@ static HRESULT WINAPI HTMLElement2_detachEvent(IHTMLElement2 *iface, BSTR event,
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(event), pDisp);
 
-    return detach_event(&This->node.event_target, &This->node.doc->basedoc, event, pDisp);
+    return detach_event(&This->node.event_target, event, pDisp);
 }
 
 static HRESULT WINAPI HTMLElement2_get_readyState(IHTMLElement2 *iface, VARIANT *p)

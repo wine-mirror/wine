@@ -2042,7 +2042,7 @@ static HRESULT WINAPI HTMLDocument3_detachEvent(IHTMLDocument3 *iface, BSTR even
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(event), pDisp);
 
-    return detach_event(&This->doc_node->node.event_target, This, event, pDisp);
+    return detach_event(&This->doc_node->node.event_target, event, pDisp);
 }
 
 static HRESULT WINAPI HTMLDocument3_put_onrowsdelete(IHTMLDocument3 *iface, VARIANT v)

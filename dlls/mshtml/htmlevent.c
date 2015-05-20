@@ -1520,7 +1520,7 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
     return S_OK;
 }
 
-HRESULT detach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
+HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
 {
     event_target_t *data;
     eventid_t eid;
