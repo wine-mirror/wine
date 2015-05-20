@@ -1147,7 +1147,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 {
     info->Level = 8;
-    info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
+    info->Architecture = PROCESSOR_ARCHITECTURE_ARM64;
 }
 
 #endif /* End architecture specific feature detection for CPUs */
