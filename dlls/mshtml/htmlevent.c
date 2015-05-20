@@ -1336,7 +1336,7 @@ static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, in
     return TRUE;
 }
 
-static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
+HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
 {
     nsIDOMNode *nsnode = NULL;
 
@@ -1374,6 +1374,13 @@ void detach_events(HTMLDocumentNode *doc)
     release_nsevents(doc);
 }
 
+static void bind_event(EventTarget *event_target, eventid_t eid)
+{
+    if(event_target->dispex.data->vtbl->bind_event)
+        event_target->dispex.data->vtbl->bind_event(&event_target->dispex, eid);
+    else
+        FIXME("Unsupported event binding on target %p\n", event_target);
+}
 
 static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 {
@@ -1410,7 +1417,7 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, HTMLDocumentNod
     data->event_table[eid]->handler_prop = disp;
     IDispatch_AddRef(disp);
 
-    return ensure_nsevent_handler(doc, eid);
+    return ensure_doc_nsevent_handler(doc, eid);
 }
 
 HRESULT set_event_handler(EventTarget *event_target, HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
@@ -1478,8 +1485,7 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
     return S_OK;
 }
 
-HRESULT attach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name,
-        IDispatch *disp, VARIANT_BOOL *res)
+HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARIANT_BOOL *res)
 {
     event_target_t *data;
     eventid_t eid;
@@ -1508,8 +1514,10 @@ HRESULT attach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name,
     IDispatch_AddRef(disp);
     data->event_table[eid]->handlers[i] = disp;
 
+    bind_event(event_target, eid);
+
     *res = VARIANT_TRUE;
-    return ensure_nsevent_handler(doc->doc_node, eid);
+    return S_OK;
 }
 
 HRESULT detach_event(EventTarget *event_target, HTMLDocument *doc, BSTR name, IDispatch *disp)
@@ -1563,7 +1571,7 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
 
     for(i=0; i < EVENTID_LAST; i++) {
         if((event_info[i].flags & EVENT_DEFAULTLISTENER) && is_cp_event(cp, event_info[i].dispid))
-            ensure_nsevent_handler(doc, i);
+            ensure_doc_nsevent_handler(doc, i);
     }
 }
 
@@ -1612,7 +1620,7 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
 
     for(i=0; i < EVENTID_LAST; i++) {
         if(event_info[i].flags & EVENT_HASDEFAULTHANDLERS) {
-            hres = ensure_nsevent_handler(doc, i);
+            hres = ensure_doc_nsevent_handler(doc, i);
             if(FAILED(hres))
                 return hres;
         }

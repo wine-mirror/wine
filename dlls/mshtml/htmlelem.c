@@ -2566,7 +2566,7 @@ static HRESULT WINAPI HTMLElement2_attachEvent(IHTMLElement2 *iface, BSTR event,
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
 
-    return attach_event(&This->node.event_target, &This->node.doc->basedoc, event, pDisp, pfResult);
+    return attach_event(&This->node.event_target, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLElement2_detachEvent(IHTMLElement2 *iface, BSTR event, IDispatch *pDisp)
@@ -3996,6 +3996,12 @@ static event_target_t **HTMLElement_get_event_target_ptr(DispatchEx *dispex)
         : &This->node.event_target.ptr;
 }
 
+static void HTMLElement_bind_event(DispatchEx *dispex, int eid)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    This->node.doc->node.event_target.dispex.data->vtbl->bind_event(&This->node.doc->node.event_target.dispex, eid);
+}
+
 static const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     0
@@ -4006,7 +4012,8 @@ static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     HTMLElement_get_dispid,
     HTMLElement_invoke,
     HTMLElement_populate_props,
-    HTMLElement_get_event_target_ptr
+    HTMLElement_get_event_target_ptr,
+    HTMLElement_bind_event
 };
 
 static dispex_static_data_t HTMLElement_dispex = {

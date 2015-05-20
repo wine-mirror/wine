@@ -2032,7 +2032,7 @@ static HRESULT WINAPI HTMLDocument3_attachEvent(IHTMLDocument3 *iface, BSTR even
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(event), pDisp, pfResult);
 
-    return attach_event(&This->doc_node->node.event_target, This, event, pDisp, pfResult);
+    return attach_event(&This->doc_node->node.event_target, event, pDisp, pfResult);
 }
 
 static HRESULT WINAPI HTMLDocument3_detachEvent(IHTMLDocument3 *iface, BSTR event,
@@ -4571,12 +4571,19 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return S_OK;
 }
 
+static void HTMLDocumentNode_bind_event(DispatchEx *dispex, int eid)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    ensure_doc_nsevent_handler(This, eid);
+}
 
 static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
     NULL,
     NULL,
     HTMLDocumentNode_invoke,
-    NULL
+    NULL,
+    NULL,
+    HTMLDocumentNode_bind_event
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
