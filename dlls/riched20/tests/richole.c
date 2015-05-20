@@ -114,7 +114,7 @@ static void test_Interfaces(void)
 {
   IRichEditOle *reOle = NULL, *reOle1 = NULL;
   ITextDocument *txtDoc = NULL;
-  ITextSelection *txtSel = NULL;
+  ITextSelection *txtSel = NULL, *txtSel2;
   IUnknown *punk;
   HRESULT hres;
   LRESULT res;
@@ -147,7 +147,13 @@ static void test_Interfaces(void)
   hres = ITextDocument_GetSelection(txtDoc, NULL);
   ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%x\n", hres);
 
-  ITextDocument_GetSelection(txtDoc, &txtSel);
+  hres = ITextDocument_GetSelection(txtDoc, &txtSel);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextDocument_GetSelection(txtDoc, &txtSel2);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(txtSel2 == txtSel, "got %p, %p\n", txtSel, txtSel2);
+  ITextSelection_Release(txtSel2);
 
   punk = NULL;
   hres = ITextSelection_QueryInterface(txtSel, &IID_ITextSelection, (void **) &punk);
@@ -1216,6 +1222,7 @@ static void test_GetFont(void)
   IRichEditOle *reOle = NULL;
   ITextDocument *doc = NULL;
   ITextRange *range = NULL;
+  ITextSelection *selection;
   ITextFont *font, *font2;
   CHARFORMAT2A cf;
   LONG value;
@@ -1226,6 +1233,17 @@ static void test_GetFont(void)
 
   create_interfaces(&hwnd, &reOle, &doc, NULL);
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  hr = ITextDocument_GetSelection(doc, &selection);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextSelection_GetFont(selection, &font);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextSelection_GetFont(selection, &font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(font != font2, "got %p, %p\n", font, font2);
+  ITextFont_Release(font2);
+  ITextFont_Release(font);
+  ITextSelection_Release(selection);
 
   EXPECT_REF(reOle, 3);
   EXPECT_REF(doc, 3);

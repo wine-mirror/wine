@@ -49,6 +49,9 @@ DEFINE_GUID(IID_ITextSelection, 0x8cc497c1, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0x
 DEFINE_GUID(IID_ITextFont, 0x8cc497c3, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextPara, 0x8cc497c4, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 
+/* private IID used to get back IRichEditOleImpl pointer */
+DEFINE_GUID(IID_Igetrichole, 0xe3ce5c7a, 0x8247, 0x4622, 0x81, 0xad, 0x11, 0x81, 0x02, 0xaa, 0x01, 0x30);
+
 typedef struct ITextSelectionImpl ITextSelectionImpl;
 typedef struct IOleClientSiteImpl IOleClientSiteImpl;
 typedef struct ITextRangeImpl ITextRangeImpl;
@@ -313,25 +316,29 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
 
 static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid, textfont_prop_val *value)
 {
-    ITextRangeImpl *rng = impl_from_ITextRange(range);
+    IRichEditOleImpl *reole;
     textfont_prop_val v;
+    LONG start, end, i;
     HRESULT hr;
-    int i;
 
-    if (!rng->reOle)
+    ITextRange_QueryInterface(range, &IID_Igetrichole, (void**)&reole);
+    if (!reole)
         return CO_E_RELEASED;
 
     init_textfont_prop_value(propid, value);
 
+    ITextRange_GetStart(range, &start);
+    ITextRange_GetEnd(range, &end);
+
     /* iterate trough a range to see if property value is consistent */
-    hr = get_textfont_prop_for_pos(rng->reOle, rng->start, propid, &v);
+    hr = get_textfont_prop_for_pos(reole, start, propid, &v);
     if (FAILED(hr))
         return hr;
 
-    for (i = rng->start + 1; i < rng->end; i++) {
+    for (i = start + 1; i < end; i++) {
         textfont_prop_val cur;
 
-        hr = get_textfont_prop_for_pos(rng->reOle, i, propid, &cur);
+        hr = get_textfont_prop_for_pos(reole, i, propid, &cur);
         if (FAILED(hr))
             return hr;
 
@@ -937,6 +944,8 @@ static const IRichEditOleVtbl revt = {
 /* ITextRange interface */
 static HRESULT WINAPI ITextRange_fnQueryInterface(ITextRange *me, REFIID riid, void **ppvObj)
 {
+    ITextRangeImpl *This = impl_from_ITextRange(me);
+
     *ppvObj = NULL;
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDispatch)
@@ -944,6 +953,11 @@ static HRESULT WINAPI ITextRange_fnQueryInterface(ITextRange *me, REFIID riid, v
     {
         *ppvObj = me;
         ITextRange_AddRef(me);
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_Igetrichole))
+    {
+        *ppvObj = This->reOle;
         return S_OK;
     }
 
@@ -3023,6 +3037,8 @@ static HRESULT WINAPI ITextSelection_fnQueryInterface(
     REFIID riid,
     void **ppvObj)
 {
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
     *ppvObj = NULL;
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDispatch)
@@ -3031,6 +3047,11 @@ static HRESULT WINAPI ITextSelection_fnQueryInterface(
     {
         *ppvObj = me;
         ITextSelection_AddRef(me);
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_Igetrichole))
+    {
+        *ppvObj = This->reOle;
         return S_OK;
     }
 
@@ -3246,14 +3267,19 @@ static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG cpLim)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **pFont)
+static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **font)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%p)\n", This, font);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!font)
+        return E_INVALIDARG;
+
+    return create_textfont((ITextRange*)me, font);
 }
 
 static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *pFont)
