@@ -221,6 +221,7 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
     case FONT_BOLD:
     case FONT_FORECOLOR:
     case FONT_ITALIC:
+    case FONT_STRIKETHROUGH:
     case FONT_UNDERLINE:
         return left->l == right->l;
     case FONT_SIZE:
@@ -238,6 +239,7 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
     case FONT_BOLD:
     case FONT_FORECOLOR:
     case FONT_ITALIC:
+    case FONT_STRIKETHROUGH:
     case FONT_UNDERLINE:
         v->l = tomUndefined;
         return;
@@ -279,6 +281,9 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         break;
     case FONT_SIZE:
         value->f = fmt.yHeight;
+        break;
+    case FONT_STRIKETHROUGH:
+        value->l = fmt.dwEffects & CFE_STRIKEOUT ? tomTrue : tomFalse;
         break;
     case FONT_UNDERLINE:
         value->l = fmt.dwEffects & CFE_UNDERLINE ? tomTrue : tomFalse;
@@ -2069,8 +2074,8 @@ static HRESULT WINAPI TextFont_SetSpacing(ITextFont *iface, FLOAT value)
 static HRESULT WINAPI TextFont_GetStrikeThrough(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_propl(This->range, FONT_STRIKETHROUGH, value);
 }
 
 static HRESULT WINAPI TextFont_SetStrikeThrough(ITextFont *iface, LONG value)
