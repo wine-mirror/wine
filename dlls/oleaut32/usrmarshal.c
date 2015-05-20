@@ -2268,8 +2268,12 @@ HRESULT CALLBACK IPersistMemory_Load_Proxy(
     LPVOID pMem,
     ULONG cbSize)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %u)\n", pMem, cbSize);
+
+    if (!pMem)
+        return E_POINTER;
+
+    return IPersistMemory_RemoteLoad_Proxy(This, pMem, cbSize);
 }
 
 HRESULT __RPC_STUB IPersistMemory_Load_Stub(
@@ -2277,8 +2281,8 @@ HRESULT __RPC_STUB IPersistMemory_Load_Stub(
     BYTE *pMem,
     ULONG cbSize)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %u)\n", pMem, cbSize);
+    return IPersistMemory_Load(This, pMem, cbSize);
 }
 
 HRESULT CALLBACK IPersistMemory_Save_Proxy(
@@ -2287,8 +2291,12 @@ HRESULT CALLBACK IPersistMemory_Save_Proxy(
     BOOL fClearDirty,
     ULONG cbSize)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %d, %u)\n", pMem, fClearDirty, cbSize);
+
+    if (!pMem)
+        return E_POINTER;
+
+    return IPersistMemory_RemoteSave_Proxy(This, pMem, fClearDirty, cbSize);
 }
 
 HRESULT __RPC_STUB IPersistMemory_Save_Stub(
@@ -2297,8 +2305,8 @@ HRESULT __RPC_STUB IPersistMemory_Save_Stub(
     BOOL fClearDirty,
     ULONG cbSize)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %d, %u)\n", pMem, fClearDirty, cbSize);
+    return IPersistMemory_Save(This, pMem, fClearDirty, cbSize);
 }
 
 void CALLBACK IAdviseSinkEx_OnViewStatusChange_Proxy(
