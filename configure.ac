@@ -506,6 +506,7 @@ AC_CHECK_HEADERS(\
 	sys/user.h \
 	sys/utsname.h \
 	sys/vm86.h \
+	sys/vnode.h \
 	sys/wait.h \
 	syscall.h \
 	termios.h \

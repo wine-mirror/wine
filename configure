@@ -6706,6 +6706,7 @@ for ac_header in \
 	sys/user.h \
 	sys/utsname.h \
 	sys/vm86.h \
+	sys/vnode.h \
 	sys/wait.h \
 	syscall.h \
 	termios.h \
