@@ -3668,8 +3668,8 @@
 @ cdecl -ret64 -arch=arm ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAA_JPB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
 @ thiscall -ret64 -arch=i386 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE_JPB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
-@ stub _Call_once
-@ stub _Call_onceEx
+@ cdecl _Call_once(ptr ptr)
+@ cdecl _Call_onceEx(ptr ptr ptr)
 @ stub _Cnd_broadcast
 @ stub _Cnd_destroy
 @ stub _Cnd_do_broadcast_at_thread_exit

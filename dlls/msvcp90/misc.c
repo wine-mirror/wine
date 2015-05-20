@@ -630,6 +630,41 @@ void __asm_dummy_vtables(void) {
 #endif
 #endif
 
+#if _MSVCP_VER >= 110
+static CRITICAL_SECTION call_once_cs;
+static CRITICAL_SECTION_DEBUG call_once_cs_debug =
+{
+    0, 0, &call_once_cs,
+    { &call_once_cs_debug.ProcessLocksList, &call_once_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": call_once_cs") }
+};
+static CRITICAL_SECTION call_once_cs = { &call_once_cs_debug, -1, 0, 0, 0, 0 };
+
+void __cdecl _Call_onceEx(int *once, void (__cdecl *func)(void*), void *argv)
+{
+    TRACE("%p %p %p\n", once, func, argv);
+
+    EnterCriticalSection(&call_once_cs);
+    if(!*once) {
+        /* FIXME: handle exceptions */
+        func(argv);
+        *once = 1;
+    }
+    LeaveCriticalSection(&call_once_cs);
+}
+
+void __cdecl call_once_func_wrapper(void *func)
+{
+    ((void (__cdecl*)(void))func)();
+}
+
+void __cdecl _Call_once(int *once, void (__cdecl *func)(void))
+{
+    TRACE("%p %p\n", once, func);
+    _Call_onceEx(once, call_once_func_wrapper, func);
+}
+#endif
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__

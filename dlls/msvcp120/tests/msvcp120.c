@@ -43,6 +43,8 @@ static int (__cdecl *p_isleadbyte)(int);
 static MSVCRT_long (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
 static _Cvtvec* (__cdecl *p__Getcvt)(_Cvtvec*);
+static void (CDECL *p__Call_once)(int *once, void (CDECL *func)(void));
+static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *argv);
 
 static HMODULE msvcp;
 
@@ -60,6 +62,8 @@ static BOOL init(void)
     p__Xtime_diff_to_millis2 = (void*)GetProcAddress(msvcp, "_Xtime_diff_to_millis2");
     p_xtime_get = (void*)GetProcAddress(msvcp, "xtime_get");
     p__Getcvt = (void*)GetProcAddress(msvcp, "_Getcvt");
+    p__Call_once = (void*)GetProcAddress(msvcp, "_Call_once");
+    p__Call_onceEx = (void*)GetProcAddress(msvcp, "_Call_onceEx");
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -190,12 +194,63 @@ static void test__Getcvt(void)
     }
 }
 
+static int cnt;
+static int once;
+
+static void __cdecl call_once_func(void)
+{
+    ok(!once, "once != 0\n");
+    cnt += 0x10000;
+}
+
+static void __cdecl call_once_ex_func(void *arg)
+{
+    int *i = arg;
+
+    ok(!once, "once != 0\n");
+    (*i)++;
+}
+
+DWORD WINAPI call_once_thread(void *arg)
+{
+    p__Call_once(&once, call_once_func);
+    return 0;
+}
+
+DWORD WINAPI call_once_ex_thread(void *arg)
+{
+    p__Call_onceEx(&once, call_once_ex_func, &cnt);
+    return 0;
+}
+
+static void test__Call_once(void)
+{
+    HANDLE h[4];
+    int i;
+
+    for(i=0; i<4; i++)
+        h[i] = CreateThread(NULL, 0, call_once_thread, &once, 0, NULL);
+    ok(WaitForMultipleObjects(4, h, TRUE, INFINITE) == WAIT_OBJECT_0,
+            "error waiting for all threads to finish\n");
+    ok(cnt == 0x10000, "cnt = %x\n", cnt);
+    ok(once == 1, "once = %x\n", once);
+
+    once = cnt = 0;
+    for(i=0; i<4; i++)
+        h[i] = CreateThread(NULL, 0, call_once_ex_thread, &once, 0, NULL);
+    ok(WaitForMultipleObjects(4, h, TRUE, INFINITE) == WAIT_OBJECT_0,
+            "error waiting for all threads to finish\n");
+    ok(cnt == 1, "cnt = %x\n", cnt);
+    ok(once == 1, "once = %x\n", once);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
     test__Xtime_diff_to_millis2();
     test_xtime_get();
     test__Getcvt();
+    test__Call_once();
 
     FreeLibrary(msvcp);
 }
