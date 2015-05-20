@@ -6427,6 +6427,24 @@ static void test_texturemapblend(void)
     emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     emit_set_rs(&ptr, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
     emit_set_rs(&ptr, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    /* The history of D3DRENDERSTATE_ALPHABLENDENABLE is quite a mess. In the
+     * first D3D release there was a D3DRENDERSTATE_BLENDENABLE (enum value 27).
+     * D3D5 introduced a new and separate D3DRENDERSTATE_ALPHABLENDENABLE (42)
+     * together with D3DRENDERSTATE_COLORKEYENABLE (41). The docs aren't all
+     * that clear but they mention that D3DRENDERSTATE_BLENDENABLE overrides the
+     * two new states.
+     * Then D3D6 came and got rid of the new D3DRENDERSTATE_ALPHABLENDENABLE
+     * state (42), renaming the older D3DRENDERSTATE_BLENDENABLE enum (27)
+     * as D3DRENDERSTATE_ALPHABLENDENABLE.
+     * There is a comment in the D3D6 docs which mentions that hardware
+     * rasterizers always used D3DRENDERSTATE_BLENDENABLE to just toggle alpha
+     * blending while prior to D3D5 software rasterizers toggled both color
+     * keying and alpha blending according to it. What I gather is that, from
+     * D3D6 onwards, D3DRENDERSTATE_ALPHABLENDENABLE always only toggles the
+     * alpha blending state.
+     * These tests seem to show that actual, current hardware follows the D3D6
+     * behavior even when using the original D3D interfaces, for the HAL device
+     * at least. */
     emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
@@ -6658,10 +6676,12 @@ static void test_texturemapblend(void)
     emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
     emit_set_rs(&ptr, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
-    /* This is supposed to be on by default on version 1 devices,
-     * but for some reason it randomly defaults to FALSE on the W8
-     * testbot. This is either the fault of Windows 8 or the WARP
-     * driver. */
+    /* D3DRENDERSTATE_COLORKEYENABLE is supposed to be on by default on version
+     * 1 devices, but for some reason it randomly defaults to FALSE on the W8
+     * testbot. This is either the fault of Windows 8 or the WARP driver.
+     * Also D3DRENDERSTATE_COLORKEYENABLE was introduced in D3D 5 aka version 2
+     * devices only, which might imply this doesn't actually do anything on
+     * WARP. */
     emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
 
     emit_tquad(&ptr, 0);
@@ -6681,12 +6701,15 @@ static void test_texturemapblend(void)
     hr = IDirect3DDevice_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+    /* Allow broken WARP results (colorkey disabled). */
     color = get_surface_color(rt, 5, 5);
-    ok(compare_color(color, 0x00000000, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00000000, 2) || broken(compare_color(color, 0x000000ff, 2)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 5);
     ok(compare_color(color, 0x00ff0000, 2), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 5, 245);
-    ok(compare_color(color, 0x00000000, 2), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00000000, 2) || broken(compare_color(color, 0x00000080, 2)),
+            "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 400, 245);
     ok(compare_color(color, 0x00800000, 2), "Got unexpected color 0x%08x.\n", color);
 
