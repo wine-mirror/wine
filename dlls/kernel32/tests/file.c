@@ -3821,11 +3821,15 @@ else
 static void test_GetFileInformationByHandleEx(void)
 {
     int i;
-    char tempPath[MAX_PATH], tempFileName[MAX_PATH], buffer[1024];
+    char tempPath[MAX_PATH], tempFileName[MAX_PATH], buffer[1024], *strPtr;
     BOOL ret;
-    DWORD ret2;
-    HANDLE directory;
+    DWORD ret2, written;
+    HANDLE directory, file;
     FILE_ID_BOTH_DIR_INFO *bothDirInfo;
+    FILE_BASIC_INFO *basicInfo;
+    FILE_STANDARD_INFO *standardInfo;
+    FILE_NAME_INFO *nameInfo;
+    LARGE_INTEGER prevWrite;
     struct {
         FILE_INFO_BY_HANDLE_CLASS handleClass;
         void *ptr;
@@ -3888,6 +3892,68 @@ static void test_GetFileInformationByHandleEx(void)
     }
 
     CloseHandle(directory);
+
+    file = CreateFileA(tempFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "GetFileInformationByHandleEx: failed to open the temp file, "
+        "got error %u.\n", GetLastError());
+
+    /* Test FileBasicInfo; make sure the write time changes when a file is updated */
+    memset(buffer, 0xff, sizeof(buffer));
+    ret = pGetFileInformationByHandleEx(file, FileBasicInfo, buffer, sizeof(buffer));
+    ok(ret, "GetFileInformationByHandleEx: failed to get FileBasicInfo, %u\n", GetLastError());
+    basicInfo = (FILE_BASIC_INFO *)buffer;
+    prevWrite = basicInfo->LastWriteTime;
+    CloseHandle(file);
+
+    Sleep(30); /* Make sure a new write time is different from the previous */
+
+    /* Write something to the file, to make sure the write time has changed */
+    file = CreateFileA(tempFileName, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "GetFileInformationByHandleEx: failed to open the temp file, "
+        "got error %u.\n", GetLastError());
+    ret = WriteFile(file, tempFileName, strlen(tempFileName), &written, NULL);
+    ok(ret, "GetFileInformationByHandleEx: Write failed\n");
+    CloseHandle(file);
+
+    file = CreateFileA(tempFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "GetFileInformationByHandleEx: failed to open the temp file, "
+        "got error %u.\n", GetLastError());
+
+    memset(buffer, 0xff, sizeof(buffer));
+    ret = pGetFileInformationByHandleEx(file, FileBasicInfo, buffer, sizeof(buffer));
+    ok(ret, "GetFileInformationByHandleEx: failed to get FileBasicInfo, %u\n", GetLastError());
+    basicInfo = (FILE_BASIC_INFO *)buffer;
+    /* Could also check that the creation time didn't change - on windows
+     * it doesn't, but on wine, it does change even if it shouldn't. */
+    ok(basicInfo->LastWriteTime.QuadPart != prevWrite.QuadPart,
+        "GetFileInformationByHandleEx: last write time didn't change\n");
+
+    /* Test FileStandardInfo, check some basic parameters */
+    memset(buffer, 0xff, sizeof(buffer));
+    ret = pGetFileInformationByHandleEx(file, FileStandardInfo, buffer, sizeof(buffer));
+    ok(ret, "GetFileInformationByHandleEx: failed to get FileStandardInfo, %u\n", GetLastError());
+    standardInfo = (FILE_STANDARD_INFO *)buffer;
+    ok(standardInfo->NumberOfLinks == 1, "GetFileInformationByHandleEx: Unexpcted number of links\n");
+    ok(standardInfo->DeletePending == FALSE, "GetFileInformationByHandleEx: Unexpcted pending delete\n");
+    ok(standardInfo->Directory == FALSE, "GetFileInformationByHandleEx: Incorrect directory flag\n");
+
+    /* Test FileNameInfo */
+    memset(buffer, 0xff, sizeof(buffer));
+    ret = pGetFileInformationByHandleEx(file, FileNameInfo, buffer, sizeof(buffer));
+    ok(ret, "GetFileInformationByHandleEx: failed to get FileNameInfo, %u\n", GetLastError());
+    nameInfo = (FILE_NAME_INFO *)buffer;
+    strPtr = strchr(tempFileName, '\\');
+    ok(strPtr != NULL, "GetFileInformationByHandleEx: Temp filename didn't contain backslash\n");
+    ok(nameInfo->FileNameLength == strlen(strPtr) * 2,
+        "GetFileInformationByHandleEx: Incorrect file name length\n");
+    for (i = 0; i < nameInfo->FileNameLength/2; i++)
+        ok(strPtr[i] == nameInfo->FileName[i], "Incorrect filename char %d: %c vs %c\n",
+            i, strPtr[i], nameInfo->FileName[i]);
+    CloseHandle(file);
+
     DeleteFileA(tempFileName);
 }
 

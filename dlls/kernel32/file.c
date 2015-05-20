@@ -897,8 +897,6 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
 
     switch (class)
     {
-    case FileBasicInfo:
-    case FileStandardInfo:
     case FileRenameInfo:
     case FileDispositionInfo:
     case FileAllocationInfo:
@@ -919,31 +917,36 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
 
+    case FileBasicInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileBasicInformation );
+        break;
+
+    case FileStandardInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileStandardInformation );
+        break;
+
     case FileNameInfo:
         status = NtQueryInformationFile( handle, &io, info, size, FileNameInformation );
-        if (status != STATUS_SUCCESS)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return FALSE;
-        }
-        return TRUE;
+        break;
 
     case FileIdBothDirectoryRestartInfo:
     case FileIdBothDirectoryInfo:
         status = NtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, info, size,
                                        FileIdBothDirectoryInformation, FALSE, NULL,
                                        (class == FileIdBothDirectoryRestartInfo) );
-        if (status != STATUS_SUCCESS)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return FALSE;
-        }
-        return TRUE;
+        break;
 
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
