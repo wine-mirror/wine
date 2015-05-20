@@ -2144,7 +2144,7 @@ static int read_directory_getattrlist( int fd, IO_STATUS_BLOCK *io, void *buffer
     {
         u_int32_t length;
         struct attrreference name_reference;
-        char name[NAME_MAX + 1];
+        char name[NAME_MAX * 3 + 1];
     } attrlist_buffer;
 
     TRACE("looking up file %s\n", debugstr_us( mask ));
