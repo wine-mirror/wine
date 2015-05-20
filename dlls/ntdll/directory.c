@@ -2185,6 +2185,11 @@ static int read_directory_getattrlist( int fd, IO_STATUS_BLOCK *io, void *buffer
             }
             else io->u.Status = STATUS_NO_MORE_FILES;
         }
+        else if ((errno == ENOENT || errno == ENOTDIR) && !get_dir_case_sensitivity("."))
+        {
+            io->u.Status = STATUS_NO_MORE_FILES;
+            ret = 0;
+        }
     }
     else ret = -1;
 
