@@ -1408,7 +1408,7 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, 
         return S_OK;
 
     data = get_event_target_data(event_target, TRUE);
-    if(!event_target)
+    if(!data)
         return E_OUTOFMEMORY;
 
     if(!alloc_handler_vector(data, eid, 0))
