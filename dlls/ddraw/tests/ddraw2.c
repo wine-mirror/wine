@@ -810,7 +810,8 @@ static void test_coop_level_d3d_state(void)
     hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
     ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
-    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x0000ff00, 1) || broken(compare_color(color, 0x00000000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     destroy_viewport(device, viewport);
     destroy_material(background);
