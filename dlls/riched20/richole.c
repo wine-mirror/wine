@@ -222,6 +222,8 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
     case FONT_FORECOLOR:
     case FONT_ITALIC:
     case FONT_STRIKETHROUGH:
+    case FONT_SUBSCRIPT:
+    case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
         return left->l == right->l;
     case FONT_SIZE:
@@ -240,6 +242,8 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
     case FONT_FORECOLOR:
     case FONT_ITALIC:
     case FONT_STRIKETHROUGH:
+    case FONT_SUBSCRIPT:
+    case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
         v->l = tomUndefined;
         return;
@@ -284,6 +288,12 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         break;
     case FONT_STRIKETHROUGH:
         value->l = fmt.dwEffects & CFE_STRIKEOUT ? tomTrue : tomFalse;
+        break;
+    case FONT_SUBSCRIPT:
+        value->l = fmt.dwEffects & CFE_SUBSCRIPT ? tomTrue : tomFalse;
+        break;
+    case FONT_SUPERSCRIPT:
+        value->l = fmt.dwEffects & CFE_SUPERSCRIPT ? tomTrue : tomFalse;
         break;
     case FONT_UNDERLINE:
         value->l = fmt.dwEffects & CFE_UNDERLINE ? tomTrue : tomFalse;
@@ -2088,8 +2098,8 @@ static HRESULT WINAPI TextFont_SetStrikeThrough(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetSubscript(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_propl(This->range, FONT_SUBSCRIPT, value);
 }
 
 static HRESULT WINAPI TextFont_SetSubscript(ITextFont *iface, LONG value)
@@ -2102,8 +2112,8 @@ static HRESULT WINAPI TextFont_SetSubscript(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetSuperscript(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_propl(This->range, FONT_SUPERSCRIPT, value);
 }
 
 static HRESULT WINAPI TextFont_SetSuperscript(ITextFont *iface, LONG value)
