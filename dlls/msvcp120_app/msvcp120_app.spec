@@ -3683,7 +3683,7 @@
 @ extern _Denorm msvcp120._Denorm
 @ stub _Dint
 @ stub _Dnorm
-@ stub _Do_call
+@ cdecl _Do_call(ptr) msvcp120._Do_call
 @ stub _Dscale
 @ stub _Dtento
 @ stub _Dtest

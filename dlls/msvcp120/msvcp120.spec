@@ -3683,7 +3683,7 @@
 @ extern _Denorm
 @ stub _Dint
 @ stub _Dnorm
-@ stub _Do_call
+@ cdecl _Do_call(ptr)
 @ stub _Dscale
 @ stub _Dtento
 @ stub _Dtest

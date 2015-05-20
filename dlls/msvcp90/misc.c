@@ -663,6 +663,11 @@ void __cdecl _Call_once(int *once, void (__cdecl *func)(void))
     TRACE("%p %p\n", once, func);
     _Call_onceEx(once, call_once_func_wrapper, func);
 }
+
+void __cdecl _Do_call(void *this)
+{
+    CALL_VTBL_FUNC(this, 0, void, (void*), (this));
+}
 #endif
 
 void init_misc(void *base)
