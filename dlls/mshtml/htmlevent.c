@@ -1399,7 +1399,7 @@ static void remove_event_handler(EventTarget *event_target, eventid_t eid)
     }
 }
 
-static HRESULT set_event_handler_disp(EventTarget *event_target, HTMLDocumentNode *doc, eventid_t eid, IDispatch *disp)
+static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, IDispatch *disp)
 {
     event_target_t *data;
 
@@ -1417,10 +1417,11 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, HTMLDocumentNod
     data->event_table[eid]->handler_prop = disp;
     IDispatch_AddRef(disp);
 
-    return ensure_doc_nsevent_handler(doc, eid);
+    bind_event(event_target, eid);
+    return S_OK;
 }
 
-HRESULT set_event_handler(EventTarget *event_target, HTMLDocumentNode *doc, eventid_t eid, VARIANT *var)
+HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var)
 {
     switch(V_VT(var)) {
     case VT_NULL:
@@ -1428,7 +1429,7 @@ HRESULT set_event_handler(EventTarget *event_target, HTMLDocumentNode *doc, even
         return S_OK;
 
     case VT_DISPATCH:
-        return set_event_handler_disp(event_target, doc, eid, V_DISPATCH(var));
+        return set_event_handler_disp(event_target, eid, V_DISPATCH(var));
 
     case VT_BSTR: {
         VARIANT *v;
@@ -1562,7 +1563,7 @@ void bind_target_event(HTMLDocumentNode *doc, EventTarget *event_target, const W
         return;
     }
 
-    set_event_handler_disp(event_target, doc, eid, disp);
+    set_event_handler_disp(event_target, eid, disp);
 }
 
 void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
@@ -1597,7 +1598,7 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
             if(disp) {
                 hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
                 if(SUCCEEDED(hres)) {
-                    set_event_handler_disp(&node->event_target, node->doc, i, disp);
+                    set_event_handler_disp(&node->event_target, i, disp);
                     node_release(node);
                 }
                 IDispatch_Release(disp);
