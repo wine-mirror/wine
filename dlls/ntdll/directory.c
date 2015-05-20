@@ -47,6 +47,9 @@
 #ifdef HAVE_SYS_ATTR_H
 #include <sys/attr.h>
 #endif
+#ifdef HAVE_SYS_VNODE_H
+#include <sys/vnode.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -2140,12 +2143,15 @@ static int read_directory_getattrlist( int fd, IO_STATUS_BLOCK *io, void *buffer
     int unix_len, ret, used_default;
     char *unix_name;
     struct attrlist attrlist;
+#include "pshpack4.h"
     struct
     {
         u_int32_t length;
         struct attrreference name_reference;
+        fsobj_type_t type;
         char name[NAME_MAX * 3 + 1];
     } attrlist_buffer;
+#include "poppack.h"
 
     TRACE("looking up file %s\n", debugstr_us( mask ));
 
@@ -2173,8 +2179,16 @@ static int read_directory_getattrlist( int fd, IO_STATUS_BLOCK *io, void *buffer
 
         memset( &attrlist, 0, sizeof(attrlist) );
         attrlist.bitmapcount = ATTR_BIT_MAP_COUNT;
-        attrlist.commonattr = ATTR_CMN_NAME;
-        ret = getattrlist( unix_name, &attrlist, &attrlist_buffer, sizeof(attrlist_buffer), 0 );
+        attrlist.commonattr = ATTR_CMN_NAME | ATTR_CMN_OBJTYPE;
+        ret = getattrlist( unix_name, &attrlist, &attrlist_buffer, sizeof(attrlist_buffer), FSOPT_NOFOLLOW );
+        /* If unix_name named a symlink, the above may have succeeded even if the symlink is broken.
+           Check that with another call without FSOPT_NOFOLLOW.  We don't ask for any attributes. */
+        if (!ret && attrlist_buffer.type == VLNK)
+        {
+            u_int32_t dummy;
+            attrlist.commonattr = 0;
+            ret = getattrlist( unix_name, &attrlist, &dummy, sizeof(dummy), 0 );
+        }
         if (!ret)
         {
             union file_directory_info *info = append_entry( buffer, io, length, attrlist_buffer.name, NULL, NULL, class );
