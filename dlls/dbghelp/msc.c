@@ -1992,6 +1992,12 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
         case 0x1142:
         case 0x1143:
         case 0x1144:
+        case 0x114c:
+        case 0x114d:
+        case 0x114e:
+        case 0x1145:
+        case 0x115a:
+        case 0x1153:
             TRACE("Unsupported symbol id %x\n", sym->generic.id);
             break;
 
