@@ -134,7 +134,7 @@ static BOOL arm64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, C
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
-          curr_mode == stm_start ? "start" : "ARM",
+          curr_mode == stm_start ? "start" : "ARM64",
           wine_dbgstr_longlong(curr_count),
           frame->FuncTableEntry);
 
