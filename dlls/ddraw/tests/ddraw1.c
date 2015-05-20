@@ -1239,26 +1239,41 @@ static void test_ck_rgba(void)
         {{640.0f}, {480.0f}, {0.75f}, {1.0f}, {0xffffffff}, {0x00000000}, {1.0f}, {0.0f}},
         {{640.0f}, {  0.0f}, {0.75f}, {1.0f}, {0xffffffff}, {0x00000000}, {1.0f}, {1.0f}},
     };
+    /* Supposedly there was no D3DRENDERSTATE_COLORKEYENABLE in D3D < 5.
+     * Maybe the WARP driver on Windows 8 ignores setting it via the older
+     * device interface but it's buggy in that the internal state is not
+     * initialized, or possibly toggling D3DRENDERSTATE_COLORKEYENABLE /
+     * D3DRENDERSTATE_ALPHABLENDENABLE has unintended side effects.
+     * Checking the W8 test results it seems like test 1 fails most of the time
+     * and test 0 fails very rarely. */
     static const struct
     {
         D3DCOLOR fill_color;
         BOOL color_key;
         BOOL blend;
-        D3DCOLOR result1, result1_broken;
-        D3DCOLOR result2, result2_broken;
+        D3DCOLOR result1, result1_r200, result1_warp;
+        D3DCOLOR result2, result2_r200, result2_warp;
     }
     tests[] =
     {
         /* r200 on Windows doesn't check the alpha component when applying the color
          * key, so the key matches on every texel. */
-        {0xff00ff00, TRUE,  TRUE,  0x00ff0000, 0x00ff0000, 0x000000ff, 0x000000ff},
-        {0xff00ff00, TRUE,  FALSE, 0x00ff0000, 0x00ff0000, 0x000000ff, 0x000000ff},
-        {0xff00ff00, FALSE, TRUE,  0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
-        {0xff00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
-        {0x7f00ff00, TRUE,  TRUE,  0x00807f00, 0x00ff0000, 0x00807f00, 0x000000ff},
-        {0x7f00ff00, TRUE,  FALSE, 0x0000ff00, 0x00ff0000, 0x0000ff00, 0x000000ff},
-        {0x7f00ff00, FALSE, TRUE,  0x00807f00, 0x00807f00, 0x00807f00, 0x00807f00},
-        {0x7f00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0xff00ff00, TRUE,  TRUE,  0x00ff0000, 0x00ff0000, 0x0000ff00,
+                0x000000ff, 0x000000ff, 0x0000ff00},
+        {0xff00ff00, TRUE,  FALSE, 0x00ff0000, 0x00ff0000, 0x0000ff00,
+                0x000000ff, 0x000000ff, 0x0000ff00},
+        {0xff00ff00, FALSE, TRUE,  0x0000ff00, 0x0000ff00, 0x0000ff00,
+                0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0xff00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00,
+                0x0000ff00, 0x0000ff00, 0x0000ff00},
+        {0x7f00ff00, TRUE,  TRUE,  0x00807f00, 0x00ff0000, 0x00807f00,
+                0x00807f00, 0x000000ff, 0x00807f00},
+        {0x7f00ff00, TRUE,  FALSE, 0x0000ff00, 0x00ff0000, 0x0000ff00,
+                0x0000ff00, 0x000000ff, 0x0000ff00},
+        {0x7f00ff00, FALSE, TRUE,  0x00807f00, 0x00807f00, 0x00807f00,
+                0x00807f00, 0x00807f00, 0x00807f00},
+        {0x7f00ff00, FALSE, FALSE, 0x0000ff00, 0x0000ff00, 0x0000ff00,
+                0x0000ff00, 0x0000ff00, 0x0000ff00},
     };
 
     IDirect3DExecuteBuffer *execute_buffer;
@@ -1371,9 +1386,10 @@ static void test_ck_rgba(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color = get_surface_color(rt, 320, 240);
-        ok(compare_color(color, tests[i].result1, 1) || compare_color(color, tests[i].result1_broken, 1),
-                "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                tests[i].result1, i, color);
+        ok(compare_color(color, tests[i].result1, 1)
+                || broken(compare_color(color, tests[i].result1_r200, 1))
+                || broken(compare_color(color, tests[i].result1_warp, 1)),
+                "Got unexpected color 0x%08x for test %u.\n", color, i);
 
         U5(fx).dwFillColor = 0xff0000ff;
         hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
@@ -1390,9 +1406,10 @@ static void test_ck_rgba(void)
         /* This tests that fragments that are masked out by the color key are
          * discarded, instead of just fully transparent. */
         color = get_surface_color(rt, 320, 240);
-        ok(compare_color(color, tests[i].result2, 1) || compare_color(color, tests[i].result2_broken, 1),
-                "Expected color 0x%08x for test %u, got 0x%08x.\n",
-                tests[i].result2, i, color);
+        ok(compare_color(color, tests[i].result2, 1)
+                || broken(compare_color(color, tests[i].result2_r200, 1))
+                || broken(compare_color(color, tests[i].result2_warp, 1)),
+                "Got unexpected color 0x%08x for test %u.\n", color, i);
     }
 
     IDirectDrawSurface_Release(rt);
