@@ -219,6 +219,7 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
     switch (propid)
     {
     case FONT_BOLD:
+    case FONT_FORECOLOR:
     case FONT_ITALIC:
     case FONT_UNDERLINE:
         return left->l == right->l;
@@ -235,6 +236,7 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
     switch (propid)
     {
     case FONT_BOLD:
+    case FONT_FORECOLOR:
     case FONT_ITALIC:
     case FONT_UNDERLINE:
         v->l = tomUndefined;
@@ -268,6 +270,9 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
     {
     case FONT_BOLD:
         value->l = fmt.dwEffects & CFE_BOLD ? tomTrue : tomFalse;
+        break;
+    case FONT_FORECOLOR:
+        value->l = fmt.dwEffects & CFE_AUTOCOLOR ? GetSysColor(COLOR_WINDOWTEXT) : fmt.crTextColor;
         break;
     case FONT_ITALIC:
         value->l = fmt.dwEffects & CFE_ITALIC ? tomTrue : tomFalse;
@@ -1868,8 +1873,8 @@ static HRESULT WINAPI TextFont_SetEmboss(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetForeColor(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_propl(This->range, FONT_FORECOLOR, value);
 }
 
 static HRESULT WINAPI TextFont_SetForeColor(ITextFont *iface, LONG value)
