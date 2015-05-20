@@ -2359,6 +2359,7 @@ static RPC_STATUS rpcrt4_http_read_http_packet(HINTERNET request, RpcHttpAsyncDa
     if (!RPCRT4_IsValidHttpPacket(hdr, *data, data_len))
     {
         ERR("invalid http packet\n");
+        HeapFree(GetProcessHeap(), 0, *data);
         return RPC_S_PROTOCOL_ERROR;
     }
 
