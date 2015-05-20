@@ -1219,6 +1219,7 @@ static void test_GetFont(void)
   ITextFont *font, *font2;
   CHARFORMAT2A cf;
   LONG value;
+  float size;
   HRESULT hr;
   HWND hwnd;
   BOOL ret;
@@ -1263,6 +1264,14 @@ static void test_GetFont(void)
   hr = ITextFont_GetItalic(font, NULL);
   ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+  hr = ITextFont_GetSize(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  size = 0.0;
+  hr = ITextFont_GetSize(font, &size);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(size > 0.0, "size %.2f\n", size);
+
   /* range is non-italic */
   value = tomTrue;
   hr = ITextFont_GetItalic(font, &value);
@@ -1270,8 +1279,9 @@ static void test_GetFont(void)
   ok(value == tomFalse, "got %d\n", value);
 
   cf.cbSize = sizeof(CHARFORMAT2A);
-  cf.dwMask = CFM_ITALIC;
+  cf.dwMask = CFM_ITALIC|CFM_SIZE;
   cf.dwEffects = CFE_ITALIC;
+  cf.yHeight = 24.0;
 
   SendMessageA(hwnd, EM_SETSEL, 2, 3);
   ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
@@ -1282,6 +1292,11 @@ static void test_GetFont(void)
   hr = ITextFont_GetItalic(font, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value == tomUndefined, "got %d\n", value);
+
+  size = 0.0;
+  hr = ITextFont_GetSize(font, &size);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(size == tomUndefined, "size %.2f\n", size);
 
   ITextFont_Release(font);
   ITextRange_Release(range);

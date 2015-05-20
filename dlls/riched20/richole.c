@@ -208,7 +208,47 @@ static const DWORD textfont_prop_masks[] = {
     CFM_WEIGHT
 };
 
-static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos, enum textfont_prop_id propid, LONG *value)
+typedef union {
+    FLOAT f;
+    LONG l;
+} textfont_prop_val;
+
+static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, textfont_prop_val *left,
+    textfont_prop_val *right)
+{
+    switch (propid)
+    {
+    case FONT_BOLD:
+    case FONT_ITALIC:
+        return left->l == right->l;
+    case FONT_SIZE:
+       return left->f == right->f;
+    default:
+        FIXME("unhandled font property %d\n", propid);
+        return FALSE;
+    }
+}
+
+static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfont_prop_val *v)
+{
+    switch (propid)
+    {
+    case FONT_BOLD:
+    case FONT_ITALIC:
+        v->l = tomUndefined;
+        return;
+    case FONT_SIZE:
+        v->f = tomUndefined;
+        return;
+    default:
+        FIXME("unhandled font property %d\n", propid);
+        v->l = tomUndefined;
+        return;
+    }
+}
+
+static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos, enum textfont_prop_id propid,
+    textfont_prop_val *value)
 {
     ME_Cursor from, to;
     CHARFORMAT2W fmt;
@@ -225,10 +265,13 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
     switch (propid)
     {
     case FONT_BOLD:
-        *value = fmt.dwEffects & CFE_BOLD ? tomTrue : tomFalse;
+        value->l = fmt.dwEffects & CFE_BOLD ? tomTrue : tomFalse;
         break;
     case FONT_ITALIC:
-        *value = fmt.dwEffects & CFE_ITALIC ? tomTrue : tomFalse;
+        value->l = fmt.dwEffects & CFE_ITALIC ? tomTrue : tomFalse;
+        break;
+    case FONT_SIZE:
+        value->f = fmt.yHeight;
         break;
     default:
         FIXME("unhandled font property %d\n", propid);
@@ -238,20 +281,17 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
     return S_OK;
 }
 
-static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid, LONG *value)
+static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid, textfont_prop_val *value)
 {
     ITextRangeImpl *rng = impl_from_ITextRange(range);
+    textfont_prop_val v;
     HRESULT hr;
-    LONG v;
     int i;
-
-    if (!value)
-        return E_INVALIDARG;
-
-    *value = tomUndefined;
 
     if (!rng->reOle)
         return CO_E_RELEASED;
+
+    init_textfont_prop_value(propid, value);
 
     /* iterate trough a range to see if property value is consistent */
     hr = get_textfont_prop_for_pos(rng->reOle, rng->start, propid, &v);
@@ -259,18 +299,44 @@ static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid
         return hr;
 
     for (i = rng->start + 1; i < rng->end; i++) {
-        LONG cur;
+        textfont_prop_val cur;
 
         hr = get_textfont_prop_for_pos(rng->reOle, i, propid, &cur);
         if (FAILED(hr))
             return hr;
 
-        if (cur != v)
+        if (!is_equal_textfont_prop_value(propid, &v, &cur))
             return S_OK;
     }
 
     *value = v;
     return S_OK;
+}
+
+static HRESULT get_textfont_propf(ITextRange *range, enum textfont_prop_id propid, FLOAT *value)
+{
+    textfont_prop_val v;
+    HRESULT hr;
+
+    if (!value)
+        return E_INVALIDARG;
+
+    hr = get_textfont_prop(range, propid, &v);
+    *value = v.f;
+    return hr;
+}
+
+static HRESULT get_textfont_propl(ITextRange *range, enum textfont_prop_id propid, LONG *value)
+{
+    textfont_prop_val v;
+    HRESULT hr;
+
+    if (!value)
+        return E_INVALIDARG;
+
+    hr = get_textfont_prop(range, propid, &v);
+    *value = v.l;
+    return hr;
 }
 
 static HRESULT WINAPI IRichEditOleImpl_inner_fnQueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
@@ -1770,7 +1836,7 @@ static HRESULT WINAPI TextFont_GetBold(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
     TRACE("(%p)->(%p)\n", This, value);
-    return get_textfont_prop(This->range, FONT_BOLD, value);
+    return get_textfont_propl(This->range, FONT_BOLD, value);
 }
 
 static HRESULT WINAPI TextFont_SetBold(ITextFont *iface, LONG value)
@@ -1840,7 +1906,7 @@ static HRESULT WINAPI TextFont_GetItalic(ITextFont *iface, LONG *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
     TRACE("(%p)->(%p)\n", This, value);
-    return get_textfont_prop(This->range, FONT_ITALIC, value);
+    return get_textfont_propl(This->range, FONT_ITALIC, value);
 }
 
 static HRESULT WINAPI TextFont_SetItalic(ITextFont *iface, LONG value)
@@ -1951,8 +2017,8 @@ static HRESULT WINAPI TextFont_SetShadow(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetSize(ITextFont *iface, FLOAT *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+    return get_textfont_propf(This->range, FONT_SIZE, value);
 }
 
 static HRESULT WINAPI TextFont_SetSize(ITextFont *iface, FLOAT value)
