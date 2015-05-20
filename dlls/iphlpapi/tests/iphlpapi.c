@@ -1044,7 +1044,6 @@ todo_wine
     {
         PICMP_ECHO_REPLY pong = (PICMP_ECHO_REPLY) replydata;
         trace ("send addr  : %s\n", ntoa(address));
-        trace ("send size  : %u\n", sizeof(senddata));
         trace ("reply addr : %s\n", ntoa(pong->Address));
         trace ("reply size : %u\n", replysz);
         trace ("roundtrip  : %u ms\n", pong->RoundTripTime);
