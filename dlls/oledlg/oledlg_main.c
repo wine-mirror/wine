@@ -163,14 +163,12 @@ BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
     WCHAR *rootname, *objecttype;
     LPOLESTR usertype = NULL;
     OLEVERB firstverb, verb;
-    WCHAR objectW[32]; /* should be enough */
+    WCHAR resstrW[32]; /* should be enough */
+    BOOL singleverb;
     HMENU submenu;
 
     TRACE("(%p, %s, %p, %d, %d, %d, %d, %d, %p)\n", object, debugstr_w(shorttype),
         hMenu, uPos, idmin, idmax, addConvert, idConvert, ret_submenu);
-
-    if (addConvert)
-        FIXME("convert menu item is not supported.\n");
 
     if (ret_submenu)
         *ret_submenu = NULL;
@@ -182,10 +180,10 @@ BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
     if (object)
         IOleObject_EnumVerbs(object, &enumverbs);
 
-    LoadStringW(OLEDLG_hInstance, IDS_VERBMENU_OBJECT, objectW, sizeof(objectW)/sizeof(WCHAR));
+    LoadStringW(OLEDLG_hInstance, IDS_VERBMENU_OBJECT, resstrW, sizeof(resstrW)/sizeof(WCHAR));
     /* no object, or object without enumeration support */
     if (!object || (object && !enumverbs)) {
-        InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_STRING|MF_GRAYED, idmin, objectW);
+        InsertMenuW(hMenu, uPos, MF_BYPOSITION|MF_STRING|MF_GRAYED, idmin, resstrW);
         return FALSE;
     }
 
@@ -195,18 +193,19 @@ BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
     else
         objecttype = (WCHAR*)shorttype;
 
-    rootname = CoTaskMemAlloc((strlenW(objecttype) + strlenW(objectW) + 2)*sizeof(WCHAR));
+    rootname = CoTaskMemAlloc((strlenW(objecttype) + strlenW(resstrW) + 2)*sizeof(WCHAR));
     strcpyW(rootname, objecttype);
     strcatW(rootname, spaceW);
-    strcatW(rootname, objectW);
+    strcatW(rootname, resstrW);
     CoTaskMemFree(usertype);
 
     /* iterate through verbs */
 
     /* find first suitable verb */
     get_next_insertable_verb(enumverbs, idmin, idmax, &firstverb);
+    singleverb = get_next_insertable_verb(enumverbs, idmin, idmax, &verb) != S_OK;
 
-    if (get_next_insertable_verb(enumverbs, idmin, idmax, &verb) != S_OK) {
+    if (singleverb && !addConvert) {
         WCHAR *str = CoTaskMemAlloc((strlenW(rootname) + strlenW(firstverb.lpszVerbName) + 2)*sizeof(WCHAR));
 
         strcpyW(str, firstverb.lpszVerbName);
@@ -224,13 +223,23 @@ BOOL WINAPI OleUIAddVerbMenuW(IOleObject *object, LPCWSTR shorttype,
 
     submenu = CreatePopupMenu();
     insert_verb_to_menu(submenu, idmin, &firstverb);
-    insert_verb_to_menu(submenu, idmin, &verb);
     CoTaskMemFree(firstverb.lpszVerbName);
-    CoTaskMemFree(verb.lpszVerbName);
+
+    if (!singleverb) {
+        insert_verb_to_menu(submenu, idmin, &verb);
+        CoTaskMemFree(verb.lpszVerbName);
+    }
 
     while (get_next_insertable_verb(enumverbs, idmin, idmax, &verb) == S_OK) {
         insert_verb_to_menu(submenu, idmin, &verb);
         CoTaskMemFree(verb.lpszVerbName);
+    }
+
+    /* convert verb is at the bottom of a popup, separated from verbs */
+    if (addConvert) {
+        LoadStringW(OLEDLG_hInstance, IDS_VERBMENU_CONVERT, resstrW, sizeof(resstrW)/sizeof(WCHAR));
+        InsertMenuW(submenu, ~0, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
+        InsertMenuW(submenu, ~0, MF_BYPOSITION|MF_STRING, idConvert, resstrW);
     }
 
     if (submenu)

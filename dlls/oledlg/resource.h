@@ -42,6 +42,7 @@
 #define IDC_FILE                        1011
 
 /* String ids for verb menu */
+#define IDS_VERBMENU_CONVERT            0x130
 #define IDS_VERBMENU_OBJECT             0x135
 
 /* String ids for Paste Special */
