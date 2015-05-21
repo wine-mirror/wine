@@ -2501,6 +2501,15 @@ BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 }
 
 /******************************************************************************
+ * ImpersonateAnonymousToken [ADVAPI32.@]
+ */
+BOOL WINAPI ImpersonateAnonymousToken( HANDLE thread )
+{
+    TRACE("(%p)\n", thread);
+    return set_ntstatus( NtImpersonateAnonymousToken( thread ) );
+}
+
+/******************************************************************************
  * AccessCheck [ADVAPI32.@]
  */
 BOOL WINAPI
