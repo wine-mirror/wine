@@ -18,7 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -120,6 +124,7 @@ struct device
 {
     struct object          obj;           /* object header */
     struct device_manager *manager;       /* manager for this device (or NULL if deleted) */
+    char                  *unix_path;     /* path to unix device if any */
     client_ptr_t           user_ptr;      /* opaque ptr for client side */
     struct list            entry;         /* entry in device manager list */
     struct list            files;         /* list of open files */
@@ -326,6 +331,7 @@ static void device_destroy( struct object *obj )
 
     assert( list_empty( &device->files ));
 
+    free( device->unix_path );
     if (device->manager) list_remove( &device->entry );
 }
 
@@ -340,7 +346,17 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
         file->device = (struct device *)grab_object( device );
         list_init( &file->requests );
         list_add_tail( &device->files, &file->entry );
-        if (!(file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, 0 )))
+        if (device->unix_path)
+        {
+            mode_t mode = 0666;
+            access = file->obj.ops->map_access( &file->obj, access );
+            file->fd = open_fd( NULL, device->unix_path, O_NONBLOCK | O_LARGEFILE,
+                                &mode, access, sharing, options );
+            if (file->fd) set_fd_user( file->fd, &device_file_fd_ops, &file->obj );
+        }
+        else file->fd = alloc_pseudo_fd( &device_file_fd_ops, &file->obj, 0 );
+
+        if (!file->fd)
         {
             release_object( file );
             file = NULL;
@@ -509,6 +525,7 @@ static struct device *create_device( struct directory *root, const struct unicod
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
+            device->unix_path = NULL;
             device->manager = manager;
             list_add_tail( &manager->devices, &device->entry );
             list_init( &device->files );
