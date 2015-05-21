@@ -1146,7 +1146,54 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 
 static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 {
-    info->Level = 8;
+#ifdef linux
+    char line[512];
+    char *s, *value;
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if (f)
+    {
+        while (fgets(line, sizeof(line), f) != NULL)
+        {
+            /* NOTE: the ':' is the only character we can rely on */
+            if (!(value = strchr(line,':')))
+                continue;
+            /* terminate the valuename */
+            s = value - 1;
+            while ((s >= line) && isspace(*s)) s--;
+            *(s + 1) = '\0';
+            /* and strip leading spaces from value */
+            value += 1;
+            while (isspace(*value)) value++;
+            if ((s = strchr(value,'\n')))
+                *s='\0';
+            if (!strcasecmp(line, "CPU architecture"))
+            {
+                if (isdigit(value[0]))
+                    info->Level = atoi(value);
+                continue;
+            }
+            if (!strcasecmp(line, "CPU revision"))
+            {
+                if (isdigit(value[0]))
+                    info->Revision = atoi(value);
+                continue;
+            }
+            if (!strcasecmp(line, "Features"))
+            {
+                if (strstr(value, "crc32"))
+                    user_shared_data->ProcessorFeatures[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE] = TRUE;
+                if (strstr(value, "aes"))
+                    user_shared_data->ProcessorFeatures[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = TRUE;
+                continue;
+            }
+        }
+        fclose(f);
+    }
+#else
+    FIXME("CPU Feature detection not implemented.\n");
+#endif
+    info->Level = max(info->Level, 8);
+    user_shared_data->ProcessorFeatures[PF_ARM_V8_INSTRUCTIONS_AVAILABLE] = TRUE;
     info->Architecture = PROCESSOR_ARCHITECTURE_ARM64;
 }
 
