@@ -185,7 +185,7 @@ static void create_hardware_registry_keys(void)
     static const WCHAR PercentDW[] = {'%','d',0};
     static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
-    static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','7',' ','M','o','d','e','l',' ','%','X',
+    static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                             ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
     static const WCHAR IntelCpuStringW[] = {'I','n','t','e','l','(','R',')',' ','P','e','n','t','i','u','m','(','R',')',' ','4',' ',
                                             'C','P','U',' ','2','.','4','0','G','H','z',0};
@@ -208,7 +208,8 @@ static void create_hardware_registry_keys(void)
     switch(sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
-        sprintfW( idW, ARMCpuDescrW, sci.Level, sci.Revision );
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        sprintfW( idW, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
     default:
     case PROCESSOR_ARCHITECTURE_INTEL:
@@ -226,6 +227,7 @@ static void create_hardware_registry_keys(void)
     switch(sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
+    case PROCESSOR_ARCHITECTURE_ARM64:
         set_reg_value( system_key, IdentifierW, ARMSysidW );
         break;
     default:
@@ -235,6 +237,7 @@ static void create_hardware_registry_keys(void)
     }
 
     if (sci.Architecture == PROCESSOR_ARCHITECTURE_ARM ||
+        sci.Architecture == PROCESSOR_ARCHITECTURE_ARM64 ||
         RegCreateKeyExW( system_key, fpuW, 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
         fpu_key = 0;
@@ -259,6 +262,7 @@ static void create_hardware_registry_keys(void)
             RegCloseKey( hkey );
         }
         if (sci.Architecture != PROCESSOR_ARCHITECTURE_ARM &&
+            sci.Architecture != PROCESSOR_ARCHITECTURE_ARM64 &&
             !RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
