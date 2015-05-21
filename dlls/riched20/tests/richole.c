@@ -1301,8 +1301,8 @@ static void test_GetFont(void)
   hr = ITextFont_GetLanguageID(font, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
-  ok(value == GetUserDefaultLCID(), "got lcid %x, user lcid %x\n", value,
-      GetUserDefaultLCID());
+  ok(value == GetSystemDefaultLCID(), "got lcid %x, user lcid %x\n", value,
+      GetSystemDefaultLCID());
 
   /* range is non-italic */
   value = tomTrue;
