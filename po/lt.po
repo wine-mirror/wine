@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-05-18 16:29+0300\n"
+"PO-Revision-Date: 2015-05-21 20:22+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -7453,10 +7453,8 @@ msgid "Add Control"
 msgstr "Pridėti valdiklį"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "Š&riftas..."
+msgstr "&Konvertuoti..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -9208,24 +9206,20 @@ msgstr ""
 "vietos diske, ar vis dar prisijungę prie tinklo."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "„Wine“ „Mono“ diegimo programa"
+msgstr "„Wine“ garso susiejiklis"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "stulpelis"
+msgstr "Garsumas"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Pagrindinis garsumas"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Nutildyti"
 
 #: winspool.rc:37
 msgid "Print to File"
