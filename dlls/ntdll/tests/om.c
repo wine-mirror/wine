@@ -1063,14 +1063,14 @@ static void test_null_device(void)
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(null, buf, sizeof(buf), &num_bytes, NULL);
-    todo_wine ok(!ret, "WriteFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(!ret, "WriteFile unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(null, buf, sizeof(buf), &num_bytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     num_bytes = 0xdeadbeef;
@@ -1102,7 +1102,7 @@ static void test_null_device(void)
         ret = GetOverlappedResult(null, &ov, &num_bytes, TRUE);
         ok(!ret, "GetOverlappedResult unexpectedly succeeded\n");
     }
-    todo_wine ok(GetLastError() == ERROR_HANDLE_EOF,
+    ok(GetLastError() == ERROR_HANDLE_EOF,
        "expected ERROR_HANDLE_EOF, got %u\n", GetLastError());
 
     pNtClose(null);

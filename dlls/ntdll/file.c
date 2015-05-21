@@ -847,7 +847,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             goto done;
         }
     }
-    else if (type == FD_TYPE_SERIAL)
+    else if (type == FD_TYPE_SERIAL || type == FD_TYPE_DEVICE)
     {
         if (async_read && (!offset || offset->QuadPart < 0))
         {
@@ -872,6 +872,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 {
                 case FD_TYPE_FILE:
                 case FD_TYPE_CHAR:
+                case FD_TYPE_DEVICE:
                     status = length ? STATUS_END_OF_FILE : STATUS_SUCCESS;
                     goto done;
                 case FD_TYPE_SERIAL:
@@ -1265,7 +1266,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             goto done;
         }
     }
-    else if (type == FD_TYPE_SERIAL)
+    else if (type == FD_TYPE_SERIAL || type == FD_TYPE_DEVICE)
     {
         if (async_write &&
             (!offset || (offset->QuadPart < 0 && offset->QuadPart != FILE_WRITE_TO_END_OF_FILE)))
