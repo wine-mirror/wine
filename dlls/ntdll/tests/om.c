@@ -658,9 +658,9 @@ static void test_symboliclink(void)
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "test-link\\NUL");
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
-    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
     status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE);
-    todo_wine ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
 
     pNtClose(h);
@@ -1053,31 +1053,24 @@ static void test_null_device(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\Device\\Null");
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     status = pNtOpenSymbolicLinkObject(&null, SYMBOLIC_LINK_QUERY, &attr);
-    todo_wine
     ok(status == STATUS_OBJECT_TYPE_MISMATCH,
        "expected STATUS_OBJECT_TYPE_MISMATCH, got %08x\n", status);
 
     status = pNtOpenFile(&null, GENERIC_READ | GENERIC_WRITE, &attr, &iosb,
                          FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-    todo_wine
     ok(status == STATUS_SUCCESS,
        "expected STATUS_SUCCESS, got %08x\n", status);
-    if (status != STATUS_SUCCESS)
-    {
-        skip("opening \\Device\\Null failed, skipping read/write tests\n");
-        goto out;
-    }
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(null, buf, sizeof(buf), &num_bytes, NULL);
-    ok(!ret, "WriteFile unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    todo_wine ok(!ret, "WriteFile unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(null, buf, sizeof(buf), &num_bytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
     num_bytes = 0xdeadbeef;
@@ -1109,12 +1102,11 @@ static void test_null_device(void)
         ret = GetOverlappedResult(null, &ov, &num_bytes, TRUE);
         ok(!ret, "GetOverlappedResult unexpectedly succeeded\n");
     }
-    ok(GetLastError() == ERROR_HANDLE_EOF,
+    todo_wine ok(GetLastError() == ERROR_HANDLE_EOF,
        "expected ERROR_HANDLE_EOF, got %u\n", GetLastError());
 
     pNtClose(null);
 
-out:
     null = CreateFileA("\\\\.\\Null", GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

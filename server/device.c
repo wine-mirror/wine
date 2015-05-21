@@ -534,6 +534,22 @@ static struct device *create_device( struct directory *root, const struct unicod
     return device;
 }
 
+struct device *create_unix_device( struct directory *root, const struct unicode_str *name,
+                                   const char *unix_path )
+{
+    struct device *device;
+
+    if ((device = create_named_object_dir( root, name, 0, &device_ops )))
+    {
+        device->unix_path = strdup( unix_path );
+        device->manager = NULL;  /* no manager, requests go straight to the Unix device */
+        list_init( &device->files );
+        make_object_static( &device->obj );
+    }
+    return device;
+
+}
+
 /* terminate requests when the underlying device is deleted */
 static void delete_file( struct device_file *file )
 {

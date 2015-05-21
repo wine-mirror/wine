@@ -224,10 +224,6 @@ extern void init_directories(void);
 extern struct symlink *create_symlink( struct directory *root, const struct unicode_str *name,
                                        unsigned int attr, const struct unicode_str *target );
 
-/* devices */
-extern void create_named_pipe_device( struct directory *root, const struct unicode_str *name );
-extern void create_mailslot_device( struct directory *root, const struct unicode_str *name );
-
 /* global variables */
 
   /* command-line options */
