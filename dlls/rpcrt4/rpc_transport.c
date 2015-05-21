@@ -2873,30 +2873,6 @@ static RPC_STATUS authorize_request(RpcConnection_http *httpc, HINTERNET request
     return status;
 }
 
-static RPC_STATUS insert_cookie_header(HINTERNET request, const WCHAR *value)
-{
-    static const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' '};
-    WCHAR *header, *ptr;
-    int len;
-    RPC_STATUS status = RPC_S_SERVER_UNAVAILABLE;
-
-    if (!value) return RPC_S_OK;
-
-    len = strlenW(value);
-    if ((header = HeapAlloc(GetProcessHeap(), 0, sizeof(cookieW) + (len + 3) * sizeof(WCHAR))))
-    {
-        memcpy(header, cookieW, sizeof(cookieW));
-        ptr = header + sizeof(cookieW) / sizeof(cookieW[0]);
-        memcpy(ptr, value, len * sizeof(WCHAR));
-        ptr[len++] = '\r';
-        ptr[len++] = '\n';
-        ptr[len] = 0;
-        if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW))) status = RPC_S_OK;
-        HeapFree(GetProcessHeap(), 0, header);
-    }
-    return status;
-}
-
 static BOOL has_credentials(RpcConnection_http *httpc)
 {
     RPC_HTTP_TRANSPORT_CREDENTIALS_W *creds;
@@ -2920,6 +2896,51 @@ static BOOL is_secure(RpcConnection_http *httpc)
     return httpc->common.QOS &&
            (httpc->common.QOS->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP) &&
            (httpc->common.QOS->qos->u.HttpCredentials->Flags & RPC_C_HTTP_FLAG_USE_SSL);
+}
+
+static RPC_STATUS set_auth_cookie(RpcConnection_http *httpc, const WCHAR *value)
+{
+    static WCHAR httpW[] = {'h','t','t','p',0};
+    static WCHAR httpsW[] = {'h','t','t','p','s',0};
+    URL_COMPONENTSW uc;
+    DWORD len;
+    WCHAR *url;
+    BOOL ret;
+
+    if (!value) return RPC_S_OK;
+
+    uc.dwStructSize     = sizeof(uc);
+    uc.lpszScheme       = is_secure(httpc) ? httpsW : httpW;
+    uc.dwSchemeLength   = 0;
+    uc.lpszHostName     = httpc->servername;
+    uc.dwHostNameLength = 0;
+    uc.nPort            = 0;
+    uc.lpszUserName     = NULL;
+    uc.dwUserNameLength = 0;
+    uc.lpszPassword     = NULL;
+    uc.dwPasswordLength = 0;
+    uc.lpszUrlPath      = NULL;
+    uc.dwUrlPathLength  = 0;
+    uc.lpszExtraInfo    = NULL;
+    uc.dwExtraInfoLength = 0;
+
+    if (!InternetCreateUrlW(&uc, 0, NULL, &len) && (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
+        return RPC_S_SERVER_UNAVAILABLE;
+
+    if (!(url = HeapAlloc(GetProcessHeap(), 0, len))) return RPC_S_OUT_OF_MEMORY;
+
+    len = len / sizeof(WCHAR) - 1;
+    if (!InternetCreateUrlW(&uc, 0, url, &len))
+    {
+        HeapFree(GetProcessHeap(), 0, url);
+        return RPC_S_SERVER_UNAVAILABLE;
+    }
+
+    ret = InternetSetCookieW(url, NULL, value);
+    HeapFree(GetProcessHeap(), 0, url);
+    if (!ret) return RPC_S_SERVER_UNAVAILABLE;
+
+    return RPC_S_OK;
 }
 
 static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
@@ -2975,6 +2996,12 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     if (secure) flags |= INTERNET_FLAG_SECURE;
     if (credentials) flags |= INTERNET_FLAG_NO_AUTH;
 
+    status = set_auth_cookie(httpc, Connection->CookieAuth);
+    if (status != RPC_S_OK)
+    {
+        HeapFree(GetProcessHeap(), 0, url);
+        return status;
+    }
     httpc->in_request = HttpOpenRequestW(httpc->session, wszVerbIn, url, NULL, NULL, wszAcceptTypes,
                                          flags, (DWORD_PTR)httpc->async_data);
     if (!httpc->in_request)
@@ -2983,12 +3010,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         HeapFree(GetProcessHeap(), 0, url);
         return RPC_S_SERVER_UNAVAILABLE;
     }
-    status = insert_cookie_header(httpc->in_request, Connection->CookieAuth);
-    if (status != RPC_S_OK)
-    {
-        HeapFree(GetProcessHeap(), 0, url);
-        return status;
-    }
+
     if (credentials)
     {
         status = authorize_request(httpc, httpc->in_request);
@@ -3014,9 +3036,6 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         ERR("HttpOpenRequestW failed with error %d\n", GetLastError());
         return RPC_S_SERVER_UNAVAILABLE;
     }
-    status = insert_cookie_header(httpc->out_request, Connection->CookieAuth);
-    if (status != RPC_S_OK)
-        return status;
 
     if (credentials)
     {
