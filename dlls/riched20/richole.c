@@ -213,7 +213,8 @@ static const DWORD textfont_prop_masks[] = {
 
 typedef union {
     FLOAT f;
-    LONG l;
+    LONG  l;
+    BSTR  str;
 } textfont_prop_val;
 
 static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, textfont_prop_val *left,
@@ -230,6 +231,8 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
     case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
         return left->l == right->l;
+    case FONT_NAME:
+        return !strcmpW(left->str, right->str);
     case FONT_SIZE:
        return left->f == right->f;
     default:
@@ -251,6 +254,9 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
     case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
         v->l = tomUndefined;
+        return;
+    case FONT_NAME:
+        v->str = NULL;
         return;
     case FONT_SIZE:
         v->f = tomUndefined;
@@ -290,6 +296,12 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         break;
     case FONT_LANGID:
         value->l = fmt.lcid;
+        break;
+    case FONT_NAME:
+        /* this case is used exclusively by GetName() */
+        value->str = SysAllocString(fmt.szFaceName);
+        if (!value->str)
+            return E_OUTOFMEMORY;
         break;
     case FONT_SIZE:
         value->f = fmt.yHeight;
@@ -1991,8 +2003,31 @@ static HRESULT WINAPI TextFont_SetLanguageID(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    const IRichEditOleImpl *reole;
+    textfont_prop_val v;
+    LONG start;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = NULL;
+
+    ITextRange_QueryInterface(This->range, &IID_Igetrichole, (void**)&reole);
+    if (!reole)
+        return CO_E_RELEASED;
+
+    init_textfont_prop_value(FONT_NAME, &v);
+
+    ITextRange_GetStart(This->range, &start);
+    hr = get_textfont_prop_for_pos(reole, start, FONT_NAME, &v);
+    if (FAILED(hr))
+        return hr;
+
+    *value = v.str;
+    return S_OK;
 }
 
 static HRESULT WINAPI TextFont_SetName(ITextFont *iface, BSTR value)

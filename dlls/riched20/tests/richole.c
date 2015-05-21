@@ -130,14 +130,12 @@ static void test_Interfaces(void)
   res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle);
   ok(res, "SendMessage\n");
   ok(reOle != NULL, "EM_GETOLEINTERFACE\n");
-  refcount = get_refcount((IUnknown *)reOle);
-  ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+  EXPECT_REF(reOle, 2);
 
   res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle1);
   ok(res == 1, "SendMessage\n");
   ok(reOle1 == reOle, "Should not return a new IRichEditOle interface\n");
-  refcount = get_refcount((IUnknown *)reOle);
-  ok(refcount == 3, "got wrong ref count: %d\n", refcount);
+  EXPECT_REF(reOle, 3);
 
   hres = IRichEditOle_QueryInterface(reOle, &IID_ITextDocument,
                                  (void **) &txtDoc);
@@ -147,12 +145,21 @@ static void test_Interfaces(void)
   hres = ITextDocument_GetSelection(txtDoc, NULL);
   ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%x\n", hres);
 
+  EXPECT_REF(txtDoc, 4);
+
   hres = ITextDocument_GetSelection(txtDoc, &txtSel);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  EXPECT_REF(txtDoc, 4);
+  EXPECT_REF(txtSel, 2);
 
   hres = ITextDocument_GetSelection(txtDoc, &txtSel2);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(txtSel2 == txtSel, "got %p, %p\n", txtSel, txtSel2);
+
+  EXPECT_REF(txtDoc, 4);
+  EXPECT_REF(txtSel, 3);
+
   ITextSelection_Release(txtSel2);
 
   punk = NULL;
@@ -1415,6 +1422,83 @@ todo_wine {
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 }
 
+static void test_ITextFont(void)
+{
+  static const WCHAR sysW[] = {'S','y','s','t','e','m',0};
+  static const WCHAR arialW[] = {'A','r','i','a','l',0};
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range = NULL;
+  ITextFont *font;
+  CHARFORMAT2A cf;
+  HRESULT hr;
+  HWND hwnd;
+  BOOL ret;
+  BSTR str;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  hr = ITextDocument_Range(doc, 0, 10, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetFont(range, &font);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetName(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  /* default font name */
+  str = NULL;
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
+  SysFreeString(str);
+
+  /* change font name for an inner subrange */
+  memset(&cf, 0, sizeof(cf));
+  cf.cbSize = sizeof(cf);
+  cf.dwMask = CFM_FACE;
+  strcpy(cf.szFaceName, "Arial");
+
+  SendMessageA(hwnd, EM_SETSEL, 3, 4);
+  ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+
+  /* still original name */
+  str = NULL;
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
+  SysFreeString(str);
+
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+  ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+
+  str = NULL;
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
+  SysFreeString(str);
+
+  /* name is returned for first position within a range */
+  SendMessageA(hwnd, EM_SETSEL, 0, 1);
+  ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+
+  str = NULL;
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(!lstrcmpW(str, arialW), "got %s\n", wine_dbgstr_w(str));
+  SysFreeString(str);
+
+  ITextFont_Release(font);
+  ITextRange_Release(range);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1439,4 +1523,5 @@ START_TEST(richole)
   test_GetFont();
   test_GetPara();
   test_dispatch();
+  test_ITextFont();
 }
