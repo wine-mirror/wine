@@ -1282,33 +1282,34 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     {
         WCHAR *p, name[5];
         char *path, *link;
+        WCHAR *buffer;
         DWORD dosdev, ret = 0;
 
         if ((dosdev = RtlIsDosDeviceName_U( devname )))
         {
             memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
             name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
+            devname = name;
         }
-        else
-        {
-            WCHAR *buffer;
 
-            if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(dosdevW) + strlenW(devname)*sizeof(WCHAR) )))
-            {
-                SetLastError( ERROR_OUTOFMEMORY );
-                return 0;
-            }
-            memcpy( buffer, dosdevW, sizeof(dosdevW) );
-            strcatW( buffer, devname );
-            status = read_nt_symlink( buffer, target, bufsize );
-            HeapFree( GetProcessHeap(), 0, buffer );
-            if (status)
-            {
-                SetLastError( RtlNtStatusToDosError(status) );
-                return 0;
-            }
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(dosdevW) + strlenW(devname)*sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+        memcpy( buffer, dosdevW, sizeof(dosdevW) );
+        strcatW( buffer, devname );
+        status = read_nt_symlink( buffer, target, bufsize );
+        HeapFree( GetProcessHeap(), 0, buffer );
+        if (!status)
+        {
             ret = strlenW( target ) + 1;
             goto done;
+        }
+        if (!dosdev)  /* not a special DOS device */
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return 0;
         }
 
         /* FIXME: should read NT symlink for all devices */
@@ -1322,7 +1323,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             ret = MultiByteToWideChar( CP_UNIXCP, 0, link, -1, target, bufsize );
             HeapFree( GetProcessHeap(), 0, link );
         }
-        else if (dosdev)  /* look for device defaults */
+        else  /* look for device defaults */
         {
             if (!strcmpiW( name, auxW ))
             {
