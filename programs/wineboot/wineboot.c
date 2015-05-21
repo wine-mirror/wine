@@ -300,6 +300,7 @@ static void create_environment_registry_keys( void )
     static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
     static const WCHAR x86W[]      = {'x','8','6',0};
     static const WCHAR armW[]      = {'A','R','M',0};
+    static const WCHAR arm64W[]    = {'A','R','M','6','4',0};
     static const WCHAR AMD64W[]    = {'A','M','D','6','4',0};
     static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
     static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
@@ -308,7 +309,7 @@ static void create_environment_registry_keys( void )
     static const WCHAR Percent04XW[] = {'%','0','4','x',0};
     static const WCHAR IntelCpuDescrW[]  = {'%','s',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                             ' ','S','t','e','p','p','i','n','g',' ','%','d',',',' ','G','e','n','u','i','n','e','I','n','t','e','l',0};
-    static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','7',' ','M','o','d','e','l',' ','%','X',
+    static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                             ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
 
     HKEY env_key;
@@ -327,6 +328,7 @@ static void create_environment_registry_keys( void )
     {
     case PROCESSOR_ARCHITECTURE_AMD64: arch = AMD64W; break;
     case PROCESSOR_ARCHITECTURE_ARM:   arch = armW; break;
+    case PROCESSOR_ARCHITECTURE_ARM64: arch = arm64W; break;
     default:
     case PROCESSOR_ARCHITECTURE_INTEL: arch = x86W; break;
     }
@@ -335,7 +337,8 @@ static void create_environment_registry_keys( void )
     switch(sci.Architecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
-        sprintfW( buffer, ARMCpuDescrW, sci.Level, sci.Revision );
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        sprintfW( buffer, ARMCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
         break;
     default:
     case PROCESSOR_ARCHITECTURE_INTEL:
