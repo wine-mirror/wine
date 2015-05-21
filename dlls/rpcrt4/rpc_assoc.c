@@ -80,6 +80,7 @@ static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
     assoc->Endpoint = RPCRT4_strdupA(Endpoint);
     assoc->NetworkOptions = NetworkOptions ? RPCRT4_strdupW(NetworkOptions) : NULL;
     assoc->assoc_group_id = 0;
+    UuidCreate(&assoc->http_uuid);
     list_init(&assoc->entry);
     *assoc_out = assoc;
     return RPC_S_OK;
