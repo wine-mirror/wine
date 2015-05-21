@@ -1523,6 +1523,16 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 }
 
 /******************************************************************************
+ *  NtImpersonateAnonymousToken      [NTDLL.@]
+ */
+NTSTATUS WINAPI
+NtImpersonateAnonymousToken(HANDLE thread)
+{
+    FIXME("(%p): stub\n", thread);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *  NtAccessCheck		[NTDLL.@]
  *  ZwAccessCheck		[NTDLL.@]
  *

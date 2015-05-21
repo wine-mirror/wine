@@ -182,7 +182,7 @@
 @ stub NtGetPlugPlayEvent
 @ stdcall NtGetTickCount()
 @ stdcall NtGetWriteWatch(long long ptr long ptr ptr ptr)
-@ stub NtImpersonateAnonymousToken
+@ stdcall NtImpersonateAnonymousToken(long)
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
