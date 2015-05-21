@@ -1139,6 +1139,8 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
+    if (info->Level >= 8)
+        user_shared_data->ProcessorFeatures[PF_ARM_V8_INSTRUCTIONS_AVAILABLE] = TRUE;
     info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
 }
 
