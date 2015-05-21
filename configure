@@ -16572,6 +16572,8 @@ fi
 for ac_func in \
 	cbrt \
 	cbrtf \
+	erf \
+	erff \
 	exp2 \
 	exp2f \
 	llrint \

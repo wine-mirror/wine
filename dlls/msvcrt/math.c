@@ -2607,6 +2607,40 @@ short CDECL MSVCR120__ldtest(LDOUBLE *x)
 }
 
 /*********************************************************************
+ *      erff (MSVCR120.@)
+ */
+float CDECL MSVCR120_erff(float x)
+{
+#ifdef HAVE_ERFF
+    return erff(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      erf (MSVCR120.@)
+ */
+double CDECL MSVCR120_erf(double x)
+{
+#ifdef HAVE_ERF
+    return erf(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      erfl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_erfl(LDOUBLE x)
+{
+    return MSVCR120_erf(x);
+}
+
+/*********************************************************************
  *      fmaxf (MSVCR120.@)
  */
 float CDECL MSVCR120_fmaxf(float x, float y)
