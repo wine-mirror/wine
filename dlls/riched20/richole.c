@@ -3163,9 +3163,11 @@ static HRESULT WINAPI ITextSelection_fnGetText(ITextSelection *me, BSTR *pbstr)
     int nChars, endOfs;
     BOOL bEOP;
 
+    TRACE("(%p)->(%p)\n", This, pbstr);
+
     if (!This->reOle)
         return CO_E_RELEASED;
-    TRACE("%p\n", pbstr);
+
     if (!pbstr)
         return E_INVALIDARG;
 

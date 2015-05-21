@@ -520,7 +520,15 @@ static void test_ITextSelection_GetText(void)
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
 
-  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_GetText(txtSel, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextSelection_Release(txtSel);
 }
 
 static void test_ITextDocument_Range(void)
@@ -1432,6 +1440,8 @@ static void test_ITextFont(void)
   ITextRange *range = NULL;
   ITextFont *font;
   CHARFORMAT2A cf;
+  LONG value;
+  float size;
   HRESULT hr;
   HWND hwnd;
   BOOL ret;
@@ -1494,9 +1504,70 @@ static void test_ITextFont(void)
   ok(!lstrcmpW(str, arialW), "got %s\n", wine_dbgstr_w(str));
   SysFreeString(str);
 
-  ITextFont_Release(font);
   ITextRange_Release(range);
   release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextFont_GetBold(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetBold(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetForeColor(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetForeColor(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetLanguageID(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetLanguageID(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetName(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSize(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSize(font, &size);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetStrikeThrough(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetStrikeThrough(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSubscript(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSubscript(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSuperscript(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetSuperscript(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetUnderline(font, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetUnderline(font, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextFont_Release(font);
 }
 
 START_TEST(richole)
