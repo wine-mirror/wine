@@ -5178,10 +5178,18 @@ static void test_LVS_EX_HEADERINALLVIEWS(void)
 
 static void test_hover(void)
 {
-    HWND hwnd;
+    HWND hwnd, fg;
     DWORD r;
 
     hwnd = create_listview_control(LVS_ICON);
+    SetForegroundWindow(hwndparent);
+    fg = GetForegroundWindow();
+    if (fg != hwndparent)
+    {
+        skip("Window is not in the foreground. Skipping hover tests.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
 
     /* test WM_MOUSEHOVER forwarding */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
