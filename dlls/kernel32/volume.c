@@ -1258,7 +1258,6 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags, LPCSTR devname, LPCSTR targetpath)
 DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 {
     static const WCHAR auxW[] = {'A','U','X',0};
-    static const WCHAR nulW[] = {'N','U','L',0};
     static const WCHAR prnW[] = {'P','R','N',0};
     static const WCHAR comW[] = {'C','O','M',0};
     static const WCHAR lptW[] = {'L','P','T',0};
@@ -1376,7 +1375,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         WCHAR *p = target;
         int i;
 
-        if (bufsize <= (sizeof(auxW)+sizeof(nulW)+sizeof(prnW))/sizeof(WCHAR))
+        if (bufsize <= (sizeof(auxW)+sizeof(prnW))/sizeof(WCHAR))
         {
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
             return 0;
@@ -1386,8 +1385,6 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 
         memcpy( p, auxW, sizeof(auxW) );
         p += sizeof(auxW) / sizeof(WCHAR);
-        memcpy( p, nulW, sizeof(nulW) );
-        p += sizeof(nulW) / sizeof(WCHAR);
         memcpy( p, prnW, sizeof(prnW) );
         p += sizeof(prnW) / sizeof(WCHAR);
 
