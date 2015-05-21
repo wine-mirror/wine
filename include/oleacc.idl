@@ -230,7 +230,7 @@ interface IAccessibleHandler : IUnknown
 interface IAccIdentity : IUnknown
 {
     HRESULT GetIdentityString([in] DWORD idchild,
-                              [out, size_is(*string_len)] BYTE **str,
+                              [out, size_is(,*string_len)] BYTE **str,
                               [out] DWORD *string_len);
 }
 
@@ -295,7 +295,7 @@ interface IAccPropServices : IUnknown
     HRESULT ComposeHwndIdentityString([in] HWND hwnd,
                                       [in] DWORD idObject,
                                       [in] DWORD idChild,
-                                      [out, size_is(*string_len)] BYTE **str,
+                                      [out, size_is(,*string_len)] BYTE **str,
                                       [out] DWORD *string_len);
 
     HRESULT DecomposeHwndIdentityString([in, size_is(string_len)] const BYTE *str,
@@ -322,7 +322,7 @@ interface IAccPropServices : IUnknown
 
     HRESULT ComposeHmenuIdentityString([in] HMENU hmenu,
                                        [in] DWORD idChild,
-                                       [out, size_is(*string_len)] BYTE **str,
+                                       [out, size_is(,*string_len)] BYTE **str,
                                        [out] DWORD *string_len);
 
     HRESULT DecomposeHmenuIdentityString([in, size_is(string_len)] const BYTE *str,
