@@ -2734,12 +2734,6 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
             strcpy( dev, "lpt1" );
             continue;
         }
-        if (!strcmp( dev, "nul" ))
-        {
-            strcpy( unix_name, "/dev/null" );
-            dev = NULL; /* last try */
-            continue;
-        }
 
         new_name = NULL;
         if (dev[1] == ':' && dev[2] == ':')  /* drive device */
