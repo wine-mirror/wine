@@ -276,8 +276,10 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
             return;
         }
 
-        FIXME("\tLocation %s (%#x).\n", wined3d_debug_location(context->current_fbo->location),
-                context->current_fbo->location);
+        FIXME("\tColor Location %s (%#x).\n", wined3d_debug_location(context->current_fbo->color_location),
+                context->current_fbo->color_location);
+        FIXME("\tDepth Stencil Location %s (%#x).\n", wined3d_debug_location(context->current_fbo->ds_location),
+                context->current_fbo->ds_location);
 
         /* Dump the FBO attachments */
         for (i = 0; i < gl_info->limits.buffers; ++i)
@@ -312,7 +314,8 @@ static inline DWORD context_generate_rt_mask_from_surface(const struct wined3d_s
 }
 
 static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,
-        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
+        DWORD color_location, DWORD ds_location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
@@ -321,7 +324,8 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
     entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->limits.buffers * sizeof(*entry->render_targets));
     memcpy(entry->render_targets, render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = depth_stencil;
-    entry->location = location;
+    entry->color_location = color_location;
+    entry->ds_location = ds_location;
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
     entry->attached = FALSE;
     gl_info->fbo_ops.glGenFramebuffers(1, &entry->id);
@@ -334,7 +338,7 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
 /* Context activation is done by the caller. */
 static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum target,
         struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
-        DWORD location, struct fbo_entry *entry)
+        DWORD color_location, DWORD ds_location, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -343,7 +347,8 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
 
     memcpy(entry->render_targets, render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
     entry->depth_stencil = depth_stencil;
-    entry->location = location;
+    entry->color_location = color_location;
+    entry->ds_location = ds_location;
     entry->attached = FALSE;
 }
 
@@ -363,7 +368,8 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
 
 /* Context activation is done by the caller. */
 static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context, GLenum target,
-        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
+        DWORD color_location, DWORD ds_location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
@@ -382,7 +388,8 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
     {
         if (!memcmp(entry->render_targets,
                 render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets))
-                && entry->depth_stencil == depth_stencil && entry->location == location)
+                && entry->depth_stencil == depth_stencil && entry->color_location == color_location
+                && entry->ds_location == ds_location)
         {
             list_remove(&entry->entry);
             list_add_head(&context->fbo_list, &entry->entry);
@@ -392,14 +399,14 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
 
     if (context->fbo_entry_count < WINED3D_MAX_FBO_ENTRIES)
     {
-        entry = context_create_fbo_entry(context, render_targets, depth_stencil, location);
+        entry = context_create_fbo_entry(context, render_targets, depth_stencil, color_location, ds_location);
         list_add_head(&context->fbo_list, &entry->entry);
         ++context->fbo_entry_count;
     }
     else
     {
         entry = LIST_ENTRY(list_tail(&context->fbo_list), struct fbo_entry, entry);
-        context_reuse_fbo_entry(context, target, render_targets, depth_stencil, location, entry);
+        context_reuse_fbo_entry(context, target, render_targets, depth_stencil, color_location, ds_location, entry);
         list_remove(&entry->entry);
         list_add_head(&context->fbo_list, &entry->entry);
     }
@@ -427,13 +434,13 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     /* Apply render targets */
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->location);
+        context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->color_location);
     }
 
     /* Apply depth targets */
     if (entry->depth_stencil)
         surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
-    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, entry->location);
+    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, entry->ds_location);
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
      * GL contexts requirements. */
@@ -452,7 +459,8 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 
 /* Context activation is done by the caller. */
 static void context_apply_fbo_state(struct wined3d_context *context, GLenum target,
-        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
+        DWORD color_location, DWORD ds_location)
 {
     struct fbo_entry *entry, *entry2;
 
@@ -467,14 +475,15 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
         context->rebind_fbo = FALSE;
     }
 
-    if (location == WINED3D_LOCATION_DRAWABLE)
+    if (color_location == WINED3D_LOCATION_DRAWABLE)
     {
         context->current_fbo = NULL;
         context_bind_fbo(context, target, 0);
     }
     else
     {
-        context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil, location);
+        context->current_fbo = context_find_fbo_entry(context, target, render_targets, depth_stencil,
+                color_location, ds_location);
         context_apply_fbo_entry(context, target, context->current_fbo);
     }
 }
@@ -488,7 +497,7 @@ void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target
     context->blit_targets[0] = render_target;
     if (clear_size)
         memset(&context->blit_targets[1], 0, clear_size);
-    context_apply_fbo_state(context, target, context->blit_targets, depth_stencil, location);
+    context_apply_fbo_state(context, target, context->blit_targets, depth_stencil, location, location);
 }
 
 /* Context activation is done by the caller. */
@@ -2314,6 +2323,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         UINT rt_count, const struct wined3d_fb_state *fb)
 {
     struct wined3d_rendertarget_view **rts = fb->render_targets;
+    struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD rt_mask = 0, *cur_mask;
     UINT i;
@@ -2321,12 +2331,12 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     if (isStateDirty(context, STATE_FRAMEBUFFER) || fb != &device->fb
             || rt_count != context->gl_info->limits.buffers)
     {
-        if (!context_validate_rt_config(rt_count, rts, fb->depth_stencil))
+        if (!context_validate_rt_config(rt_count, rts, dsv))
             return FALSE;
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            context_validate_onscreen_formats(context, fb->depth_stencil);
+            context_validate_onscreen_formats(context, dsv);
 
             if (!rt_count || wined3d_resource_is_offscreen(rts[0]->resource))
             {
@@ -2342,12 +2352,14 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                     ++i;
                 }
                 context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
-                        wined3d_rendertarget_view_get_surface(fb->depth_stencil),
-                        rt_count ? rts[0]->resource->draw_binding : WINED3D_LOCATION_TEXTURE_RGB);
+                        wined3d_rendertarget_view_get_surface(dsv),
+                        rt_count ? rts[0]->resource->draw_binding : 0,
+                        dsv ? dsv->resource->draw_binding : 0);
             }
             else
             {
-                context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, WINED3D_LOCATION_DRAWABLE);
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL,
+                        WINED3D_LOCATION_DRAWABLE, WINED3D_LOCATION_DRAWABLE);
                 rt_mask = context_generate_rt_mask_from_surface(wined3d_rendertarget_view_get_surface(rts[0]));
             }
 
@@ -2449,7 +2461,8 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
     {
         if (!context->render_offscreen)
         {
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, WINED3D_LOCATION_DRAWABLE);
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL,
+                    WINED3D_LOCATION_DRAWABLE, WINED3D_LOCATION_DRAWABLE);
         }
         else
         {
@@ -2461,7 +2474,8 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
             }
             context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
                     wined3d_rendertarget_view_get_surface(fb->depth_stencil),
-                    fb->render_targets[0]->resource->draw_binding);
+                    fb->render_targets[0]->resource->draw_binding,
+                    fb->depth_stencil ? fb->depth_stencil->resource->draw_binding : 0);
         }
     }
 
