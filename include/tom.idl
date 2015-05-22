@@ -33,10 +33,18 @@ typedef enum tagTomConstants
     tomDefault     = -9999996,
     tomSuspend     = -9999995,
     tomResume      = -9999994,
-    tomApplyNow    = 0,
-    tomApplyLater  = 1,
-    tomTrackParms  = 2,
-    tomCacheParms  = 3,
+
+    /* ITextFont::Reset() modes */
+    tomApplyNow         = 0,
+    tomApplyLater       = 1,
+    tomTrackParms       = 2,
+    tomCacheParms       = 3,
+    tomApplyTmp         = 4,
+    tomDisableSmartFont = 8,
+    tomEnableSmartFont  = 9,
+    tomUsePoints        = 10,
+    tomUseTwips         = 11,
+
     tomBackward    = 0xc0000001,
     tomForward     = 0x3fffffff,
     tomMove        = 0,

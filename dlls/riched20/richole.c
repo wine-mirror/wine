@@ -1821,14 +1821,14 @@ static HRESULT WINAPI TextFont_CanChange(ITextFont *iface, LONG *ret)
 static HRESULT WINAPI TextFont_IsEqual(ITextFont *iface, ITextFont *font, LONG *ret)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, ret);
+    FIXME("(%p)->(%p %p): stub\n", This, font, ret);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p): stub\n", This);
+    FIXME("(%p)->(%d): stub\n", This, value);
     return E_NOTIMPL;
 }
 
