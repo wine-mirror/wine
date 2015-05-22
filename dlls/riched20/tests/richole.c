@@ -525,8 +525,11 @@ static void test_ITextSelection_GetText(void)
   hres = ITextSelection_GetText(txtSel, &bstr);
   ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
 
-  hres = ITextSelection_GetText(txtSel, NULL);
-  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+  if (!is64bit)
+  {
+    hres = ITextSelection_GetText(txtSel, NULL);
+    ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+  }
 
   ITextSelection_Release(txtSel);
 }
