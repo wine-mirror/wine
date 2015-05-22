@@ -878,6 +878,13 @@ static struct sa_test sa_tests[] = {
       {0x2d30,0x2d4a,0}, 1,
           { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
+    {
+      /* LRE/PDF */
+      {0x202a,0x202c,'a','b','c','\r',0}, 3,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
+            { 2, 3, DWRITE_SCRIPT_SHAPES_DEFAULT   },
+            { 5, 1, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
+    },
     /* keep this as end marker */
     { {0} }
 };
