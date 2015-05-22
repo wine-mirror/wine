@@ -4789,6 +4789,34 @@ static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefd
     }
 }
 
+static int do_poll(struct pollfd *pollfds, int count, int timeout)
+{
+    struct timeval tv1, tv2;
+    int ret, torig = timeout;
+
+    if (timeout > 0) gettimeofday( &tv1, 0 );
+
+    while ((ret = poll( pollfds, count, timeout )) < 0)
+    {
+        if (errno != EINTR) break;
+        if (timeout < 0) continue;
+
+        gettimeofday( &tv2, 0 );
+
+        tv2.tv_sec  -= tv1.tv_sec;
+        tv2.tv_usec -= tv1.tv_usec;
+        if (tv2.tv_usec < 0)
+        {
+            tv2.tv_usec += 1000000;
+            tv2.tv_sec  -= 1;
+        }
+
+        timeout = torig - (tv2.tv_sec * 1000) - (tv2.tv_usec + 999) / 1000;
+        if (timeout <= 0) return 0;
+    }
+    return ret;
+}
+
 /* map the poll results back into the Windows fd sets */
 static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set *exceptfds,
                              const struct pollfd *fds )
@@ -4830,7 +4858,6 @@ static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set 
     return total;
 }
 
-
 /***********************************************************************
  *		select			(WS2_32.18)
  */
@@ -4839,8 +4866,6 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
                      const struct WS_timeval* ws_timeout)
 {
     struct pollfd *pollfds;
-    struct timeval tv1, tv2;
-    int torig = 0;
     int count, ret, timeout = -1;
 
     TRACE("read %p, write %p, excp %p timeout %p\n",
@@ -4850,35 +4875,9 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
         return SOCKET_ERROR;
 
     if (ws_timeout)
-    {
-        torig = (ws_timeout->tv_sec * 1000) + (ws_timeout->tv_usec + 999) / 1000;
-        timeout = torig;
-        gettimeofday( &tv1, 0 );
-    }
+        timeout = (ws_timeout->tv_sec * 1000) + (ws_timeout->tv_usec + 999) / 1000;
 
-    while ((ret = poll( pollfds, count, timeout )) < 0)
-    {
-        if (errno == EINTR)
-        {
-            if (!ws_timeout) continue;
-            gettimeofday( &tv2, 0 );
-
-            tv2.tv_sec  -= tv1.tv_sec;
-            tv2.tv_usec -= tv1.tv_usec;
-            if (tv2.tv_usec < 0)
-            {
-                tv2.tv_usec += 1000000;
-                tv2.tv_sec  -= 1;
-            }
-
-            timeout = torig - (tv2.tv_sec * 1000) - (tv2.tv_usec + 999) / 1000;
-            if (timeout <= 0)
-            {
-                ret = 0;
-                break;
-            }
-        } else break;
-    }
+    ret = do_poll(pollfds, count, timeout);
     release_poll_fds( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
 
     if (ret == -1) SetLastError(wsaErrno());
