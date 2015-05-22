@@ -110,6 +110,7 @@ static void acquire_tests(IDirectInputA *pDI, HWND hwnd)
         for (i = 0; i < sizeof(custom_state) / sizeof(custom_state[0]); i++)
             ok(custom_state[i] == 0, "Should be zeroed, got 0x%08x\n", custom_state[i]);
     }
+    keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
 
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
