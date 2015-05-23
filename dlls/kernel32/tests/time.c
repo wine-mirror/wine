@@ -765,8 +765,8 @@ static void test_GetDynamicTimeZoneInformation(void)
 static ULONGLONG get_longlong_time(FILETIME *time)
 {
     ULARGE_INTEGER uli;
-    uli.LowPart = time->dwLowDateTime;
-    uli.HighPart = time->dwHighDateTime;
+    uli.u.LowPart = time->dwLowDateTime;
+    uli.u.HighPart = time->dwHighDateTime;
     return uli.QuadPart;
 }
 
