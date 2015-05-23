@@ -653,7 +653,7 @@ void __cdecl _Call_onceEx(int *once, void (__cdecl *func)(void*), void *argv)
     LeaveCriticalSection(&call_once_cs);
 }
 
-void __cdecl call_once_func_wrapper(void *func)
+static void __cdecl call_once_func_wrapper(void *func)
 {
     ((void (__cdecl*)(void))func)();
 }
