@@ -22,7 +22,6 @@ import "comcat.idl";
 import "textstor.idl";
 import "ctfutb.idl";
 #endif
-cpp_quote("#include <winuser.h>")
 
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
 cpp_quote("#define TF_E_DISCONNECTED    MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0504)")
