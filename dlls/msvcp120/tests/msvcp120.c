@@ -213,13 +213,13 @@ static void __cdecl call_once_ex_func(void *arg)
     (*i)++;
 }
 
-DWORD WINAPI call_once_thread(void *arg)
+static DWORD WINAPI call_once_thread(void *arg)
 {
     p__Call_once(&once, call_once_func);
     return 0;
 }
 
-DWORD WINAPI call_once_ex_thread(void *arg)
+static DWORD WINAPI call_once_ex_thread(void *arg)
 {
     p__Call_onceEx(&once, call_once_ex_func, &cnt);
     return 0;
