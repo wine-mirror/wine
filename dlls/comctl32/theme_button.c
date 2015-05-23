@@ -155,8 +155,7 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
         { RBS_CHECKEDNORMAL, RBS_CHECKEDDISABLED, RBS_CHECKEDHOT, RBS_CHECKEDPRESSED, RBS_CHECKEDNORMAL }
     };
 
-    static const int cb_size = 13;
-
+    SIZE sz;
     RECT bgRect, textRect;
     HFONT font, hPrevFont = NULL;
     LRESULT checkState = SendMessageW(hwnd, BM_GETCHECK, 0, 0);
@@ -186,15 +185,18 @@ static void CB_draw(HTHEME theme, HWND hwnd, HDC hDC, ButtonState drawState, UIN
         hPrevFont = SelectObject(hDC, font);
     }
 
+    if (FAILED(GetThemePartSize(theme, hDC, part, state, NULL, TS_DRAW, &sz)))
+        sz.cx = sz.cy = 13;
+
     GetClientRect(hwnd, &bgRect);
     GetThemeBackgroundContentRect(theme, hDC, part, state, &bgRect, &textRect);
 
     if (dtFlags & DT_SINGLELINE) /* Center the checkbox / radio button to the text. */
-        bgRect.top = bgRect.top + (textRect.bottom - textRect.top - cb_size) / 2;
+        bgRect.top = bgRect.top + (textRect.bottom - textRect.top - sz.cy) / 2;
 
     /* adjust for the check/radio marker */
-    bgRect.bottom = bgRect.top + cb_size;
-    bgRect.right = bgRect.left + cb_size;
+    bgRect.bottom = bgRect.top + sz.cy;
+    bgRect.right = bgRect.left + sz.cx;
     textRect.left = bgRect.right + 6;
 
     DrawThemeParentBackground(hwnd, hDC, NULL);
