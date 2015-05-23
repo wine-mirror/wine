@@ -1827,7 +1827,7 @@ static HRESULT Global_InStrRev(vbdisp_t *This, VARIANT *args, unsigned args_cnt,
 
     assert(2 <= args_cnt && args_cnt <= 4);
 
-    if(V_VT(args) == VT_NULL || V_VT(args+1) == VT_NULL || V_VT(args+2) == VT_NULL)
+    if(V_VT(args) == VT_NULL || V_VT(args+1) == VT_NULL || (args_cnt > 2 && V_VT(args+2) == VT_NULL))
         return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
 
     hres = to_string(args, &str1);
