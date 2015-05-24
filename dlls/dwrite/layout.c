@@ -366,32 +366,36 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
         layout->actual_breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
         if (!layout->actual_breakpoints)
             return E_OUTOFMEMORY;
+        memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
     }
-    memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
 
     for (i = cur->range.startPosition; i < cur->range.length + cur->range.startPosition; i++) {
-        UINT32 j = i + cur->range.startPosition;
-        if (i == 0) {
-            if (j)
-                layout->actual_breakpoints[j].breakConditionBefore = layout->actual_breakpoints[j-1].breakConditionAfter =
-                    override_break_condition(layout->actual_breakpoints[j-1].breakConditionAfter, before);
+        /* for first codepoint check if there's anything before it and update accordingly */
+        if (i == cur->range.startPosition) {
+            if (i > 0)
+                layout->actual_breakpoints[i].breakConditionBefore = layout->actual_breakpoints[i-1].breakConditionAfter =
+                    override_break_condition(layout->actual_breakpoints[i-1].breakConditionAfter, before);
             else
-                layout->actual_breakpoints[j].breakConditionBefore = before;
-
-            layout->actual_breakpoints[j].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+                layout->actual_breakpoints[i].breakConditionBefore = before;
+            layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+        }
+        /* similar check for last codepoint */
+        else if (i == cur->range.startPosition + cur->range.length - 1) {
+            if (i == layout->len - 1)
+                layout->actual_breakpoints[i].breakConditionAfter = after;
+            else
+                layout->actual_breakpoints[i].breakConditionAfter = layout->actual_breakpoints[i+1].breakConditionBefore =
+                    override_break_condition(layout->actual_breakpoints[i+1].breakConditionBefore, after);
+            layout->actual_breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+        }
+        /* for all positions within a range disable breaks */
+        else {
+            layout->actual_breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+            layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
 
-        layout->actual_breakpoints[j].isWhitespace = 0;
-        layout->actual_breakpoints[j].isSoftHyphen = 0;
-
-        if (i == cur->range.length - 1) {
-            layout->actual_breakpoints[j].breakConditionBefore = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
-            if (j < layout->len - 1)
-                layout->actual_breakpoints[j].breakConditionAfter = layout->actual_breakpoints[j+1].breakConditionAfter =
-                    override_break_condition(layout->actual_breakpoints[j+1].breakConditionAfter, before);
-            else
-                layout->actual_breakpoints[j].breakConditionAfter = before;
-        }
+        layout->actual_breakpoints[i].isWhitespace = FALSE;
+        layout->actual_breakpoints[i].isSoftHyphen = FALSE;
     }
 
     return S_OK;
