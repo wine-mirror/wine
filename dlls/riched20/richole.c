@@ -409,15 +409,21 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
     return S_OK;
 }
 
+static inline const IRichEditOleImpl *get_range_reole(ITextRange *range)
+{
+    IRichEditOleImpl *reole = NULL;
+    ITextRange_QueryInterface(range, &IID_Igetrichole, (void**)&reole);
+    return reole;
+}
+
 static HRESULT get_textfont_prop(ITextRange *range, enum textfont_prop_id propid, textfont_prop_val *value)
 {
-    IRichEditOleImpl *reole;
+    const IRichEditOleImpl *reole;
     textfont_prop_val v;
     LONG start, end, i;
     HRESULT hr;
 
-    ITextRange_QueryInterface(range, &IID_Igetrichole, (void**)&reole);
-    if (!reole)
+    if (!(reole = get_range_reole(range)))
         return CO_E_RELEASED;
 
     init_textfont_prop_value(propid, value);
@@ -1936,7 +1942,17 @@ static HRESULT WINAPI TextFont_Invoke(
 static HRESULT WINAPI TextFont_GetDuplicate(ITextFont *iface, ITextFont **ret)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%p): stub\n", This, ret);
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    if (!ret)
+        return E_INVALIDARG;
+
+    *ret = NULL;
+    if (This->range && !get_range_reole(This->range))
+        return CO_E_RELEASED;
+
+    FIXME("not implemented\n");
     return E_NOTIMPL;
 }
 
@@ -1964,7 +1980,20 @@ static HRESULT WINAPI TextFont_IsEqual(ITextFont *iface, ITextFont *font, LONG *
 static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
+
+    TRACE("(%p)->(%d)\n", This, value);
+
+    /* If font is attached to a range, released or not, we can't
+       reset to undefined */
+    if (This->range) {
+        if (!get_range_reole(This->range))
+            return CO_E_RELEASED;
+
+        if (value == tomUndefined)
+            return E_INVALIDARG;
+    }
+
+    FIXME("reset mode %d not supported\n", value);
     return E_NOTIMPL;
 }
 
@@ -2151,8 +2180,7 @@ static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
 
     *value = NULL;
 
-    ITextRange_QueryInterface(This->range, &IID_Igetrichole, (void**)&reole);
-    if (!reole)
+    if (!(reole = get_range_reole(This->range)))
         return CO_E_RELEASED;
 
     init_textfont_prop_value(FONT_NAME, &v);
