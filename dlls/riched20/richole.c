@@ -1142,10 +1142,16 @@ static HRESULT WINAPI ITextRange_fnInvoke(ITextRange *me, DISPID dispIdMember, R
 static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *pbstr)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    FIXME("(%p)->(%p): stub\n", This, pbstr);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
+    if (!pbstr)
+        return E_INVALIDARG;
+
+    *pbstr = NULL;
     return E_NOTIMPL;
 }
 

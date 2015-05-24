@@ -439,7 +439,7 @@ static void test_ITextDocument_Open(void)
   VariantClear(&testfile);
 }
 
-static void test_ITextSelection_GetText(void)
+static void test_GetText(void)
 {
   HWND w;
   IRichEditOle *reOle = NULL;
@@ -455,11 +455,14 @@ static void test_ITextSelection_GetText(void)
   static const WCHAR bufW4[] = {'T', 'e', 's', 't', 'S', 'o', 'm',
                                 'e', 'T', 'e', 'x', 't', '\r', 0};
   static const WCHAR bufW5[] = {'\r', 0};
+  static const WCHAR bufW6[] = {'T','e','s','t','S','o','m','e','T',0};
   BOOL is64bit = sizeof(void *) > sizeof(int);
+  ITextRange *range;
 
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
+  /* ITextSelection */
   first = 0, lim = 4;
   SendMessageA(w, EM_SETSEL, first, lim);
   hres = ITextSelection_GetText(txtSel, &bstr);
@@ -520,44 +523,150 @@ static void test_ITextSelection_GetText(void)
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
 
-  release_interfaces(&w, &reOle, &txtDoc, NULL);
+  /* ITextRange */
+  hres = ITextDocument_Range(txtDoc, 0, 4, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+  ITextRange_Release(range);
 
-  hres = ITextSelection_GetText(txtSel, &bstr);
-  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+  hres = ITextDocument_Range(txtDoc, 4, 0, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+  ITextRange_Release(range);
 
+  hres = ITextDocument_Range(txtDoc, 1, 1, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
   if (!is64bit)
   {
+    hres = ITextRange_GetText(range, NULL);
+    ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+  }
+  ITextRange_Release(range);
+
+  hres = ITextDocument_Range(txtDoc, 8, 12, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW3), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+  ITextRange_Release(range);
+
+  hres = ITextDocument_Range(txtDoc, 8, 13, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW2), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+  ITextRange_Release(range);
+
+  hres = ITextDocument_Range(txtDoc, 12, 13, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW5), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+  ITextRange_Release(range);
+
+  hres = ITextDocument_Range(txtDoc, 0, -1, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  ITextRange_Release(range);
+
+  hres = ITextDocument_Range(txtDoc, -1, 9, &range);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextRange_GetText(range, &bstr);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(!lstrcmpW(bstr, bufW6), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+}
+  SysFreeString(bstr);
+
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  /* detached selection/range */
+  if (is64bit) {
+    bstr = (void*)0xdeadbeef;
+    hres = ITextSelection_GetText(txtSel, &bstr);
+    ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+todo_wine
+    ok(bstr == NULL, "got %p\n", bstr);
+
+    bstr = (void*)0xdeadbeef;
+    hres = ITextRange_GetText(range, &bstr);
+    ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+todo_wine
+    ok(bstr == NULL, "got %p\n", bstr);
+  }
+  else {
     hres = ITextSelection_GetText(txtSel, NULL);
+    ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+    hres = ITextRange_GetText(range, NULL);
     ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
   }
 
+  ITextRange_Release(range);
   ITextSelection_Release(txtSel);
 }
 
 static void test_ITextDocument_Range(void)
 {
+  static const CHAR test_text1[] = "TestSomeText";
   HWND w;
   IRichEditOle *reOle = NULL;
   ITextDocument *txtDoc = NULL;
-  ITextRange *txtRge = NULL;
-  ITextRange *pointer = NULL;
+  ITextRange *txtRge, *range2;
   HRESULT hres;
-  ULONG refcount;
+  LONG value;
 
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
   ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
-  refcount = get_refcount((IUnknown *)txtRge);
-  ok(refcount == 1, "get wrong refcount: returned %d expected 1\n", refcount);
+  EXPECT_REF(txtRge, 1);
 
-  pointer = txtRge;
-  hres = ITextDocument_Range(txtDoc, 0, 0, &txtRge);
+  hres = ITextDocument_Range(txtDoc, 0, 0, &range2);
   ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
-  ok(pointer != txtRge, "A new pointer should be returned\n");
-  ITextRange_Release(pointer);
+  ok(range2 != txtRge, "A new pointer should be returned\n");
+  ITextRange_Release(range2);
 
   hres = ITextDocument_Range(txtDoc, 0, 0, NULL);
   ok(hres == E_INVALIDARG, "ITextDocument_Range should fail 0x%x.\n", hres);
+
+  SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  hres = ITextDocument_Range(txtDoc, 8, 30, &range2);
+  ok(hres == S_OK, "ITextDocument_Range fails 0x%x.\n", hres);
+  hres = ITextRange_GetStart(range2, &value);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(value == 8, "got %d\n", value);
+
+  hres = ITextRange_GetEnd(range2, &value);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(value == 13, "got %d\n", value);
+  ITextRange_Release(range2);
 
   release_interfaces(&w, &reOle, &txtDoc, NULL);
   hres = ITextRange_CanEdit(txtRge, NULL);
@@ -579,7 +688,8 @@ static void test_ITextRange_GetChar(void)
   first = 0, lim = 4;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   pch = 0xdeadbeef;
   hres = ITextRange_GetChar(txtRge, &pch);
   ok(hres == S_OK, "ITextRange_GetChar\n");
@@ -590,7 +700,8 @@ static void test_ITextRange_GetChar(void)
   first = 0, lim = 0;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   pch = 0xdeadbeef;
   hres = ITextRange_GetChar(txtRge, &pch);
   ok(hres == S_OK, "ITextRange_GetChar\n");
@@ -601,7 +712,8 @@ static void test_ITextRange_GetChar(void)
   first = 12, lim = 12;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   pch = 0xdeadbeef;
   hres = ITextRange_GetChar(txtRge, &pch);
   ok(hres == S_OK, "ITextRange_GetChar\n");
@@ -612,7 +724,8 @@ static void test_ITextRange_GetChar(void)
   first = 13, lim = 13;
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   pch = 0xdeadbeef;
   hres = ITextRange_GetChar(txtRge, &pch);
   ok(hres == S_OK, "ITextRange_GetChar\n");
@@ -623,7 +736,8 @@ static void test_ITextRange_GetChar(void)
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
   first = 12, lim = 12;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetChar(txtRge, NULL);
   ok(hres == E_INVALIDARG, "ITextRange_GetChar\n");
   ITextRange_Release(txtRge);
@@ -692,7 +806,8 @@ static void test_ITextRange_GetStart_GetEnd(void)
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   first = 1, lim = 6;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
   hres = ITextRange_GetStart(txtRge, &start);
   ok(hres == S_OK, "ITextRange_GetStart\n");
@@ -704,7 +819,8 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ITextRange_Release(txtRge);
 
   first = 6, lim = 1;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
   hres = ITextRange_GetStart(txtRge, &start);
   ok(hres == S_OK, "ITextRange_GetStart\n");
@@ -716,7 +832,8 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ITextRange_Release(txtRge);
 
   first = -1, lim = 13;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
   hres = ITextRange_GetStart(txtRge, &start);
   ok(hres == S_OK, "ITextRange_GetStart\n");
@@ -728,7 +845,8 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ITextRange_Release(txtRge);
 
   first = 13, lim = 13;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   start = 0xdeadbeef;
   hres = ITextRange_GetStart(txtRge, &start);
   ok(hres == S_OK, "ITextRange_GetStart\n");
@@ -1771,7 +1889,7 @@ START_TEST(richole)
 
   test_Interfaces();
   test_ITextDocument_Open();
-  test_ITextSelection_GetText();
+  test_GetText();
   test_ITextSelection_GetChar();
   test_ITextSelection_GetStart_GetEnd();
   test_ITextSelection_Collapse();
