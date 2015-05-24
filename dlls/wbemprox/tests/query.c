@@ -96,7 +96,9 @@ static void test_select( IWbemServices *services )
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
          'D','i','s','k','D','r','i','v','e',' ','W','H','E','R','E',' ','D','e','v','i','c','e','I','D','=',
          '\"','\\','\\','\\','\\','.','\\','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0','\"',0};
-    static const WCHAR *test[] = { query1, query2, query3, query4, query5, query6, query7, query8 };
+    static const WCHAR query9[] =
+        {'S','E','L','E','C','T','\n','a','\r','F','R','O','M','\t','b',0};
+    static const WCHAR *test[] = { query1, query2, query3, query4, query5, query6, query7, query8, query9 };
     HRESULT hr;
     IEnumWbemClassObject *result;
     BSTR wql = SysAllocString( wqlW );
