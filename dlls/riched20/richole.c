@@ -1229,87 +1229,97 @@ static HRESULT WINAPI ITextRange_fnSetFormattedText(ITextRange *me, ITextRange *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnGetStart(ITextRange *me, LONG *pcpFirst)
+static HRESULT WINAPI ITextRange_fnGetStart(ITextRange *me, LONG *start)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, start);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    if (!pcpFirst)
+    if (!start)
         return E_INVALIDARG;
-    *pcpFirst = This->start;
-    TRACE("%d\n", *pcpFirst);
+
+    *start = This->start;
     return S_OK;
 }
 
-static HRESULT WINAPI ITextRange_fnSetStart(ITextRange *me, LONG start)
+static HRESULT textrange_setstart(const IRichEditOleImpl *reole, LONG value, LONG *start, LONG *end)
 {
-    ITextRangeImpl *This = impl_from_ITextRange(me);
     int len;
 
-    TRACE("(%p)->(%d)\n", This, start);
+    if (value < 0)
+        value = 0;
 
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    if (start == This->start)
+    if (value == *start)
         return S_FALSE;
 
-    if (start < 0) {
-        This->start = 0;
+    if (value <= *end) {
+        *start = value;
         return S_OK;
     }
 
-    len = ME_GetTextLength(This->reOle->editor);
-    if (start > This->end)
-        This->end = len;
-
-    if (start > len)
-        This->start = len;
-    else
-        This->start = start;
-
+    len = ME_GetTextLength(reole->editor);
+    *start = *end = value > len ? len : value;
     return S_OK;
 }
 
-static HRESULT WINAPI ITextRange_fnGetEnd(ITextRange *me, LONG *pcpLim)
+static HRESULT WINAPI ITextRange_fnSetStart(ITextRange *me, LONG value)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%d)\n", This, value);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    if (!pcpLim)
+    return textrange_setstart(This->reOle, value, &This->start, &This->end);
+}
+
+static HRESULT WINAPI ITextRange_fnGetEnd(ITextRange *me, LONG *end)
+{
+    ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, end);
+
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    if (!end)
         return E_INVALIDARG;
-    *pcpLim = This->end;
-    TRACE("%d\n", *pcpLim);
+
+    *end = This->end;
     return S_OK;
 }
 
-static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG end)
+static HRESULT textrange_setend(const IRichEditOleImpl *reole, LONG value, LONG *start, LONG *end)
 {
-    ITextRangeImpl *This = impl_from_ITextRange(me);
     int len;
 
-    TRACE("(%p)->(%d)\n", This, end);
-
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    if (end == This->end)
+    if (value == *end)
         return S_FALSE;
 
-    if (end < This->start) {
-        This->start = This->end = max(0, end);
+    if (value < *start) {
+        *start = *end = max(0, value);
         return S_OK;
     }
 
-    len = ME_GetTextLength(This->reOle->editor);
-    if (end > len)
-        This->end = len + 1;
-    else
-        This->end = end;
-
+    len = ME_GetTextLength(reole->editor);
+    *end = value > len ? len + 1 : value;
     return S_OK;
+}
+
+static HRESULT WINAPI ITextRange_fnSetEnd(ITextRange *me, LONG value)
+{
+    ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%d)\n", This, value);
+
+    if (!This->reOle)
+        return CO_E_RELEASED;
+
+    return textrange_setend(This->reOle, value, &This->start, &This->end);
 }
 
 static HRESULT WINAPI ITextRange_fnGetFont(ITextRange *me, ITextFont **font)
@@ -3454,14 +3464,23 @@ static HRESULT WINAPI ITextSelection_fnGetStart(ITextSelection *me, LONG *pcpFir
     return S_OK;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG cpFirst)
+static HRESULT WINAPI ITextSelection_fnSetStart(ITextSelection *me, LONG value)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG start, end;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, value);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ME_GetSelectionOfs(This->reOle->editor, &start, &end);
+    hr = textrange_setstart(This->reOle, value, &start, &end);
+    if (hr == S_OK)
+        ME_SetSelection(This->reOle->editor, start, end);
+
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetEnd(ITextSelection *me, LONG *pcpLim)
@@ -3478,14 +3497,23 @@ static HRESULT WINAPI ITextSelection_fnGetEnd(ITextSelection *me, LONG *pcpLim)
     return S_OK;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG cpLim)
+static HRESULT WINAPI ITextSelection_fnSetEnd(ITextSelection *me, LONG value)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG start, end;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, value);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ME_GetSelectionOfs(This->reOle->editor, &start, &end);
+    hr = textrange_setend(This->reOle, value, &start, &end);
+    if (hr == S_OK)
+        ME_SetSelection(This->reOle->editor, start, end);
+
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **font)

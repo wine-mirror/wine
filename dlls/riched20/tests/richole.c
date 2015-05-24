@@ -749,9 +749,16 @@ static void test_ITextRange_GetStart_GetEnd(void)
   hres = ITextRange_SetStart(txtRge, 1);
   ok(hres == S_OK, "got 0x%08x\n", hres);
 
-  /* negative resets to 0 */
+  /* negative resets to 0, return value is S_FALSE when
+     position wasn't changed */
   hres = ITextRange_SetStart(txtRge, -1);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetStart(txtRge, -1);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetStart(txtRge, 0);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
 
   start = -1;
   hres = ITextRange_GetStart(txtRge, &start);
@@ -759,6 +766,12 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(start == 0, "got %d\n", start);
 
   /* greater than initial end, but less than total char count */
+  hres = ITextRange_SetStart(txtRge, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetEnd(txtRge, 3);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
   hres = ITextRange_SetStart(txtRge, 10);
   ok(hres == S_OK, "got 0x%08x\n", hres);
 
@@ -770,8 +783,9 @@ static void test_ITextRange_GetStart_GetEnd(void)
   end = 0;
   hres = ITextRange_GetEnd(txtRge, &end);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-  ok(end == 12, "got %d\n", end);
+  ok(end == 10, "got %d\n", end);
 
+  /* more that total text length */
   hres = ITextRange_SetStart(txtRge, 50);
   ok(hres == S_OK, "got 0x%08x\n", hres);
 
@@ -855,9 +869,28 @@ static void test_ITextRange_GetStart_GetEnd(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 0, "got %d\n", end);
 
-  ITextRange_Release(txtRge);
-
   release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  /* detached range */
+  hres = ITextRange_SetStart(txtRge, 0);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_SetEnd(txtRge, 3);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetStart(txtRge, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetEnd(txtRge, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextRange_Release(txtRge);
 }
 
 static void test_ITextSelection_GetStart_GetEnd(void)
@@ -917,7 +950,153 @@ static void test_ITextSelection_GetStart_GetEnd(void)
   ok(hres == S_OK, "ITextSelection_GetEnd\n");
   ok(end == 12, "got wrong end value: %d\n", end);
 
-  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  /* SetStart/SetEnd */
+  hres = ITextSelection_SetStart(txtSel, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* same value */
+  hres = ITextSelection_SetStart(txtSel, 0);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetStart(txtSel, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* negative resets to 0, return value is S_FALSE when
+     position wasn't changed */
+  hres = ITextSelection_SetStart(txtSel, -1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetStart(txtSel, -1);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetStart(txtSel, 0);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  start = -1;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  /* greater than initial end, but less than total char count */
+  hres = ITextSelection_SetStart(txtSel, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetEnd(txtSel, 3);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetStart(txtSel, 10);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 10, "got %d\n", start);
+
+  end = 0;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 10, "got %d\n", end);
+
+  /* more that total text length */
+  hres = ITextSelection_SetStart(txtSel, 50);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 12, "got %d\n", start);
+
+  end = 0;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 12, "got %d\n", end);
+
+  /* SetEnd */
+  hres = ITextSelection_SetStart(txtSel, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* same value */
+  hres = ITextSelection_SetEnd(txtSel, 5);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetEnd(txtSel, 5);
+  ok(hres == S_FALSE, "got 0x%08x\n", hres);
+
+  /* negative resets to 0 */
+  hres = ITextSelection_SetEnd(txtSel, -1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  end = -1;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 0, "got %d\n", end);
+
+  start = -1;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  /* greater than initial end, but less than total char count */
+  hres = ITextSelection_SetStart(txtSel, 3);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_SetEnd(txtSel, 1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 1, "got %d\n", start);
+
+  end = 0;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 1, "got %d\n", end);
+
+  /* more than total count */
+  hres = ITextSelection_SetEnd(txtSel, 50);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 1, "got %d\n", start);
+
+  end = 0;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 13, "got %d\n", end);
+
+  /* zero */
+  hres = ITextSelection_SetEnd(txtSel, 0);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  start = 0;
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(start == 0, "got %d\n", start);
+
+  end = 0;
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(end == 0, "got %d\n", end);
+
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  /* detached selection */
+  hres = ITextSelection_GetStart(txtSel, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_GetStart(txtSel, &start);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_GetEnd(txtSel, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_GetEnd(txtSel, &end);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextSelection_Release(txtSel);
 }
 
 static void test_ITextRange_GetDuplicate(void)
