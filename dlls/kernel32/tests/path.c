@@ -1350,7 +1350,8 @@ static void test_GetShortPathNameW(void)
     static const WCHAR test_path[] = { 'L', 'o', 'n', 'g', 'D', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 'N', 'a', 'm', 'e',  0 };
     static const WCHAR name[] = { 't', 'e', 's', 't', 0 };
     static const WCHAR backSlash[] = { '\\', 0 };
-    WCHAR path[MAX_PATH], tmppath[MAX_PATH];
+    static const WCHAR a_bcdeW[] = {'a','.','b','c','d','e',0};
+    WCHAR path[MAX_PATH], tmppath[MAX_PATH], *ptr;
     WCHAR short_path[MAX_PATH];
     DWORD length;
     HANDLE file;
@@ -1387,7 +1388,7 @@ static void test_GetShortPathNameW(void)
     length = GetShortPathNameW( path, short_path, 0 );
     ok( length, "GetShortPathNameW returned 0.\n" );
     ret = GetShortPathNameW( path, short_path, length );
-    ok( ret, "GetShortPathNameW returned 0.\n" );
+    ok( ret && ret == length-1, "GetShortPathNameW returned 0.\n" );
 
     lstrcatW( short_path, name );
 
@@ -1399,11 +1400,24 @@ static void test_GetShortPathNameW(void)
 
     file = CreateFileW( short_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
     ok( file != INVALID_HANDLE_VALUE, "File was not created.\n" );
-
-    /* End test */
     CloseHandle( file );
     ret = DeleteFileW( short_path );
     ok( ret, "Cannot delete file.\n" );
+
+    ptr = path + lstrlenW(path);
+    lstrcpyW( ptr, a_bcdeW);
+    file = CreateFileW( path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "File was not created.\n" );
+    CloseHandle( file );
+
+    length = GetShortPathNameW( path, short_path, sizeof(short_path)/sizeof(*short_path) );
+    ok( length, "GetShortPathNameW failed: %u.\n", GetLastError() );
+
+    ret = DeleteFileW( path );
+    ok( ret, "Cannot delete file.\n" );
+    *ptr = 0;
+
+    /* End test */
     ret = RemoveDirectoryW( path );
     ok( ret, "Cannot delete directory.\n" );
 }

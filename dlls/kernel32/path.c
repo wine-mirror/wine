@@ -443,7 +443,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
     WCHAR               *tmpshortpath;
     LPCWSTR             p;
     DWORD               sp = 0, lp = 0;
-    DWORD               tmplen;
+    DWORD               tmplen, buf_len;
     WIN32_FIND_DATAW    wfd;
     HANDLE              goit;
 
@@ -462,7 +462,8 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
 
     /* code below only removes characters from string, never adds, so this is
      * the largest buffer that tmpshortpath will need to have */
-    tmpshortpath = HeapAlloc(GetProcessHeap(), 0, (strlenW(longpath) + 1) * sizeof(WCHAR));
+    buf_len = strlenW(longpath) + 1;
+    tmpshortpath = HeapAlloc(GetProcessHeap(), 0, buf_len * sizeof(WCHAR));
     if (!tmpshortpath)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -524,6 +525,23 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         goit = FindFirstFileW(tmpshortpath, &wfd);
         if (goit == INVALID_HANDLE_VALUE) goto notfound;
         FindClose(goit);
+
+        /* In rare cases (like "a.abcd") short path may be longer than original path.
+         * Make sure we have enough space in temp buffer. */
+        if (wfd.cAlternateFileName && tmplen < strlenW(wfd.cAlternateFileName))
+        {
+            WCHAR *new_buf;
+            buf_len += strlenW(wfd.cAlternateFileName) - tmplen;
+            new_buf = HeapReAlloc(GetProcessHeap(), 0, tmpshortpath, buf_len * sizeof(WCHAR));
+            if(!new_buf)
+            {
+                HeapFree(GetProcessHeap(), 0, tmpshortpath);
+                SetLastError(ERROR_OUTOFMEMORY);
+                return 0;
+            }
+            tmpshortpath = new_buf;
+        }
+
         strcpyW(tmpshortpath + sp, wfd.cAlternateFileName[0] ? wfd.cAlternateFileName : wfd.cFileName);
         sp += strlenW(tmpshortpath + sp);
         lp += tmplen;
