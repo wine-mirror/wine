@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-24 14:54+0100\n"
+"PO-Revision-Date: 2015-05-24 19:47+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3140,8 +3140,6 @@ msgid "&View Source"
 msgstr "&Quelltextansicht"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
 msgstr "&Eigenschaften"
 
@@ -7460,10 +7458,8 @@ msgid "Add Control"
 msgstr "Steuerelement hinzufügen"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "Schrift&art..."
+msgstr "&Konvertieren..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8593,10 +8589,8 @@ msgid "Duplex:"
 msgstr "Duplex:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "&Einrichten"
+msgstr "Einrichten"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -8932,10 +8926,6 @@ msgstr ""
 "noch besteht."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
@@ -9259,24 +9249,20 @@ msgstr ""
 "noch besteht."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Wine-Mono-Installation"
+msgstr "Wine-Soundmapper"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "Spalte"
+msgstr "Lautstärke"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Haupt-Lautstärke"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Stumm"
 
 #: winspool.rc:37
 msgid "Print to File"
