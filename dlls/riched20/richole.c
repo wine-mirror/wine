@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 /* there is no way to be consistent across different sets of headers - mingw, Wine, Win32 SDK*/
 
 #include "initguid.h"
+
+DEFINE_GUID(LIBID_tom, 0x8cc497c9, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextServices, 0x8d33f740, 0xcf58, 0x11ce, 0xa8, 0x9d, 0x00, 0xaa, 0x00, 0x6c, 0xad, 0xc5);
 DEFINE_GUID(IID_ITextHost, 0x13e670f4,0x1a5a,0x11cf,0xab,0xeb,0x00,0xaa,0x00,0xb6,0x5e,0xa1);
 DEFINE_GUID(IID_ITextHost2, 0x13e670f5,0x1a5a,0x11cf,0xab,0xeb,0x00,0xaa,0x00,0xb6,0x5e,0xa1);
@@ -48,6 +50,87 @@ DEFINE_GUID(IID_ITextRange, 0x8cc497c2, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 
 DEFINE_GUID(IID_ITextSelection, 0x8cc497c1, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextFont, 0x8cc497c3, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
 DEFINE_GUID(IID_ITextPara, 0x8cc497c4, 0xa1df, 0x11ce, 0x80, 0x98, 0x00, 0xaa, 0x00, 0x47, 0xbe, 0x5d);
+
+static ITypeLib *typelib;
+
+enum tid_t {
+    NULL_tid,
+    ITextDocument_tid,
+    ITextRange_tid,
+    ITextSelection_tid,
+    ITextFont_tid,
+    ITextPara_tid,
+    LAST_tid
+};
+
+static const IID * const tid_ids[] =
+{
+    &IID_NULL,
+    &IID_ITextDocument,
+    &IID_ITextRange,
+    &IID_ITextSelection,
+    &IID_ITextFont,
+    &IID_ITextPara,
+};
+static ITypeInfo *typeinfos[LAST_tid];
+
+static HRESULT load_typelib(void)
+{
+    ITypeLib *tl;
+    HRESULT hr;
+
+    hr = LoadRegTypeLib(&LIBID_tom, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if (FAILED(hr)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hr);
+        return hr;
+    }
+
+    if (InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hr;
+}
+
+void release_typelib(void)
+{
+    unsigned i;
+
+    if (!typelib)
+        return;
+
+    for (i = 0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if (typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
+static HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hr;
+
+    if (!typelib)
+        hr = load_typelib();
+    if (!typelib)
+        return hr;
+
+    if (!typeinfos[tid])
+    {
+        ITypeInfo *ti;
+
+        hr = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if (FAILED(hr))
+        {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hr);
+            return hr;
+        }
+
+        if (InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
 
 /* private IID used to get back IRichEditOleImpl pointer */
 DEFINE_GUID(IID_Igetrichole, 0xe3ce5c7a, 0x8247, 0x4622, 0x81, 0xad, 0x11, 0x81, 0x02, 0xaa, 0x01, 0x30);
@@ -1003,33 +1086,39 @@ static ULONG WINAPI ITextRange_fnRelease(ITextRange *me)
 static HRESULT WINAPI ITextRange_fnGetTypeInfoCount(ITextRange *me, UINT *pctinfo)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnGetTypeInfo(ITextRange *me, UINT iTInfo, LCID lcid,
                                                ITypeInfo **ppTInfo)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
+    HRESULT hr;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(ITextRange_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI ITextRange_fnGetIDsOfNames(ITextRange *me, REFIID riid, LPOLESTR *rgszNames,
                                                  UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
+    ITypeInfo *ti;
+    HRESULT hr;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(ITextRange_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI ITextRange_fnInvoke(ITextRange *me, DISPID dispIdMember, REFIID riid,
@@ -1038,11 +1127,16 @@ static HRESULT WINAPI ITextRange_fnInvoke(ITextRange *me, DISPID dispIdMember, R
                                           UINT *puArgErr)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
+    ITypeInfo *ti;
+    HRESULT hr;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextRange_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, me, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
 }
 
 static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *pbstr)
@@ -1763,23 +1857,40 @@ static ULONG WINAPI TextFont_Release(ITextFont *iface)
 
 static HRESULT WINAPI TextFont_GetTypeInfoCount(ITextFont *iface, UINT *pctinfo)
 {
-    FIXME("stub\n");
-    *pctinfo = 0;
-    return E_NOTIMPL;
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI TextFont_GetTypeInfo(ITextFont *iface, UINT iTInfo, LCID lcid,
     ITypeInfo **ppTInfo)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    HRESULT hr;
+
+    TRACE("(%p)->(%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(ITextFont_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI TextFont_GetIDsOfNames(ITextFont *iface, REFIID riid,
     LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(ITextFont_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI TextFont_Invoke(
@@ -1793,8 +1904,17 @@ static HRESULT WINAPI TextFont_Invoke(
     EXCEPINFO *pExcepInfo,
     UINT *puArgErr)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextFontImpl *This = impl_from_ITextFont(iface);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextFont_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
 }
 
 static HRESULT WINAPI TextFont_GetDuplicate(ITextFont *iface, ITextFont **ret)
@@ -2334,23 +2454,40 @@ static ULONG WINAPI TextPara_Release(ITextPara *iface)
 
 static HRESULT WINAPI TextPara_GetTypeInfoCount(ITextPara *iface, UINT *pctinfo)
 {
-    FIXME("stub\n");
-    *pctinfo = 0;
-    return E_NOTIMPL;
+    ITextParaImpl *This = impl_from_ITextPara(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI TextPara_GetTypeInfo(ITextPara *iface, UINT iTInfo, LCID lcid,
     ITypeInfo **ppTInfo)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextParaImpl *This = impl_from_ITextPara(iface);
+    HRESULT hr;
+
+    TRACE("(%p)->(%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(ITextPara_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI TextPara_GetIDsOfNames(ITextPara *iface, REFIID riid,
     LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextParaImpl *This = impl_from_ITextPara(iface);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(ITextPara_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI TextPara_Invoke(
@@ -2364,8 +2501,17 @@ static HRESULT WINAPI TextPara_Invoke(
     EXCEPINFO *pExcepInfo,
     UINT *puArgErr)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    ITextParaImpl *This = impl_from_ITextPara(iface);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextPara_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
 }
 
 static HRESULT WINAPI TextPara_GetDuplicate(ITextPara *iface, ITextPara **ret)
@@ -2808,8 +2954,9 @@ ITextDocument_fnGetTypeInfoCount(ITextDocument* me,
     UINT* pctinfo)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI
@@ -2817,8 +2964,14 @@ ITextDocument_fnGetTypeInfo(ITextDocument* me, UINT iTInfo, LCID lcid,
     ITypeInfo** ppTInfo)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(ITextDocument_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -2826,8 +2979,16 @@ ITextDocument_fnGetIDsOfNames(ITextDocument* me, REFIID riid,
     LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(ITextDocument_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -2836,8 +2997,16 @@ ITextDocument_fnInvoke(ITextDocument* me, DISPID dispIdMember,
     VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    FIXME("stub %p\n",This);
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextDocument_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, me, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
 }
 
 static HRESULT WINAPI
@@ -3111,33 +3280,39 @@ static ULONG WINAPI ITextSelection_fnRelease(ITextSelection *me)
 static HRESULT WINAPI ITextSelection_fnGetTypeInfoCount(ITextSelection *me, UINT *pctinfo)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
-
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetTypeInfo(ITextSelection *me, UINT iTInfo, LCID lcid,
     ITypeInfo **ppTInfo)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
+    HRESULT hr;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u,%d,%p)\n", This, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(ITextSelection_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetIDsOfNames(ITextSelection *me, REFIID riid,
     LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
-    if (!This->reOle)
-        return CO_E_RELEASED;
+    ITypeInfo *ti;
+    HRESULT hr;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(ITextSelection_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnInvoke(
@@ -3151,8 +3326,17 @@ static HRESULT WINAPI ITextSelection_fnInvoke(
     EXCEPINFO *pExcepInfo,
     UINT *puArgErr)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(ITextSelection_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, me, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
 }
 
 /*** ITextRange methods ***/

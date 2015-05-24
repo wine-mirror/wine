@@ -1406,6 +1406,7 @@ static void test_dispatch(void)
   WCHAR *nameW;
   DISPID dispid;
   HRESULT hr;
+  UINT count;
   HWND hwnd;
 
   create_interfaces(&hwnd, &reOle, &doc, NULL);
@@ -1418,19 +1419,28 @@ static void test_dispatch(void)
   dispid = 123;
   nameW = (WCHAR*)testnameW;
   hr = ITextRange_GetIDsOfNames(range, &IID_NULL, &nameW, 1, LOCALE_USER_DEFAULT, &dispid);
-todo_wine {
   ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
   ok(dispid == DISPID_UNKNOWN, "got %d\n", dispid);
-}
+
   dispid = 123;
   nameW = (WCHAR*)testname2W;
   hr = ITextRange_GetIDsOfNames(range, &IID_NULL, &nameW, 1, LOCALE_USER_DEFAULT, &dispid);
-todo_wine {
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(dispid == DISPID_VALUE, "got %d\n", dispid);
-}
-  ITextRange_Release(range);
+
   release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  /* try dispatch methods on detached range */
+  hr = ITextRange_GetTypeInfoCount(range, &count);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  dispid = 123;
+  nameW = (WCHAR*)testname2W;
+  hr = ITextRange_GetIDsOfNames(range, &IID_NULL, &nameW, 1, LOCALE_USER_DEFAULT, &dispid);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(dispid == DISPID_VALUE, "got %d\n", dispid);
+
+  ITextRange_Release(range);
 }
 
 static void test_ITextFont(void)
