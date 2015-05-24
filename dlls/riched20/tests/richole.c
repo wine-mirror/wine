@@ -1880,6 +1880,52 @@ static void test_ITextFont(void)
   ITextFont_Release(font);
 }
 
+static void test_Delete(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range, *range2;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextDocument_Range(doc, 1, 2, &range2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 4, "got %d\n", value);
+
+  hr = ITextRange_Delete(range2, tomCharacter, 0, NULL);
+todo_wine
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+  ok(value == 3, "got %d\n", value);
+
+  hr = ITextRange_GetStart(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 1, "got %d\n", value);
+
+  hr = ITextRange_GetEnd(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+  ok(value == 1, "got %d\n", value);
+
+  ITextRange_Release(range);
+  ITextRange_Release(range2);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -1905,4 +1951,5 @@ START_TEST(richole)
   test_GetPara();
   test_dispatch();
   test_ITextFont();
+  test_Delete();
 }
