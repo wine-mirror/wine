@@ -966,18 +966,15 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, event_target_t *event_target,
+static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTarget *event_target,
         ConnectionPointContainer *cp_container, eventid_t eid, IDispatch *this_obj)
 {
+    event_target_t *data = get_event_target_data(event_target, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
-    handler_vector_t *handler_vector = NULL;
     VARIANT v;
     HRESULT hres;
 
-    if(event_target)
-        handler_vector = event_target->event_table[eid];
-
-    if(handler_vector && handler_vector->handler_prop) {
+    if(data && data->event_table[eid] && data->event_table[eid]->handler_prop) {
         DISPID named_arg = DISPID_THIS;
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, &named_arg, 1, 1};
@@ -987,7 +984,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
         V_VT(&v) = VT_EMPTY;
 
         TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        hres = call_disp_func(handler_vector->handler_prop, &dp, &v);
+        hres = call_disp_func(data->event_table[eid]->handler_prop, &dp, &v);
         if(hres == S_OK) {
             TRACE("%s <<< %s\n", debugstr_w(event_info[eid].name), debugstr_variant(&v));
 
@@ -1005,7 +1002,7 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
         }
     }
 
-    if(handler_vector && handler_vector->handler_cnt) {
+    if(data && data->event_table[eid] && data->event_table[eid]->handler_cnt) {
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, NULL, 1, 0};
         int i;
@@ -1013,13 +1010,13 @@ static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, 
         V_VT(&arg) = VT_DISPATCH;
         V_DISPATCH(&arg) = (IDispatch*)event_obj;
 
-        i = handler_vector->handler_cnt;
+        i = data->event_table[eid]->handler_cnt;
         while(i--) {
-            if(handler_vector->handlers[i]) {
+            if(data->event_table[eid]->handlers[i]) {
                 V_VT(&v) = VT_EMPTY;
 
                 TRACE("%s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
-                hres = call_disp_func(handler_vector->handlers[i], &dp, &v);
+                hres = call_disp_func(data->event_table[eid]->handlers[i], &dp, &v);
                 if(hres == S_OK) {
                     TRACE("%s [%d] <<<\n", debugstr_w(event_info[eid].name), i);
 
@@ -1121,8 +1118,8 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
         do {
             hres = get_node(doc, nsnode, FALSE, &node);
             if(SUCCEEDED(hres) && node) {
-                call_event_handlers(doc, event_obj, get_event_target_data(&node->event_target, FALSE),
-                        node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
+                call_event_handlers(doc, event_obj, &node->event_target, node->cp_container, eid,
+                        script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                 node_release(node);
             }
 
@@ -1150,8 +1147,8 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             if(NS_SUCCEEDED(nsres) && nsbody) {
                 hres = get_node(doc, (nsIDOMNode*)nsbody, FALSE, &node);
                 if(SUCCEEDED(hres) && node) {
-                    call_event_handlers(doc, event_obj, get_event_target_data(&node->event_target, FALSE),
-                            node->cp_container, eid, script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
+                    call_event_handlers(doc, event_obj, &node->event_target, node->cp_container, eid,
+                            script_this ? script_this : (IDispatch*)&node->IHTMLDOMNode_iface);
                     node_release(node);
                 }
                 nsIDOMHTMLElement_Release(nsbody);
@@ -1160,7 +1157,7 @@ static void fire_event_obj(HTMLDocumentNode *doc, eventid_t eid, HTMLEventObj *e
             }
         }
 
-        call_event_handlers(doc, event_obj, doc->node.event_target.ptr, &doc->basedoc.cp_container, eid,
+        call_event_handlers(doc, event_obj, &doc->node.event_target, &doc->basedoc.cp_container, eid,
                 script_this ? script_this : (IDispatch*)&doc->basedoc.IHTMLDocument2_iface);
         break;
 
