@@ -789,6 +789,11 @@ static void test_SetupLogError(void)
 
     SetLastError(0xdeadbeef);
     ret = SetupOpenLog(FALSE);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        win_skip("SetupOpenLog() failed on insufficient permissions\n");
+        return;
+    }
     ok(ret, "SetupOpenLog failed, error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
