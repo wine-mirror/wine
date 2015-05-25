@@ -77,6 +77,7 @@ static struct {
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
+static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 
 #define MAXKEYEVENTS 12
 #define MAXKEYMESSAGES MAXKEYEVENTS /* assuming a key event generates one
@@ -160,6 +161,7 @@ static void init_function_pointers(void)
 
     GET_PROC(SendInput)
     GET_PROC(GetMouseMovePointsEx)
+    GET_PROC(GetRawInputDeviceList)
 
 #undef GET_PROC
 }
@@ -1486,6 +1488,51 @@ static void test_GetMouseMovePointsEx(void)
 #undef MYERROR
 }
 
+static void test_GetRawInputDeviceList(void)
+{
+    RAWINPUTDEVICELIST devices[32];
+    UINT ret, devcount, odevcount;
+    DWORD err;
+
+    SetLastError(0xdeadbeef);
+    ret = pGetRawInputDeviceList(NULL, NULL, 0);
+    err = GetLastError();
+    ok(ret == -1, "expected -1, got %d\n", ret);
+todo_wine
+    ok(err == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", err);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetRawInputDeviceList(NULL, NULL, sizeof(devices[0]));
+    err = GetLastError();
+    ok(ret == -1, "expected -1, got %d\n", ret);
+todo_wine
+    ok(err == ERROR_NOACCESS, "expected 998, got %d\n", err);
+
+    devcount = 0;
+    ret = pGetRawInputDeviceList(NULL, &devcount, sizeof(devices[0]));
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(devcount > 0, "expected non-zero\n");
+
+    SetLastError(0xdeadbeef);
+    devcount = 0;
+    ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
+    err = GetLastError();
+    ok(ret == -1, "expected -1, got %d\n", ret);
+todo_wine
+    ok(err == ERROR_INSUFFICIENT_BUFFER, "expected 122, got %d\n", err);
+    ok(devcount > 0, "expected non-zero\n");
+
+    /* devcount contain now the correct number of devices */
+    ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
+    ok(ret > 0, "expected non-zero\n");
+
+    /* check if variable changes from larger to smaller value */
+    devcount = odevcount = sizeof(devices) / sizeof(devices[0]);
+    ret = pGetRawInputDeviceList(devices, &odevcount, sizeof(devices[0]));
+    ok(ret > 0, "expected non-zero\n");
+    ok(devcount == odevcount, "expected %d, got %d\n", devcount, odevcount);
+}
+
 static void test_key_map(void)
 {
     HKL kl = GetKeyboardLayout(0);
@@ -2353,4 +2400,9 @@ START_TEST(input)
         test_GetMouseMovePointsEx();
     else
         win_skip("GetMouseMovePointsEx is not available\n");
+
+    if(pGetRawInputDeviceList)
+        test_GetRawInputDeviceList();
+    else
+        win_skip("GetRawInputDeviceList is not available\n");
 }
