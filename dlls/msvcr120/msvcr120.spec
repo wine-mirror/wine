@@ -2087,9 +2087,9 @@
 @ stub conj
 @ stub conjf
 @ stub conjl
-@ stub copysign
-@ stub copysignf
-@ stub copysignl
+@ cdecl copysign(double double) MSVCRT__copysign
+@ cdecl copysignf(float float) MSVCRT__copysignf
+@ cdecl copysignl(double double) MSVCRT__copysign
 @ cdecl cos(double) MSVCRT_cos
 @ cdecl -arch=arm,x86_64 cosf(float) MSVCRT_cosf
 @ cdecl cosh(double) MSVCRT_cosh

@@ -1756,9 +1756,9 @@
 @ stub conj
 @ stub conjf
 @ stub conjl
-@ stub copysign
-@ stub copysignf
-@ stub copysignl
+@ cdecl copysign(double double) msvcr120.copysign
+@ cdecl copysignf(float float) msvcr120.copysignf
+@ cdecl copysignl(double double) msvcr120.copysignl
 @ cdecl cos(double) msvcr120.cos
 @ cdecl -arch=arm,x86_64 cosf(float) msvcr120.cosf
 @ cdecl cosh(double) msvcr120.cosh
