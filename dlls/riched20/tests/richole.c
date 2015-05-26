@@ -2200,7 +2200,23 @@ static void test_ITextFont(void)
 
   hr = ITextFont_GetDuplicate(font2, &font3);
   ok(hr == S_OK, "got 0x%08x\n", hr);
-  test_textfont_global_defaults(font3);
+  test_textfont_global_defaults(font2);
+
+  hr = ITextFont_Reset(font2, tomApplyNow);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_global_defaults(font2);
+
+  hr = ITextFont_Reset(font2, tomApplyLater);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_global_defaults(font2);
+
+  hr = ITextFont_Reset(font2, tomTrackParms);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_global_defaults(font2);
+
+  hr = ITextFont_Reset(font2, tomCacheParms);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_global_defaults(font2);
 
   ITextFont_Release(font3);
   ITextFont_Release(font2);
@@ -2238,6 +2254,43 @@ static void test_ITextFont(void)
   hr = ITextFont_GetBold(font, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value != tomUndefined, "got %d\n", value);
+
+  /* tomCacheParms/tomTrackParms */
+  hr = ITextFont_Reset(font, tomCacheParms);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  memset(&cf, 0, sizeof(cf));
+  cf.cbSize = sizeof(CHARFORMAT2A);
+  cf.dwMask = CFM_ITALIC;
+
+  cf.dwEffects = CFE_ITALIC;
+  SendMessageA(hwnd, EM_SETSEL, 0, 10);
+  ret = SendMessageA(hwnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+
+  /* still cached value */
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  hr = ITextFont_Reset(font, tomTrackParms);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomTrue, "got %d\n", value);
+
+  /* switch back to cache - value retained */
+  hr = ITextFont_Reset(font, tomCacheParms);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomTrue, "got %d\n", value);
 
   ITextRange_Release(range);
   ITextFont_Release(font);

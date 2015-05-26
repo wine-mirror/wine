@@ -159,6 +159,8 @@ typedef enum tagTomConstants
     tomPrimaryFooterStory   = 9,
     tomFirstPageHeaderStory = 10,
     tomFirstPageFooterStory = 11,
+
+    /* ITextFont animation property */
     tomNoAnimation        = 0,
     tomLasVegasLights     = 1,
     tomBlinkingBackground = 2,
@@ -169,6 +171,7 @@ typedef enum tagTomConstants
     tomWipeDown           = 7,
     tomWipeRight          = 8,
     tomAnimationMax       = 8,
+
     tomLowerCase     = 0,
     tomUpperCase     = 1,
     tomTitleCase     = 2,

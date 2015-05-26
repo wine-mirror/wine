@@ -164,7 +164,8 @@ enum textfont_prop_id {
     FONT_SUPERSCRIPT,
     FONT_UNDERLINE,
     FONT_WEIGHT,
-    FONT_PROPID_LAST
+    FONT_PROPID_LAST,
+    FONT_PROPID_FIRST = FONT_ALLCAPS
 };
 
 static const DWORD textfont_prop_masks[] = {
@@ -235,6 +236,7 @@ typedef struct ITextFontImpl {
 
     ITextRange *range;
     textfont_prop_val props[FONT_PROPID_LAST];
+    BOOL get_cache_enabled;
 } ITextFontImpl;
 
 typedef struct ITextParaImpl {
@@ -306,18 +308,32 @@ static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, te
 {
     switch (propid)
     {
+    case FONT_ALLCAPS:
+    case FONT_ANIMATION:
+    case FONT_BACKCOLOR:
     case FONT_BOLD:
+    case FONT_EMBOSS:
     case FONT_FORECOLOR:
+    case FONT_HIDDEN:
+    case FONT_ENGRAVE:
     case FONT_ITALIC:
+    case FONT_KERNING:
     case FONT_LANGID:
+    case FONT_OUTLINE:
+    case FONT_PROTECTED:
+    case FONT_SHADOW:
+    case FONT_SMALLCAPS:
     case FONT_STRIKETHROUGH:
     case FONT_SUBSCRIPT:
     case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
+    case FONT_WEIGHT:
         return left->l == right->l;
     case FONT_NAME:
         return !strcmpW(left->str, right->str);
+    case FONT_POSITION:
     case FONT_SIZE:
+    case FONT_SPACING:
        return left->f == right->f;
     default:
         FIXME("unhandled font property %d\n", propid);
@@ -329,20 +345,34 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
 {
     switch (propid)
     {
+    case FONT_ALLCAPS:
+    case FONT_ANIMATION:
+    case FONT_BACKCOLOR:
     case FONT_BOLD:
+    case FONT_EMBOSS:
     case FONT_FORECOLOR:
+    case FONT_HIDDEN:
+    case FONT_ENGRAVE:
     case FONT_ITALIC:
+    case FONT_KERNING:
     case FONT_LANGID:
+    case FONT_OUTLINE:
+    case FONT_PROTECTED:
+    case FONT_SHADOW:
+    case FONT_SMALLCAPS:
     case FONT_STRIKETHROUGH:
     case FONT_SUBSCRIPT:
     case FONT_SUPERSCRIPT:
     case FONT_UNDERLINE:
+    case FONT_WEIGHT:
         v->l = tomUndefined;
         return;
     case FONT_NAME:
         v->str = NULL;
         return;
+    case FONT_POSITION:
     case FONT_SIZE:
+    case FONT_SPACING:
         v->f = tomUndefined;
         return;
     default:
@@ -369,14 +399,35 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
 
     switch (propid)
     {
+    case FONT_ALLCAPS:
+        value->l = fmt.dwEffects & CFE_ALLCAPS ? tomTrue : tomFalse;
+        break;
+    case FONT_ANIMATION:
+        value->l = fmt.bAnimation;
+        break;
+    case FONT_BACKCOLOR:
+        value->l = fmt.dwEffects & CFE_AUTOBACKCOLOR ? GetSysColor(COLOR_WINDOW) : fmt.crBackColor;
+        break;
     case FONT_BOLD:
         value->l = fmt.dwEffects & CFE_BOLD ? tomTrue : tomFalse;
+        break;
+    case FONT_EMBOSS:
+        value->l = fmt.dwEffects & CFE_EMBOSS ? tomTrue : tomFalse;
         break;
     case FONT_FORECOLOR:
         value->l = fmt.dwEffects & CFE_AUTOCOLOR ? GetSysColor(COLOR_WINDOWTEXT) : fmt.crTextColor;
         break;
+    case FONT_HIDDEN:
+        value->l = fmt.dwEffects & CFE_HIDDEN ? tomTrue : tomFalse;
+        break;
+    case FONT_ENGRAVE:
+        value->l = fmt.dwEffects & CFE_IMPRINT ? tomTrue : tomFalse;
+        break;
     case FONT_ITALIC:
         value->l = fmt.dwEffects & CFE_ITALIC ? tomTrue : tomFalse;
+        break;
+    case FONT_KERNING:
+        value->f = fmt.wKerning;
         break;
     case FONT_LANGID:
         value->l = fmt.lcid;
@@ -387,8 +438,26 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         if (!value->str)
             return E_OUTOFMEMORY;
         break;
+    case FONT_OUTLINE:
+        value->l = fmt.dwEffects & CFE_OUTLINE ? tomTrue : tomFalse;
+        break;
+    case FONT_POSITION:
+        value->f = fmt.yOffset;
+        break;
+    case FONT_PROTECTED:
+        value->l = fmt.dwEffects & CFE_PROTECTED ? tomTrue : tomFalse;
+        break;
+    case FONT_SHADOW:
+        value->l = fmt.dwEffects & CFE_SHADOW ? tomTrue : tomFalse;
+        break;
     case FONT_SIZE:
         value->f = fmt.yHeight;
+        break;
+    case FONT_SMALLCAPS:
+        value->l = fmt.dwEffects & CFE_SMALLCAPS ? tomTrue : tomFalse;
+        break;
+    case FONT_SPACING:
+        value->f = fmt.sSpacing;
         break;
     case FONT_STRIKETHROUGH:
         value->l = fmt.dwEffects & CFE_STRIKEOUT ? tomTrue : tomFalse;
@@ -401,6 +470,9 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         break;
     case FONT_UNDERLINE:
         value->l = fmt.dwEffects & CFE_UNDERLINE ? tomTrue : tomFalse;
+        break;
+    case FONT_WEIGHT:
+        value->l = fmt.wWeight;
         break;
     default:
         FIXME("unhandled font property %d\n", propid);
@@ -425,7 +497,7 @@ static HRESULT get_textfont_prop(const ITextFontImpl *font, enum textfont_prop_i
     HRESULT hr;
 
     /* when font is not attached to any range use cached values */
-    if (!font->range) {
+    if (!font->range || font->get_cache_enabled) {
         *value = font->props[propid];
         return S_OK;
     }
@@ -482,6 +554,33 @@ static HRESULT get_textfont_propl(const ITextFontImpl *font, enum textfont_prop_
     hr = get_textfont_prop(font, propid, &v);
     *value = v.l;
     return hr;
+}
+
+static HRESULT textfont_getname_from_range(ITextRange *range, BSTR *ret)
+{
+    const IRichEditOleImpl *reole;
+    textfont_prop_val v;
+    HRESULT hr;
+    LONG start;
+
+    if (!(reole = get_range_reole(range)))
+        return CO_E_RELEASED;
+
+    ITextRange_GetStart(range, &start);
+    hr = get_textfont_prop_for_pos(reole, start, FONT_NAME, &v);
+    *ret = v.str;
+    return hr;
+}
+
+static void textfont_cache_range_props(ITextFontImpl *font)
+{
+    enum textfont_prop_id propid;
+    for (propid = FONT_PROPID_FIRST; propid < FONT_PROPID_LAST; propid++) {
+        if (propid == FONT_NAME)
+            textfont_getname_from_range(font->range, &font->props[propid].str);
+        else
+            get_textfont_prop(font, propid, &font->props[propid]);
+    }
 }
 
 static HRESULT WINAPI IRichEditOleImpl_inner_fnQueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
@@ -1989,7 +2088,7 @@ static void textfont_reset_to_default(ITextFontImpl *font)
 {
     enum textfont_prop_id id;
 
-    for (id = FONT_ALLCAPS; id < FONT_PROPID_LAST; id++) {
+    for (id = FONT_PROPID_FIRST; id < FONT_PROPID_LAST; id++) {
         switch (id)
         {
         case FONT_ALLCAPS:
@@ -2041,7 +2140,7 @@ static void textfont_reset_to_undefined(ITextFontImpl *font)
 {
     enum textfont_prop_id id;
 
-    for (id = FONT_ALLCAPS; id < FONT_PROPID_LAST; id++) {
+    for (id = FONT_PROPID_FIRST; id < FONT_PROPID_LAST; id++) {
         switch (id)
         {
         case FONT_ALLCAPS:
@@ -2091,8 +2190,22 @@ static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
         if (!get_range_reole(This->range))
             return CO_E_RELEASED;
 
-        if (value == tomUndefined)
+        switch (value)
+        {
+        case tomUndefined:
             return E_INVALIDARG;
+        case tomCacheParms:
+            textfont_cache_range_props(This);
+            This->get_cache_enabled = TRUE;
+            break;
+        case tomTrackParms:
+            This->get_cache_enabled = FALSE;
+            break;
+        default:
+            FIXME("reset mode %d not supported\n", value);
+        }
+
+        return S_OK;
     }
     else {
         switch (value)
@@ -2104,6 +2217,11 @@ static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
         /* all properties are set to tomUndefined, font name is retained */
         case tomUndefined:
             textfont_reset_to_undefined(This);
+            return S_OK;
+        case tomApplyNow:
+        case tomApplyLater:
+        case tomTrackParms:
+        case tomCacheParms:
             return S_OK;
         }
     }
@@ -2283,10 +2401,6 @@ static HRESULT WINAPI TextFont_SetLanguageID(ITextFont *iface, LONG value)
 static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    const IRichEditOleImpl *reole;
-    textfont_prop_val v;
-    LONG start;
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, value);
 
@@ -2303,18 +2417,7 @@ static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
         return *value ? S_OK : E_OUTOFMEMORY;
     }
 
-    if (!(reole = get_range_reole(This->range)))
-        return CO_E_RELEASED;
-
-    init_textfont_prop_value(FONT_NAME, &v);
-
-    ITextRange_GetStart(This->range, &start);
-    hr = get_textfont_prop_for_pos(reole, start, FONT_NAME, &v);
-    if (FAILED(hr))
-        return hr;
-
-    *value = v.str;
-    return S_OK;
+    return textfont_getname_from_range(This->range, value);
 }
 
 static HRESULT WINAPI TextFont_SetName(ITextFont *iface, BSTR value)
@@ -2571,6 +2674,7 @@ static HRESULT create_textfont(ITextRange *range, const ITextFontImpl *src, ITex
 
     if (src) {
         font->range = NULL;
+        font->get_cache_enabled = TRUE;
         memcpy(&font->props, &src->props, sizeof(font->props));
         if (font->props[FONT_NAME].str)
             font->props[FONT_NAME].str = SysAllocString(font->props[FONT_NAME].str);
@@ -2578,8 +2682,10 @@ static HRESULT create_textfont(ITextRange *range, const ITextFontImpl *src, ITex
     else {
         font->range = range;
         ITextRange_AddRef(range);
-        /* FIXME: copy current range attributes to a cache */
-        memset(&font->props, 0, sizeof(font->props));
+
+        /* cache current properties */
+        font->get_cache_enabled = FALSE;
+        textfont_cache_range_props(font);
     }
 
     *ret = &font->ITextFont_iface;
