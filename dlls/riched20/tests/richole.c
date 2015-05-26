@@ -2214,6 +2214,13 @@ static void test_ITextFont(void)
   ok(hr == S_OK, "got 0x%08x\n", hr);
   test_textfont_global_defaults(font2);
 
+  hr = ITextFont_SetItalic(font2, tomUndefined);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
   hr = ITextFont_Reset(font2, tomCacheParms);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   test_textfont_global_defaults(font2);
@@ -2291,6 +2298,48 @@ static void test_ITextFont(void)
   hr = ITextFont_GetItalic(font, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value == tomTrue, "got %d\n", value);
+
+  /* tomApplyLater */
+  hr = ITextFont_Reset(font, tomApplyLater);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_SetItalic(font, tomFalse);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  cf.dwEffects = 0;
+  SendMessageA(hwnd, EM_SETSEL, 0, 10);
+  ret = SendMessageA(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+  ok((cf.dwEffects & CFE_ITALIC) == CFE_ITALIC, "got 0x%08x\n", cf.dwEffects);
+
+  hr = ITextFont_Reset(font, tomApplyNow);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  cf.dwEffects = 0;
+  SendMessageA(hwnd, EM_SETSEL, 0, 10);
+  ret = SendMessageA(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+  ok((cf.dwEffects & CFE_ITALIC) == 0, "got 0x%08x\n", cf.dwEffects);
+
+  hr = ITextFont_SetItalic(font, tomUndefined);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  hr = ITextFont_SetItalic(font, tomAutoColor);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  cf.dwEffects = 0;
+  SendMessageA(hwnd, EM_SETSEL, 0, 10);
+  ret = SendMessageA(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+  ok((cf.dwEffects & CFE_ITALIC) == 0, "got 0x%08x\n", cf.dwEffects);
 
   ITextRange_Release(range);
   ITextFont_Release(font);

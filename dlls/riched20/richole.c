@@ -237,6 +237,7 @@ typedef struct ITextFontImpl {
     ITextRange *range;
     textfont_prop_val props[FONT_PROPID_LAST];
     BOOL get_cache_enabled;
+    BOOL set_cache_enabled;
 } ITextFontImpl;
 
 typedef struct ITextParaImpl {
@@ -554,6 +555,75 @@ static HRESULT get_textfont_propl(const ITextFontImpl *font, enum textfont_prop_
     hr = get_textfont_prop(font, propid, &v);
     *value = v.l;
     return hr;
+}
+
+/* Value should already have a terminal value, for boolean properties it means tomToggle is not handled */
+static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id propid, const textfont_prop_val *value)
+{
+    const IRichEditOleImpl *reole;
+    ME_Cursor from, to;
+    CHARFORMAT2W fmt;
+    LONG start, end;
+
+    /* when font is not attached to any range use cache */
+    if (!font->range || font->set_cache_enabled) {
+        font->props[propid] = *value;
+        return S_OK;
+    }
+
+    if (!(reole = get_range_reole(font->range)))
+        return CO_E_RELEASED;
+
+    memset(&fmt, 0, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = textfont_prop_masks[propid];
+
+    switch (propid)
+    {
+    case FONT_ITALIC:
+        fmt.dwEffects = value->l == tomTrue ? CFE_ITALIC : 0;
+        break;
+    default:
+        FIXME("unhandled font property %d\n", propid);
+        return E_FAIL;
+    }
+
+    ITextRange_GetStart(font->range, &start);
+    ITextRange_GetEnd(font->range, &end);
+
+    ME_CursorFromCharOfs(reole->editor, start, &from);
+    ME_CursorFromCharOfs(reole->editor, end, &to);
+    ME_SetCharFormat(reole->editor, &from, &to, &fmt);
+
+    return S_OK;
+}
+
+static HRESULT set_textfont_propd(ITextFontImpl *font, enum textfont_prop_id propid, LONG value)
+{
+    textfont_prop_val v;
+
+    switch (value)
+    {
+    case tomUndefined:
+        return S_OK;
+    case tomToggle: {
+        LONG oldvalue;
+        get_textfont_propl(font, propid, &oldvalue);
+        if (oldvalue == tomFalse)
+            value = tomTrue;
+        else if (oldvalue == tomTrue)
+            value = tomFalse;
+        else
+            return E_INVALIDARG;
+        /* fallthrough */
+    }
+    case tomTrue:
+    case tomFalse:
+        v.l = value;
+        return set_textfont_prop(font, propid, &v);
+    default:
+        return E_INVALIDARG;
+    }
 }
 
 static HRESULT textfont_getname_from_range(ITextRange *range, BSTR *ret)
@@ -2178,6 +2248,13 @@ static void textfont_reset_to_undefined(ITextFontImpl *font)
     }
 }
 
+static void textfont_apply_range_props(ITextFontImpl *font)
+{
+    enum textfont_prop_id propid;
+    for (propid = FONT_PROPID_FIRST; propid < FONT_PROPID_LAST; propid++)
+        set_textfont_prop(font, propid, &font->props[propid]);
+}
+
 static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
@@ -2200,6 +2277,13 @@ static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
             break;
         case tomTrackParms:
             This->get_cache_enabled = FALSE;
+            break;
+        case tomApplyLater:
+            This->set_cache_enabled = TRUE;
+            break;
+        case tomApplyNow:
+            This->set_cache_enabled = FALSE;
+            textfont_apply_range_props(This);
             break;
         default:
             FIXME("reset mode %d not supported\n", value);
@@ -2366,8 +2450,8 @@ static HRESULT WINAPI TextFont_GetItalic(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetItalic(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, value);
+    return set_textfont_propd(This, FONT_ITALIC, value);
 }
 
 static HRESULT WINAPI TextFont_GetKerning(ITextFont *iface, FLOAT *value)
@@ -2675,6 +2759,7 @@ static HRESULT create_textfont(ITextRange *range, const ITextFontImpl *src, ITex
     if (src) {
         font->range = NULL;
         font->get_cache_enabled = TRUE;
+        font->set_cache_enabled = TRUE;
         memcpy(&font->props, &src->props, sizeof(font->props));
         if (font->props[FONT_NAME].str)
             font->props[FONT_NAME].str = SysAllocString(font->props[FONT_NAME].str);
@@ -2685,6 +2770,7 @@ static HRESULT create_textfont(ITextRange *range, const ITextFontImpl *src, ITex
 
         /* cache current properties */
         font->get_cache_enabled = FALSE;
+        font->set_cache_enabled = FALSE;
         textfont_cache_range_props(font);
     }
 
