@@ -61,6 +61,8 @@ struct MSVCRT_lconv
 static char* (CDECL *p_setlocale)(int category, const char* locale);
 static struct MSVCRT_lconv* (CDECL *p_localeconv)(void);
 static size_t (CDECL *p_wcstombs_s)(size_t *ret, char* dest, size_t sz, const wchar_t* src, size_t max);
+static int (CDECL *p__dsign)(double);
+static int (CDECL *p__fdsign)(float);
 
 static BOOL init(void)
 {
@@ -76,6 +78,8 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(module, "setlocale");
     p_localeconv = (void*)GetProcAddress(module, "localeconv");
     p_wcstombs_s = (void*)GetProcAddress(module, "wcstombs_s");
+    p__dsign = (void*)GetProcAddress(module, "_dsign");
+    p__fdsign = (void*)GetProcAddress(module, "_fdsign");
     return TRUE;
 }
 
@@ -148,8 +152,28 @@ static void test_lconv(void)
         test_lconv_helper(locstrs[i]);
 }
 
+static void test__dsign(void)
+{
+    int ret;
+
+    ret = p__dsign(1);
+    ok(ret == 0, "p_dsign(1) = %x\n", ret);
+    ret = p__dsign(0);
+    ok(ret == 0, "p_dsign(0) = %x\n", ret);
+    ret = p__dsign(-1);
+    ok(ret == 0x8000, "p_dsign(-1) = %x\n", ret);
+
+    ret = p__fdsign(1);
+    ok(ret == 0, "p_fdsign(1) = %x\n", ret);
+    ret = p__fdsign(0);
+    ok(ret == 0, "p_fdsign(0) = %x\n", ret);
+    ret = p__fdsign(-1);
+    ok(ret == 0x8000, "p_fdsign(-1) = %x\n", ret);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
     test_lconv();
+    test__dsign();
 }

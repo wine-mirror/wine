@@ -2633,3 +2633,19 @@ double CDECL MSVCR120_fmax(double x, double y)
         return signbit(x) ? y : x;
     return x<y ? y : x;
 }
+
+/*********************************************************************
+ *      _fdsign (MSVCR120.@)
+ */
+int CDECL MSVCR120__fdsign(float x)
+{
+    return signbit(x) ? 0x8000 : 0;
+}
+
+/*********************************************************************
+ *      _dsign (MSVCR120.@)
+ */
+int CDECL MSVCR120__dsign(double x)
+{
+    return signbit(x) ? 0x8000 : 0;
+}
