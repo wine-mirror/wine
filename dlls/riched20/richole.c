@@ -4031,11 +4031,16 @@ static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *pF
 static HRESULT WINAPI ITextSelection_fnGetPara(ITextSelection *me, ITextPara **para)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%p)\n", This, para);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!para)
+        return E_INVALIDARG;
+
+    return create_textpara((ITextRange*)me, para);
 }
 
 static HRESULT WINAPI ITextSelection_fnSetPara(ITextSelection *me, ITextPara *pPara)

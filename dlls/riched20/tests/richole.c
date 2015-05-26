@@ -1650,12 +1650,13 @@ static void test_GetPara(void)
   static const CHAR test_text1[] = "TestSomeText";
   IRichEditOle *reOle = NULL;
   ITextDocument *doc = NULL;
+  ITextSelection *selection;
   ITextRange *range = NULL;
   ITextPara *para, *para2;
   HRESULT hr;
   HWND hwnd;
 
-  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  create_interfaces(&hwnd, &reOle, &doc, &selection);
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   EXPECT_REF(reOle, 3);
@@ -1691,8 +1692,41 @@ static void test_GetPara(void)
 
   ITextPara_Release(para);
   ITextPara_Release(para2);
-  ITextRange_Release(range);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(selection, 2);
+
+  hr = ITextSelection_GetPara(selection, &para);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(reOle, 3);
+  EXPECT_REF(doc, 3);
+  EXPECT_REF(selection, 3);
+  EXPECT_REF(para, 1);
+
+  hr = ITextSelection_GetPara(selection, &para2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(para != para2, "got %p, %p\n", para, para2);
+
+  ITextPara_Release(para);
+  ITextPara_Release(para2);
   release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_GetPara(range, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetPara(range, &para);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_GetPara(selection, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_GetPara(selection, &para);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextSelection_Release(selection);
+  ITextRange_Release(range);
 }
 
 static void test_dispatch(void)
