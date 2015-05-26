@@ -243,8 +243,9 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
 
 typedef void (CALLBACK *LPDRVCALLBACK)(HDRVR,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR);
 
+#ifndef MM_MICROSOFT
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
-#define MM_CREATIVE             2       /* Creative labs   */
+#endif
 
 #define MM_MIDI_MAPPER          1       /* MIDI Mapper */
 #define MM_WAVE_MAPPER          2       /* Wave Mapper */
