@@ -3860,14 +3860,26 @@ static HRESULT WINAPI ITextSelection_fnGetText(ITextSelection *me, BSTR *pbstr)
     return S_OK;
 }
 
-static HRESULT WINAPI ITextSelection_fnSetText(ITextSelection *me, BSTR bstr)
+static HRESULT WINAPI ITextSelection_fnSetText(ITextSelection *me, BSTR str)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ME_TextEditor *editor;
+    int len, to, from;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(str));
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    editor = This->reOle->editor;
+    len = strlenW(str);
+    ME_GetSelectionOfs(editor, &from, &to);
+    ME_ReplaceSel(editor, FALSE, str, len);
+
+    if (len < to - from)
+        textranges_update_ranges(This->reOle, from, len, RANGE_UPDATE_DELETE);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetChar(ITextSelection *me, LONG *pch)

@@ -3134,6 +3134,30 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
   }
 }
 
+void ME_ReplaceSel(ME_TextEditor *editor, BOOL can_undo, const WCHAR *str, int len)
+{
+  int from, to, nStartCursor;
+  ME_Style *style;
+
+  nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
+  style = ME_GetSelectionInsertStyle(editor);
+  ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
+  ME_InsertTextFromCursor(editor, 0, str, len, style);
+  ME_ReleaseStyle(style);
+  /* drop temporary style if line end */
+  /*
+   * FIXME question: does abc\n mean: put abc,
+   * clear temp style, put \n? (would require a change)
+   */
+  if (len>0 && str[len-1] == '\n')
+    ME_ClearTempStyle(editor);
+  ME_CommitUndo(editor);
+  ME_UpdateSelectionLinkAttribute(editor);
+  if (!can_undo)
+    ME_EmptyUndoStack(editor);
+  ME_UpdateRepaint(editor, FALSE);
+}
+
 #define UNSUPPORTED_MSG(e) \
   case e:                  \
     FIXME(#e ": stub\n");  \
@@ -3609,31 +3633,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_REPLACESEL:
   {
-    int from, to, nStartCursor;
-    ME_Style *style;
     int len = 0;
     LONG codepage = unicode ? CP_UNICODE : CP_ACP;
     LPWSTR wszText = ME_ToUnicode(codepage, (void *)lParam, &len);
+
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
 
-    nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
-    style = ME_GetSelectionInsertStyle(editor);
-    ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
-    ME_InsertTextFromCursor(editor, 0, wszText, len, style);
-    ME_ReleaseStyle(style);
-    /* drop temporary style if line end */
-    /*
-     * FIXME question: does abc\n mean: put abc,
-     * clear temp style, put \n? (would require a change)
-     */
-    if (len>0 && wszText[len-1] == '\n')
-      ME_ClearTempStyle(editor);
+    ME_ReplaceSel(editor, !!wParam, wszText, len);
     ME_EndToUnicode(codepage, wszText);
-    ME_CommitUndo(editor);
-    ME_UpdateSelectionLinkAttribute(editor);
-    if (!wParam)
-      ME_EmptyUndoStack(editor);
-    ME_UpdateRepaint(editor, FALSE);
     return len;
   }
   case EM_SCROLLCARET:
