@@ -2605,3 +2605,31 @@ short CDECL MSVCR120__ldtest(LDOUBLE *x)
 {
     return MSVCR120__dclass(*x);
 }
+
+/*********************************************************************
+ *      fmaxf (MSVCR120.@)
+ */
+float CDECL MSVCR120_fmaxf(float x, float y)
+{
+    if(isnanf(x))
+        return y;
+    if(isnanf(y))
+        return x;
+    if(x==0 && y==0)
+        return signbit(x) ? y : x;
+    return x<y ? y : x;
+}
+
+/*********************************************************************
+ *      fmax (MSVCR120.@)
+ */
+double CDECL MSVCR120_fmax(double x, double y)
+{
+    if(isnan(x))
+        return y;
+    if(isnan(y))
+        return x;
+    if(x==0 && y==0)
+        return signbit(x) ? y : x;
+    return x<y ? y : x;
+}

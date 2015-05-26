@@ -2164,9 +2164,9 @@
 @ stub fma
 @ stub fmaf
 @ stub fmal
-@ stub fmax
-@ stub fmaxf
-@ stub fmaxl
+@ cdecl fmax(double double) MSVCR120_fmax
+@ cdecl fmaxf(float float) MSVCR120_fmaxf
+@ cdecl fmaxl(double double) MSVCR120_fmax
 @ stub fmin
 @ stub fminf
 @ stub fminl
