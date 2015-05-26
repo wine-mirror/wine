@@ -171,10 +171,10 @@ enum textfont_prop_id {
 static const DWORD textfont_prop_masks[][2] = {
     { CFM_ALLCAPS,     CFE_ALLCAPS },
     { CFM_ANIMATION },
-    { CFM_BACKCOLOR },
+    { CFM_BACKCOLOR,   CFE_AUTOBACKCOLOR },
     { CFM_BOLD,        CFE_BOLD },
     { CFM_EMBOSS,      CFE_EMBOSS },
-    { CFM_COLOR },
+    { CFM_COLOR,       CFE_AUTOCOLOR },
     { CFM_HIDDEN,      CFE_HIDDEN },
     { CFM_IMPRINT,     CFE_IMPRINT },
     { CFM_ITALIC,      CFE_ITALIC },
@@ -570,6 +570,36 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
     case FONT_UNDERLINE:
         fmt.dwEffects = value->l == tomTrue ? textfont_prop_masks[propid][1] : 0;
         break;
+    case FONT_ANIMATION:
+        fmt.bAnimation = value->l;
+        break;
+    case FONT_BACKCOLOR:
+    case FONT_FORECOLOR:
+        if (value->l == tomAutoColor)
+            fmt.dwEffects = textfont_prop_masks[propid][1];
+        else if (propid == FONT_BACKCOLOR)
+            fmt.crBackColor = value->l;
+        else
+            fmt.crTextColor = value->l;
+        break;
+    case FONT_KERNING:
+        fmt.wKerning = value->f;
+        break;
+    case FONT_LANGID:
+        fmt.lcid = value->l;
+        break;
+    case FONT_POSITION:
+        fmt.yOffset = value->f;
+        break;
+    case FONT_SIZE:
+        fmt.yHeight = value->f;
+        break;
+    case FONT_SPACING:
+        fmt.sSpacing = value->f;
+        break;
+    case FONT_WEIGHT:
+        fmt.wWeight = value->l;
+        break;
     default:
         FIXME("unhandled font property %d\n", propid);
         return E_FAIL;
@@ -583,6 +613,20 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
     ME_SetCharFormat(reole->editor, &from, &to, &fmt);
 
     return S_OK;
+}
+
+static inline HRESULT set_textfont_propl(ITextFontImpl *font, enum textfont_prop_id propid, LONG value)
+{
+    textfont_prop_val v;
+    v.l = value;
+    return set_textfont_prop(font, propid, &v);
+}
+
+static inline HRESULT set_textfont_propf(ITextFontImpl *font, enum textfont_prop_id propid, FLOAT value)
+{
+    textfont_prop_val v;
+    v.f = value;
+    return set_textfont_prop(font, propid, &v);
 }
 
 static HRESULT set_textfont_propd(ITextFontImpl *font, enum textfont_prop_id propid, LONG value)
@@ -2339,8 +2383,13 @@ static HRESULT WINAPI TextFont_GetAnimation(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetAnimation(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, value);
+
+    if (value < tomNoAnimation || value > tomAnimationMax)
+        return E_INVALIDARG;
+
+    return set_textfont_propl(This, FONT_ANIMATION, value);
 }
 
 static HRESULT WINAPI TextFont_GetBackColor(ITextFont *iface, LONG *value)
@@ -2353,8 +2402,8 @@ static HRESULT WINAPI TextFont_GetBackColor(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetBackColor(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, value);
+    return set_textfont_propl(This, FONT_BACKCOLOR, value);
 }
 
 static HRESULT WINAPI TextFont_GetBold(ITextFont *iface, LONG *value)
@@ -2395,8 +2444,8 @@ static HRESULT WINAPI TextFont_GetForeColor(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetForeColor(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, value);
+    return set_textfont_propl(This, FONT_FORECOLOR, value);
 }
 
 static HRESULT WINAPI TextFont_GetHidden(ITextFont *iface, LONG *value)
@@ -2451,8 +2500,8 @@ static HRESULT WINAPI TextFont_GetKerning(ITextFont *iface, FLOAT *value)
 static HRESULT WINAPI TextFont_SetKerning(ITextFont *iface, FLOAT value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%.2f): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f)\n", This, value);
+    return set_textfont_propf(This, FONT_KERNING, value);
 }
 
 static HRESULT WINAPI TextFont_GetLanguageID(ITextFont *iface, LONG *value)
@@ -2465,8 +2514,8 @@ static HRESULT WINAPI TextFont_GetLanguageID(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetLanguageID(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, value);
+    return set_textfont_propl(This, FONT_LANGID, value);
 }
 
 static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
@@ -2522,8 +2571,8 @@ static HRESULT WINAPI TextFont_GetPosition(ITextFont *iface, FLOAT *value)
 static HRESULT WINAPI TextFont_SetPosition(ITextFont *iface, FLOAT value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%.2f): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f)\n", This, value);
+    return set_textfont_propf(This, FONT_POSITION, value);
 }
 
 static HRESULT WINAPI TextFont_GetProtected(ITextFont *iface, LONG *value)
@@ -2564,8 +2613,8 @@ static HRESULT WINAPI TextFont_GetSize(ITextFont *iface, FLOAT *value)
 static HRESULT WINAPI TextFont_SetSize(ITextFont *iface, FLOAT value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%.2f): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f)\n", This, value);
+    return set_textfont_propf(This, FONT_SIZE, value);
 }
 
 static HRESULT WINAPI TextFont_GetSmallCaps(ITextFont *iface, LONG *value)
@@ -2592,8 +2641,8 @@ static HRESULT WINAPI TextFont_GetSpacing(ITextFont *iface, FLOAT *value)
 static HRESULT WINAPI TextFont_SetSpacing(ITextFont *iface, FLOAT value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%.2f): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f)\n", This, value);
+    return set_textfont_propf(This, FONT_SPACING, value);
 }
 
 static HRESULT WINAPI TextFont_GetStrikeThrough(ITextFont *iface, LONG *value)
@@ -2662,8 +2711,8 @@ static HRESULT WINAPI TextFont_GetWeight(ITextFont *iface, LONG *value)
 static HRESULT WINAPI TextFont_SetWeight(ITextFont *iface, LONG value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%d): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, value);
+    return set_textfont_propl(This, FONT_WEIGHT, value);
 }
 
 static ITextFontVtbl textfontvtbl = {
