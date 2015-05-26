@@ -496,7 +496,17 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 {
     TRACE("devices %p, device_count %p, size %u.\n", devices, device_count, size);
 
-    if (size != sizeof(*devices) || !device_count) return ~0U;
+    if (size != sizeof(*devices))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return ~0U;
+    }
+
+    if (!device_count)
+    {
+        SetLastError(ERROR_NOACCESS);
+        return ~0U;
+    }
 
     if (!devices)
     {
@@ -506,6 +516,7 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 
     if (*device_count < 2)
     {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         *device_count = 2;
         return ~0U;
     }

@@ -1491,21 +1491,19 @@ static void test_GetMouseMovePointsEx(void)
 static void test_GetRawInputDeviceList(void)
 {
     RAWINPUTDEVICELIST devices[32];
-    UINT ret, devcount, odevcount;
+    UINT ret, oret, devcount, odevcount;
     DWORD err;
 
     SetLastError(0xdeadbeef);
     ret = pGetRawInputDeviceList(NULL, NULL, 0);
     err = GetLastError();
     ok(ret == -1, "expected -1, got %d\n", ret);
-todo_wine
     ok(err == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", err);
 
     SetLastError(0xdeadbeef);
     ret = pGetRawInputDeviceList(NULL, NULL, sizeof(devices[0]));
     err = GetLastError();
     ok(ret == -1, "expected -1, got %d\n", ret);
-todo_wine
     ok(err == ERROR_NOACCESS, "expected 998, got %d\n", err);
 
     devcount = 0;
@@ -1518,19 +1516,23 @@ todo_wine
     ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
     err = GetLastError();
     ok(ret == -1, "expected -1, got %d\n", ret);
-todo_wine
     ok(err == ERROR_INSUFFICIENT_BUFFER, "expected 122, got %d\n", err);
     ok(devcount > 0, "expected non-zero\n");
 
-    /* devcount contain now the correct number of devices */
+    /* devcount contains now the correct number of devices */
     ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
     ok(ret > 0, "expected non-zero\n");
 
     /* check if variable changes from larger to smaller value */
     devcount = odevcount = sizeof(devices) / sizeof(devices[0]);
-    ret = pGetRawInputDeviceList(devices, &odevcount, sizeof(devices[0]));
+    oret = ret = pGetRawInputDeviceList(devices, &odevcount, sizeof(devices[0]));
     ok(ret > 0, "expected non-zero\n");
     ok(devcount == odevcount, "expected %d, got %d\n", devcount, odevcount);
+    devcount = odevcount;
+    odevcount = sizeof(devices) / sizeof(devices[0]);
+    ret = pGetRawInputDeviceList(NULL, &odevcount, sizeof(devices[0]));
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(odevcount == oret, "expected %d, got %d\n", oret, odevcount);
 }
 
 static void test_key_map(void)
