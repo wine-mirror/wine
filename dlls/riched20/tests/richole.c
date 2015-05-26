@@ -2746,6 +2746,50 @@ static void test_ITextRange_IsEqual(void)
   ITextSelection_Release(selection);
 }
 
+static void test_Select(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  ITextRange *range;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_Select(range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = 1;
+  hr = ITextSelection_GetStart(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  hr = ITextRange_Select(range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_Select(selection);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_Select(range);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_Select(selection);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextRange_Release(range);
+  ITextSelection_Release(selection);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -2775,4 +2819,5 @@ START_TEST(richole)
   test_SetText();
   test_InRange();
   test_ITextRange_IsEqual();
+  test_Select();
 }

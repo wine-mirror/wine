@@ -1825,11 +1825,14 @@ static HRESULT WINAPI ITextRange_fnIsEqual(ITextRange *me, ITextRange *range, LO
 static HRESULT WINAPI ITextRange_fnSelect(ITextRange *me)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)\n", This);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    ME_SetSelection(This->reOle->editor, This->start, This->end);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnStartOf(ITextRange *me, LONG Unit, LONG Extend,
@@ -4240,11 +4243,14 @@ static HRESULT WINAPI ITextSelection_fnIsEqual(ITextSelection *me, ITextRange *r
 static HRESULT WINAPI ITextSelection_fnSelect(ITextSelection *me)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)\n", This);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    /* nothing to do */
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnStartOf(ITextSelection *me, LONG Unit, LONG Extend,
