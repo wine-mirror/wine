@@ -181,6 +181,9 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg128,
                   "ret")
 
 #elif defined(__powerpc__)
+
+#if !(defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) && __SIZEOF_POINTER__ == 4) \
+ && !(defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8) && __SIZEOF_POINTER__ == 8)
 void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
 {
     void *ret = 0;
@@ -198,13 +201,17 @@ void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
         : "cr0","memory");
     return ret;
 }
+#endif
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
 __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare)
 {
     /* FIXME: add code */
     assert(0);
 }
+#endif
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_cmpxchg( int *dest, int xchg, int compare)
 {
     int ret = 0;
@@ -222,7 +229,9 @@ int interlocked_cmpxchg( int *dest, int xchg, int compare)
         : "cr0","memory","r0");
     return ret;
 }
+#endif
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_xchg_add( int *dest, int incr )
 {
     int ret = 0;
@@ -239,7 +248,9 @@ int interlocked_xchg_add( int *dest, int incr )
     );
     return ret-incr;
 }
+#endif
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 int interlocked_xchg( int* dest, int val )
 {
     int ret = 0;
@@ -253,7 +264,10 @@ int interlocked_xchg( int* dest, int val )
         : "cr0","memory","r0");
     return ret;
 }
+#endif
 
+#if !(defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4) && __SIZEOF_POINTER__ == 4) \
+ && !(defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8) && __SIZEOF_POINTER__ == 8)
 void* interlocked_xchg_ptr( void** dest, void* val )
 {
     void *ret = NULL;
@@ -267,6 +281,7 @@ void* interlocked_xchg_ptr( void** dest, void* val )
         : "cr0","memory","r0");
     return ret;
 }
+#endif
 
 #else
 
