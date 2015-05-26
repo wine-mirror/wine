@@ -541,7 +541,12 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
 
     /* when font is not attached to any range use cache */
     if (!font->range || font->set_cache_enabled) {
-        font->props[propid] = *value;
+        if (propid == FONT_NAME) {
+            SysFreeString(font->props[propid].str);
+            font->props[propid].str = SysAllocString(value->str);
+        }
+        else
+            font->props[propid] = *value;
         return S_OK;
     }
 
@@ -599,6 +604,9 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
         break;
     case FONT_WEIGHT:
         fmt.wWeight = value->l;
+        break;
+    case FONT_NAME:
+        lstrcpynW(fmt.szFaceName, value->str, sizeof(fmt.szFaceName)/sizeof(WCHAR));
         break;
     default:
         FIXME("unhandled font property %d\n", propid);
@@ -2543,8 +2551,12 @@ static HRESULT WINAPI TextFont_GetName(ITextFont *iface, BSTR *value)
 static HRESULT WINAPI TextFont_SetName(ITextFont *iface, BSTR value)
 {
     ITextFontImpl *This = impl_from_ITextFont(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(value));
-    return E_NOTIMPL;
+    textfont_prop_val v;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(value));
+
+    v.str = value;
+    return set_textfont_prop(This, FONT_NAME, &v);
 }
 
 static HRESULT WINAPI TextFont_GetOutline(ITextFont *iface, LONG *value)
