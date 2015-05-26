@@ -1748,14 +1748,36 @@ static HRESULT WINAPI ITextRange_fnSetRange(ITextRange *me, LONG cpActive, LONG 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnInRange(ITextRange *me, ITextRange *pRange, LONG *pb)
+static HRESULT textrange_inrange(LONG start, LONG end, ITextRange *range, LONG *ret)
+{
+    LONG from, to, v;
+
+    if (!ret)
+        ret = &v;
+
+    ITextRange_GetStart(range, &from);
+    ITextRange_GetEnd(range, &to);
+
+    *ret = (start >= from && end <= to) ? tomTrue : tomFalse;
+    return *ret == tomTrue ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI ITextRange_fnInRange(ITextRange *me, ITextRange *range, LONG *ret)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p %p)\n", This, range, ret);
+
+    if (ret)
+        *ret = tomFalse;
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (!range)
+        return S_FALSE;
+
+    return textrange_inrange(This->start, This->end, range, ret);
 }
 
 static HRESULT WINAPI ITextRange_fnInStory(ITextRange *me, ITextRange *pRange, LONG *pb)
@@ -4129,14 +4151,31 @@ static HRESULT WINAPI ITextSelection_fnSetRange(ITextSelection *me, LONG cpActiv
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnInRange(ITextSelection *me, ITextRange *pRange, LONG *pb)
+static HRESULT WINAPI ITextSelection_fnInRange(ITextSelection *me, ITextRange *range, LONG *ret)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextSelection *selection = NULL;
+    LONG start, end;
+
+    TRACE("(%p)->(%p %p)\n", This, range, ret);
+
+    if (ret)
+        *ret = tomFalse;
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!range)
+        return S_FALSE;
+
+    ITextRange_QueryInterface(range, &IID_ITextSelection, (void**)&selection);
+    if (!selection)
+        return S_FALSE;
+    ITextSelection_Release(selection);
+
+    ITextSelection_GetStart(me, &start);
+    ITextSelection_GetEnd(me, &end);
+    return textrange_inrange(start, end, range, ret);
 }
 
 static HRESULT WINAPI ITextSelection_fnInStory(ITextSelection *me, ITextRange *pRange, LONG *pb)
