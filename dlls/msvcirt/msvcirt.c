@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#include "msvcirt.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -37,27 +38,6 @@ typedef struct {
 typedef struct {
     LPVOID VTable;
 } class_strstreambuf;
-
-#ifdef __i386__  /* thiscall functions are i386-specific */
-
-#define THISCALL(func) __thiscall_ ## func
-#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define __thiscall __stdcall
-#define DEFINE_THISCALL_WRAPPER(func,args) \
-    extern void THISCALL(func)(void); \
-    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
-                      "popl %eax\n\t" \
-                      "pushl %ecx\n\t" \
-                      "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
-#else /* __i386__ */
-
-#define THISCALL(func) func
-#define THISCALL_NAME(func) __ASM_NAME(#func)
-#define __thiscall __cdecl
-#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
-
-#endif /* __i386__ */
 
 /******************************************************************
  *		 ??1ios@@UAE@XZ (MSVCRTI.@)
@@ -156,6 +136,22 @@ char * __thiscall MSVCIRT_str_sl_void(class_strstreambuf * _this)
    return 0;
 }
 
+void (__cdecl *MSVCRT_operator_delete)(void*);
+
+static void init_cxx_funcs(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
+    {
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
+    }
+    else
+    {
+        MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
+    }
+}
+
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
    switch (reason)
@@ -163,6 +159,8 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
    case DLL_WINE_PREATTACH:
        return FALSE;  /* prefer native version */
    case DLL_PROCESS_ATTACH:
+       init_cxx_funcs();
+       init_exception(inst);
        DisableThreadLibraryCalls( inst );
        break;
    }

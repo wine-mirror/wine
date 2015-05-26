@@ -78,10 +78,10 @@
 @ stub -arch=win64 ??0istrstream@@QEAA@PEAD@Z
 @ stub -arch=win32 ??0istrstream@@QAE@PADH@Z
 @ stub -arch=win64 ??0istrstream@@QEAA@PEADH@Z
-@ stub -arch=win32 ??0logic_error@@QAE@ABQBD@Z
-@ stub -arch=win64 ??0logic_error@@QEAA@AEBQEBD@Z
-@ stub -arch=win32 ??0logic_error@@QAE@ABV0@@Z
-@ stub -arch=win64 ??0logic_error@@QEAA@AEBV0@@Z
+@ thiscall -arch=win32 ??0logic_error@@QAE@ABQBD@Z(ptr ptr) msvcirt.??0logic_error@@QAE@ABQBD@Z
+@ cdecl -arch=win64 ??0logic_error@@QEAA@AEBQEBD@Z(ptr ptr) msvcirt.??0logic_error@@QEAA@AEBQEBD@Z
+@ thiscall -arch=win32 ??0logic_error@@QAE@ABV0@@Z(ptr ptr) msvcirt.??0logic_error@@QAE@ABV0@@Z
+@ cdecl -arch=win64 ??0logic_error@@QEAA@AEBV0@@Z(ptr ptr) msvcirt.??0logic_error@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0ofstream@@QAE@ABV0@@Z
 @ stub -arch=win64 ??0ofstream@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0ofstream@@QAE@H@Z
@@ -166,8 +166,8 @@
 @ stub -arch=win64 ??1istream_withassign@@UEAA@XZ
 @ stub -arch=win32 ??1istrstream@@UAE@XZ
 @ stub -arch=win64 ??1istrstream@@UEAA@XZ
-@ stub -arch=win32 ??1logic_error@@UAE@XZ
-@ stub -arch=win64 ??1logic_error@@UEAA@XZ
+@ thiscall -arch=win32 ??1logic_error@@UAE@XZ(ptr) msvcirt.??1logic_error@@UAE@XZ
+@ cdecl -arch=win64 ??1logic_error@@UEAA@XZ(ptr) msvcirt.??1logic_error@@UEAA@XZ
 @ stub -arch=win32 ??1ofstream@@UAE@XZ
 @ stub -arch=win64 ??1ofstream@@UEAA@XZ
 @ stub -arch=win32 ??1ostream@@UAE@XZ
@@ -226,8 +226,8 @@
 @ stub -arch=win64 ??4istream_withassign@@QEAAAEAVistream@@PEAVstreambuf@@@Z
 @ stub -arch=win32 ??4istrstream@@QAEAAV0@ABV0@@Z
 @ stub -arch=win64 ??4istrstream@@QEAAAEAV0@AEBV0@@Z
-@ stub -arch=win32 ??4logic_error@@QAEAAV0@ABV0@@Z
-@ stub -arch=win64 ??4logic_error@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=win32 ??4logic_error@@QAEAAV0@ABV0@@Z(ptr ptr) msvcirt.??4logic_error@@QAEAAV0@ABV0@@Z
+@ cdecl -arch=win64 ??4logic_error@@QEAAAEAV0@AEBV0@@Z(ptr ptr) msvcirt.??4logic_error@@QEAAAEAV0@AEBV0@@Z
 @ stub -arch=win32 ??4ofstream@@QAEAAV0@ABV0@@Z
 @ stub -arch=win64 ??4ofstream@@QEAAAEAV0@AEBV0@@Z
 @ stub -arch=win32 ??4ostream@@IAEAAV0@ABV0@@Z
@@ -346,7 +346,7 @@
 # @ extern ??_7istream@@6B@
 # @ extern ??_7istream_withassign@@6B@
 # @ extern ??_7istrstream@@6B@
-# @ extern ??_7logic_error@@6B@
+@ extern ??_7logic_error@@6B@ msvcirt.??_7logic_error@@6B@
 # @ extern ??_7ofstream@@6B@
 # @ extern ??_7ostream@@6B@
 # @ extern ??_7ostream_withassign@@6B@
@@ -409,7 +409,7 @@
 @ stub -arch=win32 ??_Eistream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Eistream_withassign@@UAEPAXI@Z
 @ stub -arch=win32 ??_Eistrstream@@UAEPAXI@Z
-@ stub -arch=win32 ??_Elogic_error@@UAEPAXI@Z
+@ thiscall -arch=win32 ??_Elogic_error@@UAEPAXI@Z(ptr long) msvcirt.??_Elogic_error@@UAEPAXI@Z
 @ stub -arch=win32 ??_Eofstream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Eostream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Eostream_withassign@@UAEPAXI@Z
@@ -432,7 +432,7 @@
 @ stub -arch=win32 ??_Gistream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Gistream_withassign@@UAEPAXI@Z
 @ stub -arch=win32 ??_Gistrstream@@UAEPAXI@Z
-@ stub -arch=win32 ??_Glogic_error@@UAEPAXI@Z
+@ thiscall -arch=win32 ??_Glogic_error@@UAEPAXI@Z(ptr long) msvcirt.??_Glogic_error@@UAEPAXI@Z
 @ stub -arch=win32 ??_Gofstream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Gostream@@UAEPAXI@Z
 @ stub -arch=win32 ??_Gostream_withassign@@UAEPAXI@Z
