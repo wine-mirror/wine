@@ -37,6 +37,8 @@ static HMODULE hmoduleRichEdit;
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
+static const WCHAR sysW[] = {'S','y','s','t','e','m',0};
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -1808,9 +1810,259 @@ static void test_detached_font_getters(ITextFont *font, BOOL duplicate)
   ok(hr == hrexp, "got 0x%08x\n", hr);
 }
 
+static void test_textfont_global_defaults(ITextFont *font)
+{
+  float valuef;
+  LONG value;
+  HRESULT hr;
+  BSTR str;
+
+  value = tomUndefined;
+  hr = ITextFont_GetAllCaps(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetAnimation(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetBackColor(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomAutoColor, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetBold(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse || value == tomTrue, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetEmboss(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetForeColor(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomAutoColor, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetHidden(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetEngrave(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  valuef = 1.0;
+  hr = ITextFont_GetKerning(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == 0.0, "got %.2f\n", valuef);
+
+  value = tomUndefined;
+  hr = ITextFont_GetLanguageID(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == GetSystemDefaultLCID(), "got %d\n", value);
+
+  str = NULL;
+  hr = ITextFont_GetName(font, &str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(!lstrcmpW(sysW, str), "%s\n", wine_dbgstr_w(str));
+  SysFreeString(str);
+
+  value = tomUndefined;
+  hr = ITextFont_GetOutline(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  valuef = 1.0;
+  hr = ITextFont_GetPosition(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == 0.0, "got %.2f\n", valuef);
+
+  value = tomUndefined;
+  hr = ITextFont_GetProtected(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetShadow(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  valuef = 0.0;
+  hr = ITextFont_GetSize(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef >= 0.0, "got %.2f\n", valuef);
+
+  value = tomUndefined;
+  hr = ITextFont_GetSmallCaps(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  valuef = 1.0;
+  hr = ITextFont_GetSpacing(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == 0.0, "got %.2f\n", valuef);
+
+  value = tomUndefined;
+  hr = ITextFont_GetStrikeThrough(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetSubscript(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetSuperscript(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetUnderline(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  value = tomUndefined;
+  hr = ITextFont_GetWeight(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == FW_NORMAL || value == FW_BOLD, "got %d\n", value);
+}
+
+static void test_textfont_undefined(ITextFont *font)
+{
+  float valuef;
+  LONG value;
+  HRESULT hr;
+
+  value = tomFalse;
+  hr = ITextFont_GetAllCaps(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetAnimation(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetBackColor(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetBold(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetEmboss(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetForeColor(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetHidden(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetEngrave(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  valuef = 0.0;
+  hr = ITextFont_GetKerning(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == tomUndefined, "got %.2f\n", valuef);
+
+  value = tomFalse;
+  hr = ITextFont_GetLanguageID(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetOutline(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  valuef = 0.0;
+  hr = ITextFont_GetPosition(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == tomUndefined, "got %.2f\n", valuef);
+
+  value = tomFalse;
+  hr = ITextFont_GetProtected(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetShadow(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  valuef = 0.0;
+  hr = ITextFont_GetSize(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == tomUndefined, "got %.2f\n", valuef);
+
+  value = tomFalse;
+  hr = ITextFont_GetSmallCaps(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  valuef = 0.0;
+  hr = ITextFont_GetSpacing(font, &valuef);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(valuef == tomUndefined, "got %.2f\n", valuef);
+
+  value = tomFalse;
+  hr = ITextFont_GetStrikeThrough(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetSubscript(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetSuperscript(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetUnderline(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+
+  value = tomFalse;
+  hr = ITextFont_GetWeight(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUndefined, "got %d\n", value);
+}
+
 static void test_ITextFont(void)
 {
-  static const WCHAR sysW[] = {'S','y','s','t','e','m',0};
   static const WCHAR arialW[] = {'A','r','i','a','l',0};
   static const CHAR test_text1[] = "TestSomeText";
   ITextFont *font, *font2, *font3;
@@ -1885,10 +2137,11 @@ static void test_ITextFont(void)
   hr = ITextFont_GetDuplicate(font, NULL);
   ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+  EXPECT_REF(range, 2);
   font2 = NULL;
   hr = ITextFont_GetDuplicate(font, &font2);
-todo_wine
   ok(hr == S_OK, "got 0x%08x\n", hr);
+  EXPECT_REF(range, 2);
 
   /* set whole range to italic */
   cf.cbSize = sizeof(CHARFORMAT2A);
@@ -1905,7 +2158,6 @@ todo_wine
   ok(value == tomTrue, "got %d\n", value);
 
   /* duplicate retains original value */
-if (font2) {
   value = tomTrue;
   hr = ITextFont_GetItalic(font2, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1915,7 +2167,7 @@ if (font2) {
   hr = ITextFont_GetDuplicate(font2, &font3);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ITextFont_Release(font3);
-}
+
   ITextRange_Release(range);
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 
@@ -1923,7 +2175,6 @@ if (font2) {
   ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
   test_detached_font_getters(font, FALSE);
-if (font2) {
   test_detached_font_getters(font2, TRUE);
 
   /* get a duplicate of detached font */
@@ -1937,17 +2188,22 @@ if (font2) {
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value != tomUndefined, "got %d\n", value);
 
-  /* reset to undefined for attached font */
+  /* reset to undefined for deatached font */
   hr = ITextFont_Reset(font2, tomUndefined);
   ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_undefined(font2);
 
-  value = tomTrue;
-  hr = ITextFont_GetBold(font2, &value);
+  /* font is detached, default means global TOM defaults */
+  hr = ITextFont_Reset(font2, tomDefault);
   ok(hr == S_OK, "got 0x%08x\n", hr);
-  ok(value == tomUndefined, "got %d\n", value);
+  test_textfont_global_defaults(font2);
 
+  hr = ITextFont_GetDuplicate(font2, &font3);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  test_textfont_global_defaults(font3);
+
+  ITextFont_Release(font3);
   ITextFont_Release(font2);
-}
 
   font2 = (void*)0xdeadbeef;
   hr = ITextFont_GetDuplicate(font, &font2);
@@ -2011,10 +2267,19 @@ static void test_Delete(void)
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value == 4, "got %d\n", value);
 
-  hr = ITextRange_Delete(range2, tomCharacter, 0, NULL);
-todo_wine
+  /* unit type doesn't matter is count is 0 */
+  value = 0;
+  hr = ITextRange_Delete(range2, tomSentence, 0, &value);
+todo_wine {
   ok(hr == S_OK, "got 0x%08x\n", hr);
-
+  ok(value == 1, "got %d\n", value);
+}
+  value = 1;
+  hr = ITextRange_Delete(range2, tomCharacter, 0, &value);
+todo_wine {
+  ok(hr == S_FALSE, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+}
   hr = ITextRange_GetEnd(range, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
