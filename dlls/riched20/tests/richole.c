@@ -2401,6 +2401,92 @@ todo_wine
   release_interfaces(&hwnd, &reOle, &doc, NULL);
 }
 
+static void test_SetText(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  static const WCHAR textW[] = {'a','b','c','d','e','f','g','h','i',0};
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range, *range2;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+  BSTR str;
+
+  create_interfaces(&hwnd, &reOle, &doc, NULL);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = 1;
+  hr = ITextRange_GetStart(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  value = 0;
+  hr = ITextRange_GetEnd(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 4, "got %d\n", value);
+
+  hr = ITextRange_SetText(range, NULL);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = 1;
+  hr = ITextRange_GetEnd(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  str = SysAllocString(textW);
+  hr = ITextRange_SetText(range, str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = 1;
+  hr = ITextRange_GetStart(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  value = 0;
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 9, "got %d\n", value);
+
+  value = 1;
+  hr = ITextRange_GetStart(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  value = 0;
+  hr = ITextRange_GetEnd(range2, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+
+  str = SysAllocStringLen(NULL, 0);
+  hr = ITextRange_SetText(range, str);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  value = 1;
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+  SysFreeString(str);
+
+  ITextRange_Release(range2);
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_SetText(range, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  str = SysAllocStringLen(NULL, 0);
+  hr = ITextRange_SetText(range, str);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+  SysFreeString(str);
+
+  ITextRange_Release(range);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -2427,4 +2513,5 @@ START_TEST(richole)
   test_dispatch();
   test_ITextFont();
   test_Delete();
+  test_SetText();
 }

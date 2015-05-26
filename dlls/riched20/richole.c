@@ -201,6 +201,10 @@ typedef union {
     BSTR  str;
 } textfont_prop_val;
 
+enum range_update_op {
+    RANGE_UPDATE_DELETE
+};
+
 typedef struct IRichEditOleImpl {
     IUnknown IUnknown_inner;
     IRichEditOle IRichEditOle_iface;
@@ -303,6 +307,35 @@ static inline ITextParaImpl *impl_from_ITextPara(ITextPara *iface)
 
 static HRESULT create_textfont(ITextRange*, const ITextFontImpl*, ITextFont**);
 static HRESULT create_textpara(ITextRange*, ITextPara**);
+
+static void textranges_update_ranges(IRichEditOleImpl *reole, LONG start, LONG end, enum range_update_op op)
+{
+    ITextRangeImpl *range;
+
+    LIST_FOR_EACH_ENTRY(range, &reole->rangelist, ITextRangeImpl, entry) {
+        switch (op)
+        {
+        case RANGE_UPDATE_DELETE:
+            /* range fully covered by deleted range - collapse to insertion point */
+            if (range->start >= start && range->end <= end)
+                range->start = range->end = start;
+            /* deleted range cuts from the right */
+            else if (range->start < start && range->end <= end)
+                range->end = start;
+            /* deleted range cuts from the left */
+            else if (range->start >= start && range->end > end) {
+                range->start = start;
+                range->end -= end - start;
+            }
+            /* deleted range cuts within */
+            else
+                range->end -= end - start;
+            break;
+        default:
+            FIXME("unknown update op, %d\n", op);
+        }
+    }
+}
 
 static inline BOOL is_equal_textfont_prop_value(enum textfont_prop_id propid, textfont_prop_val *left,
     textfont_prop_val *right)
@@ -1376,14 +1409,48 @@ static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *pbstr)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR bstr)
+static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+    ME_TextEditor *editor;
+    ME_Cursor cursor;
+    ME_Style *style;
+    int len;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(str));
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    editor = This->reOle->editor;
+
+    /* delete only where's something to delete */
+    if (This->start != This->end) {
+        ME_CursorFromCharOfs(editor, This->start, &cursor);
+        ME_InternalDeleteText(editor, &cursor, This->end - This->start, FALSE);
+    }
+
+    if (!str || !*str) {
+        /* will update this range as well */
+        textranges_update_ranges(This->reOle, This->start, This->end, RANGE_UPDATE_DELETE);
+        return S_OK;
+    }
+
+    /* it's safer not to rely on stored BSTR length */
+    len = strlenW(str);
+    cursor = editor->pCursors[0];
+    ME_CursorFromCharOfs(editor, This->start, &editor->pCursors[0]);
+    style = ME_GetInsertStyle(editor, 0);
+    ME_InsertTextFromCursor(editor, 0, str, len, style);
+    ME_ReleaseStyle(style);
+    editor->pCursors[0] = cursor;
+
+    if (len < This->end - This->start)
+        textranges_update_ranges(This->reOle, This->start + len, This->end, RANGE_UPDATE_DELETE);
+    else
+        This->end = len - This->start;
+
+    return S_OK;
 }
 
 static HRESULT range_GetChar(ME_TextEditor *editor, ME_Cursor *cursor, LONG *pch)
