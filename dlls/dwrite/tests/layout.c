@@ -990,6 +990,7 @@ static void test_typography(void)
 
 static void test_GetClusterMetrics(void)
 {
+    static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[4];
@@ -1096,8 +1097,49 @@ todo_wine
     ok(inline_metrics.width > 0.0 && inline_metrics.width == metrics[0].width, "got %.2f, expected %.2f\n",
         inline_metrics.width, metrics[0].width);
 
-    IDWriteInlineObject_Release(trimm);
     IDWriteTextLayout_Release(layout);
+
+    /* text with non-visual control codes */
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 3, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* bidi control codes take a separate cluster */
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 3, "got %u\n", count);
+
+todo_wine
+    ok(metrics[0].width == 0.0, "got %.2f\n", metrics[0].width);
+    ok(metrics[0].length == 1, "got %d\n", metrics[0].length);
+    ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
+    ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+    ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
+    ok(metrics[0].isSoftHyphen == 0, "got %d\n", metrics[0].isSoftHyphen);
+    ok(metrics[0].isRightToLeft == 0, "got %d\n", metrics[0].isRightToLeft);
+
+todo_wine
+    ok(metrics[1].width == 0.0, "got %.2f\n", metrics[1].width);
+    ok(metrics[1].length == 1, "got %d\n", metrics[1].length);
+    ok(metrics[1].canWrapLineAfter == 0, "got %d\n", metrics[1].canWrapLineAfter);
+    ok(metrics[1].isWhitespace == 0, "got %d\n", metrics[1].isWhitespace);
+    ok(metrics[1].isNewline == 0, "got %d\n", metrics[1].isNewline);
+    ok(metrics[1].isSoftHyphen == 0, "got %d\n", metrics[1].isSoftHyphen);
+    ok(metrics[1].isRightToLeft == 0, "got %d\n", metrics[1].isRightToLeft);
+
+    ok(metrics[2].width > 0.0, "got %.2f\n", metrics[2].width);
+    ok(metrics[2].length == 1, "got %d\n", metrics[2].length);
+todo_wine
+    ok(metrics[2].canWrapLineAfter == 1, "got %d\n", metrics[2].canWrapLineAfter);
+    ok(metrics[2].isWhitespace == 0, "got %d\n", metrics[2].isWhitespace);
+    ok(metrics[2].isNewline == 0, "got %d\n", metrics[2].isNewline);
+    ok(metrics[2].isSoftHyphen == 0, "got %d\n", metrics[2].isSoftHyphen);
+    ok(metrics[2].isRightToLeft == 0, "got %d\n", metrics[2].isRightToLeft);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteInlineObject_Release(trimm);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
