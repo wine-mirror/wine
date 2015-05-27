@@ -121,10 +121,12 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     /* Save normal registers */
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
     C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
 #undef C
 
     context->ContextFlags = CONTEXT_FULL;
+    context->Fp     = FP_sig(sigcontext);     /* Frame pointer */
+    context->Lr     = LR_sig(sigcontext);     /* Link register */
     context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
     context->Pc     = PC_sig(sigcontext);     /* Program Counter */
     context->PState = PSTATE_sig(sigcontext); /* Current State Register */
@@ -142,9 +144,11 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     /* Restore normal registers */
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
     C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
 #undef C
 
+    FP_sig(sigcontext)     = context->Fp;     /* Frame pointer */
+    LR_sig(sigcontext)     = context->Lr;     /* Link register */
     SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
     PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
     PSTATE_sig(sigcontext) = context->PState; /* Current State Register */
@@ -201,6 +205,8 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     flags &= ~CONTEXT_ARM64;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
+        to->Fp      = from->Fp;
+        to->Lr      = from->Lr;
         to->Sp      = from->Sp;
         to->Pc      = from->Pc;
         to->PState  = from->PState;
@@ -211,7 +217,7 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
     /* Restore normal registers */
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
     C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
 #undef C
     }
 }
@@ -231,6 +237,8 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     if (flags & CONTEXT_CONTROL)
     {
         to->flags |= SERVER_CTX_CONTROL;
+        to->integer.arm64_regs.x[29] = from->Fp;
+        to->integer.arm64_regs.x[30] = from->Lr;
         to->ctl.arm64_regs.sp     = from->Sp;
         to->ctl.arm64_regs.pc     = from->Pc;
         to->ctl.arm64_regs.pstate = from->PState;
@@ -242,7 +250,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     /* Restore normal registers */
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
     C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
 #undef C
     }
     return STATUS_SUCCESS;
@@ -262,6 +270,8 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= CONTEXT_CONTROL;
+        to->Fp     = from->integer.arm64_regs.x[29];
+        to->Lr     = from->integer.arm64_regs.x[30];
         to->Sp     = from->ctl.arm64_regs.sp;
         to->Pc     = from->ctl.arm64_regs.pc;
         to->PState = from->ctl.arm64_regs.pstate;
@@ -273,7 +283,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     /* Restore normal registers */
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9);
     C(10); C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19);
-    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+    C(20); C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28);
 #undef C
      }
     return STATUS_SUCCESS;
