@@ -1331,6 +1331,10 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_BORLAND:	str = "BORLAND"; 	break;
     case IMAGE_DEBUG_TYPE_RESERVED10:	str = "RESERVED10"; 	break;
     case IMAGE_DEBUG_TYPE_CLSID:	str = "CLSID"; 	break;
+    case IMAGE_DEBUG_TYPE_VC_FEATURE:  str = "VC_FEATURE"; break;
+    case IMAGE_DEBUG_TYPE_POGO:        str = "POGO";       break;
+    case IMAGE_DEBUG_TYPE_ILTCG:       str = "ILTCG";      break;
+    case IMAGE_DEBUG_TYPE_MPX:         str = "MPX";        break;
     }
     printf("  Type:              %u (%s)\n", idd->Type, str);
     printf("  SizeOfData:        %u\n", idd->SizeOfData);
@@ -1363,20 +1367,7 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
 	printf("    Data:              %s\n", misc->Data);
     }
     break;
-    case IMAGE_DEBUG_TYPE_EXCEPTION:
-	break;
-    case IMAGE_DEBUG_TYPE_FIXUP:
-	break;
-    case IMAGE_DEBUG_TYPE_OMAP_TO_SRC:
-	break;
-    case IMAGE_DEBUG_TYPE_OMAP_FROM_SRC:
-	break;
-    case IMAGE_DEBUG_TYPE_BORLAND:
-	break;
-    case IMAGE_DEBUG_TYPE_RESERVED10:
-	break;
-    case IMAGE_DEBUG_TYPE_CLSID:
-	break;
+    default: break;
     }
     printf("\n");
 }

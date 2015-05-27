@@ -3531,6 +3531,10 @@ typedef struct _IMAGE_DEBUG_DIRECTORY {
 #define IMAGE_DEBUG_TYPE_BORLAND        9
 #define IMAGE_DEBUG_TYPE_RESERVED10    10
 #define IMAGE_DEBUG_TYPE_CLSID         11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE    12
+#define IMAGE_DEBUG_TYPE_POGO          13
+#define IMAGE_DEBUG_TYPE_ILTCG         14
+#define IMAGE_DEBUG_TYPE_MPX           15
 
 typedef enum ReplacesCorHdrNumericDefines
 {
