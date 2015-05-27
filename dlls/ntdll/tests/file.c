@@ -297,9 +297,10 @@ static void create_file_test(void)
 
 static void open_file_test(void)
 {
+    static const WCHAR fooW[] = {'f','o','o',0};
     NTSTATUS status;
-    HANDLE dir, root, handle;
-    WCHAR path[MAX_PATH];
+    HANDLE dir, root, handle, file;
+    WCHAR path[MAX_PATH], tmpfile[MAX_PATH];
     BYTE data[1024];
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -426,6 +427,33 @@ static void open_file_test(void)
 
     CloseHandle( dir );
     CloseHandle( root );
+
+    GetTempPathW( MAX_PATH, path );
+    GetTempFileNameW( path, fooW, 0, tmpfile );
+    pRtlDosPathNameToNtPathName_U( tmpfile, &nameW, NULL, NULL );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    status = pNtOpenFile( &file, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
+                         FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
+
+    nameW.Length = 0;
+    nameW.Buffer = NULL;
+    attr.RootDirectory = file;
+    attr.ObjectName = &nameW;
+    status = pNtOpenFile( &root, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
+                          FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT );
+    todo_wine ok( !status, "open %s failed %x\n", wine_dbgstr_w(tmpfile), status );
+
+    CloseHandle( file );
+    CloseHandle( root );
+    DeleteFileW( tmpfile );
 }
 
 static void delete_file_test(void)
