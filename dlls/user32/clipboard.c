@@ -61,8 +61,6 @@ typedef struct
 {
     HWND hWndOpen;
     HWND hWndOwner;
-    HWND hWndViewer;
-    UINT seqno;
     UINT flags;
 } CLIPBOARDINFO, *LPCLIPBOARDINFO;
 
@@ -111,8 +109,6 @@ static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
         {
             cbInfo->hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
             cbInfo->hWndOwner = wine_server_ptr_handle( reply->old_owner );
-            cbInfo->hWndViewer = wine_server_ptr_handle( reply->old_viewer );
-            cbInfo->seqno = reply->seqno;
             cbInfo->flags = reply->flags;
         }
     }
@@ -147,45 +143,6 @@ BOOL CLIPBOARD_ReleaseOwner(void)
     return bRet;
 }
 
-
-/**************************************************************************
- *		CLIPBOARD_OpenClipboard
- */
-static BOOL CLIPBOARD_OpenClipboard(HWND hWnd)
-{
-    BOOL bRet;
-
-    SERVER_START_REQ( set_clipboard_info )
-    {
-        req->flags = SET_CB_OPEN;
-        req->clipboard = wine_server_user_handle( hWnd );
-        bRet = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return bRet;
-}
-
-
-/**************************************************************************
- *		CLIPBOARD_CloseClipboard
- */
-static BOOL CLIPBOARD_CloseClipboard(void)
-{
-    BOOL bRet;
-
-    TRACE(" Changed=%d\n", bCBHasChanged);
-
-    SERVER_START_REQ( set_clipboard_info )
-    {
-        req->flags = SET_CB_CLOSE;
-        if (bCBHasChanged) req->flags |= SET_CB_SEQNO;
-        bRet = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    return bRet;
-}
 
 /**************************************************************************
  *		CLIPBOARD_SetClipboardViewer
@@ -259,7 +216,13 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 
     TRACE("(%p)...\n", hWnd);
 
-    bRet = CLIPBOARD_OpenClipboard(hWnd);
+    SERVER_START_REQ( set_clipboard_info )
+    {
+        req->flags = SET_CB_OPEN;
+        req->clipboard = wine_server_user_handle( hWnd );
+        bRet = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
 
     TRACE(" returning %i\n", bRet);
 
@@ -272,28 +235,29 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
  */
 BOOL WINAPI CloseClipboard(void)
 {
-    BOOL bRet = FALSE;
+    HWND viewer = 0;
+    BOOL ret;
 
     TRACE("() Changed=%d\n", bCBHasChanged);
 
-    if (CLIPBOARD_CloseClipboard())
+    SERVER_START_REQ( set_clipboard_info )
     {
-        if (bCBHasChanged)
-        {
-            HWND hWndViewer = GetClipboardViewer();
-
-            USER_Driver->pEndClipboardUpdate();
-
-            bCBHasChanged = FALSE;
-
-            if (hWndViewer)
-                SendNotifyMessageW(hWndViewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
-        }
-
-        bRet = TRUE;
+        req->flags = SET_CB_CLOSE;
+        if (bCBHasChanged) req->flags |= SET_CB_SEQNO;
+        if ((ret = !wine_server_call_err( req )))
+            viewer = wine_server_ptr_handle( reply->old_viewer );
     }
+    SERVER_END_REQ;
 
-    return bRet;
+    if (!ret) return FALSE;
+
+    if (bCBHasChanged)
+    {
+        USER_Driver->pEndClipboardUpdate();
+        bCBHasChanged = FALSE;
+        if (viewer) SendNotifyMessageW(viewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
+    }
+    return TRUE;
 }
 
 
@@ -326,7 +290,7 @@ BOOL WINAPI EmptyClipboard(void)
      * this before acquiring the selection so that when we do acquire the
      * selection and the selection loser gets notified, it can check if
      * it has lost the Wine clipboard ownership. If it did then it knows
-     * that a WM_DESTORYCLIPBOARD has already been sent. Otherwise it
+     * that a WM_DESTROYCLIPBOARD has already been sent. Otherwise it
      * lost the selection to a X app and it should send the
      * WM_DESTROYCLIPBOARD itself. */
     CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
