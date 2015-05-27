@@ -683,7 +683,7 @@ static void test_ITextRange_GetChar(void)
   ITextDocument *txtDoc = NULL;
   ITextRange *txtRge = NULL;
   HRESULT hres;
-  LONG pch = 0xdeadbeef;
+  LONG pch;
   int first, lim;
   static const CHAR test_text1[] = "TestSomeText";
 
@@ -742,8 +742,16 @@ static void test_ITextRange_GetChar(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetChar(txtRge, NULL);
   ok(hres == E_INVALIDARG, "ITextRange_GetChar\n");
-  ITextRange_Release(txtRge);
+
   release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextRange_GetChar(txtRge, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetChar(txtRge, &pch);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextRange_Release(txtRge);
 }
 
 static void test_ITextSelection_GetChar(void)
@@ -753,7 +761,7 @@ static void test_ITextSelection_GetChar(void)
   ITextDocument *txtDoc = NULL;
   ITextSelection *txtSel = NULL;
   HRESULT hres;
-  LONG pch = 0xdeadbeef;
+  LONG pch;
   int first, lim;
   static const CHAR test_text1[] = "TestSomeText";
 
@@ -791,7 +799,15 @@ static void test_ITextSelection_GetChar(void)
   hres = ITextSelection_GetChar(txtSel, NULL);
   ok(hres == E_INVALIDARG, "ITextSelection_GetChar\n");
 
-  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextSelection_GetChar(txtSel, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_GetChar(txtSel, &pch);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextSelection_Release(txtSel);
 }
 
 static void test_ITextRange_GetStart_GetEnd(void)

@@ -1468,9 +1468,11 @@ static HRESULT WINAPI ITextRange_fnGetChar(ITextRange *me, LONG *pch)
     ITextRangeImpl *This = impl_from_ITextRange(me);
     ME_Cursor cursor;
 
+    TRACE("(%p)->(%p)\n", This, pch);
+
     if (!This->reOle)
         return CO_E_RELEASED;
-    TRACE("%p\n", pch);
+
     if (!pch)
         return E_INVALIDARG;
 
@@ -3934,9 +3936,11 @@ static HRESULT WINAPI ITextSelection_fnGetChar(ITextSelection *me, LONG *pch)
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
     ME_Cursor *start = NULL, *end = NULL;
 
+    TRACE("(%p)->(%p)\n", This, pch);
+
     if (!This->reOle)
         return CO_E_RELEASED;
-    TRACE("%p\n", pch);
+
     if (!pch)
         return E_INVALIDARG;
 
