@@ -2111,11 +2111,17 @@ static void test_textfont_undefined(ITextFont *font)
   ok(value == tomUndefined, "got %d\n", value);
 }
 
+static inline FLOAT twips_to_points(LONG value)
+{
+  return value * 72.0 / 1440;
+}
+
 static void test_ITextFont(void)
 {
   static const WCHAR arialW[] = {'A','r','i','a','l',0};
   static const CHAR test_text1[] = "TestSomeText";
   ITextFont *font, *font2, *font3;
+  FLOAT size, position, kerning;
   IRichEditOle *reOle = NULL;
   ITextDocument *doc = NULL;
   ITextRange *range = NULL;
@@ -2137,6 +2143,38 @@ static void test_ITextFont(void)
 
   hr = ITextFont_GetName(font, NULL);
   ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  /* default font size unit is point */
+  size = 0.0;
+  hr = ITextFont_GetSize(font, &size);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  /* set to some non-zero values */
+  hr = ITextFont_SetPosition(font, 20.0);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_SetKerning(font, 10.0);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  position = 0.0;
+  hr = ITextFont_GetPosition(font, &position);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  kerning = 0.0;
+  hr = ITextFont_GetKerning(font, &kerning);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  memset(&cf, 0, sizeof(cf));
+  cf.cbSize = sizeof(cf);
+  cf.dwMask = CFM_SIZE|CFM_OFFSET|CFM_KERNING;
+
+  /* CHARFORMAT members are in twips */
+  SendMessageA(hwnd, EM_SETSEL, 0, 10);
+  ret = SendMessageA(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  ok(ret, "got %d\n", ret);
+  ok(size == twips_to_points(cf.yHeight), "got yHeight %d, size %.2f\n", cf.yHeight, size);
+  ok(position == twips_to_points(cf.yOffset), "got yOffset %d, position %.2f\n", cf.yOffset, position);
+  ok(kerning == twips_to_points(cf.wKerning), "got wKerning %d, kerning %.2f\n", cf.wKerning, kerning);
 
   /* default font name */
   str = NULL;

@@ -416,6 +416,11 @@ static inline void init_textfont_prop_value(enum textfont_prop_id propid, textfo
     }
 }
 
+static inline FLOAT twips_to_points(LONG value)
+{
+    return value * 72.0 / 1440;
+}
+
 static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos, enum textfont_prop_id propid,
     textfont_prop_val *value)
 {
@@ -459,7 +464,7 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
         value->l = fmt.dwEffects & CFE_AUTOCOLOR ? GetSysColor(COLOR_WINDOWTEXT) : fmt.crTextColor;
         break;
     case FONT_KERNING:
-        value->f = fmt.wKerning;
+        value->f = twips_to_points(fmt.wKerning);
         break;
     case FONT_LANGID:
         value->l = fmt.lcid;
@@ -471,10 +476,10 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
             return E_OUTOFMEMORY;
         break;
     case FONT_POSITION:
-        value->f = fmt.yOffset;
+        value->f = twips_to_points(fmt.yOffset);
         break;
     case FONT_SIZE:
-        value->f = fmt.yHeight;
+        value->f = twips_to_points(fmt.yHeight);
         break;
     case FONT_SPACING:
         value->f = fmt.sSpacing;
