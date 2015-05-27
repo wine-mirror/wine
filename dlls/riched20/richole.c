@@ -2445,6 +2445,9 @@ static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
             This->set_cache_enabled = FALSE;
             textfont_apply_range_props(This);
             break;
+        case tomUsePoints:
+        case tomUseTwips:
+            return E_INVALIDARG;
         default:
             FIXME("reset mode %d not supported\n", value);
         }
@@ -2467,6 +2470,9 @@ static HRESULT WINAPI TextFont_Reset(ITextFont *iface, LONG value)
         case tomTrackParms:
         case tomCacheParms:
             return S_OK;
+        case tomUsePoints:
+        case tomUseTwips:
+            return E_INVALIDARG;
         }
     }
 

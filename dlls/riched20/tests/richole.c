@@ -2141,6 +2141,12 @@ static void test_ITextFont(void)
   hr = ITextRange_GetFont(range, &font);
   ok(hr == S_OK, "got 0x%08x\n", hr);
 
+  hr = ITextFont_Reset(font, tomUseTwips);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_Reset(font, tomUsePoints);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
   hr = ITextFont_GetName(font, NULL);
   ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
@@ -2175,6 +2181,23 @@ static void test_ITextFont(void)
   ok(size == twips_to_points(cf.yHeight), "got yHeight %d, size %.2f\n", cf.yHeight, size);
   ok(position == twips_to_points(cf.yOffset), "got yOffset %d, position %.2f\n", cf.yOffset, position);
   ok(kerning == twips_to_points(cf.wKerning), "got wKerning %d, kerning %.2f\n", cf.wKerning, kerning);
+
+  hr = ITextFont_Reset(font, tomUseTwips);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_Reset(font, tomUsePoints);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_GetDuplicate(font, &font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextFont_Reset(font2, tomUseTwips);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextFont_Reset(font2, tomUsePoints);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  ITextFont_Release(font2);
 
   /* default font name */
   str = NULL;
