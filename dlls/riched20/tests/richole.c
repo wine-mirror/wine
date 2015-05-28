@@ -2923,6 +2923,93 @@ static void test_GetStoryType(void)
   ITextSelection_Release(selection);
 }
 
+static void test_SetFont(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  ITextRange *range, *range2;
+  ITextFont *font, *font2;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextDocument_Range(doc, 5, 2, &range2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  EXPECT_REF(range, 1);
+  hr = ITextRange_GetFont(range, &font);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  EXPECT_REF(range, 2);
+
+  EXPECT_REF(range2, 1);
+  hr = ITextRange_GetFont(range2, &font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  EXPECT_REF(range2, 2);
+
+  hr = ITextRange_SetFont(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  /* setting same font, no-op */
+  EXPECT_REF(range, 2);
+  hr = ITextRange_SetFont(range, font);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  EXPECT_REF(range, 2);
+
+  EXPECT_REF(range2, 2);
+  EXPECT_REF(range, 2);
+  hr = ITextRange_SetFont(range, font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  EXPECT_REF(range2, 2);
+  EXPECT_REF(range, 2);
+
+  /* originaly range 0-4 is non-italic */
+  value = tomTrue;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomFalse, "got %d\n", value);
+
+  /* set range 5-2 to italic, then set this font to range 0-4 */
+  hr = ITextFont_SetItalic(font2, tomTrue);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_SetFont(range, font2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = tomFalse;
+  hr = ITextFont_GetItalic(font, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomTrue, "got %d\n", value);
+
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_SetFont(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextRange_SetFont(range, font);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_SetFont(selection, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_SetFont(selection, font);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextFont_Release(font);
+  ITextFont_Release(font2);
+  ITextRange_Release(range);
+  ITextRange_Release(range2);
+  ITextSelection_Release(selection);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -2954,4 +3041,5 @@ START_TEST(richole)
   test_ITextRange_IsEqual();
   test_Select();
   test_GetStoryType();
+  test_SetFont();
 }

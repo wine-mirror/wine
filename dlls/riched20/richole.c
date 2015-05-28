@@ -421,6 +421,11 @@ static inline FLOAT twips_to_points(LONG value)
     return value * 72.0 / 1440;
 }
 
+static inline FLOAT points_to_twips(FLOAT value)
+{
+    return value * 1440 / 72.0;
+}
+
 static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos, enum textfont_prop_id propid,
     textfont_prop_val *value)
 {
@@ -500,6 +505,166 @@ static inline const IRichEditOleImpl *get_range_reole(ITextRange *range)
     IRichEditOleImpl *reole = NULL;
     ITextRange_QueryInterface(range, &IID_Igetrichole, (void**)&reole);
     return reole;
+}
+
+static void textrange_set_font(ITextRange *range, ITextFont *font)
+{
+    CHARFORMAT2W fmt;
+    LONG value;
+    BSTR str;
+    FLOAT f;
+
+#define CHARFORMAT_SET_B_FIELD(mask, value) \
+    if (value != tomUndefined) { \
+        fmt.dwMask |= CFM_##mask; \
+        if (value == tomTrue) fmt.dwEffects |= CFE_##mask; \
+    } \
+
+    /* fill format data from font */
+    memset(&fmt, 0, sizeof(fmt));
+    fmt.cbSize = sizeof(fmt);
+
+    value = tomUndefined;
+    ITextFont_GetAllCaps(font, &value);
+    CHARFORMAT_SET_B_FIELD(ALLCAPS, value);
+
+    value = tomUndefined;
+    ITextFont_GetBold(font, &value);
+    CHARFORMAT_SET_B_FIELD(BOLD, value);
+
+    value = tomUndefined;
+    ITextFont_GetEmboss(font, &value);
+    CHARFORMAT_SET_B_FIELD(EMBOSS, value);
+
+    value = tomUndefined;
+    ITextFont_GetHidden(font, &value);
+    CHARFORMAT_SET_B_FIELD(HIDDEN, value);
+
+    value = tomUndefined;
+    ITextFont_GetEngrave(font, &value);
+    CHARFORMAT_SET_B_FIELD(IMPRINT, value);
+
+    value = tomUndefined;
+    ITextFont_GetItalic(font, &value);
+    CHARFORMAT_SET_B_FIELD(ITALIC, value);
+
+    value = tomUndefined;
+    ITextFont_GetOutline(font, &value);
+    CHARFORMAT_SET_B_FIELD(OUTLINE, value);
+
+    value = tomUndefined;
+    ITextFont_GetProtected(font, &value);
+    CHARFORMAT_SET_B_FIELD(PROTECTED, value);
+
+    value = tomUndefined;
+    ITextFont_GetShadow(font, &value);
+    CHARFORMAT_SET_B_FIELD(SHADOW, value);
+
+    value = tomUndefined;
+    ITextFont_GetSmallCaps(font, &value);
+    CHARFORMAT_SET_B_FIELD(SMALLCAPS, value);
+
+    value = tomUndefined;
+    ITextFont_GetStrikeThrough(font, &value);
+    CHARFORMAT_SET_B_FIELD(STRIKEOUT, value);
+
+    value = tomUndefined;
+    ITextFont_GetSubscript(font, &value);
+    CHARFORMAT_SET_B_FIELD(SUBSCRIPT, value);
+
+    value = tomUndefined;
+    ITextFont_GetSuperscript(font, &value);
+    CHARFORMAT_SET_B_FIELD(SUPERSCRIPT, value);
+
+    value = tomUndefined;
+    ITextFont_GetUnderline(font, &value);
+    CHARFORMAT_SET_B_FIELD(UNDERLINE, value);
+
+#undef CHARFORMAT_SET_B_FIELD
+
+    value = tomUndefined;
+    ITextFont_GetAnimation(font, &value);
+    if (value != tomUndefined) {
+        fmt.dwMask |= CFM_ANIMATION;
+        fmt.bAnimation = value;
+    }
+
+    value = tomUndefined;
+    ITextFont_GetBackColor(font, &value);
+    if (value != tomUndefined) {
+        fmt.dwMask |= CFM_BACKCOLOR;
+        if (value == tomAutoColor)
+            fmt.dwEffects |= CFE_AUTOBACKCOLOR;
+        else
+            fmt.crBackColor = value;
+    }
+
+    value = tomUndefined;
+    ITextFont_GetForeColor(font, &value);
+    if (value != tomUndefined) {
+        fmt.dwMask |= CFM_COLOR;
+        if (value == tomAutoColor)
+            fmt.dwEffects |= CFE_AUTOCOLOR;
+        else
+            fmt.crTextColor = value;
+    }
+
+    value = tomUndefined;
+    ITextFont_GetKerning(font, &f);
+    if (f != tomUndefined) {
+        fmt.dwMask |= CFM_KERNING;
+        fmt.wKerning = points_to_twips(f);
+    }
+
+    value = tomUndefined;
+    ITextFont_GetLanguageID(font, &value);
+    if (value != tomUndefined) {
+        fmt.dwMask |= CFM_LCID;
+        fmt.lcid = value;
+    }
+
+    if (ITextFont_GetName(font, &str) == S_OK) {
+        fmt.dwMask |= CFM_FACE;
+        lstrcpynW(fmt.szFaceName, str, sizeof(fmt.szFaceName)/sizeof(WCHAR));
+        SysFreeString(str);
+    }
+
+    ITextFont_GetPosition(font, &f);
+    if (f != tomUndefined) {
+        fmt.dwMask |= CFM_OFFSET;
+        fmt.yOffset = points_to_twips(f);
+    }
+
+    ITextFont_GetSize(font, &f);
+    if (f != tomUndefined) {
+        fmt.dwMask |= CFM_SIZE;
+        fmt.yHeight = points_to_twips(f);
+    }
+
+    ITextFont_GetSpacing(font, &f);
+    if (f != tomUndefined) {
+        fmt.dwMask |= CFM_SPACING;
+        fmt.sSpacing = f;
+    }
+
+    ITextFont_GetWeight(font, &value);
+    if (value != tomUndefined) {
+        fmt.dwMask |= CFM_WEIGHT;
+        fmt.wWeight = value;
+    }
+
+    if (fmt.dwMask) {
+        const IRichEditOleImpl *reole = get_range_reole(range);
+        ME_Cursor from, to;
+        LONG start, end;
+
+        ITextRange_GetStart(range, &start);
+        ITextRange_GetEnd(range, &end);
+
+        ME_CursorFromCharOfs(reole->editor, start, &from);
+        ME_CursorFromCharOfs(reole->editor, end, &to);
+        ME_SetCharFormat(reole->editor, &from, &to, &fmt);
+    }
 }
 
 static HRESULT get_textfont_prop(const ITextFontImpl *font, enum textfont_prop_id propid, textfont_prop_val *value)
@@ -1638,14 +1803,20 @@ static HRESULT WINAPI ITextRange_fnGetFont(ITextRange *me, ITextFont **font)
     return create_textfont(me, NULL, font);
 }
 
-static HRESULT WINAPI ITextRange_fnSetFont(ITextRange *me, ITextFont *pFont)
+static HRESULT WINAPI ITextRange_fnSetFont(ITextRange *me, ITextFont *font)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, font);
+
+    if (!font)
+        return E_INVALIDARG;
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    textrange_set_font(me, font);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnGetPara(ITextRange *me, ITextPara **para)
@@ -4086,14 +4257,20 @@ static HRESULT WINAPI ITextSelection_fnGetFont(ITextSelection *me, ITextFont **f
     return create_textfont((ITextRange*)me, NULL, font);
 }
 
-static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *pFont)
+static HRESULT WINAPI ITextSelection_fnSetFont(ITextSelection *me, ITextFont *font)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%p)\n", This, font);
+
+    if (!font)
+        return E_INVALIDARG;
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    textrange_set_font((ITextRange*)me, font);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnGetPara(ITextSelection *me, ITextPara **para)
