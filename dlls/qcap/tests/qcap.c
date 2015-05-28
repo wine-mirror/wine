@@ -96,78 +96,6 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-static void test_smart_tee_filter(void)
-{
-    HRESULT hr;
-    IBaseFilter *smartTeeFilter = NULL;
-    IEnumPins *enumPins = NULL;
-    IPin *pin;
-    FILTER_INFO filterInfo;
-    int pinNumber = 0;
-
-    hr = CoCreateInstance(&CLSID_SmartTee, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IBaseFilter, (void**)&smartTeeFilter);
-    todo_wine ok(SUCCEEDED(hr), "couldn't create smart tee filter, hr=%08x\n", hr);
-    if (FAILED(hr))
-        goto end;
-
-    hr = IBaseFilter_QueryFilterInfo(smartTeeFilter, &filterInfo);
-    ok(SUCCEEDED(hr), "QueryFilterInfo failed, hr=%08x\n", hr);
-    if (FAILED(hr))
-        goto end;
-
-    ok(lstrlenW(filterInfo.achName) == 0,
-            "filter's name is meant to be empty but it's %s\n", wine_dbgstr_w(filterInfo.achName));
-
-    hr = IBaseFilter_EnumPins(smartTeeFilter, &enumPins);
-    ok(SUCCEEDED(hr), "cannot enum filter pins, hr=%08x\n", hr);
-    if (FAILED(hr))
-        goto end;
-
-    while (IEnumPins_Next(enumPins, 1, &pin, NULL) == S_OK)
-    {
-        PIN_INFO pinInfo;
-        memset(&pinInfo, 0, sizeof(pinInfo));
-        hr = IPin_QueryPinInfo(pin, &pinInfo);
-        ok(SUCCEEDED(hr), "QueryPinInfo failed, hr=%08x\n", hr);
-        if (FAILED(hr))
-            goto endwhile;
-
-        if (pinNumber == 0)
-        {
-            static const WCHAR wszInput[] = {'I','n','p','u','t',0};
-            ok(pinInfo.dir == PINDIR_INPUT, "pin 0 isn't an input pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszInput), "pin 0 is called %s, not 'Input'\n", wine_dbgstr_w(pinInfo.achName));
-        }
-        else if (pinNumber == 1)
-        {
-            static const WCHAR wszCapture[] = {'C','a','p','t','u','r','e',0};
-            ok(pinInfo.dir == PINDIR_OUTPUT, "pin 1 isn't an output pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszCapture), "pin 1 is called %s, not 'Capture'\n", wine_dbgstr_w(pinInfo.achName));
-        }
-        else if (pinNumber == 2)
-        {
-            static const WCHAR wszPreview[] = {'P','r','e','v','i','e','w',0};
-            ok(pinInfo.dir == PINDIR_OUTPUT, "pin 2 isn't an output pin\n");
-            ok(!lstrcmpW(pinInfo.achName, wszPreview), "pin 2 is called %s, not 'Preview'\n", wine_dbgstr_w(pinInfo.achName));
-        }
-        else
-            ok(0, "pin %d isn't supposed to exist\n", pinNumber);
-
-    endwhile:
-        if (pinInfo.pFilter)
-            IBaseFilter_Release(pinInfo.pFilter);
-        IPin_Release(pin);
-        pinNumber++;
-    }
-
-end:
-    if (smartTeeFilter)
-        IBaseFilter_Release(smartTeeFilter);
-    if (enumPins)
-        IEnumPins_Release(enumPins);
-}
-
 typedef enum {
     SOURCE_FILTER,
     SINK_FILTER,
@@ -2088,7 +2016,6 @@ START_TEST(qcap)
 
         arg_c = winetest_get_mainargs(&arg_v);
 
-        test_smart_tee_filter();
         test_CaptureGraphBuilder_RenderStream();
         test_AviMux_QueryInterface();
         test_AviMux(arg_c>2 ? arg_v[2] : NULL);
