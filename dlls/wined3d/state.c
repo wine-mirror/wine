@@ -1507,40 +1507,11 @@ void state_pscale(struct wined3d_context *context, const struct wined3d_state *s
 
     if (state->render_states[WINED3D_RS_POINTSCALEENABLE])
     {
-        DWORD h = state->viewport.height;
-        GLfloat scaleFactor;
+        float scale_factor = state->viewport.height * state->viewport.height;
 
-        if (pointSize.f < gl_info->limits.pointsize_min)
-        {
-            /* Minimum valid point size for OpenGL is driver specific. For Direct3D it is
-             * 0.0f. This means that OpenGL will clamp really small point sizes to the
-             * driver minimum. To correct for this we need to multiply by the scale factor when sizes
-             * are less than 1.0f. scale_factor =  1.0f / point_size.
-             */
-            scaleFactor = pointSize.f / gl_info->limits.pointsize_min;
-            /* Clamp the point size, don't rely on the driver to do it. MacOS says min point size
-             * is 1.0, but then accepts points below that and draws too small points
-             */
-            pointSize.f = gl_info->limits.pointsize_min;
-        }
-        else if(pointSize.f > gl_info->limits.pointsize_max)
-        {
-            /* gl already scales the input to glPointSize,
-             * d3d scales the result after the point size scale.
-             * If the point size is bigger than the max size, use the
-             * scaling to scale it bigger, and set the gl point size to max
-             */
-            scaleFactor = pointSize.f / gl_info->limits.pointsize_max;
-            TRACE("scale: %f\n", scaleFactor);
-            pointSize.f = gl_info->limits.pointsize_max;
-        } else {
-            scaleFactor = 1.0f;
-        }
-        scaleFactor = powf(h * scaleFactor, 2);
-
-        att[0] = A.f / scaleFactor;
-        att[1] = B.f / scaleFactor;
-        att[2] = C.f / scaleFactor;
+        att[0] = A.f / scale_factor;
+        att[1] = B.f / scale_factor;
+        att[2] = C.f / scale_factor;
     }
 
     if (gl_info->supported[ARB_POINT_PARAMETERS])
@@ -1558,7 +1529,7 @@ void state_pscale(struct wined3d_context *context, const struct wined3d_state *s
         WARN("POINT_PARAMETERS not supported in this version of opengl\n");
     }
 
-    gl_info->gl_ops.gl.p_glPointSize(pointSize.f);
+    gl_info->gl_ops.gl.p_glPointSize(max(pointSize.f, FLT_MIN));
     checkGLcall("glPointSize(...);");
 }
 
