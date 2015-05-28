@@ -32,9 +32,13 @@
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
+static HANDLE event;
+
 typedef struct {
     IBaseFilter IBaseFilter_iface;
     LONG ref;
+    BOOL isCapture;
+    DWORD receiveThreadId;
     IPin IPin_iface;
     IMemInputPin IMemInputPin_iface;
     IBaseFilter *nullRenderer;
@@ -509,6 +513,7 @@ static HRESULT WINAPI SinkMemInputPin_GetAllocatorRequirements(IMemInputPin *ifa
 static HRESULT WINAPI SinkMemInputPin_Receive(IMemInputPin *iface, IMediaSample *pSample)
 {
     SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
+    ok(0, "SmartTeeFilter never calls IMemInputPin_Receive(), only IMemInputPin_ReceiveMultiple()\n");
     return IMemInputPin_Receive(This->nullRendererMemInputPin, pSample);
 }
 
@@ -516,6 +521,18 @@ static HRESULT WINAPI SinkMemInputPin_ReceiveMultiple(IMemInputPin *iface, IMedi
         LONG nSamples, LONG *nSamplesProcessed)
 {
     SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
+    IMediaSample *pSample;
+    REFERENCE_TIME startTime, endTime;
+    HRESULT hr;
+    ok(nSamples == 1, "expected 1 sample, got %d\n", nSamples);
+    pSample = pSamples[0];
+    hr = IMediaSample_GetTime(pSample, &startTime, &endTime);
+    if (This->isCapture)
+        ok(SUCCEEDED(hr), "IMediaSample_GetTime() from Capture pin failed, hr=0x%08x\n", hr);
+    else
+        ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "IMediaSample_GetTime() from Preview pin returned hr=0x%08x\n", hr);
+    This->receiveThreadId = GetCurrentThreadId();
+    SetEvent(event);
     return IMemInputPin_ReceiveMultiple(This->nullRendererMemInputPin, pSamples,
             nSamples, nSamplesProcessed);
 }
@@ -538,7 +555,7 @@ static const IMemInputPinVtbl SinkMemInputPinVtbl = {
     SinkMemInputPin_ReceiveCanBlock
 };
 
-static SinkFilter* create_SinkFilter(void)
+static SinkFilter* create_SinkFilter(BOOL isCapture)
 {
     SinkFilter *This = NULL;
     HRESULT hr;
@@ -547,6 +564,7 @@ static SinkFilter* create_SinkFilter(void)
         memset(This, 0, sizeof(*This));
         This->IBaseFilter_iface.lpVtbl = &SinkFilterVtbl;
         This->ref = 1;
+        This->isCapture = isCapture;
         This->IPin_iface.lpVtbl = &SinkPinVtbl;
         This->IMemInputPin_iface.lpVtbl = &SinkMemInputPinVtbl;
         hr = CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER,
@@ -572,6 +590,664 @@ static SinkFilter* create_SinkFilter(void)
     return NULL;
 }
 
+typedef struct {
+    IBaseFilter IBaseFilter_iface;
+    LONG ref;
+    IPin IPin_iface;
+    CRITICAL_SECTION cs;
+    FILTER_STATE state;
+    IReferenceClock *referenceClock;
+    FILTER_INFO filterInfo;
+    AM_MEDIA_TYPE mediaType;
+    VIDEOINFOHEADER videoInfo;
+    IPin *connectedTo;
+    IMemInputPin *memInputPin;
+    IMemAllocator *allocator;
+    DWORD mediaThreadId;
+} SourceFilter;
+
+typedef struct {
+    IEnumPins IEnumPins_iface;
+    LONG ref;
+    ULONG index;
+    SourceFilter *filter;
+} SourceEnumPins;
+
+static const WCHAR sourcePinName[] = {'C','a','p','t','u','r','e',0};
+
+static SourceEnumPins* create_SourceEnumPins(SourceFilter *filter);
+
+static inline SourceFilter* impl_from_SourceFilter_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, SourceFilter, IBaseFilter_iface);
+}
+
+static inline SourceFilter* impl_from_SourceFilter_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, SourceFilter, IPin_iface);
+}
+
+static inline SourceEnumPins* impl_from_SourceFilter_IEnumPins(IEnumPins *iface)
+{
+    return CONTAINING_RECORD(iface, SourceEnumPins, IEnumPins_iface);
+}
+
+static HRESULT WINAPI SourceFilter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppv = &This->IBaseFilter_iface;
+    } else if(IsEqualIID(riid, &IID_IPersist)) {
+        *ppv = &This->IBaseFilter_iface;
+    } else if(IsEqualIID(riid, &IID_IMediaFilter)) {
+        *ppv = &This->IBaseFilter_iface;
+    } else if(IsEqualIID(riid, &IID_IBaseFilter)) {
+        *ppv = &This->IBaseFilter_iface;
+    } else {
+        trace("no interface for %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SourceFilter_AddRef(IBaseFilter *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI SourceFilter_Release(IBaseFilter *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    if(!ref) {
+        if (This->referenceClock)
+            IReferenceClock_Release(This->referenceClock);
+        if (This->connectedTo)
+            IPin_Disconnect(&This->IPin_iface);
+        DeleteCriticalSection(&This->cs);
+        CoTaskMemFree(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI SourceFilter_GetClassID(IBaseFilter *iface, CLSID *pClassID)
+{
+    *pClassID = CLSID_VfwCapture;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_Stop(IBaseFilter *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    IMemAllocator_Decommit(This->allocator);
+    This->state = State_Stopped;
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_Pause(IBaseFilter *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    This->state = State_Paused;
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static DWORD WINAPI media_thread(LPVOID param)
+{
+    SourceFilter *This = (SourceFilter*) param;
+    HRESULT hr;
+    IMediaSample *sample = NULL;
+    REFERENCE_TIME startTime;
+    REFERENCE_TIME endTime;
+    BYTE *buffer;
+
+    hr = IMemAllocator_GetBuffer(This->allocator, &sample, NULL, NULL, 0);
+    ok(SUCCEEDED(hr), "IMemAllocator_GetBuffer() failed, hr=0x%08x\n", hr);
+    if (SUCCEEDED(hr)) {
+        startTime = 10;
+        endTime = 20;
+        hr = IMediaSample_SetTime(sample, &startTime, &endTime);
+        ok(SUCCEEDED(hr), "IMediaSample_SetTime() failed, hr=0x%08x\n", hr);
+        hr = IMediaSample_SetMediaType(sample, &This->mediaType);
+        ok(SUCCEEDED(hr), "IMediaSample_SetMediaType() failed, hr=0x%08x\n", hr);
+
+        hr = IMediaSample_GetPointer(sample, &buffer);
+        ok(SUCCEEDED(hr), "IMediaSample_GetPointer() failed, hr=0x%08x\n", hr);
+        if (SUCCEEDED(hr)) {
+            /* 10 by 10 pixel 32 RGB */
+            int i;
+            for (i = 0; i < 100; i++)
+                buffer[4*i] = i;
+        }
+
+        hr = IMemInputPin_Receive(This->memInputPin, sample);
+        ok(SUCCEEDED(hr), "delivering sample to SmartTeeFilter's Input pin failed, hr=0x%08x\n", hr);
+
+        IMediaSample_Release(sample);
+    }
+    return 0;
+}
+
+static HRESULT WINAPI SourceFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    HRESULT hr;
+    EnterCriticalSection(&This->cs);
+    hr = IMemAllocator_Commit(This->allocator);
+    if (SUCCEEDED(hr)) {
+        HANDLE thread = CreateThread(NULL, 0, media_thread, This, 0, &This->mediaThreadId);
+        ok(thread != NULL, "couldn't create media thread, GetLastError()=%u\n", GetLastError());
+        if (thread != NULL) {
+            CloseHandle(thread);
+            This->state = State_Running;
+        } else {
+            IMemAllocator_Decommit(This->allocator);
+            hr = E_FAIL;
+        }
+    }
+    LeaveCriticalSection(&This->cs);
+    return hr;
+}
+
+static HRESULT WINAPI SourceFilter_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *state)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    *state = This->state;
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *pClock)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    if (This->referenceClock)
+        IReferenceClock_Release(This->referenceClock);
+    This->referenceClock = pClock;
+    if (This->referenceClock)
+        IReferenceClock_AddRef(This->referenceClock);
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_GetSyncSource(IBaseFilter *iface, IReferenceClock **ppClock)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    *ppClock = This->referenceClock;
+    if (This->referenceClock)
+        IReferenceClock_AddRef(This->referenceClock);
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_EnumPins(IBaseFilter *iface, IEnumPins **ppEnum)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    SourceEnumPins *sourceEnumPins = create_SourceEnumPins(This);
+    if (sourceEnumPins) {
+        *ppEnum = &sourceEnumPins->IEnumPins_iface;
+        return S_OK;
+    }
+    else
+        return E_OUTOFMEMORY;
+}
+
+static HRESULT WINAPI SourceFilter_FindPin(IBaseFilter *iface, LPCWSTR id, IPin **ppPin)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    if (ppPin == NULL)
+        return E_POINTER;
+    *ppPin = NULL;
+    if (lstrcmpW(id, sourcePinName) == 0) {
+        *ppPin = &This->IPin_iface;
+        IPin_AddRef(&This->IPin_iface);
+        return S_OK;
+    }
+    return VFW_E_NOT_FOUND;
+}
+
+static HRESULT WINAPI SourceFilter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *pInfo)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    if (!pInfo)
+        return E_POINTER;
+    EnterCriticalSection(&This->cs);
+    *pInfo = This->filterInfo;
+    if (This->filterInfo.pGraph)
+        IFilterGraph_AddRef(This->filterInfo.pGraph);
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *pGraph, LPCWSTR pName)
+{
+    SourceFilter *This = impl_from_SourceFilter_IBaseFilter(iface);
+    EnterCriticalSection(&This->cs);
+    if (pName)
+        lstrcpyW(This->filterInfo.achName, pName);
+    else
+        This->filterInfo.achName[0] = 0;
+    This->filterInfo.pGraph = pGraph;
+    LeaveCriticalSection(&This->cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceFilter_QueryVendorInfo(IBaseFilter *iface, LPWSTR *pVendorInfo)
+{
+    return E_NOTIMPL;
+}
+
+static const IBaseFilterVtbl SourceFilterVtbl = {
+    SourceFilter_QueryInterface,
+    SourceFilter_AddRef,
+    SourceFilter_Release,
+    SourceFilter_GetClassID,
+    SourceFilter_Stop,
+    SourceFilter_Pause,
+    SourceFilter_Run,
+    SourceFilter_GetState,
+    SourceFilter_SetSyncSource,
+    SourceFilter_GetSyncSource,
+    SourceFilter_EnumPins,
+    SourceFilter_FindPin,
+    SourceFilter_QueryFilterInfo,
+    SourceFilter_JoinFilterGraph,
+    SourceFilter_QueryVendorInfo
+};
+
+static HRESULT WINAPI SourceEnumPins_QueryInterface(IEnumPins *iface, REFIID riid, void **ppv)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppv = &This->IEnumPins_iface;
+    } else if(IsEqualIID(riid, &IID_IEnumPins)) {
+        *ppv = &This->IEnumPins_iface;
+    } else {
+        trace("no interface for %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SourceEnumPins_AddRef(IEnumPins *iface)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI SourceEnumPins_Release(IEnumPins *iface)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+    {
+        IBaseFilter_Release(&This->filter->IBaseFilter_iface);
+        CoTaskMemFree(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI SourceEnumPins_Next(IEnumPins *iface, ULONG cPins, IPin **ppPins, ULONG *pcFetched)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    if (!ppPins)
+        return E_POINTER;
+    if (cPins > 1 && !pcFetched)
+        return E_INVALIDARG;
+    if (pcFetched)
+        *pcFetched = 0;
+    if (cPins == 0)
+        return S_OK;
+    if (This->index == 0) {
+        ppPins[0] = &This->filter->IPin_iface;
+        IPin_AddRef(&This->filter->IPin_iface);
+        ++This->index;
+        if (pcFetched)
+            *pcFetched = 1;
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
+static HRESULT WINAPI SourceEnumPins_Skip(IEnumPins *iface, ULONG cPins)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    if (This->index + cPins >= 1)
+        return S_FALSE;
+    This->index += cPins;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceEnumPins_Reset(IEnumPins *iface)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    This->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceEnumPins_Clone(IEnumPins *iface, IEnumPins **ppEnum)
+{
+    SourceEnumPins *This = impl_from_SourceFilter_IEnumPins(iface);
+    SourceEnumPins *clone = create_SourceEnumPins(This->filter);
+    if (clone == NULL)
+        return E_OUTOFMEMORY;
+    clone->index = This->index;
+    return S_OK;
+}
+
+static const IEnumPinsVtbl SourceEnumPinsVtbl = {
+    SourceEnumPins_QueryInterface,
+    SourceEnumPins_AddRef,
+    SourceEnumPins_Release,
+    SourceEnumPins_Next,
+    SourceEnumPins_Skip,
+    SourceEnumPins_Reset,
+    SourceEnumPins_Clone
+};
+
+static SourceEnumPins* create_SourceEnumPins(SourceFilter *filter)
+{
+    SourceEnumPins *This;
+    This = CoTaskMemAlloc(sizeof(*This));
+    if (This == NULL) {
+        return NULL;
+    }
+    This->IEnumPins_iface.lpVtbl = &SourceEnumPinsVtbl;
+    This->ref = 1;
+    This->index = 0;
+    This->filter = filter;
+    IBaseFilter_AddRef(&filter->IBaseFilter_iface);
+    return This;
+}
+
+static HRESULT WINAPI SourcePin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppv = &This->IPin_iface;
+    } else if(IsEqualIID(riid, &IID_IPin)) {
+        *ppv = &This->IPin_iface;
+    } else {
+        trace("no interface for %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SourcePin_AddRef(IPin *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    return IBaseFilter_AddRef(&This->IBaseFilter_iface);
+}
+
+static ULONG WINAPI SourcePin_Release(IPin *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    return IBaseFilter_Release(&This->IBaseFilter_iface);
+}
+
+static HRESULT WINAPI SourcePin_Connect(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    HRESULT hr;
+    if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    if (pmt && !IsEqualGUID(&pmt->subtype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    if (pmt && !IsEqualGUID(&pmt->formattype, &GUID_NULL))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    hr = IPin_ReceiveConnection(pReceivePin, &This->IPin_iface, &This->mediaType);
+    ok(SUCCEEDED(hr), "SmartTeeFilter's Input pin's IPin_ReceiveConnection() failed with 0x%08x\n", hr);
+    if (SUCCEEDED(hr)) {
+        EnterCriticalSection(&This->cs);
+        hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (void**)&This->memInputPin);
+        if (SUCCEEDED(hr)) {
+            hr = IMemInputPin_GetAllocator(This->memInputPin, &This->allocator);
+            ok(SUCCEEDED(hr), "couldn't get allocator from SmartTeeFilter, hr=0x%08x\n", hr);
+            if (SUCCEEDED(hr)) {
+                ALLOCATOR_PROPERTIES requested, actual;
+                ZeroMemory(&requested, sizeof(ALLOCATOR_PROPERTIES));
+                IMemInputPin_GetAllocatorRequirements(This->memInputPin, &requested);
+                if (requested.cBuffers < 3) requested.cBuffers = 3;
+                if (requested.cbBuffer < 4096) requested.cbBuffer = 4096;
+                if (requested.cbAlign < 1) requested.cbAlign = 1;
+                if (requested.cbPrefix < 0) requested.cbPrefix = 0;
+                hr = IMemAllocator_SetProperties(This->allocator, &requested, &actual);
+                if (SUCCEEDED(hr)) {
+                    hr = IMemInputPin_NotifyAllocator(This->memInputPin, This->allocator, FALSE);
+                    if (SUCCEEDED(hr)) {
+                        This->connectedTo = pReceivePin;
+                        IPin_AddRef(pReceivePin);
+                    }
+                }
+                if (FAILED(hr)) {
+                    IMemAllocator_Release(This->allocator);
+                    This->allocator = NULL;
+                }
+            }
+            if (FAILED(hr)) {
+                IMemInputPin_Release(This->memInputPin);
+                This->memInputPin = NULL;
+            }
+        }
+        LeaveCriticalSection(&This->cs);
+
+        if (FAILED(hr))
+            IPin_Disconnect(pReceivePin);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI SourcePin_ReceiveConnection(IPin *iface, IPin *connector, const AM_MEDIA_TYPE *pmt)
+{
+    return E_UNEXPECTED;
+}
+
+static HRESULT WINAPI SourcePin_Disconnect(IPin *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    HRESULT hr;
+    EnterCriticalSection(&This->cs);
+    if (This->connectedTo) {
+        if (This->state == State_Stopped) {
+            IMemAllocator_Release(This->allocator);
+            This->allocator = NULL;
+            IMemInputPin_Release(This->memInputPin);
+            This->memInputPin = NULL;
+            IPin_Release(This->connectedTo);
+            This->connectedTo = NULL;
+            hr = S_OK;
+        }
+        else
+            hr = VFW_E_NOT_STOPPED;
+    } else
+        hr = S_FALSE;
+    LeaveCriticalSection(&This->cs);
+    return hr;
+}
+
+static HRESULT WINAPI SourcePin_ConnectedTo(IPin *iface, IPin **pPin)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    HRESULT hr;
+    if (!pPin)
+        return E_POINTER;
+    EnterCriticalSection(&This->cs);
+    if (This->connectedTo) {
+        *pPin = This->connectedTo;
+        IPin_AddRef(This->connectedTo);
+        hr = S_OK;
+    } else
+        hr = VFW_E_NOT_CONNECTED;
+    LeaveCriticalSection(&This->cs);
+    return hr;
+}
+
+static HRESULT WINAPI SourcePin_ConnectionMediaType(IPin *iface, AM_MEDIA_TYPE *pmt)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    HRESULT hr;
+    if (!pmt)
+        return E_POINTER;
+    EnterCriticalSection(&This->cs);
+    if (This->connectedTo) {
+        *pmt = This->mediaType;
+        pmt->pbFormat = CoTaskMemAlloc(sizeof(This->videoInfo));
+        if (pmt->pbFormat) {
+            memcpy(pmt->pbFormat, &This->videoInfo, sizeof(This->videoInfo));
+            hr = S_OK;
+        } else {
+            memset(pmt, 0, sizeof(*pmt));
+            hr = E_OUTOFMEMORY;
+        }
+    } else {
+        memset(pmt, 0, sizeof(*pmt));
+        hr = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&This->cs);
+    return hr;
+}
+
+static HRESULT WINAPI SourcePin_QueryPinInfo(IPin *iface, PIN_INFO *pInfo)
+{
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    if (!pInfo)
+        return E_POINTER;
+    lstrcpyW(pInfo->achName, sourcePinName);
+    pInfo->dir = PINDIR_OUTPUT;
+    pInfo->pFilter = &This->IBaseFilter_iface;
+    IBaseFilter_AddRef(&This->IBaseFilter_iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI SourcePin_QueryDirection(IPin *iface, PIN_DIRECTION *pPinDir)
+{
+    if (!pPinDir)
+        return E_POINTER;
+    *pPinDir = PINDIR_OUTPUT;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourcePin_QueryId(IPin *iface, LPWSTR *id)
+{
+    if (!id)
+        return E_POINTER;
+    *id = CoTaskMemAlloc((lstrlenW(sourcePinName) + 1)*sizeof(WCHAR));
+    if (*id) {
+        lstrcpyW(*id, sourcePinName);
+        return S_OK;
+    }
+    return E_OUTOFMEMORY;
+}
+
+static HRESULT WINAPI SourcePin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI SourcePin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
+{
+    return VFW_E_NOT_CONNECTED;
+}
+
+static HRESULT WINAPI SourcePin_QueryInternalConnections(IPin *iface, IPin **apPin, ULONG *nPin)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SourcePin_EndOfStream(IPin *iface)
+{
+    return E_UNEXPECTED;
+}
+
+static HRESULT WINAPI SourcePin_BeginFlush(IPin *iface)
+{
+    return E_UNEXPECTED;
+}
+
+static HRESULT WINAPI SourcePin_EndFlush(IPin *iface)
+{
+    return E_UNEXPECTED;
+}
+
+static HRESULT WINAPI SourcePin_NewSegment(IPin *iface, REFERENCE_TIME tStart,
+        REFERENCE_TIME tStop, double dRate)
+{
+    return S_OK;
+}
+
+static const IPinVtbl SourcePinVtbl = {
+    SourcePin_QueryInterface,
+    SourcePin_AddRef,
+    SourcePin_Release,
+    SourcePin_Connect,
+    SourcePin_ReceiveConnection,
+    SourcePin_Disconnect,
+    SourcePin_ConnectedTo,
+    SourcePin_ConnectionMediaType,
+    SourcePin_QueryPinInfo,
+    SourcePin_QueryDirection,
+    SourcePin_QueryId,
+    SourcePin_QueryAccept,
+    SourcePin_EnumMediaTypes,
+    SourcePin_QueryInternalConnections,
+    SourcePin_EndOfStream,
+    SourcePin_BeginFlush,
+    SourcePin_EndFlush,
+    SourcePin_NewSegment
+};
+
+static SourceFilter* create_SourceFilter(void)
+{
+    SourceFilter *This = NULL;
+    This = CoTaskMemAlloc(sizeof(*This));
+    if (This) {
+        memset(This, 0, sizeof(*This));
+        This->IBaseFilter_iface.lpVtbl = &SourceFilterVtbl;
+        This->ref = 1;
+        This->IPin_iface.lpVtbl = &SourcePinVtbl;
+        InitializeCriticalSection(&This->cs);
+        This->mediaType.majortype = MEDIATYPE_Video;
+        This->mediaType.subtype = MEDIASUBTYPE_RGB32;
+        This->mediaType.bFixedSizeSamples = FALSE;
+        This->mediaType.bTemporalCompression = FALSE;
+        This->mediaType.lSampleSize = 0;
+        This->mediaType.formattype = FORMAT_VideoInfo;
+        This->mediaType.pUnk = NULL;
+        This->mediaType.cbFormat = sizeof(VIDEOINFOHEADER);
+        This->mediaType.pbFormat = (BYTE*) &This->videoInfo;
+        This->videoInfo.dwBitRate = 1000000;
+        This->videoInfo.dwBitErrorRate = 0;
+        This->videoInfo.AvgTimePerFrame = 400000;
+        This->videoInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        This->videoInfo.bmiHeader.biWidth = 10;
+        This->videoInfo.bmiHeader.biHeight = 10;
+        This->videoInfo.bmiHeader.biPlanes = 1;
+        This->videoInfo.bmiHeader.biBitCount = 32;
+        This->videoInfo.bmiHeader.biCompression = BI_RGB;
+        This->videoInfo.bmiHeader.biSizeImage = 0;
+        This->videoInfo.bmiHeader.biXPelsPerMeter = 96;
+        This->videoInfo.bmiHeader.biYPelsPerMeter = 96;
+        This->videoInfo.bmiHeader.biClrUsed = 0;
+        This->videoInfo.bmiHeader.biClrImportant = 0;
+        return This;
+    }
+    return NULL;
+}
+
 static BOOL has_interface(IUnknown *unknown, REFIID uuid)
 {
      HRESULT hr;
@@ -592,7 +1268,10 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
 {
     HRESULT hr;
     IGraphBuilder *graphBuilder = NULL;
-    SinkFilter *sinkFilter = NULL;
+    IMediaControl *mediaControl = NULL;
+    SourceFilter *sourceFilter = NULL;
+    SinkFilter *captureSinkFilter = NULL;
+    SinkFilter *previewSinkFilter = NULL;
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder,
             (LPVOID*)&graphBuilder);
@@ -605,27 +1284,87 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     if (FAILED(hr))
         goto end;
 
-    sinkFilter = create_SinkFilter();
-    if (sinkFilter == NULL) {
-        trace("couldn't create sink filter\n");
+    captureSinkFilter = create_SinkFilter(TRUE);
+    if (captureSinkFilter == NULL) {
+        skip("couldn't create capture sink filter\n");
         goto end;
     }
-    hr = IGraphBuilder_AddFilter(graphBuilder, &sinkFilter->IBaseFilter_iface, NULL);
+    hr = IGraphBuilder_AddFilter(graphBuilder, &captureSinkFilter->IBaseFilter_iface, NULL);
     if (FAILED(hr)) {
-        skip("couldn't add sink filter to graph, hr=0x%08x\n", hr);
+        skip("couldn't add capture sink filter to graph, hr=0x%08x\n", hr);
         goto end;
     }
 
-    hr = IGraphBuilder_Connect(graphBuilder, capturePin, &sinkFilter->IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting input pin returned 0x%08x\n", hr);
-    hr = IGraphBuilder_Connect(graphBuilder, previewPin, &sinkFilter->IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting input pin returned 0x%08x\n", hr);
+    previewSinkFilter = create_SinkFilter(FALSE);
+    if (previewSinkFilter == NULL) {
+        skip("couldn't create preview sink filter\n");
+        goto end;
+    }
+    hr = IGraphBuilder_AddFilter(graphBuilder, &previewSinkFilter->IBaseFilter_iface, NULL);
+    if (FAILED(hr)) {
+        skip("couldn't add preview sink filter to graph, hr=0x%08x\n", hr);
+        goto end;
+    }
+
+    hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
+    ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting Input pin returned 0x%08x\n", hr);
+    hr = IGraphBuilder_Connect(graphBuilder, previewPin, &previewSinkFilter->IPin_iface);
+    ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
+
+    sourceFilter = create_SourceFilter();
+    if (sourceFilter == NULL) {
+        skip("couldn't create source filter\n");
+        goto end;
+    }
+    hr = IGraphBuilder_AddFilter(graphBuilder, &sourceFilter->IBaseFilter_iface, NULL);
+    ok(SUCCEEDED(hr), "couldn't add source filter to graph, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = IGraphBuilder_Connect(graphBuilder, &sourceFilter->IPin_iface, inputPin);
+    ok(SUCCEEDED(hr), "couldn't connect source filter to Input pin, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
+    ok(SUCCEEDED(hr), "couldn't connect Capture pin to sink, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IGraphBuilder_Connect(graphBuilder, previewPin, &previewSinkFilter->IPin_iface);
+    ok(SUCCEEDED(hr), "couldn't connect Preview pin to sink, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = IGraphBuilder_QueryInterface(graphBuilder, &IID_IMediaControl, (void**)&mediaControl);
+    ok(SUCCEEDED(hr), "couldn't get IMediaControl interface from IGraphBuilder, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IMediaControl_Run(mediaControl);
+    ok(SUCCEEDED(hr), "IMediaControl_Run() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    while (previewSinkFilter->receiveThreadId == 0 || captureSinkFilter->receiveThreadId == 0)
+        WaitForSingleObject(event, INFINITE);
+    ok(sourceFilter->mediaThreadId != captureSinkFilter->receiveThreadId,
+            "sending thread should != capture receiving thread\n");
+    ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
+            "sending thread should != preview receiving thread\n");
+    ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
+            "capture receiving thread should != preview receiving thread");
+
+    IMediaControl_Stop(mediaControl);
 
 end:
-    if (sinkFilter)
-        IBaseFilter_Release(&sinkFilter->IBaseFilter_iface);
+    if (mediaControl)
+        IMediaControl_Release(mediaControl);
     if (graphBuilder)
         IGraphBuilder_Release(graphBuilder);
+    if (sourceFilter)
+        IBaseFilter_Release(&sourceFilter->IBaseFilter_iface);
+    if (captureSinkFilter)
+        IBaseFilter_Release(&captureSinkFilter->IBaseFilter_iface);
+    if (previewSinkFilter)
+        IBaseFilter_Release(&previewSinkFilter->IBaseFilter_iface);
 }
 
 static void test_smart_tee_filter(void)
@@ -797,7 +1536,12 @@ START_TEST(smartteefilter)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
     {
-        test_smart_tee_filter();
+        event = CreateEventW(NULL, FALSE, FALSE, NULL);
+        if (event) {
+            test_smart_tee_filter();
+            CloseHandle(event);
+        } else
+            skip("CreateEvent failed, error=%u\n", GetLastError());
 
         CoUninitialize();
     }
