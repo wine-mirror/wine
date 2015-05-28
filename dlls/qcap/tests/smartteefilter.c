@@ -1532,12 +1532,28 @@ end:
         IEnumMediaTypes_Release(enumMediaTypes);
 }
 
+static void test_smart_tee_filter_aggregation(void)
+{
+    SourceFilter *sourceFilter = create_SourceFilter();
+    if (sourceFilter) {
+        IUnknown *unknown = NULL;
+        HRESULT hr = CoCreateInstance(&CLSID_SmartTee, (IUnknown*)&sourceFilter->IBaseFilter_iface,
+                CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unknown);
+        todo_wine ok(SUCCEEDED(hr), "SmartTee filter doesn't support aggregation, hr=0x%08x\n", hr);
+        if (unknown)
+            IUnknown_Release(unknown);
+        IBaseFilter_Release(&sourceFilter->IBaseFilter_iface);
+    } else
+        ok(0, "out of memory allocating SourceFilter for test\n");
+}
+
 START_TEST(smartteefilter)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
     {
         event = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (event) {
+            test_smart_tee_filter_aggregation();
             test_smart_tee_filter();
             CloseHandle(event);
         } else
