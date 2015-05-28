@@ -247,6 +247,12 @@ static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
     FIXME("not implemented\n");
 }
 
+/**************************************************************************
+ *		__chkstk (NTDLL.@)
+ *
+ * Should check if we can decrement SP by the value provided in r4, but we shouldn't need that.
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "bx lr" )
 
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)

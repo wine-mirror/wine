@@ -1271,7 +1271,7 @@
 @ cdecl -private -arch=i386 _CIsin() NTDLL__CIsin
 @ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
-@ stdcall -private -arch=x86_64 -norelay __chkstk()
+@ stdcall -private -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl -private __isascii(long) NTDLL___isascii
 @ cdecl -private __iscsym(long) NTDLL___iscsym
 @ cdecl -private __iscsymf(long) NTDLL___iscsymf
