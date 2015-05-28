@@ -59,9 +59,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(regsvr32);
 
-typedef HRESULT (*DLLREGISTER)          (void);
-typedef HRESULT (*DLLUNREGISTER)        (void);
-typedef HRESULT (*DLLINSTALL)           (BOOL,LPCWSTR);
+typedef HRESULT (WINAPI *DLLREGISTER)   (void);
+typedef HRESULT (WINAPI *DLLUNREGISTER) (void);
+typedef HRESULT (WINAPI *DLLINSTALL)    (BOOL,LPCWSTR);
 
 static BOOL Silent = FALSE;
 
