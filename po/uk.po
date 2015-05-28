@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-08 13:50+0200\n"
+"PO-Revision-Date: 2015-05-28 15:57+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -2553,7 +2553,7 @@ msgstr "Властивості сертифікату"
 
 #: cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "Будь-ласка, введіть OID в формі 1.2.3.4"
+msgstr "Будь ласка, введіть OID в формі 1.2.3.4"
 
 #: cryptui.rc:68
 msgid "The OID you entered already exists."
@@ -2561,7 +2561,7 @@ msgstr "OID, який ви ввели, вже існує."
 
 #: cryptui.rc:70
 msgid "Please select a certificate store."
-msgstr "Будь-ласка, виберіть сховище сертифікатів."
+msgstr "Будь ласка, виберіть сховище сертифікатів."
 
 #: cryptui.rc:72
 msgid ""
@@ -6709,7 +6709,7 @@ msgstr "Введіть Мережний Пароль"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "Please enter your username and password:"
-msgstr "Будь-ласка, введіть Ваші ім'я та пароль:"
+msgstr "Будь ласка, введіть Ваші ім'я та пароль:"
 
 #: mpr.rc:39 wininet.rc:41
 msgid "Proxy"
@@ -8652,10 +8652,8 @@ msgid "Duplex:"
 msgstr "Дуплекс:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "Властивості"
+msgstr "Налаштування"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -12998,7 +12996,7 @@ msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "Оновлення конфігурації Wine в %s, будь-ласка, зачекайте..."
+msgstr "Оновлення конфігурації Wine в %s, будь ласка, зачекайте..."
 
 #: winecfg.rc:141
 msgid ""
@@ -13260,7 +13258,7 @@ msgstr "Диски"
 
 #: winecfg.rc:36
 msgid "Select the Unix target directory, please."
-msgstr "Будь-ласка, виберіть цільову теку Unix."
+msgstr "Будь ласка, виберіть цільову теку Unix."
 
 #: winecfg.rc:37
 msgid "Hide &Advanced"
