@@ -1320,8 +1320,8 @@ static HRESULT WINAPI dwritetextanalyzer1_AnalyzeVerticalGlyphOrientation(IDWrit
 static HRESULT WINAPI dwritetextanalyzer1_GetGlyphOrientationTransform(IDWriteTextAnalyzer2 *iface,
     DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, DWRITE_MATRIX *transform)
 {
-    FIXME("(%d %d %p): stub\n", angle, is_sideways, transform);
-    return E_NOTIMPL;
+    TRACE("(%d %d %p)\n", angle, is_sideways, transform);
+    return IDWriteTextAnalyzer2_GetGlyphOrientationTransform(iface, angle, is_sideways, 0.0, 0.0, transform);
 }
 
 static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyzer2 *iface, DWRITE_SCRIPT_ANALYSIS sa,
@@ -1425,10 +1425,66 @@ static HRESULT WINAPI dwritetextanalyzer1_GetJustifiedGlyphs(IDWriteTextAnalyzer
 }
 
 static HRESULT WINAPI dwritetextanalyzer2_GetGlyphOrientationTransform(IDWriteTextAnalyzer2 *iface,
-    DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, FLOAT originX, FLOAT originY, DWRITE_MATRIX *transform)
+    DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, FLOAT originX, FLOAT originY, DWRITE_MATRIX *m)
 {
-    FIXME("(%d %d %.2f %.2f %p): stub\n", angle, is_sideways, originX, originY, transform);
-    return E_NOTIMPL;
+    static const DWRITE_MATRIX transforms[] = {
+        {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },
+        {  0.0,  1.0, -1.0,  0.0, 0.0, 0.0 },
+        { -1.0,  0.0,  0.0, -1.0, 0.0, 0.0 },
+        {  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 }
+    };
+
+    TRACE("(%d %d %.2f %.2f %p)\n", angle, is_sideways, originX, originY, m);
+
+    if ((UINT32)angle > DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES) {
+        memset(m, 0, sizeof(*m));
+        return E_INVALIDARG;
+    }
+
+    /* for sideways case simply rotate 90 degrees more */
+    if (is_sideways) {
+        switch (angle) {
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES;
+            break;
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_180_DEGREES;
+            break;
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_180_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES;
+            break;
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES;
+            break;
+        default:
+            ;
+        }
+    }
+
+    *m = transforms[angle];
+
+    /* shift components represent transform necessary to get from original point to
+       rotated one in new coordinate system */
+    if ((originX != 0.0 || originY != 0.0) && angle != DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES) {
+        const DWRITE_MATRIX *p;
+
+        switch (angle) {
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES;
+            break;
+        case DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES:
+            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES;
+            break;
+        default:
+            ;
+        }
+
+        p = &transforms[angle];
+        m->dx = originX - (p->m11 * originX + p->m12 * originY);
+        m->dy = originY - (p->m21 * originX + p->m22 * originY);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer2_GetTypographicFeatures(IDWriteTextAnalyzer2 *iface,
