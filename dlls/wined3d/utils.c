@@ -3622,6 +3622,38 @@ void get_pointsize_minmax(const struct wined3d_context *context, const struct wi
     *out_max = max.f;
 }
 
+void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,
+        float *out_pointsize, float *out_att)
+{
+    /* POINTSCALEENABLE controls how point size value is treated. If set to
+     * true, the point size is scaled with respect to height of viewport.
+     * When set to false point size is in pixels. */
+    union
+    {
+        DWORD d;
+        float f;
+    } pointsize, a, b, c;
+
+    out_att[0] = 1.0f;
+    out_att[1] = 0.0f;
+    out_att[2] = 0.0f;
+
+    pointsize.d = state->render_states[WINED3D_RS_POINTSIZE];
+    a.d = state->render_states[WINED3D_RS_POINTSCALE_A];
+    b.d = state->render_states[WINED3D_RS_POINTSCALE_B];
+    c.d = state->render_states[WINED3D_RS_POINTSCALE_C];
+
+    if (state->render_states[WINED3D_RS_POINTSCALEENABLE])
+    {
+        float scale_factor = state->viewport.height * state->viewport.height;
+
+        out_att[0] = a.f / scale_factor;
+        out_att[1] = b.f / scale_factor;
+        out_att[2] = c.f / scale_factor;
+    }
+    *out_pointsize = pointsize.f;
+}
+
 /* This small helper function is used to convert a bitmask into the number of masked bits */
 unsigned int count_bits(unsigned int mask)
 {

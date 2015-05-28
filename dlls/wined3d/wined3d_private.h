@@ -3072,6 +3072,8 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
         unsigned int tex, struct wined3d_matrix *mat) DECLSPEC_HIDDEN;
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max) DECLSPEC_HIDDEN;
+void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,
+        float *out_pointsize, float *out_att) DECLSPEC_HIDDEN;
 
 /* Using additional shader constants (uniforms in GLSL / program environment
  * or local parameters in ARB) is costly:

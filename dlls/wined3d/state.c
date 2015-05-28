@@ -1458,33 +1458,10 @@ void state_psizemin_arb(struct wined3d_context *context, const struct wined3d_st
 void state_pscale(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    /* TODO: Group this with the viewport */
-    /*
-     * POINTSCALEENABLE controls how point size value is treated. If set to
-     * true, the point size is scaled with respect to height of viewport.
-     * When set to false point size is in pixels.
-     */
+    float att[3];
+    float pointsize;
 
-    /* Default values */
-    GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-    union {
-        DWORD d;
-        float f;
-    } pointSize, A, B, C;
-
-    pointSize.d = state->render_states[WINED3D_RS_POINTSIZE];
-    A.d = state->render_states[WINED3D_RS_POINTSCALE_A];
-    B.d = state->render_states[WINED3D_RS_POINTSCALE_B];
-    C.d = state->render_states[WINED3D_RS_POINTSCALE_C];
-
-    if (state->render_states[WINED3D_RS_POINTSCALEENABLE])
-    {
-        float scale_factor = state->viewport.height * state->viewport.height;
-
-        att[0] = A.f / scale_factor;
-        att[1] = B.f / scale_factor;
-        att[2] = C.f / scale_factor;
-    }
+    get_pointsize(context, state, &pointsize, att);
 
     if (gl_info->supported[ARB_POINT_PARAMETERS])
     {
@@ -1501,7 +1478,7 @@ void state_pscale(struct wined3d_context *context, const struct wined3d_state *s
         WARN("POINT_PARAMETERS not supported in this version of opengl\n");
     }
 
-    gl_info->gl_ops.gl.p_glPointSize(max(pointSize.f, FLT_MIN));
+    gl_info->gl_ops.gl.p_glPointSize(max(pointsize, FLT_MIN));
     checkGLcall("glPointSize(...);");
 }
 
