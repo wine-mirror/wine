@@ -1432,7 +1432,9 @@ static void test_http_cache(void)
     BYTE buf[100];
     HANDLE file;
     BOOL ret;
+    FILETIME filetime_zero = {0};
 
+    static const char cached_content[] = "data read from cache";
     static const char *types[] = { "*", "", NULL };
 
     session = InternetOpenA("Wine Regression Test", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
@@ -1492,9 +1494,13 @@ static void test_http_cache(void)
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
 
-    file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                      FILE_ATTRIBUTE_NORMAL, NULL);
+    file = CreateFileA(file_name, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+    ret = WriteFile(file, cached_content, sizeof(cached_content), &size, NULL);
+    ok(ret && size, "WriteFile failed: %d, %d\n", ret, size);
+    ret = CommitUrlCacheEntryA(url, file_name, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
+    ok(ret, "CommitUrlCacheEntry failed: %d\n", GetLastError());
     CloseHandle(file);
 
     /* Send the same request, requiring it to be retrieved from the cache */
@@ -1507,7 +1513,17 @@ static void test_http_cache(void)
     ret = InternetReadFile(request, buf, sizeof(buf), &size);
     ok(ret, "InternetReadFile failed: %u\n", GetLastError());
     ok(size == 100, "size = %u\n", size);
+    buf[99] = 0;
+    todo_wine ok(!strcmp((char*)buf, cached_content), "incorrect page data: %s\n", (char*)buf);
 
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
+    DeleteUrlCacheEntryA(url);
+    request = HttpOpenRequestA(connect, "GET", "/tests/hello.html", NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
+    ret = HttpSendRequestA(request, NULL, 0, NULL, 0);
+    todo_wine ok(!ret, "HttpSendRequest succeeded\n");
+    if(!ret)
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() = %d\n", GetLastError());
     ok(InternetCloseHandle(request), "Close request handle failed\n");
 
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
