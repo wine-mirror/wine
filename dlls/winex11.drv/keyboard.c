@@ -2664,8 +2664,8 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
            CTRL + number or CTRL + symbol */
         if (e.state & ControlMask)
         {
-            if (((keysym>=33) && (keysym < 'A')) ||
-                ((keysym > 'Z') && (keysym < 'a')) ||
+            if (((keysym>=33) && (keysym < '@')) ||
+                (keysym == '`') ||
                 (keysym == XK_Tab))
             {
                 lpChar[0] = 0;
@@ -2689,8 +2689,16 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 	else if((lpKeyState[VK_CONTROL] & 0x80) /* Control is pressed */
 		&& (keysym == XK_Return || keysym == XK_KP_Enter))
         {
-            lpChar[0] = '\n';
-            ret = 1;
+            if (lpKeyState[VK_SHIFT] & 0x80)
+            {
+                lpChar[0] = 0;
+                ret = 0;
+            }
+            else
+            {
+                lpChar[0] = '\n';
+                ret = 1;
+            }
         }
 
         /* Hack to detect an XLookupString hard-coded to Latin1 */
