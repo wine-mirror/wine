@@ -725,6 +725,8 @@ static void set_mwm_hints( struct x11drv_win_data *data, DWORD style, DWORD ex_s
            data->hwnd, mwm_hints.decorations, mwm_hints.functions, style, ex_style );
 
     mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
+    mwm_hints.input_mode = 0;
+    mwm_hints.status = 0;
     XChangeProperty( data->display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
                      (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
