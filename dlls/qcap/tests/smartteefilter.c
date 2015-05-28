@@ -1010,7 +1010,7 @@ static HRESULT WINAPI SourcePin_Connect(IPin *iface, IPin *pReceivePin, const AM
     if (pmt && !IsEqualGUID(&pmt->formattype, &GUID_NULL))
         return VFW_E_TYPE_NOT_ACCEPTED;
     hr = IPin_ReceiveConnection(pReceivePin, &This->IPin_iface, &This->mediaType);
-    ok(SUCCEEDED(hr), "SmartTeeFilter's Input pin's IPin_ReceiveConnection() failed with 0x%08x\n", hr);
+    todo_wine ok(SUCCEEDED(hr), "SmartTeeFilter's Input pin's IPin_ReceiveConnection() failed with 0x%08x\n", hr);
     if (SUCCEEDED(hr)) {
         EnterCriticalSection(&This->cs);
         hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (void**)&This->memInputPin);
@@ -1307,9 +1307,9 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     }
 
     hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting Input pin returned 0x%08x\n", hr);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting Input pin returned 0x%08x\n", hr);
     hr = IGraphBuilder_Connect(graphBuilder, previewPin, &previewSinkFilter->IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
 
     sourceFilter = create_SourceFilter();
     if (sourceFilter == NULL) {
@@ -1322,7 +1322,7 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
         goto end;
 
     hr = IGraphBuilder_Connect(graphBuilder, &sourceFilter->IPin_iface, inputPin);
-    ok(SUCCEEDED(hr), "couldn't connect source filter to Input pin, hr=0x%08x\n", hr);
+    todo_wine ok(SUCCEEDED(hr), "couldn't connect source filter to Input pin, hr=0x%08x\n", hr);
     if (FAILED(hr))
         goto end;
     hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
@@ -1384,7 +1384,7 @@ static void test_smart_tee_filter(void)
 
     hr = CoCreateInstance(&CLSID_SmartTee, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void**)&smartTeeFilter);
-    todo_wine ok(SUCCEEDED(hr), "couldn't create smart tee filter, hr=0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "couldn't create smart tee filter, hr=0x%08x\n", hr);
     if (FAILED(hr))
         goto end;
 
@@ -1467,23 +1467,23 @@ static void test_smart_tee_filter(void)
     ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the input pin\n");
     ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamControl), "IAMStreamControl shouldn't exist on the input pin\n");
     ok(!has_interface((IUnknown*)inputPin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the input pin\n");
-    ok(has_interface((IUnknown*)inputPin, &IID_IQualityControl), "IQualityControl should exist on the input pin\n");
+    todo_wine ok(has_interface((IUnknown*)inputPin, &IID_IQualityControl), "IQualityControl should exist on the input pin\n");
 
     ok(has_interface((IUnknown*)capturePin, &IID_IUnknown), "IUnknown should exist on the capture pin\n");
     ok(!has_interface((IUnknown*)capturePin, &IID_IAsyncReader), "IAsyncReader shouldn't exist on the capture pin\n");
     ok(!has_interface((IUnknown*)capturePin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the capture pin\n");
     ok(!has_interface((IUnknown*)capturePin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the capture pin\n");
-    ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the capture pin\n");
+    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the capture pin\n");
     ok(!has_interface((IUnknown*)capturePin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the capture pin\n");
-    ok(has_interface((IUnknown*)capturePin, &IID_IQualityControl), "IQualityControl should exist on the capture pin\n");
+    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IQualityControl), "IQualityControl should exist on the capture pin\n");
 
     ok(has_interface((IUnknown*)previewPin, &IID_IUnknown), "IUnknown should exist on the preview pin\n");
     ok(!has_interface((IUnknown*)previewPin, &IID_IAsyncReader), "IAsyncReader shouldn't exist on the preview pin\n");
     ok(!has_interface((IUnknown*)previewPin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the preview pin\n");
     ok(!has_interface((IUnknown*)previewPin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the preview pin\n");
-    ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the preview pin\n");
+    todo_wine ok(has_interface((IUnknown*)capturePin, &IID_IAMStreamControl), "IAMStreamControl should exist on the preview pin\n");
     ok(!has_interface((IUnknown*)previewPin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the preview pin\n");
-    ok(has_interface((IUnknown*)previewPin, &IID_IQualityControl), "IQualityControl should exist on the preview pin\n");
+    todo_wine ok(has_interface((IUnknown*)previewPin, &IID_IQualityControl), "IQualityControl should exist on the preview pin\n");
 
     hr = IPin_QueryInterface(inputPin, &IID_IMemInputPin, (void**)&memInputPin);
     ok(SUCCEEDED(hr), "couldn't get mem input pin, hr=0x%08x\n", hr);
@@ -1502,9 +1502,9 @@ static void test_smart_tee_filter(void)
     IEnumMediaTypes_Release(enumMediaTypes);
     enumMediaTypes = NULL;
     hr = IPin_EnumMediaTypes(capturePin, &enumMediaTypes);
-    ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
     hr = IPin_EnumMediaTypes(previewPin, &enumMediaTypes);
-    ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
 
     hr = IPin_QueryInternalConnections(inputPin, NULL, &nPin);
     ok(hr == E_NOTIMPL, "IPin_QueryInternalConnections() returned hr=0x%08x\n", hr);
@@ -1539,7 +1539,7 @@ static void test_smart_tee_filter_aggregation(void)
         IUnknown *unknown = NULL;
         HRESULT hr = CoCreateInstance(&CLSID_SmartTee, (IUnknown*)&sourceFilter->IBaseFilter_iface,
                 CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unknown);
-        todo_wine ok(SUCCEEDED(hr), "SmartTee filter doesn't support aggregation, hr=0x%08x\n", hr);
+        ok(SUCCEEDED(hr), "SmartTee filter doesn't support aggregation, hr=0x%08x\n", hr);
         if (unknown)
             IUnknown_Release(unknown);
         IBaseFilter_Release(&sourceFilter->IBaseFilter_iface);

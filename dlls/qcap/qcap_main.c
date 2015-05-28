@@ -132,7 +132,7 @@ FactoryTemplate const g_Templates[] = {
     },{
         wSmartTeeFilter,
         &CLSID_SmartTee,
-        NULL, /* FIXME: Implement QCAP_createSmartTeeFilter */
+        QCAP_createSmartTeeFilter,
         NULL
     },{
         wAudioInMixerProp,

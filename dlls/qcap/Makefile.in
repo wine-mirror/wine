@@ -8,6 +8,7 @@ C_SRCS = \
 	capturegraph.c \
 	enummedia.c \
 	qcap_main.c \
+	smartteefilter.c \
 	v4l.c \
 	vfwcapture.c \
 	yuv.c
