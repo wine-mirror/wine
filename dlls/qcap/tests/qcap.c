@@ -127,6 +127,7 @@ static void test_smart_tee_filter(void)
     while (IEnumPins_Next(enumPins, 1, &pin, NULL) == S_OK)
     {
         PIN_INFO pinInfo;
+        memset(&pinInfo, 0, sizeof(pinInfo));
         hr = IPin_QueryPinInfo(pin, &pinInfo);
         ok(SUCCEEDED(hr), "QueryPinInfo failed, hr=%08x\n", hr);
         if (FAILED(hr))
@@ -154,6 +155,8 @@ static void test_smart_tee_filter(void)
             ok(0, "pin %d isn't supposed to exist\n", pinNumber);
 
     endwhile:
+        if (pinInfo.pFilter)
+            IBaseFilter_Release(pinInfo.pFilter);
         IPin_Release(pin);
         pinNumber++;
     }
