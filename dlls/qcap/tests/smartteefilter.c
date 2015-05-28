@@ -1010,13 +1010,13 @@ static HRESULT WINAPI SourcePin_Connect(IPin *iface, IPin *pReceivePin, const AM
     if (pmt && !IsEqualGUID(&pmt->formattype, &GUID_NULL))
         return VFW_E_TYPE_NOT_ACCEPTED;
     hr = IPin_ReceiveConnection(pReceivePin, &This->IPin_iface, &This->mediaType);
-    todo_wine ok(SUCCEEDED(hr), "SmartTeeFilter's Input pin's IPin_ReceiveConnection() failed with 0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "SmartTeeFilter's Input pin's IPin_ReceiveConnection() failed with 0x%08x\n", hr);
     if (SUCCEEDED(hr)) {
         EnterCriticalSection(&This->cs);
         hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (void**)&This->memInputPin);
         if (SUCCEEDED(hr)) {
             hr = IMemInputPin_GetAllocator(This->memInputPin, &This->allocator);
-            ok(SUCCEEDED(hr), "couldn't get allocator from SmartTeeFilter, hr=0x%08x\n", hr);
+            todo_wine ok(SUCCEEDED(hr), "couldn't get allocator from SmartTeeFilter, hr=0x%08x\n", hr);
             if (SUCCEEDED(hr)) {
                 ALLOCATOR_PROPERTIES requested, actual;
                 ZeroMemory(&requested, sizeof(ALLOCATOR_PROPERTIES));
@@ -1307,9 +1307,9 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     }
 
     hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting Input pin returned 0x%08x\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "connecting Capture pin without first connecting Input pin returned 0x%08x\n", hr);
     hr = IGraphBuilder_Connect(graphBuilder, previewPin, &previewSinkFilter->IPin_iface);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
 
     sourceFilter = create_SourceFilter();
     if (sourceFilter == NULL) {
@@ -1502,9 +1502,9 @@ static void test_smart_tee_filter(void)
     IEnumMediaTypes_Release(enumMediaTypes);
     enumMediaTypes = NULL;
     hr = IPin_EnumMediaTypes(capturePin, &enumMediaTypes);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
     hr = IPin_EnumMediaTypes(previewPin, &enumMediaTypes);
-    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "IPin_EnumMediaTypes() failed, hr=0x%08x\n", hr);
 
     hr = IPin_QueryInternalConnections(inputPin, NULL, &nPin);
     ok(hr == E_NOTIMPL, "IPin_QueryInternalConnections() returned hr=0x%08x\n", hr);
