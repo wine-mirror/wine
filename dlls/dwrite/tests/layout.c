@@ -921,7 +921,6 @@ static void test_Draw(void)
 
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", TRUE);
     IDWriteTextLayout_Release(layout);

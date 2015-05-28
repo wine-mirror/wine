@@ -1058,22 +1058,56 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     }
 
     /* FIXME: actually apply features */
+
+    IDWriteFontFace1_Release(fontface1);
     return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
-    UINT32 text_len, UINT16 const* glyph_indices, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
-    UINT32 glyph_count, IDWriteFontFace * font_face, FLOAT fontEmSize, FLOAT pixels_per_dip,
+    UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
+    UINT32 glyph_count, IDWriteFontFace *fontface, FLOAT emSize, FLOAT pixels_per_dip,
     DWRITE_MATRIX const* transform, BOOL use_gdi_natural, BOOL is_sideways, BOOL is_rtl,
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
-    UINT32 const* feature_range_lengths, UINT32 feature_ranges, FLOAT* glyph_advances, DWRITE_GLYPH_OFFSET* glyph_offsets)
+    UINT32 const* feature_range_lengths, UINT32 feature_ranges, FLOAT *advances, DWRITE_GLYPH_OFFSET *offsets)
 {
-    FIXME("(%s %p %p %u %p %p %u %p %f %f %p %d %d %d %p %s %p %p %u %p %p): stub\n", debugstr_wn(text, text_len),
-        clustermap, props, text_len, glyph_indices, glyph_props, glyph_count, font_face, fontEmSize, pixels_per_dip,
+    DWRITE_FONT_METRICS metrics;
+    IDWriteFontFace1 *fontface1;
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %p %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
+        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, pixels_per_dip,
         transform, use_gdi_natural, is_sideways, is_rtl, analysis, debugstr_w(locale), features, feature_range_lengths,
-        feature_ranges, glyph_advances, glyph_offsets);
-    return E_NOTIMPL;
+        feature_ranges, advances, offsets);
+
+    if (glyph_count == 0)
+        return S_OK;
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (FAILED(hr)) {
+        WARN("failed to get IDWriteFontFace1.\n");
+        return hr;
+    }
+
+    IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emSize, pixels_per_dip, transform, &metrics);
+    for (i = 0; i < glyph_count; i++) {
+        INT32 a;
+
+        hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, emSize, pixels_per_dip,
+            transform, use_gdi_natural, is_sideways, 1, &glyphs[i], &a);
+        if (FAILED(hr))
+            a = 0;
+
+        advances[i] = get_scaled_advance_width(a, emSize, &metrics);
+        offsets[i].advanceOffset = 0.0;
+        offsets[i].ascenderOffset = 0.0;
+    }
+
+    /* FIXME: actually apply features */
+
+    IDWriteFontFace1_Release(fontface1);
+    return S_OK;
 }
 
 static inline FLOAT get_cluster_advance(const FLOAT *advances, UINT32 start, UINT32 end)
