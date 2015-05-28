@@ -3603,6 +3603,25 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
     }
 }
 
+void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
+        float *out_min, float *out_max)
+{
+    union
+    {
+        DWORD d;
+        float f;
+    } min, max;
+
+    min.d = state->render_states[WINED3D_RS_POINTSIZE_MIN];
+    max.d = state->render_states[WINED3D_RS_POINTSIZE_MAX];
+
+    if (min.f > max.f)
+        min.f = max.f;
+
+    *out_min = min.f;
+    *out_max = max.f;
+}
+
 /* This small helper function is used to convert a bitmask into the number of masked bits */
 unsigned int count_bits(unsigned int mask)
 {
