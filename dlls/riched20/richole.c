@@ -1683,14 +1683,20 @@ static HRESULT WINAPI ITextRange_fnGetStoryLength(ITextRange *me, LONG *pcch)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnGetStoryType(ITextRange *me, LONG *pValue)
+static HRESULT WINAPI ITextRange_fnGetStoryType(ITextRange *me, LONG *value)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, value);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = tomUnknownStory;
+    return S_OK;
 }
 
 static HRESULT range_Collapse(LONG bStart, LONG *start, LONG *end)
@@ -4125,14 +4131,20 @@ static HRESULT WINAPI ITextSelection_fnGetStoryLength(ITextSelection *me, LONG *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetStoryType(ITextSelection *me, LONG *pValue)
+static HRESULT WINAPI ITextSelection_fnGetStoryType(ITextSelection *me, LONG *value)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%p)\n", This, value);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = tomUnknownStory;
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)

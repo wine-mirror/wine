@@ -2867,6 +2867,62 @@ static void test_Select(void)
   ITextSelection_Release(selection);
 }
 
+static void test_GetStoryType(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  ITextRange *range;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetStoryType(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  value = tomTextFrameStory;
+  hr = ITextRange_GetStoryType(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUnknownStory, "got %d\n", value);
+
+  hr = ITextSelection_GetStoryType(selection, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  value = tomTextFrameStory;
+  hr = ITextSelection_GetStoryType(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == tomUnknownStory, "got %d\n", value);
+
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_GetStoryType(range, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  value = 123;
+  hr = ITextRange_GetStoryType(range, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+  ok(value == 123, "got %d\n", value);
+
+  hr = ITextSelection_GetStoryType(selection, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  value = 123;
+  hr = ITextSelection_GetStoryType(selection, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+  ok(value == 123, "got %d\n", value);
+
+  ITextRange_Release(range);
+  ITextSelection_Release(selection);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -2897,4 +2953,5 @@ START_TEST(richole)
   test_InRange();
   test_ITextRange_IsEqual();
   test_Select();
+  test_GetStoryType();
 }

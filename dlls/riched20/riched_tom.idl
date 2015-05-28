@@ -147,6 +147,8 @@ typedef enum tagTomConstants
     tomMatchWord    = 2,
     tomMatchCase    = 4,
     tomMatchPattern = 8,
+
+    /* ITextRange story type values */
     tomUnknownStory         = 0,
     tomMainTextStory        = 1,
     tomFootnotesStory       = 2,
