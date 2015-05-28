@@ -359,15 +359,20 @@ static void test_ITextDocument_Open(void)
 
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   DeleteFileW(filename);
-  ITextDocument_Open(txtDoc, &testfile, tomText, CP_ACP);
-  todo_wine ok(is_existing_file(filename) == TRUE, "a file should be created default\n");
+  hres = ITextDocument_Open(txtDoc, &testfile, tomText, CP_ACP);
+todo_wine {
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(is_existing_file(filename) == TRUE, "a file should be created default\n");
+}
   release_interfaces(&w, &reOle, &txtDoc, &txtSel);
   DeleteFileW(filename);
 
   /* test of share mode */
   touch_file(filename);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
-  ITextDocument_Open(txtDoc, &testfile, tomShareDenyRead, CP_ACP);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomShareDenyRead, CP_ACP);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   SetLastError(0xdeadbeef);
   hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                           FILE_ATTRIBUTE_NORMAL, NULL);
@@ -378,7 +383,9 @@ static void test_ITextDocument_Open(void)
 
   touch_file(filename);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
-  ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite, CP_ACP);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite, CP_ACP);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   SetLastError(0xdeadbeef);
   hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                           FILE_ATTRIBUTE_NORMAL, NULL);
@@ -390,7 +397,9 @@ static void test_ITextDocument_Open(void)
   touch_file(filename);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SetLastError(0xdeadbeef);
-  ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite|tomShareDenyRead, CP_ACP);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomShareDenyWrite|tomShareDenyRead, CP_ACP);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                           FILE_ATTRIBUTE_NORMAL, NULL);
   todo_wine ok(GetLastError() == ERROR_SHARING_VIOLATION, "ITextDocument_Open should fail\n");
@@ -404,7 +413,9 @@ static void test_ITextDocument_Open(void)
   WriteFile(hFile, chACP, sizeof(chACP)-sizeof(CHAR), &dw, NULL);
   CloseHandle(hFile);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
-  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_ACP);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_ACP);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   result = SendMessageA(w, WM_GETTEXT, 1024, (LPARAM)bufACP);
   todo_wine ok(result == 12, "ITextDocument_Open: Test ASCII returned %d, expected 12\n", result);
   result = strcmp(bufACP, chACP);
@@ -417,7 +428,9 @@ static void test_ITextDocument_Open(void)
   WriteFile(hFile, chUTF8, sizeof(chUTF8)-sizeof(CHAR), &dw, NULL);
   CloseHandle(hFile);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
-  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_UTF8);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_UTF8);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   result = SendMessageA(w, WM_GETTEXT, 1024, (LPARAM)bufACP);
   todo_wine ok(result == 15, "ITextDocument_Open: Test UTF-8 returned %d, expected 15\n", result);
   result = strcmp(bufACP, &chUTF8[3]);
@@ -430,7 +443,9 @@ static void test_ITextDocument_Open(void)
   WriteFile(hFile, chUTF16, sizeof(chUTF16)-sizeof(WCHAR), &dw, NULL);
   CloseHandle(hFile);
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
-  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, 1200);
+  hres = ITextDocument_Open(txtDoc, &testfile, tomReadOnly, 1200);
+todo_wine
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   result = SendMessageW(w, WM_GETTEXT, 1024, (LPARAM)bufUnicode);
   todo_wine ok(result == 12, "ITextDocument_Open: Test UTF-16 returned %d, expected 12\n", result);
   result = lstrcmpW(bufUnicode, &chUTF16[1]);
@@ -1255,9 +1270,11 @@ static void test_ITextRange_GetDuplicate(void)
   hres = ITextRange_GetDuplicate(txtRge, &txtRgeDup);
   ok(hres == S_OK, "ITextRange_GetDuplicate\n");
   ok(txtRgeDup != txtRge, "A new pointer should be returned\n");
-  ITextRange_GetStart(txtRgeDup, &start);
+  hres = ITextRange_GetStart(txtRgeDup, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == first, "got wrong value: %d\n", start);
-  ITextRange_GetEnd(txtRgeDup, &end);
+  hres = ITextRange_GetEnd(txtRgeDup, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == lim, "got wrong value: %d\n", end);
 
   ITextRange_Release(txtRgeDup);
@@ -1265,8 +1282,15 @@ static void test_ITextRange_GetDuplicate(void)
   hres = ITextRange_GetDuplicate(txtRge, NULL);
   ok(hres == E_INVALIDARG, "ITextRange_GetDuplicate\n");
 
-  ITextRange_Release(txtRge);
   release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextRange_GetDuplicate(txtRge, NULL);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_GetDuplicate(txtRge, &txtRgeDup);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextRange_Release(txtRge);
 }
 
 static void test_ITextRange_Collapse(void)
@@ -1283,73 +1307,101 @@ static void test_ITextRange_Collapse(void)
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   first = 4, lim = 8;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomTrue);
   ok(hres == S_OK, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 4, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 4, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomStart);
   ok(hres == S_OK, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 4, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 4, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomFalse);
   ok(hres == S_OK, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 8, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 8, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomEnd);
   ok(hres == S_OK, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 8, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 8, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
   /* tomStart is the default */
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, 256);
   ok(hres == S_OK, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 4, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 4, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
   first = 6, lim = 6;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomEnd);
   ok(hres == S_FALSE, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 6, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 6, "got wrong end value: %d\n", end);
   ITextRange_Release(txtRge);
 
   first = 8, lim = 8;
-  ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  hres = ITextDocument_Range(txtDoc, first, lim, &txtRge);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_Collapse(txtRge, tomStart);
   ok(hres == S_FALSE, "ITextRange_Collapse\n");
-  ITextRange_GetStart(txtRge, &start);
+  hres = ITextRange_GetStart(txtRge, &start);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(start == 8, "got wrong start value: %d\n", start);
-  ITextRange_GetEnd(txtRge, &end);
+  hres = ITextRange_GetEnd(txtRge, &end);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(end == 8, "got wrong end value: %d\n", end);
-  ITextRange_Release(txtRge);
 
   release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextRange_Collapse(txtRge, tomStart);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextRange_Collapse(txtRge, tomUndefined);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextRange_Release(txtRge);
 }
 
 static void test_ITextSelection_Collapse(void)
@@ -1418,7 +1470,15 @@ static void test_ITextSelection_Collapse(void)
   ok(start == 8, "got wrong start value: %d\n", start);
   ok(end == 8, "got wrong end value: %d\n", end);
 
-  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  release_interfaces(&w, &reOle, &txtDoc, NULL);
+
+  hres = ITextSelection_Collapse(txtSel, tomStart);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  hres = ITextSelection_Collapse(txtSel, tomUndefined);
+  ok(hres == CO_E_RELEASED, "got 0x%08x\n", hres);
+
+  ITextSelection_Release(txtSel);
 }
 
 static void test_IOleClientSite_QueryInterface(void)
@@ -1657,8 +1717,15 @@ todo_wine
   ok(size == tomUndefined, "size %.2f\n", size);
 
   ITextFont_Release(font);
-  ITextRange_Release(range);
   release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_GetFont(range, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetFont(range, &font2);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextRange_Release(range);
 }
 
 static void test_GetPara(void)
