@@ -2630,7 +2630,7 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
     if(!InternetCrackUrlA(url, 0, 0, &uc))
         uc.dwUrlPathLength = 0;
 
-    if(!uc.dwUrlPathLength) {
+    if(!uc.dwUrlPathLength || uc.dwUrlPathLength >= sizeof(file_name)) {
         file_name[0] = 0;
     }else {
         char *p, *e;
