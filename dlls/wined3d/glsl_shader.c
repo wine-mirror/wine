@@ -144,6 +144,12 @@ struct glsl_vs_program
         GLint cos_htheta;
         GLint cos_hphi;
     } light_location[MAX_ACTIVE_LIGHTS];
+    GLint pointsize_location;
+    GLint pointsize_min_location;
+    GLint pointsize_max_location;
+    GLint pointsize_c_att_location;
+    GLint pointsize_l_att_location;
+    GLint pointsize_q_att_location;
 };
 
 struct glsl_gs_program
@@ -1197,6 +1203,32 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context *c
     checkGLcall("setting FFP lights uniforms");
 }
 
+static void shader_glsl_pointsize_uniform(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float min, max;
+    float size, att[3];
+
+    get_pointsize_minmax(context, state, &min, &max);
+
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_min_location, min));
+    checkGLcall("glUniform1f");
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_max_location, max));
+    checkGLcall("glUniform1f");
+
+    get_pointsize(context, state, &size, att);
+
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_location, size));
+    checkGLcall("glUniform1f");
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_c_att_location, att[0]));
+    checkGLcall("glUniform1f");
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_l_att_location, att[1]));
+    checkGLcall("glUniform1f");
+    GL_EXTCALL(glUniform1f(prog->vs.pointsize_q_att_location, att[2]));
+    checkGLcall("glUniform1f");
+}
+
 /* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
@@ -1243,6 +1275,9 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     if (update_mask & WINED3D_SHADER_CONST_VS_B)
         shader_glsl_load_constantsB(vshader, gl_info, prog->vs.uniform_b_locations, state->vs_consts_b,
                 vshader->reg_maps.boolean_constants);
+
+    if (update_mask & WINED3D_SHADER_CONST_VS_POINTSIZE)
+        shader_glsl_pointsize_uniform(context, state, prog);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_POS_FIXUP)
     {
@@ -5610,6 +5645,18 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     shader_addline(buffer, "    float cos_hphi;\n");
     shader_addline(buffer, "} ffp_light[%u];\n", MAX_ACTIVE_LIGHTS);
 
+    if (settings->point_size)
+    {
+        shader_addline(buffer, "uniform struct\n{\n");
+        shader_addline(buffer, "    float size;\n");
+        shader_addline(buffer, "    float size_min;\n");
+        shader_addline(buffer, "    float size_max;\n");
+        shader_addline(buffer, "    float c_att;\n");
+        shader_addline(buffer, "    float l_att;\n");
+        shader_addline(buffer, "    float q_att;\n");
+        shader_addline(buffer, "} ffp_point;\n");
+    }
+
     shader_addline(buffer, "\nvoid main()\n{\n");
     shader_addline(buffer, "float m;\n");
     shader_addline(buffer, "vec3 r;\n");
@@ -5704,10 +5751,10 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
 
     if (settings->point_size)
     {
-        shader_addline(buffer, "gl_PointSize = gl_Point.size / sqrt(gl_Point.distanceConstantAttenuation"
-                " + gl_Point.distanceLinearAttenuation * length(ec_pos.xyz)"
-                " + gl_Point.distanceQuadraticAttenuation * dot(ec_pos.xyz, ec_pos.xyz));\n");
-        shader_addline(buffer, "gl_PointSize = clamp(gl_PointSize, gl_Point.sizeMin, gl_Point.sizeMax);\n");
+        shader_addline(buffer, "gl_PointSize = ffp_point.size / sqrt(ffp_point.c_att"
+                " + ffp_point.l_att * length(ec_pos.xyz)"
+                " + ffp_point.q_att * dot(ec_pos.xyz, ec_pos.xyz));\n");
+        shader_addline(buffer, "gl_PointSize = clamp(gl_PointSize, ffp_point.size_min, ffp_point.size_max);\n");
     }
 
     shader_addline(buffer, "}\n");
@@ -6440,6 +6487,12 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
         string_buffer_sprintf(name, "ffp_light[%u].cos_hphi", i);
         vs->light_location[i].cos_hphi = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
+    vs->pointsize_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.size"));
+    vs->pointsize_min_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.size_min"));
+    vs->pointsize_max_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.size_max"));
+    vs->pointsize_c_att_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.c_att"));
+    vs->pointsize_l_att_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.l_att"));
+    vs->pointsize_q_att_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.q_att"));
 
     string_buffer_release(&priv->string_buffers, name);
 }
@@ -6769,6 +6822,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         if (entry->vs.light_ambient_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_LIGHTS;
     }
+    if (entry->vs.pointsize_min_location != -1)
+        entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
 
     if (gshader)
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps,
@@ -7780,7 +7835,10 @@ static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
         glsl_vertex_pipe_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE))
             && state->render_states[WINED3D_RS_POINTSCALEENABLE])
+    {
         state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
+        context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+    }
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
 }
 
@@ -7800,6 +7858,35 @@ static void glsl_vertex_pipe_light(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_LIGHTS;
+}
+
+static void glsl_vertex_pipe_pointsize_arb(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+    state_psizemin_arb(context, state, state_id);
+}
+
+static void glsl_vertex_pipe_pointsize_ext(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+    state_psizemin_ext(context, state, state_id);
+}
+
+static void glsl_vertex_pipe_pointsize_w(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+    state_psizemin_w(context, state, state_id);
+}
+
+static void glsl_vertex_pipe_pointscale(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    if (!use_vs(state))
+        context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+    state_pscale(context, state, state_id);
 }
 
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
@@ -7899,12 +7986,12 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_EMISSIVEMATERIALSOURCE),            {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_VERTEXBLEND),                       {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE),                         {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     state_psizemin_arb     }, ARB_POINT_PARAMETERS         },
-    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     state_psizemin_ext     }, EXT_POINT_PARAMETERS         },
-    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     state_psizemin_w       }, WINED3D_GL_EXT_NONE          },
+    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize_arb}, ARB_POINT_PARAMETERS  },
+    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize_ext}, EXT_POINT_PARAMETERS  },
+    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize_w}, WINED3D_GL_EXT_NONE     },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 state_pointsprite      }, ARB_POINT_SPRITE             },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 state_pointsprite_w    }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  state_pscale           }, WINED3D_GL_EXT_NONE          },
+    {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  glsl_vertex_pipe_pointscale}, WINED3D_GL_EXT_NONE      },
     {STATE_RENDER(WINED3D_RS_POINTSCALE_A),                      {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSCALE_B),                      {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSCALE_C),                      {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
