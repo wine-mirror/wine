@@ -2313,15 +2313,17 @@ void CALLBACK IAdviseSinkEx_OnViewStatusChange_Proxy(
     IAdviseSinkEx* This,
     DWORD dwViewStatus)
 {
-    FIXME("not implemented\n");
+    TRACE("(%p, 0x%08x)\n", This, dwViewStatus);
+    IAdviseSinkEx_RemoteOnViewStatusChange_Proxy(This, dwViewStatus);
 }
 
 HRESULT __RPC_STUB IAdviseSinkEx_OnViewStatusChange_Stub(
     IAdviseSinkEx* This,
     DWORD dwViewStatus)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    TRACE("(%p, 0x%08x)\n", This, dwViewStatus);
+    IAdviseSinkEx_OnViewStatusChange(This, dwViewStatus);
+    return S_OK;
 }
 
 HRESULT CALLBACK IEnumOleUndoUnits_Next_Proxy(
@@ -2330,8 +2332,14 @@ HRESULT CALLBACK IEnumOleUndoUnits_Next_Proxy(
     IOleUndoUnit **rgElt,
     ULONG *pcEltFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    ULONG fetched;
+
+    TRACE("(%u, %p %p)\n", cElt, rgElt, pcEltFetched);
+
+    if (!pcEltFetched)
+        pcEltFetched = &fetched;
+
+    return IEnumOleUndoUnits_RemoteNext_Proxy(This, cElt, rgElt, pcEltFetched);
 }
 
 HRESULT __RPC_STUB IEnumOleUndoUnits_Next_Stub(
@@ -2340,8 +2348,16 @@ HRESULT __RPC_STUB IEnumOleUndoUnits_Next_Stub(
     IOleUndoUnit **rgElt,
     ULONG *pcEltFetched)
 {
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%u, %p, %p)\n", cElt, rgElt, pcEltFetched);
+
+    *pcEltFetched = 0;
+    hr = IEnumOleUndoUnits_Next(This, cElt, rgElt, pcEltFetched);
+    if (hr == S_OK)
+        *pcEltFetched = cElt;
+
+    return hr;
 }
 
 HRESULT CALLBACK IQuickActivate_QuickActivate_Proxy(
