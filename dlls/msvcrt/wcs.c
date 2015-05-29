@@ -1295,6 +1295,20 @@ int CDECL MSVCRT_sprintf_p_l(char *buffer, MSVCRT_size_t length,
 }
 
 /*********************************************************************
+ *		__swprintf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT___swprintf_l( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    retval = MSVCRT_vswprintf_l(str, format, locale, valist);
+    __ms_va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
  * _sprintf_p (MSVCR100.@)
  */
 int CDECL MSVCRT__sprintf_p(char *buffer, MSVCRT_size_t length, const char *format, ...)

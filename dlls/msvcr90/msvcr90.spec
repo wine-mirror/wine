@@ -290,7 +290,7 @@
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ stub __strncnt
-@ stub __swprintf_l
+@ varargs  __swprintf_l(ptr wstr ptr) MSVCRT___swprintf_l
 @ cdecl __sys_errlist()
 @ cdecl __sys_nerr()
 @ cdecl __threadhandle() kernel32.GetCurrentThread

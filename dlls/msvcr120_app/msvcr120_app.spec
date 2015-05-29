@@ -966,7 +966,7 @@
 @ extern __setlc_active msvcr120.__setlc_active
 @ cdecl __setusermatherr(ptr) msvcr120.__setusermatherr
 @ stub __strncnt
-@ stub __swprintf_l
+@ varargs __swprintf_l(ptr wstr ptr) msvcr120.__swprintf_l
 @ cdecl __sys_errlist() msvcr120.__sys_errlist
 @ cdecl __sys_nerr() msvcr120.__sys_nerr
 @ cdecl __threadhandle() msvcr120.__threadhandle
