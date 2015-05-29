@@ -406,6 +406,11 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
 
         nsIDOMWindow_Release(nswindow);
 
+        if(!window_iter) {
+            WARN("nsIDOMWindow without HTMLOuterWindow: %p\n", nswindow);
+            continue;
+        }
+
         hres = IHTMLElement_get_id(&window_iter->frame_element->element.IHTMLElement_iface, &id);
         if(FAILED(hres)) {
             FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
