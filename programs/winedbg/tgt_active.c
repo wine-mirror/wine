@@ -836,10 +836,10 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
 
     dbg_interactiveP = TRUE;
     parser_handle(input);
+    output_system_info();
 
     if (output != INVALID_HANDLE_VALUE)
     {
-        output_system_info();
         SetEvent( event );
         WaitForSingleObject( thread, INFINITE );
         CloseHandle( output );
