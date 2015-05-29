@@ -2016,6 +2016,56 @@ static HRESULT parse_script_expr(const char *expr, VARIANT *res, IActiveScript *
     return hres;
 }
 
+static void test_retval(void)
+{
+    BSTR str = a2bstr("reportSuccess(), true");
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    SCRIPTSTATE state;
+    VARIANT res;
+    HRESULT hres;
+
+    engine = create_script();
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    SET_EXPECT(GetItemInfo_testVal);
+    hres = IActiveScript_AddNamedItem(engine, test_valW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+    CHECK_CALLED(GetItemInfo_testVal);
+
+    V_VT(&res) = VT_NULL;
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, &res, NULL);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    ok(V_VT(&res) == VT_EMPTY, "V_VT(&res) = %d\n", V_VT(&res));
+
+    hres = IActiveScript_GetScriptState(engine, &state);
+    ok(hres == S_OK, "GetScriptState failed: %08x\n", hres);
+    ok(state == SCRIPTSTATE_INITIALIZED, "state = %d\n", state);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    hres = IActiveScript_Close(engine);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+
+    IActiveScriptParse_Release(parser);
+    IActiveScript_Release(engine);
+    SysFreeString(str);
+}
+
 static void test_default_value(void)
 {
     DISPPARAMS dp = {0};
@@ -2084,6 +2134,7 @@ static void test_script_exprs(void)
     CHECK_CALLED(global_success_i);
 
     test_default_value();
+    test_retval();
 
     testing_expr = FALSE;
 }
