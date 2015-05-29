@@ -1076,13 +1076,13 @@ static HRESULT WINAPI submit_onclick_setret(IDispatchEx *iface, DISPID id, LCID 
 
     hres = IHTMLEventObj_put_returnValue(event, onclick_event_retval);
     ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
-    IHTMLEventObj_Release(event);
 
     V_VT(&v) = VT_ERROR;
     hres = IHTMLEventObj_get_returnValue(event, &v);
     ok(hres == S_OK, "get_returnValue failed: %08x\n", hres);
     ok(VarCmp(&v, &onclick_event_retval, 0, 0) == VARCMP_EQ, "unexpected returnValue\n");
 
+    IHTMLEventObj_Release(event);
     *pvarRes = onclick_retval;
     return S_OK;
 }
@@ -1108,9 +1108,9 @@ static HRESULT WINAPI submit_onclick_cancel(IDispatchEx *iface, DISPID id, LCID 
 
     hres = IHTMLEventObj_put_cancelBubble(event, VARIANT_TRUE);
     ok(hres == S_OK, "put_returnValue failed: %08x\n", hres);
-    IHTMLEventObj_Release(event);
 
     test_event_cancelbubble(event, VARIANT_TRUE);
+    IHTMLEventObj_Release(event);
     return S_OK;
 }
 
