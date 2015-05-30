@@ -139,6 +139,7 @@ struct layout_run {
         struct inline_object_run object;
         struct regular_layout_run regular;
     } u;
+    IUnknown *effect;
 };
 
 struct layout_effective_run {
@@ -556,6 +557,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
             r->u.object.object = range->object;
             r->u.object.length = range->range.length;
+            r->effect = range->effect;
             list_add_tail(&layout->runs, &r->entry);
             continue;
         }
@@ -615,6 +617,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
+        r->effect = range->effect;
 
         hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
         if (FAILED(hr) || !exists) {
@@ -2091,7 +2094,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             DWRITE_MEASURING_MODE_NATURAL,
             &glyph_run,
             &descr,
-            NULL /* FIXME */);
+            run->run->effect);
     }
 
     /* 2. Inline objects */
@@ -2103,7 +2106,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             inlineobject->object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
-            NULL /* FIXME */);
+            run->run->effect);
     }
 
     /* TODO: 3. Underlines */
