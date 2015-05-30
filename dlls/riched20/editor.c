@@ -3158,13 +3158,84 @@ void ME_ReplaceSel(ME_TextEditor *editor, BOOL can_undo, const WCHAR *str, int l
   ME_UpdateRepaint(editor, FALSE);
 }
 
+static void ME_SetText(ME_TextEditor *editor, void *text, BOOL unicode)
+{
+  LONG codepage = unicode ? CP_UNICODE : CP_ACP;
+  int textLen;
+
+  LPWSTR wszText = ME_ToUnicode(codepage, text, &textLen);
+
+  if (textLen > 0)
+  {
+    int len = -1;
+
+    /* uses default style! */
+    if (!(editor->styleFlags & ES_MULTILINE))
+    {
+      WCHAR *p = wszText;
+
+      while (*p != '\0' && *p != '\r' && *p != '\n') p++;
+      len = p - wszText;
+    }
+    ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
+  }
+  ME_EndToUnicode(codepage, wszText);
+}
+
+static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
+{
+  CREATESTRUCTW *createW = (CREATESTRUCTW*)lParam;
+  CREATESTRUCTA *createA = (CREATESTRUCTA*)lParam;
+  void *text = NULL;
+  INT max;
+
+  if (lParam)
+    text = unicode ? (void*)createW->lpszName : (void*)createA->lpszName;
+
+  ME_SetDefaultFormatRect(editor);
+
+  max = (editor->styleFlags & ES_DISABLENOSCROLL) ? 1 : 0;
+  if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_VSCROLL)
+    ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, 0, max, TRUE);
+
+  if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_HSCROLL)
+    ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, 0, max, TRUE);
+
+  if (editor->styleFlags & ES_DISABLENOSCROLL)
+  {
+    if (editor->styleFlags & WS_VSCROLL)
+    {
+      ITextHost_TxEnableScrollBar(editor->texthost, SB_VERT, ESB_DISABLE_BOTH);
+      ITextHost_TxShowScrollBar(editor->texthost, SB_VERT, TRUE);
+    }
+    if (editor->styleFlags & WS_HSCROLL)
+    {
+      ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
+      ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
+    }
+  }
+
+  if (text)
+  {
+    ME_SetText(editor, text, unicode);
+    ME_SetCursorToStart(editor, &editor->pCursors[0]);
+    ME_SetCursorToStart(editor, &editor->pCursors[1]);
+  }
+
+  ME_CommitUndo(editor);
+  ME_WrapMarkedParagraphs(editor);
+  ME_MoveCaret(editor);
+  return 0;
+}
+
+
 #define UNSUPPORTED_MSG(e) \
   case e:                  \
     FIXME(#e ": stub\n");  \
     *phresult = S_FALSE;   \
     return 0;
 
-/* Handle messages for windowless and windoweded richedit controls.
+/* Handle messages for windowless and windowed richedit controls.
  *
  * The LRESULT that is returned is a return value for window procs,
  * and the phresult parameter is the COM return code needed by the
@@ -3689,28 +3760,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         ME_StreamInRTFString(editor, 0, (char *)lParam);
       }
       else
-      {
-        int textLen;
-        LONG codepage = unicode ? CP_UNICODE : CP_ACP;
-        LPWSTR wszText = ME_ToUnicode(codepage, (void *)lParam, &textLen);
-        TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
-        if (textLen > 0)
-        {
-          int len = -1;
-
-          /* uses default style! */
-          if (!(editor->styleFlags & ES_MULTILINE))
-          {
-            WCHAR * p;
-
-            p = wszText;
-            while (*p != '\0' && *p != '\r' && *p != '\n') p++;
-            len = p - wszText;
-          }
-          ME_InsertTextFromCursor(editor, 0, wszText, len, editor->pBuffer->pDefaultStyle);
-        }
-        ME_EndToUnicode(codepage, wszText);
-      }
+        ME_SetText(editor, (void*)lParam, unicode);
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
@@ -4065,61 +4115,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
-  {
-    void *text = NULL;
-    INT max;
-
-    ME_SetDefaultFormatRect(editor);
-
-    max = (editor->styleFlags & ES_DISABLENOSCROLL) ? 1 : 0;
-    if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_VSCROLL)
-      ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, 0, max, TRUE);
-
-    if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_HSCROLL)
-      ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, 0, max, TRUE);
-
-    if (editor->styleFlags & ES_DISABLENOSCROLL)
-    {
-      if (editor->styleFlags & WS_VSCROLL)
-      {
-        ITextHost_TxEnableScrollBar(editor->texthost, SB_VERT, ESB_DISABLE_BOTH);
-        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT, TRUE);
-      }
-      if (editor->styleFlags & WS_HSCROLL)
-      {
-        ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
-        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
-      }
-    }
-
-    if (lParam)
-    {
-        text = (unicode ? (void*)((CREATESTRUCTW*)lParam)->lpszName
-                : (void*)((CREATESTRUCTA*)lParam)->lpszName);
-    }
-    if (text)
-    {
-      WCHAR *textW;
-      int len;
-      LONG codepage = unicode ? CP_UNICODE : CP_ACP;
-      textW = ME_ToUnicode(codepage, text, &len);
-      if (!(editor->styleFlags & ES_MULTILINE))
-      {
-        len = 0;
-        while(textW[len] != '\0' && textW[len] != '\r' && textW[len] != '\n')
-          len++;
-      }
-      ME_InsertTextFromCursor(editor, 0, textW, len, editor->pBuffer->pDefaultStyle);
-      ME_EndToUnicode(codepage, textW);
-      ME_SetCursorToStart(editor, &editor->pCursors[0]);
-      ME_SetCursorToStart(editor, &editor->pCursors[1]);
-    }
-
-    ME_CommitUndo(editor);
-    ME_WrapMarkedParagraphs(editor);
-    ME_MoveCaret(editor);
-    return 0;
-  }
+    return ME_WmCreate(editor, lParam, unicode);
   case WM_DESTROY:
     ME_DestroyEditor(editor);
     return 0;
