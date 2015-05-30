@@ -258,7 +258,6 @@ static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *if
     UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
 {
     struct call_entry entry;
-
     entry.kind = ScriptAnalysis;
     entry.sa.pos = position;
     entry.sa.len = length;
@@ -885,6 +884,13 @@ static struct sa_test sa_tests[] = {
           { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
             { 2, 3, DWRITE_SCRIPT_SHAPES_DEFAULT   },
             { 5, 1, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
+    },
+    {
+      /* LRE/PDF and other visual and non-visual codes from Common script range */
+      {0x202a,0x202c,'r','!',0x200b,'\r',0}, 3,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
+            { 2, 2, DWRITE_SCRIPT_SHAPES_DEFAULT   },
+            { 4, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
     },
     /* keep this as end marker */
     { {0} }

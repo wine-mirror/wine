@@ -128,6 +128,8 @@ struct regular_layout_run {
     UINT16 *clustermap;
     FLOAT  *advances;
     DWRITE_GLYPH_OFFSET *offsets;
+    /* this is actual glyph count after shaping, it's not necessary the same as reported to Draw() */
+    UINT32 glyphcount;
 };
 
 struct layout_run {
@@ -436,12 +438,17 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     UINT16 j;
 
     metrics->width = 0.0;
-    for (j = start_glyph; j < stop_glyph; j++)
-        metrics->width += run->run.glyphAdvances[j];
+
+    /* For clusters on control chars we report zero glyphs, and we need zero cluster
+       width as well; advances are already computed at this point and are not necessary zero. */
+    if (run->run.glyphCount) {
+        for (j = start_glyph; j < stop_glyph; j++)
+            metrics->width += run->run.glyphAdvances[j];
+    }
     metrics->length = 0;
 
     position = stop_position;
-    if (stop_glyph == run->run.glyphCount)
+    if (stop_glyph == run->glyphcount)
         breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionAfter;
     else {
         breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionBefore;
@@ -498,7 +505,7 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
         }
 
         if (end) {
-            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->run.glyphCount, i, metrics);
+            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->glyphcount, i, metrics);
             metrics->length = i - start + 1;
             c->position = start;
             c->run = r;
@@ -649,12 +656,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, run->descr.string, run->descr.stringLength,
                 run->run.fontFace, run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
                 NULL /* FIXME */, NULL, NULL, 0, max_count, run->clustermap, text_props, run->glyphs, glyph_props,
-                &run->run.glyphCount);
+                &run->glyphcount);
             if (hr == E_NOT_SUFFICIENT_BUFFER) {
                 heap_free(run->glyphs);
                 heap_free(glyph_props);
 
-                max_count = run->run.glyphCount;
+                max_count = run->glyphcount;
 
                 run->glyphs = heap_alloc(max_count*sizeof(UINT16));
                 glyph_props = heap_alloc(max_count*sizeof(DWRITE_SHAPING_GLYPH_PROPERTIES));
@@ -677,21 +684,21 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphIndices = run->glyphs;
         run->descr.clusterMap = run->clustermap;
 
-        run->advances = heap_alloc(run->run.glyphCount*sizeof(FLOAT));
-        run->offsets = heap_alloc(run->run.glyphCount*sizeof(DWRITE_GLYPH_OFFSET));
+        run->advances = heap_alloc(run->glyphcount*sizeof(FLOAT));
+        run->offsets = heap_alloc(run->glyphcount*sizeof(DWRITE_GLYPH_OFFSET));
         if (!run->advances || !run->offsets)
             goto memerr;
 
         /* now set advances and offsets */
         if (layout->gdicompatible)
             hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap,
-                text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->run.glyphCount,
+                text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, layout->pixels_per_dip, &layout->transform, layout->use_gdi_natural,
                 run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0,
                 run->advances, run->offsets);
         else
             hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap, text_props,
-                run->descr.stringLength, run->run.glyphIndices, glyph_props, run->run.glyphCount, run->run.fontFace,
+                run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount, run->run.fontFace,
                 run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
                 NULL, NULL, 0, run->advances, run->offsets);
 
@@ -703,6 +710,13 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
 
+        /* Special treatment of control script, shaping code adds normal glyphs for it,
+           with non-zero advances, and layout code exposes those as zero width clusters,
+           so we have to do it manually. */
+        if (run->sa.script == Script_Common)
+            run->run.glyphCount = 0;
+        else
+            run->run.glyphCount = run->glyphcount;
         layout_set_cluster_metrics(layout, r, &cluster);
 
         continue;
@@ -775,11 +789,13 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     return hr;
 }
 
-static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 start,
-    UINT32 length, FLOAT origin_x)
+/* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
+   'cluster_count' indicates how many clusters to add, including first one. */
+static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
+    UINT32 cluster_count, FLOAT origin_x)
 {
+    UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
-    UINT32 i;
 
     if (r->kind == LAYOUT_RUN_INLINE) {
         struct layout_effective_inline *inlineobject;
@@ -804,6 +820,10 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     if (!run)
         return E_OUTOFMEMORY;
 
+    /* no need to iterate for that */
+    last_cluster = first_cluster + cluster_count - 1;
+    length = layout->clusters[last_cluster].position + layout->clustermetrics[last_cluster].length;
+
     run->clustermap = heap_alloc(sizeof(UINT16)*length);
     if (!run->clustermap) {
         heap_free(run);
@@ -811,16 +831,20 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     }
 
     run->run = r;
-    run->start = start;
+    run->start = start = layout->clusters[first_cluster].position;
     run->length = length;
     run->origin_x = origin_x;
     run->origin_y = 0.0; /* FIXME: set after line is built */
 
-    /* trim from the left */
-    run->glyphcount = r->u.regular.run.glyphCount - r->u.regular.clustermap[start];
-    /* trim from the right */
-    if (length < r->u.regular.descr.stringLength)
-        run->glyphcount -= r->u.regular.clustermap[start + length];
+    if (r->u.regular.run.glyphCount) {
+        /* trim from the left */
+        run->glyphcount = r->u.regular.run.glyphCount - r->u.regular.clustermap[start];
+        /* trim from the right */
+        if (length < r->u.regular.descr.stringLength)
+            run->glyphcount -= r->u.regular.clustermap[start + length];
+    }
+    else
+        run->glyphcount = 0;
 
     /* cluster map needs to be shifted */
     for (i = 0; i < length; i++)
@@ -901,8 +925,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
             UINT32 strlength = metrics.length, index = i;
 
-            if (i > start) {
-                hr = layout_add_effective_run(layout, run, start, i - start, origin_x);
+            if (i >= start) {
+                hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */

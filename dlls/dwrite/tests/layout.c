@@ -31,13 +31,152 @@
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
-#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
-static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+static DWRITE_SCRIPT_ANALYSIS g_sa;
+static DWRITE_SCRIPT_ANALYSIS g_control_sa;
+
+/* test IDWriteTextAnalysisSink */
+static HRESULT WINAPI analysissink_QueryInterface(IDWriteTextAnalysisSink *iface, REFIID riid, void **obj)
 {
-    ULONG rc = IUnknown_AddRef(obj);
-    IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSink) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
 }
+
+static ULONG WINAPI analysissink_AddRef(IDWriteTextAnalysisSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI analysissink_Release(IDWriteTextAnalysisSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
+{
+    g_sa = *sa;
+    return S_OK;
+}
+
+static HRESULT WINAPI analysissink_SetLineBreakpoints(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, DWRITE_LINE_BREAKPOINT const* breakpoints)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analysissink_SetBidiLevel(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analysissink_SetNumberSubstitution(IDWriteTextAnalysisSink *iface,
+    UINT32 position, UINT32 length, IDWriteNumberSubstitution* substitution)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static IDWriteTextAnalysisSinkVtbl analysissinkvtbl = {
+    analysissink_QueryInterface,
+    analysissink_AddRef,
+    analysissink_Release,
+    analysissink_SetScriptAnalysis,
+    analysissink_SetLineBreakpoints,
+    analysissink_SetBidiLevel,
+    analysissink_SetNumberSubstitution
+};
+
+static IDWriteTextAnalysisSink analysissink = { &analysissinkvtbl };
+
+/* test IDWriteTextAnalysisSource */
+static HRESULT WINAPI analysissource_QueryInterface(IDWriteTextAnalysisSource *iface,
+    REFIID riid, void **obj)
+{
+    ok(0, "QueryInterface not expected\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI analysissource_AddRef(IDWriteTextAnalysisSource *iface)
+{
+    ok(0, "AddRef not expected\n");
+    return 2;
+}
+
+static ULONG WINAPI analysissource_Release(IDWriteTextAnalysisSource *iface)
+{
+    ok(0, "Release not expected\n");
+    return 1;
+}
+
+static const WCHAR *g_source;
+
+static HRESULT WINAPI analysissource_GetTextAtPosition(IDWriteTextAnalysisSource *iface,
+    UINT32 position, WCHAR const** text, UINT32* text_len)
+{
+    if (position >= lstrlenW(g_source))
+    {
+        *text = NULL;
+        *text_len = 0;
+    }
+    else
+    {
+        *text = &g_source[position];
+        *text_len = lstrlenW(g_source) - position;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI analysissource_GetTextBeforePosition(IDWriteTextAnalysisSource *iface,
+    UINT32 position, WCHAR const** text, UINT32* text_len)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static DWRITE_READING_DIRECTION WINAPI analysissource_GetParagraphReadingDirection(
+    IDWriteTextAnalysisSource *iface)
+{
+    ok(0, "unexpected\n");
+    return DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
+}
+
+static HRESULT WINAPI analysissource_GetLocaleName(IDWriteTextAnalysisSource *iface,
+    UINT32 position, UINT32* text_len, WCHAR const** locale)
+{
+    *locale = NULL;
+    *text_len = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI analysissource_GetNumberSubstitution(IDWriteTextAnalysisSource *iface,
+    UINT32 position, UINT32* text_len, IDWriteNumberSubstitution **substitution)
+{
+    ok(0, "unexpected\n");
+    return E_NOTIMPL;
+}
+
+static IDWriteTextAnalysisSourceVtbl analysissourcevtbl = {
+    analysissource_QueryInterface,
+    analysissource_AddRef,
+    analysissource_Release,
+    analysissource_GetTextAtPosition,
+    analysissource_GetTextBeforePosition,
+    analysissource_GetParagraphReadingDirection,
+    analysissource_GetLocaleName,
+    analysissource_GetNumberSubstitution
+};
+
+static IDWriteTextAnalysisSource analysissource = { &analysissourcevtbl };
 
 static IDWriteFactory *create_factory(void)
 {
@@ -45,6 +184,35 @@ static IDWriteFactory *create_factory(void)
     HRESULT hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&factory);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     return factory;
+}
+
+/* obvious limitation is that only last script data is returned, so this
+   helper is suitable for single script strings only */
+static void get_script_analysis(const WCHAR *str, UINT32 len, DWRITE_SCRIPT_ANALYSIS *sa)
+{
+    IDWriteTextAnalyzer *analyzer;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    g_source = str;
+
+    factory = create_factory();
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, len, &analysissink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    *sa = g_sa;
+    IDWriteFactory_Release(factory);
+}
+
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc = IUnknown_AddRef(obj);
+    IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
 }
 
 enum drawcall_kind {
@@ -246,11 +414,27 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_MEASURING_MODE mode,
-    DWRITE_GLYPH_RUN const *glyph_run,
-    DWRITE_GLYPH_RUN_DESCRIPTION const *run_descr,
+    DWRITE_GLYPH_RUN const *run,
+    DWRITE_GLYPH_RUN_DESCRIPTION const *descr,
     IUnknown *drawing_effect)
 {
     struct drawcall_entry entry;
+    DWRITE_SCRIPT_ANALYSIS sa;
+
+    /* see what's reported for control codes runs */
+    get_script_analysis(descr->string, descr->stringLength, &sa);
+    if (sa.script == g_control_sa.script) {
+        /* glyphs are not reported at all for control code runs */
+        ok(run->glyphCount == 0, "got %u\n", run->glyphCount);
+        ok(run->glyphAdvances != NULL, "advances array %p\n", run->glyphAdvances);
+        ok(run->glyphOffsets != NULL, "offsets array %p\n", run->glyphOffsets);
+        ok(run->fontFace != NULL, "got %p\n", run->fontFace);
+        /* text positions are still valid */
+        ok(descr->string != NULL, "got string %p\n", descr->string);
+        ok(descr->stringLength > 0, "got string length %u\n", descr->stringLength);
+        ok(descr->clusterMap != NULL, "clustermap %p\n", descr->clusterMap);
+    }
+
     entry.kind = DRAW_GLYPHRUN;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
@@ -875,9 +1059,16 @@ static const struct drawcall_entry draw_seq2[] = {
     { DRAW_LAST_KIND }
 };
 
+static const struct drawcall_entry draw_seq3[] = {
+    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN },
+    { DRAW_LAST_KIND }
+};
+
 static void test_Draw(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
+    static const WCHAR str2W[] = {0x202a,0x202c,'a','b',0};
     static const WCHAR ruW[] = {'r','u',0};
 
     IDWriteInlineObject *inlineobj;
@@ -932,8 +1123,17 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
-
     IDWriteTextLayout_Release(layout);
+
+    /* string with control characters */
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_seq3, "draw test 3", TRUE);
+    IDWriteTextLayout_Release(layout);
+
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
@@ -1109,7 +1309,6 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 3, "got %u\n", count);
 
-todo_wine
     ok(metrics[0].width == 0.0, "got %.2f\n", metrics[0].width);
     ok(metrics[0].length == 1, "got %d\n", metrics[0].length);
     ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
@@ -1118,7 +1317,6 @@ todo_wine
     ok(metrics[0].isSoftHyphen == 0, "got %d\n", metrics[0].isSoftHyphen);
     ok(metrics[0].isRightToLeft == 0, "got %d\n", metrics[0].isRightToLeft);
 
-todo_wine
     ok(metrics[1].width == 0.0, "got %.2f\n", metrics[1].width);
     ok(metrics[1].length == 1, "got %d\n", metrics[1].length);
     ok(metrics[1].canWrapLineAfter == 0, "got %d\n", metrics[1].canWrapLineAfter);
@@ -1421,12 +1619,16 @@ static void test_DetermineMinWidth(void)
 
 START_TEST(layout)
 {
+    static const WCHAR ctrlstrW[] = {0x202a,0};
     IDWriteFactory *factory;
 
     if (!(factory = create_factory())) {
         win_skip("failed to create factory\n");
         return;
     }
+
+    /* actual script ids are not fixed */
+    get_script_analysis(ctrlstrW, 1, &g_control_sa);
 
     init_call_sequences(sequences, NUM_CALL_SEQUENCES);
     init_call_sequences(expected_seq, 1);
