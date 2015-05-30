@@ -528,7 +528,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
 
         /* In rare cases (like "a.abcd") short path may be longer than original path.
          * Make sure we have enough space in temp buffer. */
-        if (wfd.cAlternateFileName && tmplen < strlenW(wfd.cAlternateFileName))
+        if (wfd.cAlternateFileName[0] && tmplen < strlenW(wfd.cAlternateFileName))
         {
             WCHAR *new_buf;
             buf_len += strlenW(wfd.cAlternateFileName) - tmplen;
