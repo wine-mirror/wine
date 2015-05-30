@@ -256,11 +256,11 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
         This->StreamType = StreamType;
         hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaSeeking, (void**)&This->media_seeking);
         if (SUCCEEDED(hr))
-            IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
+            hr = IGraphBuilder_QueryInterface(This->pFilterGraph, &IID_IMediaControl, (void**)&This->media_control);
         if (SUCCEEDED(hr))
             hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&This->media_stream_filter);
         if (SUCCEEDED(hr))
-            IGraphBuilder_AddFilter(This->pFilterGraph, This->media_stream_filter, filternameW);
+            hr = IGraphBuilder_AddFilter(This->pFilterGraph, This->media_stream_filter, filternameW);
         if (SUCCEEDED(hr))
         {
             IMediaEventEx* media_event = NULL;
