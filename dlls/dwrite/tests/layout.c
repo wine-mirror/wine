@@ -893,7 +893,7 @@ static void test_Draw(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 100.0, 100.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);

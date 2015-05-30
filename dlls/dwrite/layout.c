@@ -150,6 +150,15 @@ struct layout_effective_run {
     UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
 };
 
+struct layout_effective_inline {
+    struct list entry;
+    IDWriteInlineObject *object;
+    FLOAT origin_x;
+    FLOAT origin_y;
+    BOOL  is_sideways;
+    BOOL  is_rtl;
+};
+
 struct layout_cluster {
     const struct layout_run *run; /* link to nominal run this cluster belongs to */
     UINT32 position;        /* relative to run, first cluster has 0 position */
@@ -175,8 +184,10 @@ struct dwrite_textlayout {
     FLOAT  maxwidth;
     FLOAT  maxheight;
     struct list ranges;
-    struct list eruns;
     struct list runs;
+    /* lists ready to use by Draw() */
+    struct list eruns;
+    struct list inlineobjects;
     USHORT recompute;
 
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
@@ -324,11 +335,18 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
 
 static void free_layout_eruns(struct dwrite_textlayout *layout)
 {
+    struct layout_effective_inline *in, *in2;
     struct layout_effective_run *cur, *cur2;
+
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry) {
         list_remove(&cur->entry);
         heap_free(cur->clustermap);
         heap_free(cur);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry) {
+        list_remove(&in->entry);
+        heap_free(in);
     }
 }
 
@@ -499,6 +517,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     UINT32 cluster = 0;
     HRESULT hr;
 
+    free_layout_eruns(layout);
     free_layout_runs(layout);
 
     /* Cluster data arrays are allocated once, assuming one text position per cluster. */
@@ -762,6 +781,25 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     struct layout_effective_run *run;
     UINT32 i;
 
+    if (r->kind == LAYOUT_RUN_INLINE) {
+        struct layout_effective_inline *inlineobject;
+
+        inlineobject = heap_alloc(sizeof(*inlineobject));
+        if (!inlineobject)
+            return E_OUTOFMEMORY;
+
+        inlineobject->object = r->u.object.object;
+        inlineobject->origin_x = origin_x;
+        inlineobject->origin_y = 0.0; /* FIXME */
+        /* It's not clear how these two are set, possibly directionality
+           is derived from surrounding text (replaced text could have
+           different ranges which differ in reading direction). */
+        inlineobject->is_sideways = FALSE;
+        inlineobject->is_rtl = FALSE;
+        list_add_tail(&layout->inlineobjects, &inlineobject->entry);
+        return S_OK;
+    }
+
     run = heap_alloc(sizeof(*run));
     if (!run)
         return E_OUTOFMEMORY;
@@ -828,7 +866,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     const struct layout_run *run;
     FLOAT width, origin_x;
     UINT32 i, start, line;
-    BOOL can_wrap_after;
     HRESULT hr;
 
     if (!(layout->recompute & RECOMPUTE_EFFECTIVE_RUNS))
@@ -842,12 +879,14 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     origin_x = 0.0;
     line = 0;
     run = layout->clusters[0].run;
-    can_wrap_after = layout->clustermetrics[0].canWrapLineAfter;
     memset(&metrics, 0, sizeof(metrics));
 
     for (i = 0, start = 0, width = 0.0; i < layout->cluster_count; i++) {
+        BOOL can_wrap_after = layout->clustermetrics[i].canWrapLineAfter;
+
+        /* switched to next nominal run, at this point all previous pending clusters are already
+           checked for layout line overflow, so new effective run will fit in current line */
         if (run != layout->clusters[i].run) {
-            /* switched to next nominal run */
             hr = layout_add_effective_run(layout, run, start, i - start, origin_x);
             if (FAILED(hr))
                 return hr;
@@ -869,7 +908,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                 /* we don't need to update origin for next run as we're going to wrap */
             }
 
-            /* take a look at clusters we got for this line in reverse order */
+            /* take a look at clusters we got for this line in reverse order to set
+               trailing properties for current line */
             while (strlength) {
                 DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
 
@@ -905,7 +945,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             width += layout->clustermetrics[i].width;
         }
 
-        can_wrap_after = layout->clustermetrics[i].canWrapLineAfter;
+        run = layout->clusters[i].run;
     }
 
     layout->line_count = line;
@@ -1984,6 +2024,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     void *context, IDWriteTextRenderer* renderer, FLOAT origin_x, FLOAT origin_y)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
+    struct layout_effective_inline *inlineobject;
     struct layout_effective_run *run;
     HRESULT hr;
 
@@ -2029,7 +2070,18 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             NULL /* FIXME */);
     }
 
-    /* TODO: 2. Inline objects */
+    /* 2. Inline objects */
+    LIST_FOR_EACH_ENTRY(inlineobject, &This->inlineobjects, struct layout_effective_inline, entry) {
+        IDWriteTextRenderer_DrawInlineObject(renderer,
+            context,
+            inlineobject->origin_x,
+            inlineobject->origin_y,
+            inlineobject->object,
+            inlineobject->is_sideways,
+            inlineobject->is_rtl,
+            NULL /* FIXME */);
+    }
+
     /* TODO: 3. Underlines */
     /* TODO: 4. Strikethrough */
 
@@ -2986,6 +3038,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->line_alloc = 0;
     layout->minwidth = 0.0;
     list_init(&layout->eruns);
+    list_init(&layout->inlineobjects);
     list_init(&layout->runs);
     list_init(&layout->ranges);
     memset(&layout->format, 0, sizeof(layout->format));
