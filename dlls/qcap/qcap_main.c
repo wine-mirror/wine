@@ -77,7 +77,7 @@ FactoryTemplate const g_Templates[] = {
     {
         wAudioCaptureFilter,
         &CLSID_AudioRecord,
-        NULL, /* FIXME: Implement QCAP_createAudioCaptureFilter */
+        QCAP_createAudioCaptureFilter,
         NULL
     },{
         wAVICompressor,
