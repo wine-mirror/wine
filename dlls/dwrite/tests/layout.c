@@ -542,8 +542,8 @@ static HRESULT WINAPI testinlineobj_GetOverhangMetrics(IDWriteInlineObject *ifac
 static HRESULT WINAPI testinlineobj_GetBreakConditions(IDWriteInlineObject *iface, DWRITE_BREAK_CONDITION *before,
     DWRITE_BREAK_CONDITION *after)
 {
-    *before = *after = DWRITE_BREAK_CONDITION_NEUTRAL;
-    return S_OK;
+    *before = *after = DWRITE_BREAK_CONDITION_MUST_BREAK;
+    return 0x8feacafe;
 }
 
 static IDWriteInlineObjectVtbl testinlineobjvtbl = {
@@ -557,6 +557,7 @@ static IDWriteInlineObjectVtbl testinlineobjvtbl = {
 };
 
 static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
+static IDWriteInlineObject testinlineobj2 = { &testinlineobjvtbl };
 
 static void test_CreateTextLayout(void)
 {
@@ -1422,6 +1423,36 @@ todo_wine
     ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
     ok(metrics[0].isSoftHyphen == 0, "got %d\n", metrics[0].isSoftHyphen);
     ok(metrics[0].isRightToLeft == 0, "got %d\n", metrics[0].isRightToLeft);
+
+    /* now set two inline object for [0,1] and [2,3], both fail to report break conditions */
+    range.startPosition = 2;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj2, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+
+    ok(metrics[0].width == 0.0, "got %.2f\n", metrics[0].width);
+    ok(metrics[0].length == 2, "got %d\n", metrics[0].length);
+    ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
+    ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+    ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
+    ok(metrics[0].isSoftHyphen == 0, "got %d\n", metrics[0].isSoftHyphen);
+    ok(metrics[0].isRightToLeft == 0, "got %d\n", metrics[0].isRightToLeft);
+
+    ok(metrics[1].width == 0.0, "got %.2f\n", metrics[1].width);
+    ok(metrics[1].length == 2, "got %d\n", metrics[1].length);
+todo_wine
+    ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
+    ok(metrics[1].isWhitespace == 0, "got %d\n", metrics[1].isWhitespace);
+    ok(metrics[1].isNewline == 0, "got %d\n", metrics[1].isNewline);
+    ok(metrics[1].isSoftHyphen == 0, "got %d\n", metrics[1].isSoftHyphen);
+    ok(metrics[1].isRightToLeft == 0, "got %d\n", metrics[1].isRightToLeft);
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimm);

@@ -379,9 +379,10 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
     HRESULT hr;
     UINT32 i;
 
+    /* ignore returned conditions if failed */
     hr = IDWriteInlineObject_GetBreakConditions(cur->object, &before, &after);
     if (FAILED(hr))
-        return hr;
+        after = before = DWRITE_BREAK_CONDITION_NEUTRAL;
 
     if (!layout->actual_breakpoints) {
         layout->actual_breakpoints = heap_alloc(sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
