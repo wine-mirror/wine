@@ -602,12 +602,14 @@ typedef struct {
     IBaseFilter IBaseFilter_iface;
     LONG ref;
     IPin IPin_iface;
+    IKsPropertySet IKsPropertySet_iface;
     CRITICAL_SECTION cs;
     FILTER_STATE state;
     IReferenceClock *referenceClock;
     FILTER_INFO filterInfo;
     AM_MEDIA_TYPE mediaType;
     VIDEOINFOHEADER videoInfo;
+    WAVEFORMATEX audioInfo;
     IPin *connectedTo;
     IMemInputPin *memInputPin;
     IMemAllocator *allocator;
@@ -621,9 +623,17 @@ typedef struct {
     SourceFilter *filter;
 } SourceEnumPins;
 
+typedef struct {
+    IEnumMediaTypes IEnumMediaTypes_iface;
+    LONG ref;
+    ULONG index;
+    SourceFilter *filter;
+} SourceEnumMediaTypes;
+
 static const WCHAR sourcePinName[] = {'C','a','p','t','u','r','e',0};
 
 static SourceEnumPins* create_SourceEnumPins(SourceFilter *filter);
+static SourceEnumMediaTypes* create_SourceEnumMediaTypes(SourceFilter *filter);
 
 static inline SourceFilter* impl_from_SourceFilter_IBaseFilter(IBaseFilter *iface)
 {
@@ -635,9 +645,19 @@ static inline SourceFilter* impl_from_SourceFilter_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, SourceFilter, IPin_iface);
 }
 
+static inline SourceFilter* impl_from_SourceFilter_IKsPropertySet(IKsPropertySet *iface)
+{
+    return CONTAINING_RECORD(iface, SourceFilter, IKsPropertySet_iface);
+}
+
 static inline SourceEnumPins* impl_from_SourceFilter_IEnumPins(IEnumPins *iface)
 {
     return CONTAINING_RECORD(iface, SourceEnumPins, IEnumPins_iface);
+}
+
+static inline SourceEnumMediaTypes* impl_from_SourceFilter_IEnumMediaTypes(IEnumMediaTypes *iface)
+{
+    return CONTAINING_RECORD(iface, SourceEnumMediaTypes, IEnumMediaTypes_iface);
 }
 
 static HRESULT WINAPI SourceFilter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
@@ -979,6 +999,122 @@ static SourceEnumPins* create_SourceEnumPins(SourceFilter *filter)
     return This;
 }
 
+static HRESULT WINAPI SourceEnumMediaTypes_QueryInterface(IEnumMediaTypes *iface, REFIID riid, void **ppv)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppv = &This->IEnumMediaTypes_iface;
+    } else if(IsEqualIID(riid, &IID_IEnumMediaTypes)) {
+        *ppv = &This->IEnumMediaTypes_iface;
+    } else {
+        trace("no interface for %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI SourceEnumMediaTypes_AddRef(IEnumMediaTypes *iface)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI SourceEnumMediaTypes_Release(IEnumMediaTypes *iface)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    if (ref == 0)
+    {
+        IBaseFilter_Release(&This->filter->IBaseFilter_iface);
+        CoTaskMemFree(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI SourceEnumMediaTypes_Next(IEnumMediaTypes *iface, ULONG cMediaTypes, AM_MEDIA_TYPE **ppMediaTypes, ULONG *pcFetched)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    if (!ppMediaTypes)
+        return E_POINTER;
+    if (cMediaTypes > 1 && !pcFetched)
+        return E_INVALIDARG;
+    if (pcFetched)
+        *pcFetched = 0;
+    if (cMediaTypes == 0)
+        return S_OK;
+    if (This->index == 0) {
+        ppMediaTypes[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+        if (ppMediaTypes[0]) {
+            *ppMediaTypes[0] = This->filter->mediaType;
+            ppMediaTypes[0]->pbFormat = CoTaskMemAlloc(This->filter->mediaType.cbFormat);
+            if (ppMediaTypes[0]->pbFormat) {
+                memcpy(ppMediaTypes[0]->pbFormat, This->filter->mediaType.pbFormat, This->filter->mediaType.cbFormat);
+                ++This->index;
+                if (pcFetched)
+                    *pcFetched = 1;
+                return S_OK;
+            }
+            CoTaskMemFree(ppMediaTypes[0]);
+        }
+        return E_OUTOFMEMORY;
+    }
+    return S_FALSE;
+}
+
+static HRESULT WINAPI SourceEnumMediaTypes_Skip(IEnumMediaTypes *iface, ULONG cMediaTypes)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    This->index += cMediaTypes;
+    if (This->index >= 1)
+        return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceEnumMediaTypes_Reset(IEnumMediaTypes *iface)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    This->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI SourceEnumMediaTypes_Clone(IEnumMediaTypes *iface, IEnumMediaTypes **ppEnum)
+{
+    SourceEnumMediaTypes *This = impl_from_SourceFilter_IEnumMediaTypes(iface);
+    SourceEnumMediaTypes *clone = create_SourceEnumMediaTypes(This->filter);
+    if (clone == NULL)
+        return E_OUTOFMEMORY;
+    clone->index = This->index;
+    return S_OK;
+}
+
+static const IEnumMediaTypesVtbl SourceEnumMediaTypesVtbl = {
+    SourceEnumMediaTypes_QueryInterface,
+    SourceEnumMediaTypes_AddRef,
+    SourceEnumMediaTypes_Release,
+    SourceEnumMediaTypes_Next,
+    SourceEnumMediaTypes_Skip,
+    SourceEnumMediaTypes_Reset,
+    SourceEnumMediaTypes_Clone
+};
+
+static SourceEnumMediaTypes* create_SourceEnumMediaTypes(SourceFilter *filter)
+{
+    SourceEnumMediaTypes *This;
+    This = CoTaskMemAlloc(sizeof(*This));
+    if (This == NULL) {
+        return NULL;
+    }
+    This->IEnumMediaTypes_iface.lpVtbl = &SourceEnumMediaTypesVtbl;
+    This->ref = 1;
+    This->index = 0;
+    This->filter = filter;
+    IBaseFilter_AddRef(&filter->IBaseFilter_iface);
+    return This;
+}
+
 static HRESULT WINAPI SourcePin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
 {
     SourceFilter *This = impl_from_SourceFilter_IPin(iface);
@@ -986,6 +1122,8 @@ static HRESULT WINAPI SourcePin_QueryInterface(IPin *iface, REFIID riid, void **
         *ppv = &This->IPin_iface;
     } else if(IsEqualIID(riid, &IID_IPin)) {
         *ppv = &This->IPin_iface;
+    } else if(IsEqualIID(riid, &IID_IKsPropertySet)) {
+        *ppv = &This->IKsPropertySet_iface;
     } else {
         trace("no interface for %s\n", wine_dbgstr_guid(riid));
         *ppv = NULL;
@@ -1011,6 +1149,7 @@ static HRESULT WINAPI SourcePin_Connect(IPin *iface, IPin *pReceivePin, const AM
 {
     SourceFilter *This = impl_from_SourceFilter_IPin(iface);
     HRESULT hr;
+
     if (pmt && !IsEqualGUID(&pmt->majortype, &GUID_NULL) && !IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video))
         return VFW_E_TYPE_NOT_ACCEPTED;
     if (pmt && !IsEqualGUID(&pmt->subtype, &GUID_NULL) && !IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32))
@@ -1168,7 +1307,14 @@ static HRESULT WINAPI SourcePin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pm
 
 static HRESULT WINAPI SourcePin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **ppEnum)
 {
-    return VFW_E_NOT_CONNECTED;
+    SourceFilter *This = impl_from_SourceFilter_IPin(iface);
+    SourceEnumMediaTypes *sourceEnumMediaTypes = create_SourceEnumMediaTypes(This);
+    if (sourceEnumMediaTypes) {
+        *ppEnum = &sourceEnumMediaTypes->IEnumMediaTypes_iface;
+        return S_OK;
+    }
+    else
+        return E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI SourcePin_QueryInternalConnections(IPin *iface, IPin **apPin, ULONG *nPin)
@@ -1218,6 +1364,75 @@ static const IPinVtbl SourcePinVtbl = {
     SourcePin_NewSegment
 };
 
+static HRESULT WINAPI SourceKSP_QueryInterface(IKsPropertySet *iface, REFIID riid, LPVOID *ppv)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    return IPin_QueryInterface(&This->IPin_iface, riid, ppv);
+}
+
+static ULONG WINAPI SourceKSP_AddRef(IKsPropertySet *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    return IBaseFilter_AddRef(&This->IBaseFilter_iface);
+}
+
+static ULONG WINAPI SourceKSP_Release(IKsPropertySet *iface)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    return IBaseFilter_Release(&This->IBaseFilter_iface);
+}
+
+static HRESULT WINAPI SourceKSP_Set(IKsPropertySet *iface, REFGUID guidPropSet, DWORD dwPropID,
+        LPVOID pInstanceData, DWORD cbInstanceData, LPVOID pPropData, DWORD cbPropData)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    trace("(%p)->(%s, %u, %p, %u, %p, %u): stub\n", This, wine_dbgstr_guid(guidPropSet),
+            dwPropID, pInstanceData, cbInstanceData, pPropData, cbPropData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SourceKSP_Get(IKsPropertySet *iface, REFGUID guidPropSet, DWORD dwPropID,
+        LPVOID pInstanceData, DWORD cbInstanceData, LPVOID pPropData,
+        DWORD cbPropData, DWORD *pcbReturned)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    trace("(%p)->(%s, %u, %p, %u, %p, %u, %p)\n", This, wine_dbgstr_guid(guidPropSet),
+            dwPropID, pInstanceData, cbInstanceData, pPropData, cbPropData, pcbReturned);
+    if (IsEqualIID(guidPropSet, &AMPROPSETID_Pin)) {
+        if (pcbReturned)
+            *pcbReturned = sizeof(GUID);
+        if (pPropData) {
+            LPGUID guid = pPropData;
+            if (cbPropData >= sizeof(GUID))
+                *guid = PIN_CATEGORY_CAPTURE;
+        } else {
+            if (!pcbReturned)
+                return E_POINTER;
+        }
+        return S_OK;
+    }
+    return E_PROP_SET_UNSUPPORTED;
+}
+
+static HRESULT WINAPI SourceKSP_QuerySupported(IKsPropertySet *iface, REFGUID guidPropSet,
+                    DWORD dwPropID, DWORD *pTypeSupport)
+{
+    SourceFilter *This = impl_from_SourceFilter_IKsPropertySet(iface);
+    trace("(%p)->(%s, %u, %p): stub\n", This, wine_dbgstr_guid(guidPropSet),
+            dwPropID, pTypeSupport);
+    return E_NOTIMPL;
+}
+
+static const IKsPropertySetVtbl SourceKSPVtbl =
+{
+   SourceKSP_QueryInterface,
+   SourceKSP_AddRef,
+   SourceKSP_Release,
+   SourceKSP_Set,
+   SourceKSP_Get,
+   SourceKSP_QuerySupported
+};
+
 static SourceFilter* create_SourceFilter(void)
 {
     SourceFilter *This = NULL;
@@ -1227,33 +1442,66 @@ static SourceFilter* create_SourceFilter(void)
         This->IBaseFilter_iface.lpVtbl = &SourceFilterVtbl;
         This->ref = 1;
         This->IPin_iface.lpVtbl = &SourcePinVtbl;
+        This->IKsPropertySet_iface.lpVtbl = &SourceKSPVtbl;
         InitializeCriticalSection(&This->cs);
-        This->mediaType.majortype = MEDIATYPE_Video;
-        This->mediaType.subtype = MEDIASUBTYPE_RGB32;
-        This->mediaType.bFixedSizeSamples = FALSE;
-        This->mediaType.bTemporalCompression = FALSE;
-        This->mediaType.lSampleSize = 0;
-        This->mediaType.formattype = FORMAT_VideoInfo;
-        This->mediaType.pUnk = NULL;
-        This->mediaType.cbFormat = sizeof(VIDEOINFOHEADER);
-        This->mediaType.pbFormat = (BYTE*) &This->videoInfo;
-        This->videoInfo.dwBitRate = 1000000;
-        This->videoInfo.dwBitErrorRate = 0;
-        This->videoInfo.AvgTimePerFrame = 400000;
-        This->videoInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        This->videoInfo.bmiHeader.biWidth = 10;
-        This->videoInfo.bmiHeader.biHeight = 10;
-        This->videoInfo.bmiHeader.biPlanes = 1;
-        This->videoInfo.bmiHeader.biBitCount = 32;
-        This->videoInfo.bmiHeader.biCompression = BI_RGB;
-        This->videoInfo.bmiHeader.biSizeImage = 0;
-        This->videoInfo.bmiHeader.biXPelsPerMeter = 96;
-        This->videoInfo.bmiHeader.biYPelsPerMeter = 96;
-        This->videoInfo.bmiHeader.biClrUsed = 0;
-        This->videoInfo.bmiHeader.biClrImportant = 0;
         return This;
     }
     return NULL;
+}
+
+static SourceFilter* create_video_SourceFilter(void)
+{
+    SourceFilter *This = create_SourceFilter();
+    if (!This)
+        return NULL;
+    This->mediaType.majortype = MEDIATYPE_Video;
+    This->mediaType.subtype = MEDIASUBTYPE_RGB32;
+    This->mediaType.bFixedSizeSamples = FALSE;
+    This->mediaType.bTemporalCompression = FALSE;
+    This->mediaType.lSampleSize = 0;
+    This->mediaType.formattype = FORMAT_VideoInfo;
+    This->mediaType.pUnk = NULL;
+    This->mediaType.cbFormat = sizeof(VIDEOINFOHEADER);
+    This->mediaType.pbFormat = (BYTE*) &This->videoInfo;
+    This->videoInfo.dwBitRate = 1000000;
+    This->videoInfo.dwBitErrorRate = 0;
+    This->videoInfo.AvgTimePerFrame = 400000;
+    This->videoInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    This->videoInfo.bmiHeader.biWidth = 10;
+    This->videoInfo.bmiHeader.biHeight = 10;
+    This->videoInfo.bmiHeader.biPlanes = 1;
+    This->videoInfo.bmiHeader.biBitCount = 32;
+    This->videoInfo.bmiHeader.biCompression = BI_RGB;
+    This->videoInfo.bmiHeader.biSizeImage = 0;
+    This->videoInfo.bmiHeader.biXPelsPerMeter = 96;
+    This->videoInfo.bmiHeader.biYPelsPerMeter = 96;
+    This->videoInfo.bmiHeader.biClrUsed = 0;
+    This->videoInfo.bmiHeader.biClrImportant = 0;
+    return This;
+}
+
+static SourceFilter* create_audio_SourceFilter(void)
+{
+    SourceFilter *This = create_SourceFilter();
+    if (!This)
+        return NULL;
+    This->mediaType.majortype = MEDIATYPE_Audio;
+    This->mediaType.subtype = MEDIASUBTYPE_PCM;
+    This->mediaType.bFixedSizeSamples = FALSE;
+    This->mediaType.bTemporalCompression = FALSE;
+    This->mediaType.lSampleSize = 0;
+    This->mediaType.formattype = FORMAT_WaveFormatEx;
+    This->mediaType.pUnk = NULL;
+    This->mediaType.cbFormat = sizeof(WAVEFORMATEX);
+    This->mediaType.pbFormat = (BYTE*) &This->audioInfo;
+    This->audioInfo.wFormatTag = WAVE_FORMAT_PCM;
+    This->audioInfo.nChannels = 1;
+    This->audioInfo.nSamplesPerSec = 8000;
+    This->audioInfo.nAvgBytesPerSec = 16000;
+    This->audioInfo.nBlockAlign = 2;
+    This->audioInfo.wBitsPerSample = 16;
+    This->audioInfo.cbSize = 0;
+    return This;
 }
 
 static BOOL has_interface(IUnknown *unknown, REFIID uuid)
@@ -1320,7 +1568,7 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     hr = IGraphBuilder_Connect(graphBuilder, previewPin, &previewSinkFilter->IPin_iface);
     ok(hr == VFW_E_NOT_CONNECTED, "connecting Preview pin without first connecting Input pin returned 0x%08x\n", hr);
 
-    sourceFilter = create_SourceFilter();
+    sourceFilter = create_video_SourceFilter();
     if (sourceFilter == NULL) {
         skip("couldn't create source filter\n");
         goto end;
@@ -1556,7 +1804,7 @@ end:
 
 static void test_smart_tee_filter_aggregation(void)
 {
-    SourceFilter *sourceFilter = create_SourceFilter();
+    SourceFilter *sourceFilter = create_video_SourceFilter();
     if (sourceFilter) {
         IUnknown *unknown = NULL;
         HRESULT hr = CoCreateInstance(&CLSID_SmartTee, (IUnknown*)&sourceFilter->IBaseFilter_iface,
@@ -1569,6 +1817,207 @@ static void test_smart_tee_filter_aggregation(void)
         ok(0, "out of memory allocating SourceFilter for test\n");
 }
 
+static HRESULT get_connected_filter_classid(IPin *pin, GUID *guid)
+{
+    IPin *connectedPin = NULL;
+    PIN_INFO connectedPinInfo;
+    HRESULT hr = IPin_ConnectedTo(pin, &connectedPin);
+    ok(SUCCEEDED(hr), "IPin_ConnectedTo() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IPin_QueryPinInfo(connectedPin, &connectedPinInfo);
+    ok(SUCCEEDED(hr), "IPin_QueryPinInfo() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    if (connectedPinInfo.pFilter) {
+        hr = IBaseFilter_GetClassID(connectedPinInfo.pFilter, guid);
+        ok(SUCCEEDED(hr), "IBaseFilter_GetClassID() failed, hr=0x%08x\n", hr);
+        IBaseFilter_Release(connectedPinInfo.pFilter);
+    }
+end:
+    if (connectedPin)
+        IPin_Release(connectedPin);
+    return hr;
+}
+
+static void test_audio_preview(ICaptureGraphBuilder2 *captureGraphBuilder, IGraphBuilder *graphBuilder,
+        SourceFilter *audioSource, IBaseFilter *nullRenderer)
+{
+    GUID clsid;
+    HRESULT hr = ICaptureGraphBuilder2_RenderStream(captureGraphBuilder, &PIN_CATEGORY_PREVIEW, &MEDIATYPE_Audio,
+                (IUnknown*)&audioSource->IBaseFilter_iface, NULL, nullRenderer);
+    ok(hr == VFW_S_NOPREVIEWPIN, "ICaptureGraphBuilder2_RenderStream() returned hr=0x%08x\n", hr);
+    hr = get_connected_filter_classid(&audioSource->IPin_iface, &clsid);
+    if (FAILED(hr))
+        return;
+    ok(IsEqualIID(&clsid, &CLSID_SmartTee), "unexpected connected filter %s\n",
+            wine_dbgstr_guid(&clsid));
+}
+
+static void test_audio_capture(ICaptureGraphBuilder2 *captureGraphBuilder, IGraphBuilder *graphBuilder,
+        SourceFilter *audioSource, IBaseFilter *nullRenderer)
+{
+    GUID clsid;
+    HRESULT hr = ICaptureGraphBuilder2_RenderStream(captureGraphBuilder, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Audio,
+                (IUnknown*)&audioSource->IBaseFilter_iface, NULL, nullRenderer);
+    ok(hr == S_OK, "ICaptureGraphBuilder2_RenderStream() returned hr=0x%08x\n", hr);
+    hr = get_connected_filter_classid(&audioSource->IPin_iface, &clsid);
+    if (FAILED(hr))
+        return;
+    ok(IsEqualIID(&clsid, &CLSID_SmartTee), "unexpected connected filter %s\n",
+            wine_dbgstr_guid(&clsid));
+}
+
+static void test_video_preview(ICaptureGraphBuilder2 *captureGraphBuilder, IGraphBuilder *graphBuilder,
+        SourceFilter *videoSource, IBaseFilter *nullRenderer)
+{
+    GUID clsid;
+    HRESULT hr = ICaptureGraphBuilder2_RenderStream(captureGraphBuilder, &PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video,
+                (IUnknown*)&videoSource->IBaseFilter_iface, NULL, nullRenderer);
+    ok(hr == VFW_S_NOPREVIEWPIN, "ICaptureGraphBuilder2_RenderStream() failed, hr=0x%08x\n", hr);
+    hr = get_connected_filter_classid(&videoSource->IPin_iface, &clsid);
+    if (FAILED(hr))
+        return;
+    ok(IsEqualIID(&clsid, &CLSID_SmartTee), "unexpected connected filter %s\n",
+            wine_dbgstr_guid(&clsid));
+}
+
+static void test_video_capture(ICaptureGraphBuilder2 *captureGraphBuilder, IGraphBuilder *graphBuilder,
+        SourceFilter *videoSource, IBaseFilter *nullRenderer)
+{
+    GUID clsid;
+    HRESULT hr = ICaptureGraphBuilder2_RenderStream(captureGraphBuilder, &PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video,
+                (IUnknown*)&videoSource->IBaseFilter_iface, NULL, nullRenderer);
+    ok(hr == S_OK, "ICaptureGraphBuilder2_RenderStream() failed, hr=0x%08x\n", hr);
+    hr = get_connected_filter_classid(&videoSource->IPin_iface, &clsid);
+    if (FAILED(hr))
+        return;
+    ok(IsEqualIID(&clsid, &CLSID_SmartTee), "unexpected connected filter %s\n",
+            wine_dbgstr_guid(&clsid));
+}
+
+static void test_audio_smart_tee_filter_auto_insertion(
+        void (*test_function)(ICaptureGraphBuilder2 *cgb, IGraphBuilder *gb,
+                SourceFilter *audioSource, IBaseFilter *nullRenderer))
+{
+    HRESULT hr;
+    ICaptureGraphBuilder2 *captureGraphBuilder = NULL;
+    IGraphBuilder *graphBuilder = NULL;
+    IBaseFilter *nullRenderer = NULL;
+    SourceFilter *audioSource = NULL;
+
+    hr = CoCreateInstance(&CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ICaptureGraphBuilder2, (void**)&captureGraphBuilder);
+    ok(SUCCEEDED(hr), "couldn't create capture graph builder, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder,
+            (LPVOID*)&graphBuilder);
+    ok(SUCCEEDED(hr), "couldn't create graph builder, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = ICaptureGraphBuilder2_SetFiltergraph(captureGraphBuilder, graphBuilder);
+    ok(SUCCEEDED(hr), "ICaptureGraphBuilder2_SetFilterGraph() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (LPVOID*)&nullRenderer);
+    ok(SUCCEEDED(hr) ||
+            /* Windows 2008: http://stackoverflow.com/questions/29410348/initialize-nullrender-failed-with-error-regdb-e-classnotreg-on-win2008-r2 */
+            broken(hr == REGDB_E_CLASSNOTREG), "couldn't create NullRenderer, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IGraphBuilder_AddFilter(graphBuilder, nullRenderer, NULL);
+    ok(SUCCEEDED(hr), "IGraphBuilder_AddFilter() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    audioSource = create_audio_SourceFilter();
+    ok(audioSource != NULL, "couldn't create audio source\n");
+    if (audioSource == NULL)
+        goto end;
+    hr = IGraphBuilder_AddFilter(graphBuilder, &audioSource->IBaseFilter_iface, NULL);
+    ok(SUCCEEDED(hr), "IGraphBuilder_AddFilter() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    test_function(captureGraphBuilder, graphBuilder, audioSource, nullRenderer);
+
+end:
+    if (nullRenderer)
+        IBaseFilter_Release(nullRenderer);
+    if (audioSource)
+        IBaseFilter_Release(&audioSource->IBaseFilter_iface);
+    if (captureGraphBuilder)
+        ICaptureGraphBuilder2_Release(captureGraphBuilder);
+    if (graphBuilder)
+        IGraphBuilder_Release(graphBuilder);
+}
+
+static void test_video_smart_tee_filter_auto_insertion(
+        void (*test_function)(ICaptureGraphBuilder2 *cgb, IGraphBuilder *gb,
+                SourceFilter *videoSource, IBaseFilter *nullRenderer))
+{
+    HRESULT hr;
+    ICaptureGraphBuilder2 *captureGraphBuilder = NULL;
+    IGraphBuilder *graphBuilder = NULL;
+    IBaseFilter *nullRenderer = NULL;
+    SourceFilter *videoSource = NULL;
+
+    hr = CoCreateInstance(&CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_ICaptureGraphBuilder2, (void**)&captureGraphBuilder);
+    ok(SUCCEEDED(hr), "couldn't create capture graph builder, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder,
+            (LPVOID*)&graphBuilder);
+    ok(SUCCEEDED(hr), "couldn't create graph builder, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = ICaptureGraphBuilder2_SetFiltergraph(captureGraphBuilder, graphBuilder);
+    ok(SUCCEEDED(hr), "ICaptureGraphBuilder2_SetFilterGraph() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    hr = CoCreateInstance(&CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (LPVOID*)&nullRenderer);
+    ok(SUCCEEDED(hr) ||
+            /* Windows 2008: http://stackoverflow.com/questions/29410348/initialize-nullrender-failed-with-error-regdb-e-classnotreg-on-win2008-r2 */
+            broken(hr == REGDB_E_CLASSNOTREG), "couldn't create NullRenderer, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+    hr = IGraphBuilder_AddFilter(graphBuilder, nullRenderer, NULL);
+    ok(SUCCEEDED(hr), "IGraphBuilder_AddFilter() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    videoSource = create_video_SourceFilter();
+    ok(videoSource != NULL, "couldn't create audio source\n");
+    if (videoSource == NULL)
+        goto end;
+    hr = IGraphBuilder_AddFilter(graphBuilder, &videoSource->IBaseFilter_iface, NULL);
+    ok(SUCCEEDED(hr), "IGraphBuilder_AddFilter() failed, hr=0x%08x\n", hr);
+    if (FAILED(hr))
+        goto end;
+
+    test_function(captureGraphBuilder, graphBuilder, videoSource, nullRenderer);
+
+end:
+    if (nullRenderer)
+        IBaseFilter_Release(nullRenderer);
+    if (videoSource)
+        IBaseFilter_Release(&videoSource->IBaseFilter_iface);
+    if (captureGraphBuilder)
+        ICaptureGraphBuilder2_Release(captureGraphBuilder);
+    if (graphBuilder)
+        IGraphBuilder_Release(graphBuilder);
+}
+
 START_TEST(smartteefilter)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
@@ -1577,6 +2026,13 @@ START_TEST(smartteefilter)
         if (event) {
             test_smart_tee_filter_aggregation();
             test_smart_tee_filter();
+
+            test_audio_smart_tee_filter_auto_insertion(test_audio_preview);
+            test_audio_smart_tee_filter_auto_insertion(test_audio_capture);
+
+            test_video_smart_tee_filter_auto_insertion(test_video_preview);
+            test_video_smart_tee_filter_auto_insertion(test_video_capture);
+
             CloseHandle(event);
         } else
             skip("CreateEvent failed, error=%u\n", GetLastError());
