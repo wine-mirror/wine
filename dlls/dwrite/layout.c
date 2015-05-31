@@ -603,11 +603,11 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             c->position = 0; /* there's always one cluster per inline object, so 0 is valid value */
             cluster++;
 
-            /* TODO: is it fatal if GetMetrics() fails? */
+            /* it's not fatal if GetMetrics() fails, all returned metrics are ignored */
             hr = IDWriteInlineObject_GetMetrics(r->u.object.object, &inlinemetrics);
             if (FAILED(hr)) {
-                FIXME("failed to get inline object metrics, 0x%08x\n", hr);
-                continue;
+                memset(&inlinemetrics, 0, sizeof(inlinemetrics));
+                hr = S_OK;
             }
             metrics->width = inlinemetrics.width;
 

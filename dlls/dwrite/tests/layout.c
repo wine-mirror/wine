@@ -496,6 +496,68 @@ static const IDWriteTextRendererVtbl testrenderervtbl = {
 
 static IDWriteTextRenderer testrenderer = { &testrenderervtbl };
 
+/* test IDWriteInlineObject */
+static HRESULT WINAPI testinlineobj_QI(IDWriteInlineObject *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDWriteInlineObject) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IDWriteInlineObject_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testinlineobj_AddRef(IDWriteInlineObject *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testinlineobj_Release(IDWriteInlineObject *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testinlineobj_Draw(IDWriteInlineObject *iface,
+    void* client_drawingontext, IDWriteTextRenderer* renderer,
+    FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *drawing_effect)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinlineobj_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
+{
+    metrics->width = 123.0;
+    return 0x8faecafe;
+}
+
+static HRESULT WINAPI testinlineobj_GetOverhangMetrics(IDWriteInlineObject *iface, DWRITE_OVERHANG_METRICS *overhangs)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinlineobj_GetBreakConditions(IDWriteInlineObject *iface, DWRITE_BREAK_CONDITION *before,
+    DWRITE_BREAK_CONDITION *after)
+{
+    *before = *after = DWRITE_BREAK_CONDITION_NEUTRAL;
+    return S_OK;
+}
+
+static IDWriteInlineObjectVtbl testinlineobjvtbl = {
+    testinlineobj_QI,
+    testinlineobj_AddRef,
+    testinlineobj_Release,
+    testinlineobj_Draw,
+    testinlineobj_GetMetrics,
+    testinlineobj_GetOverhangMetrics,
+    testinlineobj_GetBreakConditions
+};
+
+static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
+
 static void test_CreateTextLayout(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
@@ -1334,6 +1396,32 @@ todo_wine
     ok(metrics[2].isSoftHyphen == 0, "got %d\n", metrics[2].isSoftHyphen);
     ok(metrics[2].isRightToLeft == 0, "got %d\n", metrics[2].isRightToLeft);
 
+    IDWriteTextLayout_Release(layout);
+
+    /* single inline object that fails to report its metrics */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 4;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    /* object sets a width to 123.0, but returns failure from GetMetrics() */
+    ok(metrics[0].width == 0.0, "got %.2f\n", metrics[0].width);
+    ok(metrics[0].length == 4, "got %d\n", metrics[0].length);
+todo_wine
+    ok(metrics[0].canWrapLineAfter == 1, "got %d\n", metrics[0].canWrapLineAfter);
+    ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+    ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
+    ok(metrics[0].isSoftHyphen == 0, "got %d\n", metrics[0].isSoftHyphen);
+    ok(metrics[0].isRightToLeft == 0, "got %d\n", metrics[0].isRightToLeft);
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimm);
