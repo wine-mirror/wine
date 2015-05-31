@@ -41,6 +41,7 @@ typedef struct {
     DWORD receiveThreadId;
     IPin IPin_iface;
     IMemInputPin IMemInputPin_iface;
+    IMemAllocator *allocator;
     IBaseFilter *nullRenderer;
     IPin *nullRendererPin;
     IMemInputPin *nullRendererMemInputPin;
@@ -106,6 +107,8 @@ static ULONG WINAPI SinkFilter_Release(IBaseFilter *iface)
     SinkFilter *This = impl_from_SinkFilter_IBaseFilter(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     if(!ref) {
+        if (This->allocator)
+            IMemAllocator_Release(This->allocator);
         IMemInputPin_Release(This->nullRendererMemInputPin);
         IPin_Release(This->nullRendererPin);
         IBaseFilter_Release(This->nullRenderer);
@@ -493,6 +496,7 @@ static ULONG WINAPI SinkMemInputPin_Release(IMemInputPin *iface)
 static HRESULT WINAPI SinkMemInputPin_GetAllocator(IMemInputPin *iface, IMemAllocator **ppAllocator)
 {
     SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
+    ok(0, "SmartTeeFilter never calls IMemInputPin_GetAllocator()\n");
     return IMemInputPin_GetAllocator(This->nullRendererMemInputPin, ppAllocator);
 }
 
@@ -500,6 +504,9 @@ static HRESULT WINAPI SinkMemInputPin_NotifyAllocator(IMemInputPin *iface, IMemA
         BOOL bReadOnly)
 {
     SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
+    This->allocator = pAllocator;
+    IMemAllocator_AddRef(This->allocator);
+    ok(bReadOnly, "bReadOnly isn't supposed to be FALSE\n");
     return IMemInputPin_NotifyAllocator(This->nullRendererMemInputPin, pAllocator, bReadOnly);
 }
 
@@ -507,6 +514,7 @@ static HRESULT WINAPI SinkMemInputPin_GetAllocatorRequirements(IMemInputPin *ifa
         ALLOCATOR_PROPERTIES *pProps)
 {
     SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
+    ok(0, "SmartTeeFilter never calls IMemInputPin_GetAllocatorRequirements()\n");
     return IMemInputPin_GetAllocatorRequirements(This->nullRendererMemInputPin, pProps);
 }
 
@@ -727,7 +735,7 @@ static DWORD WINAPI media_thread(LPVOID param)
         }
 
         hr = IMemInputPin_Receive(This->memInputPin, sample);
-        ok(SUCCEEDED(hr), "delivering sample to SmartTeeFilter's Input pin failed, hr=0x%08x\n", hr);
+        todo_wine ok(SUCCEEDED(hr), "delivering sample to SmartTeeFilter's Input pin failed, hr=0x%08x\n", hr);
 
         IMediaSample_Release(sample);
     }
@@ -1016,7 +1024,7 @@ static HRESULT WINAPI SourcePin_Connect(IPin *iface, IPin *pReceivePin, const AM
         hr = IPin_QueryInterface(pReceivePin, &IID_IMemInputPin, (void**)&This->memInputPin);
         if (SUCCEEDED(hr)) {
             hr = IMemInputPin_GetAllocator(This->memInputPin, &This->allocator);
-            todo_wine ok(SUCCEEDED(hr), "couldn't get allocator from SmartTeeFilter, hr=0x%08x\n", hr);
+            ok(SUCCEEDED(hr), "couldn't get allocator from SmartTeeFilter, hr=0x%08x\n", hr);
             if (SUCCEEDED(hr)) {
                 ALLOCATOR_PROPERTIES requested, actual;
                 ZeroMemory(&requested, sizeof(ALLOCATOR_PROPERTIES));
@@ -1272,6 +1280,7 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     SourceFilter *sourceFilter = NULL;
     SinkFilter *captureSinkFilter = NULL;
     SinkFilter *previewSinkFilter = NULL;
+    DWORD endTime;
 
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder,
             (LPVOID*)&graphBuilder);
@@ -1322,7 +1331,7 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
         goto end;
 
     hr = IGraphBuilder_Connect(graphBuilder, &sourceFilter->IPin_iface, inputPin);
-    todo_wine ok(SUCCEEDED(hr), "couldn't connect source filter to Input pin, hr=0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "couldn't connect source filter to Input pin, hr=0x%08x\n", hr);
     if (FAILED(hr))
         goto end;
     hr = IGraphBuilder_Connect(graphBuilder, capturePin, &captureSinkFilter->IPin_iface);
@@ -1334,6 +1343,9 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     if (FAILED(hr))
         goto end;
 
+    ok(sourceFilter->allocator == captureSinkFilter->allocator, "input and capture allocators don't match\n");
+    ok(sourceFilter->allocator == previewSinkFilter->allocator, "input and preview allocators don't match\n");
+
     hr = IGraphBuilder_QueryInterface(graphBuilder, &IID_IMediaControl, (void**)&mediaControl);
     ok(SUCCEEDED(hr), "couldn't get IMediaControl interface from IGraphBuilder, hr=0x%08x\n", hr);
     if (FAILED(hr))
@@ -1343,14 +1355,24 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
     if (FAILED(hr))
         goto end;
 
-    while (previewSinkFilter->receiveThreadId == 0 || captureSinkFilter->receiveThreadId == 0)
-        WaitForSingleObject(event, INFINITE);
-    ok(sourceFilter->mediaThreadId != captureSinkFilter->receiveThreadId,
-            "sending thread should != capture receiving thread\n");
-    ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
-            "sending thread should != preview receiving thread\n");
-    ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
-            "capture receiving thread should != preview receiving thread");
+    endTime = GetTickCount() + 5000;
+    while (previewSinkFilter->receiveThreadId == 0 || captureSinkFilter->receiveThreadId == 0) {
+        DWORD now = GetTickCount();
+        if (now < endTime)
+            WaitForSingleObject(event, endTime - now);
+        else
+            break;
+    }
+    if (previewSinkFilter->receiveThreadId != 0 && captureSinkFilter->receiveThreadId != 0) {
+        ok(sourceFilter->mediaThreadId != captureSinkFilter->receiveThreadId,
+                "sending thread should != capture receiving thread\n");
+        ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
+                "sending thread should != preview receiving thread\n");
+        ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
+                "capture receiving thread should != preview receiving thread");
+    } else {
+        todo_wine ok(0, "timeout: threads did not receive sample in time\n");
+    }
 
     IMediaControl_Stop(mediaControl);
 

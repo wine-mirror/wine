@@ -374,12 +374,13 @@ static HRESULT WINAPI SmartTeeFilterCapture_GetMediaType(BasePin *base, int iPos
         return S_FALSE;
 }
 
-static HRESULT WINAPI SmartTeeFilterCapture_DecideBufferSize(BaseOutputPin *base, IMemAllocator *alloc,
-        ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI SmartTeeFilterCapture_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
-    FIXME("(%p, %p, %p): stub\n", This, alloc, ppropInputRequest);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);
+    *pAlloc = This->input->pAllocator;
+    IMemAllocator_AddRef(This->input->pAllocator);
+    return IMemInputPin_NotifyAllocator(pPin, This->input->pAllocator, TRUE);
 }
 
 static HRESULT WINAPI SmartTeeFilterCapture_BreakConnect(BaseOutputPin *base)
@@ -396,8 +397,8 @@ static const BaseOutputPinFuncTable SmartTeeFilterCaptureFuncs = {
         SmartTeeFilterCapture_GetMediaTypeVersion,
         SmartTeeFilterCapture_GetMediaType
     },
-    SmartTeeFilterCapture_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+    NULL,
+    SmartTeeFilterCapture_DecideAllocator,
     SmartTeeFilterCapture_BreakConnect
 };
 
@@ -466,11 +467,13 @@ static HRESULT WINAPI SmartTeeFilterPreview_GetMediaType(BasePin *base, int iPos
         return S_FALSE;
 }
 
-static HRESULT WINAPI SmartTeeFilterPreview_DecideBufferSize(BaseOutputPin *base, IMemAllocator *alloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI SmartTeeFilterPreview_DecideAllocator(BaseOutputPin *base, IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
-    FIXME("(%p, %p, %p): stub\n", This, alloc, ppropInputRequest);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p)\n", This, pPin, pAlloc);
+    *pAlloc = This->input->pAllocator;
+    IMemAllocator_AddRef(This->input->pAllocator);
+    return IMemInputPin_NotifyAllocator(pPin, This->input->pAllocator, TRUE);
 }
 
 static HRESULT WINAPI SmartTeeFilterPreview_BreakConnect(BaseOutputPin *base)
@@ -487,8 +490,8 @@ static const BaseOutputPinFuncTable SmartTeeFilterPreviewFuncs = {
         SmartTeeFilterPreview_GetMediaTypeVersion,
         SmartTeeFilterPreview_GetMediaType
     },
-    SmartTeeFilterPreview_DecideBufferSize,
-    BaseOutputPinImpl_DecideAllocator,
+    NULL,
+    SmartTeeFilterPreview_DecideAllocator,
     SmartTeeFilterPreview_BreakConnect
 };
 IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
@@ -519,6 +522,10 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     inputPinInfo.pFilter = &This->filter.IBaseFilter_iface;
     hr = BaseInputPin_Construct(&SmartTeeFilterInputVtbl, sizeof(BaseInputPin), &inputPinInfo,
             &SmartTeeFilterInputFuncs, &This->filter.csFilter, NULL, (IPin**)&This->input);
+    if (FAILED(hr))
+        goto end;
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void**)&This->input->pAllocator);
     if (FAILED(hr))
         goto end;
 
