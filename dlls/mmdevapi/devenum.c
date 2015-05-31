@@ -551,7 +551,7 @@ static HRESULT WINAPI MMDevice_QueryInterface(IMMDevice *iface, REFIID riid, voi
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown)
         || IsEqualIID(riid, &IID_IMMDevice))
-        *ppv = This;
+        *ppv = &This->IMMDevice_iface;
     else if (IsEqualIID(riid, &IID_IMMEndpoint))
         *ppv = &This->IMMEndpoint_iface;
     if (*ppv)
@@ -797,7 +797,7 @@ static HRESULT WINAPI MMDevCol_QueryInterface(IMMDeviceCollection *iface, REFIID
         return E_POINTER;
     if (IsEqualIID(riid, &IID_IUnknown)
         || IsEqualIID(riid, &IID_IMMDeviceCollection))
-        *ppv = This;
+        *ppv = &This->IMMDeviceCollection_iface;
     else
         *ppv = NULL;
     if (!*ppv)
@@ -897,7 +897,7 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
         load_driver_devices(eRender);
         load_driver_devices(eCapture);
     }
-    return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
+    return IMMDeviceEnumerator_QueryInterface(&This->IMMDeviceEnumerator_iface, riid, ppv);
 }
 
 void MMDevEnum_Free(void)
@@ -920,7 +920,7 @@ static HRESULT WINAPI MMDevEnum_QueryInterface(IMMDeviceEnumerator *iface, REFII
         return E_POINTER;
     if (IsEqualIID(riid, &IID_IUnknown)
         || IsEqualIID(riid, &IID_IMMDeviceEnumerator))
-        *ppv = This;
+        *ppv = &This->IMMDeviceEnumerator_iface;
     else
         *ppv = NULL;
     if (!*ppv)
@@ -1345,7 +1345,7 @@ static HRESULT WINAPI MMDevPropStore_QueryInterface(IPropertyStore *iface, REFII
         return E_POINTER;
     if (IsEqualIID(riid, &IID_IUnknown)
         || IsEqualIID(riid, &IID_IPropertyStore))
-        *ppv = This;
+        *ppv = &This->IPropertyStore_iface;
     else
         *ppv = NULL;
     if (!*ppv)
