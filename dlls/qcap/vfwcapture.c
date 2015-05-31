@@ -642,8 +642,8 @@ KSP_Get( IKsPropertySet * iface, REFGUID guidPropSet, DWORD dwPropID,
     if (cbPropData < sizeof(GUID))
         return E_UNEXPECTED;
     pGuid = pPropData;
-    *pGuid = PIN_CATEGORY_PREVIEW;
-    FIXME("() Not adding a pin with PIN_CATEGORY_CAPTURE\n");
+    *pGuid = PIN_CATEGORY_CAPTURE;
+    FIXME("() Not adding a pin with PIN_CATEGORY_PREVIEW\n");
     return S_OK;
 }
 
