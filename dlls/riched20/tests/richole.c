@@ -1473,7 +1473,7 @@ static void test_ITextSelection_Collapse(void)
   ITextSelection_Release(txtSel);
 }
 
-static void test_IOleClientSite_QueryInterface(void)
+static void test_GetClientSite(void)
 {
   HWND w;
   IRichEditOle *reOle = NULL, *reOle1 = NULL;
@@ -1487,17 +1487,24 @@ static void test_IOleClientSite_QueryInterface(void)
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   hres = IRichEditOle_GetClientSite(reOle, &clientSite);
   ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
-  refcount1 = get_refcount((IUnknown *)clientSite);
-  todo_wine ok(refcount1 == 1, "got wrong ref count: %d\n", refcount1);
+
+todo_wine
+  EXPECT_REF(clientSite, 1);
 
   hres = IOleClientSite_QueryInterface(clientSite, &IID_IRichEditOle, (void **)&reOle1);
   ok(hres == E_NOINTERFACE, "IOleClientSite_QueryInterface: %x\n", hres);
 
+  hres = IRichEditOle_GetClientSite(reOle, &clientSite1);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+todo_wine
+  ok(clientSite != clientSite1, "got %p, %p\n", clientSite, clientSite1);
+  IOleClientSite_Release(clientSite1);
+
   hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleClientSite, (void **)&clientSite1);
   ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
   ok(clientSite == clientSite1, "Should not return a new pointer.\n");
-  refcount1 = get_refcount((IUnknown *)clientSite);
-  todo_wine ok(refcount1 == 2, "got wrong ref count: %d\n", refcount1);
+todo_wine
+  EXPECT_REF(clientSite, 2);
 
   /* IOleWindow interface */
   hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleWindow, (void **)&oleWin);
@@ -3087,7 +3094,7 @@ START_TEST(richole)
   test_ITextRange_GetStart_GetEnd();
   test_ITextRange_GetDuplicate();
   test_ITextRange_Collapse();
-  test_IOleClientSite_QueryInterface();
+  test_GetClientSite();
   test_IOleWindow_GetWindow();
   test_IOleInPlaceSite_GetWindow();
   test_GetFont();
