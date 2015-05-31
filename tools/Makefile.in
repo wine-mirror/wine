@@ -13,8 +13,6 @@ C_SRCS = \
 IN_SRCS = \
 	wineapploader.in
 
-UPDATE_DESKTOP_DATABASE = update-desktop-database
-
 all: wineapploader
 
 make_xftmpl$(EXEEXT): make_xftmpl.o
@@ -24,11 +22,9 @@ make_xftmpl$(EXEEXT): make_xftmpl.o
 
 install install-lib::
 	$(INSTALL_DATA) $(srcdir)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
-	-$(UPDATE_DESKTOP_DATABASE)
 
 install install-dev:: install-man-pages
 	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 
 uninstall::
 	$(RM) $(DESTDIR)$(datadir)/applications/wine.desktop $(DESTDIR)$(bindir)/winemaker
-	-$(UPDATE_DESKTOP_DATABASE)
