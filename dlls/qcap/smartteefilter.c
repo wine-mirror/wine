@@ -147,8 +147,13 @@ static ULONG WINAPI SmartTeeFilter_Release(IBaseFilter *iface)
 static HRESULT WINAPI SmartTeeFilter_Stop(IBaseFilter *iface)
 {
     SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", This);
+    EnterCriticalSection(&This->filter.csFilter);
+    if(This->filter.state != State_Stopped) {
+        This->filter.state = State_Stopped;
+    }
+    LeaveCriticalSection(&This->filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI SmartTeeFilter_Pause(IBaseFilter *iface)
@@ -160,14 +165,40 @@ static HRESULT WINAPI SmartTeeFilter_Pause(IBaseFilter *iface)
 
 static HRESULT WINAPI SmartTeeFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
-    FIXME("(%p, %x%08x): stub\n", iface, (ULONG)(tStart >> 32), (ULONG)tStart);
-    return E_NOTIMPL;
+    SmartTeeFilter *This = impl_from_IBaseFilter(iface);
+    HRESULT hr = S_OK;
+    TRACE("(%p, %x%08x)\n", This, (ULONG)(tStart >> 32), (ULONG)tStart);
+    EnterCriticalSection(&This->filter.csFilter);
+    if(This->filter.state != State_Running) {
+        /* We share an allocator among all pins, an allocator can only get committed
+         * once, state transitions occur in upstream order, and only output pins
+         * commit allocators, so let the filter attached to the input pin worry about it. */
+        if (This->input->pin.pConnectedTo)
+            This->filter.state = State_Running;
+        else
+            hr = VFW_E_NOT_CONNECTED;
+    }
+    LeaveCriticalSection(&This->filter.csFilter);
+    return hr;
 }
 
 static HRESULT WINAPI SmartTeeFilter_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
 {
     SmartTeeFilter *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%s, %p): stub\n", This, debugstr_w(Id), ppPin);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(Id), ppPin);
+    if (lstrcmpW(Id, This->input->pin.pinInfo.achName) == 0) {
+        *ppPin = &This->input->pin.IPin_iface;
+        IPin_AddRef(*ppPin);
+        return S_OK;
+    } else if (lstrcmpW(Id, This->capture->pin.pinInfo.achName) == 0) {
+        *ppPin = &This->capture->pin.IPin_iface;
+        IPin_AddRef(*ppPin);
+        return S_OK;
+    } else if (lstrcmpW(Id, This->preview->pin.pinInfo.achName) == 0) {
+        *ppPin = &This->preview->pin.IPin_iface;
+        IPin_AddRef(*ppPin);
+        return S_OK;
+    }
     return VFW_E_NOT_FOUND;
 }
 
@@ -292,11 +323,125 @@ static HRESULT WINAPI SmartTeeFilterInput_GetMediaType(BasePin *base, int iPosit
     return hr;
 }
 
-static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSample *pSample)
+static HRESULT copy_sample(IMediaSample *inputSample, IMemAllocator *allocator, IMediaSample **pOutputSample)
+{
+    REFERENCE_TIME startTime, endTime;
+    BOOL haveStartTime = TRUE, haveEndTime = TRUE;
+    IMediaSample *outputSample = NULL;
+    BYTE *ptrIn, *ptrOut;
+    AM_MEDIA_TYPE *mediaType = NULL;
+    HRESULT hr;
+
+    hr = IMediaSample_GetTime(inputSample, &startTime, &endTime);
+    if (hr == S_OK)
+        ;
+    else if (hr == VFW_S_NO_STOP_TIME)
+        haveEndTime = FALSE;
+    else if (hr == VFW_E_SAMPLE_TIME_NOT_SET)
+        haveStartTime = haveEndTime = FALSE;
+    else
+        goto end;
+
+    hr = IMemAllocator_GetBuffer(allocator, &outputSample,
+            haveStartTime ? &startTime : NULL, haveEndTime ? &endTime : NULL, 0);
+    if (FAILED(hr)) goto end;
+    if (IMediaSample_GetSize(outputSample) < IMediaSample_GetActualDataLength(inputSample)) {
+        ERR("insufficient space in sample\n");
+        hr = VFW_E_BUFFER_OVERFLOW;
+        goto end;
+    }
+
+    hr = IMediaSample_SetTime(outputSample, haveStartTime ? &startTime : NULL, haveEndTime ? &endTime : NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IMediaSample_GetPointer(inputSample, &ptrIn);
+    if (FAILED(hr)) goto end;
+    hr = IMediaSample_GetPointer(outputSample, &ptrOut);
+    if (FAILED(hr)) goto end;
+    memcpy(ptrOut, ptrIn, IMediaSample_GetActualDataLength(inputSample));
+    IMediaSample_SetActualDataLength(outputSample, IMediaSample_GetActualDataLength(inputSample));
+
+    hr = IMediaSample_SetDiscontinuity(outputSample, IMediaSample_IsDiscontinuity(inputSample) == S_OK);
+    if (FAILED(hr)) goto end;
+
+    haveStartTime = haveEndTime = TRUE;
+    hr = IMediaSample_GetMediaTime(inputSample, &startTime, &endTime);
+    if (hr == S_OK)
+        ;
+    else if (hr == VFW_S_NO_STOP_TIME)
+        haveEndTime = FALSE;
+    else if (hr == VFW_E_MEDIA_TIME_NOT_SET)
+        haveStartTime = haveEndTime = FALSE;
+    else
+        goto end;
+    hr = IMediaSample_SetMediaTime(outputSample, haveStartTime ? &startTime : NULL, haveEndTime ? &endTime : NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IMediaSample_GetMediaType(inputSample, &mediaType);
+    if (FAILED(hr)) goto end;
+    if (hr == S_OK) {
+        hr = IMediaSample_SetMediaType(outputSample, mediaType);
+        if (FAILED(hr)) goto end;
+    }
+
+    hr = IMediaSample_SetPreroll(outputSample, IMediaSample_IsPreroll(inputSample) == S_OK);
+    if (FAILED(hr)) goto end;
+
+    hr = IMediaSample_SetSyncPoint(outputSample, IMediaSample_IsSyncPoint(inputSample) == S_OK);
+    if (FAILED(hr)) goto end;
+
+end:
+    if (mediaType)
+        DeleteMediaType(mediaType);
+    if (FAILED(hr) && outputSample) {
+        IMediaSample_Release(outputSample);
+        outputSample = NULL;
+    }
+    *pOutputSample = outputSample;
+    return hr;
+}
+
+static HRESULT WINAPI SmartTeeFilterInput_Receive(BaseInputPin *base, IMediaSample *inputSample)
 {
     SmartTeeFilter *This = impl_from_BasePin(&base->pin);
-    FIXME("(%p)->(%p): stub\n", This, pSample);
-    return E_NOTIMPL;
+    IMediaSample *captureSample = NULL;
+    IMediaSample *previewSample = NULL;
+    HRESULT hrCapture = VFW_E_NOT_CONNECTED, hrPreview = VFW_E_NOT_CONNECTED;
+
+    TRACE("(%p)->(%p)\n", This, inputSample);
+
+    /* Modifying the image coming out of one pin doesn't modify the image
+     * coming out of the other. MSDN claims the filter doesn't copy,
+     * but unless it somehow uses copy-on-write, I just don't see how
+     * that's possible. */
+
+    /* FIXME: we should ideally do each of these in a separate thread */
+    EnterCriticalSection(&This->filter.csFilter);
+    if (This->capture->pin.pConnectedTo)
+        hrCapture = copy_sample(inputSample, This->capture->pAllocator, &captureSample);
+    LeaveCriticalSection(&This->filter.csFilter);
+    if (SUCCEEDED(hrCapture))
+        hrCapture = BaseOutputPinImpl_Deliver(This->capture, captureSample);
+    if (captureSample)
+        IMediaSample_Release(captureSample);
+
+    EnterCriticalSection(&This->filter.csFilter);
+    if (This->preview->pin.pConnectedTo)
+        hrPreview = copy_sample(inputSample, This->preview->pAllocator, &previewSample);
+    LeaveCriticalSection(&This->filter.csFilter);
+    /* No timestamps on preview stream: */
+    if (SUCCEEDED(hrPreview))
+        hrPreview = IMediaSample_SetTime(previewSample, NULL, NULL);
+    if (SUCCEEDED(hrPreview))
+        hrPreview = BaseOutputPinImpl_Deliver(This->preview, previewSample);
+    if (previewSample)
+        IMediaSample_Release(previewSample);
+
+    /* FIXME: how to merge the HRESULTs from the 2 pins? */
+    if (SUCCEEDED(hrCapture))
+        return hrCapture;
+    else
+        return hrPreview;
 }
 
 static const BaseInputPinFuncTable SmartTeeFilterInputFuncs = {

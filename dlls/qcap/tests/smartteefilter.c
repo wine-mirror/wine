@@ -520,9 +520,9 @@ static HRESULT WINAPI SinkMemInputPin_GetAllocatorRequirements(IMemInputPin *ifa
 
 static HRESULT WINAPI SinkMemInputPin_Receive(IMemInputPin *iface, IMediaSample *pSample)
 {
-    SinkFilter *This = impl_from_SinkFilter_IMemInputPin(iface);
-    ok(0, "SmartTeeFilter never calls IMemInputPin_Receive(), only IMemInputPin_ReceiveMultiple()\n");
-    return IMemInputPin_Receive(This->nullRendererMemInputPin, pSample);
+    LONG samplesProcessed;
+    todo_wine ok(0, "SmartTeeFilter never calls IMemInputPin_Receive(), only IMemInputPin_ReceiveMultiple()\n");
+    return IMemInputPin_ReceiveMultiple(iface, &pSample, 1, &samplesProcessed);
 }
 
 static HRESULT WINAPI SinkMemInputPin_ReceiveMultiple(IMemInputPin *iface, IMediaSample **pSamples,
@@ -735,7 +735,7 @@ static DWORD WINAPI media_thread(LPVOID param)
         }
 
         hr = IMemInputPin_Receive(This->memInputPin, sample);
-        todo_wine ok(SUCCEEDED(hr), "delivering sample to SmartTeeFilter's Input pin failed, hr=0x%08x\n", hr);
+        ok(SUCCEEDED(hr), "delivering sample to SmartTeeFilter's Input pin failed, hr=0x%08x\n", hr);
 
         IMediaSample_Release(sample);
     }
@@ -1364,14 +1364,14 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
             break;
     }
     if (previewSinkFilter->receiveThreadId != 0 && captureSinkFilter->receiveThreadId != 0) {
-        ok(sourceFilter->mediaThreadId != captureSinkFilter->receiveThreadId,
+        todo_wine ok(sourceFilter->mediaThreadId != captureSinkFilter->receiveThreadId,
                 "sending thread should != capture receiving thread\n");
-        ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
+        todo_wine ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
                 "sending thread should != preview receiving thread\n");
-        ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
+        todo_wine ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
                 "capture receiving thread should != preview receiving thread");
     } else {
-        todo_wine ok(0, "timeout: threads did not receive sample in time\n");
+        ok(0, "timeout: threads did not receive sample in time\n");
     }
 
     IMediaControl_Stop(mediaControl);
