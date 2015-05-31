@@ -371,6 +371,7 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
     IPin *source_out = NULL, *renderer_in;
+    BOOL rendererNeedsRelease = FALSE;
     BOOL usedSmartTeePreviewPin = FALSE;
     HRESULT hr;
 
@@ -382,11 +383,6 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
     {
         FIXME("Need a capture graph\n");
         return E_UNEXPECTED;
-    }
-    if (!pfRenderer)
-    {
-        FIXME("pfRenderer == NULL not yet supported\n");
-        return E_NOTIMPL;
     }
 
     if (pCategory && IsEqualIID(pCategory, &PIN_CATEGORY_VBI)) {
@@ -411,9 +407,45 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
             return E_INVALIDARG;
     }
 
+    if (!pfRenderer)
+    {
+        IEnumMediaTypes *enumMedia = NULL;
+        hr = IPin_EnumMediaTypes(source_out, &enumMedia);
+        if (SUCCEEDED(hr)) {
+            AM_MEDIA_TYPE *mediaType;
+            hr = IEnumMediaTypes_Next(enumMedia, 1, &mediaType, NULL);
+            if (SUCCEEDED(hr)) {
+                if (IsEqualIID(&mediaType->majortype, &MEDIATYPE_Video)) {
+                    hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IBaseFilter, (void**)&pfRenderer);
+                } else if (IsEqualIID(&mediaType->majortype, &MEDIATYPE_Audio)) {
+                    hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IBaseFilter, (void**)&pfRenderer);
+                } else {
+                    FIXME("cannot automatically load renderer for majortype %s\n", debugstr_guid(&mediaType->majortype));
+                    hr = E_FAIL;
+                }
+                if (SUCCEEDED(hr)) {
+                    rendererNeedsRelease = TRUE;
+                    hr = IGraphBuilder_AddFilter(This->mygraph, pfRenderer, NULL);
+                }
+                DeleteMediaType(mediaType);
+            }
+            IEnumMediaTypes_Release(enumMedia);
+        }
+        if (FAILED(hr)) {
+            if (rendererNeedsRelease)
+                IBaseFilter_Release(pfRenderer);
+            IPin_Release(source_out);
+            return hr;
+        }
+    }
+
     hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, NULL, NULL, TRUE, 0, &renderer_in);
     if (FAILED(hr))
     {
+        if (rendererNeedsRelease)
+            IBaseFilter_Release(pfRenderer);
         IPin_Release(source_out);
         return hr;
     }
@@ -446,6 +478,8 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
 
     IPin_Release(source_out);
     IPin_Release(renderer_in);
+    if (rendererNeedsRelease)
+        IBaseFilter_Release(pfRenderer);
     if (SUCCEEDED(hr) && usedSmartTeePreviewPin)
         hr = VFW_S_NOPREVIEWPIN;
     return hr;
