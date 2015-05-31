@@ -1487,8 +1487,6 @@ static void test_GetClientSite(void)
   create_interfaces(&w, &reOle, &txtDoc, NULL);
   hres = IRichEditOle_GetClientSite(reOle, &clientSite);
   ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
-
-todo_wine
   EXPECT_REF(clientSite, 1);
 
   hres = IOleClientSite_QueryInterface(clientSite, &IID_IRichEditOle, (void **)&reOle1);
@@ -1496,14 +1494,12 @@ todo_wine
 
   hres = IRichEditOle_GetClientSite(reOle, &clientSite1);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-todo_wine
   ok(clientSite != clientSite1, "got %p, %p\n", clientSite, clientSite1);
   IOleClientSite_Release(clientSite1);
 
   hres = IOleClientSite_QueryInterface(clientSite, &IID_IOleClientSite, (void **)&clientSite1);
   ok(hres == S_OK, "IOleClientSite_QueryInterface: 0x%08x\n", hres);
   ok(clientSite == clientSite1, "Should not return a new pointer.\n");
-todo_wine
   EXPECT_REF(clientSite, 2);
 
   /* IOleWindow interface */
