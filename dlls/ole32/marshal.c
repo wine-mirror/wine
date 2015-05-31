@@ -1045,8 +1045,11 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
         IRemUnknown_AddRef(*remunk);
     }
     else if (!This->parent)
+    {
         /* disconnected - we can't create IRemUnknown */
+        *remunk = NULL;
         hr = S_FALSE;
+    }
     else
     {
         STDOBJREF stdobjref;
