@@ -544,27 +544,24 @@ static void test_GetText(void)
   hres = ITextDocument_Range(txtDoc, 0, 4, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
   ITextRange_Release(range);
 
   hres = ITextDocument_Range(txtDoc, 4, 0, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
   ITextRange_Release(range);
 
   hres = ITextDocument_Range(txtDoc, 1, 1, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
   if (!is64bit)
@@ -577,37 +574,33 @@ todo_wine
   hres = ITextDocument_Range(txtDoc, 8, 12, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW3), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
   ITextRange_Release(range);
 
   hres = ITextDocument_Range(txtDoc, 8, 13, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW2), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
   ITextRange_Release(range);
 
   hres = ITextDocument_Range(txtDoc, 12, 13, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW5), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
   ITextRange_Release(range);
 
   hres = ITextDocument_Range(txtDoc, 0, -1, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
   ITextRange_Release(range);
@@ -615,10 +608,9 @@ todo_wine
   hres = ITextDocument_Range(txtDoc, -1, 9, &range);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = ITextRange_GetText(range, &bstr);
-todo_wine {
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(!lstrcmpW(bstr, bufW6), "got wrong text: %s\n", wine_dbgstr_w(bstr));
-}
+
   SysFreeString(bstr);
 
   release_interfaces(&w, &reOle, &txtDoc, NULL);

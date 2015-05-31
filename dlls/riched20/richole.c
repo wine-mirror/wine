@@ -1563,20 +1563,38 @@ static HRESULT WINAPI ITextRange_fnInvoke(ITextRange *me, DISPID dispIdMember, R
     return hr;
 }
 
-static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *pbstr)
+static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *str)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+    ME_Cursor start, end;
+    int length;
+    BOOL bEOP;
 
-    FIXME("(%p)->(%p): stub\n", This, pbstr);
+    TRACE("(%p)->(%p)\n", This, str);
 
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    if (!pbstr)
+    if (!str)
         return E_INVALIDARG;
 
-    *pbstr = NULL;
-    return E_NOTIMPL;
+    /* return early for degenerate range */
+    if (This->start == This->end) {
+        *str = NULL;
+        return S_OK;
+    }
+
+    ME_CursorFromCharOfs(This->reOle->editor, This->start, &start);
+    ME_CursorFromCharOfs(This->reOle->editor, This->end, &end);
+
+    length = This->end - This->start;
+    *str = SysAllocStringLen(NULL, length);
+    if (!*str)
+        return E_OUTOFMEMORY;
+
+    bEOP = (end.pRun->next->type == diTextEnd && This->end > ME_GetTextLength(This->reOle->editor));
+    ME_GetTextW(This->reOle->editor, *str, length, &start, length, FALSE, bEOP);
+    return S_OK;
 }
 
 static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
