@@ -1211,10 +1211,10 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 
         res=StgOpenStorage(filePathName,NULL,STGM_READ | STGM_SHARE_DENY_WRITE,NULL,0,&pstg);
 
-        if (SUCCEEDED(res))
+        if (SUCCEEDED(res)) {
             res=ReadClassStg(pstg,pclsid);
-
-        IStorage_Release(pstg);
+            IStorage_Release(pstg);
+        }
 
         return res;
     }
