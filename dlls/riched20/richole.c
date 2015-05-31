@@ -310,6 +310,7 @@ static inline ITextParaImpl *impl_from_ITextPara(ITextPara *iface)
 
 static HRESULT create_textfont(ITextRange*, const ITextFontImpl*, ITextFont**);
 static HRESULT create_textpara(ITextRange*, ITextPara**);
+static ITextSelectionImpl *CreateTextSelection(IRichEditOleImpl*);
 
 static void textranges_update_ranges(IRichEditOleImpl *reole, LONG start, LONG end, enum range_update_op op)
 {
@@ -943,10 +944,11 @@ static ULONG WINAPI IRichEditOleImpl_inner_fnRelease(IUnknown *iface)
         IOleClientSiteImpl *clientsite;
         ITextRangeImpl *txtRge;
 
-        TRACE("Destroying %p\n", This);
-        This->txtSel->reOle = NULL;
         This->editor->reOle = NULL;
-        ITextSelection_Release(&This->txtSel->ITextSelection_iface);
+        if (This->txtSel) {
+            This->txtSel->reOle = NULL;
+            ITextSelection_Release(&This->txtSel->ITextSelection_iface);
+        }
 
         LIST_FOR_EACH_ENTRY(txtRge, &This->rangelist, ITextRangeImpl, child.entry)
             txtRge->child.reole = NULL;
@@ -3790,15 +3792,25 @@ ITextDocument_fnGetName(ITextDocument* me, BSTR* pName)
 }
 
 static HRESULT WINAPI
-ITextDocument_fnGetSelection(ITextDocument* me, ITextSelection** ppSel)
+ITextDocument_fnGetSelection(ITextDocument *me, ITextSelection **selection)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
-    TRACE("(%p)\n", me);
 
-    if(!ppSel)
+    TRACE("(%p)->(%p)\n", me, selection);
+
+    if (!selection)
       return E_INVALIDARG;
-    *ppSel = &This->txtSel->ITextSelection_iface;
-    ITextSelection_AddRef(*ppSel);
+
+    if (!This->txtSel) {
+      This->txtSel = CreateTextSelection(This);
+      if (!This->txtSel) {
+        *selection = NULL;
+        return E_OUTOFMEMORY;
+      }
+    }
+
+    *selection = &This->txtSel->ITextSelection_iface;
+    ITextSelection_AddRef(*selection);
     return S_OK;
 }
 
@@ -4977,12 +4989,7 @@ LRESULT CreateIRichEditOle(IUnknown *outer_unk, ME_TextEditor *editor, LPVOID *p
     reo->ITextDocument_iface.lpVtbl = &tdvt;
     reo->ref = 1;
     reo->editor = editor;
-    reo->txtSel = CreateTextSelection(reo);
-    if (!reo->txtSel)
-    {
-        heap_free(reo);
-        return 0;
-    }
+    reo->txtSel = NULL;
 
     TRACE("Created %p\n",reo);
     list_init(&reo->rangelist);
