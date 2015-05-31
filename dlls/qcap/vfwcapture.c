@@ -374,6 +374,7 @@ AMStreamConfig_GetNumberOfCapabilities( IAMStreamConfig *iface, int *piCount,
                                         int *piSize )
 {
     FIXME("%p: %p %p - stub, intentional\n", iface, piCount, piSize);
+    *piCount = 0;
     return E_NOTIMPL; /* Not implemented for this interface */
 }
 
