@@ -1343,6 +1343,11 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
         return E_FAIL;
     }
 
+    if(!nsstyle) {
+        ERR("GetComputedStyle returned NULL nsstyle\n");
+        return E_FAIL;
+    }
+
     ret = heap_alloc_zero(sizeof(HTMLCurrentStyle));
     if(!ret) {
         nsIDOMCSSStyleDeclaration_Release(nsstyle);
