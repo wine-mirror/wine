@@ -75,6 +75,7 @@ static UINT (WINAPI *pGetSystemWow64DirectoryW)(LPWSTR, UINT);
 static HRESULT (WINAPI *pSHCreateDefaultContextMenu)(const DEFCONTEXTMENU*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateShellFolderView)(const SFV_CREATE *pcsfv, IShellView **ppsv);
 static HRESULT (WINAPI *pSHCreateShellFolderViewEx)(LPCSFV psvcbi, IShellView **ppv);
+static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
 
 static WCHAR *make_wstr(const char *str)
 {
@@ -140,6 +141,7 @@ static void init_function_pointers(void)
     MAKEFUNC_ORD(ILFindLastID, 16);
     MAKEFUNC_ORD(ILIsEqual, 21);
     MAKEFUNC_ORD(ILCombine, 25);
+    MAKEFUNC_ORD(SHILCreateFromPath, 28);
     MAKEFUNC_ORD(ILFree, 155);
     MAKEFUNC_ORD(SHSimpleIDListFromPathAW, 162);
 #undef MAKEFUNC_ORD
@@ -4974,9 +4976,9 @@ static void test_SHChangeNotify(BOOL test_new_delivery)
 
     entries[0].pidl = NULL;
     if(has_unicode)
-        hr = SHILCreateFromPath(root_dirW, (LPITEMIDLIST*)&entries[0].pidl, 0);
+        hr = pSHILCreateFromPath(root_dirW, (LPITEMIDLIST*)&entries[0].pidl, 0);
     else
-        hr = SHILCreateFromPath((LPCVOID)root_dirA, (LPITEMIDLIST*)&entries[0].pidl, 0);
+        hr = pSHILCreateFromPath((LPCVOID)root_dirA, (LPITEMIDLIST*)&entries[0].pidl, 0);
     ok(hr == S_OK, "SHILCreateFromPath failed: 0x%08x\n", hr);
     entries[0].fRecursive = TRUE;
 
