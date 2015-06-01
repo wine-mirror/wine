@@ -2437,6 +2437,27 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 
+    V_VT(&name) = VT_UI4;
+    V_I4(&name) = len;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
+
+    V_VT(&name) = VT_INT;
+    V_I4(&name) = len;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
+
+    V_VT(&name) = VT_UINT;
+    V_I4(&name) = len;
+    disp = (void*)0xdeadbeef;
+    hres = IHTMLElementCollection_item(col, name, index, &disp);
+    ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
+    ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
+
     V_VT(&name) = VT_I4;
     V_I4(&name) = -1;
     disp = (void*)0xdeadbeef;
