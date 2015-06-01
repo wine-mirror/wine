@@ -75,6 +75,8 @@ static LRESULT MCIQTZ_relayTaskMessage(DWORD_PTR dwDevID, UINT wMsg,
 {
     WINE_MCIQTZ *wma;
     LRESULT res;
+    HANDLE handles[2];
+    DWORD ret;
     TRACE("(%08lX, %08x, %08x, %08lx)\n", dwDevID, wMsg, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(dwDevID);
@@ -86,7 +88,11 @@ static LRESULT MCIQTZ_relayTaskMessage(DWORD_PTR dwDevID, UINT wMsg,
     wma->task.flags = dwFlags;
     wma->task.parms = lpParms;
     SetEvent(wma->task.notify);
-    if (WaitForSingleObject(wma->task.done, INFINITE) == WAIT_OBJECT_0)
+    handles[0] = wma->task.done;
+    handles[1] = wma->task.thread;
+    ret = WaitForMultipleObjects(sizeof(handles)/sizeof(handles[0]), handles,
+                                 FALSE, INFINITE);
+    if (ret == WAIT_OBJECT_0)
         res = wma->task.res;
     else
         res = MCIERR_INTERNAL;
