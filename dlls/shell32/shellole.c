@@ -578,7 +578,7 @@ UINT WINAPI DragQueryFileA(
         if(lpDropFileStruct->fWide) {
             LPWSTR lpszFileW = NULL;
 
-            if(lpszFile) {
+            if(lpszFile && lFile != 0xFFFFFFFF) {
                 lpszFileW = HeapAlloc(GetProcessHeap(), 0, lLength*sizeof(WCHAR));
                 if(lpszFileW == NULL) {
                     goto end;
@@ -633,7 +633,7 @@ UINT WINAPI DragQueryFileW(
         if(lpDropFileStruct->fWide == FALSE) {
             LPSTR lpszFileA = NULL;
 
-            if(lpszwFile) {
+            if(lpszwFile && lFile != 0xFFFFFFFF) {
                 lpszFileA = HeapAlloc(GetProcessHeap(), 0, lLength);
                 if(lpszFileA == NULL) {
                     goto end;

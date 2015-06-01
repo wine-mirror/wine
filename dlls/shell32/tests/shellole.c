@@ -760,7 +760,7 @@ static LRESULT WINAPI drop_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
         num = DragQueryFileA(hDrop, 0xffffffff, NULL, 0);
         ok(num == 1, "expected 1, got %u\n", num);
         num = DragQueryFileA(hDrop, 0xffffffff, (char*)0xdeadbeef, 0xffffffff);
-        todo_wine ok(num == 1, "expected 1, got %u\n", num);
+        ok(num == 1, "expected 1, got %u\n", num);
         num = DragQueryFileA(hDrop, 0, filename, sizeof(filename));
         ok(num == strlen(DROPTEST_FILENAME), "got %u\n", num);
         ok(!strcmp(filename, DROPTEST_FILENAME), "got %s\n", filename);
