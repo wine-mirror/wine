@@ -1569,26 +1569,23 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
     shader_dump_register(&param->reg, shader_version);
 
-    if (src_modifier)
+    switch (src_modifier)
     {
-        switch (src_modifier)
-        {
-            case WINED3DSPSM_NONE:    break;
-            case WINED3DSPSM_NEG:     break;
-            case WINED3DSPSM_NOT:     break;
-            case WINED3DSPSM_BIAS:    TRACE("_bias"); break;
-            case WINED3DSPSM_BIASNEG: TRACE("_bias"); break;
-            case WINED3DSPSM_SIGN:    TRACE("_bx2"); break;
-            case WINED3DSPSM_SIGNNEG: TRACE("_bx2"); break;
-            case WINED3DSPSM_COMP:    break;
-            case WINED3DSPSM_X2:      TRACE("_x2"); break;
-            case WINED3DSPSM_X2NEG:   TRACE("_x2"); break;
-            case WINED3DSPSM_DZ:      TRACE("_dz"); break;
-            case WINED3DSPSM_DW:      TRACE("_dw"); break;
-            case WINED3DSPSM_ABSNEG:  TRACE(")"); break;
-            case WINED3DSPSM_ABS:     TRACE(")"); break;
-            default:                  TRACE("_unknown_modifier(%#x)", src_modifier);
-        }
+        case WINED3DSPSM_NONE:    break;
+        case WINED3DSPSM_NEG:     break;
+        case WINED3DSPSM_NOT:     break;
+        case WINED3DSPSM_BIAS:    TRACE("_bias"); break;
+        case WINED3DSPSM_BIASNEG: TRACE("_bias"); break;
+        case WINED3DSPSM_SIGN:    TRACE("_bx2"); break;
+        case WINED3DSPSM_SIGNNEG: TRACE("_bx2"); break;
+        case WINED3DSPSM_COMP:    break;
+        case WINED3DSPSM_X2:      TRACE("_x2"); break;
+        case WINED3DSPSM_X2NEG:   TRACE("_x2"); break;
+        case WINED3DSPSM_DZ:      TRACE("_dz"); break;
+        case WINED3DSPSM_DW:      TRACE("_dw"); break;
+        case WINED3DSPSM_ABSNEG:  TRACE(")"); break;
+        case WINED3DSPSM_ABS:     TRACE(")"); break;
+        default:                  TRACE("_unknown_modifier(%#x)", src_modifier);
     }
 
     if (swizzle != WINED3DSP_NOSWIZZLE)
