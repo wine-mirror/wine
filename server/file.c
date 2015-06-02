@@ -64,6 +64,7 @@ struct file
 static unsigned int generic_file_map_access( unsigned int access );
 
 static void file_dump( struct object *obj, int verbose );
+static struct object_type *file_get_type( struct object *obj );
 static struct fd *file_get_fd( struct object *obj );
 static struct security_descriptor *file_get_sd( struct object *obj );
 static int file_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
@@ -77,7 +78,7 @@ static const struct object_ops file_ops =
 {
     sizeof(struct file),          /* size */
     file_dump,                    /* dump */
-    no_get_type,                  /* get_type */
+    file_get_type,                /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -271,6 +272,13 @@ static void file_dump( struct object *obj, int verbose )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     fprintf( stderr, "File fd=%p\n", file->fd );
+}
+
+static struct object_type *file_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'F','i','l','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 static int file_get_poll_events( struct fd *fd )
