@@ -590,7 +590,6 @@ static int next_token(parser_ctx_t *ctx, void *lval)
     case ',':
     case '~':
     case '?':
-    case ':':
         return *ctx->ptr++;
 
     case '}':
@@ -785,6 +784,13 @@ static int next_token(parser_ctx_t *ctx, void *lval)
             }
         }
         return '/';
+
+    case ':':
+        if(++ctx->ptr < ctx->end && *ctx->ptr == ':') {
+            ctx->ptr++;
+            return kDCOL;
+        }
+        return ':';
 
     case '\"':
     case '\'':
