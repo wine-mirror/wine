@@ -3919,6 +3919,17 @@ static void dump_get_object_info_reply( const struct get_object_info_reply *req 
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
+static void dump_get_object_type_request( const struct get_object_type_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_object_type_reply( const struct get_object_type_reply *req )
+{
+    fprintf( stderr, " total=%u", req->total );
+    dump_varargs_unicode_str( ", type=", cur_size );
+}
+
 static void dump_unlink_object_request( const struct unlink_object_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4445,6 +4456,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_request,
     (dump_func)dump_query_symlink_request,
     (dump_func)dump_get_object_info_request,
+    (dump_func)dump_get_object_type_request,
     (dump_func)dump_unlink_object_request,
     (dump_func)dump_get_token_impersonation_level_request,
     (dump_func)dump_allocate_locally_unique_id_request,
@@ -4712,6 +4724,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_reply,
     (dump_func)dump_query_symlink_reply,
     (dump_func)dump_get_object_info_reply,
+    (dump_func)dump_get_object_type_reply,
     NULL,
     (dump_func)dump_get_token_impersonation_level_reply,
     (dump_func)dump_allocate_locally_unique_id_reply,
@@ -4979,6 +4992,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_symlink",
     "query_symlink",
     "get_object_info",
+    "get_object_type",
     "unlink_object",
     "get_token_impersonation_level",
     "allocate_locally_unique_id",
@@ -5081,7 +5095,6 @@ static const struct
     { "NAME_TOO_LONG",               STATUS_NAME_TOO_LONG },
     { "NETWORK_BUSY",                STATUS_NETWORK_BUSY },
     { "NETWORK_UNREACHABLE",         STATUS_NETWORK_UNREACHABLE },
-    { "NOTIFY_ENUM_DIR",             STATUS_NOTIFY_ENUM_DIR },
     { "NOT_ALL_ASSIGNED",            STATUS_NOT_ALL_ASSIGNED },
     { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
     { "NOT_FOUND",                   STATUS_NOT_FOUND },
