@@ -3072,6 +3072,42 @@ static void test_SetFont(void)
   ITextSelection_Release(selection);
 }
 
+static void test_InsertObject(void)
+{
+  IRichEditOle *reole = NULL;
+  ITextDocument *doc = NULL;
+  IOleClientSite *clientsite;
+  REOBJECT reo;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reole, &doc, NULL);
+
+  hr = IRichEditOle_InsertObject(reole, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  hr = IRichEditOle_GetClientSite(reole, &clientsite);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  reo.cbStruct = sizeof(reo);
+  reo.cp = 0;
+  memset(&reo.clsid, 0, sizeof(reo.clsid));
+  reo.poleobj = NULL;
+  reo.pstg = NULL;
+  reo.polesite = clientsite;
+  reo.sizel.cx = 10;
+  reo.sizel.cy = 10;
+  reo.dvaspect = DVASPECT_CONTENT;
+  reo.dwFlags = 0;
+  reo.dwUser = 0;
+
+  hr = IRichEditOle_InsertObject(reole, &reo);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  IOleClientSite_Release(clientsite);
+  release_interfaces(&hwnd, &reole, &doc, NULL);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -3104,4 +3140,5 @@ START_TEST(richole)
   test_Select();
   test_GetStoryType();
   test_SetFont();
+  test_InsertObject();
 }

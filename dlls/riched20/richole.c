@@ -1420,7 +1420,11 @@ static HRESULT WINAPI
 IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
+
     TRACE("(%p,%p)\n", This, reo);
+
+    if (!reo)
+        return E_INVALIDARG;
 
     if (reo->cbStruct < sizeof(*reo)) return STG_E_INVALIDPARAMETER;
 
@@ -5034,6 +5038,12 @@ void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
       pSize->cx = MulDiv(pSize->cx, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
       pSize->cy = MulDiv(pSize->cy, c->editor->nZoomNumerator, c->editor->nZoomDenominator);
     }
+    return;
+  }
+
+  if (!run->ole_obj->poleobj)
+  {
+    pSize->cx = pSize->cy = 0;
     return;
   }
 
