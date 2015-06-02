@@ -818,7 +818,7 @@ static void test_query_object(void)
     str = (UNICODE_STRING *)buffer;
     expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
     ok( len >= expected_len, "unexpected len %u\n", len );
-    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_iocompletion, sizeof(type_iocompletion) ),
+    ok( str->Buffer && !memcmp( str->Buffer, type_iocompletion, sizeof(type_iocompletion) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
     pNtClose( handle );
 
