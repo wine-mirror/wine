@@ -4925,7 +4925,7 @@ static void handle_ps3_input(struct shader_glsl_priv *priv,
 /* Context activation is done by the caller. */
 static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
-        const struct wined3d_gl_info *gl_info)
+        BOOL per_vertex_point_size, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     GLuint ret = 0;
@@ -4938,6 +4938,14 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
     string_buffer_clear(buffer);
 
     shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &vs->reg_maps.shader_version));
+
+    if (per_vertex_point_size)
+    {
+        shader_addline(buffer, "uniform struct\n{\n");
+        shader_addline(buffer, "    float size_min;\n");
+        shader_addline(buffer, "    float size_max;\n");
+        shader_addline(buffer, "} ffp_point;\n");
+    }
 
     if (ps_major < 3)
     {
@@ -4983,9 +4991,10 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
                         shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
                 }
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE) && per_vertex_point_size)
             {
-                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", output->register_idx, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = clamp(vs_out[%u].%c, ffp_point.size_min, ffp_point.size_max);\n",
+                        output->register_idx, reg_mask[1]);
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
@@ -5019,9 +5028,10 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, output->register_idx, reg_mask);
             }
-            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE))
+            else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE) && per_vertex_point_size)
             {
-                shader_addline(buffer, "gl_PointSize = vs_out[%u].%c;\n", output->register_idx, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = clamp(vs_out[%u].%c, ffp_point.size_min, ffp_point.size_max);\n",
+                        output->register_idx, reg_mask[1]);
             }
         }
 
@@ -6711,7 +6721,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         WORD map = vshader->reg_maps.input_registers;
         struct wined3d_string_buffer *tmp_name = string_buffer_get(&priv->string_buffers);
 
-        reorder_shader_id = generate_param_reorder_function(priv, vshader, pshader, gl_info);
+        reorder_shader_id = generate_param_reorder_function(priv, vshader, pshader,
+                state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
         GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
         checkGLcall("glAttachShader");
