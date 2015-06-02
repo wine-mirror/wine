@@ -640,7 +640,8 @@ struct wined3d_shader_reg_maps
     WORD usesifc        : 1;
     WORD usescall       : 1;
     WORD usespow        : 1;
-    WORD padding        : 3;
+    WORD point_size     : 1;
+    WORD padding        : 2;
 
     DWORD rt_mask; /* Used render targets, 32 max. */
 
@@ -841,10 +842,14 @@ enum fog_src_type {
     VS_FOG_COORD    = 1
 };
 
-struct vs_compile_args {
-    BYTE                        fog_src;
-    BYTE                        clip_enabled;
-    WORD                        swizzle_map;   /* MAX_ATTRIBS, 16 */
+struct vs_compile_args
+{
+    BYTE fog_src;
+    BYTE clip_enabled : 1;
+    BYTE point_size : 1;
+    BYTE per_vertex_point_size : 1;
+    BYTE padding : 5;
+    WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
 };
 
 struct wined3d_context;
@@ -871,6 +876,7 @@ struct wined3d_shader_backend_ops
     void (*shader_free_private)(struct wined3d_device *device);
     BOOL (*shader_allocate_context_data)(struct wined3d_context *context);
     void (*shader_free_context_data)(struct wined3d_context *context);
+    void (*shader_init_context_state)(struct wined3d_context *context);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
     BOOL (*shader_has_ffp_proj_control)(void *shader_priv);
@@ -2836,17 +2842,9 @@ void state_clipping(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void clipplane(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_psizemin_w(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_psizemin_ext(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_psizemin_arb(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_pointsprite_w(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_pointsprite(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
-void state_pscale(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,

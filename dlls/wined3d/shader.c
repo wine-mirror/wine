@@ -550,6 +550,8 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
         case WINED3DSPR_RASTOUT:
             if (reg->idx[0].offset == 1)
                 reg_maps->fog = 1;
+            if (reg->idx[0].offset == 2)
+                reg_maps->point_size = 1;
             break;
 
         case WINED3DSPR_MISCTYPE:
@@ -764,6 +766,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     shader_signature_from_semantic(&output_signature_elements[reg_idx], semantic);
                     if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
+                    if (semantic->usage == WINED3D_DECL_USAGE_PSIZE)
+                        reg_maps->point_size = 1;
                     break;
 
                 case WINED3DSPR_SAMPLER:
@@ -1904,6 +1908,7 @@ static void shader_none_load_constants(void *shader_priv, struct wined3d_context
         const struct wined3d_state *state) {}
 static void shader_none_destroy(struct wined3d_shader *shader) {}
 static void shader_none_free_context_data(struct wined3d_context *context) {}
+static void shader_none_init_context_state(struct wined3d_context *context) {}
 
 /* Context activation is done by the caller. */
 static void shader_none_select(void *shader_priv, struct wined3d_context *context,
@@ -2022,6 +2027,7 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_free,
     shader_none_allocate_context_data,
     shader_none_free_context_data,
+    shader_none_init_context_state,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
     shader_none_has_ffp_proj_control,
@@ -2210,6 +2216,8 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+    args->point_size = state->gl_primitive_type == GL_POINTS;
+    args->per_vertex_point_size = shader->reg_maps.point_size;
     args->swizzle_map = swizzle_map;
 }
 

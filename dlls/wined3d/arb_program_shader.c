@@ -5059,6 +5059,8 @@ static void shader_arb_free_context_data(struct wined3d_context *context)
         priv->last_context = NULL;
 }
 
+static void shader_arb_init_context_state(struct wined3d_context *context) {}
+
 static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
@@ -5738,6 +5740,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_free,
     shader_arb_allocate_context_data,
     shader_arb_free_context_data,
+    shader_arb_init_context_state,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
     shader_arb_has_ffp_proj_control,

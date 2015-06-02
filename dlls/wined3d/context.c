@@ -1762,6 +1762,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
+    device->shader_backend->shader_init_context_state(ret);
     ret->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
             | (1 << WINED3D_SHADER_TYPE_VERTEX)
             | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
