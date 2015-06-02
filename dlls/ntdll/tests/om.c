@@ -783,11 +783,11 @@ static void test_query_object(void)
     memset( buffer, 0, sizeof(buffer) );
     status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
     ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
-    todo_wine ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
     str = (UNICODE_STRING *)buffer;
     expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
-    todo_wine ok( len >= expected_len, "unexpected len %u\n", len );
-    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
+    ok( len >= expected_len, "unexpected len %u\n", len );
+    ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
 
     pNtClose( handle );
