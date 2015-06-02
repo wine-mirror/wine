@@ -54,6 +54,7 @@ static NTSTATUS (WINAPI *pNtCreateKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJE
 static NTSTATUS (WINAPI *pNtOpenKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES * );
 static NTSTATUS (WINAPI *pNtWaitForKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtReleaseKeyedEvent)( HANDLE, const void *, BOOLEAN, const LARGE_INTEGER * );
+static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -674,12 +675,16 @@ static void test_query_object(void)
                                  '\\','t','e','s','t','_','e','v','e','n','t'};
     static const WCHAR type_event[] = {'E','v','e','n','t'};
     static const WCHAR type_file[] = {'F','i','l','e'};
+    static const WCHAR type_iocompletion[] = {'I','o','C','o','m','p','l','e','t','i','o','n'};
+    static const WCHAR type_directory[] = {'D','i','r','e','c','t','o','r','y'};
+    static const WCHAR type_section[] = {'S','e','c','t','i','o','n'};
     HANDLE handle;
     char buffer[1024];
     NTSTATUS status;
     ULONG len, expected_len;
     UNICODE_STRING *str;
-    char dir[MAX_PATH];
+    char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
+    LARGE_INTEGER size;
 
     handle = CreateEventA( NULL, FALSE, FALSE, "test_event" );
 
@@ -785,6 +790,66 @@ static void test_query_object(void)
     todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
 
+    pNtClose( handle );
+
+    GetTempPathA(MAX_PATH, tmp_path);
+    GetTempFileNameA(tmp_path, "foo", 0, file1);
+    handle = CreateFileA(file1, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    todo_wine ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
+    todo_wine ok( len >= expected_len, "unexpected len %u\n", len );
+    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_file, sizeof(type_file) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    DeleteFileA( file1 );
+    pNtClose( handle );
+
+    status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( status == STATUS_SUCCESS, "NtCreateIoCompletion failed %x\n", status);
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
+    ok( len >= expected_len, "unexpected len %u\n", len );
+    todo_wine ok( str->Buffer && !memcmp( str->Buffer, type_iocompletion, sizeof(type_iocompletion) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    pNtClose( handle );
+
+    status = pNtCreateDirectoryObject( &handle, DIRECTORY_QUERY, NULL );
+    ok(status == STATUS_SUCCESS, "Failed to create Directory %08x\n", status);
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
+    ok( len >= expected_len, "unexpected len %u\n", len );
+    ok( str->Buffer && !memcmp( str->Buffer, type_directory, sizeof(type_directory) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    pNtClose( handle );
+
+    size.u.LowPart = 256;
+    size.u.HighPart = 0;
+    status = pNtCreateSection( &handle, SECTION_MAP_WRITE, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_SUCCESS , "NtCreateSection returned %x\n", status );
+    len = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok( len > sizeof(OBJECT_TYPE_INFORMATION), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR);
+    ok( len >= expected_len, "unexpected len %u\n", len );
+    ok( str->Buffer && !memcmp( str->Buffer, type_section, sizeof(type_section) ),
+                  "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
     pNtClose( handle );
 }
 
@@ -1164,6 +1229,7 @@ START_TEST(om)
     pNtOpenKeyedEvent       =  (void *)GetProcAddress(hntdll, "NtOpenKeyedEvent");
     pNtWaitForKeyedEvent    =  (void *)GetProcAddress(hntdll, "NtWaitForKeyedEvent");
     pNtReleaseKeyedEvent    =  (void *)GetProcAddress(hntdll, "NtReleaseKeyedEvent");
+    pNtCreateIoCompletion   =  (void *)GetProcAddress(hntdll, "NtCreateIoCompletion");
 
     test_case_sensitive();
     test_namespace_pipe();
