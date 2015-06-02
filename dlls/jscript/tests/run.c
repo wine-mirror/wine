@@ -110,6 +110,7 @@ DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 DEFINE_EXPECT(invoke_func);
 DEFINE_EXPECT(DeleteMemberByDispID);
 DEFINE_EXPECT(DeleteMemberByDispID_false);
+DEFINE_EXPECT(BindHandler);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -140,6 +141,7 @@ DEFINE_EXPECT(DeleteMemberByDispID_false);
 #define DISPID_GLOBAL_DISPEXFUNC    0x101a
 #define DISPID_GLOBAL_TESTPROPPUTREF 0x101b
 #define DISPID_GLOBAL_GETSCRIPTSTATE 0x101c
+#define DISPID_GLOBAL_BINDEVENTHANDLER 0x101d
 
 #define DISPID_GLOBAL_TESTPROPDELETE    0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE  0x2001
@@ -268,6 +270,13 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 }
 
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *res, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -583,6 +592,75 @@ static IDispatchExVtbl pureDispVtbl = {
 
 static IDispatchEx pureDisp = { &pureDispVtbl };
 
+static HRESULT WINAPI BindEventHandler_QueryInterface(IBindEventHandler *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI BindEventHandler_AddRef(IBindEventHandler *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI BindEventHandler_Release(IBindEventHandler *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI BindEventHandler_BindHandler(IBindEventHandler *iface, const WCHAR *event, IDispatch *disp)
+{
+    CHECK_EXPECT(BindHandler);
+    ok(!strcmp_wa(event, "eventName"), "event = %s\n", wine_dbgstr_w(event));
+    ok(disp != NULL, "disp = NULL\n");
+    return S_OK;
+}
+
+static const IBindEventHandlerVtbl BindEventHandlerVtbl = {
+    BindEventHandler_QueryInterface,
+    BindEventHandler_AddRef,
+    BindEventHandler_Release,
+    BindEventHandler_BindHandler
+};
+
+static IBindEventHandler BindEventHandler = { &BindEventHandlerVtbl };
+
+static HRESULT WINAPI bindEventHandlerDisp_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDispatch) || IsEqualGUID(riid, &IID_IDispatchEx)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IBindEventHandler)) {
+        *ppv = &BindEventHandler;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static IDispatchExVtbl bindEventHandlerDispVtbl = {
+    bindEventHandlerDisp_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx bindEventHandlerDisp = { &bindEventHandlerDispVtbl };
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
@@ -760,6 +838,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
 
     if(!strcmp_wa(bstrName, "getScriptState")) {
         *pid = DISPID_GLOBAL_GETSCRIPTSTATE;
+        return S_OK;
+    }
+
+    if(!strcmp_wa(bstrName, "bindEventHandler")) {
+        *pid = DISPID_GLOBAL_BINDEVENTHANDLER;
         return S_OK;
     }
 
@@ -1126,6 +1209,11 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_I4(pvarRes) = state;
         return S_OK;
     }
+
+    case DISPID_GLOBAL_BINDEVENTHANDLER:
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&bindEventHandlerDisp;
+        return S_OK;
 
     case DISPID_GLOBAL_PROPARGPUT:
         CHECK_EXPECT(global_propargput_i);
@@ -1974,6 +2062,49 @@ static void test_start(void)
     script_engine = NULL;
 }
 
+static void test_automagic(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR str;
+    HRESULT hres;
+
+    script_engine = engine = create_script();
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, testW, SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    str = a2bstr("function bindEventHandler::eventName() {}\n"
+                 "reportSuccess();");
+    hres = IActiveScriptParse_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(str);
+
+    SET_EXPECT(BindHandler);
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    CHECK_CALLED(BindHandler);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
+    IActiveScript_Release(engine);
+    IActiveScriptParse_Release(parser);
+    script_engine = NULL;
+}
+
 static HRESULT parse_script_expr(const char *expr, VARIANT *res, IActiveScript **engine_ret)
 {
     IActiveScriptParse *parser;
@@ -2502,6 +2633,7 @@ static BOOL run_tests(void)
     test_isvisible(FALSE);
     test_isvisible(TRUE);
     test_start();
+    test_automagic();
 
     parse_script_af(0, "test.testThis2(this);");
     parse_script_af(0, "(function () { test.testThis2(this); })();");
