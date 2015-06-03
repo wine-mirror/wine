@@ -344,7 +344,7 @@ static BOOL CDECL nulldrv_CountClipboardFormats(void)
     return 0;
 }
 
-static void CDECL nulldrv_EmptyClipboard( BOOL keepunowned )
+static void CDECL nulldrv_EmptyClipboard(void)
 {
 }
 
@@ -684,9 +684,9 @@ static BOOL CDECL loaderdrv_CountClipboardFormats(void)
     return load_driver()->pCountClipboardFormats();
 }
 
-static void CDECL loaderdrv_EmptyClipboard( BOOL keepunowned )
+static void CDECL loaderdrv_EmptyClipboard(void)
 {
-    load_driver()->pEmptyClipboard( keepunowned );
+    load_driver()->pEmptyClipboard();
 }
 
 static void CDECL loaderdrv_EndClipboardUpdate(void)

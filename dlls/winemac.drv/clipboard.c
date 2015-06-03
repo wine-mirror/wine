@@ -1952,9 +1952,9 @@ INT CDECL macdrv_CountClipboardFormats(void)
  *
  * Empty cached clipboard data.
  */
-void CDECL macdrv_EmptyClipboard(BOOL keepunowned)
+void CDECL macdrv_EmptyClipboard(void)
 {
-    TRACE("keepunowned %d\n", keepunowned);
+    TRACE("()\n");
     macdrv_clear_pasteboard();
 }
 

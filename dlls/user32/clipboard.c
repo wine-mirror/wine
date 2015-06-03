@@ -299,8 +299,7 @@ BOOL WINAPI EmptyClipboard(void)
      * to clear its cache. */
     USER_Driver->pAcquireClipboard(cbinfo.hWndOpen);
 
-    /* Empty the local cache */
-    USER_Driver->pEmptyClipboard(FALSE);
+    USER_Driver->pEmptyClipboard();
 
     bCBHasChanged = TRUE;
 
