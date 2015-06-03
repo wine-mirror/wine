@@ -824,6 +824,9 @@ static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems,
 {
     HTMLElementCollection *ret = heap_alloc_zero(sizeof(HTMLElementCollection));
 
+    if (!ret)
+        return NULL;
+
     ret->IHTMLElementCollection_iface.lpVtbl = &HTMLElementCollectionVtbl;
     ret->ref = 1;
     ret->elems = elems;
