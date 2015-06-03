@@ -863,8 +863,6 @@ void output_def_file( DLLSPEC *spec, int include_private )
         const ORDDEF *odp = &spec->entry_points[i];
         int is_data = 0;
 
-        if (!odp) continue;
-
         if (odp->name) name = odp->name;
         else if (odp->export_name) name = odp->export_name;
         else continue;
