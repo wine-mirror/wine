@@ -121,26 +121,15 @@ static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
 /**************************************************************************
  *	CLIPBOARD_ReleaseOwner
  */
-BOOL CLIPBOARD_ReleaseOwner(void)
+void CLIPBOARD_ReleaseOwner( HWND hwnd )
 {
-    BOOL bRet = FALSE;
-
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_RELOWNER | SET_CB_SEQNO;
-
-        if (wine_server_call_err( req ))
-        {
-            ERR("Failed to set clipboard.\n");
-        }
-        else
-        {
-            bRet = TRUE;
-        }
+        req->owner = wine_server_user_handle( hwnd );
+        wine_server_call( req );
     }
     SERVER_END_REQ;
-
-    return bRet;
 }
 
 

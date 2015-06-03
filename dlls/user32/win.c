@@ -1875,8 +1875,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     WIN_SendDestroyMsg( hwnd );
     if (!IsWindow( hwnd )) return TRUE;
 
-    if (GetClipboardOwner() == hwnd)
-        CLIPBOARD_ReleaseOwner();
+    CLIPBOARD_ReleaseOwner( hwnd );
 
       /* Destroy the window storage */
 

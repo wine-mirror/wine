@@ -222,7 +222,7 @@ extern HMODULE user32_module DECLSPEC_HIDDEN;
 struct dce;
 struct tagWND;
 
-extern BOOL CLIPBOARD_ReleaseOwner(void) DECLSPEC_HIDDEN;
+extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;

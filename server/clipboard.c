@@ -172,11 +172,12 @@ static int set_clipboard_owner( struct clipboard *clipboard, user_handle_t win )
     return 1;
 }
 
-static int release_clipboard_owner( struct clipboard *clipboard )
+static int release_clipboard_owner( struct clipboard *clipboard, user_handle_t win )
 {
-    if (clipboard->open_thread && clipboard->open_thread->process != current->process)
+    if ((clipboard->open_thread && clipboard->open_thread->process != current->process) ||
+        (win && clipboard->owner_win != get_user_full_handle( win )))
     {
-        set_error(STATUS_WAS_LOCKED);
+        set_win32_error( ERROR_CLIPBOARD_NOT_OPEN );
         return 0;
     }
     clipboard->owner_win = 0;
@@ -221,7 +222,7 @@ DECL_HANDLER(set_clipboard_info)
     }
     else if (req->flags & SET_CB_RELOWNER)
     {
-        if (!release_clipboard_owner( clipboard )) return;
+        if (!release_clipboard_owner( clipboard, req->owner )) return;
     }
 
     if (req->flags & SET_CB_VIEWER) clipboard->viewer = get_user_full_handle( req->viewer );
