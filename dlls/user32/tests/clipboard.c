@@ -24,17 +24,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-static BOOL is_win9x = FALSE;
-
-#define test_last_error(expected_error) \
-    do \
-    { \
-        if (!is_win9x) \
-            ok(GetLastError() == expected_error, \
-               "Last error should be set to %d, not %d\n", \
-                expected_error, GetLastError()); \
-    } while (0)
-
 static void test_ClipboardOwner(void)
 {
     HWND hWnd1, hWnd2;
@@ -118,7 +107,7 @@ static void test_RegisterClipboardFormatA(void)
     SetLastError(0xdeadbeef);
     len = GetAtomNameA((ATOM)format_id, buf, 256);
     ok(len == 0, "GetAtomNameA should fail\n");
-    test_last_error(ERROR_INVALID_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
 
 todo_wine
 {
@@ -126,13 +115,13 @@ todo_wine
     SetLastError(0xdeadbeef);
     len = GlobalGetAtomNameA((ATOM)format_id, buf, 256);
     ok(len == 0, "GlobalGetAtomNameA should fail\n");
-    test_last_error(ERROR_INVALID_HANDLE);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
 }
 
     SetLastError(0xdeadbeef);
     atom_id = FindAtomA("my_cool_clipboard_format");
     ok(atom_id == 0, "FindAtomA should fail\n");
-    test_last_error(ERROR_FILE_NOT_FOUND);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %d\n", GetLastError());
 
     if (0)
     {
@@ -140,7 +129,7 @@ todo_wine
     SetLastError(0xdeadbeef);
     atom_id = GlobalFindAtomA("my_cool_clipboard_format");
     ok(atom_id == 0, "GlobalFindAtomA should fail\n");
-    test_last_error(ERROR_FILE_NOT_FOUND);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %d\n", GetLastError());
     }
 
     for (format_id = 0; format_id < 0xffff; format_id++)
@@ -356,10 +345,6 @@ static void test_messages(void)
 
 START_TEST(clipboard)
 {
-    SetLastError(0xdeadbeef);
-    FindAtomW(NULL);
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) is_win9x = TRUE;
-
     test_RegisterClipboardFormatA();
     test_ClipboardOwner();
     test_synthesized();
