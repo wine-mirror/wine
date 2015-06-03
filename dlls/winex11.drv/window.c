@@ -573,7 +573,6 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
 
 failed:
     if (color_pixmap) XFreePixmap( gdi_display, color_pixmap );
-    if (mask_pixmap) XFreePixmap( gdi_display, mask_pixmap );
     HeapFree( GetProcessHeap(), 0, bits.ptr );
     return FALSE;
 }
