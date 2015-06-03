@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "request.h"
 #include "object.h"
+#include "file.h"
 #include "process.h"
 #include "user.h"
 #include "winuser.h"
@@ -44,7 +45,7 @@ struct clipboard
     user_handle_t  owner_win;        /* window that owns the clipboard data */
     user_handle_t  viewer;           /* first window in clipboard viewer list */
     unsigned int   seqno;            /* clipboard change sequence number */
-    time_t         seqno_timestamp;  /* time stamp of last seqno increment */
+    timeout_t      seqno_timestamp;  /* time stamp of last seqno increment */
 };
 
 static void clipboard_dump( struct object *obj, int verbose );
@@ -70,7 +71,7 @@ static const struct object_ops clipboard_ops =
 };
 
 
-#define MINUPDATELAPSE 2
+#define MINUPDATELAPSE (2 * TICKS_PER_SEC)
 
 /* dump a clipboard object */
 static void clipboard_dump( struct object *obj, int verbose )
@@ -178,11 +179,9 @@ static int set_clipboard_owner( struct clipboard *clipboard, user_handle_t win, 
 
 static int get_seqno( struct clipboard *clipboard )
 {
-    time_t tm = time(NULL);
-
-    if (!clipboard->owner_thread && (tm > (clipboard->seqno_timestamp + MINUPDATELAPSE)))
+    if (!clipboard->owner_thread && (current_time - clipboard->seqno_timestamp > MINUPDATELAPSE))
     {
-        clipboard->seqno_timestamp = tm;
+        clipboard->seqno_timestamp = current_time;
         clipboard->seqno++;
     }
     return clipboard->seqno;
