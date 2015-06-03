@@ -2255,7 +2255,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         sinEsc = 0;
     }
 
-    if (lprect)
+    if (lprect && (flags & (ETO_OPAQUE | ETO_CLIPPED)))
     {
         rc = *lprect;
         LPtoDP(hdc, (POINT*)&rc, 2);
