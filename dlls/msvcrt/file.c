@@ -2468,9 +2468,8 @@ static inline int get_utf8_char_len(char ch)
 /*********************************************************************
  * (internal) read_utf8
  */
-static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
+static int read_utf8(ioinfo *fdinfo, MSVCRT_wchar_t *buf, unsigned int count)
 {
-    ioinfo *fdinfo = get_ioinfo_nolock(fd);
     HANDLE hand = fdinfo->handle;
     char min_buf[4], *readbuf, lookahead;
     DWORD readbuf_size, pos=0, num_read=1, char_len, i, j;
@@ -2645,12 +2644,10 @@ static int read_utf8(int fd, MSVCRT_wchar_t *buf, unsigned int count)
  * the file pointer on the \r character while getc() goes on to
  * the following \n
  */
-static int read_i(int fd, void *buf, unsigned int count)
+static int read_i(int fd, ioinfo *fdinfo, void *buf, unsigned int count)
 {
     DWORD num_read, utf16;
     char *bufstart = buf;
-    HANDLE hand = msvcrt_fdtoh(fd);
-    ioinfo *fdinfo = get_ioinfo_nolock(fd);
 
     if (count == 0)
         return 0;
@@ -2661,8 +2658,8 @@ static int read_i(int fd, void *buf, unsigned int count)
     }
     /* Don't trace small reads, it gets *very* annoying */
     if (count > 4)
-        TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
-    if (hand == INVALID_HANDLE_VALUE)
+        TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n", fd, fdinfo->handle, buf, count);
+    if (fdinfo->handle == INVALID_HANDLE_VALUE)
     {
         *MSVCRT__errno() = MSVCRT_EBADF;
         return -1;
@@ -2676,9 +2673,9 @@ static int read_i(int fd, void *buf, unsigned int count)
     }
 
     if((fdinfo->wxflag&WX_TEXT) && (fdinfo->exflag&EF_UTF8))
-        return read_utf8(fd, buf, count);
+        return read_utf8(fdinfo, buf, count);
 
-    if (fdinfo->lookahead[0]!='\n' || ReadFile(hand, bufstart, count, &num_read, NULL))
+    if (fdinfo->lookahead[0]!='\n' || ReadFile(fdinfo->handle, bufstart, count, &num_read, NULL))
     {
         if (fdinfo->lookahead[0] != '\n')
         {
@@ -2691,7 +2688,7 @@ static int read_i(int fd, void *buf, unsigned int count)
                 fdinfo->lookahead[1] = '\n';
             }
 
-            if(count>1+utf16 && ReadFile(hand, bufstart+1+utf16, count-1-utf16, &num_read, NULL))
+            if(count>1+utf16 && ReadFile(fdinfo->handle, bufstart+1+utf16, count-1-utf16, &num_read, NULL))
                 num_read += 1+utf16;
             else
                 num_read = 1+utf16;
@@ -2736,7 +2733,7 @@ static int read_i(int fd, void *buf, unsigned int count)
                     DWORD len;
 
                     lookahead[1] = '\n';
-                    if (ReadFile(hand, lookahead, 1+utf16, &len, NULL) && len)
+                    if (ReadFile(fdinfo->handle, lookahead, 1+utf16, &len, NULL) && len)
                     {
                         if(lookahead[0]=='\n' && (!utf16 || lookahead[1]==0) && j==0)
                         {
@@ -2809,9 +2806,10 @@ static int read_i(int fd, void *buf, unsigned int count)
  */
 int CDECL MSVCRT__read(int fd, void *buf, unsigned int count)
 {
-  int num_read;
-  num_read = read_i(fd, buf, count);
-  return num_read;
+    ioinfo *info = get_ioinfo(fd);
+    int num_read = read_i(fd, info, buf, count);
+    release_ioinfo(info);
+    return num_read;
 }
 
 /*********************************************************************
@@ -3558,14 +3556,14 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
 
     if(!(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
         int r;
-        if ((r = read_i(file->_file,&c,1)) != 1) {
+        if ((r = MSVCRT__read(file->_file,&c,1)) != 1) {
             file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
             return MSVCRT_EOF;
         }
 
         return c;
     } else {
-        file->_cnt = read_i(file->_file, file->_base, file->_bufsiz);
+        file->_cnt = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
         if(file->_cnt<=0) {
             file->_flag |= (file->_cnt == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
             file->_cnt = 0;
