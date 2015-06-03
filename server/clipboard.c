@@ -138,7 +138,7 @@ void cleanup_clipboard_thread(struct thread *thread)
 static int open_clipboard( struct clipboard *clipboard, user_handle_t win )
 {
     win = get_user_full_handle( win );
-    if (clipboard->open_thread && (clipboard->open_thread != current || clipboard->open_win != win))
+    if (clipboard->open_thread && clipboard->open_win != win)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;

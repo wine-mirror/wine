@@ -24,9 +24,18 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+static DWORD WINAPI open_clipboard_thread(LPVOID arg)
+{
+    HWND hWnd = arg;
+    ok(OpenClipboard(hWnd), "OpenClipboard failed\n");
+    return 0;
+}
+
 static void test_ClipboardOwner(void)
 {
+    HANDLE thread;
     HWND hWnd1, hWnd2;
+    DWORD dwret;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
@@ -56,7 +65,13 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
-    ok(OpenClipboard(hWnd1), "OpenClipboard second time in the same hwnd failed\n");
+    thread = CreateThread(NULL, 0, open_clipboard_thread, hWnd1, 0, NULL);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+    dwret = WaitForSingleObject(thread, 1000);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+    CloseHandle(thread);
+    ok(!CloseClipboard(), "CloseClipboard should fail if clipboard wasn't open\n");
+    ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
