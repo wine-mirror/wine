@@ -2616,6 +2616,7 @@ static void test_SetText(void)
   str = SysAllocString(textW);
   hr = ITextRange_SetText(range, str);
   ok(hr == S_OK, "got 0x%08x\n", hr);
+  SysFreeString(str);
 
   value = 1;
   hr = ITextRange_GetStart(range, &value);
