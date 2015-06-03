@@ -398,6 +398,7 @@ static void test_ShellFolderViewDual(void)
         &IID_IShellDispatch6,
         &IID_IShellDispatch5,
         &IID_IShellDispatch4,
+        &IID_IShellDispatch2,
         &IID_NULL
     };
     IShellFolderViewDual *viewdual;
