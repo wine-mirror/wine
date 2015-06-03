@@ -332,10 +332,8 @@ static HANDLE msvcrt_fdtoh(int fd)
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
-  ioinfo *fdinfo;
+  ioinfo *fdinfo = get_ioinfo(fd);
 
-  LOCK_FILES();
-  fdinfo = get_ioinfo_nolock(fd);
   if(fdinfo != &MSVCRT___badioinfo)
   {
     fdinfo->handle = INVALID_HANDLE_VALUE;
@@ -358,7 +356,9 @@ static void msvcrt_free_fd(int fd)
         break;
     }
   }
+  release_ioinfo(fdinfo);
 
+  LOCK_FILES();
   if (fd == MSVCRT_fdend - 1)
     MSVCRT_fdend--;
   if (fd < MSVCRT_fdstart)
