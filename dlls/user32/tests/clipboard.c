@@ -51,11 +51,12 @@ static void test_ClipboardOwner(void)
     ok(OpenClipboard(0), "OpenClipboard failed\n");
     ok(!GetClipboardOwner(), "clipboard should still be not owned\n");
     ok(!OpenClipboard(hWnd1), "OpenClipboard should fail since clipboard already opened\n");
+    ok(OpenClipboard(0), "OpenClipboard again failed\n");
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
-    todo_wine ok(OpenClipboard(hWnd1), "OpenClipboard second time in the same hwnd failed\n");
+    ok(OpenClipboard(hWnd1), "OpenClipboard second time in the same hwnd failed\n");
 
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
