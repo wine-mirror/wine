@@ -260,8 +260,15 @@ static inline ioinfo* get_ioinfo_nolock(int fd)
 static inline ioinfo* get_ioinfo(int fd)
 {
     ioinfo *ret = get_ioinfo_nolock(fd);
-    if(ret->exflag & EF_CRIT_INIT)
-        EnterCriticalSection(&ret->crit);
+    if(!(ret->exflag & EF_CRIT_INIT)) {
+        LOCK_FILES();
+        if(!(ret->exflag & EF_CRIT_INIT)) {
+            InitializeCriticalSection(&ret->crit);
+            ret->exflag |= EF_CRIT_INIT;
+        }
+        UNLOCK_FILES();
+    }
+    EnterCriticalSection(&ret->crit);
     return ret;
 }
 
@@ -1016,20 +1023,33 @@ int CDECL MSVCRT__close(int fd)
  */
 int CDECL MSVCRT__dup2(int od, int nd)
 {
+  ioinfo *info_od, *info_nd;
   int ret;
 
   TRACE("(od=%d, nd=%d)\n", od, nd);
   LOCK_FILES();
-  if (nd < MSVCRT_MAX_FILES && nd >= 0 && msvcrt_is_valid_fd(od))
+
+  if (od < nd)
+  {
+    info_od = get_ioinfo(od);
+    info_nd = get_ioinfo(nd);
+  }
+  else
+  {
+    info_nd = get_ioinfo(nd);
+    info_od = get_ioinfo(od);
+  }
+
+  if (nd < MSVCRT_MAX_FILES && nd >= 0 && (info_od->wxflag & WX_OPEN))
   {
     HANDLE handle;
 
-    if (DuplicateHandle(GetCurrentProcess(), get_ioinfo_nolock(od)->handle,
+    if (DuplicateHandle(GetCurrentProcess(), info_od->handle,
      GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS))
     {
-      int wxflag = get_ioinfo_nolock(od)->wxflag & ~MSVCRT__O_NOINHERIT;
+      int wxflag = info_od->wxflag & ~MSVCRT__O_NOINHERIT;
 
-      if (msvcrt_is_valid_fd(nd))
+      if (info_nd->wxflag & WX_OPEN)
         MSVCRT__close(nd);
       ret = msvcrt_set_fd(handle, wxflag, nd);
       if (ret == -1)
@@ -1054,6 +1074,9 @@ int CDECL MSVCRT__dup2(int od, int nd)
     *MSVCRT__errno() = MSVCRT_EBADF;
     ret = -1;
   }
+
+  release_ioinfo(info_od);
+  release_ioinfo(info_nd);
   UNLOCK_FILES();
   return ret;
 }
