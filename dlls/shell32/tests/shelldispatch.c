@@ -822,6 +822,7 @@ if (0) { /* crashes on winxp/win2k3 */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(verb == NULL, "got %p\n", verb);
 
+    FolderItemVerbs_Release(verbs);
     FolderItem_Release(item);
     IShellDispatch_Release(sd);
 }
