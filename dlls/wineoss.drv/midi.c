@@ -642,7 +642,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
     TRACE("Thread startup\n");
 
     pfd.fd = midiSeqFD;
-    pfd.fd = POLLIN;
+    pfd.events = POLLIN;
     
     while(!end_thread) {
 	TRACE("Thread loop\n");
