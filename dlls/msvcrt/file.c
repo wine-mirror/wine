@@ -498,7 +498,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   for (fd = 0; fd < MSVCRT_fdend; fd++)
   {
     /* to be inherited, we need it to be open, and that DONTINHERIT isn't set */
-    fdinfo = get_ioinfo_nolock(fd);
+    fdinfo = get_ioinfo(fd);
     if ((fdinfo->wxflag & (WX_OPEN | WX_DONTINHERIT)) == WX_OPEN)
     {
       *wxflag_ptr = fdinfo->wxflag;
@@ -509,6 +509,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
       *wxflag_ptr = 0;
       *handle_ptr = INVALID_HANDLE_VALUE;
     }
+    release_ioinfo(fdinfo);
     wxflag_ptr++; handle_ptr++;
   } 
   return TRUE;
