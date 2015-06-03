@@ -2247,7 +2247,7 @@ unsigned char * __RPC_USER SNB_UserUnmarshal(ULONG *pFlags, unsigned char *pBuff
         WCHAR **ptrW;
         ULONG i;
 
-        ptrW = *pSnb = umcb->pStubMsg->pfnAllocate((wire->strcnt+1)*sizeof(WCHAR*) + wire->datalen);
+        ptrW = *pSnb = umcb->pStubMsg->pfnAllocate((wire->strcnt+1)*sizeof(WCHAR*) + wire->datalen*sizeof(WCHAR));
         dest = (WCHAR*)(*pSnb + wire->strcnt + 1);
 
         for (i = 0; i < wire->strcnt; i++)
