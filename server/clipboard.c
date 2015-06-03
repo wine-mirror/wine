@@ -137,6 +137,7 @@ void cleanup_clipboard_thread(struct thread *thread)
 
 static int open_clipboard( struct clipboard *clipboard, user_handle_t win )
 {
+    win = get_user_full_handle( win );
     if (clipboard->open_thread && clipboard->open_thread != current)
     {
         set_error(STATUS_WAS_LOCKED);
@@ -166,7 +167,7 @@ static int set_clipboard_owner( struct clipboard *clipboard, user_handle_t win )
         set_error(STATUS_WAS_LOCKED);
         return 0;
     }
-    clipboard->owner_win = win;
+    clipboard->owner_win = get_user_full_handle( win );
     clipboard->owner_thread = current;
     return 1;
 }
@@ -223,7 +224,7 @@ DECL_HANDLER(set_clipboard_info)
         if (!release_clipboard_owner( clipboard )) return;
     }
 
-    if (req->flags & SET_CB_VIEWER) clipboard->viewer = req->viewer;
+    if (req->flags & SET_CB_VIEWER) clipboard->viewer = get_user_full_handle( req->viewer );
 
     if (req->flags & SET_CB_SEQNO) clipboard->seqno++;
 
