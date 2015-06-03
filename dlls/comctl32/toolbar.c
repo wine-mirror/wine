@@ -3347,8 +3347,7 @@ TOOLBAR_GetButtonInfoT(const TOOLBAR_INFO *infoPtr, INT Id, LPTBBUTTONINFOW lpTb
     if (nIndex == -1)
 	return -1;
 
-    if (!(btnPtr = &infoPtr->buttons[nIndex])) return -1;
-
+    btnPtr = &infoPtr->buttons[nIndex];
     if (lpTbInfo->dwMask & TBIF_COMMAND)
 	lpTbInfo->idCommand = btnPtr->idCommand;
     if (lpTbInfo->dwMask & TBIF_IMAGE)
