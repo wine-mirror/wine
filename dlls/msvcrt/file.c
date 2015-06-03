@@ -304,11 +304,6 @@ static inline MSVCRT_FILE* msvcrt_get_file(int i)
     return &ret->file;
 }
 
-static inline BOOL msvcrt_is_valid_fd(int fd)
-{
-    return fd >= 0 && fd < MSVCRT_fdend && (get_ioinfo_nolock(fd)->wxflag & WX_OPEN);
-}
-
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
@@ -454,7 +449,7 @@ static MSVCRT_FILE* msvcrt_alloc_fp(void)
 static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
 {
   TRACE(":fd (%d) allocating FILE*\n",fd);
-  if (!msvcrt_is_valid_fd(fd))
+  if (!(get_ioinfo_nolock(fd)->wxflag & WX_OPEN))
   {
     WARN(":invalid fd %d\n",fd);
     *MSVCRT___doserrno() = 0;
