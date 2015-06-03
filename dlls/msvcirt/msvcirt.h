@@ -20,6 +20,9 @@
 #include "windef.h"
 #include "cxx.h"
 
+typedef LONG streamoff;
+typedef LONG streampos;
+
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 void init_exception(void*);
