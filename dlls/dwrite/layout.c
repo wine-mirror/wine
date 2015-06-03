@@ -1863,8 +1863,11 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayou
 
     TRACE("(%p)->(%u %p %p)\n", This, position, collection, r);
 
+    if (position >= This->len)
+        return S_OK;
+
     range = get_layout_range_by_pos(This, position);
-    *collection = range ? range->collection : NULL;
+    *collection = range->collection;
     if (*collection)
         IDWriteFontCollection_AddRef(*collection);
 
