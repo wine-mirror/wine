@@ -295,10 +295,6 @@ BOOL WINAPI EmptyClipboard(void)
      * WM_DESTROYCLIPBOARD itself. */
     CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
 
-    /* Acquire the selection. This will notify the previous owner
-     * to clear its cache. */
-    USER_Driver->pAcquireClipboard(cbinfo.hWndOpen);
-
     USER_Driver->pEmptyClipboard();
 
     bCBHasChanged = TRUE;

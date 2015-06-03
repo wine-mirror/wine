@@ -80,7 +80,6 @@ typedef struct tagUSER_DRIVER {
     BOOL   (CDECL *pSetCursorPos)(INT,INT);
     BOOL   (CDECL *pClipCursor)(LPCRECT);
     /* clipboard functions */
-    INT    (CDECL *pAcquireClipboard)(HWND);                     /* Acquire selection */
     BOOL   (CDECL *pCountClipboardFormats)(void);                /* Count available clipboard formats */
     void   (CDECL *pEmptyClipboard)(void);                       /* Empty clipboard data */
     void   (CDECL *pEndClipboardUpdate)(void);                   /* End clipboard update */

@@ -600,7 +600,7 @@ extern XContext win_data_context DECLSPEC_HIDDEN;
 extern XContext cursor_context DECLSPEC_HIDDEN;
 
 extern void X11DRV_InitClipboard(void) DECLSPEC_HIDDEN;
-extern int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow) DECLSPEC_HIDDEN;
+extern void X11DRV_AcquireClipboard(HWND hWndClipWindow) DECLSPEC_HIDDEN;
 extern void X11DRV_ResetSelectionOwner(void) DECLSPEC_HIDDEN;
 extern void CDECL X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;

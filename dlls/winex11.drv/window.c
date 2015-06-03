@@ -2593,7 +2593,8 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     switch(msg)
     {
     case WM_X11DRV_ACQUIRE_SELECTION:
-        return X11DRV_AcquireClipboard( hwnd );
+        X11DRV_AcquireClipboard( hwnd );
+        return 0;
     case WM_X11DRV_SET_WIN_REGION:
         if ((data = get_win_data( hwnd )))
         {

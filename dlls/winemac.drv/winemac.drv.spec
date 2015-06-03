@@ -4,7 +4,6 @@
 
 # USER driver
 
-@ cdecl AcquireClipboard(long) macdrv_AcquireClipboard
 @ cdecl ActivateKeyboardLayout(long long) macdrv_ActivateKeyboardLayout
 @ cdecl Beep() macdrv_Beep
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) macdrv_ChangeDisplaySettingsEx

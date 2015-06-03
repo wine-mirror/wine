@@ -2924,9 +2924,9 @@ static DWORD WINAPI selection_thread_proc(LPVOID p)
 }
 
 /**************************************************************************
- *		AcquireClipboard (X11DRV.@)
+ *		X11DRV_AcquireClipboard
  */
-int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
+void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 {
     DWORD procid;
     HANDLE selectionThread;
@@ -2953,7 +2953,8 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
                 GetCurrentThreadId(),
                 GetWindowThreadProcessId(hWndClipWindow, NULL), hWndClipWindow);
 
-            return SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0);
+            SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0);
+            return;
         }
     }
 
@@ -2966,19 +2967,13 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
         HANDLE event = CreateEventW(NULL, FALSE, FALSE, NULL);
         selectionThread = CreateThread(NULL, 0, selection_thread_proc, event, 0, NULL);
 
-        if (!selectionThread)
+        if (selectionThread)
         {
-            WARN("Could not start clipboard thread\n");
-            CloseHandle(event);
-            return 0;
+            WaitForSingleObject(event, INFINITE);
+            CloseHandle(selectionThread);
         }
-
-        WaitForSingleObject(event, INFINITE);
         CloseHandle(event);
-        CloseHandle(selectionThread);
     }
-
-    return 1;
 }
 
 
@@ -3005,6 +3000,7 @@ static void empty_clipboard(BOOL keepunowned)
  */
 void CDECL X11DRV_EmptyClipboard(void)
 {
+    X11DRV_AcquireClipboard( GetOpenClipboardWindow() );
     empty_clipboard( FALSE );
 }
 

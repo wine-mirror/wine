@@ -120,7 +120,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetCursorPos);
         GET_USER_FUNC(SetCursorPos);
         GET_USER_FUNC(ClipCursor);
-        GET_USER_FUNC(AcquireClipboard);
         GET_USER_FUNC(EmptyClipboard);
         GET_USER_FUNC(SetClipboardData);
         GET_USER_FUNC(GetClipboardData);
@@ -334,11 +333,6 @@ static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
     return FALSE;
 }
 
-static INT CDECL nulldrv_AcquireClipboard( HWND hwnd )
-{
-    return 0;
-}
-
 static BOOL CDECL nulldrv_CountClipboardFormats(void)
 {
     return 0;
@@ -536,7 +530,6 @@ static USER_DRIVER null_driver =
     nulldrv_SetCursorPos,
     nulldrv_ClipCursor,
     /* clipboard functions */
-    nulldrv_AcquireClipboard,
     nulldrv_CountClipboardFormats,
     nulldrv_EmptyClipboard,
     nulldrv_EndClipboardUpdate,
@@ -674,11 +667,6 @@ static BOOL CDECL loaderdrv_ClipCursor( LPCRECT clip )
     return load_driver()->pClipCursor( clip );
 }
 
-static INT CDECL loaderdrv_AcquireClipboard( HWND hwnd )
-{
-    return load_driver()->pAcquireClipboard( hwnd );
-}
-
 static BOOL CDECL loaderdrv_CountClipboardFormats(void)
 {
     return load_driver()->pCountClipboardFormats();
@@ -791,7 +779,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_SetCursorPos,
     loaderdrv_ClipCursor,
     /* clipboard functions */
-    loaderdrv_AcquireClipboard,
     loaderdrv_CountClipboardFormats,
     loaderdrv_EmptyClipboard,
     loaderdrv_EndClipboardUpdate,
