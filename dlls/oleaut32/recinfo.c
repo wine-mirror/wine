@@ -650,7 +650,12 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
             WARN("GetRefTypeInfo failed: %08x\n", hres);
             return hres;
         }
-        ITypeInfo_GetTypeAttr(pTypeInfo, &typeattr);
+        hres = ITypeInfo_GetTypeAttr(pTypeInfo, &typeattr);
+        if(FAILED(hres)) {
+            ITypeInfo_Release(pTypeInfo);
+            WARN("GetTypeAttr failed for referenced type: %08x\n", hres);
+            return hres;
+        }
     }else  {
         pTypeInfo = pTI;
         ITypeInfo_AddRef(pTypeInfo);
