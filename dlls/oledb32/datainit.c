@@ -498,10 +498,10 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 
         TRACE("initial data source provider %s\n", debugstr_w(V_BSTR(&propset->rgProperties[0].vValue)));
         initprov = IID_NULL;
-        CLSIDFromProgID(V_BSTR(&propset->rgProperties[0].vValue), &initprov);
+        hr = CLSIDFromProgID(V_BSTR(&propset->rgProperties[0].vValue), &initprov);
         free_dbpropset(count, propset);
 
-        if (!IsEqualIID(&provclsid, &initprov)) return DB_E_MISMATCHEDPROVIDER;
+        if (FAILED(hr) || !IsEqualIID(&provclsid, &initprov)) return DB_E_MISMATCHEDPROVIDER;
     }
 
     if (!*datasource)
