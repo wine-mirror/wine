@@ -1850,6 +1850,11 @@ static void test_get_osfhandle(void)
 
     _close(fd);
     _unlink(fname);
+
+    errno = 0xdeadbeef;
+    handle = (HANDLE)_get_osfhandle(fd);
+    ok(handle == INVALID_HANDLE_VALUE, "_get_osfhandle returned %p\n", handle);
+    ok(errno == EBADF, "errno = %d\n", errno);
 }
 
 static void test_setmaxstdio(void)

@@ -309,26 +309,6 @@ static inline BOOL msvcrt_is_valid_fd(int fd)
     return fd >= 0 && fd < MSVCRT_fdend && (get_ioinfo_nolock(fd)->wxflag & WX_OPEN);
 }
 
-/* INTERNAL: Get the HANDLE for a fd
- * This doesn't lock the table, because a failure will result in
- * INVALID_HANDLE_VALUE being returned, which should be handled correctly.  If
- * it returns a valid handle which is about to be closed, a subsequent call
- * will fail, most likely in a sane way.
- */
-static HANDLE msvcrt_fdtoh(int fd)
-{
-  if (!msvcrt_is_valid_fd(fd))
-  {
-    WARN(":fd (%d) - no handle!\n",fd);
-    *MSVCRT___doserrno() = 0;
-    *MSVCRT__errno() = MSVCRT_EBADF;
-    return INVALID_HANDLE_VALUE;
-  }
-  if (get_ioinfo_nolock(fd)->handle == INVALID_HANDLE_VALUE)
-      WARN("returning INVALID_HANDLE_VALUE for %d\n", fd);
-  return get_ioinfo_nolock(fd)->handle;
-}
-
 /* INTERNAL: free a file entry fd */
 static void msvcrt_free_fd(int fd)
 {
@@ -1848,9 +1828,11 @@ int CDECL _futime(int fd, struct MSVCRT___utimbuf32 *t)
  */
 MSVCRT_intptr_t CDECL MSVCRT__get_osfhandle(int fd)
 {
-  HANDLE hand = msvcrt_fdtoh(fd);
+  HANDLE hand = get_ioinfo_nolock(fd)->handle;
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
+  if(hand == INVALID_HANDLE_VALUE)
+      *MSVCRT__errno() = MSVCRT_EBADF;
   return (MSVCRT_intptr_t)hand;
 }
 
