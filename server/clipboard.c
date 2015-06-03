@@ -135,44 +135,51 @@ void cleanup_clipboard_thread(struct thread *thread)
     release_object( winstation );
 }
 
-static int set_clipboard_window( struct clipboard *clipboard, user_handle_t win, int clear )
+static int open_clipboard( struct clipboard *clipboard, user_handle_t win )
 {
     if (clipboard->open_thread && clipboard->open_thread != current)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;
     }
-    else if (!clear)
-    {
-        clipboard->open_win = win;
-        clipboard->open_thread = current;
-    }
-    else
-    {
-        clipboard->open_thread = NULL;
-        clipboard->open_win = 0;
-    }
+    clipboard->open_win = win;
+    clipboard->open_thread = current;
     return 1;
 }
 
+static int close_clipboard( struct clipboard *clipboard )
+{
+    if (clipboard->open_thread != current)
+    {
+        set_win32_error( ERROR_CLIPBOARD_NOT_OPEN );
+        return 0;
+    }
+    clipboard->open_thread = NULL;
+    clipboard->open_win = 0;
+    return 1;
+}
 
-static int set_clipboard_owner( struct clipboard *clipboard, user_handle_t win, int clear )
+static int set_clipboard_owner( struct clipboard *clipboard, user_handle_t win )
 {
     if (clipboard->open_thread && clipboard->open_thread->process != current->process)
     {
         set_error(STATUS_WAS_LOCKED);
         return 0;
     }
-    else if (!clear)
+    clipboard->owner_win = win;
+    clipboard->owner_thread = current;
+    return 1;
+}
+
+static int release_clipboard_owner( struct clipboard *clipboard )
+{
+    if (clipboard->open_thread && clipboard->open_thread->process != current->process)
     {
-        clipboard->owner_win = win;
-        clipboard->owner_thread = current;
+        set_error(STATUS_WAS_LOCKED);
+        return 0;
     }
-    else
-    {
-        clipboard->owner_win = 0;
-        clipboard->owner_thread = NULL;
-    }
+    clipboard->owner_win = 0;
+    clipboard->owner_thread = NULL;
     return 1;
 }
 
@@ -200,33 +207,20 @@ DECL_HANDLER(set_clipboard_info)
 
     if (req->flags & SET_CB_OPEN)
     {
-        if (clipboard->open_thread)
-        {
-            /* clipboard already opened */
-            set_error(STATUS_WAS_LOCKED);
-            return;
-        }
-
-        if (!set_clipboard_window( clipboard, req->clipboard, 0 )) return;
+        if (!open_clipboard( clipboard, req->clipboard )) return;
     }
     else if (req->flags & SET_CB_CLOSE)
     {
-        if (clipboard->open_thread != current)
-        {
-            set_win32_error(ERROR_CLIPBOARD_NOT_OPEN);
-            return;
-        }
-
-        if (!set_clipboard_window( clipboard, 0, 1 )) return;
+        if (!close_clipboard( clipboard )) return;
     }
 
     if (req->flags & SET_CB_OWNER)
     {
-        if (!set_clipboard_owner( clipboard, req->owner, 0 )) return;
+        if (!set_clipboard_owner( clipboard, req->owner )) return;
     }
     else if (req->flags & SET_CB_RELOWNER)
     {
-        if (!set_clipboard_owner( clipboard, 0, 1 )) return;
+        if (!release_clipboard_owner( clipboard )) return;
     }
 
     if (req->flags & SET_CB_VIEWER) clipboard->viewer = req->viewer;
