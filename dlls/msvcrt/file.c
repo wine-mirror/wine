@@ -1788,7 +1788,7 @@ int CDECL MSVCRT__fstat64i32(int fd, struct MSVCRT__stat64i32* buf)
  */
 int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
 {
-  HANDLE hand = msvcrt_fdtoh(fd);
+  ioinfo *info = get_ioinfo(fd);
   FILETIME at, wt;
 
   if (!t)
@@ -1802,11 +1802,13 @@ int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
       time_to_filetime( t->modtime, &wt );
   }
 
-  if (!SetFileTime(hand, NULL, &at, &wt))
+  if (!SetFileTime(info->handle, NULL, &at, &wt))
   {
+    release_ioinfo(info);
     msvcrt_set_errno(GetLastError());
     return -1 ;
   }
+  release_ioinfo(info);
   return 0;
 }
 
