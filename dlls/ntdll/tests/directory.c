@@ -350,7 +350,7 @@ static void test_NtQueryDirectoryFile_case(void)
     }
 
     mask.Buffer = testmask;
-    mask.Length = mask.MaximumLength = lstrlenW(testmask) * sizeof(WCHAR);
+    mask.Length = mask.MaximumLength = sizeof(testmask);
     pNtQueryDirectoryFile(dirh, NULL, NULL, NULL, &io, data, data_size,
                           FileBothDirectoryInformation, TRUE, &mask, FALSE);
     ok(U(io).Status == STATUS_SUCCESS, "failed to query directory; status %x\n", U(io).Status);
