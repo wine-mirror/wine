@@ -451,7 +451,7 @@ if (0) /* crashes on pre-vista */ {
 
     disp = (void*)0xdeadbeef;
     hr = IShellView_GetItemObject(view, SVGIO_BACKGROUND, &IID_IShellFolderViewDual, (void**)&disp);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    ok(hr == E_NOINTERFACE || broken(hr == E_NOTIMPL) /* win2k */, "got 0x%08x\n", hr);
     ok(disp == NULL, "got %p\n", disp);
     IShellView_Release(view);
 
@@ -704,14 +704,14 @@ static void test_ParseName(void)
 
     item = (void*)0xdeadbeef;
     hr = Folder_ParseName(folder, NULL, &item);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == E_INVALIDARG) /* win2k */, "got 0x%08x\n", hr);
     ok(item == NULL, "got %p\n", item);
 
     /* empty name */
     str = SysAllocStringLen(NULL, 0);
     item = (void*)0xdeadbeef;
     hr = Folder_ParseName(folder, str, &item);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == E_INVALIDARG) /* win2k */, "got 0x%08x\n", hr);
     ok(item == NULL, "got %p\n", item);
     SysFreeString(str);
 
@@ -719,7 +719,7 @@ static void test_ParseName(void)
     str = SysAllocString(cadabraW);
     item = (void*)0xdeadbeef;
     hr = Folder_ParseName(folder, str, &item);
-    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == E_INVALIDARG) /* win2k */, "got 0x%08x\n", hr);
     ok(item == NULL, "got %p\n", item);
     SysFreeString(str);
 
