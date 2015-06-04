@@ -3234,8 +3234,8 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_BASEVERTEXINDEX";
     if (STATE_IS_FRAMEBUFFER(state))
         return "STATE_FRAMEBUFFER";
-    if (STATE_IS_POINT_SIZE_ENABLE(state))
-        return "STATE_POINT_SIZE_ENABLE";
+    if (STATE_IS_POINT_ENABLE(state))
+        return "STATE_POINT_ENABLE";
     if (STATE_IS_COLOR_KEY(state))
         return "STATE_COLOR_KEY";
 

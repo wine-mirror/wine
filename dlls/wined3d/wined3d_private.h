@@ -835,6 +835,7 @@ struct ps_compile_args {
        D3D9 has a limit of 16 samplers and the fixup is superfluous
        in D3D10 (unconditional NP2 support mandatory). */
     WORD shadow; /* MAX_FRAGMENT_SAMPLERS, 16 */
+    BOOL pointsprite;
 };
 
 enum fog_src_type {
@@ -1075,10 +1076,10 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 #define STATE_FRAMEBUFFER (STATE_BASEVERTEXINDEX + 1)
 #define STATE_IS_FRAMEBUFFER(a) ((a) == STATE_FRAMEBUFFER)
 
-#define STATE_POINT_SIZE_ENABLE (STATE_FRAMEBUFFER + 1)
-#define STATE_IS_POINT_SIZE_ENABLE(a) ((a) == STATE_POINT_SIZE_ENABLE)
+#define STATE_POINT_ENABLE (STATE_FRAMEBUFFER + 1)
+#define STATE_IS_POINT_ENABLE(a) ((a) == STATE_POINT_ENABLE)
 
-#define STATE_COLOR_KEY (STATE_POINT_SIZE_ENABLE + 1)
+#define STATE_COLOR_KEY (STATE_POINT_ENABLE + 1)
 #define STATE_IS_COLOR_KEY(a) ((a) == STATE_COLOR_KEY)
 
 #define STATE_HIGHEST (STATE_COLOR_KEY)

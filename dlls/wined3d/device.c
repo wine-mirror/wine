@@ -3404,7 +3404,7 @@ void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
     if (device->recording)
         device->recording->changed.primitive_type = TRUE;
     else if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
-        device_invalidate_state(device, STATE_POINT_SIZE_ENABLE);
+        device_invalidate_state(device, STATE_POINT_ENABLE);
 }
 
 void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,

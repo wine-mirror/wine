@@ -2576,6 +2576,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             args->fog = WINED3D_FFP_PS_FOG_OFF;
         }
     }
+
+    args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
+            && state->gl_primitive_type == GL_POINTS;
 }
 
 static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
