@@ -10013,10 +10013,13 @@ static BOOL point_match(IDirect3DDevice9 *device, UINT x, UINT y, UINT r)
 
 static void pointsize_test(void)
 {
+    static const float a = 0.5f, b = 0.5f, c = 0.5f;
     float ptsize, ptsizemax_orig, ptsizemin_orig;
     IDirect3DSurface9 *rt, *backbuffer;
     IDirect3DTexture9 *tex1, *tex2;
     IDirect3DDevice9 *device;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
     D3DLOCKED_RECT lr;
     IDirect3D9 *d3d;
     D3DCOLOR color;
@@ -10024,6 +10027,7 @@ static void pointsize_test(void)
     D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
+    unsigned int i, j;
 
     static const RECT rect = {0, 0, 128, 128};
     static const DWORD tex1_data[4] = {0x00ff0000, 0x00ff0000, 0x00000000, 0x00000000};
@@ -10039,14 +10043,190 @@ static void pointsize_test(void)
         448.0f, 64.0f, 0.1f,
         512.0f, 64.0f, 0.1f,
     };
-    /* Transforms the coordinate system [-1.0;1.0]x[-1.0;1.0] to
+    static const struct
+    {
+        float x, y, z;
+        float point_size;
+    }
+    vertex_pointsize = {64.0f, 64.0f, 0.1f, 48.0f},
+    vertex_pointsize_scaled = {64.0f, 64.0f, 0.1f, 24.0f},
+    vertex_pointsize_zero = {64.0f, 64.0f, 0.1f, 0.0f};
+    static const DWORD vshader_code[] =
+    {
+        0xfffe0101,                                                 /* vs_1_1                 */
+        0x0000001f, 0x80000000, 0x900f0000,                         /* dcl_position v0        */
+        0x00000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
+        0x00000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
+        0x00000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
+        0x00000004, 0xc00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad oPos, v0.w, c3, r0 */
+        0x0000ffff
+    };
+    static const DWORD vshader_psize_code[] =
+    {
+        0xfffe0101,                                                 /* vs_1_1                 */
+        0x0000001f, 0x80000000, 0x900f0000,                         /* dcl_position v0        */
+        0x0000001f, 0x80000004, 0x900f0001,                         /* dcl_psize v1           */
+        0x00000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
+        0x00000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
+        0x00000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
+        0x00000004, 0xc00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad oPos, v0.w, c3, r0 */
+        0x00000001, 0xc00f0002, 0x90000001,                         /* mov oPts, v1.x */
+        0x0000ffff
+    };
+    static const DWORD pshader_code[] =
+    {
+        0xffff0101,                                                 /* ps_1_1                 */
+        0x00000042, 0xb00f0000,                                     /* tex t0                 */
+        0x00000042, 0xb00f0001,                                     /* tex t1                 */
+        0x00000002, 0x800f0000, 0xb0e40000, 0xb0e40001,             /* add r0, t0, t1         */
+        0x0000ffff
+    };
+    static const DWORD pshader2_code[] =
+    {
+        0xffff0200,                                                 /* ps_2_0                 */
+        0x0200001f, 0x80000000, 0xb00f0000,                         /* dcl t0                 */
+        0x0200001f, 0x80000000, 0xb00f0001,                         /* dcl t1                 */
+        0x0200001f, 0x90000000, 0xa00f0800,                         /* dcl_2d s0              */
+        0x0200001f, 0x90000000, 0xa00f0801,                         /* dcl_2d s1              */
+        0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800,             /* texld r0, t0, s0       */
+        0x03000042, 0x800f0001, 0xb0e40001, 0xa0e40801,             /* texld r1, t1, s1       */
+        0x03000002, 0x800f0000, 0x80e40000, 0x80e40001,             /* add r0, r0, r1         */
+        0x02000001, 0x800f0800, 0x80e40000,                         /* mov oC0, r0            */
+        0x0000ffff
+    };
+    static const DWORD pshader2_zw_code[] =
+    {
+        0xffff0200,                                                 /* ps_2_0                 */
+        0x0200001f, 0x80000000, 0xb00f0000,                         /* dcl t0                 */
+        0x0200001f, 0x80000000, 0xb00f0001,                         /* dcl t1                 */
+        0x0200001f, 0x90000000, 0xa00f0800,                         /* dcl_2d s0              */
+        0x0200001f, 0x90000000, 0xa00f0801,                         /* dcl_2d s1              */
+        0x02000001, 0x80030000, 0xb01b0000,                         /* mov r0.xy, t0.wzyx     */
+        0x02000001, 0x80030001, 0xb01b0001,                         /* mov r1.xy, t1.wzyx     */
+        0x03000042, 0x800f0000, 0x80e40000, 0xa0e40800,             /* texld r0, r0, s0       */
+        0x03000042, 0x800f0001, 0x80e40001, 0xa0e40801,             /* texld r1, r1, s1       */
+        0x03000002, 0x800f0000, 0x80e40000, 0x80e40001,             /* add r0, r0, r1         */
+        0x02000001, 0x800f0800, 0x80e40000,                         /* mov oC0, r0            */
+        0x0000ffff
+    };
+    static const DWORD vshader3_code[] =
+    {
+        0xfffe0300,                                                 /* vs_3_0                 */
+        0x0200001f, 0x80000000, 0x900f0000,                         /* dcl_position v0        */
+        0x0200001f, 0x80000000, 0xe00f0000,                         /* dcl_position o0        */
+        0x03000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
+        0x04000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
+        0x04000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
+        0x04000004, 0xe00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad o0, v0.w, c3, r0   */
+        0x0000ffff
+    };
+    static const DWORD vshader3_psize_code[] =
+    {
+        0xfffe0300,                                                 /* vs_3_0                 */
+        0x0200001f, 0x80000000, 0x900f0000,                         /* dcl_position v0        */
+        0x0200001f, 0x80000004, 0x90010001,                         /* dcl_psize v1.x         */
+        0x0200001f, 0x80000000, 0xe00f0000,                         /* dcl_position o0        */
+        0x0200001f, 0x80000004, 0xe00f0001,                         /* dcl_psize o1           */
+        0x03000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
+        0x04000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
+        0x04000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
+        0x04000004, 0xe00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad o0, v0.w, c3, r0   */
+        0x02000001, 0xe00f0001, 0x90000001,                         /* mov o1, v1.x           */
+        0x0000ffff
+    };
+    static const DWORD pshader3_code[] =
+    {
+        0xffff0300,                                                 /* ps_3_0                 */
+        0x0200001f, 0x80000005, 0x900f0000,                         /* dcl_texcoord0 v0       */
+        0x0200001f, 0x80010005, 0x900f0001,                         /* dcl_texcoord1 v1       */
+        0x0200001f, 0x90000000, 0xa00f0800,                         /* dcl_2d s0              */
+        0x0200001f, 0x90000000, 0xa00f0801,                         /* dcl_2d s1              */
+        0x03000042, 0x800f0000, 0x90e40000, 0xa0e40800,             /* texld r0, v0, s0       */
+        0x03000042, 0x800f0001, 0x90e40001, 0xa0e40801,             /* texld r1, v1, s1       */
+        0x03000002, 0x800f0800, 0x80e40000, 0x80e40001,             /* add oC0, r0, r1        */
+        0x0000ffff
+    };
+    static const DWORD pshader3_zw_code[] =
+    {
+        0xffff0300,                                                 /* ps_3_0                 */
+        0x0200001f, 0x80000005, 0x900f0000,                         /* dcl_texcoord0 v0       */
+        0x0200001f, 0x80010005, 0x900f0001,                         /* dcl_texcoord1 v1       */
+        0x0200001f, 0x90000000, 0xa00f0800,                         /* dcl_2d s0              */
+        0x0200001f, 0x90000000, 0xa00f0801,                         /* dcl_2d s1              */
+        0x03000042, 0x800f0000, 0x90fe0000, 0xa0e40800,             /* texld r0, v0.zw, s0    */
+        0x03000042, 0x800f0001, 0x90fe0001, 0xa0e40801,             /* texld r1, v1.zw, s1    */
+        0x03000002, 0x800f0800, 0x80e40000, 0x80e40001,             /* add oC0, r0, r1        */
+        0x0000ffff
+    };
+    static const struct test_shader
+    {
+        DWORD version;
+        const DWORD *code;
+    }
+    novs = {0, NULL},
+    vs1 = {D3DVS_VERSION(1, 1), vshader_code},
+    vs1_psize = {D3DVS_VERSION(1, 1), vshader_psize_code},
+    vs3 = {D3DVS_VERSION(3, 0), vshader3_code},
+    vs3_psize = {D3DVS_VERSION(3, 0), vshader3_psize_code},
+    nops = {0, NULL},
+    ps1 = {D3DPS_VERSION(1, 1), pshader_code},
+    ps2 = {D3DPS_VERSION(2, 0), pshader2_code},
+    ps2_zw = {D3DPS_VERSION(2, 0), pshader2_zw_code},
+    ps3 = {D3DPS_VERSION(3, 0), pshader3_code},
+    ps3_zw = {D3DVS_VERSION(3, 0), pshader3_zw_code};
+    static const struct
+    {
+        const struct test_shader *vs;
+        const struct test_shader *ps;
+        DWORD accepted_fvf;
+        unsigned int nonscaled_size, scaled_size;
+        BOOL gives_0_0_texcoord;
+        BOOL allow_broken;
+    }
+    test_setups[] =
+    {
+        {&novs, &nops, D3DFVF_XYZ, 32, 62, FALSE, FALSE},
+        {&vs1, &ps1, D3DFVF_XYZ, 32, 32, FALSE, FALSE},
+        {&novs, &ps1, D3DFVF_XYZ, 32, 62, FALSE, FALSE},
+        {&vs1, &nops, D3DFVF_XYZ, 32, 32, FALSE, FALSE},
+        {&novs, &ps2, D3DFVF_XYZ, 32, 62, FALSE, TRUE},
+        {&novs, &ps2_zw, D3DFVF_XYZ, 32, 62, TRUE, FALSE},
+        {&vs1, &ps2, D3DFVF_XYZ, 32, 32, FALSE, TRUE},
+        {&vs1, &ps2_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
+        {&vs3, &ps3, D3DFVF_XYZ, 32, 32, FALSE, TRUE},
+        {&vs3, &ps3_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
+        /* {&novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48, FALSE, FALSE}, */
+        {&vs1_psize, &ps1, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, FALSE},
+        {&vs3_psize, &ps3, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, TRUE},
+    };
+    static const struct
+    {
+        BOOL zero_size;
+        BOOL scale;
+        BOOL override_min;
+        DWORD fvf;
+        const void *vertex_data;
+        unsigned int vertex_size;
+    }
+    tests[] =
+    {
+        {FALSE, FALSE, FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, TRUE,  FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, TRUE,  D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {TRUE,  FALSE, FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
+        {FALSE, TRUE,  FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_scaled, sizeof(vertex_pointsize_scaled)},
+        {FALSE, FALSE, TRUE,  D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
+        {TRUE,  FALSE, FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_zero, sizeof(vertex_pointsize_zero)},
+    };
+    /* Transforms the coordinate system [-1.0;1.0]x[1.0;-1.0] to
      * [0.0;0.0]x[640.0;480.0]. Z is untouched. */
     D3DMATRIX matrix =
     {{{
-        2.0f / 640.0f,          0.0f, 0.0f,  0.0f,
-                 0.0f, -2.0 / 480.0f, 0.0f,  0.0f,
-                 0.0f,          0.0f, 1.0f,  0.0f,
-                -1.0f,          1.0f, 0.0f,  1.0f,
+        2.0f / 640.0f,           0.0f, 0.0f, 0.0f,
+                 0.0f, -2.0f / 480.0f, 0.0f, 0.0f,
+                 0.0f,           0.0f, 1.0f, 0.0f,
+                -1.0f,           1.0f, 0.0f, 1.0f,
     }}};
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -10248,40 +10428,151 @@ static void pointsize_test(void)
             D3DMULTISAMPLE_NONE, 0, TRUE, &rt, NULL );
     ok(SUCCEEDED(hr), "CreateRenderTarget failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
-    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
-    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, *(DWORD *)&a);
+    ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, *(DWORD *)&b);
+    ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_C, *(DWORD *)&c);
+    ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &S(U(matrix))._11, 4);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader constants, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[0], sizeof(float) * 3);
-    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+    if (caps.MaxPointSize < 63.0f)
+    {
+        skip("MaxPointSize %f < 63.0, skipping some tests.\n", caps.MaxPointSize);
+        goto cleanup;
+    }
 
-    hr = IDirect3DDevice9_StretchRect(device, rt, &rect, backbuffer, &rect, D3DTEXF_NONE);
-    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(test_setups) / sizeof(test_setups[0]); ++i)
+    {
+        if (caps.VertexShaderVersion < test_setups[i].vs->version
+                || caps.PixelShaderVersion < test_setups[i].ps->version)
+        {
+            skip("Vertex / pixel shader version not supported, skipping test.\n");
+            continue;
+        }
+        if (test_setups[i].vs->code)
+        {
+            hr = IDirect3DDevice9_CreateVertexShader(device, test_setups[i].vs->code, &vs);
+            ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x (case %u).\n", hr, i);
+        }
+        else
+        {
+            vs = NULL;
+        }
+        if (test_setups[i].ps->code)
+        {
+            hr = IDirect3DDevice9_CreatePixelShader(device, test_setups[i].ps->code, &ps);
+            ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x (case %u).\n", hr, i);
+        }
+        else
+        {
+            ps = NULL;
+        }
+
+        hr = IDirect3DDevice9_SetVertexShader(device, vs);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShader(device, ps);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+
+        for (j = 0; j < sizeof(tests) / sizeof(tests[0]); ++j)
+        {
+            BOOL allow_broken = test_setups[i].allow_broken;
+            unsigned int size = tests[j].override_min ? 63 : tests[j].zero_size ? 0 : tests[j].scale
+                    ? test_setups[i].scaled_size : test_setups[i].nonscaled_size;
+
+            if (test_setups[i].accepted_fvf != tests[j].fvf)
+                continue;
+
+            ptsize = tests[j].zero_size ? 0.0f : 32.0f;
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *(DWORD *)&ptsize);
+            ok(SUCCEEDED(hr), "Failed to set pointsize, hr %#x.\n", hr);
+
+            ptsize = tests[j].override_min ? 63.0f : tests[j].zero_size ? 0.0f : ptsizemin_orig;
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *(DWORD *)&ptsize);
+            ok(SUCCEEDED(hr), "Failed to set minimum pointsize, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALEENABLE, tests[j].scale);
+            ok(SUCCEEDED(hr), "Failed setting point scale state, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_SetFVF(device, tests[j].fvf);
+            ok(SUCCEEDED(hr), "Failed setting FVF, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
+            ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1,
+                    tests[j].vertex_data, tests[j].vertex_size);
+            ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice9_StretchRect(device, rt, &rect, backbuffer, &rect, D3DTEXF_NONE);
+            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+            if (tests[j].zero_size)
+            {
+                /* Technically 0 pointsize is undefined in OpenGL but in practice it seems like
+                 * it does the "useful" thing on all the drivers I tried. */
+                /* On WARP it does draw some pixels, most of the time. */
+                color = getPixelColor(device, 64, 64);
+                ok(color_match(color, 0x0000ffff, 0)
+                        || broken(color_match(color, 0x00ff0000, 0))
+                        || broken(color_match(color, 0x00ffff00, 0))
+                        || broken(color_match(color, 0x00000000, 0))
+                        || broken(color_match(color, 0x0000ff00, 0)),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+            }
+            else
+            {
+                /* On AMD apparently only the first texcoord is modified by the point coordinates
+                 * when using SM2/3 pixel shaders. */
+                color = getPixelColor(device, 64 - size / 2 + 1, 64 - size / 2 + 1);
+                ok(color_match(color, 0x00ff0000, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 + size / 2 - 1, 64 - size / 2 + 1);
+                ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00ffff00, 0)
+                        || (allow_broken && broken(color_match(color, 0x00ff0000, 0))),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 - size / 2 + 1, 64 + size / 2 - 1);
+                ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00000000, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 + size / 2 - 1, 64 + size / 2 - 1);
+                ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x0000ff00, 0)
+                        || (allow_broken && broken(color_match(color, 0x00000000, 0))),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+
+                color = getPixelColor(device, 64 - size / 2 - 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0x0000ffff, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 + size / 2 + 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0x0000ffff, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 - size / 2 - 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0x0000ffff, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                color = getPixelColor(device, 64 + size / 2 + 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0x0000ffff, 0),
+                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+            }
+        }
+        IDirect3DDevice9_SetVertexShader(device, NULL);
+        IDirect3DDevice9_SetPixelShader(device, NULL);
+        if (vs)
+            IDirect3DVertexShader9_Release(vs);
+        if (ps)
+            IDirect3DVertexShader9_Release(ps);
+    }
+
+cleanup:
     IDirect3DSurface9_Release(backbuffer);
     IDirect3DSurface9_Release(rt);
-
-    color = getPixelColor(device, 64-4, 64-4);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00), 0),
-            "Expected color 0x00ff0000, got 0x%08x.\n", color);
-    color = getPixelColor(device, 64+4, 64-4);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 0),
-            "Expected color 0x00ffff00, got 0x%08x.\n", color);
-    color = getPixelColor(device, 64-4, 64+4);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00), 0),
-            "Expected color 0x00000000, got 0x%08x.\n", color);
-    color = getPixelColor(device, 64+4, 64+4);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 0),
-            "Expected color 0x0000ff00, got 0x%08x.\n", color);
-
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
     IDirect3DTexture9_Release(tex1);
     IDirect3DTexture9_Release(tex2);
