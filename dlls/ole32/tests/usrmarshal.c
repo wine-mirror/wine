@@ -44,13 +44,17 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal  (ULONG *, unsigned char *,
 unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(ULONG *, unsigned char *, HMETAFILEPICT *);
 void __RPC_USER HMETAFILEPICT_UserFree(ULONG *, HMETAFILEPICT *);
 
+static BOOL g_expect_user_alloc;
 static void * WINAPI user_allocate(SIZE_T size)
 {
+    ok(g_expect_user_alloc, "unexpected user_allocate call\n");
     return CoTaskMemAlloc(size);
 }
 
+static BOOL g_expect_user_free;
 static void WINAPI user_free(void *p)
 {
+    ok(g_expect_user_free, "unexpected user_free call\n");
     CoTaskMemFree(p);
 }
 
@@ -201,7 +205,6 @@ static void test_marshal_HGLOBAL(void)
         GlobalUnlock(hglobal);
         actual_size = GlobalSize(hglobal);
         expected_size = actual_size + 5 * sizeof(DWORD);
-        trace("%d: actual size %d\n", block_size, actual_size);
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
         size = HGLOBAL_UserSize(&umcb.Flags, 0, &hglobal);
         /* native is poorly programmed and allocates 4/8 bytes more than it needs to
@@ -404,7 +407,6 @@ static void test_marshal_HMETAFILEPICT(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = HMETAFILEPICT_UserSize(&umcb.Flags, 0, &hmfp);
     ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
-    trace("size is %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     buffer_end = HMETAFILEPICT_UserMarshal(&umcb.Flags, buffer, &hmfp);
@@ -604,14 +606,12 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     IStream_Seek(stm, zero, STREAM_SEEK_CUR, &pos);
     marshal_size = pos.u.LowPart;
     marshal_data = GlobalLock(h);
-    trace("marshal_size %x\n", marshal_size);
 todo_wine
     ok(Test_Unknown.refs == 2, "got %d\n", Test_Unknown.refs);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, umcb_ctx);
     size = WdtpInterfacePointer_UserSize(&umcb.Flags, ctx, 0, unk, &IID_IUnknown);
     ok(size >= marshal_size + 2 * sizeof(DWORD), "marshal size %x got %x\n", marshal_size, size);
-    trace("WdtpInterfacePointer_UserSize returned %x\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
@@ -846,8 +846,10 @@ static void test_marshal_SNB(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
 
+    g_expect_user_alloc = TRUE;
     snb2 = NULL;
     SNB_UserUnmarshal(&umcb.Flags, buffer, &snb2);
+    g_expect_user_alloc = FALSE;
 
     ptrW = snb2;
     ok(!lstrcmpW(*ptrW, str1W), "unmarshalled string 0: %s\n", wine_dbgstr_w(*ptrW));
@@ -858,7 +860,10 @@ static void test_marshal_SNB(void)
 
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+
+    g_expect_user_free = TRUE;
     SNB_UserFree(&umcb.Flags, &snb2);
+    g_expect_user_free = FALSE;
 }
 
 START_TEST(usrmarshal)
