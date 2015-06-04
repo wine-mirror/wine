@@ -1156,6 +1156,14 @@ static const struct drawcall_entry draw_seq4[] = {
     { DRAW_LAST_KIND }
 };
 
+static const struct drawcall_entry draw_seq5[] = {
+    { DRAW_GLYPHRUN, {'s','t',0} },
+    { DRAW_GLYPHRUN, {'r','i',0} },
+    { DRAW_GLYPHRUN, {'n','g',0} },
+    { DRAW_STRIKETHROUGH },
+    { DRAW_LAST_KIND }
+};
+
 static void test_Draw(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
@@ -1238,7 +1246,22 @@ static void test_Draw(void)
 
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_seq4, "draw test 4", TRUE);
+    ok_sequence(sequences, RENDERER_ID, draw_seq4, "draw test 4", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    /* strikethrough somewhere in the middle */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+
+    range.startPosition = 2;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_seq5, "draw test 5", FALSE);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);

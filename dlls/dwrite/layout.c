@@ -176,6 +176,12 @@ struct layout_effective_inline {
     BOOL  is_rtl;
 };
 
+struct layout_strikethrough {
+    struct list entry;
+    const struct layout_effective_run *run;
+    DWRITE_STRIKETHROUGH s;
+};
+
 struct layout_cluster {
     const struct layout_run *run; /* link to nominal run this cluster belongs to */
     UINT32 position;        /* relative to run, first cluster has 0 position */
@@ -206,6 +212,7 @@ struct dwrite_textlayout {
     /* lists ready to use by Draw() */
     struct list eruns;
     struct list inlineobjects;
+    struct list strikethrough;
     USHORT recompute;
 
     DWRITE_LINE_BREAKPOINT *nominal_breakpoints;
@@ -355,6 +362,7 @@ static void free_layout_eruns(struct dwrite_textlayout *layout)
 {
     struct layout_effective_inline *in, *in2;
     struct layout_effective_run *cur, *cur2;
+    struct layout_strikethrough *s, *s2;
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry) {
         list_remove(&cur->entry);
@@ -365,6 +373,11 @@ static void free_layout_eruns(struct dwrite_textlayout *layout)
     LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry) {
         list_remove(&in->entry);
         heap_free(in);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(s, s2, &layout->strikethrough, struct layout_strikethrough, entry) {
+        list_remove(&s->entry);
+        heap_free(s);
     }
 }
 
@@ -808,10 +821,18 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     return hr;
 }
 
+static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UINT32 start, UINT32 end)
+{
+    FLOAT width = 0.0;
+    for (; start < end; start++)
+        width += layout->clustermetrics[start].width;
+    return width;
+}
+
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
-    UINT32 cluster_count, FLOAT origin_x)
+    UINT32 cluster_count, FLOAT origin_x, BOOL strikethrough)
 {
     UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
@@ -839,9 +860,11 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     if (!run)
         return E_OUTOFMEMORY;
 
-    /* no need to iterate for that */
+    /* No need to iterate for that, use simple fact that:
+       <last cluster position> = first cluster position> + <sum of cluster lengths not including last one> */
     last_cluster = first_cluster + cluster_count - 1;
-    length = layout->clusters[last_cluster].position + layout->clustermetrics[last_cluster].length;
+    length = layout->clusters[last_cluster].position - layout->clusters[first_cluster].position +
+        layout->clustermetrics[last_cluster].length;
 
     run->clustermap = heap_alloc(sizeof(UINT16)*length);
     if (!run->clustermap) {
@@ -870,6 +893,43 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         run->clustermap[i] = r->u.regular.clustermap[start] - start;
 
     list_add_tail(&layout->eruns, &run->entry);
+
+    /* Strikethrough style is guaranteed to be consistent within effective run,
+       it's width equals to run width, thikness and offset are derived from
+       font metrics, rest of the values are from layout or run itself */
+    if (strikethrough) {
+        DWRITE_FONT_METRICS metrics = { 0 };
+        struct layout_strikethrough *s;
+
+        s = heap_alloc(sizeof(*s));
+        if (!s)
+            return E_OUTOFMEMORY;
+
+        if (layout->gdicompatible) {
+            HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(
+                r->u.regular.run.fontFace,
+                r->u.regular.run.fontEmSize,
+                layout->pixels_per_dip,
+                &layout->transform,
+                &metrics);
+            if (FAILED(hr))
+                WARN("failed to get font metrics, 0x%08x\n", hr);
+        }
+        else
+            IDWriteFontFace_GetMetrics(r->u.regular.run.fontFace, &metrics);
+
+        s->s.width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+        s->s.thickness = metrics.strikethroughThickness;
+        s->s.offset = metrics.strikethroughPosition;
+        s->s.readingDirection = layout->format.readingdir;
+        s->s.flowDirection = layout->format.flow;
+        s->s.localeName = r->u.regular.descr.localeName;
+        s->s.measuringMode = DWRITE_MEASURING_MODE_NATURAL; /* FIXME */
+        s->run = run;
+
+        list_add_tail(&layout->strikethrough, &s->entry);
+    }
+
     return S_OK;
 }
 
@@ -895,12 +955,23 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     return S_OK;
 }
 
-static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UINT32 start, UINT32 end)
+static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
 {
-    FLOAT width = 0.0;
-    for (; start < end; start++)
-        width += layout->clustermetrics[start].width;
-    return width;
+    struct layout_range_header *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
+        DWRITE_TEXT_RANGE *r = &cur->range;
+        if (r->startPosition <= pos && pos < r->startPosition + r->length)
+            return cur;
+    }
+
+    return NULL;
+}
+
+static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+{
+    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->strike_ranges, pos);
+    return ((struct layout_range_bool*)h)->value;
 }
 
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
@@ -908,8 +979,9 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     DWRITE_LINE_METRICS metrics;
     const struct layout_run *run;
     FLOAT width, origin_x;
-    UINT32 i, start, line;
+    UINT32 i, start, line, textpos;
     HRESULT hr;
+    BOOL s[2];
 
     if (!(layout->recompute & RECOMPUTE_EFFECTIVE_RUNS))
         return S_OK;
@@ -923,17 +995,21 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     line = 0;
     run = layout->clusters[0].run;
     memset(&metrics, 0, sizeof(metrics));
+    s[0] = s[1] = layout_get_strikethrough_from_pos(layout, 0);
 
-    for (i = 0, start = 0, width = 0.0; i < layout->cluster_count; i++) {
+    for (i = 0, start = 0, textpos = 0, width = 0.0; i < layout->cluster_count; i++) {
         BOOL can_wrap_after = layout->clustermetrics[i].canWrapLineAfter;
+
+        s[1] = layout_get_strikethrough_from_pos(layout, textpos);
 
         /* switched to next nominal run, at this point all previous pending clusters are already
            checked for layout line overflow, so new effective run will fit in current line */
-        if (run != layout->clusters[i].run) {
-            hr = layout_add_effective_run(layout, run, start, i - start, origin_x);
+        if (run != layout->clusters[i].run || s[0] != s[1]) {
+            hr = layout_add_effective_run(layout, run, start, i - start, origin_x, s[0]);
             if (FAILED(hr))
                 return hr;
             origin_x += get_cluster_range_width(layout, start, i);
+            run = layout->clusters[i].run;
             start = i;
         }
 
@@ -945,7 +1021,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             UINT32 strlength = metrics.length, index = i;
 
             if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x);
+                hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x, s[0]);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */
@@ -988,7 +1064,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             width += layout->clustermetrics[i].width;
         }
 
-        run = layout->clusters[i].run;
+        s[0] = s[1];
+        textpos += layout->clustermetrics[i].length;
     }
 
     layout->line_count = line;
@@ -1249,19 +1326,6 @@ static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *la
 
     LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
         DWRITE_TEXT_RANGE *r = &cur->h.range;
-        if (r->startPosition <= pos && pos < r->startPosition + r->length)
-            return cur;
-    }
-
-    return NULL;
-}
-
-static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
-{
-    struct layout_range_header *cur;
-
-    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
-        DWRITE_TEXT_RANGE *r = &cur->range;
         if (r->startPosition <= pos && pos < r->startPosition + r->length)
             return cur;
     }
@@ -2193,6 +2257,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     struct layout_effective_inline *inlineobject;
     struct layout_effective_run *run;
+    struct layout_strikethrough *s;
     HRESULT hr;
 
     TRACE("(%p)->(%p %p %.2f %.2f)\n", This, context, renderer, origin_x, origin_y);
@@ -2250,7 +2315,16 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     }
 
     /* TODO: 3. Underlines */
-    /* TODO: 4. Strikethrough */
+
+    /* 4. Strikethrough */
+    LIST_FOR_EACH_ENTRY(s, &This->strikethrough, struct layout_strikethrough, entry) {
+        IDWriteTextRenderer_DrawStrikethrough(renderer,
+            context,
+            s->run->origin_x,
+            s->run->origin_y,
+            &s->s,
+            s->run->run->effect);
+    }
 
     return S_OK;
 }
@@ -3206,6 +3280,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->minwidth = 0.0;
     list_init(&layout->eruns);
     list_init(&layout->inlineobjects);
+    list_init(&layout->strikethrough);
     list_init(&layout->runs);
     list_init(&layout->ranges);
     list_init(&layout->strike_ranges);
