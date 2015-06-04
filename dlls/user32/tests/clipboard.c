@@ -24,6 +24,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
+static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
+
 static DWORD WINAPI open_clipboard_thread(LPVOID arg)
 {
     HWND hWnd = arg;
@@ -278,9 +281,14 @@ static CRITICAL_SECTION clipboard_cs;
 static HWND next_wnd;
 static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+    static UINT wm_drawclipboard;
+    static UINT wm_clipboardupdate;
+    LRESULT ret;
+
     switch(msg) {
     case WM_DRAWCLIPBOARD:
         EnterCriticalSection(&clipboard_cs);
+        wm_drawclipboard++;
         LeaveCriticalSection(&clipboard_cs);
         break;
     case WM_CHANGECBCHAIN:
@@ -289,10 +297,21 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
         else if (next_wnd)
             SendMessageA(next_wnd, msg, wp, lp);
         break;
+    case WM_CLIPBOARDUPDATE:
+        wm_clipboardupdate++;
+        break;
     case WM_USER:
         ChangeClipboardChain(hwnd, next_wnd);
         PostQuitMessage(0);
         break;
+    case WM_USER+1:
+        ret = wm_drawclipboard;
+        wm_drawclipboard = 0;
+        return ret;
+    case WM_USER+2:
+        ret = wm_clipboardupdate;
+        wm_clipboardupdate = 0;
+        return ret;
     }
 
     return DefWindowProcA(hwnd, msg, wp, lp);
@@ -302,23 +321,182 @@ static DWORD WINAPI clipboard_thread(void *param)
 {
     HWND win = param;
     BOOL r;
+    HANDLE handle;
+    UINT count, old_seq = 0, seq;
+
+    if (pGetClipboardSequenceNumber) old_seq = pGetClipboardSequenceNumber();
 
     EnterCriticalSection(&clipboard_cs);
     SetLastError(0xdeadbeef);
     next_wnd = SetClipboardViewer(win);
     ok(GetLastError() == 0xdeadbeef, "GetLastError = %d\n", GetLastError());
     LeaveCriticalSection(&clipboard_cs);
+    if (pAddClipboardFormatListener)
+    {
+        r = pAddClipboardFormatListener(win);
+        ok( r, "AddClipboardFormatListener failed err %d\n", GetLastError());
+    }
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        ok( seq == old_seq, "sequence changed\n" );
+    }
+    count = SendMessageA( win, WM_USER + 1, 0, 0 );
+    ok( count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
 
     r = OpenClipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
 
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        ok( seq == old_seq, "sequence changed\n" );
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
     r = EmptyClipboard();
     ok(r, "EmptyClipboard failed: %d\n", GetLastError());
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    r = EmptyClipboard();
+    ok(r, "EmptyClipboard failed: %d\n", GetLastError());
+    /* sequence changes again, even though it was already empty */
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    handle = SetClipboardData( CF_TEXT, create_text() );
+    ok(handle != 0, "SetClipboardData failed: %d\n", GetLastError());
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    SetClipboardData( CF_UNICODETEXT, 0 );
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    SetClipboardData( CF_UNICODETEXT, 0 );  /* same data again */
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
 
     EnterCriticalSection(&clipboard_cs);
     r = CloseClipboard();
     ok(r, "CloseClipboard failed: %d\n", GetLastError());
     LeaveCriticalSection(&clipboard_cs);
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+
+    r = OpenClipboard(win);
+    ok(r, "OpenClipboard failed: %d\n", GetLastError());
+
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        ok( seq == old_seq, "sequence changed\n" );
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    SetClipboardData( CF_WAVE, 0 );
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    r = CloseClipboard();
+    ok(r, "CloseClipboard failed: %d\n", GetLastError());
+    if (pGetClipboardSequenceNumber)
+    {
+        /* no synthesized format, so CloseClipboard doesn't change the sequence */
+        seq = pGetClipboardSequenceNumber();
+        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        old_seq = seq;
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+
+    r = OpenClipboard(win);
+    ok(r, "OpenClipboard failed: %d\n", GetLastError());
+    r = CloseClipboard();
+    ok(r, "CloseClipboard failed: %d\n", GetLastError());
+    /* nothing changed */
+    if (pGetClipboardSequenceNumber)
+    {
+        seq = pGetClipboardSequenceNumber();
+        ok( seq == old_seq, "sequence changed\n" );
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
+    count = SendMessageA( win, WM_USER+2, 0, 0 );
+    ok( !count, "WM_CLIPBOARDUPDATE received\n" );
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
@@ -361,6 +539,11 @@ static void test_messages(void)
 
 START_TEST(clipboard)
 {
+    HMODULE mod = GetModuleHandleA( "user32" );
+
+    pAddClipboardFormatListener = (void *)GetProcAddress( mod, "AddClipboardFormatListener" );
+    pGetClipboardSequenceNumber = (void *)GetProcAddress( mod, "GetClipboardSequenceNumber" );
+
     test_RegisterClipboardFormatA();
     test_ClipboardOwner();
     test_synthesized();
