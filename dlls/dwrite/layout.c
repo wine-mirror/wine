@@ -94,17 +94,18 @@ struct layout_range_attr_value {
 };
 
 enum layout_range_kind {
-    LAYOUT_RANGE_REGULAR
+    LAYOUT_RANGE_REGULAR,
+    LAYOUT_RANGE_STRIKETHROUGH
 };
 
 struct layout_range_header {
     struct list entry;
     enum layout_range_kind kind;
+    DWRITE_TEXT_RANGE range;
 };
 
 struct layout_range {
     struct layout_range_header h;
-    DWRITE_TEXT_RANGE range;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
     FLOAT fontsize;
@@ -112,11 +113,15 @@ struct layout_range {
     IDWriteInlineObject *object;
     IUnknown *effect;
     BOOL underline;
-    BOOL strikethrough;
     BOOL pair_kerning;
     IDWriteFontCollection *collection;
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     WCHAR *fontfamily;
+};
+
+struct layout_range_bool {
+    struct layout_range_header h;
+    BOOL value;
 };
 
 enum layout_run_kind {
@@ -195,6 +200,7 @@ struct dwrite_textlayout {
     struct dwrite_textformat_data format;
     FLOAT  maxwidth;
     FLOAT  maxheight;
+    struct list strike_ranges;
     struct list ranges;
     struct list runs;
     /* lists ready to use by Draw() */
@@ -400,9 +406,9 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
         memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
     }
 
-    for (i = cur->range.startPosition; i < cur->range.length + cur->range.startPosition; i++) {
+    for (i = cur->h.range.startPosition; i < cur->h.range.length + cur->h.range.startPosition; i++) {
         /* for first codepoint check if there's anything before it and update accordingly */
-        if (i == cur->range.startPosition) {
+        if (i == cur->h.range.startPosition) {
             if (i > 0)
                 layout->actual_breakpoints[i].breakConditionBefore = layout->actual_breakpoints[i-1].breakConditionAfter =
                     override_break_condition(layout->actual_breakpoints[i-1].breakConditionAfter, before);
@@ -411,7 +417,7 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
             layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
         /* similar check for last codepoint */
-        else if (i == cur->range.startPosition + cur->range.length - 1) {
+        else if (i == cur->h.range.startPosition + cur->h.range.length - 1) {
             if (i == layout->len - 1)
                 layout->actual_breakpoints[i].breakConditionAfter = after;
             else
@@ -566,7 +572,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
                 return E_OUTOFMEMORY;
 
             r->u.object.object = range->object;
-            r->u.object.length = range->range.length;
+            r->u.object.length = range->h.range.length;
             r->effect = range->effect;
             list_add_tail(&layout->runs, &r->entry);
             continue;
@@ -574,13 +580,13 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         /* initial splitting by script */
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->range.startPosition, range->range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->h.range.startPosition, range->h.range.length, &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
 
         /* this splits it further */
         hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->range.startPosition, range->range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->h.range.startPosition, range->h.range.length, &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
     }
@@ -1002,8 +1008,11 @@ static inline BOOL validate_text_range(struct dwrite_textlayout *layout, DWRITE_
     return TRUE;
 }
 
-static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
+static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
+    struct layout_range_bool const *range_bool = (struct layout_range_bool*)h;
+    struct layout_range const *range = (struct layout_range*)h;
+
     switch (attr) {
     case LAYOUT_RANGE_ATTR_WEIGHT:
         return range->weight == value->u.weight;
@@ -1020,7 +1029,7 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
     case LAYOUT_RANGE_ATTR_UNDERLINE:
         return range->underline == value->u.underline;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
-        return range->strikethrough == value->u.strikethrough;
+        return range_bool->value == value->u.strikethrough;
     case LAYOUT_RANGE_ATTR_PAIR_KERNING:
         return range->pair_kerning == value->u.pair_kerning;
     case LAYOUT_RANGE_ATTR_FONTCOLL:
@@ -1036,20 +1045,36 @@ static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layo
     return FALSE;
 }
 
-static inline BOOL is_same_layout_attributes(struct layout_range const *left, struct layout_range const *right)
+static inline BOOL is_same_layout_attributes(struct layout_range_header const *hleft, struct layout_range_header const *hright)
 {
-    return left->weight == right->weight &&
-           left->style  == right->style &&
-           left->stretch == right->stretch &&
-           left->fontsize == right->fontsize &&
-           left->object == right->object &&
-           left->effect == right->effect &&
-           left->underline == right->underline &&
-           left->strikethrough == right->strikethrough &&
-           left->pair_kerning == right->pair_kerning &&
-           left->collection == right->collection &&
-          !strcmpW(left->locale, right->locale) &&
-          !strcmpW(left->fontfamily, right->fontfamily);
+    switch (hleft->kind)
+    {
+    case LAYOUT_RANGE_REGULAR:
+    {
+        struct layout_range const *left = (struct layout_range const*)hleft;
+        struct layout_range const *right = (struct layout_range const*)hright;
+        return left->weight == right->weight &&
+               left->style  == right->style &&
+               left->stretch == right->stretch &&
+               left->fontsize == right->fontsize &&
+               left->object == right->object &&
+               left->effect == right->effect &&
+               left->underline == right->underline &&
+               left->pair_kerning == right->pair_kerning &&
+               left->collection == right->collection &&
+              !strcmpW(left->locale, right->locale) &&
+              !strcmpW(left->fontfamily, right->fontfamily);
+    }
+    case LAYOUT_RANGE_STRIKETHROUGH:
+    {
+        struct layout_range_bool const *left = (struct layout_range_bool const*)hleft;
+        struct layout_range_bool const *right = (struct layout_range_bool const*)hright;
+        return left->value == right->value;
+    }
+    default:
+        FIXME("unknown range kind %d\n", hleft->kind);
+        return FALSE;
+    }
 }
 
 static inline BOOL is_same_text_range(const DWRITE_TEXT_RANGE *left, const DWRITE_TEXT_RANGE *right)
@@ -1058,94 +1083,152 @@ static inline BOOL is_same_text_range(const DWRITE_TEXT_RANGE *left, const DWRIT
 }
 
 /* Allocates range and inits it with default values from text format. */
-static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout, const DWRITE_TEXT_RANGE *r)
+static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *layout, const DWRITE_TEXT_RANGE *r,
+    enum layout_range_kind kind)
 {
-    struct layout_range *range;
+    struct layout_range_header *h;
 
-    range = heap_alloc(sizeof(*range));
-    if (!range) return NULL;
+    switch (kind)
+    {
+    case LAYOUT_RANGE_REGULAR:
+    {
+        struct layout_range *range;
 
-    range->h.kind = LAYOUT_RANGE_REGULAR;
-    range->range = *r;
-    range->weight = layout->format.weight;
-    range->style  = layout->format.style;
-    range->stretch = layout->format.stretch;
-    range->fontsize = layout->format.fontsize;
-    range->object = NULL;
-    range->effect = NULL;
-    range->underline = FALSE;
-    range->strikethrough = FALSE;
-    range->pair_kerning = FALSE;
+        range = heap_alloc(sizeof(*range));
+        if (!range) return NULL;
 
-    range->fontfamily = heap_strdupW(layout->format.family_name);
-    if (!range->fontfamily) {
-        heap_free(range);
+        range->weight = layout->format.weight;
+        range->style  = layout->format.style;
+        range->stretch = layout->format.stretch;
+        range->fontsize = layout->format.fontsize;
+        range->object = NULL;
+        range->effect = NULL;
+        range->underline = FALSE;
+        range->pair_kerning = FALSE;
+
+        range->fontfamily = heap_strdupW(layout->format.family_name);
+        if (!range->fontfamily) {
+            heap_free(range);
+            return NULL;
+        }
+
+        range->collection = layout->format.collection;
+        if (range->collection)
+            IDWriteFontCollection_AddRef(range->collection);
+        strcpyW(range->locale, layout->format.locale);
+
+        h = &range->h;
+        break;
+    }
+    case LAYOUT_RANGE_STRIKETHROUGH:
+    {
+        struct layout_range_bool *range;
+
+        range = heap_alloc(sizeof(*range));
+        if (!range) return NULL;
+
+        range->value = FALSE;
+        h = &range->h;
+        break;
+    }
+    default:
+        FIXME("unknown range kind %d\n", kind);
         return NULL;
     }
 
-    range->collection = layout->format.collection;
-    if (range->collection)
-        IDWriteFontCollection_AddRef(range->collection);
-    strcpyW(range->locale, layout->format.locale);
-
-    return range;
+    h->kind = kind;
+    h->range = *r;
+    return h;
 }
 
-static struct layout_range *alloc_layout_range_from(struct layout_range *from, const DWRITE_TEXT_RANGE *r)
+static struct layout_range_header *alloc_layout_range_from(struct layout_range_header *h, const DWRITE_TEXT_RANGE *r)
 {
-    struct layout_range *range;
+    struct layout_range_header *ret;
 
-    range = heap_alloc(sizeof(*range));
-    if (!range) return NULL;
+    switch (h->kind)
+    {
+    case LAYOUT_RANGE_REGULAR:
+    {
+        struct layout_range *from = (struct layout_range*)h;
 
-    *range = *from;
-    range->range = *r;
+        struct layout_range *range = heap_alloc(sizeof(*range));
+        if (!range) return NULL;
 
-    range->fontfamily = heap_strdupW(from->fontfamily);
-    if (!range->fontfamily) {
-        heap_free(range);
+        *range = *from;
+        range->fontfamily = heap_strdupW(from->fontfamily);
+        if (!range->fontfamily) {
+            heap_free(range);
+            return NULL;
+        }
+
+        /* update refcounts */
+        if (range->object)
+            IDWriteInlineObject_AddRef(range->object);
+        if (range->effect)
+            IUnknown_AddRef(range->effect);
+        if (range->collection)
+            IDWriteFontCollection_AddRef(range->collection);
+        ret = &range->h;
+        break;
+    }
+    case LAYOUT_RANGE_STRIKETHROUGH:
+    {
+        struct layout_range_bool *strike = heap_alloc(sizeof(*strike));
+        if (!strike) return NULL;
+
+        *strike = *(struct layout_range_bool*)h;
+        ret = &strike->h;
+        break;
+    }
+    default:
+        FIXME("unknown range kind %d\n", h->kind);
         return NULL;
     }
 
-    /* update refcounts */
-    if (range->object)
-        IDWriteInlineObject_AddRef(range->object);
-    if (range->effect)
-        IUnknown_AddRef(range->effect);
-    if (range->collection)
-        IDWriteFontCollection_AddRef(range->collection);
-
-    return range;
+    ret->range = *r;
+    return ret;
 }
 
-static void free_layout_range(struct layout_range *range)
+static void free_layout_range(struct layout_range_header *h)
 {
-    if (!range)
+    if (!h)
         return;
-    if (range->object)
-        IDWriteInlineObject_Release(range->object);
-    if (range->effect)
-        IUnknown_Release(range->effect);
-    if (range->collection)
-        IDWriteFontCollection_Release(range->collection);
-    heap_free(range->fontfamily);
-    heap_free(range);
+
+    if (h->kind == LAYOUT_RANGE_REGULAR) {
+        struct layout_range *range = (struct layout_range*)h;
+
+        if (range->object)
+            IDWriteInlineObject_Release(range->object);
+        if (range->effect)
+            IUnknown_Release(range->effect);
+        if (range->collection)
+            IDWriteFontCollection_Release(range->collection);
+        heap_free(range->fontfamily);
+    }
+
+    heap_free(h);
 }
 
 static void free_layout_ranges_list(struct dwrite_textlayout *layout)
 {
-    struct layout_range *cur, *cur2;
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range, h.entry) {
-        list_remove(&cur->h.entry);
+    struct layout_range_header *cur, *cur2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range_header, entry) {
+        list_remove(&cur->entry);
+        free_layout_range(cur);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->strike_ranges, struct layout_range_header, entry) {
+        list_remove(&cur->entry);
         free_layout_range(cur);
     }
 }
 
-static struct layout_range *find_outer_range(struct dwrite_textlayout *layout, const DWRITE_TEXT_RANGE *range)
+static struct layout_range_header *find_outer_range(struct list *ranges, const DWRITE_TEXT_RANGE *range)
 {
-    struct layout_range *cur;
+    struct layout_range_header *cur;
 
-    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
+    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
 
         if (cur->range.startPosition > range->startPosition)
             return NULL;
@@ -1165,6 +1248,19 @@ static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *la
     struct layout_range *cur;
 
     LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
+        DWRITE_TEXT_RANGE *r = &cur->h.range;
+        if (r->startPosition <= pos && pos < r->startPosition + r->length)
+            return cur;
+    }
+
+    return NULL;
+}
+
+static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
+{
+    struct layout_range_header *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
         DWRITE_TEXT_RANGE *r = &cur->range;
         if (r->startPosition <= pos && pos < r->startPosition + r->length)
             return cur;
@@ -1186,8 +1282,11 @@ static inline BOOL set_layout_range_iface_attr(IUnknown **dest, IUnknown *value)
     return TRUE;
 }
 
-static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
+static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
+    struct layout_range_bool *dest_bool = (struct layout_range_bool*)h;
+    struct layout_range *dest = (struct layout_range*)h;
+
     BOOL changed = FALSE;
 
     switch (attr) {
@@ -1218,8 +1317,8 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         dest->underline = value->u.underline;
         break;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
-        changed = dest->strikethrough != value->u.strikethrough;
-        dest->strikethrough = value->u.strikethrough;
+        changed = dest_bool->value != value->u.strikethrough;
+        dest_bool->value = value->u.strikethrough;
         break;
     case LAYOUT_RANGE_ATTR_PAIR_KERNING:
         changed = dest->pair_kerning != value->u.pair_kerning;
@@ -1253,25 +1352,49 @@ static inline BOOL is_in_layout_range(const DWRITE_TEXT_RANGE *outer, const DWRI
            (inner->startPosition + inner->length <= outer->startPosition + outer->length);
 }
 
-static inline HRESULT return_range(const struct layout_range *range, DWRITE_TEXT_RANGE *r)
+static inline HRESULT return_range(const struct layout_range_header *h, DWRITE_TEXT_RANGE *r)
 {
-    if (r) *r = range->range;
+    if (r) *r = h->range;
     return S_OK;
 }
 
 /* Set attribute value for given range, does all needed splitting/merging of existing ranges. */
 static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
-    struct layout_range *outer, *right, *left, *cur;
-    struct list *ranges = &layout->ranges;
+    struct layout_range_header *cur, *right, *left, *outer;
     BOOL changed = FALSE;
+    struct list *ranges;
     DWRITE_TEXT_RANGE r;
 
     if (!validate_text_range(layout, &value->range))
         return S_OK;
 
+    /* select from ranges lists */
+    switch (attr)
+    {
+    case LAYOUT_RANGE_ATTR_WEIGHT:
+    case LAYOUT_RANGE_ATTR_STYLE:
+    case LAYOUT_RANGE_ATTR_STRETCH:
+    case LAYOUT_RANGE_ATTR_FONTSIZE:
+    case LAYOUT_RANGE_ATTR_EFFECT:
+    case LAYOUT_RANGE_ATTR_INLINE:
+    case LAYOUT_RANGE_ATTR_UNDERLINE:
+    case LAYOUT_RANGE_ATTR_PAIR_KERNING:
+    case LAYOUT_RANGE_ATTR_FONTCOLL:
+    case LAYOUT_RANGE_ATTR_LOCALE:
+    case LAYOUT_RANGE_ATTR_FONTFAMILY:
+        ranges = &layout->ranges;
+        break;
+    case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
+        ranges = &layout->strike_ranges;
+        break;
+    default:
+        FIXME("unknown attr kind %d\n", attr);
+        return E_FAIL;
+    }
+
     /* If new range is completely within existing range, split existing range in two */
-    if ((outer = find_outer_range(layout, &value->range))) {
+    if ((outer = find_outer_range(ranges, &value->range))) {
 
         /* no need to add same range */
         if (is_same_layout_attrvalue(outer, attr, value))
@@ -1289,7 +1412,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             if (!left) return E_OUTOFMEMORY;
 
             changed = set_layout_range_attrval(left, attr, value);
-            list_add_before(&outer->h.entry, &left->h.entry);
+            list_add_before(&outer->entry, &left->entry);
             outer->range.startPosition += value->range.length;
             outer->range.length -= value->range.length;
             goto done;
@@ -1301,7 +1424,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             if (!right) return E_OUTOFMEMORY;
 
             changed = set_layout_range_attrval(right, attr, value);
-            list_add_after(&outer->h.entry, &right->h.entry);
+            list_add_after(&outer->entry, &right->entry);
             outer->range.length -= value->range.length;
             goto done;
         }
@@ -1325,15 +1448,15 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         /* new part */
         set_layout_range_attrval(cur, attr, value);
 
-        list_add_after(&outer->h.entry, &cur->h.entry);
-        list_add_after(&cur->h.entry, &right->h.entry);
+        list_add_after(&outer->entry, &cur->entry);
+        list_add_after(&cur->entry, &right->entry);
 
         return S_OK;
     }
 
     /* Now it's only possible that given range contains some existing ranges, fully or partially.
        Update all of them. */
-    left = get_layout_range_by_pos(layout, value->range.startPosition);
+    left = get_layout_range_header_by_pos(ranges, value->range.startPosition);
     if (left->range.startPosition == value->range.startPosition)
         changed = set_layout_range_attrval(left, attr, value);
     else /* need to split */ {
@@ -1342,14 +1465,14 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         left->range.length -= r.length;
         cur = alloc_layout_range_from(left, &r);
         changed = set_layout_range_attrval(cur, attr, value);
-        list_add_after(&left->h.entry, &cur->h.entry);
+        list_add_after(&left->entry, &cur->entry);
     }
-    cur = LIST_ENTRY(list_next(ranges, &left->h.entry), struct layout_range, h.entry);
+    cur = LIST_ENTRY(list_next(ranges, &left->entry), struct layout_range_header, entry);
 
     /* for all existing ranges covered by new one update value */
     while (is_in_layout_range(&value->range, &cur->range)) {
         changed = set_layout_range_attrval(cur, attr, value);
-        cur = LIST_ENTRY(list_next(ranges, &cur->h.entry), struct layout_range, h.entry);
+        cur = LIST_ENTRY(list_next(ranges, &cur->entry), struct layout_range_header, entry);
     }
 
     /* it's possible rightmost range intersects */
@@ -1360,7 +1483,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         changed = set_layout_range_attrval(left, attr, value);
         cur->range.startPosition += left->range.length;
         cur->range.length -= left->range.length;
-        list_add_before(&cur->h.entry, &left->h.entry);
+        list_add_before(&cur->entry, &left->entry);
     }
 
 done:
@@ -1370,9 +1493,9 @@ done:
         layout->recompute = RECOMPUTE_EVERYTHING;
         i = list_head(ranges);
         while ((next = list_next(ranges, i))) {
-            struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, h.entry);
+            struct layout_range_header *next_range = LIST_ENTRY(next, struct layout_range_header, entry);
 
-            cur = LIST_ENTRY(i, struct layout_range, h.entry);
+            cur = LIST_ENTRY(i, struct layout_range_header, entry);
             if (is_same_layout_attributes(cur, next_range)) {
                 /* remove similar range */
                 cur->range.length += next_range->range.length;
@@ -1419,7 +1542,7 @@ static HRESULT get_string_attribute_length(struct dwrite_textlayout *layout, enu
 
     str = get_string_attribute_ptr(range, kind);
     *length = strlenW(str);
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT get_string_attribute_value(struct dwrite_textlayout *layout, enum layout_range_attr_kind kind, UINT32 position,
@@ -1441,7 +1564,7 @@ static HRESULT get_string_attribute_value(struct dwrite_textlayout *layout, enum
         return E_NOT_SUFFICIENT_BUFFER;
 
     strcpyW(ret, str);
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_QueryInterface(IDWriteTextLayout2 *iface, REFIID riid, void **obj)
@@ -1881,7 +2004,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayou
     if (*collection)
         IDWriteFontCollection_AddRef(*collection);
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontFamilyNameLength(IDWriteTextLayout2 *iface,
@@ -1914,7 +2037,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontWeight(IDWriteTextLayout2 *
     range = get_layout_range_by_pos(This, position);
     *weight = range->weight;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout2 *iface,
@@ -1931,7 +2054,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout2 *i
     range = get_layout_range_by_pos(This, position);
     *style = range->style;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout2 *iface,
@@ -1948,7 +2071,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout2 
     range = get_layout_range_by_pos(This, position);
     *stretch = range->stretch;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout2 *iface,
@@ -1965,7 +2088,7 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout2 *if
     range = get_layout_range_by_pos(This, position);
     *size = range->fontsize;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout2 *iface,
@@ -1982,24 +2105,24 @@ static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout2 *iface,
     range = get_layout_range_by_pos(This, position);
     *underline = range->underline;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout2 *iface,
     UINT32 position, BOOL *strikethrough, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    struct layout_range *range;
+    struct layout_range_bool *range;
 
     TRACE("(%p)->(%u %p %p)\n", This, position, strikethrough, r);
 
     if (position >= This->len)
         return S_OK;
 
-    range = get_layout_range_by_pos(This, position);
-    *strikethrough = range->strikethrough;
+    range = (struct layout_range_bool*)get_layout_range_header_by_pos(&This->strike_ranges, position);
+    *strikethrough = range->value;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout2 *iface,
@@ -2018,7 +2141,7 @@ static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout2 *ifac
     if (*effect)
         IUnknown_AddRef(*effect);
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout2 *iface,
@@ -2037,7 +2160,7 @@ static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout2 *iface
     if (*object)
         IDWriteInlineObject_AddRef(*object);
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetTypography(IDWriteTextLayout2 *iface,
@@ -2301,7 +2424,7 @@ static HRESULT WINAPI dwritetextlayout1_GetPairKerning(IDWriteTextLayout2 *iface
     range = get_layout_range_by_pos(This, position);
     *is_pairkerning_enabled = range->pair_kerning;
 
-    return return_range(range, r);
+    return return_range(&range->h, r);
 }
 
 static HRESULT WINAPI dwritetextlayout1_SetCharacterSpacing(IDWriteTextLayout2 *iface, FLOAT leading_spacing, FLOAT trailing_spacing,
@@ -3059,8 +3182,8 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
 static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
+    struct layout_range_header *range, *strike;
     DWRITE_TEXT_RANGE r = { 0, len };
-    struct layout_range *range;
     HRESULT hr;
 
     layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
@@ -3085,6 +3208,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     list_init(&layout->inlineobjects);
     list_init(&layout->runs);
     list_init(&layout->ranges);
+    list_init(&layout->strike_ranges);
     memset(&layout->format, 0, sizeof(layout->format));
 
     layout->gdicompatible = FALSE;
@@ -3102,13 +3226,17 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     if (FAILED(hr))
         goto fail;
 
-    range = alloc_layout_range(layout, &r);
-    if (!range) {
+    range = alloc_layout_range(layout, &r, LAYOUT_RANGE_REGULAR);
+    strike = alloc_layout_range(layout, &r, LAYOUT_RANGE_STRIKETHROUGH);
+    if (!range || !strike) {
+        free_layout_range(range);
+        free_layout_range(strike);
         hr = E_OUTOFMEMORY;
         goto fail;
     }
 
-    list_add_head(&layout->ranges, &range->h.entry);
+    list_add_head(&layout->ranges, &range->entry);
+    list_add_head(&layout->strike_ranges, &strike->entry);
     return S_OK;
 
 fail:
