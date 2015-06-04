@@ -1987,6 +1987,10 @@ then
    AC_SUBST([UNWINDFLAGS],[-fasynchronous-unwind-tables])
 else
    AC_DEFINE([__ASM_CFI(str)],[""])
+   if test "x$enable_win64" = "xyes"
+   then
+      WINE_WARNING([building 64-bit Wine without support for CFI directives; exception handling will not work properly.])
+   fi
 fi
 
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"

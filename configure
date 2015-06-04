@@ -14649,6 +14649,10 @@ $as_echo "#define __ASM_CFI(str) str" >>confdefs.h
 else
    $as_echo "#define __ASM_CFI(str) \"\"" >>confdefs.h
 
+   if test "x$enable_win64" = "xyes"
+   then
+      as_fn_append wine_warnings "|building 64-bit Wine without support for CFI directives; exception handling will not work properly."
+   fi
 fi
 
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
