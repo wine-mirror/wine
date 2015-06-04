@@ -93,8 +93,17 @@ struct layout_range_attr_value {
     } u;
 };
 
-struct layout_range {
+enum layout_range_kind {
+    LAYOUT_RANGE_REGULAR
+};
+
+struct layout_range_header {
     struct list entry;
+    enum layout_range_kind kind;
+};
+
+struct layout_range {
+    struct layout_range_header h;
     DWRITE_TEXT_RANGE range;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
@@ -545,7 +554,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     if (FAILED(hr))
         return hr;
 
-    LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, h.entry) {
         /* inline objects override actual text in a range */
         if (range->object) {
             hr = layout_update_breakpoints_range(layout, range);
@@ -1056,6 +1065,7 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
     range = heap_alloc(sizeof(*range));
     if (!range) return NULL;
 
+    range->h.kind = LAYOUT_RANGE_REGULAR;
     range->range = *r;
     range->weight = layout->format.weight;
     range->style  = layout->format.style;
@@ -1125,8 +1135,8 @@ static void free_layout_range(struct layout_range *range)
 static void free_layout_ranges_list(struct dwrite_textlayout *layout)
 {
     struct layout_range *cur, *cur2;
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range, entry) {
-        list_remove(&cur->entry);
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range, h.entry) {
+        list_remove(&cur->h.entry);
         free_layout_range(cur);
     }
 }
@@ -1135,7 +1145,7 @@ static struct layout_range *find_outer_range(struct dwrite_textlayout *layout, c
 {
     struct layout_range *cur;
 
-    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
 
         if (cur->range.startPosition > range->startPosition)
             return NULL;
@@ -1154,7 +1164,7 @@ static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *la
 {
     struct layout_range *cur;
 
-    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, entry) {
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
         DWRITE_TEXT_RANGE *r = &cur->range;
         if (r->startPosition <= pos && pos < r->startPosition + r->length)
             return cur;
@@ -1279,7 +1289,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             if (!left) return E_OUTOFMEMORY;
 
             changed = set_layout_range_attrval(left, attr, value);
-            list_add_before(&outer->entry, &left->entry);
+            list_add_before(&outer->h.entry, &left->h.entry);
             outer->range.startPosition += value->range.length;
             outer->range.length -= value->range.length;
             goto done;
@@ -1291,7 +1301,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             if (!right) return E_OUTOFMEMORY;
 
             changed = set_layout_range_attrval(right, attr, value);
-            list_add_after(&outer->entry, &right->entry);
+            list_add_after(&outer->h.entry, &right->h.entry);
             outer->range.length -= value->range.length;
             goto done;
         }
@@ -1315,8 +1325,8 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         /* new part */
         set_layout_range_attrval(cur, attr, value);
 
-        list_add_after(&outer->entry, &cur->entry);
-        list_add_after(&cur->entry, &right->entry);
+        list_add_after(&outer->h.entry, &cur->h.entry);
+        list_add_after(&cur->h.entry, &right->h.entry);
 
         return S_OK;
     }
@@ -1332,14 +1342,14 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         left->range.length -= r.length;
         cur = alloc_layout_range_from(left, &r);
         changed = set_layout_range_attrval(cur, attr, value);
-        list_add_after(&left->entry, &cur->entry);
+        list_add_after(&left->h.entry, &cur->h.entry);
     }
-    cur = LIST_ENTRY(list_next(ranges, &left->entry), struct layout_range, entry);
+    cur = LIST_ENTRY(list_next(ranges, &left->h.entry), struct layout_range, h.entry);
 
     /* for all existing ranges covered by new one update value */
     while (is_in_layout_range(&value->range, &cur->range)) {
         changed = set_layout_range_attrval(cur, attr, value);
-        cur = LIST_ENTRY(list_next(ranges, &cur->entry), struct layout_range, entry);
+        cur = LIST_ENTRY(list_next(ranges, &cur->h.entry), struct layout_range, h.entry);
     }
 
     /* it's possible rightmost range intersects */
@@ -1350,7 +1360,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         changed = set_layout_range_attrval(left, attr, value);
         cur->range.startPosition += left->range.length;
         cur->range.length -= left->range.length;
-        list_add_before(&cur->entry, &left->entry);
+        list_add_before(&cur->h.entry, &left->h.entry);
     }
 
 done:
@@ -1360,9 +1370,9 @@ done:
         layout->recompute = RECOMPUTE_EVERYTHING;
         i = list_head(ranges);
         while ((next = list_next(ranges, i))) {
-            struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, entry);
+            struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, h.entry);
 
-            cur = LIST_ENTRY(i, struct layout_range, entry);
+            cur = LIST_ENTRY(i, struct layout_range, h.entry);
             if (is_same_layout_attributes(cur, next_range)) {
                 /* remove similar range */
                 cur->range.length += next_range->range.length;
@@ -3098,7 +3108,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
         goto fail;
     }
 
-    list_add_head(&layout->ranges, &range->entry);
+    list_add_head(&layout->ranges, &range->h.entry);
     return S_OK;
 
 fail:
