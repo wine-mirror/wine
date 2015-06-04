@@ -231,6 +231,7 @@ static const char *get_draw_kind_name(enum drawcall_kind kind)
 
 struct drawcall_entry {
     enum drawcall_kind kind;
+    WCHAR string[10]; /* only meaningful for DrawGlyphRun() */
 };
 
 struct drawcall_sequence
@@ -326,6 +327,18 @@ static void ok_sequence_(struct drawcall_sequence **seq, int sequence_index,
                 ok_(file, line) (0, "%s: call %s was expected, but got call %s instead\n",
                     context, get_draw_kind_name(expected->kind), get_draw_kind_name(actual->kind));
         }
+        else if (expected->kind == DRAW_GLYPHRUN) {
+            int cmp = lstrcmpW(expected->string, actual->string);
+            if (cmp != 0 && todo) {
+                failcount++;
+            todo_wine
+                ok_(file, line) (0, "%s: glyphrun string %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->string), wine_dbgstr_w(actual->string));
+            }
+            else
+                ok_(file, line) (cmp == 0, "%s: glyphrun string %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->string), wine_dbgstr_w(actual->string));
+        }
         expected++;
         actual++;
     }
@@ -420,6 +433,14 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
 {
     struct drawcall_entry entry;
     DWRITE_SCRIPT_ANALYSIS sa;
+
+    ok(descr->stringLength < sizeof(entry.string)/sizeof(WCHAR), "string is too long\n");
+    if (descr->stringLength && descr->stringLength < sizeof(entry.string)/sizeof(WCHAR)) {
+        memcpy(entry.string, descr->string, descr->stringLength*sizeof(WCHAR));
+        entry.string[descr->stringLength] = 0;
+    }
+    else
+        entry.string[0] = 0;
 
     /* see what's reported for control codes runs */
     get_script_analysis(descr->string, descr->stringLength, &sa);
@@ -1102,10 +1123,10 @@ static void test_SetInlineObject(void)
 /* drawing calls sequence doesn't depend on run order, instead all runs are
    drawn first, inline objects next and then underline/strikes */
 static const struct drawcall_entry draw_seq[] = {
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN, {'s',0}     },
+    { DRAW_GLYPHRUN, {'r','i',0} },
+    { DRAW_GLYPHRUN, {'n',0}     },
+    { DRAW_GLYPHRUN, {'g',0}     },
     { DRAW_INLINE },
     { DRAW_UNDERLINE },
     { DRAW_STRIKETHROUGH },
@@ -1113,18 +1134,25 @@ static const struct drawcall_entry draw_seq[] = {
 };
 
 static const struct drawcall_entry draw_seq2[] = {
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN, {'s',0} },
+    { DRAW_GLYPHRUN, {'t',0} },
+    { DRAW_GLYPHRUN, {'r',0} },
+    { DRAW_GLYPHRUN, {'i',0} },
+    { DRAW_GLYPHRUN, {'n',0} },
+    { DRAW_GLYPHRUN, {'g',0} },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draw_seq3[] = {
     { DRAW_GLYPHRUN },
-    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN, {'a','b',0} },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draw_seq4[] = {
+    { DRAW_GLYPHRUN, {'s','t','r',0} },
+    { DRAW_GLYPHRUN, {'i','n','g',0} },
+    { DRAW_STRIKETHROUGH },
     { DRAW_LAST_KIND }
 };
 
@@ -1195,6 +1223,22 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq3, "draw test 3", TRUE);
+    IDWriteTextLayout_Release(layout);
+
+    /* strikethrough splits ranges from renderer point of view, but doesn't break
+       shaping */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+
+    range.startPosition = 0;
+    range.length = 3;
+    hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_seq4, "draw test 4", TRUE);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
