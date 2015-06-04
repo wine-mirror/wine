@@ -260,6 +260,8 @@ static inline ioinfo* get_ioinfo_nolock(int fd)
 static inline ioinfo* get_ioinfo(int fd)
 {
     ioinfo *ret = get_ioinfo_nolock(fd);
+    if(ret == &MSVCRT___badioinfo)
+        return ret;
     if(!(ret->exflag & EF_CRIT_INIT)) {
         LOCK_FILES();
         if(!(ret->exflag & EF_CRIT_INIT)) {
@@ -274,7 +276,7 @@ static inline ioinfo* get_ioinfo(int fd)
 
 static inline void release_ioinfo(ioinfo *info)
 {
-    if(info->exflag & EF_CRIT_INIT)
+    if(info!=&MSVCRT___badioinfo && info->exflag & EF_CRIT_INIT)
         LeaveCriticalSection(&info->crit);
 }
 
