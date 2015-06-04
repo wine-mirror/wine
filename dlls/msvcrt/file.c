@@ -3283,7 +3283,7 @@ int CDECL _wutime(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf32 *t)
 int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 {
     DWORD num_written;
-    ioinfo *info = get_ioinfo_nolock(fd);
+    ioinfo *info = get_ioinfo(fd);
     HANDLE hand = info->handle;
 
     /* Don't trace small writes, it gets *very* annoying */
@@ -3294,12 +3294,14 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
     if (hand == INVALID_HANDLE_VALUE)
     {
         *MSVCRT__errno() = MSVCRT_EBADF;
+        release_ioinfo(info);
         return -1;
     }
 
     if (((info->exflag&EF_UTF8) || (info->exflag&EF_UTF16)) && count&1)
     {
         *MSVCRT__errno() = MSVCRT_EINVAL;
+        release_ioinfo(info);
         return -1;
     }
 
@@ -3311,7 +3313,10 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
     {
         if (WriteFile(hand, buf, count, &num_written, NULL)
                 &&  (num_written == count))
+        {
+            release_ioinfo(info);
             return num_written;
+        }
         TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
                 hand, GetLastError());
         *MSVCRT__errno() = MSVCRT_ENOSPC;
@@ -3402,6 +3407,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
             if(!conv_len) {
                 msvcrt_set_errno(GetLastError());
                 MSVCRT_free(p);
+                release_ioinfo(info);
                 return -1;
             }
 
@@ -3433,6 +3439,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 
         if (!WriteFile(hand, q, size, &num_written, NULL))
             num_written = -1;
+        release_ioinfo(info);
         if(p)
             MSVCRT_free(p);
         if (num_written != size)
@@ -3445,6 +3452,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
         return count;
     }
 
+    release_ioinfo(info);
     return -1;
 }
 
