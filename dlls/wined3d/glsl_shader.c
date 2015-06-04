@@ -171,6 +171,10 @@ struct glsl_ps_program
     GLint tss_constant_location[MAX_TEXTURES];
     GLint tex_factor_location;
     GLint specular_enable_location;
+    GLint fog_color_location;
+    GLint fog_density_location;
+    GLint fog_end_location;
+    GLint fog_scale_location;
     GLint ycorrection_location;
     GLint np2_fixup_location;
     GLint color_key_location;
@@ -1229,6 +1233,29 @@ static void shader_glsl_pointsize_uniform(const struct wined3d_context *context,
     checkGLcall("glUniform1f");
 }
 
+static void shader_glsl_load_fog_uniform(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    float start, end, scale;
+    union
+    {
+        DWORD d;
+        float f;
+    } tmpvalue;
+    float col[4];
+
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_FOGCOLOR], col);
+    GL_EXTCALL(glUniform4fv(prog->ps.fog_color_location, 1, col));
+    tmpvalue.d = state->render_states[WINED3D_RS_FOGDENSITY];
+    GL_EXTCALL(glUniform1f(prog->ps.fog_density_location, tmpvalue.f));
+    get_fog_start_end(context, state, &start, &end);
+    scale = 1.0f / (end - start);
+    GL_EXTCALL(glUniform1f(prog->ps.fog_end_location, end));
+    GL_EXTCALL(glUniform1f(prog->ps.fog_scale_location, scale));
+    checkGLcall("fog emulation uniforms");
+}
+
 /* Context activation is done by the caller (state handler). */
 static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
@@ -1401,6 +1428,9 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
         checkGLcall("fixed function uniforms");
     }
+
+    if (update_mask & WINED3D_SHADER_CONST_PS_FOG)
+        shader_glsl_load_fog_uniform(context, state, prog);
 
     if (priv->next_constant_version == UINT_MAX)
     {
@@ -1747,6 +1777,16 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
     else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
+        if (version->major < 3 || ps_args->vp_mode != vertexshader)
+        {
+            shader_addline(buffer, "uniform struct\n{\n");
+            shader_addline(buffer, "    vec4 color;\n");
+            shader_addline(buffer, "    float density;\n");
+            shader_addline(buffer, "    float end;\n");
+            shader_addline(buffer, "    float scale;\n");
+            shader_addline(buffer, "} ffp_fog;\n");
+        }
+
         if (version->major >= 3)
         {
             UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
@@ -5069,17 +5109,16 @@ static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer, 
             return;
 
         case WINED3D_FFP_PS_FOG_LINEAR:
-            shader_addline(buffer, "float Fog = (gl_Fog.end - gl_FogFragCoord) * gl_Fog.scale;\n");
+            shader_addline(buffer, "float fog = (ffp_fog.end - gl_FogFragCoord) * ffp_fog.scale;\n");
             break;
 
         case WINED3D_FFP_PS_FOG_EXP:
-            /* Fog = e^-(gl_Fog.density * gl_FogFragCoord) */
-            shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
+            shader_addline(buffer, "float fog = exp(-ffp_fog.density * gl_FogFragCoord);\n");
             break;
 
         case WINED3D_FFP_PS_FOG_EXP2:
-            /* Fog = e^-((gl_Fog.density * gl_FogFragCoord)^2) */
-            shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
+            shader_addline(buffer, "float fog = exp(-ffp_fog.density * ffp_fog.density"
+                    " * gl_FogFragCoord * gl_FogFragCoord);\n");
             break;
 
         default:
@@ -5087,7 +5126,8 @@ static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer, 
             return;
     }
 
-    shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, clamp(Fog, 0.0, 1.0));\n");
+    shader_addline(buffer, "gl_FragData[0].xyz = mix(ffp_fog.color.xyz, gl_FragData[0].xyz,"
+            " clamp(fog, 0.0, 1.0));\n");
 }
 
 /* Context activation is done by the caller. */
@@ -6187,6 +6227,13 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         shader_addline(buffer, ";\n");
     }
 
+    shader_addline(buffer, "uniform struct\n{\n");
+    shader_addline(buffer, "    vec4 color;\n");
+    shader_addline(buffer, "    float density;\n");
+    shader_addline(buffer, "    float end;\n");
+    shader_addline(buffer, "    float scale;\n");
+    shader_addline(buffer, "} ffp_fog;\n");
+
     shader_addline(buffer, "void main()\n{\n");
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
@@ -6569,6 +6616,12 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
 
     ps->tex_factor_location = GL_EXTCALL(glGetUniformLocation(program_id, "tex_factor"));
     ps->specular_enable_location = GL_EXTCALL(glGetUniformLocation(program_id, "specular_enable"));
+
+    ps->fog_color_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_fog.color"));
+    ps->fog_density_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_fog.density"));
+    ps->fog_end_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_fog.end"));
+    ps->fog_scale_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_fog.scale"));
+
     ps->np2_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "ps_samplerNP2Fixup"));
     ps->ycorrection_location = GL_EXTCALL(glGetUniformLocation(program_id, "ycorrection"));
     ps->color_key_location = GL_EXTCALL(glGetUniformLocation(program_id, "color_key"));
@@ -6890,6 +6943,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             }
         }
 
+        if (entry->ps.fog_color_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_FOG;
         if (entry->ps.np2_fixup_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_NP2_FIXUP;
         if (entry->ps.color_key_location != -1)
@@ -8163,6 +8218,12 @@ static void glsl_fragment_pipe_shader(struct wined3d_context *context,
     context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
 }
 
+static void glsl_fragment_pipe_fogparams(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->constant_update_mask |= WINED3D_SHADER_CONST_PS_FOG;
+}
+
 static void glsl_fragment_pipe_fog(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -8193,7 +8254,7 @@ static void glsl_fragment_pipe_fog(struct wined3d_context *context,
     if (new_source != context->fog_source || fogstart == fogend)
     {
         context->fog_source = new_source;
-        state_fogstartend(context, state, STATE_RENDER(WINED3D_RS_FOGSTART));
+        context->constant_update_mask |= WINED3D_SHADER_CONST_PS_FOG;
     }
 }
 
@@ -8338,12 +8399,12 @@ static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
     {STATE_RENDER(WINED3D_RS_FOGENABLE),                        {STATE_RENDER(WINED3D_RS_FOGENABLE),                         glsl_fragment_pipe_fog                 }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),                     {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),                    {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                                   }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGSTART),                         {STATE_RENDER(WINED3D_RS_FOGSTART),                          state_fogstartend                      }, WINED3D_GL_EXT_NONE },
+    {STATE_RENDER(WINED3D_RS_FOGSTART),                         {STATE_RENDER(WINED3D_RS_FOGSTART),                          glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGEND),                           {STATE_RENDER(WINED3D_RS_FOGSTART),                          NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                   state_srgbwrite                        }, ARB_FRAMEBUFFER_SRGB},
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGCOLOR),                         {STATE_RENDER(WINED3D_RS_FOGCOLOR),                          state_fogcolor                         }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGDENSITY),                       {STATE_RENDER(WINED3D_RS_FOGDENSITY),                        state_fogdensity                       }, WINED3D_GL_EXT_NONE },
+    {STATE_RENDER(WINED3D_RS_FOGCOLOR),                         {STATE_RENDER(WINED3D_RS_FOGCOLOR),                          glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
+    {STATE_RENDER(WINED3D_RS_FOGDENSITY),                       {STATE_RENDER(WINED3D_RS_FOGDENSITY),                        glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 glsl_fragment_pipe_shader              }, ARB_POINT_SPRITE    },
     {STATE_TEXTURESTAGE(0,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(1,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
