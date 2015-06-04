@@ -3074,6 +3074,8 @@ void get_pointsize_minmax(const struct wined3d_context *context, const struct wi
         float *out_min, float *out_max) DECLSPEC_HIDDEN;
 void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_pointsize, float *out_att) DECLSPEC_HIDDEN;
+void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,
+        float *start, float *end) DECLSPEC_HIDDEN;
 
 /* Using additional shader constants (uniforms in GLSL / program environment
  * or local parameters in ARB) is costly:

@@ -1006,47 +1006,8 @@ void state_fogstartend(struct wined3d_context *context, const struct wined3d_sta
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float fogstart, fogend;
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
 
-    switch(context->fog_source) {
-        case FOGSOURCE_VS:
-            fogstart = 1.0f;
-            fogend = 0.0f;
-            break;
-
-        case FOGSOURCE_COORD:
-            fogstart = 255.0f;
-            fogend = 0.0f;
-            break;
-
-        case FOGSOURCE_FFP:
-            tmpvalue.d = state->render_states[WINED3D_RS_FOGSTART];
-            fogstart = tmpvalue.f;
-            tmpvalue.d = state->render_states[WINED3D_RS_FOGEND];
-            fogend = tmpvalue.f;
-            /* Special handling for fogstart == fogend. In d3d with vertex
-             * fog, everything is fogged. With table fog, everything with
-             * fog_coord < fog_start is unfogged, and fog_coord > fog_start
-             * is fogged. Windows drivers disagree when fog_coord == fog_start. */
-            if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE
-                    && fogstart == fogend)
-            {
-                fogstart = -INFINITY;
-                fogend = 0.0f;
-            }
-            break;
-
-        default:
-            /* This should not happen.context->fog_source is set in wined3d, not the app.
-             * Still this is needed to make the compiler happy
-             */
-            ERR("Unexpected fog coordinate source\n");
-            fogstart = 0.0f;
-            fogend = 0.0f;
-    }
+    get_fog_start_end(context, state, &fogstart, &fogend);
 
     gl_info->gl_ops.gl.p_glFogf(GL_FOG_START, fogstart);
     checkGLcall("glFogf(GL_FOG_START, fogstart)");
