@@ -69,6 +69,7 @@ static HRESULT (WINAPI *pSKSetValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD, void*, DWO
 static HRESULT (WINAPI *pSKDeleteValueW)(DWORD, LPCWSTR, LPCWSTR);
 static HRESULT (WINAPI *pSKAllocValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void**, DWORD*);
 static HWND    (WINAPI *pSHSetParentHwnd)(HWND, HWND);
+static HRESULT (WINAPI *pIUnknown_GetClassID)(IUnknown*, CLSID*);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -3047,6 +3048,7 @@ static void init_pointers(void)
     MAKEFUNC(SHSetWindowBits, 165);
     MAKEFUNC(SHSetParentHwnd, 167);
     MAKEFUNC(ConnectToConnectionPoint, 168);
+    MAKEFUNC(IUnknown_GetClassID, 175);
     MAKEFUNC(SHSearchMapInt, 198);
     MAKEFUNC(SHCreateWorkerWindowA, 257);
     MAKEFUNC(GUIDFromStringA, 269);
@@ -3152,6 +3154,95 @@ static void test_SHSetParentHwnd(void)
     DestroyWindow(hwnd2);
 }
 
+static HRESULT WINAPI testpersist_QI(IPersist *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPersist)) {
+        *obj = iface;
+        IPersist_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI testpersist_QI2(IPersist *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IPersistFolder)) {
+        *obj = iface;
+        IPersist_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testpersist_AddRef(IPersist *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testpersist_Release(IPersist *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testpersist_GetClassID(IPersist *iface, CLSID *clsid)
+{
+    memset(clsid, 0xab, sizeof(*clsid));
+    return 0x8fff2222;
+}
+
+static IPersistVtbl testpersistvtbl = {
+    testpersist_QI,
+    testpersist_AddRef,
+    testpersist_Release,
+    testpersist_GetClassID
+};
+
+static IPersistVtbl testpersist2vtbl = {
+    testpersist_QI2,
+    testpersist_AddRef,
+    testpersist_Release,
+    testpersist_GetClassID
+};
+
+static IPersist testpersist = { &testpersistvtbl };
+static IPersist testpersist2 = { &testpersist2vtbl };
+
+static void test_IUnknown_GetClassID(void)
+{
+    CLSID clsid, clsid2, clsid3;
+    HRESULT hr;
+
+if (0) /* crashes on native systems */
+    hr = pIUnknown_GetClassID(NULL, NULL);
+
+    memset(&clsid, 0xcc, sizeof(clsid));
+    memset(&clsid3, 0xcc, sizeof(clsid3));
+    hr = pIUnknown_GetClassID(NULL, &clsid);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k, winxp, win2k3 */,
+        "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    memset(&clsid, 0xcc, sizeof(clsid));
+    memset(&clsid2, 0xab, sizeof(clsid2));
+    hr = pIUnknown_GetClassID((IUnknown*)&testpersist, &clsid);
+    ok(hr == 0x8fff2222, "got 0x%08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &clsid2) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k3 */,
+        "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    /* IPersistFolder is also supported */
+    memset(&clsid, 0xcc, sizeof(clsid));
+    memset(&clsid2, 0xab, sizeof(clsid2));
+    memset(&clsid3, 0xcc, sizeof(clsid3));
+    hr = pIUnknown_GetClassID((IUnknown*)&testpersist2, &clsid);
+    ok(hr == 0x8fff2222, "got 0x%08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &clsid2) || broken(IsEqualCLSID(&clsid, &clsid3)) /* win2k3 */,
+        "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+}
+
 START_TEST(ordinal)
 {
     char **argv;
@@ -3206,6 +3297,7 @@ START_TEST(ordinal)
     test_SHSetIniString();
     test_SHGetShellKey();
     test_SHSetParentHwnd();
+    test_IUnknown_GetClassID();
 
     FreeLibrary(hshell32);
     FreeLibrary(hmlang);
