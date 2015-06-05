@@ -73,6 +73,7 @@ static void test_GetDataSource(WCHAR *initstring)
                                              pInfoset->rgPropertyInfos[i].vtType);
                 }
 
+                CoTaskMemFree(pInfoset);
                 CoTaskMemFree(ary);
             }
 
