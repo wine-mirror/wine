@@ -111,6 +111,7 @@ static void test_RegisterClipboardFormatA(void)
     char buf[256];
     int len;
     BOOL ret;
+    HANDLE handle;
 
     format_id = RegisterClipboardFormatA("my_cool_clipboard_format");
     ok(format_id > 0xc000 && format_id < 0xffff, "invalid clipboard format id %04x\n", format_id);
@@ -164,6 +165,25 @@ todo_wine
 
     ret = OpenClipboard(0);
     ok( ret, "OpenClipboard error %d\n", GetLastError());
+
+    /* try some invalid/unregistered formats */
+    SetLastError( 0xdeadbeef );
+    handle = SetClipboardData( 0, GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE, 1 ));
+    ok( !handle, "SetClipboardData succeeded\n" );
+    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError());
+    handle = SetClipboardData( 0x1234, GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE, 1 ));
+    ok( handle != 0, "SetClipboardData failed err %d\n", GetLastError());
+    handle = SetClipboardData( 0x123456, GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE, 1 ));
+    ok( handle != 0, "SetClipboardData failed err %d\n", GetLastError());
+    handle = SetClipboardData( 0xffff8765, GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE, 1 ));
+    ok( handle != 0, "SetClipboardData failed err %d\n", GetLastError());
+
+    ok( IsClipboardFormatAvailable( 0x1234 ), "format missing\n" );
+    ok( IsClipboardFormatAvailable( 0x123456 ), "format missing\n" );
+    ok( IsClipboardFormatAvailable( 0xffff8765 ), "format missing\n" );
+    ok( !IsClipboardFormatAvailable( 0 ), "format available\n" );
+    ok( !IsClipboardFormatAvailable( 0x3456 ), "format available\n" );
+    ok( !IsClipboardFormatAvailable( 0x8765 ), "format available\n" );
 
     trace("# of formats available: %d\n", CountClipboardFormats());
 

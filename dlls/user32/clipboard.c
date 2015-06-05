@@ -400,6 +400,12 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 
     TRACE("(%04X, %p) !\n", wFormat, hData);
 
+    if (!wFormat)
+    {
+        SetLastError( ERROR_CLIPBOARD_NOT_OPEN );
+        return 0;
+    }
+
     /* If it's not owned, data can only be set if the format isn't
        available and its rendering is not delayed */
     if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
