@@ -736,6 +736,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 
 #define WRITE_WATCH_FLAG_RESET  0x00000001
 
+#define AT_ROUND_TO_PAGE        0x40000000
 
 #define MINCHAR       0x80
 #define MAXCHAR       0x7f
