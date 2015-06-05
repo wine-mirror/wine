@@ -1534,7 +1534,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     cur = LIST_ENTRY(list_next(ranges, &left->entry), struct layout_range_header, entry);
 
     /* for all existing ranges covered by new one update value */
-    while (is_in_layout_range(&value->range, &cur->range)) {
+    while (cur && is_in_layout_range(&value->range, &cur->range)) {
         changed = set_layout_range_attrval(cur, attr, value);
         cur = LIST_ENTRY(list_next(ranges, &cur->entry), struct layout_range_header, entry);
     }

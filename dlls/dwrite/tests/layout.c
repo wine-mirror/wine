@@ -921,10 +921,21 @@ static void test_fontweight(void)
     weight = IDWriteTextFormat_GetFontWeight(fmt2);
     ok(weight == DWRITE_FONT_WEIGHT_BOLD, "got %u\n", weight);
 
+    range.startPosition = range.length = 0;
+    hr = IDWriteTextLayout_GetFontWeight(layout, 0, &weight, &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(range.startPosition == 0 && range.length == ~0u, "got %u, %u\n", range.startPosition, range.length);
+
     range.startPosition = 0;
     range.length = 6;
     hr = IDWriteTextLayout_SetFontWeight(layout, DWRITE_FONT_WEIGHT_NORMAL, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = range.length = 0;
+    hr = IDWriteTextLayout_GetFontWeight(layout, 0, &weight, &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(range.startPosition == 0 && range.length == 6, "got %u, %u\n", range.startPosition, range.length);
 
     /* IDWriteTextFormat methods output doesn't reflect layout changes */
     weight = IDWriteTextFormat_GetFontWeight(fmt2);
@@ -1803,6 +1814,217 @@ static void test_DetermineMinWidth(void)
     IDWriteTextFormat_Release(format);
 }
 
+static void test_SetFontSize(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE r;
+    FLOAT size;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    size = 0.0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 0, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+    ok(size == 10.0, "got %.2f\n", size);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, 15.0, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = 0.0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 1, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size == 15.0, "got %.2f\n", size);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontSize(layout, 15.0, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = 0.0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 1, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size == 15.0, "got %.2f\n", size);
+
+    size = 0.0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 0, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(size == 15.0, "got %.2f\n", size);
+
+    size = 15.0;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 20, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(r.startPosition == 4 && r.length == ~0u-4, "got %u, %u\n", r.startPosition, r.length);
+    ok(size == 10.0, "got %.2f\n", size);
+}
+    r.startPosition = 100;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontSize(layout, 25.0, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = 15.0;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontSize(layout, 100, &size, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(size == 25.0, "got %.2f\n", size);
+}
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
+static void test_SetFontFamilyName(void)
+{
+    static const WCHAR arialW[] = {'A','r','i','a','l',0};
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE r;
+    WCHAR nameW[50];
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    nameW[0] = 0;
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    nameW[0] = 0;
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(!lstrcmpW(nameW, arialW), "got name %s\n", wine_dbgstr_w(nameW));
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
+static void test_SetFontStyle(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_FONT_STYLE style;
+    DWRITE_TEXT_RANGE r;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 0, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+    ok(style == DWRITE_FONT_STYLE_NORMAL, "got %d\n", style);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_ITALIC, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    style = DWRITE_FONT_STYLE_NORMAL;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 1, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(style == DWRITE_FONT_STYLE_ITALIC, "got %d\n", style);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_OBLIQUE, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    style = DWRITE_FONT_STYLE_ITALIC;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 1, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+
+    style = DWRITE_FONT_STYLE_ITALIC;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 0, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+
+    style = DWRITE_FONT_STYLE_ITALIC;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 20, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(r.startPosition == 4 && r.length == ~0u-4, "got %u, %u\n", r.startPosition, r.length);
+    ok(style == DWRITE_FONT_STYLE_NORMAL, "got %d\n", style);
+}
+    r.startPosition = 100;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_OBLIQUE, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    style = DWRITE_FONT_STYLE_NORMAL;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontStyle(layout, 100, &style, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+}
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -1834,6 +2056,9 @@ START_TEST(layout)
     test_SetVerticalGlyphOrientation();
     test_fallback();
     test_DetermineMinWidth();
+    test_SetFontSize();
+    test_SetFontFamilyName();
+    test_SetFontStyle();
 
     IDWriteFactory_Release(factory);
 }
