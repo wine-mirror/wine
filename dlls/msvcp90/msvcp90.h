@@ -148,6 +148,12 @@ const char* __thiscall _Yarn_char_c_str(const _Yarn_char*);
 void __thiscall _Yarn_char_dtor(_Yarn_char*);
 _Yarn_char* __thiscall _Yarn_char_op_assign(_Yarn_char*, const _Yarn_char*);
 
+typedef struct
+{
+    wchar_t *str;
+    wchar_t null_str;
+} _Yarn_wchar;
+
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;

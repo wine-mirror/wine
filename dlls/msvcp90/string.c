@@ -1721,6 +1721,79 @@ MSVCP_bool __thiscall _Yarn_char_empty(const _Yarn_char *this)
     return !this->str;
 }
 
+/* ??0?$_Yarn@_W@std@@QAE@XZ */
+/* ??0?$_Yarn@_W@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar_ctor, 4)
+_Yarn_wchar* __thiscall _Yarn_wchar_ctor(_Yarn_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    this->str = NULL;
+    this->null_str = '\0';
+    return this;
+}
+
+/* ?_Tidy@?$_Yarn@_W@std@@AAEXXZ */
+/* ?_Tidy@?$_Yarn@_W@std@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar__Tidy, 4)
+void __thiscall _Yarn_wchar__Tidy(_Yarn_wchar *this)
+{
+    TRACE("(%p)\n", this);
+
+    if(this->str)
+        MSVCRT_operator_delete(this->str);
+    this->str = NULL;
+}
+
+/* ??1?$_Yarn@_W@std@@QAE@XZ */
+/* ??1?$_Yarn@_W@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar_dtor, 4)
+void __thiscall _Yarn_wchar_dtor(_Yarn_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    _Yarn_wchar__Tidy(this);
+}
+
+/* ??4?$_Yarn@_W@std@@QAEAAV01@PB_W@Z */
+/* ??4?$_Yarn@_W@std@@QEAAAEAV01@PEB_W@Z */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar_op_assign_cstr, 8)
+_Yarn_wchar* __thiscall _Yarn_wchar_op_assign_cstr(_Yarn_wchar *this, const wchar_t *str)
+{
+    TRACE("(%p %p)\n", this, str);
+
+    _Yarn_wchar__Tidy(this);
+
+    if(str) {
+        MSVCP_size_t len = wcslen(str);
+
+        this->str = MSVCRT_operator_new((len+1)*sizeof(wchar_t));
+        if(!this->str) {
+            ERR("out of memory\n");
+            return NULL;
+        }
+        memcpy(this->str, str, (len+1)*sizeof(wchar_t));
+    }
+    return this;
+}
+
+/* ?_C_str@?$_Yarn@_W@std@@QBEPB_WXZ */
+/* ?_C_str@?$_Yarn@_W@std@@QEBAPEB_WXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar__C_str, 4)
+const wchar_t* __thiscall _Yarn_wchar__C_str(const _Yarn_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return this->str ? this->str : &this->null_str;
+}
+
+/* ?_Empty@?$_Yarn@_W@std@@QBE_NXZ */
+/* ?_Empty@?$_Yarn@_W@std@@QEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(_Yarn_wchar__Empty, 4)
+MSVCP_bool __thiscall _Yarn_wchar__Empty(const _Yarn_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return !this->str;
+}
+
 /* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z */
 /* ?find_first_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_first_of_cstr, 12)
