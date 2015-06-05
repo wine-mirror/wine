@@ -82,7 +82,7 @@ static ULONG WINAPI BackgroundCopyFile_Release(
 
     if (ref == 0)
     {
-        IBackgroundCopyJob2_Release(&file->owner->IBackgroundCopyJob2_iface);
+        IBackgroundCopyJob3_Release(&file->owner->IBackgroundCopyJob3_iface);
         HeapFree(GetProcessHeap(), 0, file->info.LocalName);
         HeapFree(GetProcessHeap(), 0, file->info.RemoteName);
         HeapFree(GetProcessHeap(), 0, file);
@@ -201,7 +201,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     This->fileProgress.BytesTransferred = 0;
     This->fileProgress.Completed = FALSE;
     This->owner = owner;
-    IBackgroundCopyJob2_AddRef(&owner->IBackgroundCopyJob2_iface);
+    IBackgroundCopyJob3_AddRef(&owner->IBackgroundCopyJob3_iface);
 
     *file = This;
     return S_OK;
