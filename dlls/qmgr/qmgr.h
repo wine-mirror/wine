@@ -22,11 +22,11 @@
 #define __QMGR_H__
 
 #include "windef.h"
-
 #define COBJMACROS
-#include "objbase.h"
-
+#include "bits.h"
 #include "bits1_5.h"
+#include "bits2_0.h"
+#include "bits2_5.h"
 #include "bits3_0.h"
 
 #include <string.h>
@@ -56,7 +56,7 @@ typedef struct
 /* Background copy file vtbl and related data */
 typedef struct
 {
-    IBackgroundCopyFile IBackgroundCopyFile_iface;
+    IBackgroundCopyFile2 IBackgroundCopyFile2_iface;
     LONG ref;
     BG_FILE_INFO info;
     BG_FILE_PROGRESS fileProgress;

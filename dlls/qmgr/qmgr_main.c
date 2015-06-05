@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 
+#define COBJMACROS
 #include "objbase.h"
 #include "winuser.h"
 #include "winreg.h"
@@ -30,10 +31,7 @@
 #include "olectl.h"
 #include "rpcproxy.h"
 #include "winsvc.h"
-
-#include "bits.h"
 #include "qmgr.h"
-#include "initguid.h"
 
 #include "wine/debug.h"
 

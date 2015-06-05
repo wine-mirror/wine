@@ -20,69 +20,72 @@
 
 #include <stdarg.h>
 
-#define COBJMACROS
-
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "ole2.h"
-#include "urlmon.h"
 #include "wininet.h"
-
+#define COBJMACROS
+#include "urlmon.h"
 #include "qmgr.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
-static inline BackgroundCopyFileImpl *impl_from_IBackgroundCopyFile(IBackgroundCopyFile *iface)
+static inline BackgroundCopyFileImpl *impl_from_IBackgroundCopyFile2(
+    IBackgroundCopyFile2 *iface)
 {
-    return CONTAINING_RECORD(iface, BackgroundCopyFileImpl, IBackgroundCopyFile_iface);
+    return CONTAINING_RECORD(iface, BackgroundCopyFileImpl, IBackgroundCopyFile2_iface);
 }
 
 static HRESULT WINAPI BackgroundCopyFile_QueryInterface(
-    IBackgroundCopyFile* iface,
+    IBackgroundCopyFile2 *iface,
     REFIID riid,
     void **obj)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("(%p)->(%s %p)\n", file, debugstr_guid(riid), obj);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IBackgroundCopyFile))
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IBackgroundCopyFile) ||
+        IsEqualGUID(riid, &IID_IBackgroundCopyFile2))
     {
         *obj = iface;
-        IBackgroundCopyFile_AddRef(iface);
-        return S_OK;
+    }
+    else
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IBackgroundCopyFile2_AddRef(iface);
+    return S_OK;
 }
 
-static ULONG WINAPI BackgroundCopyFile_AddRef(IBackgroundCopyFile* iface)
+static ULONG WINAPI BackgroundCopyFile_AddRef(
+    IBackgroundCopyFile2 *iface)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
+    ULONG ref = InterlockedIncrement(&file->ref);
+    TRACE("(%p)->(%d)\n", file, ref);
     return ref;
 }
 
 static ULONG WINAPI BackgroundCopyFile_Release(
-    IBackgroundCopyFile* iface)
+    IBackgroundCopyFile2 *iface)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
+    ULONG ref = InterlockedDecrement(&file->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("(%p)->(%d)\n", file, ref);
 
     if (ref == 0)
     {
-        IBackgroundCopyJob2_Release(&This->owner->IBackgroundCopyJob2_iface);
-        HeapFree(GetProcessHeap(), 0, This->info.LocalName);
-        HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
-        HeapFree(GetProcessHeap(), 0, This);
+        IBackgroundCopyJob2_Release(&file->owner->IBackgroundCopyJob2_iface);
+        HeapFree(GetProcessHeap(), 0, file->info.LocalName);
+        HeapFree(GetProcessHeap(), 0, file->info.RemoteName);
+        HeapFree(GetProcessHeap(), 0, file);
     }
 
     return ref;
@@ -90,52 +93,73 @@ static ULONG WINAPI BackgroundCopyFile_Release(
 
 /* Get the remote name of a background copy file */
 static HRESULT WINAPI BackgroundCopyFile_GetRemoteName(
-    IBackgroundCopyFile* iface,
+    IBackgroundCopyFile2 *iface,
     LPWSTR *pVal)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
 
-    TRACE("(%p)->(%p)\n", This, pVal);
+    TRACE("(%p)->(%p)\n", file, pVal);
 
-    return return_strval(This->info.RemoteName, pVal);
+    return return_strval(file->info.RemoteName, pVal);
 }
 
 static HRESULT WINAPI BackgroundCopyFile_GetLocalName(
-    IBackgroundCopyFile* iface,
+    IBackgroundCopyFile2 *iface,
     LPWSTR *pVal)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
 
-    TRACE("(%p)->(%p)\n", This, pVal);
+    TRACE("(%p)->(%p)\n", file, pVal);
 
-    return return_strval(This->info.LocalName, pVal);
+    return return_strval(file->info.LocalName, pVal);
 }
 
 static HRESULT WINAPI BackgroundCopyFile_GetProgress(
-    IBackgroundCopyFile* iface,
+    IBackgroundCopyFile2 *iface,
     BG_FILE_PROGRESS *pVal)
 {
-    BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
 
-    TRACE("(%p)->(%p)\n", This, pVal);
+    TRACE("(%p)->(%p)\n", file, pVal);
 
-    EnterCriticalSection(&This->owner->cs);
-    pVal->BytesTotal = This->fileProgress.BytesTotal;
-    pVal->BytesTransferred = This->fileProgress.BytesTransferred;
-    pVal->Completed = This->fileProgress.Completed;
-    LeaveCriticalSection(&This->owner->cs);
+    EnterCriticalSection(&file->owner->cs);
+    pVal->BytesTotal = file->fileProgress.BytesTotal;
+    pVal->BytesTransferred = file->fileProgress.BytesTransferred;
+    pVal->Completed = file->fileProgress.Completed;
+    LeaveCriticalSection(&file->owner->cs);
 
     return S_OK;
 }
 
-static const IBackgroundCopyFileVtbl BackgroundCopyFileVtbl =
+static HRESULT WINAPI BackgroundCopyFile_GetFileRanges(
+    IBackgroundCopyFile2 *iface,
+    DWORD *RangeCount,
+    BG_FILE_RANGE **Ranges)
+{
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
+    FIXME("(%p)->(%p %p)\n", file, RangeCount, Ranges);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BackgroundCopyFile_SetRemoteName(
+    IBackgroundCopyFile2 *iface,
+    LPCWSTR Val)
+{
+    BackgroundCopyFileImpl *file = impl_from_IBackgroundCopyFile2(iface);
+    FIXME("(%p)->(%s)\n", file, debugstr_w(Val));
+    return E_NOTIMPL;
+}
+
+static const IBackgroundCopyFile2Vtbl BackgroundCopyFile2Vtbl =
 {
     BackgroundCopyFile_QueryInterface,
     BackgroundCopyFile_AddRef,
     BackgroundCopyFile_Release,
     BackgroundCopyFile_GetRemoteName,
     BackgroundCopyFile_GetLocalName,
-    BackgroundCopyFile_GetProgress
+    BackgroundCopyFile_GetProgress,
+    BackgroundCopyFile_GetFileRanges,
+    BackgroundCopyFile_SetRemoteName
 };
 
 HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
@@ -170,7 +194,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     }
     memcpy(This->info.LocalName, localName, n);
 
-    This->IBackgroundCopyFile_iface.lpVtbl = &BackgroundCopyFileVtbl;
+    This->IBackgroundCopyFile2_iface.lpVtbl = &BackgroundCopyFile2Vtbl;
     This->ref = 1;
 
     This->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
@@ -255,7 +279,7 @@ static ULONG WINAPI DLBindStatusCallback_Release(IBindStatusCallback *iface)
 
     if (ref == 0)
     {
-        IBackgroundCopyFile_Release(&This->file->IBackgroundCopyFile_iface);
+        IBackgroundCopyFile2_Release(&This->file->IBackgroundCopyFile2_iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -365,7 +389,7 @@ static DLBindStatusCallback *DLBindStatusCallbackConstructor(
         return NULL;
 
     This->IBindStatusCallback_iface.lpVtbl = &DLBindStatusCallback_Vtbl;
-    IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
+    IBackgroundCopyFile2_AddRef(&file->IBackgroundCopyFile2_iface);
     This->file = file;
     This->ref = 1;
     return This;

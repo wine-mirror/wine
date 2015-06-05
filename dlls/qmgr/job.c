@@ -22,7 +22,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-
 #include "qmgr.h"
 #include "wine/debug.h"
 
