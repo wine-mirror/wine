@@ -84,6 +84,7 @@ static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PV
 static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FS_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryFullAttributesFile)(const OBJECT_ATTRIBUTES*, FILE_NETWORK_OPEN_INFORMATION*);
 static NTSTATUS (WINAPI *pNtFlushBuffersFile)(HANDLE, IO_STATUS_BLOCK*);
+static NTSTATUS (WINAPI *pNtQueryEaFile)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,BOOLEAN,PVOID,ULONG,PULONG,BOOLEAN);
 
 static WCHAR fooW[] = {'f','o','o',0};
 
@@ -5112,6 +5113,86 @@ static void test_flush_buffers_file(void)
     DeleteFileA(buffer);
 }
 
+static void test_query_ea(void)
+{
+#define EA_BUFFER_SIZE 4097
+    unsigned char data[EA_BUFFER_SIZE + 8];
+    unsigned char *buffer = (void *)(((DWORD_PTR)data + 7) & ~7);
+    DWORD buffer_len, i;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    if (!(handle = create_temp_file(0))) return;
+
+    /* test with INVALID_HANDLE_VALUE */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset(buffer, 0xcc, EA_BUFFER_SIZE);
+    buffer_len = EA_BUFFER_SIZE - 1;
+    status = pNtQueryEaFile(INVALID_HANDLE_VALUE, &io, buffer, buffer_len, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+    ok(buffer[0] == 0xcc, "data at position 0 overwritten\n");
+
+    /* test with 0xdeadbeef */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset(buffer, 0xcc, EA_BUFFER_SIZE);
+    buffer_len = EA_BUFFER_SIZE - 1;
+    status = pNtQueryEaFile((void *)0xdeadbeef, &io, buffer, buffer_len, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+    ok(buffer[0] == 0xcc, "data at position 0 overwritten\n");
+
+    /* test without buffer */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    status = pNtQueryEaFile(handle, &io, NULL, 0, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_NO_EAS_ON_FILE, "expected STATUS_NO_EAS_ON_FILE, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+
+    /* test with zero buffer */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    status = pNtQueryEaFile(handle, &io, buffer, 0, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_NO_EAS_ON_FILE, "expected STATUS_NO_EAS_ON_FILE, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+
+    /* test with very small buffer */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset(buffer, 0xcc, EA_BUFFER_SIZE);
+    buffer_len = 4;
+    status = pNtQueryEaFile(handle, &io, buffer, buffer_len, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_NO_EAS_ON_FILE, "expected STATUS_NO_EAS_ON_FILE, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+    for (i = 0; i < buffer_len && !buffer[i]; i++);
+    ok(i == buffer_len,  "expected %lu bytes filled with 0x00, got %lu bytes\n", buffer_len, i);
+    ok(buffer[i] == 0xcc, "data at position %u overwritten\n", buffer[i]);
+
+    /* test with very big buffer */
+    U(io).Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset(buffer, 0xcc, EA_BUFFER_SIZE);
+    buffer_len = EA_BUFFER_SIZE - 1;
+    status = pNtQueryEaFile(handle, &io, buffer, buffer_len, TRUE, NULL, 0, NULL, FALSE);
+    ok(status == STATUS_NO_EAS_ON_FILE, "expected STATUS_NO_EAS_ON_FILE, got %#lx\n", status);
+    ok(U(io).Status == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", U(io).Status);
+    ok(io.Information == 0xdeadbeef, "expected 0xdeadbeef, got %#Ix\n", io.Information);
+    for (i = 0; i < buffer_len && !buffer[i]; i++);
+    ok(i == buffer_len,  "expected %lu bytes filled with 0x00, got %lu bytes\n", buffer_len, i);
+    ok(buffer[i] == 0xcc, "data at position %u overwritten\n", buffer[i]);
+
+    CloseHandle(handle);
+#undef EA_BUFFER_SIZE
+}
+
 static void test_file_readonly_access(void)
 {
     static const DWORD default_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
@@ -5285,6 +5366,7 @@ START_TEST(file)
     pNtQueryVolumeInformationFile = (void *)GetProcAddress(hntdll, "NtQueryVolumeInformationFile");
     pNtQueryFullAttributesFile = (void *)GetProcAddress(hntdll, "NtQueryFullAttributesFile");
     pNtFlushBuffersFile = (void *)GetProcAddress(hntdll, "NtFlushBuffersFile");
+    pNtQueryEaFile          = (void *)GetProcAddress(hntdll, "NtQueryEaFile");
 
     test_read_write();
     test_NtCreateFile();
@@ -5314,6 +5396,7 @@ START_TEST(file)
     test_query_volume_information_file();
     test_query_attribute_information_file();
     test_ioctl();
+    test_query_ea();
     test_flush_buffers_file();
     test_mailslot_name();
 }

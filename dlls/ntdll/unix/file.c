@@ -6844,9 +6844,20 @@ NTSTATUS WINAPI NtQueryEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
                                BOOLEAN single_entry, void *list, ULONG list_len,
                                ULONG *index, BOOLEAN restart )
 {
-    FIXME( "(%p,%p,%p,%d,%d,%p,%d,%p,%d) stub\n",
+    int fd, needs_close;
+    NTSTATUS status;
+
+    FIXME( "(%p,%p,%p,%d,%d,%p,%d,%p,%d) semi-stub\n",
            handle, io, buffer, length, single_entry, list, list_len, index, restart );
-    return STATUS_ACCESS_DENIED;
+
+    if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+        return status;
+
+    if (buffer && length)
+        memset( buffer, 0, length );
+
+    if (needs_close) close( fd );
+    return STATUS_NO_EAS_ON_FILE;
 }
 
 
