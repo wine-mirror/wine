@@ -51,6 +51,10 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
+#ifdef HAVE_LIBUNWIND_H
+# define UNW_LOCAL_ONLY
+# include <libunwind.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -1424,6 +1428,188 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 }
 
 
+#if HAVE_LIBUNWIND_H
+/***********************************************************************
+ *           libunwind_set_cursor_from_context
+ */
+static int libunwind_set_cursor_from_context( unw_cursor_t *cursor, CONTEXT *context, ULONG64 ip )
+{
+    int rc;
+
+    rc = unw_set_reg(cursor, UNW_REG_IP, ip);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_REG_SP, context->Rsp);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RAX, context->Rax);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RDX, context->Rdx);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RCX, context->Rcx);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RBX, context->Rbx);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RSI, context->Rsi);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RDI, context->Rdi);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_RBP, context->Rbp);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R8, context->R8);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R9, context->R9);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R10, context->R10);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R11, context->R11);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R12, context->R12);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R13, context->R13);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R14, context->R14);
+    if (rc == UNW_ESUCCESS)
+        rc = unw_set_reg(cursor, UNW_X86_64_R15, context->R15);
+
+    return rc;
+}
+
+
+/***********************************************************************
+ *           libunwind_get_reg
+ */
+static int libunwind_get_reg( unw_cursor_t *cursor, unw_regnum_t reg, ULONG64 *val )
+{
+    int rc;
+    unw_word_t word;
+
+    rc = unw_get_reg(cursor, reg, &word);
+    if (rc == UNW_ESUCCESS)
+        *val = word;
+
+    return rc;
+}
+
+
+/***********************************************************************
+ *           libunwind_set_context_from_cursor
+ */
+static BOOL libunwind_set_context_from_cursor( CONTEXT *context, unw_cursor_t *cursor )
+{
+    int rc;
+
+    rc = libunwind_get_reg(cursor, UNW_REG_IP, &context->Rip);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_REG_SP, &context->Rsp);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RAX, &context->Rax);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RDX, &context->Rdx);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RCX, &context->Rcx);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RBX, &context->Rbx);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RSI, &context->Rsi);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RDI, &context->Rdi);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_RBP, &context->Rbp);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R8, &context->R8);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R9, &context->R9);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R10, &context->R10);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R11, &context->R11);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R12, &context->R12);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R13, &context->R13);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R14, &context->R14);
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_get_reg(cursor, UNW_X86_64_R15, &context->R15);
+
+    return rc;
+}
+
+
+/***********************************************************************
+ *           libunwind_virtual_unwind
+ *
+ * Equivalent of RtlVirtualUnwind for builtin modules.
+ */
+static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *frame, CONTEXT *context,
+                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
+{
+    unw_context_t unw_context;
+    unw_cursor_t cursor;
+    unw_proc_info_t info;
+    int rc;
+
+    rc = unw_getcontext( &unw_context );
+    if (rc == UNW_ESUCCESS)
+        rc = unw_init_local( &cursor, &unw_context );
+    if (rc == UNW_ESUCCESS)
+        rc = libunwind_set_cursor_from_context( &cursor, context, ip - 1 );
+    if (rc != UNW_ESUCCESS)
+    {
+        WARN( "setup failed: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    rc = unw_get_proc_info(&cursor, &info);
+    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
+    {
+        WARN( "failed to get info: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    if (rc == UNW_ENOINFO || ip < info.start_ip || info.end_ip <= ip || !info.format)
+    {
+        *got_info = FALSE;
+        return STATUS_SUCCESS;
+    }
+
+    TRACE( "ip %#lx function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
+           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
+           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
+
+    rc = unw_step(&cursor);
+    if (rc < 0)
+    {
+        WARN( "failed to unwind: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    *frame = context->Rsp;
+
+    rc = libunwind_set_context_from_cursor( context, &cursor );
+    if (rc != UNW_ESUCCESS)
+    {
+        WARN( "failed to update context after unwind: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    *handler = (void*)info.handler;
+    *handler_data = (void*)info.lsda;
+    *got_info = TRUE;
+
+    TRACE( "next function rip=%016lx\n", context->Rip );
+    TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+           context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+           context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+           context->R8, context->R9, context->R10, context->R11 );
+    TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+           context->R12, context->R13, context->R14, context->R15 );
+
+    return STATUS_SUCCESS;
+}
+#endif
+
+
 /***********************************************************************
  *           dispatch_signal
  */
@@ -2141,6 +2327,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 
         if (!module || (module->Flags & LDR_WINE_INTERNAL))
         {
+            BOOL got_info = FALSE;
             struct dwarf_eh_bases bases;
             const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
 
@@ -2149,6 +2336,19 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                 status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context,
                                                fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
                 if (status != STATUS_SUCCESS) return status;
+                got_info = TRUE;
+            }
+#if HAVE_LIBUNWIND_H
+            else
+            {
+                status = libunwind_virtual_unwind( context.Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
+                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
+                if (status != STATUS_SUCCESS) return status;
+            }
+#endif
+
+            if (got_info)
+            {
                 dispatch.FunctionEntry = NULL;
                 if (dispatch.LanguageHandler && !module)
                 {
@@ -3155,15 +3355,29 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
         if (!module || (module->Flags & LDR_WINE_INTERNAL))
         {
+            BOOL got_info = FALSE;
             struct dwarf_eh_bases bases;
             const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Rip - 1), &bases );
 
             if (fde)
             {
-                dispatch.FunctionEntry = NULL;
                 status = dwarf_virtual_unwind( context->Rip, &dispatch.EstablisherFrame, &new_context, fde,
                                                &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
                 if (status != STATUS_SUCCESS) raise_status( status, rec );
+                got_info = TRUE;
+            }
+#if HAVE_LIBUNWIND_H
+            else
+            {
+                status = libunwind_virtual_unwind( context->Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
+                                                   &dispatch.LanguageHandler, &dispatch.HandlerData );
+                if (status != STATUS_SUCCESS) raise_status( status, rec );
+            }
+#endif
+
+            if (got_info)
+            {
+                dispatch.FunctionEntry = NULL;
                 if (dispatch.LanguageHandler && !module)
                 {
                     FIXME( "calling personality routine in system library not supported yet\n" );
