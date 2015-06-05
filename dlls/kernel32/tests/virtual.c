@@ -1072,7 +1072,6 @@ static void test_NtMapViewOfSection(void)
     size = 0;
     offset.QuadPart = 1;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
 
     /* ptr has to be aligned */
@@ -1080,7 +1079,6 @@ static void test_NtMapViewOfSection(void)
     size = 0;
     offset.QuadPart = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
 
     /* still not 64k aligned */
@@ -1088,7 +1086,6 @@ static void test_NtMapViewOfSection(void)
     size = 0;
     offset.QuadPart = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_MAPPED_ALIGNMENT, "NtMapViewOfSection returned %x\n", status );
 
     /* zero_bits != 0 is not allowed when an address is set */
