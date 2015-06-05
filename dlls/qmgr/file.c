@@ -424,13 +424,53 @@ static HRESULT WINAPI http_negotiate_BeginningTransaction(
     return E_NOTIMPL;
 }
 
+static HRESULT error_from_http_response(DWORD code)
+{
+    switch (code)
+    {
+    case 200: return S_OK;
+    case 400: return BG_E_HTTP_ERROR_400;
+    case 401: return BG_E_HTTP_ERROR_401;
+    case 404: return BG_E_HTTP_ERROR_404;
+    case 407: return BG_E_HTTP_ERROR_407;
+    case 414: return BG_E_HTTP_ERROR_414;
+    case 501: return BG_E_HTTP_ERROR_501;
+    case 503: return BG_E_HTTP_ERROR_503;
+    case 504: return BG_E_HTTP_ERROR_504;
+    case 505: return BG_E_HTTP_ERROR_505;
+    default:
+        FIXME("unhandled response code %u\n", code);
+        return S_OK;
+    }
+}
+
 static HRESULT WINAPI http_negotiate_OnResponse(
     IHttpNegotiate *iface, DWORD code, LPCWSTR resp_headers, LPCWSTR req_headers, LPWSTR *add_reqheaders)
 {
     DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
-    FIXME("(%p)->(%d %s %s %p)\n", callback, code, debugstr_w(resp_headers), debugstr_w(req_headers),
+    BackgroundCopyJobImpl *job = callback->file->owner;
+
+    TRACE("(%p)->(%d %s %s %p)\n", callback, code, debugstr_w(resp_headers), debugstr_w(req_headers),
           add_reqheaders);
-    return E_NOTIMPL;
+
+    if ((job->error.code = error_from_http_response(code)))
+    {
+        job->error.context = BG_ERROR_CONTEXT_REMOTE_FILE;
+        if (job->error.file) IBackgroundCopyFile2_Release(job->error.file);
+        job->error.file = &callback->file->IBackgroundCopyFile2_iface;
+        IBackgroundCopyFile2_AddRef(job->error.file);
+    }
+    else
+    {
+        job->error.context = 0;
+        if (job->error.file)
+        {
+            IBackgroundCopyFile2_Release(job->error.file);
+            job->error.file = NULL;
+        }
+    }
+    *add_reqheaders = NULL;
+    return S_OK;
 }
 
 static const IHttpNegotiateVtbl http_negotiate_vtbl =
@@ -520,6 +560,12 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
     else if (FAILED(hr))
     {
         ERR("URLDownload failed: eh 0x%08x\n", hr);
+        transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
+        return FALSE;
+    }
+    else if (job->error.code)
+    {
+        ERR("transfer error: 0x%08x\n", job->error.code);
         transitionJobState(job, BG_JOB_STATE_TRANSFERRING, BG_JOB_STATE_ERROR);
         return FALSE;
     }

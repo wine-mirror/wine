@@ -51,6 +51,12 @@ typedef struct
     /* Protects file list, and progress */
     CRITICAL_SECTION cs;
     struct list entryFromQmgr;
+    struct
+    {
+        BG_ERROR_CONTEXT      context;
+        HRESULT               code;
+        IBackgroundCopyFile2 *file;
+    } error;
 } BackgroundCopyJobImpl;
 
 /* Background copy file vtbl and related data */

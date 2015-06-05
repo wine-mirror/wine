@@ -27,6 +27,167 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
+struct copy_error
+{
+    IBackgroundCopyError  IBackgroundCopyError_iface;
+    LONG                  refs;
+    BG_ERROR_CONTEXT      context;
+    HRESULT               code;
+    IBackgroundCopyFile2 *file;
+};
+
+static inline struct copy_error *impl_from_IBackgroundCopyError(IBackgroundCopyError *iface)
+{
+    return CONTAINING_RECORD(iface, struct copy_error, IBackgroundCopyError_iface);
+}
+
+static HRESULT WINAPI copy_error_QueryInterface(
+    IBackgroundCopyError *iface,
+    REFIID riid,
+    void **obj)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+
+    TRACE("(%p)->(%s %p)\n", error, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IBackgroundCopyError))
+    {
+        *obj = &error->IBackgroundCopyError_iface;
+    }
+    else
+    {
+        *obj = NULL;
+        WARN("interface %s not supported\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IBackgroundCopyError_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI copy_error_AddRef(
+    IBackgroundCopyError *iface)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+    LONG refs = InterlockedIncrement(&error->refs);
+    TRACE("(%p)->(%d)\n", error, refs);
+    return refs;
+}
+
+static ULONG WINAPI copy_error_Release(
+    IBackgroundCopyError *iface)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+    LONG refs = InterlockedDecrement(&error->refs);
+
+    TRACE("(%p)->(%d)\n", error, refs);
+
+    if (!refs)
+    {
+        if (error->file) IBackgroundCopyFile2_Release(error->file);
+        HeapFree(GetProcessHeap(), 0, error);
+    }
+    return refs;
+}
+
+static HRESULT WINAPI copy_error_GetError(
+    IBackgroundCopyError *iface,
+    BG_ERROR_CONTEXT *pContext,
+    HRESULT *pCode)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+
+    TRACE("(%p)->(%p %p)\n", error, pContext, pCode);
+
+    *pContext = error->context;
+    *pCode = error->code;
+
+    TRACE("returning context %u error code 0x%08x\n", error->context, error->code);
+    return S_OK;
+}
+
+static HRESULT WINAPI copy_error_GetFile(
+    IBackgroundCopyError *iface,
+    IBackgroundCopyFile **pVal)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+
+    TRACE("(%p)->(%p)\n", error, pVal);
+
+    if (error->file)
+    {
+        IBackgroundCopyFile2_AddRef(error->file);
+        *pVal = (IBackgroundCopyFile *)error->file;
+        return S_OK;
+    }
+    *pVal = NULL;
+    return BG_E_FILE_NOT_AVAILABLE;
+}
+
+static HRESULT WINAPI copy_error_GetErrorDescription(
+    IBackgroundCopyError *iface,
+    DWORD LanguageId,
+    LPWSTR *pErrorDescription)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+    FIXME("(%p)->(%p)\n", error, pErrorDescription);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI copy_error_GetErrorContextDescription(
+    IBackgroundCopyError *iface,
+    DWORD LanguageId,
+    LPWSTR *pContextDescription)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+    FIXME("(%p)->(%p)\n", error, pContextDescription);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI copy_error_GetProtocol(
+    IBackgroundCopyError *iface,
+    LPWSTR *pProtocol)
+{
+    struct copy_error *error = impl_from_IBackgroundCopyError(iface);
+    FIXME("(%p)->(%p)\n", error, pProtocol);
+    return E_NOTIMPL;
+}
+
+static const IBackgroundCopyErrorVtbl copy_error_vtbl =
+{
+    copy_error_QueryInterface,
+    copy_error_AddRef,
+    copy_error_Release,
+    copy_error_GetError,
+    copy_error_GetFile,
+    copy_error_GetErrorDescription,
+    copy_error_GetErrorContextDescription,
+    copy_error_GetProtocol
+};
+
+static HRESULT create_copy_error(
+    BG_ERROR_CONTEXT context,
+    HRESULT code,
+    IBackgroundCopyFile2 *file,
+    IBackgroundCopyError **obj)
+{
+    struct copy_error *error;
+
+    TRACE("context %u code %08x file %p\n", context, code, file);
+
+    if (!(error = HeapAlloc(GetProcessHeap(), 0, sizeof(*error) ))) return E_OUTOFMEMORY;
+    error->IBackgroundCopyError_iface.lpVtbl = &copy_error_vtbl;
+    error->refs    = 1;
+    error->context = context;
+    error->code    = code;
+    error->file    = file;
+    if (error->file) IBackgroundCopyFile2_AddRef(error->file);
+
+    *obj = &error->IBackgroundCopyError_iface;
+    TRACE("returning iface %p\n", *obj);
+    return S_OK;
+}
+
 static inline BOOL is_job_done(const BackgroundCopyJobImpl *job)
 {
     return job->state == BG_JOB_STATE_CANCELLED || job->state == BG_JOB_STATE_ACKNOWLEDGED;
@@ -312,9 +473,13 @@ static HRESULT WINAPI BackgroundCopyJob_GetError(
     IBackgroundCopyJob3 *iface,
     IBackgroundCopyError **ppError)
 {
-    BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob3(iface);
-    FIXME("(%p)->(%p): stub\n", This, ppError);
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJob3(iface);
+
+    TRACE("(%p)->(%p)\n", job, ppError);
+
+    if (!job->error.context) return BG_E_ERROR_INFORMATION_UNAVAILABLE;
+
+    return create_copy_error(job->error.context, job->error.code, job->error.file, ppError);
 }
 
 static HRESULT WINAPI BackgroundCopyJob_GetOwner(
@@ -787,6 +952,10 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->notify_flags = BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED;
     This->callback = NULL;
     This->callback2 = FALSE;
+
+    This->error.context = 0;
+    This->error.code = 0;
+    This->error.file = NULL;
 
     *job = This;
 
