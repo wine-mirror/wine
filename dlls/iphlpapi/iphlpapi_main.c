@@ -2658,3 +2658,12 @@ ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
     FIXME("pTcp6Table2 %p, size %p, order %d: stub\n", table, size, order);
     return ERROR_NOT_SUPPORTED;
 }
+
+/******************************************************************
+ *    ConvertInterfaceLuidToGuid (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
+{
+    FIXME("(%p %p) stub\n", luid, guid);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
