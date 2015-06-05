@@ -238,6 +238,7 @@ static DWORD CALLBACK copyProgressCallback(LARGE_INTEGER totalSize,
 typedef struct
 {
     IBindStatusCallback IBindStatusCallback_iface;
+    IHttpNegotiate      IHttpNegotiate_iface;
     BackgroundCopyFileImpl *file;
     LONG ref;
 } DLBindStatusCallback;
@@ -254,16 +255,24 @@ static HRESULT WINAPI DLBindStatusCallback_QueryInterface(
 {
     DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
 
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IBindStatusCallback))
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IBindStatusCallback))
     {
         *ppvObject = &This->IBindStatusCallback_iface;
-        IBindStatusCallback_AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_IHttpNegotiate))
+    {
+        *ppvObject = &This->IHttpNegotiate_iface;
+    }
+    else
+    {
+        *ppvObject = NULL;
+        return E_NOINTERFACE;
     }
 
-    *ppvObject = NULL;
-    return E_NOINTERFACE;
+    IBindStatusCallback_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG WINAPI DLBindStatusCallback_AddRef(IBindStatusCallback *iface)
@@ -381,6 +390,58 @@ static const IBindStatusCallbackVtbl DLBindStatusCallback_Vtbl =
     DLBindStatusCallback_OnObjectAvailable
 };
 
+static inline DLBindStatusCallback *impl_from_IHttpNegotiate(IHttpNegotiate *iface)
+{
+    return CONTAINING_RECORD(iface, DLBindStatusCallback, IHttpNegotiate_iface);
+}
+
+static HRESULT WINAPI http_negotiate_QueryInterface(
+    IHttpNegotiate *iface, REFIID riid, void **ppv)
+{
+    DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_QueryInterface(&callback->IBindStatusCallback_iface, riid, ppv);
+}
+
+static ULONG WINAPI http_negotiate_AddRef(
+    IHttpNegotiate *iface)
+{
+    DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_AddRef(&callback->IBindStatusCallback_iface);
+}
+
+static ULONG WINAPI http_negotiate_Release(
+    IHttpNegotiate *iface)
+{
+    DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_Release(&callback->IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI http_negotiate_BeginningTransaction(
+    IHttpNegotiate *iface, LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
+{
+    DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
+    FIXME("(%p)->(%s %s %u %p)\n", callback, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_negotiate_OnResponse(
+    IHttpNegotiate *iface, DWORD code, LPCWSTR resp_headers, LPCWSTR req_headers, LPWSTR *add_reqheaders)
+{
+    DLBindStatusCallback *callback = impl_from_IHttpNegotiate(iface);
+    FIXME("(%p)->(%d %s %s %p)\n", callback, code, debugstr_w(resp_headers), debugstr_w(req_headers),
+          add_reqheaders);
+    return E_NOTIMPL;
+}
+
+static const IHttpNegotiateVtbl http_negotiate_vtbl =
+{
+    http_negotiate_QueryInterface,
+    http_negotiate_AddRef,
+    http_negotiate_Release,
+    http_negotiate_BeginningTransaction,
+    http_negotiate_OnResponse
+};
+
 static DLBindStatusCallback *DLBindStatusCallbackConstructor(
     BackgroundCopyFileImpl *file)
 {
@@ -389,6 +450,7 @@ static DLBindStatusCallback *DLBindStatusCallbackConstructor(
         return NULL;
 
     This->IBindStatusCallback_iface.lpVtbl = &DLBindStatusCallback_Vtbl;
+    This->IHttpNegotiate_iface.lpVtbl = &http_negotiate_vtbl;
     IBackgroundCopyFile2_AddRef(&file->IBackgroundCopyFile2_iface);
     This->file = file;
     This->ref = 1;
