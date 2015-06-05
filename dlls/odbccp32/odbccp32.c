@@ -264,7 +264,7 @@ BOOL WINAPI SQLConfigDriver(HWND hwndParent, WORD fRequest, LPCSTR lpszDriver,
 BOOL WINAPI SQLCreateDataSourceW(HWND hwnd, LPCWSTR lpszDS)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s\n", hwnd, debugstr_w(lpszDS));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -272,7 +272,7 @@ BOOL WINAPI SQLCreateDataSourceW(HWND hwnd, LPCWSTR lpszDS)
 BOOL WINAPI SQLCreateDataSource(HWND hwnd, LPCSTR lpszDS)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s\n", hwnd, debugstr_a(lpszDS));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -281,7 +281,7 @@ BOOL WINAPI SQLGetAvailableDriversW(LPCWSTR lpszInfFile, LPWSTR lpszBuf,
                WORD cbBufMax, WORD *pcbBufOut)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %p %d %p\n", debugstr_w(lpszInfFile), lpszBuf, cbBufMax, pcbBufOut);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -290,7 +290,7 @@ BOOL WINAPI SQLGetAvailableDrivers(LPCSTR lpszInfFile, LPSTR lpszBuf,
                WORD cbBufMax, WORD *pcbBufOut)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %p %d %p\n", debugstr_a(lpszInfFile), lpszBuf, cbBufMax, pcbBufOut);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -298,6 +298,7 @@ BOOL WINAPI SQLGetAvailableDrivers(LPCSTR lpszInfFile, LPSTR lpszBuf,
 BOOL WINAPI SQLGetConfigMode(UWORD *pwConfigMode)
 {
     clear_errors();
+    TRACE("%p\n", pwConfigMode);
     if (pwConfigMode)
         *pwConfigMode = config_mode;
     return TRUE;
@@ -315,6 +316,9 @@ BOOL WINAPI SQLGetInstalledDriversW(LPWSTR lpszBuf, WORD cbBufMax,
     BOOL success = FALSE; /* The value we will return */
 
     clear_errors();
+
+    TRACE("%p %d %p\n", lpszBuf, cbBufMax, pcbBufOut);
+
     if (!lpszBuf || cbBufMax == 0)
     {
         push_error(ODBC_ERROR_INVALID_BUFF_LEN, odbc_error_invalid_buff_len);
@@ -370,6 +374,9 @@ BOOL WINAPI SQLGetInstalledDrivers(LPSTR lpszBuf, WORD cbBufMax,
     int size_wbuf = cbBufMax;
     LPWSTR wbuf;
     WORD size_used;
+
+    TRACE("%p %d %p\n", lpszBuf, cbBufMax, pcbBufOut);
+
     wbuf = HeapAlloc(GetProcessHeap(), 0, size_wbuf*sizeof(WCHAR));
     if (wbuf)
     {
@@ -397,7 +404,9 @@ int WINAPI SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
                LPCWSTR lpszFilename)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %p %d %s\n", debugstr_w(lpszSection), debugstr_w(lpszEntry),
+               debugstr_w(lpszDefault), RetBuffer, cbRetBuffer,
+               debugstr_w(lpszFilename));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -407,7 +416,9 @@ int WINAPI SQLGetPrivateProfileString(LPCSTR lpszSection, LPCSTR lpszEntry,
                LPCSTR lpszFilename)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %p %d %s\n", debugstr_a(lpszSection), debugstr_a(lpszEntry),
+               debugstr_a(lpszDefault), RetBuffer, cbRetBuffer,
+               debugstr_a(lpszFilename));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -417,7 +428,8 @@ BOOL WINAPI SQLGetTranslatorW(HWND hwndParent, LPWSTR lpszName, WORD cbNameMax,
                WORD *pcbPathOut, DWORD *pvOption)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s %d %p %p %d %p %p\n", hwndParent, debugstr_w(lpszName), cbNameMax,
+               pcbNameOut, lpszPath, cbPathMax, pcbPathOut, pvOption);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -427,7 +439,8 @@ BOOL WINAPI SQLGetTranslator(HWND hwndParent, LPSTR lpszName, WORD cbNameMax,
                WORD *pcbPathOut, DWORD *pvOption)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s %d %p %p %d %p %p\n", hwndParent, debugstr_a(lpszName), cbNameMax,
+               pcbNameOut, lpszPath, cbPathMax, pcbPathOut, pvOption);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -607,7 +620,8 @@ BOOL WINAPI SQLInstallODBCW(HWND hwndParent, LPCWSTR lpszInfFile,
                LPCWSTR lpszSrcPath, LPCWSTR lpszDrivers)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s %s %s\n", hwndParent, debugstr_w(lpszInfFile),
+               debugstr_w(lpszSrcPath), debugstr_w(lpszDrivers));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -616,7 +630,8 @@ BOOL WINAPI SQLInstallODBC(HWND hwndParent, LPCSTR lpszInfFile,
                LPCSTR lpszSrcPath, LPCSTR lpszDrivers)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p %s %s %s\n", hwndParent, debugstr_a(lpszInfFile),
+               debugstr_a(lpszSrcPath), debugstr_a(lpszDrivers));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -820,21 +835,21 @@ BOOL WINAPI SQLInstallTranslatorW(LPCWSTR lpszInfFile, LPCWSTR lpszTranslator,
 BOOL WINAPI SQLManageDataSources(HWND hwnd)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%p\n", hwnd);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
 SQLRETURN WINAPI SQLPostInstallerErrorW(DWORD fErrorCode, LPCWSTR szErrorMsg)
 {
-    FIXME("\n");
+    FIXME("%u %s\n", fErrorCode, debugstr_w(szErrorMsg));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
 SQLRETURN WINAPI SQLPostInstallerError(DWORD fErrorCode, LPCSTR szErrorMsg)
 {
-    FIXME("\n");
+    FIXME("%u %s\n", fErrorCode, debugstr_a(szErrorMsg));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -844,7 +859,8 @@ BOOL WINAPI SQLReadFileDSNW(LPCWSTR lpszFileName, LPCWSTR lpszAppName,
                WORD *pcbString)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %s %d %p\n", debugstr_w(lpszFileName), debugstr_w(lpszAppName),
+               debugstr_w(lpszKeyName), debugstr_w(lpszString), cbString, pcbString);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -854,7 +870,8 @@ BOOL WINAPI SQLReadFileDSN(LPCSTR lpszFileName, LPCSTR lpszAppName,
                WORD *pcbString)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %s %d %p\n", debugstr_a(lpszFileName), debugstr_a(lpszAppName),
+               debugstr_a(lpszKeyName), debugstr_a(lpszString), cbString, pcbString);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -871,7 +888,7 @@ BOOL WINAPI SQLRemoveDriverW(LPCWSTR lpszDriver, BOOL fRemoveDSN,
                LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("stub\n");
+    FIXME("%s %d %p\n", debugstr_w(lpszDriver), fRemoveDSN, lpdwUsageCount);
     if (lpdwUsageCount) *lpdwUsageCount = 1;
     return TRUE;
 }
@@ -880,7 +897,7 @@ BOOL WINAPI SQLRemoveDriver(LPCSTR lpszDriver, BOOL fRemoveDSN,
                LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("stub\n");
+    FIXME("%s %d %p\n", debugstr_a(lpszDriver), fRemoveDSN, lpdwUsageCount);
     if (lpdwUsageCount) *lpdwUsageCount = 1;
     return TRUE;
 }
@@ -888,7 +905,7 @@ BOOL WINAPI SQLRemoveDriver(LPCSTR lpszDriver, BOOL fRemoveDSN,
 BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)
 {
     clear_errors();
-    FIXME("stub\n");
+    FIXME("%p\n", pdwUsageCount);
     if (pdwUsageCount) *pdwUsageCount = 1;
     return TRUE;
 }
@@ -896,7 +913,7 @@ BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)
 BOOL WINAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s\n", debugstr_w(lpszDSN));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -904,7 +921,7 @@ BOOL WINAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
 BOOL WINAPI SQLRemoveDSNFromIni(LPCSTR lpszDSN)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s\n", debugstr_a(lpszDSN));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -912,7 +929,7 @@ BOOL WINAPI SQLRemoveDSNFromIni(LPCSTR lpszDSN)
 BOOL WINAPI SQLRemoveTranslatorW(LPCWSTR lpszTranslator, LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %p\n", debugstr_w(lpszTranslator), lpdwUsageCount);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -920,7 +937,7 @@ BOOL WINAPI SQLRemoveTranslatorW(LPCWSTR lpszTranslator, LPDWORD lpdwUsageCount)
 BOOL WINAPI SQLRemoveTranslator(LPCSTR lpszTranslator, LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %p\n", debugstr_a(lpszTranslator), lpdwUsageCount);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -928,6 +945,8 @@ BOOL WINAPI SQLRemoveTranslator(LPCSTR lpszTranslator, LPDWORD lpdwUsageCount)
 BOOL WINAPI SQLSetConfigMode(UWORD wConfigMode)
 {
     clear_errors();
+    TRACE("%u\n", wConfigMode);
+
     if (wConfigMode > ODBC_SYSTEM_DSN)
     {
         push_error(ODBC_ERROR_INVALID_PARAM_SEQUENCE, odbc_error_invalid_param_sequence);
@@ -943,7 +962,7 @@ BOOL WINAPI SQLSetConfigMode(UWORD wConfigMode)
 BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s\n", debugstr_w(lpszDSN));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -951,7 +970,7 @@ BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)
 BOOL WINAPI SQLValidDSN(LPCSTR lpszDSN)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s\n", debugstr_a(lpszDSN));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -959,7 +978,7 @@ BOOL WINAPI SQLValidDSN(LPCSTR lpszDSN)
 BOOL WINAPI SQLWriteDSNToIniW(LPCWSTR lpszDSN, LPCWSTR lpszDriver)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s\n", debugstr_w(lpszDSN), debugstr_w(lpszDriver));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -967,7 +986,7 @@ BOOL WINAPI SQLWriteDSNToIniW(LPCWSTR lpszDSN, LPCWSTR lpszDriver)
 BOOL WINAPI SQLWriteDSNToIni(LPCSTR lpszDSN, LPCSTR lpszDriver)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s\n", debugstr_a(lpszDSN), debugstr_a(lpszDriver));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -976,7 +995,8 @@ BOOL WINAPI SQLWriteFileDSNW(LPCWSTR lpszFileName, LPCWSTR lpszAppName,
                LPCWSTR lpszKeyName, LPCWSTR lpszString)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %s\n", debugstr_w(lpszFileName), debugstr_w(lpszAppName),
+                 debugstr_w(lpszKeyName), debugstr_w(lpszString));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -985,7 +1005,8 @@ BOOL WINAPI SQLWriteFileDSN(LPCSTR lpszFileName, LPCSTR lpszAppName,
                LPCSTR lpszKeyName, LPCSTR lpszString)
 {
     clear_errors();
-    FIXME("\n");
+    FIXME("%s %s %s %s\n", debugstr_a(lpszFileName), debugstr_a(lpszAppName),
+                 debugstr_a(lpszKeyName), debugstr_a(lpszString));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
