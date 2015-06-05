@@ -360,6 +360,9 @@
 /* Define to 1 if you have the <libproc.h> header file. */
 #undef HAVE_LIBPROC_H
 
+/* Define to 1 if you have the <libunwind.h> header file. */
+#undef HAVE_LIBUNWIND_H
+
 /* Define to 1 if you have the <libv4l1.h> header file. */
 #undef HAVE_LIBV4L1_H
 
