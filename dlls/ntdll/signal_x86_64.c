@@ -1342,7 +1342,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 
     /* parse the CIE first */
 
-    if (cie->version != 1)
+    if (cie->version != 1 && cie->version != 3)
     {
         FIXME( "unknown CIE version %u at %p\n", cie->version, cie );
         return STATUS_INVALID_DISPOSITION;
@@ -1351,7 +1351,10 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 
     info.code_align = dwarf_get_uleb128( &ptr );
     info.data_align = dwarf_get_sleb128( &ptr );
-    info.retaddr_reg = *ptr++;
+    if (cie->version == 1)
+        info.retaddr_reg = *ptr++;
+    else
+        info.retaddr_reg = dwarf_get_uleb128( &ptr );
     info.state.cfa_rule = RULE_CFA_OFFSET;
 
     TRACE( "function %lx base %p cie %p len %x id %x version %x aug '%s' code_align %lu data_align %ld retaddr %s\n",
