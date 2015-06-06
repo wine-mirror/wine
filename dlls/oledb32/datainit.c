@@ -424,6 +424,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r','=',0};
     static const WCHAR msdasqlW[] = {'M','S','D','A','S','Q','L',0};
     datainit *This = impl_from_IDataInitialize(iface);
+    BOOL datasource_created = FALSE;
     IDBProperties *dbprops;
     DBPROPSET *propset;
     WCHAR *prov = NULL;
@@ -511,6 +512,8 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 
         if (FAILED(hr) && IsEqualIID(riid, &IID_IDBInitialize))
             hr = create_db_init(datasource);
+
+        datasource_created = *datasource != NULL;
     }
 
     /* now set properties */
@@ -521,7 +524,12 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
         hr = IUnknown_QueryInterface(*datasource, &IID_IDBProperties, (void**)&dbprops);
         if (FAILED(hr))
         {
-            WARN("provider doesn't support IDBProperties\n");
+            ERR("provider doesn't support IDBProperties\n");
+            if (datasource_created)
+            {
+                IUnknown_Release(*datasource);
+                *datasource = NULL;
+            }
             return hr;
         }
 
@@ -557,7 +565,16 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 
             hr = IDBProperties_SetProperties(dbprops, 1, propset);
             free_dbpropset(1, propset);
-            TRACE("provider ret 0x%08x\n", hr);
+            if (FAILED(hr))
+            {
+                ERR("failed to set property, 0x%08x\n", hr);
+                if (datasource_created)
+                {
+                    IUnknown_Release(*datasource);
+                    *datasource = NULL;
+                }
+                break;
+            }
         }
 
         IDBProperties_Release(dbprops);

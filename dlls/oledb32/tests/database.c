@@ -37,6 +37,14 @@ DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44
 
 static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc = IUnknown_AddRef(obj);
+    IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
+
 static void test_GetDataSource(WCHAR *initstring)
 {
     IDataInitialize *datainit = NULL;
@@ -48,11 +56,16 @@ static void test_GetDataSource(WCHAR *initstring)
     hr = CoCreateInstance(&CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,(void**)&datainit);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    EXPECT_REF(datainit, 1);
+
     /* a failure to create data source here may indicate provider is simply not present */
     hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring, &IID_IDBInitialize, (IUnknown**)&dbinit);
     if(SUCCEEDED(hr))
     {
         IDBProperties *props = NULL;
+
+        EXPECT_REF(datainit, 1);
+        EXPECT_REF(dbinit, 1);
 
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -62,6 +75,8 @@ static void test_GetDataSource(WCHAR *initstring)
             DBPROPINFOSET *pInfoset;
             OLECHAR *ary;
 
+            EXPECT_REF(dbinit, 2);
+            EXPECT_REF(props, 2);
             hr = IDBProperties_GetPropertyInfo(props, 0, NULL, &cnt, &pInfoset, &ary);
             todo_wine ok(hr == S_OK, "got %08x\n", hr);
             if(hr == S_OK)
@@ -80,9 +95,11 @@ static void test_GetDataSource(WCHAR *initstring)
             IDBProperties_Release(props);
         }
 
+        EXPECT_REF(dbinit, 1);
         IDBInitialize_Release(dbinit);
     }
 
+    EXPECT_REF(datainit, 1);
     IDataInitialize_Release(datainit);
 }
 
@@ -186,7 +203,7 @@ static void test_initializationstring(void)
     static const WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
     IDataInitialize *datainit = NULL;
-    IDBInitialize *dbinit = NULL;
+    IDBInitialize *dbinit;
     HRESULT hr;
     WCHAR *initstring = NULL;
 
@@ -194,10 +211,16 @@ static void test_initializationstring(void)
     ok(hr == S_OK, "got %08x\n", hr);
     if(SUCCEEDED(hr))
     {
+        EXPECT_REF(datainit, 1);
+
+        dbinit = NULL;
         hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring_default,
                                                                 &IID_IDBInitialize, (IUnknown**)&dbinit);
         if(SUCCEEDED(hr))
         {
+            EXPECT_REF(datainit, 1);
+            EXPECT_REF(dbinit, 1);
+
             hr = IDataInitialize_GetInitializationString(datainit, (IUnknown*)dbinit, 0, &initstring);
             ok(hr == S_OK, "got %08x\n", hr);
             if(hr == S_OK)
@@ -210,6 +233,8 @@ static void test_initializationstring(void)
 
             IDBInitialize_Release(dbinit);
         }
+        else
+            ok(dbinit == NULL, "got %p\n", dbinit);
 
         IDataInitialize_Release(datainit);
     }
