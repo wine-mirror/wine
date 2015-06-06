@@ -1937,6 +1937,9 @@ static HRESULT WINAPI dwritetextlayout_SetFontStyle(IDWriteTextLayout2 *iface, D
 
     TRACE("(%p)->(%d %s)\n", This, style, debugstr_range(&range));
 
+    if ((UINT32)style > DWRITE_FONT_STYLE_ITALIC)
+        return E_INVALIDARG;
+
     value.range = range;
     value.u.style = style;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STYLE, &value);
@@ -1949,6 +1952,9 @@ static HRESULT WINAPI dwritetextlayout_SetFontStretch(IDWriteTextLayout2 *iface,
 
     TRACE("(%p)->(%d %s)\n", This, stretch, debugstr_range(&range));
 
+    if (stretch == DWRITE_FONT_STRETCH_UNDEFINED || (UINT32)stretch > DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+        return E_INVALIDARG;
+
     value.range = range;
     value.u.stretch = stretch;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STRETCH, &value);
@@ -1960,6 +1966,9 @@ static HRESULT WINAPI dwritetextlayout_SetFontSize(IDWriteTextLayout2 *iface, FL
     struct layout_range_attr_value value;
 
     TRACE("(%p)->(%.2f %s)\n", This, size, debugstr_range(&range));
+
+    if (size <= 0.0)
+        return E_INVALIDARG;
 
     value.range = range;
     value.u.fontsize = size;

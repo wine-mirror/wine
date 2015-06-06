@@ -1832,6 +1832,15 @@ static void test_SetFontSize(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* negative/zero size */
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, -15.0, r);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetFontSize(layout, 0.0, r);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     r.startPosition = 1;
     r.length = 0;
     size = 0.0;
@@ -1909,6 +1918,12 @@ static void test_SetFontFamilyName(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* NULL name */
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, NULL, r);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     r.startPosition = 1;
     r.length = 0;
     nameW[0] = 0;
@@ -1960,6 +1975,12 @@ static void test_SetFontStyle(void)
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* invalid style value */
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_ITALIC+1, r);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     r.startPosition = 1;
     r.length = 0;
@@ -2036,6 +2057,12 @@ static void test_SetFontStretch(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* invalid stretch value */
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_ULTRA_EXPANDED+1, r);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     r.startPosition = 1;
     r.length = 0;
     stretch = DWRITE_FONT_STRETCH_UNDEFINED;
@@ -2093,7 +2120,6 @@ static void test_SetFontStretch(void)
     r.startPosition = 0;
     r.length = 2;
     hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_UNDEFINED, r);
-todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     IDWriteTextLayout_Release(layout);
