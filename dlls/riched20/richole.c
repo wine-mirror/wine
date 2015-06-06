@@ -312,6 +312,15 @@ static HRESULT create_textfont(ITextRange*, const ITextFontImpl*, ITextFont**);
 static HRESULT create_textpara(ITextRange*, ITextPara**);
 static ITextSelectionImpl *CreateTextSelection(IRichEditOleImpl*);
 
+static HRESULT textrange_get_storylength(ME_TextEditor *editor, LONG *length)
+{
+    if (!length)
+        return E_INVALIDARG;
+
+    *length = ME_GetTextLength(editor) + 1;
+    return S_OK;
+}
+
 static void textranges_update_ranges(IRichEditOleImpl *reole, LONG start, LONG end, enum range_update_op op)
 {
     ITextRangeImpl *range;
@@ -1897,14 +1906,16 @@ static HRESULT WINAPI ITextRange_fnSetPara(ITextRange *me, ITextPara *pPara)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextRange_fnGetStoryLength(ITextRange *me, LONG *pcch)
+static HRESULT WINAPI ITextRange_fnGetStoryLength(ITextRange *me, LONG *length)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
+
+    TRACE("(%p)->(%p)\n", This, length);
+
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    FIXME("not implemented %p\n", This);
-    return E_NOTIMPL;
+    return textrange_get_storylength(This->child.reole->editor, length);
 }
 
 static HRESULT WINAPI ITextRange_fnGetStoryType(ITextRange *me, LONG *value)
@@ -4364,14 +4375,16 @@ static HRESULT WINAPI ITextSelection_fnSetPara(ITextSelection *me, ITextPara *pP
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetStoryLength(ITextSelection *me, LONG *pcch)
+static HRESULT WINAPI ITextSelection_fnGetStoryLength(ITextSelection *me, LONG *length)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%p)\n", This, length);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    return textrange_get_storylength(This->reOle->editor, length);
 }
 
 static HRESULT WINAPI ITextSelection_fnGetStoryType(ITextSelection *me, LONG *value)

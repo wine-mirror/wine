@@ -3109,6 +3109,74 @@ static void test_InsertObject(void)
   release_interfaces(&hwnd, &reole, &doc, NULL);
 }
 
+static void test_GetStoryLength(void)
+{
+  static const CHAR test_text1[] = "TestSomeText";
+  IRichEditOle *reOle = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  ITextRange *range;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reOle, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_GetStoryLength(range, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  value = 0;
+  hr = ITextRange_GetStoryLength(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  hr = ITextSelection_GetStoryLength(selection, NULL);
+  ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+  value = 0;
+  hr = ITextSelection_GetStoryLength(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+
+  value = 0;
+  hr = ITextRange_GetStoryLength(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 1, "got %d\n", value);
+
+  value = 0;
+  hr = ITextSelection_GetStoryLength(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 1, "got %d\n", value);
+
+  release_interfaces(&hwnd, &reOle, &doc, NULL);
+
+  hr = ITextRange_GetStoryLength(range, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  value = 100;
+  hr = ITextRange_GetStoryLength(range, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+  ok(value == 100, "got %d\n", value);
+
+  hr = ITextSelection_GetStoryLength(selection, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  value = 100;
+  hr = ITextSelection_GetStoryLength(selection, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+  ok(value == 100, "got %d\n", value);
+
+  ITextSelection_Release(selection);
+  ITextRange_Release(range);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -3142,4 +3210,5 @@ START_TEST(richole)
   test_GetStoryType();
   test_SetFont();
   test_InsertObject();
+  test_GetStoryLength();
 }
