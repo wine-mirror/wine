@@ -3390,6 +3390,10 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
+        /* WINED3D_GL_RES_TYPE_BUFFER */
+        NULL,
+        /* WINED3D_GL_RES_TYPE_RB */
+        NULL,
     };
 
     static const char * const blt_fprograms_masked[WINED3D_GL_RES_TYPE_COUNT] =
@@ -3428,6 +3432,10 @@ static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_i
         "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
         "MOV result.depth.z, R0.x;\n"
         "END\n",
+        /* WINED3D_GL_RES_TYPE_BUFFER */
+        NULL,
+        /* WINED3D_GL_RES_TYPE_RB */
+        NULL,
     };
 
     fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];

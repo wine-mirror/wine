@@ -1417,6 +1417,8 @@ static GLenum wined3d_gl_type_to_enum(enum wined3d_gl_resource_type type)
             return GL_TEXTURE_RECTANGLE_ARB;
         case WINED3D_GL_RES_TYPE_BUFFER:
             return GL_TEXTURE_2D; /* TODO: GL_TEXTURE_BUFFER. */
+        case WINED3D_GL_RES_TYPE_RB:
+            return GL_RENDERBUFFER;
         case WINED3D_GL_RES_TYPE_COUNT:
             break;
     }
@@ -1424,52 +1426,74 @@ static GLenum wined3d_gl_type_to_enum(enum wined3d_gl_resource_type type)
     return 0;
 }
 
-static void delete_fbo_attachment(const struct wined3d_gl_info *gl_info)
-{
-    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_2D, 0, 0);
-}
-
-/* Context activation is done by the caller. */
-static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info,
-        enum wined3d_gl_resource_type d3d_type, GLuint tex, GLenum internal, GLenum format, GLenum type)
+static void delete_fbo_attachment(const struct wined3d_gl_info *gl_info,
+        enum wined3d_gl_resource_type d3d_type, GLuint object)
 {
     switch (d3d_type)
     {
         case WINED3D_GL_RES_TYPE_TEX_1D:
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, tex);
+        case WINED3D_GL_RES_TYPE_TEX_2D:
+        case WINED3D_GL_RES_TYPE_TEX_RECT:
+        case WINED3D_GL_RES_TYPE_TEX_3D:
+        case WINED3D_GL_RES_TYPE_TEX_CUBE:
+            gl_info->gl_ops.gl.p_glDeleteTextures(1, &object);
+            break;
+
+        case WINED3D_GL_RES_TYPE_RB:
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &object);
+            break;
+
+        case WINED3D_GL_RES_TYPE_BUFFER:
+        case WINED3D_GL_RES_TYPE_COUNT:
+            break;
+    }
+}
+
+/* Context activation is done by the caller. */
+static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info,
+        enum wined3d_gl_resource_type d3d_type, GLuint *object, GLenum internal, GLenum format, GLenum type)
+{
+    switch (d3d_type)
+    {
+        case WINED3D_GL_RES_TYPE_TEX_1D:
+            gl_info->gl_ops.gl.p_glGenTextures(1, object);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, *object);
             gl_info->gl_ops.gl.p_glTexImage1D(GL_TEXTURE_1D, 0, internal, 16, 0, format, type, NULL);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_1D, tex, 0);
+            gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_1D,
+                    *object, 0);
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_2D:
         case WINED3D_GL_RES_TYPE_TEX_RECT:
-            gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(d3d_type), tex);
+            gl_info->gl_ops.gl.p_glGenTextures(1, object);
+            gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(d3d_type), *object);
             gl_info->gl_ops.gl.p_glTexImage2D(wined3d_gl_type_to_enum(d3d_type), 0, internal, 16, 16, 0,
                     format, type, NULL);
             gl_info->gl_ops.gl.p_glTexParameteri(wined3d_gl_type_to_enum(d3d_type), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(wined3d_gl_type_to_enum(d3d_type), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                    wined3d_gl_type_to_enum(d3d_type), tex, 0);
+                    wined3d_gl_type_to_enum(d3d_type), *object, 0);
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_3D:
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, tex);
+            gl_info->gl_ops.gl.p_glGenTextures(1, object);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, *object);
             GL_EXTCALL(glTexImage3D)(GL_TEXTURE_3D, 0, internal, 16, 16, 16, 0,
                     format, type, NULL);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             gl_info->fbo_ops.glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                    GL_TEXTURE_3D, tex, 0, 0);
+                    GL_TEXTURE_3D, *object, 0, 0);
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_CUBE:
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, tex);
+            gl_info->gl_ops.gl.p_glGenTextures(1, object);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, *object);
             gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, internal, 16, 16, 0,
                     format, type, NULL);
             gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, internal, 16, 16, 0,
@@ -1486,13 +1510,28 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                    GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, tex, 0);
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, *object, 0);
+            break;
+
+        case WINED3D_GL_RES_TYPE_RB:
+            gl_info->fbo_ops.glGenRenderbuffers(1, object);
+            gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, *object);
+            gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, internal, 16, 16);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
+                    *object);
             break;
 
         case WINED3D_GL_RES_TYPE_BUFFER:
         case WINED3D_GL_RES_TYPE_COUNT:
             break;
     }
+
+    /* Ideally we'd skip all formats already known not to work on textures
+     * by checking for WINED3DFMT_FLAG_TEXTURE here. However, we want to
+     * know if we can attach WINED3DFMT_P8_UINT textures to FBOs, and this
+     * format never has WINED3DFMT_FLAG_TEXTURE set. Instead, swallow GL
+     * errors generated by invalid formats. */
+    while (gl_info->gl_ops.gl.p_glGetError());
 }
 
 /* Context activation is done by the caller. */
@@ -1503,7 +1542,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
      *
      * Try to stick to the standard format if possible, this limits precision differences. */
     GLenum status, rt_internal = format->rtInternal;
-    GLuint tex;
+    GLuint object;
     enum wined3d_gl_resource_type type;
     BOOL fallback_fmt_used = FALSE, regular_fmt_used = FALSE;
 
@@ -1514,17 +1553,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         if (type == WINED3D_GL_RES_TYPE_BUFFER)
             continue;
 
-        /* Ideally we'd skip all formats already known not to work on textures
-         * by checking for WINED3DFMT_FLAG_TEXTURE here. However, we want to
-         * know if we can attach WINED3DFMT_P8_UINT textures to FBOs, and this
-         * format never has WINED3DFMT_FLAG_TEXTURE set. Instead, swallow GL
-         * errors generated by invalid formats. */
-
-        gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
-        create_and_bind_fbo_attachment(gl_info, type, tex, format->glInternal,
+        create_and_bind_fbo_attachment(gl_info, type, &object, format->glInternal,
                 format->glFormat, format->glType);
-        while (gl_info->gl_ops.gl.p_glGetError());
-
         status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
         checkGLcall("Framebuffer format check");
 
@@ -1560,8 +1590,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
                 while (gl_info->gl_ops.gl.p_glGetError());
 
-                delete_fbo_attachment(gl_info);
-                create_and_bind_fbo_attachment(gl_info, type, tex, format->rtInternal,
+                delete_fbo_attachment(gl_info, type, object);
+                create_and_bind_fbo_attachment(gl_info, type, &object, format->rtInternal,
                         format->glFormat, format->glType);
 
                 status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1654,12 +1684,12 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
                 gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
 
-                /* Rebinding texture to workaround a fglrx bug. */
-                gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(type), tex);
                 switch (type)
                 {
                     case WINED3D_GL_RES_TYPE_TEX_1D:
-                        gl_info->gl_ops.gl.p_glGetTexImage(wined3d_gl_type_to_enum(type), 0, GL_BGRA,
+                        /* Rebinding texture to workaround a fglrx bug. */
+                        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, object);
+                        gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_1D, 0, GL_BGRA,
                                 GL_UNSIGNED_INT_8_8_8_8_REV, readback);
                         color = readback[7];
                         break;
@@ -1667,14 +1697,24 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
                     case WINED3D_GL_RES_TYPE_TEX_2D:
                     case WINED3D_GL_RES_TYPE_TEX_3D:
                     case WINED3D_GL_RES_TYPE_TEX_RECT:
+                        /* Rebinding texture to workaround a fglrx bug. */
+                        gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(type), object);
                         gl_info->gl_ops.gl.p_glGetTexImage(wined3d_gl_type_to_enum(type), 0, GL_BGRA,
                                 GL_UNSIGNED_INT_8_8_8_8_REV, readback);
                         color = readback[7 * 16 + 7];
                         break;
 
                     case WINED3D_GL_RES_TYPE_TEX_CUBE:
+                        /* Rebinding texture to workaround a fglrx bug. */
+                        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, object);
                         gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_BGRA,
                                 GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+                        color = readback[7 * 16 + 7];
+                        break;
+
+                    case WINED3D_GL_RES_TYPE_RB:
+                        gl_info->gl_ops.gl.p_glReadPixels(0, 0, 16, 16,
+                                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
                         color = readback[7 * 16 + 7];
                         break;
 
@@ -1722,8 +1762,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
         if (format->glInternal != format->glGammaInternal)
         {
-            delete_fbo_attachment(gl_info);
-            create_and_bind_fbo_attachment(gl_info, type, tex, format->glGammaInternal,
+            delete_fbo_attachment(gl_info, type, object);
+            create_and_bind_fbo_attachment(gl_info, type, &object, format->glGammaInternal,
                     format->glFormat, format->glType);
 
             status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1744,8 +1784,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         else if (status == GL_FRAMEBUFFER_COMPLETE)
             format->flags[type] |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
 
-        delete_fbo_attachment(gl_info);
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
+        delete_fbo_attachment(gl_info, type, object);
+        checkGLcall("Framebuffer format check cleaup");
     }
 
     if (fallback_fmt_used && regular_fmt_used)
@@ -1993,6 +2033,9 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
 
         if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
             format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] |= format_texture_info[i].flags;
+
+        format->flags[WINED3D_GL_RES_TYPE_RB] |= format_texture_info[i].flags;
+        format->flags[WINED3D_GL_RES_TYPE_RB] &= ~WINED3DFMT_FLAG_TEXTURE;
 
         if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
         {

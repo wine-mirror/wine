@@ -6997,6 +6997,10 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "{\n"
         "    gl_FragDepth = texture2DRect(sampler, gl_TexCoord[0].xy).x;\n"
         "}\n",
+        /* WINED3D_GL_RES_TYPE_BUFFER */
+        NULL,
+        /* WINED3D_GL_RES_TYPE_RB */
+        NULL,
     };
 
     static const char * const blt_pshaders_masked[WINED3D_GL_RES_TYPE_COUNT] =
@@ -7033,6 +7037,10 @@ static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum
         "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
         "    gl_FragDepth = texture2DRect(sampler, gl_TexCoord[0].xy).x;\n"
         "}\n",
+        /* WINED3D_GL_RES_TYPE_BUFFER */
+        NULL,
+        /* WINED3D_GL_RES_TYPE_RB */
+        NULL,
     };
 
     blt_pshader = masked ? blt_pshaders_masked[tex_type] : blt_pshaders_full[tex_type];

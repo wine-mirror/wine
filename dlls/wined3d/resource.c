@@ -80,13 +80,13 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 {
     const struct wined3d *d3d = device->wined3d;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    static const enum wined3d_gl_resource_type gl_resource_types[][3] =
+    static const enum wined3d_gl_resource_type gl_resource_types[][4] =
     {
         /* 0                            */ {WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_SURFACE        */ {WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_VOLUME         */ {WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_TEXTURE        */ {WINED3D_GL_RES_TYPE_TEX_2D,
-                WINED3D_GL_RES_TYPE_TEX_RECT, WINED3D_GL_RES_TYPE_COUNT},
+                WINED3D_GL_RES_TYPE_TEX_RECT, WINED3D_GL_RES_TYPE_RB, WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_VOLUME_TEXTURE */ {WINED3D_GL_RES_TYPE_TEX_3D, WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_CUBE_TEXTURE   */ {WINED3D_GL_RES_TYPE_TEX_CUBE, WINED3D_GL_RES_TYPE_COUNT},
         /* WINED3D_RTYPE_BUFFER         */ {WINED3D_GL_RES_TYPE_BUFFER, WINED3D_GL_RES_TYPE_COUNT},
