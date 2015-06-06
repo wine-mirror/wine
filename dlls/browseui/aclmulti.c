@@ -138,44 +138,6 @@ static ULONG WINAPI ACLMulti_Release(IEnumString *iface)
     return ret;
 }
 
-static HRESULT WINAPI ACLMulti_Append(IObjMgr *iface, IUnknown *obj)
-{
-    ACLMulti *This = impl_from_IObjMgr(iface);
-
-    TRACE("(%p, %p)\n", This, obj);
-    if (obj == NULL)
-        return E_FAIL;
-
-    This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
-    This->objs[This->nObjs].punk = obj;
-    IUnknown_AddRef(obj);
-    if (FAILED(IUnknown_QueryInterface(obj, &IID_IEnumString, (LPVOID *)&This->objs[This->nObjs].pEnum)))
-        This->objs[This->nObjs].pEnum = NULL;
-    if (FAILED(IUnknown_QueryInterface(obj, &IID_IACList, (LPVOID *)&This->objs[This->nObjs].pACL)))
-        This->objs[This->nObjs].pACL = NULL;
-    This->nObjs++;
-    return S_OK;
-}
-
-static HRESULT WINAPI ACLMulti_Remove(IObjMgr *iface, IUnknown *obj)
-{
-    ACLMulti *This = impl_from_IObjMgr(iface);
-    int i;
-
-    TRACE("(%p, %p)\n", This, obj);
-    for (i = 0; i < This->nObjs; i++)
-        if (This->objs[i].punk == obj)
-        {
-            release_obj(&This->objs[i]);
-            memmove(&This->objs[i], &This->objs[i+1], (This->nObjs-i-1)*sizeof(struct ACLMultiSublist));
-            This->nObjs--;
-            This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
-            return S_OK;
-        }
-
-    return E_FAIL;
-}
-
 static HRESULT WINAPI ACLMulti_Next(IEnumString *iface, ULONG celt, LPOLESTR *rgelt, ULONG *pceltFetched)
 {
     ACLMulti *This = impl_from_IEnumString(iface);
@@ -226,22 +188,6 @@ static HRESULT WINAPI ACLMulti_Clone(IEnumString *iface, IEnumString **ppOut)
     return E_OUTOFMEMORY;
 }
 
-static HRESULT WINAPI ACLMulti_Expand(IACList *iface, LPCWSTR wstr)
-{
-    ACLMulti *This = impl_from_IACList(iface);
-    HRESULT res = S_OK;
-    int i;
-
-    for (i = 0; i < This->nObjs; i++)
-    {
-        if (!This->objs[i].pACL)
-            continue;
-        res = IACList_Expand(This->objs[i].pACL, wstr);
-        /* Vista behaviour - XP would break out of the loop if res == S_OK (usually calling Expand only once) */
-    }
-    return res;
-}
-
 static const IEnumStringVtbl ACLMultiVtbl =
 {
     ACLMulti_QueryInterface,
@@ -257,19 +203,57 @@ static const IEnumStringVtbl ACLMultiVtbl =
 static HRESULT WINAPI ACLMulti_IObjMgr_QueryInterface(IObjMgr *iface, REFIID iid, LPVOID *ppvOut)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
+    return IEnumString_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ACLMulti_IObjMgr_AddRef(IObjMgr *iface)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_AddRef(&This->IEnumString_iface);
+    return IEnumString_AddRef(&This->IEnumString_iface);
 }
 
 static ULONG WINAPI ACLMulti_IObjMgr_Release(IObjMgr *iface)
 {
     ACLMulti *This = impl_from_IObjMgr(iface);
-    return ACLMulti_Release(&This->IEnumString_iface);
+    return IEnumString_Release(&This->IEnumString_iface);
+}
+
+static HRESULT WINAPI ACLMulti_Append(IObjMgr *iface, IUnknown *obj)
+{
+    ACLMulti *This = impl_from_IObjMgr(iface);
+
+    TRACE("(%p, %p)\n", This, obj);
+    if (obj == NULL)
+        return E_FAIL;
+
+    This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
+    This->objs[This->nObjs].punk = obj;
+    IUnknown_AddRef(obj);
+    if (FAILED(IUnknown_QueryInterface(obj, &IID_IEnumString, (LPVOID *)&This->objs[This->nObjs].pEnum)))
+        This->objs[This->nObjs].pEnum = NULL;
+    if (FAILED(IUnknown_QueryInterface(obj, &IID_IACList, (LPVOID *)&This->objs[This->nObjs].pACL)))
+        This->objs[This->nObjs].pACL = NULL;
+    This->nObjs++;
+    return S_OK;
+}
+
+static HRESULT WINAPI ACLMulti_Remove(IObjMgr *iface, IUnknown *obj)
+{
+    ACLMulti *This = impl_from_IObjMgr(iface);
+    int i;
+
+    TRACE("(%p, %p)\n", This, obj);
+    for (i = 0; i < This->nObjs; i++)
+        if (This->objs[i].punk == obj)
+        {
+            release_obj(&This->objs[i]);
+            memmove(&This->objs[i], &This->objs[i+1], (This->nObjs-i-1)*sizeof(struct ACLMultiSublist));
+            This->nObjs--;
+            This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
+            return S_OK;
+        }
+
+    return E_FAIL;
 }
 
 static const IObjMgrVtbl ACLMulti_ObjMgrVtbl =
@@ -285,19 +269,35 @@ static const IObjMgrVtbl ACLMulti_ObjMgrVtbl =
 static HRESULT WINAPI ACLMulti_IACList_QueryInterface(IACList *iface, REFIID iid, LPVOID *ppvOut)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
+    return IEnumString_QueryInterface(&This->IEnumString_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ACLMulti_IACList_AddRef(IACList *iface)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_AddRef(&This->IEnumString_iface);
+    return IEnumString_AddRef(&This->IEnumString_iface);
 }
 
 static ULONG WINAPI ACLMulti_IACList_Release(IACList *iface)
 {
     ACLMulti *This = impl_from_IACList(iface);
-    return ACLMulti_Release(&This->IEnumString_iface);
+    return IEnumString_Release(&This->IEnumString_iface);
+}
+
+static HRESULT WINAPI ACLMulti_Expand(IACList *iface, LPCWSTR wstr)
+{
+    ACLMulti *This = impl_from_IACList(iface);
+    HRESULT res = S_OK;
+    int i;
+
+    for (i = 0; i < This->nObjs; i++)
+    {
+        if (!This->objs[i].pACL)
+            continue;
+        res = IACList_Expand(This->objs[i].pACL, wstr);
+        /* Vista behaviour - XP would break out of the loop if res == S_OK (usually calling Expand only once) */
+    }
+    return res;
 }
 
 static const IACListVtbl ACLMulti_ACListVtbl =
