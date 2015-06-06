@@ -924,7 +924,6 @@ static void test_fontweight(void)
     range.startPosition = range.length = 0;
     hr = IDWriteTextLayout_GetFontWeight(layout, 0, &weight, &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(range.startPosition == 0 && range.length == ~0u, "got %u, %u\n", range.startPosition, range.length);
 
     range.startPosition = 0;
@@ -1838,7 +1837,6 @@ static void test_SetFontSize(void)
     size = 0.0;
     hr = IDWriteTextLayout_GetFontSize(layout, 0, &size, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
     ok(size == 10.0, "got %.2f\n", size);
 
@@ -1872,10 +1870,9 @@ todo_wine
     r.startPosition = r.length = 0;
     hr = IDWriteTextLayout_GetFontSize(layout, 20, &size, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(r.startPosition == 4 && r.length == ~0u-4, "got %u, %u\n", r.startPosition, r.length);
     ok(size == 10.0, "got %.2f\n", size);
-}
+
     r.startPosition = 100;
     r.length = 4;
     hr = IDWriteTextLayout_SetFontSize(layout, 25.0, r);
@@ -1885,10 +1882,9 @@ todo_wine {
     r.startPosition = r.length = 0;
     hr = IDWriteTextLayout_GetFontSize(layout, 100, &size, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
     ok(size == 25.0, "got %.2f\n", size);
-}
+
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 }
@@ -1918,7 +1914,6 @@ static void test_SetFontFamilyName(void)
     nameW[0] = 0;
     hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
 
     r.startPosition = 1;
@@ -1970,7 +1965,6 @@ static void test_SetFontStyle(void)
     r.length = 0;
     hr = IDWriteTextLayout_GetFontStyle(layout, 0, &style, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
     ok(style == DWRITE_FONT_STYLE_NORMAL, "got %d\n", style);
 
@@ -2004,10 +1998,9 @@ todo_wine
     r.startPosition = r.length = 0;
     hr = IDWriteTextLayout_GetFontStyle(layout, 20, &style, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(r.startPosition == 4 && r.length == ~0u-4, "got %u, %u\n", r.startPosition, r.length);
     ok(style == DWRITE_FONT_STYLE_NORMAL, "got %d\n", style);
-}
+
     r.startPosition = 100;
     r.length = 4;
     hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_OBLIQUE, r);
@@ -2017,10 +2010,92 @@ todo_wine {
     r.startPosition = r.length = 0;
     hr = IDWriteTextLayout_GetFontStyle(layout, 100, &style, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
     ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
 }
+
+static void test_SetFontStretch(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    DWRITE_FONT_STRETCH stretch;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE r;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 0, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+    ok(stretch == DWRITE_FONT_STRETCH_NORMAL, "got %d\n", stretch);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_CONDENSED, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 1, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(stretch == DWRITE_FONT_STRETCH_CONDENSED, "got %d\n", stretch);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_EXPANDED, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 1, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(stretch == DWRITE_FONT_STRETCH_EXPANDED, "got %d\n", stretch);
+
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 0, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(stretch == DWRITE_FONT_STRETCH_EXPANDED, "got %d\n", stretch);
+
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 20, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 4 && r.length == ~0u-4, "got %u, %u\n", r.startPosition, r.length);
+    ok(stretch == DWRITE_FONT_STRETCH_NORMAL, "got %d\n", stretch);
+
+    r.startPosition = 100;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_EXPANDED, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    stretch = DWRITE_FONT_STRETCH_UNDEFINED;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetFontStretch(layout, 100, &stretch, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(stretch == DWRITE_FONT_STRETCH_EXPANDED, "got %d\n", stretch);
+
+    /* trying to set undefined value */
+    r.startPosition = 0;
+    r.length = 2;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_UNDEFINED, r);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 }
@@ -2059,6 +2134,7 @@ START_TEST(layout)
     test_SetFontSize();
     test_SetFontFamilyName();
     test_SetFontStyle();
+    test_SetFontStretch();
 
     IDWriteFactory_Release(factory);
 }

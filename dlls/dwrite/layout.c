@@ -546,6 +546,15 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
     }
 }
 
+/* This helper should be used to get effective range length, in other words it returns number of text
+   positions from range starting point to the end of the range, limited by layout text length */
+static inline UINT32 get_clipped_range_length(const struct dwrite_textlayout *layout, const struct layout_range *range)
+{
+    if (range->h.range.startPosition + range->h.range.length <= layout->len)
+        return range->h.range.length;
+    return layout->len - range->h.range.startPosition;
+}
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
@@ -574,6 +583,10 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         return hr;
 
     LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, h.entry) {
+        /* we don't care about ranges that don't contain any text */
+        if (range->h.range.startPosition >= layout->len)
+            break;
+
         /* inline objects override actual text in a range */
         if (range->object) {
             hr = layout_update_breakpoints_range(layout, range);
@@ -585,7 +598,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
                 return E_OUTOFMEMORY;
 
             r->u.object.object = range->object;
-            r->u.object.length = range->h.range.length;
+            r->u.object.length = get_clipped_range_length(layout, range);
             r->effect = range->effect;
             list_add_tail(&layout->runs, &r->entry);
             continue;
@@ -593,13 +606,13 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         /* initial splitting by script */
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->h.range.startPosition, range->h.range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->h.range.startPosition, get_clipped_range_length(layout, range), &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
 
         /* this splits it further */
         hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->h.range.startPosition, range->h.range.length, &layout->IDWriteTextAnalysisSink_iface);
+            range->h.range.startPosition, get_clipped_range_length(layout, range), &layout->IDWriteTextAnalysisSink_iface);
         if (FAILED(hr))
             break;
     }
@@ -1073,18 +1086,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     return hr;
 }
 
-/* To be used in IDWriteTextLayout methods to validate and fix passed range */
-static inline BOOL validate_text_range(struct dwrite_textlayout *layout, DWRITE_TEXT_RANGE *r)
-{
-    if (r->startPosition >= layout->len)
-        return FALSE;
-
-    if (r->startPosition + r->length > layout->len)
-        r->length = layout->len - r->startPosition;
-
-    return TRUE;
-}
-
 static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
     struct layout_range_bool const *range_bool = (struct layout_range_bool*)h;
@@ -1429,9 +1430,6 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     BOOL changed = FALSE;
     struct list *ranges;
     DWRITE_TEXT_RANGE r;
-
-    if (!validate_text_range(layout, &value->range))
-        return S_OK;
 
     /* select from ranges lists */
     switch (attr)
@@ -2112,12 +2110,8 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout2 *i
 
     TRACE("(%p)->(%u %p %p)\n", This, position, style, r);
 
-    if (position >= This->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(This, position);
     *style = range->style;
-
     return return_range(&range->h, r);
 }
 
@@ -2129,12 +2123,8 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout2 
 
     TRACE("(%p)->(%u %p %p)\n", This, position, stretch, r);
 
-    if (position >= This->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(This, position);
     *stretch = range->stretch;
-
     return return_range(&range->h, r);
 }
 
@@ -2146,12 +2136,8 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout2 *if
 
     TRACE("(%p)->(%u %p %p)\n", This, position, size, r);
 
-    if (position >= This->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(This, position);
     *size = range->fontsize;
-
     return return_range(&range->h, r);
 }
 
@@ -3257,7 +3243,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
     struct layout_range_header *range, *strike;
-    DWRITE_TEXT_RANGE r = { 0, len };
+    DWRITE_TEXT_RANGE r;
     HRESULT hr;
 
     layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
@@ -3301,7 +3287,11 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     if (FAILED(hr))
         goto fail;
 
+    r.startPosition = 0;
+    r.length = ~0u;
     range = alloc_layout_range(layout, &r, LAYOUT_RANGE_REGULAR);
+    r.startPosition = 0;
+    r.length = len;
     strike = alloc_layout_range(layout, &r, LAYOUT_RANGE_STRIKETHROUGH);
     if (!range || !strike) {
         free_layout_range(range);
