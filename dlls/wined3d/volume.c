@@ -44,7 +44,7 @@ void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pit
 {
     const struct wined3d_format *format = volume->resource.format;
 
-    if (volume->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (volume->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
@@ -89,7 +89,7 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
 
         if (data->buffer_object)
             ERR("Loading a converted volume from a PBO.\n");
-        if (volume->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+        if (volume->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
             ERR("Converting a block-based format.\n");
 
         dst_row_pitch = width * format->conv_byte_count;
@@ -551,7 +551,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     const struct wined3d_gl_info *gl_info;
     BYTE *base_memory;
     const struct wined3d_format *format = volume->resource.format;
-    const unsigned int fmt_flags = volume->resource.format_flags;
+    const unsigned int fmt_flags = volume->container->resource.format_flags;
 
     TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
             volume, map_desc, box, flags);
@@ -759,7 +759,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
 
     size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, desc->depth);
 
-    if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, container->resource.gl_type,
+    if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, WINED3D_GL_RES_TYPE_COUNT,
             format, WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->pool, desc->width, desc->height, desc->depth,
             size, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
     {

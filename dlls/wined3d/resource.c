@@ -87,7 +87,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->type = type;
     resource->gl_type = gl_type;
     resource->format = format;
-    resource->format_flags = format->flags[gl_type];
+    if (gl_type < WINED3D_GL_RES_TYPE_COUNT)
+        resource->format_flags = format->flags[gl_type];
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
@@ -105,7 +106,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->resource_ops = resource_ops;
     resource->map_binding = WINED3D_LOCATION_SYSMEM;
 
-    if (pool != WINED3D_POOL_SCRATCH && type != WINED3D_RTYPE_BUFFER)
+    if (pool != WINED3D_POOL_SCRATCH && type != WINED3D_RTYPE_BUFFER && gl_type < WINED3D_GL_RES_TYPE_COUNT)
     {
         if ((usage & WINED3DUSAGE_RENDERTARGET) && !(resource->format_flags & WINED3DFMT_FLAG_RENDERTARGET))
         {
