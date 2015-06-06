@@ -4223,14 +4223,22 @@ static HRESULT WINAPI ITextSelection_fnSetChar(ITextSelection *me, LONG ch)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ITextSelection_fnGetDuplicate(ITextSelection *me, ITextRange **ppRange)
+static HRESULT WINAPI ITextSelection_fnGetDuplicate(ITextSelection *me, ITextRange **range)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    LONG start, end;
+
+    TRACE("(%p)->(%p)\n", This, range);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    if (!range)
+        return E_INVALIDARG;
+
+    ITextSelection_GetStart(me, &start);
+    ITextSelection_GetEnd(me, &end);
+    return CreateITextRange(This->reOle, start, end, range);
 }
 
 static HRESULT WINAPI ITextSelection_fnGetFormattedText(ITextSelection *me, ITextRange **ppRange)
