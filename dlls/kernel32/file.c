@@ -897,14 +897,9 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
 
     switch (class)
     {
-    case FileRenameInfo:
-    case FileDispositionInfo:
-    case FileAllocationInfo:
-    case FileEndOfFileInfo:
     case FileStreamInfo:
     case FileCompressionInfo:
     case FileAttributeTagInfo:
-    case FileIoPriorityHintInfo:
     case FileRemoteProtocolInfo:
     case FileFullDirectoryInfo:
     case FileFullDirectoryRestartInfo:
@@ -936,6 +931,11 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
                                        (class == FileIdBothDirectoryRestartInfo) );
         break;
 
+    case FileRenameInfo:
+    case FileDispositionInfo:
+    case FileAllocationInfo:
+    case FileIoPriorityHintInfo:
+    case FileEndOfFileInfo:
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;

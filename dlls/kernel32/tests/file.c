@@ -3830,6 +3830,12 @@ static void test_GetFileInformationByHandleEx(void)
     FILE_STANDARD_INFO *standardInfo;
     FILE_NAME_INFO *nameInfo;
     LARGE_INTEGER prevWrite;
+    FILE_IO_PRIORITY_HINT_INFO priohintinfo;
+    FILE_ALLOCATION_INFO allocinfo;
+    FILE_DISPOSITION_INFO dispinfo;
+    FILE_END_OF_FILE_INFO eofinfo;
+    FILE_RENAME_INFO renameinfo;
+
     struct {
         FILE_INFO_BY_HANDLE_CLASS handleClass;
         void *ptr;
@@ -3952,8 +3958,29 @@ static void test_GetFileInformationByHandleEx(void)
     for (i = 0; i < nameInfo->FileNameLength/2; i++)
         ok(strPtr[i] == nameInfo->FileName[i], "Incorrect filename char %d: %c vs %c\n",
             i, strPtr[i], nameInfo->FileName[i]);
-    CloseHandle(file);
 
+    /* invalid classes */
+    SetLastError(0xdeadbeef);
+    ret = pGetFileInformationByHandleEx(file, FileEndOfFileInfo, &eofinfo, sizeof(eofinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetFileInformationByHandleEx(file, FileIoPriorityHintInfo, &priohintinfo, sizeof(priohintinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetFileInformationByHandleEx(file, FileAllocationInfo, &allocinfo, sizeof(allocinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetFileInformationByHandleEx(file, FileDispositionInfo, &dispinfo, sizeof(dispinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetFileInformationByHandleEx(file, FileRenameInfo, &renameinfo, sizeof(renameinfo));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    CloseHandle(file);
     DeleteFileA(tempFileName);
 }
 
