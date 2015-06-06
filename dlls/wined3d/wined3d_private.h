@@ -2154,7 +2154,7 @@ static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
-        enum wined3d_resource_type type, enum wined3d_gl_resource_type gl_type, const struct wined3d_format *format,
+        enum wined3d_resource_type type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,

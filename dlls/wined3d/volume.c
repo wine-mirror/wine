@@ -759,8 +759,8 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
 
     size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, desc->depth);
 
-    if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, WINED3D_GL_RES_TYPE_COUNT,
-            format, WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->pool, desc->width, desc->height, desc->depth,
+    if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
+            WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->pool, desc->width, desc->height, desc->depth,
             size, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);

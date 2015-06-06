@@ -72,15 +72,95 @@ static void resource_check_usage(DWORD usage)
 }
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
-        enum wined3d_resource_type type, enum wined3d_gl_resource_type gl_type, const struct wined3d_format *format,
+        enum wined3d_resource_type type, const struct wined3d_format *format,
         enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, enum wined3d_pool pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
     const struct wined3d *d3d = device->wined3d;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    static const enum wined3d_gl_resource_type gl_resource_types[][3] =
+    {
+        /* 0                            */ {WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_SURFACE        */ {WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_VOLUME         */ {WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_TEXTURE        */ {WINED3D_GL_RES_TYPE_TEX_2D,
+                WINED3D_GL_RES_TYPE_TEX_RECT, WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_VOLUME_TEXTURE */ {WINED3D_GL_RES_TYPE_TEX_3D, WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_CUBE_TEXTURE   */ {WINED3D_GL_RES_TYPE_TEX_CUBE, WINED3D_GL_RES_TYPE_COUNT},
+        /* WINED3D_RTYPE_BUFFER         */ {WINED3D_GL_RES_TYPE_BUFFER, WINED3D_GL_RES_TYPE_COUNT},
+    };
+    enum wined3d_gl_resource_type gl_type = WINED3D_GL_RES_TYPE_COUNT;
+    enum wined3d_gl_resource_type base_type = gl_resource_types[type][0];
 
     resource_check_usage(usage);
+
+    if (base_type != WINED3D_GL_RES_TYPE_COUNT)
+    {
+        unsigned int i;
+        BOOL tex_2d_ok = FALSE;
+
+        for (i = 0; (gl_type = gl_resource_types[type][i]) != WINED3D_GL_RES_TYPE_COUNT; i++)
+        {
+            if ((usage & WINED3DUSAGE_RENDERTARGET) && !(format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
+            {
+                WARN("Format %s cannot be used for render targets.\n", debug_d3dformat(format->id));
+                continue;
+            }
+            if ((usage & WINED3DUSAGE_DEPTHSTENCIL) &&
+                    !(format->flags[gl_type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            {
+                WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
+                continue;
+            }
+            if ((usage & WINED3DUSAGE_TEXTURE) && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE))
+            {
+                WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
+                continue;
+            }
+            if (((width & (width - 1)) || (height & (height - 1)))
+                    && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
+                    && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
+                    && gl_type == WINED3D_GL_RES_TYPE_TEX_2D)
+            {
+                TRACE("Skipping 2D texture type to try texture rectangle.\n");
+                tex_2d_ok = TRUE;
+                continue;
+            }
+            break;
+        }
+
+        if (gl_type == WINED3D_GL_RES_TYPE_COUNT)
+        {
+            if (tex_2d_ok)
+            {
+                /* Non power of 2 texture and rectangle textures or renderbuffers do not work.
+                 * Use 2D textures, the texture code will pad to a power of 2 size. */
+                gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
+            }
+            else if (pool == WINED3D_POOL_SCRATCH)
+            {
+                /* Needed for proper format information. */
+                gl_type = base_type;
+            }
+            else
+            {
+                WARN("Did not find a suitable GL resource type, resource type, d3d type %u.\n", type);
+                return WINED3DERR_INVALIDCALL;
+            }
+        }
+    }
+
+    if (base_type != WINED3D_GL_RES_TYPE_COUNT
+            && (format->flags[base_type] & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY))
+            == WINED3DFMT_FLAG_BLOCKS)
+    {
+        UINT width_mask = format->block_width - 1;
+        UINT height_mask = format->block_height - 1;
+        if (width & width_mask || height & height_mask)
+            return WINED3DERR_INVALIDCALL;
+    }
 
     resource->ref = 1;
     resource->device = device;
@@ -105,26 +185,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
     resource->map_binding = WINED3D_LOCATION_SYSMEM;
-
-    if (pool != WINED3D_POOL_SCRATCH && type != WINED3D_RTYPE_BUFFER && gl_type < WINED3D_GL_RES_TYPE_COUNT)
-    {
-        if ((usage & WINED3DUSAGE_RENDERTARGET) && !(resource->format_flags & WINED3DFMT_FLAG_RENDERTARGET))
-        {
-            WARN("Format %s cannot be used for render targets.\n", debug_d3dformat(format->id));
-            return WINED3DERR_INVALIDCALL;
-        }
-        if ((usage & WINED3DUSAGE_DEPTHSTENCIL) &&
-                !(resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
-        {
-            WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
-            return WINED3DERR_INVALIDCALL;
-        }
-        if ((usage & WINED3DUSAGE_TEXTURE) && !(resource->format_flags & WINED3DFMT_FLAG_TEXTURE))
-        {
-            WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
 
     if (size)
     {

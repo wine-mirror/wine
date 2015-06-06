@@ -5459,7 +5459,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     else
         surface->surface_ops = &surface_ops;
 
-    if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE, WINED3D_GL_RES_TYPE_COUNT,
+    if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE,
             format, desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height,
             1, resource_size, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
     {
