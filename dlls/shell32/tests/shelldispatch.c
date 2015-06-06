@@ -719,7 +719,8 @@ static void test_ParseName(void)
     str = SysAllocString(cadabraW);
     item = (void*)0xdeadbeef;
     hr = Folder_ParseName(folder, str, &item);
-    ok(hr == S_FALSE || broken(hr == E_INVALIDARG) /* win2k */, "got 0x%08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* win2k */,
+        "got 0x%08x\n", hr);
     ok(item == NULL, "got %p\n", item);
     SysFreeString(str);
 
