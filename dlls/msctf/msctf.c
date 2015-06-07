@@ -371,7 +371,6 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
 
     actsvr->pITfTextInputProcessor = NULL;
     actsvr->LanguageProfile = *lp;
-    actsvr->LanguageProfile.fActive = TRUE;
     actsvr->pITfKeyEventSink = NULL;
 
     /* get TIP category */
