@@ -2006,10 +2006,11 @@ static HRESULT textrange_inrange(LONG start, LONG end, ITextRange *range, LONG *
     if (!ret)
         ret = &v;
 
-    ITextRange_GetStart(range, &from);
-    ITextRange_GetEnd(range, &to);
-
-    *ret = (start >= from && end <= to) ? tomTrue : tomFalse;
+    if (FAILED(ITextRange_GetStart(range, &from)) || FAILED(ITextRange_GetEnd(range, &to))) {
+        *ret = tomFalse;
+    }
+    else
+        *ret = (start >= from && end <= to) ? tomTrue : tomFalse;
     return *ret == tomTrue ? S_OK : S_FALSE;
 }
 
