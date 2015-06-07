@@ -3032,7 +3032,6 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 		GCP_GLYPHSHAPE_MASK=FS_ARABIC,
 		GCP_KASHIDA_MASK=0x00000000,
 		GCP_LIGATE_MASK=0x00000000,
-		GCP_USEKERNING_MASK=0x00000000,
 		GCP_REORDER_MASK=FS_HEBREW|FS_ARABIC;
 
 	DWORD result=0;
@@ -3058,7 +3057,7 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 	if( (fontsig.fsCsb[0]&GCP_LIGATE_MASK)!=0 )
 		result|=GCP_LIGATE;
 
-	if( (fontsig.fsCsb[0]&GCP_USEKERNING_MASK)!=0 )
+	if( GetKerningPairsW( hdc, 0, NULL ) )
 		result|=GCP_USEKERNING;
 
         /* this might need a test for a HEBREW- or ARABIC_CHARSET as well */
