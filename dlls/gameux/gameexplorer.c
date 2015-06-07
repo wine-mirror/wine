@@ -756,7 +756,7 @@ HRESULT GAMEUX_FindGameInstanceId(
         if(SUCCEEDED(hr))
         {
             ++dwMaxSubKeyLen; /* for string terminator */
-            lpName = CoTaskMemAlloc(dwMaxSubKeyLen*sizeof(WCHAR));
+            lpName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen*sizeof(WCHAR));
             if(!lpName) hr = E_OUTOFMEMORY;
         }
 
