@@ -5757,8 +5757,8 @@ BOOL CRYPT_AsnDecodeCMSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
        offsetof(CRYPT_SIGNED_INFO, rgSignerInfo), 0 },
     };
 
-    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, signedInfo, *pcbSignedInfo);
+    TRACE("%p, %d, %08x, %p, %p, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, signedInfo, pcbSignedInfo);
 
     ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
      pbEncoded, cbEncoded, dwFlags, pDecodePara, signedInfo, pcbSignedInfo,
@@ -5875,8 +5875,8 @@ BOOL CRYPT_AsnDecodePKCSEnvelopedData(const BYTE *pbEncoded, DWORD cbEncoded,
        offsetof(CRYPT_ENVELOPED_DATA, encryptedContentInfo.contentType), 0 },
     };
 
-    TRACE("%p, %d, %08x, %p, %p, %d\n", pbEncoded, cbEncoded, dwFlags,
-     pDecodePara, envelopedData, *pcbEnvelopedData);
+    TRACE("%p, %d, %08x, %p, %p, %p\n", pbEncoded, cbEncoded, dwFlags,
+     pDecodePara, envelopedData, pcbEnvelopedData);
 
     ret = CRYPT_AsnDecodeSequence(items, sizeof(items) / sizeof(items[0]),
      pbEncoded, cbEncoded, dwFlags, pDecodePara, envelopedData,
