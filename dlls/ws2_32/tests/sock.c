@@ -3523,30 +3523,46 @@ static void test_select(void)
     struct sockaddr_in address;
     select_thread_params thread_params;
     HANDLE thread_handle;
-    DWORD id;
+    DWORD ticks, id;
 
     fdRead = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdRead != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
     fdWrite = socket(AF_INET, SOCK_STREAM, 0);
     ok( (fdWrite != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
 
+    maxfd = fdRead;
+    if (fdWrite > maxfd)
+        maxfd = fdWrite;
+
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdRead);
+    FD_SET_ALL(fdWrite);
+    select_timeout.tv_sec=0;
+    select_timeout.tv_usec=0;
+
+    ticks = GetTickCount();
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ticks = GetTickCount() - ticks;
+    ok(ret == 0, "select should not return any socket handles\n");
+    ok(ticks < 10, "select was blocking for %u ms, expected < 10 ms\n", ticks);
+    ok(!FD_ISSET(fdRead, &readfds), "FD should not be set\n");
+    ok(!FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
+    ok(!FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
+    ok(!FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
+ 
     FD_ZERO_ALL();
     FD_SET_ALL(fdRead);
     FD_SET_ALL(fdWrite);
     select_timeout.tv_sec=0;
     select_timeout.tv_usec=500;
 
-    maxfd = fdRead;
-    if (fdWrite > maxfd)
-        maxfd = fdWrite;
-       
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
-    ok ( (ret == 0), "select should not return any socket handles\n");
-    ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
-    ok ( !FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
-    ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
-    ok ( !FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
- 
+    ok(ret == 0, "select should not return any socket handles\n");
+    ok(!FD_ISSET(fdRead, &readfds), "FD should not be set\n");
+    ok(!FD_ISSET(fdWrite, &writefds), "FD should not be set\n");
+    ok(!FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
+    ok(!FD_ISSET(fdWrite, &exceptfds), "FD should not be set\n");
+
     ok ((listen(fdWrite, SOMAXCONN) == SOCKET_ERROR), "listen did not fail\n");
     ret = closesocket(fdWrite);
     ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
