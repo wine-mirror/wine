@@ -4800,6 +4800,7 @@ static int do_poll(struct pollfd *pollfds, int count, int timeout)
     {
         if (errno != EINTR) break;
         if (timeout < 0) continue;
+        if (timeout == 0) return 0;
 
         gettimeofday( &tv2, 0 );
 
