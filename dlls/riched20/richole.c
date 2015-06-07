@@ -523,12 +523,13 @@ static inline const IRichEditOleImpl *get_range_reole(ITextRange *range)
 static void textrange_set_font(ITextRange *range, ITextFont *font)
 {
     CHARFORMAT2W fmt;
+    HRESULT hr;
     LONG value;
     BSTR str;
     FLOAT f;
 
 #define CHARFORMAT_SET_B_FIELD(mask, value) \
-    if (value != tomUndefined) { \
+    if (hr == S_OK && value != tomUndefined) { \
         fmt.dwMask |= CFM_##mask; \
         if (value == tomTrue) fmt.dwEffects |= CFE_##mask; \
     } \
@@ -538,73 +539,73 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
     fmt.cbSize = sizeof(fmt);
 
     value = tomUndefined;
-    ITextFont_GetAllCaps(font, &value);
+    hr = ITextFont_GetAllCaps(font, &value);
     CHARFORMAT_SET_B_FIELD(ALLCAPS, value);
 
     value = tomUndefined;
-    ITextFont_GetBold(font, &value);
+    hr = ITextFont_GetBold(font, &value);
     CHARFORMAT_SET_B_FIELD(BOLD, value);
 
     value = tomUndefined;
-    ITextFont_GetEmboss(font, &value);
+    hr = ITextFont_GetEmboss(font, &value);
     CHARFORMAT_SET_B_FIELD(EMBOSS, value);
 
     value = tomUndefined;
-    ITextFont_GetHidden(font, &value);
+    hr = ITextFont_GetHidden(font, &value);
     CHARFORMAT_SET_B_FIELD(HIDDEN, value);
 
     value = tomUndefined;
-    ITextFont_GetEngrave(font, &value);
+    hr = ITextFont_GetEngrave(font, &value);
     CHARFORMAT_SET_B_FIELD(IMPRINT, value);
 
     value = tomUndefined;
-    ITextFont_GetItalic(font, &value);
+    hr = ITextFont_GetItalic(font, &value);
     CHARFORMAT_SET_B_FIELD(ITALIC, value);
 
     value = tomUndefined;
-    ITextFont_GetOutline(font, &value);
+    hr = ITextFont_GetOutline(font, &value);
     CHARFORMAT_SET_B_FIELD(OUTLINE, value);
 
     value = tomUndefined;
-    ITextFont_GetProtected(font, &value);
+    hr = ITextFont_GetProtected(font, &value);
     CHARFORMAT_SET_B_FIELD(PROTECTED, value);
 
     value = tomUndefined;
-    ITextFont_GetShadow(font, &value);
+    hr = ITextFont_GetShadow(font, &value);
     CHARFORMAT_SET_B_FIELD(SHADOW, value);
 
     value = tomUndefined;
-    ITextFont_GetSmallCaps(font, &value);
+    hr = ITextFont_GetSmallCaps(font, &value);
     CHARFORMAT_SET_B_FIELD(SMALLCAPS, value);
 
     value = tomUndefined;
-    ITextFont_GetStrikeThrough(font, &value);
+    hr = ITextFont_GetStrikeThrough(font, &value);
     CHARFORMAT_SET_B_FIELD(STRIKEOUT, value);
 
     value = tomUndefined;
-    ITextFont_GetSubscript(font, &value);
+    hr = ITextFont_GetSubscript(font, &value);
     CHARFORMAT_SET_B_FIELD(SUBSCRIPT, value);
 
     value = tomUndefined;
-    ITextFont_GetSuperscript(font, &value);
+    hr = ITextFont_GetSuperscript(font, &value);
     CHARFORMAT_SET_B_FIELD(SUPERSCRIPT, value);
 
     value = tomUndefined;
-    ITextFont_GetUnderline(font, &value);
+    hr = ITextFont_GetUnderline(font, &value);
     CHARFORMAT_SET_B_FIELD(UNDERLINE, value);
 
 #undef CHARFORMAT_SET_B_FIELD
 
     value = tomUndefined;
-    ITextFont_GetAnimation(font, &value);
-    if (value != tomUndefined) {
+    hr = ITextFont_GetAnimation(font, &value);
+    if (hr == S_OK && value != tomUndefined) {
         fmt.dwMask |= CFM_ANIMATION;
         fmt.bAnimation = value;
     }
 
     value = tomUndefined;
-    ITextFont_GetBackColor(font, &value);
-    if (value != tomUndefined) {
+    hr = ITextFont_GetBackColor(font, &value);
+    if (hr == S_OK && value != tomUndefined) {
         fmt.dwMask |= CFM_BACKCOLOR;
         if (value == tomAutoColor)
             fmt.dwEffects |= CFE_AUTOBACKCOLOR;
@@ -613,8 +614,8 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
     }
 
     value = tomUndefined;
-    ITextFont_GetForeColor(font, &value);
-    if (value != tomUndefined) {
+    hr = ITextFont_GetForeColor(font, &value);
+    if (hr == S_OK && value != tomUndefined) {
         fmt.dwMask |= CFM_COLOR;
         if (value == tomAutoColor)
             fmt.dwEffects |= CFE_AUTOCOLOR;
@@ -623,15 +624,15 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
     }
 
     value = tomUndefined;
-    ITextFont_GetKerning(font, &f);
-    if (f != tomUndefined) {
+    hr = ITextFont_GetKerning(font, &f);
+    if (hr == S_OK && f != tomUndefined) {
         fmt.dwMask |= CFM_KERNING;
         fmt.wKerning = points_to_twips(f);
     }
 
     value = tomUndefined;
-    ITextFont_GetLanguageID(font, &value);
-    if (value != tomUndefined) {
+    hr = ITextFont_GetLanguageID(font, &value);
+    if (hr == S_OK && value != tomUndefined) {
         fmt.dwMask |= CFM_LCID;
         fmt.lcid = value;
     }
@@ -642,26 +643,26 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
         SysFreeString(str);
     }
 
-    ITextFont_GetPosition(font, &f);
-    if (f != tomUndefined) {
+    hr = ITextFont_GetPosition(font, &f);
+    if (hr == S_OK && f != tomUndefined) {
         fmt.dwMask |= CFM_OFFSET;
         fmt.yOffset = points_to_twips(f);
     }
 
-    ITextFont_GetSize(font, &f);
-    if (f != tomUndefined) {
+    hr = ITextFont_GetSize(font, &f);
+    if (hr == S_OK && f != tomUndefined) {
         fmt.dwMask |= CFM_SIZE;
         fmt.yHeight = points_to_twips(f);
     }
 
-    ITextFont_GetSpacing(font, &f);
-    if (f != tomUndefined) {
+    hr = ITextFont_GetSpacing(font, &f);
+    if (hr == S_OK && f != tomUndefined) {
         fmt.dwMask |= CFM_SPACING;
         fmt.sSpacing = f;
     }
 
-    ITextFont_GetWeight(font, &value);
-    if (value != tomUndefined) {
+    hr = ITextFont_GetWeight(font, &value);
+    if (hr == S_OK && value != tomUndefined) {
         fmt.dwMask |= CFM_WEIGHT;
         fmt.wWeight = value;
     }
