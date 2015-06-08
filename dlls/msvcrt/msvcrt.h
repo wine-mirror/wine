@@ -134,7 +134,20 @@ typedef struct {
     } str;
     LCID lcid;
     int  unk[2];
-    MSVCRT_wchar_t *wstr[43];
+    union {
+        MSVCRT_wchar_t *wstr[43];
+        struct {
+            MSVCRT_wchar_t *short_wday[7];
+            MSVCRT_wchar_t *wday[7];
+            MSVCRT_wchar_t *short_mon[12];
+            MSVCRT_wchar_t *mon[12];
+            MSVCRT_wchar_t *am;
+            MSVCRT_wchar_t *pm;
+            MSVCRT_wchar_t *short_date;
+            MSVCRT_wchar_t *date;
+            MSVCRT_wchar_t *time;
+        } names;
+    } wstr;
     char data[1];
 } MSVCRT___lc_time_data;
 

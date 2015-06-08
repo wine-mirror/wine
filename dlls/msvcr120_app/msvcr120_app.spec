@@ -842,7 +842,7 @@
 @ stub -arch=win64 _SetImageBase
 @ stub -arch=win64 _SetThrowImageBase
 @ cdecl _Strftime(str long str ptr ptr) msvcr120._Strftime
-@ stub _W_Getdays
+@ cdecl _W_Getdays() msvcr120._W_Getdays
 @ stub _W_Getmonths
 @ stub _W_Gettnames
 @ stub _Wcsftime

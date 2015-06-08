@@ -35,6 +35,7 @@
 #include "mtdll.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -432,6 +433,39 @@ char* CDECL _Getdays(void)
         out[size++] = ':';
         len = strlen(cur->str.names.wday[i]);
         memcpy(&out[size], cur->str.names.wday[i], len);
+        size += len;
+    }
+    out[size] = '\0';
+
+    return out;
+}
+
+/*********************************************************************
+ *		_W_Getdays (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL _W_Getdays(void)
+{
+    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    MSVCRT_wchar_t *out;
+    int i, len, size;
+
+    TRACE("\n");
+
+    size = cur->wstr.names.short_mon[0]-cur->wstr.names.short_wday[0];
+    out = MSVCRT_malloc((size+1)*sizeof(*out));
+    if(!out)
+        return NULL;
+
+    size = 0;
+    for(i=0; i<7; i++) {
+        out[size++] = ':';
+        len = strlenW(cur->wstr.names.short_wday[i]);
+        memcpy(&out[size], cur->wstr.names.short_wday[i], len*sizeof(*out));
+        size += len;
+
+        out[size++] = ':';
+        len = strlenW(cur->wstr.names.wday[i]);
+        memcpy(&out[size], cur->wstr.names.wday[i], len*sizeof(*out));
         size += len;
     }
     out[size] = '\0';
@@ -1381,7 +1415,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         }
     }
     for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
-        loc->locinfo->lc_time_curr->wstr[i] = (MSVCRT_wchar_t*)&loc->locinfo->lc_time_curr->data[ret];
+        loc->locinfo->lc_time_curr->wstr.wstr[i] = (MSVCRT_wchar_t*)&loc->locinfo->lc_time_curr->data[ret];
         if(time_data[i]==LOCALE_SSHORTDATE && !lcid[MSVCRT_LC_TIME]) {
             memcpy(&loc->locinfo->lc_time_curr->data[ret], cloc_short_dateW, sizeof(cloc_short_dateW));
             ret += sizeof(cloc_short_dateW);
