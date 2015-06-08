@@ -2175,9 +2175,6 @@ static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout2 *ifac
 
     TRACE("(%p)->(%u %p %p)\n", This, position, strikethrough, r);
 
-    if (position >= This->len)
-        return S_OK;
-
     range = (struct layout_range_bool*)get_layout_range_header_by_pos(&This->strike_ranges, position);
     *strikethrough = range->value;
 
@@ -3252,7 +3249,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
     struct layout_range_header *range, *strike;
-    DWRITE_TEXT_RANGE r;
+    DWRITE_TEXT_RANGE r = { 0, ~0u };
     HRESULT hr;
 
     layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
@@ -3296,11 +3293,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     if (FAILED(hr))
         goto fail;
 
-    r.startPosition = 0;
-    r.length = ~0u;
     range = alloc_layout_range(layout, &r, LAYOUT_RANGE_REGULAR);
-    r.startPosition = 0;
-    r.length = len;
     strike = alloc_layout_range(layout, &r, LAYOUT_RANGE_STRIKETHROUGH);
     if (!range || !strike) {
         free_layout_range(range);

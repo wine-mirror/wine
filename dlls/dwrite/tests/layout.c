@@ -1174,6 +1174,10 @@ static const struct drawcall_entry draw_seq5[] = {
     { DRAW_LAST_KIND }
 };
 
+static const struct drawcall_entry draw_seq6[] = {
+    { DRAW_LAST_KIND }
+};
+
 static void test_Draw(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
@@ -1272,6 +1276,16 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq5, "draw test 5", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    /* empty string */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_seq6, "draw test 6", FALSE);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
@@ -1530,6 +1544,17 @@ todo_wine
     ok(metrics[1].isSoftHyphen == 0, "got %d\n", metrics[1].isSoftHyphen);
     ok(metrics[1].isRightToLeft == 0, "got %d\n", metrics[1].isRightToLeft);
 
+    IDWriteTextLayout_Release(layout);
+
+    /* zero length string */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 1;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 0, "got %u\n", count);
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimm);
@@ -2141,6 +2166,67 @@ static void test_SetFontStretch(void)
     IDWriteTextFormat_Release(format);
 }
 
+static void test_SetStrikethrough(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE r;
+    BOOL value;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 0;
+    value = TRUE;
+    hr = IDWriteTextLayout_GetStrikethrough(layout, 0, &value, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+    ok(value == FALSE, "got %d\n", value);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    value = FALSE;
+    hr = IDWriteTextLayout_GetStrikethrough(layout, 1, &value, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(value == TRUE, "got %d\n", value);
+    ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
+
+    value = TRUE;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetStrikethrough(layout, 20, &value, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 2 && r.length == ~0u-2, "got %u, %u\n", r.startPosition, r.length);
+    ok(value == FALSE, "got %d\n", value);
+
+    r.startPosition = 100;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    value = FALSE;
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetStrikethrough(layout, 100, &value, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 100 && r.length == 4, "got %u, %u\n", r.startPosition, r.length);
+    ok(value == TRUE, "got %d\n", value);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -2176,6 +2262,7 @@ START_TEST(layout)
     test_SetFontFamilyName();
     test_SetFontStyle();
     test_SetFontStretch();
+    test_SetStrikethrough();
 
     IDWriteFactory_Release(factory);
 }
