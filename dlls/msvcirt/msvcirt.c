@@ -45,7 +45,7 @@ typedef struct {
     char *eback;
     char *gptr;
     char *egptr;
-    int unknown2;
+    int do_lock;
     CRITICAL_SECTION lock;
 } streambuf;
 
@@ -99,7 +99,7 @@ streambuf* __thiscall streambuf_reserve_ctor(streambuf *this, char *buffer, int 
     this->vtable = &MSVCP_streambuf_vtable;
     this->allocated = 0;
     this->unknown = -1;
-    this->unknown2 = -1;
+    this->do_lock = -1;
     this->base = NULL;
     streambuf_setbuf(this, buffer, length);
     streambuf_setg(this, NULL, NULL, NULL);
@@ -288,6 +288,35 @@ char* __thiscall streambuf_pptr(const streambuf *this)
     return this->pptr;
 }
 
+/* ?clrlock@streambuf@@QAEXXZ */
+/* ?clrlock@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_clrlock, 4)
+void __thiscall streambuf_clrlock(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->do_lock <= 0)
+        this->do_lock++;
+}
+
+/* ?lock@streambuf@@QAEXXZ */
+/* ?lock@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_lock, 4)
+void __thiscall streambuf_lock(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->do_lock < 0)
+        EnterCriticalSection(&this->lock);
+}
+
+/* ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ */
+/* ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ */
+DEFINE_THISCALL_WRAPPER(streambuf_lockptr, 4)
+CRITICAL_SECTION* __thiscall streambuf_lockptr(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return &this->lock;
+}
+
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
 int __thiscall streambuf_overflow(streambuf *this, int c)
@@ -366,6 +395,15 @@ void __thiscall streambuf_setg(streambuf *this, char *ek, char *gp, char *eg)
     this->egptr = eg;
 }
 
+/* ?setlock@streambuf@@QAEXXZ */
+/* ?setlock@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_setlock, 4)
+void __thiscall streambuf_setlock(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    this->do_lock--;
+}
+
 /* ?setp@streambuf@@IAEXPAD0@Z */
 /* ?setp@streambuf@@IEAAXPEAD0@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_setp, 12)
@@ -408,6 +446,16 @@ DEFINE_THISCALL_WRAPPER(streambuf_underflow, 4)
 int __thiscall streambuf_underflow(streambuf *this)
 {
     return EOF;
+}
+
+/* ?unlock@streambuf@@QAEXXZ */
+/* ?unlock@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_unlock, 4)
+void __thiscall streambuf_unlock(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->do_lock < 0)
+        LeaveCriticalSection(&this->lock);
 }
 
 /* ?xsgetn@streambuf@@UAEHPADH@Z */

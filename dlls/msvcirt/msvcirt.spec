@@ -434,8 +434,8 @@
 @ stub -arch=win64 ?close@ofstream@@QEAAXXZ
 @ stub -arch=win32 ?clrlock@ios@@QAAXXZ  # void __cdecl ios::clrlock(void)
 @ stub -arch=win64 ?clrlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?clrlock@streambuf@@QAEXXZ  # void __thiscall streambuf::clrlock(void)
-@ stub -arch=win64 ?clrlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) streambuf_clrlock
+@ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) streambuf_clrlock
 @ stub ?cout@@3Vostream_withassign@@A  # class ostream_withassign cout
 @ stub -arch=win32 ?dbp@streambuf@@QAEXXZ  # void __thiscall streambuf::dbp(void)
 @ stub -arch=win64 ?dbp@streambuf@@QEAAXXZ
@@ -551,15 +551,15 @@
 @ stub -arch=win64 ?iword@ios@@QEBAAEAJH@Z
 @ stub -arch=win32 ?lock@ios@@QAAXXZ  # void __cdecl ios::lock(void)
 @ stub -arch=win64 ?lock@ios@@QEAAXXZ
-@ stub -arch=win32 ?lock@streambuf@@QAEXXZ  # void __thiscall streambuf::lock(void)
-@ stub -arch=win64 ?lock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?lock@streambuf@@QAEXXZ(ptr) streambuf_lock
+@ cdecl -arch=win64 ?lock@streambuf@@QEAAXXZ(ptr) streambuf_lock
 @ stub -arch=win32 ?lockbuf@ios@@QAAXXZ  # void __cdecl ios::lockbuf(void)
 @ stub -arch=win64 ?lockbuf@ios@@QEAAXXZ
 @ stub ?lockc@ios@@KAXXZ  # static void __cdecl ios::lockc(void)
 @ stub -arch=win32 ?lockptr@ios@@IAEPAU_CRT_CRITICAL_SECTION@@XZ  # struct _CRT_CRITICAL_SECTION * __thiscall ios::lockptr(void)
 @ stub -arch=win64 ?lockptr@ios@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
-@ stub -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ  # struct _CRT_CRITICAL_SECTION * __thiscall streambuf::lockptr(void)
-@ stub -arch=win64 ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
+@ thiscall -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ(ptr) streambuf_lockptr
+@ cdecl -arch=win64 ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ(ptr) streambuf_lockptr
 @ stub -arch=win32 ?oct@@YAAAVios@@AAV1@@Z  # class ios & __cdecl oct(class ios &)
 @ stub -arch=win64 ?oct@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?open@filebuf@@QAEPAV1@PBDHH@Z  # class filebuf * __thiscall filebuf::open(char const *,int,int)
@@ -679,8 +679,8 @@
 @ cdecl -arch=win64 ?setg@streambuf@@IEAAXPEAD00@Z(ptr ptr ptr ptr) streambuf_setg
 @ stub -arch=win32 ?setlock@ios@@QAAXXZ  # void __cdecl ios::setlock(void)
 @ stub -arch=win64 ?setlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?setlock@streambuf@@QAEXXZ  # void __thiscall streambuf::setlock(void)
-@ stub -arch=win64 ?setlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?setlock@streambuf@@QAEXXZ(ptr) streambuf_setlock
+@ cdecl -arch=win64 ?setlock@streambuf@@QEAAXXZ(ptr) streambuf_setlock
 @ stub -arch=win32 ?setmode@filebuf@@QAEHH@Z  # int __thiscall filebuf::setmode(int)
 @ stub -arch=win64 ?setmode@filebuf@@QEAAHH@Z
 @ stub -arch=win32 ?setmode@fstream@@QAEHH@Z  # int __thiscall fstream::setmode(int)
@@ -753,8 +753,8 @@
 @ stub -arch=win64 ?underflow@strstreambuf@@UEAAHXZ
 @ stub -arch=win32 ?unlock@ios@@QAAXXZ  # void __cdecl ios::unlock(void)
 @ stub -arch=win64 ?unlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?unlock@streambuf@@QAEXXZ  # void __thiscall streambuf::unlock(void)
-@ stub -arch=win64 ?unlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?unlock@streambuf@@QAEXXZ(ptr) streambuf_unlock
+@ cdecl -arch=win64 ?unlock@streambuf@@QEAAXXZ(ptr) streambuf_unlock
 @ stub -arch=win32 ?unlockbuf@ios@@QAAXXZ  # void __cdecl ios::unlockbuf(void)
 @ stub -arch=win64 ?unlockbuf@ios@@QEAAXXZ
 @ stub ?unlockc@ios@@KAXXZ  # static void __cdecl ios::unlockc(void)

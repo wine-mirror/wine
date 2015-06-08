@@ -422,8 +422,8 @@
 @ stub -arch=win64 ?close@ofstream@@QEAAXXZ
 @ stub -arch=win32 ?clrlock@ios@@QAAXXZ
 @ stub -arch=win64 ?clrlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?clrlock@streambuf@@QAEXXZ
-@ stub -arch=win64 ?clrlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) msvcirt.?clrlock@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) msvcirt.?clrlock@streambuf@@QEAAXXZ
 @ stub ?cout@@3Vostream_withassign@@A
 @ stub -arch=win32 ?dbp@streambuf@@QAEXXZ
 @ stub -arch=win64 ?dbp@streambuf@@QEAAXXZ
@@ -537,15 +537,15 @@
 @ stub -arch=win64 ?iword@ios@@QEBAAEAJH@Z
 @ stub -arch=win32 ?lock@ios@@QAAXXZ
 @ stub -arch=win64 ?lock@ios@@QEAAXXZ
-@ stub -arch=win32 ?lock@streambuf@@QAEXXZ
-@ stub -arch=win64 ?lock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?lock@streambuf@@QAEXXZ(ptr) msvcirt.?lock@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?lock@streambuf@@QEAAXXZ(ptr) msvcirt.?lock@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?lockbuf@ios@@QAAXXZ
 @ stub -arch=win64 ?lockbuf@ios@@QEAAXXZ
 @ stub ?lockc@ios@@KAXXZ
 @ stub -arch=win32 ?lockptr@ios@@IAEPAU_CRT_CRITICAL_SECTION@@XZ
 @ stub -arch=win64 ?lockptr@ios@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
-@ stub -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ
-@ stub -arch=win64 ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
+@ thiscall -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ(ptr) msvcirt.?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ
+@ cdecl -arch=win64 ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ(ptr) msvcirt.?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
 @ stub -arch=win32 ?oct@@YAAAVios@@AAV1@@Z
 @ stub -arch=win64 ?oct@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?open@filebuf@@QAEPAV1@PBDHH@Z
@@ -667,8 +667,8 @@
 @ cdecl -arch=win64 ?setg@streambuf@@IEAAXPEAD00@Z(ptr ptr ptr ptr) msvcirt.?setg@streambuf@@IEAAXPEAD00@Z
 @ stub -arch=win32 ?setlock@ios@@QAAXXZ
 @ stub -arch=win64 ?setlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?setlock@streambuf@@QAEXXZ
-@ stub -arch=win64 ?setlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?setlock@streambuf@@QAEXXZ(ptr) msvcirt.?setlock@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?setlock@streambuf@@QEAAXXZ(ptr) msvcirt.?setlock@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?setmode@filebuf@@QAEHH@Z
 @ stub -arch=win64 ?setmode@filebuf@@QEAAHH@Z
 @ stub -arch=win32 ?setmode@fstream@@QAEHH@Z
@@ -743,8 +743,8 @@
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
 @ stub -arch=win32 ?unlock@ios@@QAAXXZ
 @ stub -arch=win64 ?unlock@ios@@QEAAXXZ
-@ stub -arch=win32 ?unlock@streambuf@@QAEXXZ
-@ stub -arch=win64 ?unlock@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?unlock@streambuf@@QAEXXZ(ptr) msvcirt.?unlock@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?unlock@streambuf@@QEAAXXZ(ptr) msvcirt.?unlock@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?unlockbuf@ios@@QAAXXZ
 @ stub -arch=win64 ?unlockbuf@ios@@QEAAXXZ
 @ stub ?unlockc@ios@@KAXXZ

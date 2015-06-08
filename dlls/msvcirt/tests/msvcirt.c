@@ -37,7 +37,7 @@ typedef struct {
     char *eback;
     char *gptr;
     char *egptr;
-    int unknown2;
+    int do_lock;
     CRITICAL_SECTION lock;
 } streambuf;
 
@@ -53,9 +53,13 @@ static streambuf* (*__thiscall p_streambuf_reserve_ctor)(streambuf*, char*, int)
 static streambuf* (*__thiscall p_streambuf_ctor)(streambuf*);
 static void (*__thiscall p_streambuf_dtor)(streambuf*);
 static int (*__thiscall p_streambuf_allocate)(streambuf*);
+static void (*__thiscall p_streambuf_clrclock)(streambuf*);
 static int (*__thiscall p_streambuf_doallocate)(streambuf*);
+static void (*__thiscall p_streambuf_lock)(streambuf*);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
+static void (*__thiscall p_streambuf_setlock)(streambuf*);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
+static void (*__thiscall p_streambuf_unlock)(streambuf*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -130,28 +134,65 @@ static BOOL init(void)
         SET(p_streambuf_ctor, "??0streambuf@@IEAA@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UEAA@XZ");
         SET(p_streambuf_allocate, "?allocate@streambuf@@IEAAHXZ");
+        SET(p_streambuf_clrclock, "?clrlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MEAAHXZ");
+        SET(p_streambuf_lock, "?lock@streambuf@@QEAAXXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
+        SET(p_streambuf_setlock, "?setlock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
     } else {
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IAE@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UAE@XZ");
         SET(p_streambuf_allocate, "?allocate@streambuf@@IAEHXZ");
+        SET(p_streambuf_clrclock, "?clrlock@streambuf@@QAEXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MAEHXZ");
+        SET(p_streambuf_lock, "?lock@streambuf@@QAEXXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
+        SET(p_streambuf_setlock, "?setlock@streambuf@@QAEXXZ");
+        SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
     }
 
     init_thiscall_thunk();
     return TRUE;
 }
 
+struct streambuf_lock_arg
+{
+    streambuf *sb;
+    HANDLE lock[4];
+    HANDLE test[4];
+};
+
+static DWORD WINAPI lock_streambuf(void *arg)
+{
+    struct streambuf_lock_arg *lock_arg = arg;
+    call_func1(p_streambuf_lock, lock_arg->sb);
+    SetEvent(lock_arg->lock[0]);
+    WaitForSingleObject(lock_arg->test[0], INFINITE);
+    call_func1(p_streambuf_lock, lock_arg->sb);
+    SetEvent(lock_arg->lock[1]);
+    WaitForSingleObject(lock_arg->test[1], INFINITE);
+    call_func1(p_streambuf_lock, lock_arg->sb);
+    SetEvent(lock_arg->lock[2]);
+    WaitForSingleObject(lock_arg->test[2], INFINITE);
+    call_func1(p_streambuf_unlock, lock_arg->sb);
+    SetEvent(lock_arg->lock[3]);
+    WaitForSingleObject(lock_arg->test[3], INFINITE);
+    call_func1(p_streambuf_unlock, lock_arg->sb);
+    return 0;
+}
+
 static void test_streambuf(void)
 {
     streambuf sb, sb2, *psb;
+    struct streambuf_lock_arg lock_arg;
+    HANDLE thread;
     char reserve[16];
-    int ret;
+    int ret, i;
+    BOOL locked;
 
     memset(&sb, 0xab, sizeof(streambuf));
     memset(&sb2, 0xab, sizeof(streambuf));
@@ -169,6 +210,64 @@ static void test_streambuf(void)
     ok(sb2.base == reserve, "wrong base pointer, expected %p got %p\n", reserve, sb2.base);
     ok(sb2.ebuf == reserve+16, "wrong ebuf pointer, expected %p got %p\n", reserve+16, sb2.ebuf);
     ok(sb.lock.LockCount == -1, "wrong critical section state, expected -1 got %d\n", sb.lock.LockCount);
+
+    /* setlock */
+    ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
+    call_func1(p_streambuf_setlock, &sb);
+    ok(sb.do_lock == -2, "expected do_lock value -2, got %d\n", sb.do_lock);
+    call_func1(p_streambuf_setlock, &sb);
+    ok(sb.do_lock == -3, "expected do_lock value -3, got %d\n", sb.do_lock);
+    sb.do_lock = 3;
+    call_func1(p_streambuf_setlock, &sb);
+    ok(sb.do_lock == 2, "expected do_lock value 2, got %d\n", sb.do_lock);
+
+    /* clrlock */
+    sb.do_lock = -2;
+    call_func1(p_streambuf_clrclock, &sb);
+    ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
+    call_func1(p_streambuf_clrclock, &sb);
+    ok(sb.do_lock == 0, "expected do_lock value 0, got %d\n", sb.do_lock);
+    call_func1(p_streambuf_clrclock, &sb);
+    ok(sb.do_lock == 1, "expected do_lock value 1, got %d\n", sb.do_lock);
+    call_func1(p_streambuf_clrclock, &sb);
+    ok(sb.do_lock == 1, "expected do_lock value 1, got %d\n", sb.do_lock);
+
+    /* lock/unlock */
+    lock_arg.sb = &sb;
+    for (i = 0; i < 4; i++) {
+        lock_arg.lock[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
+        ok(lock_arg.lock[i] != NULL, "CreateEventW failed\n");
+        lock_arg.test[i] = CreateEventW(NULL, FALSE, FALSE, NULL);
+        ok(lock_arg.test[i] != NULL, "CreateEventW failed\n");
+    }
+
+    sb.do_lock = 0;
+    thread = CreateThread(NULL, 0, lock_streambuf, (void*)&lock_arg, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(lock_arg.lock[0], INFINITE);
+    locked = TryEnterCriticalSection(&sb.lock);
+    ok(locked != 0, "could not lock the streambuf\n");
+    LeaveCriticalSection(&sb.lock);
+
+    sb.do_lock = 1;
+    SetEvent(lock_arg.test[0]);
+    WaitForSingleObject(lock_arg.lock[1], INFINITE);
+    locked = TryEnterCriticalSection(&sb.lock);
+    ok(locked != 0, "could not lock the streambuf\n");
+    LeaveCriticalSection(&sb.lock);
+
+    sb.do_lock = -1;
+    SetEvent(lock_arg.test[1]);
+    WaitForSingleObject(lock_arg.lock[2], INFINITE);
+    locked = TryEnterCriticalSection(&sb.lock);
+    ok(locked == 0, "the streambuf was not locked before\n");
+
+    sb.do_lock = 0;
+    SetEvent(lock_arg.test[2]);
+    WaitForSingleObject(lock_arg.lock[3], INFINITE);
+    locked = TryEnterCriticalSection(&sb.lock);
+    ok(locked == 0, "the streambuf was not locked before\n");
+    sb.do_lock = -1;
 
     /* setb */
     call_func4(p_streambuf_setb, &sb, reserve, reserve+16, 0);
@@ -219,8 +318,16 @@ static void test_streambuf(void)
     ok(sb2.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb2.allocated);
     ok(sb2.ebuf - sb2.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb2.ebuf, sb2.base);
 
+    SetEvent(lock_arg.test[3]);
+    WaitForSingleObject(thread, INFINITE);
+
     call_func1(p_streambuf_dtor, &sb);
     call_func1(p_streambuf_dtor, &sb2);
+    for (i = 0; i < 4; i++) {
+        CloseHandle(lock_arg.lock[i]);
+        CloseHandle(lock_arg.test[i]);
+    }
+    CloseHandle(thread);
 }
 
 START_TEST(msvcirt)
