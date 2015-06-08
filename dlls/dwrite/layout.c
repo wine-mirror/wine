@@ -1431,6 +1431,10 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     struct list *ranges;
     DWRITE_TEXT_RANGE r;
 
+    /* ignore zero length ranges */
+    if (value->range.length == 0)
+        return S_OK;
+
     /* select from ranges lists */
     switch (attr)
     {

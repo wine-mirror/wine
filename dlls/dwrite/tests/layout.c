@@ -1879,6 +1879,12 @@ static void test_SetFontSize(void)
     hr = IDWriteTextLayout_SetFontSize(layout, 15.0, r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* zero length range */
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_SetFontSize(layout, 123.0, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     size = 0.0;
     hr = IDWriteTextLayout_GetFontSize(layout, 1, &size, &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1963,6 +1969,12 @@ static void test_SetFontFamilyName(void)
     hr = IDWriteTextLayout_SetFontFamilyName(layout, taHomaW, r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* zero length range */
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, arialW, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     r.startPosition = 0;
     r.length = 0;
     nameW[0] = 0;
@@ -2032,6 +2044,12 @@ static void test_SetFontStyle(void)
     r.startPosition = 1;
     r.length = 1;
     hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_ITALIC, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* zero length range */
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_SetFontStyle(layout, DWRITE_FONT_STYLE_NORMAL, r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     style = DWRITE_FONT_STYLE_NORMAL;
@@ -2114,6 +2132,12 @@ static void test_SetFontStretch(void)
     r.startPosition = 1;
     r.length = 1;
     hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_CONDENSED, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* zero length range */
+    r.startPosition = 1;
+    r.length = 0;
+    hr = IDWriteTextLayout_SetFontStretch(layout, DWRITE_FONT_STRETCH_NORMAL, r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     stretch = DWRITE_FONT_STRETCH_UNDEFINED;
