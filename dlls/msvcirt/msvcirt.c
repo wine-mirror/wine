@@ -207,6 +207,87 @@ int __thiscall streambuf_allocate(streambuf *this)
     return call_streambuf_doallocate(this);
 }
 
+/* ?base@streambuf@@IBEPADXZ */
+/* ?base@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_base, 4)
+char* __thiscall streambuf_base(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->base;
+}
+
+/* ?blen@streambuf@@IBEHXZ */
+/* ?blen@streambuf@@IEBAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_blen, 4)
+int __thiscall streambuf_blen(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->ebuf - this->base;
+}
+
+/* ?eback@streambuf@@IBEPADXZ */
+/* ?eback@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_eback, 4)
+char* __thiscall streambuf_eback(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->eback;
+}
+
+/* ?ebuf@streambuf@@IBEPADXZ */
+/* ?ebuf@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_ebuf, 4)
+char* __thiscall streambuf_ebuf(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->ebuf;
+}
+
+/* ?egptr@streambuf@@IBEPADXZ */
+/* ?egptr@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_egptr, 4)
+char* __thiscall streambuf_egptr(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->egptr;
+}
+
+/* ?epptr@streambuf@@IBEPADXZ */
+/* ?epptr@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_epptr, 4)
+char* __thiscall streambuf_epptr(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->epptr;
+}
+
+/* ?gptr@streambuf@@IBEPADXZ */
+/* ?gptr@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_gptr, 4)
+char* __thiscall streambuf_gptr(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->gptr;
+}
+
+/* ?pbase@streambuf@@IBEPADXZ */
+/* ?pbase@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_pbase, 4)
+char* __thiscall streambuf_pbase(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->pbase;
+}
+
+/* ?pptr@streambuf@@IBEPADXZ */
+/* ?pptr@streambuf@@IEBAPEADXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_pptr, 4)
+char* __thiscall streambuf_pptr(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->pptr;
+}
+
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
 int __thiscall streambuf_overflow(streambuf *this, int c)

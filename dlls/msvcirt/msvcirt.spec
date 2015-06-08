@@ -412,13 +412,13 @@
 @ stub -arch=win64 ?attach@ofstream@@QEAAXH@Z
 @ stub -arch=win32 ?bad@ios@@QBEHXZ  # int __thiscall ios::bad(void)const 
 @ stub -arch=win64 ?bad@ios@@QEBAHXZ
-@ stub -arch=win32 ?base@streambuf@@IBEPADXZ  # char * __thiscall streambuf::base(void)const 
-@ stub -arch=win64 ?base@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?base@streambuf@@IBEPADXZ(ptr) streambuf_base
+@ cdecl -arch=win64 ?base@streambuf@@IEBAPEADXZ(ptr) streambuf_base
 # @ extern ?basefield@ios@@2JB  # static long const ios::basefield
 # @ extern ?binary@filebuf@@2HB  # static int const filebuf::binary
 @ stub ?bitalloc@ios@@SAJXZ  # static long __cdecl ios::bitalloc(void)
-@ stub -arch=win32 ?blen@streambuf@@IBEHXZ  # int __thiscall streambuf::blen(void)const 
-@ stub -arch=win64 ?blen@streambuf@@IEBAHXZ
+@ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) streambuf_blen
+@ cdecl -arch=win64 ?blen@streambuf@@IEBAHXZ(ptr) streambuf_blen
 @ stub ?cerr@@3Vostream_withassign@@A  # class ostream_withassign cerr
 @ stub ?cin@@3Vistream_withassign@@A  # class istream_withassign cin
 @ stub -arch=win32 ?clear@ios@@QAEXH@Z  # void __thiscall ios::clear(int)
@@ -451,20 +451,20 @@
 @ stub -arch=win64 ?doallocate@strstreambuf@@MEAAHXZ
 @ stub -arch=win32 ?eatwhite@istream@@QAEXXZ  # void __thiscall istream::eatwhite(void)
 @ stub -arch=win64 ?eatwhite@istream@@QEAAXXZ
-@ stub -arch=win32 ?eback@streambuf@@IBEPADXZ  # char * __thiscall streambuf::eback(void)const 
-@ stub -arch=win64 ?eback@streambuf@@IEBAPEADXZ
-@ stub -arch=win32 ?ebuf@streambuf@@IBEPADXZ  # char * __thiscall streambuf::ebuf(void)const 
-@ stub -arch=win64 ?ebuf@streambuf@@IEBAPEADXZ
-@ stub -arch=win32 ?egptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::egptr(void)const 
-@ stub -arch=win64 ?egptr@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?eback@streambuf@@IBEPADXZ(ptr) streambuf_eback
+@ cdecl -arch=win64 ?eback@streambuf@@IEBAPEADXZ(ptr) streambuf_eback
+@ thiscall -arch=win32 ?ebuf@streambuf@@IBEPADXZ(ptr) streambuf_ebuf
+@ cdecl -arch=win64 ?ebuf@streambuf@@IEBAPEADXZ(ptr) streambuf_ebuf
+@ thiscall -arch=win32 ?egptr@streambuf@@IBEPADXZ(ptr) streambuf_egptr
+@ cdecl -arch=win64 ?egptr@streambuf@@IEBAPEADXZ(ptr) streambuf_egptr
 @ cdecl -arch=win32 ?endl@@YAAAVostream@@AAV1@@Z(ptr) MSVCIRT_endl  # class ostream & __cdecl endl(class ostream &)
 @ cdecl -arch=win64 ?endl@@YAAEAVostream@@AEAV1@@Z(ptr) MSVCIRT_endl
 @ cdecl -arch=win32 ?ends@@YAAAVostream@@AAV1@@Z(ptr) MSVCIRT_ends  # class ostream & __cdecl ends(class ostream &)
 @ cdecl -arch=win64 ?ends@@YAAEAVostream@@AEAV1@@Z(ptr) MSVCIRT_ends
 @ stub -arch=win32 ?eof@ios@@QBEHXZ  # int __thiscall ios::eof(void)const 
 @ stub -arch=win64 ?eof@ios@@QEBAHXZ
-@ stub -arch=win32 ?epptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::epptr(void)const 
-@ stub -arch=win64 ?epptr@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?epptr@streambuf@@IBEPADXZ(ptr) streambuf_epptr
+@ cdecl -arch=win64 ?epptr@streambuf@@IEBAPEADXZ(ptr) streambuf_epptr
 # @ extern ?fLockcInit@ios@@0HA  # static int ios::fLockcInit
 @ stub -arch=win32 ?fail@ios@@QBEHXZ  # int __thiscall ios::fail(void)const 
 @ stub -arch=win64 ?fail@ios@@QEBAHXZ
@@ -525,8 +525,8 @@
 @ stub -arch=win64 ?getline@istream@@QEAAAEAV1@PEAEHD@Z
 @ stub -arch=win32 ?good@ios@@QBEHXZ  # int __thiscall ios::good(void)const 
 @ stub -arch=win64 ?good@ios@@QEBAHXZ
-@ stub -arch=win32 ?gptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::gptr(void)const 
-@ stub -arch=win64 ?gptr@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?gptr@streambuf@@IBEPADXZ(ptr) streambuf_gptr
+@ cdecl -arch=win64 ?gptr@streambuf@@IEBAPEADXZ(ptr) streambuf_gptr
 @ stub -arch=win32 ?hex@@YAAAVios@@AAV1@@Z  # class ios & __cdecl hex(class ios &)
 @ stub -arch=win64 ?hex@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?ignore@istream@@QAEAAV1@HH@Z  # class istream & __thiscall istream::ignore(int,int)
@@ -587,8 +587,8 @@
 @ stub -arch=win64 ?pbackfail@stdiobuf@@UEAAHH@Z
 @ thiscall -arch=win32 ?pbackfail@streambuf@@UAEHH@Z(ptr long) streambuf_pbackfail
 @ cdecl -arch=win64 ?pbackfail@streambuf@@UEAAHH@Z(ptr long) streambuf_pbackfail
-@ stub -arch=win32 ?pbase@streambuf@@IBEPADXZ  # char * __thiscall streambuf::pbase(void)const 
-@ stub -arch=win64 ?pbase@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?pbase@streambuf@@IBEPADXZ(ptr) streambuf_pbase
+@ cdecl -arch=win64 ?pbase@streambuf@@IEBAPEADXZ(ptr) streambuf_pbase
 @ stub -arch=win32 ?pbump@streambuf@@IAEXH@Z  # void __thiscall streambuf::pbump(int)
 @ stub -arch=win64 ?pbump@streambuf@@IEAAXH@Z
 @ stub -arch=win32 ?pcount@ostrstream@@QBEHXZ  # int __thiscall ostrstream::pcount(void)const 
@@ -597,8 +597,8 @@
 @ stub -arch=win64 ?pcount@strstream@@QEBAHXZ
 @ stub -arch=win32 ?peek@istream@@QAEHXZ  # int __thiscall istream::peek(void)
 @ stub -arch=win64 ?peek@istream@@QEAAHXZ
-@ stub -arch=win32 ?pptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::pptr(void)const 
-@ stub -arch=win64 ?pptr@streambuf@@IEBAPEADXZ
+@ thiscall -arch=win32 ?pptr@streambuf@@IBEPADXZ(ptr) streambuf_pptr
+@ cdecl -arch=win64 ?pptr@streambuf@@IEBAPEADXZ(ptr) streambuf_pptr
 @ stub -arch=win32 ?precision@ios@@QAEHH@Z  # int __thiscall ios::precision(int)
 @ stub -arch=win64 ?precision@ios@@QEAAHH@Z
 @ stub -arch=win32 ?precision@ios@@QBEHXZ  # int __thiscall ios::precision(void)const 
