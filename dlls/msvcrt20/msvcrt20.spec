@@ -730,10 +730,10 @@
 @ stub -arch=win64 ?tie@ios@@QEAAPEAVostream@@PEAV2@@Z
 @ stub -arch=win32 ?tie@ios@@QBEPAVostream@@XZ
 @ stub -arch=win64 ?tie@ios@@QEBAPEAVostream@@XZ
-@ stub -arch=win32 ?unbuffered@streambuf@@IAEXH@Z
-@ stub -arch=win64 ?unbuffered@streambuf@@IEAAXH@Z
-@ stub -arch=win32 ?unbuffered@streambuf@@IBEHXZ
-@ stub -arch=win64 ?unbuffered@streambuf@@IEBAHXZ
+@ thiscall -arch=win32 ?unbuffered@streambuf@@IAEXH@Z(ptr long) msvcirt.?unbuffered@streambuf@@IAEXH@Z
+@ cdecl -arch=win64 ?unbuffered@streambuf@@IEAAXH@Z(ptr long) msvcirt.?unbuffered@streambuf@@IEAAXH@Z
+@ thiscall -arch=win32 ?unbuffered@streambuf@@IBEHXZ(ptr) msvcirt.?unbuffered@streambuf@@IBEHXZ
+@ cdecl -arch=win64 ?unbuffered@streambuf@@IEBAHXZ(ptr) msvcirt.?unbuffered@streambuf@@IEBAHXZ
 @ stub -arch=win32 ?underflow@filebuf@@UAEHXZ
 @ stub -arch=win64 ?underflow@filebuf@@UEAAHXZ
 @ stub -arch=win32 ?underflow@stdiobuf@@UAEHXZ

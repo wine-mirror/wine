@@ -385,6 +385,24 @@ int __thiscall streambuf_sync(streambuf *this)
     return EOF;
 }
 
+/* ?unbuffered@streambuf@@IAEXH@Z */
+/* ?unbuffered@streambuf@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_unbuffered_set, 8)
+void __thiscall streambuf_unbuffered_set(streambuf *this, int buf)
+{
+    TRACE("(%p %d)\n", this, buf);
+    this->unbuffered = buf;
+}
+
+/* ?unbuffered@streambuf@@IBEHXZ */
+/* ?unbuffered@streambuf@@IEBAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_unbuffered_get, 4)
+int __thiscall streambuf_unbuffered_get(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->unbuffered;
+}
+
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_underflow, 4)
 int __thiscall streambuf_underflow(streambuf *this)

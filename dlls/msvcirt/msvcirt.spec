@@ -741,10 +741,10 @@
 @ stub -arch=win64 ?tie@ios@@QEAAPEAVostream@@PEAV2@@Z
 @ stub -arch=win32 ?tie@ios@@QBEPAVostream@@XZ  # class ostream * __thiscall ios::tie(void)const 
 @ stub -arch=win64 ?tie@ios@@QEBAPEAVostream@@XZ
-@ stub -arch=win32 ?unbuffered@streambuf@@IAEXH@Z  # void __thiscall streambuf::unbuffered(int)
-@ stub -arch=win64 ?unbuffered@streambuf@@IEAAXH@Z
-@ stub -arch=win32 ?unbuffered@streambuf@@IBEHXZ  # int __thiscall streambuf::unbuffered(void)const 
-@ stub -arch=win64 ?unbuffered@streambuf@@IEBAHXZ
+@ thiscall -arch=win32 ?unbuffered@streambuf@@IAEXH@Z(ptr long) streambuf_unbuffered_set
+@ cdecl -arch=win64 ?unbuffered@streambuf@@IEAAXH@Z(ptr long) streambuf_unbuffered_set
+@ thiscall -arch=win32 ?unbuffered@streambuf@@IBEHXZ(ptr) streambuf_unbuffered_get
+@ cdecl -arch=win64 ?unbuffered@streambuf@@IEBAHXZ(ptr) streambuf_unbuffered_get
 @ stub -arch=win32 ?underflow@filebuf@@UAEHXZ  # virtual int __thiscall filebuf::underflow(void)
 @ stub -arch=win64 ?underflow@filebuf@@UEAAHXZ
 @ stub -arch=win32 ?underflow@stdiobuf@@UAEHXZ  # virtual int __thiscall stdiobuf::underflow(void)
