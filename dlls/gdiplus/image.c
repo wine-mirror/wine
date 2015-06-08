@@ -5235,3 +5235,12 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
 
     return stat;
 }
+
+/*****************************************************************************
+ * GdipImageSetAbort [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipImageSetAbort(GpImage *image, GdiplusAbort *pabort)
+{
+    FIXME("(%p, %p): stub\n", image, pabort);
+    return NotImplemented;
+}
