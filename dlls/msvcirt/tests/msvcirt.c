@@ -52,6 +52,8 @@ typedef struct {
 static streambuf* (*__thiscall p_streambuf_reserve_ctor)(streambuf*, char*, int);
 static streambuf* (*__thiscall p_streambuf_ctor)(streambuf*);
 static void (*__thiscall p_streambuf_dtor)(streambuf*);
+static int (*__thiscall p_streambuf_allocate)(streambuf*);
+static int (*__thiscall p_streambuf_doallocate)(streambuf*);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
 
@@ -127,12 +129,16 @@ static BOOL init(void)
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IEAA@PEADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IEAA@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UEAA@XZ");
+        SET(p_streambuf_allocate, "?allocate@streambuf@@IEAAHXZ");
+        SET(p_streambuf_doallocate, "?doallocate@streambuf@@MEAAHXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
     } else {
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IAE@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UAE@XZ");
+        SET(p_streambuf_allocate, "?allocate@streambuf@@IAEHXZ");
+        SET(p_streambuf_doallocate, "?doallocate@streambuf@@MAEHXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
     }
@@ -145,6 +151,7 @@ static void test_streambuf(void)
 {
     streambuf sb, sb2, *psb;
     char reserve[16];
+    int ret;
 
     memset(&sb, 0xab, sizeof(streambuf));
     memset(&sb2, 0xab, sizeof(streambuf));
@@ -197,7 +204,21 @@ static void test_streambuf(void)
     ok(sb.base == reserve, "wrong base pointer, expected %p got %p\n", reserve, sb.base);
     ok(sb.ebuf == reserve+16, "wrong ebuf pointer, expected %p got %p\n", reserve+16, sb.ebuf);
 
-    sb.allocated = 0;
+    /* allocate */
+    ret = (int) call_func1(p_streambuf_allocate, &sb);
+    ok(ret == 0, "wrong return value, expected 0 got %d\n", ret);
+    sb.base = NULL;
+    ret = (int) call_func1(p_streambuf_allocate, &sb);
+    ok(ret == 1, "wrong return value, expected 1 got %d\n", ret);
+    ok(sb.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb.allocated);
+    ok(sb.ebuf - sb.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb.ebuf, sb.base);
+
+    /* doallocate */
+    ret = (int) call_func1(p_streambuf_doallocate, &sb2);
+    ok(ret == 1, "doallocate failed, got %d\n", ret);
+    ok(sb2.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb2.allocated);
+    ok(sb2.ebuf - sb2.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb2.ebuf, sb2.base);
+
     call_func1(p_streambuf_dtor, &sb);
     call_func1(p_streambuf_dtor, &sb2);
 }

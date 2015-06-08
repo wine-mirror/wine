@@ -400,8 +400,8 @@
 @ stub -arch=win32 ??_Gstrstream@@UAEPAXI@Z  # virtual void * __thiscall strstream::`scalar deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Gstrstreambuf@@UAEPAXI@Z  # virtual void * __thiscall strstreambuf::`scalar deleting destructor'(unsigned int)
 # @ extern ?adjustfield@ios@@2JB  # static long const ios::adjustfield
-@ stub -arch=win32 ?allocate@streambuf@@IAEHXZ  # int __thiscall streambuf::allocate(void)
-@ stub -arch=win64 ?allocate@streambuf@@IEAAHXZ
+@ thiscall -arch=win32 ?allocate@streambuf@@IAEHXZ(ptr) streambuf_allocate
+@ cdecl -arch=win64 ?allocate@streambuf@@IEAAHXZ(ptr) streambuf_allocate
 @ stub -arch=win32 ?attach@filebuf@@QAEPAV1@H@Z  # class filebuf * __thiscall filebuf::attach(int)
 @ stub -arch=win64 ?attach@filebuf@@QEAAPEAV1@H@Z
 @ stub -arch=win32 ?attach@fstream@@QAEXH@Z  # void __thiscall fstream::attach(int)

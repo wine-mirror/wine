@@ -29,6 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 
+#define RESERVE_SIZE 512
+
 /* class streambuf */
 typedef struct {
     const vtable_ptr *vtable;
@@ -47,6 +49,7 @@ typedef struct {
     CRITICAL_SECTION lock;
 } streambuf;
 
+void __thiscall streambuf_setb(streambuf*, char*, char*, int);
 streambuf* __thiscall streambuf_setbuf(streambuf*, char*, int);
 void __thiscall streambuf_setg(streambuf*, char*, char*, char*);
 void __thiscall streambuf_setp(streambuf*, char*, char*);
@@ -179,10 +182,29 @@ streambuf* __thiscall streambuf_scalar_dtor(streambuf *this, unsigned int flags)
 /* ?doallocate@streambuf@@MAEHXZ */
 /* ?doallocate@streambuf@@MEAAHXZ */
 DEFINE_THISCALL_WRAPPER(streambuf_doallocate, 4)
+#define call_streambuf_doallocate(this) CALL_VTBL_FUNC(this, 40, int, (streambuf*), (this))
 int __thiscall streambuf_doallocate(streambuf *this)
 {
-    FIXME("(%p): stub\n", this);
-    return EOF;
+    char *reserve;
+
+    TRACE("(%p)\n", this);
+    reserve = MSVCRT_operator_new(RESERVE_SIZE);
+    if (!reserve)
+        return EOF;
+
+    streambuf_setb(this, reserve, reserve + RESERVE_SIZE, 1);
+    return 1;
+}
+
+/* ?allocate@streambuf@@IAEHXZ */
+/* ?allocate@streambuf@@IEAAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_allocate, 4)
+int __thiscall streambuf_allocate(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->base != NULL || this->unbuffered)
+        return 0;
+    return call_streambuf_doallocate(this);
 }
 
 /* Unexported */
@@ -404,6 +426,35 @@ char * __thiscall MSVCIRT_str_sl_void(class_strstreambuf * _this)
    return 0;
 }
 
+#ifdef __i386__
+
+#define DEFINE_VTBL_WRAPPER(off)            \
+    __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
+        "popl %eax\n\t"                     \
+        "popl %ecx\n\t"                     \
+        "pushl %eax\n\t"                    \
+        "movl 0(%ecx), %eax\n\t"            \
+        "jmp *" #off "(%eax)\n\t")
+
+DEFINE_VTBL_WRAPPER(0);
+DEFINE_VTBL_WRAPPER(4);
+DEFINE_VTBL_WRAPPER(8);
+DEFINE_VTBL_WRAPPER(12);
+DEFINE_VTBL_WRAPPER(16);
+DEFINE_VTBL_WRAPPER(20);
+DEFINE_VTBL_WRAPPER(24);
+DEFINE_VTBL_WRAPPER(28);
+DEFINE_VTBL_WRAPPER(32);
+DEFINE_VTBL_WRAPPER(36);
+DEFINE_VTBL_WRAPPER(40);
+DEFINE_VTBL_WRAPPER(44);
+DEFINE_VTBL_WRAPPER(48);
+DEFINE_VTBL_WRAPPER(52);
+DEFINE_VTBL_WRAPPER(56);
+
+#endif
+
+void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 
 static void init_cxx_funcs(void)
@@ -412,10 +463,12 @@ static void init_cxx_funcs(void)
 
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
     }
     else
     {
+        MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
     }
 }

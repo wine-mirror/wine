@@ -388,8 +388,8 @@
 @ cdecl -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
 # @ extern ?adjustfield@ios@@2JB
-@ stub -arch=win32 ?allocate@streambuf@@IAEHXZ
-@ stub -arch=win64 ?allocate@streambuf@@IEAAHXZ
+@ thiscall -arch=win32 ?allocate@streambuf@@IAEHXZ(ptr) msvcirt.?allocate@streambuf@@IAEHXZ
+@ cdecl -arch=win64 ?allocate@streambuf@@IEAAHXZ(ptr) msvcirt.?allocate@streambuf@@IEAAHXZ
 @ stub -arch=win32 ?attach@filebuf@@QAEPAV1@H@Z
 @ stub -arch=win64 ?attach@filebuf@@QEAAPEAV1@H@Z
 @ stub -arch=win32 ?attach@fstream@@QAEXH@Z
