@@ -1401,6 +1401,8 @@ static void test_strtok(void)
 
 static void test_strtol(void)
 {
+    static char neg[] = "-0x";
+
     char* e;
     LONG l;
     ULONG ul;
@@ -1457,6 +1459,12 @@ static void test_strtol(void)
     ul = strtoul("-4294967296", NULL, 0);
     ok(ul == 1, "wrong value %u\n", ul);
     ok(errno == ERANGE, "wrong errno %d\n", errno);
+
+    errno = 0;
+    l = strtol(neg, &e, 0);
+    ok(l == 0, "wrong value %d\n", l);
+    ok(errno == 0, "wrong errno %d\n", errno);
+    ok(e == neg, "e = %p, neg = %p\n", e, neg);
 }
 
 static void test_strnlen(void)

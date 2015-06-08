@@ -839,7 +839,9 @@ MSVCRT_size_t CDECL MSVCRT_strnlen(const char *s, MSVCRT_size_t maxlen)
  */
 __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCRT__locale_t locale)
 {
+    const char *p = nptr;
     BOOL negative = FALSE;
+    BOOL got_digit = FALSE;
     __int64 ret = 0;
 
     TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
@@ -881,6 +883,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
                 break;
             v = cur-'a'+10;
         }
+        got_digit = TRUE;
 
         if(negative)
             v = -v;
@@ -898,7 +901,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     }
 
     if(endptr)
-        *endptr = (char*)nptr;
+        *endptr = (char*)(got_digit ? nptr : p);
 
     return ret;
 }
@@ -1014,7 +1017,9 @@ MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
  */
 unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int base, MSVCRT__locale_t locale)
 {
+    const char *p = nptr;
     BOOL negative = FALSE;
+    BOOL got_digit = FALSE;
     unsigned __int64 ret = 0;
 
     TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
@@ -1056,6 +1061,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
                 break;
             v = cur-'a'+10;
         }
+        got_digit = TRUE;
 
         nptr++;
 
@@ -1067,7 +1073,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     }
 
     if(endptr)
-        *endptr = (char*)nptr;
+        *endptr = (char*)(got_digit ? nptr : p);
 
     return negative ? -ret : ret;
 }
