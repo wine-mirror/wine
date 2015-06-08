@@ -1900,6 +1900,7 @@ static void test_SetFontSize(void)
 
 static void test_SetFontFamilyName(void)
 {
+    static const WCHAR taHomaW[] = {'T','a','H','o','m','a',0};
     static const WCHAR arialW[] = {'A','r','i','a','l',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     IDWriteTextFormat *format;
@@ -1930,6 +1931,20 @@ static void test_SetFontFamilyName(void)
     hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+
+    /* set name only different in casing */
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetFontFamilyName(layout, taHomaW, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 0;
+    r.length = 0;
+    nameW[0] = 0;
+    hr = IDWriteTextLayout_GetFontFamilyName(layout, 1, nameW, sizeof(nameW)/sizeof(WCHAR), &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(nameW, taHomaW), "got %s\n", wine_dbgstr_w(nameW));
+    ok(r.startPosition == 1 && r.length == 1, "got %u, %u\n", r.startPosition, r.length);
 
     r.startPosition = 1;
     r.length = 1;
