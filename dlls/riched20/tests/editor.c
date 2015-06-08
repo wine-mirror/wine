@@ -3422,6 +3422,19 @@ static DWORD CALLBACK test_esCallback_written_1(DWORD_PTR dwCookie,
   return 0;
 }
 
+static int count_pars(const char *buf)
+{
+    const char *p = buf;
+    int count = 0;
+    while ((p = strstr( p, "\\par" )) != NULL)
+    {
+        if (!isalpha( p[4] ))
+           count++;
+        p++;
+    }
+    return count;
+}
+
 static void test_EM_STREAMOUT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -3446,6 +3459,19 @@ static void test_EM_STREAMOUT(void)
   ok(strcmp(buf, TestItem1) == 0,
         "streamed text different, got %s\n", buf);
 
+  /* RTF mode writes the final end of para \r if it's part of the selection */
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
+  ok (count_pars(buf) == 1, "got %s\n", buf);
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, 12);
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  ok (count_pars(buf) == 0, "got %s\n", buf);
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  ok (count_pars(buf) == 1, "got %s\n", buf);
+
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem2);
   p = buf;
   es.dwCookie = (DWORD_PTR)&p;
@@ -3458,6 +3484,20 @@ static void test_EM_STREAMOUT(void)
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
   ok(strcmp(buf, TestItem3) == 0,
         "streamed text different from, got %s\n", buf);
+
+  /* And again RTF mode writes the final end of para \r if it's part of the selection */
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
+  ok (count_pars(buf) == 2, "got %s\n", buf);
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, 13);
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  ok (count_pars(buf) == 1, "got %s\n", buf);
+  p = buf;
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  ok (count_pars(buf) == 2, "got %s\n", buf);
+
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem3);
   p = buf;
   es.dwCookie = (DWORD_PTR)&p;
@@ -4904,7 +4944,7 @@ static void test_WM_PASTE(void)
     SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     result = strcmp(buffer,"cut\r\n");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     /* Simulates undo (Ctrl-Z) */
     hold_key(VK_CONTROL);
@@ -4919,7 +4959,7 @@ static void test_WM_PASTE(void)
                 (MapVirtualKeyA('Y', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     result = strcmp(buffer,"cut\r\n");
-    todo_wine ok(result == 0,
+    ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     release_key(VK_CONTROL);
 

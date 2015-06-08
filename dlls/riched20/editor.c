@@ -1708,7 +1708,7 @@ ME_StreamInRTFString(ME_TextEditor *editor, BOOL selection, char *string)
   data.pos = 0;
   es.dwCookie = (DWORD_PTR)&data;
   es.pfnCallback = ME_ReadFromRTFString;
-  ME_StreamIn(editor, SF_RTF | (selection ? SFF_SELECTION : 0), &es, FALSE);
+  ME_StreamIn(editor, SF_RTF | (selection ? SFF_SELECTION : 0), &es, TRUE);
 }
 
 
