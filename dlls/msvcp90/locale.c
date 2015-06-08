@@ -48,7 +48,9 @@ typedef enum {
 } dateorder;
 
 char* __cdecl _Getdays(void);
+wchar_t* __cdecl _W_Getdays(void);
 char* __cdecl _Getmonths(void);
+wchar_t* __cdecl _W_Getmonths(void);
 void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
 int __cdecl ___lc_collate_cp_func(void);
@@ -86,6 +88,12 @@ LCID* __cdecl ___lc_handle_func(void);
 #define locale_string_char_dtor(this)           _Yarn_char_dtor(this)
 #define locale_string_char_c_str(this)          _Yarn_char_c_str(this)
 #define locale_string_char_assign(this,assign)  _Yarn_char_op_assign(this,assign)
+
+#define locale_string_wchar _Yarn_wchar
+#define locale_string_wchar_ctor(this)           _Yarn_wchar_ctor(this)
+#define locale_string_wchar_ctor_cstr(this,str)  _Yarn_wchar_ctor(this); _Yarn_wchar_op_assign_cstr(this,str)
+#define locale_string_wchar_dtor(this)           _Yarn_wchar_dtor(this)
+#define locale_string_wchar_c_str(this)          _Yarn_wchar__C_str(this)
 #endif
 
 typedef int category;
@@ -111,6 +119,10 @@ typedef struct {
     _Lockit lock;
     locale_string days;
     locale_string months;
+#if _MSVCP_VER >= 110
+    locale_string_wchar wdays;
+    locale_string_wchar wmonths;
+#endif
     locale_string oldlocname;
     locale_string newlocname;
 } _Locinfo;
@@ -502,6 +514,9 @@ void* __thiscall _Timevec__Getptr(_Timevec *this)
 _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int category, const char *locstr)
 {
     const char *locale = NULL;
+#if _MSVCP_VER >= 110
+    static const wchar_t empty[] = { '\0' };
+#endif
 
     /* This function is probably modifying more global objects */
     FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
@@ -512,6 +527,10 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
     _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
     locale_string_char_ctor_cstr(&locinfo->days, "");
     locale_string_char_ctor_cstr(&locinfo->months, "");
+#if _MSVCP_VER >= 110
+    locale_string_wchar_ctor_cstr(&locinfo->wdays, empty);
+    locale_string_wchar_ctor_cstr(&locinfo->wmonths, empty);
+#endif
     locale_string_char_ctor_cstr(&locinfo->oldlocname, setlocale(LC_ALL, NULL));
 
     if(category)
@@ -574,6 +593,10 @@ void __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
     setlocale(LC_ALL, locale_string_char_c_str(&locinfo->oldlocname));
     locale_string_char_dtor(&locinfo->days);
     locale_string_char_dtor(&locinfo->months);
+#if _MSVCP_VER >= 110
+    locale_string_wchar_dtor(&locinfo->wdays);
+    locale_string_wchar_dtor(&locinfo->wmonths);
+#endif
     locale_string_char_dtor(&locinfo->oldlocname);
     locale_string_char_dtor(&locinfo->newlocname);
     _Lockit_dtor(&locinfo->lock);
@@ -777,6 +800,75 @@ const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
     if (!ret[0]) ret = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
     return ret;
 }
+
+#if _MSVCP_VER >= 110
+/* ?_W_Getdays@_Locinfo@std@@QBEPBGXZ */
+/* ?_W_Getdays@_Locinfo@std@@QEBAPEBGXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__W_Getdays, 4)
+const wchar_t* __thiscall _Locinfo__W_Getdays(_Locinfo *this)
+{
+    static const wchar_t defdays[] =
+    {
+        ':','S','u','n',':','S','u','n','d','a','y',
+        ':','M','o','n',':','M','o','n','d','a','y',
+        ':','T','u','e',':','T','u','e','s','d','a','y',
+        ':','W','e','d',':','W','e','d','n','e','s','d','a','y',
+        ':','T','h','u',':','T','h','u','r','s','d','a','y',
+        ':','F','r','i',':','F','r','i','d','a','y',
+        ':','S','a','t',':','S','a','t','u','r','d','a','y'
+    };
+    wchar_t *wdays = _W_Getdays();
+    const wchar_t *ret;
+
+    TRACE("(%p)\n", this);
+
+    if(wdays) {
+        locale_string_wchar_dtor(&this->wdays);
+        locale_string_wchar_ctor_cstr(&this->wdays, wdays);
+        free(wdays);
+    }
+
+    ret = locale_string_wchar_c_str(&this->wdays);
+    if (!ret[0]) ret = defdays;
+    return ret;
+}
+
+/* ?_W_Getmonths@_Locinfo@std@@QBEPBGXZ */
+/* ?_W_Getmonths@_Locinfo@std@@QEBAPEBGXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__W_Getmonths, 4)
+const wchar_t* __thiscall _Locinfo__W_Getmonths(_Locinfo *this)
+{
+    static const wchar_t defmonths[] =
+    {
+        ':','J','a','n',':','J','a','n','u','a','r','y',
+        ':','F','e','b',':','F','e','b','r','u','a','r','y',
+        ':','M','a','r',':','M','a','r','c','h',
+        ':','A','p','r',':','A','p','r','i','l',
+        ':','M','a','y',':','M','a','y',
+        ':','J','u','n',':','J','u','n','e',
+        ':','J','u','l',':','J','u','l','y',
+        ':','A','u','g',':','A','u','g','u','s','t',
+        ':','S','e','p',':','S','e','p','t','e','m','b','e','r',
+        ':','O','c','t',':','O','c','t','o','b','e','r',
+        ':','N','o','v',':','N','o','v','e','m','b','e','r',
+        ':','D','e','c',':','D','e','c','e','m','b','e','r'
+    };
+    wchar_t *wmonths = _W_Getmonths();
+    const wchar_t *ret;
+
+    TRACE("(%p)\n", this);
+
+    if(wmonths) {
+        locale_string_wchar_dtor(&this->wmonths);
+        locale_string_wchar_ctor_cstr(&this->wmonths, wmonths);
+        free(wmonths);
+    }
+
+    ret = locale_string_wchar_c_str(&this->wmonths);
+    if (!ret[0]) ret = defmonths;
+    return ret;
+}
+#endif
 
 /* ?_Getmonths@_Locinfo@std@@QBEPBDXZ */
 /* ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ */
