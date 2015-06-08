@@ -2049,8 +2049,8 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
     {
         surface->overlay_destrect.left = 0;
         surface->overlay_destrect.top = 0;
-        surface->overlay_destrect.right = dst_surface ? dst_surface->resource.width : 0;
-        surface->overlay_destrect.bottom = dst_surface ? dst_surface->resource.height : 0;
+        surface->overlay_destrect.right = dst_surface->resource.width;
+        surface->overlay_destrect.bottom = dst_surface->resource.height;
     }
 
     if (surface->overlay_dest && (surface->overlay_dest != dst_surface || flags & WINEDDOVER_HIDE))
