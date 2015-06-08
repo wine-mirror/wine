@@ -55,7 +55,9 @@ static void (*__thiscall p_streambuf_dtor)(streambuf*);
 static int (*__thiscall p_streambuf_allocate)(streambuf*);
 static void (*__thiscall p_streambuf_clrclock)(streambuf*);
 static int (*__thiscall p_streambuf_doallocate)(streambuf*);
+static void (*__thiscall p_streambuf_gbump)(streambuf*, int);
 static void (*__thiscall p_streambuf_lock)(streambuf*);
+static void (*__thiscall p_streambuf_pbump)(streambuf*, int);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
 static void (*__thiscall p_streambuf_setlock)(streambuf*);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
@@ -136,7 +138,9 @@ static BOOL init(void)
         SET(p_streambuf_allocate, "?allocate@streambuf@@IEAAHXZ");
         SET(p_streambuf_clrclock, "?clrlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MEAAHXZ");
+        SET(p_streambuf_gbump, "?gbump@streambuf@@IEAAXH@Z");
         SET(p_streambuf_lock, "?lock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_pbump, "?pbump@streambuf@@IEAAXH@Z");
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QEAAXXZ");
@@ -148,7 +152,9 @@ static BOOL init(void)
         SET(p_streambuf_allocate, "?allocate@streambuf@@IAEHXZ");
         SET(p_streambuf_clrclock, "?clrlock@streambuf@@QAEXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MAEHXZ");
+        SET(p_streambuf_gbump, "?gbump@streambuf@@IAEXH@Z");
         SET(p_streambuf_lock, "?lock@streambuf@@QAEXXZ");
+        SET(p_streambuf_pbump, "?pbump@streambuf@@IAEXH@Z");
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QAEXXZ");
@@ -317,6 +323,23 @@ static void test_streambuf(void)
     ok(ret == 1, "doallocate failed, got %d\n", ret);
     ok(sb2.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb2.allocated);
     ok(sb2.ebuf - sb2.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb2.ebuf, sb2.base);
+
+    /* gbump */
+    sb.eback = sb.base + 100;
+    sb.gptr = sb.base + 104;
+    sb.egptr = sb.base + 110;
+    call_func2(p_streambuf_gbump, &sb, 10);
+    ok(sb.gptr == sb.eback + 14, "advance get pointer failed, expected %p got %p\n", sb.eback + 14, sb.gptr);
+    call_func2(p_streambuf_gbump, &sb, -15);
+    ok(sb.gptr == sb.eback - 1, "advance get pointer failed, expected %p got %p\n", sb.eback - 1, sb.gptr);
+
+    /* pbump */
+    sb.pbase = sb.pptr = sb.base + 200;
+    sb.epptr = sb.base + 210;
+    call_func2(p_streambuf_pbump, &sb, -2);
+    ok(sb.pptr == sb.pbase - 2, "advance put pointer failed, expected %p got %p\n", sb.pbase - 2, sb.pptr);
+    call_func2(p_streambuf_pbump, &sb, 20);
+    ok(sb.pptr == sb.pbase + 18, "advance put pointer failed, expected %p got %p\n", sb.pbase + 18, sb.pptr);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

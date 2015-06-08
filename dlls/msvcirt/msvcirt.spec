@@ -491,8 +491,8 @@
 @ stub -arch=win64 ?flush@ostream@@QEAAAEAV1@XZ
 @ stub -arch=win32 ?freeze@strstreambuf@@QAEXH@Z  # void __thiscall strstreambuf::freeze(int)
 @ stub -arch=win64 ?freeze@strstreambuf@@QEAAXH@Z
-@ stub -arch=win32 ?gbump@streambuf@@IAEXH@Z  # void __thiscall streambuf::gbump(int)
-@ stub -arch=win64 ?gbump@streambuf@@IEAAXH@Z
+@ thiscall -arch=win32 ?gbump@streambuf@@IAEXH@Z(ptr long) streambuf_gbump
+@ cdecl -arch=win64 ?gbump@streambuf@@IEAAXH@Z(ptr long) streambuf_gbump
 @ stub -arch=win32 ?gcount@istream@@QBEHXZ  # int __thiscall istream::gcount(void)const 
 @ stub -arch=win64 ?gcount@istream@@QEBAHXZ
 @ stub -arch=win32 ?get@istream@@IAEAAV1@PADHH@Z  # class istream & __thiscall istream::get(char *,int,int)
@@ -589,8 +589,8 @@
 @ cdecl -arch=win64 ?pbackfail@streambuf@@UEAAHH@Z(ptr long) streambuf_pbackfail
 @ thiscall -arch=win32 ?pbase@streambuf@@IBEPADXZ(ptr) streambuf_pbase
 @ cdecl -arch=win64 ?pbase@streambuf@@IEBAPEADXZ(ptr) streambuf_pbase
-@ stub -arch=win32 ?pbump@streambuf@@IAEXH@Z  # void __thiscall streambuf::pbump(int)
-@ stub -arch=win64 ?pbump@streambuf@@IEAAXH@Z
+@ thiscall -arch=win32 ?pbump@streambuf@@IAEXH@Z(ptr long) streambuf_pbump
+@ cdecl -arch=win64 ?pbump@streambuf@@IEAAXH@Z(ptr long) streambuf_pbump
 @ stub -arch=win32 ?pcount@ostrstream@@QBEHXZ  # int __thiscall ostrstream::pcount(void)const 
 @ stub -arch=win64 ?pcount@ostrstream@@QEBAHXZ
 @ stub -arch=win32 ?pcount@strstream@@QBEHXZ  # int __thiscall strstream::pcount(void)const 

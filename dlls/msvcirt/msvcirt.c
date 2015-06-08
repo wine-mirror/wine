@@ -317,6 +317,24 @@ CRITICAL_SECTION* __thiscall streambuf_lockptr(streambuf *this)
     return &this->lock;
 }
 
+/* ?gbump@streambuf@@IAEXH@Z */
+/* ?gbump@streambuf@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_gbump, 8)
+void __thiscall streambuf_gbump(streambuf *this, int count)
+{
+    TRACE("(%p %d)\n", this, count);
+    this->gptr += count;
+}
+
+/* ?pbump@streambuf@@IAEXH@Z */
+/* ?pbump@streambuf@@IEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_pbump, 8)
+void __thiscall streambuf_pbump(streambuf *this, int count)
+{
+    TRACE("(%p %d)\n", this, count);
+    this->pptr += count;
+}
+
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
 int __thiscall streambuf_overflow(streambuf *this, int c)

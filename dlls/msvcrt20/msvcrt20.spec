@@ -479,8 +479,8 @@
 @ stub -arch=win64 ?flush@ostream@@QEAAAEAV1@XZ
 @ stub -arch=win32 ?freeze@strstreambuf@@QAEXH@Z
 @ stub -arch=win64 ?freeze@strstreambuf@@QEAAXH@Z
-@ stub -arch=win32 ?gbump@streambuf@@IAEXH@Z
-@ stub -arch=win64 ?gbump@streambuf@@IEAAXH@Z
+@ thiscall -arch=win32 ?gbump@streambuf@@IAEXH@Z(ptr long) msvcirt.?gbump@streambuf@@IAEXH@Z
+@ cdecl -arch=win64 ?gbump@streambuf@@IEAAXH@Z(ptr long) msvcirt.?gbump@streambuf@@IEAAXH@Z
 @ stub -arch=win32 ?gcount@istream@@QBEHXZ
 @ stub -arch=win64 ?gcount@istream@@QEBAHXZ
 @ stub -arch=win32 ?get@istream@@QAEAAV1@AAC@Z
@@ -575,8 +575,8 @@
 @ cdecl -arch=win64 ?pbackfail@streambuf@@UEAAHH@Z(ptr long) msvcirt.?pbackfail@streambuf@@UEAAHH@Z
 @ thiscall -arch=win32 ?pbase@streambuf@@IBEPADXZ(ptr) msvcirt.?pbase@streambuf@@IBEPADXZ
 @ cdecl -arch=win64 ?pbase@streambuf@@IEBAPEADXZ(ptr) msvcirt.?pbase@streambuf@@IEBAPEADXZ
-@ stub -arch=win32 ?pbump@streambuf@@IAEXH@Z
-@ stub -arch=win64 ?pbump@streambuf@@IEAAXH@Z
+@ thiscall -arch=win32 ?pbump@streambuf@@IAEXH@Z(ptr long) msvcirt.?pbump@streambuf@@IAEXH@Z
+@ cdecl -arch=win64 ?pbump@streambuf@@IEAAXH@Z(ptr long) msvcirt.?pbump@streambuf@@IEAAXH@Z
 @ stub -arch=win32 ?pcount@ostrstream@@QBEHXZ
 @ stub -arch=win64 ?pcount@ostrstream@@QEBAHXZ
 @ stub -arch=win32 ?pcount@strstream@@QBEHXZ
