@@ -56,7 +56,7 @@ static void test_COM(void)
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectSoundWave, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicSegment8, (void**)&dmo);
-    todo_wine ok(hr == E_NOINTERFACE, "DirectSoundWave create failed: %08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "DirectSoundWave create failed: %08x, expected E_NOINTERFACE\n", hr);
 
     /* Same refcount for all DirectSoundWave interfaces */
     hr = CoCreateInstance(&CLSID_DirectSoundWave, NULL, CLSCTX_INPROC_SERVER,
@@ -79,9 +79,9 @@ static void test_COM(void)
 
     /* Interfaces that native does not support */
     hr = IDirectMusicObject_QueryInterface(dmo, &IID_IDirectMusicSegment, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicSegment failed: %08x\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicSegment failed: %08x\n", hr);
     hr = IDirectMusicObject_QueryInterface(dmo, &IID_IDirectMusicSegment8, (void**)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicSegment8 failed: %08x\n", hr);
+    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicSegment8 failed: %08x\n", hr);
 
     while (IDirectMusicObject_Release(dmo));
 }

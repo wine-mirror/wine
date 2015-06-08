@@ -57,7 +57,6 @@ extern HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_H
 struct IDirectMusicWaveImpl {
   /* IUnknown fields */
   const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicSegment8Vtbl *SegmentVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
   LONG          ref;
