@@ -865,7 +865,7 @@
 @ cdecl _Strftime(str long str ptr ptr)
 @ stub _Unlock_shared_ptr_spin_lock
 @ cdecl _W_Getdays()
-@ stub _W_Getmonths
+@ cdecl _W_Getmonths()
 @ stub _W_Gettnames
 @ stub _Wcsftime
 @ cdecl _XcptFilter(long ptr)

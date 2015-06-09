@@ -847,7 +847,7 @@
 @ stub -arch=win64 _SetThrowImageBase
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _W_Getdays()
-@ stub _W_Getmonths
+@ cdecl _W_Getmonths()
 @ stub _W_Gettnames
 @ stub _Wcsftime
 @ cdecl _XcptFilter(long ptr)

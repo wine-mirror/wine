@@ -507,6 +507,39 @@ char* CDECL _Getmonths(void)
 }
 
 /*********************************************************************
+ *		_W_Getmonths (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL _W_Getmonths(void)
+{
+    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    MSVCRT_wchar_t *out;
+    int i, len, size;
+
+    TRACE("\n");
+
+    size = cur->wstr.names.am-cur->wstr.names.short_mon[0];
+    out = MSVCRT_malloc((size+1)*sizeof(*out));
+    if(!out)
+        return NULL;
+
+    size = 0;
+    for(i=0; i<12; i++) {
+        out[size++] = ':';
+        len = strlenW(cur->wstr.names.short_mon[i]);
+        memcpy(&out[size], cur->wstr.names.short_mon[i], len*sizeof(*out));
+        size += len;
+
+        out[size++] = ':';
+        len = strlenW(cur->wstr.names.mon[i]);
+        memcpy(&out[size], cur->wstr.names.mon[i], len*sizeof(*out));
+        size += len;
+    }
+    out[size] = '\0';
+
+    return out;
+}
+
+/*********************************************************************
  *		_Gettnames (MSVCRT.@)
  */
 void* CDECL _Gettnames(void)
