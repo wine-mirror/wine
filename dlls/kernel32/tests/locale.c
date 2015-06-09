@@ -2418,9 +2418,9 @@ static void test_LocaleNameToLCID(void)
     buffer[0] = 0;
     SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(LOCALE_NAME_INVARIANT, 0);
-    todo_wine ok(lcid == 0x7F, "Expected lcid = 0x7F, got %08x, error %d\n", lcid, GetLastError());
+    ok(lcid == 0x7F, "Expected lcid = 0x7F, got %08x, error %d\n", lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
-    ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
+    todo_wine ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
 
     /* bad name */
@@ -4091,6 +4091,8 @@ static void test_IsValidLocaleName(void)
     ok(!ret, "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(zzzzW);
     ok(!ret, "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(LOCALE_NAME_INVARIANT);
+    ok(ret, "IsValidLocaleName failed\n");
 }
 
 static void test_CompareStringOrdinal(void)

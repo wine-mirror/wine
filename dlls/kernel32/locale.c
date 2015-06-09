@@ -453,6 +453,13 @@ static void parse_locale_name( const WCHAR *str, struct locale_name *name )
     name->win_name[0] = 0;
     lstrcpynW( name->lang, str, sizeof(name->lang)/sizeof(WCHAR) );
 
+    if (!*name->lang)
+    {
+        name->lcid = LOCALE_INVARIANT;
+        name->matches = 4;
+        return;
+    }
+
     if (!(p = strpbrkW( name->lang, sepW )))
     {
         if (!strcmpW( name->lang, posixW ) || !strcmpW( name->lang, cW ))
