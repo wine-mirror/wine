@@ -24,6 +24,9 @@
 #include <wine/test.h>
 #include <dmusici.h>
 
+DEFINE_GUID(IID_IDirectMusicWavePRIVATE, 0x69e934e4, 0x97f1, 0x4f1d, 0x88, 0xe8, 0xf2, 0xac, 0x88,
+        0x67, 0x13, 0x27);
+
 static BOOL missing_dswave(void)
 {
     IDirectMusicObject *dmo;
@@ -76,6 +79,14 @@ static void test_COM(void)
     refcount = IUnknown_AddRef(unk);
     ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
     refcount = IUnknown_Release(unk);
+
+    hr = IDirectMusicObject_QueryInterface(dmo, &IID_IDirectMusicWavePRIVATE, (void**)&unk);
+    todo_wine ok(hr == S_OK, "QueryInterface for IID_IDirectMusicWavePRIVATE failed: %08x\n", hr);
+    if (hr == S_OK) {
+        refcount = IUnknown_AddRef(unk);
+        ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+        refcount = IUnknown_Release(unk);
+    }
 
     /* Interfaces that native does not support */
     hr = IDirectMusicObject_QueryInterface(dmo, &IID_IDirectMusicSegment, (void**)&unk);
