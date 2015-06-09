@@ -23,6 +23,12 @@
 typedef LONG streamoff;
 typedef LONG streampos;
 
+typedef enum {
+    SEEKDIR_beg = 0,
+    SEEKDIR_cur = 1,
+    SEEKDIR_end = 2
+} ios_seek_dir;
+
 extern void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 

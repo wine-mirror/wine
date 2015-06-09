@@ -354,9 +354,10 @@ int __thiscall streambuf_pbackfail(streambuf *this, int c)
 /* ?seekoff@streambuf@@UAEJJW4seek_dir@ios@@H@Z */
 /* ?seekoff@streambuf@@UEAAJJW4seek_dir@ios@@H@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_seekoff, 16)
-streampos __thiscall streambuf_seekoff(streambuf *this, streamoff offset, int dir, int mode)
+#define call_streambuf_seekoff(this, off, dir, mode) CALL_VTBL_FUNC(this, 12, streampos, (streambuf*, streamoff, ios_seek_dir, int), (this, off, dir, mode))
+streampos __thiscall streambuf_seekoff(streambuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    FIXME("(%p %d %d %d): stub\n", this, offset, dir, mode);
+    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
     return EOF;
 }
 
@@ -365,8 +366,8 @@ streampos __thiscall streambuf_seekoff(streambuf *this, streamoff offset, int di
 DEFINE_THISCALL_WRAPPER(streambuf_seekpos, 12)
 streampos __thiscall streambuf_seekpos(streambuf *this, streampos pos, int mode)
 {
-    FIXME("(%p %d %d): stub\n", this, pos, mode);
-    return EOF;
+    TRACE("(%p %d %d)\n", this, pos, mode);
+    return call_streambuf_seekoff(this, pos, SEEKDIR_beg, mode);
 }
 
 /* ?setb@streambuf@@IAEXPAD0H@Z */
