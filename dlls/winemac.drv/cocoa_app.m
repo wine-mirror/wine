@@ -213,15 +213,15 @@ int macdrv_err_on;
             [NSApp activateIgnoringOtherApps:YES];
 
             mainMenu = [[[NSMenu alloc] init] autorelease];
+            
+            // Application Name
+            bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
+            if (!bundleName || ![bundleName lenght]) bundleName = @"Wine";
 
             // Application menu
-            submenu = [[[NSMenu alloc] initWithTitle:@"Wine"] autorelease];
-            bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
+            submenu = [[[NSMenu alloc] initWithTitle:bundleName] autorelease];
 
-            if ([bundleName length])
-                title = [NSString stringWithFormat:@"Hide %@", bundleName];
-            else
-                title = @"Hide";
+            title = [NSString stringWithFormat:@"Hide %@", bundleName];
             item = [submenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@""];
 
             item = [submenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
@@ -231,14 +231,11 @@ int macdrv_err_on;
 
             [submenu addItem:[NSMenuItem separatorItem]];
 
-            if ([bundleName length])
-                title = [NSString stringWithFormat:@"Quit %@", bundleName];
-            else
-                title = @"Quit";
+            title = [NSString stringWithFormat:@"Quit %@", bundleName];
             item = [submenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
             [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
             item = [[[NSMenuItem alloc] init] autorelease];
-            [item setTitle:@"Wine"];
+            [item setTitle:bundleName];
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
