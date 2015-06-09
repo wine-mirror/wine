@@ -517,8 +517,8 @@
 @ stub -arch=win64 ?hex@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?ignore@istream@@QAEAAV1@HH@Z
 @ stub -arch=win64 ?ignore@istream@@QEAAAEAV1@HH@Z
-@ stub -arch=win32 ?in_avail@streambuf@@QBEHXZ
-@ stub -arch=win64 ?in_avail@streambuf@@QEBAHXZ
+@ thiscall -arch=win32 ?in_avail@streambuf@@QBEHXZ(ptr) msvcirt.?in_avail@streambuf@@QBEHXZ
+@ cdecl -arch=win64 ?in_avail@streambuf@@QEBAHXZ(ptr) msvcirt.?in_avail@streambuf@@QEBAHXZ
 @ stub -arch=win32 ?init@ios@@IAEXPAVstreambuf@@@Z
 @ stub -arch=win64 ?init@ios@@IEAAXPEAVstreambuf@@@Z
 @ stub -arch=win32 ?ipfx@istream@@QAEHH@Z
@@ -561,8 +561,8 @@
 @ stub -arch=win64 ?opfx@ostream@@QEAAHXZ
 @ stub -arch=win32 ?osfx@ostream@@QAEXXZ
 @ stub -arch=win64 ?osfx@ostream@@QEAAXXZ
-@ stub -arch=win32 ?out_waiting@streambuf@@QBEHXZ
-@ stub -arch=win64 ?out_waiting@streambuf@@QEBAHXZ
+@ thiscall -arch=win32 ?out_waiting@streambuf@@QBEHXZ(ptr) msvcirt.?out_waiting@streambuf@@QBEHXZ
+@ cdecl -arch=win64 ?out_waiting@streambuf@@QEBAHXZ(ptr) msvcirt.?out_waiting@streambuf@@QEBAHXZ
 @ stub -arch=win32 ?overflow@filebuf@@UAEHH@Z
 @ stub -arch=win64 ?overflow@filebuf@@UEAAHH@Z
 @ stub -arch=win32 ?overflow@stdiobuf@@UAEHH@Z

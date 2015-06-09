@@ -335,6 +335,24 @@ void __thiscall streambuf_pbump(streambuf *this, int count)
     this->pptr += count;
 }
 
+/* ?in_avail@streambuf@@QBEHXZ */
+/* ?in_avail@streambuf@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_in_avail, 4)
+int __thiscall streambuf_in_avail(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->egptr - this->gptr;
+}
+
+/* ?out_waiting@streambuf@@QBEHXZ */
+/* ?out_waiting@streambuf@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_out_waiting, 4)
+int __thiscall streambuf_out_waiting(const streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    return this->pptr - this->pbase;
+}
+
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
 int __thiscall streambuf_overflow(streambuf *this, int c)

@@ -531,8 +531,8 @@
 @ stub -arch=win64 ?hex@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?ignore@istream@@QAEAAV1@HH@Z  # class istream & __thiscall istream::ignore(int,int)
 @ stub -arch=win64 ?ignore@istream@@QEAAAEAV1@HH@Z
-@ stub -arch=win32 ?in_avail@streambuf@@QBEHXZ  # int __thiscall streambuf::in_avail(void)const 
-@ stub -arch=win64 ?in_avail@streambuf@@QEBAHXZ
+@ thiscall -arch=win32 ?in_avail@streambuf@@QBEHXZ(ptr) streambuf_in_avail
+@ cdecl -arch=win64 ?in_avail@streambuf@@QEBAHXZ(ptr) streambuf_in_avail
 @ stub -arch=win32 ?init@ios@@IAEXPAVstreambuf@@@Z  # void __thiscall ios::init(class streambuf *)
 @ stub -arch=win64 ?init@ios@@IEAAXPEAVstreambuf@@@Z
 @ stub -arch=win32 ?ipfx@istream@@QAEHH@Z  # int __thiscall istream::ipfx(int)
@@ -575,8 +575,8 @@
 @ stub -arch=win64 ?opfx@ostream@@QEAAHXZ
 @ stub -arch=win32 ?osfx@ostream@@QAEXXZ  # void __thiscall ostream::osfx(void)
 @ stub -arch=win64 ?osfx@ostream@@QEAAXXZ
-@ stub -arch=win32 ?out_waiting@streambuf@@QBEHXZ  # int __thiscall streambuf::out_waiting(void)const 
-@ stub -arch=win64 ?out_waiting@streambuf@@QEBAHXZ
+@ thiscall -arch=win32 ?out_waiting@streambuf@@QBEHXZ(ptr) streambuf_out_waiting
+@ cdecl -arch=win64 ?out_waiting@streambuf@@QEBAHXZ(ptr) streambuf_out_waiting
 @ stub -arch=win32 ?overflow@filebuf@@UAEHH@Z  # virtual int __thiscall filebuf::overflow(int)
 @ stub -arch=win64 ?overflow@filebuf@@UEAAHH@Z
 @ stub -arch=win32 ?overflow@stdiobuf@@UAEHH@Z  # virtual int __thiscall stdiobuf::overflow(int)
