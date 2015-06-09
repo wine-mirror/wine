@@ -425,14 +425,14 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ppobj)
 {
-	IDirectMusicWaveImpl* obj;
+    IDirectMusicWaveImpl *obj;
     HRESULT hr;
 
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicWaveImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicWaveImpl));
+    if (!obj) {
+        *ppobj = NULL;
+        return E_OUTOFMEMORY;
+    }
     obj->IUnknown_iface.lpVtbl = &unknown_vtbl;
     obj->ref = 1;
     dmobject_init(&obj->dmobj, &CLSID_DirectSoundWave, &obj->IUnknown_iface);
