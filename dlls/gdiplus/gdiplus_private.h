@@ -39,7 +39,8 @@
 #define MAX_DASHLEN (16) /* this is a limitation of gdi */
 #define INCH_HIMETRIC (2540)
 
-#define VERSION_MAGIC 0xdbc01001
+#define VERSION_MAGIC  0xdbc01001
+#define VERSION_MAGIC2 0xdbc01002
 #define TENSION_CONST (0.3)
 
 #define GIF_DISPOSE_UNSPECIFIED 0

@@ -522,15 +522,6 @@ GpStatus WINGDIPAPI GdipCreateRegionRectI(GDIPCONST GpRect *rect,
     return GdipCreateRegionRect(&rectf, region);
 }
 
-GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRegion **region)
-{
-    FIXME("(%p, %d, %p): stub\n", data, size, region);
-
-    *region = NULL;
-    return NotImplemented;
-}
-
-
 /******************************************************************************
  * GdipCreateRegionHrgn [GDIPLUS.@]
  */
@@ -787,6 +778,14 @@ static void write_element(const region_element* element, DWORD *buffer,
     }
 }
 
+struct region_header
+{
+    DWORD size;
+    DWORD checksum;
+    DWORD magic;
+    DWORD num_children;
+};
+
 /*****************************************************************************
  * GdipGetRegionData [GDIPLUS.@]
  *
@@ -823,13 +822,7 @@ static void write_element(const region_element* element, DWORD *buffer,
 GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
         UINT *needed)
 {
-    struct _region_header
-    {
-        DWORD size;
-        DWORD checksum;
-        DWORD magic;
-        DWORD num_children;
-    } *region_header;
+    struct region_header *region_header;
     INT filled = 0;
     UINT required;
     GpStatus status;
@@ -847,7 +840,7 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
         return InsufficientBuffer;
     }
 
-    region_header = (struct _region_header *)buffer;
+    region_header = (struct region_header *)buffer;
     region_header->size = sizeheader_size + get_element_size(&region->node);
     region_header->checksum = 0;
     region_header->magic = VERSION_MAGIC;
@@ -861,6 +854,74 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
         *needed = filled * sizeof(DWORD);
 
     return Ok;
+}
+
+static inline GpStatus read_dword(DWORD **buffer, INT *size, DWORD *ret)
+{
+    if (*size < sizeof(DWORD))
+        return GenericError;
+
+    *ret = **buffer;
+    (*buffer)++;
+    (*size) -= sizeof(DWORD);
+    return Ok;
+}
+
+static GpStatus read_element(GpRegion *region, region_element *element, DWORD **buffer, INT *size)
+{
+    GpStatus status;
+
+    status = read_dword(buffer, size, &element->type);
+    if (status != Ok)
+        return status;
+
+    switch (element->type)
+    {
+    case RegionDataInfiniteRect:
+    case RegionDataEmptyRect:
+        break;
+    default:
+        FIXME("region element type 0x%08x not supported\n", element->type);
+        return NotImplemented;
+    }
+
+    return Ok;
+}
+
+/*****************************************************************************
+ * GdipCreateRegionRgnData [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipCreateRegionRgnData(GDIPCONST BYTE *data, INT size, GpRegion **region)
+{
+    struct region_header *region_header;
+    DWORD *buffer = (DWORD*)data;
+    GpStatus status;
+
+    TRACE("(%p, %d, %p)\n", data, size, region);
+
+    if (!data || size < sizeof(*region_header) || !region)
+        return InvalidParameter;
+
+    region_header = (struct region_header *)buffer;
+    if (region_header->magic != VERSION_MAGIC && region_header->magic != VERSION_MAGIC2)
+        return InvalidParameter;
+
+    status = GdipCreateRegion(region);
+    if (status != Ok)
+        return status;
+
+    /* skip header */
+    buffer += 4;
+    size -= sizeof(*region_header);
+
+    status = read_element(*region, &(*region)->node, &buffer, &size);
+    if (status != Ok)
+    {
+        GdipDeleteRegion(*region);
+        *region = NULL;
+    }
+
+    return status;
 }
 
 /*****************************************************************************
@@ -988,7 +1049,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                     case CombineModeIntersect:
                         return get_region_hrgn(element->elementdata.combine.right, graphics, hrgn);
                     case CombineModeXor: case CombineModeExclude:
-                        left = CreateRectRgn(-4194304, -4194304, 4194304, 4194304);
+                        left = CreateRectRgn(-(1 << 22), -(1 << 22), 1 << 22, 1 << 22);
                         break;
                     case CombineModeUnion: case CombineModeComplement:
                         *hrgn = NULL;
@@ -1013,7 +1074,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                         *hrgn = left;
                         return Ok;
                     case CombineModeXor: case CombineModeComplement:
-                        right = CreateRectRgn(-4194304, -4194304, 4194304, 4194304);
+                        right = CreateRectRgn(-(1 << 22), -(1 << 22), 1 << 22, 1 << 22);
                         break;
                     case CombineModeUnion: case CombineModeExclude:
                         DeleteObject(left);
