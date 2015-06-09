@@ -34,6 +34,14 @@ static DWORD WINAPI open_clipboard_thread(LPVOID arg)
     return 0;
 }
 
+static DWORD WINAPI empty_clipboard_thread(LPVOID arg)
+{
+    SetLastError( 0xdeadbeef );
+    ok(!EmptyClipboard(), "EmptyClipboard succeeded\n" );
+    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError());
+    return 0;
+}
+
 static void test_ClipboardOwner(void)
 {
     HANDLE thread;
@@ -69,6 +77,11 @@ static void test_ClipboardOwner(void)
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
     thread = CreateThread(NULL, 0, open_clipboard_thread, hWnd1, 0, NULL);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+    dwret = WaitForSingleObject(thread, 1000);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+    CloseHandle(thread);
+    thread = CreateThread(NULL, 0, empty_clipboard_thread, 0, 0, NULL);
     ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
     dwret = WaitForSingleObject(thread, 1000);
     ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
@@ -303,6 +316,7 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 {
     static UINT wm_drawclipboard;
     static UINT wm_clipboardupdate;
+    static UINT wm_destroyclipboard;
     LRESULT ret;
 
     switch(msg) {
@@ -316,6 +330,10 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
             next_wnd = (HWND)lp;
         else if (next_wnd)
             SendMessageA(next_wnd, msg, wp, lp);
+        break;
+    case WM_DESTROYCLIPBOARD:
+        wm_destroyclipboard++;
+        ok( GetClipboardOwner() == hwnd, "WM_DESTROYCLIPBOARD owner %p\n", GetClipboardOwner() );
         break;
     case WM_CLIPBOARDUPDATE:
         wm_clipboardupdate++;
@@ -331,6 +349,10 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
     case WM_USER+2:
         ret = wm_clipboardupdate;
         wm_clipboardupdate = 0;
+        return ret;
+    case WM_USER+3:
+        ret = wm_destroyclipboard;
+        wm_destroyclipboard = 0;
         return ret;
     }
 
@@ -393,6 +415,8 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+    count = SendMessageA( win, WM_USER+3, 0, 0 );
+    ok( !count, "WM_DESTROYCLIPBOARD received\n" );
 
     r = EmptyClipboard();
     ok(r, "EmptyClipboard failed: %d\n", GetLastError());
@@ -407,6 +431,8 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+    count = SendMessageA( win, WM_USER+3, 0, 0 );
+    ok( count, "WM_DESTROYCLIPBOARD not received\n" );
 
     handle = SetClipboardData( CF_TEXT, create_text() );
     ok(handle != 0, "SetClipboardData failed: %d\n", GetLastError());
@@ -517,6 +543,13 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    r = OpenClipboard(0);
+    ok(r, "OpenClipboard failed: %d\n", GetLastError());
+    r = EmptyClipboard();
+    ok(r, "EmptyClipboard failed: %d\n", GetLastError());
+    r = CloseClipboard();
+    ok(r, "CloseClipboard failed: %d\n", GetLastError());
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
