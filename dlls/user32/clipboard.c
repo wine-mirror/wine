@@ -71,30 +71,6 @@ static BOOL bCBHasChanged = FALSE;
 
 
 /**************************************************************************
- *                      CLIPBOARD_SetClipboardOwner
- *
- * Set the global wineserver clipboard owner. The current process will
- * be the owner and <hWnd> will get the render notifications.
- */
-static BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
-{
-    BOOL bRet;
-
-    TRACE(" hWnd(%p)\n", hWnd);
-
-    SERVER_START_REQ( set_clipboard_info )
-    {
-        req->flags = SET_CB_OWNER;
-        req->owner = wine_server_user_handle( hWnd );
-        bRet = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    return bRet;
-}
-
-
-/**************************************************************************
  *                      CLIPBOARD_GetClipboardInfo
  */
 static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
@@ -256,39 +232,25 @@ BOOL WINAPI CloseClipboard(void)
  */
 BOOL WINAPI EmptyClipboard(void)
 {
-    CLIPBOARDINFO cbinfo;
+    BOOL ret;
+    HWND owner = GetClipboardOwner();
 
     TRACE("()\n");
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        ~cbinfo.flags & CB_OPEN)
+    if (owner) SendMessageTimeoutW( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG, 5000, NULL );
+
+    SERVER_START_REQ( empty_clipboard )
     {
-        WARN("Clipboard not opened by calling task!\n");
-        SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
-        return FALSE;
+        ret = !wine_server_call_err( req );
     }
+    SERVER_END_REQ;
 
-    /* Destroy private objects */
-    if (cbinfo.hWndOwner)
-        SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
-
-    /* Tell the driver to acquire the selection. The current owner
-     * will be signaled to delete its own cache. */
-
-    /* Assign ownership of the clipboard to the current client. We do
-     * this before acquiring the selection so that when we do acquire the
-     * selection and the selection loser gets notified, it can check if
-     * it has lost the Wine clipboard ownership. If it did then it knows
-     * that a WM_DESTROYCLIPBOARD has already been sent. Otherwise it
-     * lost the selection to a X app and it should send the
-     * WM_DESTROYCLIPBOARD itself. */
-    CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
-
-    USER_Driver->pEmptyClipboard();
-
-    bCBHasChanged = TRUE;
-
-    return TRUE;
+    if (ret)
+    {
+        USER_Driver->pEmptyClipboard();
+        bCBHasChanged = TRUE;
+    }
+    return ret;
 }
 
 

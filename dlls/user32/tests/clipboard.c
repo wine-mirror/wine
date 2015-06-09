@@ -408,7 +408,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
@@ -424,7 +424,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
+        ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );

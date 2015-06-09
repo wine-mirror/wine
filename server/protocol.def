@@ -3087,7 +3087,6 @@ enum coords_relative
 @END
 
 #define SET_CB_OPEN      0x001
-#define SET_CB_OWNER     0x002
 #define SET_CB_VIEWER    0x004
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
@@ -3095,6 +3094,11 @@ enum coords_relative
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100
+
+
+/* Empty the clipboard and grab ownership */
+@REQ(empty_clipboard)
+@END
 
 
 /* Open a security token */

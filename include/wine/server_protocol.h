@@ -4381,7 +4381,6 @@ struct set_clipboard_info_reply
 };
 
 #define SET_CB_OPEN      0x001
-#define SET_CB_OWNER     0x002
 #define SET_CB_VIEWER    0x004
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
@@ -4389,6 +4388,18 @@ struct set_clipboard_info_reply
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100
+
+
+
+struct empty_clipboard_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct empty_clipboard_reply
+{
+    struct reply_header __header;
+};
 
 
 
@@ -5462,6 +5473,7 @@ enum request
     REQ_destroy_class,
     REQ_set_class_info,
     REQ_set_clipboard_info,
+    REQ_empty_clipboard,
     REQ_open_token,
     REQ_set_global_windows,
     REQ_adjust_token_privileges,
@@ -5734,6 +5746,7 @@ union generic_request
     struct destroy_class_request destroy_class_request;
     struct set_class_info_request set_class_info_request;
     struct set_clipboard_info_request set_clipboard_info_request;
+    struct empty_clipboard_request empty_clipboard_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
     struct adjust_token_privileges_request adjust_token_privileges_request;
@@ -6004,6 +6017,7 @@ union generic_reply
     struct destroy_class_reply destroy_class_reply;
     struct set_class_info_reply set_class_info_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
+    struct empty_clipboard_reply empty_clipboard_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
     struct adjust_token_privileges_reply adjust_token_privileges_reply;
@@ -6059,6 +6073,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 475
+#define SERVER_PROTOCOL_VERSION 476
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

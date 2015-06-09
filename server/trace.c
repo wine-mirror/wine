@@ -3639,6 +3639,10 @@ static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply
     fprintf( stderr, ", seqno=%08x", req->seqno );
 }
 
+static void dump_empty_clipboard_request( const struct empty_clipboard_request *req )
+{
+}
+
 static void dump_open_token_request( const struct open_token_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4434,6 +4438,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_destroy_class_request,
     (dump_func)dump_set_class_info_request,
     (dump_func)dump_set_clipboard_info_request,
+    (dump_func)dump_empty_clipboard_request,
     (dump_func)dump_open_token_request,
     (dump_func)dump_set_global_windows_request,
     (dump_func)dump_adjust_token_privileges_request,
@@ -4702,6 +4707,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
     (dump_func)dump_set_clipboard_info_reply,
+    NULL,
     (dump_func)dump_open_token_reply,
     (dump_func)dump_set_global_windows_reply,
     (dump_func)dump_adjust_token_privileges_reply,
@@ -4970,6 +4976,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "destroy_class",
     "set_class_info",
     "set_clipboard_info",
+    "empty_clipboard",
     "open_token",
     "set_global_windows",
     "adjust_token_privileges",
