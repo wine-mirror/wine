@@ -18,6 +18,7 @@
  */
 
 #include "dswave_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dswave);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -31,8 +32,7 @@ static const GUID IID_IDirectMusicWavePRIVATE = {0x69e934e4,0x97f1,0x4f1d,{0x88,
  */
 typedef struct IDirectMusicWaveImpl {
     IUnknown IUnknown_iface;
-    const IDirectMusicObjectVtbl *ObjectVtbl;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    struct dmobject dmobj;
     LONG ref;
     LPDMUS_OBJECTDESC pDesc;
 } IDirectMusicWaveImpl;
@@ -54,9 +54,9 @@ static HRESULT WINAPI IUnknownImpl_QueryInterface(IUnknown *iface, REFIID riid, 
     if (IsEqualIID(riid, &IID_IUnknown))
         *ret_iface = iface;
     else if (IsEqualIID(riid, &IID_IDirectMusicObject))
-        *ret_iface = &This->ObjectVtbl;
+        *ret_iface = &This->dmobj.IDirectMusicObject_iface;
     else if (IsEqualIID(riid, &IID_IPersistStream))
-        *ret_iface = &This->PersistStreamVtbl;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
     else if (IsEqualIID(riid, &IID_IDirectMusicWavePRIVATE)) {
         FIXME("(%p, %s, %p): Unsupported private interface\n", This, debugstr_guid(riid), ret_iface);
         return E_NOINTERFACE;
@@ -87,7 +87,6 @@ static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This->pDesc);
         HeapFree(GetProcessHeap(), 0, This);
         DSWAVE_UnlockModule();
     }
@@ -102,64 +101,9 @@ static const IUnknownVtbl unknown_vtbl = {
 };
 
 /* IDirectMusicWaveImpl IDirectMusicObject part: */
-static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, ObjectVtbl, iface);
-	return IUnknown_QueryInterface(&This->IUnknown_iface, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicWaveImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, ObjectVtbl, iface);
-	return IUnknown_AddRef(&This->IUnknown_iface);
-}
-
-static ULONG WINAPI IDirectMusicWaveImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, ObjectVtbl, iface);
-	return IUnknown_Release(&This->IUnknown_iface);
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p)\n", This, pDesc);
-	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-	memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p, %s): setting descriptor:\n", This, pDesc, debugstr_DMUS_OBJECTDESC(pDesc));
-
-	/* According to MSDN, we should copy only given values, not whole struct */	
-	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
-		This->pDesc->guidObject = pDesc->guidObject;
-	if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-		This->pDesc->guidClass = pDesc->guidClass;
-	if (pDesc->dwValidData & DMUS_OBJ_NAME)
-		lstrcpynW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
-	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-		lstrcpynW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
-	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-		lstrcpynW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
-	if (pDesc->dwValidData & DMUS_OBJ_VERSION)
-		This->pDesc->vVersion = pDesc->vVersion;
-	if (pDesc->dwValidData & DMUS_OBJ_DATE)
-		This->pDesc->ftDate = pDesc->ftDate;
-	if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
-		This->pDesc->llMemLength = pDesc->llMemLength;
-		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
-	}
-	if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
-		/* according to MSDN, we copy the stream */
-		IStream_Clone (pDesc->pStream, &This->pDesc->pStream);	
-	}
-	
-	/* add new flags */
-	This->pDesc->dwValidData |= pDesc->dwValidData;
-
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor(IDirectMusicObject *iface,
+        IStream *pStream, DMUS_OBJECTDESC *pDesc)
+{
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -306,42 +250,24 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (L
 	return S_OK;	
 }
 
-static const IDirectMusicObjectVtbl DirectMusicWave_Object_Vtbl = {
-	IDirectMusicWaveImpl_IDirectMusicObject_QueryInterface,
-	IDirectMusicWaveImpl_IDirectMusicObject_AddRef,
-	IDirectMusicWaveImpl_IDirectMusicObject_Release,
-	IDirectMusicWaveImpl_IDirectMusicObject_GetDescriptor,
-	IDirectMusicWaveImpl_IDirectMusicObject_SetDescriptor,
-	IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor
+static const IDirectMusicObjectVtbl dmobject_vtbl = {
+    dmobj_IDirectMusicObject_QueryInterface,
+    dmobj_IDirectMusicObject_AddRef,
+    dmobj_IDirectMusicObject_Release,
+    dmobj_IDirectMusicObject_GetDescriptor,
+    dmobj_IDirectMusicObject_SetDescriptor,
+    IDirectMusicObjectImpl_ParseDescriptor
 };
 
 /* IDirectMusicWaveImpl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, PersistStreamVtbl, iface);
-	return IUnknown_QueryInterface(&This->IUnknown_iface, riid, ppobj);
+static inline IDirectMusicWaveImpl *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicWaveImpl, dmobj.IPersistStream_iface);
 }
 
-static ULONG WINAPI IDirectMusicWaveImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, PersistStreamVtbl, iface);
-	return IUnknown_AddRef(&This->IUnknown_iface);
-}
-
-static ULONG WINAPI IDirectMusicWaveImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, PersistStreamVtbl, iface);
-	return IUnknown_Release(&This->IUnknown_iface);
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	ICOM_THIS_MULTI(IDirectMusicWaveImpl, PersistStreamVtbl, iface);
-	
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+{
+        IDirectMusicWaveImpl *This = impl_from_IPersistStream(iface);
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -486,25 +412,16 @@ static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl DirectMusicWave_PersistStream_Vtbl = {
-	IDirectMusicWaveImpl_IPersistStream_QueryInterface,
-	IDirectMusicWaveImpl_IPersistStream_AddRef,
-	IDirectMusicWaveImpl_IPersistStream_Release,
-	IDirectMusicWaveImpl_IPersistStream_GetClassID,
-	IDirectMusicWaveImpl_IPersistStream_IsDirty,
-	IDirectMusicWaveImpl_IPersistStream_Load,
-	IDirectMusicWaveImpl_IPersistStream_Save,
-	IDirectMusicWaveImpl_IPersistStream_GetSizeMax
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
+    IPersistStreamImpl_Load,
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
-
 
 /* for ClassFactory */
 HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ppobj)
@@ -518,13 +435,11 @@ HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ppobj)
 		return E_OUTOFMEMORY;
 	}
     obj->IUnknown_iface.lpVtbl = &unknown_vtbl;
-	obj->ObjectVtbl = &DirectMusicWave_Object_Vtbl;
-	obj->PersistStreamVtbl = &DirectMusicWave_PersistStream_Vtbl;
-	obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(obj->pDesc);
-	obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	obj->pDesc->guidClass = CLSID_DirectMusicSegment; /* shown by tests */
     obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectSoundWave, &obj->IUnknown_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+    obj->pDesc = &obj->dmobj.desc;
 
     DSWAVE_LockModule();
     hr = IUnknown_QueryInterface(&obj->IUnknown_iface, lpcGUID, ppobj);
