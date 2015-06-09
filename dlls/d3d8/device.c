@@ -1185,6 +1185,14 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
             wined3d_mutex_unlock();
             return D3DERR_INVALIDCALL;
         }
+        if (ds_desc.multisample_type != rt_desc.multisample_type
+                || ds_desc.multisample_quality != rt_desc.multisample_quality)
+        {
+            WARN("Multisample settings do not match, returing D3DERR_INVALIDCALL\n");
+            wined3d_mutex_unlock();
+            return D3DERR_INVALIDCALL;
+
+        }
     }
 
     original_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device);
