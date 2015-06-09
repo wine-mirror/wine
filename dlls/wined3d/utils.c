@@ -1608,7 +1608,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             {
                 if (format->flags[type] & WINED3DFMT_FLAG_RENDERTARGET)
                 {
-                    FIXME("Format %s with rendertarget flag is not supported as FBO color attachment (type %u),"
+                    WARN("Format %s with rendertarget flag is not supported as FBO color attachment (type %u),"
                             " and no fallback specified.\n", debug_d3dformat(format->id), type);
                     format->flags[type] &= ~WINED3DFMT_FLAG_RENDERTARGET;
                 }
@@ -1642,7 +1642,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
                 }
                 else
                 {
-                    FIXME("Format %s rtInternal format is not supported as FBO %s attachment, type %u.\n",
+                    WARN("Format %s rtInternal format is not supported as FBO %s attachment, type %u.\n",
                             debug_d3dformat(format->id), type_string, type);
                     format->flags[type] &= ~WINED3DFMT_FLAG_RENDERTARGET;
                 }
