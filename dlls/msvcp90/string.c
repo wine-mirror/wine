@@ -1542,8 +1542,8 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_rfind_cstr_substr(
     if(len > this->size)
         return MSVCP_basic_string_char_npos;
 
-    if(pos > this->size-len+1)
-        pos = this->size-len+1;
+    if(pos > this->size-len)
+        pos = this->size-len;
     end = basic_string_char_const_ptr(this);
     for(p=end+pos; p>=end; p--) {
         if(*p==*find && !MSVCP_char_traits_char_compare(p, find, len))
@@ -3392,8 +3392,8 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_rfind_cstr_substr(
     if(len > this->size)
         return MSVCP_basic_string_wchar_npos;
 
-    if(pos > this->size-len+1)
-        pos = this->size-len+1;
+    if(pos > this->size-len)
+        pos = this->size-len;
     end = basic_string_wchar_const_ptr(this);
     for(p=end+pos; p>=end; p--) {
         if(*p==*find && !MSVCP_char_traits_wchar_compare(p, find, len))
