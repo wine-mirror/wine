@@ -73,7 +73,8 @@ C_SRCS = \
 	service.c \
 	task.c \
 	txtrange.c \
-	view.c
+	view.c \
+	xmlhttprequest.c
 
 RC_SRCS = mshtml.rc
 

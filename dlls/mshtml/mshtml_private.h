@@ -204,6 +204,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLWindow4) \
     XIID(IHTMLWindow5) \
     XIID(IHTMLWindow6) \
+    XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator)
 
@@ -351,6 +352,13 @@ typedef struct {
     HTMLInnerWindow *window;
 } HTMLImageElementFactory;
 
+typedef struct {
+    DispatchEx dispex;
+    IHTMLXMLHttpRequestFactory IHTMLXMLHttpRequestFactory_iface;
+
+    LONG ref;
+} HTMLXMLHttpRequestFactory;
+
 struct HTMLLocation {
     DispatchEx dispex;
     IHTMLLocation IHTMLLocation_iface;
@@ -437,6 +445,7 @@ struct HTMLInnerWindow {
 
     HTMLImageElementFactory *image_factory;
     HTMLOptionElementFactory *option_factory;
+    HTMLXMLHttpRequestFactory *xml_factory;
     IHTMLScreen *screen;
     OmHistory *history;
     IHTMLStorage *session_storage;
@@ -775,6 +784,7 @@ HTMLOuterWindow *nswindow_to_window(const nsIDOMWindow*) DECLSPEC_HIDDEN;
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**) DECLSPEC_HIDDEN;
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**) DECLSPEC_HIDDEN;
+HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
 HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;

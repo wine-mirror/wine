@@ -518,6 +518,34 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
+static const char *debugstr_variant(const VARIANT *var)
+{
+    static char buf[400];
+
+    if (!var)
+        return "(null)";
+
+    switch (V_VT(var))
+    {
+    case VT_EMPTY:
+        return "{VT_EMPTY}";
+    case VT_BSTR:
+        sprintf(buf, "{VT_BSTR: %s}", wine_dbgstr_w(V_BSTR(var)));
+        break;
+    case VT_BOOL:
+        sprintf(buf, "{VT_BOOL: %x}", V_BOOL(var));
+        break;
+    case VT_UI4:
+        sprintf(buf, "{VT_UI4: %u}", V_UI4(var));
+        break;
+    default:
+        sprintf(buf, "{vt %d}", V_VT(var));
+        break;
+    }
+
+    return buf;
+}
+
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -6059,9 +6087,29 @@ static void test_history(IHTMLWindow2 *window)
     IOmHistory_Release(history);
 }
 
+static void test_xmlhttprequest(IHTMLWindow5 *window)
+{
+    HRESULT hres;
+    VARIANT var;
+    IHTMLXMLHttpRequestFactory *factory;
+
+    hres = IHTMLWindow5_get_XMLHttpRequest(window, &var);
+    ok(hres == S_OK, "get_XMLHttpRequest failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "expect VT_DISPATCH, got %s\n", debugstr_variant(&var));
+
+    factory = NULL;
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLXMLHttpRequestFactory, (void**)&factory);
+    ok(hres == S_OK, "QueryInterface(&IID_IHTMLXMLHttpRequestFactory) failed: %08x\n", hres);
+    ok(factory != NULL, "factory == NULL\n");
+
+    IHTMLXMLHttpRequestFactory_Release(factory);
+    VariantClear(&var);
+}
+
 static void test_window(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window, *window2, *self, *parent;
+    IHTMLWindow5 *window5;
     IHTMLDocument2 *doc2 = NULL;
     IDispatch *disp;
     IUnknown *unk;
@@ -6147,6 +6195,15 @@ static void test_window(IHTMLDocument2 *doc)
     test_window_status(window);
     set_window_status(window, "Test!");
     test_history(window);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow5, (void**)&window5);
+    if(SUCCEEDED(hres)) {
+        ok(window5 != NULL, "window5 == NULL\n");
+        test_xmlhttprequest(window5);
+        IHTMLWindow5_Release(window5);
+    }else {
+        win_skip("IHTMLWindow5 not supported!\n");
+    }
 
     IHTMLWindow2_Release(window);
 }
