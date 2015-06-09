@@ -139,7 +139,6 @@ my @dll_groups =
   "kernel32",
   "api-ms-win-downlevel-normaliz-l1-1-0",
   "api-ms-win-core-processthreads-l1-1-0",
-  "api-ms-win-core-processthreads-l1-1-1",
   "api-ms-win-core-debug-l1-1-0",
   "api-ms-win-core-debug-l1-1-1",
   "api-ms-win-core-errorhandling-l1-1-0",
@@ -195,6 +194,7 @@ my @dll_groups =
   "advapi32",
   "api-ms-win-core-namedpipe-l1-1-0",
   "api-ms-win-core-namedpipe-l1-2-0",
+  "api-ms-win-core-processthreads-l1-1-1",
  ],
  [
   "ole32",

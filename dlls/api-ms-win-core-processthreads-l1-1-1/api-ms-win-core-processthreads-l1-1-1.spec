@@ -1,5 +1,5 @@
 @ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) kernel32.CreateProcessA
-@ stub CreateProcessAsUserW
+@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr) advapi32.CreateProcessAsUserW
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) kernel32.CreateProcessW
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
 @ stub CreateRemoteThreadEx
@@ -35,9 +35,9 @@
 @ stub InitializeProcThreadAttributeList
 @ stdcall IsProcessorFeaturePresent(long) kernel32.IsProcessorFeaturePresent
 @ stdcall OpenProcess(long long long) kernel32.OpenProcess
-@ stub OpenProcessToken
+@ stdcall OpenProcessToken(long long ptr) advapi32.OpenProcessToken
 @ stdcall OpenThread(long long long) kernel32.OpenThread
-@ stub OpenThreadToken
+@ stdcall OpenThreadToken(long long long ptr) advapi32.OpenThreadToken
 @ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
 @ stub QueryProcessAffinityUpdateMode
 @ stdcall QueueUserAPC(ptr long long) kernel32.QueueUserAPC
@@ -51,7 +51,7 @@
 @ stdcall SetThreadPriority(long long) kernel32.SetThreadPriority
 @ stdcall SetThreadPriorityBoost(long long) kernel32.SetThreadPriorityBoost
 @ stdcall SetThreadStackGuarantee(ptr) kernel32.SetThreadStackGuarantee
-@ stub SetThreadToken
+@ stdcall SetThreadToken(ptr ptr) advapi32.SetThreadToken
 @ stdcall SuspendThread(long) kernel32.SuspendThread
 @ stdcall SwitchToThread() kernel32.SwitchToThread
 @ stdcall TerminateProcess(long long) kernel32.TerminateProcess
