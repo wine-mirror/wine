@@ -737,10 +737,8 @@ static void test_dslocator(void)
     {
         COMPATIBLE_LONG hwnd = 0;
 
-        /* Crashes under Window 7
-        hr = IDataSourceLocator_get_hWnd(dslocator, NULL);
-        ok(hr == E_INVALIDARG, "got %08x\n", hr);
-        */
+        if (0) /* Crashes under Window 7 */
+            hr = IDataSourceLocator_get_hWnd(dslocator, NULL);
 
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -755,7 +753,7 @@ static void test_dslocator(void)
         hr = IDataSourceLocator_put_hWnd(dslocator, hwnd);
         ok(hr == S_OK, "got %08x\n", hr);
 
-        hwnd = 0xDEADBEEF;
+        hwnd = 0;
         hr = IDataSourceLocator_get_hWnd(dslocator, &hwnd);
         ok(hr == S_OK, "got %08x\n", hr);
         ok(hwnd == 0xDEADBEEF, "got %p\n", (HWND)hwnd);
