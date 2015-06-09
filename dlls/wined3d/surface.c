@@ -3716,6 +3716,9 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
             case WINED3D_LOCATION_RB_MULTISAMPLE:
                 surface_prepare_rb(surface, gl_info, TRUE);
                 break;
+            case WINED3D_LOCATION_RB_RESOLVED:
+                surface_prepare_rb(surface, gl_info, FALSE);
+                break;
             case WINED3D_LOCATION_DRAWABLE:
                 /* Nothing to do */
                 break;

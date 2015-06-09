@@ -402,6 +402,8 @@ void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
         resource->draw_binding = WINED3D_LOCATION_DRAWABLE;
     else if (resource->multisample_type)
         resource->draw_binding = WINED3D_LOCATION_RB_MULTISAMPLE;
+    else if (resource->gl_type == WINED3D_GL_RES_TYPE_RB)
+        resource->draw_binding = WINED3D_LOCATION_RB_RESOLVED;
     else
         resource->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
 }
