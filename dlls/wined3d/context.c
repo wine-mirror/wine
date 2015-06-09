@@ -420,6 +420,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
     GLuint read_binding, draw_binding;
+    struct wined3d_surface *depth_stencil = entry->depth_stencil;
 
     if (entry->attached)
     {
@@ -437,10 +438,22 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
         context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->color_location);
     }
 
-    /* Apply depth targets */
-    if (entry->depth_stencil)
-        surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
-    context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, entry->ds_location);
+    if (depth_stencil && entry->render_targets[0]
+            && (depth_stencil->resource.multisample_type
+            != entry->render_targets[0]->resource.multisample_type
+            || depth_stencil->resource.multisample_quality
+            != entry->render_targets[0]->resource.multisample_quality))
+    {
+        WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
+                entry->render_targets[0]->resource.multisample_quality,
+                entry->render_targets[0]->resource.multisample_type,
+                depth_stencil->resource.multisample_quality, depth_stencil->resource.multisample_type);
+        depth_stencil = NULL;
+    }
+
+    if (depth_stencil)
+        surface_set_compatible_renderbuffer(depth_stencil, entry->render_targets[0]);
+    context_attach_depth_stencil_fbo(context, target, depth_stencil, entry->ds_location);
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
      * GL contexts requirements. */
