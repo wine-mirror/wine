@@ -448,7 +448,7 @@ HRESULT new_glyph_outline(UINT32 count, struct glyph_outline **ret)
         return E_OUTOFMEMORY;
 
     points = heap_alloc(count*sizeof(D2D1_POINT_2F));
-    tags = heap_alloc(count*sizeof(UINT8));
+    tags = heap_alloc_zero(count*sizeof(UINT8));
     if (!points || !tags) {
         heap_free(points);
         heap_free(tags);

@@ -244,109 +244,124 @@ static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
     p->y = v->y / 64.0;
 }
 
-static HRESULT get_outline_data(const FT_Outline *outline, struct glyph_outline **ret)
+/* Convert the quadratic Beziers to cubic Beziers. */
+static void get_cubic_glyph_outline(const FT_Outline *outline, short point, short first_pt,
+    short contour, FT_Vector *cubic_control)
 {
-    short i, j, contour = 0;
-    D2D1_POINT_2F *points;
-    UINT16 count = 0;
-    UINT8 *tags;
-    HRESULT hr;
+    /*
+       The parametric eqn for a cubic Bezier is, from PLRM:
+       r(t) = at^3 + bt^2 + ct + r0
+       with the control points:
+       r1 = r0 + c/3
+       r2 = r1 + (c + b)/3
+       r3 = r0 + c + b + a
 
-    /* we need all curves in cubic format */
-    for (i = 0; i < outline->n_points; i++) {
-        /* control point */
-        if (!(outline->tags[i] & FT_Curve_Tag_On)) {
-            if (!(outline->tags[i] & FT_Curve_Tag_Cubic)) {
-                count++;
-            }
+       A quadratic Bezier has the form:
+       p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
+
+       So equating powers of t leads to:
+       r1 = 2/3 p1 + 1/3 p0
+       r2 = 2/3 p1 + 1/3 p2
+       and of course r0 = p0, r3 = p2
+    */
+
+    /* FIXME: Possible optimization in endpoint calculation
+       if there are two consecutive curves */
+    cubic_control[0] = outline->points[point-1];
+    if (!(outline->tags[point-1] & FT_Curve_Tag_On)) {
+        cubic_control[0].x += outline->points[point].x + 1;
+        cubic_control[0].y += outline->points[point].y + 1;
+        cubic_control[0].x >>= 1;
+        cubic_control[0].y >>= 1;
+    }
+    if (point+1 > outline->contours[contour])
+        cubic_control[3] = outline->points[first_pt];
+    else {
+        cubic_control[3] = outline->points[point+1];
+        if (!(outline->tags[point+1] & FT_Curve_Tag_On)) {
+            cubic_control[3].x += outline->points[point].x + 1;
+            cubic_control[3].y += outline->points[point].y + 1;
+            cubic_control[3].x >>= 1;
+            cubic_control[3].y >>= 1;
         }
+    }
+
+    /* r1 = 1/3 p0 + 2/3 p1
+       r2 = 1/3 p2 + 2/3 p1 */
+    cubic_control[1].x = (2 * outline->points[point].x + 1) / 3;
+    cubic_control[1].y = (2 * outline->points[point].y + 1) / 3;
+    cubic_control[2] = cubic_control[1];
+    cubic_control[1].x += (cubic_control[0].x + 1) / 3;
+    cubic_control[1].y += (cubic_control[0].y + 1) / 3;
+    cubic_control[2].x += (cubic_control[3].x + 1) / 3;
+    cubic_control[2].y += (cubic_control[3].y + 1) / 3;
+}
+
+static inline void set_outline_end_tag(short point, short endpoint, UINT8 *tag)
+{
+    if (point == endpoint)
+        *tag |= OUTLINE_POINT_END;
+}
+
+static short get_outline_data(const FT_Outline *outline, struct glyph_outline *ret)
+{
+    short contour, point = 0, first_pt, count;
+
+    for (contour = 0, count = 0; contour < outline->n_contours; contour++) {
+        first_pt = point;
+        if (ret) {
+            ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
+            ret->tags[count] = OUTLINE_POINT_START;
+        }
+
+        point++;
         count++;
-    }
 
-    hr = new_glyph_outline(count, ret);
-    if (FAILED(hr))
-        return hr;
+        while (point <= outline->contours[contour]) {
+            do {
+                if (outline->tags[point] & FT_Curve_Tag_On) {
+                    if (ret) {
+                        ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
+                        ret->tags[count] |= OUTLINE_POINT_LINE;
+                        set_outline_end_tag(point, outline->contours[contour], &ret->tags[count]);
+                    }
 
-    points = (*ret)->points;
-    tags = (*ret)->tags;
+                    point++;
+                    count++;
+                }
+                else {
 
-    ft_vector_to_d2d_point(outline->points, points);
-    tags[0] = OUTLINE_POINT_START;
+                    if (ret) {
+                        FT_Vector cubic_control[4];
 
-    for (i = 1, j = 1; i < outline->n_points; i++, j++) {
-        /* mark start of new contour */
-        if (tags[j-1] & OUTLINE_POINT_END)
-            tags[j] = OUTLINE_POINT_START;
-        else
-            tags[j] = 0;
+                        get_cubic_glyph_outline(outline, point, first_pt, contour, cubic_control);
+                        ft_vector_to_d2d_point(&cubic_control[1], &ret->points[count]);
+                        ft_vector_to_d2d_point(&cubic_control[2], &ret->points[count+1]);
+                        ft_vector_to_d2d_point(&cubic_control[3], &ret->points[count+2]);
+                        ret->tags[count] = OUTLINE_POINT_BEZIER;
+                        ret->tags[count+1] = OUTLINE_POINT_BEZIER;
+                        ret->tags[count+2] = OUTLINE_POINT_BEZIER;
+                        set_outline_end_tag(point, outline->contours[contour], &ret->tags[count+2]);
+                    }
 
-        if (outline->tags[i] & FT_Curve_Tag_On) {
-            ft_vector_to_d2d_point(outline->points+i, points+j);
-            tags[j] |= OUTLINE_POINT_LINE;
-        }
-        else {
-            /* third order curve */
-            if (outline->tags[i] & FT_Curve_Tag_Cubic) {
-                /* store 3 points, advance 3 points */
+                    count += 3;
+                    point++;
+                }
+            } while (point <= outline->contours[contour] &&
+                    (outline->tags[point] & FT_Curve_Tag_On) ==
+                    (outline->tags[point-1] & FT_Curve_Tag_On));
 
-                ft_vector_to_d2d_point(outline->points+i,   points+j);
-                ft_vector_to_d2d_point(outline->points+i+1, points+j+1);
-                ft_vector_to_d2d_point(outline->points+i+2, points+j+2);
-
-                i += 2;
+            if (point <= outline->contours[contour] &&
+               outline->tags[point] & FT_Curve_Tag_On)
+            {
+                /* This is the closing pt of a bezier, but we've already
+                   added it, so just inc point and carry on */
+                point++;
             }
-            else {
-                FT_Vector vec;
-
-                /* Convert the quadratic Beziers to cubic Beziers.
-                   The parametric eqn for a cubic Bezier is, from PLRM:
-                   r(t) = at^3 + bt^2 + ct + r0
-                   with the control points:
-                   r1 = r0 + c/3
-                   r2 = r1 + (c + b)/3
-                   r3 = r0 + c + b + a
-
-                   A quadratic Bezier has the form:
-                   p(t) = (1-t)^2 p0 + 2(1-t)t p1 + t^2 p2
-
-                   So equating powers of t leads to:
-                   r1 = 2/3 p1 + 1/3 p0
-                   r2 = 2/3 p1 + 1/3 p2
-                   and of course r0 = p0, r3 = p2
-                */
-
-                /* r1 */
-                vec.x = 2 * outline->points[i].x + outline->points[i-1].x;
-                vec.y = 2 * outline->points[i].y + outline->points[i-1].y;
-                ft_vector_to_d2d_point(&vec, points+j);
-                points[j].x /= 3.0;
-                points[j].y /= 3.0;
-
-                /* r2 */
-                vec.x = 2 * outline->points[i].x + outline->points[i+1].x;
-                vec.y = 2 * outline->points[i].y + outline->points[i+1].y;
-                ft_vector_to_d2d_point(&vec, points+j+1);
-                points[j+1].x /= 3.0;
-                points[j+1].y /= 3.0;
-
-                /* r3 */
-                ft_vector_to_d2d_point(outline->points+i+1, points+j+2);
-
-                i++;
-            }
-
-            tags[j] = tags[j+1] = tags[j+2] = OUTLINE_POINT_BEZIER;
-            j += 2;
-        }
-
-        /* mark end point */
-        if (i < outline->n_points && outline->contours[contour] == i) {
-            tags[j] |= OUTLINE_POINT_END;
-            contour++;
         }
     }
 
-    return S_OK;
+    return count;
 }
 
 HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, USHORT simulations, struct glyph_outline **ret)
@@ -366,6 +381,7 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
          if (pFT_Load_Glyph(size->face, index, FT_LOAD_DEFAULT) == 0) {
              FT_Outline *outline = &size->face->glyph->outline;
+             short count;
              FT_Matrix m;
 
              m.xx = 1 << 16;
@@ -375,9 +391,12 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
 
              pFT_Outline_Transform(outline, &m);
 
-             hr = get_outline_data(outline, ret);
-             if (hr == S_OK)
+             count = get_outline_data(outline, NULL);
+             hr = new_glyph_outline(count, ret);
+             if (hr == S_OK) {
+                 get_outline_data(outline, *ret);
                  (*ret)->advance = size->face->glyph->metrics.horiAdvance >> 6;
+             }
          }
     }
     LeaveCriticalSection(&freetype_cs);

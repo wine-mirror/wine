@@ -469,7 +469,9 @@ static void WINAPI test_geometrysink_BeginFigure(ID2D1SimplifiedGeometrySink *if
     D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
 {
     ok(figureBegin == D2D1_FIGURE_BEGIN_FILLED, "begin figure %d\n", figureBegin);
-    g_startpoints[g_startpoint_count++] = startPoint;
+    if (g_startpoint_count < sizeof(g_startpoints)/sizeof(g_startpoints[0]))
+        g_startpoints[g_startpoint_count] = startPoint;
+    g_startpoint_count++;
 }
 
 static void WINAPI test_geometrysink_AddLines(ID2D1SimplifiedGeometrySink *iface,
