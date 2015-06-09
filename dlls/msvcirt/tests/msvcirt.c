@@ -61,6 +61,7 @@ static void (*__thiscall p_streambuf_pbump)(streambuf*, int);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
 static void (*__thiscall p_streambuf_setlock)(streambuf*);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
+static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 
 /* Emulate a __thiscall */
@@ -144,6 +145,7 @@ static BOOL init(void)
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_sync, "?sync@streambuf@@UEAAHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
     } else {
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
@@ -158,6 +160,7 @@ static BOOL init(void)
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QAEXXZ");
+        SET(p_streambuf_sync, "?sync@streambuf@@UAEHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
     }
 
@@ -340,6 +343,18 @@ static void test_streambuf(void)
     ok(sb.pptr == sb.pbase - 2, "advance put pointer failed, expected %p got %p\n", sb.pbase - 2, sb.pptr);
     call_func2(p_streambuf_pbump, &sb, 20);
     ok(sb.pptr == sb.pbase + 18, "advance put pointer failed, expected %p got %p\n", sb.pbase + 18, sb.pptr);
+
+    /* sync */
+    ret = (int) call_func1(p_streambuf_sync, &sb);
+    ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
+    sb.gptr = sb.egptr;
+    ret = (int) call_func1(p_streambuf_sync, &sb);
+    ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
+    sb.pptr = sb.pbase;
+    ret = (int) call_func1(p_streambuf_sync, &sb);
+    ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    ret = (int) call_func1(p_streambuf_sync, &sb2);
+    ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

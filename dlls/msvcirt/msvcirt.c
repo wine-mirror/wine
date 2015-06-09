@@ -437,8 +437,8 @@ void __thiscall streambuf_setp(streambuf *this, char *pb, char *ep)
 DEFINE_THISCALL_WRAPPER(streambuf_sync, 4)
 int __thiscall streambuf_sync(streambuf *this)
 {
-    FIXME("(%p): stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    return (this->gptr == this->egptr && this->pbase == this->pptr) ? 0 : EOF;
 }
 
 /* ?unbuffered@streambuf@@IAEXH@Z */
