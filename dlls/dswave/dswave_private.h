@@ -41,30 +41,9 @@
 #include "dmusics.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicWaveImpl IDirectMusicWaveImpl;
-
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_HIDDEN;
-
-
-/*****************************************************************************
- * IDirectMusicWaveImpl implementation structure
- */
-struct IDirectMusicWaveImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG          ref;
-
-  /* IDirectMusicWaveImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
-
-};
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dswave.dll
