@@ -1282,7 +1282,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_FRAMEBUFFER_OBJECT,     NULL},
     {WINED3DFMT_NULL,                   0,                                0,                                      0,
             GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
-            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FBO_ATTACHABLE,
             ARB_FRAMEBUFFER_OBJECT,     NULL},
 };
 

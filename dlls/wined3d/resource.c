@@ -114,6 +114,13 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
                 WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
                 continue;
             }
+            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
+                    && usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)
+                    && !(format->flags[gl_type] & WINED3DFMT_FLAG_FBO_ATTACHABLE))
+            {
+                WARN("Render target or depth stencil is not FBO attachable.\n");
+                continue;
+            }
             if ((usage & WINED3DUSAGE_TEXTURE) && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE))
             {
                 WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
