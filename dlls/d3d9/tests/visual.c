@@ -18772,6 +18772,181 @@ static void test_multisample_mismatch(void)
     DestroyWindow(window);
 }
 
+static void test_texcoordindex(void)
+{
+    static const D3DMATRIX mat =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+    }}};
+    static const struct
+    {
+        struct vec3 pos;
+        struct vec2 texcoord1;
+        struct vec2 texcoord2;
+        struct vec2 texcoord3;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}},
+    };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    HWND window;
+    HRESULT hr;
+    IDirect3DTexture9 *texture1, *texture2;
+    D3DLOCKED_RECT locked_rect;
+    ULONG refcount;
+    D3DCOLOR color;
+    DWORD *ptr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture1, 0, &locked_rect, NULL, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    ptr = locked_rect.pBits;
+    ptr[0] = 0xff000000;
+    ptr[1] = 0xff00ff00;
+    ptr[2] = 0xff0000ff;
+    ptr[3] = 0xff00ffff;
+    hr = IDirect3DTexture9_UnlockRect(texture1, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture2, 0, &locked_rect, NULL, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    ptr = locked_rect.pBits;
+    ptr[0] = 0xff000000;
+    ptr[1] = 0xff0000ff;
+    ptr[2] = 0xffff0000;
+    ptr[3] = 0xffff00ff;
+    hr = IDirect3DTexture9_UnlockRect(texture2, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)texture1);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *)texture2);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX3);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_ADD);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 2, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXCOORDINDEX, 1);
+    ok(SUCCEEDED(hr), "Failed to set texcoord index, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_TEXCOORDINDEX, 0);
+    ok(SUCCEEDED(hr), "Failed to set texcoord index, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 120);
+    ok(color_match(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color_match(color, 0x0000ffff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color_match(color, 0x00ff0000, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color_match(color, 0x00ffffff, 2), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+    ok(SUCCEEDED(hr), "Failed to set texture transform flags, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE1, &mat);
+    ok(SUCCEEDED(hr), "Failed to set transformation matrix, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 120);
+    ok(color_match(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color_match(color, 0x0000ffff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color_match(color, 0x00000000, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color_match(color, 0x0000ffff, 2), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+    ok(SUCCEEDED(hr), "Failed to set texture transform flags, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_TEXCOORDINDEX, 2);
+    ok(SUCCEEDED(hr), "Failed to set texcoord index, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 120);
+    ok(color_match(color, 0x000000ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 120);
+    ok(color_match(color, 0x0000ffff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 160, 360);
+    ok(color_match(color, 0x00ff00ff, 2), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color_match(color, 0x00ffff00, 2), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    IDirect3DTexture9_Release(texture1);
+    IDirect3DTexture9_Release(texture2);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -18886,4 +19061,5 @@ START_TEST(visual)
     test_table_fog_zw();
     test_signed_formats();
     test_multisample_mismatch();
+    test_texcoordindex();
 }
