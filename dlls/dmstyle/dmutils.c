@@ -213,7 +213,7 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
   }
   TRACE("** DM Reference End of Load ***\n");
 
-  return S_OK;
+  return hr;
 }
 
 /* FOURCC to string conversion for debug messages */
