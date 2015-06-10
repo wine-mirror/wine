@@ -1460,8 +1460,25 @@ static void test_file_disposition_information(void)
     IO_STATUS_BLOCK io;
     FILE_DISPOSITION_INFORMATION fdi;
     BOOL fileDeleted;
+    DWORD fdi2;
 
     GetTempPathA( MAX_PATH, tmp_path );
+
+    /* tests for info struct size */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA( buffer, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = pNtSetInformationFile( handle, &io, &fdi, 0, FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_INFO_LENGTH_MISMATCH, "expected STATUS_INFO_LENGTH_MISMATCH, got %x\n", res );
+    fdi2 = 0x100;
+    res = pNtSetInformationFile( handle, &io, &fdi2, sizeof(fdi2), FileDispositionInformation );
+    todo_wine
+    ok( res == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %x\n", res );
+    CloseHandle( handle );
+    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    DeleteFileA( buffer );
 
     /* cannot set disposition on file not opened with delete access */
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
