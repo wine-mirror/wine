@@ -452,8 +452,8 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_IsDirty (LPPERSISTST
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicStyle8Impl_IPersistStream_LoadBand (LPPERSISTSTREAM iface, IStream* pClonedStream, IDirectMusicBand** ppBand) {
-
+static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
+{
   HRESULT hr = E_FAIL;
   IPersistStream* pPersistStream = NULL;
   
@@ -481,8 +481,9 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_LoadBand (LPPERSISTSTREAM i
   return S_OK;
 }
 
-static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_PRIVATE_STYLE_MOTIF pNewMotif) {
-  /*ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);*/
+static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
+        DMUS_PRIVATE_STYLE_MOTIF *pNewMotif)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -573,9 +574,8 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
   return S_OK;
 }
 
-static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  /*ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);*/
+static HRESULT parse_part_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -785,8 +785,8 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
 	liMove.QuadPart = 0;
 	liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-	
-	hr = IDirectMusicStyle8Impl_IPersistStream_LoadBand (iface, pClonedStream, &pBand);
+
+        hr = load_band(pClonedStream, &pBand);
 	if (FAILED(hr)) {
 	  ERR(": could not load track\n");
 	  return hr;
@@ -845,7 +845,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       }
       case DMUS_FOURCC_PARTREF_LIST: {
 	TRACE_(dmfile)(": PartRef list\n");
-	hr = IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (iface, &Chunk, pStm, pNewMotif);
+        hr = parse_part_ref_list(&Chunk, pStm, pNewMotif);
 	if (FAILED(hr)) return hr;
 	break;
       }
@@ -926,8 +926,8 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTST
 	  liMove.QuadPart = 0;
 	  liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	  IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-	  
-	  hr = IDirectMusicStyle8Impl_IPersistStream_LoadBand (iface, pClonedStream, &pBand);
+
+          hr = load_band(pClonedStream, &pBand);
 	  if (FAILED(hr)) {
 	    ERR(": could not load track\n");
 	    return hr;
@@ -992,7 +992,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTST
 	}
 	case DMUS_FOURCC_PART_LIST: {
 	  TRACE_(dmfile)(": PART list\n");
-	  hr = IDirectMusicStyle8Impl_IPersistStream_ParsePartList (iface, &Chunk, pStm);
+          hr = parse_part_list(&Chunk, pStm);
 	  if (FAILED(hr)) return hr;
 	  break;
 	}
