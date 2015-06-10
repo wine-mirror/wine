@@ -223,7 +223,8 @@ if (0) /* crashes on native */
     SysFreeString(str);
 
     hr = IWshShell3_put_CurrentDirectory(sh3, NULL);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG ||
+       broken(hr == HRESULT_FROM_WIN32(ERROR_NOACCESS)), "got 0x%08x\n", hr);
 
     str = SysAllocString(emptyW);
     hr = IWshShell3_put_CurrentDirectory(sh3, str);
@@ -490,7 +491,7 @@ static void test_registry(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     type = REG_NONE;
-    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ret = RegQueryValueExA(root, "regsz", 0, &type, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "got %d\n", ret);
     ok(type == REG_SZ, "got %d\n", type);
 
@@ -503,7 +504,7 @@ static void test_registry(void)
     VariantClear(&value);
 
     type = REG_NONE;
-    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ret = RegQueryValueExA(root, "regsz", 0, &type, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "got %d\n", ret);
     ok(type == REG_SZ, "got %d\n", type);
 
@@ -516,7 +517,7 @@ static void test_registry(void)
     VariantClear(&value);
 
     type = REG_NONE;
-    ret = RegGetValueA(root, NULL, "regsz", RRF_RT_ANY, &type, NULL, NULL);
+    ret = RegQueryValueExA(root, "regsz", 0, &type, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "got %d\n", ret);
     ok(type == REG_SZ, "got %d\n", type);
 
