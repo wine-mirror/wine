@@ -1104,9 +1104,67 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
  */
 BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime)
 {
-    FIXME("(%p,%p,%p): Stub!\n", lpIdleTime, lpKernelTime, lpUserTime);
+    LARGE_INTEGER idle_time, kernel_time, user_time;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi;
+    SYSTEM_BASIC_INFORMATION sbi;
+    NTSTATUS status;
+    ULONG ret_size;
+    int i;
 
-    return FALSE;
+    TRACE("(%p,%p,%p)\n", lpIdleTime, lpKernelTime, lpUserTime);
+
+    status = NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), &ret_size );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    sppi = HeapAlloc( GetProcessHeap(), 0,
+                      sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors);
+    if (!sppi)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+
+    status = NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi, sizeof(*sppi) * sbi.NumberOfProcessors,
+                                       &ret_size );
+    if (status != STATUS_SUCCESS)
+    {
+        HeapFree( GetProcessHeap(), 0, sppi );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    idle_time.QuadPart = 0;
+    kernel_time.QuadPart = 0;
+    user_time.QuadPart = 0;
+    for (i = 0; i < sbi.NumberOfProcessors; i++)
+    {
+        idle_time.QuadPart += sppi[i].IdleTime.QuadPart;
+        kernel_time.QuadPart += sppi[i].KernelTime.QuadPart;
+        user_time.QuadPart += sppi[i].UserTime.QuadPart;
+    }
+
+    if (lpIdleTime)
+    {
+        lpIdleTime->dwLowDateTime = idle_time.u.LowPart;
+        lpIdleTime->dwHighDateTime = idle_time.u.HighPart;
+    }
+    if (lpKernelTime)
+    {
+        lpKernelTime->dwLowDateTime = kernel_time.u.LowPart;
+        lpKernelTime->dwHighDateTime = kernel_time.u.HighPart;
+    }
+    if (lpUserTime)
+    {
+        lpUserTime->dwLowDateTime = user_time.u.LowPart;
+        lpUserTime->dwHighDateTime = user_time.u.HighPart;
+    }
+
+    HeapFree( GetProcessHeap(), 0, sppi );
+    return TRUE;
 }
 
 /***********************************************************************
