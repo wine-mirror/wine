@@ -1046,6 +1046,9 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
  */
 BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS class, VOID *info, DWORD size )
 {
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+
     TRACE( "%p %u %p %u\n", file, class, info, size );
 
     switch (class)
@@ -1053,7 +1056,6 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
     case FileBasicInfo:
     case FileNameInfo:
     case FileRenameInfo:
-    case FileDispositionInfo:
     case FileAllocationInfo:
     case FileEndOfFileInfo:
     case FileStreamInfo:
@@ -1071,6 +1073,10 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
 
+    case FileDispositionInfo:
+        status = NtSetInformationFile( file, &io, info, size, FileDispositionInformation );
+        break;
+
     case FileStandardInfo:
     case FileCompressionInfo:
     case FileAttributeTagInfo:
@@ -1080,6 +1086,11 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
         return FALSE;
     }
 
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
     return TRUE;
 }
 

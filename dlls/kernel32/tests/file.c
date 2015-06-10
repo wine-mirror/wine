@@ -38,6 +38,10 @@
 #include "winnls.h"
 #include "fileapi.h"
 
+#ifdef WINE_NO_UNICODE_MACROS
+#undef DeleteFile  /* needed for FILE_DISPOSITION_INFO */
+#endif
+
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
 static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
@@ -4589,6 +4593,7 @@ static void test_SetFileInformationByHandle(void)
     FILE_REMOTE_PROTOCOL_INFO protinfo = { 0 };
     FILE_STANDARD_INFO stdinfo = { };
     FILE_COMPRESSION_INFO compressinfo;
+    FILE_DISPOSITION_INFO dispinfo;
     char tempFileName[MAX_PATH];
     char tempPath[MAX_PATH];
     HANDLE file;
@@ -4631,6 +4636,17 @@ static void test_SetFileInformationByHandle(void)
     SetLastError(0xdeadbeef);
     ret = pSetFileInformationByHandle(file, FileRemoteProtocolInfo, &protinfo, sizeof(protinfo));
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    /* test FileDispositionInfo, additional details already covered by ntdll tests */
+    SetLastError(0xdeadbeef);
+    ret = pSetFileInformationByHandle(file, FileDispositionInfo, &dispinfo, 0);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "got %d, error %d\n", ret, GetLastError());
+
+    dispinfo.DeleteFile = TRUE;
+    ret = pSetFileInformationByHandle(file, FileDispositionInfo, &dispinfo, sizeof(dispinfo));
+todo_wine
+    ok(ret, "setting FileDispositionInfo failed, error %d\n", GetLastError());
 
     CloseHandle(file);
 }
