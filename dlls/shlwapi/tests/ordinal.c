@@ -548,10 +548,10 @@ static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
     hmem2 = pSHMapHandle(hmem, procid, GetCurrentProcessId(), 0, 0);
 
     /* It seems like Windows Vista/2008 uses a different internal implementation
-     * for shared memory, and calling SHMapHandle fails with ERROR_INVALID_HANDLE. */
-    ok(hmem2 != NULL || broken(hmem2 == NULL && GetLastError() == ERROR_INVALID_HANDLE),
+     * for shared memory, and calling SHMapHandle fails. */
+    ok(hmem2 != NULL || broken(hmem2 == NULL),
        "SHMapHandle failed: %u\n", GetLastError());
-    if (hmem2 == NULL && GetLastError() == ERROR_INVALID_HANDLE)
+    if (hmem2 == NULL)
     {
         win_skip("Subprocess failed to map shared memory, skipping test\n");
         return;
