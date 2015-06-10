@@ -1009,7 +1009,6 @@ int CDECL MSVCRT__close(int fd)
   ioinfo *info = get_ioinfo(fd);
   int ret;
 
-  LOCK_FILES();
   TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
   if (!(info->wxflag & WX_OPEN)) {
     ret = -1;
@@ -1021,7 +1020,6 @@ int CDECL MSVCRT__close(int fd)
       msvcrt_set_errno(GetLastError());
     }
   }
-  UNLOCK_FILES();
   release_ioinfo(info);
   return ret;
 }
@@ -1039,7 +1037,6 @@ int CDECL MSVCRT__dup2(int od, int nd)
   int ret;
 
   TRACE("(od=%d, nd=%d)\n", od, nd);
-  LOCK_FILES();
 
   if (od < nd)
   {
@@ -1086,7 +1083,6 @@ int CDECL MSVCRT__dup2(int od, int nd)
 
   release_ioinfo(info_od);
   release_ioinfo(info_nd);
-  UNLOCK_FILES();
   return ret;
 }
 
@@ -2065,7 +2061,6 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
     unsigned int wxflags = split_oflags(textmode);
     int fd;
 
-    LOCK_FILES();
     fd = msvcrt_alloc_fd(readHandle, wxflags|WX_PIPE);
     if (fd != -1)
     {
@@ -2089,7 +2084,6 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
       CloseHandle(writeHandle);
       *MSVCRT__errno() = MSVCRT_EMFILE;
     }
-    UNLOCK_FILES();
   }
   else
     msvcrt_set_errno(GetLastError());
