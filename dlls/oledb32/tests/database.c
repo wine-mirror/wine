@@ -148,7 +148,6 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG set_coun
     ok(set_count == 1, "got %u\n", set_count);
 
     ok(IsEqualIID(&propsets->guidPropertySet, &DBPROPSET_DBINIT), "set guid %s\n", wine_dbgstr_guid(&propsets->guidPropertySet));
-todo_wine
     ok(propsets->cProperties == 2, "got propcount %u\n", propsets->cProperties);
 
 if (propsets->cProperties == 2) {
@@ -278,7 +277,6 @@ static void test_GetDataSource2(WCHAR *initstring)
 
     dbinit = &dbinittest;
     hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, initstring, &IID_IDBInitialize, (IUnknown**)&dbinit);
-todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
 
     IDataInitialize_Release(datainit);
