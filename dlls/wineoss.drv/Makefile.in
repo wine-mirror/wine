@@ -1,5 +1,5 @@
 MODULE    = wineoss.drv
-IMPORTS   = uuid ole32 user32
+IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
 EXTRAINCL = $(OSS4_CFLAGS)
 

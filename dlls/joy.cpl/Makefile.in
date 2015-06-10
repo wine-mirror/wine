@@ -1,5 +1,5 @@
 MODULE    = joy.cpl
-IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32
+IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 advapi32
 
 C_SRCS = \
 	main.c
