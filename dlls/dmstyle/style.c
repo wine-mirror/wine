@@ -706,9 +706,9 @@ static HRESULT parse_part_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
   return S_OK;
 }
 
-static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);
+static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -871,9 +871,9 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
   return S_OK;
 }
 
-static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-  ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);
-
+static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -998,7 +998,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (LPPERSISTST
 	}
 	case  DMUS_FOURCC_PATTERN_LIST: {
 	  TRACE_(dmfile)(": PATTERN list\n");
-	  hr = IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (iface, &Chunk, pStm);
+          hr = parse_pattern_list(This, &Chunk, pStm);
 	  if (FAILED(hr)) return hr;
 	  break;
 	}
@@ -1043,7 +1043,7 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_Load (LPPERSISTSTREA
     switch (Chunk.fccID) {
     case DMUS_FOURCC_STYLE_FORM: {
       TRACE_(dmfile)(": Style form\n");
-      hr = IDirectMusicStyle8Impl_IPersistStream_ParseStyleForm (iface, &Chunk, pStm);
+      hr = parse_style_form(This, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;
     }
