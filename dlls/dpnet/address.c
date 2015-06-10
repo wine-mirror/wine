@@ -232,9 +232,30 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(IDirectPlay8Address *ifa
         {
             struct component *entry = This->components[i];
 
-            hr = IDirectPlay8Address_AddComponent(dup, entry->name, &entry->data, entry->size, entry->type);
+            switch (entry->type)
+            {
+                case DPNA_DATATYPE_DWORD:
+                    hr = IDirectPlay8Address_AddComponent(dup, entry->name, &entry->data.value, entry->size, entry->type);
+                    break;
+                case DPNA_DATATYPE_GUID:
+                    hr = IDirectPlay8Address_AddComponent(dup, entry->name, &entry->data.guid, entry->size, entry->type);
+                    break;
+                case DPNA_DATATYPE_STRING:
+                    hr = IDirectPlay8Address_AddComponent(dup, entry->name, entry->data.string, entry->size, entry->type);
+                    break;
+                case DPNA_DATATYPE_STRING_ANSI:
+                    hr = IDirectPlay8Address_AddComponent(dup, entry->name, entry->data.ansi, entry->size, entry->type);
+                    break;
+                case DPNA_DATATYPE_BINARY:
+                    hr = IDirectPlay8Address_AddComponent(dup, entry->name, entry->data.binary, entry->size, entry->type);
+                    break;
+            }
+
             if(hr != S_OK)
+            {
                 ERR("Failed to copy component: %s - 0x%08x\n", debugstr_w(entry->name), hr);
+                break;
+            }
         }
 
         *ppdpaNewAddress = dup;

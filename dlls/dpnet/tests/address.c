@@ -24,6 +24,7 @@
 
 /* {6733C6E8-A0D6-450E-8C18-CEACF331DC27} */
 static const GUID IID_Random = {0x6733c6e8, 0xa0d6, 0x450e, { 0x8c, 0x18, 0xce, 0xac, 0xf3, 0x31, 0xdc, 0x27 } };
+static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
 
 static void create_directplay_address(void)
 {
@@ -70,7 +71,6 @@ static void create_directplay_address(void)
 static void address_addcomponents(void)
 {
     static const WCHAR UNKNOWN[] = { 'u','n','k','n','o','w','n',0 };
-    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
     static const char testing[] = "testing";
     HRESULT hr;
     IDirectPlay8Address *localaddr = NULL;
@@ -309,14 +309,20 @@ static void address_duplicate(void)
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost), DPNA_DATATYPE_STRING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
         hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(components == 1, "components=%d\n", components);
+        ok(components == 2, "components=%d\n", components);
 
         hr = IDirectPlay8Address_Duplicate(localaddr, &duplicate);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
+            DWORD size, type;
+            WCHAR buffer[256];
+
             hr = IDirectPlay8Address_GetSP(duplicate, &guid);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(IsEqualGUID(&guid, &CLSID_DP8SP_TCPIP), "wrong guid\n");
@@ -324,6 +330,12 @@ static void address_duplicate(void)
             hr = IDirectPlay8Address_GetNumComponents(duplicate, &dupcomps);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(components == dupcomps, "expected %d got %d\n", components, dupcomps);
+
+            size = sizeof(buffer);
+            hr = IDirectPlay8Address_GetComponentByName(duplicate, DPNA_KEY_HOSTNAME, buffer, &size, &type);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(type == DPNA_DATATYPE_STRING, "incorrect type %d\n", type);
+            ok(!lstrcmpW(buffer, localhost), "Invalid string: %s\n", wine_dbgstr_w(buffer));
 
             IDirectPlay8Address_Release(duplicate);
         }
