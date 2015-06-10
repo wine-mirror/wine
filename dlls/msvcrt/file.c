@@ -548,12 +548,17 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
  */
 unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
 {
-  int         fd;
+  int         fd, last_fd;
   char*       wxflag_ptr;
   HANDLE*     handle_ptr;
   ioinfo*     fdinfo;
 
-  *size = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * MSVCRT_fdend;
+  for (last_fd=MSVCRT_MAX_FILES-1; last_fd>=0; last_fd--)
+    if (get_ioinfo_nolock(last_fd)->handle != INVALID_HANDLE_VALUE)
+      break;
+  last_fd++;
+
+  *size = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * last_fd;
   *block = MSVCRT_calloc(*size, 1);
   if (!*block)
   {
@@ -561,10 +566,10 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
     return FALSE;
   }
   wxflag_ptr = (char*)*block + sizeof(unsigned);
-  handle_ptr = (HANDLE*)(wxflag_ptr + MSVCRT_fdend * sizeof(char));
+  handle_ptr = (HANDLE*)(wxflag_ptr + last_fd);
 
-  *(unsigned*)*block = MSVCRT_fdend;
-  for (fd = 0; fd < MSVCRT_fdend; fd++)
+  *(unsigned*)*block = last_fd;
+  for (fd = 0; fd < last_fd; fd++)
   {
     /* to be inherited, we need it to be open, and that DONTINHERIT isn't set */
     fdinfo = get_ioinfo(fd);
