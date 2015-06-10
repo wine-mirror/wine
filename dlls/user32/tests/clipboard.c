@@ -27,26 +27,84 @@
 static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
 static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
 
+static int thread_from_line;
+
 static DWORD WINAPI open_clipboard_thread(LPVOID arg)
 {
     HWND hWnd = arg;
-    ok(OpenClipboard(hWnd), "OpenClipboard failed\n");
+    ok(OpenClipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
     return 0;
 }
 
 static DWORD WINAPI empty_clipboard_thread(LPVOID arg)
 {
     SetLastError( 0xdeadbeef );
-    ok(!EmptyClipboard(), "EmptyClipboard succeeded\n" );
-    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError());
+    ok(!EmptyClipboard(), "%u: EmptyClipboard succeeded\n", thread_from_line );
+    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+        thread_from_line, GetLastError());
     return 0;
+}
+
+static DWORD WINAPI open_and_empty_clipboard_thread(LPVOID arg)
+{
+    HWND hWnd = arg;
+    ok(OpenClipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
+    ok(EmptyClipboard(), "%u: EmptyClipboard failed\n", thread_from_line );
+    return 0;
+}
+
+static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
+{
+    HWND hwnd = arg;
+    HANDLE ret;
+
+    SetLastError( 0xdeadbeef );
+    if (GetClipboardOwner() == hwnd)
+    {
+        SetClipboardData( CF_WAVE, 0 );
+        todo_wine ok( IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData failed\n", thread_from_line );
+        ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
+        ok( ret != 0, "%u: SetClipboardData failed err %u\n", thread_from_line, GetLastError() );
+    }
+    else
+    {
+        SetClipboardData( CF_WAVE, 0 );
+        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+                      thread_from_line, GetLastError());
+        ok( !IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData succeeded\n", thread_from_line );
+        ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
+        todo_wine ok( !ret, "%u: SetClipboardData succeeded\n", thread_from_line );
+        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+                      thread_from_line, GetLastError());
+    }
+    return 0;
+}
+
+static void run_thread( LPTHREAD_START_ROUTINE func, void *arg, int line )
+{
+    DWORD ret;
+    HANDLE thread;
+
+    thread_from_line = line;
+    thread = CreateThread(NULL, 0, func, arg, 0, NULL);
+    ok(thread != NULL, "%u: CreateThread failed with error %d\n", line, GetLastError());
+    for (;;)
+    {
+        ret = MsgWaitForMultipleObjectsEx( 1, &thread, 1000, QS_ALLINPUT, 0 );
+        if (ret == WAIT_OBJECT_0 + 1)
+        {
+            MSG msg;
+            while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+        }
+        else break;
+    }
+    ok(ret == WAIT_OBJECT_0, "%u: expected WAIT_OBJECT_0, got %u\n", line, ret);
+    CloseHandle(thread);
 }
 
 static void test_ClipboardOwner(void)
 {
-    HANDLE thread;
     HWND hWnd1, hWnd2;
-    DWORD dwret;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
@@ -76,16 +134,9 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
-    thread = CreateThread(NULL, 0, open_clipboard_thread, hWnd1, 0, NULL);
-    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
-    dwret = WaitForSingleObject(thread, 1000);
-    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
-    CloseHandle(thread);
-    thread = CreateThread(NULL, 0, empty_clipboard_thread, 0, 0, NULL);
-    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
-    dwret = WaitForSingleObject(thread, 1000);
-    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
-    CloseHandle(thread);
+    run_thread( open_clipboard_thread, hWnd1, __LINE__ );
+    run_thread( empty_clipboard_thread, 0, __LINE__ );
+    run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
     ok(!CloseClipboard(), "CloseClipboard should fail if clipboard wasn't open\n");
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
@@ -99,6 +150,8 @@ static void test_ClipboardOwner(void)
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
+    run_thread( empty_clipboard_thread, 0, __LINE__ );
+    run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
 
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
@@ -109,12 +162,54 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should still be owned\n");
 
+    /* any window will do, even from a different process */
+    ret = OpenClipboard( GetDesktopWindow() );
+    ok( ret, "OpenClipboard error %d\n", GetLastError());
+    ret = EmptyClipboard();
+    ok( ret, "EmptyClipboard error %d\n", GetLastError());
+    ok( GetClipboardOwner() == GetDesktopWindow(), "wrong owner %p/%p\n",
+        GetClipboardOwner(), GetDesktopWindow() );
+    run_thread( set_clipboard_data_thread, GetDesktopWindow(), __LINE__ );
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
+
+    ret = OpenClipboard( hWnd1 );
+    ok( ret, "OpenClipboard error %d\n", GetLastError());
+    ret = EmptyClipboard();
+    ok( ret, "EmptyClipboard error %d\n", GetLastError());
+    ok( GetClipboardOwner() == hWnd1, "wrong owner %p/%p\n", GetClipboardOwner(), hWnd1 );
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
+
     ret = DestroyWindow(hWnd1);
     ok( ret, "DestroyWindow error %d\n", GetLastError());
     ret = DestroyWindow(hWnd2);
     ok( ret, "DestroyWindow error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
+
+    ret = OpenClipboard( 0 );
+    ok( ret, "OpenClipboard error %d\n", GetLastError());
+    run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
+
+    run_thread( open_and_empty_clipboard_thread, 0, __LINE__ );
+
+    ret = OpenClipboard( 0 );
+    ok( ret, "OpenClipboard error %d\n", GetLastError());
+    run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    ret = EmptyClipboard();
+    ok( ret, "EmptyClipboard error %d\n", GetLastError());
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %d\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    todo_wine ok( !SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 )),
+                  "SetClipboardData succeeded\n" );
+    todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
+    todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
+
 }
 
 static void test_RegisterClipboardFormatA(void)
@@ -290,12 +385,9 @@ static void test_synthesized(void)
     ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
-    ok(cf == CF_UNICODETEXT ||
-       broken(cf == CF_METAFILEPICT), /* win9x and winME has no CF_UNICODETEXT */
-       "cf %08x\n", cf);
+    ok(cf == CF_UNICODETEXT, "cf %08x\n", cf);
 
-    if(cf == CF_UNICODETEXT)
-        cf = EnumClipboardFormats(cf);
+    cf = EnumClipboardFormats(cf);
     ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
     data = GetClipboardData(cf);
     todo_wine ok(data != NULL, "couldn't get data, cf %08x\n", cf);
