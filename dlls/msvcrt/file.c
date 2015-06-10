@@ -274,6 +274,106 @@ static inline ioinfo* get_ioinfo(int fd)
     return ret;
 }
 
+static inline BOOL alloc_pioinfo_block(int fd)
+{
+    ioinfo *block;
+    int i;
+
+    if(fd<0 || fd>=MSVCRT_MAX_FILES)
+    {
+        *MSVCRT__errno() = MSVCRT_ENFILE;
+        return FALSE;
+    }
+
+    block = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(ioinfo));
+    if(!block)
+    {
+        WARN(":out of memory!\n");
+        *MSVCRT__errno() = MSVCRT_ENOMEM;
+        return FALSE;
+    }
+    for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
+        block[i].handle = INVALID_HANDLE_VALUE;
+    if(InterlockedCompareExchangePointer((void**)&MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE], block, NULL))
+        MSVCRT_free(block);
+    return TRUE;
+}
+
+static inline ioinfo* get_ioinfo_alloc_fd(int fd)
+{
+    ioinfo *ret, *info;
+
+    ret = get_ioinfo(fd);
+    if(ret != &MSVCRT___badioinfo)
+    {
+        LOCK_FILES();
+        /* locate next free slot */
+        if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
+            MSVCRT_fdstart = MSVCRT_fdend + 1;
+        else if (fd == MSVCRT_fdstart)
+        {
+            MSVCRT_fdstart++;
+            while (MSVCRT_fdstart < MSVCRT_fdend &&
+                    ((info = get_ioinfo_nolock(MSVCRT_fdstart))->exflag & EF_CRIT_INIT))
+            {
+                if (TryEnterCriticalSection(&info->crit))
+                {
+                    if (info->handle == INVALID_HANDLE_VALUE)
+                    {
+                        LeaveCriticalSection(&info->crit);
+                        break;
+                    }
+                    LeaveCriticalSection(&info->crit);
+                }
+                MSVCRT_fdstart++;
+            }
+        }
+        /* update last fd in use */
+        if (fd >= MSVCRT_fdend)
+            MSVCRT_fdend = fd + 1;
+        TRACE("fdstart is %d, fdend is %d\n", MSVCRT_fdstart, MSVCRT_fdend);
+        UNLOCK_FILES();
+        return ret;
+    }
+
+    if(!alloc_pioinfo_block(fd))
+        return &MSVCRT___badioinfo;
+
+    ret = get_ioinfo(fd);
+    if(ret == &MSVCRT___badioinfo)
+        return ret;
+
+    LOCK_FILES();
+    /* locate next free slot */
+    if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
+        MSVCRT_fdstart = MSVCRT_fdend + 1;
+    else if (fd == MSVCRT_fdstart)
+    {
+        MSVCRT_fdstart++;
+        while (MSVCRT_fdstart < MSVCRT_fdend &&
+                ((info = get_ioinfo_nolock(MSVCRT_fdstart))->exflag & EF_CRIT_INIT))
+        {
+            if (TryEnterCriticalSection(&info->crit))
+            {
+                if (info->handle == INVALID_HANDLE_VALUE)
+                {
+                    LeaveCriticalSection(&info->crit);
+                    break;
+                }
+                LeaveCriticalSection(&info->crit);
+            }
+            MSVCRT_fdstart++;
+        }
+    }
+    /* update last fd in use */
+    if (fd >= MSVCRT_fdend)
+        MSVCRT_fdend = fd + 1;
+    TRACE("fdstart is %d, fdend is %d\n", MSVCRT_fdstart, MSVCRT_fdend);
+    UNLOCK_FILES();
+
+    return ret;
+}
+
 static inline void release_ioinfo(ioinfo *info)
 {
     if(info!=&MSVCRT___badioinfo && info->exflag & EF_CRIT_INIT)
@@ -343,77 +443,49 @@ static void msvcrt_free_fd(int fd)
   UNLOCK_FILES();
 }
 
-/* INTERNAL: Allocate an fd slot from a Win32 HANDLE, starting from fd */
-/* caller must hold the files lock */
-static int msvcrt_set_fd(HANDLE hand, int flag, int fd)
+static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
 {
-  ioinfo *fdinfo;
-
-  if (fd >= MSVCRT_MAX_FILES)
-  {
-    WARN(":files exhausted!\n");
-    *MSVCRT__errno() = MSVCRT_ENFILE;
-    return -1;
-  }
-
-  fdinfo = get_ioinfo_nolock(fd);
-  if(fdinfo == &MSVCRT___badioinfo) {
-    int i;
-
-    MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(ioinfo));
-    if(!MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE]) {
-      WARN(":out of memory!\n");
-      *MSVCRT__errno() = MSVCRT_ENOMEM;
-      return -1;
-    }
-
-    for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
-      MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE][i].handle = INVALID_HANDLE_VALUE;
-
-    fdinfo = get_ioinfo_nolock(fd);
-  }
-
   fdinfo->handle = hand;
   fdinfo->wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT | WX_PIPE | WX_TTY));
   fdinfo->lookahead[0] = '\n';
   fdinfo->lookahead[1] = '\n';
   fdinfo->lookahead[2] = '\n';
-  if(!(fdinfo->exflag & EF_CRIT_INIT))
-      InitializeCriticalSection(&fdinfo->crit);
-  fdinfo->exflag = EF_CRIT_INIT;
+  fdinfo->exflag &= EF_CRIT_INIT;
 
-  /* locate next free slot */
-  if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
-    MSVCRT_fdstart = MSVCRT_fdend + 1;
-  else
-    while (MSVCRT_fdstart < MSVCRT_fdend &&
-      get_ioinfo_nolock(MSVCRT_fdstart)->handle != INVALID_HANDLE_VALUE)
-      MSVCRT_fdstart++;
-  /* update last fd in use */
-  if (fd >= MSVCRT_fdend)
-    MSVCRT_fdend = fd + 1;
-  TRACE("fdstart is %d, fdend is %d\n", MSVCRT_fdstart, MSVCRT_fdend);
-
-  switch (fd)
+  switch (fdinfo-MSVCRT___pioinfo[0])
   {
   case 0: SetStdHandle(STD_INPUT_HANDLE,  hand); break;
   case 1: SetStdHandle(STD_OUTPUT_HANDLE, hand); break;
   case 2: SetStdHandle(STD_ERROR_HANDLE,  hand); break;
   }
-
-  return fd;
 }
 
 /* INTERNAL: Allocate an fd slot from a Win32 HANDLE */
 static int msvcrt_alloc_fd(HANDLE hand, int flag)
 {
-  int ret;
+    ioinfo *info;
+    int fd;
 
-  LOCK_FILES();
-  TRACE(":handle (%p) allocating fd (%d)\n",hand,MSVCRT_fdstart);
-  ret = msvcrt_set_fd(hand, flag, MSVCRT_fdstart);
-  UNLOCK_FILES();
-  return ret;
+    LOCK_FILES();
+    fd = MSVCRT_fdstart;
+    TRACE(":handle (%p) allocating fd (%d)\n", hand, fd);
+
+    if (fd >= MSVCRT_MAX_FILES)
+    {
+        UNLOCK_FILES();
+        WARN(":files exhausted!\n");
+        *MSVCRT__errno() = MSVCRT_ENFILE;
+        return -1;
+    }
+
+    info = get_ioinfo_alloc_fd(fd);
+    UNLOCK_FILES();
+    if(info == &MSVCRT___badioinfo)
+        return -1;
+
+    msvcrt_set_fd(info, hand, flag);
+    release_ioinfo(info);
+    return fd;
 }
 
 /* INTERNAL: Allocate a FILE* for an fd slot */
@@ -537,7 +609,12 @@ void msvcrt_init_io(void)
     for (i = 0; i < count; i++)
     {
       if ((*wxflag_ptr & WX_OPEN) && *handle_ptr != INVALID_HANDLE_VALUE)
-        msvcrt_set_fd(*handle_ptr, *wxflag_ptr, i);
+      {
+        fdinfo = get_ioinfo_alloc_fd(i);
+        if(fdinfo != &MSVCRT___badioinfo)
+            msvcrt_set_fd(fdinfo, *handle_ptr, *wxflag_ptr);
+        release_ioinfo(fdinfo);
+      }
 
       wxflag_ptr++; handle_ptr++;
     }
@@ -546,32 +623,35 @@ void msvcrt_init_io(void)
         if (get_ioinfo_nolock(MSVCRT_fdstart)->handle == INVALID_HANDLE_VALUE) break;
   }
 
-  fdinfo = get_ioinfo_nolock(MSVCRT_STDIN_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDIN_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
     DWORD type = GetFileType(h);
 
-    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
-            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDIN_FILENO);
+    msvcrt_set_fd(fdinfo, h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0));
   }
+  release_ioinfo(fdinfo);
 
-  fdinfo = get_ioinfo_nolock(MSVCRT_STDOUT_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDOUT_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD type = GetFileType(h);
 
-    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
-            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDOUT_FILENO);
+    msvcrt_set_fd(fdinfo, h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0));
   }
+  release_ioinfo(fdinfo);
 
-  fdinfo = get_ioinfo_nolock(MSVCRT_STDERR_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDERR_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
     DWORD type = GetFileType(h);
 
-    msvcrt_set_fd(h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
-            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0), MSVCRT_STDERR_FILENO);
+    msvcrt_set_fd(fdinfo, h, WX_OPEN|WX_TEXT|((type&0xf)==FILE_TYPE_CHAR ? WX_TTY : 0)
+            |((type&0xf)==FILE_TYPE_PIPE ? WX_PIPE : 0));
   }
+  release_ioinfo(fdinfo);
 
   TRACE(":handles (%p)(%p)(%p)\n", get_ioinfo_nolock(MSVCRT_STDIN_FILENO)->handle,
         get_ioinfo_nolock(MSVCRT_STDOUT_FILENO)->handle,
@@ -1010,15 +1090,19 @@ int CDECL MSVCRT__dup2(int od, int nd)
   if (od < nd)
   {
     info_od = get_ioinfo(od);
-    info_nd = get_ioinfo(nd);
+    info_nd = get_ioinfo_alloc_fd(nd);
   }
   else
   {
-    info_nd = get_ioinfo(nd);
+    info_nd = get_ioinfo_alloc_fd(nd);
     info_od = get_ioinfo(od);
   }
 
-  if (nd < MSVCRT_MAX_FILES && nd >= 0 && (info_od->wxflag & WX_OPEN))
+  if (info_nd == &MSVCRT___badioinfo)
+  {
+      ret = -1;
+  }
+  else if (info_od->wxflag & WX_OPEN)
   {
     HANDLE handle;
 
@@ -1029,17 +1113,10 @@ int CDECL MSVCRT__dup2(int od, int nd)
 
       if (info_nd->wxflag & WX_OPEN)
         MSVCRT__close(nd);
-      ret = msvcrt_set_fd(handle, wxflag, nd);
-      if (ret == -1)
-      {
-        CloseHandle(handle);
-        *MSVCRT__errno() = MSVCRT_EMFILE;
-      }
-      else
-      {
-        /* _dup2 returns 0, not nd, on success */
-        ret = 0;
-      }
+
+      msvcrt_set_fd(info_nd, handle, wxflag);
+      /* _dup2 returns 0, not nd, on success */
+      ret = 0;
     }
     else
     {
