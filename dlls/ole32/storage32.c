@@ -5031,6 +5031,14 @@ static HRESULT StorageImpl_GrabLocks(StorageImpl *This, DWORD openFlags)
     if (SUCCEEDED(hr) && (share_mode == STGM_SHARE_DENY_WRITE || share_mode == STGM_SHARE_EXCLUSIVE))
         hr = StorageImpl_CheckLockRange(This, RANGELOCK_WRITE_FIRST, RANGELOCK_WRITE_LAST, STG_E_LOCKVIOLATION);
 
+    if (SUCCEEDED(hr) && STGM_ACCESS_MODE(openFlags) == STGM_READ && share_mode == STGM_SHARE_EXCLUSIVE)
+    {
+        hr = StorageImpl_CheckLockRange(This, 0, RANGELOCK_CHECKLOCKS-1, STG_E_LOCKVIOLATION);
+
+        if (SUCCEEDED(hr))
+            hr = StorageImpl_CheckLockRange(This, RANGELOCK_CHECKLOCKS+1, RANGELOCK_LAST, STG_E_LOCKVIOLATION);
+    }
+
     /* Then grab our locks. */
     if (SUCCEEDED(hr) && (openFlags & STGM_PRIORITY) == STGM_PRIORITY)
     {

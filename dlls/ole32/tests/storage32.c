@@ -3185,8 +3185,8 @@ static const struct lock_test lock_tests[] = {
     { STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, rwdw_fail_ranges, FALSE },
     { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges, TRUE },
     { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, FALSE },
-    { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
-    { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, FALSE },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, FALSE },
 };
 
 static BOOL can_open(LPCWSTR filename, DWORD access, DWORD sharing)
