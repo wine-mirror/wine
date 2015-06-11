@@ -18,6 +18,7 @@
  */
 
 #include "dmcompos_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -27,8 +28,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  */
 typedef struct IDirectMusicChordMapImpl {
     IDirectMusicChordMap IDirectMusicChordMap_iface;
-    const IDirectMusicObjectVtbl *ObjectVtbl;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    struct dmobject dmobj;
     LONG  ref;
     DMUS_OBJECTDESC *pDesc;
 } IDirectMusicChordMapImpl;
@@ -51,9 +51,9 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_QueryInterface(IDirectMusicChordM
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicChordMap))
         *ret_iface = iface;
     else if (IsEqualIID(riid, &IID_IDirectMusicObject))
-        *ret_iface = &This->ObjectVtbl;
+        *ret_iface = &This->dmobj.IDirectMusicObject_iface;
     else if (IsEqualIID(riid, &IID_IPersistStream))
-        *ret_iface = &This->PersistStreamVtbl;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
     else {
         WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
         return E_NOINTERFACE;
@@ -81,7 +81,6 @@ static ULONG WINAPI IDirectMusicChordMapImpl_Release(IDirectMusicChordMap *iface
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This->pDesc);
         HeapFree(GetProcessHeap(), 0, This);
         DMCOMPOS_UnlockModule();
     }
@@ -105,64 +104,9 @@ static const IDirectMusicChordMapVtbl dmchordmap_vtbl = {
 };
 
 /* IDirectMusicChordMapImpl IDirectMusicObject part: */
-static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
-        return IDirectMusicChordMap_QueryInterface(&This->IDirectMusicChordMap_iface, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
-        return IDirectMusicChordMap_AddRef(&This->IDirectMusicChordMap_iface);
-}
-
-static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
-        return IDirectMusicChordMap_Release(&This->IDirectMusicChordMap_iface);
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p)\n", This, pDesc);
-	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-	memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
-
-	/* According to MSDN, we should copy only given values, not whole struct */	
-	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
-		This->pDesc->guidObject = pDesc->guidObject;
-	if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-		This->pDesc->guidClass = pDesc->guidClass;
-	if (pDesc->dwValidData & DMUS_OBJ_NAME)
-		lstrcpynW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
-	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-		lstrcpynW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
-	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-		lstrcpynW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
-	if (pDesc->dwValidData & DMUS_OBJ_VERSION)
-		This->pDesc->vVersion = pDesc->vVersion;
-	if (pDesc->dwValidData & DMUS_OBJ_DATE)
-		This->pDesc->ftDate = pDesc->ftDate;
-	if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
-		This->pDesc->llMemLength = pDesc->llMemLength;
-		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
-	}
-	if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
-		/* according to MSDN, we copy the stream */
-		IStream_Clone (pDesc->pStream, &This->pDesc->pStream);	
-	}
-	
-	/* add new flags */
-	This->pDesc->dwValidData |= pDesc->dwValidData;
-
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor(IDirectMusicObject *iface,
+        IStream *pStream, DMUS_OBJECTDESC *pDesc)
+{
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -309,43 +253,24 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescripto
 	return S_OK;
 }
 
-static const IDirectMusicObjectVtbl DirectMusicChordMap_Object_Vtbl = {
-	IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface,
-	IDirectMusicChordMapImpl_IDirectMusicObject_AddRef,
-	IDirectMusicChordMapImpl_IDirectMusicObject_Release,
-	IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor,
-	IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor,
-	IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor
+static const IDirectMusicObjectVtbl dmobject_vtbl = {
+    dmobj_IDirectMusicObject_QueryInterface,
+    dmobj_IDirectMusicObject_AddRef,
+    dmobj_IDirectMusicObject_Release,
+    dmobj_IDirectMusicObject_GetDescriptor,
+    dmobj_IDirectMusicObject_SetDescriptor,
+    IDirectMusicObjectImpl_ParseDescriptor
 };
 
-	
 /* IDirectMusicChordMapImpl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
-        return IDirectMusicChordMap_QueryInterface(&This->IDirectMusicChordMap_iface, riid, ppobj);
+static inline IDirectMusicChordMapImpl *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicChordMapImpl, dmobj.IPersistStream_iface);
 }
 
-static ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
-        return IDirectMusicChordMap_AddRef(&This->IDirectMusicChordMap_iface);
-}
-
-static ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
-        return IDirectMusicChordMap_Release(&This->IDirectMusicChordMap_iface);
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
-
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+{
+        IDirectMusicChordMapImpl *This = impl_from_IPersistStream(iface);
 	FOURCC chunkID;
 	DWORD chunkSize, StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -490,23 +415,15 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTR
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl DirectMusicChordMap_PersistStream_Vtbl = {
-	IDirectMusicChordMapImpl_IPersistStream_QueryInterface,
-	IDirectMusicChordMapImpl_IPersistStream_AddRef,
-	IDirectMusicChordMapImpl_IPersistStream_Release,
-	IDirectMusicChordMapImpl_IPersistStream_GetClassID,
-	IDirectMusicChordMapImpl_IPersistStream_IsDirty,
-	IDirectMusicChordMapImpl_IPersistStream_Load,
-	IDirectMusicChordMapImpl_IPersistStream_Save,
-	IDirectMusicChordMapImpl_IPersistStream_GetSizeMax
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
+    IPersistStreamImpl_Load,
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
@@ -521,13 +438,12 @@ HRESULT WINAPI create_dmchordmap(REFIID lpcGUID, void **ppobj)
 		return E_OUTOFMEMORY;
 	}
         obj->IDirectMusicChordMap_iface.lpVtbl = &dmchordmap_vtbl;
-	obj->ObjectVtbl = &DirectMusicChordMap_Object_Vtbl;
-	obj->PersistStreamVtbl = &DirectMusicChordMap_PersistStream_Vtbl;
-	obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(obj->pDesc);
-	obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	obj->pDesc->guidClass = CLSID_DirectMusicChordMap;
         obj->ref = 1;
+        dmobject_init(&obj->dmobj, &CLSID_DirectMusicChordMap,
+                (IUnknown *)&obj->IDirectMusicChordMap_iface);
+        obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+        obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+        obj->pDesc = &obj->dmobj.desc;
 
         DMCOMPOS_LockModule();
         hr = IDirectMusicChordMap_QueryInterface(&obj->IDirectMusicChordMap_iface, lpcGUID, ppobj);
