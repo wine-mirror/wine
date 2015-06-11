@@ -1166,7 +1166,8 @@ static void on_select_font(HWND hDlg)
     cf.lpLogFont = &(metrics[index].lf);
     cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL | CF_NOVERTFONTS;
 
-    ChooseFontW(&cf);
+    if (ChooseFontW(&cf))
+        SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
 }
 
 INT_PTR CALLBACK
