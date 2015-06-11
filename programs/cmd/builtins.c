@@ -3313,7 +3313,8 @@ void WCMD_setshow_default (const WCHAR *args) {
   WINE_TRACE("Request change to directory '%s'\n", wine_dbgstr_w(args));
 
   /* Skip /D and trailing whitespace if on the front of the command line */
-  if (CompareStringW(LOCALE_USER_DEFAULT,
+  if (strlenW(args) >= 2 &&
+      CompareStringW(LOCALE_USER_DEFAULT,
                      NORM_IGNORECASE | SORT_STRINGSORT,
                      args, 2, parmD, -1) == CSTR_EQUAL) {
     args += 2;
