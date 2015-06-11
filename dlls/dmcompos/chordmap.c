@@ -30,7 +30,6 @@ typedef struct IDirectMusicChordMapImpl {
     IDirectMusicChordMap IDirectMusicChordMap_iface;
     struct dmobject dmobj;
     LONG  ref;
-    DMUS_OBJECTDESC *pDesc;
 } IDirectMusicChordMapImpl;
 
 /* IDirectMusicChordMapImpl IDirectMusicChordMap part: */
@@ -296,20 +295,20 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 						switch (chunkID) {
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->pDesc->guidObject, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
+								IStream_Read (pStm, &This->dmobj.desc.guidObject, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->pDesc->vVersion, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
+								IStream_Read (pStm, &This->dmobj.desc.vVersion, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
-								This->pDesc->dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->pDesc->wszCategory, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
+								IStream_Read (pStm, This->dmobj.desc.wszCategory, chunkSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
@@ -331,8 +330,8 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													This->pDesc->dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->pDesc->wszName, chunkSize, NULL);
+													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
+													IStream_Read (pStm, This->dmobj.desc.wszName, chunkSize, NULL);
 													break;
 												}
 												case mmioFOURCC('I','A','R','T'):
@@ -443,7 +442,6 @@ HRESULT WINAPI create_dmchordmap(REFIID lpcGUID, void **ppobj)
                 (IUnknown *)&obj->IDirectMusicChordMap_iface);
         obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
         obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-        obj->pDesc = &obj->dmobj.desc;
 
         DMCOMPOS_LockModule();
         hr = IDirectMusicChordMap_QueryInterface(&obj->IDirectMusicChordMap_iface, lpcGUID, ppobj);
