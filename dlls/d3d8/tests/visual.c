@@ -7076,6 +7076,293 @@ static void test_texcoordindex(void)
     DestroyWindow(window);
 }
 
+static void test_vshader_input(void)
+{
+    DWORD swapped_twotexcrd_shader, swapped_onetexcrd_shader = 0;
+    DWORD swapped_twotex_wrongidx_shader = 0, swapped_twotexcrd_rightorder_shader;
+    DWORD texcoord_color_shader, color_ubyte_shader, color_color_shader, color_float_shader;
+    DWORD color_nocolor_shader = 0;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const DWORD swapped_shader_code[] =
+    {
+        0xfffe0101,                                         /* vs_1_1               */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov o0, v0           */
+        0x00000001, 0x800f0001, 0x90e40001,                 /* mov r1, v1           */
+        0x00000002, 0xd00f0000, 0x80e40001, 0x91e40002,     /* sub o1, r1, v2       */
+        0x0000ffff                                          /* end                  */
+    };
+    static const DWORD texcoord_color_shader_code[] =
+    {
+        0xfffe0101,                                         /* vs_1_1               */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x00000001, 0xd00f0000, 0x90e40007,                 /* mov oD0, v7          */
+        0x0000ffff                                          /* end                  */
+    };
+    static const DWORD color_color_shader_code[] =
+    {
+        0xfffe0101,                                         /* vs_1_1               */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x00000005, 0xd00f0000, 0xa0e40000, 0x90e40005,     /* mul oD0, c0, v5      */
+        0x0000ffff                                          /* end                  */
+    };
+    static const float quad1[] =
+    {
+        -1.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+        -1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+    };
+    static const float quad4[] =
+    {
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f,  1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         1.0f,  1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+    };
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad1_color[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0x00ff8040},
+        {{-1.0f,  0.0f, 0.1f}, 0x00ff8040},
+        {{ 0.0f, -1.0f, 0.1f}, 0x00ff8040},
+        {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
+    },
+    quad2_color[] =
+    {
+        {{ 0.0f, -1.0f, 0.1f}, 0x00ff8040},
+        {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
+        {{ 1.0f, -1.0f, 0.1f}, 0x00ff8040},
+        {{ 1.0f,  0.0f, 0.1f}, 0x00ff8040},
+    },
+    quad3_color[] =
+    {
+        {{-1.0f,  0.0f, 0.1f}, 0x00ff8040},
+        {{-1.0f,  1.0f, 0.1f}, 0x00ff8040},
+        {{ 0.0f,  0.0f, 0.1f}, 0x00ff8040},
+        {{ 0.0f,  1.0f, 0.1f}, 0x00ff8040},
+    };
+    static const float quad4_color[] =
+    {
+         0.0f,  0.0f, 0.1f,  1.0f, 1.0f, 0.0f, 0.0f,
+         0.0f,  1.0f, 0.1f,  1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f,  0.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
+    };
+    static const DWORD decl_twotexcrd[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(1, D3DVSDT_FLOAT4), /* texcoord0 */
+        D3DVSD_REG(2, D3DVSDT_FLOAT4), /* texcoord1 */
+        D3DVSD_END()
+    };
+    static const DWORD decl_twotexcrd_rightorder[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(2, D3DVSDT_FLOAT4), /* texcoord0 */
+        D3DVSD_REG(1, D3DVSDT_FLOAT4), /* texcoord1 */
+        D3DVSD_END()
+    };
+    static const DWORD decl_onetexcrd[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(1, D3DVSDT_FLOAT4), /* texcoord0 */
+        D3DVSD_END()
+    };
+    static const DWORD decl_twotexcrd_wrongidx[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(2, D3DVSDT_FLOAT4), /* texcoord1 */
+        D3DVSD_REG(3, D3DVSDT_FLOAT4), /* texcoord2 */
+        D3DVSD_END()
+    };
+    static const DWORD decl_texcoord_color[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(7, D3DVSDT_D3DCOLOR), /* texcoord0 */
+        D3DVSD_END()
+    };
+    static const DWORD decl_color_color[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3), /* position */
+        D3DVSD_REG(5, D3DVSDT_D3DCOLOR), /* diffuse */
+        D3DVSD_END()
+    };
+    static const DWORD decl_color_ubyte[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3),
+        D3DVSD_REG(5, D3DVSDT_UBYTE4),
+        D3DVSD_END()
+    };
+    static const DWORD decl_color_float[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3),
+        D3DVSD_REG(5, D3DVSDT_FLOAT4),
+        D3DVSD_END()
+    };
+    static const DWORD decl_nocolor[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3),
+        D3DVSD_END()
+    };
+    static const float normalize[4] = {1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f};
+    static const float no_normalize[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1))
+    {
+        skip("No vs_1_1 support, skipping tests.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd, swapped_shader_code, &swapped_twotexcrd_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_onetexcrd, swapped_shader_code, &swapped_onetexcrd_shader, 0);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd_wrongidx, swapped_shader_code, &swapped_twotex_wrongidx_shader, 0);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_twotexcrd_rightorder, swapped_shader_code, &swapped_twotexcrd_rightorder_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_texcoord_color, texcoord_color_shader_code, &texcoord_color_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_color_ubyte, color_color_shader_code, &color_ubyte_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_color_color, color_color_shader_code, &color_color_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_color_float, color_color_shader_code, &color_float_shader, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl_nocolor, color_color_shader_code, &color_nocolor_shader, 0);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected error while creating vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, swapped_twotexcrd_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(float) * 11);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, swapped_twotexcrd_rightorder_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(float) * 11);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color_match(color, 0x00ffff80, 1), "Got unexpected color 0x%08x for quad 1 (2crd).\n", color);
+    color = getPixelColor(device, 480, 160);
+    ok(color == 0x00000000, "Got unexpected color 0x%08x for quad 4 (2crd-rightorder).\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, texcoord_color_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1_color, sizeof(quad1_color[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, color_ubyte_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, normalize, 1);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2_color, sizeof(quad2_color[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, no_normalize, 1);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, color_color_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3_color, sizeof(quad3_color[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, color_float_shader);
+    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4_color, sizeof(float) * 7);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    IDirect3DDevice8_SetVertexShader(device, 0);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x80, 0x40), 1),
+            "Input test: Quad 1(color-texcoord) returned color 0x%08x, expected 0x00ff8040\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x40, 0x80, 0xff), 1),
+            "Input test: Quad 2(color-ubyte) returned color 0x%08x, expected 0x004080ff\n", color);
+    color = getPixelColor(device, 160, 120);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x80, 0x40), 1),
+            "Input test: Quad 3(color-color) returned color 0x%08x, expected 0x00ff8040\n", color);
+    color = getPixelColor(device, 480, 160);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 1),
+            "Input test: Quad 4(color-float) returned color 0x%08x, expected 0x00ffff00\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    IDirect3DDevice8_DeleteVertexShader(device, swapped_twotexcrd_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, swapped_onetexcrd_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, swapped_twotex_wrongidx_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, swapped_twotexcrd_rightorder_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, texcoord_color_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, color_ubyte_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, color_color_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, color_float_shader);
+    IDirect3DDevice8_DeleteVertexShader(device, color_nocolor_shader);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -7134,4 +7421,5 @@ START_TEST(visual)
     test_pointsize();
     test_multisample_mismatch();
     test_texcoordindex();
+    test_vshader_input();
 }
