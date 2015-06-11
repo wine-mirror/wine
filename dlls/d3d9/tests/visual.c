@@ -8365,7 +8365,7 @@ done:
 static void fixed_function_decl_test(void)
 {
     IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
-    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL, *dcl_positiont;
+    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL, *dcl_nocolor, *dcl_positiont;
     IDirect3DVertexBuffer9 *vb, *vb2;
     IDirect3DDevice9 *device;
     BOOL s_ok, ub_ok, f_ok;
@@ -8405,6 +8405,10 @@ static void fixed_function_decl_test(void)
     static const D3DVERTEXELEMENT9 decl_elements_float[] = {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 decl_elements_nocolor[] = {
+        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         D3DDECL_END()
     };
     static const D3DVERTEXELEMENT9 decl_elements_positiont[] = {
@@ -8544,6 +8548,8 @@ static void fixed_function_decl_test(void)
     }
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor_2streams, &dcl_color_2);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_nocolor, &dcl_nocolor);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_positiont, &dcl_positiont);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (%08x)\n", hr);
 
@@ -8629,6 +8635,8 @@ static void fixed_function_decl_test(void)
      * It makes sure that the vertex buffer one works, while the above tests
      * whether the immediate mode code works. */
     f_ok = FALSE; s_ok = FALSE; ub_ok = FALSE;
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
@@ -8698,11 +8706,6 @@ static void fixed_function_decl_test(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed (%08x)\n", hr);
-
     if(dcl_short) {
         color = getPixelColor(device, 480, 360);
         ok(color == 0x000000ff || !s_ok,
@@ -8725,8 +8728,95 @@ static void fixed_function_decl_test(void)
     }
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
+    /* Test with no diffuse color attribute. */
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_nocolor);
+    ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quads, sizeof(float) * 3);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00ffffff, "Got unexpected color 0x%08x in the no color attribute test.\n", color);
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Test what happens with specular lighting enabled and no specular color attribute. */
+    f_ok = FALSE; s_ok = FALSE; ub_ok = FALSE;
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable specular lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    if (dcl_color)
+    {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_color);
+        ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(quad1[0]));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    }
+    if (dcl_ubyte)
+    {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_ubyte);
+        ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(quad2[0]));
+        ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ub_ok = SUCCEEDED(hr);
+    }
+    if (dcl_short)
+    {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_short);
+        ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(quad3[0]));
+        ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        s_ok = SUCCEEDED(hr);
+    }
+    if (dcl_float)
+    {
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_float);
+        ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad4, sizeof(quad4[0]));
+        ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        f_ok = SUCCEEDED(hr);
+    }
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable specular lighting, hr %#x.\n", hr);
+
+    if (dcl_short)
+    {
+        color = getPixelColor(device, 480, 360);
+        ok(color == 0x000000ff || !s_ok,
+                "D3DDECLTYPE_USHORT4N returned color %08x, expected 0x000000ff.\n", color);
+    }
+    if (dcl_ubyte)
+    {
+        color = getPixelColor(device, 160, 120);
+        ok(color == 0x0000ffff || !ub_ok,
+                "D3DDECLTYPE_UBYTE4N returned color %08x, expected 0x0000ffff.\n", color);
+    }
+    if (dcl_color)
+    {
+        color = getPixelColor(device, 160, 360);
+        ok(color == 0x00ffff00,
+                "D3DDECLTYPE_D3DCOLOR returned color %08x, expected 0x00ffff00.\n", color);
+    }
+    if (dcl_float)
+    {
+        color = getPixelColor(device, 480, 120);
+        ok(color == 0x00ff0000 || !f_ok,
+                "D3DDECLTYPE_FLOAT4 returned color %08x, expected 0x00ff0000.\n", color);
+    }
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad_transformed), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
@@ -8736,6 +8826,9 @@ static void fixed_function_decl_test(void)
 
     hr = IDirect3DDevice9_SetVertexDeclaration(device, dcl_positiont);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
@@ -8895,7 +8988,8 @@ out:
     if(dcl_color) IDirect3DVertexDeclaration9_Release(dcl_color);
     if(dcl_color_2) IDirect3DVertexDeclaration9_Release(dcl_color_2);
     if(dcl_ubyte_2) IDirect3DVertexDeclaration9_Release(dcl_ubyte_2);
-    if(dcl_positiont) IDirect3DVertexDeclaration9_Release(dcl_positiont);
+    IDirect3DVertexDeclaration9_Release(dcl_nocolor);
+    IDirect3DVertexDeclaration9_Release(dcl_positiont);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 done:
