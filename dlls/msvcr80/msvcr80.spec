@@ -1090,7 +1090,7 @@
 @ stub _umask_s
 @ cdecl _ungetc_nolock(long ptr) MSVCRT__ungetc_nolock
 @ cdecl _ungetch(long)
-@ stub _ungetch_nolock
+@ cdecl _ungetch_nolock(long)
 @ cdecl _ungetwc_nolock(long ptr) MSVCRT__ungetwc_nolock
 @ stub _ungetwch
 @ stub _ungetwch_nolock

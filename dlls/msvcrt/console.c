@@ -280,16 +280,25 @@ char* CDECL _cgets(char* str)
 }
 
 /*********************************************************************
+ *		_ungetch_nolock (MSVCRT.@)
+ */
+int CDECL _ungetch_nolock(int c)
+{
+  int retval = MSVCRT_EOF;
+  if (c != MSVCRT_EOF && __MSVCRT_console_buffer == MSVCRT_EOF)
+    retval = __MSVCRT_console_buffer = c;
+  return retval;
+}
+
+/*********************************************************************
  *		_ungetch (MSVCRT.@)
  */
 int CDECL _ungetch(int c)
 {
-  int retval = MSVCRT_EOF;
-  LOCK_CONSOLE;
-  if (c != MSVCRT_EOF && __MSVCRT_console_buffer == MSVCRT_EOF)
-    retval = __MSVCRT_console_buffer = c;
-  UNLOCK_CONSOLE;
-  return retval;
+    LOCK_CONSOLE;
+    c = _ungetch_nolock(c);
+    UNLOCK_CONSOLE;
+    return c;
 }
 
 /*********************************************************************
