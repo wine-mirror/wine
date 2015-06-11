@@ -3963,7 +3963,9 @@ static void load_numbered_arrays(struct wined3d_context *context,
         {
             if (context->numbered_array_mask & (1 << i))
                 unload_numbered_array(context, i);
-            if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.input_registers & (1 << i))
+            if (!use_vs(state) && i == WINED3D_FFP_DIFFUSE)
+                GL_EXTCALL(glVertexAttrib4f(i, 1.0f, 1.0f, 1.0f, 1.0f));
+            else
                 GL_EXTCALL(glVertexAttrib4f(i, 0.0f, 0.0f, 0.0f, 0.0f));
             continue;
         }
@@ -4370,8 +4372,10 @@ static void load_vertex_data(struct wined3d_context *context,
 
 static void streamsrc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    BOOL load_numbered = use_vs(state) && !context->use_immediate_mode_draw;
-    BOOL load_named = !use_vs(state) && !context->use_immediate_mode_draw;
+    BOOL load_numbered = context->d3d_info->ffp_generic_attributes
+            || (use_vs(state) && !context->use_immediate_mode_draw);
+    BOOL load_named = !context->d3d_info->ffp_generic_attributes
+            && !use_vs(state) && !context->use_immediate_mode_draw;
 
     if (isStateDirty(context, STATE_VDECL)) return;
     if (context->numberedArraysLoaded && !load_numbered)
@@ -5572,6 +5576,7 @@ static void ffp_free(struct wined3d_device *device) {}
 static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
     caps->xyzrhw = FALSE;
+    caps->ffp_generic_attributes = FALSE;
     caps->max_active_lights = gl_info->limits.lights;
     caps->max_vertex_blend_matrices = gl_info->limits.blends;
     caps->max_vertex_blend_matrix_index = 0;

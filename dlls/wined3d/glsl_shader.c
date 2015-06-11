@@ -5505,9 +5505,9 @@ static const char *shader_glsl_ffp_mcs(enum wined3d_material_color_source mcs, c
         case WINED3D_MCS_MATERIAL:
             return material;
         case WINED3D_MCS_COLOR1:
-            return "gl_Color";
+            return "ffp_attrib_diffuse";
         case WINED3D_MCS_COLOR2:
-            return "gl_SecondaryColor";
+            return "ffp_attrib_specular";
         default:
             ERR("Invalid material color source %#x.\n", mcs);
             return "<invalid>";
@@ -5524,8 +5524,8 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
 
     if (!settings->lighting)
     {
-        shader_addline(buffer, "gl_FrontColor = gl_Color;\n");
-        shader_addline(buffer, "gl_FrontSecondaryColor = gl_SecondaryColor;\n");
+        shader_addline(buffer, "gl_FrontColor = ffp_attrib_diffuse;\n");
+        shader_addline(buffer, "gl_FrontSecondaryColor = ffp_attrib_specular;\n");
         return;
     }
 
@@ -5678,12 +5678,36 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
         const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info,
         BOOL legacy_lighting)
 {
+    static const struct attrib_info
+    {
+        const char type[6];
+        const char name[20];
+    }
+    attrib_info[] =
+    {
+        {"vec4", "ffp_attrib_position"},        /* WINED3D_FFP_POSITION */
+        /* TODO: Vertex blending */
+        {"vec4", ""},                           /* WINED3D_FFP_BLENDWEIGHT */
+        {"float", ""},                          /* WINED3D_FFP_BLENDINDICES */
+        {"vec3", "ffp_attrib_normal"},          /* WINED3D_FFP_NORMAL */
+        {"float", "ffp_attrib_psize"},          /* WINED3D_FFP_PSIZE */
+        {"vec4", "ffp_attrib_diffuse"},         /* WINED3D_FFP_DIFFUSE */
+        {"vec4", "ffp_attrib_specular"},        /* WINED3D_FFP_SPECULAR */
+    };
     GLuint shader_obj;
     unsigned int i;
 
     string_buffer_clear(buffer);
 
     shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "\n");
+
+    for (i = 0; i < WINED3D_FFP_ATTRIBS_COUNT; ++i)
+    {
+        const char *type = i < ARRAY_SIZE(attrib_info) ? attrib_info[i].type : "vec4";
+
+        shader_addline(buffer, "attribute %s vs_in%u;\n", type, i);
+    }
     shader_addline(buffer, "\n");
 
     shader_addline(buffer, "uniform mat4 ffp_modelview_matrix;\n");
@@ -5731,15 +5755,30 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     shader_addline(buffer, "float m;\n");
     shader_addline(buffer, "vec3 r;\n");
 
+    for (i = 0; i < ARRAY_SIZE(attrib_info); ++i)
+    {
+        if (attrib_info[i].name[0])
+            shader_addline(buffer, "%s %s = vs_in%u;\n",
+                    attrib_info[i].type, attrib_info[i].name, i);
+    }
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        unsigned int coord_idx = settings->texgen[i] & 0x0000ffff;
+        if ((settings->texgen[i] & 0xffff0000) == WINED3DTSS_TCI_PASSTHRU)
+        {
+            shader_addline(buffer, "vec4 ffp_attrib_texcoord%u = vs_in%u;\n", i, coord_idx + WINED3D_FFP_TEXCOORD0);
+        }
+    }
+
     if (settings->transformed)
     {
-        shader_addline(buffer, "vec4 ec_pos = vec4(gl_Vertex.xyz, 1.0);\n");
+        shader_addline(buffer, "vec4 ec_pos = vec4(ffp_attrib_position.xyz, 1.0);\n");
         shader_addline(buffer, "gl_Position = ffp_projection_matrix * ec_pos;\n");
-        shader_addline(buffer, "if (gl_Vertex.w != 0.0) gl_Position /= gl_Vertex.w;\n");
+        shader_addline(buffer, "if (ffp_attrib_position.w != 0.0) gl_Position /= ffp_attrib_position.w;\n");
     }
     else
     {
-        shader_addline(buffer, "vec4 ec_pos = ffp_modelview_matrix * gl_Vertex;\n");
+        shader_addline(buffer, "vec4 ec_pos = ffp_modelview_matrix * ffp_attrib_position;\n");
         shader_addline(buffer, "gl_Position = ffp_projection_matrix * ec_pos;\n");
         if (settings->clipping)
             shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
@@ -5749,19 +5788,19 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     if (!settings->normal)
         shader_addline(buffer, "vec3 normal = vec3(0.0);\n");
     else if (settings->normalize)
-        shader_addline(buffer, "vec3 normal = normalize(ffp_normal_matrix * gl_Normal);\n");
+        shader_addline(buffer, "vec3 normal = normalize(ffp_normal_matrix * ffp_attrib_normal);\n");
     else
-        shader_addline(buffer, "vec3 normal = ffp_normal_matrix * gl_Normal;\n");
+        shader_addline(buffer, "vec3 normal = ffp_normal_matrix * ffp_attrib_normal;\n");
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, gl_info, legacy_lighting);
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
-        switch (settings->texgen[i] << WINED3D_FFP_TCI_SHIFT)
+        switch (settings->texgen[i] & 0xffff0000)
         {
             case WINED3DTSS_TCI_PASSTHRU:
                 if (settings->texcoords & (1 << i))
-                    shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * gl_MultiTexCoord%d;\n",
+                    shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * ffp_attrib_texcoord%u;\n",
                             i, i, i);
                 break;
 
@@ -5797,7 +5836,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
             break;
 
         case WINED3D_FFP_VS_FOG_FOGCOORD:
-            shader_addline(buffer, "gl_FogFragCoord = gl_SecondaryColor.w * 255.0;\n");
+            shader_addline(buffer, "gl_FogFragCoord = ffp_attrib_specular.w * 255.0;\n");
             break;
 
         case WINED3D_FFP_VS_FOG_RANGE:
@@ -6668,6 +6707,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     GLuint gs_id = 0;
     GLuint ps_id = 0;
     struct list *ps_list, *vs_list;
+    WORD attribs_map;
+    struct wined3d_string_buffer *tmp_name;
 
     if (!(context->shader_update_mask & (1 << WINED3D_SHADER_TYPE_VERTEX)))
     {
@@ -6773,9 +6814,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
     if (vshader)
     {
-        WORD map = vshader->reg_maps.input_registers;
-        struct wined3d_string_buffer *tmp_name = string_buffer_get(&priv->string_buffers);
-
+        attribs_map = vshader->reg_maps.input_registers;
         reorder_shader_id = generate_param_reorder_function(priv, vshader, pshader,
                 state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
@@ -6785,26 +6824,32 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
          * is destroyed
          */
         GL_EXTCALL(glDeleteShader(reorder_shader_id));
-
-        /* Bind vertex attributes to a corresponding index number to match
-         * the same index numbers as ARB_vertex_programs (makes loading
-         * vertex attributes simpler).  With this method, we can use the
-         * exact same code to load the attributes later for both ARB and
-         * GLSL shaders.
-         *
-         * We have to do this here because we need to know the Program ID
-         * in order to make the bindings work, and it has to be done prior
-         * to linking the GLSL program. */
-        for (i = 0; map; map >>= 1, ++i)
-        {
-            if (!(map & 1)) continue;
-
-            string_buffer_sprintf(tmp_name, "vs_in%u", i);
-            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
-        }
-        checkGLcall("glBindAttribLocation");
-        string_buffer_release(&priv->string_buffers, tmp_name);
     }
+    else
+    {
+        attribs_map = (1 << WINED3D_FFP_ATTRIBS_COUNT) - 1;
+    }
+
+    /* Bind vertex attributes to a corresponding index number to match
+     * the same index numbers as ARB_vertex_programs (makes loading
+     * vertex attributes simpler).  With this method, we can use the
+     * exact same code to load the attributes later for both ARB and
+     * GLSL shaders.
+     *
+     * We have to do this here because we need to know the Program ID
+     * in order to make the bindings work, and it has to be done prior
+     * to linking the GLSL program. */
+    tmp_name = string_buffer_get(&priv->string_buffers);
+    for (i = 0; attribs_map; attribs_map >>= 1, ++i)
+    {
+        if (!(attribs_map & 1))
+            continue;
+
+        string_buffer_sprintf(tmp_name, "vs_in%u", i);
+        GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+    }
+    checkGLcall("glBindAttribLocation");
+    string_buffer_release(&priv->string_buffers, tmp_name);
 
     if (gshader)
     {
@@ -7753,6 +7798,7 @@ static void glsl_vertex_pipe_vp_enable(const struct wined3d_gl_info *gl_info, BO
 static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
     caps->xyzrhw = TRUE;
+    caps->ffp_generic_attributes = TRUE;
     caps->max_active_lights = MAX_ACTIVE_LIGHTS;
     caps->max_vertex_blend_matrices = 1;
     caps->max_vertex_blend_matrix_index = 0;

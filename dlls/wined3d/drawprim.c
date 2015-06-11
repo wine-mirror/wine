@@ -761,8 +761,12 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         }
         else
         {
-            drawStridedSlow(device, context, stream_info, index_count,
+            if (context->d3d_info->ffp_generic_attributes)
+                drawStridedSlowVs(context, state, stream_info, index_count,
                     state->gl_primitive_type, idx_data, idx_size, start_idx);
+            else
+                drawStridedSlow(device, context, stream_info, index_count,
+                        state->gl_primitive_type, idx_data, idx_size, start_idx);
         }
     }
     else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)

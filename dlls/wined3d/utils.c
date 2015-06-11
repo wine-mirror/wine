@@ -4526,8 +4526,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
             coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
             if (coord_idx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
                 settings->texcoords |= 1 << i;
-            settings->texgen[i] = (state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] >> WINED3D_FFP_TCI_SHIFT)
-                    & WINED3D_FFP_TCI_MASK;
+            settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         }
         return;
     }
@@ -4562,8 +4561,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
         coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         if (coord_idx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
             settings->texcoords |= 1 << i;
-        settings->texgen[i] = (state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] >> WINED3D_FFP_TCI_SHIFT)
-                & WINED3D_FFP_TCI_MASK;
+        settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
     }
 
     settings->light_type = 0;

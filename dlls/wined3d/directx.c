@@ -3562,6 +3562,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     adapter->vertex_pipe->vp_get_caps(gl_info, &vertex_caps);
     adapter->d3d_info.xyzrhw = vertex_caps.xyzrhw;
+    adapter->d3d_info.ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     adapter->d3d_info.limits.ffp_blend_stages = fragment_caps.MaxTextureBlendStages;

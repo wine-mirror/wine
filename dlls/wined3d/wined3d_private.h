@@ -948,6 +948,7 @@ enum wined3d_ffp_idx
     WINED3D_FFP_TEXCOORD5 = 12,
     WINED3D_FFP_TEXCOORD6 = 13,
     WINED3D_FFP_TEXCOORD7 = 14,
+    WINED3D_FFP_ATTRIBS_COUNT = 15,
 };
 
 enum wined3d_ffp_emit_idx
@@ -1301,6 +1302,7 @@ struct fragment_pipeline
 struct wined3d_vertex_caps
 {
     BOOL xyzrhw;
+    BOOL ffp_generic_attributes;
     DWORD max_active_lights;
     DWORD max_vertex_blend_matrices;
     DWORD max_vertex_blend_matrix_index;
@@ -1761,6 +1763,7 @@ struct wined3d_d3d_info
     struct wined3d_d3d_limits limits;
     struct wined3d_ffp_attrib_ops ffp_attrib_ops;
     BOOL xyzrhw;
+    BOOL ffp_generic_attributes;
     BOOL vs_clipping;
     BOOL shader_color_key;
     DWORD valid_rt_mask;
@@ -1896,7 +1899,7 @@ struct wined3d_ffp_vs_settings
     DWORD ortho_fog       : 1;
     DWORD padding         : 14;
 
-    BYTE texgen[MAX_TEXTURES];
+    DWORD texgen[MAX_TEXTURES];
 };
 
 struct wined3d_ffp_vs_desc
