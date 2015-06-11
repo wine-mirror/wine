@@ -217,17 +217,28 @@ int CDECL _putch(int c)
 }
 
 /*********************************************************************
+ *		_getche_nolock (MSVCR80.@)
+ */
+int CDECL _getche_nolock(void)
+{
+  int retval;
+  retval = _getch_nolock();
+  if (retval != MSVCRT_EOF)
+    retval = _putch_nolock(retval);
+  return retval;
+}
+
+/*********************************************************************
  *		_getche (MSVCRT.@)
  */
 int CDECL _getche(void)
 {
-  int retval;
-  LOCK_CONSOLE;
-  retval = _getch();
-  if (retval != MSVCRT_EOF)
-    retval = _putch(retval);
-  UNLOCK_CONSOLE;
-  return retval;
+    int ret;
+
+    LOCK_CONSOLE;
+    ret = _getche_nolock();
+    UNLOCK_CONSOLE;
+    return ret;
 }
 
 /*********************************************************************

@@ -1238,7 +1238,7 @@
 @ cdecl _getch()
 @ cdecl _getch_nolock()
 @ cdecl _getche()
-@ stub _getche_nolock
+@ cdecl _getche_nolock()
 @ cdecl _getcwd(str long) MSVCRT__getcwd
 @ cdecl _getdcwd(long str long) MSVCRT__getdcwd
 @ cdecl _getdiskfree(long ptr) MSVCRT__getdiskfree
