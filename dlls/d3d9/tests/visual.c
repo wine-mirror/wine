@@ -7388,6 +7388,7 @@ static void test_vshader_input(void)
 {
     IDirect3DVertexDeclaration9 *decl_twotexcrd, *decl_onetexcrd, *decl_twotex_wrongidx, *decl_twotexcrd_rightorder;
     IDirect3DVertexDeclaration9 *decl_texcoord_color, *decl_color_color, *decl_color_ubyte, *decl_color_float;
+    IDirect3DVertexDeclaration9 *decl_nocolor;
     IDirect3DVertexShader9 *swapped_shader, *texcoord_color_shader, *color_color_shader;
     D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DPixelShader9 *ps;
@@ -7576,6 +7577,13 @@ static void test_vshader_input(void)
          1.0f,  0.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
          1.0f,  1.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
     };
+    static const struct vec3 quad_nocolor[] =
+    {
+        {-1.0f, -1.0f, 0.1f},
+        {-1.0f,  1.0f, 0.1f},
+        { 1.0f, -1.0f, 0.1f},
+        { 1.0f,  1.0f, 0.1f},
+    };
     static const D3DVERTEXELEMENT9 decl_elements_twotexcrd[] =
     {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
@@ -7627,6 +7635,11 @@ static void test_vshader_input(void)
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
+    static const D3DVERTEXELEMENT9 decl_elements_nocolor[] =
+    {
+        {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
+        D3DDECL_END()
+    };
     static const float normalize[4] = {1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f};
     static const float no_normalize[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -7669,6 +7682,8 @@ static void test_vshader_input(void)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_color_ubyte, &decl_color_ubyte);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_color_float, &decl_color_float);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_nocolor, &decl_nocolor);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
 
     hr = IDirect3DDevice9_CreatePixelShader(device, ps3_code, &ps);
@@ -7876,10 +7891,6 @@ static void test_vshader_input(void)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        IDirect3DDevice9_SetVertexShader(device, NULL);
-        IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-        IDirect3DDevice9_SetPixelShader(device, NULL);
-
         color = getPixelColor(device, 160, 360);
         ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x80, 0x40), 1),
            "Input test: Quad 1(color-texcoord) returned color 0x%08x, expected 0x00ff8040\n", color);
@@ -7896,6 +7907,30 @@ static void test_vshader_input(void)
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, decl_nocolor);
+        ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_nocolor, sizeof(quad_nocolor[0]));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        /* WARP ends up using the color attribute from the previous draw. Let's mark
+         * that behavior as broken. */
+        color = getPixelColor(device, 160, 360);
+        ok(color_match(color, 0x00000000, 1)
+                || broken(color_match(color, 0x00ffff00, 1)),
+                "Got unexpected color 0x%08x for no color attribute test.\n", color);
+
+        IDirect3DDevice9_SetVertexShader(device, NULL);
+        IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+        IDirect3DDevice9_SetPixelShader(device, NULL);
+
         IDirect3DVertexShader9_Release(texcoord_color_shader);
         IDirect3DVertexShader9_Release(color_color_shader);
     }
@@ -7909,6 +7944,7 @@ static void test_vshader_input(void)
     IDirect3DVertexDeclaration9_Release(decl_color_color);
     IDirect3DVertexDeclaration9_Release(decl_color_ubyte);
     IDirect3DVertexDeclaration9_Release(decl_color_float);
+    IDirect3DVertexDeclaration9_Release(decl_nocolor);
 
     IDirect3DPixelShader9_Release(ps);
     refcount = IDirect3DDevice9_Release(device);
