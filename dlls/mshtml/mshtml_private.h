@@ -116,6 +116,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLTitleElement) \
     XDIID(DispHTMLUnknownElement) \
     XDIID(DispHTMLWindow2) \
+    XDIID(DispHTMLXMLHttpRequest) \
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
     XIID(IHTMLAnchorElement) \
@@ -204,6 +205,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLWindow4) \
     XIID(IHTMLWindow5) \
     XIID(IHTMLWindow6) \
+    XIID(IHTMLXMLHttpRequest) \
     XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator)

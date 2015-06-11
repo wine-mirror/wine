@@ -6092,6 +6092,7 @@ static void test_xmlhttprequest(IHTMLWindow5 *window)
     HRESULT hres;
     VARIANT var;
     IHTMLXMLHttpRequestFactory *factory;
+    IHTMLXMLHttpRequest *xml;
 
     hres = IHTMLWindow5_get_XMLHttpRequest(window, &var);
     ok(hres == S_OK, "get_XMLHttpRequest failed: %08x\n", hres);
@@ -6102,6 +6103,13 @@ static void test_xmlhttprequest(IHTMLWindow5 *window)
     ok(hres == S_OK, "QueryInterface(&IID_IHTMLXMLHttpRequestFactory) failed: %08x\n", hres);
     ok(factory != NULL, "factory == NULL\n");
 
+    xml = NULL;
+    hres = IHTMLXMLHttpRequestFactory_create(factory, &xml);
+    ok(hres == S_OK, "create failed: %08x\n", hres);
+    ok(xml != NULL, "xml == NULL\n");
+    test_disp((IUnknown*)xml, &DIID_DispHTMLXMLHttpRequest, "[object]");
+
+    IHTMLXMLHttpRequest_Release(xml);
     IHTMLXMLHttpRequestFactory_Release(factory);
     VariantClear(&var);
 }
