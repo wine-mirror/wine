@@ -661,7 +661,7 @@ if (0)
 
     hwnd_view = NULL;
     hr = IShellView_CreateViewWindow(view, NULL, &settings, &test_shellbrowser, &r, &hwnd_view);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hr == S_OK || broken(hr == S_FALSE), "got (0x%08x)\n", hr);
     ok(hwnd_view != 0, "got %p\n", hwnd_view);
 
     hwnd2 = (HWND)0xdeadbeef;
