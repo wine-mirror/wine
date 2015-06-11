@@ -701,8 +701,13 @@ static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const x
     return ret;
 }
 
-static void register_manifest( const WCHAR *dll_name, const char *manifest, DWORD len,
-                               const void *dll_data, size_t dll_size )
+struct dll_data {
+    const WCHAR *name;
+    const void *data;
+    SIZE_T size;
+};
+
+static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR *res_name, LONG_PTR arg )
 {
 #ifdef __i386__
     static const char current_arch[] = "x86";
@@ -711,10 +716,22 @@ static void register_manifest( const WCHAR *dll_name, const char *manifest, DWOR
 #else
     static const char current_arch[] = "none";
 #endif
+    static const WCHAR manifestW[] = {'W','I','N','E','_','M','A','N','I','F','E','S','T'};
+    const struct dll_data *dll_data = (const struct dll_data*)arg;
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
     xmlstr_t name, version, arch, key, lang;
     BOOL end = FALSE, error;
+    const char *manifest;
+    SIZE_T len;
+    HRSRC rsrc;
+
+    if (IS_INTRESOURCE(res_name) || strncmpW( res_name, manifestW, sizeof(manifestW)/sizeof(WCHAR) ))
+        return TRUE;
+
+    rsrc = FindResourceW( module, res_name, type );
+    manifest = LoadResource( module, rsrc );
+    len = SizeofResource( module, rsrc );
 
     buffer.ptr = manifest;
     buffer.end = manifest + len;
@@ -747,17 +764,19 @@ static void register_manifest( const WCHAR *dll_name, const char *manifest, DWOR
                 memcpy( new_buffer + strlen(new_buffer), arch.ptr, len - (arch.ptr - manifest) );
                 arch.ptr = current_arch;
                 arch.len = strlen( current_arch );
-                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, &lang, dll_data, dll_size ))
+                if (create_winsxs_dll( dll_data->name, &arch, &name, &key, &version, &lang, dll_data->data, dll_data->size ))
                     create_manifest( &arch, &name, &key, &version, &lang, new_buffer, len + arch.len );
                 HeapFree( GetProcessHeap(), 0, new_buffer );
             }
             else
             {
-                if (create_winsxs_dll( dll_name, &arch, &name, &key, &version, &lang, dll_data, dll_size ))
+                if (create_winsxs_dll( dll_data->name, &arch, &name, &key, &version, &lang, dll_data->data, dll_data->size ))
                     create_manifest( &arch, &name, &key, &version, &lang, manifest, len );
             }
         }
     }
+
+    return TRUE;
 }
 
 static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR arg )
@@ -783,18 +802,13 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size 
     static const WCHAR atlW[] = {'a','t','l','1','0','0','.','d','l','l',0};
     static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
     static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
-    static const WCHAR manifestW[] = {'W','I','N','E','_','M','A','N','I','F','E','S','T',0};
     const IMAGE_RESOURCE_DIRECTORY *resdir;
     LDR_RESOURCE_INFO info;
     HRESULT hr = S_OK;
     HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
-    HRSRC rsrc;
+    struct dll_data dll_data = { name, data, size };
 
-    if ((rsrc = FindResourceW( module, manifestW, (LPWSTR)RT_MANIFEST )))
-    {
-        char *manifest = LoadResource( module, rsrc );
-        register_manifest( name, manifest, SizeofResource( module, rsrc ), data, size );
-    }
+    EnumResourceNamesW( module, (WCHAR*)RT_MANIFEST, register_manifest, (LONG_PTR)&dll_data );
 
     info.Type = (ULONG_PTR)regtypeW;
     if (LdrFindResourceDirectory_U( module, &info, 1, &resdir )) return;
