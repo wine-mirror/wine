@@ -710,7 +710,10 @@ static UINT patch_add_media( MSIPACKAGE *package, IStorage *storage, MSIPATCHINF
             msiobj_release( &rec->hdr );
             continue;
         }
-        if (!(media = msi_alloc( sizeof( *media )))) goto done;
+        if (!(media = msi_alloc( sizeof( *media )))) {
+            msiobj_release( &rec->hdr );
+            goto done;
+	}
         media->disk_id = disk_id;
         media->last_sequence = MSI_RecordGetInteger( rec, 2 );
         media->prompt  = msi_dup_record_field( rec, 3 );
