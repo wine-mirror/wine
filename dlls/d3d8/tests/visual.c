@@ -7363,6 +7363,198 @@ done:
     DestroyWindow(window);
 }
 
+static void test_fixed_function_fvf(void)
+{
+    IDirect3DDevice8 *device;
+    DWORD color;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad1[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0x00ffff00},
+        {{-1.0f,  0.0f, 0.1f}, 0x00ffff00},
+        {{ 0.0f, -1.0f, 0.1f}, 0x00ffff00},
+        {{ 0.0f,  0.0f, 0.1f}, 0x00ffff00},
+    };
+    static const struct vec3 quad2[] =
+    {
+        {-1.0f, -1.0f, 0.1f},
+        {-1.0f,  0.0f, 0.1f},
+        { 0.0f, -1.0f, 0.1f},
+        { 0.0f,  0.0f, 0.1f},
+    };
+    static const struct
+    {
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad_transformed[] =
+    {
+        {{ 90.0f, 110.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{570.0f, 110.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{ 90.0f, 300.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{570.0f, 300.0f, 0.1f, 2.0f}, 0x00ffff00},
+    };
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(quad1[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00ffff00,
+            "D3DDECLTYPE_D3DCOLOR returned color %08x, expected 0x00ffff00\n", color);
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Test with no diffuse color attribute. */
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_Clear failed with %08x\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad2, sizeof(quad2[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00ffffff, "Got unexpected color 0x%08x in the no diffuse attribute test.\n", color);
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    /* Test what happens with specular lighting enabled and no specular color attribute. */
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SPECULARENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable specular lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad1, sizeof(quad1[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SPECULARENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable specular lighting, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 160, 360);
+    ok(color == 0x00ffff00, "Got unexpected color 0x%08x in the no specular attribute test.\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad_transformed, sizeof(quad_transformed[0]));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 88, 108);
+    ok(color == 0x000000ff,
+            "pixel 88/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 108);
+    ok(color == 0x000000ff,
+            "pixel 92/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 88, 112);
+    ok(color == 0x000000ff,
+            "pixel 88/112 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 112);
+    ok(color == 0x00ffff00,
+            "pixel 92/112 has color %08x, expected 0x00ffff00\n", color);
+
+    color = getPixelColor(device, 568, 108);
+    ok(color == 0x000000ff,
+            "pixel 568/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 572, 108);
+    ok(color == 0x000000ff,
+            "pixel 572/108 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 568, 112);
+    ok(color == 0x00ffff00,
+            "pixel 568/112 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 572, 112);
+    ok(color == 0x000000ff,
+            "pixel 572/112 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 88, 298);
+    ok(color == 0x000000ff,
+            "pixel 88/298 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 298);
+    ok(color == 0x00ffff00,
+            "pixel 92/298 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 88, 302);
+    ok(color == 0x000000ff,
+            "pixel 88/302 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 92, 302);
+    ok(color == 0x000000ff,
+            "pixel 92/302 has color %08x, expected 0x000000ff\n", color);
+
+    color = getPixelColor(device, 568, 298);
+    ok(color == 0x00ffff00,
+            "pixel 568/298 has color %08x, expected 0x00ffff00\n", color);
+    color = getPixelColor(device, 572, 298);
+    ok(color == 0x000000ff,
+            "pixel 572/298 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 568, 302);
+    ok(color == 0x000000ff,
+            "pixel 568/302 has color %08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 572, 302);
+    ok(color == 0x000000ff,
+            "pixel 572/302 has color %08x, expected 0x000000ff\n", color);
+
+    IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -7422,4 +7614,5 @@ START_TEST(visual)
     test_multisample_mismatch();
     test_texcoordindex();
     test_vshader_input();
+    test_fixed_function_fvf();
 }
