@@ -564,7 +564,7 @@
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _getch()
-@ stub _getch_nolock
+@ cdecl _getch_nolock()
 @ cdecl _getche()
 @ stub _getche_nolock
 @ cdecl _getcwd(str long) MSVCRT__getcwd

@@ -113,13 +113,12 @@ static const struct {unsigned vk; unsigned ch[4][2];} enh_map[] = {
 };
 
 /*********************************************************************
- *		_getch (MSVCRT.@)
+ *		_getch_nolock (MSVCR80.@)
  */
-int CDECL _getch(void)
+int CDECL _getch_nolock(void)
 {
   int retval = MSVCRT_EOF;
 
-  LOCK_CONSOLE;
   if (__MSVCRT_console_buffer != MSVCRT_EOF)
   {
     retval = __MSVCRT_console_buffer;
@@ -179,8 +178,20 @@ int CDECL _getch(void)
     if (mode)
       SetConsoleMode(MSVCRT_console_in, mode);
   }
-  UNLOCK_CONSOLE;
   return retval;
+}
+
+/*********************************************************************
+ *		_getch (MSVCRT.@)
+ */
+int CDECL _getch(void)
+{
+    int ret;
+
+    LOCK_CONSOLE;
+    ret = _getch_nolock();
+    UNLOCK_CONSOLE;
+    return ret;
 }
 
 /*********************************************************************
