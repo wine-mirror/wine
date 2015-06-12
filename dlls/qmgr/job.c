@@ -212,6 +212,10 @@ static HRESULT WINAPI BackgroundCopyJob_QueryInterface(
     {
         *obj = &This->IBackgroundCopyJob3_iface;
     }
+    else if (IsEqualGUID(riid, &IID_IBackgroundCopyJobHttpOptions))
+    {
+        *obj = &This->IBackgroundCopyJobHttpOptions_iface;
+    }
     else
     {
         *obj = NULL;
@@ -245,6 +249,7 @@ static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob3 *iface)
             IBackgroundCopyCallback2_Release(This->callback);
         HeapFree(GetProcessHeap(), 0, This->displayName);
         HeapFree(GetProcessHeap(), 0, This->description);
+        HeapFree(GetProcessHeap(), 0, This->http_options.headers);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -900,6 +905,120 @@ static const IBackgroundCopyJob3Vtbl BackgroundCopyJob3Vtbl =
     BackgroundCopyJob_GetFileACLFlags
 };
 
+static inline BackgroundCopyJobImpl *impl_from_IBackgroundCopyJobHttpOptions(
+    IBackgroundCopyJobHttpOptions *iface)
+{
+    return CONTAINING_RECORD(iface, BackgroundCopyJobImpl, IBackgroundCopyJobHttpOptions_iface);
+}
+
+static HRESULT WINAPI http_options_QueryInterface(
+    IBackgroundCopyJobHttpOptions *iface,
+    REFIID riid,
+    void **ppvObject)
+{
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+    return IBackgroundCopyJob3_QueryInterface(&job->IBackgroundCopyJob3_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI http_options_AddRef(
+    IBackgroundCopyJobHttpOptions *iface)
+{
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+    return IBackgroundCopyJob3_AddRef(&job->IBackgroundCopyJob3_iface);
+}
+
+static ULONG WINAPI http_options_Release(
+    IBackgroundCopyJobHttpOptions *iface)
+{
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+    return IBackgroundCopyJob3_Release(&job->IBackgroundCopyJob3_iface);
+}
+
+static HRESULT WINAPI http_options_SetClientCertificateByID(
+    IBackgroundCopyJobHttpOptions *iface,
+    BG_CERT_STORE_LOCATION StoreLocation,
+    LPCWSTR StoreName,
+    BYTE *pCertHashBlob)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_SetClientCertificateByName(
+    IBackgroundCopyJobHttpOptions *iface,
+    BG_CERT_STORE_LOCATION StoreLocation,
+    LPCWSTR StoreName,
+    LPCWSTR SubjectName)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_RemoveClientCertificate(
+    IBackgroundCopyJobHttpOptions *iface)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_GetClientCertificate(
+    IBackgroundCopyJobHttpOptions *iface,
+    BG_CERT_STORE_LOCATION *pStoreLocation,
+    LPWSTR *pStoreName,
+    BYTE **ppCertHashBlob,
+    LPWSTR *pSubjectName)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_SetCustomHeaders(
+    IBackgroundCopyJobHttpOptions *iface,
+    LPCWSTR RequestHeaders)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_GetCustomHeaders(
+    IBackgroundCopyJobHttpOptions *iface,
+    LPWSTR *pRequestHeaders)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_SetSecurityFlags(
+    IBackgroundCopyJobHttpOptions *iface,
+    ULONG Flags)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI http_options_GetSecurityFlags(
+    IBackgroundCopyJobHttpOptions *iface,
+    ULONG *pFlags)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const IBackgroundCopyJobHttpOptionsVtbl http_options_vtbl =
+{
+    http_options_QueryInterface,
+    http_options_AddRef,
+    http_options_Release,
+    http_options_SetClientCertificateByID,
+    http_options_SetClientCertificateByName,
+    http_options_RemoveClientCertificate,
+    http_options_GetClientCertificate,
+    http_options_SetCustomHeaders,
+    http_options_GetCustomHeaders,
+    http_options_SetSecurityFlags,
+    http_options_GetSecurityFlags
+};
+
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID *job_id, BackgroundCopyJobImpl **job)
 {
     HRESULT hr;
@@ -913,6 +1032,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
         return E_OUTOFMEMORY;
 
     This->IBackgroundCopyJob3_iface.lpVtbl = &BackgroundCopyJob3Vtbl;
+    This->IBackgroundCopyJobHttpOptions_iface.lpVtbl = &http_options_vtbl;
     InitializeCriticalSection(&This->cs);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BackgroundCopyJobImpl.cs");
 
@@ -956,6 +1076,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->error.context = 0;
     This->error.code = 0;
     This->error.file = NULL;
+
+    memset(&This->http_options, 0, sizeof(This->http_options));
 
     *job = This;
 

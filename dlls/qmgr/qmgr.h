@@ -37,6 +37,7 @@
 typedef struct
 {
     IBackgroundCopyJob3 IBackgroundCopyJob3_iface;
+    IBackgroundCopyJobHttpOptions IBackgroundCopyJobHttpOptions_iface;
     LONG ref;
     LPWSTR displayName;
     LPWSTR description;
@@ -51,6 +52,12 @@ typedef struct
     /* Protects file list, and progress */
     CRITICAL_SECTION cs;
     struct list entryFromQmgr;
+    struct
+    {
+        WCHAR              *headers;
+        ULONG               flags;
+        BG_AUTH_CREDENTIALS creds;
+    } http_options;
     struct
     {
         BG_ERROR_CONTEXT      context;
