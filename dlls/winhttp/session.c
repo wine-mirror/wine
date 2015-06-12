@@ -555,7 +555,7 @@ end:
 static void request_destroy( object_header_t *hdr )
 {
     request_t *request = (request_t *)hdr;
-    unsigned int i;
+    unsigned int i, j;
 
     TRACE("%p\n", request);
 
@@ -587,6 +587,14 @@ static void request_destroy( object_header_t *hdr )
     heap_free( request->headers );
     for (i = 0; i < request->num_accept_types; i++) heap_free( request->accept_types[i] );
     heap_free( request->accept_types );
+    for (i = 0; i < TARGET_MAX; i++)
+    {
+        for (j = 0; j < SCHEME_MAX; j++)
+        {
+            heap_free( request->creds[i][j].username );
+            heap_free( request->creds[i][j].password );
+        }
+    }
     heap_free( request );
 }
 

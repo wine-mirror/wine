@@ -1572,8 +1572,16 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
             return FALSE;
         auth_ptr = &request->authinfo;
         auth_target = attr_authorization;
-        username = request->connect->username;
-        password = request->connect->password;
+        if (request->creds[TARGET_SERVER][scheme].username)
+        {
+            username = request->creds[TARGET_SERVER][scheme].username;
+            password = request->creds[TARGET_SERVER][scheme].password;
+        }
+        else
+        {
+            username = request->connect->username;
+            password = request->connect->password;
+        }
         break;
 
     case WINHTTP_AUTH_TARGET_PROXY:
@@ -1581,8 +1589,16 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
             return FALSE;
         auth_ptr = &request->proxy_authinfo;
         auth_target = attr_proxy_authorization;
-        username = request->connect->session->proxy_username;
-        password = request->connect->session->proxy_password;
+        if (request->creds[TARGET_PROXY][scheme].username)
+        {
+            username = request->creds[TARGET_PROXY][scheme].username;
+            password = request->creds[TARGET_PROXY][scheme].password;
+        }
+        else
+        {
+            username = request->connect->session->proxy_username;
+            password = request->connect->session->proxy_password;
+        }
         break;
 
     default:
@@ -1766,11 +1782,12 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
     return ret;
 }
 
-static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme, const WCHAR *username,
+static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme_flag, const WCHAR *username,
                              const WCHAR *password )
 {
-    if ((scheme == WINHTTP_AUTH_SCHEME_BASIC || scheme == WINHTTP_AUTH_SCHEME_DIGEST) &&
-        (!username || !password))
+    enum auth_scheme scheme = scheme_from_flag( scheme_flag );
+
+    if (scheme == SCHEME_INVALID || ((scheme == SCHEME_BASIC || scheme == SCHEME_DIGEST) && (!username || !password)))
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -1779,24 +1796,24 @@ static BOOL set_credentials( request_t *request, DWORD target, DWORD scheme, con
     {
     case WINHTTP_AUTH_TARGET_SERVER:
     {
-        heap_free( request->connect->username );
-        if (!username) request->connect->username = NULL;
-        else if (!(request->connect->username = strdupW( username ))) return FALSE;
+        heap_free( request->creds[TARGET_SERVER][scheme].username );
+        if (!username) request->creds[TARGET_SERVER][scheme].username = NULL;
+        else if (!(request->creds[TARGET_SERVER][scheme].username = strdupW( username ))) return FALSE;
 
-        heap_free( request->connect->password );
-        if (!password) request->connect->password = NULL;
-        else if (!(request->connect->password = strdupW( password ))) return FALSE;
+        heap_free( request->creds[TARGET_SERVER][scheme].password );
+        if (!password) request->creds[TARGET_SERVER][scheme].password = NULL;
+        else if (!(request->creds[TARGET_SERVER][scheme].password = strdupW( password ))) return FALSE;
         break;
     }
     case WINHTTP_AUTH_TARGET_PROXY:
     {
-        heap_free( request->connect->session->proxy_username );
-        if (!username) request->connect->session->proxy_username = NULL;
-        else if (!(request->connect->session->proxy_username = strdupW( username ))) return FALSE;
+        heap_free( request->creds[TARGET_PROXY][scheme].username );
+        if (!username) request->creds[TARGET_PROXY][scheme].username = NULL;
+        else if (!(request->creds[TARGET_PROXY][scheme].username = strdupW( username ))) return FALSE;
 
-        heap_free( request->connect->session->proxy_password );
-        if (!password) request->connect->session->proxy_password = NULL;
-        else if (!(request->connect->session->proxy_password = strdupW( password ))) return FALSE;
+        heap_free( request->creds[TARGET_PROXY][scheme].password );
+        if (!password) request->creds[TARGET_PROXY][scheme].password = NULL;
+        else if (!(request->creds[TARGET_PROXY][scheme].password = strdupW( password ))) return FALSE;
         break;
     }
     default:

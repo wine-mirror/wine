@@ -1986,8 +1986,9 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
 static void test_basic_authentication(int port)
 {
     static const WCHAR authW[] = {'/','a','u','t','h',0};
-    static const WCHAR userW[] = {'u','s','e','r',0};
-    static const WCHAR passW[] = {'p','w','d',0};
+    static WCHAR userW[] = {'u','s','e','r',0};
+    static WCHAR passW[] = {'p','w','d',0};
+    static WCHAR pass2W[] = {'p','w','d','2',0};
     HINTERNET ses, con, req;
     DWORD status, size, error, supported, first, target;
     BOOL ret;
@@ -2116,6 +2117,76 @@ static void test_basic_authentication(int port)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == 200, "request failed unexpectedly %u\n", status);
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+
+    /* credentials set with WinHttpSetCredentials take precedence over those set through options */
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, authW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, passW, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_USERNAME, userW, lstrlenW(userW));
+    ok(ret, "failed to set username %u\n", GetLastError());
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_PASSWORD, pass2W, lstrlenW(pass2W));
+    ok(ret, "failed to set password %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == 200, "request failed unexpectedly %u\n", status);
+
+    WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, authW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_USERNAME, userW, lstrlenW(userW));
+    ok(ret, "failed to set username %u\n", GetLastError());
+
+    ret = WinHttpSetOption(req, WINHTTP_OPTION_PASSWORD, pass2W, lstrlenW(passW));
+    ok(ret, "failed to set password %u\n", GetLastError());
+
+    ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC, userW, pass2W, NULL);
+    ok(ret, "failed to set credentials %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %u\n", GetLastError());
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %u\n", GetLastError());
+    ok(status == 401, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
