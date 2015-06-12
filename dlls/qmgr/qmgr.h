@@ -56,7 +56,7 @@ typedef struct
     {
         WCHAR              *headers;
         ULONG               flags;
-        BG_AUTH_CREDENTIALS creds;
+        BG_AUTH_CREDENTIALS creds[BG_AUTH_TARGET_PROXY][BG_AUTH_SCHEME_PASSPORT];
     } http_options;
     struct
     {

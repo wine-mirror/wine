@@ -237,7 +237,7 @@ static ULONG WINAPI BackgroundCopyJob_AddRef(IBackgroundCopyJob3 *iface)
 static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob3 *iface)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob3(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG i, j, ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(%d)\n", This, ref);
 
@@ -250,6 +250,15 @@ static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob3 *iface)
         HeapFree(GetProcessHeap(), 0, This->displayName);
         HeapFree(GetProcessHeap(), 0, This->description);
         HeapFree(GetProcessHeap(), 0, This->http_options.headers);
+        for (i = 0; i < BG_AUTH_TARGET_PROXY; i++)
+        {
+            for (j = 0; j < BG_AUTH_SCHEME_PASSPORT; j++)
+            {
+                BG_AUTH_CREDENTIALS *cred = &This->http_options.creds[i][j];
+                HeapFree(GetProcessHeap(), 0, cred->Credentials.Basic.UserName);
+                HeapFree(GetProcessHeap(), 0, cred->Credentials.Basic.Password);
+            }
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -795,12 +804,49 @@ static HRESULT WINAPI BackgroundCopyJob_GetReplyFileName(
     return E_NOTIMPL;
 }
 
+static int index_from_target(BG_AUTH_TARGET target)
+{
+    if (!target || target > BG_AUTH_TARGET_PROXY) return -1;
+    return target - 1;
+}
+
+static int index_from_scheme(BG_AUTH_SCHEME scheme)
+{
+    if (!scheme || scheme > BG_AUTH_SCHEME_PASSPORT) return -1;
+    return scheme - 1;
+}
+
 static HRESULT WINAPI BackgroundCopyJob_SetCredentials(
     IBackgroundCopyJob3 *iface,
     BG_AUTH_CREDENTIALS *cred)
 {
-    BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob3(iface);
-    FIXME("(%p)->(%p): stub\n", This, cred);
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJob3(iface);
+    BG_AUTH_CREDENTIALS *new_cred;
+    int idx_target, idx_scheme;
+
+    TRACE("(%p)->(%p)\n", job, cred);
+
+    if ((idx_target = index_from_target(cred->Target)) < 0) return BG_E_INVALID_AUTH_TARGET;
+    if ((idx_scheme = index_from_scheme(cred->Scheme)) < 0) return BG_E_INVALID_AUTH_SCHEME;
+    new_cred = &job->http_options.creds[idx_target][idx_scheme];
+
+    EnterCriticalSection(&job->cs);
+
+    new_cred->Target = cred->Target;
+    new_cred->Scheme = cred->Scheme;
+
+    if (cred->Credentials.Basic.UserName)
+    {
+        HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.UserName);
+        new_cred->Credentials.Basic.UserName = strdupW(cred->Credentials.Basic.UserName);
+    }
+    if (cred->Credentials.Basic.Password)
+    {
+        HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.Password);
+        new_cred->Credentials.Basic.Password = strdupW(cred->Credentials.Basic.Password);
+    }
+
+    LeaveCriticalSection(&job->cs);
     return S_OK;
 }
 
@@ -809,8 +855,25 @@ static HRESULT WINAPI BackgroundCopyJob_RemoveCredentials(
     BG_AUTH_TARGET target,
     BG_AUTH_SCHEME scheme)
 {
-    BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob3(iface);
-    FIXME("(%p)->(%d %d): stub\n", This, target, scheme);
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJob3(iface);
+    BG_AUTH_CREDENTIALS *new_cred;
+    int idx_target, idx_scheme;
+
+    TRACE("(%p)->(%u %u)\n", job, target, scheme);
+
+    if ((idx_target = index_from_target(target)) < 0) return BG_E_INVALID_AUTH_TARGET;
+    if ((idx_scheme = index_from_scheme(scheme)) < 0) return BG_E_INVALID_AUTH_SCHEME;
+    new_cred = &job->http_options.creds[idx_target][idx_scheme];
+
+    EnterCriticalSection(&job->cs);
+
+    new_cred->Target = new_cred->Scheme = 0;
+    HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.UserName);
+    new_cred->Credentials.Basic.UserName = NULL;
+    HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.Password);
+    new_cred->Credentials.Basic.Password = NULL;
+
+    LeaveCriticalSection(&job->cs);
     return S_OK;
 }
 

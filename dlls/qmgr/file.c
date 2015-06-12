@@ -321,6 +321,55 @@ static DWORD wait_for_completion(BackgroundCopyJobImpl *job)
     return error;
 }
 
+static UINT target_from_index(UINT index)
+{
+    switch (index)
+    {
+    case 0: return WINHTTP_AUTH_TARGET_SERVER;
+    case 1: return WINHTTP_AUTH_TARGET_PROXY;
+    default:
+        ERR("unhandled index %u\n", index);
+        break;
+    }
+    return 0;
+}
+
+static UINT scheme_from_index(UINT index)
+{
+    switch (index)
+    {
+    case 0: return WINHTTP_AUTH_SCHEME_BASIC;
+    case 1: return WINHTTP_AUTH_SCHEME_NTLM;
+    case 2: return WINHTTP_AUTH_SCHEME_PASSPORT;
+    case 3: return WINHTTP_AUTH_SCHEME_DIGEST;
+    case 4: return WINHTTP_AUTH_SCHEME_NEGOTIATE;
+    default:
+        ERR("unhandled index %u\n", index);
+        break;
+    }
+    return 0;
+}
+
+static BOOL set_request_credentials(HINTERNET req, BackgroundCopyJobImpl *job)
+{
+    UINT i, j;
+
+    for (i = 0; i < BG_AUTH_TARGET_PROXY; i++)
+    {
+        UINT target = target_from_index(i);
+        for (j = 0; j < BG_AUTH_SCHEME_PASSPORT; j++)
+        {
+            UINT scheme = scheme_from_index(j);
+            const WCHAR *username = job->http_options.creds[i][j].Credentials.Basic.UserName;
+            const WCHAR *password = job->http_options.creds[i][j].Credentials.Basic.Password;
+
+            if (!username) continue;
+            if (!WinHttpSetCredentials(req, target, scheme, username, password, NULL)) return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static BOOL transfer_file_http(BackgroundCopyFileImpl *file, URL_COMPONENTSW *uc,
                                const WCHAR *tmpfile)
 {
@@ -339,6 +388,7 @@ static BOOL transfer_file_http(BackgroundCopyFileImpl *file, URL_COMPONENTSW *uc
 
     if (!(con = WinHttpConnect(ses, uc->lpszHostName, uc->nPort, 0))) goto done;
     if (!(req = WinHttpOpenRequest(con, NULL, uc->lpszUrlPath, NULL, NULL, NULL, flags))) goto done;
+    if (!set_request_credentials(req, job)) goto done;
 
     if (!(WinHttpSendRequest(req, job->http_options.headers, ~0u, NULL, 0, 0, (DWORD_PTR)file))) goto done;
     if (wait_for_completion(job) || job->error.code) goto done;
