@@ -542,7 +542,7 @@ static void test_GetFile(void)
     WCHAR pathW[MAX_PATH];
     FileAttribute fa;
     VARIANT size;
-    DWORD gfa;
+    DWORD gfa, new_gfa;
     IFile *file;
     HRESULT hr;
     HANDLE hf;
@@ -580,10 +580,30 @@ static void test_GetFile(void)
     ok(!lstrcmpW(str, pathW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+#define FILE_ATTR_MASK (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
+        FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE | \
+        FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED)
+
     hr = IFile_get_Attributes(file, &fa);
-    gfa = GetFileAttributesW(pathW) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
-            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
-            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED);
+    gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
+    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
+    ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
+
+    hr = IFile_put_Attributes(file, gfa | FILE_ATTRIBUTE_READONLY);
+    ok(hr == S_OK, "put_Attributes failed: %08x\n", hr);
+    new_gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
+    ok(new_gfa == (gfa|FILE_ATTRIBUTE_READONLY), "new_gfa = %x, expected %x\n", new_gfa, gfa|FILE_ATTRIBUTE_READONLY);
+
+    hr = IFile_get_Attributes(file, &fa);
+    ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
+    ok(fa == new_gfa, "fa = %x, expected %x\n", fa, new_gfa);
+
+    hr = IFile_put_Attributes(file, gfa);
+    ok(hr == S_OK, "put_Attributes failed: %08x\n", hr);
+    new_gfa = GetFileAttributesW(pathW) & FILE_ATTR_MASK;
+    ok(new_gfa == gfa, "new_gfa = %x, expected %x\n", new_gfa, gfa);
+
+    hr = IFile_get_Attributes(file, &fa);
     ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
     ok(fa == gfa, "fa = %x, expected %x\n", fa, gfa);
 

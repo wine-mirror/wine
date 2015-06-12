@@ -2645,8 +2645,10 @@ static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)
 static HRESULT WINAPI file_put_Attributes(IFile *iface, FileAttribute pfa)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%x)\n", This, pfa);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, pfa);
+
+    return SetFileAttributesW(This->path, pfa) ? S_OK : create_error(GetLastError());
 }
 
 static HRESULT WINAPI file_get_DateCreated(IFile *iface, DATE *pdate)
