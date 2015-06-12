@@ -27,6 +27,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
+BOOL transitionJobState(BackgroundCopyJobImpl *job, BG_JOB_STATE from, BG_JOB_STATE to)
+{
+    BOOL ret = FALSE;
+
+    EnterCriticalSection(&globalMgr.cs);
+    if (job->state == from)
+    {
+        job->state = to;
+        ret = TRUE;
+    }
+    LeaveCriticalSection(&globalMgr.cs);
+    return ret;
+}
+
 struct copy_error
 {
     IBackgroundCopyError  IBackgroundCopyError_iface;

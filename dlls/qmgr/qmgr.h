@@ -113,6 +113,7 @@ HRESULT EnumBackgroundCopyFilesConstructor(BackgroundCopyJobImpl*, IEnumBackgrou
 DWORD WINAPI fileTransfer(void *param) DECLSPEC_HIDDEN;
 void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
+BOOL transitionJobState(BackgroundCopyJobImpl *job, BG_JOB_STATE from, BG_JOB_STATE to) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
 static inline WCHAR *strdupW(const WCHAR *src)
@@ -140,21 +141,6 @@ static inline HRESULT return_strval(const WCHAR *str, WCHAR **ret)
     if (!*ret) return E_OUTOFMEMORY;
     strcpyW(*ret, str);
     return S_OK;
-}
-
-static inline BOOL
-transitionJobState(BackgroundCopyJobImpl *job, BG_JOB_STATE fromState,
-                   BG_JOB_STATE toState)
-{
-    BOOL rv = FALSE;
-    EnterCriticalSection(&globalMgr.cs);
-    if (job->state == fromState)
-    {
-        job->state = toState;
-        rv = TRUE;
-    }
-    LeaveCriticalSection(&globalMgr.cs);
-    return rv;
 }
 
 #endif /* __QMGR_H__ */
