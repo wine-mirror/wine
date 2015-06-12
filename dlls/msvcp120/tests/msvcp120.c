@@ -64,6 +64,7 @@ static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
+static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -100,6 +101,8 @@ static BOOL init(void)
                 "?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPEBD@Z");
+        SET(p_tr2_sys__Make_dir,
+                "?_Make_dir@sys@tr2@std@@YAHPEBD@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -109,6 +112,8 @@ static BOOL init(void)
                 "?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPBD@Z");
+        SET(p_tr2_sys__Make_dir,
+                "?_Make_dir@sys@tr2@std@@YAHPBD@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -469,6 +474,29 @@ static void test_tr2_sys__Current_set(void)
     ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
 }
 
+static void test_tr2_sys__Make_dir(void)
+{
+    int ret, i;
+    struct {
+        char const *path;
+        int val;
+    } tests[] = {
+        { "tr2_test_dir", 1 },
+        { "tr2_test_dir", 0 },
+        { NULL, -1 },
+        { "??invalid_name>>", -1 }
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_tr2_sys__Make_dir(tests[i].path);
+        ok(ret == tests[i].val, "tr2_sys__Make_dir(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
+        ok(errno == 0xdeadbeef, "tr2_sys__Make_dir(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+    }
+
+    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -482,5 +510,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Equivalent();
     test_tr2_sys__Current_get();
     test_tr2_sys__Current_set();
+    test_tr2_sys__Make_dir();
     FreeLibrary(msvcp);
 }

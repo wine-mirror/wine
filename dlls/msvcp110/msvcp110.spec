@@ -1617,8 +1617,8 @@
 @ stub -arch=win64 ?_MP_Mul@std@@YAXQEA_K_K1@Z
 @ stub -arch=win32 ?_MP_Rem@std@@YAXQA_K_K@Z
 @ stub -arch=win64 ?_MP_Rem@std@@YAXQEA_K_K@Z
-@ stub -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPBD@Z
-@ stub -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEBD@Z
+@ cdecl -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPBD@Z(str) tr2_sys__Make_dir
+@ cdecl -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEBD@Z(str) tr2_sys__Make_dir
 @ stub -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPB_W@Z
 @ stub -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEB_W@Z
 @ cdecl -arch=win32 ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) locale__Locimp__Makeloc

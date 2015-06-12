@@ -14260,6 +14260,22 @@ MSVCP_bool __cdecl tr2_sys__Current_set(char const* path)
     return SetCurrentDirectoryA(path) != 0;
 }
 
+/* ?_Make_dir@sys@tr2@std@@YAHPBD@Z */
+/* ?_Make_dir@sys@tr2@std@@YAHPEBD@Z */
+int __cdecl tr2_sys__Make_dir(char const* path)
+{
+    TRACE("(%p)\n", path);
+
+    if(!CreateDirectoryA(path, NULL)) {
+        if(GetLastError() == ERROR_ALREADY_EXISTS)
+            return 0;
+        else
+            return -1;
+    }
+
+    return 1;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
