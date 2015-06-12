@@ -457,7 +457,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_sync, 4)
 int __thiscall streambuf_sync(streambuf *this)
 {
     TRACE("(%p)\n", this);
-    return (this->gptr == this->egptr && this->pbase == this->pptr) ? 0 : EOF;
+    return (this->gptr >= this->egptr && this->pbase >= this->pptr) ? 0 : EOF;
 }
 
 /* ?unbuffered@streambuf@@IAEXH@Z */

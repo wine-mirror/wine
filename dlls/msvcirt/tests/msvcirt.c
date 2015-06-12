@@ -372,7 +372,7 @@ static void test_streambuf(void)
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
     sb.gptr = sb.egptr + 1;
     ret = (int) call_func1(p_streambuf_sync, &sb);
-    todo_wine ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
     sb.gptr = sb.eback;
     ret = (int) call_func1(p_streambuf_sync, &sb2);
     ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
@@ -381,7 +381,7 @@ static void test_streambuf(void)
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
     sb2.pptr = sb2.pbase - 1;
     ret = (int) call_func1(p_streambuf_sync, &sb2);
-    todo_wine ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
     sb2.pptr = sb2.epptr;
     ret = (int) call_func1(p_streambuf_sync, &sb3);
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
