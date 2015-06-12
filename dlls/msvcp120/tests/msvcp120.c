@@ -17,6 +17,7 @@
  */
 
 #include <locale.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include "winbase.h"
@@ -36,6 +37,16 @@ typedef struct {
     BYTE isleadbyte[32];
 } _Cvtvec;
 
+static inline const char* debugstr_longlong(ULONGLONG ll)
+{
+    static char string[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(string, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(string, "%lx", (unsigned long)ll);
+    return string;
+}
+
 static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__setmbcp)(int);
 static int (__cdecl *p_isleadbyte)(int);
@@ -47,8 +58,12 @@ static void (CDECL *p__Call_once)(int *once, void (CDECL *func)(void));
 static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *argv);
 static void (CDECL *p__Do_call)(void *this);
 
-static HMODULE msvcp;
+/* filesystem */
+static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
 
+static HMODULE msvcp;
+#define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
     HANDLE msvcr;
@@ -60,12 +75,25 @@ static BOOL init(void)
         return FALSE;
     }
 
-    p__Xtime_diff_to_millis2 = (void*)GetProcAddress(msvcp, "_Xtime_diff_to_millis2");
-    p_xtime_get = (void*)GetProcAddress(msvcp, "xtime_get");
-    p__Getcvt = (void*)GetProcAddress(msvcp, "_Getcvt");
-    p__Call_once = (void*)GetProcAddress(msvcp, "_Call_once");
-    p__Call_onceEx = (void*)GetProcAddress(msvcp, "_Call_onceEx");
-    p__Do_call = (void*)GetProcAddress(msvcp, "_Do_call");
+    SET(p__Xtime_diff_to_millis2,
+            "_Xtime_diff_to_millis2");
+    SET(p_xtime_get,
+            "xtime_get");
+    SET(p__Getcvt,
+            "_Getcvt");
+    SET(p__Call_once,
+            "_Call_once");
+    SET(p__Call_onceEx,
+            "_Call_onceEx");
+    SET(p__Do_call,
+            "_Do_call");
+    if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(p_tr2_sys__File_size,
+                "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
+    } else {
+        SET(p_tr2_sys__File_size,
+                "?_File_size@sys@tr2@std@@YA_KPBD@Z");
+    }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -271,6 +299,45 @@ static void test__Do_call(void)
     ok(cnt == 1, "func was not called\n");
 }
 
+static void test_tr2_sys__File_size(void)
+{
+    ULONGLONG val;
+    HANDLE file;
+    LARGE_INTEGER file_size = {{7, 0}};
+    CreateDirectoryA("tr2_test_dir", NULL);
+
+    file = CreateFileA("tr2_test_dir/f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+    val = p_tr2_sys__File_size("tr2_test_dir/f1");
+    ok(val == 7, "file_size is %s\n", debugstr_longlong(val));
+
+    file = CreateFileA("tr2_test_dir/f2", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    val = p_tr2_sys__File_size("tr2_test_dir/f2");
+    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+
+    val = p_tr2_sys__File_size("tr2_test_dir");
+    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+
+    errno = 0xdeadbeef;
+    val = p_tr2_sys__File_size("tr2_test_dir/not_exists_file");
+    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    val = p_tr2_sys__File_size(NULL);
+    ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    ok(DeleteFileA("tr2_test_dir/f1"), "Expected tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f2"), "Expected tr2_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -280,5 +347,6 @@ START_TEST(msvcp120)
     test__Call_once();
     test__Do_call();
 
+    test_tr2_sys__File_size();
     FreeLibrary(msvcp);
 }

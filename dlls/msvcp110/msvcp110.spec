@@ -1206,8 +1206,8 @@
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_wchar__Ffmt
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_wchar__Ffmt
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_wchar__Ffmt
-@ stub -arch=win32 ?_File_size@sys@tr2@std@@YA_KPBD@Z
-@ stub -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEBD@Z
+@ cdecl -ret64 -arch=win32 ?_File_size@sys@tr2@std@@YA_KPBD@Z(str) tr2_sys__File_size
+@ cdecl -ret64 -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEBD@Z(str) tr2_sys__File_size
 @ stub -arch=win32 ?_File_size@sys@tr2@std@@YA_KPB_W@Z
 @ stub -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEB_W@Z
 @ cdecl -arch=arm ?_Findarr@ios_base@std@@AAAAAU_Iosarray@12@H@Z(ptr long) ios_base_Findarr

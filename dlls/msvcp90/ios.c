@@ -14190,6 +14190,21 @@ basic_ostream_char* __cdecl basic_ostream_char_print_complex_ldouble(basic_ostre
     return ostr;
 }
 
+/* ?_File_size@sys@tr2@std@@YA_KPBD@Z  */
+/* ?_File_size@sys@tr2@std@@YA_KPEBD@Z */
+ULONGLONG __cdecl tr2_sys__File_size(const char* path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+
+    TRACE("(%p)\n", path);
+    if(!GetFileAttributesExA(path, GetFileExInfoStandard, &fad))
+        return 0;
+    if(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        return 0;
+
+    return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
