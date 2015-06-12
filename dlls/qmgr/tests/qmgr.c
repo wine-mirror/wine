@@ -23,7 +23,6 @@
 #define COBJMACROS
 
 #include "wine/test.h"
-#include "initguid.h"
 #include "bits.h"
 
 static WCHAR progname[MAX_PATH];

@@ -24,6 +24,7 @@
 #define COBJMACROS
 
 #include "wine/test.h"
+#include "initguid.h"
 #include "bits.h"
 
 /* Globals used by many tests */
