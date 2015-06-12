@@ -115,6 +115,20 @@ void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
+static inline WCHAR *strdupW(const WCHAR *src)
+{
+    WCHAR *dst = HeapAlloc(GetProcessHeap(), 0, (strlenW(src) + 1) * sizeof(WCHAR));
+    if (dst) strcpyW(dst, src);
+    return dst;
+}
+
+static inline WCHAR *co_strdupW(const WCHAR *src)
+{
+    WCHAR *dst = CoTaskMemAlloc((strlenW(src) + 1) * sizeof(WCHAR));
+    if (dst) strcpyW(dst, src);
+    return dst;
+}
+
 static inline HRESULT return_strval(const WCHAR *str, WCHAR **ret)
 {
     int len;

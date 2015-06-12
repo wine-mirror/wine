@@ -976,16 +976,59 @@ static HRESULT WINAPI http_options_SetCustomHeaders(
     IBackgroundCopyJobHttpOptions *iface,
     LPCWSTR RequestHeaders)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+
+    TRACE("(%p)->(%s)\n", iface, debugstr_w(RequestHeaders));
+
+    EnterCriticalSection(&job->cs);
+
+    if (RequestHeaders)
+    {
+        WCHAR *headers = strdupW(RequestHeaders);
+        if (!headers)
+        {
+            LeaveCriticalSection(&job->cs);
+            return E_OUTOFMEMORY;
+        }
+        HeapFree(GetProcessHeap(), 0, job->http_options.headers);
+        job->http_options.headers = headers;
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, job->http_options.headers);
+        job->http_options.headers = NULL;
+    }
+
+    LeaveCriticalSection(&job->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI http_options_GetCustomHeaders(
     IBackgroundCopyJobHttpOptions *iface,
     LPWSTR *pRequestHeaders)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+
+    TRACE("(%p)->(%p)\n", iface, pRequestHeaders);
+
+    EnterCriticalSection(&job->cs);
+
+    if (job->http_options.headers)
+    {
+        WCHAR *headers = co_strdupW(job->http_options.headers);
+        if (!headers)
+        {
+            LeaveCriticalSection(&job->cs);
+            return E_OUTOFMEMORY;
+        }
+        *pRequestHeaders = headers;
+        LeaveCriticalSection(&job->cs);
+        return S_OK;
+    }
+
+    *pRequestHeaders = NULL;
+    LeaveCriticalSection(&job->cs);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI http_options_SetSecurityFlags(

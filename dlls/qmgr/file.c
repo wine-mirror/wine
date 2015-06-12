@@ -340,7 +340,7 @@ static BOOL transfer_file_http(BackgroundCopyFileImpl *file, URL_COMPONENTSW *uc
     if (!(con = WinHttpConnect(ses, uc->lpszHostName, uc->nPort, 0))) goto done;
     if (!(req = WinHttpOpenRequest(con, NULL, uc->lpszUrlPath, NULL, NULL, NULL, flags))) goto done;
 
-    if (!(WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, (DWORD_PTR)file))) goto done;
+    if (!(WinHttpSendRequest(req, job->http_options.headers, ~0u, NULL, 0, 0, (DWORD_PTR)file))) goto done;
     if (wait_for_completion(job) || job->error.code) goto done;
 
     if (!(WinHttpReceiveResponse(req, NULL))) goto done;
