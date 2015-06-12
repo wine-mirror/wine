@@ -23,6 +23,7 @@
 #include "winbase.h"
 
 typedef int MSVCRT_long;
+typedef unsigned char MSVCP_bool;
 
 /* xtime */
 typedef struct {
@@ -62,6 +63,7 @@ static void (CDECL *p__Do_call)(void *this);
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
+static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -96,6 +98,8 @@ static BOOL init(void)
                 "?_Equivalent@sys@tr2@std@@YAHPEBD0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z");
+        SET(p_tr2_sys__Current_set,
+                "?_Current_set@sys@tr2@std@@YA_NPEBD@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -103,6 +107,8 @@ static BOOL init(void)
                 "?_Equivalent@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z");
+        SET(p_tr2_sys__Current_set,
+                "?_Current_set@sys@tr2@std@@YA_NPBD@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -423,6 +429,46 @@ static void test_tr2_sys__Current_get(void)
     ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
 }
 
+static void test_tr2_sys__Current_set(void)
+{
+    char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
+    char *temp;
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathA(MAX_PATH, temp_path);
+    memset(origin_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, origin_path);
+    temp = p_tr2_sys__Current_get(origin_path);
+    ok(temp == origin_path, "p_tr2_sys__Current_get returned different buffer\n");
+
+    ok(p_tr2_sys__Current_set(temp_path), "p_tr2_sys__Current_set to temp_path failed\n");
+    memset(current_path, 0, MAX_PATH);
+    temp = p_tr2_sys__Current_get(current_path);
+    ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
+    temp[strlen(temp)] = '\\';
+    ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
+
+    ok(p_tr2_sys__Current_set("./"), "p_tr2_sys__Current_set to temp_path failed\n");
+    memset(current_path, 0, MAX_PATH);
+    temp = p_tr2_sys__Current_get(current_path);
+    ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
+    temp[strlen(temp)] = '\\';
+    ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
+
+    errno = 0xdeadbeef;
+    ok(!p_tr2_sys__Current_set("not_exisist_dir"), "p_tr2_sys__Current_set to not_exist_dir succeed\n");
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ok(!p_tr2_sys__Current_set("??invalid_name>>"), "p_tr2_sys__Current_set to ??invalid_name>> succeed\n");
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    ok(p_tr2_sys__Current_set(origin_path), "p_tr2_sys__Current_set to origin_path failed\n");
+    memset(current_path, 0, MAX_PATH);
+    temp = p_tr2_sys__Current_get(current_path);
+    ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
+    ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -435,5 +481,6 @@ START_TEST(msvcp120)
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();
     test_tr2_sys__Current_get();
+    test_tr2_sys__Current_set();
     FreeLibrary(msvcp);
 }

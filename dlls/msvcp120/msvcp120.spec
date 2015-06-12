@@ -1136,8 +1136,8 @@
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z(ptr) tr2_sys__Current_get
 @ stub -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z
 @ stub -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z
-@ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z
-@ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z
+@ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z(str) tr2_sys__Current_set
+@ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z(str) tr2_sys__Current_set
 @ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z
 @ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ(ptr) locale_facet__Decref

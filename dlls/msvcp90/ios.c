@@ -14252,6 +14252,14 @@ char* __cdecl tr2_sys__Current_get(char *current_path)
     return current_path;
 }
 
+/* ?_Current_set@sys@tr2@std@@YA_NPBD@Z */
+/* ?_Current_set@sys@tr2@std@@YA_NPEBD@Z */
+MSVCP_bool __cdecl tr2_sys__Current_set(char const* path)
+{
+    TRACE("(%p)\n", path);
+    return SetCurrentDirectoryA(path) != 0;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
