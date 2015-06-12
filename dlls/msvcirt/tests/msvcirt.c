@@ -196,7 +196,7 @@ static DWORD WINAPI lock_streambuf(void *arg)
 
 static void test_streambuf(void)
 {
-    streambuf sb, sb2, *psb;
+    streambuf sb, sb2, sb3, *psb;
     struct streambuf_lock_arg lock_arg;
     HANDLE thread;
     char reserve[16];
@@ -205,6 +205,7 @@ static void test_streambuf(void)
 
     memset(&sb, 0xab, sizeof(streambuf));
     memset(&sb2, 0xab, sizeof(streambuf));
+    memset(&sb3, 0xab, sizeof(streambuf));
 
     /* constructors */
     call_func1(p_streambuf_ctor, &sb);
@@ -219,6 +220,11 @@ static void test_streambuf(void)
     ok(sb2.base == reserve, "wrong base pointer, expected %p got %p\n", reserve, sb2.base);
     ok(sb2.ebuf == reserve+16, "wrong ebuf pointer, expected %p got %p\n", reserve+16, sb2.ebuf);
     ok(sb.lock.LockCount == -1, "wrong critical section state, expected -1 got %d\n", sb.lock.LockCount);
+    call_func1(p_streambuf_ctor, &sb3);
+    ok(sb3.allocated == 0, "wrong allocate value, expected 0 got %d\n", sb3.allocated);
+    ok(sb3.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", sb3.unbuffered);
+    ok(sb3.base == NULL, "wrong base pointer, expected %p got %p\n", NULL, sb3.base);
+    ok(sb3.ebuf == NULL, "wrong ebuf pointer, expected %p got %p\n", NULL, sb3.ebuf);
 
     /* setlock */
     ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
@@ -326,34 +332,58 @@ static void test_streambuf(void)
     ok(ret == 1, "doallocate failed, got %d\n", ret);
     ok(sb2.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb2.allocated);
     ok(sb2.ebuf - sb2.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb2.ebuf, sb2.base);
+    ret = (int) call_func1(p_streambuf_doallocate, &sb3);
+    ok(ret == 1, "doallocate failed, got %d\n", ret);
+    ok(sb3.allocated == 1, "wrong allocate value, expected 1 got %d\n", sb3.allocated);
+    ok(sb3.ebuf - sb3.base == 512 , "wrong reserve area size, expected 512 got %p-%p\n", sb3.ebuf, sb3.base);
+
+    /* sb: buffered, space available */
+    sb.eback = sb.gptr = sb.base;
+    sb.egptr = sb.base + 256;
+    sb.pbase = sb.pptr = sb.base + 256;
+    sb.epptr = sb.base + 512;
+    /* sb2: buffered, no space available */
+    sb2.eback = sb2.base;
+    sb2.gptr = sb2.egptr = sb2.base + 256;
+    sb2.pbase = sb2.base + 256;
+    sb2.pptr = sb2.epptr = sb2.base + 512;
+    /* sb3: unbuffered */
+    sb3.unbuffered = 1;
 
     /* gbump */
-    sb.eback = sb.base + 100;
-    sb.gptr = sb.base + 104;
-    sb.egptr = sb.base + 110;
     call_func2(p_streambuf_gbump, &sb, 10);
-    ok(sb.gptr == sb.eback + 14, "advance get pointer failed, expected %p got %p\n", sb.eback + 14, sb.gptr);
+    ok(sb.gptr == sb.eback + 10, "advance get pointer failed, expected %p got %p\n", sb.eback + 10, sb.gptr);
     call_func2(p_streambuf_gbump, &sb, -15);
-    ok(sb.gptr == sb.eback - 1, "advance get pointer failed, expected %p got %p\n", sb.eback - 1, sb.gptr);
+    ok(sb.gptr == sb.eback - 5, "advance get pointer failed, expected %p got %p\n", sb.eback - 5, sb.gptr);
+    sb.gptr = sb.eback;
 
     /* pbump */
-    sb.pbase = sb.pptr = sb.base + 200;
-    sb.epptr = sb.base + 210;
     call_func2(p_streambuf_pbump, &sb, -2);
     ok(sb.pptr == sb.pbase - 2, "advance put pointer failed, expected %p got %p\n", sb.pbase - 2, sb.pptr);
     call_func2(p_streambuf_pbump, &sb, 20);
     ok(sb.pptr == sb.pbase + 18, "advance put pointer failed, expected %p got %p\n", sb.pbase + 18, sb.pptr);
+    sb.pptr = sb.pbase;
 
     /* sync */
     ret = (int) call_func1(p_streambuf_sync, &sb);
     ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
     sb.gptr = sb.egptr;
     ret = (int) call_func1(p_streambuf_sync, &sb);
-    ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
-    sb.pptr = sb.pbase;
-    ret = (int) call_func1(p_streambuf_sync, &sb);
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    sb.gptr = sb.egptr + 1;
+    ret = (int) call_func1(p_streambuf_sync, &sb);
+    todo_wine ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    sb.gptr = sb.eback;
     ret = (int) call_func1(p_streambuf_sync, &sb2);
+    ok(ret == EOF, "sync failed, expected EOF got %d\n", ret);
+    sb2.pptr = sb2.pbase;
+    ret = (int) call_func1(p_streambuf_sync, &sb2);
+    ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    sb2.pptr = sb2.pbase - 1;
+    ret = (int) call_func1(p_streambuf_sync, &sb2);
+    todo_wine ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+    sb2.pptr = sb2.epptr;
+    ret = (int) call_func1(p_streambuf_sync, &sb3);
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
 
     SetEvent(lock_arg.test[3]);
@@ -361,6 +391,7 @@ static void test_streambuf(void)
 
     call_func1(p_streambuf_dtor, &sb);
     call_func1(p_streambuf_dtor, &sb2);
+    call_func1(p_streambuf_dtor, &sb3);
     for (i = 0; i < 4; i++) {
         CloseHandle(lock_arg.lock[i]);
         CloseHandle(lock_arg.test[i]);
