@@ -408,7 +408,7 @@ static void reset_data_stream(http_request_t *req)
     destroy_data_stream(req->data_stream);
     req->data_stream = &req->netconn_stream.data_stream;
     req->read_pos = req->read_size = req->netconn_stream.content_read = 0;
-    req->read_chunked = req->read_gzip = FALSE;
+    req->read_gzip = FALSE;
 }
 
 static void remove_header( http_request_t *request, const WCHAR *str, BOOL from_request )
@@ -2955,7 +2955,6 @@ static DWORD set_content_length(http_request_t *request)
 
         request->data_stream = &chunked_stream->data_stream;
         request->contentLength = ~0u;
-        request->read_chunked = TRUE;
     }
 
     if(request->decoding) {

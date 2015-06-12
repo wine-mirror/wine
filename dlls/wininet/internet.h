@@ -355,7 +355,6 @@ typedef struct
 
     CRITICAL_SECTION read_section;  /* section to protect the following fields */
     DWORD contentLength;  /* total number of bytes to be read */
-    BOOL  read_chunked;   /* are we reading in chunked mode? */
     BOOL  read_gzip;      /* are we reading in gzip mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
