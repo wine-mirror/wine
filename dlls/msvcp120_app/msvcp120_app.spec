@@ -1161,8 +1161,8 @@
 @ cdecl -arch=arm ?_Empty@?$_Yarn@_W@std@@QBA_NXZ(ptr) msvcp120.?_Empty@?$_Yarn@_W@std@@QBA_NXZ
 @ thiscall -arch=i386 ?_Empty@?$_Yarn@_W@std@@QBE_NXZ(ptr) msvcp120.?_Empty@?$_Yarn@_W@std@@QBE_NXZ
 @ cdecl -arch=win64 ?_Empty@?$_Yarn@_W@std@@QEBA_NXZ(ptr) msvcp120.?_Empty@?$_Yarn@_W@std@@QEBA_NXZ
-@ stub -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPBD0@Z
-@ stub -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z
+@ cdecl -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Equivalent@sys@tr2@std@@YAHPBD0@Z
+@ cdecl -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Equivalent@sys@tr2@std@@YAHPEBD0@Z
 @ stub -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z
 @ stub -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) msvcp120.?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z

@@ -60,6 +60,7 @@ static void (CDECL *p__Do_call)(void *this);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
+static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -90,9 +91,13 @@ static BOOL init(void)
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
+        SET(p_tr2_sys__Equivalent,
+                "?_Equivalent@sys@tr2@std@@YAHPEBD0@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
+        SET(p_tr2_sys__Equivalent,
+                "?_Equivalent@sys@tr2@std@@YAHPBD0@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -338,6 +343,58 @@ static void test_tr2_sys__File_size(void)
     ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
 }
 
+static void test_tr2_sys__Equivalent(void)
+{
+    int val, i;
+    HANDLE file;
+    char temp_path[MAX_PATH], current_path[MAX_PATH];
+    struct {
+        char const *path1;
+        char const *path2;
+        int equivalent;
+    } tests[] = {
+        { NULL, NULL, -1 },
+        { NULL, "f1", -1 },
+        { "f1", NULL, -1 },
+        { "f1", "tr2_test_dir", -1 },
+        { "tr2_test_dir", "f1", -1 },
+        { "tr2_test_dir", "tr2_test_dir", -1 },
+        { "tr2_test_dir/./f1", "tr2_test_dir/f2", 0 },
+        { "tr2_test_dir/f1"  , "tr2_test_dir/f1", 1 },
+        { "not_exists_file"  , "tr2_test_dir/f1", 0 },
+        { "tr2_test_dir\\f1" , "tr2_test_dir/./f1", 1 },
+        { "not_exists_file"  , "not_exists_file",  -1 },
+        { "tr2_test_dir/f1"  , "not_exists_file",   0 },
+        { "tr2_test_dir/../tr2_test_dir/f1", "tr2_test_dir/f1", 1 }
+    };
+
+    memset(current_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, current_path);
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathA(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
+    CreateDirectoryA("tr2_test_dir", NULL);
+
+    file = CreateFileA("tr2_test_dir/f1", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    file = CreateFileA("tr2_test_dir/f2", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        val = p_tr2_sys__Equivalent(tests[i].path1, tests[i].path2);
+        ok(tests[i].equivalent == val, "tr2_sys__Equivalent(): test %d expect: %d, got %d\n", i+1, tests[i].equivalent, val);
+        ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    }
+
+    ok(DeleteFileA("tr2_test_dir/f1"), "Expected tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f2"), "Expected tr2_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+    ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -348,5 +405,6 @@ START_TEST(msvcp120)
     test__Do_call();
 
     test_tr2_sys__File_size();
+    test_tr2_sys__Equivalent();
     FreeLibrary(msvcp);
 }
