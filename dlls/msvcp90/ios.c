@@ -14241,6 +14241,17 @@ int __cdecl tr2_sys__Equivalent(char const* path1, char const* path2)
             );
 }
 
+/* ?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z */
+/* ?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z */
+char* __cdecl tr2_sys__Current_get(char *current_path)
+{
+    TRACE("(%p)\n", current_path);
+
+    if(!GetCurrentDirectoryA(MAX_PATH, current_path))
+        return NULL;
+    return current_path;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

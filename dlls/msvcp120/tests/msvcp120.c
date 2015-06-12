@@ -61,6 +61,7 @@ static void (CDECL *p__Do_call)(void *this);
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
+static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -93,11 +94,15 @@ static BOOL init(void)
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPEBD0@Z");
+        SET(p_tr2_sys__Current_get,
+                "?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPBD0@Z");
+        SET(p_tr2_sys__Current_get,
+                "?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -395,6 +400,29 @@ static void test_tr2_sys__Equivalent(void)
     ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
 }
 
+static void test_tr2_sys__Current_get(void)
+{
+    char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
+    char *temp;
+    memset(origin_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, origin_path);
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathA(MAX_PATH, temp_path);
+
+    ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
+    memset(current_path, 0, MAX_PATH);
+    temp = p_tr2_sys__Current_get(current_path);
+    ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
+    temp[strlen(temp)] = '\\';
+    ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
+
+    ok(SetCurrentDirectoryA(origin_path), "SetCurrentDirectoryA to origin_path failed\n");
+    memset(current_path, 0, MAX_PATH);
+    temp = p_tr2_sys__Current_get(current_path);
+    ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
+    ok(!strcmp(origin_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", origin_path, current_path);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -406,5 +434,6 @@ START_TEST(msvcp120)
 
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();
+    test_tr2_sys__Current_get();
     FreeLibrary(msvcp);
 }
