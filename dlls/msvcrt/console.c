@@ -44,7 +44,8 @@ void msvcrt_init_console(void)
 {
   TRACE(":Opening console handles\n");
 
-  MSVCRT_console_in = CreateFileA("CONIN$", GENERIC_READ, FILE_SHARE_READ,
+  MSVCRT_console_in = CreateFileA("CONIN$", GENERIC_WRITE|GENERIC_READ,
+                                  FILE_SHARE_WRITE|FILE_SHARE_READ,
                                   NULL, OPEN_EXISTING, 0, NULL);
   MSVCRT_console_out= CreateFileA("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
 				    NULL, OPEN_EXISTING, 0, NULL);
