@@ -57,6 +57,9 @@ typedef struct
         HRESULT               code;
         IBackgroundCopyFile2 *file;
     } error;
+    HANDLE wait;
+    HANDLE cancel;
+    HANDLE done;
 } BackgroundCopyJobImpl;
 
 /* Background copy file vtbl and related data */
@@ -69,6 +72,7 @@ typedef struct
     WCHAR tempFileName[MAX_PATH];
     struct list entryFromJob;
     BackgroundCopyJobImpl *owner;
+    DWORD read_size;
 } BackgroundCopyFileImpl;
 
 /* Background copy manager vtbl and related data */
@@ -104,14 +108,6 @@ void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
-static inline char *
-qmgr_strdup(const char *s)
-{
-    size_t n = strlen(s) + 1;
-    char *d = HeapAlloc(GetProcessHeap(), 0, n);
-    return d ? memcpy(d, s, n) : NULL;
-}
-
 static inline HRESULT return_strval(const WCHAR *str, WCHAR **ret)
 {
     int len;

@@ -1,5 +1,5 @@
 MODULE    = qmgr.dll
-IMPORTS   = uuid wininet urlmon ole32 advapi32
+IMPORTS   = uuid winhttp ole32 advapi32
 
 C_SRCS = \
 	enum_files.c \
