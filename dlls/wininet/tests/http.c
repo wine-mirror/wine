@@ -4838,7 +4838,13 @@ static void test_secure_connection(void)
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    ok(ret, "HttpSendRequest failed: %d\n", GetLastError());
+    ok(ret || broken(GetLastError() == ERROR_INTERNET_CANNOT_CONNECT),
+                     "HttpSendRequest failed: %d\n", GetLastError());
+    if (!ret)
+    {
+        win_skip("Cannot connect to https.\n");
+        goto done;
+    }
 
     size = sizeof(flags);
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
@@ -4963,6 +4969,7 @@ static void test_secure_connection(void)
     }
     HeapFree(GetProcessHeap(), 0, certificate_structW);
 
+done:
     InternetCloseHandle(req);
     InternetCloseHandle(con);
     InternetCloseHandle(ses);
