@@ -201,6 +201,7 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     This->fileProgress.Completed = FALSE;
     This->owner = owner;
     This->read_size = 0;
+    This->tempFileName[0] = 0;
     IBackgroundCopyJob3_AddRef(&owner->IBackgroundCopyJob3_iface);
 
     *file = This;

@@ -259,6 +259,9 @@ static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob3 *iface)
                 HeapFree(GetProcessHeap(), 0, cred->Credentials.Basic.Password);
             }
         }
+        CloseHandle(This->wait);
+        CloseHandle(This->cancel);
+        CloseHandle(This->done);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -365,8 +368,48 @@ static HRESULT WINAPI BackgroundCopyJob_Cancel(
     IBackgroundCopyJob3 *iface)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob3(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    HRESULT rv = S_OK;
+
+    TRACE("(%p)\n", This);
+
+    EnterCriticalSection(&This->cs);
+
+    if (is_job_done(This))
+    {
+        rv = BG_E_INVALID_STATE;
+    }
+    else
+    {
+        BackgroundCopyFileImpl *file;
+
+        if (This->state == BG_JOB_STATE_CONNECTING || This->state == BG_JOB_STATE_TRANSFERRING)
+        {
+            This->state = BG_JOB_STATE_CANCELLED;
+            SetEvent(This->cancel);
+
+            LeaveCriticalSection(&This->cs);
+            WaitForSingleObject(This->done, INFINITE);
+            EnterCriticalSection(&This->cs);
+        }
+
+        LIST_FOR_EACH_ENTRY(file, &This->files, BackgroundCopyFileImpl, entryFromJob)
+        {
+            if (file->tempFileName[0] && !DeleteFileW(file->tempFileName))
+            {
+                WARN("Couldn't delete %s (%u)\n", debugstr_w(file->tempFileName), GetLastError());
+                rv = BG_S_UNABLE_TO_DELETE_FILES;
+            }
+            if (file->info.LocalName && !DeleteFileW(file->info.LocalName))
+            {
+                WARN("Couldn't delete %s (%u)\n", debugstr_w(file->info.LocalName), GetLastError());
+                rv = BG_S_UNABLE_TO_DELETE_FILES;
+            }
+        }
+        This->state = BG_JOB_STATE_CANCELLED;
+    }
+
+    LeaveCriticalSection(&This->cs);
+    return rv;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_Complete(
@@ -1192,6 +1235,10 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->error.file = NULL;
 
     memset(&This->http_options, 0, sizeof(This->http_options));
+
+    This->wait   = CreateEventW(NULL, FALSE, FALSE, NULL);
+    This->cancel = CreateEventW(NULL, FALSE, FALSE, NULL);
+    This->done   = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     *job = This;
 
