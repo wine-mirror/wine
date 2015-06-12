@@ -11964,6 +11964,18 @@ static void test_SetForegroundWindow(void)
     DestroyWindow(hwnd);
 }
 
+static DWORD get_input_codepage( void )
+{
+    DWORD cp;
+    int ret;
+    HKL hkl = GetKeyboardLayout( 0 );
+
+    ret = GetLocaleInfoW( LOWORD(hkl), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                          (WCHAR *)&cp, sizeof(cp) / sizeof(WCHAR) );
+    if (!ret) cp = CP_ACP;
+    return cp;
+}
+
 static void test_dbcs_wm_char(void)
 {
     BYTE dbch[2];
@@ -11977,6 +11989,7 @@ static void test_dbcs_wm_char(void)
     UINT i, j, k;
     struct message wmCharSeq[2];
     BOOL ret;
+    DWORD cp = get_input_codepage();
 
     if (!pGetCPInfoExA)
     {
@@ -11984,7 +11997,7 @@ static void test_dbcs_wm_char(void)
         return;
     }
 
-    pGetCPInfoExA( CP_ACP, 0, &cpinfo );
+    pGetCPInfoExA( cp, 0, &cpinfo );
     if (cpinfo.MaxCharSize != 2)
     {
         skip( "Skipping DBCS WM_CHAR test in SBCS codepage '%s'\n", cpinfo.CodePageName );
@@ -12002,8 +12015,8 @@ static void test_dbcs_wm_char(void)
                 WCHAR wstr[2];
                 str[0] = j;
                 str[1] = k;
-                if (MultiByteToWideChar( CP_ACP, 0, str, 2, wstr, 2 ) == 1 &&
-                    WideCharToMultiByte( CP_ACP, 0, wstr, 1, str, 2, NULL, NULL ) == 2 &&
+                if (MultiByteToWideChar( cp, 0, str, 2, wstr, 2 ) == 1 &&
+                    WideCharToMultiByte( cp, 0, wstr, 1, str, 2, NULL, NULL ) == 2 &&
                     (BYTE)str[0] == j && (BYTE)str[1] == k &&
                     HIBYTE(wstr[0]) && HIBYTE(wstr[0]) != 0xff)
                 {
