@@ -992,16 +992,24 @@ static HRESULT WINAPI http_options_SetSecurityFlags(
     IBackgroundCopyJobHttpOptions *iface,
     ULONG Flags)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+
+    TRACE("(%p)->(0x%08x)\n", iface, Flags);
+
+    job->http_options.flags = Flags;
+    return S_OK;
 }
 
 static HRESULT WINAPI http_options_GetSecurityFlags(
     IBackgroundCopyJobHttpOptions *iface,
     ULONG *pFlags)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *job = impl_from_IBackgroundCopyJobHttpOptions(iface);
+
+    TRACE("(%p)->(%p)\n", iface, pFlags);
+
+    *pFlags = job->http_options.flags;
+    return S_OK;
 }
 
 static const IBackgroundCopyJobHttpOptionsVtbl http_options_vtbl =
