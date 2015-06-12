@@ -14276,6 +14276,14 @@ int __cdecl tr2_sys__Make_dir(char const* path)
     return 1;
 }
 
+/* ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z */
+/* ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z */
+MSVCP_bool __cdecl tr2_sys__Remove_dir(char const* path)
+{
+    TRACE("(%p)\n", path);
+    return RemoveDirectoryA(path) != 0;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

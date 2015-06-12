@@ -1679,8 +1679,8 @@
 @ stub -arch=arm ?_Release@_Pad@std@@QAAXXZ
 @ stub -arch=i386 ?_Release@_Pad@std@@QAEXXZ
 @ stub -arch=win64 ?_Release@_Pad@std@@QEAAXXZ
-@ stub -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z
-@ stub -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z
+@ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z(str) tr2_sys__Remove_dir
+@ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z(str) tr2_sys__Remove_dir
 @ stub -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z
 @ stub -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z
 @ stub -arch=win32 ?_Rename@sys@tr2@std@@YAHPBD0@Z

@@ -65,6 +65,7 @@ static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
+static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -103,6 +104,8 @@ static BOOL init(void)
                 "?_Current_set@sys@tr2@std@@YA_NPEBD@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPEBD@Z");
+        SET(p_tr2_sys__Remove_dir,
+                "?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -114,6 +117,8 @@ static BOOL init(void)
                 "?_Current_set@sys@tr2@std@@YA_NPBD@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPBD@Z");
+        SET(p_tr2_sys__Remove_dir,
+                "?_Remove_dir@sys@tr2@std@@YA_NPBD@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -497,6 +502,30 @@ static void test_tr2_sys__Make_dir(void)
     ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
 }
 
+static void test_tr2_sys__Remove_dir(void)
+{
+    MSVCP_bool ret;
+    int i;
+    struct {
+        char const *path;
+        MSVCP_bool val;
+    } tests[] = {
+        { "tr2_test_dir", TRUE  },
+        { "tr2_test_dir", FALSE },
+        { NULL, FALSE },
+        { "??invalid_name>>", FALSE }
+    };
+
+    ok(p_tr2_sys__Make_dir("tr2_test_dir"), "tr2_sys__Make_dir() failed\n");
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_tr2_sys__Remove_dir(tests[i].path);
+        ok(ret == tests[i].val, "test_tr2_sys__Remove_dir(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
+        ok(errno == 0xdeadbeef, "test_tr2_sys__Remove_dir(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -511,5 +540,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Current_get();
     test_tr2_sys__Current_set();
     test_tr2_sys__Make_dir();
+    test_tr2_sys__Remove_dir();
     FreeLibrary(msvcp);
 }
