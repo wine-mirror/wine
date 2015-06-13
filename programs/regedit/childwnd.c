@@ -243,7 +243,14 @@ static void get_last_key(HWND hwndTV)
     if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_READ, NULL, &hkey, NULL) == ERROR_SUCCESS)
     {
         if (RegQueryValueExW(hkey, wszLastKey, NULL, NULL, (LPBYTE)wszVal, &dwSize) == ERROR_SUCCESS)
-            SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)FindPathInTree(hwndTV, wszVal));
+        {
+            HTREEITEM selection;
+            if (!strcmpW(wszVal, g_pChildWnd->szPath))
+                selection = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+            else
+                selection = FindPathInTree(hwndTV, wszVal);
+            SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)selection);
+        }
 
         RegCloseKey(hkey);
     }
@@ -258,15 +265,20 @@ static void get_last_key(HWND hwndTV)
 static void set_last_key(HWND hwndTV)
 {
     HKEY hkey;
-    WCHAR *wszVal;
 
     if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL) == ERROR_SUCCESS)
     {
         HTREEITEM selection = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
+        HTREEITEM root = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+        WCHAR *value;
 
-        wszVal = GetItemFullPath(g_pChildWnd->hTreeWnd, selection, FALSE);
-        RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)wszVal, (lstrlenW(wszVal) + 1) * sizeof(WCHAR));
-        HeapFree(GetProcessHeap(), 0, wszVal);
+        if (selection == root)
+            value = g_pChildWnd->szPath;
+        else
+            value = GetItemFullPath(g_pChildWnd->hTreeWnd, selection, FALSE);
+        RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)value, (lstrlenW(value) + 1) * sizeof(WCHAR));
+        if (selection != root)
+            HeapFree(GetProcessHeap(), 0, value);
         RegCloseKey(hkey);
     }
 }
