@@ -1407,9 +1407,11 @@ HRESULT WINAPI IUnknown_GetClassID(IUnknown *lpUnknown, CLSID *clsid)
 
     hr = IUnknown_QueryInterface(lpUnknown, &IID_IPersist, (void**)&persist);
     if (hr != S_OK)
+    {
         hr = IUnknown_QueryInterface(lpUnknown, &IID_IPersistFolder, (void**)&persist);
         if (hr != S_OK)
             return hr;
+    }
 
     hr = IPersist_GetClassID(persist, clsid);
     IPersist_Release(persist);
