@@ -520,6 +520,8 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
         if (FAILED(hr))
         {
             ERR("failed to init property %s value as type %d\n", debugstr_w(pair->name), descr->type);
+            free_dbpropset(1, *propset);
+            *propset = NULL;
             return hr;
         }
 
