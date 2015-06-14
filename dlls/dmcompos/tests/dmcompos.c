@@ -261,6 +261,68 @@ static void test_chordmap(void)
     while (IDirectMusicChordMap_Release(dmcm));
 }
 
+static void test_chordmaptrack(void)
+{
+    IDirectMusicTrack8 *dmt8;
+    IPersistStream *ps;
+    CLSID class;
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicChordMapTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack8, (void**)&dmt8);
+    ok(hr == S_OK, "DirectMusicChordMapTrack create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicChordMapTrack),
+            "Expected class CLSID_DirectMusicChordMapTrack got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicTrack8_Release(dmt8));
+}
+
+static void test_signposttrack(void)
+{
+    IDirectMusicTrack8 *dmt8;
+    IPersistStream *ps;
+    CLSID class;
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSignPostTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack8, (void**)&dmt8);
+    ok(hr == S_OK, "DirectMusicSignPostTrack create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicSignPostTrack),
+            "Expected class CLSID_DirectMusicSignPostTrack got %s\n", wine_dbgstr_guid(&class));
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    todo_wine ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+
+    while (IDirectMusicTrack8_Release(dmt8));
+}
+
 START_TEST(dmcompos)
 {
     CoInitialize(NULL);
@@ -276,6 +338,8 @@ START_TEST(dmcompos)
     test_COM_template();
     test_COM_track();
     test_chordmap();
+    test_chordmaptrack();
+    test_signposttrack();
 
     CoUninitialize();
 }
