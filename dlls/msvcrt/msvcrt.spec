@@ -1025,7 +1025,7 @@
 @ cdecl _umask(long) MSVCRT__umask
 # stub _umask_s(long ptr)
 @ cdecl _ungetch(long)
-# stub _ungetwch(long)
+@ cdecl _ungetwch(long)
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)

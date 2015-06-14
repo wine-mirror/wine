@@ -1784,8 +1784,8 @@
 @ cdecl _ungetch(long)
 @ cdecl _ungetch_nolock(long)
 @ cdecl _ungetwc_nolock(long ptr) MSVCRT__ungetwc_nolock
-@ stub _ungetwch
-@ stub _ungetwch_nolock
+@ cdecl _ungetwch(long)
+@ cdecl _ungetwch_nolock(long)
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)

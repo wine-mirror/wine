@@ -439,6 +439,28 @@ int CDECL _ungetch(int c)
 }
 
 /*********************************************************************
+ *              _ungetwch_nolock (MSVCR80.@)
+ */
+MSVCRT_wchar_t CDECL _ungetwch_nolock(MSVCRT_wchar_t c)
+{
+    MSVCRT_wchar_t retval = MSVCRT_WEOF;
+    if (c != MSVCRT_WEOF && __MSVCRT_console_buffer_w == MSVCRT_WEOF)
+        retval = __MSVCRT_console_buffer_w = c;
+    return retval;
+}
+
+/*********************************************************************
+ *              _ungetwch (MSVCRT.@)
+ */
+MSVCRT_wchar_t CDECL _ungetwch(MSVCRT_wchar_t c)
+{
+    LOCK_CONSOLE;
+    c = _ungetwch_nolock(c);
+    UNLOCK_CONSOLE;
+    return c;
+}
+
+/*********************************************************************
  *		_kbhit (MSVCRT.@)
  */
 int CDECL _kbhit(void)

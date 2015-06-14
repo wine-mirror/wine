@@ -578,7 +578,7 @@
 @ cdecl _ultow(long ptr long) ntdll._ultow
 @ cdecl _umask(long) MSVCRT__umask
 @ cdecl _ungetch(long)
-@ stub _ungetwch
+@ cdecl _ungetwch(long)
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
