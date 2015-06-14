@@ -60,7 +60,7 @@ static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_r
     int i;
     char        buf[8];
 
-    switch (ctx->PState & 0x0f)
+    switch (ctx->Cpsr & 0x0f)
     {
     case 0:  strcpy(buf, "EL0t"); break;
     case 4:  strcpy(buf, "EL1t"); break;
@@ -73,15 +73,15 @@ static void be_arm64_print_context(HANDLE hThread, const CONTEXT* ctx, int all_r
     }
 
     dbg_printf("Register dump:\n");
-    dbg_printf("%s %s Mode\n", (ctx->PState & 0x10) ? "ARM" : "ARM64", buf);
+    dbg_printf("%s %s Mode\n", (ctx->Cpsr & 0x10) ? "ARM" : "ARM64", buf);
 
     strcpy(buf, condflags);
     for (i = 0; buf[i]; i++)
-        if (!((ctx->PState >> 26) & (1 << (sizeof(condflags) - i))))
+        if (!((ctx->Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
-    dbg_printf(" Pc:%016lx Sp:%016lx Lr:%016lx Pstate:%016lx(%s)\n",
-               ctx->Pc, ctx->Sp, ctx->Lr, ctx->PState, buf);
+    dbg_printf(" Pc:%016lx Sp:%016lx Lr:%016lx Cpsr:%08x(%s)\n",
+               ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr, buf);
     dbg_printf(" x0: %016lx x1: %016lx x2: %016lx x3: %016lx x4: %016lx\n",
                ctx->X0, ctx->X1, ctx->X2, ctx->X3, ctx->X4);
     dbg_printf(" x5: %016lx x6: %016lx x7: %016lx x8: %016lx x9: %016lx\n",
@@ -104,6 +104,7 @@ static void be_arm64_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
 
 static struct dbg_internal_var be_arm64_ctx[] =
 {
+    {CV_ARM64_PSTATE,     "cpsr",   (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Cpsr),   dbg_itype_unsigned_int},
     {CV_ARM64_X0 +  0,    "x0",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, X0),     dbg_itype_unsigned_long_int},
     {CV_ARM64_X0 +  1,    "x1",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, X1),     dbg_itype_unsigned_long_int},
     {CV_ARM64_X0 +  2,    "x2",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, X2),     dbg_itype_unsigned_long_int},
@@ -137,7 +138,6 @@ static struct dbg_internal_var be_arm64_ctx[] =
     {CV_ARM64_LR,         "lr",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Lr),     dbg_itype_unsigned_long_int},
     {CV_ARM64_SP,         "sp",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Sp),     dbg_itype_unsigned_long_int},
     {CV_ARM64_PC,         "pc",     (DWORD_PTR*)FIELD_OFFSET(CONTEXT, Pc),     dbg_itype_unsigned_long_int},
-    {CV_ARM64_PSTATE,     "pstate", (DWORD_PTR*)FIELD_OFFSET(CONTEXT, PState), dbg_itype_unsigned_long_int},
     {0,                   NULL,     0,                                         dbg_itype_none}
 };
 

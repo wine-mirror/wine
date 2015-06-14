@@ -129,7 +129,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->Lr     = LR_sig(sigcontext);     /* Link register */
     context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
     context->Pc     = PC_sig(sigcontext);     /* Program Counter */
-    context->PState = PSTATE_sig(sigcontext); /* Current State Register */
+    context->Cpsr   = PSTATE_sig(sigcontext); /* Current State Register */
 }
 
 
@@ -151,7 +151,7 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     LR_sig(sigcontext)     = context->Lr;     /* Link register */
     SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
     PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
-    PSTATE_sig(sigcontext) = context->PState; /* Current State Register */
+    PSTATE_sig(sigcontext) = context->Cpsr;   /* Current State Register */
 }
 
 
@@ -209,7 +209,7 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
         to->Lr      = from->Lr;
         to->Sp      = from->Sp;
         to->Pc      = from->Pc;
-        to->PState  = from->PState;
+        to->Cpsr    = from->Cpsr;
     }
     if (flags & CONTEXT_INTEGER)
     {
@@ -241,7 +241,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->integer.arm64_regs.x[30] = from->Lr;
         to->ctl.arm64_regs.sp     = from->Sp;
         to->ctl.arm64_regs.pc     = from->Pc;
-        to->ctl.arm64_regs.pstate = from->PState;
+        to->ctl.arm64_regs.pstate = from->Cpsr;
     }
     if (flags & CONTEXT_INTEGER)
     {
@@ -274,7 +274,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Lr     = from->integer.arm64_regs.x[30];
         to->Sp     = from->ctl.arm64_regs.sp;
         to->Pc     = from->ctl.arm64_regs.pc;
-        to->PState = from->ctl.arm64_regs.pstate;
+        to->Cpsr   = from->ctl.arm64_regs.pstate;
     }
     if (from->flags & SERVER_CTX_INTEGER)
     {

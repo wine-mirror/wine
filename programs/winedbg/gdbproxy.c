@@ -399,6 +399,7 @@ static struct cpu_register cpu_register_map[] = {
 #elif defined(__aarch64__)
 static const char target_xml[] = "";
 static struct cpu_register cpu_register_map[] = {
+    REG(Cpsr, 4, CONTEXT_CONTROL),
     REG(X0,  8, CONTEXT_INTEGER),
     REG(X1,  8, CONTEXT_INTEGER),
     REG(X2,  8, CONTEXT_INTEGER),
@@ -432,7 +433,6 @@ static struct cpu_register cpu_register_map[] = {
     REG(Lr,  8, CONTEXT_INTEGER),
     REG(Sp,  8, CONTEXT_CONTROL),
     REG(Pc,  8, CONTEXT_CONTROL),
-    REG(PState, 8, CONTEXT_CONTROL),
 };
 #else
 # error Define the registers map for your CPU

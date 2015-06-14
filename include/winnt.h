@@ -1755,6 +1755,7 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry(ULONG_PTR,DWORD*,UNWIND_HISTORY_
 
 typedef struct _CONTEXT {
     ULONG ContextFlags;
+    ULONG Cpsr;
 
     /* This section is specified/returned if the ContextFlags word contains
        the flag CONTEXT_INTEGER. */
@@ -1793,7 +1794,6 @@ typedef struct _CONTEXT {
     ULONGLONG Lr;
     ULONGLONG Sp;
     ULONGLONG Pc;
-    ULONGLONG PState;
 
     /* These are selected by CONTEXT_FLOATING_POINT */
     /* FIXME */
