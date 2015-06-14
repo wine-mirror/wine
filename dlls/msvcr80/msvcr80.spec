@@ -583,8 +583,8 @@
 @ cdecl _getwc_nolock(ptr) MSVCRT__fgetwc_nolock
 @ cdecl _getwch()
 @ cdecl _getwch_nolock()
-@ stub _getwche
-@ stub _getwche_nolock
+@ cdecl _getwche()
+@ cdecl _getwche_nolock()
 @ cdecl _getws(ptr) MSVCRT__getws
 @ stub _getws_s
 @ cdecl -arch=i386 _global_unwind2(ptr)

@@ -534,7 +534,7 @@
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr) MSVCRT__getw
 @ cdecl _getwch()
-# stub _getwche()
+@ cdecl _getwche()
 @ cdecl _getws(ptr) MSVCRT__getws
 @ cdecl -arch=i386 _global_unwind2(ptr)
 @ cdecl _gmtime32(ptr) MSVCRT__gmtime32

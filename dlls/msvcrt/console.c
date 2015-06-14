@@ -354,6 +354,31 @@ int CDECL _getche(void)
 }
 
 /*********************************************************************
+ *              _getwche_nolock (MSVCR80.@)
+ */
+MSVCRT_wchar_t CDECL _getwche_nolock(void)
+{
+    MSVCRT_wchar_t wch;
+    wch = _getch_nolock();
+    if (wch == MSVCRT_WEOF)
+        return wch;
+    return _putwch_nolock(wch);
+}
+
+/*********************************************************************
+ *              _getwche (MSVCRT.@)
+ */
+MSVCRT_wchar_t CDECL _getwche(void)
+{
+    MSVCRT_wchar_t ret;
+
+    LOCK_CONSOLE;
+    ret = _getwche_nolock();
+    UNLOCK_CONSOLE;
+    return ret;
+}
+
+/*********************************************************************
  *		_cgets (MSVCRT.@)
  */
 char* CDECL _cgets(char* str)
