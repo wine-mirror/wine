@@ -1051,8 +1051,8 @@ static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory2 *
     IDWriteInlineObject **trimming_sign)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%p %p): semi-stub\n", This, format, trimming_sign);
-    return create_trimmingsign(trimming_sign);
+    TRACE("(%p)->(%p %p)\n", This, format, trimming_sign);
+    return create_trimmingsign(format, trimming_sign);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory2 *iface, IDWriteTextAnalyzer **analyzer)

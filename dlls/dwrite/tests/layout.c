@@ -883,8 +883,19 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(before == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", before);
     ok(after == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", after);
-
     IDWriteInlineObject_Release(sign);
+
+    /* non-orthogonal flow/reading combination */
+    hr = IDWriteTextFormat_SetReadingDirection(format, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* vista, win7 */, "got 0x%08x\n", hr);
+    if (hr == S_OK) {
+        hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
+        ok(hr == DWRITE_E_FLOWDIRECTIONCONFLICTS, "got 0x%08x\n", hr);
+    }
+
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
@@ -2362,6 +2373,56 @@ todo_wine {
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetFlowDirection(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    DWRITE_READING_DIRECTION reading;
+    DWRITE_FLOW_DIRECTION flow;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flow = IDWriteTextFormat_GetFlowDirection(format);
+    ok(flow == DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM, "got %d\n", flow);
+
+    reading = IDWriteTextFormat_GetReadingDirection(format);
+    ok(reading == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", reading);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
+
+    hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* vista,win7 */, "got 0x%08x\n", hr);
+    if (hr == S_OK) {
+        hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout_Release(layout);
+
+        hr = IDWriteTextFormat_SetReadingDirection(format, DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout_Release(layout);
+    }
+    else
+        win_skip("DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT is not supported\n");
+
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -2399,6 +2460,7 @@ START_TEST(layout)
     test_SetFontStretch();
     test_SetStrikethrough();
     test_GetMetrics();
+    test_SetFlowDirection();
 
     IDWriteFactory_Release(factory);
 }

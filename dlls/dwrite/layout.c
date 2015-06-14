@@ -3439,11 +3439,46 @@ static const IDWriteInlineObjectVtbl dwritetrimmingsignvtbl = {
     dwritetrimmingsign_GetBreakConditions
 };
 
-HRESULT create_trimmingsign(IDWriteInlineObject **sign)
+static inline BOOL is_reading_direction_horz(DWRITE_READING_DIRECTION direction)
+{
+    return (direction == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT) ||
+           (direction == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
+}
+
+static inline BOOL is_reading_direction_vert(DWRITE_READING_DIRECTION direction)
+{
+    return (direction == DWRITE_READING_DIRECTION_TOP_TO_BOTTOM) ||
+           (direction == DWRITE_READING_DIRECTION_BOTTOM_TO_TOP);
+}
+
+static inline BOOL is_flow_direction_horz(DWRITE_FLOW_DIRECTION direction)
+{
+    return (direction == DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT) ||
+           (direction == DWRITE_FLOW_DIRECTION_RIGHT_TO_LEFT);
+}
+
+static inline BOOL is_flow_direction_vert(DWRITE_FLOW_DIRECTION direction)
+{
+    return (direction == DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM) ||
+           (direction == DWRITE_FLOW_DIRECTION_BOTTOM_TO_TOP);
+}
+
+HRESULT create_trimmingsign(IDWriteTextFormat *format, IDWriteInlineObject **sign)
 {
     struct dwrite_trimmingsign *This;
+    DWRITE_READING_DIRECTION reading;
+    DWRITE_FLOW_DIRECTION flow;
 
     *sign = NULL;
+
+    /* Validate reading/flow direction here, layout creation won't complain about
+       invalid combinations. */
+    reading = IDWriteTextFormat_GetReadingDirection(format);
+    flow = IDWriteTextFormat_GetFlowDirection(format);
+
+    if ((is_reading_direction_horz(reading) && is_flow_direction_horz(flow)) ||
+        (is_reading_direction_vert(reading) && is_flow_direction_vert(flow)))
+        return DWRITE_E_FLOWDIRECTIONCONFLICTS;
 
     This = heap_alloc(sizeof(struct dwrite_trimmingsign));
     if (!This) return E_OUTOFMEMORY;
@@ -3527,7 +3562,12 @@ static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat1 *iface
 static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d)\n", This, direction);
+
+    if ((UINT32)direction > DWRITE_READING_DIRECTION_BOTTOM_TO_TOP)
+        return E_INVALIDARG;
+
     This->format.readingdir = direction;
     return S_OK;
 }
@@ -3535,7 +3575,12 @@ static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat1 *i
 static HRESULT WINAPI dwritetextformat_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d)\n", This, direction);
+
+    if ((UINT32)direction > DWRITE_FLOW_DIRECTION_RIGHT_TO_LEFT)
+        return E_INVALIDARG;
+
     This->format.flow = direction;
     return S_OK;
 }
