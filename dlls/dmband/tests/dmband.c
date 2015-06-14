@@ -162,7 +162,7 @@ static void test_dmband(void)
     hr = IDirectMusicBand_QueryInterface(dmb, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    todo_wine ok(hr == E_NOTIMPL, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetClassID failed: %08x\n", hr);
     hr = IPersistStream_IsDirty(ps);
     ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
     hr = IPersistStream_GetSizeMax(ps, &size);

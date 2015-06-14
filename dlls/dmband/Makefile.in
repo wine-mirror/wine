@@ -5,6 +5,7 @@ C_SRCS = \
 	band.c \
 	bandtrack.c \
 	dmband_main.c \
+	dmobject.c \
 	dmutils.c
 
 IDL_SRCS = dmband.idl
