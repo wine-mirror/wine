@@ -179,11 +179,52 @@ static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI RtlCaptureContext( CONTEXT *context )
-{
-    FIXME( "Not implemented on ARM64\n" );
-    memset( context, 0, sizeof(*context) );
-}
+/* FIXME: Use the Stack instead of the actual register values? */
+__ASM_STDCALL_FUNC( RtlCaptureContext, 8,
+                    "stp x0, x1, [sp, #-32]!\n\t"
+                    "mov w1, #0x400000\n\t"         /* CONTEXT_ARM64 */
+                    "add w1, w1, #0x3\n\t"          /* CONTEXT_FULL */
+                    "str w1, [x0]\n\t"              /* context->ContextFlags */ /* 32-bit, look at cpsr */
+                    "mrs x1, DAIF\n\t"
+                    "str w1, [x0, #0x4]\n\t"        /* context->Cpsr */
+                    "ldp x0, x1, [sp], #32\n\t"
+                    "str x0, [x0, #0x8]\n\t"        /* context->X0 */
+                    "str x1, [x0, #0x10]\n\t"       /* context->X1 */
+                    "str x2, [x0, #0x18]\n\t"       /* context->X2 */
+                    "str x3, [x0, #0x20]\n\t"       /* context->X3 */
+                    "str x4, [x0, #0x28]\n\t"       /* context->X4 */
+                    "str x5, [x0, #0x30]\n\t"       /* context->X5 */
+                    "str x6, [x0, #0x38]\n\t"       /* context->X6 */
+                    "str x7, [x0, #0x40]\n\t"       /* context->X7 */
+                    "str x8, [x0, #0x48]\n\t"       /* context->X8 */
+                    "str x9, [x0, #0x50]\n\t"       /* context->X9 */
+                    "str x10, [x0, #0x58]\n\t"      /* context->X10 */
+                    "str x11, [x0, #0x60]\n\t"      /* context->X11 */
+                    "str x12, [x0, #0x68]\n\t"      /* context->X12 */
+                    "str x13, [x0, #0x70]\n\t"      /* context->X13 */
+                    "str x14, [x0, #0x78]\n\t"      /* context->X14 */
+                    "str x15, [x0, #0x80]\n\t"      /* context->X15 */
+                    "str x16, [x0, #0x88]\n\t"      /* context->X16 */
+                    "str x17, [x0, #0x90]\n\t"      /* context->X17 */
+                    "str x18, [x0, #0x98]\n\t"      /* context->X18 */
+                    "str x19, [x0, #0xa0]\n\t"      /* context->X19 */
+                    "str x20, [x0, #0xa8]\n\t"      /* context->X20 */
+                    "str x21, [x0, #0xb0]\n\t"      /* context->X21 */
+                    "str x22, [x0, #0xb8]\n\t"      /* context->X22 */
+                    "str x23, [x0, #0xc0]\n\t"      /* context->X23 */
+                    "str x24, [x0, #0xc8]\n\t"      /* context->X24 */
+                    "str x25, [x0, #0xd0]\n\t"      /* context->X25 */
+                    "str x26, [x0, #0xd8]\n\t"      /* context->X26 */
+                    "str x27, [x0, #0xe0]\n\t"      /* context->X27 */
+                    "str x28, [x0, #0xe8]\n\t"      /* context->X28 */
+                    "str x29, [x0, #0xf0]\n\t"      /* context->Fp */
+                    "str x30, [x0, #0xf8]\n\t"      /* context->Lr */
+                    "mov x1, sp\n\t"
+                    "str x1, [x0, #0x100]\n\t"      /* context->Sp */
+                    "adr x1, 1f\n\t"
+                    "1: str x1, [x0, #0x108]\n\t"   /* context->Pc */
+                    "ret"
+                    )
 
 /***********************************************************************
  *           set_cpu_context
