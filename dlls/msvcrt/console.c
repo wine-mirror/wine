@@ -218,6 +218,28 @@ int CDECL _putch(int c)
 }
 
 /*********************************************************************
+ *		_putwch_nolock (MSVCR80.@)
+ */
+MSVCRT_wchar_t CDECL _putwch_nolock(MSVCRT_wchar_t c)
+{
+    DWORD count;
+    if (WriteConsoleW(MSVCRT_console_out, &c, 1, &count, NULL) && count==1)
+        return c;
+    return MSVCRT_WEOF;
+}
+
+/*********************************************************************
+ *		_putwch (MSVCRT.@)
+ */
+MSVCRT_wchar_t CDECL _putwch(MSVCRT_wchar_t c)
+{
+    LOCK_CONSOLE;
+    c = _putwch_nolock(c);
+    UNLOCK_CONSOLE;
+    return c;
+}
+
+/*********************************************************************
  *		_getche_nolock (MSVCR80.@)
  */
 int CDECL _getche_nolock(void)
