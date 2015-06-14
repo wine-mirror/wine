@@ -69,11 +69,14 @@ void msvcrt_free_console(void)
 int CDECL _cputs(const char* str)
 {
   DWORD count;
-  int retval = MSVCRT_EOF;
+  int len, retval = -1;
+
+  if (!MSVCRT_CHECK_PMT(str != NULL)) return -1;
+  len = strlen(str);
 
   LOCK_CONSOLE;
-  if (WriteConsoleA(MSVCRT_console_out, str, strlen(str), &count, NULL)
-      && count == 1)
+  if (WriteConsoleA(MSVCRT_console_out, str, len, &count, NULL)
+      && count == len)
     retval = 0;
   UNLOCK_CONSOLE;
   return retval;
