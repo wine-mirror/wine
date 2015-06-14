@@ -406,20 +406,15 @@ static HRESULT WINAPI testrenderer_IsPixelSnappingDisabled(IDWriteTextRenderer *
 static HRESULT WINAPI testrenderer_GetCurrentTransform(IDWriteTextRenderer *iface,
     void *client_drawingcontext, DWRITE_MATRIX *transform)
 {
-    transform->m11 = 1.0;
-    transform->m12 = 0.0;
-    transform->m21 = 0.0;
-    transform->m22 = 1.0;
-    transform->dx = 0.0;
-    transform->dy = 0.0;
-    return S_OK;
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI testrenderer_GetPixelsPerDip(IDWriteTextRenderer *iface,
     void *client_drawingcontext, FLOAT *pixels_per_dip)
 {
-    *pixels_per_dip = 1.0;
-    return S_OK;
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
@@ -1174,7 +1169,12 @@ static const struct drawcall_entry draw_seq5[] = {
     { DRAW_LAST_KIND }
 };
 
-static const struct drawcall_entry draw_seq6[] = {
+static const struct drawcall_entry empty_seq[] = {
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draw_single_run_seq[] = {
+    { DRAW_GLYPHRUN, {'s','t','r','i','n','g',0} },
     { DRAW_LAST_KIND }
 };
 
@@ -1183,12 +1183,12 @@ static void test_Draw(void)
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a','b',0};
     static const WCHAR ruW[] = {'r','u',0};
-
     IDWriteInlineObject *inlineobj;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
     IDWriteFactory *factory;
+    DWRITE_MATRIX m;
     HRESULT hr;
 
     factory = create_factory();
@@ -1285,7 +1285,44 @@ static void test_Draw(void)
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_seq6, "draw test 6", FALSE);
+    ok_sequence(sequences, RENDERER_ID, empty_seq, "draw test 6", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    /* different parameter combinations with gdi-compatible layout */
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, TRUE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 7", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 8", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    m.m11 = m.m22 = 2.0;
+    m.m12 = m.m21 = m.dx = m.dy = 0.0;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, TRUE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 9", FALSE);
+    IDWriteTextLayout_Release(layout);
+
+    m.m11 = m.m22 = 2.0;
+    m.m12 = m.m21 = m.dx = m.dy = 0.0;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 10", FALSE);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
