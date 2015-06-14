@@ -1435,10 +1435,10 @@ static UINT32 collection_find_family(struct dwrite_fontcollection *collection, c
 
     for (i = 0; i < collection->family_count; i++) {
         IDWriteLocalizedStrings *family_name = collection->family_data[i]->familyname;
+        UINT32 j, count = IDWriteLocalizedStrings_GetCount(family_name);
         HRESULT hr;
-        int j;
 
-        for (j = 0; j < IDWriteLocalizedStrings_GetCount(family_name); j++) {
+        for (j = 0; j < count; j++) {
             WCHAR buffer[255];
             hr = IDWriteLocalizedStrings_GetString(family_name, j, buffer, 255);
             if (SUCCEEDED(hr) && !strcmpiW(buffer, name))
