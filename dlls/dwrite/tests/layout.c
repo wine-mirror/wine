@@ -215,18 +215,39 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
 }
 
-enum drawcall_kind {
-    DRAW_GLYPHRUN = 0,
-    DRAW_UNDERLINE,
-    DRAW_STRIKETHROUGH,
-    DRAW_INLINE,
-    DRAW_LAST_KIND
+enum drawcall_modifiers_kind {
+    DRAW_EFFECT         = 0x1000
 };
 
-static const char *get_draw_kind_name(enum drawcall_kind kind)
+enum drawcall_kind {
+    DRAW_GLYPHRUN      = 0,
+    DRAW_UNDERLINE     = 1,
+    DRAW_STRIKETHROUGH = 2,
+    DRAW_INLINE        = 3,
+    DRAW_LAST_KIND     = 4,
+    DRAW_TOTAL_KINDS   = 5,
+    DRAW_KINDS_MASK    = 0xff
+};
+
+static const char *get_draw_kind_name(unsigned short kind)
 {
-    static const char *kind_names[] = { "GLYPH_RUN", "UNDERLINE", "STRIKETHROUGH", "INLINE", "END_OF_SEQ" };
-    return kind > DRAW_LAST_KIND ? "unknown" : kind_names[kind];
+    static const char *kind_names[] = {
+      "GLYPH_RUN",
+      "UNDERLINE",
+      "STRIKETHROUGH",
+      "INLINE",
+      "END_OF_SEQ",
+
+      "GLYPH_RUN|EFFECT",
+      "UNDERLINE|EFFECT",
+      "STRIKETHROUGH|EFFECT",
+      "INLINE|EFFECT",
+      "END_OF_SEQ"
+    };
+    if ((kind & DRAW_KINDS_MASK) > DRAW_LAST_KIND)
+        return "unknown";
+    return (kind & DRAW_EFFECT) ? kind_names[(kind & DRAW_KINDS_MASK) + DRAW_TOTAL_KINDS] :
+        kind_names[kind];
 }
 
 struct drawcall_entry {
@@ -242,7 +263,7 @@ struct drawcall_sequence
 };
 
 struct drawtestcontext {
-    enum drawcall_kind kind;
+    unsigned short kind;
     BOOL todo;
     int *failcount;
     const char *file;
@@ -327,7 +348,7 @@ static void ok_sequence_(struct drawcall_sequence **seq, int sequence_index,
                 ok_(file, line) (0, "%s: call %s was expected, but got call %s instead\n",
                     context, get_draw_kind_name(expected->kind), get_draw_kind_name(actual->kind));
         }
-        else if (expected->kind == DRAW_GLYPHRUN) {
+        else if ((expected->kind & DRAW_KINDS_MASK) == DRAW_GLYPHRUN) {
             int cmp = lstrcmpW(expected->string, actual->string);
             if (cmp != 0 && todo) {
                 failcount++;
@@ -424,7 +445,7 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     DWRITE_MEASURING_MODE mode,
     DWRITE_GLYPH_RUN const *run,
     DWRITE_GLYPH_RUN_DESCRIPTION const *descr,
-    IUnknown *drawing_effect)
+    IUnknown *effect)
 {
     struct drawcall_entry entry;
     DWRITE_SCRIPT_ANALYSIS sa;
@@ -452,6 +473,8 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     }
 
     entry.kind = DRAW_GLYPHRUN;
+    if (effect)
+        entry.kind |= DRAW_EFFECT;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -461,10 +484,12 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_UNDERLINE const* underline,
-    IUnknown *drawing_effect)
+    IUnknown *effect)
 {
     struct drawcall_entry entry;
     entry.kind = DRAW_UNDERLINE;
+    if (effect)
+        entry.kind |= DRAW_EFFECT;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -474,10 +499,12 @@ static HRESULT WINAPI testrenderer_DrawStrikethrough(IDWriteTextRenderer *iface,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_STRIKETHROUGH const* strikethrough,
-    IUnknown *drawing_effect)
+    IUnknown *effect)
 {
     struct drawcall_entry entry;
     entry.kind = DRAW_STRIKETHROUGH;
+    if (effect)
+        entry.kind |= DRAW_EFFECT;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -489,10 +516,12 @@ static HRESULT WINAPI testrenderer_DrawInlineObject(IDWriteTextRenderer *iface,
     IDWriteInlineObject *object,
     BOOL is_sideways,
     BOOL is_rtl,
-    IUnknown *drawing_effect)
+    IUnknown *effect)
 {
     struct drawcall_entry entry;
     entry.kind = DRAW_INLINE;
+    if (effect)
+        entry.kind |= DRAW_EFFECT;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -574,6 +603,36 @@ static IDWriteInlineObjectVtbl testinlineobjvtbl = {
 
 static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
 static IDWriteInlineObject testinlineobj2 = { &testinlineobjvtbl };
+
+static HRESULT WINAPI testeffect_QI(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testeffect_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testeffect_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl testeffectvtbl = {
+    testeffect_QI,
+    testeffect_AddRef,
+    testeffect_Release
+};
+
+static IUnknown testeffect = { &testeffectvtbl };
 
 static void test_CreateTextLayout(void)
 {
@@ -1156,7 +1215,7 @@ static void test_SetInlineObject(void)
 static const struct drawcall_entry draw_seq[] = {
     { DRAW_GLYPHRUN, {'s',0}     },
     { DRAW_GLYPHRUN, {'r','i',0} },
-    { DRAW_GLYPHRUN, {'n',0}     },
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'n',0} },
     { DRAW_GLYPHRUN, {'g',0}     },
     { DRAW_INLINE },
     { DRAW_UNDERLINE },
@@ -2438,6 +2497,153 @@ static void test_SetFlowDirection(void)
     IDWriteFactory_Release(factory);
 }
 
+static const struct drawcall_entry draweffect_seq[] = {
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0x0300,0} },
+    { DRAW_GLYPHRUN, {'d',0} },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draweffect2_seq[] = {
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0} },
+    { DRAW_GLYPHRUN, {'c','d',0} },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draweffect3_seq[] = {
+    { DRAW_INLINE|DRAW_EFFECT },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry draweffect4_seq[] = {
+    { DRAW_INLINE },
+    { DRAW_LAST_KIND }
+};
+
+static void test_SetDrawingEffect(void)
+{
+    static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
+    static const WCHAR str2W[] = {'a','e','c','d',0};
+    IDWriteInlineObject *sign;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE r;
+    IUnknown *unk;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* string with combining mark */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* set effect past the end of text */
+    r.startPosition = 100;
+    r.length = 10;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = r.length = 0;
+    hr = IDWriteTextLayout_GetDrawingEffect(layout, 101, &unk, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 100 && r.length == 10, "got %u, %u\n", r.startPosition, r.length);
+
+    r.startPosition = r.length = 0;
+    unk = (void*)0xdeadbeef;
+    hr = IDWriteTextLayout_GetDrawingEffect(layout, 1000, &unk, &r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(r.startPosition == 110 && r.length == ~0u-110, "got %u, %u\n", r.startPosition, r.length);
+    ok(unk == NULL, "got %p\n", unk);
+
+    /* effect is applied to clusters, not individual text positions */
+    r.startPosition = 0;
+    r.length = 2;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draweffect_seq, "effect draw test", TRUE);
+    IDWriteTextLayout_Release(layout);
+
+    /* simple string */
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 0;
+    r.length = 2;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draweffect2_seq, "effect draw test 2", TRUE);
+    IDWriteTextLayout_Release(layout);
+
+    /* Inline object - effect set for same range */
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetInlineObject(layout, sign, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draweffect3_seq, "effect draw test 3", FALSE);
+
+    /* now set effect somewhere inside a range replaced by inline object */
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, NULL, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 1;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* no effect is reported in this case */
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draweffect4_seq, "effect draw test 4", FALSE);
+
+    r.startPosition = 0;
+    r.length = 4;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, NULL, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r.startPosition = 0;
+    r.length = 1;
+    hr = IDWriteTextLayout_SetDrawingEffect(layout, &testeffect, r);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* first range position is all that matters for inline ranges */
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draweffect3_seq, "effect draw test 5", FALSE);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteInlineObject_Release(sign);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -2476,6 +2682,7 @@ START_TEST(layout)
     test_SetStrikethrough();
     test_GetMetrics();
     test_SetFlowDirection();
+    test_SetDrawingEffect();
 
     IDWriteFactory_Release(factory);
 }

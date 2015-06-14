@@ -95,7 +95,8 @@ struct layout_range_attr_value {
 
 enum layout_range_kind {
     LAYOUT_RANGE_REGULAR,
-    LAYOUT_RANGE_STRIKETHROUGH
+    LAYOUT_RANGE_STRIKETHROUGH,
+    LAYOUT_RANGE_EFFECT
 };
 
 struct layout_range_header {
@@ -111,7 +112,6 @@ struct layout_range {
     FLOAT fontsize;
     DWRITE_FONT_STRETCH stretch;
     IDWriteInlineObject *object;
-    IUnknown *effect;
     BOOL underline;
     BOOL pair_kerning;
     IDWriteFontCollection *collection;
@@ -122,6 +122,11 @@ struct layout_range {
 struct layout_range_bool {
     struct layout_range_header h;
     BOOL value;
+};
+
+struct layout_range_effect {
+    struct layout_range_header h;
+    IUnknown *effect;
 };
 
 enum layout_run_kind {
@@ -153,7 +158,6 @@ struct layout_run {
         struct inline_object_run object;
         struct regular_layout_run regular;
     } u;
-    IUnknown *effect;
 };
 
 struct layout_effective_run {
@@ -170,6 +174,7 @@ struct layout_effective_run {
 struct layout_effective_inline {
     struct list entry;
     IDWriteInlineObject *object;
+    IUnknown *effect;
     FLOAT origin_x;
     FLOAT origin_y;
     BOOL  is_sideways;
@@ -207,6 +212,7 @@ struct dwrite_textlayout {
     FLOAT  maxwidth;
     FLOAT  maxheight;
     struct list strike_ranges;
+    struct list effects;
     struct list ranges;
     struct list runs;
     /* lists ready to use by Draw() */
@@ -601,7 +607,6 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
             r->u.object.object = range->object;
             r->u.object.length = get_clipped_range_length(layout, range);
-            r->effect = range->effect;
             list_add_tail(&layout->runs, &r->entry);
             continue;
         }
@@ -661,7 +666,6 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
-        r->effect = range->effect;
 
         hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
         if (FAILED(hr) || !exists) {
@@ -844,6 +848,25 @@ static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UI
     return width;
 }
 
+static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
+{
+    struct layout_range_header *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
+        DWRITE_TEXT_RANGE *r = &cur->range;
+        if (r->startPosition <= pos && pos < r->startPosition + r->length)
+            return cur;
+    }
+
+    return NULL;
+}
+
+static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+{
+    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->effects, pos);
+    return ((struct layout_range_effect*)h)->effect;
+}
+
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
@@ -867,6 +890,10 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
            different ranges which differ in reading direction). */
         inlineobject->is_sideways = FALSE;
         inlineobject->is_rtl = FALSE;
+
+        /* effect assigned from start position and on is used for inline objects */
+        inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position);
+
         list_add_tail(&layout->inlineobjects, &inlineobject->entry);
         return S_OK;
     }
@@ -968,19 +995,6 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     layout->lines[*line] = *metrics;
     *line += 1;
     return S_OK;
-}
-
-static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
-{
-    struct layout_range_header *cur;
-
-    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
-        DWRITE_TEXT_RANGE *r = &cur->range;
-        if (r->startPosition <= pos && pos < r->startPosition + r->length)
-            return cur;
-    }
-
-    return NULL;
 }
 
 static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
@@ -1090,6 +1104,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
 static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
+    struct layout_range_effect const *range_effect = (struct layout_range_effect*)h;
     struct layout_range_bool const *range_bool = (struct layout_range_bool*)h;
     struct layout_range const *range = (struct layout_range*)h;
 
@@ -1105,7 +1120,7 @@ static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum l
     case LAYOUT_RANGE_ATTR_INLINE:
         return range->object == value->u.object;
     case LAYOUT_RANGE_ATTR_EFFECT:
-        return range->effect == value->u.effect;
+        return range_effect->effect == value->u.effect;
     case LAYOUT_RANGE_ATTR_UNDERLINE:
         return range->underline == value->u.underline;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
@@ -1138,7 +1153,6 @@ static inline BOOL is_same_layout_attributes(struct layout_range_header const *h
                left->stretch == right->stretch &&
                left->fontsize == right->fontsize &&
                left->object == right->object &&
-               left->effect == right->effect &&
                left->underline == right->underline &&
                left->pair_kerning == right->pair_kerning &&
                left->collection == right->collection &&
@@ -1150,6 +1164,12 @@ static inline BOOL is_same_layout_attributes(struct layout_range_header const *h
         struct layout_range_bool const *left = (struct layout_range_bool const*)hleft;
         struct layout_range_bool const *right = (struct layout_range_bool const*)hright;
         return left->value == right->value;
+    }
+    case LAYOUT_RANGE_EFFECT:
+    {
+        struct layout_range_effect const *left = (struct layout_range_effect const*)hleft;
+        struct layout_range_effect const *right = (struct layout_range_effect const*)hright;
+        return left->effect == right->effect;
     }
     default:
         FIXME("unknown range kind %d\n", hleft->kind);
@@ -1182,7 +1202,6 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
         range->stretch = layout->format.stretch;
         range->fontsize = layout->format.fontsize;
         range->object = NULL;
-        range->effect = NULL;
         range->underline = FALSE;
         range->pair_kerning = FALSE;
 
@@ -1208,6 +1227,17 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
         if (!range) return NULL;
 
         range->value = FALSE;
+        h = &range->h;
+        break;
+    }
+    case LAYOUT_RANGE_EFFECT:
+    {
+        struct layout_range_effect *range;
+
+        range = heap_alloc(sizeof(*range));
+        if (!range) return NULL;
+
+        range->effect = NULL;
         h = &range->h;
         break;
     }
@@ -1244,8 +1274,6 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
         /* update refcounts */
         if (range->object)
             IDWriteInlineObject_AddRef(range->object);
-        if (range->effect)
-            IUnknown_AddRef(range->effect);
         if (range->collection)
             IDWriteFontCollection_AddRef(range->collection);
         ret = &range->h;
@@ -1258,6 +1286,17 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
 
         *strike = *(struct layout_range_bool*)h;
         ret = &strike->h;
+        break;
+    }
+    case LAYOUT_RANGE_EFFECT:
+    {
+        struct layout_range_effect *effect = heap_alloc(sizeof(*effect));
+        if (!effect) return NULL;
+
+        *effect = *(struct layout_range_effect*)h;
+        if (effect->effect)
+            IUnknown_AddRef(effect->effect);
+        ret = &effect->h;
         break;
     }
     default:
@@ -1274,16 +1313,28 @@ static void free_layout_range(struct layout_range_header *h)
     if (!h)
         return;
 
-    if (h->kind == LAYOUT_RANGE_REGULAR) {
+    switch (h->kind)
+    {
+    case LAYOUT_RANGE_REGULAR:
+    {
         struct layout_range *range = (struct layout_range*)h;
 
         if (range->object)
             IDWriteInlineObject_Release(range->object);
-        if (range->effect)
-            IUnknown_Release(range->effect);
         if (range->collection)
             IDWriteFontCollection_Release(range->collection);
         heap_free(range->fontfamily);
+        break;
+    }
+    case LAYOUT_RANGE_EFFECT:
+    {
+        struct layout_range_effect *effect = (struct layout_range_effect*)h;
+        if (effect->effect)
+            IUnknown_Release(effect->effect);
+        break;
+    }
+    default:
+        ;
     }
 
     heap_free(h);
@@ -1299,6 +1350,11 @@ static void free_layout_ranges_list(struct dwrite_textlayout *layout)
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->strike_ranges, struct layout_range_header, entry) {
+        list_remove(&cur->entry);
+        free_layout_range(cur);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->effects, struct layout_range_header, entry) {
         list_remove(&cur->entry);
         free_layout_range(cur);
     }
@@ -1351,6 +1407,7 @@ static inline BOOL set_layout_range_iface_attr(IUnknown **dest, IUnknown *value)
 
 static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
+    struct layout_range_effect *dest_effect = (struct layout_range_effect*)h;
     struct layout_range_bool *dest_bool = (struct layout_range_bool*)h;
     struct layout_range *dest = (struct layout_range*)h;
 
@@ -1377,7 +1434,7 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         changed = set_layout_range_iface_attr((IUnknown**)&dest->object, (IUnknown*)value->u.object);
         break;
     case LAYOUT_RANGE_ATTR_EFFECT:
-        changed = set_layout_range_iface_attr((IUnknown**)&dest->effect, (IUnknown*)value->u.effect);
+        changed = set_layout_range_iface_attr((IUnknown**)&dest_effect->effect, (IUnknown*)value->u.effect);
         break;
     case LAYOUT_RANGE_ATTR_UNDERLINE:
         changed = dest->underline != value->u.underline;
@@ -1444,7 +1501,6 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     case LAYOUT_RANGE_ATTR_STYLE:
     case LAYOUT_RANGE_ATTR_STRETCH:
     case LAYOUT_RANGE_ATTR_FONTSIZE:
-    case LAYOUT_RANGE_ATTR_EFFECT:
     case LAYOUT_RANGE_ATTR_INLINE:
     case LAYOUT_RANGE_ATTR_UNDERLINE:
     case LAYOUT_RANGE_ATTR_PAIR_KERNING:
@@ -1455,6 +1511,9 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         break;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         ranges = &layout->strike_ranges;
+        break;
+    case LAYOUT_RANGE_ATTR_EFFECT:
+        ranges = &layout->effects;
         break;
     default:
         FIXME("unknown attr kind %d\n", attr);
@@ -2191,14 +2250,11 @@ static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout2 *ifac
     UINT32 position, IUnknown **effect, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    struct layout_range *range;
+    struct layout_range_effect *range;
 
     TRACE("(%p)->(%u %p %p)\n", This, position, effect, r);
 
-    if (position >= This->len)
-        return S_OK;
-
-    range = get_layout_range_by_pos(This, position);
+    range = (struct layout_range_effect*)get_layout_range_header_by_pos(&This->effects, position);
     *effect = range->effect;
     if (*effect)
         IUnknown_AddRef(*effect);
@@ -2297,7 +2353,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             DWRITE_MEASURING_MODE_NATURAL,
             &glyph_run,
             &descr,
-            run->run->effect);
+            NULL);
     }
 
     /* 2. Inline objects */
@@ -2309,7 +2365,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             inlineobject->object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
-            run->run->effect);
+            inlineobject->effect);
     }
 
     /* TODO: 3. Underlines */
@@ -2321,7 +2377,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             s->run->origin_x,
             s->run->origin_y,
             &s->s,
-            s->run->run->effect);
+            NULL);
     }
 
     return S_OK;
@@ -3254,7 +3310,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
 static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
-    struct layout_range_header *range, *strike;
+    struct layout_range_header *range, *strike, *effect;
     DWRITE_TEXT_RANGE r = { 0, ~0u };
     HRESULT hr;
 
@@ -3282,6 +3338,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     list_init(&layout->runs);
     list_init(&layout->ranges);
     list_init(&layout->strike_ranges);
+    list_init(&layout->effects);
     memset(&layout->format, 0, sizeof(layout->format));
 
     layout->gdicompatible = FALSE;
@@ -3301,15 +3358,18 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
 
     range = alloc_layout_range(layout, &r, LAYOUT_RANGE_REGULAR);
     strike = alloc_layout_range(layout, &r, LAYOUT_RANGE_STRIKETHROUGH);
-    if (!range || !strike) {
+    effect = alloc_layout_range(layout, &r, LAYOUT_RANGE_EFFECT);
+    if (!range || !strike || !effect) {
         free_layout_range(range);
         free_layout_range(strike);
+        free_layout_range(effect);
         hr = E_OUTOFMEMORY;
         goto fail;
     }
 
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
+    list_add_head(&layout->effects, &effect->entry);
     return S_OK;
 
 fail:
