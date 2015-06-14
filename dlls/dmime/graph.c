@@ -18,18 +18,15 @@
  */
 
 #include "dmime_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 struct IDirectMusicGraphImpl {
   IDirectMusicGraph IDirectMusicGraph_iface;
-  IDirectMusicObject IDirectMusicObject_iface;
-  IPersistStream IPersistStream_iface;
+  struct dmobject dmobj;
   LONG ref;
-
-  /* IDirectMusicGraphImpl fields */
-  DMUS_OBJECTDESC   desc;
   WORD              num_tools;
   struct list       Tools;
 };
@@ -41,12 +38,12 @@ static inline IDirectMusicGraphImpl *impl_from_IDirectMusicGraph(IDirectMusicGra
 
 static inline IDirectMusicGraphImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, IDirectMusicObject_iface);
+    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IDirectMusicObject_iface);
 }
 
 static inline IDirectMusicGraphImpl *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, IPersistStream_iface);
+    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IPersistStream_iface);
 }
 
 static HRESULT WINAPI DirectMusicGraph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
@@ -63,9 +60,9 @@ static HRESULT WINAPI DirectMusicGraph_QueryInterface(IDirectMusicGraph *iface, 
         *ret_iface = &This->IDirectMusicGraph_iface;
     }
     else if (IsEqualIID(riid, &IID_IDirectMusicObject))
-        *ret_iface = &This->IDirectMusicObject_iface;
+        *ret_iface = &This->dmobj.IDirectMusicObject_iface;
     else if (IsEqualIID(riid, &IID_IPersistStream))
-        *ret_iface = &This->IPersistStream_iface;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
 
     if (*ret_iface)
     {
@@ -195,68 +192,6 @@ static const IDirectMusicGraphVtbl DirectMusicGraphVtbl =
     DirectMusicGraph_GetTool,
     DirectMusicGraph_RemoveTool
 };
-
-static HRESULT WINAPI DirectMusicObject_QueryInterface(IDirectMusicObject *iface, REFIID riid, void **ret_iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
-    return IDirectMusicGraph_QueryInterface(&This->IDirectMusicGraph_iface, riid, ret_iface);
-}
-
-static ULONG WINAPI DirectMusicObject_AddRef(IDirectMusicObject *iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
-    return IDirectMusicGraph_AddRef(&This->IDirectMusicGraph_iface);
-}
-
-static ULONG WINAPI DirectMusicObject_Release(IDirectMusicObject *iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
-    return IDirectMusicGraph_Release(&This->IDirectMusicGraph_iface);
-}
-
-static HRESULT WINAPI DirectMusicObject_GetDescriptor(IDirectMusicObject *iface, DMUS_OBJECTDESC *desc)
-{
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
-    TRACE("(%p, %p)\n", This, desc);
-    *desc = This->desc;
-    return S_OK;
-}
-
-static HRESULT WINAPI DirectMusicObject_SetDescriptor(IDirectMusicObject *iface, DMUS_OBJECTDESC *pDesc)
-{
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicObject(iface);
-
-    TRACE("(%p, %p): %s\n", This, pDesc, debugstr_DMUS_OBJECTDESC(pDesc));
-
-    /* According to MSDN, we should copy only given values, not whole struct */
-    if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
-        This->desc.guidObject = pDesc->guidObject;
-    if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-        This->desc.guidClass = pDesc->guidClass;
-    if (pDesc->dwValidData & DMUS_OBJ_NAME)
-        lstrcpynW (This->desc.wszName, pDesc->wszName, DMUS_MAX_NAME);
-    if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-        lstrcpynW (This->desc.wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
-    if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-        lstrcpynW (This->desc.wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
-    if (pDesc->dwValidData & DMUS_OBJ_VERSION)
-        This->desc.vVersion = pDesc->vVersion;
-    if (pDesc->dwValidData & DMUS_OBJ_DATE)
-        This->desc.ftDate = pDesc->ftDate;
-    if (pDesc->dwValidData & DMUS_OBJ_MEMORY)
-    {
-        This->desc.llMemLength = pDesc->llMemLength;
-        memcpy(This->desc.pbMemData, pDesc->pbMemData, pDesc->llMemLength);
-    }
-
-    /* according to MSDN, we copy the stream */
-    if (pDesc->dwValidData & DMUS_OBJ_STREAM)
-        IStream_Clone(pDesc->pStream, &This->desc.pStream);
-
-    /* add new flags */
-    This->desc.dwValidData |= pDesc->dwValidData;
-    return S_OK;
-}
 
 static HRESULT WINAPI DirectMusicObject_ParseDescriptor(IDirectMusicObject *iface, IStream *pStream, DMUS_OBJECTDESC *pDesc)
 {
@@ -407,48 +342,14 @@ static HRESULT WINAPI DirectMusicObject_ParseDescriptor(IDirectMusicObject *ifac
 	return S_OK;
 }
 
-static const IDirectMusicObjectVtbl DirectMusicObjectVtbl =
-{
-    DirectMusicObject_QueryInterface,
-    DirectMusicObject_AddRef,
-    DirectMusicObject_Release,
-    DirectMusicObject_GetDescriptor,
-    DirectMusicObject_SetDescriptor,
+static const IDirectMusicObjectVtbl dmobject_vtbl = {
+    dmobj_IDirectMusicObject_QueryInterface,
+    dmobj_IDirectMusicObject_AddRef,
+    dmobj_IDirectMusicObject_Release,
+    dmobj_IDirectMusicObject_GetDescriptor,
+    dmobj_IDirectMusicObject_SetDescriptor,
     DirectMusicObject_ParseDescriptor
 };
-
-static HRESULT WINAPI PersistStream_QueryInterface(IPersistStream *iface, REFIID riid, void **ret_iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    return IDirectMusicGraph_QueryInterface(&This->IDirectMusicGraph_iface, riid, ret_iface);
-}
-
-static ULONG WINAPI PersistStream_AddRef(IPersistStream *iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    return IDirectMusicGraph_AddRef(&This->IDirectMusicGraph_iface);
-}
-
-static ULONG WINAPI PersistStream_Release(IPersistStream *iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    return IDirectMusicGraph_Release(&This->IDirectMusicGraph_iface);
-}
-
-static HRESULT WINAPI PersistStream_GetClassID(IPersistStream *iface, CLSID *clsid)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    TRACE("(%p) %p\n", This, clsid);
-    *clsid = CLSID_DirectMusicGraph;
-    return S_OK;
-}
-
-static HRESULT WINAPI PersistStream_IsDirty(IPersistStream *iface)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
-}
 
 static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 {
@@ -478,20 +379,20 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 						switch (chunkID) {
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								This->desc.dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->desc.guidObject, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
+								IStream_Read (pStm, &This->dmobj.desc.guidObject, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								This->desc.dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->desc.vVersion, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
+								IStream_Read (pStm, &This->dmobj.desc.vVersion, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
-								This->desc.dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->desc.wszCategory, chunkSize, NULL);
+								This->dmobj.desc.dwValidData |= DMUS_OBJ_CATEGORY;
+								IStream_Read (pStm, This->dmobj.desc.wszCategory, chunkSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
@@ -513,8 +414,8 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													This->desc.dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->desc.wszName, chunkSize, NULL);
+													This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
+													IStream_Read (pStm, This->dmobj.desc.wszName, chunkSize, NULL);
 													break;
 												}
 												case mmioFOURCC('I','A','R','T'):
@@ -597,30 +498,15 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream* pStm)
 	return S_OK;
 }
 
-static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *stream, BOOL clear_dirty)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    TRACE("(%p) %p %d\n", This, stream, clear_dirty);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI PersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *size)
-{
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
-    TRACE("(%p) %p\n", This, size);
-    return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl PersistStreamVtbl =
-{
-    PersistStream_QueryInterface,
-    PersistStream_AddRef,
-    PersistStream_Release,
-    PersistStream_GetClassID,
-    PersistStream_IsDirty,
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
     PersistStream_Load,
-    PersistStream_Save,
-    PersistStream_GetSizeMax
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
@@ -636,12 +522,10 @@ HRESULT WINAPI create_dmgraph(REFIID riid, void **ret_iface)
         return E_OUTOFMEMORY;
 
     obj->IDirectMusicGraph_iface.lpVtbl = &DirectMusicGraphVtbl;
-    obj->IDirectMusicObject_iface.lpVtbl = &DirectMusicObjectVtbl;
-    obj->IPersistStream_iface.lpVtbl = &PersistStreamVtbl;
-    DM_STRUCT_INIT(&obj->desc);
-    obj->desc.dwValidData |= DMUS_OBJ_CLASS;
-    obj->desc.guidClass = CLSID_DirectMusicGraph;
     obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicGraph, (IUnknown *)&obj->IDirectMusicGraph_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
     list_init(&obj->Tools);
 
     hr = IDirectMusicGraph_QueryInterface(&obj->IDirectMusicGraph_iface, riid, ret_iface);
