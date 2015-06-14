@@ -4,6 +4,7 @@ IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
 C_SRCS = \
 	audiopath.c \
 	dmime_main.c \
+	dmobject.c \
 	dmutils.c \
 	graph.c \
 	lyricstrack.c \

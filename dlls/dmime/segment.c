@@ -19,6 +19,7 @@
  */
 
 #include "dmime_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -28,10 +29,8 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  */
 typedef struct IDirectMusicSegment8Impl {
     IDirectMusicSegment8 IDirectMusicSegment8_iface;
-    const IDirectMusicObjectVtbl *ObjectVtbl;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    struct dmobject dmobj;
     LONG ref;
-    DMUS_OBJECTDESC *pDesc;
     DMUS_IO_SEGMENT_HEADER header;
     IDirectMusicGraph *pGraph;
     struct list Tracks;
@@ -54,9 +53,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_QueryInterface(IDirectMusicSegmen
             IsEqualIID (riid, &IID_IDirectMusicSegment8))
         *ret_iface = iface;
     else if (IsEqualIID (riid, &IID_IDirectMusicObject))
-        *ret_iface = &This->ObjectVtbl;
+        *ret_iface = &This->dmobj.IDirectMusicObject_iface;
     else if (IsEqualIID (riid, &IID_IPersistStream))
-        *ret_iface = &This->PersistStreamVtbl;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
     else {
         WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
         return E_NOINTERFACE;
@@ -575,70 +574,14 @@ static const IDirectMusicSegment8Vtbl dmsegment8_vtbl = {
 };
 
 /* IDirectMusicSegment8Impl IDirectMusicObject part: */
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
-        return IDirectMusicSegment8_QueryInterface(&This->IDirectMusicSegment8_iface, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
-        return IDirectMusicSegment8_AddRef(&This->IDirectMusicSegment8_iface);
-}
-
-static ULONG WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
-        return IDirectMusicSegment8_Release(&This->IDirectMusicSegment8_iface);
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
-	TRACE("(%p, %p)\n", This, pDesc);
-	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-	memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
-	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
-
-	/* According to MSDN, we should copy only given values, not whole struct */	
-	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
-		This->pDesc->guidObject = pDesc->guidObject;
-	if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-		This->pDesc->guidClass = pDesc->guidClass;
-	if (pDesc->dwValidData & DMUS_OBJ_NAME)
-		lstrcpynW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
-	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-		lstrcpynW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
-	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-		lstrcpynW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
-	if (pDesc->dwValidData & DMUS_OBJ_VERSION)
-		This->pDesc->vVersion = pDesc->vVersion;
-	if (pDesc->dwValidData & DMUS_OBJ_DATE)
-		This->pDesc->ftDate = pDesc->ftDate;
-	if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
-		This->pDesc->llMemLength = pDesc->llMemLength;
-		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
-	}
-	if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
-		/* according to MSDN, we copy the stream */
-		IStream_Clone (pDesc->pStream, &This->pDesc->pStream);	
-	}
-	
-	/* add new flags */
-	This->pDesc->dwValidData |= pDesc->dwValidData;
-
-	return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, ObjectVtbl, iface);
+static HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor(IDirectMusicObject *iface,
+        IStream *pStream, DMUS_OBJECTDESC *pDesc)
+{
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
 
-	TRACE("(%p,%p, %p)\n", This, pStream, pDesc);
+        TRACE("(%p,%p, %p)\n", iface, pStream, pDesc);
 
 	/* FIXME: should this be determined from stream? */
 	pDesc->dwValidData |= DMUS_OBJ_CLASS;
@@ -803,44 +746,16 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescripto
 	return S_OK;
 }
 
-static const IDirectMusicObjectVtbl DirectMusicSegment8_Object_Vtbl = {
-  IDirectMusicSegment8Impl_IDirectMusicObject_QueryInterface,
-  IDirectMusicSegment8Impl_IDirectMusicObject_AddRef,
-  IDirectMusicSegment8Impl_IDirectMusicObject_Release,
-  IDirectMusicSegment8Impl_IDirectMusicObject_GetDescriptor,
-  IDirectMusicSegment8Impl_IDirectMusicObject_SetDescriptor,
-  IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor
+static const IDirectMusicObjectVtbl dmobject_vtbl = {
+    dmobj_IDirectMusicObject_QueryInterface,
+    dmobj_IDirectMusicObject_AddRef,
+    dmobj_IDirectMusicObject_Release,
+    dmobj_IDirectMusicObject_GetDescriptor,
+    dmobj_IDirectMusicObject_SetDescriptor,
+    IDirectMusicObjectImpl_ParseDescriptor
 };
 
 /* IDirectMusicSegment8Impl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicSegment8_QueryInterface(&This->IDirectMusicSegment8_iface, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicSegment8Impl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicSegment8_AddRef(&This->IDirectMusicSegment8_iface);
-}
-
-static ULONG WINAPI IDirectMusicSegment8Impl_IPersistStream_Release (LPPERSISTSTREAM iface) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicSegment8_Release(&This->IDirectMusicSegment8_iface);
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  TRACE("(%p, %p)\n", This, pClassID);
-  *pClassID = CLSID_DirectMusicSegment;
-  return S_OK;
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  FIXME("(%p): stub, always S_FALSE\n", This);
-  return S_FALSE;
-}
-
 static HRESULT load_track(IDirectMusicSegment8Impl *This, IStream *pClonedStream,
         IDirectMusicTrack **ppTrack, DMUS_IO_TRACK_HEADER *pTrack_hdr)
 {
@@ -1112,8 +1027,8 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_C
     IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
     TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    
-    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
+
+    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, &This->dmobj.desc);
     if (FAILED(hr)) return hr;
     
     if (hr == S_FALSE) {
@@ -1173,7 +1088,7 @@ static HRESULT parse_segment_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_C
 	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
             TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
-	    hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
+            hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &This->dmobj.desc);
 	    if (FAILED(hr)) return hr;
 	    
 	    if (hr == S_FALSE) {
@@ -1249,9 +1164,14 @@ static HRESULT load_wave(IStream *pClonedStream, IDirectMusicObject **ppWaveObje
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+static inline IDirectMusicSegment8Impl *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicSegment8Impl, dmobj.IPersistStream_iface);
+}
 
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+{
+  IDirectMusicSegment8Impl *This = impl_from_IPersistStream(iface);
   HRESULT hr;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize;
@@ -1320,27 +1240,15 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  FIXME("(%p): Saving not implemented yet\n", This);
-  return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  FIXME("(%p, %p): stub\n", This, pcbSize);
-  return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl DirectMusicSegment8_PersistStream_Vtbl = {
-  IDirectMusicSegment8Impl_IPersistStream_QueryInterface,
-  IDirectMusicSegment8Impl_IPersistStream_AddRef,
-  IDirectMusicSegment8Impl_IPersistStream_Release,
-  IDirectMusicSegment8Impl_IPersistStream_GetClassID,
-  IDirectMusicSegment8Impl_IPersistStream_IsDirty,
-  IDirectMusicSegment8Impl_IPersistStream_Load,
-  IDirectMusicSegment8Impl_IPersistStream_Save,
-  IDirectMusicSegment8Impl_IPersistStream_GetSizeMax
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
+    IPersistStreamImpl_Load,
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
@@ -1355,13 +1263,11 @@ HRESULT WINAPI create_dmsegment(REFIID lpcGUID, void **ppobj)
     return E_OUTOFMEMORY;
   }
   obj->IDirectMusicSegment8_iface.lpVtbl = &dmsegment8_vtbl;
-  obj->ObjectVtbl = &DirectMusicSegment8_Object_Vtbl;
-  obj->PersistStreamVtbl = &DirectMusicSegment8_PersistStream_Vtbl;
-  obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-  DM_STRUCT_INIT(obj->pDesc);
-  obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-  obj->pDesc->guidClass = CLSID_DirectMusicSegment;
   obj->ref = 1;
+  dmobject_init(&obj->dmobj, &CLSID_DirectMusicSegment,
+          (IUnknown *)&obj->IDirectMusicSegment8_iface);
+  obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+  obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
   list_init (&obj->Tracks);
 
   DMIME_LockModule();
