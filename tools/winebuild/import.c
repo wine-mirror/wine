@@ -1270,6 +1270,23 @@ void output_stubs( DLLSPEC *spec )
             if (exp_name) output( "\t.long .L%s_string-2b\n", name );
             else output( "\t.long %u\n", odp->ordinal );
             break;
+        case CPU_ARM64:
+            output( "\tadr x0, 2f\n" );
+            output( "\tldur x0, [x0, #0]\n" );
+            output( "\tadr x1, 2f+8\n" );
+            output( "\tldur x1, [x1, #0]\n" );
+            output( "\tadr x2, 1f\n" );
+            output( "\tldur x2, [x2, #0]\n" );
+            output( "\tblr x2\n" );
+            output( "1:\t.quad %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "2:\t.quad %s\n", asm_name("__wine_spec_file_name") );
+            if (exp_name)
+            {
+                output( "\t.quad .L%s_string\n", name );
+                count++;
+            }
+            else output( "\t.quad %u\n", odp->ordinal );
+            break;
         default:
             assert(0);
         }
