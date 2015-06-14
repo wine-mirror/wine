@@ -1330,7 +1330,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
  *	Changing default drive has to be handled as a special case.
  */
 
-    if ((cmd[1] == ':') && IsCharAlphaW(cmd[0]) && (strlenW(cmd) == 2)) {
+    if ((strlenW(cmd) == 2) && (cmd[1] == ':') && IsCharAlphaW(cmd[0])) {
       WCHAR envvar[5];
       WCHAR dir[MAX_PATH];
 
