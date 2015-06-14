@@ -3084,7 +3084,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
 
         /* reduce existing run */
         cur->run.bidiLevel = resolvedLevel;
-        cur->descr.stringLength -= length;
+        cur->descr.stringLength = length;
 
         list_add_after(&cur_run->entry, &run->entry);
         break;

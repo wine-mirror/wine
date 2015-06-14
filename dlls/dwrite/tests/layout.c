@@ -1380,6 +1380,7 @@ static void test_typography(void)
 
 static void test_GetClusterMetrics(void)
 {
+    static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
@@ -1398,6 +1399,13 @@ static void test_GetClusterMetrics(void)
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str3W, 7, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, NULL, 0, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count == 7, "got %u\n", count);
+    IDWriteTextLayout_Release(layout);
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1873,6 +1881,7 @@ static void test_DetermineMinWidth(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetFontSize(void)
@@ -1964,6 +1973,7 @@ static void test_SetFontSize(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetFontFamilyName(void)
@@ -2044,6 +2054,7 @@ static void test_SetFontFamilyName(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetFontStyle(void)
@@ -2131,6 +2142,7 @@ static void test_SetFontStyle(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetFontStretch(void)
@@ -2225,6 +2237,7 @@ static void test_SetFontStretch(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 static void test_SetStrikethrough(void)
@@ -2286,6 +2299,67 @@ static void test_SetStrikethrough(void)
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
+static void test_GetMetrics(void)
+{
+    static const WCHAR str2W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    DWRITE_TEXT_METRICS metrics;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width > 0.0, "got %.2f\n", metrics.width);
+    ok(metrics.widthIncludingTrailingWhitespace > 0.0, "got %.2f\n", metrics.widthIncludingTrailingWhitespace);
+    ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.maxBidiReorderingDepth == 1, "got %u\n", metrics.maxBidiReorderingDepth);
+    ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
+}
+    IDWriteTextLayout_Release(layout);
+
+    /* a string with more complex bidi sequence */
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 7, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&metrics, 0xcc, sizeof(metrics));
+    metrics.maxBidiReorderingDepth = 0;
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width > 0.0, "got %.2f\n", metrics.width);
+    ok(metrics.widthIncludingTrailingWhitespace > 0.0, "got %.2f\n", metrics.widthIncludingTrailingWhitespace);
+    ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.maxBidiReorderingDepth > 1, "got %u\n", metrics.maxBidiReorderingDepth);
+    ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
+}
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
 }
 
 START_TEST(layout)
@@ -2324,6 +2398,7 @@ START_TEST(layout)
     test_SetFontStyle();
     test_SetFontStretch();
     test_SetStrikethrough();
+    test_GetMetrics();
 
     IDWriteFactory_Release(factory);
 }

@@ -523,8 +523,8 @@ static struct sa_test sa_tests[] = {
     },
     {
       /* Arabic */
-      {0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,0}, 1,
-          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+      {0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,0x0661,0}, 1,
+          { { 0, 8, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Arabic */
