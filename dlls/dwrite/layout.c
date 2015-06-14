@@ -243,6 +243,8 @@ struct dwrite_textformat {
 struct dwrite_trimmingsign {
     IDWriteInlineObject IDWriteInlineObject_iface;
     LONG ref;
+
+    IDWriteTextLayout *layout;
 };
 
 struct dwrite_typography {
@@ -3371,7 +3373,6 @@ static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *ifa
 
     *obj = NULL;
     return E_NOINTERFACE;
-
 }
 
 static ULONG WINAPI dwritetrimmingsign_AddRef(IDWriteInlineObject *iface)
@@ -3389,18 +3390,24 @@ static ULONG WINAPI dwritetrimmingsign_Release(IDWriteInlineObject *iface)
 
     TRACE("(%p)->(%d)\n", This, ref);
 
-    if (!ref)
+    if (!ref) {
+        IDWriteTextLayout_Release(This->layout);
         heap_free(This);
+    }
 
     return ref;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *context, IDWriteTextRenderer *renderer,
-    FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *drawing_effect)
+    FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    FIXME("(%p)->(%p %p %f %f %d %d %p): stub\n", This, context, renderer, originX, originY, is_sideways, is_rtl, drawing_effect);
-    return E_NOTIMPL;
+    DWRITE_TEXT_RANGE range = { 0, ~0u };
+
+    TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY, is_sideways, is_rtl, effect);
+
+    IDWriteTextLayout_SetDrawingEffect(This->layout, effect, range);
+    return IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY);
 }
 
 static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
@@ -3463,11 +3470,13 @@ static inline BOOL is_flow_direction_vert(DWRITE_FLOW_DIRECTION direction)
            (direction == DWRITE_FLOW_DIRECTION_BOTTOM_TO_TOP);
 }
 
-HRESULT create_trimmingsign(IDWriteTextFormat *format, IDWriteInlineObject **sign)
+HRESULT create_trimmingsign(IDWriteFactory2 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
 {
+    static const WCHAR ellipsisW = 0x2026;
     struct dwrite_trimmingsign *This;
     DWRITE_READING_DIRECTION reading;
     DWRITE_FLOW_DIRECTION flow;
+    HRESULT hr;
 
     *sign = NULL;
 
@@ -3480,12 +3489,20 @@ HRESULT create_trimmingsign(IDWriteTextFormat *format, IDWriteInlineObject **sig
         (is_reading_direction_vert(reading) && is_flow_direction_vert(flow)))
         return DWRITE_E_FLOWDIRECTIONCONFLICTS;
 
-    This = heap_alloc(sizeof(struct dwrite_trimmingsign));
-    if (!This) return E_OUTOFMEMORY;
+    This = heap_alloc(sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
 
     This->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
     This->ref = 1;
 
+    hr = IDWriteFactory2_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0, 0.0, &This->layout);
+    if (FAILED(hr)) {
+        heap_free(This);
+        return hr;
+    }
+
+    IDWriteTextLayout_SetWordWrapping(This->layout, DWRITE_WORD_WRAPPING_NO_WRAP);
     *sign = &This->IDWriteInlineObject_iface;
 
     return S_OK;

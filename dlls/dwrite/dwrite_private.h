@@ -103,7 +103,7 @@ extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdicompat_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,FLOAT,const DWRITE_MATRIX*,BOOL,IDWriteTextLayout**) DECLSPEC_HIDDEN;
-extern HRESULT create_trimmingsign(IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
+extern HRESULT create_trimmingsign(IDWriteFactory2*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteFactory2*,IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern void    release_gdiinterop(IDWriteGdiInterop*) DECLSPEC_HIDDEN;

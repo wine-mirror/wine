@@ -856,12 +856,18 @@ static void test_GetLocaleName(void)
     IDWriteFactory_Release(factory);
 }
 
+static const struct drawcall_entry drawellipsis_seq[] = {
+    { DRAW_GLYPHRUN, {0x2026, 0} },
+    { DRAW_LAST_KIND }
+};
+
 static void test_CreateEllipsisTrimmingSign(void)
 {
     DWRITE_BREAK_CONDITION before, after;
     IDWriteTextFormat *format;
     IDWriteInlineObject *sign;
     IDWriteFactory *factory;
+    IUnknown *unk;
     HRESULT hr;
 
     factory = create_factory();
@@ -875,6 +881,9 @@ static void test_CreateEllipsisTrimmingSign(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(format, 1);
 
+    hr = IDWriteInlineObject_QueryInterface(sign, &IID_IDWriteTextLayout, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
 if (0) /* crashes on native */
     hr = IDWriteInlineObject_GetBreakConditions(sign, NULL, NULL);
 
@@ -883,6 +892,12 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(before == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", before);
     ok(after == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", after);
+
+    /* Draw tests */
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteInlineObject_Draw(sign, NULL, &testrenderer, 0.0, 0.0, FALSE, FALSE, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawellipsis_seq, "ellipsis sign draw test", FALSE);
     IDWriteInlineObject_Release(sign);
 
     /* non-orthogonal flow/reading combination */
