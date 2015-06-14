@@ -88,11 +88,14 @@ int CDECL _cputs(const char* str)
 int CDECL _cputws(const MSVCRT_wchar_t* str)
 {
   DWORD count;
-  int retval = MSVCRT_EOF;
+  int len, retval = -1;
+
+  if (!MSVCRT_CHECK_PMT(str != NULL)) return -1;
+  len = lstrlenW(str);
 
   LOCK_CONSOLE;
-  if (WriteConsoleW(MSVCRT_console_out, str, lstrlenW(str), &count, NULL)
-      && count == 1)
+  if (WriteConsoleW(MSVCRT_console_out, str, len, &count, NULL)
+      && count == len)
     retval = 0;
   UNLOCK_CONSOLE;
   return retval;
