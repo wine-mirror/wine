@@ -2491,6 +2491,28 @@ static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
 #endif
 }
 
+static DWORD DVD_ReadStructureSize(const DVD_READ_STRUCTURE *structure, DWORD size)
+{
+    if (!structure || size != sizeof(DVD_READ_STRUCTURE))
+        return 0;
+
+    switch (structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+        return sizeof(DVD_LAYER_DESCRIPTOR);
+    case DvdCopyrightDescriptor:
+        return sizeof(DVD_COPYRIGHT_DESCRIPTOR);
+    case DvdDiskKeyDescriptor:
+        return sizeof(DVD_DISK_KEY_DESCRIPTOR);
+    case DvdBCADescriptor:
+        return sizeof(DVD_BCA_DESCRIPTOR);
+    case DvdManufacturerDescriptor:
+        return sizeof(DVD_MANUFACTURER_DESCRIPTOR);
+    default:
+        return 0;
+    }
+}
+
 /******************************************************************
  *		DVD_ReadStructure
  *
@@ -3097,7 +3119,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         }
         break;
     case IOCTL_DVD_READ_STRUCTURE:
-        sz = sizeof(DVD_LAYER_DESCRIPTOR);
+        sz = DVD_ReadStructureSize(lpInBuffer, nInBufferSize);
         if (lpInBuffer == NULL || nInBufferSize != sizeof(DVD_READ_STRUCTURE)) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz || !lpOutBuffer) status = STATUS_BUFFER_TOO_SMALL;
         else
