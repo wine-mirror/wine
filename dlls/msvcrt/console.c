@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static HANDLE MSVCRT_console_in = INVALID_HANDLE_VALUE;
 static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;
 static int __MSVCRT_console_buffer = MSVCRT_EOF;
+static MSVCRT_wchar_t __MSVCRT_console_buffer_w = MSVCRT_WEOF;
 
 /* INTERNAL: Initialise console handles */
 void msvcrt_init_console(void)
@@ -106,7 +107,7 @@ int CDECL _cputws(const MSVCRT_wchar_t* str)
 #define CTRL_CHAR       2
 #define SHIFT_CHAR      3
 
-static const struct {unsigned vk; unsigned ch[4][2];} enh_map[] = {
+static const struct {unsigned short vk; unsigned char ch[4][2];} enh_map[] = {
     {0x47, {{0xE0, 0x47}, {0x00, 0x97}, {0xE0, 0x77}, {0xE0, 0x47}}},
     {0x48, {{0xE0, 0x48}, {0x00, 0x98}, {0xE0, 0x8D}, {0xE0, 0x48}}},
     {0x49, {{0xE0, 0x49}, {0x00, 0x99}, {0xE0, 0x86}, {0xE0, 0x49}}},
@@ -118,6 +119,36 @@ static const struct {unsigned vk; unsigned ch[4][2];} enh_map[] = {
     {0x52, {{0xE0, 0x52}, {0x00, 0xA2}, {0xE0, 0x92}, {0xE0, 0x52}}},
     {0x53, {{0xE0, 0x53}, {0x00, 0xA3}, {0xE0, 0x93}, {0xE0, 0x53}}},
 };
+
+static BOOL handle_enhanced_keys(INPUT_RECORD *ir, unsigned char *ch1, unsigned char *ch2)
+{
+    int i;
+
+    for (i = 0; i < sizeof(enh_map) / sizeof(enh_map[0]); i++)
+    {
+        if (ir->Event.KeyEvent.wVirtualScanCode == enh_map[i].vk)
+        {
+            unsigned idx;
+
+            if (ir->Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
+                idx = ALT_CHAR;
+            else if (ir->Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED) )
+                idx = CTRL_CHAR;
+            else if (ir->Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED)
+                idx = SHIFT_CHAR;
+            else
+                idx = NORMAL_CHAR;
+
+            *ch1 = enh_map[i].ch[idx][0];
+            *ch2 = enh_map[i].ch[idx][1];
+            return TRUE;
+        }
+    }
+
+    WARN("Unmapped char keyState=%x vk=%x\n",
+            ir->Event.KeyEvent.dwControlKeyState, ir->Event.KeyEvent.wVirtualScanCode);
+    return FALSE;
+}
 
 /*********************************************************************
  *		_getch_nolock (MSVCR80.@)
@@ -144,39 +175,24 @@ int CDECL _getch_nolock(void)
     do {
       if (ReadConsoleInputA(MSVCRT_console_in, &ir, 1, &count))
       {
-          unsigned int i;
         /* Only interested in ASCII chars */
         if (ir.EventType == KEY_EVENT &&
             ir.Event.KeyEvent.bKeyDown)
         {
+            unsigned char ch1, ch2;
+
             if (ir.Event.KeyEvent.uChar.AsciiChar)
             {
                 retval = ir.Event.KeyEvent.uChar.AsciiChar;
                 break;
             }
-            for (i = 0; i < sizeof(enh_map) / sizeof(enh_map[0]); i++)
-            {
-                if (ir.Event.KeyEvent.wVirtualScanCode == enh_map[i].vk) break;
-            }
-            if (i < sizeof(enh_map) / sizeof(enh_map[0]))
-            {
-                unsigned idx;
 
-                if (ir.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
-                    idx = ALT_CHAR;
-                else if (ir.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED) )
-                    idx = CTRL_CHAR;
-                else if (ir.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED)
-                    idx = SHIFT_CHAR;
-                else
-                    idx = NORMAL_CHAR;
-
-                retval = enh_map[i].ch[idx][0];
-                __MSVCRT_console_buffer = enh_map[i].ch[idx][1];
+            if (handle_enhanced_keys(&ir, &ch1, &ch2))
+            {
+                retval = ch1;
+                __MSVCRT_console_buffer = ch2;
                 break;
             }
-            WARN("Unmapped char keyState=%x vk=%x\n",
-                 ir.Event.KeyEvent.dwControlKeyState, ir.Event.KeyEvent.wVirtualScanCode);
         }
       }
       else
@@ -197,6 +213,73 @@ int CDECL _getch(void)
 
     LOCK_CONSOLE;
     ret = _getch_nolock();
+    UNLOCK_CONSOLE;
+    return ret;
+}
+
+/*********************************************************************
+ *		_getwch_nolock (MSVCR80.@)
+ */
+MSVCRT_wchar_t CDECL _getwch_nolock(void)
+{
+    MSVCRT_wchar_t retval = MSVCRT_WEOF;
+
+    if (__MSVCRT_console_buffer_w != MSVCRT_WEOF)
+    {
+        retval = __MSVCRT_console_buffer_w;
+        __MSVCRT_console_buffer_w = MSVCRT_WEOF;
+    }
+    else
+    {
+        INPUT_RECORD ir;
+        DWORD count;
+        DWORD mode = 0;
+
+        GetConsoleMode(MSVCRT_console_in, &mode);
+        if(mode)
+            SetConsoleMode(MSVCRT_console_in, 0);
+
+        do {
+            if (ReadConsoleInputW(MSVCRT_console_in, &ir, 1, &count))
+            {
+                /* Only interested in ASCII chars */
+                if (ir.EventType == KEY_EVENT &&
+                        ir.Event.KeyEvent.bKeyDown)
+                {
+                    unsigned char ch1, ch2;
+
+                    if (ir.Event.KeyEvent.uChar.UnicodeChar)
+                    {
+                        retval = ir.Event.KeyEvent.uChar.UnicodeChar;
+                        break;
+                    }
+
+                    if (handle_enhanced_keys(&ir, &ch1, &ch2))
+                    {
+                        retval = ch1;
+                        __MSVCRT_console_buffer_w = ch2;
+                        break;
+                    }
+                }
+            }
+            else
+                break;
+        } while(1);
+        if (mode)
+            SetConsoleMode(MSVCRT_console_in, mode);
+    }
+    return retval;
+}
+
+/*********************************************************************
+ *              _getwch (MSVCRT.@)
+ */
+MSVCRT_wchar_t CDECL _getwch(void)
+{
+    MSVCRT_wchar_t ret;
+
+    LOCK_CONSOLE;
+    ret = _getwch_nolock();
     UNLOCK_CONSOLE;
     return ret;
 }

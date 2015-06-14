@@ -343,7 +343,7 @@
 @ cdecl _getpid() _getpid
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr) MSVCRT__getw
-@ stub _getwch
+@ cdecl _getwch()
 @ stub _getwche
 @ cdecl _getws(ptr) MSVCRT__getws
 @ cdecl -arch=i386 _global_unwind2(ptr)
