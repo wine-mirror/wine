@@ -173,6 +173,37 @@ static void test_dmband(void)
     while (IDirectMusicBand_Release(dmb));
 }
 
+static void test_bandtrack(void)
+{
+    IDirectMusicTrack8 *dmt8;
+    IPersistStream *ps;
+    CLSID class;
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack8, (void**)&dmt8);
+    ok(hr == S_OK, "DirectMusicBandTrack create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicBandTrack),
+            "Expected class CLSID_DirectMusicBandTrack got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicTrack8_Release(dmt8));
+}
+
 START_TEST(dmband)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -187,6 +218,7 @@ START_TEST(dmband)
     test_COM();
     test_COM_bandtrack();
     test_dmband();
+    test_bandtrack();
 
     CoUninitialize();
 }
