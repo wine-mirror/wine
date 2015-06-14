@@ -367,8 +367,9 @@ static HRESULT WINAPI IDirectMusicBandImpl_IPersistStream_IsDirty (LPPERSISTSTRE
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-  ICOM_THIS_MULTI(IDirectMusicBandImpl, PersistStreamVtbl, iface);
+static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -418,7 +419,8 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTR
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_REF_LIST: {
 	FIXME_(dmfile)(": DMRF (DM References) list\n");
-	hr = IDirectMusicUtils_IPersistStream_ParseReference (iface,  &Chunk, pStm, &pObject);
+        hr = IDirectMusicUtils_IPersistStream_ParseReference((IPersistStream*)&This->PersistStreamVtbl,
+                &Chunk, pStm, &pObject);
 	if (FAILED(hr)) {
 	  ERR(": could not load Reference\n");
 	  return hr;
@@ -471,8 +473,9 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrument (LPPERSISTSTR
   return S_OK;
 }
 
-static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrumentsList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-  /*ICOM_THIS_MULTI(IDirectMusicBandImpl, PersistStreamVtbl, iface);*/
+static HRESULT parse_instruments_list(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
@@ -499,7 +502,7 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrumentsList (LPPERSI
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_INSTRUMENT_LIST: {
 	TRACE_(dmfile)(": Instrument list\n");
-	hr = IDirectMusicBandImpl_IPersistStream_ParseInstrument (iface, &Chunk, pStm);
+        hr = parse_instrument(This, &Chunk, pStm);
 	if (FAILED(hr)) return hr;
 	break;
       }
@@ -525,9 +528,9 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseInstrumentsList (LPPERSI
   return S_OK;
 }
 
-static HRESULT IDirectMusicBandImpl_IPersistStream_ParseBandForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  ICOM_THIS_MULTI(IDirectMusicBandImpl, PersistStreamVtbl, iface);
+static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -591,7 +594,7 @@ static HRESULT IDirectMusicBandImpl_IPersistStream_ParseBandForm (LPPERSISTSTREA
 	}
 	case DMUS_FOURCC_INSTRUMENTS_LIST: {
 	  TRACE_(dmfile)(": INSTRUMENTS list\n");
-	  hr = IDirectMusicBandImpl_IPersistStream_ParseInstrumentsList (iface, &Chunk, pStm);
+          hr = parse_instruments_list(This, &Chunk, pStm);
 	  if (FAILED(hr)) return hr;
 	  break;	
 	}
@@ -636,7 +639,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_IPersistStream_Load (LPPERSISTSTREAM 
     switch (Chunk.fccID) {
     case DMUS_FOURCC_BAND_FORM: {
       TRACE_(dmfile)(": Band form\n");
-      hr = IDirectMusicBandImpl_IPersistStream_ParseBandForm (iface, &Chunk, pStm);
+      hr = parse_band_form(This, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }
