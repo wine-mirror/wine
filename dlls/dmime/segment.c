@@ -841,10 +841,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_IsDirty (LPPERSIST
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREAM iface, IStream* pClonedStream, IDirectMusicTrack** ppTrack, 
-								  DMUS_IO_TRACK_HEADER* pTrack_hdr) {
-
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+static HRESULT load_track(IDirectMusicSegment8Impl *This, IStream *pClonedStream,
+        IDirectMusicTrack **ppTrack, DMUS_IO_TRACK_HEADER *pTrack_hdr)
+{
   HRESULT hr = E_FAIL;
   IPersistStream* pPersistStream = NULL;
   
@@ -879,9 +878,9 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREA
   return S_OK;
 }
 
-static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  /*ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);*/
+static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3];
@@ -941,8 +940,8 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	liMove.QuadPart = 0;
 	liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-	
-	hr = IDirectMusicSegment8Impl_IPersistStream_LoadTrack (iface, pClonedStream, &pTrack, &track_hdr);
+
+        hr = load_track(This, pClonedStream, &pTrack, &track_hdr);
 	if (FAILED(hr)) {
 	  ERR(": could not load track\n");
 	  return hr;
@@ -978,8 +977,8 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	liMove.QuadPart = 0;
 	liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-	
-	hr = IDirectMusicSegment8Impl_IPersistStream_LoadTrack (iface, pClonedStream, &pTrack, &track_hdr);
+
+        hr = load_track(This, pClonedStream, &pTrack, &track_hdr);
 	if (FAILED(hr)) {
 	  ERR(": could not load track\n");
 	  return hr;
@@ -1012,7 +1011,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
 	liMove.QuadPart -= (sizeof(FOURCC) + sizeof(DWORD));
 	IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
 
-	hr = IDirectMusicSegment8Impl_IPersistStream_LoadTrack (iface, pClonedStream, &pTrack, &track_hdr);
+        hr = load_track(This, pClonedStream, &pTrack, &track_hdr);
 	if (FAILED(hr)) {
 	  ERR(": could not load track\n");
 	  return hr;
@@ -1066,7 +1065,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackList (LPPERSIST
       switch (Chunk.fccID) {
       case  DMUS_FOURCC_TRACK_FORM: {
 	TRACE_(dmfile)(": TRACK form\n");
-	hr = IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (iface, &Chunk, pStm);
+        hr = parse_track_form(This, &Chunk, pStm);
 	if (FAILED(hr)) return hr;	
 	break;
       }
