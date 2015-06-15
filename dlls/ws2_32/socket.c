@@ -2572,6 +2572,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
                 WS_closesocket(as);
                 return SOCKET_ERROR;
             }
+            TRACE("\taccepted %04lx\n", as);
             return as;
         }
         if (is_blocking && status == STATUS_CANT_WAIT)
