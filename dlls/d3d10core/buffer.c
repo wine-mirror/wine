@@ -233,10 +233,8 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
     buffer->refcount = 1;
     wined3d_private_store_init(&buffer->private_store);
 
-    FIXME("Implement DXGI<->wined3d usage conversion\n");
-
     wined3d_desc.byte_width = desc->ByteWidth;
-    wined3d_desc.usage = desc->Usage;
+    wined3d_desc.usage = wined3d_usage_from_d3d10core(0, desc->Usage);
     wined3d_desc.bind_flags = desc->BindFlags;
     wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
     wined3d_desc.misc_flags = desc->MiscFlags;
