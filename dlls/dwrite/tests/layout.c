@@ -849,11 +849,20 @@ if (0) /* crashes on native */
     hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_LEADING);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_JUSTIFIED+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     hr = IDWriteTextFormat_SetParagraphAlignment(format, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IDWriteTextFormat_SetParagraphAlignment(format, DWRITE_PARAGRAPH_ALIGNMENT_CENTER+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_WRAP);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_CHARACTER+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_SetReadingDirection(format, DWRITE_READING_DIRECTION_LEFT_TO_RIGHT);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -863,6 +872,15 @@ if (0) /* crashes on native */
 
     hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0, -10.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, -10.0, 0.0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_UNIFORM+1, 0.0, 0.0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_SetTrimming(format, &trimming, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);

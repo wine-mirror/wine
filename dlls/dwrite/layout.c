@@ -3615,7 +3615,12 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat1 *iface)
 static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat1 *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d)\n", This, alignment);
+
+    if ((UINT32)alignment > DWRITE_TEXT_ALIGNMENT_JUSTIFIED)
+        return E_INVALIDARG;
+
     This->format.textalignment = alignment;
     return S_OK;
 }
@@ -3623,7 +3628,12 @@ static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat1 *ifac
 static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d)\n", This, alignment);
+
+    if ((UINT32)alignment > DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+        return E_INVALIDARG;
+
     This->format.paralign = alignment;
     return S_OK;
 }
@@ -3631,7 +3641,12 @@ static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat1 
 static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d)\n", This, wrapping);
+
+    if ((UINT32)wrapping > DWRITE_WORD_WRAPPING_CHARACTER)
+        return E_INVALIDARG;
+
     This->format.wrapping = wrapping;
     return S_OK;
 }
@@ -3688,7 +3703,12 @@ static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat1 *iface,
     FLOAT spacing, FLOAT baseline)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
+
     TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
+
+    if (spacing < 0.0 || (UINT32)method > DWRITE_LINE_SPACING_METHOD_UNIFORM)
+        return E_INVALIDARG;
+
     This->format.spacingmethod = method;
     This->format.spacing = spacing;
     This->format.baseline = baseline;
