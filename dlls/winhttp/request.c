@@ -2719,6 +2719,7 @@ struct winhttp_request
     LONG send_timeout;
     LONG receive_timeout;
     WINHTTP_PROXY_INFO proxy;
+    BOOL async;
 };
 
 static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
@@ -2737,8 +2738,20 @@ static ULONG WINAPI winhttp_request_AddRef(
 static void cancel_request( struct winhttp_request *request )
 {
     if (request->state <= REQUEST_STATE_CANCELLED) return;
-    if (request->thread) SetEvent( request->cancel );
+
+    SetEvent( request->cancel );
+    LeaveCriticalSection( &request->cs );
+    WaitForSingleObject( request->thread, INFINITE );
+    EnterCriticalSection( &request->cs );
+
     request->state = REQUEST_STATE_CANCELLED;
+
+    CloseHandle( request->thread );
+    request->thread = NULL;
+    CloseHandle( request->wait );
+    request->wait = NULL;
+    CloseHandle( request->cancel );
+    request->cancel = NULL;
 }
 
 /* critical section must be held */
@@ -3045,6 +3058,7 @@ static void initialize_request( struct winhttp_request *request )
     request->bytes_available = 0;
     request->bytes_read = 0;
     request->error = ERROR_SUCCESS;
+    request->async = FALSE;
     request->logon_policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM;
     request->disable_feature = 0;
     request->proxy.dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
@@ -3055,6 +3069,26 @@ static void initialize_request( struct winhttp_request *request )
     request->send_timeout    = 30000;
     request->receive_timeout = 30000;
     VariantInit( &request->data );
+    request->state = REQUEST_STATE_INITIALIZED;
+}
+
+static void reset_request( struct winhttp_request *request )
+{
+    cancel_request( request );
+    WinHttpCloseHandle( request->hrequest );
+    request->hrequest = NULL;
+    WinHttpCloseHandle( request->hconnect );
+    request->hconnect = NULL;
+    heap_free( request->buffer );
+    request->buffer   = NULL;
+    heap_free( request->verb );
+    request->verb     = NULL;
+    request->offset   = 0;
+    request->bytes_available = 0;
+    request->bytes_read = 0;
+    request->error    = ERROR_SUCCESS;
+    request->async    = FALSE;
+    VariantClear( &request->data );
     request->state = REQUEST_STATE_INITIALIZED;
 }
 
@@ -3072,10 +3106,9 @@ static HRESULT WINAPI winhttp_request_Open(
         'W','i','n','3','2',';',' ','W','i','n','H','t','t','p','.','W','i','n','H','t','t','p',
         'R','e','q','u','e','s','t','.','5',')',0};
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
-    HINTERNET hsession = NULL, hconnect = NULL, hrequest;
     URL_COMPONENTS uc;
     WCHAR *hostname, *path = NULL, *verb = NULL;
-    DWORD err = ERROR_OUTOFMEMORY, len, flags = 0, request_flags = 0;
+    DWORD err = ERROR_OUTOFMEMORY, len, flags = 0;
 
     TRACE("%p, %s, %s, %s\n", request, debugstr_w(method), debugstr_w(url),
           debugstr_variant(&async));
@@ -3091,12 +3124,9 @@ static HRESULT WINAPI winhttp_request_Open(
     if (!WinHttpCrackUrl( url, 0, 0, &uc )) return HRESULT_FROM_WIN32( get_last_error() );
 
     EnterCriticalSection( &request->cs );
-    if (request->state != REQUEST_STATE_INITIALIZED)
-    {
-        cancel_request( request );
-        free_request( request );
-        initialize_request( request );
-    }
+    if (request->state < REQUEST_STATE_INITIALIZED) initialize_request( request );
+    else reset_request( request );
+
     if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) goto error;
     memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
     hostname[uc.dwHostNameLength] = 0;
@@ -3106,37 +3136,44 @@ static HRESULT WINAPI winhttp_request_Open(
     path[uc.dwUrlPathLength + uc.dwExtraInfoLength] = 0;
 
     if (!(verb = strdupW( method ))) goto error;
-    if (SUCCEEDED( VariantChangeType( &async, &async, 0, VT_BOOL )) && V_BOOL( &async )) flags |= WINHTTP_FLAG_ASYNC;
-    if (!(hsession = WinHttpOpen( user_agentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL, flags )))
+    if (SUCCEEDED( VariantChangeType( &async, &async, 0, VT_BOOL )) && V_BOOL( &async )) request->async = TRUE;
+    else request->async = FALSE;
+
+    if (!request->hsession)
+    {
+        if (!(request->hsession = WinHttpOpen( user_agentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, NULL, NULL,
+                                               WINHTTP_FLAG_ASYNC )))
+        {
+            err = get_last_error();
+            goto error;
+        }
+        if (!(request->hconnect = WinHttpConnect( request->hsession, hostname, uc.nPort, 0 )))
+        {
+            WinHttpCloseHandle( request->hsession );
+            request->hsession = NULL;
+            err = get_last_error();
+            goto error;
+        }
+    }
+    else if (!(request->hconnect = WinHttpConnect( request->hsession, hostname, uc.nPort, 0 )))
     {
         err = get_last_error();
         goto error;
     }
-    if (!(hconnect = WinHttpConnect( hsession, hostname, uc.nPort, 0 )))
-    {
-        err = get_last_error();
-        goto error;
-    }
+
     len = sizeof(httpsW) / sizeof(WCHAR);
     if (uc.dwSchemeLength == len && !memcmp( uc.lpszScheme, httpsW, len * sizeof(WCHAR) ))
     {
-        request_flags |= WINHTTP_FLAG_SECURE;
+        flags |= WINHTTP_FLAG_SECURE;
     }
-    if (!(hrequest = WinHttpOpenRequest( hconnect, method, path, NULL, NULL, acceptW, request_flags )))
+    if (!(request->hrequest = WinHttpOpenRequest( request->hconnect, method, path, NULL, NULL, acceptW, flags )))
     {
         err = get_last_error();
         goto error;
     }
-    if (flags & WINHTTP_FLAG_ASYNC)
-    {
-        request->wait   = CreateEventW( NULL, FALSE, FALSE, NULL );
-        request->cancel = CreateEventW( NULL, FALSE, FALSE, NULL );
-        WinHttpSetOption( hrequest, WINHTTP_OPTION_CONTEXT_VALUE, &request, sizeof(request) );
-    }
+    WinHttpSetOption( request->hrequest, WINHTTP_OPTION_CONTEXT_VALUE, &request, sizeof(request) );
+
     request->state = REQUEST_STATE_OPEN;
-    request->hsession = hsession;
-    request->hconnect = hconnect;
-    request->hrequest = hrequest;
     request->verb = verb;
     heap_free( hostname );
     heap_free( path );
@@ -3144,8 +3181,8 @@ static HRESULT WINAPI winhttp_request_Open(
     return S_OK;
 
 error:
-    WinHttpCloseHandle( hconnect );
-    WinHttpCloseHandle( hsession );
+    WinHttpCloseHandle( request->hconnect );
+    request->hconnect = NULL;
     heap_free( hostname );
     heap_free( path );
     heap_free( verb );
@@ -3307,22 +3344,14 @@ static void CALLBACK wait_status_callback( HINTERNET handle, DWORD_PTR context, 
 
 static void wait_set_status_callback( struct winhttp_request *request, DWORD status )
 {
-    if (!request->wait) return;
     status |= WINHTTP_CALLBACK_STATUS_REQUEST_ERROR;
     WinHttpSetStatusCallback( request->hrequest, wait_status_callback, status, 0 );
 }
 
 static DWORD wait_for_completion( struct winhttp_request *request )
 {
-    HANDLE handles[2];
+    HANDLE handles[2] = { request->wait, request->cancel };
 
-    if (!request->wait)
-    {
-        request->error = ERROR_SUCCESS;
-        return ERROR_SUCCESS;
-    }
-    handles[0] = request->wait;
-    handles[1] = request->cancel;
     switch (WaitForMultipleObjects( 2, handles, FALSE, INFINITE ))
     {
     case WAIT_OBJECT_0:
@@ -3505,6 +3534,39 @@ static DWORD CALLBACK send_and_receive_proc( void *arg )
     return request_send_and_receive( request );
 }
 
+/* critical section must be held */
+static DWORD request_wait( struct winhttp_request *request, DWORD timeout )
+{
+    HANDLE thread = request->thread;
+    DWORD err, ret;
+
+    LeaveCriticalSection( &request->cs );
+    while ((err = MsgWaitForMultipleObjects( 1, &thread, FALSE, timeout, QS_ALLINPUT )) == WAIT_OBJECT_0 + 1)
+    {
+        MSG msg;
+        while (PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+    }
+    switch (err)
+    {
+    case WAIT_OBJECT_0:
+        ret = ERROR_SUCCESS;
+        break;
+    case WAIT_TIMEOUT:
+        ret = ERROR_TIMEOUT;
+        break;
+    case WAIT_FAILED:
+    default:
+        ret = get_last_error();
+        break;
+    }
+    EnterCriticalSection( &request->cs );
+    return ret;
+}
+
 static HRESULT WINAPI winhttp_request_Send(
     IWinHttpRequest *iface,
     VARIANT body )
@@ -3526,20 +3588,22 @@ static HRESULT WINAPI winhttp_request_Send(
         return S_OK;
     }
     VariantClear( &request->data );
-    if ((hr = VariantCopyInd( &request->data, &body )) != S_OK) {
+    if ((hr = VariantCopyInd( &request->data, &body )) != S_OK)
+    {
         LeaveCriticalSection( &request->cs );
         return hr;
     }
-
-    if (request->wait) /* async request */
+    if (!(request->thread = CreateThread( NULL, 0, send_and_receive_proc, request, 0, NULL )))
     {
-        if (!(request->thread = CreateThread( NULL, 0, send_and_receive_proc, request, 0, NULL )))
-        {
-            LeaveCriticalSection( &request->cs );
-            return HRESULT_FROM_WIN32( get_last_error() );
-        }
+        LeaveCriticalSection( &request->cs );
+        return HRESULT_FROM_WIN32( get_last_error() );
     }
-    else hr = request_send_and_receive( request );
+    request->wait = CreateEventW( NULL, FALSE, FALSE, NULL );
+    request->cancel = CreateEventW( NULL, FALSE, FALSE, NULL );
+    if (!request->async)
+    {
+        hr = HRESULT_FROM_WIN32( request_wait( request, INFINITE ) );
+    }
     LeaveCriticalSection( &request->cs );
     return hr;
 }
@@ -3962,39 +4026,6 @@ static HRESULT WINAPI winhttp_request_put_Option(
     return hr;
 }
 
-/* critical section must be held */
-static DWORD wait_for_response( struct winhttp_request *request, DWORD timeout )
-{
-    HANDLE thread = request->thread;
-    DWORD err, ret;
-
-    LeaveCriticalSection( &request->cs );
-    while ((err = MsgWaitForMultipleObjects( 1, &thread, FALSE, timeout, QS_ALLINPUT )) == WAIT_OBJECT_0 + 1)
-    {
-        MSG msg;
-        while (PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
-        {
-            TranslateMessage( &msg );
-            DispatchMessageW( &msg );
-        }
-    }
-    switch (err)
-    {
-    case WAIT_OBJECT_0:
-        ret = ERROR_SUCCESS;
-        break;
-    case WAIT_TIMEOUT:
-        ret = ERROR_TIMEOUT;
-        break;
-    case WAIT_FAILED:
-    default:
-        ret = get_last_error();
-        break;
-    }
-    EnterCriticalSection( &request->cs );
-    return ret;
-}
-
 static HRESULT WINAPI winhttp_request_WaitForResponse(
     IWinHttpRequest *iface,
     VARIANT timeout,
@@ -4006,17 +4037,12 @@ static HRESULT WINAPI winhttp_request_WaitForResponse(
     TRACE("%p, %s, %p\n", request, debugstr_variant(&timeout), succeeded);
 
     EnterCriticalSection( &request->cs );
-    if (!request->thread)
-    {
-        LeaveCriticalSection( &request->cs );
-        return S_OK;
-    }
     if (request->state >= REQUEST_STATE_RESPONSE_RECEIVED)
     {
         LeaveCriticalSection( &request->cs );
         return S_OK;
     }
-    switch ((err = wait_for_response( request, msecs )))
+    switch ((err = request_wait( request, msecs )))
     {
     case ERROR_TIMEOUT:
         if (succeeded) *succeeded = VARIANT_FALSE;
