@@ -1216,7 +1216,7 @@ interface ID2D1Factory : IUnknown
         [out] ID2D1TransformedGeometry **transformed_geometry
     );
     HRESULT CreatePathGeometry(
-        [out] ID2D1PathGeometry *geometry
+        [out] ID2D1PathGeometry **geometry
     );
     HRESULT CreateStrokeStyle(
         [in] const D2D1_STROKE_STYLE_PROPERTIES *desc,
