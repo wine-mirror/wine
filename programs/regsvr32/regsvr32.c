@@ -52,6 +52,7 @@
 #include "wine/port.h"
 
 #include <string.h>
+#include <ctype.h>
 #include <windows.h>
 #include <ole2.h>
 #include "regsvr32.h"
@@ -252,26 +253,33 @@ int main(int argc, char* argv[])
      */
     for(i = 1; i < argc; i++)
     {
-        if ((!strcasecmp(argv[i], "/u")) ||(!strcasecmp(argv[i], "-u")))
+        if ((argv[i][0] == '/' || argv[i][0] == '-') && (!argv[i][2] || argv[i][2] == ':'))
+        {
+            switch (tolower(argv[i][1]))
+            {
+            case 'u':
                 Unregister = TRUE;
-        else if ((!strcasecmp(argv[i], "/s"))||(!strcasecmp(argv[i], "-s")))
+                break;
+            case 's':
                 Silent = TRUE;
-        else if ((!strncasecmp(argv[i], "/i", strlen("/i")))||(!strncasecmp(argv[i], "-i", strlen("-i"))))
-        {
-            CallInstall = TRUE;
-            wsCommandLine = parse_command_line(argv[i] + strlen("/i"));
-            if (!wsCommandLine)
-                wsCommandLine = EmptyLine;
-        }
-        else if((!strcasecmp(argv[i], "/n"))||(!strcasecmp(argv[i], "-n")))
-            CallRegister = FALSE;
-        else if((!strcasecmp(argv[i], "/c"))||(!strcasecmp(argv[i], "-c")))
-            /* console output */;
-        else if (argv[i][0] == '/' && (!argv[i][2] || argv[i][2] == ':'))
-        {
-            output_write(STRING_UNRECOGNIZED_SWITCH, argv[i]);
-            output_write(STRING_USAGE);
-            return 1;
+                break;
+            case 'i':
+                CallInstall = TRUE;
+                wsCommandLine = parse_command_line(argv[i] + strlen("/i"));
+                if (!wsCommandLine)
+                    wsCommandLine = EmptyLine;
+                break;
+            case 'n':
+                CallRegister = FALSE;
+                break;
+            case 'c':
+                /* console output */;
+                break;
+            default:
+                output_write(STRING_UNRECOGNIZED_SWITCH, argv[i]);
+                output_write(STRING_USAGE);
+                return 1;
+            }
         }
         else
         {
