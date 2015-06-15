@@ -4704,22 +4704,29 @@ static void shader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins)
  * If any of the first 3 components are < 0, discard this pixel */
 static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 {
-    struct glsl_dst_param dst_param;
-
-    /* The argument is a destination parameter, and no writemasks are allowed */
-    shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
-    if (ins->ctx->reg_maps->shader_version.major >= 2)
+    if (ins->ctx->reg_maps->shader_version.major >= 4)
     {
-        if (ins->ctx->reg_maps->shader_version.major >= 4)
-            FIXME("SM4 discard not implemented.\n");
-        /* 2.0 shaders compare all 4 components in texkill */
-        shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
-    } else {
-        /* 1.X shaders only compare the first 3 components, probably due to the nature of the texkill
-         * instruction as a tex* instruction, and phase, which kills all a / w components. Even if all
-         * 4 components are defined, only the first 3 are used
-         */
-        shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_param.reg_name);
+        struct glsl_src_param src_param;
+
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
+        shader_addline(ins->ctx->buffer, "if (bool(floatBitsToUint(%s))) discard;\n", src_param.param_str);
+    }
+    else
+    {
+        struct glsl_dst_param dst_param;
+
+        /* The argument is a destination parameter, and no writemasks are allowed */
+        shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
+
+        /* 2.0 shaders compare all 4 components in texkill. */
+        if (ins->ctx->reg_maps->shader_version.major >= 2)
+            shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
+        /* 1.x shaders only compare the first 3 components, probably due to
+         * the nature of the texkill instruction as a tex* instruction, and
+         * phase, which kills all .w components. Even if all 4 components are
+         * defined, only the first 3 are used. */
+        else
+            shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_param.reg_name);
     }
 }
 
