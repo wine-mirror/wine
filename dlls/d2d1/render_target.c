@@ -1293,12 +1293,27 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
         float baseline_origin_x, float baseline_origin_y, DWRITE_MEASURING_MODE measuring_mode,
         const DWRITE_GLYPH_RUN *glyph_run, const DWRITE_GLYPH_RUN_DESCRIPTION *desc, IUnknown *effect)
 {
-    FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
-            "measuring_mode %#x, glyph_run %p, desc %p, effect %p stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
+    D2D1_POINT_2F baseline_origin = {baseline_origin_x, baseline_origin_y};
+    struct d2d_draw_text_layout_ctx *context = ctx;
+
+    TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
+            "measuring_mode %#x, glyph_run %p, desc %p, effect %p.\n",
             iface, ctx, baseline_origin_x, baseline_origin_y,
             measuring_mode, glyph_run, desc, effect);
 
-    return E_NOTIMPL;
+    if (desc)
+        FIXME("Ignoring glyph run description %p.\n", desc);
+    if (effect)
+        FIXME("Ignoring effect %p.\n", effect);
+    if (context->options)
+        FIXME("Ignoring options %#x.\n", context->options);
+
+    TRACE("%s\n", debugstr_wn(desc->string, desc->stringLength));
+    ID2D1RenderTarget_DrawGlyphRun(&render_target->ID2D1RenderTarget_iface,
+            baseline_origin, glyph_run, context->brush, measuring_mode);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRenderer *iface, void *ctx,
