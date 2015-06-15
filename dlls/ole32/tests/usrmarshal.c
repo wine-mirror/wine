@@ -897,6 +897,41 @@ static void test_marshal_HDC(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_marshal_HICON(void)
+{
+    static const BYTE bmp_bits[1024];
+    MIDL_STUB_MESSAGE stub_msg;
+    HICON hIcon, hIcon2;
+    USER_MARSHAL_CB umcb;
+    RPC_MESSAGE rpc_msg;
+    unsigned char *buffer;
+    wireHICON wirehicon;
+    ULONG size;
+
+    hIcon = CreateIcon(0, 16, 16, 1, 1, bmp_bits, bmp_bits);
+    ok(hIcon != 0, "CreateIcon failed\n");
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = HICON_UserSize(&umcb.Flags, 0, &hIcon);
+    ok(size == sizeof(*wirehicon), "Wrong size %d\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HICON_UserMarshal(&umcb.Flags, buffer, &hIcon);
+    wirehicon = (wireHICON)buffer;
+    ok(wirehicon->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehicon->fContext);
+    ok(wirehicon->u.hInproc == (LONG_PTR)hIcon, "Marshaled value should be %p instead of %x\n", hIcon, wirehicon->u.hRemote);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HICON_UserUnmarshal(&umcb.Flags, buffer, &hIcon2);
+    ok(hIcon == hIcon2, "Didn't unmarshal properly\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    HICON_UserFree(&umcb.Flags, &hIcon2);
+    DestroyIcon(hIcon);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -911,6 +946,7 @@ START_TEST(usrmarshal)
     test_marshal_STGMEDIUM();
     test_marshal_SNB();
     test_marshal_HDC();
+    test_marshal_HICON();
 
     CoUninitialize();
 }
