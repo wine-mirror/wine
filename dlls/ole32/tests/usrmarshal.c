@@ -866,6 +866,37 @@ static void test_marshal_SNB(void)
     g_expect_user_free = FALSE;
 }
 
+static void test_marshal_HDC(void)
+{
+    MIDL_STUB_MESSAGE stub_msg;
+    HDC hdc = GetDC(0), hdc2;
+    USER_MARSHAL_CB umcb;
+    RPC_MESSAGE rpc_msg;
+    unsigned char *buffer;
+    wireHDC wirehdc;
+    ULONG size;
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = HDC_UserSize(&umcb.Flags, 0, &hdc);
+    ok(size == sizeof(*wirehdc), "Wrong size %d\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HDC_UserMarshal(&umcb.Flags, buffer, &hdc);
+    wirehdc = (wireHDC)buffer;
+    ok(wirehdc->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehdc->fContext);
+    ok(wirehdc->u.hInproc == (LONG_PTR)hdc, "Marshaled value should be %p instead of %x\n", hdc, wirehdc->u.hRemote);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HDC_UserUnmarshal(&umcb.Flags, buffer, &hdc2);
+    ok(hdc == hdc2, "Didn't unmarshal properly\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    HDC_UserFree(&umcb.Flags, &hdc2);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -879,6 +910,7 @@ START_TEST(usrmarshal)
     test_marshal_WdtpInterfacePointer();
     test_marshal_STGMEDIUM();
     test_marshal_SNB();
+    test_marshal_HDC();
 
     CoUninitialize();
 }
