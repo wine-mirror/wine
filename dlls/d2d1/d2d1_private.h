@@ -189,4 +189,12 @@ void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWIN
         IDWriteRenderingParams *text_rendering_params) DECLSPEC_HIDDEN;
 struct d2d_state_block *unsafe_impl_from_ID2D1DrawingStateBlock(ID2D1DrawingStateBlock *iface) DECLSPEC_HIDDEN;
 
+struct d2d_geometry
+{
+    ID2D1Geometry ID2D1Geometry_iface;
+    LONG refcount;
+};
+
+void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D2D1_PRIVATE_H */

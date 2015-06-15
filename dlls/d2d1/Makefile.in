@@ -6,6 +6,7 @@ C_SRCS = \
 	bitmap.c \
 	brush.c \
 	factory.c \
+	geometry.c \
 	mesh.c \
 	render_target.c \
 	state_block.c \

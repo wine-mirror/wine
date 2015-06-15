@@ -136,9 +136,19 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateTransformedGeometry(ID2D1Fact
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry(ID2D1Factory *iface, ID2D1PathGeometry **geometry)
 {
-    FIXME("iface %p, geometry %p stub!\n", iface, geometry);
+    struct d2d_geometry *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, geometry %p.\n", iface, geometry);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_path_geometry_init(object);
+
+    TRACE("Created path geometry %p.\n", object);
+    *geometry = (ID2D1PathGeometry *)&object->ID2D1Geometry_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory *iface,
