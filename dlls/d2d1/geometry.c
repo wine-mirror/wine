@@ -121,7 +121,9 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBezier(ID2D1GeometrySink *ifa
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBezier(ID2D1GeometrySink *iface,
         const D2D1_QUADRATIC_BEZIER_SEGMENT *bezier)
 {
-    FIXME("iface %p, bezier %p stub!\n", iface, bezier);
+    TRACE("iface %p, bezier %p.\n", iface, bezier);
+
+    ID2D1GeometrySink_AddQuadraticBeziers(iface, bezier, 1);
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1GeometrySink *iface,
