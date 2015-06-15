@@ -250,9 +250,10 @@ static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
 /**************************************************************************
  *		__chkstk (NTDLL.@)
  *
- * Should check if we can decrement SP by the value provided in r4, but we shouldn't need that.
+ * Incoming r4 contains words to allocate, converting to bytes then return
  */
-__ASM_GLOBAL_FUNC( __chkstk, "bx lr" )
+__ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
+                             "bx lr" )
 
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
