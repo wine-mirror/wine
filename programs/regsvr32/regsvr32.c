@@ -202,6 +202,37 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     return 0;
 }
 
+static WCHAR *parse_command_line(char *command_line)
+{
+    WCHAR *ret = NULL;
+
+    if (command_line[0] == ':' && command_line[1])
+    {
+        int len = strlen(command_line);
+
+        command_line++;
+        len--;
+        /* remove double quotes */
+        if (command_line[0] == '"')
+        {
+            command_line++;
+            len--;
+            if (command_line[0])
+            {
+                len--;
+                command_line[len] = 0;
+            }
+        }
+        if (command_line[0])
+        {
+            len = MultiByteToWideChar(CP_ACP, 0, command_line, -1, NULL, 0);
+            ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (ret) MultiByteToWideChar(CP_ACP, 0, command_line, -1, ret, len);
+        }
+    }
+    return ret;
+}
+
 int main(int argc, char* argv[])
 {
     int             i;
@@ -227,45 +258,10 @@ int main(int argc, char* argv[])
                 Silent = TRUE;
         else if ((!strncasecmp(argv[i], "/i", strlen("/i")))||(!strncasecmp(argv[i], "-i", strlen("-i"))))
         {
-            CHAR* command_line = argv[i] + strlen("/i");
-
             CallInstall = TRUE;
-            if (command_line[0] == ':' && command_line[1])
-            {
-                int len = strlen(command_line);
-
-                command_line++;
-                len--;
-                /* remove double quotes */
-                if (command_line[0] == '"')
-                {
-                    command_line++;
-                    len--;
-                    if (command_line[0])
-                    {
-                        len--;
-                        command_line[len] = 0;
-                    }
-                }
-                if (command_line[0])
-                {
-                    len = MultiByteToWideChar(CP_ACP, 0, command_line, -1,
-                                              NULL, 0);
-                    wsCommandLine = HeapAlloc(GetProcessHeap(), 0,
-                                              len * sizeof(WCHAR));
-                    if (wsCommandLine)
-                        MultiByteToWideChar(CP_ACP, 0, command_line, -1,
-                                            wsCommandLine, len);
-                }
-                else
-                {
-                    wsCommandLine = EmptyLine;
-                }
-            }
-            else
-            {
+            wsCommandLine = parse_command_line(argv[i] + strlen("/i"));
+            if (!wsCommandLine)
                 wsCommandLine = EmptyLine;
-            }
         }
         else if((!strcasecmp(argv[i], "/n"))||(!strcasecmp(argv[i], "-n")))
             CallRegister = FALSE;
