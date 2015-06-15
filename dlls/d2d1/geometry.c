@@ -108,7 +108,9 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddLine(ID2D1GeometrySink *iface, D2D1_POINT_2F point)
 {
-    FIXME("iface %p, point {%.8e, %.8e} stub!\n", iface, point.x, point.y);
+    TRACE("iface %p, point {%.8e, %.8e}.\n", iface, point.x, point.y);
+
+    d2d_geometry_sink_AddLines(iface, &point, 1);
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddBezier(ID2D1GeometrySink *iface, const D2D1_BEZIER_SEGMENT *bezier)
