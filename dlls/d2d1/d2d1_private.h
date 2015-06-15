@@ -192,6 +192,7 @@ struct d2d_state_block *unsafe_impl_from_ID2D1DrawingStateBlock(ID2D1DrawingStat
 struct d2d_geometry
 {
     ID2D1Geometry ID2D1Geometry_iface;
+    ID2D1GeometrySink ID2D1GeometrySink_iface;
     LONG refcount;
 };
 

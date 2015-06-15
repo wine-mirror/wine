@@ -23,6 +23,135 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+static inline struct d2d_geometry *impl_from_ID2D1GeometrySink(ID2D1GeometrySink *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1GeometrySink_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_QueryInterface(ID2D1GeometrySink *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1GeometrySink)
+            || IsEqualGUID(iid, &IID_ID2D1SimplifiedGeometrySink)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1GeometrySink_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_geometry_sink_AddRef(ID2D1GeometrySink *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return ID2D1Geometry_AddRef(&geometry->ID2D1Geometry_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_geometry_sink_Release(ID2D1GeometrySink *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return ID2D1Geometry_Release(&geometry->ID2D1Geometry_iface);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_SetFillMode(ID2D1GeometrySink *iface, D2D1_FILL_MODE mode)
+{
+    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface, D2D1_PATH_SEGMENT flags)
+{
+    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *iface,
+        D2D1_POINT_2F start_point, D2D1_FIGURE_BEGIN figure_begin)
+{
+    FIXME("iface %p, start_point {%.8e, %.8e}, figure_begin %#x stub!\n",
+            iface, start_point.x, start_point.y, figure_begin);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *iface,
+        const D2D1_POINT_2F *points, UINT32 count)
+{
+    FIXME("iface %p, points %p, count %u stub!\n", iface, points, count);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *iface,
+        const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+    FIXME("iface %p, beziers %p, count %u stub!\n", iface, beziers, count);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *iface, D2D1_FIGURE_END figure_end)
+{
+    FIXME("iface %p, figure_end %#x stub!\n", iface, figure_end);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddLine(ID2D1GeometrySink *iface, D2D1_POINT_2F point)
+{
+    FIXME("iface %p, point {%.8e, %.8e} stub!\n", iface, point.x, point.y);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddBezier(ID2D1GeometrySink *iface, const D2D1_BEZIER_SEGMENT *bezier)
+{
+    FIXME("iface %p, bezier %p stub!\n", iface, bezier);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBezier(ID2D1GeometrySink *iface,
+        const D2D1_QUADRATIC_BEZIER_SEGMENT *bezier)
+{
+    FIXME("iface %p, bezier %p stub!\n", iface, bezier);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1GeometrySink *iface,
+        const D2D1_QUADRATIC_BEZIER_SEGMENT *beziers, UINT32 bezier_count)
+{
+    FIXME("iface %p, beziers %p, bezier_count %u stub!\n", iface, beziers, bezier_count);
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_AddArc(ID2D1GeometrySink *iface, const D2D1_ARC_SEGMENT *arc)
+{
+    FIXME("iface %p, arc %p stub!\n", iface, arc);
+}
+
+struct ID2D1GeometrySinkVtbl d2d_geometry_sink_vtbl =
+{
+    d2d_geometry_sink_QueryInterface,
+    d2d_geometry_sink_AddRef,
+    d2d_geometry_sink_Release,
+    d2d_geometry_sink_SetFillMode,
+    d2d_geometry_sink_SetSegmentFlags,
+    d2d_geometry_sink_BeginFigure,
+    d2d_geometry_sink_AddLines,
+    d2d_geometry_sink_AddBeziers,
+    d2d_geometry_sink_EndFigure,
+    d2d_geometry_sink_Close,
+    d2d_geometry_sink_AddLine,
+    d2d_geometry_sink_AddBezier,
+    d2d_geometry_sink_AddQuadraticBezier,
+    d2d_geometry_sink_AddQuadraticBeziers,
+    d2d_geometry_sink_AddArc,
+};
+
 static inline struct d2d_geometry *impl_from_ID2D1PathGeometry(ID2D1PathGeometry *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
@@ -197,9 +326,14 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Widen(ID2D1PathGeometry *ifac
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry *iface, ID2D1GeometrySink **sink)
 {
-    FIXME("iface %p, sink %p stub!\n", iface, sink);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, sink %p.\n", iface, sink);
+
+    *sink = &geometry->ID2D1GeometrySink_iface;
+    ID2D1GeometrySink_AddRef(*sink);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Stream(ID2D1PathGeometry *iface, ID2D1GeometrySink *sink)
@@ -251,5 +385,6 @@ static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
 void d2d_path_geometry_init(struct d2d_geometry *geometry)
 {
     geometry->ID2D1Geometry_iface.lpVtbl = (ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl;
+    geometry->ID2D1GeometrySink_iface.lpVtbl = &d2d_geometry_sink_vtbl;
     geometry->refcount = 1;
 }
