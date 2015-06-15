@@ -1009,10 +1009,16 @@ NTSTATUS WINAPI IoGetDeviceInterfaces( const GUID *InterfaceClassGuid,
  */
 NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK access, PFILE_OBJECT *file, PDEVICE_OBJECT *device )
 {
+    static DEVICE_OBJECT stub_device;
+    static DRIVER_OBJECT stub_driver;
+
     FIXME( "stub: %s %x %p %p\n", debugstr_us(name), access, file, device );
 
+    stub_device.StackSize = 0x80; /* minimum value to appease SecuROM 5.x */
+    stub_device.DriverObject = &stub_driver;
+
     *file  = NULL;
-    *device  = NULL;
+    *device = &stub_device;
 
     return STATUS_SUCCESS;
 }
