@@ -2029,29 +2029,8 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (src_rect)
-    {
-        surface->overlay_srcrect = *src_rect;
-    }
-    else
-    {
-        surface->overlay_srcrect.left = 0;
-        surface->overlay_srcrect.top = 0;
-        surface->overlay_srcrect.right = surface->resource.width;
-        surface->overlay_srcrect.bottom = surface->resource.height;
-    }
-
-    if (dst_rect)
-    {
-        surface->overlay_destrect = *dst_rect;
-    }
-    else
-    {
-        surface->overlay_destrect.left = 0;
-        surface->overlay_destrect.top = 0;
-        surface->overlay_destrect.right = dst_surface->resource.width;
-        surface->overlay_destrect.bottom = dst_surface->resource.height;
-    }
+    surface_get_rect(surface, src_rect, &surface->overlay_srcrect);
+    surface_get_rect(dst_surface, dst_rect, &surface->overlay_destrect);
 
     if (surface->overlay_dest && (surface->overlay_dest != dst_surface || flags & WINEDDOVER_HIDE))
     {
