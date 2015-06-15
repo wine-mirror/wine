@@ -134,22 +134,14 @@ static cookie_t *parse_cookie( const WCHAR *string )
     const WCHAR *p;
     int len;
 
-    if (!(p = strchrW( string, '=' )))
-    {
-        WARN("no '=' in %s\n", debugstr_w(string));
-        return NULL;
-    }
-    if (p == string)
-    {
-        WARN("empty cookie name in %s\n", debugstr_w(string));
-        return NULL;
-    }
+    if (!(p = strchrW( string, '=' ))) p = string + strlenW( string );
+    len = p - string;
+    while (len && string[len - 1] == ' ') len--;
+    if (!len) return NULL;
 
     if (!(cookie = heap_alloc_zero( sizeof(cookie_t) ))) return NULL;
-
     list_init( &cookie->entry );
 
-    len = p - string;
     if (!(cookie->name = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         heap_free( cookie );
@@ -158,18 +150,20 @@ static cookie_t *parse_cookie( const WCHAR *string )
     memcpy( cookie->name, string, len * sizeof(WCHAR) );
     cookie->name[len] = 0;
 
-    p++; /* skip '=' */
-    while (*p == ' ') p++;
-
-    len = strlenW( p );
-    if (!(cookie->value = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+    if (*p++ == '=')
     {
-        free_cookie( cookie );
-        return NULL;
-    }
-    memcpy( cookie->value, p, len * sizeof(WCHAR) );
-    cookie->value[len] = 0;
+        while (*p && *p == ' ') p++;
+        len = strlenW( p );
+        while (len && p[len - 1] == ' ') len--;
 
+        if (!(cookie->value = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+        {
+            free_cookie( cookie );
+            return NULL;
+        }
+        memcpy( cookie->value, p, len * sizeof(WCHAR) );
+        cookie->value[len] = 0;
+    }
     return cookie;
 }
 
@@ -259,14 +253,21 @@ BOOL add_cookie_headers( request_t *request )
 
                 if (strstrW( request->path, cookie->path ) == request->path)
                 {
-                    const WCHAR format[] = {'C','o','o','k','i','e',':',' ','%','s','=','%','s',0};
-                    int len;
+                    const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' '};
+                    int len, len_cookie = sizeof(cookieW) / sizeof(cookieW[0]), len_name = strlenW( cookie->name );
                     WCHAR *header;
 
-                    len = strlenW( cookie->name ) + strlenW( format ) + strlenW( cookie->value );
+                    len = len_cookie + len_name;
+                    if (cookie->value) len += strlenW( cookie->value ) + 1;
                     if (!(header = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
 
-                    sprintfW( header, format, cookie->name, cookie->value );
+                    memcpy( header, cookieW, len_cookie * sizeof(WCHAR) );
+                    strcpyW( header + len_cookie, cookie->name );
+                    if (cookie->value)
+                    {
+                        header[len_cookie + len_name] = '=';
+                        strcpyW( header + len_cookie + len_name + 1, cookie->value );
+                    }
 
                     TRACE("%s\n", debugstr_w(header));
                     add_request_headers( request, header, len, WINHTTP_ADDREQ_FLAG_ADD );
