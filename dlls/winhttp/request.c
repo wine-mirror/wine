@@ -2296,13 +2296,21 @@ static BOOL handle_redirect( request_t *request, DWORD status )
     {
         WCHAR *path, *p;
 
-        len = strlenW( location ) + 1;
-        if (location[0] != '/') len++;
-        if (!(p = path = heap_alloc( len * sizeof(WCHAR) ))) goto end;
-
-        if (location[0] != '/') *p++ = '/';
-        strcpyW( p, location );
-
+        if (location[0] == '/')
+        {
+            len = strlenW( location );
+            if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            strcpyW( path, location );
+        }
+        else
+        {
+            if ((p = strrchrW( request->path, '/' ))) *p = 0;
+            len = strlenW( request->path ) + 1 + strlenW( location );
+            if (!(path = heap_alloc( (len + 1) * sizeof(WCHAR) ))) goto end;
+            strcpyW( path, request->path );
+            strcatW( path, slashW );
+            strcatW( path, location );
+        }
         heap_free( request->path );
         request->path = path;
 
