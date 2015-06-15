@@ -3868,6 +3868,20 @@ todo_wine
     ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
     WaitForSingleObject (thread_handle, 1000);
     closesocket(fdRead);
+
+    /* test UDP behavior of unbound sockets */
+    select_timeout.tv_sec = 0;
+    select_timeout.tv_usec = 250000;
+    fdWrite = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ok(fdWrite != INVALID_SOCKET, "socket call failed\n");
+    FD_ZERO_ALL();
+    FD_SET_ALL(fdWrite);
+    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+todo_wine
+    ok(ret == 1, "expected 1, got %d\n", ret);
+todo_wine
+    ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
+    closesocket(fdWrite);
 }
 #undef FD_SET_ALL
 #undef FD_ZERO_ALL
