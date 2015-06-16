@@ -299,7 +299,10 @@ static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
     case GNUTLS_CIPHER_DES_CBC:
     case GNUTLS_CIPHER_3DES_CBC: return CALG_DES;
     case GNUTLS_CIPHER_AES_128_CBC:
-    case GNUTLS_CIPHER_AES_256_CBC: return CALG_AES;
+    case GNUTLS_CIPHER_AES_128_GCM: return CALG_AES_128;
+    case GNUTLS_CIPHER_AES_192_CBC: return CALG_AES_192;
+    case GNUTLS_CIPHER_AES_256_GCM:
+    case GNUTLS_CIPHER_AES_256_CBC: return CALG_AES_256;
     case GNUTLS_CIPHER_RC2_40_CBC: return CALG_RC2;
     default:
         FIXME("unknown algorithm %d\n", cipher);
