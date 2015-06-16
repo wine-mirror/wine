@@ -1423,11 +1423,11 @@ end:
 
 static HKEY open_menus_reg_key(void)
 {
-    static const WCHAR Software_Wine_FileOpenAssociationsW[] = {
+    static const WCHAR Software_Wine_FileOpenMenuFilesW[] = {
         'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','M','e','n','u','F','i','l','e','s',0};
     HKEY assocKey;
     DWORD ret;
-    ret = RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenAssociationsW, &assocKey);
+    ret = RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenMenuFilesW, &assocKey);
     if (ret == ERROR_SUCCESS)
         return assocKey;
     SetLastError(ret);
