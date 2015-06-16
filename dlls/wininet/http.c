@@ -2659,24 +2659,29 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     DWORD res = ERROR_SUCCESS;
-    int len = 0;
+    int len = 0, ret = 0;
 
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
 
     if(size && is_valid_netconn(req->netconn)) {
-        if((res = NETCON_recv(req->netconn, buf, size, blocking_mode, &len))) {
-            len = 0;
-            if(blocking_mode == BLOCKING_DISALLOW && res == WSAEWOULDBLOCK)
-                res = ERROR_SUCCESS;
-            else
+        while((res = NETCON_recv(req->netconn, buf+ret, size-ret,
+                             blocking_mode == BLOCKING_WAITALL ? BLOCKING_ALLOW : blocking_mode, &len)) == ERROR_SUCCESS) {
+            if(!len) {
                 netconn_stream->content_length = netconn_stream->content_read;
-        }else if(!len) {
-            netconn_stream->content_length = netconn_stream->content_read;
+                break;
+            }
+            ret += len;
+            netconn_stream->content_read += len;
+            if(blocking_mode != BLOCKING_WAITALL || size == ret)
+                break;
         }
+
+        if(ret || (blocking_mode == BLOCKING_DISALLOW && res == WSAEWOULDBLOCK))
+            res = ERROR_SUCCESS;
     }
 
-    netconn_stream->content_read += *read = len;
-    TRACE("read %u bytes\n", len);
+    TRACE("read %u bytes\n", ret);
+    *read = ret;
     return res;
 }
 
