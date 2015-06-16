@@ -2479,6 +2479,22 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
     if (func_entry)
     {
         func = WINE_RB_ENTRY_VALUE(func_entry, struct hlsl_ir_function, entry);
+        if (intrinsic != func->intrinsic)
+        {
+            if (intrinsic)
+            {
+                ERR("Redeclaring a user defined function as an intrinsic.\n");
+                return;
+            }
+            TRACE("Function %s redeclared as a user defined function.\n", debugstr_a(name));
+            func->intrinsic = intrinsic;
+            wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
+            if (wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs) == -1)
+            {
+                ERR("Failed to initialize function rbtree.\n");
+                return;
+            }
+        }
         decl->func = func;
         if ((old_entry = wine_rb_get(&func->overloads, decl->parameters)))
         {
