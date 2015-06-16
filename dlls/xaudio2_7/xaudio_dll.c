@@ -71,118 +71,9 @@ HRESULT WINAPI DllUnregisterServer(void)
 }
 
 typedef struct {
-    IClassFactory IClassFactory_iface;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, IUnknown **ppObj);
-} IClassFactoryImpl;
-
-static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
-{
-    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
-}
-
-static HRESULT WINAPI XAudio2CF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
-{
-    if(IsEqualGUID(riid, &IID_IUnknown)
-            || IsEqualGUID(riid, &IID_IClassFactory))
-    {
-        IClassFactory_AddRef(iface);
-        *ppobj = iface;
-        return S_OK;
-    }
-
-    *ppobj = NULL;
-    WARN("(%p)->(%s, %p): interface not found\n", iface, debugstr_guid(riid), ppobj);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI XAudio2CF_AddRef(IClassFactory *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
-                                               REFIID riid, void **ppobj)
-{
-    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-    HRESULT hr;
-    IUnknown *punk;
-
-    TRACE("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
-
-    *ppobj = NULL;
-    hr = This->pfnCreateInstance(pOuter, &punk);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IUnknown_QueryInterface(punk, riid, ppobj);
-    IUnknown_Release(punk);
-    return hr;
-}
-
-static HRESULT WINAPI XAudio2CF_LockServer(IClassFactory *iface, BOOL dolock)
-{
-    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
-    FIXME("(%p)->(%d): stub!\n", This, dolock);
-    return S_OK;
-}
-
-static const IClassFactoryVtbl XAudio2CF_Vtbl =
-{
-    XAudio2CF_QueryInterface,
-    XAudio2CF_AddRef,
-    XAudio2CF_Release,
-    XAudio2CF_CreateInstance,
-    XAudio2CF_LockServer
-};
-
-typedef struct {
     IXAudio2 IXAudio2Impl_iface;
     LONG ref;
 } IXAudio2Impl;
-
-static const struct IXAudio2Vtbl XAudio2_Vtbl;
-
-HRESULT XAudio2_create(IUnknown *pUnkOuter, IUnknown **ppObj)
-{
-    IXAudio2Impl *object;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
-
-    if(pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IXAudio2Impl));
-    if(!object)
-        return E_OUTOFMEMORY;
-
-    object->IXAudio2Impl_iface.lpVtbl = &XAudio2_Vtbl;
-    object->ref = 1;
-
-    *ppObj = (IUnknown *)&object->IXAudio2Impl_iface;
-
-    return S_OK;
-}
-
-static IClassFactoryImpl xaudio2_cf = { { &XAudio2CF_Vtbl }, XAudio2_create };
-
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
-{
-    IClassFactory *factory = NULL;
-
-    TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
-
-    if(IsEqualGUID(rclsid, &CLSID_XAudio2)) {
-        factory = &xaudio2_cf.IClassFactory_iface;
-    }
-    if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
-
-    return IClassFactory_QueryInterface(factory, riid, ppv);
-}
 
 /*** IUnknown methods ***/
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
@@ -362,3 +253,110 @@ static const IXAudio2Vtbl XAudio2_Vtbl =
     IXAudio2Impl_GetPerformanceData,
     IXAudio2Impl_SetDebugConfiguration
 };
+
+typedef struct {
+    IClassFactory IClassFactory_iface;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, IUnknown **ppObj);
+} IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
+static HRESULT WINAPI XAudio2CF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)
+            || IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef(iface);
+        *ppobj = iface;
+        return S_OK;
+    }
+
+    *ppobj = NULL;
+    WARN("(%p)->(%s, %p): interface not found\n", iface, debugstr_guid(riid), ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI XAudio2CF_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                               REFIID riid, void **ppobj)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    HRESULT hr;
+    IUnknown *punk;
+
+    TRACE("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
+
+    *ppobj = NULL;
+    hr = This->pfnCreateInstance(pOuter, &punk);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IUnknown_QueryInterface(punk, riid, ppobj);
+    IUnknown_Release(punk);
+    return hr;
+}
+
+static HRESULT WINAPI XAudio2CF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    FIXME("(%p)->(%d): stub!\n", This, dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl XAudio2CF_Vtbl =
+{
+    XAudio2CF_QueryInterface,
+    XAudio2CF_AddRef,
+    XAudio2CF_Release,
+    XAudio2CF_CreateInstance,
+    XAudio2CF_LockServer
+};
+
+HRESULT XAudio2_create(IUnknown *pUnkOuter, IUnknown **ppObj)
+{
+    IXAudio2Impl *object;
+
+    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
+
+    if(pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IXAudio2Impl));
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    object->IXAudio2Impl_iface.lpVtbl = &XAudio2_Vtbl;
+    object->ref = 1;
+
+    *ppObj = (IUnknown *)&object->IXAudio2Impl_iface;
+
+    return S_OK;
+}
+
+static IClassFactoryImpl xaudio2_cf = { { &XAudio2CF_Vtbl }, XAudio2_create };
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    IClassFactory *factory = NULL;
+
+    TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(rclsid, &CLSID_XAudio2)) {
+        factory = &xaudio2_cf.IClassFactory_iface;
+    }
+    if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
+
+    return IClassFactory_QueryInterface(factory, riid, ppv);
+}
