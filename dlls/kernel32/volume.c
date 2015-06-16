@@ -1818,7 +1818,7 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
 BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
 {
     static const WCHAR ntprefixW[] = { '\\','\\','?','\\',0 };
-    static const WCHAR fallbackpathW[] = { 'C',':','\\',0 };
+    WCHAR fallbackpathW[] = { 'C',':','\\',0 };
     NTSTATUS status = STATUS_SUCCESS;
     WCHAR *volumenameW = NULL, *c;
     int pos, last_pos, stop_pos;
@@ -1897,7 +1897,17 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
             goto cleanup;
         }
 
-        /* DOS-style paths revert to C:\ (anything not beginning with a slash) */
+        /* DOS-style paths (anything not beginning with a slash) have fallback replies */
+        if (filename[1] == ':')
+        {
+            /* if the path is semi-sane (X:) then use the given drive letter (if it is mounted) */
+            fallbackpathW[0] = filename[0];
+            if (!isalphaW(filename[0]) || GetDriveTypeW( fallbackpathW ) == DRIVE_NO_ROOT_DIR)
+            {
+                status = STATUS_OBJECT_NAME_NOT_FOUND;
+                goto cleanup;
+            }
+        }
         last_pos = strlenW(fallbackpathW) - 1; /* points to \\ */
         filename = fallbackpathW;
         status = STATUS_SUCCESS;
