@@ -10325,7 +10325,7 @@ static void pointsize_test(void)
         {&vs1, &ps2_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
         {&vs3, &ps3, D3DFVF_XYZ, 32, 32, FALSE, TRUE},
         {&vs3, &ps3_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
-        /* {&novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48, FALSE, FALSE}, */
+        {&novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48, FALSE, FALSE},
         {&vs1_psize, &ps1, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, FALSE},
         {&vs3_psize, &ps3, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, TRUE},
     };

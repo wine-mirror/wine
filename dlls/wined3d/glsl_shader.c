@@ -5867,9 +5867,10 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
 
     if (settings->point_size)
     {
-        shader_addline(buffer, "gl_PointSize = ffp_point.size / sqrt(ffp_point.c_att"
+        shader_addline(buffer, "gl_PointSize = %s / sqrt(ffp_point.c_att"
                 " + ffp_point.l_att * length(ec_pos.xyz)"
-                " + ffp_point.q_att * dot(ec_pos.xyz, ec_pos.xyz));\n");
+                " + ffp_point.q_att * dot(ec_pos.xyz, ec_pos.xyz));\n",
+                settings->per_vertex_point_size ? "ffp_attrib_psize" : "ffp_point.size");
         shader_addline(buffer, "gl_PointSize = clamp(gl_PointSize, ffp_point.size_min, ffp_point.size_max);\n");
     }
 

@@ -6475,7 +6475,7 @@ static void test_pointsize(void)
         {decl, &vs1, &ps1, D3DFVF_XYZ, 32, 32},
         {NULL, &novs, &ps1, D3DFVF_XYZ, 32, 62},
         {decl, &vs1, &nops, D3DFVF_XYZ, 32, 32},
-        /* {NULL, &novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48}, */
+        {NULL, &novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48},
         {decl_psize, &vs1_psize, &ps1, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24},
     };
     static const struct

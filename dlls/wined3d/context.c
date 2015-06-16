@@ -2785,6 +2785,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
     BOOL use_vshader = use_vs(state);
+    BOOL generic_attributes = context->d3d_info->ffp_generic_attributes;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -2829,7 +2830,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
         }
         else
         {
-            if (!element->ffp_valid)
+            if (!generic_attributes && !element->ffp_valid)
             {
                 WARN("Skipping unsupported fixed function element of format %s and usage %s.\n",
                         debug_d3dformat(element->format->id), debug_d3ddeclusage(element->usage));

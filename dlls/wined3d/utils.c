@@ -4514,6 +4514,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
 
         settings->transformed = 1;
         settings->point_size = state->gl_primitive_type == GL_POINTS;
+        settings->per_vertex_point_size = !!(si->use_map & 1 << WINED3D_FFP_PSIZE);
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
         else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
@@ -4539,6 +4540,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];
     settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
     settings->point_size = state->gl_primitive_type == GL_POINTS;
+    settings->per_vertex_point_size = !!(si->use_map & 1 << WINED3D_FFP_PSIZE);
 
     if (state->render_states[WINED3D_RS_COLORVERTEX] && (si->use_map & (1 << WINED3D_FFP_DIFFUSE)))
     {

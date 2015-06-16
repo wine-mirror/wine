@@ -1894,10 +1894,11 @@ struct wined3d_ffp_vs_settings
     DWORD lighting        : 1;
     DWORD localviewer     : 1;
     DWORD point_size      : 1;
+    DWORD per_vertex_point_size : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
     DWORD ortho_fog       : 1;
-    DWORD padding         : 14;
+    DWORD padding         : 13;
 
     DWORD texgen[MAX_TEXTURES];
 };
