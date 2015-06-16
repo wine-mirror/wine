@@ -190,11 +190,13 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
 
 static void * WINAPI user_allocate(SIZE_T size)
 {
+    ok(0, "unexpected user_allocate call\n");
     return CoTaskMemAlloc(size);
 }
 
 static void WINAPI user_free(void *p)
 {
+    ok(0, "unexpected user_free call\n");
     CoTaskMemFree(p);
 }
 
