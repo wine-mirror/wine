@@ -308,7 +308,7 @@ static unsigned char * handle_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffe
     return pBuffer + sizeof(RemotableHandle);
 }
 
-static void handle_UserFree(ULONG *pFlags, HANDLE *phMenu)
+static void handle_UserFree(ULONG *pFlags, HANDLE *handle)
 {
     /* nothing to do */
 }
