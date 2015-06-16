@@ -49,6 +49,7 @@ MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
 MAKE_FUNCPTR(gnutls_certificate_get_peers);
 MAKE_FUNCPTR(gnutls_cipher_get);
+MAKE_FUNCPTR(gnutls_cipher_get_block_size);
 MAKE_FUNCPTR(gnutls_cipher_get_key_size);
 MAKE_FUNCPTR(gnutls_credentials_set);
 MAKE_FUNCPTR(gnutls_deinit);
@@ -239,37 +240,6 @@ SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
     return SEC_E_OK;
 }
 
-static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cipher)
-{
-    const struct
-    {
-        gnutls_cipher_algorithm_t cipher;
-        unsigned int block_size;
-    }
-    algorithms[] =
-    {
-        {GNUTLS_CIPHER_3DES_CBC, 8},
-        {GNUTLS_CIPHER_AES_128_CBC, 16},
-        {GNUTLS_CIPHER_AES_256_CBC, 16},
-        {GNUTLS_CIPHER_ARCFOUR_128, 1},
-        {GNUTLS_CIPHER_ARCFOUR_40, 1},
-        {GNUTLS_CIPHER_DES_CBC, 8},
-        {GNUTLS_CIPHER_NULL, 1},
-        {GNUTLS_CIPHER_RC2_40_CBC, 8},
-    };
-    unsigned int i;
-
-    for (i = 0; i < sizeof(algorithms) / sizeof(*algorithms); ++i)
-    {
-        if (algorithms[i].cipher == cipher)
-            return algorithms[i].block_size;
-    }
-
-    FIXME("Unknown cipher %#x, returning 1\n", cipher);
-
-    return 1;
-}
-
 static DWORD schannel_get_protocol(gnutls_protocol_t proto)
 {
     /* FIXME: currently schannel only implements client connections, but
@@ -343,8 +313,7 @@ static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
 unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
 {
     gnutls_session_t s = (gnutls_session_t)session;
-    gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(s);
-    return schannel_get_cipher_block_size(cipher);
+    return pgnutls_cipher_get_block_size(pgnutls_cipher_get(s));
 }
 
 unsigned int schan_imp_get_max_message_size(schan_imp_session session)
@@ -502,6 +471,7 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
     LOAD_FUNCPTR(gnutls_certificate_get_peers)
     LOAD_FUNCPTR(gnutls_cipher_get)
+    LOAD_FUNCPTR(gnutls_cipher_get_block_size)
     LOAD_FUNCPTR(gnutls_cipher_get_key_size)
     LOAD_FUNCPTR(gnutls_credentials_set)
     LOAD_FUNCPTR(gnutls_deinit)
