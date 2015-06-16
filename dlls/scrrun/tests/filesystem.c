@@ -35,6 +35,9 @@
 
 static IFileSystem3 *fs3;
 
+/* w2k and 2k3 error code. */
+#define E_VAR_NOT_SET 0x800a005b
+
 static inline ULONG get_refcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
@@ -1377,6 +1380,15 @@ static void test_CreateTextFile(void)
 
     hr = ITextStream_Read(stream, 1, &str);
     ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Close(stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, 1, &str);
+    ok(hr == CTL_E_BADFILEMODE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Close(stream);
+    ok(hr == S_FALSE || hr == E_VAR_NOT_SET, "got 0x%08x\n", hr);
 
     ITextStream_Release(stream);
 

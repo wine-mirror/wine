@@ -633,8 +633,16 @@ static HRESULT WINAPI textstream_SkipLine(ITextStream *iface)
 static HRESULT WINAPI textstream_Close(ITextStream *iface)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)\n", This);
+
+    if(!CloseHandle(This->file))
+        hr = S_FALSE;
+
+    This->file = NULL;
+
+    return hr;
 }
 
 static const ITextStreamVtbl textstreamvtbl = {
