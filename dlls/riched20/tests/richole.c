@@ -3251,6 +3251,92 @@ static void test_ITextSelection_GetDuplicate(void)
   ITextRange_Release(range);
 }
 
+static void test_Expand(void)
+{
+  static const char test_text1[] = "TestSomeText";
+  IRichEditOle *reole = NULL;
+  ITextDocument *doc = NULL;
+  ITextSelection *selection;
+  ITextRange *range;
+  LONG value;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reole, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
+  SendMessageA(hwnd, EM_SETSEL, 1, 2);
+
+  hr = ITextDocument_Range(doc, 0, 4, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextRange_Expand(range, tomStory, NULL);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextRange_GetStart(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  hr = ITextSelection_Expand(selection, tomStory, NULL);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextSelection_GetStart(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+  hr = ITextSelection_GetEnd(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  hr = ITextRange_SetStart(range, 1);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextRange_SetEnd(range, 2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_SetStart(selection, 1);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  hr = ITextSelection_SetEnd(selection, 2);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  value = 0;
+  hr = ITextRange_Expand(range, tomStory, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 12, "got %d\n", value);
+  hr = ITextRange_GetStart(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+  hr = ITextRange_GetEnd(range, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  value = 0;
+  hr = ITextSelection_Expand(selection, tomStory, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 12, "got %d\n", value);
+  hr = ITextSelection_GetStart(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 0, "got %d\n", value);
+  hr = ITextSelection_GetEnd(selection, &value);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+  ok(value == 13, "got %d\n", value);
+
+  release_interfaces(&hwnd, &reole, &doc, NULL);
+
+  hr = ITextRange_Expand(range, tomStory, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextRange_Expand(range, tomStory, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_Expand(selection, tomStory, NULL);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  hr = ITextSelection_Expand(selection, tomStory, &value);
+  ok(hr == CO_E_RELEASED, "got 0x%08x\n", hr);
+
+  ITextSelection_Release(selection);
+  ITextRange_Release(range);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -3286,4 +3372,5 @@ START_TEST(richole)
   test_InsertObject();
   test_GetStoryLength();
   test_ITextSelection_GetDuplicate();
+  test_Expand();
 }

@@ -909,6 +909,35 @@ static void textfont_cache_range_props(ITextFontImpl *font)
     }
 }
 
+static HRESULT textrange_expand(ITextRange *range, LONG unit, LONG *delta)
+{
+    LONG expand_start, expand_end;
+
+    switch (unit)
+    {
+    case tomStory:
+        expand_start = 0;
+        ITextRange_GetStoryLength(range, &expand_end);
+        break;
+    default:
+        FIXME("unit %d is not supported\n", unit);
+        return E_NOTIMPL;
+    }
+
+    if (delta) {
+        LONG start, end;
+
+        ITextRange_GetStart(range, &start);
+        ITextRange_GetEnd(range, &end);
+        *delta = expand_end - expand_start - (end - start);
+    }
+
+    ITextRange_SetStart(range, expand_start);
+    ITextRange_SetEnd(range, expand_end);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI IRichEditOleImpl_inner_fnQueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppvObj)
 {
     IRichEditOleImpl *This = impl_from_IUnknown(iface);
@@ -1970,12 +1999,12 @@ static HRESULT WINAPI ITextRange_fnExpand(ITextRange *me, LONG unit, LONG *delta
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
 
-    FIXME("(%p)->(%d %p): stub\n", This, unit, delta);
+    TRACE("(%p)->(%d %p)\n", This, unit, delta);
 
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    return textrange_expand(me, unit, delta);
 }
 
 static HRESULT WINAPI ITextRange_fnGetIndex(ITextRange *me, LONG unit, LONG *index)
@@ -4494,14 +4523,16 @@ static HRESULT WINAPI ITextSelection_fnCollapse(ITextSelection *me, LONG bStart)
     return hres;
 }
 
-static HRESULT WINAPI ITextSelection_fnExpand(ITextSelection *me, LONG Unit, LONG *pDelta)
+static HRESULT WINAPI ITextSelection_fnExpand(ITextSelection *me, LONG unit, LONG *delta)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+
+    TRACE("(%p)->(%d %p)\n", This, unit, delta);
+
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    FIXME("not implemented\n");
-    return E_NOTIMPL;
+    return textrange_expand((ITextRange*)me, unit, delta);
 }
 
 static HRESULT WINAPI ITextSelection_fnGetIndex(ITextSelection *me, LONG Unit, LONG *pIndex)
