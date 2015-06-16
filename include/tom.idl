@@ -267,7 +267,7 @@ interface ITextRange : IDispatch
     HRESULT Expand([in]LONG Unit, [retval, out]LONG *pDelta);
     HRESULT GetIndex([in]LONG Unit, [retval, out]LONG *pIndex);
     HRESULT SetIndex([in]LONG Unit, [in]LONG Index, [in]LONG Extend);
-    HRESULT SetRange([in]LONG cpActive, [in]LONG cpOther);
+    HRESULT SetRange([in]LONG anchor, [in]LONG active);
     HRESULT InRange([in]ITextRange *pRange, [retval, out]LONG *pb);
     HRESULT InStory([in]ITextRange *pRange, [retval, out]LONG *pb);
     HRESULT IsEqual([in]ITextRange *pRange, [retval, out]LONG *pb);
