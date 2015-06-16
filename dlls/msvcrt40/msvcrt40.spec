@@ -753,8 +753,8 @@
 @ cdecl -arch=win64 ?setp@streambuf@@IEAAXPEAD0@Z(ptr ptr ptr) msvcirt.?setp@streambuf@@IEAAXPEAD0@Z
 @ stub -arch=win32 ?setrwbuf@stdiobuf@@QAEHHH@Z
 @ stub -arch=win64 ?setrwbuf@stdiobuf@@QEAAHHH@Z
-@ stub -arch=win32 ?sgetc@streambuf@@QAEHXZ
-@ stub -arch=win64 ?sgetc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?sgetc@streambuf@@QAEHXZ(ptr) msvcirt.?sgetc@streambuf@@QAEHXZ
+@ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) msvcirt.?sgetc@streambuf@@QEAAHXZ
 @ stub -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z
 @ stub -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z
 # @ extern ?sh_none@filebuf@@2HB

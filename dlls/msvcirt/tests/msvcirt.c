@@ -28,7 +28,7 @@ typedef struct {
     const vtable_ptr *vtable;
     int allocated;
     int unbuffered;
-    int unknown;
+    int stored_char;
     char *base;
     char *ebuf;
     char *pbase;
@@ -61,6 +61,7 @@ static void (*__thiscall p_streambuf_pbump)(streambuf*, int);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
 static void (*__thiscall p_streambuf_setlock)(streambuf*);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
+static int (*__thiscall p_streambuf_sgetc)(streambuf*);
 static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 
@@ -145,6 +146,7 @@ static BOOL init(void)
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_sgetc, "?sgetc@streambuf@@QEAAHXZ");
         SET(p_streambuf_sync, "?sync@streambuf@@UEAAHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
     } else {
@@ -160,12 +162,25 @@ static BOOL init(void)
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QAEXXZ");
+        SET(p_streambuf_sgetc, "?sgetc@streambuf@@QAEHXZ");
         SET(p_streambuf_sync, "?sync@streambuf@@UAEHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
     }
 
     init_thiscall_thunk();
     return TRUE;
+}
+
+static int underflow_count;
+
+#ifdef __i386__
+static int __thiscall test_streambuf_underflow(void)
+#else
+static int __thiscall test_streambuf_underflow(streambuf *this)
+#endif
+{
+    underflow_count++;
+    return 'u';
 }
 
 struct streambuf_lock_arg
@@ -197,6 +212,7 @@ static DWORD WINAPI lock_streambuf(void *arg)
 static void test_streambuf(void)
 {
     streambuf sb, sb2, sb3, *psb;
+    vtable_ptr test_streambuf_vtbl[11];
     struct streambuf_lock_arg lock_arg;
     HANDLE thread;
     char reserve[16];
@@ -225,6 +241,12 @@ static void test_streambuf(void)
     ok(sb3.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", sb3.unbuffered);
     ok(sb3.base == NULL, "wrong base pointer, expected %p got %p\n", NULL, sb3.base);
     ok(sb3.ebuf == NULL, "wrong ebuf pointer, expected %p got %p\n", NULL, sb3.ebuf);
+
+    memcpy(test_streambuf_vtbl, sb.vtable, sizeof(test_streambuf_vtbl));
+    test_streambuf_vtbl[8] = (vtable_ptr)&test_streambuf_underflow;
+    sb2.vtable = test_streambuf_vtbl;
+    sb3.vtable = test_streambuf_vtbl;
+    underflow_count = 0;
 
     /* setlock */
     ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
@@ -385,6 +407,28 @@ static void test_streambuf(void)
     sb2.pptr = sb2.epptr;
     ret = (int) call_func1(p_streambuf_sync, &sb3);
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
+
+    /* sgetc */
+    ret = (int) call_func1(p_streambuf_sgetc, &sb2);
+    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(underflow_count == 1, "expected call to underflow\n");
+    ok(sb2.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb2.stored_char);
+    sb2.gptr = sb2.eback;
+    *sb2.gptr = 'a';
+    ret = (int) call_func1(p_streambuf_sgetc, &sb2);
+    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(underflow_count == 2, "expected call to underflow\n");
+    ok(sb2.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb2.stored_char);
+    sb2.gptr = sb2.egptr;
+    ret = (int) call_func1(p_streambuf_sgetc, &sb3);
+    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(underflow_count == 3, "expected call to underflow\n");
+    ok(sb3.stored_char == 'u', "wrong stored character, expected 'u' got %c\n", sb3.stored_char);
+    sb3.stored_char = 'b';
+    ret = (int) call_func1(p_streambuf_sgetc, &sb3);
+    ok(ret == 'b', "expected 'b' got '%c'\n", ret);
+    ok(underflow_count == 3, "no call to underflow expected\n");
+    ok(sb3.stored_char == 'b', "wrong stored character, expected 'b' got %c\n", sb3.stored_char);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

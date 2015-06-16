@@ -693,8 +693,8 @@
 @ cdecl -arch=win64 ?setp@streambuf@@IEAAXPEAD0@Z(ptr ptr ptr) streambuf_setp
 @ stub -arch=win32 ?setrwbuf@stdiobuf@@QAEHHH@Z  # int __thiscall stdiobuf::setrwbuf(int,int)
 @ stub -arch=win64 ?setrwbuf@stdiobuf@@QEAAHHH@Z
-@ stub -arch=win32 ?sgetc@streambuf@@QAEHXZ  # int __thiscall streambuf::sgetc(void)
-@ stub -arch=win64 ?sgetc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?sgetc@streambuf@@QAEHXZ(ptr) streambuf_sgetc
+@ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) streambuf_sgetc
 @ stub -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z  # int __thiscall streambuf::sgetn(char *,int)
 @ stub -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z
 # @ extern ?sh_none@filebuf@@2HB  # static int const filebuf::sh_none

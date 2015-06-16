@@ -36,7 +36,7 @@ typedef struct {
     const vtable_ptr *vtable;
     int allocated;
     int unbuffered;
-    int unknown;
+    int stored_char;
     char *base;
     char *ebuf;
     char *pbase;
@@ -98,7 +98,7 @@ streambuf* __thiscall streambuf_reserve_ctor(streambuf *this, char *buffer, int 
     TRACE("(%p %p %d)\n", this, buffer, length);
     this->vtable = &MSVCP_streambuf_vtable;
     this->allocated = 0;
-    this->unknown = -1;
+    this->stored_char = EOF;
     this->do_lock = -1;
     this->base = NULL;
     streambuf_setbuf(this, buffer, length);
@@ -480,6 +480,7 @@ int __thiscall streambuf_unbuffered_get(const streambuf *this)
 
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_underflow, 4)
+#define call_streambuf_underflow(this) CALL_VTBL_FUNC(this, 32, int, (streambuf*), (this))
 int __thiscall streambuf_underflow(streambuf *this)
 {
     return EOF;
@@ -511,6 +512,20 @@ int __thiscall streambuf_xsputn(streambuf *this, const char *data, int length)
 {
     FIXME("(%p %p %d): stub\n", this, data, length);
     return 0;
+}
+
+/* ?sgetc@streambuf@@QAEHXZ */
+/* ?sgetc@streambuf@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_sgetc, 4)
+int __thiscall streambuf_sgetc(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->unbuffered) {
+        if (this->stored_char == EOF)
+            this->stored_char = call_streambuf_underflow(this);
+        return this->stored_char;
+    } else
+        return call_streambuf_underflow(this);
 }
 
 /******************************************************************
