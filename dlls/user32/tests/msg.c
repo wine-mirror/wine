@@ -10339,13 +10339,14 @@ static void wait_move_event(HWND hwnd, int x, int y)
 {
     MSG msg;
     DWORD time;
-    BOOL ret, go = FALSE;
+    BOOL ret;
 
     time = GetTickCount();
-    while (GetTickCount() - time < 200 && !go) {
+    while (GetTickCount() - time < 200) {
 	ret = PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE);
-	go  = ret && msg.pt.x > x && msg.pt.y > y;
+        if (ret && msg.pt.x > x && msg.pt.y > y) break;
         if (!ret) MsgWaitForMultipleObjects( 0, NULL, FALSE, GetTickCount() - time, QS_ALLINPUT );
+        else Sleep( GetTickCount() - time );
     }
 }
 
