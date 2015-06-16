@@ -4428,7 +4428,7 @@ struct exsetsel_s {
   int _getsel_todo_wine;
 };
 
-const struct exsetsel_s exsetsel_tests[] = {
+static const struct exsetsel_s exsetsel_tests[] = {
   /* sanity tests */
   {5, 10, 10, 5, 10, 0},
   {15, 17, 17, 15, 17, 0},
@@ -4452,6 +4452,9 @@ const struct exsetsel_s exsetsel_tests[] = {
   /* test if cpMin > cpMax */
   {15, 19, 18, 15, 18, 0},
   {19, 15, 18, 15, 18, 0},
+  /* cpMin == strlen() && cpMax > cpMin */
+  {17, 18, 18, 17, 18 },
+  {17, 50, 18, 17, 18 },
 };
 
 static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
@@ -4515,6 +4518,7 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
 
 static void test_EM_SETSEL(void)
 {
+    char buffA[32];
     HWND hwndRichEdit = new_richedit(NULL);
     int i;
     const int num_tests = sizeof(exsetsel_tests)/sizeof(struct exsetsel_s);
@@ -4527,6 +4531,11 @@ static void test_EM_SETSEL(void)
     for (i = 0; i < num_tests; i++) {
         check_EM_SETSEL(hwndRichEdit, &exsetsel_tests[i], i);
     }
+
+    SendMessageA(hwndRichEdit, EM_SETSEL, 17, 18);
+    buffA[0] = 123;
+    SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffA);
+    ok(buffA[0] == 0, "selection text %s\n", buffA);
 
     DestroyWindow(hwndRichEdit);
 }
