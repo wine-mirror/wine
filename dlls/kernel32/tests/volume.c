@@ -591,7 +591,7 @@ static void test_disk_extents(void)
 
 static void test_GetVolumePathNameA(void)
 {
-    char volume_path[MAX_PATH];
+    char volume_path[MAX_PATH], cwd[MAX_PATH];
     struct {
         const char *file_name;
         const char *path_name;
@@ -671,6 +671,10 @@ static void test_GetVolumePathNameA(void)
             "M::", "C:\\", 4,
             ERROR_FILE_NOT_FOUND, ERROR_MORE_DATA
         },
+        { /* test 17: an unreasonable DOS path */
+            "InvalidDrive:\\AnInvalidFolder", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
     };
     BOOL ret, success;
     DWORD error;
@@ -682,6 +686,13 @@ static void test_GetVolumePathNameA(void)
         win_skip("required functions not found\n");
         return;
     }
+
+    /* Obtain the drive of the working directory */
+    ret = GetCurrentDirectoryA( sizeof(cwd), cwd );
+    ok( ret, "Failed to obtain the current working directory.\n" );
+    cwd[2] = 0;
+    ret = SetEnvironmentVariableA( "CurrentDrive", cwd );
+    ok( ret, "Failed to set an environment variable for the current working drive.\n" );
 
     for (i=0; i<sizeof(test_paths)/sizeof(test_paths[0]); i++)
     {
@@ -699,11 +710,14 @@ static void test_GetVolumePathNameA(void)
 
         if (ret)
         {
+            char path_name[MAX_PATH];
+
+            ExpandEnvironmentStringsA( test_paths[i].path_name, path_name, MAX_PATH);
             /* If we succeeded then make sure the path is correct */
-            success = (strcmp( volume_path, test_paths[i].path_name ) == 0)
-                      || broken(strcasecmp( volume_path, test_paths[i].path_name ) == 0) /* XP */;
+            success = (strcmp( volume_path, path_name ) == 0)
+                      || broken(strcasecmp( volume_path, path_name ) == 0) /* XP */;
             ok(success, "GetVolumePathName test %d unexpectedly returned path %s (expected %s).\n",
-                        i, volume_path, test_paths[i].path_name);
+                        i, volume_path, path_name);
         }
         else
         {

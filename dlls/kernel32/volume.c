@@ -1889,6 +1889,8 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 
     if (status != STATUS_SUCCESS)
     {
+        WCHAR cwdW[MAX_PATH];
+
         /* the path was completely invalid */
         if (filename[0] == '\\')
         {
@@ -1907,6 +1909,16 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
                 status = STATUS_OBJECT_NAME_NOT_FOUND;
                 goto cleanup;
             }
+        }
+        else if (GetCurrentDirectoryW( sizeof(cwdW), cwdW ))
+        {
+            /* if the path is completely bogus then revert to the drive of the working directory */
+            fallbackpathW[0] = cwdW[0];
+        }
+        else
+        {
+            status = STATUS_OBJECT_NAME_INVALID;
+            goto cleanup;
         }
         last_pos = strlenW(fallbackpathW) - 1; /* points to \\ */
         filename = fallbackpathW;
