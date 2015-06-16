@@ -19,6 +19,8 @@
 import "unknwn.idl";
 import "mmdeviceapi.idl";
 
+import "audiosessiontypes.h";
+
 [
     uuid(5a508685-a254-4fba-9b82-9a24b00306af)
 ]
@@ -328,7 +330,9 @@ typedef struct XAUDIO2_VOICE_STATE
 [
     local
 ]
-interface IXAudio2SourceVoice : IXAudio2Voice
+/* XAudio2 2.7's IXAudio2SourceVoice interface. Actually called
+ * IXAudio2SourceVoice in the Jun 2010 DX SDK */
+interface IXAudio27SourceVoice : IXAudio2Voice
 {
     HRESULT Start(
         [in, defaultvalue(0)] UINT32 Flags,
@@ -362,6 +366,41 @@ interface IXAudio2SourceVoice : IXAudio2Voice
 [
     local
 ]
+/* XAudio2 2.8's IXAudio2SourceVoice interface. */
+interface IXAudio2SourceVoice : IXAudio2Voice
+{
+    HRESULT Start(
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    HRESULT Stop(
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    HRESULT SubmitSourceBuffer(
+        [in] const XAUDIO2_BUFFER* pBuffer,
+        [in, defaultvalue(NULL)] const XAUDIO2_BUFFER_WMA* pBufferWMA);
+
+    HRESULT FlushSourceBuffers();
+
+    HRESULT Discontinuity();
+
+    HRESULT ExitLoop([in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetState([out] XAUDIO2_VOICE_STATE* pVoiceState, [in, defaultvalue(0)] UINT32 Flags);
+
+    HRESULT SetFrequencyRatio(
+        [in] float Ratio,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetFrequencyRatio([out] float* pRatio);
+
+    HRESULT SetSourceSampleRate([in] UINT32 NewSourceSampleRate);
+}
+
+[
+    local
+]
 interface IXAudio2SubmixVoice : IXAudio2Voice
 {
 }
@@ -371,6 +410,8 @@ interface IXAudio2SubmixVoice : IXAudio2Voice
 ]
 interface IXAudio2MasteringVoice : IXAudio2Voice
 {
+    /* not present in XAudio2 2.7 */
+    void GetChannelMask([out] DWORD *pChannelMask);
 }
 
 [
@@ -410,7 +451,9 @@ typedef struct XAUDIO2_DEBUG_CONFIGURATION
     object,
     uuid(8bcf1f58-9fe7-4583-8ac6-e2adc465c8bb),
 ]
-interface IXAudio2 : IUnknown
+/* XAudio2 2.7's IXAudio2 interface. Actually called IXAudio2 in the Jun 2010
+ * DX SDK */
+interface IXAudio27 : IUnknown
 {
     HRESULT GetDeviceCount([out] UINT32* pCount);
 
@@ -465,6 +508,57 @@ interface IXAudio2 : IUnknown
         [in, defaultvalue(NULL)] void* pReserved);
 }
 
+[
+    object,
+    uuid(60d8dac8-5aa1-4e8e-b597-2f5e2883d484),
+]
+/* XAudio2 2.8's IXAudio2 interface. */
+interface IXAudio2 : IUnknown
+{
+    HRESULT RegisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    void UnregisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    HRESULT CreateSourceVoice(
+        [out] IXAudio2SourceVoice** ppSourceVoice,
+        [in] const WAVEFORMATEX* pSourceFormat,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_DEFAULT_FREQ_RATIO)] float MaxFrequencyRatio,
+        [in, defaultvalue(NULL)] IXAudio2VoiceCallback* pCallback,
+        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateSubmixVoice(
+        [out] IXAudio2SubmixVoice** ppSubmixVoice,
+        [in] UINT32 InputChannels,
+        [in] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(0)] UINT32 ProcessingStage,
+        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateMasteringVoice(
+        [out] IXAudio2MasteringVoice** ppMasteringVoice,
+        [in, defaultvalue(XAUDIO2_DEFAULT_CHANNELS)] UINT32 InputChannels,
+        [in, defaultvalue(XAUDIO2_DEFAULT_SAMPLERATE)] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(NULL)] LPCWSTR DeviceId,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain,
+        [in, defaultvalue(AudioCategory_GameEffects)] AUDIO_STREAM_CATEGORY StreamCategory);
+
+    HRESULT StartEngine();
+
+    void StopEngine();
+
+    HRESULT CommitChanges([in] UINT32 OperationSet);
+
+    void GetPerformanceData([out] XAUDIO2_PERFORMANCE_DATA* pPerfData);
+
+    [local] void SetDebugConfiguration(
+        [in] const XAUDIO2_DEBUG_CONFIGURATION* pDebugConfiguration,
+        [in, defaultvalue(NULL)] void* pReserved);
+}
+
 const UINT32 XAUDIO2_DEBUG_ENGINE = 1;
 const UINT32 XAUDIO2_VOICE_NOPITCH = 2;
 const UINT32 XAUDIO2_VOICE_NOSRC = 4;
@@ -497,30 +591,4 @@ cpp_quote("inline static float XAudio2CutoffFrequencyToRadians(float cutofffreq,
 cpp_quote("inline static float XAudio2RadiansToCutoffFrequency(float radians, float samplerate) { return samplerate * asinf(radians/2.0f) / (float)M_PI; }")
 cpp_quote("#endif")
 
-cpp_quote("#ifdef __cplusplus")
-cpp_quote("inline static HRESULT XAudio2Create(IXAudio2** pxaudio2, UINT32 flags = 0, XAUDIO2_PROCESSOR processor = XAUDIO2_DEFAULT_PROCESSOR) {")
-cpp_quote("    IXAudio2* xaudio2;")
-cpp_quote("    HRESULT hr = CoCreateInstance(__uuidof(XAudio2), NULL, CLSCTX_INPROC_SERVER, __uuidof(IXAudio2), (void**)&xaudio2);")
-cpp_quote("    if (SUCCEEDED(hr)) {")
-cpp_quote("        hr = xaudio2->Initialize(flags, processor);")
-cpp_quote("        if (SUCCEEDED(hr))")
-cpp_quote("            *pxaudio2 = xaudio2;")
-cpp_quote("        else")
-cpp_quote("            xaudio2->Release();")
-cpp_quote("    }")
-cpp_quote("    return hr;")
-cpp_quote("}")
-cpp_quote("#else")
-cpp_quote("inline static HRESULT XAudio2Create(IXAudio2** pxaudio2, UINT32 flags, XAUDIO2_PROCESSOR processor) {")
-cpp_quote("    IXAudio2* xaudio2;")
-cpp_quote("    HRESULT hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER, &IID_IXAudio2, (void**)&xaudio2);")
-cpp_quote("    if (SUCCEEDED(hr)) {")
-cpp_quote("        hr = xaudio2->lpVtbl->Initialize(xaudio2, flags, processor);")
-cpp_quote("        if (SUCCEEDED(hr))")
-cpp_quote("            *pxaudio2 = xaudio2;")
-cpp_quote("        else")
-cpp_quote("            xaudio2->lpVtbl->Release(xaudio2);")
-cpp_quote("    }")
-cpp_quote("    return hr;")
-cpp_quote("}")
-cpp_quote("#endif")
+cpp_quote("HRESULT WINAPI XAudio2Create(IXAudio2** pxaudio2, UINT32 flags, XAUDIO2_PROCESSOR processor);")

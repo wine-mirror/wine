@@ -45,4 +45,16 @@ typedef enum _AudioSessionState
     AudioSessionStateExpired,
 } AudioSessionState;
 
+typedef enum _AUDIO_STREAM_CATEGORY
+{
+    AudioCategory_Other = 0,
+    AudioCategory_ForegroundOnlyMedia,
+    AudioCategory_BackgroundCapableMedia,
+    AudioCategory_Communications,
+    AudioCategory_Alerts,
+    AudioCategory_SoundEffects,
+    AudioCategory_GameEffects,
+    AudioCategory_GameMedia
+} AUDIO_STREAM_CATEGORY;
+
 #endif
