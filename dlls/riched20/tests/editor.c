@@ -4425,33 +4425,33 @@ struct exsetsel_s {
   LRESULT expected_retval;
   int expected_getsel_start;
   int expected_getsel_end;
-  int _getsel_todo_wine;
+  BOOL todo;
 };
 
 static const struct exsetsel_s exsetsel_tests[] = {
   /* sanity tests */
-  {5, 10, 10, 5, 10, 0},
-  {15, 17, 17, 15, 17, 0},
+  {5, 10, 10, 5, 10 },
+  {15, 17, 17, 15, 17 },
   /* test cpMax > strlen() */
-  {0, 100, 18, 0, 18, 0},
+  {0, 100, 18, 0, 18 },
   /* test cpMin < 0 && cpMax >= 0 after cpMax > strlen() */
-  {-1, 1, 17, 17, 17, 0},
+  {-1, 1, 17, 17, 17 },
   /* test cpMin == cpMax */
-  {5, 5, 5, 5, 5, 0},
+  {5, 5, 5, 5, 5 },
   /* test cpMin < 0 && cpMax >= 0 (bug 4462) */
-  {-1, 0, 5, 5, 5, 0},
-  {-1, 17, 5, 5, 5, 0},
-  {-1, 18, 5, 5, 5, 0},
+  {-1, 0, 5, 5, 5 },
+  {-1, 17, 5, 5, 5 },
+  {-1, 18, 5, 5, 5 },
   /* test cpMin < 0 && cpMax < 0 */
-  {-1, -1, 17, 17, 17, 0},
-  {-4, -5, 17, 17, 17, 0},
+  {-1, -1, 17, 17, 17 },
+  {-4, -5, 17, 17, 17 },
   /* test cpMin >=0 && cpMax < 0 (bug 6814) */
-  {0, -1, 18, 0, 18, 0},
-  {17, -5, 18, 17, 18, 0},
-  {18, -3, 17, 17, 17, 0},
+  {0, -1, 18, 0, 18 },
+  {17, -5, 18, 17, 18 },
+  {18, -3, 17, 17, 17 },
   /* test if cpMin > cpMax */
-  {15, 19, 18, 15, 18, 0},
-  {19, 15, 18, 15, 18, 0},
+  {15, 19, 18, 15, 18 },
+  {19, 15, 18, 15, 18 },
   /* cpMin == strlen() && cpMax > cpMin */
   {17, 18, 18, 17, 18 },
   {17, 50, 18, 17, 18 },
@@ -4470,7 +4470,7 @@ static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->_getsel_todo_wine) {
+    if (setsel->todo) {
         todo_wine {
             ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
         }
@@ -4507,7 +4507,7 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->_getsel_todo_wine) {
+    if (setsel->todo) {
         todo_wine {
             ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
         }
