@@ -424,7 +424,6 @@ AC_CHECK_HEADERS(\
 	lber.h \
 	ldap.h \
 	libproc.h \
-	libunwind.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -751,6 +750,7 @@ uninstall::
     ;;
 
   darwin*|macosx*)
+    AC_CHECK_HEADERS(libunwind.h)
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LIBWINE_LDFLAGS="-multiply_defined suppress"

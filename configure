@@ -6626,7 +6626,6 @@ for ac_header in \
 	lber.h \
 	ldap.h \
 	libproc.h \
-	libunwind.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -7849,6 +7848,18 @@ uninstall::
     ;;
 
   darwin*|macosx*)
+    for ac_header in libunwind.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "libunwind.h" "ac_cv_header_libunwind_h" "$ac_includes_default"
+if test "x$ac_cv_header_libunwind_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBUNWIND_H 1
+_ACEOF
+
+fi
+
+done
+
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LIBWINE_LDFLAGS="-multiply_defined suppress"
