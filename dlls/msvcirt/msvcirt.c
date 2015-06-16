@@ -358,6 +358,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
 #define call_streambuf_overflow(this, c) CALL_VTBL_FUNC(this, 28, int, (streambuf*, int), (this, c))
 int __thiscall streambuf_overflow(streambuf *this, int c)
 {
+    ERR("overflow is not implemented in streambuf\n");
     return EOF;
 }
 
@@ -484,6 +485,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_underflow, 4)
 #define call_streambuf_underflow(this) CALL_VTBL_FUNC(this, 32, int, (streambuf*), (this))
 int __thiscall streambuf_underflow(streambuf *this)
 {
+    ERR("underflow is not implemented in streambuf\n");
     return EOF;
 }
 
