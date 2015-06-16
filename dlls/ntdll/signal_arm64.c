@@ -799,6 +799,10 @@ void signal_init_thread( TEB *teb )
         pthread_key_create( &teb_key, NULL );
         init_done = TRUE;
     }
+
+    /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
+    __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
+
     pthread_setspecific( teb_key, teb );
 }
 
