@@ -1817,6 +1817,7 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
  */
 BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
 {
+    static const WCHAR deviceprefixW[] = { '\\','?','?','\\',0 };
     static const WCHAR ntprefixW[] = { '\\','\\','?','\\',0 };
     WCHAR fallbackpathW[] = { 'C',':','\\',0 };
     NTSTATUS status = STATUS_SUCCESS;
@@ -1892,9 +1893,9 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
         WCHAR cwdW[MAX_PATH];
 
         /* the path was completely invalid */
-        if (filename[0] == '\\')
+        if (filename[0] == '\\' && strncmpW(deviceprefixW, filename, strlenW(deviceprefixW)) != 0)
         {
-            /* NT-style paths fail */
+            /* NT-style paths (that are not device paths) fail */
             status = STATUS_OBJECT_NAME_INVALID;
             goto cleanup;
         }

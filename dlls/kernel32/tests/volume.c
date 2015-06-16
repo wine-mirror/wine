@@ -675,6 +675,14 @@ static void test_GetVolumePathNameA(void)
             "InvalidDrive:\\AnInvalidFolder", "%CurrentDrive%\\", sizeof(volume_path),
             NO_ERROR, NO_ERROR
         },
+        { /* test 18: a reasonable device path */
+            "\\??\\CdRom0", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 19: an unreasonable device path */
+            "\\??\\ReallyBogus", "%CurrentDrive%\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
     };
     BOOL ret, success;
     DWORD error;
