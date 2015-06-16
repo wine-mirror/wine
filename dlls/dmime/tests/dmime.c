@@ -470,6 +470,72 @@ static void test_segment(void)
     while (IDirectMusicSegment_Release(dms));
 }
 
+static void test_track(void)
+{
+    IDirectMusicTrack8 *dmt8;
+    IPersistStream *ps;
+    CLSID classid;
+    ULARGE_INTEGER size;
+    HRESULT hr;
+#define X(class)        &CLSID_ ## class, #class
+    const struct {
+        REFCLSID clsid;
+        const char *name;
+        BOOL todo;
+    } class[] = {
+        { X(DirectMusicLyricsTrack), TRUE },
+        { X(DirectMusicMarkerTrack), TRUE },
+        { X(DirectMusicParamControlTrack), TRUE },
+        { X(DirectMusicSegmentTriggerTrack), FALSE },
+        { X(DirectMusicSeqTrack), TRUE },
+        { X(DirectMusicSysExTrack), TRUE },
+        { X(DirectMusicTempoTrack), FALSE },
+        { X(DirectMusicTimeSigTrack), TRUE },
+        { X(DirectMusicWaveTrack), TRUE }
+    };
+#undef X
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(class); i++) {
+        trace("Testing %s\n", class[i].name);
+        hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack8,
+                (void**)&dmt8);
+        if (hr == E_NOINTERFACE && !dmt8) {
+            skip("%s not created with CoCreateInstance()\n", class[i].name);
+            continue;
+        }
+        ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
+
+        /* IPersistStream */
+        hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
+        ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+        hr = IPersistStream_GetClassID(ps, &classid);
+        if (class[i].todo) {
+            todo_wine {
+                ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+                ok(IsEqualGUID(&classid, class[i].clsid),
+                        "Expected class %s got %s\n", class[i].name, wine_dbgstr_guid(&classid));
+                hr = IPersistStream_IsDirty(ps);
+                ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+            }
+        } else {
+            ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+            ok(IsEqualGUID(&classid, class[i].clsid),
+                    "Expected class %s got %s\n", class[i].name, wine_dbgstr_guid(&classid));
+            hr = IPersistStream_IsDirty(ps);
+            ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+        }
+
+        /* Unimplemented IPersistStream methods */
+        hr = IPersistStream_GetSizeMax(ps, &size);
+        ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+        hr = IPersistStream_Save(ps, NULL, TRUE);
+        ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+        while (IDirectMusicTrack8_Release(dmt8));
+    }
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -489,6 +555,7 @@ START_TEST(dmime)
     test_audiopathconfig();
     test_graph();
     test_segment();
+    test_track();
 
     CoUninitialize();
 }
