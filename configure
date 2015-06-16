@@ -985,6 +985,7 @@ enable_d3dcompiler_41
 enable_d3dcompiler_42
 enable_d3dcompiler_43
 enable_d3dcompiler_46
+enable_d3dcompiler_47
 enable_d3dim
 enable_d3drm
 enable_d3dx10_33
@@ -17181,6 +17182,7 @@ wine_fn_config_dll d3dcompiler_42 enable_d3dcompiler_42
 wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43 implib d3dcompiler
 wine_fn_config_test dlls/d3dcompiler_43/tests d3dcompiler_43_test
 wine_fn_config_dll d3dcompiler_46 enable_d3dcompiler_46
+wine_fn_config_dll d3dcompiler_47 enable_d3dcompiler_47
 wine_fn_config_dll d3dim enable_d3dim implib
 wine_fn_config_dll d3drm enable_d3drm implib
 wine_fn_config_test dlls/d3drm/tests d3drm_test

@@ -1,0 +1,6 @@
+MODULE    = d3dcompiler_47.dll
+
+C_SRCS = \
+	d3dcompiler_47_main.c
+
+RC_SRCS = version.rc
