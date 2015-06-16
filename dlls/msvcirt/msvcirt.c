@@ -355,6 +355,7 @@ int __thiscall streambuf_out_waiting(const streambuf *this)
 
 /* Unexported */
 DEFINE_THISCALL_WRAPPER(streambuf_overflow, 8)
+#define call_streambuf_overflow(this, c) CALL_VTBL_FUNC(this, 28, int, (streambuf*, int), (this, c))
 int __thiscall streambuf_overflow(streambuf *this, int c)
 {
     return EOF;
@@ -526,6 +527,15 @@ int __thiscall streambuf_sgetc(streambuf *this)
         return this->stored_char;
     } else
         return call_streambuf_underflow(this);
+}
+
+/* ?sputc@streambuf@@QAEHH@Z */
+/* ?sputc@streambuf@@QEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_sputc, 8)
+int __thiscall streambuf_sputc(streambuf *this, int ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    return (this->pptr < this->epptr) ? *this->pptr++ = ch : call_streambuf_overflow(this, ch);
 }
 
 /******************************************************************

@@ -704,8 +704,8 @@
 @ stub -arch=win64 ?snextc@streambuf@@QEAAHXZ
 @ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z  # int __thiscall streambuf::sputbackc(char)
 @ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
-@ stub -arch=win32 ?sputc@streambuf@@QAEHH@Z  # int __thiscall streambuf::sputc(int)
-@ stub -arch=win64 ?sputc@streambuf@@QEAAHH@Z
+@ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) streambuf_sputc
+@ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) streambuf_sputc
 @ stub -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z  # int __thiscall streambuf::sputn(char const *,int)
 @ stub -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z
 @ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ  # struct _iobuf * __thiscall stdiobuf::stdiofile(void)

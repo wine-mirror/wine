@@ -62,6 +62,7 @@ static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
 static void (*__thiscall p_streambuf_setlock)(streambuf*);
 static streambuf* (*__thiscall p_streambuf_setbuf)(streambuf*, char*, int);
 static int (*__thiscall p_streambuf_sgetc)(streambuf*);
+static int (*__thiscall p_streambuf_sputc)(streambuf*, int);
 static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 
@@ -147,6 +148,7 @@ static BOOL init(void)
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UEAAPEAV1@PEADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_sgetc, "?sgetc@streambuf@@QEAAHXZ");
+        SET(p_streambuf_sputc, "?sputc@streambuf@@QEAAHH@Z");
         SET(p_streambuf_sync, "?sync@streambuf@@UEAAHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
     } else {
@@ -163,6 +165,7 @@ static BOOL init(void)
         SET(p_streambuf_setbuf, "?setbuf@streambuf@@UAEPAV1@PADH@Z");
         SET(p_streambuf_setlock, "?setlock@streambuf@@QAEXXZ");
         SET(p_streambuf_sgetc, "?sgetc@streambuf@@QAEHXZ");
+        SET(p_streambuf_sputc, "?sputc@streambuf@@QAEHH@Z");
         SET(p_streambuf_sync, "?sync@streambuf@@UAEHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
     }
@@ -171,7 +174,20 @@ static BOOL init(void)
     return TRUE;
 }
 
-static int underflow_count;
+static int overflow_count, underflow_count;
+static streambuf *test_overflow_this;
+
+#ifdef __i386__
+static int __thiscall test_streambuf_overflow(int ch)
+#else
+static int __thiscall test_streambuf_overflow(streambuf *this, int ch)
+#endif
+{
+    overflow_count++;
+    if (!test_overflow_this->unbuffered)
+        test_overflow_this->pptr = test_overflow_this->pbase + 5;
+    return ch;
+}
 
 #ifdef __i386__
 static int __thiscall test_streambuf_underflow(void)
@@ -243,10 +259,11 @@ static void test_streambuf(void)
     ok(sb3.ebuf == NULL, "wrong ebuf pointer, expected %p got %p\n", NULL, sb3.ebuf);
 
     memcpy(test_streambuf_vtbl, sb.vtable, sizeof(test_streambuf_vtbl));
+    test_streambuf_vtbl[7] = (vtable_ptr)&test_streambuf_overflow;
     test_streambuf_vtbl[8] = (vtable_ptr)&test_streambuf_underflow;
     sb2.vtable = test_streambuf_vtbl;
     sb3.vtable = test_streambuf_vtbl;
-    underflow_count = 0;
+    overflow_count = underflow_count = 0;
 
     /* setlock */
     ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
@@ -429,6 +446,30 @@ static void test_streambuf(void)
     ok(ret == 'b', "expected 'b' got '%c'\n", ret);
     ok(underflow_count == 3, "no call to underflow expected\n");
     ok(sb3.stored_char == 'b', "wrong stored character, expected 'b' got %c\n", sb3.stored_char);
+
+    /* sputc */
+    *sb.pbase = 'a';
+    ret = (int) call_func2(p_streambuf_sputc, &sb, 'c');
+    ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
+    ok(overflow_count == 0, "no call to overflow expected\n");
+    ok(*sb.pbase == 'c', "expected 'c' in the put area, got %c\n", *sb.pbase);
+    ok(sb.pptr == sb.pbase + 1, "wrong put pointer, expected %p got %p\n", sb.pbase + 1, sb.pptr);
+    test_overflow_this = &sb2;
+    ret = (int) call_func2(p_streambuf_sputc, &sb2, 'c');
+    ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
+    ok(overflow_count == 1, "expected call to overflow\n");
+    ok(sb2.pptr == sb2.pbase + 5, "wrong put pointer, expected %p got %p\n", sb2.pbase + 5, sb2.pptr);
+    test_overflow_this = &sb3;
+    ret = (int) call_func2(p_streambuf_sputc, &sb3, 'c');
+    ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
+    ok(overflow_count == 2, "expected call to overflow\n");
+    sb3.pbase = sb3.pptr = sb3.base;
+    sb3.epptr = sb3.ebuf;
+    ret = (int) call_func2(p_streambuf_sputc, &sb3, 'c');
+    ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
+    ok(overflow_count == 2, "no call to overflow expected\n");
+    ok(*sb3.pbase == 'c', "expected 'c' in the put area, got %c\n", *sb3.pbase);
+    sb3.pbase = sb3.pptr = sb3.epptr = NULL;
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

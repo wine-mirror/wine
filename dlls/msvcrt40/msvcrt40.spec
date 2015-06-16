@@ -764,8 +764,8 @@
 @ stub -arch=win64 ?snextc@streambuf@@QEAAHXZ
 @ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z
 @ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
-@ stub -arch=win32 ?sputc@streambuf@@QAEHH@Z
-@ stub -arch=win64 ?sputc@streambuf@@QEAAHH@Z
+@ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) msvcirt.?sputc@streambuf@@QAEHH@Z
+@ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) msvcirt.?sputc@streambuf@@QEAAHH@Z
 @ stub -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z
 @ stub -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z
 @ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ
