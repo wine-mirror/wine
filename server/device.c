@@ -288,7 +288,6 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     irp->out_size = min( irp->out_size, out_size );
     if (irp->out_size && !(irp->out_data = memdup( out_data, irp->out_size )))
         irp->out_size = 0;
-    release_object( file );
     irp->file = NULL;
     if (irp->async)
     {
@@ -306,6 +305,7 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
         list_remove( &irp->dev_entry );
         release_object( irp );  /* no longer on the device queue */
     }
+    release_object( file );
 }
 
 
