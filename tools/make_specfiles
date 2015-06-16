@@ -94,6 +94,7 @@ my @dll_groups =
  ],
  [
   "d3dcompiler_43",
+  "d3dcompiler_46",
   "d3dcompiler_42",
   "d3dcompiler_41",
   "d3dcompiler_40",

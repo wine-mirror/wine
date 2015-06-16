@@ -1,0 +1,6 @@
+MODULE    = d3dcompiler_46.dll
+
+C_SRCS = \
+	d3dcompiler_46_main.c
+
+RC_SRCS = version.rc
