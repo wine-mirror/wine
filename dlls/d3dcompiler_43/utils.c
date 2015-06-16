@@ -802,6 +802,7 @@ void free_declaration(struct hlsl_ir_var *decl)
 {
     d3dcompiler_free((void *)decl->name);
     d3dcompiler_free((void *)decl->semantic);
+    d3dcompiler_free((void *)decl->reg_reservation);
     d3dcompiler_free(decl);
 }
 
