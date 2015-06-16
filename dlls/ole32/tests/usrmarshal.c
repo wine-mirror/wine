@@ -44,6 +44,11 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal  (ULONG *, unsigned char *,
 unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(ULONG *, unsigned char *, HMETAFILEPICT *);
 void __RPC_USER HMETAFILEPICT_UserFree(ULONG *, HMETAFILEPICT *);
 
+ULONG __RPC_USER HBRUSH_UserSize(ULONG *, ULONG, HBRUSH *);
+unsigned char * __RPC_USER HBRUSH_UserMarshal(ULONG *, unsigned char *, HBRUSH *);
+unsigned char * __RPC_USER HBRUSH_UserUnmarshal(ULONG *, unsigned char *, HBRUSH *);
+void __RPC_USER HBRUSH_UserFree(ULONG *, HBRUSH *);
+
 static BOOL g_expect_user_alloc;
 static void * WINAPI user_allocate(SIZE_T size)
 {
@@ -932,6 +937,45 @@ static void test_marshal_HICON(void)
     DestroyIcon(hIcon);
 }
 
+static void test_marshal_HBRUSH(void)
+{
+    MIDL_STUB_MESSAGE stub_msg;
+    HBRUSH hBrush, hBrush2;
+    USER_MARSHAL_CB umcb;
+    RPC_MESSAGE rpc_msg;
+    unsigned char *buffer;
+    LOGBRUSH logbrush;
+    wireHBRUSH wirehbrush;
+    ULONG size;
+
+    logbrush.lbStyle = BS_SOLID;
+    logbrush.lbColor = RGB(0, 0, 0);
+    logbrush.lbHatch = 0;
+
+    hBrush = CreateBrushIndirect(&logbrush);
+    ok(hBrush != 0, "CreateBrushIndirect failed\n");
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    size = HBRUSH_UserSize(&umcb.Flags, 0, &hBrush);
+    ok(size == sizeof(*wirehbrush), "Wrong size %d\n", size);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HBRUSH_UserMarshal(&umcb.Flags, buffer, &hBrush);
+    wirehbrush = (wireHBRUSH)buffer;
+    ok(wirehbrush->fContext == WDT_INPROC_CALL, "Context should be WDT_INPROC_CALL instead of 0x%08x\n", wirehbrush->fContext);
+    ok(wirehbrush->u.hInproc == (LONG_PTR)hBrush, "Marshaled value should be %p instead of %x\n", hBrush, wirehbrush->u.hRemote);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+    HBRUSH_UserUnmarshal(&umcb.Flags, buffer, &hBrush2);
+    ok(hBrush == hBrush2, "Didn't unmarshal properly\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+    HBRUSH_UserFree(&umcb.Flags, &hBrush2);
+    DeleteObject(hBrush);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -947,6 +991,7 @@ START_TEST(usrmarshal)
     test_marshal_SNB();
     test_marshal_HDC();
     test_marshal_HICON();
+    test_marshal_HBRUSH();
 
     CoUninitialize();
 }
