@@ -250,12 +250,6 @@ void WINAPI SHFreeNameMappings(HANDLE hNameMappings);
 /******************************************
  * ShellExecute
  */
-#define SE_ERR_SHARE            26
-#define SE_ERR_ASSOCINCOMPLETE  27
-#define SE_ERR_DDETIMEOUT       28
-#define SE_ERR_DDEFAIL          29
-#define SE_ERR_DDEBUSY          30
-#define SE_ERR_NOASSOC          31
 
 HINSTANCE	WINAPI ShellExecuteA(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT);
 HINSTANCE	WINAPI ShellExecuteW(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,INT);
