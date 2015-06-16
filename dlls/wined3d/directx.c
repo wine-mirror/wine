@@ -3399,13 +3399,25 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         gl_info->supported[NV_POINT_SPRITE] = TRUE;
     }
 
+    if ((!gl_info->supported[EXT_BLEND_MINMAX] || !gl_info->supported[EXT_BLEND_SUBTRACT])
+            && gl_version >= MAKEDWORD_VERSION(1, 4))
+    {
+        TRACE("GL CORE: GL_EXT_blend_minmax / GL_EXT_blend_subtract support.\n");
+        gl_info->supported[EXT_BLEND_MINMAX] = TRUE;
+        gl_info->supported[EXT_BLEND_SUBTRACT] = TRUE;
+    }
+
     if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_version >= MAKEDWORD_VERSION(2, 0))
     {
         TRACE("GL CORE: GL_ARB_texture_non_power_of_two support.\n");
         gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = TRUE;
     }
 
-    if (gl_version >= MAKEDWORD_VERSION(2, 0)) gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
+    if (gl_info->supported[EXT_BLEND_MINMAX] || gl_info->supported[EXT_BLEND_SUBTRACT])
+        gl_info->supported[WINED3D_GL_BLEND_EQUATION] = TRUE;
+
+    if (gl_version >= MAKEDWORD_VERSION(2, 0))
+        gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
 
     if (gl_info->supported[APPLE_FENCE])
     {
@@ -4760,7 +4772,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                      WINED3DPMISCCAPS_CLIPTLVERTS           |
                                      WINED3DPMISCCAPS_CLIPPLANESCALEDPOINTS |
                                      WINED3DPMISCCAPS_MASKZ                 |
-                                     WINED3DPMISCCAPS_BLENDOP               |
                                      WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING;
                                     /* TODO:
                                         WINED3DPMISCCAPS_NULLREFERENCE
@@ -4768,6 +4779,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS
                                         WINED3DPMISCCAPS_FOGVERTEXCLAMPED */
 
+    if (gl_info->supported[WINED3D_GL_BLEND_EQUATION])
+        caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_BLENDOP;
     if (gl_info->supported[EXT_BLEND_EQUATION_SEPARATE] && gl_info->supported[EXT_BLEND_FUNC_SEPARATE])
         caps->PrimitiveMiscCaps |= WINED3DPMISCCAPS_SEPARATEALPHABLEND;
     if (gl_info->supported[EXT_DRAW_BUFFERS2])

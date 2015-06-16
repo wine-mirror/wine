@@ -273,23 +273,23 @@ static void state_blendop_w(struct wined3d_context *context, const struct wined3
     WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
 }
 
-static GLenum gl_blend_op(enum wined3d_blend_op op)
+static GLenum gl_blend_op(const struct wined3d_gl_info *gl_info, enum wined3d_blend_op op)
 {
     switch (op)
     {
         case WINED3D_BLEND_OP_ADD:
-            return GL_FUNC_ADD_EXT;
+            return GL_FUNC_ADD;
         case WINED3D_BLEND_OP_SUBTRACT:
-            return GL_FUNC_SUBTRACT_EXT;
+            return gl_info->supported[EXT_BLEND_SUBTRACT] ? GL_FUNC_SUBTRACT : GL_FUNC_ADD;
         case WINED3D_BLEND_OP_REVSUBTRACT:
-            return GL_FUNC_REVERSE_SUBTRACT_EXT;
+            return gl_info->supported[EXT_BLEND_SUBTRACT] ? GL_FUNC_REVERSE_SUBTRACT : GL_FUNC_ADD;
         case WINED3D_BLEND_OP_MIN:
-            return GL_MIN_EXT;
+            return gl_info->supported[EXT_BLEND_MINMAX] ? GL_MIN : GL_FUNC_ADD;
         case WINED3D_BLEND_OP_MAX:
-            return GL_MAX_EXT;
+            return gl_info->supported[EXT_BLEND_MINMAX] ? GL_MAX : GL_FUNC_ADD;
         default:
             FIXME("Unhandled blend op %#x.\n", op);
-            return GL_NONE;
+            return GL_FUNC_ADD;
     }
 }
 
@@ -307,8 +307,8 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
         return;
     }
 
-    blend_equation = gl_blend_op(state->render_states[WINED3D_RS_BLENDOP]);
-    blend_equation_alpha = gl_blend_op(state->render_states[WINED3D_RS_BLENDOPALPHA]);
+    blend_equation = gl_blend_op(gl_info, state->render_states[WINED3D_RS_BLENDOP]);
+    blend_equation_alpha = gl_blend_op(gl_info, state->render_states[WINED3D_RS_BLENDOPALPHA]);
     TRACE("blend_equation %#x, blend_equation_alpha %#x.\n", blend_equation, blend_equation_alpha);
 
     if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
@@ -4997,7 +4997,7 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         state_debug_monitor }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite0   }, EXT_DRAW_BUFFERS2               },
     { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, EXT_BLEND_MINMAX                },
+    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, WINED3D_GL_BLEND_EQUATION       },
     { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop_w     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         state_scissor       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SLOPESCALEDEPTHBIAS),       { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 NULL                }, WINED3D_GL_EXT_NONE             },
