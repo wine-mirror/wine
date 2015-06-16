@@ -1584,8 +1584,31 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         type = left->data_type;
     else
     {
-        FIXME("Assignments with writemasks not supported yet.\n");
-        type = NULL;
+        unsigned int dimx = 0;
+        DWORD bitmask;
+        enum hlsl_type_class type_class;
+
+        if (left->data_type->type > HLSL_CLASS_LAST_NUMERIC)
+        {
+            hlsl_report_message(left->loc.file, left->loc.line, left->loc.col, HLSL_LEVEL_ERROR,
+                    "writemask on a non scalar/vector/matrix type");
+            d3dcompiler_free(assign);
+            return NULL;
+        }
+        bitmask = writemask & ((1 << left->data_type->dimx) - 1);
+        while (bitmask)
+        {
+            if (bitmask & 1)
+                dimx++;
+            bitmask >>= 1;
+        }
+        if (left->data_type->type == HLSL_CLASS_MATRIX)
+            FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
+        if (dimx == 1)
+            type_class = HLSL_CLASS_SCALAR;
+        else
+            type_class = left->data_type->type;
+        type = new_hlsl_type(NULL, type_class, left->data_type->base_type, dimx, 1);
     }
     assign->node.type = HLSL_IR_ASSIGNMENT;
     assign->node.loc = left->loc;
