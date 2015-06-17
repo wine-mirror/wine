@@ -1819,6 +1819,65 @@ static void test_GetGlyphOrientationTransform(void)
     IDWriteTextAnalyzer2_Release(analyzer2);
 }
 
+static void test_GetBaseline(void)
+{
+    DWRITE_SCRIPT_ANALYSIS sa = { 0 };
+    IDWriteTextAnalyzer1 *analyzer1;
+    IDWriteTextAnalyzer *analyzer;
+    IDWriteFontFace *fontface;
+    INT32 baseline;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextAnalyzer_QueryInterface(analyzer, &IID_IDWriteTextAnalyzer1, (void**)&analyzer1);
+    IDWriteTextAnalyzer_Release(analyzer);
+    if (hr != S_OK) {
+        win_skip("GetBaseline() is not supported.\n");
+        return;
+    }
+
+    fontface = create_fontface();
+
+    /* Tahoma doesn't have BASE table, it doesn't work even with simulation enabled */
+    exists = TRUE;
+    baseline = 456;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
+       fontface,
+       DWRITE_BASELINE_DEFAULT,
+       FALSE,
+       TRUE,
+       sa,
+       NULL,
+       &baseline,
+       &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(baseline == 0, "got %d\n", baseline);
+    ok(exists == FALSE, "got %d\n", exists);
+}
+    exists = TRUE;
+    baseline = 456;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
+       fontface,
+       DWRITE_BASELINE_ROMAN,
+       FALSE,
+       TRUE,
+       sa,
+       NULL,
+       &baseline,
+       &exists);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(baseline == 0, "got %d\n", baseline);
+    ok(exists == FALSE, "got %d\n", exists);
+}
+    IDWriteFontFace_Release(fontface);
+    IDWriteTextAnalyzer1_Release(analyzer1);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -1844,6 +1903,7 @@ START_TEST(analyzer)
     test_GetGlyphPlacements();
     test_ApplyCharacterSpacing();
     test_GetGlyphOrientationTransform();
+    test_GetBaseline();
 
     IDWriteFactory_Release(factory);
 }
