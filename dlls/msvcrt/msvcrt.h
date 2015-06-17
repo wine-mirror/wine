@@ -159,7 +159,7 @@ typedef struct MSVCRT_threadlocaleinfostruct {
     MSVCRT_LC_ID lc_id[6];
     struct {
         char *locale;
-        wchar_t *wlocale;
+        MSVCRT_wchar_t *wlocale;
         int *refcount;
         int *wrefcount;
     } lc_category[6];
@@ -175,6 +175,9 @@ typedef struct MSVCRT_threadlocaleinfostruct {
     unsigned char *pclmap;
     unsigned char *pcumap;
     MSVCRT___lc_time_data *lc_time_curr;
+#if _MSVCR_VER >= 110
+    MSVCRT_wchar_t *lc_name[6];
+#endif
 } MSVCRT_threadlocinfo;
 
 typedef struct MSVCRT_threadmbcinfostruct {

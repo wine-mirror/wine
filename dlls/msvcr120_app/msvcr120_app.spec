@@ -872,7 +872,7 @@
 @ stub __TypeMatch
 @ cdecl ___lc_codepage_func() msvcr120.___lc_codepage_func
 @ cdecl ___lc_collate_cp_func() msvcr120.___lc_collate_cp_func
-@ stub ___lc_locale_name_func
+@ cdecl ___lc_locale_name_func() msvcr120.___lc_locale_name_func
 @ cdecl ___mb_cur_max_func() msvcr120.___mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr) msvcr120.___mb_cur_max_l_func
 @ cdecl ___setlc_active_func() msvcr120.___setlc_active_func
