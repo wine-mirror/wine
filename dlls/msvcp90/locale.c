@@ -62,15 +62,6 @@ const locale* __cdecl locale_classic(void);
 
 #if _MSVCP_VER >= 110
 wchar_t ** __cdecl ___lc_locale_name_func(void);
-static LCID* ___lc_handle_func(void)
-{
-    LCID *ret;
-
-    _locale_t loc = _get_current_locale();
-    ret = loc->locinfo->lc_handle;
-    _free_locale(loc);
-    return ret;
-}
 #else
 LCID* __cdecl ___lc_handle_func(void);
 #endif
@@ -129,8 +120,13 @@ typedef struct {
 } _Locinfo;
 
 typedef struct {
+#if _MSVCP_VER < 110
     LCID handle;
+#endif
     unsigned page;
+#if _MSVCP_VER >= 110
+    wchar_t *lc_name;
+#endif
 } _Collvec;
 
 typedef struct {
@@ -664,7 +660,11 @@ ULONGLONG __cdecl _Getcoll(void)
     TRACE("\n");
 
     ret.collvec.page = ___lc_collate_cp_func();
+#if _MSVCP_VER < 110
     ret.collvec.handle = ___lc_handle_func()[LC_COLLATE];
+#else
+    ret.collvec.lc_name = ___lc_locale_name_func()[LC_COLLATE];
+#endif
     return ret.ull;
 }
 
@@ -1091,10 +1091,11 @@ int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
 
     TRACE("(%s %s)\n", debugstr_an(first1, last1-first1), debugstr_an(first2, last2-first2));
 
-    if(coll)
-        lcid = coll->handle;
-    else
-        lcid = ___lc_handle_func()[LC_COLLATE];
+#if _MSVCP_VER < 110
+    lcid = (coll ? coll->handle : ___lc_handle_func()[LC_COLLATE]);
+#else
+    lcid = LocaleNameToLCID(coll ? coll->lc_name : ___lc_locale_name_func()[LC_COLLATE], 0);
+#endif
     return CompareStringA(lcid, 0, first1, last1-first1, first2, last2-first2)-CSTR_EQUAL;
 }
 
@@ -1425,15 +1426,15 @@ static collate* collate_short_use_facet(const locale *loc)
 int __cdecl _Wcscoll(const wchar_t *first1, const wchar_t *last1, const wchar_t *first2,
         const wchar_t *last2, const _Collvec *coll)
 {
-    LCID lcid;
-
     TRACE("(%s %s)\n", debugstr_wn(first1, last1-first1), debugstr_wn(first2, last2-first2));
 
-    if(coll)
-        lcid = coll->handle;
-    else
-        lcid = ___lc_handle_func()[LC_COLLATE];
-    return CompareStringW(lcid, 0, first1, last1-first1, first2, last2-first2)-CSTR_EQUAL;
+#if _MSVCP_VER < 110
+    return CompareStringW(coll ? coll->handle : ___lc_handle_func()[LC_COLLATE],
+            0, first1, last1-first1, first2, last2-first2)-CSTR_EQUAL;
+#else
+    return CompareStringEx(coll ? coll->lc_name : ___lc_locale_name_func()[LC_COLLATE],
+            0, first1, last1-first1, first2, last2-first2, NULL, NULL, 0)-CSTR_EQUAL;
+#endif
 }
 
 /* ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z */
