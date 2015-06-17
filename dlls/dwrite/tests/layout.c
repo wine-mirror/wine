@@ -1486,6 +1486,7 @@ static void test_GetClusterMetrics(void)
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
+    static const WCHAR str4W[] = {'a',' ',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[4];
     IDWriteTextLayout1 *layout1;
@@ -1703,6 +1704,20 @@ todo_wine
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 0, "got %u\n", count);
+    IDWriteTextLayout_Release(layout);
+
+    /* whitespace */
+    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 2, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 2, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+    ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+todo_wine
+    ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimm);

@@ -469,21 +469,20 @@ static inline DWRITE_LINE_BREAKPOINT get_effective_breakpoint(const struct dwrit
 }
 
 static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, const struct regular_layout_run *run,
-    UINT16 start_glyph, UINT16 stop_glyph, UINT32 stop_position, DWRITE_CLUSTER_METRICS *metrics)
+    UINT16 start_glyph, UINT16 stop_glyph, UINT32 stop_position, UINT16 length, DWRITE_CLUSTER_METRICS *metrics)
 {
     UINT8 breakcondition;
     UINT32 position;
     UINT16 j;
 
-    metrics->width = 0.0;
-
-    /* For clusters on control chars we report zero glyphs, and we need zero cluster
+    /* For clusters made of control chars we report zero glyphs, and we need zero cluster
        width as well; advances are already computed at this point and are not necessary zero. */
+    metrics->width = 0.0;
     if (run->run.glyphCount) {
         for (j = start_glyph; j < stop_glyph; j++)
             metrics->width += run->run.glyphAdvances[j];
     }
-    metrics->length = 0;
+    metrics->length = length;
 
     position = stop_position;
     if (stop_glyph == run->glyphcount)
@@ -531,8 +530,8 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
         BOOL end = i == run->descr.stringLength - 1;
 
         if (run->descr.clusterMap[start] != run->descr.clusterMap[i]) {
-            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->descr.clusterMap[i], i, metrics);
-            metrics->length = i - start;
+            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->descr.clusterMap[i], i,
+                i - start, metrics);
             c->position = start;
             c->run = r;
 
@@ -543,8 +542,8 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
         }
 
         if (end) {
-            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->glyphcount, i, metrics);
-            metrics->length = i - start + 1;
+            init_cluster_metrics(layout, run, run->descr.clusterMap[start], run->glyphcount, i,
+                i - start + 1, metrics);
             c->position = start;
             c->run = r;
 
