@@ -61,6 +61,7 @@ MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
 const locale* __cdecl locale_classic(void);
 
 #if _MSVCP_VER >= 110
+wchar_t ** __cdecl ___lc_locale_name_func(void);
 static LCID* ___lc_handle_func(void)
 {
     LCID *ret;
@@ -688,8 +689,7 @@ _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 #if _MSVCP_VER < 110
     ret->handle = ___lc_handle_func()[LC_COLLATE];
 #else
-    /* FIXME: use ___lc_locale_name_func() */
-    ret->name = NULL;
+    ret->name = ___lc_locale_name_func()[LC_COLLATE];
 #endif
     ret->delfl = TRUE;
     table = malloc(sizeof(short[256]));
