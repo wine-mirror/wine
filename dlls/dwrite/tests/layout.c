@@ -1716,7 +1716,6 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
     ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
-todo_wine
     ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
     IDWriteTextLayout_Release(layout);
 
@@ -2746,10 +2745,10 @@ static void test_GetLineMetrics(void)
     memset(&metrics, 0, sizeof(metrics));
     hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
+todo_wine
     ok(metrics.length == 5, "got %u\n", metrics.length);
     ok(metrics.trailingWhitespaceLength == 1, "got %u\n", metrics.trailingWhitespaceLength);
-}
+
     ok(metrics.newlineLength == 0, "got %u\n", metrics.newlineLength);
     ok(metrics.isTrimmed == FALSE, "got %d\n", metrics.isTrimmed);
 
