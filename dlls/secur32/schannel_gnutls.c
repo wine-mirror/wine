@@ -76,7 +76,10 @@ MAKE_FUNCPTR(gnutls_transport_set_pull_function);
 MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
-
+#if GNUTLS_VERSION_MAJOR < 3
+#define GNUTLS_CIPHER_AES_128_GCM 93
+#define GNUTLS_CIPHER_AES_256_GCM 94
+#endif
 
 static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
                                       void *buff, size_t buff_len)
@@ -258,7 +261,7 @@ static DWORD schannel_get_protocol(gnutls_protocol_t proto)
     }
 }
 
-static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
+static ALG_ID schannel_get_cipher_algid(int cipher)
 {
     switch (cipher)
     {
