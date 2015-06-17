@@ -5835,6 +5835,92 @@ static void test_AddAce(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %d\n", GetLastError());
 }
 
+static void test_system_security_access(void)
+{
+    static const WCHAR testkeyW[] =
+        {'S','O','F','T','W','A','R','E','\\','W','i','n','e','\\','S','A','C','L','t','e','s','t',0};
+    LONG res;
+    HKEY hkey;
+    PSECURITY_DESCRIPTOR sd;
+    ACL *sacl;
+    DWORD err, len = 128;
+    TOKEN_PRIVILEGES priv, *priv_prev;
+    HANDLE token;
+    LUID luid;
+    BOOL ret;
+
+    if (!OpenProcessToken( GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, &token )) return;
+    if (!LookupPrivilegeValueA( NULL, SE_SECURITY_NAME, &luid ))
+    {
+        CloseHandle( token );
+        return;
+    }
+
+    /* ACCESS_SYSTEM_SECURITY requires special privilege */
+    res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
+    todo_wine ok( res == ERROR_PRIVILEGE_NOT_HELD, "got %d\n", res );
+
+    priv.PrivilegeCount = 1;
+    priv.Privileges[0].Luid = luid;
+    priv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    priv_prev = HeapAlloc( GetProcessHeap(), 0, len );
+    ret = AdjustTokenPrivileges( token, FALSE, &priv, len, priv_prev, &len );
+    ok( ret, "got %u\n", GetLastError());
+
+    res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
+    ok( !res, "got %d\n", res );
+
+    /* restore privileges */
+    ret = AdjustTokenPrivileges( token, FALSE, priv_prev, 0, NULL, NULL );
+    ok( ret, "got %u\n", GetLastError() );
+    HeapFree( GetProcessHeap(), 0, priv_prev );
+
+    /* privilege is checked on access */
+    err = GetSecurityInfo( hkey, SE_REGISTRY_KEY, SACL_SECURITY_INFORMATION, NULL, NULL, NULL, &sacl, &sd );
+    todo_wine ok( err == ERROR_PRIVILEGE_NOT_HELD, "got %u\n", err );
+
+    priv.PrivilegeCount = 1;
+    priv.Privileges[0].Luid = luid;
+    priv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    priv_prev = HeapAlloc( GetProcessHeap(), 0, len );
+    ret = AdjustTokenPrivileges( token, FALSE, &priv, len, priv_prev, &len );
+    ok( ret, "got %u\n", GetLastError());
+
+    err = GetSecurityInfo( hkey, SE_REGISTRY_KEY, SACL_SECURITY_INFORMATION, NULL, NULL, NULL, &sacl, &sd );
+    ok( err == ERROR_SUCCESS, "got %u\n", err );
+    RegCloseKey( hkey );
+    LocalFree( sd );
+
+    /* handle created without ACCESS_SYSTEM_SECURITY, privilege held */
+    res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ, NULL, &hkey, NULL );
+    ok( res == ERROR_SUCCESS, "got %d\n", res );
+
+    sd = NULL;
+    err = GetSecurityInfo( hkey, SE_REGISTRY_KEY, SACL_SECURITY_INFORMATION, NULL, NULL, NULL, &sacl, &sd );
+    todo_wine ok( err == ERROR_SUCCESS, "got %u\n", err );
+    RegCloseKey( hkey );
+    LocalFree( sd );
+
+    /* restore privileges */
+    ret = AdjustTokenPrivileges( token, FALSE, priv_prev, 0, NULL, NULL );
+    ok( ret, "got %u\n", GetLastError() );
+    HeapFree( GetProcessHeap(), 0, priv_prev );
+
+    /* handle created without ACCESS_SYSTEM_SECURITY, privilege not held */
+    res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ, NULL, &hkey, NULL );
+    ok( res == ERROR_SUCCESS, "got %d\n", res );
+
+    err = GetSecurityInfo( hkey, SE_REGISTRY_KEY, SACL_SECURITY_INFORMATION, NULL, NULL, NULL, &sacl, &sd );
+    todo_wine ok( err == ERROR_PRIVILEGE_NOT_HELD, "got %u\n", err );
+    RegCloseKey( hkey );
+
+    res = RegDeleteKeyW( HKEY_LOCAL_MACHINE, testkeyW );
+    ok( !res, "got %d\n", res );
+    CloseHandle( token );
+}
+
 START_TEST(security)
 {
     init();
@@ -5877,4 +5963,5 @@ START_TEST(security)
     test_default_dacl_owner_sid();
     test_AdjustTokenPrivileges();
     test_AddAce();
+    test_system_security_access();
 }
