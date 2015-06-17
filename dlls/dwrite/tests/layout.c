@@ -2662,6 +2662,99 @@ static void test_SetDrawingEffect(void)
     IDWriteFactory_Release(factory);
 }
 
+static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFontFamily *family;
+    IDWriteFontFace *fontface;
+    IDWriteFont *font;
+    WCHAR nameW[255];
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteTextFormat_GetFontCollection(format, &collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_GetFontFamilyName(format, nameW, sizeof(nameW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_FindFamilyName(collection, nameW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontCollection_Release(collection);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family,
+        IDWriteTextFormat_GetFontWeight(format),
+        IDWriteTextFormat_GetFontStretch(format),
+        IDWriteTextFormat_GetFontStyle(format),
+        &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFont_Release(font);
+    IDWriteFontFamily_Release(family);
+
+    return fontface;
+}
+
+static void test_GetLineMetrics(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',' ',0};
+    DWRITE_FONT_METRICS fontmetrics;
+    DWRITE_LINE_METRICS metrics;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    UINT32 count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 2048.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 5, format, 30000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 0, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count == 1, "got count %u\n", count);
+
+    memset(&metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(metrics.length == 5, "got %u\n", metrics.length);
+    ok(metrics.trailingWhitespaceLength == 1, "got %u\n", metrics.trailingWhitespaceLength);
+}
+    ok(metrics.newlineLength == 0, "got %u\n", metrics.newlineLength);
+    ok(metrics.isTrimmed == FALSE, "got %d\n", metrics.isTrimmed);
+
+    /* Tahoma doesn't provide BASE table, so baseline is calculated from font metrics */
+    fontface = get_fontface_from_format(format);
+    ok(fontface != NULL, "got %p\n", fontface);
+    IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
+
+todo_wine {
+    ok(metrics.baseline == fontmetrics.ascent, "got %.2f, expected %d\n", metrics.baseline,
+        fontmetrics.ascent);
+    ok(metrics.height == fontmetrics.ascent + fontmetrics.descent, "got %.2f, expected %d\n",
+        metrics.height, fontmetrics.ascent + fontmetrics.descent);
+}
+    IDWriteFontFace_Release(fontface);
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -2701,6 +2794,7 @@ START_TEST(layout)
     test_GetMetrics();
     test_SetFlowDirection();
     test_SetDrawingEffect();
+    test_GetLineMetrics();
 
     IDWriteFactory_Release(factory);
 }
