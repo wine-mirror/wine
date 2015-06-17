@@ -410,7 +410,7 @@ static void test_WinHttpAddHeaders(void)
     BOOL ret, reverse;
     WCHAR buffer[MAX_PATH];
     WCHAR check_buffer[MAX_PATH];
-    DWORD index, len, oldlen;
+    DWORD err, index, len, oldlen;
 
     static const WCHAR test_file[] = {'/','p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR test_verb[] = {'P','O','S','T',0};
@@ -420,6 +420,9 @@ static void test_WinHttpAddHeaders(void)
         {'P','O','S','T',' ','h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',':','8','0','/','p','o','s','t','.','p','h','p',' ','H','T','T','P','/','1'};
     static const WCHAR test_header_end[] = {'\r','\n','\r','\n',0};
     static const WCHAR test_header_name[] = {'W','a','r','n','i','n','g',0};
+    static const WCHAR test_header_range[] = {'R','a','n','g','e',0};
+    static const WCHAR test_header_range_bytes[] = {'R','a','n','g','e',':',' ','b','y','t','e','s','=','0','-','7','7','3','\r','\n',0};
+    static const WCHAR test_header_bytes[] = {'b','y','t','e','s','=','0','-','7','7','3',0};
 
     static const WCHAR test_flag_coalesce[] = {'t','e','s','t','2',',',' ','t','e','s','t','4',0};
     static const WCHAR test_flag_coalesce_reverse[] = {'t','e','s','t','3',',',' ','t','e','s','t','4',0};
@@ -779,6 +782,26 @@ static void test_WinHttpAddHeaders(void)
         field, buffer, &len, &index);
     ok(ret, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(!memcmp(buffer, value, sizeof(value)) || ! memcmp(buffer, value_nospace, sizeof(value_nospace)), "unexpected result\n");
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpAddRequestHeaders(request, test_header_range_bytes, 0,
+                                   WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE);
+    err = GetLastError();
+    ok(!ret, "unexpected success\n");
+    ok(err == ERROR_INVALID_PARAMETER, "got %u\n", err);
+
+    ret = WinHttpAddRequestHeaders(request, test_header_range_bytes, ~0u,
+                                   WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE);
+    ok(ret, "failed to add header: %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_range, buffer, &len, &index);
+    ok(ret, "failed to get range header %u\n", GetLastError());
+    ok(!memcmp(buffer, test_header_bytes, sizeof(test_header_bytes)), "incorrect string returned\n");
+    ok(len == lstrlenW(test_header_bytes) * sizeof(WCHAR), "wrong length %u\n", len);
+    ok(index == 1, "wrong index %u\n", index);
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
@@ -1923,7 +1946,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /not_modified"))
         {
-            send(c, notmodified, sizeof notmodified - 1, 0);
+            if (strstr(buffer, "If-Modified-Since:")) send(c, notmodified, sizeof notmodified - 1, 0);
+            else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
             continue;
         }
         if (strstr(buffer, "HEAD /head"))
@@ -2395,11 +2419,12 @@ static void test_not_modified(int port)
 {
     static const WCHAR pathW[] = {'/','n','o','t','_','m','o','d','i','f','i','e','d',0};
     static const WCHAR ifmodifiedW[] = {'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',':',' '};
+    static const WCHAR ifmodified2W[] = {'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0};
     BOOL ret;
     HINTERNET session, request, connection;
-    DWORD status, size, start = GetTickCount();
+    DWORD index, len, status, size, start = GetTickCount();
     SYSTEMTIME st;
-    WCHAR today[(sizeof(ifmodifiedW) + WINHTTP_TIME_FORMAT_BUFSIZE)/sizeof(WCHAR) + 3];
+    WCHAR today[(sizeof(ifmodifiedW) + WINHTTP_TIME_FORMAT_BUFSIZE)/sizeof(WCHAR) + 3], buffer[32];
 
     memcpy(today, ifmodifiedW, sizeof(ifmodifiedW));
     GetSystemTime(&st);
@@ -2416,11 +2441,17 @@ static void test_not_modified(int port)
         WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_BYPASS_PROXY_CACHE);
     ok(request != NULL, "WinHttpOpenrequest failed: %u\n", GetLastError());
 
-    ret = WinHttpSendRequest(request, today, ~0u, NULL, 0, 0, 0);
+    ret = WinHttpSendRequest(request, today, 0, NULL, 0, 0, 0);
     ok(ret, "WinHttpSendRequest failed: %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(request, NULL);
     ok(ret, "WinHttpReceiveResponse failed: %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              ifmodified2W, buffer, &len, &index);
+    ok(ret, "failed to get header %u\n", GetLastError());
 
     status = 0xdeadbeef;
     size = sizeof(status);

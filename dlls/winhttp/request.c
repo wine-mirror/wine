@@ -486,7 +486,8 @@ BOOL add_request_headers( request_t *request, LPCWSTR headers, DWORD len, DWORD 
     if (len == ~0u) len = strlenW( headers );
     if (!len) return TRUE;
     if (!(buffer = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return FALSE;
-    strcpyW( buffer, headers );
+    memcpy( buffer, headers, len * sizeof(WCHAR) );
+    buffer[len] = 0;
 
     p = buffer;
     do
@@ -530,7 +531,7 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
 
     TRACE("%p, %s, 0x%x, 0x%08x\n", hrequest, debugstr_w(headers), len, flags);
 
-    if (!headers)
+    if (!headers || !len)
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -1250,6 +1251,8 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
     }
+
+    if (headers && !headers_len) headers_len = strlenW( headers );
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
