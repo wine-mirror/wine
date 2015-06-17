@@ -761,9 +761,15 @@ int __cdecl _Getdateorder(void)
 {
     WCHAR date_fmt[2];
 
+#if _MSVCP_VER < 110
     if(!GetLocaleInfoW(___lc_handle_func()[LC_TIME], LOCALE_ILDATE,
                 date_fmt, sizeof(date_fmt)/sizeof(*date_fmt)))
         return DATEORDER_no_order;
+#else
+    if(!GetLocaleInfoEx(___lc_locale_name_func()[LC_TIME], LOCALE_ILDATE,
+                date_fmt, sizeof(date_fmt)/sizeof(*date_fmt)))
+        return DATEORDER_no_order;
+#endif
 
     if(*date_fmt == '0') return DATEORDER_mdy;
     if(*date_fmt == '1') return DATEORDER_dmy;
