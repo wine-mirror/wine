@@ -942,6 +942,11 @@ static void test_request_parameter_defaults(void)
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
+    if (!ret && GetLastError() == ERROR_WINHTTP_INVALID_SERVER_RESPONSE) /* win2k */
+    {
+        win_skip("invalid response\n");
+        goto done;
+    }
     ok(ret, "failed to receive response %u\n", GetLastError());
 
     status = 0xdeadbeef;
