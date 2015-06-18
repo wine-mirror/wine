@@ -4121,6 +4121,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return 0;
   case WM_SETCURSOR:
   {
+    POINT cursor_pos;
+    if (wParam == (WPARAM)editor->hWnd && GetCursorPos(&cursor_pos) &&
+        ScreenToClient(editor->hWnd, &cursor_pos))
+      ME_LinkNotify(editor, msg, 0, MAKELPARAM(cursor_pos.x, cursor_pos.y));
     return ME_SetCursor(editor);
   }
   case WM_LBUTTONDBLCLK:
@@ -4135,7 +4139,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
     ITextHost_TxSetCapture(editor->texthost, TRUE);
     editor->bMouseCaptured = TRUE;
-    ME_LinkNotify(editor,msg,wParam,lParam);
+    ME_LinkNotify(editor, msg, wParam, lParam);
     if (!ME_SetCursor(editor)) goto do_default;
     break;
   }
@@ -4145,7 +4149,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       return 0;
     if (editor->bMouseCaptured)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
-    ME_LinkNotify(editor,msg,wParam,lParam);
+    else
+      ME_LinkNotify(editor, msg, wParam, lParam);
     /* Set cursor if mouse is captured, since WM_SETCURSOR won't be received. */
     if (editor->bMouseCaptured)
         ME_SetCursor(editor);
@@ -4163,15 +4168,17 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     else
     {
       ME_SetCursor(editor);
-      ME_LinkNotify(editor,msg,wParam,lParam);
+      ME_LinkNotify(editor, msg, wParam, lParam);
     }
     break;
   case WM_RBUTTONUP:
   case WM_RBUTTONDOWN:
+  case WM_RBUTTONDBLCLK:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
+    ME_LinkNotify(editor, msg, wParam, lParam);
     goto do_default;
   case WM_CONTEXTMENU:
     if (!ME_ShowContextMenu(editor, (short)LOWORD(lParam), (short)HIWORD(lParam)))
