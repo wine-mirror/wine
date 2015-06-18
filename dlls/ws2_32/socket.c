@@ -4708,7 +4708,8 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
             fds[j].fd = get_sock_fd( writefds->fd_array[i], FILE_WRITE_DATA, NULL );
             if (fds[j].fd == -1) goto failed;
             fds[j].revents = 0;
-            if (is_fd_bound(fds[j].fd, NULL, NULL) == 1)
+            if (is_fd_bound(fds[j].fd, NULL, NULL) == 1 ||
+                _get_fd_type(fds[j].fd) == SOCK_DGRAM)
             {
                 fds[j].events = POLLOUT;
             }

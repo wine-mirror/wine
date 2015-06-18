@@ -3877,9 +3877,7 @@ todo_wine
     FD_ZERO_ALL();
     FD_SET_ALL(fdWrite);
     ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
-todo_wine
     ok(ret == 1, "expected 1, got %d\n", ret);
-todo_wine
     ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
     closesocket(fdWrite);
 }
