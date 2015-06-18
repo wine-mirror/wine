@@ -1536,17 +1536,23 @@ static void test_GetClusterMetrics(void)
         DWRITE_TEXT_RANGE r;
 
         leading = trailing = min_advance = 2.0;
-        hr = IDWriteTextLayout1_GetCharacterSpacing(layout1, 0, &leading, &trailing,
-            &min_advance, NULL);
-todo_wine {
+        hr = IDWriteTextLayout1_GetCharacterSpacing(layout1, 500, &leading, &trailing,
+            &min_advance, &r);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(leading == 0.0 && trailing == 0.0 && min_advance == 0.0,
             "got %.2f, %.2f, %.2f\n", leading, trailing, min_advance);
-}
+        ok(r.startPosition == 0 && r.length == ~0u, "got %u, %u\n", r.startPosition, r.length);
+
+        leading = trailing = min_advance = 2.0;
+        hr = IDWriteTextLayout1_GetCharacterSpacing(layout1, 0, &leading, &trailing,
+            &min_advance, NULL);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(leading == 0.0 && trailing == 0.0 && min_advance == 0.0,
+            "got %.2f, %.2f, %.2f\n", leading, trailing, min_advance);
+
         r.startPosition = 0;
         r.length = 4;
         hr = IDWriteTextLayout1_SetCharacterSpacing(layout1, 10.0, 15.0, 0.0, r);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         count = 0;
@@ -1564,8 +1570,13 @@ todo_wine
         r.startPosition = 0;
         r.length = 4;
         hr = IDWriteTextLayout1_SetCharacterSpacing(layout1, 0.0, 0.0, 0.0, r);
-todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        /* negative advance limit */
+        r.startPosition = 0;
+        r.length = 4;
+        hr = IDWriteTextLayout1_SetCharacterSpacing(layout1, 0.0, 0.0, -10.0, r);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
         IDWriteTextLayout1_Release(layout1);
     }
