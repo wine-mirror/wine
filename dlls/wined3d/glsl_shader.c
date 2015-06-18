@@ -5389,8 +5389,7 @@ static const char *shader_glsl_ffp_mcs(enum wined3d_material_color_source mcs, c
 }
 
 static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer,
-        const struct wined3d_ffp_vs_settings *settings, const struct wined3d_gl_info *gl_info,
-        BOOL legacy_lighting)
+        const struct wined3d_ffp_vs_settings *settings, BOOL legacy_lighting)
 {
     const char *diffuse, *specular, *emissive, *ambient;
     enum wined3d_light_type light_type;
@@ -5666,7 +5665,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     else
         shader_addline(buffer, "vec3 normal = ffp_normal_matrix * ffp_attrib_normal;\n");
 
-    shader_glsl_ffp_vertex_lighting(buffer, settings, gl_info, legacy_lighting);
+    shader_glsl_ffp_vertex_lighting(buffer, settings, legacy_lighting);
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
