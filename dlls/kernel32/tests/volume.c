@@ -649,15 +649,12 @@ static void test_GetVolumePathNameA(void)
     volume[0] = '\0';
     ret = pGetVolumePathNameA(pathC1, volume, sizeof(volume));
     ok(ret, "expected success\n");
-todo_wine
     ok(!strcmp(expected, volume) || broken(!strcasecmp(expected, volume)) /* <=XP */,
        "expected name '%s', returned '%s'\n", expected, volume);
 
     volume[0] = '\0';
     ret = pGetVolumePathNameA(pathC2, volume, sizeof(volume));
-todo_wine
     ok(ret, "expected success\n");
-todo_wine
     ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", expected, volume);
 
     /* test an invalid path */

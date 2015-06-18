@@ -1792,7 +1792,7 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
     BOOL ret;
     WCHAR *filenameW = NULL, *volumeW = NULL;
 
-    FIXME("(%s, %p, %d), stub!\n", debugstr_a(filename), volumepathname, buflen);
+    TRACE("(%s, %p, %d)\n", debugstr_a(filename), volumepathname, buflen);
 
     if (filename && !(filenameW = FILE_name_AtoW( filename, FALSE )))
         return FALSE;
@@ -1808,12 +1808,27 @@ BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD bufl
 
 /***********************************************************************
  *           GetVolumePathNameW   (KERNEL32.@)
+ *
+ * This routine is intended to find the most basic path on the same filesystem
+ * for any particular path name.  Since we can have very complicated drive/path
+ * relationships on Unix systems, due to symbolic links, the safest way to
+ * handle this is to start with the full path and work our way back folder by
+ * folder unil we find a folder on a different drive (or run out of folders).
  */
 BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
 {
-    const WCHAR *p = filename;
+    static const WCHAR ntprefixW[] = { '\\','\\','?','\\',0 };
+    static const WCHAR fallbackpathW[] = { 'C',':','\\',0 };
+    NTSTATUS status = STATUS_SUCCESS;
+    WCHAR *volumenameW = NULL, *c;
+    int pos, last_pos, stop_pos;
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    BOOL first_run = TRUE;
+    dev_t search_dev = 0;
+    struct stat st;
 
-    FIXME("(%s, %p, %d), stub!\n", debugstr_w(filename), volumepathname, buflen);
+    TRACE("(%s, %p, %d)\n", debugstr_w(filename), volumepathname, buflen);
 
     if (!filename || !volumepathname || !buflen)
     {
@@ -1821,23 +1836,101 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
         return FALSE;
     }
 
-    if (p && tolowerW(p[0]) >= 'a' && tolowerW(p[0]) <= 'z' && p[1] ==':' && p[2] == '\\')
+    last_pos = pos = strlenW( filename );
+    /* allocate enough memory for searching the path (need room for a slash and a NULL terminator) */
+    if (!(volumenameW = HeapAlloc( GetProcessHeap(), 0, (pos + 2) * sizeof(WCHAR) )))
     {
-        if (buflen < 4)
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    strcpyW( volumenameW, filename );
+    stop_pos = 0;
+    /* stop searching slashes early for NT-type and nearly NT-type paths */
+    if (strncmpW(ntprefixW, filename, strlenW(ntprefixW)) == 0)
+        stop_pos = strlenW(ntprefixW)-1;
+    else if (strncmpW(ntprefixW, filename, 2) == 0)
+        stop_pos = 2;
+
+    do
+    {
+        volumenameW[pos+0] = '\\';
+        volumenameW[pos+1] = '\0';
+        if (!RtlDosPathNameToNtPathName_U( volumenameW, &nt_name, NULL, NULL ))
+            goto cleanup;
+        volumenameW[pos] = '\0';
+        status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE );
+        RtlFreeUnicodeString( &nt_name );
+        if (status == STATUS_SUCCESS)
         {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            return FALSE;
+            if (stat( unix_name.Buffer, &st ) != 0)
+            {
+                RtlFreeAnsiString( &unix_name );
+                status = STATUS_OBJECT_NAME_INVALID;
+                goto cleanup;
+            }
+            if (first_run)
+            {
+                first_run = FALSE;
+                search_dev = st.st_dev;
+            }
+            else if (st.st_dev != search_dev)
+            {
+                /* folder is on a new filesystem, return the last folder */
+                RtlFreeAnsiString( &unix_name );
+                break;
+            }
         }
-        volumepathname[0] = p[0];
-        volumepathname[1] = ':';
-        volumepathname[2] = '\\';
-        volumepathname[3] = 0;
-        return TRUE;
+        RtlFreeAnsiString( &unix_name );
+        last_pos = pos;
+        c = strrchrW( volumenameW, '\\' );
+        if (c != NULL)
+            pos = c-volumenameW;
+    } while (c != NULL && pos > stop_pos);
+
+    if (status != STATUS_SUCCESS)
+    {
+        /* the path was completely invalid */
+        if (filename[0] == '\\')
+        {
+            /* NT-style paths fail */
+            status = STATUS_OBJECT_NAME_INVALID;
+            goto cleanup;
+        }
+
+        /* DOS-style paths revert to C:\ (anything not beginning with a slash) */
+        last_pos = strlenW(fallbackpathW) - 1; /* points to \\ */
+        filename = fallbackpathW;
+        status = STATUS_SUCCESS;
     }
 
-    SetLastError(ERROR_INVALID_NAME);
-    return FALSE;
+    if (last_pos + 1 <= buflen)
+    {
+        WCHAR *p;
+        memcpy(volumepathname, filename, last_pos * sizeof(WCHAR));
+        if (last_pos + 2 <= buflen) volumepathname[last_pos++] = '\\';
+        volumepathname[last_pos] = '\0';
+
+        /* Normalize path */
+        for (p = volumepathname; *p; p++) if (*p == '/') *p = '\\';
+
+        /* DOS-style paths always return upper-case drive letters */
+        if (volumepathname[1] == ':')
+            volumepathname[0] = toupperW(volumepathname[0]);
+
+        TRACE("Successfully translated path %s to mount-point %s\n",
+              debugstr_w(filename), debugstr_w(volumepathname));
+    }
+    else
+        status = STATUS_NAME_TOO_LONG;
+
+cleanup:
+    HeapFree( GetProcessHeap(), 0, volumenameW );
+
+    if (status != STATUS_SUCCESS)
+        SetLastError( RtlNtStatusToDosError(status) );
+    return (status == STATUS_SUCCESS);
 }
+
 
 /***********************************************************************
  *           GetVolumePathNamesForVolumeNameA   (KERNEL32.@)
