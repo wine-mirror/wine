@@ -1096,6 +1096,14 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
     return events[bit];
 }
 
+static int _get_fd_type(int fd)
+{
+    int sock_type = -1;
+    socklen_t optlen = sizeof(sock_type);
+    getsockopt(fd, SOL_SOCKET, SO_TYPE, (char*) &sock_type, &optlen);
+    return sock_type;
+}
+
 static struct per_thread_data *get_per_thread_data(void)
 {
     struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
@@ -2778,8 +2786,6 @@ static int WINAPI WS2_WSARecvMsg( SOCKET s, LPWSAMSG msg, LPDWORD lpNumberOfByte
 static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
 {
     struct sockaddr_in *in_sock = (struct sockaddr_in *) addr;
-    unsigned int sock_type = 0;
-    socklen_t optlen = sizeof(sock_type);
     in_addr_t bind_addr = in_sock->sin_addr.s_addr;
     PIP_ADAPTER_INFO adapters = NULL, adapter;
     BOOL ret = FALSE;
@@ -2788,7 +2794,7 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
 
     if (bind_addr == htonl(INADDR_ANY) || bind_addr == htonl(INADDR_LOOPBACK))
         return FALSE; /* Not binding to a network adapter, special interface binding unnecessary. */
-    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen) == -1 || sock_type != SOCK_DGRAM)
+    if (_get_fd_type(fd) != SOCK_DGRAM)
         return FALSE; /* Special interface binding is only necessary for UDP datagrams. */
     if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
         goto cleanup;
@@ -3231,12 +3237,12 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
     return;
 #else
     int ifindex;
-    socklen_t len = sizeof(ifindex);
+    socklen_t len;
 
     /* Check for IPv4, address 0.0.0.0 and UDP socket */
     if (addr->sin_family != AF_INET || addr->sin_addr.s_addr != 0)
         return;
-    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &ifindex, &len) || ifindex != SOCK_DGRAM)
+    if (_get_fd_type(fd) != SOCK_DGRAM)
         return;
 
     ifindex = -1;
@@ -3547,8 +3553,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_LINGER:
         {
             struct linger lingval;
-            int so_type;
-            socklen_t len = sizeof(struct linger), slen = sizeof(int);
+            socklen_t len = sizeof(struct linger);
 
             /* struct linger and LINGER have different sizes */
             if (!optlen || *optlen < sizeof(LINGER) || !optval)
@@ -3559,7 +3564,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
 
-            if ((getsockopt(fd, SOL_SOCKET, SO_TYPE, &so_type, &slen) == 0 && so_type == SOCK_DGRAM))
+            if (_get_fd_type(fd) == SOCK_DGRAM)
             {
                 SetLastError(WSAENOPROTOOPT);
                 ret = SOCKET_ERROR;
@@ -3643,6 +3648,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         }
         case WS_SO_TYPE:
         {
+            int sock_type;
             if (!optlen || *optlen < sizeof(int) || !optval)
             {
                 SetLastError(WSAEFAULT);
@@ -3651,13 +3657,14 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
 
-            if (getsockopt(fd, SOL_SOCKET, SO_TYPE, optval, (socklen_t *)optlen) != 0 )
+            sock_type = _get_fd_type(fd);
+            if (sock_type == -1)
             {
                 SetLastError(wsaErrno());
                 ret = SOCKET_ERROR;
             }
             else
-                (*(int *)optval) = convert_socktype_u2w(*(int *)optval);
+                (*(int *)optval) = convert_socktype_u2w(sock_type);
 
             release_sock_fd( s, fd );
             return ret;
