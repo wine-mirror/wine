@@ -7767,9 +7767,6 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
                 clipplane(context, state, STATE_CLIPPLANE(i));
         }
 
-        if (transformed != wasrhw)
-            context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
-
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 
         /* Because of settings->texcoords, we have to always regenerate the
