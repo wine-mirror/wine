@@ -54,6 +54,7 @@ static UINT (WINAPI *pGetLogicalDriveStringsA)(UINT,LPSTR);
 static UINT (WINAPI *pGetLogicalDriveStringsW)(UINT,LPWSTR);
 static BOOL (WINAPI *pGetVolumeInformationA)(LPCSTR, LPSTR, DWORD, LPDWORD, LPDWORD, LPDWORD, LPSTR, DWORD);
 static BOOL (WINAPI *pGetVolumePathNameA)(LPCSTR, LPSTR, DWORD);
+static BOOL (WINAPI *pGetVolumePathNameW)(LPWSTR, LPWSTR, DWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameA)(LPCSTR, LPSTR, DWORD, LPDWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, LPDWORD);
 
@@ -832,6 +833,52 @@ static void test_GetVolumePathNameA(void)
     }
 }
 
+static void test_GetVolumePathNameW(void)
+{
+    static WCHAR drive_c1[] = {'C',':',0};
+    static WCHAR drive_c2[] = {'C',':','\\',0};
+    WCHAR volume_path[MAX_PATH];
+    BOOL ret;
+
+    if (!pGetVolumePathNameW)
+    {
+        win_skip("required functions not found\n");
+        return;
+    }
+
+    volume_path[0] = 0;
+    volume_path[1] = 0x11;
+    ret = pGetVolumePathNameW( drive_c1, volume_path, 1 );
+    ok(!ret, "GetVolumePathNameW test succeeded unexpectedly.\n");
+    ok(GetLastError() == ERROR_FILENAME_EXCED_RANGE, "GetVolumePathNameW unexpectedly returned error 0x%x (expected 0x%x).\n",
+        GetLastError(), ERROR_FILENAME_EXCED_RANGE);
+    ok(volume_path[1] == 0x11, "GetVolumePathW corrupted byte after end of buffer.\n");
+
+    volume_path[0] = 0;
+    volume_path[2] = 0x11;
+    ret = pGetVolumePathNameW( drive_c1, volume_path, 2 );
+    ok(!ret, "GetVolumePathNameW test succeeded unexpectedly.\n");
+    ok(GetLastError() == ERROR_FILENAME_EXCED_RANGE, "GetVolumePathNameW unexpectedly returned error 0x%x (expected 0x%x).\n",
+        GetLastError(), ERROR_FILENAME_EXCED_RANGE);
+    ok(volume_path[2] == 0x11, "GetVolumePathW corrupted byte after end of buffer.\n");
+
+    volume_path[0] = 0;
+    volume_path[3] = 0x11;
+    ret = pGetVolumePathNameW( drive_c1, volume_path, 3 );
+    ok(ret || broken(!ret) /* win2k */, "GetVolumePathNameW test failed unexpectedly.\n");
+    ok(memcmp(volume_path, drive_c1, sizeof(drive_c1)) == 0
+       || broken(volume_path[0] == 0) /* win2k */,
+       "GetVolumePathNameW unexpectedly returned wrong path.\n");
+    ok(volume_path[3] == 0x11, "GetVolumePathW corrupted byte after end of buffer.\n");
+
+    volume_path[0] = 0;
+    volume_path[4] = 0x11;
+    ret = pGetVolumePathNameW( drive_c1, volume_path, 4 );
+    ok(ret, "GetVolumePathNameW test failed unexpectedly.\n");
+    ok(memcmp(volume_path, drive_c2, sizeof(drive_c2)) == 0, "GetVolumePathNameW unexpectedly returned wrong path.\n");
+    ok(volume_path[4] == 0x11, "GetVolumePathW corrupted byte after end of buffer.\n");
+}
+
 static void test_GetVolumePathNamesForVolumeNameA(void)
 {
     BOOL ret;
@@ -1171,6 +1218,7 @@ START_TEST(volume)
     pGetLogicalDriveStringsW = (void *) GetProcAddress(hdll, "GetLogicalDriveStringsW");
     pGetVolumeInformationA = (void *) GetProcAddress(hdll, "GetVolumeInformationA");
     pGetVolumePathNameA = (void *) GetProcAddress(hdll, "GetVolumePathNameA");
+    pGetVolumePathNameW = (void *) GetProcAddress(hdll, "GetVolumePathNameW");
     pGetVolumePathNamesForVolumeNameA = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameA");
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
 
@@ -1178,6 +1226,7 @@ START_TEST(volume)
     test_define_dos_deviceA();
     test_FindFirstVolume();
     test_GetVolumePathNameA();
+    test_GetVolumePathNameW();
     test_GetVolumeNameForVolumeMountPointA();
     test_GetVolumeNameForVolumeMountPointW();
     test_GetLogicalDriveStringsA();
