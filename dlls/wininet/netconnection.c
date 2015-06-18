@@ -731,6 +731,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
     *ret_size = buf_len;
 
     if(!buf_len) {
+        TRACE("EOF\n");
         *eof = TRUE;
         return ERROR_SUCCESS;
     }
@@ -817,7 +818,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
  * Basically calls 'recv()' unless we should use SSL
  * number of chars received is put in *recvd
  */
-DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t mode, int *recvd)
+DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, BOOL blocking, int *recvd)
 {
     *recvd = 0;
     if (!len)
@@ -825,18 +826,13 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
 
     if (!connection->secure)
     {
-        int flags = 0;
-
-        if(mode == BLOCKING_WAITALL)
-            flags = MSG_WAITALL;
-
-        set_socket_blocking(connection->socket, mode);
-	*recvd = sock_recv(connection->socket, buf, len, flags);
+        set_socket_blocking(connection->socket, blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW);
+	*recvd = sock_recv(connection->socket, buf, len, 0);
 	return *recvd == -1 ? WSAGetLastError() :  ERROR_SUCCESS;
     }
     else
     {
-        SIZE_T size = 0, cread;
+        SIZE_T size = 0;
         BOOL eof;
         DWORD res;
 
@@ -850,17 +846,13 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
                 heap_free(connection->peek_msg_mem);
                 connection->peek_msg_mem = connection->peek_msg = NULL;
             }
-            /* check if we have enough data from the peek buffer */
-            if(mode != BLOCKING_WAITALL || size == len) {
-                *recvd = size;
-                return ERROR_SUCCESS;
-            }
 
-            mode = BLOCKING_DISALLOW;
+            *recvd = size;
+            return ERROR_SUCCESS;
         }
 
         do {
-            res = read_ssl_chunk(connection, (BYTE*)buf+size, len-size, mode, &cread, &eof);
+            res = read_ssl_chunk(connection, (BYTE*)buf+size, len-size, blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW, &size, &eof);
             if(res != ERROR_SUCCESS) {
                 if(res == WSAEWOULDBLOCK) {
                     if(size)
@@ -870,14 +862,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
                 }
                 break;
             }
-
-            if(eof) {
-                TRACE("EOF\n");
-                break;
-            }
-
-            size += cread;
-        }while(!size || (mode == BLOCKING_WAITALL && size < len));
+        }while(!size && !eof);
 
         TRACE("received %ld bytes\n", size);
         *recvd = size;
