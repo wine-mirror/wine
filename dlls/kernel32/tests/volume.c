@@ -591,79 +591,90 @@ static void test_disk_extents(void)
 
 static void test_GetVolumePathNameA(void)
 {
-    BOOL ret;
-    char volume[MAX_PATH];
-    char expected[] = "C:\\", pathC1[] = "C:\\", pathC2[] = "C::";
+    char volume_path[MAX_PATH];
+    struct {
+        const char *file_name;
+        const char *path_name;
+        DWORD       path_len;
+        DWORD       error;
+        DWORD       broken_error;
+    } test_paths[] = {
+        { /* test 0: NULL parameters, 0 output length */
+            NULL, NULL, 0,
+            ERROR_INVALID_PARAMETER, 0xdeadbeef /* winxp */
+        },
+        { /* test 1: empty input, NULL output, 0 output length */
+            "", NULL, 0,
+            ERROR_INVALID_PARAMETER, 0xdeadbeef /* winxp */
+        },
+        { /* test 2: valid input, NULL output, 0 output length */
+            "C:\\", NULL, 0,
+            ERROR_INVALID_PARAMETER, ERROR_FILENAME_EXCED_RANGE /* winxp */
+        },
+        { /* test 3: valid input, valid output, 0 output length */
+            "C:\\", "C:\\", 0,
+            ERROR_INVALID_PARAMETER, ERROR_FILENAME_EXCED_RANGE /* winxp */
+        },
+        { /* test 4: valid input, valid output, 1 output length */
+            "C:\\", "C:\\", 1,
+            ERROR_FILENAME_EXCED_RANGE, NO_ERROR
+        },
+        { /* test 5: valid input, valid output, valid output length */
+            "C:\\", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 6: lowercase input, uppercase output, valid output length */
+            "c:\\", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 7: poor quality input, valid output, valid output length */
+            "C::", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 8: really bogus input, valid output, 1 output length */
+            "\\\\$$$", "C:\\", 1,
+            ERROR_INVALID_NAME, ERROR_FILENAME_EXCED_RANGE
+        },
+    };
+    BOOL ret, success;
     DWORD error;
+    UINT i;
 
+    /* GetVolumePathNameA is not present before w2k */
     if (!pGetVolumePathNameA)
     {
         win_skip("required functions not found\n");
         return;
     }
 
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA(NULL, NULL, 0);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER
-       || broken( error == 0xdeadbeef) /* <=XP */,
-       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+    for (i=0; i<sizeof(test_paths)/sizeof(test_paths[0]); i++)
+    {
+        char *output = (test_paths[i].path_name != NULL ? volume_path : NULL);
+        BOOL expected_ret = test_paths[i].error == NO_ERROR ? TRUE : FALSE;
 
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA("", NULL, 0);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER
-       || broken( error == 0xdeadbeef) /* <=XP */,
-       "expected ERROR_INVALID_PARAMETER got %u\n", error);
+        volume_path[0] = 0;
+        SetLastError( 0xdeadbeef );
+        ret = pGetVolumePathNameA( test_paths[i].file_name, output, test_paths[i].path_len );
+        error = GetLastError();
+        ok(ret == expected_ret, "GetVolumePathName test %d %s unexpectedly.\n",
+                                i, test_paths[i].error == NO_ERROR ? "failed" : "succeeded");
 
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA(pathC1, NULL, 0);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER
-       || broken(error == ERROR_FILENAME_EXCED_RANGE) /* <=XP */,
-       "expected ERROR_INVALID_PARAMETER got %u\n", error);
-
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA(pathC1, volume, 0);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_PARAMETER
-       || broken(error == ERROR_FILENAME_EXCED_RANGE ) /* <=XP */,
-       "expected ERROR_INVALID_PARAMETER got %u\n", error);
-
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA(pathC1, volume, 1);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_FILENAME_EXCED_RANGE, "expected ERROR_FILENAME_EXCED_RANGE got %u\n", error);
-
-    volume[0] = '\0';
-    ret = pGetVolumePathNameA(pathC1, volume, sizeof(volume));
-    ok(ret, "expected success\n");
-    ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", pathC1, volume);
-
-    pathC1[0] = tolower(pathC1[0]);
-    volume[0] = '\0';
-    ret = pGetVolumePathNameA(pathC1, volume, sizeof(volume));
-    ok(ret, "expected success\n");
-    ok(!strcmp(expected, volume) || broken(!strcasecmp(expected, volume)) /* <=XP */,
-       "expected name '%s', returned '%s'\n", expected, volume);
-
-    volume[0] = '\0';
-    ret = pGetVolumePathNameA(pathC2, volume, sizeof(volume));
-    ok(ret, "expected success\n");
-    ok(!strcmp(expected, volume), "expected name '%s', returned '%s'\n", expected, volume);
-
-    /* test an invalid path */
-    SetLastError( 0xdeadbeef );
-    ret = pGetVolumePathNameA("\\\\$$$", volume, 1);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_INVALID_NAME || broken(ERROR_FILENAME_EXCED_RANGE) /* <=2000 */,
-       "expected ERROR_INVALID_NAME got %u\n", error);
+        if (ret)
+        {
+            /* If we succeeded then make sure the path is correct */
+            success = (strcmp( volume_path, test_paths[i].path_name ) == 0)
+                      || broken(strcasecmp( volume_path, test_paths[i].path_name ) == 0) /* XP */;
+            ok(success, "GetVolumePathName test %d unexpectedly returned path %s (expected %s).\n",
+                        i, volume_path, test_paths[i].path_name);
+        }
+        else
+        {
+            /* On success Windows always returns ERROR_MORE_DATA, so only worry about failure */
+            success = (error == test_paths[i].error || broken(error == test_paths[i].broken_error));
+            ok(success, "GetVolumePathName test %d unexpectedly returned error 0x%x (expected 0x%x).\n",
+                        i, error, test_paths[i].error);
+        }
+    }
 }
 
 static void test_GetVolumePathNamesForVolumeNameA(void)
