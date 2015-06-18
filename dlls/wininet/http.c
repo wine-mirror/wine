@@ -380,6 +380,12 @@ static WCHAR *get_host_header( http_request_t *req )
     return ret;
 }
 
+typedef enum {
+    BLOCKING_ALLOW,
+    BLOCKING_DISALLOW,
+    BLOCKING_WAITALL
+} blocking_mode_t;
+
 struct data_stream_vtbl_t {
     DWORD (*get_avail_data)(data_stream_t*,http_request_t*);
     BOOL (*end_of_data)(data_stream_t*,http_request_t*);
