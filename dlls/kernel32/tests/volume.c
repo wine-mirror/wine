@@ -635,6 +635,34 @@ static void test_GetVolumePathNameA(void)
             "\\\\$$$", "C:\\", 1,
             ERROR_INVALID_NAME, ERROR_FILENAME_EXCED_RANGE
         },
+        { /* test 9: a reasonable DOS path that is guaranteed to exist */
+            "C:\\windows\\system32", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 10: a reasonable DOS path that shouldn't exist */
+            "C:\\windows\\system32\\AnInvalidFolder", "C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 11: a reasonable NT-converted DOS path that shouldn't exist */
+            "\\\\?\\C:\\AnInvalidFolder", "\\\\?\\C:\\", sizeof(volume_path),
+            NO_ERROR, NO_ERROR
+        },
+        { /* test 12: an unreasonable NT-converted DOS path */
+            "\\\\?\\InvalidDrive:\\AnInvalidFolder", "\\\\?\\InvalidDrive:\\" /* win2k, winxp */,
+            sizeof(volume_path),
+            ERROR_INVALID_NAME, NO_ERROR
+        },
+        { /* test 13: an unreasonable NT volume path */
+            "\\\\?\\Volume{00000000-00-0000-0000-000000000000}\\AnInvalidFolder",
+            "\\\\?\\Volume{00000000-00-0000-0000-000000000000}\\" /* win2k, winxp */,
+            sizeof(volume_path),
+            ERROR_INVALID_NAME, NO_ERROR
+        },
+        { /* test 14: an unreasonable NT-ish path */
+            "\\\\ReallyBogus\\InvalidDrive:\\AnInvalidFolder",
+            "\\\\ReallyBogus\\InvalidDrive:\\" /* win2k, winxp */, sizeof(volume_path),
+            ERROR_INVALID_NAME, NO_ERROR
+        },
     };
     BOOL ret, success;
     DWORD error;
@@ -649,6 +677,7 @@ static void test_GetVolumePathNameA(void)
 
     for (i=0; i<sizeof(test_paths)/sizeof(test_paths[0]); i++)
     {
+        BOOL broken_ret = test_paths[i].broken_error == NO_ERROR ? TRUE : FALSE;
         char *output = (test_paths[i].path_name != NULL ? volume_path : NULL);
         BOOL expected_ret = test_paths[i].error == NO_ERROR ? TRUE : FALSE;
 
@@ -656,7 +685,8 @@ static void test_GetVolumePathNameA(void)
         SetLastError( 0xdeadbeef );
         ret = pGetVolumePathNameA( test_paths[i].file_name, output, test_paths[i].path_len );
         error = GetLastError();
-        ok(ret == expected_ret, "GetVolumePathName test %d %s unexpectedly.\n",
+        ok(ret == expected_ret || broken(ret == broken_ret),
+                                "GetVolumePathName test %d %s unexpectedly.\n",
                                 i, test_paths[i].error == NO_ERROR ? "failed" : "succeeded");
 
         if (ret)
