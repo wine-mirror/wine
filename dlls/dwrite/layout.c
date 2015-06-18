@@ -1026,7 +1026,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     s[0] = s[1] = layout_get_strikethrough_from_pos(layout, 0);
 
     for (i = 0, start = 0, textpos = 0, width = 0.0; i < layout->cluster_count; i++) {
-        BOOL can_wrap_after = layout->clustermetrics[i].canWrapLineAfter;
+        BOOL overflow;
 
         s[1] = layout_get_strikethrough_from_pos(layout, textpos);
 
@@ -1041,12 +1041,18 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             start = i;
         }
 
-        /* check if we got new line */
-        if (((can_wrap_after && (width + layout->clustermetrics[i].width > layout->maxwidth)) ||
-              layout->clustermetrics[i].isNewline || /* always wrap on new line */
-              i == layout->cluster_count - 1)) /* end of the text */ {
+        overflow = layout->clustermetrics[i].canWrapLineAfter &&
+            (width + layout->clustermetrics[i].width > layout->maxwidth);
+        /* check if we got new */
+        if (overflow ||
+            layout->clustermetrics[i].isNewline || /* always wrap on new line */
+            i == layout->cluster_count - 1) /* end of the text */ {
 
-            UINT32 strlength = metrics.length, index = i;
+            UINT32 strlength, index = i;
+
+            if (!overflow)
+                metrics.length += layout->clustermetrics[i].length;
+            strlength = metrics.length;
 
             if (i >= start) {
                 hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x, s[0]);

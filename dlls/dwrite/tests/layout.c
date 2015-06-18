@@ -2745,7 +2745,6 @@ static void test_GetLineMetrics(void)
     memset(&metrics, 0, sizeof(metrics));
     hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(metrics.length == 5, "got %u\n", metrics.length);
     ok(metrics.trailingWhitespaceLength == 1, "got %u\n", metrics.trailingWhitespaceLength);
 
