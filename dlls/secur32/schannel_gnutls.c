@@ -41,6 +41,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+/* Not present in gnutls version < 2.9.10. */
+extern int gnutls_cipher_get_block_size(gnutls_cipher_algorithm_t algorithm);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_alert_get);
@@ -77,9 +80,33 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 #if GNUTLS_VERSION_MAJOR < 3
+#define GNUTLS_CIPHER_AES_192_CBC 92
 #define GNUTLS_CIPHER_AES_128_GCM 93
 #define GNUTLS_CIPHER_AES_256_GCM 94
 #endif
+
+static int compat_cipher_get_block_size(gnutls_cipher_algorithm_t cipher)
+{
+    switch(cipher) {
+    case GNUTLS_CIPHER_3DES_CBC:
+        return 8;
+    case GNUTLS_CIPHER_AES_128_CBC:
+    case GNUTLS_CIPHER_AES_256_CBC:
+        return 16;
+    case GNUTLS_CIPHER_ARCFOUR_128:
+    case GNUTLS_CIPHER_ARCFOUR_40:
+        return 1;
+    case GNUTLS_CIPHER_DES_CBC:
+        return 8;
+    case GNUTLS_CIPHER_NULL:
+        return 1;
+    case GNUTLS_CIPHER_RC2_40_CBC:
+        return 8;
+    default:
+        FIXME("Unknown cipher %#x, returning 1\n", cipher);
+        return 1;
+    }
+}
 
 static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
                                       void *buff, size_t buff_len)
@@ -474,7 +501,6 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
     LOAD_FUNCPTR(gnutls_certificate_get_peers)
     LOAD_FUNCPTR(gnutls_cipher_get)
-    LOAD_FUNCPTR(gnutls_cipher_get_block_size)
     LOAD_FUNCPTR(gnutls_cipher_get_key_size)
     LOAD_FUNCPTR(gnutls_credentials_set)
     LOAD_FUNCPTR(gnutls_deinit)
@@ -500,6 +526,12 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_transport_set_pull_function)
     LOAD_FUNCPTR(gnutls_transport_set_push_function)
 #undef LOAD_FUNCPTR
+
+    if (!(pgnutls_cipher_get_block_size = wine_dlsym(libgnutls_handle, "gnutls_cipher_get_block_size", NULL, 0)))
+    {
+        WARN("gnutls_cipher_get_block_size not found\n");
+        pgnutls_cipher_get_block_size = compat_cipher_get_block_size;
+    }
 
     ret = pgnutls_global_init();
     if (ret != GNUTLS_E_SUCCESS)
