@@ -5704,9 +5704,11 @@ static void test_stock_fonts(void)
     {
         int charset, weight, height, height_pixels, dpi;
         const char face_name[LF_FACESIZE];
+        WORD lang_id;
     } td[][11] =
     {
         { /* ANSI_FIXED_FONT */
+            { ANSI_CHARSET, FW_NORMAL, 12, 12, 96, "Courier", LANG_ARABIC },
             { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 96, "Courier" },
             { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 120, "Courier" },
             { 0 }
@@ -5769,7 +5771,8 @@ static void test_stock_fonts(void)
 
         for (j = 0; td[i][j].face_name[0] != 0; j++)
         {
-            if (lf.lfCharSet != td[i][j].charset && td[i][j].charset != DEFAULT_CHARSET)
+            if ((lf.lfCharSet != td[i][j].charset && td[i][j].charset != DEFAULT_CHARSET) ||
+                (system_lang_id != td[i][j].lang_id && td[i][j].lang_id != LANG_NEUTRAL))
             {
                 continue;
             }
