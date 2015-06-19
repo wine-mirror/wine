@@ -49,7 +49,7 @@ static int output_write(const WCHAR* str, int len)
 
         WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA,
                             NULL, NULL);
-        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, len, &count, FALSE);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &count, FALSE);
         HeapFree(GetProcessHeap(), 0, strA);
     }
     return count;
