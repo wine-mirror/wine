@@ -675,6 +675,30 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     switch(*instr)
     {
+    case 0x0f: /* extended instruction */
+        switch(instr[1])
+        {
+        case 0xb6: /* movzx Eb, Gv */
+        case 0xb7: /* movzx Ew, Gv */
+        {
+            BYTE *data = INSTR_GetOperandAddr( context, instr + 2, long_addr,
+                                               rex, segprefix, &len );
+            unsigned int data_size = (instr[1] == 0xb7) ? 2 : 1;
+            unsigned int offset = data - user_shared_data;
+
+            if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+            {
+                ULONGLONG temp = 0;
+                memcpy( &temp, wine_user_shared_data + offset, data_size );
+                store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
+                context->Rip += prefixlen + len + 2;
+                return ExceptionContinueExecution;
+            }
+            break;  /* Unable to emulate it */
+        }
+        }
+        break;  /* Unable to emulate it */
+
     case 0x8a: /* mov Eb, Gb */
     case 0x8b: /* mov Ev, Gv */
     {
