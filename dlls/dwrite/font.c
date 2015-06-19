@@ -703,9 +703,11 @@ static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFac
     DWRITE_OUTLINE_THRESHOLD threshold, DWRITE_MEASURING_MODE measuring_mode, DWRITE_RENDERING_MODE *rendering_mode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%f %f %f %p %d %d %d %p): stub\n", This, font_emsize, dpiX, dpiY, transform, is_sideways,
+    DWRITE_GRID_FIT_MODE gridfitmode;
+    TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p)\n", This, font_emsize, dpiX, dpiY, transform, is_sideways,
         threshold, measuring_mode, rendering_mode);
-    return E_NOTIMPL;
+    return IDWriteFontFace2_GetRecommendedRenderingMode(iface, font_emsize, dpiX, dpiY, transform, is_sideways,
+        threshold, measuring_mode, NULL, rendering_mode, &gridfitmode);
 }
 
 static HRESULT WINAPI dwritefontface1_GetVerticalGlyphVariants(IDWriteFontFace2 *iface, UINT32 glyph_count,
