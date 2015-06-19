@@ -282,8 +282,11 @@ void init_winsock(void)
 
 static void set_socket_blocking(netconn_t *conn, BOOL is_blocking)
 {
-    ULONG arg = !is_blocking;
-    ioctlsocket(conn->socket, FIONBIO, &arg);
+    if(conn->is_blocking != is_blocking) {
+        ULONG arg = !is_blocking;
+        ioctlsocket(conn->socket, FIONBIO, &arg);
+    }
+    conn->is_blocking = is_blocking;
 }
 
 static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD timeout)
