@@ -695,6 +695,23 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         }
         break;  /* Unable to emulate it */
     }
+
+    case 0xa0: /* mov Ob, AL */
+    case 0xa1: /* mov Ovqp, rAX */
+    {
+        BYTE *data = (BYTE *)(long_addr ? *(DWORD64 *)(instr + 1) : *(DWORD *)(instr + 1));
+        unsigned int data_size = (*instr == 0xa1) ? get_op_size( long_op, rex ) : 1;
+        unsigned int offset = data - user_shared_data;
+        len = long_addr ? sizeof(DWORD64) : sizeof(DWORD);
+
+        if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+        {
+            memcpy( &context->Rax, wine_user_shared_data + offset, data_size );
+            context->Rip += prefixlen + len + 1;
+            return ExceptionContinueExecution;
+        }
+        break;  /* Unable to emulate it */
+    }
     }
     return ExceptionContinueSearch;  /* Unable to emulate it */
 }
