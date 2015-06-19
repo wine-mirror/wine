@@ -534,6 +534,15 @@ SIZE_T WINAPI RtlCompareMemoryUlong(const ULONG *Source1, SIZE_T Length, ULONG d
 }
 
 /******************************************************************************
+ *  RtlCopyMemory   [NTDLL.@]
+ */
+#undef RtlCopyMemory
+void WINAPI RtlCopyMemory(void *dest, const void *src, SIZE_T len)
+{
+    memcpy(dest, src, len);
+}
+
+/******************************************************************************
  *  RtlAssert                           [NTDLL.@]
  *
  * Fail a debug assertion.

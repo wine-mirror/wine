@@ -474,6 +474,7 @@
 # @ stub RtlConvertVariantToProperty
 @ stdcall RtlCopyLuid(ptr ptr)
 @ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
+@ stdcall -arch=x86_64 RtlCopyMemory(ptr ptr long)
 # @ stub RtlCopyMemoryStreamTo
 # @ stub RtlCopyOutOfProcessMemoryStreamTo
 # @ stub RtlCopyRangeList
