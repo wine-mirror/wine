@@ -979,7 +979,8 @@ static BOOL urlcache_create_file_pathW(
     LPCSTR szLocalFileName,
     BYTE Directory,
     LPWSTR wszPath,
-    LPLONG lpBufferSize)
+    LPLONG lpBufferSize,
+    BOOL trunc_name)
 {
     LONG nRequired;
     int path_len = strlenW(pContainer->path);
@@ -993,6 +994,8 @@ static BOOL urlcache_create_file_pathW(
     nRequired = (path_len + file_name_len) * sizeof(WCHAR);
     if(Directory != CACHE_CONTAINER_NO_SUBDIR)
         nRequired += (DIR_LENGTH + 1) * sizeof(WCHAR);
+    if (trunc_name && nRequired >= *lpBufferSize)
+        nRequired = *lpBufferSize;
     if (nRequired <= *lpBufferSize)
     {
         int dir_len;
@@ -1008,7 +1011,9 @@ static BOOL urlcache_create_file_pathW(
         {
             dir_len = 0;
         }
-        MultiByteToWideChar(CP_ACP, 0, szLocalFileName, -1, wszPath + dir_len + path_len, file_name_len);
+        MultiByteToWideChar(CP_ACP, 0, szLocalFileName, -1, wszPath + dir_len + path_len,
+                *lpBufferSize/sizeof(WCHAR)-dir_len-path_len);
+        wszPath[*lpBufferSize/sizeof(WCHAR)-1] = 0;
         *lpBufferSize = nRequired;
         return TRUE;
     }
@@ -1097,7 +1102,7 @@ static DWORD urlcache_delete_file(const cache_container *container,
 
     if(!urlcache_create_file_pathW(container, header,
                 (LPCSTR)url_entry+url_entry->local_name_off,
-                url_entry->cache_dir, path, &path_size))
+                url_entry->cache_dir, path, &path_size, FALSE))
         goto succ;
 
     if(!GetFileAttributesExW(path, GetFileExInfoStandard, &attr))
@@ -1320,8 +1325,10 @@ static DWORD urlcache_copy_entry(cache_container *container, const urlcache_head
         LPSTR file_name;
         file_name = (LPSTR)entry_info+size;
         file_name_size = *info_size-size;
-        if((unicode && urlcache_create_file_pathW(container, header, (LPCSTR)url_entry+url_entry->local_name_off, url_entry->cache_dir, (LPWSTR)file_name, &file_name_size)) ||
-            (!unicode && urlcache_create_file_pathA(container, header, (LPCSTR)url_entry+url_entry->local_name_off, url_entry->cache_dir, file_name, &file_name_size))) {
+        if((unicode && urlcache_create_file_pathW(container, header, (LPCSTR)url_entry+url_entry->local_name_off,
+                        url_entry->cache_dir, (LPWSTR)file_name, &file_name_size, FALSE)) ||
+            (!unicode && urlcache_create_file_pathA(container, header, (LPCSTR)url_entry+url_entry->local_name_off,
+                        url_entry->cache_dir, file_name, &file_name_size))) {
             entry_info->lpszLocalFileName = file_name;
         }
         size += file_name_size;
@@ -2613,7 +2620,7 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
     char file_name[MAX_PATH];
     WCHAR extW[MAX_PATH];
     BYTE cache_dir;
-    LONG full_path_len;
+    LONG full_path_len, ext_len = 0;
     BOOL generate_name = FALSE;
     DWORD error;
     HANDLE file;
@@ -2630,7 +2637,7 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
     if(!InternetCrackUrlA(url, 0, 0, &uc))
         uc.dwUrlPathLength = 0;
 
-    if(!uc.dwUrlPathLength || uc.dwUrlPathLength >= sizeof(file_name)) {
+    if(!uc.dwUrlPathLength) {
         file_name[0] = 0;
     }else {
         char *p, *e;
@@ -2644,6 +2651,8 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
                 p--;
         }
 
+        if(e-p >= MAX_PATH)
+            e = p+MAX_PATH-1;
         memcpy(file_name, p, e-p);
         file_name[e-p] = 0;
 
@@ -2683,7 +2692,7 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
         cache_dir = CACHE_CONTAINER_NO_SUBDIR;
 
     full_path_len = MAX_PATH * sizeof(WCHAR);
-    if(!urlcache_create_file_pathW(container, header, file_name, cache_dir, full_path, &full_path_len)) {
+    if(!urlcache_create_file_pathW(container, header, file_name, cache_dir, full_path, &full_path_len, TRUE)) {
         WARN("Failed to get full path for filename %s, needed %u bytes.\n",
                 debugstr_a(file_name), full_path_len);
         cache_container_unlock_index(container, header);
@@ -2697,7 +2706,7 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
         WCHAR *p;
 
         extW[0] = '.';
-        MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
+        ext_len = MultiByteToWideChar(CP_ACP, 0, ext, -1, extW+1, MAX_PATH-1);
 
         for(p=extW; *p; p++) {
             switch(*p) {
@@ -2715,6 +2724,10 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
         extW[0] = '\0';
     }
 
+    if(!generate_name && full_path_len+5+ext_len>=MAX_PATH) { /* strlen("[255]") = 5 */
+        full_path_len = MAX_PATH-5-ext_len-1;
+    }
+
     for(i=0; i<255 && !generate_name; i++) {
         static const WCHAR format[] = {'[','%','u',']','%','s',0};
 
@@ -2727,6 +2740,9 @@ static BOOL urlcache_entry_create(const char *url, const char *ext, WCHAR *full_
             return TRUE;
         }
     }
+
+    if(full_path_len+8+ext_len >= MAX_PATH)
+        full_path_len = MAX_PATH-8-ext_len-1;
 
     /* Try to generate random name */
     GetSystemTimeAsFileTime(&ft);
