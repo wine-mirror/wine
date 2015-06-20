@@ -502,6 +502,7 @@ void __thiscall streambuf_unlock(streambuf *this)
 /* ?xsgetn@streambuf@@UAEHPADH@Z */
 /* ?xsgetn@streambuf@@UEAAHPEADH@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_xsgetn, 12)
+#define call_streambuf_xsgetn(this, buffer, count) CALL_VTBL_FUNC(this, 24, int, (streambuf*, char*, int), (this, buffer, count))
 int __thiscall streambuf_xsgetn(streambuf *this, char *buffer, int count)
 {
     int copied = 0, chunk;
@@ -533,6 +534,7 @@ int __thiscall streambuf_xsgetn(streambuf *this, char *buffer, int count)
 /* ?xsputn@streambuf@@UAEHPBDH@Z */
 /* ?xsputn@streambuf@@UEAAHPEBDH@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_xsputn, 12)
+#define call_streambuf_xsputn(this, data, length) CALL_VTBL_FUNC(this, 20, int, (streambuf*, const char*, int), (this, data, length))
 int __thiscall streambuf_xsputn(streambuf *this, const char *data, int length)
 {
     int copied = 0, chunk;
@@ -577,6 +579,22 @@ int __thiscall streambuf_sputc(streambuf *this, int ch)
 {
     TRACE("(%p %d)\n", this, ch);
     return (this->pptr < this->epptr) ? *this->pptr++ = ch : call_streambuf_overflow(this, ch);
+}
+
+/* ?sgetn@streambuf@@QAEHPADH@Z */
+/* ?sgetn@streambuf@@QEAAHPEADH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_sgetn, 12)
+int __thiscall streambuf_sgetn(streambuf *this, char *buffer, int count)
+{
+    return call_streambuf_xsgetn(this, buffer, count);
+}
+
+/* ?sputn@streambuf@@QAEHPBDH@Z */
+/* ?sputn@streambuf@@QEAAHPEBDH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_sputn, 12)
+int __thiscall streambuf_sputn(streambuf *this, const char *data, int length)
+{
+    return call_streambuf_xsputn(this, data, length);
 }
 
 /******************************************************************

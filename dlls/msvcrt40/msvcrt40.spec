@@ -755,8 +755,8 @@
 @ stub -arch=win64 ?setrwbuf@stdiobuf@@QEAAHHH@Z
 @ thiscall -arch=win32 ?sgetc@streambuf@@QAEHXZ(ptr) msvcirt.?sgetc@streambuf@@QAEHXZ
 @ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) msvcirt.?sgetc@streambuf@@QEAAHXZ
-@ stub -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z
-@ stub -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z
+@ thiscall -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z(ptr ptr long) msvcirt.?sgetn@streambuf@@QAEHPADH@Z
+@ cdecl -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z(ptr ptr long) msvcirt.?sgetn@streambuf@@QEAAHPEADH@Z
 # @ extern ?sh_none@filebuf@@2HB
 # @ extern ?sh_read@filebuf@@2HB
 # @ extern ?sh_write@filebuf@@2HB
@@ -766,8 +766,8 @@
 @ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
 @ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) msvcirt.?sputc@streambuf@@QAEHH@Z
 @ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) msvcirt.?sputc@streambuf@@QEAAHH@Z
-@ stub -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z
-@ stub -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z
+@ thiscall -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z(ptr str long) msvcirt.?sputn@streambuf@@QAEHPBDH@Z
+@ cdecl -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z(ptr str long) msvcirt.?sputn@streambuf@@QEAAHPEBDH@Z
 @ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ
 @ stub -arch=win64 ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ
 @ stub -arch=win32 ?stossc@streambuf@@QAEXXZ
