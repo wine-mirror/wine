@@ -869,6 +869,8 @@ static void test_marshal_SNB(void)
     g_expect_user_free = TRUE;
     SNB_UserFree(&umcb.Flags, &snb2);
     g_expect_user_free = FALSE;
+
+    HeapFree(GetProcessHeap(), 0, src);
 }
 
 static void test_marshal_HDC(void)
