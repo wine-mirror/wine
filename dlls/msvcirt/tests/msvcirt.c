@@ -65,6 +65,7 @@ static int (*__thiscall p_streambuf_sgetc)(streambuf*);
 static int (*__thiscall p_streambuf_sputc)(streambuf*, int);
 static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
+static int (*__thiscall p_streambuf_xsgetn)(streambuf*, char*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -151,6 +152,7 @@ static BOOL init(void)
         SET(p_streambuf_sputc, "?sputc@streambuf@@QEAAHH@Z");
         SET(p_streambuf_sync, "?sync@streambuf@@UEAAHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UEAAHPEADH@Z");
     } else {
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IAE@XZ");
@@ -168,6 +170,7 @@ static BOOL init(void)
         SET(p_streambuf_sputc, "?sputc@streambuf@@QAEHH@Z");
         SET(p_streambuf_sync, "?sync@streambuf@@UAEHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
+        SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UAEHPADH@Z");
     }
 
     init_thiscall_thunk();
@@ -175,7 +178,9 @@ static BOOL init(void)
 }
 
 static int overflow_count, underflow_count;
-static streambuf *test_overflow_this;
+static streambuf *test_this;
+static char test_get_buffer[24];
+static int buffer_pos, get_end;
 
 #ifdef __i386__
 static int __thiscall test_streambuf_overflow(int ch)
@@ -184,8 +189,8 @@ static int __thiscall test_streambuf_overflow(streambuf *this, int ch)
 #endif
 {
     overflow_count++;
-    if (!test_overflow_this->unbuffered)
-        test_overflow_this->pptr = test_overflow_this->pbase + 5;
+    if (!test_this->unbuffered)
+        test_this->pptr = test_this->pbase + 5;
     return ch;
 }
 
@@ -196,7 +201,13 @@ static int __thiscall test_streambuf_underflow(streambuf *this)
 #endif
 {
     underflow_count++;
-    return 'u';
+    if (test_this->unbuffered) {
+        return (buffer_pos < 23) ? test_get_buffer[buffer_pos++] : EOF;
+    } else if (test_this->gptr < test_this->egptr) {
+        return *test_this->gptr;
+    } else {
+        return get_end ? EOF : *(test_this->gptr = test_this->eback);
+    }
 }
 
 struct streambuf_lock_arg
@@ -264,6 +275,8 @@ static void test_streambuf(void)
     sb2.vtable = test_streambuf_vtbl;
     sb3.vtable = test_streambuf_vtbl;
     overflow_count = underflow_count = 0;
+    strcpy(test_get_buffer, "CompuGlobalHyperMegaNet");
+    buffer_pos = get_end = 0;
 
     /* setlock */
     ok(sb.do_lock == -1, "expected do_lock value -1, got %d\n", sb.do_lock);
@@ -426,21 +439,23 @@ static void test_streambuf(void)
     ok(ret == 0, "sync failed, expected 0 got %d\n", ret);
 
     /* sgetc */
+    strcpy(sb2.eback, "WorstTestEver");
+    test_this = &sb2;
     ret = (int) call_func1(p_streambuf_sgetc, &sb2);
-    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(ret == 'W', "expected 'W' got '%c'\n", ret);
     ok(underflow_count == 1, "expected call to underflow\n");
     ok(sb2.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb2.stored_char);
-    sb2.gptr = sb2.eback;
-    *sb2.gptr = 'a';
+    sb2.gptr++;
     ret = (int) call_func1(p_streambuf_sgetc, &sb2);
-    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(ret == 'o', "expected 'o' got '%c'\n", ret);
     ok(underflow_count == 2, "expected call to underflow\n");
     ok(sb2.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb2.stored_char);
     sb2.gptr = sb2.egptr;
+    test_this = &sb3;
     ret = (int) call_func1(p_streambuf_sgetc, &sb3);
-    ok(ret == 'u', "expected 'u' got '%c'\n", ret);
+    ok(ret == 'C', "expected 'C' got '%c'\n", ret);
     ok(underflow_count == 3, "expected call to underflow\n");
-    ok(sb3.stored_char == 'u', "wrong stored character, expected 'u' got %c\n", sb3.stored_char);
+    ok(sb3.stored_char == 'C', "wrong stored character, expected 'C' got %c\n", sb3.stored_char);
     sb3.stored_char = 'b';
     ret = (int) call_func1(p_streambuf_sgetc, &sb3);
     ok(ret == 'b', "expected 'b' got '%c'\n", ret);
@@ -454,12 +469,12 @@ static void test_streambuf(void)
     ok(overflow_count == 0, "no call to overflow expected\n");
     ok(*sb.pbase == 'c', "expected 'c' in the put area, got %c\n", *sb.pbase);
     ok(sb.pptr == sb.pbase + 1, "wrong put pointer, expected %p got %p\n", sb.pbase + 1, sb.pptr);
-    test_overflow_this = &sb2;
+    test_this = &sb2;
     ret = (int) call_func2(p_streambuf_sputc, &sb2, 'c');
     ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
     ok(overflow_count == 1, "expected call to overflow\n");
     ok(sb2.pptr == sb2.pbase + 5, "wrong put pointer, expected %p got %p\n", sb2.pbase + 5, sb2.pptr);
-    test_overflow_this = &sb3;
+    test_this = &sb3;
     ret = (int) call_func2(p_streambuf_sputc, &sb3, 'c');
     ok(ret == 'c', "wrong return value, expected 'c' got %d\n", ret);
     ok(overflow_count == 2, "expected call to overflow\n");
@@ -470,6 +485,47 @@ static void test_streambuf(void)
     ok(overflow_count == 2, "no call to overflow expected\n");
     ok(*sb3.pbase == 'c', "expected 'c' in the put area, got %c\n", *sb3.pbase);
     sb3.pbase = sb3.pptr = sb3.epptr = NULL;
+
+    /* xsgetn */
+    sb2.gptr = sb2.egptr = sb2.eback + 13;
+    test_this = &sb2;
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb2, reserve, 5);
+    ok(ret == 5, "wrong return value, expected 5 got %d\n", ret);
+    ok(!strncmp(reserve, "Worst", 5), "expected 'Worst' got %s\n", reserve);
+    ok(sb2.gptr == sb2.eback + 5, "wrong get pointer, expected %p got %p\n", sb2.eback + 5, sb2.gptr);
+    ok(underflow_count == 4, "expected call to underflow\n");
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb2, reserve, 4);
+    ok(ret == 4, "wrong return value, expected 4 got %d\n", ret);
+    ok(!strncmp(reserve, "Test", 4), "expected 'Test' got %s\n", reserve);
+    ok(sb2.gptr == sb2.eback + 9, "wrong get pointer, expected %p got %p\n", sb2.eback + 9, sb2.gptr);
+    ok(underflow_count == 5, "expected call to underflow\n");
+    get_end = 1;
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb2, reserve, 16);
+    ok(ret == 4, "wrong return value, expected 4 got %d\n", ret);
+    ok(!strncmp(reserve, "Ever", 4), "expected 'Ever' got %s\n", reserve);
+    ok(sb2.gptr == sb2.egptr, "wrong get pointer, expected %p got %p\n", sb2.egptr, sb2.gptr);
+    ok(underflow_count == 7, "expected 2 calls to underflow, got %d\n", underflow_count - 5);
+    test_this = &sb3;
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb3, reserve, 11);
+    ok(ret == 11, "wrong return value, expected 11 got %d\n", ret);
+    ok(!strncmp(reserve, "bompuGlobal", 11), "expected 'bompuGlobal' got %s\n", reserve);
+    ok(sb3.stored_char == 'H', "wrong stored character, expected 'H' got %c\n", sb3.stored_char);
+    ok(underflow_count == 18, "expected 11 calls to underflow, got %d\n", underflow_count - 7);
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb3, reserve, 16);
+    ok(ret == 12, "wrong return value, expected 12 got %d\n", ret);
+    ok(!strncmp(reserve, "HyperMegaNet", 12), "expected 'HyperMegaNet' got %s\n", reserve);
+    ok(sb3.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb3.stored_char);
+    ok(underflow_count == 30, "expected 12 calls to underflow, got %d\n", underflow_count - 18);
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb3, reserve, 3);
+    ok(ret == 0, "wrong return value, expected 0 got %d\n", ret);
+    ok(sb3.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb3.stored_char);
+    ok(underflow_count == 31, "expected call to underflow\n");
+    buffer_pos = 0;
+    ret = (int) call_func3(p_streambuf_xsgetn, &sb3, reserve, 5);
+    ok(ret == 5, "wrong return value, expected 5 got %d\n", ret);
+    ok(!strncmp(reserve, "Compu", 5), "expected 'Compu' got %s\n", reserve);
+    ok(sb3.stored_char == 'G', "wrong stored character, expected 'G' got %c\n", sb3.stored_char);
+    ok(underflow_count == 37, "expected 6 calls to underflow, got %d\n", underflow_count - 31);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

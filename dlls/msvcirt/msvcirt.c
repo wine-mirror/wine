@@ -504,8 +504,30 @@ void __thiscall streambuf_unlock(streambuf *this)
 DEFINE_THISCALL_WRAPPER(streambuf_xsgetn, 12)
 int __thiscall streambuf_xsgetn(streambuf *this, char *buffer, int count)
 {
-    FIXME("(%p %p %d): stub\n", this, buffer, count);
-    return 0;
+    int copied = 0, chunk;
+
+    TRACE("(%p %p %d)\n", this, buffer, count);
+
+    if (this->unbuffered) {
+        if (this->stored_char == EOF)
+            this->stored_char = call_streambuf_underflow(this);
+        while (copied < count && this->stored_char != EOF) {
+            buffer[copied++] = this->stored_char;
+            this->stored_char = call_streambuf_underflow(this);
+        }
+    } else {
+        while (copied < count) {
+            if (call_streambuf_underflow(this) == EOF)
+                break;
+            chunk = this->egptr - this->gptr;
+            if (chunk > count - copied)
+                chunk = count - copied;
+            memcpy(buffer+copied, this->gptr, chunk);
+            this->gptr += chunk;
+            copied += chunk;
+        }
+    }
+    return copied;
 }
 
 /* ?xsputn@streambuf@@UAEHPBDH@Z */
