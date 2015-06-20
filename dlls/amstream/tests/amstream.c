@@ -28,19 +28,15 @@
 
 static const WCHAR filenameW[] = {'t','e','s','t','.','a','v','i',0};
 
-static IAMMultiMediaStream* pams;
 static IDirectDraw7* pdd7;
 static IDirectDrawSurface7* pdds7;
 
-static int create_ammultimediastream(void)
+static IAMMultiMediaStream *create_ammultimediastream(void)
 {
-    return S_OK == CoCreateInstance(
-        &CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMultiMediaStream, (LPVOID*)&pams);
-}
-
-static void release_ammultimediastream(void)
-{
-    IAMMultiMediaStream_Release(pams);
+    IAMMultiMediaStream *stream = NULL;
+    CoCreateInstance(&CLSID_AMMultiMediaStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMultiMediaStream,
+        (void**)&stream);
+    return stream;
 }
 
 static int create_directdraw(void)
@@ -89,10 +85,11 @@ static void release_directdraw(void)
 
 static void test_openfile(void)
 {
+    IAMMultiMediaStream *pams;
     HRESULT hr;
     IGraphBuilder* pgraph;
 
-    if (!create_ammultimediastream())
+    if (!(pams = create_ammultimediastream()))
         return;
 
     hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
@@ -112,21 +109,22 @@ static void test_openfile(void)
     if (pgraph)
         IGraphBuilder_Release(pgraph);
 
-    release_ammultimediastream();
+    IAMMultiMediaStream_Release(pams);
 }
 
 static void test_renderfile(void)
 {
+    IAMMultiMediaStream *pams;
     HRESULT hr;
     IMediaStream *pvidstream = NULL;
     IDirectDrawMediaStream *pddstream = NULL;
     IDirectDrawStreamSample *pddsample = NULL;
 
-    if (!create_ammultimediastream())
+    if (!(pams = create_ammultimediastream()))
         return;
     if (!create_directdraw())
     {
-        release_ammultimediastream();
+        IAMMultiMediaStream_Release(pams);
         return;
     }
 
@@ -162,22 +160,23 @@ error:
         IMediaStream_Release(pvidstream);
 
     release_directdraw();
-    release_ammultimediastream();
+    IAMMultiMediaStream_Release(pams);
 }
 
 static void test_media_streams(void)
 {
+    IAMMultiMediaStream *pams;
     HRESULT hr;
     IMediaStream *video_stream = NULL;
     IMediaStream *audio_stream = NULL;
     IMediaStream *dummy_stream;
     IMediaStreamFilter* media_stream_filter = NULL;
 
-    if (!create_ammultimediastream())
+    if (!(pams = create_ammultimediastream()))
         return;
     if (!create_directdraw())
     {
-        release_ammultimediastream();
+        IAMMultiMediaStream_Release(pams);
         return;
     }
 
@@ -424,7 +423,7 @@ static void test_media_streams(void)
         IMediaStreamFilter_Release(media_stream_filter);
 
     release_directdraw();
-    release_ammultimediastream();
+    IAMMultiMediaStream_Release(pams);
 }
 
 START_TEST(amstream)
