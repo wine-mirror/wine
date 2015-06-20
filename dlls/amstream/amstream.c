@@ -114,6 +114,7 @@ static ULONG WINAPI IAMMultiMediaStreamImpl_Release(IAMMultiMediaStream* iface)
     {
         for(i = 0; i < This->nbStreams; i++)
             IAMMediaStream_Release(This->pStreams[i]);
+        CoTaskMemFree(This->pStreams);
         if (This->ipin)
             IPin_Release(This->ipin);
         if (This->media_stream_filter)
