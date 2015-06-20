@@ -32,7 +32,6 @@
 #include "rpcproxy.h"
 
 #include "amstream_private.h"
-#include "amstream.h"
 
 #include "wine/debug.h"
 

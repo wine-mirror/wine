@@ -25,8 +25,6 @@
 #include "winbase.h"
 #include "amstream_private.h"
 
-#include "amstream.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {

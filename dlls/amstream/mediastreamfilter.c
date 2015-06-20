@@ -29,7 +29,6 @@
 #include "wine/strmbase.h"
 
 #include "amstream_private.h"
-#include "amstream.h"
 
 #include "ddstream.h"
 

@@ -26,7 +26,6 @@
 #include "wingdi.h"
 
 #include "amstream_private.h"
-#include "amstream.h"
 
 #include "ddstream.h"
 
@@ -428,7 +427,7 @@ static const struct IDirectDrawMediaStreamVtbl DirectDrawMediaStreamImpl_IDirect
 };
 
 HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        STREAM_TYPE stream_type, IMediaStream **media_stream)
+        STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     DirectDrawMediaStreamImpl *object;
 
@@ -446,7 +445,7 @@ HRESULT ddrawmediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
     object->purpose_id = *purpose_id;
     object->stream_type = stream_type;
 
-    *media_stream = (IMediaStream*)&object->IAMMediaStream_iface;
+    *media_stream = &object->IAMMediaStream_iface;
 
     return S_OK;
 }
@@ -828,7 +827,7 @@ static const struct IAudioMediaStreamVtbl AudioMediaStreamImpl_IAudioMediaStream
 };
 
 HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        STREAM_TYPE stream_type, IMediaStream **media_stream)
+        STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     AudioMediaStreamImpl *object;
 
@@ -846,7 +845,7 @@ HRESULT audiomediastream_create(IMultiMediaStream *parent, const MSPID *purpose_
     object->purpose_id = *purpose_id;
     object->stream_type = stream_type;
 
-    *media_stream = (IMediaStream*)&object->IAMMediaStream_iface;
+    *media_stream = &object->IAMMediaStream_iface;
 
     return S_OK;
 }
