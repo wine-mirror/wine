@@ -535,8 +535,25 @@ int __thiscall streambuf_xsgetn(streambuf *this, char *buffer, int count)
 DEFINE_THISCALL_WRAPPER(streambuf_xsputn, 12)
 int __thiscall streambuf_xsputn(streambuf *this, const char *data, int length)
 {
-    FIXME("(%p %p %d): stub\n", this, data, length);
-    return 0;
+    int copied = 0, chunk;
+
+    TRACE("(%p %p %d)\n", this, data, length);
+
+    while (copied < length) {
+        if (this->unbuffered || this->pptr == this->epptr) {
+            if (call_streambuf_overflow(this, data[copied]) == EOF)
+                break;
+            copied++;
+        } else {
+            chunk = this->epptr - this->pptr;
+            if (chunk > length - copied)
+                chunk = length - copied;
+            memcpy(this->pptr, data+copied, chunk);
+            this->pptr += chunk;
+            copied += chunk;
+        }
+    }
+    return copied;
 }
 
 /* ?sgetc@streambuf@@QAEHXZ */

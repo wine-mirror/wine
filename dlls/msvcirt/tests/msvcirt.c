@@ -66,6 +66,7 @@ static int (*__thiscall p_streambuf_sputc)(streambuf*, int);
 static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 static int (*__thiscall p_streambuf_xsgetn)(streambuf*, char*, int);
+static int (*__thiscall p_streambuf_xsputn)(streambuf*, const char*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -153,6 +154,7 @@ static BOOL init(void)
         SET(p_streambuf_sync, "?sync@streambuf@@UEAAHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UEAAHPEADH@Z");
+        SET(p_streambuf_xsputn, "?xsputn@streambuf@@UEAAHPEBDH@Z");
     } else {
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IAE@XZ");
@@ -171,6 +173,7 @@ static BOOL init(void)
         SET(p_streambuf_sync, "?sync@streambuf@@UAEHXZ");
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UAEHPADH@Z");
+        SET(p_streambuf_xsputn, "?xsputn@streambuf@@UAEHPBDH@Z");
     }
 
     init_thiscall_thunk();
@@ -189,6 +192,8 @@ static int __thiscall test_streambuf_overflow(streambuf *this, int ch)
 #endif
 {
     overflow_count++;
+    if (ch == 'L') /* simulate a failure */
+        return EOF;
     if (!test_this->unbuffered)
         test_this->pptr = test_this->pbase + 5;
     return ch;
@@ -526,6 +531,38 @@ static void test_streambuf(void)
     ok(!strncmp(reserve, "Compu", 5), "expected 'Compu' got %s\n", reserve);
     ok(sb3.stored_char == 'G', "wrong stored character, expected 'G' got %c\n", sb3.stored_char);
     ok(underflow_count == 37, "expected 6 calls to underflow, got %d\n", underflow_count - 31);
+
+    /* xsputn */
+    ret = (int) call_func3(p_streambuf_xsputn, &sb, "Test\0ing", 8);
+    ok(ret == 8, "wrong return value, expected 8 got %d\n", ret);
+    ok(sb.pptr == sb.pbase + 9, "wrong put pointer, expected %p got %p\n", sb.pbase + 9, sb.pptr);
+    test_this = &sb2;
+    sb2.pptr = sb2.epptr - 7;
+    ret = (int) call_func3(p_streambuf_xsputn, &sb2, "Testing", 7);
+    ok(ret == 7, "wrong return value, expected 7 got %d\n", ret);
+    ok(sb2.pptr == sb2.epptr, "wrong put pointer, expected %p got %p\n", sb2.epptr, sb2.pptr);
+    ok(overflow_count == 2, "no call to overflow expected\n");
+    sb2.pptr = sb2.epptr - 5;
+    sb2.pbase[5] = 'a';
+    ret = (int) call_func3(p_streambuf_xsputn, &sb2, "Testing", 7);
+    ok(ret == 7, "wrong return value, expected 7 got %d\n", ret);
+    ok(sb2.pbase[5] == 'g', "expected 'g' got %c\n", sb2.pbase[5]);
+    ok(sb2.pptr == sb2.pbase + 6, "wrong put pointer, expected %p got %p\n", sb2.pbase + 6, sb2.pptr);
+    ok(overflow_count == 3, "expected call to overflow\n");
+    sb2.pptr = sb2.epptr - 4;
+    ret = (int) call_func3(p_streambuf_xsputn, &sb2, "TestLing", 8);
+    ok(ret == 4, "wrong return value, expected 4 got %d\n", ret);
+    ok(sb2.pptr == sb2.epptr, "wrong put pointer, expected %p got %p\n", sb2.epptr, sb2.pptr);
+    ok(overflow_count == 4, "expected call to overflow\n");
+    test_this = &sb3;
+    ret = (int) call_func3(p_streambuf_xsputn, &sb3, "Testing", 7);
+    ok(ret == 7, "wrong return value, expected 7 got %d\n", ret);
+    ok(sb3.stored_char == 'G', "wrong stored character, expected 'G' got %c\n", sb3.stored_char);
+    ok(overflow_count == 11, "expected 7 calls to overflow, got %d\n", overflow_count - 4);
+    ret = (int) call_func3(p_streambuf_xsputn, &sb3, "TeLephone", 9);
+    ok(ret == 2, "wrong return value, expected 2 got %d\n", ret);
+    ok(sb3.stored_char == 'G', "wrong stored character, expected 'G' got %c\n", sb3.stored_char);
+    ok(overflow_count == 14, "expected 3 calls to overflow, got %d\n", overflow_count - 11);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);
