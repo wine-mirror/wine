@@ -2730,8 +2730,9 @@ static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
 static void test_GetLineMetrics(void)
 {
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
+    static const WCHAR str2W[] = {'a','b','\r','c','d',0};
     DWRITE_FONT_METRICS fontmetrics;
-    DWRITE_LINE_METRICS metrics;
+    DWRITE_LINE_METRICS metrics[2];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFontFace *fontface;
@@ -2749,31 +2750,47 @@ static void test_GetLineMetrics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     count = 0;
-    hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 0, &count);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 0, &count);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
     ok(count == 1, "got count %u\n", count);
 
-    memset(&metrics, 0, sizeof(metrics));
-    hr = IDWriteTextLayout_GetLineMetrics(layout, &metrics, 1, &count);
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(metrics.length == 5, "got %u\n", metrics.length);
-    ok(metrics.trailingWhitespaceLength == 1, "got %u\n", metrics.trailingWhitespaceLength);
+    ok(metrics[0].length == 5, "got %u\n", metrics[0].length);
+    ok(metrics[0].trailingWhitespaceLength == 1, "got %u\n", metrics[0].trailingWhitespaceLength);
 
-    ok(metrics.newlineLength == 0, "got %u\n", metrics.newlineLength);
-    ok(metrics.isTrimmed == FALSE, "got %d\n", metrics.isTrimmed);
+    ok(metrics[0].newlineLength == 0, "got %u\n", metrics[0].newlineLength);
+    ok(metrics[0].isTrimmed == FALSE, "got %d\n", metrics[0].isTrimmed);
 
     /* Tahoma doesn't provide BASE table, so baseline is calculated from font metrics */
     fontface = get_fontface_from_format(format);
     ok(fontface != NULL, "got %p\n", fontface);
     IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
 
-    ok(metrics.baseline == fontmetrics.ascent, "got %.2f, expected %d\n", metrics.baseline,
+    ok(metrics[0].baseline == fontmetrics.ascent, "got %.2f, expected %d\n", metrics[0].baseline,
         fontmetrics.ascent);
-    ok(metrics.height == fontmetrics.ascent + fontmetrics.descent, "got %.2f, expected %d\n",
-        metrics.height, fontmetrics.ascent + fontmetrics.descent);
+    ok(metrics[0].height == fontmetrics.ascent + fontmetrics.descent, "got %.2f, expected %d\n",
+        metrics[0].height, fontmetrics.ascent + fontmetrics.descent);
+    IDWriteTextLayout_Release(layout);
+
+    /* force 2 lines */
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 10000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(metrics, 0, sizeof(metrics));
+    count = 2;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 2, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(count == 2, "got %u\n", count);
+    /* baseline is relative to a line, and is not accumulated */
+    ok(metrics[0].baseline == metrics[1].baseline, "got %.2f, %.2f\n", metrics[0].baseline,
+        metrics[1].baseline);
+}
+    IDWriteTextLayout_Release(layout);
 
     IDWriteFontFace_Release(fontface);
-    IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
