@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -28,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -169,15 +171,19 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_statusText(IHTMLXMLHttpRequest *ifa
 static HRESULT WINAPI HTMLXMLHttpRequest_put_onreadystatechange(IHTMLXMLHttpRequest *iface, VARIANT v)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return set_event_handler(&This->event_target, EVENTID_READYSTATECHANGE, &v);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_get_onreadystatechange(IHTMLXMLHttpRequest *iface, VARIANT *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_event_handler(&This->event_target, EVENTID_READYSTATECHANGE, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
@@ -246,12 +252,35 @@ static const IHTMLXMLHttpRequestVtbl HTMLXMLHttpRequestVtbl = {
     HTMLXMLHttpRequest_setRequestHeader
 };
 
+static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
+}
+
+static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, int eid)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+
+    FIXME("(%p)\n", This);
+
+    assert(eid == EVENTID_READYSTATECHANGE);
+}
+
+static dispex_static_data_vtbl_t HTMLXMLHttpRequest_dispex_vtbl = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLXMLHttpRequest_bind_event
+};
+
 static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
     IHTMLXMLHttpRequest_tid,
     0
 };
 static dispex_static_data_t HTMLXMLHttpRequest_dispex = {
-    NULL,
+    &HTMLXMLHttpRequest_dispex_vtbl,
     DispHTMLXMLHttpRequest_tid,
     NULL,
     HTMLXMLHttpRequest_iface_tids
