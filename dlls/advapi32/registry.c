@@ -1922,53 +1922,47 @@ LSTATUS WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_
 
     status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
                                   buffer, total_size, &total_size );
-    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    if (value || data)
+    /* retry with a dynamically allocated buffer */
+    while (status == STATUS_BUFFER_OVERFLOW)
     {
-        /* retry with a dynamically allocated buffer */
-        while (status == STATUS_BUFFER_OVERFLOW)
+        if (buf_ptr != buffer) heap_free( buf_ptr );
+        if (!(buf_ptr = heap_alloc( total_size ))) return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                      buf_ptr, total_size, &total_size );
+    }
+
+    if (status) goto done;
+
+    if (value)
+    {
+        if (info->NameLength/sizeof(WCHAR) >= *val_count)
         {
-            if (buf_ptr != buffer) heap_free( buf_ptr );
-            if (!(buf_ptr = heap_alloc( total_size )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
-            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
-                                          buf_ptr, total_size, &total_size );
+            status = STATUS_BUFFER_OVERFLOW;
+            goto overflow;
         }
+        memcpy( value, info->Name, info->NameLength );
+        *val_count = info->NameLength / sizeof(WCHAR);
+        value[*val_count] = 0;
+    }
 
-        if (status) goto done;
-
-        if (value)
+    if (data)
+    {
+        if (total_size - info->DataOffset > *count)
         {
-            if (info->NameLength/sizeof(WCHAR) >= *val_count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                goto overflow;
-            }
-            memcpy( value, info->Name, info->NameLength );
-            *val_count = info->NameLength / sizeof(WCHAR);
-            value[*val_count] = 0;
+            status = STATUS_BUFFER_OVERFLOW;
+            goto overflow;
         }
-
-        if (data)
+        memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        if (total_size - info->DataOffset <= *count-sizeof(WCHAR) && is_string(info->Type))
         {
-            if (total_size - info->DataOffset > *count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                goto overflow;
-            }
-            memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
-            if (total_size - info->DataOffset <= *count-sizeof(WCHAR) && is_string(info->Type))
-            {
-                /* if the type is REG_SZ and data is not 0-terminated
-                 * and there is enough space in the buffer NT appends a \0 */
-                WCHAR *ptr = (WCHAR *)(data + total_size - info->DataOffset);
-                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
-            }
+            /* if the type is REG_SZ and data is not 0-terminated
+             * and there is enough space in the buffer NT appends a \0 */
+            WCHAR *ptr = (WCHAR *)(data + total_size - info->DataOffset);
+            if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
         }
     }
-    else status = STATUS_SUCCESS;
 
  overflow:
     if (type) *type = info->Type;
