@@ -56,7 +56,7 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
 LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
                                    unsigned* psize, BOOL *issigned)
 {
-    LONGLONG            rtn;
+    LONGLONG            rtn = 0;
     DWORD               tag, bt;
     DWORD64             size;
     struct dbg_type     type = lvalue->type;
@@ -123,7 +123,6 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
     default:
         WINE_FIXME("Unsupported tag %u\n", tag);
         RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
-        rtn = 0;
     }
 
     return rtn;
