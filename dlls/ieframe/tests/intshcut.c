@@ -156,13 +156,14 @@ static void _check_string_transform(unsigned line, IUniformResourceLocatorA *url
         todo_wine
         ok_(__FILE__,line)(!lstrcmpA(output, expectedOutput), "unexpected URL change %s -> %s (expected %s)\n",
             input, output, expectedOutput);
-        CoTaskMemFree(output);
     }else {
         todo_wine
         ok_(__FILE__,line)(hr == S_FALSE, "GetUrl failed, hr=0x%x\n", hr);
         todo_wine
         ok_(__FILE__,line)(!output, "GetUrl returned %s\n", output);
     }
+    if (hr == S_OK)
+        CoTaskMemFree(output);
 }
 
 static void test_ReadAndWriteProperties(void)
@@ -252,7 +253,7 @@ static void test_ReadAndWriteProperties(void)
         hr = urlAFromFile->lpVtbl->GetURL(urlAFromFile, &url);
         ok(hr == S_OK, "Unable to get url from file, hr=0x%x\n", hr);
         ok(lstrcmpA(url, testurl) == 0, "Wrong url read from file: %s\n",url);
-
+        CoTaskMemFree(url);
 
         hr = urlAFromFile->lpVtbl->QueryInterface(urlAFromFile, &IID_IPropertySetStorage, (void **) &pPropSetStg);
         ok(hr == S_OK, "Unable to get an IPropertySetStorage, hr=0x%x\n", hr);
@@ -381,6 +382,7 @@ static void test_InternetShortcut(void)
     ok(hres == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hres);
     if(FAILED(hres))
         return;
+    url->lpVtbl->Release(url);
 
     test_Aggregability();
     test_QueryInterface();
