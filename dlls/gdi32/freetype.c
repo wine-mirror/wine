@@ -1511,6 +1511,14 @@ static LONG reg_load_dword(HKEY hkey, const WCHAR *value, DWORD *data)
     return ERROR_SUCCESS;
 }
 
+static LONG reg_load_ftlong(HKEY hkey, const WCHAR *value, FT_Long *data)
+{
+    DWORD dw;
+    LONG ret = reg_load_dword(hkey, value, &dw);
+    *data = dw;
+    return ret;
+}
+
 static inline LONG reg_save_dword(HKEY hkey, const WCHAR *value, DWORD data)
 {
     return RegSetValueExW(hkey, value, 0, REG_DWORD, (BYTE*)&data, sizeof(DWORD));
@@ -1541,10 +1549,10 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         else
             face->FullName = NULL;
 
-        reg_load_dword(hkey_face, face_index_value, (DWORD*)&face->face_index);
+        reg_load_ftlong(hkey_face, face_index_value, &face->face_index);
         reg_load_dword(hkey_face, face_ntmflags_value, &face->ntmFlags);
-        reg_load_dword(hkey_face, face_version_value, (DWORD*)&face->font_version);
-        reg_load_dword(hkey_face, face_flags_value, (DWORD*)&face->flags);
+        reg_load_ftlong(hkey_face, face_version_value, &face->font_version);
+        reg_load_dword(hkey_face, face_flags_value, &face->flags);
 
         needed = sizeof(face->fs);
         RegQueryValueExW(hkey_face, face_font_sig_value, NULL, NULL, (BYTE*)&face->fs, &needed);
@@ -1558,9 +1566,9 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         {
             face->scalable = FALSE;
             reg_load_dword(hkey_face, face_width_value, (DWORD*)&face->size.width);
-            reg_load_dword(hkey_face, face_size_value, (DWORD*)&face->size.size);
-            reg_load_dword(hkey_face, face_x_ppem_value, (DWORD*)&face->size.x_ppem);
-            reg_load_dword(hkey_face, face_y_ppem_value, (DWORD*)&face->size.y_ppem);
+            reg_load_ftlong(hkey_face, face_size_value, &face->size.size);
+            reg_load_ftlong(hkey_face, face_x_ppem_value, &face->size.x_ppem);
+            reg_load_ftlong(hkey_face, face_y_ppem_value, &face->size.y_ppem);
             reg_load_dword(hkey_face, face_internal_leading_value, (DWORD*)&face->size.internal_leading);
 
             TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
