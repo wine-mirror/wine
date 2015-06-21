@@ -2767,12 +2767,11 @@ static void test_GetLineMetrics(void)
     ok(fontface != NULL, "got %p\n", fontface);
     IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
 
-todo_wine {
     ok(metrics.baseline == fontmetrics.ascent, "got %.2f, expected %d\n", metrics.baseline,
         fontmetrics.ascent);
     ok(metrics.height == fontmetrics.ascent + fontmetrics.descent, "got %.2f, expected %d\n",
         metrics.height, fontmetrics.ascent + fontmetrics.descent);
-}
+
     IDWriteFontFace_Release(fontface);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);

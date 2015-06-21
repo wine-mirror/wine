@@ -168,6 +168,8 @@ struct layout_run {
         struct inline_object_run object;
         struct regular_layout_run regular;
     } u;
+    FLOAT baseline;
+    FLOAT height;
 };
 
 struct layout_effective_run {
@@ -573,6 +575,11 @@ static inline UINT32 get_clipped_range_length(const struct dwrite_textlayout *la
     return layout->len - range->h.range.startPosition;
 }
 
+static inline FLOAT get_scaled_font_metric(UINT32 metric, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
+{
+    return (FLOAT)metric * emSize / (FLOAT)metrics->designUnitsPerEm;
+}
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
@@ -639,6 +646,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props = NULL;
         DWRITE_SHAPING_TEXT_PROPERTIES *text_props = NULL;
         struct regular_layout_run *run = &r->u.regular;
+        DWRITE_FONT_METRICS fontmetrics = { 0 };
         IDWriteFontFamily *family;
         UINT32 index, max_count;
         IDWriteFont *font;
@@ -669,6 +677,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
                 hr = S_OK;
             }
             metrics->width = inlinemetrics.width;
+            r->baseline = inlinemetrics.baseline;
+            r->height = inlinemetrics.height;
 
             /* FIXME: use resolved breakpoints in this case too */
 
@@ -778,6 +788,22 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             run->run.glyphCount = 0;
         else
             run->run.glyphCount = run->glyphcount;
+
+        /* baseline derived from font metrics */
+        if (layout->gdicompatible) {
+            /* FIXME: check return value when it's actually implemented */
+            IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
+                run->run.fontEmSize,
+                layout->pixels_per_dip,
+                &layout->transform,
+                &fontmetrics);
+        }
+        else
+            IDWriteFontFace_GetMetrics(run->run.fontFace, &fontmetrics);
+
+        r->baseline = get_scaled_font_metric(fontmetrics.ascent, run->run.fontEmSize, &fontmetrics);
+        r->height = get_scaled_font_metric(fontmetrics.ascent + fontmetrics.descent, run->run.fontEmSize, &fontmetrics);
+
         layout_set_cluster_metrics(layout, r, &cluster);
 
         continue;
@@ -1059,11 +1085,15 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             layout->clustermetrics[i].isNewline || /* always wrap on new line */
             i == layout->cluster_count - 1) /* end of the text */ {
 
-            UINT32 strlength, index = i;
+            UINT32 strlength, last_cluster = i, index;
+            FLOAT descent;
 
-            if (!overflow)
+            if (!overflow) {
                 metrics.length += layout->clustermetrics[i].length;
-            strlength = metrics.length;
+                last_cluster = i;
+            }
+            else
+                last_cluster = i ? i - 1 : i;
 
             if (i >= start) {
                 hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x, s[0]);
@@ -1074,6 +1104,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
             /* take a look at clusters we got for this line in reverse order to set
                trailing properties for current line */
+            strlength = metrics.length;
+            index = last_cluster;
             while (strlength) {
                 DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
 
@@ -1092,8 +1124,27 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                 index--;
             }
 
-            metrics.height = 0.0;   /* FIXME */
-            metrics.baseline = 0.0; /* FIXME */
+            /* look for max baseline and descent for this line */
+            strlength = metrics.length;
+            index = last_cluster;
+            metrics.baseline = 0.0;
+            descent = 0.0;
+            while (strlength) {
+                DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+                const struct layout_run *cur = layout->clusters[index].run;
+                FLOAT cur_descent = cur->height - cur->baseline;
+
+                if (cur->baseline > metrics.baseline)
+                    metrics.baseline = cur->baseline;
+
+                if (cur_descent > descent)
+                    descent = cur_descent;
+
+                strlength -= cluster->length;
+                index--;
+            }
+            metrics.height = descent + metrics.baseline;
+
             metrics.isTrimmed = width > layout->maxwidth;
             hr = layout_set_line_metrics(layout, &metrics, &line);
             if (FAILED(hr))
