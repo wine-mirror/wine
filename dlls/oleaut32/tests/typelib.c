@@ -5500,6 +5500,7 @@ static void test_stub(void)
 
         hr = IPSFactoryBuffer_CreateStub(factory, &interfaceguid, &uk, &base_stub);
         ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+        IRpcStubBuffer_Release(base_stub);
 
         IPSFactoryBuffer_Release(factory);
     next:
