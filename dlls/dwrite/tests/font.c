@@ -37,6 +37,35 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    do { called_ ## func = FALSE; expect_ ## func = TRUE; } while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
+DEFINE_EXPECT(setfillmode);
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -457,6 +486,7 @@ static ULONG WINAPI test_geometrysink_Release(ID2D1SimplifiedGeometrySink *iface
 
 static void WINAPI test_geometrysink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
 {
+    CHECK_EXPECT(setfillmode);
     ok(mode == D2D1_FILL_MODE_WINDING, "fill mode %d\n", mode);
 }
 
@@ -508,7 +538,44 @@ static const ID2D1SimplifiedGeometrySinkVtbl test_geometrysink_vtbl = {
     test_geometrysink_Close
 };
 
+static void WINAPI test_geometrysink2_BeginFigure(ID2D1SimplifiedGeometrySink *iface,
+    D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI test_geometrysink2_AddLines(ID2D1SimplifiedGeometrySink *iface,
+    const D2D1_POINT_2F *points, UINT32 count)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI test_geometrysink2_AddBeziers(ID2D1SimplifiedGeometrySink *iface,
+    const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+    ok(0, "unexpected call\n");
+}
+
+static void WINAPI test_geometrysink2_EndFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_FIGURE_END figureEnd)
+{
+    ok(0, "unexpected call\n");
+}
+
+static const ID2D1SimplifiedGeometrySinkVtbl test_geometrysink2_vtbl = {
+    test_geometrysink_QueryInterface,
+    test_geometrysink_AddRef,
+    test_geometrysink_Release,
+    test_geometrysink_SetFillMode,
+    test_geometrysink_SetSegmentFlags,
+    test_geometrysink2_BeginFigure,
+    test_geometrysink2_AddLines,
+    test_geometrysink2_AddBeziers,
+    test_geometrysink2_EndFigure,
+    test_geometrysink_Close
+};
+
 static ID2D1SimplifiedGeometrySink test_geomsink = { &test_geometrysink_vtbl };
+static ID2D1SimplifiedGeometrySink test_geomsink2 = { &test_geometrysink2_vtbl };
 
 static void test_CreateFontFromLOGFONT(void)
 {
@@ -2991,6 +3058,7 @@ static void test_GetGlyphRunOutline(void)
     /* default advances, no offsets */
     memset(g_startpoints, 0, sizeof(g_startpoints));
     g_startpoint_count = 0;
+    SET_EXPECT(setfillmode);
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 2, FALSE, FALSE, &test_geomsink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
@@ -2999,10 +3067,12 @@ static void test_GetGlyphRunOutline(void)
         ok(g_startpoints[0].x == 229.5 && g_startpoints[0].y == -629.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
         ok(g_startpoints[1].x == 729.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
     }
+    CHECK_CALLED(setfillmode);
 
     /* default advances, no offsets, RTL */
     memset(g_startpoints, 0, sizeof(g_startpoints));
     g_startpoint_count = 0;
+    SET_EXPECT(setfillmode);
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 2, FALSE, TRUE, &test_geomsink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
@@ -3011,10 +3081,12 @@ static void test_GetGlyphRunOutline(void)
         ok(g_startpoints[0].x == -270.5 && g_startpoints[0].y == -629.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
         ok(g_startpoints[1].x == -770.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
     }
+    CHECK_CALLED(setfillmode);
 
     /* default advances, additional offsets */
     memset(g_startpoints, 0, sizeof(g_startpoints));
     g_startpoint_count = 0;
+    SET_EXPECT(setfillmode);
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, offsets, 2, FALSE, FALSE, &test_geomsink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
@@ -3023,10 +3095,12 @@ static void test_GetGlyphRunOutline(void)
         ok(g_startpoints[0].x == 230.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
         ok(g_startpoints[1].x == 729.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
     }
+    CHECK_CALLED(setfillmode);
 
     /* default advances, additional offsets, RTL */
     memset(g_startpoints, 0, sizeof(g_startpoints));
     g_startpoint_count = 0;
+    SET_EXPECT(setfillmode);
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, offsets, 2, FALSE, TRUE, &test_geomsink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
@@ -3034,10 +3108,12 @@ static void test_GetGlyphRunOutline(void)
         ok(g_startpoints[0].x == -271.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
         ok(g_startpoints[1].x == -770.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
     }
+    CHECK_CALLED(setfillmode);
 
     /* custom advances and offsets, offset turns total advance value to zero */
     memset(g_startpoints, 0, sizeof(g_startpoints));
     g_startpoint_count = 0;
+    SET_EXPECT(setfillmode);
     hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, advances, offsets, 2, FALSE, FALSE, &test_geomsink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(g_startpoint_count == 2, "got %d\n", g_startpoint_count);
@@ -3045,11 +3121,33 @@ static void test_GetGlyphRunOutline(void)
         ok(g_startpoints[0].x == 230.5 && g_startpoints[0].y == -630.0, "0: got (%.2f,%.2f)\n", g_startpoints[0].x, g_startpoints[0].y);
         ok(g_startpoints[1].x == 230.5 && g_startpoints[1].y == -629.0, "1: got (%.2f,%.2f)\n", g_startpoints[1].x, g_startpoints[1].y);
     }
+    CHECK_CALLED(setfillmode);
 
-    IDWriteFontFace_Release(face);
+    /* 0 glyph count */
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 0, FALSE, FALSE, &test_geomsink2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     IDWriteFactory_Release(factory);
-
+    IDWriteFontFace_Release(face);
     DELETE_FONTFILE(path);
+
+    /* space glyph */
+    factory = create_factory();
+    face = create_fontface(factory);
+
+    codepoint = ' ';
+    glyphs[0] = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(face, &codepoint, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyphs[0] > 0, "got %u\n", glyphs[0]);
+
+    SET_EXPECT(setfillmode);
+    hr = IDWriteFontFace_GetGlyphRunOutline(face, 1024.0, glyphs, NULL, NULL, 1, FALSE, FALSE, &test_geomsink2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    CHECK_CALLED(setfillmode);
+
+    IDWriteFactory_Release(factory);
+    IDWriteFontFace_Release(face);
 }
 
 static void test_GetEudcFontCollection(void)

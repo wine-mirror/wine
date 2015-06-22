@@ -523,6 +523,9 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface,
     if (is_sideways)
         FIXME("sideways mode is not supported.\n");
 
+    if (count)
+        ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
+
     for (g = 0; g < count; g++) {
         FLOAT xoffset = 0.0, yoffset = 0.0;
         struct glyph_outline *outline;
