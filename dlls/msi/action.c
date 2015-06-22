@@ -1313,9 +1313,10 @@ static UINT load_media( MSIRECORD *row, LPVOID param )
     const WCHAR *cabinet = MSI_RecordGetString( row, 4 );
 
     /* FIXME: load external cabinets and directory sources too */
-    if (!cabinet || cabinet[0] != '#') return ERROR_SUCCESS;
-    msi_add_cabinet_stream( package, disk_id, package->db->storage, cabinet );
-    return ERROR_SUCCESS;
+    if (!cabinet || cabinet[0] != '#' || disk_id >= MSI_INITIAL_MEDIA_TRANSFORM_DISKID)
+        return ERROR_SUCCESS;
+
+    return msi_add_cabinet_stream( package, disk_id, package->db->storage, cabinet );
 }
 
 static UINT load_all_media( MSIPACKAGE *package )

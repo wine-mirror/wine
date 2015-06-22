@@ -220,28 +220,39 @@ static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
 {
     MSICABINETSTREAM *cab;
     IStream *stream;
-    WCHAR *encoded;
-    HRESULT hr;
 
-    cab = msi_get_cabinet_stream( package_disk.package, package_disk.id );
-    if (!cab)
+    if (!(cab = msi_get_cabinet_stream( package_disk.package, package_disk.id )))
     {
         WARN("failed to get cabinet stream\n");
         return -1;
     }
-    if (!cab->stream[0] || !(encoded = encode_streamname( FALSE, cab->stream + 1 )))
+    if (cab->storage == package_disk.package->db->storage)
     {
-        WARN("failed to encode stream name\n");
-        return -1;
+        UINT r = msi_get_stream( package_disk.package->db, cab->stream + 1, &stream );
+        if (r != ERROR_SUCCESS)
+        {
+            WARN("failed to get stream %u\n", r);
+            return -1;
+        }
     }
-    hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
-    if (FAILED(hr))
+    else /* patch storage */
     {
-        WARN("failed to open stream 0x%08x\n", hr);
+        HRESULT hr;
+        WCHAR *encoded;
+
+        if (!(encoded = encode_streamname( FALSE, cab->stream + 1 )))
+        {
+            WARN("failed to encode stream name\n");
+            return -1;
+        }
+        hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
         msi_free( encoded );
-        return -1;
+        if (FAILED(hr))
+        {
+            WARN("failed to open stream 0x%08x\n", hr);
+            return -1;
+        }
     }
-    msi_free( encoded );
     return (INT_PTR)stream;
 }
 
