@@ -522,8 +522,6 @@ static void test_enum_value(void)
     static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
     static const WCHAR testW[] = {'T','e','s','t',0};
     static const WCHAR xxxW[] = {'x','x','x','x','x','x','x','x',0};
-    WCHAR longW[128];
-    int i;
 
     /* create the working key for new 'Test' value */
     res = RegCreateKeyA( hkey_main, "TestKey", &test_key );
@@ -711,17 +709,6 @@ static void test_enum_value(void)
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
-
-    /* tests the overflow case for the fixed "char buffer[]" in RegEnumValueW */
-    for (i = 0; i < sizeof(longW)/sizeof(WCHAR); i++) longW[i] = 'x';
-    longW[i - 1] = 0;
-    res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)longW, sizeof(longW) );
-    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
-    data_count = 20;
-    type = 1234;
-    res = RegEnumValueW( test_key, 0, NULL, NULL, NULL, &type, NULL, &data_count);
-    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
-    ok( data_count == sizeof(longW), "data_count set to %d\n", data_count );
 
 cleanup:
     RegDeleteKeyA(test_key, "");
