@@ -628,6 +628,15 @@ int CDECL __crtGetLocaleInfoW( LCID lcid, LCTYPE type, MSVCRT_wchar_t *buffer, i
 }
 
 /*********************************************************************
+ *		__crtGetLocaleInfoEx (MSVC110.@)
+ */
+int CDECL __crtGetLocaleInfoEx( const WCHAR *locale, LCTYPE type, MSVCRT_wchar_t *buffer, int len )
+{
+    TRACE("(%s, %x, %p, %d)\n", debugstr_w(locale), type, buffer, len);
+    return GetLocaleInfoEx(locale, type, buffer, len);
+}
+
+/*********************************************************************
  *              btowc(MSVCRT.@)
  */
 MSVCRT_wint_t CDECL MSVCRT_btowc(int c)

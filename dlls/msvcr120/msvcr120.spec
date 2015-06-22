@@ -902,7 +902,7 @@
 @ stub -arch=i386,win64 __crtFlsSetValue
 @ stub -arch=i386,win64 __crtGetDateFormatEx
 @ stub __crtGetFileInformationByHandleEx
-@ stub -arch=i386,win64 __crtGetLocaleInfoEx
+@ cdecl -arch=i386,win64 __crtGetLocaleInfoEx(wstr long ptr long)
 @ cdecl __crtGetShowWindowMode() MSVCR110__crtGetShowWindowMode
 @ stub __crtGetTickCount64
 @ stub -arch=i386,win64 __crtGetTimeFormatEx
