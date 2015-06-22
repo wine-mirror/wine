@@ -1586,6 +1586,8 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
 
         for (;;)
         {
+            heap_free( glob );
+            heap_free( path );
             path = pop_dir( dirstack, &len );
             if (!(glob = build_glob( root[0], path, len )))
             {
@@ -1635,8 +1637,6 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                 FindClose( handle );
             }
             if (!peek_dir( dirstack )) break;
-            heap_free( glob );
-            heap_free( path );
         }
     }
 
@@ -1678,6 +1678,8 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
         for (;;)
         {
+            heap_free( glob );
+            heap_free( path );
             path = pop_dir( dirstack, &len );
             if (!(glob = build_glob( root[0], path, len )))
             {
@@ -1728,8 +1730,6 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
                 FindClose( handle );
             }
             if (!peek_dir( dirstack )) break;
-            heap_free( glob );
-            heap_free( path );
         }
     }
 
