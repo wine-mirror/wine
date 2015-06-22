@@ -351,6 +351,8 @@ static const WCHAR prop_volumenameW[] =
     {'V','o','l','u','m','e','N','a','m','e',0};
 static const WCHAR prop_volumeserialnumberW[] =
     {'V','o','l','u','m','e','S','e','r','i','a','l','N','u','m','b','e','r',0};
+static const WCHAR prop_workingsetsizeW[] =
+    {'W','o','r','k','i','n','g','S','e','t','S','i','z','e',0};
 
 /* column definitions must be kept in sync with record structures below */
 static const struct column col_baseboard[] =
@@ -521,16 +523,17 @@ static const struct column col_printer[] =
 };
 static const struct column col_process[] =
 {
-    { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_commandlineW, CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_descriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_handleW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_nameW,        CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_pprocessidW,  CIM_UINT32, VT_I4 },
-    { prop_processidW,   CIM_UINT32, VT_I4 },
-    { prop_threadcountW, CIM_UINT32, VT_I4 },
+    { prop_captionW,        CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_commandlineW,    CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_descriptionW,    CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_handleW,         CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_nameW,           CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_pprocessidW,     CIM_UINT32, VT_I4 },
+    { prop_processidW,      CIM_UINT32, VT_I4 },
+    { prop_threadcountW,    CIM_UINT32, VT_I4 },
+    { prop_workingsetsizeW, CIM_UINT64 },
     /* methods */
-    { method_getownerW,  CIM_FLAG_ARRAY|COL_FLAG_METHOD }
+    { method_getownerW,     CIM_FLAG_ARRAY|COL_FLAG_METHOD }
 };
 static const struct column col_processor[] =
 {
@@ -911,6 +914,7 @@ struct record_process
     UINT32       pprocess_id;
     UINT32       process_id;
     UINT32       thread_count;
+    UINT64       workingsetsize;
     /* methods */
     class_method *get_owner;
 };
@@ -2204,16 +2208,17 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         if (!resize_table( table, row + 1, sizeof(*rec) )) goto done;
 
         rec = (struct record_process *)(table->data + offset);
-        rec->caption      = heap_strdupW( entry.szExeFile );
-        rec->commandline  = get_cmdline( entry.th32ProcessID );
-        rec->description  = heap_strdupW( entry.szExeFile );
+        rec->caption        = heap_strdupW( entry.szExeFile );
+        rec->commandline    = get_cmdline( entry.th32ProcessID );
+        rec->description    = heap_strdupW( entry.szExeFile );
         sprintfW( handle, fmtW, entry.th32ProcessID );
-        rec->handle       = heap_strdupW( handle );
-        rec->name         = heap_strdupW( entry.szExeFile );
-        rec->process_id   = entry.th32ProcessID;
-        rec->pprocess_id  = entry.th32ParentProcessID;
-        rec->thread_count = entry.cntThreads;
-        rec->get_owner    = process_get_owner;
+        rec->handle         = heap_strdupW( handle );
+        rec->name           = heap_strdupW( entry.szExeFile );
+        rec->process_id     = entry.th32ProcessID;
+        rec->pprocess_id    = entry.th32ParentProcessID;
+        rec->thread_count   = entry.cntThreads;
+        rec->workingsetsize = 0;
+        rec->get_owner      = process_get_owner;
         if (!match_row( table, row, cond, &status ))
         {
             free_row_values( table, row );
