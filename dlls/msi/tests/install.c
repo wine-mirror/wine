@@ -2656,6 +2656,11 @@ static void test_MsiInstallProduct(void)
 
     /* published, reinstall */
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_FAILURE) /* win2k3 */
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -2932,6 +2937,12 @@ static void test_continuouscabs(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
     }
     else
     {
@@ -3014,6 +3025,7 @@ static void test_continuouscabs(void)
         ok(delete_pf("msitest", FALSE), "Directory not created\n");
     }
 
+error:
     delete_cab_files();
     DeleteFileA(msifile);
 }
@@ -3131,6 +3143,11 @@ static void test_mixedmedia(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
@@ -3242,6 +3259,11 @@ static void test_readonlyfile(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(file_matches(path), "Expected file to be overwritten\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
@@ -3294,6 +3316,11 @@ static void test_readonlyfile_cab(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     memset( buf, 0, sizeof(buf) );
@@ -3337,6 +3364,11 @@ static void test_setdirproperty(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_cf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_cf("msitest", FALSE), "Directory not created\n");
@@ -3376,6 +3408,11 @@ static void test_cabisextracted(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3614,6 +3651,11 @@ static void test_transformprop(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "Directory created\n");
@@ -3661,6 +3703,12 @@ static void test_currentworkingdir(void)
 
     sprintf(path, "..\\%s", msifile);
     r = MsiInstallProductA(path, NULL);
+    if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
+
     todo_wine
     {
         ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
@@ -3673,6 +3721,11 @@ static void test_currentworkingdir(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3745,6 +3798,11 @@ static void test_admin(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3825,6 +3883,11 @@ static void test_adminprops(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "Directory created\n");
@@ -3881,6 +3944,11 @@ static void test_missingcab(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3990,6 +4058,11 @@ static void test_customaction51(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "Directory created\n");
@@ -4032,6 +4105,11 @@ static void test_installstate(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4512,6 +4590,11 @@ static void test_missingcomponent(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(pf_exists("msitest\\helium"), "File not installed\n");
@@ -4558,6 +4641,11 @@ static void test_sourcedirprop(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4624,6 +4712,11 @@ static void test_adminimage(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -4676,6 +4769,11 @@ static void test_propcase(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4777,6 +4875,11 @@ static void test_shortcut(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -4833,6 +4936,11 @@ static void test_preselected(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4893,6 +5001,11 @@ static void test_installed_prop(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiInstallProductA(msifile, "FULL=1");
@@ -4942,6 +5055,11 @@ static void test_allusers_prop(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5147,6 +5265,11 @@ static void test_file_in_use(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS_REBOOT_REQUIRED, "Expected ERROR_SUCCESS_REBOOT_REQUIRED got %u\n", r);
     ok(!file_matches_data(path, "msitest\\maximus"), "Expected file not to match\n");
     CloseHandle(file);
@@ -5209,6 +5332,11 @@ static void test_file_in_use_cab(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS_REBOOT_REQUIRED, "Expected ERROR_SUCCESS_REBOOT_REQUIRED got %u\n", r);
     ok(!file_matches_data(path, "maximus"), "Expected file not to match\n");
     CloseHandle(file);
@@ -5261,6 +5389,11 @@ static void test_feature_override(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5418,6 +5551,11 @@ static void test_package_validation(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -5648,6 +5786,11 @@ static void test_mixed_package(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
+    else if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
@@ -5790,11 +5933,17 @@ static void test_volume_props(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("broken result\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "got %u\n", r);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "got %u\n", r);
 
+error:
     DeleteFileA("msitest\\volumeprop.txt");
     RemoveDirectoryA("msitest");
     DeleteFileA(msifile);
