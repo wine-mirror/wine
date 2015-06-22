@@ -271,6 +271,8 @@ static const WCHAR prop_pnpdeviceidW[] =
     {'P','N','P','D','e','v','i','c','e','I','D',0};
 static const WCHAR prop_pprocessidW[] =
     {'P','a','r','e','n','t','P','r','o','c','e','s','s','I','D',0};
+static const WCHAR prop_primaryW[] =
+    {'P','r','i','m','a','r','y',0};
 static const WCHAR prop_processidW[] =
     {'P','r','o','c','e','s','s','I','D',0};
 static const WCHAR prop_processoridW[] =
@@ -480,6 +482,7 @@ static const struct column col_os[] =
     { prop_oslanguageW,             CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
     { prop_ostypeW,                 CIM_UINT16, VT_I4 },
+    { prop_primaryW,                CIM_BOOLEAN },
     { prop_serialnumberW,           CIM_STRING },
     { prop_servicepackmajorW,       CIM_UINT16, VT_I4 },
     { prop_servicepackminorW,       CIM_UINT16, VT_I4 },
@@ -861,6 +864,7 @@ struct record_operatingsystem
     UINT32       oslanguage;
     UINT32       osproductsuite;
     UINT16       ostype;
+    int          primary;
     const WCHAR *serialnumber;
     UINT16       servicepackmajor;
     UINT16       servicepackminor;
@@ -2491,6 +2495,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->oslanguage             = GetSystemDefaultLangID();
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
     rec->ostype                 = 18;      /* WINNT */
+    rec->primary                = -1;
     rec->serialnumber           = os_serialnumberW;
     rec->servicepackmajor       = 3;
     rec->servicepackminor       = 0;
