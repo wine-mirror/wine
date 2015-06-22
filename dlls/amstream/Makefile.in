@@ -1,5 +1,5 @@
 MODULE    = amstream.dll
-IMPORTS   = strmiids strmbase uuid ole32 advapi32
+IMPORTS   = strmiids strmbase uuid ole32 advapi32 ddraw
 
 C_SRCS = \
 	amstream.c \

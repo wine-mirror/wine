@@ -458,6 +458,8 @@ static void test_IDirectDrawStreamSample(void)
     IDirectDrawMediaStream *pddstream = NULL;
     IDirectDrawStreamSample *pddsample = NULL;
     IDirectDrawSurface *surface, *surface2;
+    IDirectDraw *ddraw, *ddraw2;
+    IDirectDraw7 *ddraw7;
     RECT rect;
 
     if (!(pams = create_ammultimediastream()))
@@ -481,6 +483,20 @@ static void test_IDirectDrawStreamSample(void)
     hr = IMediaStream_QueryInterface(pvidstream, &IID_IDirectDrawMediaStream, (LPVOID*)&pddstream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (FAILED(hr)) goto error;
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(pddstream, &ddraw);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(pddstream, &ddraw2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ddraw == ddraw2, "got %p, %p\n", ddraw, ddraw2);
+
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirectDraw7, (void**)&ddraw7);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDirectDraw7_Release(ddraw7);
+
+    IDirectDraw_Release(ddraw2);
+    IDirectDraw_Release(ddraw);
 
     hr = IDirectDrawMediaStream_CreateSample(pddstream, NULL, NULL, 0, &pddsample);
     ok(hr == S_OK, "got 0x%08x\n", hr);

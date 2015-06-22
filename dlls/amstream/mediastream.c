@@ -42,6 +42,7 @@ typedef struct {
     IMultiMediaStream* parent;
     MSPID purpose_id;
     STREAM_TYPE stream_type;
+    IDirectDraw7 *ddraw;
 } DirectDrawMediaStreamImpl;
 
 static inline DirectDrawMediaStreamImpl *impl_from_DirectDrawMediaStream_IAMMediaStream(IAMMediaStream *iface)
@@ -94,7 +95,11 @@ static ULONG WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_Release(IAMMediaStr
     TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
 
     if (!ref)
+    {
+        if (This->ddraw)
+            IDirectDraw7_Release(This->ddraw);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -373,11 +378,21 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_SetFormat
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMediaStream *iface,
-        IDirectDraw **ppDirectDraw)
+        IDirectDraw **ddraw)
 {
-    FIXME("(%p)->(%p) stub!\n", iface, ppDirectDraw);
+    DirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, ddraw);
+
+    *ddraw = NULL;
+    if (!This->ddraw)
+    {
+        HRESULT hr = DirectDrawCreateEx(NULL, (void**)&This->ddraw, &IID_IDirectDraw7, NULL);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return IDirectDraw7_QueryInterface(This->ddraw, &IID_IDirectDraw, (void**)ddraw);
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_SetDirectDraw(IDirectDrawMediaStream *iface,
