@@ -353,7 +353,7 @@ msgstr "&Zurücksetzen"
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
-#: winemine.rc:51 winhlp32.rc:56 wordpad.rc:94
+#: winemine.rc:51 winhlp32.rc:57 wordpad.rc:94
 msgid "&Help"
 msgstr "&Hilfe"
 
@@ -8172,7 +8172,7 @@ msgstr "Vorlagen"
 msgid "PrintHood"
 msgstr "Druckumgebung"
 
-#: shell32.rc:214 winhlp32.rc:48
+#: shell32.rc:214 winhlp32.rc:49
 msgid "History"
 msgstr "Verlauf"
 
@@ -14187,29 +14187,29 @@ msgstr "&Lesezeichen"
 msgid "&Define..."
 msgstr "&Definieren..."
 
-#: winhlp32.rc:49 winhlp32.rc:70
+#: winhlp32.rc:48
+msgid "Always on &top"
+msgstr "Immer im &Vordergrund"
+
+#: winhlp32.rc:50 winhlp32.rc:70
 msgid "Fonts"
 msgstr "Schriftarten"
 
-#: winhlp32.rc:51 winhlp32.rc:72
+#: winhlp32.rc:52 winhlp32.rc:72
 msgid "Small"
 msgstr "Klein"
 
-#: winhlp32.rc:52 winhlp32.rc:73
+#: winhlp32.rc:53 winhlp32.rc:73
 msgid "Normal"
 msgstr "Mittel"
 
-#: winhlp32.rc:53 winhlp32.rc:74
+#: winhlp32.rc:54 winhlp32.rc:74
 msgid "Large"
 msgstr "Groß"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:58
 msgid "&Help on help\tF1"
 msgstr "&Hilfe benutzen\tF1"
-
-#: winhlp32.rc:58
-msgid "Always on &top"
-msgstr "Immer im &Vordergrund"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"

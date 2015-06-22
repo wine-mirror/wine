@@ -352,7 +352,7 @@ msgstr "재설정(&E)"
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
-#: winemine.rc:51 winhlp32.rc:56 wordpad.rc:94
+#: winemine.rc:51 winhlp32.rc:57 wordpad.rc:94
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -8211,7 +8211,7 @@ msgstr "Templates"
 msgid "PrintHood"
 msgstr "네트워크 환경"
 
-#: shell32.rc:214 winhlp32.rc:48
+#: shell32.rc:214 winhlp32.rc:49
 msgid "History"
 msgstr "기록"
 
@@ -14142,29 +14142,29 @@ msgstr "책갈피(&B)"
 msgid "&Define..."
 msgstr "정의(&D)..."
 
-#: winhlp32.rc:49 winhlp32.rc:70
+#: winhlp32.rc:48
+msgid "Always on &top"
+msgstr "항상 위(&T)"
+
+#: winhlp32.rc:50 winhlp32.rc:70
 msgid "Fonts"
 msgstr "글꼴"
 
-#: winhlp32.rc:51 winhlp32.rc:72
+#: winhlp32.rc:52 winhlp32.rc:72
 msgid "Small"
 msgstr "작게"
 
-#: winhlp32.rc:52 winhlp32.rc:73
+#: winhlp32.rc:53 winhlp32.rc:73
 msgid "Normal"
 msgstr "보통"
 
-#: winhlp32.rc:53 winhlp32.rc:74
+#: winhlp32.rc:54 winhlp32.rc:74
 msgid "Large"
 msgstr "크게"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:58
 msgid "&Help on help\tF1"
 msgstr "도움말 사용법(&H)\tF1"
-
-#: winhlp32.rc:58
-msgid "Always on &top"
-msgstr "항상 위(&T)"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"

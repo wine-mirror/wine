@@ -354,7 +354,7 @@ msgstr "リセット(R&)"
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
-#: winemine.rc:51 winhlp32.rc:56 wordpad.rc:94
+#: winemine.rc:51 winhlp32.rc:57 wordpad.rc:94
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -8153,7 +8153,7 @@ msgstr "Templates"
 msgid "PrintHood"
 msgstr "PrintHood"
 
-#: shell32.rc:214 winhlp32.rc:48
+#: shell32.rc:214 winhlp32.rc:49
 msgid "History"
 msgstr "History"
 
@@ -14097,29 +14097,29 @@ msgstr "しおり(&B)"
 msgid "&Define..."
 msgstr "定義(&D)..."
 
-#: winhlp32.rc:49 winhlp32.rc:70
+#: winhlp32.rc:48
+msgid "Always on &top"
+msgstr "常に手前に表示(&T)"
+
+#: winhlp32.rc:50 winhlp32.rc:70
 msgid "Fonts"
 msgstr "フォント"
 
-#: winhlp32.rc:51 winhlp32.rc:72
+#: winhlp32.rc:52 winhlp32.rc:72
 msgid "Small"
 msgstr "小"
 
-#: winhlp32.rc:52 winhlp32.rc:73
+#: winhlp32.rc:53 winhlp32.rc:73
 msgid "Normal"
 msgstr "標準"
 
-#: winhlp32.rc:53 winhlp32.rc:74
+#: winhlp32.rc:54 winhlp32.rc:74
 msgid "Large"
 msgstr "大"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:58
 msgid "&Help on help\tF1"
 msgstr "ヘルプの使い方(&H)\tF1"
-
-#: winhlp32.rc:58
-msgid "Always on &top"
-msgstr "常に手前に表示(&T)"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"
