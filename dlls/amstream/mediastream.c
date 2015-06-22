@@ -906,6 +906,7 @@ static ULONG WINAPI IDirectDrawStreamSampleImpl_Release(IDirectDrawStreamSample 
     {
         if (This->surface)
             IDirectDrawSurface_Release(This->surface);
+        IMediaStream_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1011,6 +1012,8 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = (IMediaStream*)parent;
+    IMediaStream_AddRef(object->parent);
+
     if (surface)
     {
         object->surface = surface;
