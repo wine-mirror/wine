@@ -181,6 +181,7 @@ struct layout_effective_run {
     FLOAT origin_x;         /* baseline X position */
     FLOAT origin_y;         /* baseline Y position */
     UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
+    UINT32 line;
 };
 
 struct layout_effective_inline {
@@ -191,6 +192,7 @@ struct layout_effective_inline {
     FLOAT origin_y;
     BOOL  is_sideways;
     BOOL  is_rtl;
+    UINT32 line;
 };
 
 struct layout_strikethrough {
@@ -906,7 +908,7 @@ static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *lay
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
-    UINT32 cluster_count, FLOAT origin_x, BOOL strikethrough)
+    UINT32 cluster_count, UINT32 line, FLOAT origin_x, BOOL strikethrough)
 {
     UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
@@ -926,6 +928,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
            different ranges which differ in reading direction). */
         inlineobject->is_sideways = FALSE;
         inlineobject->is_rtl = FALSE;
+        inlineobject->line = line;
 
         /* effect assigned from start position and on is used for inline objects */
         inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position);
@@ -954,7 +957,8 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->start = start = layout->clusters[first_cluster].position;
     run->length = length;
     run->origin_x = origin_x;
-    run->origin_y = 0.0; /* FIXME: set after line is built */
+    run->origin_y = 0.0; /* set after line is built */
+    run->line = line;
 
     if (r->u.regular.run.glyphCount) {
         /* trim from the left */
@@ -1039,11 +1043,41 @@ static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *l
     return ((struct layout_range_bool*)h)->value;
 }
 
+static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_textlayout *layout,
+    const struct layout_effective_run *cur)
+{
+    struct list *e;
+
+    if (!cur)
+        e = list_head(&layout->eruns);
+    else
+        e = list_next(&layout->eruns, &cur->entry);
+    if (!e)
+        return NULL;
+    return LIST_ENTRY(e, struct layout_effective_run, entry);
+}
+
+static inline struct layout_effective_inline *layout_get_next_inline_run(struct dwrite_textlayout *layout,
+    const struct layout_effective_inline *cur)
+{
+    struct list *e;
+
+    if (!cur)
+        e = list_head(&layout->inlineobjects);
+    else
+        e = list_next(&layout->inlineobjects, &cur->entry);
+    if (!e)
+        return NULL;
+    return LIST_ENTRY(e, struct layout_effective_inline, entry);
+}
+
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
-    DWRITE_LINE_METRICS metrics;
+    struct layout_effective_inline *inrun;
+    struct layout_effective_run *erun;
     const struct layout_run *run;
-    FLOAT width, origin_x;
+    DWRITE_LINE_METRICS metrics;
+    FLOAT width, origin_x, origin_y;
     UINT32 i, start, line, textpos;
     HRESULT hr;
     BOOL s[2];
@@ -1070,7 +1104,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         /* switched to next nominal run, at this point all previous pending clusters are already
            checked for layout line overflow, so new effective run will fit in current line */
         if (run != layout->clusters[i].run || s[0] != s[1]) {
-            hr = layout_add_effective_run(layout, run, start, i - start, origin_x, s[0]);
+            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, s[0]);
             if (FAILED(hr))
                 return hr;
             origin_x += get_cluster_range_width(layout, start, i);
@@ -1096,7 +1130,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                 last_cluster = i ? i - 1 : i;
 
             if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, i - start + 1, origin_x, s[0]);
+                hr = layout_add_effective_run(layout, run, start, i - start + 1, line, origin_x, s[0]);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */
@@ -1165,6 +1199,33 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     }
 
     layout->line_count = line;
+
+    /* Now all line info is here, update effective runs positions in flow direction */
+    erun = layout_get_next_erun(layout, NULL);
+    inrun = layout_get_next_inline_run(layout, NULL);
+
+    origin_y = 0.0;
+    for (line = 0; line < layout->line_count; line++) {
+
+        origin_y += layout->lines[line].baseline;
+
+        /* For all runs on this line */
+        while (erun && erun->line == line) {
+            erun->origin_y = origin_y;
+            erun = layout_get_next_erun(layout, erun);
+            if (!erun)
+                break;
+        }
+
+        /* Same for inline runs */
+        while (inrun && inrun->line == line) {
+            inrun->origin_y = origin_y;
+            inrun = layout_get_next_inline_run(layout, inrun);
+            if (!inrun)
+                break;
+        }
+    }
+
     layout->recompute &= ~RECOMPUTE_EFFECTIVE_RUNS;
     return hr;
 }
