@@ -122,9 +122,7 @@ static HRESULT WINAPI BackgroundCopyFile_GetProgress(
     TRACE("(%p)->(%p)\n", file, pVal);
 
     EnterCriticalSection(&file->owner->cs);
-    pVal->BytesTotal = file->fileProgress.BytesTotal;
-    pVal->BytesTransferred = file->fileProgress.BytesTransferred;
-    pVal->Completed = file->fileProgress.Completed;
+    *pVal = file->fileProgress;
     LeaveCriticalSection(&file->owner->cs);
 
     return S_OK;

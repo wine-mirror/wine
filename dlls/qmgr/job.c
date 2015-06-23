@@ -506,10 +506,7 @@ static HRESULT WINAPI BackgroundCopyJob_GetProgress(
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->cs);
-    pVal->BytesTotal = This->jobProgress.BytesTotal;
-    pVal->BytesTransferred = This->jobProgress.BytesTransferred;
-    pVal->FilesTotal = This->jobProgress.FilesTotal;
-    pVal->FilesTransferred = This->jobProgress.FilesTransferred;
+    *pVal = This->jobProgress;
     LeaveCriticalSection(&This->cs);
 
     return S_OK;
