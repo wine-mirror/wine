@@ -9665,38 +9665,79 @@ extern const vtable_ptr MSVCP_time_get_char_vtable;
 DEFINE_THISCALL_WRAPPER(time_get_char__Init, 8)
 void __thiscall time_get_char__Init(time_get_char *this, const _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
-}
+    const char *months;
+    const char *days;
+    int len;
 
-/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAE@PBDI@Z */
-/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAA@PEBD_K@Z */
-DEFINE_THISCALL_WRAPPER(time_get_char_ctor_name, 12)
-time_get_char* __thiscall time_get_char_ctor_name(time_get_char *this, const char *name, unsigned int refs)
-{
-    FIXME("(%p %p %d) stub\n", this, name, refs);
-    this->facet.vtable = &MSVCP_time_get_char_vtable;
-    return NULL;
+    TRACE("(%p %p)\n", this, locinfo);
+
+    days = _Locinfo__Getdays(locinfo);
+    len = strlen(days)+1;
+    this->days = MSVCRT_operator_new(len);
+    if(!this->days)
+    {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    memcpy((char*)this->days, days, len);
+
+    months = _Locinfo__Getmonths(locinfo);
+    len = strlen(months)+1;
+    this->months = MSVCRT_operator_new(len);
+    if(!this->months)
+    {
+        MSVCRT_operator_delete((char*)this->days);
+
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    memcpy((char*)this->months, months, len);
+
+    this->dateorder = _Locinfo__Getdateorder(locinfo);
+    _Locinfo__Getcvt(locinfo, &this->cvt);
 }
 
 /* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_ctor_locinfo, 12)
 time_get_char* __thiscall time_get_char_ctor_locinfo(time_get_char *this,
-        const _Locinfo *locinfo, unsigned int refs)
+        const _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %d) stub\n", this, locinfo, refs);
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_time_get_char_vtable;
-    return NULL;
+    time_get_char__Init(this, locinfo);
+    return this;
+}
+
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IAE@PBDI@Z */
+/* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(time_get_char_ctor_name, 12)
+time_get_char* __thiscall time_get_char_ctor_name(time_get_char *this, const char *name, MSVCP_size_t refs)
+{
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu)\n", this, name, refs);
+
+    _Locinfo_ctor_cstr(&locinfo, name);
+    time_get_char_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@I@Z */
 /* ??0?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEAA@_K@Z */
 DEFINE_THISCALL_WRAPPER(time_get_char_ctor_refs, 8)
-time_get_char* __thiscall time_get_char_ctor_refs(time_get_char *this, unsigned int refs)
+time_get_char* __thiscall time_get_char_ctor_refs(time_get_char *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %d) stub\n", this, refs);
-    this->facet.vtable = &MSVCP_time_get_char_vtable;
-    return NULL;
+    _Locinfo locinfo;
+
+    TRACE("(%p %lu)\n", this, refs);
+
+    _Locinfo_ctor(&locinfo);
+    time_get_char_ctor_locinfo(this, &locinfo, refs);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??_F?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAEXXZ */
@@ -9712,7 +9753,10 @@ time_get_char* __thiscall time_get_char_ctor(time_get_char *this)
 DEFINE_THISCALL_WRAPPER(time_get_char__Tidy, 4)
 void __thiscall time_get_char__Tidy(time_get_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    MSVCRT_operator_delete((char*)this->days);
+    MSVCRT_operator_delete((char*)this->months);
 }
 
 /* ??1?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MAE@XZ */
@@ -9720,7 +9764,9 @@ void __thiscall time_get_char__Tidy(time_get_char *this)
 DEFINE_THISCALL_WRAPPER(time_get_char_dtor, 4) /* virtual */
 void __thiscall time_get_char_dtor(time_get_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    time_get_char__Tidy(this);
 }
 
 DEFINE_THISCALL_WRAPPER(time_get_char_vector_dtor, 8)
