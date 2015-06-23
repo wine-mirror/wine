@@ -93,9 +93,23 @@ static void __cdecl output_write(UINT id, ...)
 
     ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL);
 
+    /* WriteConsole fails if its output is redirected to a file.
+     * If this occurs, we should use an OEM codepage and call WriteFile.
+     */
     if (!ret)
-        WINE_WARN("regsvr32: WriteConsoleW() failed.\n");
+    {
+        DWORD lenA;
+        char *strA;
 
+        lenA = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, NULL, 0, NULL, NULL);
+        strA = HeapAlloc(GetProcessHeap(), 0, lenA);
+        if (strA)
+        {
+            WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA, NULL, NULL);
+            WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &nOut, FALSE);
+            HeapFree(GetProcessHeap(), 0, strA);
+        }
+    }
     LocalFree(str);
 }
 
