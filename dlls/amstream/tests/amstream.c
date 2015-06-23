@@ -452,11 +452,13 @@ static void test_media_streams(void)
 
 static void test_IDirectDrawStreamSample(void)
 {
+    DDSURFACEDESC desc = { sizeof(desc) };
     IAMMultiMediaStream *pams;
     HRESULT hr;
     IMediaStream *pvidstream = NULL;
     IDirectDrawMediaStream *pddstream = NULL;
     IDirectDrawStreamSample *pddsample = NULL;
+    IDirectDrawSurface7 *surface7;
     IDirectDrawSurface *surface, *surface2;
     IDirectDraw *ddraw, *ddraw2;
     IDirectDraw7 *ddraw7;
@@ -504,9 +506,18 @@ static void test_IDirectDrawStreamSample(void)
     surface = NULL;
     hr = IDirectDrawStreamSample_GetSurface(pddsample, &surface, &rect);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(surface != NULL, "got %p\n", surface);
-if (surface)
+
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void**)&surface7);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDirectDrawSurface7_Release(surface7);
+
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(desc.dwWidth == 100, "width %d\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "height %d\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "format flags %08x\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount, "dwRGBBitCount %d\n", desc.ddpfPixelFormat.dwRGBBitCount);
     IDirectDrawSurface_Release(surface);
     IDirectDrawStreamSample_Release(pddsample);
 

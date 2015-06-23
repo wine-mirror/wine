@@ -364,6 +364,7 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_GetDirect
         HRESULT hr = DirectDrawCreateEx(NULL, (void**)&This->ddraw, &IID_IDirectDraw7, NULL);
         if (FAILED(hr))
             return hr;
+        IDirectDraw7_SetCooperativeLevel(This->ddraw, NULL, DDSCL_NORMAL);
     }
 
     return IDirectDraw7_QueryInterface(This->ddraw, &IID_IDirectDraw, (void**)ddraw);
@@ -979,7 +980,39 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
         IDirectDrawSurface_AddRef(surface);
     }
     else
-        FIXME("create ddraw surface\n");
+    {
+        DDSURFACEDESC desc;
+        IDirectDraw *ddraw;
+
+        hr = IDirectDrawMediaStream_GetDirectDraw(parent, &ddraw);
+        if (FAILED(hr))
+        {
+            IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
+            return hr;
+        }
+
+        desc.dwSize = sizeof(desc);
+        desc.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
+        desc.dwHeight = 100;
+        desc.dwWidth = 100;
+        desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+        desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        desc.ddpfPixelFormat.dwRBitMask = 0xff0000;
+        desc.ddpfPixelFormat.dwGBitMask = 0x00ff00;
+        desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
+        desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+        desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY|DDSCAPS_OFFSCREENPLAIN;
+
+        hr = IDirectDraw_CreateSurface(ddraw, &desc, &object->surface, NULL);
+        IDirectDraw_Release(ddraw);
+        if (FAILED(hr))
+        {
+            ERR("failed to create surface, 0x%08x\n", hr);
+            IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
+            return hr;
+        }
+    }
 
     if (rect)
         object->rect = *rect;
@@ -995,7 +1028,7 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
         }
     }
 
-    *ddraw_stream_sample = (IDirectDrawStreamSample*)&object->IDirectDrawStreamSample_iface;
+    *ddraw_stream_sample = &object->IDirectDrawStreamSample_iface;
 
     return S_OK;
 }
