@@ -1,0 +1,4 @@
+MODULE    = msscript.ocx
+
+C_SRCS = \
+	msscript.c
