@@ -682,6 +682,10 @@ _Collvec* __thiscall _Locinfo__Getcoll(const _Locinfo *this, _Collvec *ret)
 _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 {
     short *table;
+#if _MSVCP_VER >= 110
+    wchar_t *name;
+    MSVCP_size_t size;
+#endif
 
     TRACE("\n");
 
@@ -689,7 +693,14 @@ _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 #if _MSVCP_VER < 110
     ret->handle = ___lc_handle_func()[LC_COLLATE];
 #else
-    ret->name = ___lc_locale_name_func()[LC_COLLATE];
+    if((name = ___lc_locale_name_func()[LC_COLLATE])) {
+        size = wcslen(name)+1;
+        ret->name = malloc(size*sizeof(*name));
+        if(!ret->name) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        memcpy(ret->name, name, size*sizeof(*name));
+    } else {
+        ret->name = NULL;
+    }
 #endif
     ret->delfl = TRUE;
     table = malloc(sizeof(short[256]));
