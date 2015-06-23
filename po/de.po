@@ -12011,8 +12011,8 @@ msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' konnte nicht geladen werden\n"
 
 #: regsvr32.rc:43
-msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr "regsvr32: %1 nicht in DLL '%2' implementiert\n"
+msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
+msgstr "regsvr32: '%1!S!' nicht in DLL '%2' implementiert\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"

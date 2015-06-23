@@ -12031,7 +12031,7 @@ msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: Не вдалося завантажити DLL '%1'\n"
 
 #: regsvr32.rc:43
-msgid "regsvr32: %1 not implemented in DLL '%2'\n"
+msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
 msgstr "regsvr32: %1 не реалізовано у DLL '%2'\n"
 
 #: regsvr32.rc:44

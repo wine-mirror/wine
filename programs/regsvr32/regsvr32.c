@@ -51,11 +51,10 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <string.h>
-#include <ctype.h>
 #include <windows.h>
 #include <ole2.h>
 #include "regsvr32.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regsvr32);
@@ -68,14 +67,14 @@ static BOOL Silent = FALSE;
 
 static void __cdecl output_write(UINT id, ...)
 {
-    char fmt[1024];
+    WCHAR fmt[1024];
     __ms_va_list va_args;
-    char *str;
+    WCHAR *str;
     DWORD len, nOut, ret;
 
     if (Silent) return;
 
-    if (!LoadStringA(GetModuleHandleA(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
         return;
@@ -83,19 +82,19 @@ static void __cdecl output_write(UINT id, ...)
 
     __ms_va_start(va_args, id);
     SetLastError(NO_ERROR);
-    len = FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         fmt, 0, 0, (LPSTR)&str, 0, &va_args);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (LPWSTR)&str, 0, &va_args);
     __ms_va_end(va_args);
     if (len == 0 && GetLastError() != NO_ERROR)
     {
-        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_a(fmt));
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
         return;
     }
 
-    ret = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL);
+    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL);
 
     if (!ret)
-        WINE_WARN("regsvr32: WriteConsoleA() failed.\n");
+        WINE_WARN("regsvr32: WriteConsoleW() failed.\n");
 
     LocalFree(str);
 }
@@ -108,11 +107,11 @@ static void __cdecl output_write(UINT id, ...)
  * procName - name of the procedure to load from dll
  * pDllHanlde - output variable receives handle of the loaded dll.
  */
-static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHandle)
+static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHandle)
 {
     VOID* (*proc)(void);
 
-    *DllHandle = LoadLibraryExA(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    *DllHandle = LoadLibraryExW(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
         output_write(STRING_DLL_LOAD_FAILED, strDll);
@@ -128,7 +127,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     return proc;
 }
 
-static int RegisterDll(const char* strDll)
+static int RegisterDll(const WCHAR* strDll)
 {
     HRESULT hr;
     DLLREGISTER pfRegister;
@@ -151,7 +150,7 @@ static int RegisterDll(const char* strDll)
     return 0;
 }
 
-static int UnregisterDll(char* strDll)
+static int UnregisterDll(const WCHAR* strDll)
 {
     HRESULT hr;
     DLLUNREGISTER pfUnregister;
@@ -174,7 +173,7 @@ static int UnregisterDll(char* strDll)
     return 0;
 }
 
-static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
+static int InstallDll(BOOL install, const WCHAR *strDll, const WCHAR *command_line)
 {
     HRESULT hr;
     DLLINSTALL pfInstall;
@@ -203,13 +202,11 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     return 0;
 }
 
-static WCHAR *parse_command_line(char *command_line)
+static WCHAR *parse_command_line(WCHAR *command_line)
 {
-    WCHAR *ret = NULL;
-
     if (command_line[0] == ':' && command_line[1])
     {
-        int len = strlen(command_line);
+        int len = strlenW(command_line);
 
         command_line++;
         len--;
@@ -225,16 +222,12 @@ static WCHAR *parse_command_line(char *command_line)
             }
         }
         if (command_line[0])
-        {
-            len = MultiByteToWideChar(CP_ACP, 0, command_line, -1, NULL, 0);
-            ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            if (ret) MultiByteToWideChar(CP_ACP, 0, command_line, -1, ret, len);
-        }
+            return command_line;
     }
-    return ret;
+    return NULL;
 }
 
-int main(int argc, char* argv[])
+int wmain(int argc, WCHAR* argv[])
 {
     int             i;
     BOOL            CallRegister = TRUE;
@@ -255,7 +248,7 @@ int main(int argc, char* argv[])
     {
         if ((argv[i][0] == '/' || argv[i][0] == '-') && (!argv[i][2] || argv[i][2] == ':'))
         {
-            switch (tolower(argv[i][1]))
+            switch (tolowerW(argv[i][1]))
             {
             case 'u':
                 Unregister = TRUE;
@@ -265,7 +258,7 @@ int main(int argc, char* argv[])
                 break;
             case 'i':
                 CallInstall = TRUE;
-                wsCommandLine = parse_command_line(argv[i] + strlen("/i"));
+                wsCommandLine = parse_command_line(argv[i] + 2); /* argv[i] + strlen("/i") */
                 if (!wsCommandLine)
                     wsCommandLine = EmptyLine;
                 break;
@@ -283,7 +276,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            char *DllName = argv[i];
+            WCHAR *DllName = argv[i];
             int res = 0;
 
             DllFound = TRUE;

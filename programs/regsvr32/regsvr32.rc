@@ -39,7 +39,7 @@ Options:\n\
 \  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n\n"
     STRING_UNRECOGNIZED_SWITCH, "regsvr32: Invalid or unrecognized switch [%1]\n\n"
     STRING_DLL_LOAD_FAILED, "regsvr32: Failed to load DLL '%1'\n"
-    STRING_PROC_NOT_IMPLEMENTED, "regsvr32: %1 not implemented in DLL '%2'\n"
+    STRING_PROC_NOT_IMPLEMENTED, "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
     STRING_REGISTER_FAILED, "regsvr32: Failed to register DLL '%1'\n"
     STRING_REGISTER_SUCCESSFUL, "regsvr32: Successfully registered DLL '%1'\n"
     STRING_UNREGISTER_FAILED, "regsvr32: Failed to unregister DLL '%1'\n"

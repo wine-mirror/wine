@@ -12005,8 +12005,8 @@ msgid "regsvr32: Failed to load DLL '%1'\n"
 msgstr "regsvr32: Nieudane wczytywanie biblioteki DLL '%1'\n"
 
 #: regsvr32.rc:43
-msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr "regsvr32: %1 nie jest zaimplementowana w bibliotece DLL '%2'\n"
+msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
+msgstr "regsvr32: '%1!S!' nie jest zaimplementowana w bibliotece DLL '%2'\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
