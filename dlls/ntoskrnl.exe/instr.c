@@ -684,7 +684,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             BYTE *data = INSTR_GetOperandAddr( context, instr + 2, long_addr,
                                                rex, segprefix, &len );
             unsigned int data_size = (instr[1] == 0xb7) ? 2 : 1;
-            unsigned int offset = data - user_shared_data;
+            SIZE_T offset = data - user_shared_data;
 
             if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
             {
@@ -705,7 +705,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         BYTE *data = INSTR_GetOperandAddr( context, instr + 1, long_addr,
                                            rex, segprefix, &len );
         unsigned int data_size = (*instr == 0x8b) ? get_op_size( long_op, rex ) : 1;
-        unsigned int offset = data - user_shared_data;
+        SIZE_T offset = data - user_shared_data;
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
         {
@@ -725,7 +725,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     {
         BYTE *data = (BYTE *)(long_addr ? *(DWORD64 *)(instr + 1) : *(DWORD *)(instr + 1));
         unsigned int data_size = (*instr == 0xa1) ? get_op_size( long_op, rex ) : 1;
-        unsigned int offset = data - user_shared_data;
+        SIZE_T offset = data - user_shared_data;
         len = long_addr ? sizeof(DWORD64) : sizeof(DWORD);
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
