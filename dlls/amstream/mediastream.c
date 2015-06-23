@@ -247,48 +247,22 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_QueryInte
         REFIID riid, void **ret_iface)
 {
     DirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
-
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ret_iface);
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IMediaStream) ||
-        IsEqualGUID(riid, &IID_IDirectDrawMediaStream))
-    {
-        IDirectDrawMediaStream_AddRef(iface);
-        *ret_iface = iface;
-        return S_OK;
-    }
-    else if (IsEqualGUID(riid, &IID_IAMMediaStream))
-    {
-        IDirectDrawMediaStream_AddRef(iface);
-        *ret_iface = &This->IAMMediaStream_iface;
-        return S_OK;
-    }
-
-    ERR("(%p)->(%s,%p),not found\n", This, debugstr_guid(riid), ret_iface);
-    return E_NOINTERFACE;
+    return IAMMediaStream_QueryInterface(&This->IAMMediaStream_iface, riid, ret_iface);
 }
 
 static ULONG WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_AddRef(IDirectDrawMediaStream *iface)
 {
     DirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
-
     TRACE("(%p/%p)\n", iface, This);
-
-    return InterlockedIncrement(&This->ref);
+    return IAMMediaStream_AddRef(&This->IAMMediaStream_iface);
 }
 
 static ULONG WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_Release(IDirectDrawMediaStream *iface)
 {
     DirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
     TRACE("(%p/%p)\n", iface, This);
-
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
+    return IAMMediaStream_Release(&This->IAMMediaStream_iface);
 }
 
 /*** IMediaStream methods ***/
@@ -673,52 +647,22 @@ static HRESULT WINAPI AudioMediaStreamImpl_IAudioMediaStream_QueryInterface(IAud
         REFIID riid, void **ret_iface)
 {
     AudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
-
     TRACE("(%p/%p)->(%s,%p)\n", iface, This, debugstr_guid(riid), ret_iface);
-
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IMediaStream) ||
-        IsEqualGUID(riid, &IID_IAudioMediaStream))
-    {
-        IAudioMediaStream_AddRef(iface);
-        *ret_iface = iface;
-        return S_OK;
-    }
-    else if (IsEqualGUID(riid, &IID_IAMMediaStream))
-    {
-        IAudioMediaStream_AddRef(iface);
-        *ret_iface = &This->IAMMediaStream_iface;
-        return S_OK;
-    }
-
-
-    *ret_iface = NULL;
-
-    ERR("(%p/%p)->(%s,%p),not found\n", iface, This, debugstr_guid(riid), ret_iface);
-    return E_NOINTERFACE;
+    return IAMMediaStream_QueryInterface(&This->IAMMediaStream_iface, riid, ret_iface);
 }
 
 static ULONG WINAPI AudioMediaStreamImpl_IAudioMediaStream_AddRef(IAudioMediaStream *iface)
 {
     AudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p/%p): new ref = %u\n", iface, This, ref);
-
-    return ref;
+    TRACE("(%p/%p)\n", iface, This);
+    return IAMMediaStream_AddRef(&This->IAMMediaStream_iface);
 }
 
 static ULONG WINAPI AudioMediaStreamImpl_IAudioMediaStream_Release(IAudioMediaStream *iface)
 {
     AudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p/%p): new ref = %u\n", iface, This, ref);
-
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
+    TRACE("(%p/%p)\n", iface, This);
+    return IAMMediaStream_Release(&This->IAMMediaStream_iface);
 }
 
 /*** IMediaStream methods ***/
