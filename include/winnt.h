@@ -3620,7 +3620,30 @@ typedef struct _FPO_DATA {
   WORD  cbFrame  : 2;
 } FPO_DATA, *PFPO_DATA;
 
-typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY64 {
+  DWORD     Size;
+  DWORD     TimeDateStamp;
+  WORD      MajorVersion;
+  WORD      MinorVersion;
+  DWORD     GlobalFlagsClear;
+  DWORD     GlobalFlagsSet;
+  DWORD     CriticalSectionDefaultTimeout;
+  ULONGLONG DeCommitFreeBlockThreshold;
+  ULONGLONG DeCommitTotalFreeThreshold;
+  ULONGLONG LockPrefixTable;
+  ULONGLONG MaximumAllocationSize;
+  ULONGLONG VirtualMemoryThreshold;
+  ULONGLONG ProcessAffinityMask;
+  DWORD     ProcessHeapFlags;
+  WORD      CSDVersion;
+  WORD      Reserved1;
+  ULONGLONG EditList;
+  ULONGLONG SecurityCookie;
+  ULONGLONG SEHandlerTable;
+  ULONGLONG SEHandlerCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;
+
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32 {
   DWORD Size;
   DWORD TimeDateStamp;
   WORD  MajorVersion;
@@ -3641,7 +3664,15 @@ typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
   DWORD SecurityCookie;
   DWORD SEHandlerTable;
   DWORD SEHandlerCount;
-} IMAGE_LOAD_CONFIG_DIRECTORY, *PIMAGE_LOAD_CONFIG_DIRECTORY;
+} IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
+
+#ifdef _WIN64
+typedef IMAGE_LOAD_CONFIG_DIRECTORY64   IMAGE_LOAD_CONFIG_DIRECTORY;
+typedef PIMAGE_LOAD_CONFIG_DIRECTORY64  PIMAGE_LOAD_CONFIG_DIRECTORY;
+#else
+typedef IMAGE_LOAD_CONFIG_DIRECTORY32   IMAGE_LOAD_CONFIG_DIRECTORY;
+typedef PIMAGE_LOAD_CONFIG_DIRECTORY32  PIMAGE_LOAD_CONFIG_DIRECTORY;
+#endif
 
 typedef struct _IMAGE_FUNCTION_ENTRY {
   DWORD StartingAddress;
