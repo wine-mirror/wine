@@ -1194,7 +1194,6 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
 {
     HRESULT hr;
     BackgroundCopyJobImpl *This;
-    int n;
 
     TRACE("(%s,%d,%p)\n", debugstr_w(displayName), type, job);
 
@@ -1210,8 +1209,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->ref = 1;
     This->type = type;
 
-    n = (strlenW(displayName) + 1) *  sizeof *displayName;
-    This->displayName = HeapAlloc(GetProcessHeap(), 0, n);
+    This->displayName = strdupW(displayName);
     if (!This->displayName)
     {
         This->cs.DebugInfo->Spare[0] = 0;
@@ -1219,7 +1217,6 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
-    memcpy(This->displayName, displayName, n);
 
     hr = CoCreateGuid(&This->jobId);
     if (FAILED(hr))

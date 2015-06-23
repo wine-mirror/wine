@@ -166,7 +166,6 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       BackgroundCopyFileImpl **file)
 {
     BackgroundCopyFileImpl *This;
-    int n;
 
     TRACE("(%s, %s, %p)\n", debugstr_w(remoteName), debugstr_w(localName), file);
 
@@ -174,24 +173,20 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
     if (!This)
         return E_OUTOFMEMORY;
 
-    n = (lstrlenW(remoteName) + 1) * sizeof(WCHAR);
-    This->info.RemoteName = HeapAlloc(GetProcessHeap(), 0, n);
+    This->info.RemoteName = strdupW(remoteName);
     if (!This->info.RemoteName)
     {
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
-    memcpy(This->info.RemoteName, remoteName, n);
 
-    n = (lstrlenW(localName) + 1) * sizeof(WCHAR);
-    This->info.LocalName = HeapAlloc(GetProcessHeap(), 0, n);
+    This->info.LocalName = strdupW(localName);
     if (!This->info.LocalName)
     {
         HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
-    memcpy(This->info.LocalName, localName, n);
 
     This->IBackgroundCopyFile2_iface.lpVtbl = &BackgroundCopyFile2Vtbl;
     This->ref = 1;
