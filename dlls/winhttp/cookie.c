@@ -270,7 +270,8 @@ BOOL add_cookie_headers( request_t *request )
                     }
 
                     TRACE("%s\n", debugstr_w(header));
-                    add_request_headers( request, header, len, WINHTTP_ADDREQ_FLAG_ADD );
+                    add_request_headers( request, header, len,
+                                         WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
                     heap_free( header );
                 }
             }

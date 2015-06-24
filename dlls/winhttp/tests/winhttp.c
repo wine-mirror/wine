@@ -2014,6 +2014,11 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, headmsg, sizeof headmsg - 1, 0);
             continue;
         }
+        if (strstr(buffer, "GET /cookie3"))
+        {
+            if (strstr(buffer, "Cookie: name=value2; name=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
+            else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+        }
         if (strstr(buffer, "GET /cookie2"))
         {
             if (strstr(buffer, "Cookie: name=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
@@ -2621,6 +2626,9 @@ static void test_cookies( int port )
 {
     static const WCHAR cookieW[] = {'/','c','o','o','k','i','e',0};
     static const WCHAR cookie2W[] = {'/','c','o','o','k','i','e','2',0};
+    static const WCHAR cookie3W[] = {'/','c','o','o','k','i','e','3',0};
+    static const WCHAR cookieheaderW[] =
+        {'C','o','o','k','i','e',':',' ','n','a','m','e','=','v','a','l','u','e','2','\r','\n',0};
     HINTERNET ses, con, req;
     DWORD status, size;
     BOOL ret;
@@ -2683,6 +2691,23 @@ static void test_cookies( int port )
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
     ok( status == 200, "request failed unexpectedly %u\n", status );
+
+    WinHttpCloseHandle( req );
+
+    req = WinHttpOpenRequest( con, NULL, cookie3W, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "failed to open a request %u\n", GetLastError() );
+
+    ret = WinHttpSendRequest( req, cookieheaderW, ~0u, NULL, 0, 0, 0 );
+    ok( ret, "failed to send request %u\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "failed to receive response %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
+    ok( ret, "failed to query status code %u\n", GetLastError() );
+    ok( status == 200 || broken(status == 400), "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
