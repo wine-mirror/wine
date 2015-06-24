@@ -943,6 +943,14 @@ BOOL macho_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
 }
 
 /******************************************************************
+ *              macho_module_remove
+ */
+static void macho_module_remove(struct process* pcs, struct module_format* modfmt)
+{
+    HeapFree(GetProcessHeap(), 0, modfmt);
+}
+
+/******************************************************************
  *              macho_load_file
  *
  * Loads the information for Mach-O module stored in 'filename'.
@@ -1036,7 +1044,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
         macho_info->module->format_info[DFI_MACHO] = modfmt;
 
         modfmt->module       = macho_info->module;
-        modfmt->remove       = NULL;
+        modfmt->remove       = macho_module_remove;
         modfmt->loc_compute  = NULL;
         modfmt->u.macho_info = macho_module_info;
 
