@@ -129,7 +129,6 @@ struct macho_file_map
     /* The portion of the file which is this architecture.  mach_header was
      * read from arch_offset. */
     unsigned                    arch_offset;
-    unsigned                    arch_size;
 
     /* The range of address space covered by all segments. */
     size_t                      segs_start;
@@ -501,7 +500,6 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
             if (swap_ulong_be_to_host(fat_arch.cputype) == TARGET_CPU_TYPE)
             {
                 fmap->arch_offset = swap_ulong_be_to_host(fat_arch.offset);
-                fmap->arch_size = swap_ulong_be_to_host(fat_arch.size);
                 break;
             }
         }
@@ -511,7 +509,6 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
     else
     {
         fmap->arch_offset = 0;
-        fmap->arch_size = statbuf.st_size;
         TRACE("... not a fat header\n");
     }
 
