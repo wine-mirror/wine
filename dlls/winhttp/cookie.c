@@ -54,7 +54,7 @@ static cookie_t *find_cookie( domain_t *domain, const WCHAR *path, const WCHAR *
     LIST_FOR_EACH( item, &domain->cookies )
     {
         cookie = LIST_ENTRY( item, cookie_t, entry );
-        if (!strcmpW( cookie->path, path ) && !strcmpiW( cookie->name, name ))
+        if (!strcmpW( cookie->path, path ) && !strcmpW( cookie->name, name ))
         {
             TRACE("found %s=%s\n", debugstr_w(cookie->name), debugstr_w(cookie->value));
             return cookie;

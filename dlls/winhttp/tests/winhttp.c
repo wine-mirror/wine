@@ -1893,6 +1893,7 @@ static const char notokmsg[] =
 static const char cookiemsg[] =
 "HTTP/1.1 200 OK\r\n"
 "Set-Cookie: name = value \r\n"
+"Set-Cookie: NAME = value \r\n"
 "\r\n";
 
 static const char nocontentmsg[] =
@@ -2016,12 +2017,14 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /cookie3"))
         {
-            if (strstr(buffer, "Cookie: name=value2; name=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
+            if (strstr(buffer, "Cookie: name=value2; NAME=value; name=value\r\n") ||
+                strstr(buffer, "Cookie: name=value2; name=value; NAME=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         if (strstr(buffer, "GET /cookie2"))
         {
-            if (strstr(buffer, "Cookie: name=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
+            if (strstr(buffer, "Cookie: NAME=value; name=value\r\n") ||
+                strstr(buffer, "Cookie: name=value; NAME=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         else if (strstr(buffer, "GET /cookie"))
