@@ -129,6 +129,7 @@ static NTSTATUS (WINAPI *pNtSetSecurityObject)(HANDLE,SECURITY_INFORMATION,PSECU
 static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
+static BOOL     (WINAPI *pGetWindowsAccountDomainSid)(PSID,PSID,DWORD*);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -190,6 +191,7 @@ static void init(void)
     pConvertStringSidToSidA = (void *)GetProcAddress(hmod, "ConvertStringSidToSidA");
     pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
     pGetAce = (void *)GetProcAddress(hmod, "GetAce");
+    pGetWindowsAccountDomainSid = (void *)GetProcAddress(hmod, "GetWindowsAccountDomainSid");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -5922,6 +5924,85 @@ static void test_system_security_access(void)
     CloseHandle( token );
 }
 
+static void test_GetWindowsAccountDomainSid(void)
+{
+    char *user, buffer1[SECURITY_MAX_SID_SIZE], buffer2[SECURITY_MAX_SID_SIZE];
+    SID_IDENTIFIER_AUTHORITY domain_ident = { SECURITY_NT_AUTHORITY };
+    PSID domain_sid = (PSID *)&buffer1;
+    PSID domain_sid2 = (PSID *)&buffer2;
+    DWORD sid_size;
+    PSID user_sid;
+    HANDLE token;
+    BOOL bret = TRUE;
+    int i;
+
+    if (!pGetWindowsAccountDomainSid)
+    {
+        skip("GetWindowsAccountDomainSid not available\n");
+        return;
+    }
+
+    if (!OpenThreadToken(GetCurrentThread(), TOKEN_READ, TRUE, &token))
+    {
+        if (GetLastError() != ERROR_NO_TOKEN) bret = FALSE;
+        else if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token)) bret = FALSE;
+    }
+    if (!bret)
+    {
+        win_skip("Failed to get current user token\n");
+        return;
+    }
+
+    bret = GetTokenInformation(token, TokenUser, NULL, 0, &sid_size);
+    ok(!bret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
+    user = HeapAlloc(GetProcessHeap(), 0, sid_size);
+    bret = GetTokenInformation(token, TokenUser, user, sid_size, &sid_size);
+    ok(bret, "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
+    CloseHandle(token);
+    user_sid = ((TOKEN_USER *)user)->User.Sid;
+
+    SetLastError(0xdeadbeef);
+    bret = pGetWindowsAccountDomainSid(0, 0, 0);
+    ok(!bret, "GetWindowsAccountDomainSid succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_SID, "expected ERROR_INVALID_SID, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    bret = pGetWindowsAccountDomainSid(user_sid, 0, 0);
+    ok(!bret, "GetWindowsAccountDomainSid succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    sid_size = SECURITY_MAX_SID_SIZE;
+    SetLastError(0xdeadbeef);
+    bret = pGetWindowsAccountDomainSid(user_sid, 0, &sid_size);
+    ok(!bret, "GetWindowsAccountDomainSid succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(sid_size == GetSidLengthRequired(4), "expected size %d, got %d\n", GetSidLengthRequired(4), sid_size);
+
+    SetLastError(0xdeadbeef);
+    bret = pGetWindowsAccountDomainSid(user_sid, domain_sid, 0);
+    ok(!bret, "GetWindowsAccountDomainSid succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    sid_size = 1;
+    SetLastError(0xdeadbeef);
+    bret = pGetWindowsAccountDomainSid(user_sid, domain_sid, &sid_size);
+    ok(!bret, "GetWindowsAccountDomainSid succeeded\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size == GetSidLengthRequired(4), "expected size %d, got %d\n", GetSidLengthRequired(4), sid_size);
+
+    sid_size = SECURITY_MAX_SID_SIZE;
+    bret = pGetWindowsAccountDomainSid(user_sid, domain_sid, &sid_size);
+    ok(bret, "GetWindowsAccountDomainSid failed with error %d\n", GetLastError());
+    ok(sid_size == GetSidLengthRequired(4), "expected size %d, got %d\n", GetSidLengthRequired(4), sid_size);
+    InitializeSid(domain_sid2, &domain_ident, 4);
+    for (i = 0; i < 4; i++)
+        *GetSidSubAuthority(domain_sid2, i) = *GetSidSubAuthority(user_sid, i);
+    ok(EqualSid(domain_sid, domain_sid2), "unexpected domain sid\n");
+
+    HeapFree(GetProcessHeap(), 0, user);
+}
+
 START_TEST(security)
 {
     init();
@@ -5953,6 +6034,7 @@ START_TEST(security)
     test_ConvertSecurityDescriptorToString();
     test_PrivateObjectSecurity();
     test_acls();
+    test_GetWindowsAccountDomainSid();
     test_GetSecurityInfo();
     test_GetSidSubAuthority();
     test_CheckTokenMembership();
