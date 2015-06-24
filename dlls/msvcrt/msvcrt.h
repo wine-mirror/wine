@@ -237,7 +237,12 @@ struct __thread_data {
     void                           *unk6[3];
     int                             unk7;
     EXCEPTION_RECORD               *exc_record;
-    void                           *unk8[100];
+    void                           *unk8[7];
+    LCID                            cached_lcid;
+    int                             unk9[3];
+    DWORD                           cached_cp;
+    char                            cached_locale[131];
+    void                           *unk10[100];
 };
 
 typedef struct __thread_data thread_data_t;

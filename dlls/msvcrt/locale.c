@@ -217,9 +217,16 @@ extern int atoi(const char *);
 /* Internal: Find the LCID for a locale specification */
 LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage)
 {
+    thread_data_t *data = msvcrt_get_thread_data();
     LCID lcid;
     locale_search_t search;
     const char *cp, *region;
+
+    if (!strcmp(locale, data->cached_locale)) {
+        if (codepage)
+            *codepage = data->cached_cp;
+        return data->cached_lcid;
+    }
 
     memset(&search, 0, sizeof(locale_search_t));
 
@@ -291,6 +298,12 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage)
     }
     if (codepage)
         *codepage = atoi(search.found_codepage);
+
+    if (strlen(locale) < sizeof(data->cached_locale)) {
+        strcpy(data->cached_locale, locale);
+        data->cached_lcid = lcid;
+        data->cached_cp = codepage ? *codepage : atoi(search.found_codepage);
+    }
 
     return lcid;
 }
