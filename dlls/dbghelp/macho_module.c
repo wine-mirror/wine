@@ -75,6 +75,27 @@ struct dyld_all_image_infos {
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_macho);
 
 
+#ifdef _WIN64
+typedef struct mach_header_64       macho_mach_header;
+typedef struct segment_command_64   macho_segment_command;
+typedef struct section_64           macho_section;
+typedef struct nlist_64             macho_nlist;
+
+#define TARGET_CPU_TYPE         CPU_TYPE_X86_64
+#define TARGET_MH_MAGIC         MH_MAGIC_64
+#define TARGET_SEGMENT_COMMAND  LC_SEGMENT_64
+#else
+typedef struct mach_header          macho_mach_header;
+typedef struct segment_command      macho_segment_command;
+typedef struct section              macho_section;
+typedef struct nlist                macho_nlist;
+
+#define TARGET_CPU_TYPE         CPU_TYPE_X86
+#define TARGET_MH_MAGIC         MH_MAGIC
+#define TARGET_SEGMENT_COMMAND  LC_SEGMENT
+#endif
+
+
 struct macho_module_info
 {
     unsigned long               load_addr;
@@ -100,7 +121,7 @@ struct macho_info
 struct macho_file_map
 {
     /* A copy of the Mach-O header for an individual architecture. */
-    struct mach_header          mach_header;
+    macho_mach_header           mach_header;
 
     /* The mapped load commands. */
     const struct load_command*  load_commands;
@@ -133,13 +154,13 @@ static void macho_unmap_file(struct macho_file_map* fmap);
  * that encompasses it.  For a fat binary, the architecture will
  * itself be offset within the file, so take that into account.
  */
-static void macho_calc_range(const struct macho_file_map* fmap, unsigned offset,
-                             unsigned len, unsigned* out_aligned_offset,
-                             unsigned* out_aligned_end, unsigned* out_aligned_len,
-                             unsigned* out_misalign)
+static void macho_calc_range(const struct macho_file_map* fmap, unsigned long offset,
+                             unsigned long len, unsigned long* out_aligned_offset,
+                             unsigned long* out_aligned_end, unsigned long* out_aligned_len,
+                             unsigned long* out_misalign)
 {
-    unsigned pagemask = sysconf( _SC_PAGESIZE ) - 1;
-    unsigned file_offset, misalign;
+    unsigned long pagemask = sysconf( _SC_PAGESIZE ) - 1;
+    unsigned long file_offset, misalign;
 
     file_offset = fmap->arch_offset + offset;
     misalign = file_offset & pagemask;
@@ -156,19 +177,19 @@ static void macho_calc_range(const struct macho_file_map* fmap, unsigned offset,
  *
  * Maps a range (offset, length in bytes) from a Mach-O file into memory
  */
-static const char* macho_map_range(const struct macho_file_map* fmap, unsigned offset, unsigned len)
+static const char* macho_map_range(const struct macho_file_map* fmap, unsigned long offset, unsigned long len)
 {
-    unsigned    misalign, aligned_offset, aligned_map_end, map_size;
-    const void* aligned_ptr;
+    unsigned long   misalign, aligned_offset, aligned_map_end, map_size;
+    const void*     aligned_ptr;
 
-    TRACE("(%p/%d, 0x%08x, 0x%08x)\n", fmap, fmap->fd, offset, len);
+    TRACE("(%p/%d, 0x%08lx, 0x%08lx)\n", fmap, fmap->fd, offset, len);
 
     macho_calc_range(fmap, offset, len, &aligned_offset, &aligned_map_end,
                      &map_size, &misalign);
 
     aligned_ptr = mmap(NULL, map_size, PROT_READ, MAP_PRIVATE, fmap->fd, aligned_offset);
 
-    TRACE("Mapped (0x%08x - 0x%08x) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
+    TRACE("Mapped (0x%08lx - 0x%08lx) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
 
     if (aligned_ptr == MAP_FAILED) return MACHO_NO_MAP;
     return (const char*)aligned_ptr + misalign;
@@ -180,14 +201,14 @@ static const char* macho_map_range(const struct macho_file_map* fmap, unsigned o
  * Unmaps a range (offset, length in bytes) of a Mach-O file from memory
  */
 static void macho_unmap_range(const void** mapped, const struct macho_file_map* fmap,
-                              unsigned offset, unsigned len)
+                              unsigned long offset, unsigned long len)
 {
-    TRACE("(%p, %p/%d, 0x%08x, 0x%08x)\n", mapped, fmap, fmap->fd, offset, len);
+    TRACE("(%p, %p/%d, 0x%08lx, 0x%08lx)\n", mapped, fmap, fmap->fd, offset, len);
 
     if (mapped && *mapped != MACHO_NO_MAP)
     {
-        unsigned    misalign, aligned_offset, aligned_map_end, map_size;
-        void*       aligned_ptr;
+        unsigned long   misalign, aligned_offset, aligned_map_end, map_size;
+        void*           aligned_ptr;
 
         macho_calc_range(fmap, offset, len, &aligned_offset, &aligned_map_end,
                          &map_size, &misalign);
@@ -195,7 +216,7 @@ static void macho_unmap_range(const void** mapped, const struct macho_file_map* 
         aligned_ptr = (char*)*mapped - misalign;
         if (munmap(aligned_ptr, map_size) < 0)
             WARN("Couldn't unmap the range\n");
-        TRACE("Unmapped (0x%08x - 0x%08x) from %p - %p\n", aligned_offset, aligned_map_end, aligned_ptr, (char*)aligned_ptr + map_size);
+        TRACE("Unmapped (0x%08lx - 0x%08lx) from %p - %p\n", aligned_offset, aligned_map_end, aligned_ptr, (char*)aligned_ptr + map_size);
         *mapped = MACHO_NO_MAP;
     }
 }
@@ -208,14 +229,14 @@ static void macho_unmap_range(const void** mapped, const struct macho_file_map* 
  * the munmap doesn't fragment the mapping.
  */
 static BOOL macho_map_ranges(const struct macho_file_map* fmap,
-                             unsigned offset1, unsigned len1,
-                             unsigned offset2, unsigned len2,
+                             unsigned long offset1, unsigned long len1,
+                             unsigned long offset2, unsigned long len2,
                              const void** mapped1, const void** mapped2)
 {
-    unsigned aligned_offset1, aligned_map_end1;
-    unsigned aligned_offset2, aligned_map_end2;
+    unsigned long aligned_offset1, aligned_map_end1;
+    unsigned long aligned_offset2, aligned_map_end2;
 
-    TRACE("(%p/%d, 0x%08x, 0x%08x, 0x%08x, 0x%08x, %p, %p)\n", fmap, fmap->fd,
+    TRACE("(%p/%d, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, %p, %p)\n", fmap, fmap->fd,
             offset1, len1, offset2, len2, mapped1, mapped2);
 
     macho_calc_range(fmap, offset1, len1, &aligned_offset1, &aligned_map_end1, NULL, NULL);
@@ -260,14 +281,14 @@ static BOOL macho_map_ranges(const struct macho_file_map* fmap,
  * macho_map_ranges.
  */
 static void macho_unmap_ranges(const struct macho_file_map* fmap,
-                               unsigned offset1, unsigned len1,
-                               unsigned offset2, unsigned len2,
+                               unsigned long offset1, unsigned long len1,
+                               unsigned long offset2, unsigned long len2,
                                const void** mapped1, const void** mapped2)
 {
-    unsigned    aligned_offset1, aligned_map_end1;
-    unsigned    aligned_offset2, aligned_map_end2;
+    unsigned long   aligned_offset1, aligned_map_end1;
+    unsigned long   aligned_offset2, aligned_map_end2;
 
-    TRACE("(%p/%d, 0x%08x, 0x%08x, 0x%08x, 0x%08x, %p/%p, %p/%p)\n", fmap, fmap->fd,
+    TRACE("(%p/%d, 0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx, %p/%p, %p/%p)\n", fmap, fmap->fd,
             offset1, len1, offset2, len2, mapped1, *mapped1, mapped2, *mapped2);
 
     macho_calc_range(fmap, offset1, len1, &aligned_offset1, &aligned_map_end1, NULL, NULL);
@@ -380,18 +401,18 @@ static int macho_enum_load_commands(struct macho_file_map* fmap, unsigned cmd,
  *
  * Callback for macho_enum_load_commands.  Accumulates the address
  * range covered by the segments of a Mach-O file.  All commands
- * are expected to be of LC_SEGMENT type.
+ * are expected to be of LC_SEGMENT[_64] type.
  */
 static int macho_accum_segs_range(struct macho_file_map* fmap,
                                   const struct load_command* lc, void* user)
 {
-    const struct segment_command*   sc = (const struct segment_command*)lc;
-    unsigned                        tmp, page_mask = sysconf( _SC_PAGESIZE ) - 1;
+    const macho_segment_command*    sc = (const macho_segment_command*)lc;
+    unsigned long                   tmp, page_mask = sysconf( _SC_PAGESIZE ) - 1;
 
-    TRACE("(%p/%d, %p, %p) before: 0x%08x - 0x%08x\n", fmap, fmap->fd, lc, user,
-            (unsigned)fmap->segs_start, (unsigned)fmap->segs_size);
-    TRACE("Segment command vm: 0x%08x - 0x%08x\n", (unsigned)sc->vmaddr,
-            (unsigned)sc->vmaddr + sc->vmsize);
+    TRACE("(%p/%d, %p, %p) before: 0x%08lx - 0x%08lx\n", fmap, fmap->fd, lc, user,
+            (unsigned long)fmap->segs_start, (unsigned long)fmap->segs_size);
+    TRACE("Segment command vm: 0x%08lx - 0x%08lx\n", (unsigned long)sc->vmaddr,
+            (unsigned long)(sc->vmaddr + sc->vmsize));
 
     if (!strncmp(sc->segname, "WINE_", 5))
     {
@@ -414,7 +435,7 @@ static int macho_accum_segs_range(struct macho_file_map* fmap,
     tmp = (sc->vmaddr + sc->vmsize + page_mask) & ~page_mask;
     if (fmap->segs_size < tmp) fmap->segs_size = tmp;
 
-    TRACE("after: 0x%08x - 0x%08x\n", (unsigned)fmap->segs_start, (unsigned)fmap->segs_size);
+    TRACE("after: 0x%08lx - 0x%08lx\n", (unsigned long)fmap->segs_start, (unsigned long)fmap->segs_size);
 
     return 0;
 }
@@ -477,7 +498,7 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
             struct fat_arch fat_arch;
             if (read(fmap->fd, &fat_arch, sizeof(fat_arch)) != sizeof(fat_arch))
                 goto done;
-            if (swap_ulong_be_to_host(fat_arch.cputype) == CPU_TYPE_X86)
+            if (swap_ulong_be_to_host(fat_arch.cputype) == TARGET_CPU_TYPE)
             {
                 fmap->arch_offset = swap_ulong_be_to_host(fat_arch.offset);
                 fmap->arch_size = swap_ulong_be_to_host(fat_arch.size);
@@ -485,7 +506,7 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
             }
         }
         if (i >= narch) goto done;
-        TRACE("... found x86 arch\n");
+        TRACE("... found target arch (%d)\n", TARGET_CPU_TYPE);
     }
     else
     {
@@ -500,8 +521,8 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
         goto done;
     TRACE("... got possible Mach header\n");
     /* and check for a Mach-O header */
-    if (fmap->mach_header.magic != MH_MAGIC ||
-        fmap->mach_header.cputype != CPU_TYPE_X86) goto done;
+    if (fmap->mach_header.magic != TARGET_MH_MAGIC ||
+        fmap->mach_header.cputype != TARGET_CPU_TYPE) goto done;
     /* Make sure the file type is one of the ones we expect. */
     switch (fmap->mach_header.filetype)
     {
@@ -513,17 +534,17 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
         default:
             goto done;
     }
-    TRACE("... verified Mach x86 header\n");
+    TRACE("... verified Mach header\n");
 
     fmap->segs_size = 0;
     fmap->segs_start = ~0L;
 
-    if (macho_enum_load_commands(fmap, LC_SEGMENT, macho_accum_segs_range, NULL) < 0)
+    if (macho_enum_load_commands(fmap, TARGET_SEGMENT_COMMAND, macho_accum_segs_range, NULL) < 0)
         goto done;
 
     fmap->segs_size -= fmap->segs_start;
-    TRACE("segs_start: 0x%08x, segs_size: 0x%08x\n", (unsigned)fmap->segs_start,
-            (unsigned)fmap->segs_size);
+    TRACE("segs_start: 0x%08lx, segs_size: 0x%08lx\n", (unsigned long)fmap->segs_start,
+            (unsigned long)fmap->segs_size);
 
     ret = TRUE;
 done:
@@ -554,20 +575,20 @@ static void macho_unmap_file(struct macho_file_map* fmap)
  *
  * Callback for macho_enum_load_commands.  Determines which segments
  * of a Mach-O file contain code.  All commands are expected to be
- * of LC_SEGMENT type.
+ * of LC_SEGMENT[_64] type.
  */
 static int macho_fill_sect_is_code(struct macho_file_map* fmap,
                                    const struct load_command* lc, void* user)
 {
-    const struct segment_command*   sc = (const struct segment_command*)lc;
-    const struct section*           sections;
+    const macho_segment_command*    sc = (const macho_segment_command*)lc;
+    const macho_section*            sections;
     int*                            cursect = user;
     int                             i;
 
     TRACE("(%p/%d, %p, %p/%d) scanning %u sections\n", fmap, fmap->fd, lc,
             cursect, *cursect, sc->nsects);
 
-    sections = (const struct section*)(sc + 1);
+    sections = (const macho_section*)(sc + 1);
     for (i = 0; i < sc->nsects; i++)
     {
         if (*cursect > MAX_SECT) return -1;
@@ -599,7 +620,7 @@ static BOOL macho_sect_is_code(struct macho_file_map* fmap, unsigned char sectid
     if (!RtlAreBitsSet(&fmap->sect_is_code, 0, 1))
     {
         int cursect = 0;
-        if (macho_enum_load_commands(fmap, LC_SEGMENT, macho_fill_sect_is_code, &cursect) < 0)
+        if (macho_enum_load_commands(fmap, TARGET_SEGMENT_COMMAND, macho_fill_sect_is_code, &cursect) < 0)
             WARN("Couldn't load sect_is_code map\n");
         RtlSetBits(&fmap->sect_is_code, 0, 1);
     }
@@ -667,24 +688,24 @@ static int macho_parse_symtab(struct macho_file_map* fmap,
 {
     const struct symtab_command*    sc = (const struct symtab_command*)lc;
     struct macho_debug_info*        mdi = user;
-    const struct nlist*             stab;
+    const macho_nlist*              stab;
     const char*                     stabstr;
     int                             ret = 0;
 
     TRACE("(%p/%d, %p, %p) %u syms at 0x%08x, strings 0x%08x - 0x%08x\n", fmap, fmap->fd, lc,
             user, sc->nsyms, sc->symoff, sc->stroff, sc->stroff + sc->strsize);
 
-    if (!macho_map_ranges(fmap, sc->symoff, sc->nsyms * sizeof(struct nlist),
+    if (!macho_map_ranges(fmap, sc->symoff, sc->nsyms * sizeof(macho_nlist),
             sc->stroff, sc->strsize, (const void**)&stab, (const void**)&stabstr))
         return 0;
 
     if (!stabs_parse(mdi->module,
                      mdi->module->format_info[DFI_MACHO]->u.macho_info->load_addr - fmap->segs_start,
-                     stab, sc->nsyms * sizeof(struct nlist),
+                     stab, sc->nsyms * sizeof(macho_nlist),
                      stabstr, sc->strsize, macho_stabs_def_cb, mdi))
         ret = -1;
 
-    macho_unmap_ranges(fmap, sc->symoff, sc->nsyms * sizeof(struct nlist),
+    macho_unmap_ranges(fmap, sc->symoff, sc->nsyms * sizeof(macho_nlist),
             sc->stroff, sc->strsize, (const void**)&stab, (const void**)&stabstr);
 
     return ret;
@@ -991,8 +1012,8 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
             if (ReadProcessMemory(pcs->handle, &pbi.PebBaseAddress->Reserved[0],
                                   &dyld_image_info, sizeof(dyld_image_info), NULL))
             {
-                TRACE("got dyld_image_info 0x%08x from PEB %p MacDyldImageInfo %p\n",
-                      dyld_image_info, pbi.PebBaseAddress, &pbi.PebBaseAddress->Reserved);
+                TRACE("got dyld_image_info 0x%08lx from PEB %p MacDyldImageInfo %p\n",
+                      (unsigned long)dyld_image_info, pbi.PebBaseAddress, &pbi.PebBaseAddress->Reserved);
                 macho_info->dbg_hdr_addr = dyld_image_info;
                 ret = TRUE;
             }
