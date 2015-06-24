@@ -445,20 +445,35 @@ static void print_version (void)
 static void print_language(void)
 {
     HMODULE hkernel32;
+    BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, PULONG, PZZWSTR, PULONG);
     LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
     LANGID (WINAPI *pGetThreadUILanguage)(void);
 
-    xprintf ("    SystemDefaultLCID=%x\n", GetSystemDefaultLCID());
-    xprintf ("    UserDefaultLCID=%x\n", GetUserDefaultLCID());
-    xprintf ("    ThreadLocale=%x\n", GetThreadLocale());
+    xprintf ("    SystemDefaultLCID=%04x\n", GetSystemDefaultLCID());
+    xprintf ("    UserDefaultLCID=%04x\n", GetUserDefaultLCID());
+    xprintf ("    ThreadLocale=%04x\n", GetThreadLocale());
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
+    pGetSystemPreferredUILanguages = (void*)GetProcAddress(hkernel32, "GetSystemPreferredUILanguages");
     pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
     pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+
+    if (pGetSystemPreferredUILanguages && !running_under_wine())
+    {
+        WCHAR langW[32];
+        ULONG num, size = sizeof(langW)/sizeof(langW[0]);
+        if (pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &num, langW, &size))
+        {
+            char lang[32], *p = lang;
+            WideCharToMultiByte(CP_ACP, 0, langW, size, lang, sizeof(lang), NULL, NULL);
+            for (p += strlen(p) + 1; *p != '\0'; p += strlen(p) + 1) *(p - 1) = ',';
+            xprintf ("    SystemPreferredUILanguages=%s\n", lang);
+        }
+    }
     if (pGetUserDefaultUILanguage)
-        xprintf ("    UserDefaultUILanguage=%x\n", pGetUserDefaultUILanguage());
+        xprintf ("    UserDefaultUILanguage=%04x\n", pGetUserDefaultUILanguage());
     if (pGetThreadUILanguage)
-        xprintf ("    ThreadUILanguage=%x\n", pGetThreadUILanguage());
+        xprintf ("    ThreadUILanguage=%04x\n", pGetThreadUILanguage());
 }
 
 static inline BOOL is_dot_dir(const char* x)
