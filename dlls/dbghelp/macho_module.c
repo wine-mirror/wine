@@ -901,12 +901,12 @@ static BOOL macho_load_debug_info_from_map(struct module* module,
  *
  * Loads Mach-O debugging information from the module image file.
  */
-BOOL macho_load_debug_info(struct module* module, struct macho_file_map* fmap)
+BOOL macho_load_debug_info(struct module* module)
 {
     BOOL                    ret = TRUE;
-    struct macho_file_map   my_fmap;
+    struct macho_file_map   fmap;
 
-    TRACE("(%p, %p/%d)\n", module, fmap, fmap ? fmap->fd : -1);
+    TRACE("(%p)\n", module);
 
     if (module->type != DMT_MACHO || !module->format_info[DFI_MACHO]->u.macho_info)
     {
@@ -914,15 +914,11 @@ BOOL macho_load_debug_info(struct module* module, struct macho_file_map* fmap)
         return FALSE;
     }
 
-    if (!fmap)
-    {
-        fmap = &my_fmap;
-        ret = macho_map_file(module->module.LoadedImageName, fmap);
-    }
+    ret = macho_map_file(module->module.LoadedImageName, &fmap);
     if (ret)
-        ret = macho_load_debug_info_from_map(module, fmap);
+        ret = macho_load_debug_info_from_map(module, &fmap);
 
-    if (fmap == &my_fmap) macho_unmap_file(fmap);
+    macho_unmap_file(&fmap);
     return ret;
 }
 
@@ -1048,7 +1044,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
 
         if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
             macho_info->module->module.SymType = SymDeferred;
-        else if (!macho_load_debug_info(macho_info->module, &fmap))
+        else if (!macho_load_debug_info_from_map(macho_info->module, &fmap))
             ret = FALSE;
 
         macho_info->module->format_info[DFI_MACHO]->u.macho_info->in_use = 1;
@@ -1480,7 +1476,7 @@ struct module*  macho_load_module(struct process* pcs, const WCHAR* name, unsign
     return NULL;
 }
 
-BOOL macho_load_debug_info(struct module* module, struct macho_file_map* fmap)
+BOOL macho_load_debug_info(struct module* module)
 {
     return FALSE;
 }
