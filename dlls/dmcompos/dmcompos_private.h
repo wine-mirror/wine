@@ -43,46 +43,12 @@
 #include "dmusics.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicChordMapTrack IDirectMusicChordMapTrack;
-typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
-	
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirectMusicChordMapTrack implementation structure
- */
-struct IDirectMusicChordMapTrack {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicTrack8Vtbl *TrackVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicChordMapTrack fields */
-  LPDMUS_OBJECTDESC pDesc;
-};
-
-/*****************************************************************************
- * IDirectMusicSignPostTrack implementation structure
- */
-struct IDirectMusicSignPostTrack {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicTrack8Vtbl *TrackVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicSignPostTrack fields */
-  LPDMUS_OBJECTDESC pDesc;
-};
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll

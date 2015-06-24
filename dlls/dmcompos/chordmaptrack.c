@@ -28,6 +28,14 @@ static ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTST
 /*****************************************************************************
  * IDirectMusicChordMapTrack implementation
  */
+typedef struct IDirectMusicChordMapTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicChordMapTrack;
+
 /* IDirectMusicChordMapTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicChordMapTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, UnknownVtbl, iface);
