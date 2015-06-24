@@ -420,6 +420,8 @@ static void test_WinHttpAddHeaders(void)
         {'P','O','S','T',' ','h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',':','8','0','/','p','o','s','t','.','p','h','p',' ','H','T','T','P','/','1'};
     static const WCHAR test_header_end[] = {'\r','\n','\r','\n',0};
     static const WCHAR test_header_name[] = {'W','a','r','n','i','n','g',0};
+    static const WCHAR test_header_name2[] = {'n','a','m','e',0};
+    static const WCHAR test_header_name3[] = {'a',0};
     static const WCHAR test_header_range[] = {'R','a','n','g','e',0};
     static const WCHAR test_header_range_bytes[] = {'R','a','n','g','e',':',' ','b','y','t','e','s','=','0','-','7','7','3','\r','\n',0};
     static const WCHAR test_header_bytes[] = {'b','y','t','e','s','=','0','-','7','7','3',0};
@@ -438,6 +440,7 @@ static void test_WinHttpAddHeaders(void)
     static const WCHAR field[] = {'f','i','e','l','d',0};
     static const WCHAR value[] = {'v','a','l','u','e',' ',0};
     static const WCHAR value_nospace[] = {'v','a','l','u','e',0};
+    static const WCHAR empty[] = {0};
 
     static const WCHAR test_headers[][14] =
         {
@@ -454,7 +457,9 @@ static void test_WinHttpAddHeaders(void)
             {':','b',0},
             {'c','d',0},
             {' ','e',' ',':','f',0},
-            {'f','i','e','l','d',':',' ','v','a','l','u','e',' ',0}
+            {'f','i','e','l','d',':',' ','v','a','l','u','e',' ',0},
+            {'n','a','m','e',':',' ','v','a','l','u','e',0},
+            {'n','a','m','e',':',0}
         };
     static const WCHAR test_indices[][6] =
         {
@@ -763,6 +768,14 @@ static void test_WinHttpAddHeaders(void)
     ret = WinHttpAddRequestHeaders(request, test_headers[9], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(ret, "WinHttpAddRequestHeaders failed\n");
 
+    index = 0;
+    memset(buffer, 0xff, sizeof(buffer));
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_name3, buffer, &len, &index);
+    ok(ret, "WinHttpQueryHeaders failed: %u\n", GetLastError());
+    ok(!memcmp(buffer, empty, sizeof(empty)), "unexpected result\n");
+
     ret = WinHttpAddRequestHeaders(request, test_headers[10], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(!ret, "WinHttpAddRequestHeaders failed\n");
 
@@ -802,6 +815,52 @@ static void test_WinHttpAddHeaders(void)
     ok(!memcmp(buffer, test_header_bytes, sizeof(test_header_bytes)), "incorrect string returned\n");
     ok(len == lstrlenW(test_header_bytes) * sizeof(WCHAR), "wrong length %u\n", len);
     ok(index == 1, "wrong index %u\n", index);
+
+    index = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_name2, buffer, &len, &index);
+    ok(!ret, "unexpected success\n");
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpAddRequestHeaders(request, test_headers[14], ~0u, WINHTTP_ADDREQ_FLAG_REPLACE);
+    err = GetLastError();
+    ok(!ret, "unexpected success\n");
+    ok(err == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %u\n", err);
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[14], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "got %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_name2, buffer, &len, &index);
+    ok(ret, "got %u\n", GetLastError());
+    ok(index == 1, "wrong index %u\n", index);
+    ok(!memcmp(buffer, value_nospace, sizeof(value_nospace)), "incorrect string\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[15], ~0u, WINHTTP_ADDREQ_FLAG_REPLACE);
+    ok(ret, "got %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_name2, buffer, &len, &index);
+    err = GetLastError();
+    ok(!ret, "unexpected success\n");
+    ok(err == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %u\n", err);
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[14], -1L, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    index = 0;
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              test_header_name2, buffer, &len, &index);
+    ok(ret, "got %u\n", GetLastError());
+    ok(index == 1, "wrong index %u\n", index);
+    ok(!memcmp(buffer, value_nospace, sizeof(value_nospace)), "incorrect string\n");
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);

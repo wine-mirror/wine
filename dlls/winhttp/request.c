@@ -327,12 +327,8 @@ static header_t *parse_header( LPCWSTR string )
 
     q++; /* skip past colon */
     while (*q == ' ') q++;
-    if (!*q)
-    {
-        WARN("no value in line %s\n", debugstr_w(string));
-        return header;
-    }
     len = strlenW( q );
+
     if (!(header->value = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
         free_header( header );
@@ -404,76 +400,65 @@ static BOOL delete_header( request_t *request, DWORD index )
 static BOOL process_header( request_t *request, LPCWSTR field, LPCWSTR value, DWORD flags, BOOL request_only )
 {
     int index;
-    header_t *header;
+    header_t hdr;
 
     TRACE("%s: %s 0x%08x\n", debugstr_w(field), debugstr_w(value), flags);
 
-    /* replace wins out over add */
-    if (flags & WINHTTP_ADDREQ_FLAG_REPLACE) flags &= ~WINHTTP_ADDREQ_FLAG_ADD;
-
-    if (flags & WINHTTP_ADDREQ_FLAG_ADD) index = -1;
-    else
-        index = get_header_index( request, field, 0, request_only );
-
-    if (index >= 0)
+    if ((index = get_header_index( request, field, 0, request_only )) >= 0)
     {
         if (flags & WINHTTP_ADDREQ_FLAG_ADD_IF_NEW) return FALSE;
-        header = &request->headers[index];
     }
-    else if (value)
+
+    if (flags & WINHTTP_ADDREQ_FLAG_REPLACE)
     {
-        header_t hdr;
+        if (index >= 0)
+        {
+            delete_header( request, index );
+            if (!value || !value[0]) return TRUE;
+        }
+        else if (!(flags & WINHTTP_ADDREQ_FLAG_ADD))
+        {
+            set_last_error( ERROR_WINHTTP_HEADER_NOT_FOUND );
+            return FALSE;
+        }
 
         hdr.field = (LPWSTR)field;
         hdr.value = (LPWSTR)value;
         hdr.is_request = request_only;
-
         return insert_header( request, &hdr );
     }
-    /* no value to delete */
-    else return TRUE;
-
-    if (flags & WINHTTP_ADDREQ_FLAG_REPLACE)
+    else if (value)
     {
-        delete_header( request, index );
-        if (value)
+
+        if ((flags & (WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON)) &&
+            index >= 0)
         {
-            header_t hdr;
+            WCHAR *tmp;
+            int len, len_orig, len_value;
+            header_t *header = &request->headers[index];
 
-            hdr.field = (LPWSTR)field;
-            hdr.value = (LPWSTR)value;
-            hdr.is_request = request_only;
+            len_orig = strlenW( header->value );
+            len_value = strlenW( value );
 
-            return insert_header( request, &hdr );
-        }
-        return TRUE;
-    }
-    else if (flags & (WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON))
-    {
-        WCHAR sep, *tmp;
-        int len, orig_len, value_len;
-
-        orig_len = strlenW( header->value );
-        value_len = strlenW( value );
-
-        if (flags & WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA) sep = ',';
-        else sep = ';';
-
-        len = orig_len + value_len + 2;
-        if ((tmp = heap_realloc( header->value, (len + 1) * sizeof(WCHAR) )))
-        {
+            len = len_orig + len_value + 2;
+            if (!(tmp = heap_realloc( header->value, (len + 1) * sizeof(WCHAR) ))) return FALSE;
             header->value = tmp;
+            header->value[len_orig++] = (flags & WINHTTP_ADDREQ_FLAG_COALESCE_WITH_COMMA) ? ',' : ';';
+            header->value[len_orig++] = ' ';
 
-            header->value[orig_len] = sep;
-            orig_len++;
-            header->value[orig_len] = ' ';
-            orig_len++;
-
-            memcpy( &header->value[orig_len], value, value_len * sizeof(WCHAR) );
+            memcpy( &header->value[len_orig], value, len_value * sizeof(WCHAR) );
             header->value[len] = 0;
             return TRUE;
         }
+        else
+        {
+            hdr.field = (LPWSTR)field;
+            hdr.value = (LPWSTR)value;
+            hdr.is_request = request_only;
+            return insert_header( request, &hdr );
+        }
     }
+
     return TRUE;
 }
 
@@ -2128,7 +2113,9 @@ static BOOL read_reply( request_t *request )
     /*  we rely on the fact that the protocol is ascii */
     MultiByteToWideChar( CP_ACP, 0, status_code, len, status_codeW, len );
     status_codeW[len] = 0;
-    if (!(process_header( request, attr_status, status_codeW, WINHTTP_ADDREQ_FLAG_REPLACE, FALSE ))) return FALSE;
+    if (!(process_header( request, attr_status, status_codeW,
+                          WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, FALSE )))
+        return FALSE;
 
     len = status_code - buffer;
     if (!(versionW = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
@@ -2358,7 +2345,7 @@ static BOOL handle_redirect( request_t *request, DWORD status )
         }
         else heap_free( hostname );
 
-        if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
+        if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
         if (!(ret = open_connection( request ))) goto end;
 
         heap_free( request->path );
@@ -3227,7 +3214,8 @@ static HRESULT WINAPI winhttp_request_SetRequestHeader(
         goto done;
     }
     sprintfW( str, fmtW, header, value ? value : emptyW );
-    if (!WinHttpAddRequestHeaders( request->hrequest, str, len, WINHTTP_ADDREQ_FLAG_REPLACE ))
+    if (!WinHttpAddRequestHeaders( request->hrequest, str, len,
+                                   WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))
     {
         err = get_last_error();
     }
