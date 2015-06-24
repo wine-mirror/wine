@@ -42,6 +42,17 @@
 #ifdef HAVE_SYS_LINK_H
 # include <sys/link.h>
 #endif
+#ifdef HAVE_MACH_O_LOADER_H
+#include <mach-o/loader.h>
+
+#ifdef _WIN64
+typedef struct mach_header_64       macho_mach_header;
+typedef struct section_64           macho_section;
+#else
+typedef struct mach_header          macho_mach_header;
+typedef struct section              macho_section;
+#endif
+#endif
 
 #define IMAGE_NO_MAP  ((void*)-1)
 
@@ -94,6 +105,27 @@ struct image_file_map
             }*                          sect;
 #endif
         } elf;
+        struct macho_file_map
+        {
+            size_t                      segs_size;
+            size_t                      segs_start;
+            int                         fd;
+
+#ifdef HAVE_MACH_O_LOADER_H
+            macho_mach_header           mach_header;
+            const struct load_command*  load_commands;
+
+            /* The offset in the file which is this architecture.  mach_header was
+             * read from arch_offset. */
+            unsigned                    arch_offset;
+
+            int                         num_sections;
+            struct
+            {
+                const macho_section*            section;
+            }*                          sect;
+#endif
+        } macho;
         struct pe_file_map
         {
             HANDLE                      hMap;
