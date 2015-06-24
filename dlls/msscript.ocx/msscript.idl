@@ -294,7 +294,10 @@ library MSScriptControl
 
     [
         helpstring("ScriptControl Object"),
-        uuid(0e59f1d5-1fbe-11d0-8ff2-00a0d10038bc)
+        uuid(0e59f1d5-1fbe-11d0-8ff2-00a0d10038bc),
+        threading(apartment),
+        progid("MSScriptControl.ScriptControl.1"),
+        vi_progid("MSScriptControl.ScriptControl")
     ]
     coclass ScriptControl {
         [default] interface  IScriptControl;

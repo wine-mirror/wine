@@ -17,10 +17,14 @@
  */
 
 #include "windows.h"
+#include "ole2.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msscript);
+
+static HINSTANCE msscript_instance;
 
 /******************************************************************
  *              DllMain (msscript.ocx.@)
@@ -33,6 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID lpv)
     case DLL_WINE_PREATTACH:
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
+        msscript_instance = instance;
         DisableThreadLibraryCalls(instance);
         break;
     }
@@ -63,8 +68,8 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("()\n");
-    return E_NOTIMPL;
+    TRACE("()\n");
+    return __wine_register_resources(msscript_instance);
 }
 
 /***********************************************************************
@@ -73,5 +78,5 @@ HRESULT WINAPI DllRegisterServer(void)
 HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("()\n");
-    return E_NOTIMPL;
+    return __wine_unregister_resources(msscript_instance);
 }

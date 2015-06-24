@@ -1,4 +1,5 @@
 MODULE    = msscript.ocx
+RC_SRCS   = msscript.rc
 IDL_SRCS  = msscript.idl
 
 C_SRCS = \
