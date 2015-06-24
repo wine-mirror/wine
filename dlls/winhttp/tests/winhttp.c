@@ -2018,14 +2018,18 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /cookie3"))
         {
             if (strstr(buffer, "Cookie: name=value2; NAME=value; name=value\r\n") ||
-                strstr(buffer, "Cookie: name=value2; name=value; NAME=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
-            else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+                broken(strstr(buffer, "Cookie: name=value2; name=value; NAME=value\r\n") != NULL))
+                send(c, okmsg, sizeof(okmsg) - 1, 0);
+            else
+                send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         if (strstr(buffer, "GET /cookie2"))
         {
             if (strstr(buffer, "Cookie: NAME=value; name=value\r\n") ||
-                strstr(buffer, "Cookie: name=value; NAME=value\r\n")) send(c, okmsg, sizeof(okmsg) - 1, 0);
-            else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+                broken(strstr(buffer, "Cookie: name=value; NAME=value\r\n") != NULL))
+                send(c, okmsg, sizeof(okmsg) - 1, 0);
+            else
+                send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
         else if (strstr(buffer, "GET /cookie"))
         {

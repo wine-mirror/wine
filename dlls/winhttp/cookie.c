@@ -121,7 +121,7 @@ static BOOL add_cookie( session_t *session, cookie_t *cookie, WCHAR *domain_name
     else if ((old_cookie = find_cookie( domain, path, cookie->name ))) delete_cookie( old_cookie );
 
     cookie->path = strdupW( path );
-    list_add_tail( &domain->cookies, &cookie->entry );
+    list_add_head( &domain->cookies, &cookie->entry );
 
     TRACE("domain %s path %s <- %s=%s\n", debugstr_w(domain_name), debugstr_w(cookie->path),
           debugstr_w(cookie->name), debugstr_w(cookie->value));
