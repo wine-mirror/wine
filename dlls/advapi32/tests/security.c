@@ -5938,7 +5938,7 @@ static void test_GetWindowsAccountDomainSid(void)
 
     if (!pGetWindowsAccountDomainSid)
     {
-        skip("GetWindowsAccountDomainSid not available\n");
+        win_skip("GetWindowsAccountDomainSid not available\n");
         return;
     }
 

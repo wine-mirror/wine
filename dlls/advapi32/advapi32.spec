@@ -363,7 +363,7 @@
 @ stdcall GetTrusteeTypeW(ptr) 
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
-# @ stub GetWindowsAccountDomainSid
+@ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
 # @ stub I_QueryTagInformation
 # @ stub I_ScGetCurrentGroupStateW
 # @ stub I_ScIsSecurityProcess

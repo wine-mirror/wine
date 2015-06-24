@@ -57,7 +57,7 @@
 @ stdcall GetSidSubAuthority(ptr long) advapi32.GetSidSubAuthority
 @ stdcall GetSidSubAuthorityCount(ptr) advapi32.GetSidSubAuthorityCount
 @ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
-@ stub GetWindowsAccountDomainSid
+@ stdcall GetWindowsAccountDomainSid(ptr ptr ptr) advapi32.GetWindowsAccountDomainSid
 @ stdcall ImpersonateAnonymousToken(long) advapi32.ImpersonateAnonymousToken
 @ stdcall ImpersonateLoggedOnUser(long) advapi32.ImpersonateLoggedOnUser
 @ stdcall ImpersonateSelf(long) advapi32.ImpersonateSelf
