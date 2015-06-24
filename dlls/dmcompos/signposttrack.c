@@ -85,6 +85,11 @@ static const IUnknownVtbl DirectMusicSignPostTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicSignPostTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicSignPostTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicSignPostTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
 	return IDirectMusicSignPostTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -124,24 +129,32 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Play (LPDIRECT
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
-	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %d, %p, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pmtNext, pParam);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_GetParam(IDirectMusicTrack8 *iface, REFGUID type,
+        MUSIC_TIME time, MUSIC_TIME *next, void *param)
+{
+    IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p, %p): method not implemented\n", This, debugstr_dmguid(type), time,
+            next, param);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam) {
-	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, %d, %p): stub\n", This, debugstr_dmguid(rguidType), mtTime, pParam);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_SetParam(IDirectMusicTrack8 *iface, REFGUID type,
+        MUSIC_TIME time, void *param)
+{
+    IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %d, %p): method not implemented\n", This, debugstr_dmguid(type), time, param);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
-	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
-	/* didn't find any params */
-	TRACE("param unsupported\n");
-	return DMUS_E_TYPE_UNSUPPORTED;
+static HRESULT WINAPI IDirectMusicTrack8Impl_IsParamSupported(IDirectMusicTrack8 *iface,
+        REFGUID type)
+{
+    IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(type));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
@@ -169,18 +182,24 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_PlayEx (LPDIRE
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags) {
-	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
-	    wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_GetParamEx(IDirectMusicTrack8 *iface, REFGUID type,
+        REFERENCE_TIME time, REFERENCE_TIME *next, void *param, void *state, DWORD flags)
+{
+    IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %s, %p, %p, %p, %x): method not implemented\n", This, debugstr_dmguid(type),
+            wine_dbgstr_longlong(time), next, param, state, flags);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags) {
-	ICOM_THIS_MULTI(IDirectMusicSignPostTrack, TrackVtbl, iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %d): stub\n", This, debugstr_dmguid(rguidType),
-	    wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_SetParamEx(IDirectMusicTrack8 *iface, REFGUID type,
+        REFERENCE_TIME time, void *param, void *state, DWORD flags)
+{
+    IDirectMusicSignPostTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s, %s, %p, %p, %x): method not implemented\n", This, debugstr_dmguid(type),
+            wine_dbgstr_longlong(time), param, state, flags);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
@@ -196,24 +215,24 @@ static HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Join (LPDIRECT
 }
 
 static const IDirectMusicTrack8Vtbl DirectMusicSignPostTrack_Track_Vtbl = {
-	IDirectMusicSignPostTrack_IDirectMusicTrack_QueryInterface,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Release,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Init,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_InitPlay,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_EndPlay,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Play,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_GetParam,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_SetParam,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_IsParamSupported,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_AddNotificationType,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_RemoveNotificationType,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Clone,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_PlayEx,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_GetParamEx,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Compose,
-	IDirectMusicSignPostTrack_IDirectMusicTrack_Join
+    IDirectMusicSignPostTrack_IDirectMusicTrack_QueryInterface,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Release,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Init,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_InitPlay,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_EndPlay,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Play,
+    IDirectMusicTrack8Impl_GetParam,
+    IDirectMusicTrack8Impl_SetParam,
+    IDirectMusicTrack8Impl_IsParamSupported,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_AddNotificationType,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_RemoveNotificationType,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Clone,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_PlayEx,
+    IDirectMusicTrack8Impl_GetParamEx,
+    IDirectMusicTrack8Impl_SetParamEx,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Compose,
+    IDirectMusicSignPostTrack_IDirectMusicTrack_Join
 };
 
 /* IDirectMusicSignPostTrack IPersistStream part: */

@@ -85,6 +85,11 @@ static const IUnknownVtbl DirectMusicChordMapTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicChordMapTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicChordMapTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicChordMapTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
 	return IDirectMusicChordMapTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -151,16 +156,22 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_IsParamSupport
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicChordMapTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicChordMapTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
@@ -190,10 +201,13 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_SetParamEx (LP
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicChordMapTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
@@ -203,24 +217,24 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Join (LPDIRECT
 }
 
 static const IDirectMusicTrack8Vtbl DirectMusicChordMapTrack_Track_Vtbl = {
-	IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Release,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Init,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_InitPlay,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_EndPlay,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Play,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_GetParam,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_SetParam,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_IsParamSupported,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_AddNotificationType,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_RemoveNotificationType,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Clone,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_PlayEx,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_GetParamEx,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Compose,
-	IDirectMusicChordMapTrack_IDirectMusicTrack_Join
+    IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_Release,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_Init,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_InitPlay,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_EndPlay,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_Play,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_GetParam,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_SetParam,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_IsParamSupported,
+    IDirectMusicTrack8Impl_AddNotificationType,
+    IDirectMusicTrack8Impl_RemoveNotificationType,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_Clone,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_PlayEx,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_GetParamEx,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_SetParamEx,
+    IDirectMusicTrack8Impl_Compose,
+    IDirectMusicChordMapTrack_IDirectMusicTrack_Join
 };
 
 /* IDirectMusicChordMapTrack IPersistStream part: */
