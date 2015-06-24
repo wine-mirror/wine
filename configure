@@ -17427,7 +17427,7 @@ wine_fn_config_dll msnet32 enable_msnet32
 wine_fn_config_dll mspatcha enable_mspatcha implib
 wine_fn_config_dll msrle32 enable_msrle32 po
 wine_fn_config_test dlls/msrle32/tests msrle32_test
-wine_fn_config_dll msscript.ocx enable_msscript_ocx
+wine_fn_config_dll msscript.ocx enable_msscript_ocx clean
 wine_fn_config_dll mssign32 enable_mssign32
 wine_fn_config_dll mssip32 enable_mssip32
 wine_fn_config_dll mstask enable_mstask clean
