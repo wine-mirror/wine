@@ -139,6 +139,10 @@ static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_SetParam (LPDI
 static HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, TrackVtbl, iface);
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+
+        if (!rguidType)
+                return E_POINTER;
+
 	if (IsEqualGUID (rguidType, &GUID_IDirectMusicChordMap)) {
 		TRACE("param supported\n");
 		return S_OK;
