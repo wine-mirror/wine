@@ -438,6 +438,9 @@ Passed: file size check on subdir\a.a [8]@or_broken@Skipping file size check on 
 if seems to work
 else seems to work
 if seems not to detect /c as parameter
+else if seems to work
+else if seems to work
+else if seems to work
 --- case sensitivity with and without /i option
 if seems to default to case sensitivity
 if /i seems to work

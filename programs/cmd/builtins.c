@@ -1561,7 +1561,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
                                      (*cmdList)->command)) {
 
           /* Swap between if and else processing */
-          processThese = !processThese;
+          processThese = !executecmds;
 
           /* Process the ELSE part */
           if (processThese) {

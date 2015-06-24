@@ -667,7 +667,45 @@ if /c==/c (
 ) else (
   echo parameter detection seems to be broken
 )
-
+SET elseIF=0
+if 1 == 1 (
+  SET /a elseIF=%elseIF%+1
+) else if 1 == 1 (
+  SET /a elseIF=%elseIF%+2
+) else (
+  SET /a elseIF=%elseIF%+2
+)
+if %elseIF% == 1 (
+  echo else if seems to work
+) else (
+  echo else if seems to be broken
+)
+SET elseIF=0
+if 1 == 2 (
+  SET /a elseIF=%elseIF%+2
+) else if 1 == 1 (
+  SET /a elseIF=%elseIF%+1
+) else (
+  SET /a elseIF=%elseIF%+2
+)
+if %elseIF% == 1 (
+  echo else if seems to work
+) else (
+  echo else if seems to be broken
+)
+SET elseIF=0
+if 1 == 2 (
+  SET /a elseIF=%elseIF%+2
+) else if 1 == 2 (
+  SET /a elseIF=%elseIF%+2
+) else (
+  SET /a elseIF=%elseIF%+1
+)
+if %elseIF% == 1 (
+  echo else if seems to work
+) else (
+  echo else if seems to be broken
+)
 echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity
