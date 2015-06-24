@@ -65,6 +65,7 @@ struct dyld_all_image_infos {
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/debug.h"
+#include "image_private.h"
 
 #ifdef WORDS_BIGENDIAN
 #define swap_ulong_be_to_host(n) (n)
@@ -190,7 +191,7 @@ static const char* macho_map_range(const struct macho_file_map* fmap, unsigned l
 
     TRACE("Mapped (0x%08lx - 0x%08lx) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
 
-    if (aligned_ptr == MAP_FAILED) return MACHO_NO_MAP;
+    if (aligned_ptr == MAP_FAILED) return IMAGE_NO_MAP;
     return (const char*)aligned_ptr + misalign;
 }
 
@@ -204,7 +205,7 @@ static void macho_unmap_range(const void** mapped, const struct macho_file_map* 
 {
     TRACE("(%p, %p/%d, 0x%08lx, 0x%08lx)\n", mapped, fmap, fmap->fd, offset, len);
 
-    if (mapped && *mapped != MACHO_NO_MAP)
+    if (mapped && *mapped != IMAGE_NO_MAP)
     {
         unsigned long   misalign, aligned_offset, aligned_map_end, map_size;
         void*           aligned_ptr;
@@ -216,7 +217,7 @@ static void macho_unmap_range(const void** mapped, const struct macho_file_map* 
         if (munmap(aligned_ptr, map_size) < 0)
             WARN("Couldn't unmap the range\n");
         TRACE("Unmapped (0x%08lx - 0x%08lx) from %p - %p\n", aligned_offset, aligned_map_end, aligned_ptr, (char*)aligned_ptr + map_size);
-        *mapped = MACHO_NO_MAP;
+        *mapped = IMAGE_NO_MAP;
     }
 }
 
@@ -244,10 +245,10 @@ static BOOL macho_map_ranges(const struct macho_file_map* fmap,
     if (aligned_map_end1 < aligned_offset2 || aligned_map_end2 < aligned_offset1)
     {
         *mapped1 = macho_map_range(fmap, offset1, len1);
-        if (*mapped1 != MACHO_NO_MAP)
+        if (*mapped1 != IMAGE_NO_MAP)
         {
             *mapped2 = macho_map_range(fmap, offset2, len2);
-            if (*mapped2 == MACHO_NO_MAP)
+            if (*mapped2 == IMAGE_NO_MAP)
                 macho_unmap_range(mapped1, fmap, offset1, len1);
         }
     }
@@ -256,20 +257,20 @@ static BOOL macho_map_ranges(const struct macho_file_map* fmap,
         if (offset1 < offset2)
         {
             *mapped1 = macho_map_range(fmap, offset1, offset2 + len2 - offset1);
-            if (*mapped1 != MACHO_NO_MAP)
+            if (*mapped1 != IMAGE_NO_MAP)
                 *mapped2 = (const char*)*mapped1 + offset2 - offset1;
         }
         else
         {
             *mapped2 = macho_map_range(fmap, offset2, offset1 + len1 - offset2);
-            if (*mapped2 != MACHO_NO_MAP)
+            if (*mapped2 != IMAGE_NO_MAP)
                 *mapped1 = (const char*)*mapped2 + offset1 - offset2;
         }
     }
 
     TRACE(" => %p, %p\n", *mapped1, *mapped2);
 
-    return (*mapped1 != MACHO_NO_MAP) && (*mapped2 != MACHO_NO_MAP);
+    return (*mapped1 != IMAGE_NO_MAP) && (*mapped2 != IMAGE_NO_MAP);
 }
 
 /******************************************************************
@@ -303,12 +304,12 @@ static void macho_unmap_ranges(const struct macho_file_map* fmap,
         if (offset1 < offset2)
         {
             macho_unmap_range(mapped1, fmap, offset1, offset2 + len2 - offset1);
-            *mapped2 = MACHO_NO_MAP;
+            *mapped2 = IMAGE_NO_MAP;
         }
         else
         {
             macho_unmap_range(mapped2, fmap, offset2, offset1 + len1 - offset2);
-            *mapped1 = MACHO_NO_MAP;
+            *mapped1 = IMAGE_NO_MAP;
         }
     }
 }
@@ -320,7 +321,7 @@ static void macho_unmap_ranges(const struct macho_file_map* fmap,
  */
 static const struct load_command* macho_map_load_commands(struct macho_file_map* fmap)
 {
-    if (fmap->load_commands == MACHO_NO_MAP)
+    if (fmap->load_commands == IMAGE_NO_MAP)
     {
         fmap->load_commands = (const struct load_command*) macho_map_range(
                 fmap, sizeof(fmap->mach_header), fmap->mach_header.sizeofcmds);
@@ -337,7 +338,7 @@ static const struct load_command* macho_map_load_commands(struct macho_file_map*
  */
 static void macho_unmap_load_commands(struct macho_file_map* fmap)
 {
-    if (fmap->load_commands != MACHO_NO_MAP)
+    if (fmap->load_commands != IMAGE_NO_MAP)
     {
         TRACE("Unmapping load commands: %p\n", fmap->load_commands);
         macho_unmap_range((const void**)&fmap->load_commands, fmap,
@@ -376,7 +377,7 @@ static int macho_enum_load_commands(struct macho_file_map* fmap, unsigned cmd,
 
     TRACE("(%p/%d, %u, %p, %p)\n", fmap, fmap->fd, cmd, cb, user);
 
-    if ((lc = macho_map_load_commands(fmap)) == MACHO_NO_MAP) return -1;
+    if ((lc = macho_map_load_commands(fmap)) == IMAGE_NO_MAP) return -1;
 
     TRACE("%d total commands\n", fmap->mach_header.ncmds);
 
@@ -456,7 +457,7 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
     TRACE("(%s, %p)\n", debugstr_w(filenameW), fmap);
 
     fmap->fd = -1;
-    fmap->load_commands = MACHO_NO_MAP;
+    fmap->load_commands = IMAGE_NO_MAP;
     RtlInitializeBitMap(&fmap->sect_is_code, fmap->sect_is_code_buff, MAX_SECT + 1);
 
     len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
