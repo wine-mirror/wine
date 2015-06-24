@@ -1002,6 +1002,10 @@ BOOL macho_load_debug_info(struct module* module)
 
     macho_finish_stabs(module, &mdi.ht_symtab);
 
+    if (dwarf2_parse(module, module->reloc_delta, NULL /* FIXME: some thunks to deal with ? */,
+                     &module->format_info[DFI_MACHO]->u.macho_info->file_map))
+        ret = TRUE;
+
     pool_destroy(&mdi.pool);
     return ret;
 }
@@ -1125,6 +1129,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
             HeapFree(GetProcessHeap(), 0, modfmt);
             goto leave;
         }
+        macho_info->module->reloc_delta = macho_info->module->module.BaseOfImage - fmap.u.macho.segs_start;
         macho_module_info = (void*)(modfmt + 1);
         macho_info->module->format_info[DFI_MACHO] = modfmt;
 
