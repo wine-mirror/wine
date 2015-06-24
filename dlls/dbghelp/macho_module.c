@@ -95,6 +95,7 @@ typedef struct nlist                macho_nlist;
 
 struct macho_module_info
 {
+    struct image_file_map       file_map;
     unsigned long               load_addr;
     unsigned short              in_use : 1,
                                 is_loader : 1;
@@ -429,6 +430,19 @@ static int macho_load_section_info(struct macho_file_map* fmap, const struct loa
 }
 
 /******************************************************************
+ *              reset_file_map
+ */
+static inline void reset_file_map(struct image_file_map* ifm)
+{
+    struct macho_file_map* fmap = &ifm->u.macho;
+
+    fmap->fd = -1;
+    fmap->load_commands = IMAGE_NO_MAP;
+    fmap->num_sections = 0;
+    fmap->sect = NULL;
+}
+
+/******************************************************************
  *              macho_map_file
  *
  * Maps a Mach-O file into memory (and checks it's a real Mach-O file)
@@ -445,10 +459,7 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct image_file_map* ifm)
 
     TRACE("(%s, %p)\n", debugstr_w(filenameW), fmap);
 
-    fmap->fd = -1;
-    fmap->load_commands = IMAGE_NO_MAP;
-    fmap->num_sections = 0;
-    fmap->sect = NULL;
+    reset_file_map(ifm);
 
     ifm->modtype = DMT_MACHO;
 #ifdef _WIN64
@@ -854,20 +865,24 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 }
 
 /******************************************************************
- *              macho_load_debug_info_from_map
+ *              macho_load_debug_info
  *
- * Loads the symbolic information from a Mach-O module.
- * Returns
- *      FALSE if the file doesn't contain symbolic info (or this info
- *              cannot be read or parsed)
- *      TRUE on success
+ * Loads Mach-O debugging information from the module image file.
  */
-static BOOL macho_load_debug_info_from_map(struct module* module,
-                                           struct macho_file_map* fmap)
+BOOL macho_load_debug_info(struct module* module)
 {
     BOOL                    ret = FALSE;
     struct macho_debug_info mdi;
     int                     result;
+    struct macho_file_map  *fmap;
+
+    if (module->type != DMT_MACHO || !module->format_info[DFI_MACHO]->u.macho_info)
+    {
+        ERR("Bad Mach-O module '%s'\n", debugstr_w(module->module.LoadedImageName));
+        return FALSE;
+    }
+
+    fmap = &module->format_info[DFI_MACHO]->u.macho_info->file_map.u.macho;
 
     TRACE("(%p, %p/%d)\n", module, fmap, fmap->fd);
 
@@ -886,32 +901,6 @@ static BOOL macho_load_debug_info_from_map(struct module* module,
     macho_finish_stabs(module, &mdi.ht_symtab);
 
     pool_destroy(&mdi.pool);
-    return ret;
-}
-
-/******************************************************************
- *              macho_load_debug_info
- *
- * Loads Mach-O debugging information from the module image file.
- */
-BOOL macho_load_debug_info(struct module* module)
-{
-    BOOL                    ret = TRUE;
-    struct image_file_map   fmap;
-
-    TRACE("(%p)\n", module);
-
-    if (module->type != DMT_MACHO || !module->format_info[DFI_MACHO]->u.macho_info)
-    {
-        ERR("Bad Mach-O module '%s'\n", debugstr_w(module->module.LoadedImageName));
-        return FALSE;
-    }
-
-    ret = macho_map_file(module->module.LoadedImageName, &fmap);
-    if (ret)
-        ret = macho_load_debug_info_from_map(module, &fmap.u.macho);
-
-    macho_unmap_file(&fmap);
     return ret;
 }
 
@@ -940,6 +929,7 @@ BOOL macho_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
  */
 static void macho_module_remove(struct process* pcs, struct module_format* modfmt)
 {
+    macho_unmap_file(&modfmt->u.macho_info->file_map);
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
@@ -1043,9 +1033,11 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
 
         macho_module_info->load_addr = load_addr;
 
+        macho_module_info->file_map = fmap;
+        reset_file_map(&fmap);
         if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
             macho_info->module->module.SymType = SymDeferred;
-        else if (!macho_load_debug_info_from_map(macho_info->module, &fmap.u.macho))
+        else if (!macho_load_debug_info(macho_info->module))
             ret = FALSE;
 
         macho_info->module->format_info[DFI_MACHO]->u.macho_info->in_use = 1;
