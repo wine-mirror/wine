@@ -4290,7 +4290,8 @@ static void test_GetSecurityInfo(void)
         win_skip("Failed to get current user token\n");
         return;
     }
-    GetTokenInformation(token, TokenUser, b, l, &l);
+    bret = GetTokenInformation(token, TokenUser, b, l, &l);
+    ok(bret, "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
     CloseHandle( token );
     user_sid = ((TOKEN_USER *)b)->User.Sid;
 
