@@ -123,6 +123,7 @@ struct image_file_map
             struct
             {
                 const macho_section*            section;
+                const char*                     mapped;
             }*                          sect;
 #endif
         } macho;
@@ -155,6 +156,13 @@ extern void         elf_unmap_section(struct image_section_map* ism) DECLSPEC_HI
 extern DWORD_PTR    elf_get_map_rva(const struct image_section_map* ism) DECLSPEC_HIDDEN;
 extern unsigned     elf_get_map_size(const struct image_section_map* ism) DECLSPEC_HIDDEN;
 
+extern BOOL         macho_find_section(struct image_file_map* ifm, const char* segname,
+                                       const char* sectname, struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern const char*  macho_map_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern void         macho_unmap_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern DWORD_PTR    macho_get_map_rva(const struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern unsigned     macho_get_map_size(const struct image_section_map* ism) DECLSPEC_HIDDEN;
+
 extern BOOL         pe_find_section(struct image_file_map* fmap, const char* name,
                                     struct image_section_map* ism) DECLSPEC_HIDDEN;
 extern const char*  pe_map_section(struct image_section_map* psm) DECLSPEC_HIDDEN;
@@ -167,8 +175,9 @@ static inline BOOL image_find_section(struct image_file_map* fmap, const char* n
 {
     switch (fmap->modtype)
     {
-    case DMT_ELF: return elf_find_section(fmap, name, SHT_NULL, ism);
-    case DMT_PE:  return pe_find_section(fmap, name, ism);
+    case DMT_ELF:   return elf_find_section(fmap, name, SHT_NULL, ism);
+    case DMT_MACHO: return macho_find_section(fmap, NULL, name, ism);
+    case DMT_PE:    return pe_find_section(fmap, name, ism);
     default: assert(0); return FALSE;
     }
 }
@@ -178,8 +187,9 @@ static inline const char* image_map_section(struct image_section_map* ism)
     if (!ism->fmap) return NULL;
     switch (ism->fmap->modtype)
     {
-    case DMT_ELF: return elf_map_section(ism);
-    case DMT_PE:  return pe_map_section(ism);
+    case DMT_ELF:   return elf_map_section(ism);
+    case DMT_MACHO: return macho_map_section(ism);
+    case DMT_PE:    return pe_map_section(ism);
     default: assert(0); return NULL;
     }
 }
@@ -189,8 +199,9 @@ static inline void image_unmap_section(struct image_section_map* ism)
     if (!ism->fmap) return;
     switch (ism->fmap->modtype)
     {
-    case DMT_ELF: elf_unmap_section(ism); break;
-    case DMT_PE:  pe_unmap_section(ism);   break;
+    case DMT_ELF:   elf_unmap_section(ism); break;
+    case DMT_MACHO: macho_unmap_section(ism); break;
+    case DMT_PE:    pe_unmap_section(ism);   break;
     default: assert(0); return;
     }
 }
@@ -200,8 +211,9 @@ static inline DWORD_PTR image_get_map_rva(const struct image_section_map* ism)
     if (!ism->fmap) return 0;
     switch (ism->fmap->modtype)
     {
-    case DMT_ELF: return elf_get_map_rva(ism);
-    case DMT_PE:  return pe_get_map_rva(ism);
+    case DMT_ELF:   return elf_get_map_rva(ism);
+    case DMT_MACHO: return macho_get_map_rva(ism);
+    case DMT_PE:    return pe_get_map_rva(ism);
     default: assert(0); return 0;
     }
 }
@@ -211,8 +223,9 @@ static inline unsigned image_get_map_size(const struct image_section_map* ism)
     if (!ism->fmap) return 0;
     switch (ism->fmap->modtype)
     {
-    case DMT_ELF: return elf_get_map_size(ism);
-    case DMT_PE:  return pe_get_map_size(ism);
+    case DMT_ELF:   return elf_get_map_size(ism);
+    case DMT_MACHO: return macho_get_map_size(ism);
+    case DMT_PE:    return pe_get_map_size(ism);
     default: assert(0); return 0;
     }
 }

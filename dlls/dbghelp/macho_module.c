@@ -24,12 +24,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "dbghelp_private.h"
-
-#ifdef HAVE_MACH_O_LOADER_H
-
 #include <assert.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -39,6 +33,16 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "dbghelp_private.h"
+#include "winternl.h"
+#include "wine/library.h"
+#include "wine/debug.h"
+#include "image_private.h"
+
+#ifdef HAVE_MACH_O_LOADER_H
 
 #include <mach-o/fat.h>
 #include <mach-o/loader.h>
@@ -61,11 +65,6 @@ struct dyld_all_image_infos {
     int                           processDetachedFromSharedRegion;
 };
 #endif
-
-#include "winternl.h"
-#include "wine/library.h"
-#include "wine/debug.h"
-#include "image_private.h"
 
 #ifdef WORDS_BIGENDIAN
 #define swap_ulong_be_to_host(n) (n)
@@ -146,7 +145,8 @@ static void macho_calc_range(const struct macho_file_map* fmap, unsigned long of
  *
  * Maps a range (offset, length in bytes) from a Mach-O file into memory
  */
-static const char* macho_map_range(const struct macho_file_map* fmap, unsigned long offset, unsigned long len)
+static const char* macho_map_range(const struct macho_file_map* fmap, unsigned long offset, unsigned long len,
+                                   const char** base)
 {
     unsigned long   misalign, aligned_offset, aligned_map_end, map_size;
     const void*     aligned_ptr;
@@ -161,6 +161,8 @@ static const char* macho_map_range(const struct macho_file_map* fmap, unsigned l
     TRACE("Mapped (0x%08lx - 0x%08lx) to %p\n", aligned_offset, aligned_map_end, aligned_ptr);
 
     if (aligned_ptr == MAP_FAILED) return IMAGE_NO_MAP;
+    if (base)
+        *base = aligned_ptr;
     return (const char*)aligned_ptr + misalign;
 }
 
@@ -169,12 +171,12 @@ static const char* macho_map_range(const struct macho_file_map* fmap, unsigned l
  *
  * Unmaps a range (offset, length in bytes) of a Mach-O file from memory
  */
-static void macho_unmap_range(const void** mapped, const struct macho_file_map* fmap,
+static void macho_unmap_range(const char** base, const void** mapped, const struct macho_file_map* fmap,
                               unsigned long offset, unsigned long len)
 {
-    TRACE("(%p, %p/%d, 0x%08lx, 0x%08lx)\n", mapped, fmap, fmap->fd, offset, len);
+    TRACE("(%p, %p, %p/%d, 0x%08lx, 0x%08lx)\n", base, mapped, fmap, fmap->fd, offset, len);
 
-    if (mapped && *mapped != IMAGE_NO_MAP)
+    if ((mapped && *mapped != IMAGE_NO_MAP) || (base && *base != IMAGE_NO_MAP))
     {
         unsigned long   misalign, aligned_offset, aligned_map_end, map_size;
         void*           aligned_ptr;
@@ -182,11 +184,17 @@ static void macho_unmap_range(const void** mapped, const struct macho_file_map* 
         macho_calc_range(fmap, offset, len, &aligned_offset, &aligned_map_end,
                          &map_size, &misalign);
 
-        aligned_ptr = (char*)*mapped - misalign;
+        if (mapped)
+            aligned_ptr = (char*)*mapped - misalign;
+        else
+            aligned_ptr = (void*)*base;
         if (munmap(aligned_ptr, map_size) < 0)
             WARN("Couldn't unmap the range\n");
         TRACE("Unmapped (0x%08lx - 0x%08lx) from %p - %p\n", aligned_offset, aligned_map_end, aligned_ptr, (char*)aligned_ptr + map_size);
-        *mapped = IMAGE_NO_MAP;
+        if (mapped)
+            *mapped = IMAGE_NO_MAP;
+        if (base)
+            *base = IMAGE_NO_MAP;
     }
 }
 
@@ -213,25 +221,25 @@ static BOOL macho_map_ranges(const struct macho_file_map* fmap,
 
     if (aligned_map_end1 < aligned_offset2 || aligned_map_end2 < aligned_offset1)
     {
-        *mapped1 = macho_map_range(fmap, offset1, len1);
+        *mapped1 = macho_map_range(fmap, offset1, len1, NULL);
         if (*mapped1 != IMAGE_NO_MAP)
         {
-            *mapped2 = macho_map_range(fmap, offset2, len2);
+            *mapped2 = macho_map_range(fmap, offset2, len2, NULL);
             if (*mapped2 == IMAGE_NO_MAP)
-                macho_unmap_range(mapped1, fmap, offset1, len1);
+                macho_unmap_range(NULL, mapped1, fmap, offset1, len1);
         }
     }
     else
     {
         if (offset1 < offset2)
         {
-            *mapped1 = macho_map_range(fmap, offset1, offset2 + len2 - offset1);
+            *mapped1 = macho_map_range(fmap, offset1, offset2 + len2 - offset1, NULL);
             if (*mapped1 != IMAGE_NO_MAP)
                 *mapped2 = (const char*)*mapped1 + offset2 - offset1;
         }
         else
         {
-            *mapped2 = macho_map_range(fmap, offset2, offset1 + len1 - offset2);
+            *mapped2 = macho_map_range(fmap, offset2, offset1 + len1 - offset2, NULL);
             if (*mapped2 != IMAGE_NO_MAP)
                 *mapped1 = (const char*)*mapped2 + offset1 - offset2;
         }
@@ -265,22 +273,106 @@ static void macho_unmap_ranges(const struct macho_file_map* fmap,
 
     if (aligned_map_end1 < aligned_offset2 || aligned_map_end2 < aligned_offset1)
     {
-        macho_unmap_range(mapped1, fmap, offset1, len1);
-        macho_unmap_range(mapped2, fmap, offset2, len2);
+        macho_unmap_range(NULL, mapped1, fmap, offset1, len1);
+        macho_unmap_range(NULL, mapped2, fmap, offset2, len2);
     }
     else
     {
         if (offset1 < offset2)
         {
-            macho_unmap_range(mapped1, fmap, offset1, offset2 + len2 - offset1);
+            macho_unmap_range(NULL, mapped1, fmap, offset1, offset2 + len2 - offset1);
             *mapped2 = IMAGE_NO_MAP;
         }
         else
         {
-            macho_unmap_range(mapped2, fmap, offset2, offset1 + len1 - offset2);
+            macho_unmap_range(NULL, mapped2, fmap, offset2, offset1 + len1 - offset2);
             *mapped1 = IMAGE_NO_MAP;
         }
     }
+}
+
+/******************************************************************
+ *              macho_find_section
+ */
+BOOL macho_find_section(struct image_file_map* ifm, const char* segname, const char* sectname, struct image_section_map* ism)
+{
+    struct macho_file_map* fmap;
+    unsigned i;
+    char tmp[sizeof(fmap->sect[0].section->sectname)];
+
+    /* Other parts of dbghelp use section names like ".eh_frame".  Mach-O uses
+       names like "__eh_frame".  Convert those. */
+    if (sectname[0] == '.')
+    {
+        lstrcpynA(tmp, "__", sizeof(tmp));
+        lstrcpynA(tmp + 2, sectname + 1, sizeof(tmp) - 2);
+        sectname = tmp;
+    }
+
+    fmap = &ifm->u.macho;
+    for (i = 0; i < fmap->num_sections; i++)
+    {
+        if (strcmp(fmap->sect[i].section->sectname, sectname) == 0 &&
+            (!segname || strcmp(fmap->sect[i].section->sectname, segname) == 0))
+        {
+            ism->fmap = ifm;
+            ism->sidx = i;
+            return TRUE;
+        }
+    }
+
+    ism->fmap = NULL;
+    ism->sidx = -1;
+    return FALSE;
+}
+
+/******************************************************************
+ *              macho_map_section
+ */
+const char* macho_map_section(struct image_section_map* ism)
+{
+    struct macho_file_map* fmap = &ism->fmap->u.macho;
+
+    assert(ism->fmap->modtype == DMT_MACHO);
+    if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.macho.num_sections)
+        return IMAGE_NO_MAP;
+
+    return macho_map_range(fmap, fmap->sect[ism->sidx].section->offset, fmap->sect[ism->sidx].section->size,
+                           &fmap->sect[ism->sidx].mapped);
+}
+
+/******************************************************************
+ *              macho_unmap_section
+ */
+void macho_unmap_section(struct image_section_map* ism)
+{
+    struct macho_file_map* fmap = &ism->fmap->u.macho;
+
+    if (ism->sidx >= 0 && ism->sidx < fmap->num_sections && fmap->sect[ism->sidx].mapped != IMAGE_NO_MAP)
+    {
+        macho_unmap_range(&fmap->sect[ism->sidx].mapped, NULL, fmap, fmap->sect[ism->sidx].section->offset,
+                          fmap->sect[ism->sidx].section->size);
+    }
+}
+
+/******************************************************************
+ *              macho_get_map_rva
+ */
+DWORD_PTR macho_get_map_rva(const struct image_section_map* ism)
+{
+    if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.macho.num_sections)
+        return 0;
+    return ism->fmap->u.macho.sect[ism->sidx].section->addr - ism->fmap->u.macho.segs_start;
+}
+
+/******************************************************************
+ *              macho_get_map_size
+ */
+unsigned macho_get_map_size(const struct image_section_map* ism)
+{
+    if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.macho.num_sections)
+        return 0;
+    return ism->fmap->u.macho.sect[ism->sidx].section->size;
 }
 
 /******************************************************************
@@ -293,7 +385,7 @@ static const struct load_command* macho_map_load_commands(struct macho_file_map*
     if (fmap->load_commands == IMAGE_NO_MAP)
     {
         fmap->load_commands = (const struct load_command*) macho_map_range(
-                fmap, sizeof(fmap->mach_header), fmap->mach_header.sizeofcmds);
+                fmap, sizeof(fmap->mach_header), fmap->mach_header.sizeofcmds, NULL);
         TRACE("Mapped load commands: %p\n", fmap->load_commands);
     }
 
@@ -310,7 +402,7 @@ static void macho_unmap_load_commands(struct macho_file_map* fmap)
     if (fmap->load_commands != IMAGE_NO_MAP)
     {
         TRACE("Unmapping load commands: %p\n", fmap->load_commands);
-        macho_unmap_range((const void**)&fmap->load_commands, fmap,
+        macho_unmap_range(NULL, (const void**)&fmap->load_commands, fmap,
                     sizeof(fmap->mach_header), fmap->mach_header.sizeofcmds);
     }
 }
@@ -423,6 +515,7 @@ static int macho_load_section_info(struct macho_file_map* fmap, const struct loa
     for (i = 0; i < sc->nsects; i++)
     {
         fmap->sect[*section_index].section = &section[i];
+        fmap->sect[*section_index].mapped = IMAGE_NO_MAP;
         (*section_index)++;
     }
 
@@ -556,7 +649,10 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct image_file_map* ifm)
 
     i = 0;
     if (macho_enum_load_commands(fmap, TARGET_SEGMENT_COMMAND, macho_load_section_info, &i) < 0)
+    {
+        fmap->num_sections = 0;
         goto done;
+    }
 
     fmap->segs_size -= fmap->segs_start;
     TRACE("segs_start: 0x%08lx, segs_size: 0x%08lx\n", (unsigned long)fmap->segs_start,
@@ -580,6 +676,12 @@ static void macho_unmap_file(struct image_file_map* ifm)
     TRACE("(%p/%d)\n", ifm, ifm->u.macho.fd);
     if (ifm->u.macho.fd != -1)
     {
+        struct image_section_map ism;
+
+        ism.fmap = ifm;
+        for (ism.sidx = 0; ism.sidx < ifm->u.macho.num_sections; ism.sidx++)
+            macho_unmap_section(&ism);
+
         HeapFree(GetProcessHeap(), 0, ifm->u.macho.sect);
         macho_unmap_load_commands(&ifm->u.macho);
         close(ifm->u.macho.fd);
@@ -1442,6 +1544,30 @@ struct module*  macho_load_module(struct process* pcs, const WCHAR* name, unsign
 }
 
 #else  /* HAVE_MACH_O_LOADER_H */
+
+BOOL macho_find_section(struct image_file_map* ifm, const char* segname, const char* sectname, struct image_section_map* ism)
+{
+    return FALSE;
+}
+
+const char* macho_map_section(struct image_section_map* ism)
+{
+    return NULL;
+}
+
+void macho_unmap_section(struct image_section_map* ism)
+{
+}
+
+DWORD_PTR macho_get_map_rva(const struct image_section_map* ism)
+{
+    return 0;
+}
+
+unsigned macho_get_map_size(const struct image_section_map* ism)
+{
+    return 0;
+}
 
 BOOL    macho_synchronize_module_list(struct process* pcs)
 {
