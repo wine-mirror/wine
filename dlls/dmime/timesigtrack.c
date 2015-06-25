@@ -24,6 +24,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 /*****************************************************************************
  * IDirectMusicTimeSigTrack implementation
  */
+typedef struct IDirectMusicTimeSigTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicTimeSigTrack;
+
 /* IDirectMusicTimeSigTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicTimeSigTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicTimeSigTrack, UnknownVtbl, iface);

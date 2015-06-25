@@ -24,6 +24,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 /*****************************************************************************
  * IDirectMusicLyricsTrack implementation
  */
+typedef struct IDirectMusicLyricsTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicLyricsTrack;
+
 /* IDirectMusicLyricsTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicLyricsTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicLyricsTrack, UnknownVtbl, iface);
