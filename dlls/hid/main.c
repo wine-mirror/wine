@@ -24,14 +24,10 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "ddk/hidsdi.h"
 
 #include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(hid);
-
 #include "initguid.h"
-DEFINE_GUID(HID_GUID, 0x4D1E55B2, 0xF16F, 0x11CF, 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
+#include "ddk/hidclass.h"
 
 /***********************************************************************/
 
@@ -46,36 +42,4 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
             break;
     }
     return TRUE;
-}
-
-BOOLEAN WINAPI HidD_GetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
-{
-    static int count = 0;
-    if (!count++)
-        FIXME("(%p %p %u) stub\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return FALSE;
-}
-
-void WINAPI HidD_GetHidGuid(LPGUID guid)
-{
-    TRACE("(%p)\n", guid);
-    *guid = HID_GUID;
-}
-
-BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
-{
-    FIXME("(%p %p %u) stub\n", HidDeviceObject, Buffer, BufferLength);
-    return FALSE;
-}
-
-BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
-{
-    FIXME("(%p %p %u) stub\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
-    return FALSE;
-}
-
-BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
-{
-    FIXME("(%p %p %u) stub\n", HidDeviceObject, Buffer, BufferLength);
-    return FALSE;
 }

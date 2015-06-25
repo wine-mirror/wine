@@ -2,6 +2,7 @@ MODULE    = hid.dll
 IMPORTLIB = hid
 
 C_SRCS = \
+	hidd.c \
 	main.c
 
 RC_SRCS = version.rc
