@@ -964,8 +964,8 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         /* trim from the left */
         run->glyphcount = r->u.regular.run.glyphCount - r->u.regular.clustermap[start];
         /* trim from the right */
-        if (length < r->u.regular.descr.stringLength)
-            run->glyphcount -= r->u.regular.clustermap[start + length];
+        if (start + length < r->u.regular.descr.stringLength - 1)
+            run->glyphcount -= r->u.regular.run.glyphCount - r->u.regular.clustermap[start + length];
     }
     else
         run->glyphcount = 0;
