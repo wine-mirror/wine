@@ -306,10 +306,9 @@ static HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_IsDirty (LPPERSISTSTR
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicBandTrack_IPersistStream_LoadBand (LPPERSISTSTREAM iface, IStream* pClonedStream, IDirectMusicBand** ppBand,
-							      DMUS_PRIVATE_BAND_ITEM_HEADER* pHeader) {
-
-  ICOM_THIS_MULTI(IDirectMusicBandTrack, PersistStreamVtbl, iface);
+static HRESULT load_band(IDirectMusicBandTrack *This, IStream *pClonedStream,
+        IDirectMusicBand **ppBand, DMUS_PRIVATE_BAND_ITEM_HEADER *pHeader)
+{
   HRESULT hr = E_FAIL;
   IPersistStream* pPersistStream = NULL;
   
@@ -352,9 +351,9 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_LoadBand (LPPERSISTSTREAM if
   return S_OK;
 }
 
-static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  /*ICOM_THIS_MULTI(IDirectMusicBandTrack, PersistStreamVtbl, iface);*/
+static HRESULT parse_bands_list(IDirectMusicBandTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, ListSize[3], ListCount[3];
@@ -426,8 +425,8 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
 	    liMove.QuadPart = 0;
 	    liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
 	    IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
-	    
-	    hr = IDirectMusicBandTrack_IPersistStream_LoadBand (iface, pClonedStream, &pBand, &header);
+
+            hr = load_band(This, pClonedStream, &pBand, &header);
 	    if (FAILED(hr)) {
 	      ERR(": could not load track\n");
 	      return hr;
@@ -474,9 +473,9 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandsList (LPPERSISTSTR
   return S_OK;
 }
 
-static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  ICOM_THIS_MULTI(IDirectMusicBandTrack, PersistStreamVtbl, iface);
+static HRESULT parse_bandtrack_form(IDirectMusicBandTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -538,7 +537,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (LPPERSIS
 	}
 	case DMUS_FOURCC_BANDS_LIST: {
 	  TRACE_(dmfile)(": TRACK list\n");
-	  hr = IDirectMusicBandTrack_IPersistStream_ParseBandsList (iface, &Chunk, pStm);
+          hr = parse_bands_list(This, &Chunk, pStm);
 	  if (FAILED(hr)) return hr;
 	  break;
 	}
@@ -584,7 +583,7 @@ static HRESULT WINAPI IDirectMusicBandTrack_IPersistStream_Load (LPPERSISTSTREAM
     switch (Chunk.fccID) {
     case DMUS_FOURCC_BANDTRACK_FORM: {
       TRACE_(dmfile)(": Band track form\n");
-      hr = IDirectMusicBandTrack_IPersistStream_ParseBandTrackForm (iface, &Chunk, pStm);
+      hr = parse_bandtrack_form(This, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }
