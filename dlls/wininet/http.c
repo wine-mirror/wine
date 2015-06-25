@@ -1671,7 +1671,8 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
 
         TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
 
-        HTTP_ProcessHeader(request, header, authorization, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+        HTTP_ProcessHeader(request, header, authorization,
+                           HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
         heap_free(authorization);
     }
     else if (!strcmpW(header, szAuthorization) && (host = get_host_header(request)))
@@ -1692,7 +1693,8 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
 
             TRACE("Inserting authorization: %s\n", debugstr_w(authorization));
 
-            HTTP_ProcessHeader(request, header, authorization, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+            HTTP_ProcessHeader(request, header, authorization,
+                               HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_ADD);
             heap_free(data);
             heap_free(authorization);
         }
@@ -3413,7 +3415,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
             HTTP_ProcessHeader(request, HTTP_ACCEPT, lpszAcceptTypes[i],
                                HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA |
                                HTTP_ADDHDR_FLAG_REQ |
-                               (i == 0 ? HTTP_ADDHDR_FLAG_REPLACE : 0));
+                               (i == 0 ? (HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_ADD) : 0));
         }
     }
 
@@ -4253,7 +4255,8 @@ static void HTTP_InsertCookies(http_request_t *request)
     if(res != ERROR_SUCCESS || !cookies)
         return;
 
-    HTTP_HttpAddRequestHeadersW(request, cookies, strlenW(cookies), HTTP_ADDREQ_FLAG_REPLACE);
+    HTTP_HttpAddRequestHeadersW(request, cookies, strlenW(cookies),
+                                HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
     heap_free(cookies);
 }
 
@@ -4974,7 +4977,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         HTTP_FixURL(request);
         if (request->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION)
         {
-            HTTP_ProcessHeader(request, szConnection, szKeepAlive, HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
+            HTTP_ProcessHeader(request, szConnection, szKeepAlive,
+                               HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_ADD);
         }
         HTTP_InsertAuthorization(request, request->authInfo, szAuthorization);
         HTTP_InsertAuthorization(request, request->proxyAuthInfo, szProxy_Authorization);
@@ -5991,7 +5995,7 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
 
     /* Add status code */
     HTTP_ProcessHeader(request, szStatus, status_code,
-            HTTP_ADDHDR_FLAG_REPLACE);
+                       HTTP_ADDHDR_FLAG_REPLACE | HTTP_ADDHDR_FLAG_ADD);
 
     heap_free(request->version);
     heap_free(request->statusText);
