@@ -145,6 +145,10 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_IsParamSupporte
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
 
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+
+        if (!rguidType)
+                return E_POINTER;
+
 	if (IsEqualGUID (rguidType, &GUID_CommandParam)
 		|| IsEqualGUID (rguidType, &GUID_CommandParam2)
 		|| IsEqualGUID (rguidType, &GUID_CommandParamNext)) {

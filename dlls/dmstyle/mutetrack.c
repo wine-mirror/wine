@@ -144,6 +144,10 @@ static HRESULT WINAPI IDirectMusicMuteTrack_IDirectMusicTrack_IsParamSupported (
 	ICOM_THIS_MULTI(IDirectMusicMuteTrack, TrackVtbl, iface);
 
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+
+        if (!rguidType)
+                return E_POINTER;
+
 	if (IsEqualGUID (rguidType, &GUID_MuteParam)) {
 		TRACE("param supported\n");
 		return S_OK;

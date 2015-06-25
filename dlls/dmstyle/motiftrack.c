@@ -144,6 +144,10 @@ static HRESULT WINAPI IDirectMusicMotifTrack_IDirectMusicTrack_IsParamSupported 
 	ICOM_THIS_MULTI(IDirectMusicMotifTrack, TrackVtbl, iface);
 
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+
+        if (!rguidType)
+                return E_POINTER;
+
 	if (IsEqualGUID (rguidType, &GUID_DisableTimeSig)
 		|| IsEqualGUID (rguidType, &GUID_EnableTimeSig)
 		|| IsEqualGUID (rguidType, &GUID_SeedVariations)

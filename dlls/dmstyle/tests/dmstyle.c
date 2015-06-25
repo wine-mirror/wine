@@ -273,6 +273,10 @@ static void test_track(void)
         }
         ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
 
+        /* IDirectMusicTrack8 */
+        hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+
         /* IPersistStream */
         hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
         ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);

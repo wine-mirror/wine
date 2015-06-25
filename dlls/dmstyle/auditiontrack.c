@@ -144,6 +144,10 @@ static HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_IsParamSupport
 	ICOM_THIS_MULTI(IDirectMusicAuditionTrack, TrackVtbl, iface);
 
 	TRACE("(%p, %s)\n", This, debugstr_dmguid(rguidType));
+
+        if (!rguidType)
+                return E_POINTER;
+
 	/* didn't find any params */
 	TRACE("param unsupported\n");
 	return DMUS_E_TYPE_UNSUPPORTED;
