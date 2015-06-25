@@ -9,7 +9,8 @@ C_SRCS = \
 	misc.c \
 	protocol.c \
 	script.c \
-	style.c
+	style.c \
+	xmlhttprequest.c
 
 IDL_SRCS = test_tlb.idl
 
