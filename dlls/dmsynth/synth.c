@@ -575,31 +575,37 @@ static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj, IUnknown *outer)
 {
-	IDirectMusicSynth8Impl *obj;
-	
-	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSynth8Impl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	obj->IDirectMusicSynth8_iface.lpVtbl = &DirectMusicSynth8_Vtbl;
-	obj->IKsControl_iface.lpVtbl = &DMSynthImpl_IKsControl_Vtbl;
-	obj->ref = 0;
-	/* fill in caps */
-	obj->pCaps.dwSize = sizeof(DMUS_PORTCAPS);
-	obj->pCaps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
-	obj->pCaps.guidPort = CLSID_DirectMusicSynth;
-	obj->pCaps.dwClass = DMUS_PC_OUTPUTCLASS;
-	obj->pCaps.dwType = DMUS_PORT_USER_MODE_SYNTH;
-	obj->pCaps.dwMemorySize = DMUS_PC_SYSTEMMEMORY;
-	obj->pCaps.dwMaxChannelGroups = 1000;
-	obj->pCaps.dwMaxVoices = 1000;
-	obj->pCaps.dwMaxAudioChannels = 2;
-	obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
-	MultiByteToWideChar (CP_ACP, 0, "Microsoft Synthesizer", -1, obj->pCaps.wszDescription, sizeof(obj->pCaps.wszDescription)/sizeof(WCHAR));
+    static const WCHAR descrW[] = {'M','i','c','r','o','s','o','f','t',' ',
+        'S','y','n','t','h','e','s','i','z','e','r',0};
+    IDirectMusicSynth8Impl *obj;
+    HRESULT hr;
 
-	return IDirectMusicSynth8Impl_QueryInterface ((LPDIRECTMUSICSYNTH8)obj, lpcGUID, ppobj);
+    TRACE("(%s, %p, %p)\n", debugstr_guid(riid), ppobj, outer);
+
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    if (NULL == obj) {
+        *ppobj = NULL;
+        return E_OUTOFMEMORY;
+    }
+    obj->IDirectMusicSynth8_iface.lpVtbl = &DirectMusicSynth8_Vtbl;
+    obj->IKsControl_iface.lpVtbl = &DMSynthImpl_IKsControl_Vtbl;
+    obj->ref = 1;
+    /* fill in caps */
+    obj->pCaps.dwSize = sizeof(DMUS_PORTCAPS);
+    obj->pCaps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
+    obj->pCaps.guidPort = CLSID_DirectMusicSynth;
+    obj->pCaps.dwClass = DMUS_PC_OUTPUTCLASS;
+    obj->pCaps.dwType = DMUS_PORT_USER_MODE_SYNTH;
+    obj->pCaps.dwMemorySize = DMUS_PC_SYSTEMMEMORY;
+    obj->pCaps.dwMaxChannelGroups = 1000;
+    obj->pCaps.dwMaxVoices = 1000;
+    obj->pCaps.dwMaxAudioChannels = 2;
+    obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
+    strcpyW(obj->pCaps.wszDescription, descrW);
+
+    hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
+    IDirectMusicSynth8_Release(&obj->IDirectMusicSynth8_iface);
+    return hr;
 }
