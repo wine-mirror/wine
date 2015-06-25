@@ -636,6 +636,25 @@ int __thiscall streambuf_sbumpc(streambuf *this)
     return ret;
 }
 
+/* ?stossc@streambuf@@QAEXXZ */
+/* ?stossc@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_stossc, 4)
+void __thiscall streambuf_stossc(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->unbuffered) {
+        if (this->stored_char == EOF)
+            call_streambuf_underflow(this);
+        else
+            this->stored_char = EOF;
+    } else {
+        if (this->gptr >= this->egptr)
+            call_streambuf_underflow(this);
+        if (this->gptr < this->egptr)
+            this->gptr++;
+    }
+}
+
 /******************************************************************
  *		 ??1ios@@UAE@XZ (MSVCRTI.@)
  *        class ios & __thiscall ios::-ios<<(void)

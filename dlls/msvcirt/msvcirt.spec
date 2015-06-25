@@ -710,8 +710,8 @@
 @ cdecl -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z(ptr str long) streambuf_sputn
 @ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ  # struct _iobuf * __thiscall stdiobuf::stdiofile(void)
 @ stub -arch=win64 ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ
-@ stub -arch=win32 ?stossc@streambuf@@QAEXXZ  # void __thiscall streambuf::stossc(void)
-@ stub -arch=win64 ?stossc@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?stossc@streambuf@@QAEXXZ(ptr) streambuf_stossc
+@ cdecl -arch=win64 ?stossc@streambuf@@QEAAXXZ(ptr) streambuf_stossc
 @ stub -arch=win32 ?str@istrstream@@QAEPADXZ  # char * __thiscall istrstream::str(void)
 @ stub -arch=win64 ?str@istrstream@@QEAAPEADXZ
 @ stub -arch=win32 ?str@ostrstream@@QAEPADXZ  # char * __thiscall ostrstream::str(void)

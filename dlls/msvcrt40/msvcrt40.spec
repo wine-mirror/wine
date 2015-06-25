@@ -770,8 +770,8 @@
 @ cdecl -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z(ptr str long) msvcirt.?sputn@streambuf@@QEAAHPEBDH@Z
 @ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ
 @ stub -arch=win64 ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ
-@ stub -arch=win32 ?stossc@streambuf@@QAEXXZ
-@ stub -arch=win64 ?stossc@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?stossc@streambuf@@QAEXXZ(ptr) msvcirt.?stossc@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?stossc@streambuf@@QEAAXXZ(ptr) msvcirt.?stossc@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?str@istrstream@@QAEPADXZ
 @ stub -arch=win64 ?str@istrstream@@QEAAPEADXZ
 @ stub -arch=win32 ?str@ostrstream@@QAEPADXZ
