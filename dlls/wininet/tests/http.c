@@ -2051,6 +2051,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     WSADATA wsaData;
     int last_request = 0;
     char host_header[22];
+    char host_header_override[30];
     static BOOL test_b = FALSE;
     static int test_no_cache = 0;
 
@@ -2077,6 +2078,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     SetEvent(si->hEvent);
 
     sprintf(host_header, "Host: localhost:%d", si->port);
+    sprintf(host_header_override, "Host: test.local:%d\r\n", si->port);
 
     do
     {
@@ -2347,6 +2349,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "PUT /upload2.txt"))
         {
             if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+                send(c, okmsg, sizeof okmsg-1, 0);
+            else
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+        }
+        if (strstr(buffer, "/test_host_override"))
+        {
+            if (strstr(buffer, host_header_override))
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
@@ -2940,6 +2949,105 @@ static void test_connection_header(int port)
     ok(ret, "HttpSendRequest failed\n");
 
     test_status_code(req, 200);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
+static void test_header_override(int port)
+{
+    char buffer[128], host_header_override[30], full_url[128];
+    HINTERNET ses, con, req;
+    DWORD size, count, err;
+    BOOL ret;
+
+    sprintf(host_header_override, "Host: test.local:%d\r\n", port);
+    sprintf(full_url, "http://localhost:%d/test_host_override", port);
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, NULL, "/test_host_override", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    size = sizeof(buffer) - 1;
+    count = 0;
+    memset(buffer, 0, sizeof(buffer));
+    ret = HttpQueryInfoA(req, HTTP_QUERY_HOST | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, &count);
+    err = GetLastError();
+    todo_wine ok(!ret, "HttpQueryInfo succeeded\n");
+    todo_wine ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
+
+    size = sizeof(buffer) - 1;
+    memset(buffer, 0, sizeof(buffer));
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_URL, buffer, &size);
+    ok(ret, "InternetQueryOption failed\n");
+    ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
+
+    ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_COALESCE);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    size = sizeof(buffer) - 1;
+    count = 0;
+    memset(buffer, 0, sizeof(buffer));
+    ret = HttpQueryInfoA(req, HTTP_QUERY_HOST | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, &count);
+    ok(ret, "HttpQueryInfo failed\n");
+
+    size = sizeof(buffer) - 1;
+    memset(buffer, 0, sizeof(buffer));
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_URL, buffer, &size);
+    ok(ret, "InternetQueryOption failed\n");
+    todo_wine ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    test_status_code_todo(req, 200);
+
+    InternetCloseHandle(req);
+    req = HttpOpenRequestA(con, NULL, "/test_host_override", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_COALESCE);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_COALESCE);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    test_status_code(req, 400);
+
+    InternetCloseHandle(req);
+    req = HttpOpenRequestA(con, NULL, "/test_host_override", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_ADD);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    test_status_code(req, 200);
+
+    InternetCloseHandle(req);
+    req = HttpOpenRequestA(con, NULL, "/test_host_override", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_REPLACE);
+    err = GetLastError();
+    todo_wine ok(!ret, "HttpAddRequestHeaders succeeded\n");
+    todo_wine ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
+
+    test_status_code_todo(req, 400);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
@@ -4322,6 +4430,7 @@ static void test_http_connection(void)
     test_basic_request(si.port, "GET", "/test6");
     test_basic_request(si.port, "GET", "/testF");
     test_connection_header(si.port);
+    test_header_override(si.port);
     test_http1_1(si.port);
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
