@@ -8,7 +8,7 @@ C_SRCS = \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
-	d3dcompiler_43_main.c \
+	main.c \
 	reflection.c \
 	utils.c
 
