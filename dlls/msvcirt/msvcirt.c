@@ -615,6 +615,27 @@ int __thiscall streambuf_snextc(streambuf *this)
     }
 }
 
+/* ?sbumpc@streambuf@@QAEHXZ */
+/* ?sbumpc@streambuf@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_sbumpc, 4)
+int __thiscall streambuf_sbumpc(streambuf *this)
+{
+    int ret;
+
+    TRACE("(%p)\n", this);
+
+    if (this->unbuffered) {
+        ret = this->stored_char;
+        this->stored_char = EOF;
+        if (ret == EOF)
+            ret = call_streambuf_underflow(this);
+    } else {
+        ret = (this->gptr < this->egptr) ? *this->gptr : call_streambuf_underflow(this);
+        this->gptr++;
+    }
+    return ret;
+}
+
 /******************************************************************
  *		 ??1ios@@UAE@XZ (MSVCRTI.@)
  *        class ios & __thiscall ios::-ios<<(void)

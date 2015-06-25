@@ -637,8 +637,8 @@
 @ stub -arch=win64 ?read@istream@@QEAAAEAV1@PEADH@Z
 @ stub -arch=win32 ?read@istream@@QAEAAV1@PAEH@Z  # class istream & __thiscall istream::read(unsigned char *,int)
 @ stub -arch=win64 ?read@istream@@QEAAAEAV1@PEAEH@Z
-@ stub -arch=win32 ?sbumpc@streambuf@@QAEHXZ  # int __thiscall streambuf::sbumpc(void)
-@ stub -arch=win64 ?sbumpc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?sbumpc@streambuf@@QAEHXZ(ptr) streambuf_sbumpc
+@ cdecl -arch=win64 ?sbumpc@streambuf@@QEAAHXZ(ptr) streambuf_sbumpc
 @ stub -arch=win32 ?seekg@istream@@QAEAAV1@J@Z  # class istream & __thiscall istream::seekg(long)
 @ stub -arch=win64 ?seekg@istream@@QEAAAEAV1@J@Z
 @ stub -arch=win32 ?seekg@istream@@QAEAAV1@JW4seek_dir@ios@@@Z  # class istream & __thiscall istream::seekg(long,enum ios::seek_dir)

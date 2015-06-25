@@ -623,8 +623,8 @@
 @ stub -arch=win64 ?read@istream@@QEAAAEAV1@PEADH@Z
 @ stub -arch=win32 ?read@istream@@QAEAAV1@PAEH@Z
 @ stub -arch=win64 ?read@istream@@QEAAAEAV1@PEAEH@Z
-@ stub -arch=win32 ?sbumpc@streambuf@@QAEHXZ
-@ stub -arch=win64 ?sbumpc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?sbumpc@streambuf@@QAEHXZ(ptr) msvcirt.?sbumpc@streambuf@@QAEHXZ
+@ cdecl -arch=win64 ?sbumpc@streambuf@@QEAAHXZ(ptr) msvcirt.?sbumpc@streambuf@@QEAAHXZ
 @ stub -arch=win32 ?seekg@istream@@QAEAAV1@J@Z
 @ stub -arch=win64 ?seekg@istream@@QEAAAEAV1@J@Z
 @ stub -arch=win32 ?seekg@istream@@QAEAAV1@JW4seek_dir@ios@@@Z
