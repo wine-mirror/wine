@@ -2275,7 +2275,7 @@ static RPC_STATUS insert_content_length_header(HINTERNET request, DWORD len)
     WCHAR header[sizeof(fmtW) / sizeof(fmtW[0]) + 10];
 
     sprintfW(header, fmtW, len);
-    if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE))) return RPC_S_OK;
+    if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD))) return RPC_S_OK;
     return RPC_S_SERVER_UNAVAILABLE;
 }
 
@@ -2867,7 +2867,7 @@ static RPC_STATUS authorize_request(RpcConnection_http *httpc, HINTERNET request
     }
 
     if (info->scheme != RPC_C_HTTP_AUTHN_SCHEME_BASIC)
-        HttpAddRequestHeadersW(request, authW, -1, HTTP_ADDREQ_FLAG_REPLACE);
+        HttpAddRequestHeadersW(request, authW, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
 
     destroy_authinfo(info);
     return status;
