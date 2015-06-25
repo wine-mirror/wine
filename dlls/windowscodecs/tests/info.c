@@ -223,7 +223,7 @@ static void test_pixelformat_info(void)
     memset(value, 0xaa, 256 * sizeof(WCHAR));
     hr = IWICComponentInfo_GetAuthor(info, len-1, value, NULL);
     ok(hr == E_INVALIDARG, "GetAuthor failed, hr=%x\n", hr);
-    ok(value[0] = 0xaaaa, "string modified\n");
+    ok(value[0] == 0xaaaa, "string modified\n");
 
     len = 0xdeadbeef;
     memset(value, 0xaa, 256 * sizeof(WCHAR));
