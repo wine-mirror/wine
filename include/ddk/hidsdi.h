@@ -20,7 +20,7 @@
 #define __WINE_HIDSDI_H
 
 #include "hidusage.h"
-/* FIXME: #include "hidpi.h" */
+#include "hidpi.h"
 
 #ifndef WINE_NTSTATUS_DECLARED
 #define WINE_NTSTATUS_DECLARED

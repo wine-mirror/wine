@@ -253,6 +253,7 @@ SRCDIR_INCLUDES = \
 	ddk/compstui.h \
 	ddk/csq.h \
 	ddk/hidclass.h \
+	ddk/hidpi.h \
 	ddk/hidsdi.h \
 	ddk/imm.h \
 	ddk/mountmgr.h \
