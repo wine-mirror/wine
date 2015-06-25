@@ -760,8 +760,8 @@
 # @ extern ?sh_none@filebuf@@2HB
 # @ extern ?sh_read@filebuf@@2HB
 # @ extern ?sh_write@filebuf@@2HB
-@ stub -arch=win32 ?snextc@streambuf@@QAEHXZ
-@ stub -arch=win64 ?snextc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) msvcirt.?snextc@streambuf@@QAEHXZ
+@ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) msvcirt.?snextc@streambuf@@QEAAHXZ
 @ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z
 @ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
 @ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) msvcirt.?sputc@streambuf@@QAEHH@Z

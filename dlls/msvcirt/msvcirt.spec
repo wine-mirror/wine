@@ -700,8 +700,8 @@
 # @ extern ?sh_none@filebuf@@2HB  # static int const filebuf::sh_none
 # @ extern ?sh_read@filebuf@@2HB  # static int const filebuf::sh_read
 # @ extern ?sh_write@filebuf@@2HB  # static int const filebuf::sh_write
-@ stub -arch=win32 ?snextc@streambuf@@QAEHXZ  # int __thiscall streambuf::snextc(void)
-@ stub -arch=win64 ?snextc@streambuf@@QEAAHXZ
+@ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) streambuf_snextc
+@ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) streambuf_snextc
 @ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z  # int __thiscall streambuf::sputbackc(char)
 @ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
 @ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) streambuf_sputc

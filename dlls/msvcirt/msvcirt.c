@@ -597,6 +597,24 @@ int __thiscall streambuf_sputn(streambuf *this, const char *data, int length)
     return call_streambuf_xsputn(this, data, length);
 }
 
+/* ?snextc@streambuf@@QAEHXZ */
+/* ?snextc@streambuf@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_snextc, 4)
+int __thiscall streambuf_snextc(streambuf *this)
+{
+    TRACE("(%p)\n", this);
+    if (this->unbuffered) {
+        if (this->stored_char == EOF)
+            call_streambuf_underflow(this);
+        return this->stored_char = call_streambuf_underflow(this);
+    } else {
+        if (this->gptr >= this->egptr)
+            call_streambuf_underflow(this);
+        this->gptr++;
+        return (this->gptr < this->egptr) ? *this->gptr : call_streambuf_underflow(this);
+    }
+}
+
 /******************************************************************
  *		 ??1ios@@UAE@XZ (MSVCRTI.@)
  *        class ios & __thiscall ios::-ios<<(void)
