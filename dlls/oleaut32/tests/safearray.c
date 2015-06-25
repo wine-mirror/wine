@@ -709,7 +709,7 @@ static void test_safearray(void)
         return;
 
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
-        a = NULL;
+		a = NULL;
 		hres = pSafeArrayAllocDescriptorEx(vttypes[i].vt,1,&a);
 		ok(hres == S_OK, "SafeArrayAllocDescriptorEx gave hres 0x%x\n", hres);
 		ok(a->fFeatures == vttypes[i].expflags,"SAADE(%d) resulted with flags %x, expected %x\n", vttypes[i].vt, a->fFeatures, vttypes[i].expflags);
