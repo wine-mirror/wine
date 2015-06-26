@@ -409,3 +409,23 @@ int WINAPI RegisterServicesProcess(DWORD ServicesProcessId)
     FIXME("(0x%x): stub\n", ServicesProcessId);
     return 0;
 }
+
+/***********************************************************************
+ *		ShutdownBlockReasonCreate (USER32.@)
+ */
+BOOL WINAPI ShutdownBlockReasonCreate(HWND hwnd, LPCWSTR reason)
+{
+    FIXME("(%p, %s): stub\n", hwnd, debugstr_w(reason));
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/***********************************************************************
+ *		ShutdownBlockReasonDestroy (USER32.@)
+ */
+BOOL WINAPI ShutdownBlockReasonDestroy(HWND hwnd)
+{
+    FIXME("(%p): stub\n", hwnd);
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

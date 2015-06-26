@@ -697,6 +697,8 @@
 @ stub ShowStartGlass
 @ stdcall ShowWindow(long long)
 @ stdcall ShowWindowAsync(long long)
+@ stdcall ShutdownBlockReasonCreate(long wstr)
+@ stdcall ShutdownBlockReasonDestroy(long)
 # @ stub SoftModalMessageBox
 @ stdcall SubtractRect(ptr ptr ptr)
 @ stdcall SwapMouseButton(long)
