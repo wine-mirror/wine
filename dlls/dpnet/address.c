@@ -253,6 +253,8 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(IDirectPlay8Address *ifa
 
             if(hr != S_OK)
             {
+                IDirectPlay8Address_Release(dup);
+                dup = NULL;
                 ERR("Failed to copy component: %s - 0x%08x\n", debugstr_w(entry->name), hr);
                 break;
             }
