@@ -800,7 +800,7 @@ int __thiscall _Locinfo__Getdateorder(const _Locinfo *this)
 /* ?_Getdays@_Locinfo@std@@QBEPBDXZ */
 /* ?_Getdays@_Locinfo@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getdays, 4)
-const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
+const char* __thiscall _Locinfo__Getdays(const _Locinfo *this)
 {
     char *days = _Getdays();
     const char *ret;
@@ -808,8 +808,8 @@ const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(days) {
-        locale_string_char_dtor(&this->days);
-        locale_string_char_ctor_cstr(&this->days, days);
+        locale_string_char_dtor((locale_string *)&this->days);
+        locale_string_char_ctor_cstr((locale_string *)&this->days, days);
         free(days);
     }
 
@@ -822,7 +822,7 @@ const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
 /* ?_W_Getdays@_Locinfo@std@@QBEPBGXZ */
 /* ?_W_Getdays@_Locinfo@std@@QEBAPEBGXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__W_Getdays, 4)
-const wchar_t* __thiscall _Locinfo__W_Getdays(_Locinfo *this)
+const wchar_t* __thiscall _Locinfo__W_Getdays(const _Locinfo *this)
 {
     static const wchar_t defdays[] =
     {
@@ -840,8 +840,8 @@ const wchar_t* __thiscall _Locinfo__W_Getdays(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(wdays) {
-        locale_string_wchar_dtor(&this->wdays);
-        locale_string_wchar_ctor_cstr(&this->wdays, wdays);
+        locale_string_wchar_dtor((locale_string_wchar *)&this->wdays);
+        locale_string_wchar_ctor_cstr((locale_string_wchar *)&this->wdays, wdays);
         free(wdays);
     }
 
@@ -853,7 +853,7 @@ const wchar_t* __thiscall _Locinfo__W_Getdays(_Locinfo *this)
 /* ?_W_Getmonths@_Locinfo@std@@QBEPBGXZ */
 /* ?_W_Getmonths@_Locinfo@std@@QEBAPEBGXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__W_Getmonths, 4)
-const wchar_t* __thiscall _Locinfo__W_Getmonths(_Locinfo *this)
+const wchar_t* __thiscall _Locinfo__W_Getmonths(const _Locinfo *this)
 {
     static const wchar_t defmonths[] =
     {
@@ -876,8 +876,8 @@ const wchar_t* __thiscall _Locinfo__W_Getmonths(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(wmonths) {
-        locale_string_wchar_dtor(&this->wmonths);
-        locale_string_wchar_ctor_cstr(&this->wmonths, wmonths);
+        locale_string_wchar_dtor((locale_string_wchar *)&this->wmonths);
+        locale_string_wchar_ctor_cstr((locale_string_wchar *)&this->wmonths, wmonths);
         free(wmonths);
     }
 
@@ -890,7 +890,7 @@ const wchar_t* __thiscall _Locinfo__W_Getmonths(_Locinfo *this)
 /* ?_Getmonths@_Locinfo@std@@QBEPBDXZ */
 /* ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getmonths, 4)
-const char* __thiscall _Locinfo__Getmonths(_Locinfo *this)
+const char* __thiscall _Locinfo__Getmonths(const _Locinfo *this)
 {
     char *months = _Getmonths();
     const char *ret;
@@ -898,8 +898,8 @@ const char* __thiscall _Locinfo__Getmonths(_Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(months) {
-        locale_string_char_dtor(&this->months);
-        locale_string_char_ctor_cstr(&this->months, months);
+        locale_string_char_dtor((locale_string *)&this->months);
+        locale_string_char_ctor_cstr((locale_string *)&this->months, months);
         free(months);
     }
 
