@@ -1911,7 +1911,7 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
                 goto cleanup;
             }
         }
-        else if (GetCurrentDirectoryW( sizeof(cwdW), cwdW ))
+        else if (GetCurrentDirectoryW( sizeof(cwdW)/sizeof(cwdW[0]), cwdW ))
         {
             /* if the path is completely bogus then revert to the drive of the working directory */
             fallbackpathW[0] = cwdW[0];
