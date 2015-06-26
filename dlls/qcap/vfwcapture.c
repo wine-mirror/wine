@@ -68,6 +68,16 @@ typedef struct VfwCapture
     IPin * pOutputPin;
 } VfwCapture;
 
+static inline VfwCapture *impl_from_BaseFilter(BaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, filter);
+}
+
+static inline VfwCapture *impl_from_IBaseFilter(IBaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, filter.IBaseFilter_iface);
+}
+
 static inline VfwCapture *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
 {
     return CONTAINING_RECORD(iface, VfwCapture, IAMStreamConfig_iface);
@@ -94,7 +104,7 @@ typedef struct VfwPinImpl
 
 static IPin* WINAPI VfwCapture_GetPin(BaseFilter *iface, int pos)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_BaseFilter(iface);
 
     if (pos >= 1 || pos < 0)
         return NULL;
@@ -148,12 +158,12 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
 
     ObjectRefCount(TRUE);
     *phr = S_OK;
-    return (IUnknown *)pVfwCapture;
+    return (IUnknown *)&pVfwCapture->filter.IBaseFilter_iface;
 }
 
 static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_IBaseFilter(iface);
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
     *ppv = NULL;
 
@@ -162,7 +172,7 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
         IsEqualIID(riid, &IID_IMediaFilter) ||
         IsEqualIID(riid, &IID_IBaseFilter))
     {
-        *ppv = This;
+        *ppv = &This->filter.IBaseFilter_iface;
     }
     else if (IsEqualIID(riid, &IID_IAMStreamConfig))
         *ppv = &This->IAMStreamConfig_iface;
@@ -200,7 +210,7 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
 
 static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_IBaseFilter(iface);
     ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("%p->() New refcount: %d\n", This, refCount);
@@ -234,7 +244,7 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
 
 static HRESULT WINAPI VfwCapture_Stop(IBaseFilter * iface)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_IBaseFilter(iface);
 
     TRACE("()\n");
     return qcap_driver_stop(This->driver_info, &This->filter.state);
@@ -242,7 +252,7 @@ static HRESULT WINAPI VfwCapture_Stop(IBaseFilter * iface)
 
 static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_IBaseFilter(iface);
 
     TRACE("()\n");
     return qcap_driver_pause(This->driver_info, &This->filter.state);
@@ -250,7 +260,7 @@ static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
 
 static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
-    VfwCapture *This = (VfwCapture *)iface;
+    VfwCapture *This = impl_from_IBaseFilter(iface);
     TRACE("(%x%08x)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
     return qcap_driver_run(This->driver_info, &This->filter.state);
 }
@@ -306,7 +316,7 @@ static ULONG WINAPI AMStreamConfig_AddRef( IAMStreamConfig * iface )
     VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
-    return IUnknown_AddRef((IUnknown *)This);
+    return IUnknown_AddRef(&This->filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI AMStreamConfig_Release( IAMStreamConfig * iface )
@@ -314,7 +324,7 @@ static ULONG WINAPI AMStreamConfig_Release( IAMStreamConfig * iface )
     VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
-    return IUnknown_Release((IUnknown *)This);
+    return IUnknown_Release(&This->filter.IBaseFilter_iface);
 }
 
 static HRESULT WINAPI
@@ -417,14 +427,14 @@ static ULONG WINAPI AMVideoProcAmp_AddRef(IAMVideoProcAmp * iface)
 {
     VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
-    return IUnknown_AddRef((IUnknown *)This);
+    return IUnknown_AddRef(&This->filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI AMVideoProcAmp_Release(IAMVideoProcAmp * iface)
 {
     VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
-    return IUnknown_Release((IUnknown *)This);
+    return IUnknown_Release(&This->filter.IBaseFilter_iface);
 }
 
 static HRESULT WINAPI
@@ -494,7 +504,7 @@ static ULONG WINAPI PPB_AddRef(IPersistPropertyBag * iface)
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
 
-    return IUnknown_AddRef((IUnknown *)This);
+    return IUnknown_AddRef(&This->filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI PPB_Release(IPersistPropertyBag * iface)
@@ -503,7 +513,7 @@ static ULONG WINAPI PPB_Release(IPersistPropertyBag * iface)
 
     TRACE("%p --> Forwarding to VfwCapture (%p)\n", iface, This);
 
-    return IUnknown_Release((IUnknown *)This);
+    return IUnknown_Release(&This->filter.IBaseFilter_iface);
 }
 
 static HRESULT WINAPI
