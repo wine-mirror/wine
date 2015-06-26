@@ -1093,25 +1093,25 @@ static void test_NtMapViewOfSection(void)
     size = 0;
     offset.QuadPart = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 12, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
 
     ptr2 = (char *)ptr + 0x1000;
     size = 0;
     offset.QuadPart = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
-    if (status == STATUS_SUCCESS)
-    {
-        status = pNtUnmapViewOfSection( hProcess, ptr2 );
-        ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
-    }
+
+    ptr2 = (char *)ptr + 0x1001;
+    size = 0;
+    offset.QuadPart = 0;
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
+
+    ptr2 = (char *)ptr + 0x1000;
+    size = 0;
+    offset.QuadPart = 1;
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 16, 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
 
     if (sizeof(void *) == sizeof(int) && (!pIsWow64Process ||
         !pIsWow64Process( GetCurrentProcess(), &is_wow64 ) || !is_wow64))

@@ -2601,6 +2601,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Check parameters */
 
+    if (*addr_ptr && zero_bits)
+        return STATUS_INVALID_PARAMETER_4;
+
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_MAPPED_ALIGNMENT;
 
