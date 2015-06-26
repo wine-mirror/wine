@@ -972,7 +972,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
 
     /* cluster map needs to be shifted */
     for (i = 0; i < length; i++)
-        run->clustermap[i] = r->u.regular.clustermap[start] - start;
+        run->clustermap[i] = r->u.regular.clustermap[start + i] - r->u.regular.clustermap[start];
 
     list_add_tail(&layout->eruns, &run->entry);
 
