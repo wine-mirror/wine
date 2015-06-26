@@ -2604,6 +2604,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (*addr_ptr && zero_bits)
         return STATUS_INVALID_PARAMETER_4;
 
+#ifndef _WIN64
+    if (!is_wow64 && (alloc_type & AT_ROUND_TO_PAGE))
+    {
+        *addr_ptr = ROUND_ADDR( *addr_ptr, page_mask );
+        mask = page_mask;
+    }
+#endif
+
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_MAPPED_ALIGNMENT;
 
