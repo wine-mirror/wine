@@ -4,6 +4,7 @@
  * Copyright 2001 ReactOS project
  * Copyright 2001 Jurgen Van Gael [jurgen.vangael@student.kuleuven.ac.be]
  * Copyright 2002 Andriy Palamarchuk
+ * Copyright 2014, 2015 Hugh McMaster
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,30 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * This version deliberately differs in error handling compared to the
- * windows version.
- */
-
-/*
- *
- *  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname ...
- *  [/u]    unregister server
- *  [/s]    silent (no message boxes)
- *  [/i]    Call DllInstall passing it an optional [cmdline];
- *          when used with /u calls dll uninstall.
- *  [/n]    Do not call DllRegisterServer; this option must be used with [/i]
- *  [/c]    Console output (seems to be deprecated and ignored)
- *
- *  Note the complication that this version may be passed unix format file names
- *  which might be mistaken for flags.  Conveniently the Windows version
- *  requires each flag to be separate (e.g. no /su ) and so we will simply
- *  assume that anything longer than /. is a filename.
- */
-
-/**
- * FIXME - currently receives command-line parameters in ASCII only and later
- * converts to Unicode. Ideally the function should have wWinMain entry point
- * and then work in Unicode only, but it seems Wine does not have necessary
- * support.
+ * Windows version.
  */
 
 #define WIN32_LEAN_AND_MEAN
@@ -118,8 +96,8 @@ static void __cdecl output_write(UINT id, ...)
  *
  * Parameters:
  * strDll - name of the dll.
- * procName - name of the procedure to load from dll
- * pDllHanlde - output variable receives handle of the loaded dll.
+ * procName - name of the procedure to load from the dll.
+ * DllHandle - a variable that receives the handle of the loaded dll.
  */
 static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHandle)
 {
@@ -257,6 +235,11 @@ int wmain(int argc, WCHAR* argv[])
      * the files (e.g. regsvr32 file1 /s file2 is silent even for file1).
      * For ease, we will not replicate that and will process the arguments
      * in order.
+     *
+     * Note the complication that this version may be passed Unix format filenames
+     * which could be mistaken for flags. The Windows version conveniently
+     * requires each flag to be separate (e.g. no /su), so we will simply
+     * assume that anything longer than /. is a filename.
      */
     for(i = 1; i < argc; i++)
     {
@@ -304,7 +287,7 @@ int wmain(int argc, WCHAR* argv[])
 
             if (res)
                 return res;
-	    /* Confirmed.  The windows version does stop on the first error.*/
+            /* Confirmed. The Windows version stops on the first error. */
 
             if (CallInstall)
             {
