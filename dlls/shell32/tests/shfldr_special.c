@@ -77,6 +77,7 @@ static void test_parse_for_entire_network(void)
     attr = ~0;
 
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, entire_network_path, &eaten, &pidl, &attr);
+    IShellFolder_Release(psfDesktop);
     if (hr == HRESULT_FROM_WIN32(ERROR_BAD_NET_NAME) ||
         hr == HRESULT_FROM_WIN32(ERROR_NO_NET_OR_BAD_PATH) ||
         hr == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER))
@@ -125,6 +126,7 @@ static void test_parse_for_control_panel(void)
        "Unexpected attributes : %08x\n", attr);
 
     ILFree(pidl);
+    IShellFolder_Release(psfDesktop);
 }
 
 static void test_printers_folder(void)
