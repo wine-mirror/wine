@@ -413,7 +413,19 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
     else if (info->proc)
     {
+        struct user_thread_info *thread_info = get_user_thread_info();
         HMODULE free_module = 0;
+
+        /*
+         * Windows protects from stack overflow in recursive hook calls. Different Windows
+         * allow different depths.
+         */
+        if (thread_info->hook_call_depth >= 25)
+        {
+            WARN("Too many hooks called recursively, skipping call.\n");
+            return 0;
+        }
+
         TRACE( "calling hook %p %s code %x wp %lx lp %lx module %s\n",
                info->proc, hook_names[info->id-WH_MINHOOK], code, wparam,
                lparam, debugstr_w(info->module) );
@@ -421,16 +433,17 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
         if (!info->module[0] ||
             (info->proc = get_hook_proc( info->proc, info->module, &free_module )) != NULL)
         {
-            struct user_thread_info *thread_info = get_user_thread_info();
             HHOOK prev = thread_info->hook;
             BOOL prev_unicode = thread_info->hook_unicode;
 
             thread_info->hook = info->handle;
             thread_info->hook_unicode = info->next_unicode;
+            thread_info->hook_call_depth++;
             ret = call_hook_proc( info->proc, info->id, code, wparam, lparam,
                                   info->prev_unicode, info->next_unicode );
             thread_info->hook = prev;
             thread_info->hook_unicode = prev_unicode;
+            thread_info->hook_call_depth--;
 
             if (free_module) FreeLibrary(free_module);
         }

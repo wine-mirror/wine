@@ -175,6 +175,7 @@ struct user_thread_info
     DWORD                         changed_mask;           /* Current queue changed mask */
     WORD                          recursion_count;        /* SendMessage recursion counter */
     WORD                          message_count;          /* Get/PeekMessage loop counter */
+    WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     BOOL                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
     struct received_message_info *receive_info;           /* Message being currently received */
