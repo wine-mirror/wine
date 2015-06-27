@@ -2421,7 +2421,12 @@ static HRESULT deleteStorageContents(
   /*
    * Enumerate the elements
    */
-  IStorage_EnumElements( childStorage, 0, 0, 0, &elements);
+  hr = IStorage_EnumElements(childStorage, 0, 0, 0, &elements);
+  if (FAILED(hr))
+  {
+    IStorage_Release(childStorage);
+    return hr;
+  }
 
   do
   {
