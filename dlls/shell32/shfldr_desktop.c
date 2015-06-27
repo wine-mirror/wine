@@ -106,6 +106,8 @@ static HRESULT WINAPI ISF_Desktop_fnQueryInterface(
 
     TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
 
+    if (!ppvObj) return E_POINTER;
+
     *ppvObj = NULL;
 
     if (IsEqualIID (riid, &IID_IUnknown) ||
