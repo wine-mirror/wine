@@ -745,7 +745,7 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
     static const WCHAR edit_flags[] = {'E','d','i','t','F','l','a','g','s',0};
 
     IQueryAssociationsImpl *This = impl_from_IQueryAssociations(iface);
-    void *data;
+    void *data = NULL;
     DWORD size;
     HRESULT hres;
 
@@ -761,10 +761,8 @@ static HRESULT WINAPI IQueryAssociations_fnGetData(IQueryAssociations *iface,
             return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
 
         hres = ASSOC_GetValue(This->hkeyProgID, edit_flags, &data, &size);
-        if(FAILED(hres) || !pcbOut)
-            return hres;
-
-        hres = ASSOC_ReturnData(pvOut, pcbOut, data, size);
+        if(SUCCEEDED(hres) && pcbOut)
+            hres = ASSOC_ReturnData(pvOut, pcbOut, data, size);
         HeapFree(GetProcessHeap(), 0, data);
         return hres;
     default:
