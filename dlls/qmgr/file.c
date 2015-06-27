@@ -378,7 +378,7 @@ static BOOL transfer_file_http(BackgroundCopyFileImpl *file, URL_COMPONENTSW *uc
 
     if (!(ses = WinHttpOpen(NULL, 0, NULL, NULL, WINHTTP_FLAG_ASYNC))) return FALSE;
     WinHttpSetStatusCallback(ses, progress_callback_http, WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS, 0);
-    if (!WinHttpSetOption(ses, WINHTTP_OPTION_CONTEXT_VALUE, file, sizeof(file))) goto done;
+    if (!WinHttpSetOption(ses, WINHTTP_OPTION_CONTEXT_VALUE, &file, sizeof(file))) goto done;
 
     if (!(con = WinHttpConnect(ses, uc->lpszHostName, uc->nPort, 0))) goto done;
     if (!(req = WinHttpOpenRequest(con, NULL, uc->lpszUrlPath, NULL, NULL, NULL, flags))) goto done;
