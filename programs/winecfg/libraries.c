@@ -106,7 +106,7 @@ static enum dllmode string_to_mode(char *in)
     enum dllmode res;
 
     len = strlen(in);
-    out = HeapAlloc(GetProcessHeap(), 0, len);
+    out = HeapAlloc(GetProcessHeap(), 0, len + 1);
 
     /* remove the spaces */
     for (i = j = 0; i <= len; ++i) {
