@@ -367,6 +367,7 @@ void apply_drive_changes(void)
         }
         else WINE_WARN( "failed to set drive %c: to %s type %u err %u\n", 'a' + i,
                        wine_dbgstr_a(drives[i].unixpath), drives[i].type, GetLastError() );
+        HeapFree( GetProcessHeap(), 0, ioctl );
     }
     CloseHandle( mgr );
 }
