@@ -3058,8 +3058,8 @@ static BOOL get_bool_property(IWICMetadataReader *reader, const GUID *guid, cons
     PROPVARIANT id, value;
     BOOL ret = FALSE;
 
-    IWICMetadataReader_GetMetadataFormat(reader, &format);
-    if (!IsEqualGUID(&format, guid)) return FALSE;
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    if (FAILED(hr) || !IsEqualGUID(&format, guid)) return FALSE;
 
     PropVariantInit(&id);
     PropVariantInit(&value);
@@ -3085,8 +3085,8 @@ static PropertyItem *get_property(IWICMetadataReader *reader, const GUID *guid, 
     PROPVARIANT id, value;
     PropertyItem *item = NULL;
 
-    IWICMetadataReader_GetMetadataFormat(reader, &format);
-    if (!IsEqualGUID(&format, guid)) return NULL;
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    if (FAILED(hr) || !IsEqualGUID(&format, guid)) return NULL;
 
     PropVariantInit(&id);
     PropVariantInit(&value);
