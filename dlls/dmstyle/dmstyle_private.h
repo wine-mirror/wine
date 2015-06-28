@@ -43,11 +43,6 @@
 #include "dmusics.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicMelodyFormulationTrack IDirectMusicMelodyFormulationTrack;
-	
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI create_dmstyle(REFIID lpcGUID, LPVOID* ppobj) DECLSPEC_HIDDEN;
@@ -96,28 +91,6 @@ typedef struct _DMUS_PRIVATE_COMMAND {
 	DMUS_IO_COMMAND pCommand;
 	IDirectMusicCollection* ppReferenceCollection;
 } DMUS_PRIVATE_COMMAND, *LPDMUS_PRIVATE_COMMAND;
-
-/*****************************************************************************
- * IDirectMusicMelodyFormulationTrack implementation structure
- */
-struct IDirectMusicMelodyFormulationTrack {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicTrack8Vtbl *TrackVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicMelodyFormulationTrack fields */
-  LPDMUS_OBJECTDESC pDesc;
-};
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicMelodyFormulationTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IUnknown_AddRef (LPUNKNOWN iface) DECLSPEC_HIDDEN;
-/* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) DECLSPEC_HIDDEN;
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmstyle.dll
