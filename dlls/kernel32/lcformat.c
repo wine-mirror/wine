@@ -1971,26 +1971,29 @@ BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
     return TRUE;
 }
 
+enum enumcalendar_callback_type {
+    CALLBACK_ENUMPROC,
+    CALLBACK_ENUMPROCEX,
+};
+
+struct enumcalendar_context {
+    enum enumcalendar_callback_type type;  /* callback kind */
+    union {
+        CALINFO_ENUMPROCW    callback;     /* user callback pointer */
+        CALINFO_ENUMPROCEXW  callbackex;
+    } u;
+    LCID    lcid;     /* locale of interest */
+    CALID   calendar; /* specific calendar or ENUM_ALL_CALENDARS */
+    CALTYPE caltype;  /* calendar information type */
+    BOOL    unicode;  /* A vs W callback type, only for regular and Ex callbacks */
+};
+
 /******************************************************************************
- * NLS_EnumCalendarInfoAW <internal>
+ * NLS_EnumCalendarInfo <internal>
  * Enumerates calendar information for a specified locale.
  *
  * PARAMS
- *    calinfoproc [I] Pointer to the callback
- *    locale      [I] The locale for which to retrieve calendar information.
- *                    This parameter can be a locale identifier created by the
- *                    MAKELCID macro, or one of the following values:
- *                        LOCALE_SYSTEM_DEFAULT
- *                            Use the default system locale.
- *                        LOCALE_USER_DEFAULT
- *                            Use the default user locale.
- *    calendar    [I] The calendar for which information is requested, or
- *                    ENUM_ALL_CALENDARS.
- *    caltype     [I] The type of calendar information to be returned. Note
- *                    that only one CALTYPE value can be specified per call
- *                    of this function, except where noted.
- *    unicode     [I] Specifies if the callback expects a unicode string.
- *    ex          [I] Specifies if the callback needs the calendar identifier.
+ *    ctxt [I] enumeration context, see 'struct enumcalendar_context'
  *
  * RETURNS
  *    Success: TRUE.
@@ -2005,14 +2008,14 @@ BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
  * TODO
  *    The above note should be respected by GetCalendarInfoA.
  */
-static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
-                  CALID calendar, CALTYPE caltype, BOOL unicode, BOOL ex )
+static BOOL NLS_EnumCalendarInfo(const struct enumcalendar_context *ctxt)
 {
   WCHAR *buf, *opt = NULL, *iter = NULL;
+  CALID calendar = ctxt->calendar;
   BOOL ret = FALSE;
   int bufSz = 200;		/* the size of the buffer */
 
-  if (calinfoproc == NULL)
+  if (ctxt->u.callback == NULL)
   {
     SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
@@ -2027,7 +2030,7 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
 
   if (calendar == ENUM_ALL_CALENDARS)
   {
-    int optSz = GetLocaleInfoW(locale, LOCALE_IOPTIONALCALENDAR, NULL, 0);
+    int optSz = GetLocaleInfoW(ctxt->lcid, LOCALE_IOPTIONALCALENDAR, NULL, 0);
     if (optSz > 1)
     {
       opt = HeapAlloc(GetProcessHeap(), 0, optSz * sizeof(WCHAR));
@@ -2036,30 +2039,30 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         goto cleanup;
       }
-      if (GetLocaleInfoW(locale, LOCALE_IOPTIONALCALENDAR, opt, optSz))
+      if (GetLocaleInfoW(ctxt->lcid, LOCALE_IOPTIONALCALENDAR, opt, optSz))
         iter = opt;
     }
-    calendar = NLS_GetLocaleNumber(locale, LOCALE_ICALENDARTYPE);
+    calendar = NLS_GetLocaleNumber(ctxt->lcid, LOCALE_ICALENDARTYPE);
   }
 
   while (TRUE)			/* loop through calendars */
   {
     do				/* loop until there's no error */
     {
-      if (caltype & CAL_RETURN_NUMBER)
-        ret = GetCalendarInfoW(locale, calendar, caltype, NULL, bufSz / sizeof(WCHAR), (LPDWORD)buf);
-      else if (unicode)
-        ret = GetCalendarInfoW(locale, calendar, caltype, buf, bufSz / sizeof(WCHAR), NULL);
-      else ret = GetCalendarInfoA(locale, calendar, caltype, (CHAR*)buf, bufSz / sizeof(CHAR), NULL);
+      if (ctxt->caltype & CAL_RETURN_NUMBER)
+        ret = GetCalendarInfoW(ctxt->lcid, calendar, ctxt->caltype, NULL, bufSz / sizeof(WCHAR), (LPDWORD)buf);
+      else if (ctxt->unicode)
+        ret = GetCalendarInfoW(ctxt->lcid, calendar, ctxt->caltype, buf, bufSz / sizeof(WCHAR), NULL);
+      else ret = GetCalendarInfoA(ctxt->lcid, calendar, ctxt->caltype, (CHAR*)buf, bufSz / sizeof(CHAR), NULL);
 
       if (!ret)
       {
         if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {				/* so resize it */
           int newSz;
-          if (unicode)
-            newSz = GetCalendarInfoW(locale, calendar, caltype, NULL, 0, NULL) * sizeof(WCHAR);
-          else newSz = GetCalendarInfoA(locale, calendar, caltype, NULL, 0, NULL) * sizeof(CHAR);
+          if (ctxt->unicode)
+            newSz = GetCalendarInfoW(ctxt->lcid, calendar, ctxt->caltype, NULL, 0, NULL) * sizeof(WCHAR);
+          else newSz = GetCalendarInfoA(ctxt->lcid, calendar, ctxt->caltype, NULL, 0, NULL) * sizeof(CHAR);
           if (bufSz >= newSz)
           {
             ERR("Buffer resizing disorder: was %d, requested %d.\n", bufSz, newSz);
@@ -2079,10 +2082,17 @@ static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
      * we must check for Ex, but we don't care about Unicode
      * because the buffer is already in the correct format.
      */
-    if (ex) {
-      ret = ((CALINFO_ENUMPROCEXW)calinfoproc)(buf, calendar);
-    } else
-      ret = ((CALINFO_ENUMPROCW)calinfoproc)(buf);
+    switch (ctxt->type)
+    {
+    case CALLBACK_ENUMPROC:
+      ret = ctxt->u.callback(buf);
+      break;
+    case CALLBACK_ENUMPROCEX:
+      ret = ctxt->u.callbackex(buf, calendar);
+      break;
+    default:
+      ;
+    }
 
     if (!ret) {			/* the callback told to stop */
       ret = TRUE;
@@ -2118,8 +2128,17 @@ cleanup:
 BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA calinfoproc,LCID locale,
                                CALID calendar,CALTYPE caltype )
 {
+  struct enumcalendar_context ctxt;
+
   TRACE("(%p,0x%08x,0x%08x,0x%08x)\n", calinfoproc, locale, calendar, caltype);
-  return NLS_EnumCalendarInfoAW(calinfoproc, locale, calendar, caltype, FALSE, FALSE);
+
+  ctxt.type = CALLBACK_ENUMPROC;
+  ctxt.u.callback = (CALINFO_ENUMPROCW)calinfoproc;
+  ctxt.lcid = locale;
+  ctxt.calendar = calendar;
+  ctxt.caltype = caltype;
+  ctxt.unicode = FALSE;
+  return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
@@ -2130,8 +2149,17 @@ BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA calinfoproc,LCID locale,
 BOOL WINAPI EnumCalendarInfoW( CALINFO_ENUMPROCW calinfoproc,LCID locale,
                                CALID calendar,CALTYPE caltype )
 {
+  struct enumcalendar_context ctxt;
+
   TRACE("(%p,0x%08x,0x%08x,0x%08x)\n", calinfoproc, locale, calendar, caltype);
-  return NLS_EnumCalendarInfoAW(calinfoproc, locale, calendar, caltype, TRUE, FALSE);
+
+  ctxt.type = CALLBACK_ENUMPROC;
+  ctxt.u.callback = calinfoproc;
+  ctxt.lcid = locale;
+  ctxt.calendar = calendar;
+  ctxt.caltype = caltype;
+  ctxt.unicode = TRUE;
+  return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
@@ -2142,8 +2170,17 @@ BOOL WINAPI EnumCalendarInfoW( CALINFO_ENUMPROCW calinfoproc,LCID locale,
 BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA calinfoproc,LCID locale,
                                  CALID calendar,CALTYPE caltype )
 {
+  struct enumcalendar_context ctxt;
+
   TRACE("(%p,0x%08x,0x%08x,0x%08x)\n", calinfoproc, locale, calendar, caltype);
-  return NLS_EnumCalendarInfoAW(calinfoproc, locale, calendar, caltype, FALSE, TRUE);
+
+  ctxt.type = CALLBACK_ENUMPROCEX;
+  ctxt.u.callbackex = (CALINFO_ENUMPROCEXW)calinfoproc;
+  ctxt.lcid = locale;
+  ctxt.calendar = calendar;
+  ctxt.caltype = caltype;
+  ctxt.unicode = FALSE;
+  return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
@@ -2154,6 +2191,15 @@ BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA calinfoproc,LCID locale,
 BOOL WINAPI EnumCalendarInfoExW( CALINFO_ENUMPROCEXW calinfoproc,LCID locale,
                                  CALID calendar,CALTYPE caltype )
 {
+  struct enumcalendar_context ctxt;
+
   TRACE("(%p,0x%08x,0x%08x,0x%08x)\n", calinfoproc, locale, calendar, caltype);
-  return NLS_EnumCalendarInfoAW(calinfoproc, locale, calendar, caltype, TRUE, TRUE);
+
+  ctxt.type = CALLBACK_ENUMPROCEX;
+  ctxt.u.callbackex = calinfoproc;
+  ctxt.lcid = locale;
+  ctxt.calendar = calendar;
+  ctxt.caltype = caltype;
+  ctxt.unicode = TRUE;
+  return NLS_EnumCalendarInfo(&ctxt);
 }
