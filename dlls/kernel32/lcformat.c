@@ -1974,6 +1974,7 @@ BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 enum enumcalendar_callback_type {
     CALLBACK_ENUMPROC,
     CALLBACK_ENUMPROCEX,
+    CALLBACK_ENUMPROCEXEX
 };
 
 struct enumcalendar_context {
@@ -1981,10 +1982,12 @@ struct enumcalendar_context {
     union {
         CALINFO_ENUMPROCW    callback;     /* user callback pointer */
         CALINFO_ENUMPROCEXW  callbackex;
+        CALINFO_ENUMPROCEXEX callbackexex;
     } u;
     LCID    lcid;     /* locale of interest */
     CALID   calendar; /* specific calendar or ENUM_ALL_CALENDARS */
     CALTYPE caltype;  /* calendar information type */
+    LPARAM  lParam;   /* user input parameter passed to callback, for ExEx case only */
     BOOL    unicode;  /* A vs W callback type, only for regular and Ex callbacks */
 };
 
@@ -2090,6 +2093,9 @@ static BOOL NLS_EnumCalendarInfo(const struct enumcalendar_context *ctxt)
     case CALLBACK_ENUMPROCEX:
       ret = ctxt->u.callbackex(buf, calendar);
       break;
+    case CALLBACK_ENUMPROCEXEX:
+      ret = ctxt->u.callbackexex(buf, calendar, NULL, ctxt->lParam);
+      break;
     default:
       ;
     }
@@ -2122,8 +2128,6 @@ cleanup:
 
 /******************************************************************************
  *		EnumCalendarInfoA	[KERNEL32.@]
- *
- * See EnumCalendarInfoAW.
  */
 BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA calinfoproc,LCID locale,
                                CALID calendar,CALTYPE caltype )
@@ -2137,14 +2141,13 @@ BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA calinfoproc,LCID locale,
   ctxt.lcid = locale;
   ctxt.calendar = calendar;
   ctxt.caltype = caltype;
+  ctxt.lParam = 0;
   ctxt.unicode = FALSE;
   return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
  *		EnumCalendarInfoW	[KERNEL32.@]
- *
- * See EnumCalendarInfoAW.
  */
 BOOL WINAPI EnumCalendarInfoW( CALINFO_ENUMPROCW calinfoproc,LCID locale,
                                CALID calendar,CALTYPE caltype )
@@ -2158,14 +2161,13 @@ BOOL WINAPI EnumCalendarInfoW( CALINFO_ENUMPROCW calinfoproc,LCID locale,
   ctxt.lcid = locale;
   ctxt.calendar = calendar;
   ctxt.caltype = caltype;
+  ctxt.lParam = 0;
   ctxt.unicode = TRUE;
   return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
  *		EnumCalendarInfoExA	[KERNEL32.@]
- *
- * See EnumCalendarInfoAW.
  */
 BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA calinfoproc,LCID locale,
                                  CALID calendar,CALTYPE caltype )
@@ -2179,14 +2181,13 @@ BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA calinfoproc,LCID locale,
   ctxt.lcid = locale;
   ctxt.calendar = calendar;
   ctxt.caltype = caltype;
+  ctxt.lParam = 0;
   ctxt.unicode = FALSE;
   return NLS_EnumCalendarInfo(&ctxt);
 }
 
 /******************************************************************************
  *		EnumCalendarInfoExW	[KERNEL32.@]
- *
- * See EnumCalendarInfoAW.
  */
 BOOL WINAPI EnumCalendarInfoExW( CALINFO_ENUMPROCEXW calinfoproc,LCID locale,
                                  CALID calendar,CALTYPE caltype )
@@ -2200,6 +2201,27 @@ BOOL WINAPI EnumCalendarInfoExW( CALINFO_ENUMPROCEXW calinfoproc,LCID locale,
   ctxt.lcid = locale;
   ctxt.calendar = calendar;
   ctxt.caltype = caltype;
+  ctxt.lParam = 0;
+  ctxt.unicode = TRUE;
+  return NLS_EnumCalendarInfo(&ctxt);
+}
+
+/******************************************************************************
+ *		EnumCalendarInfoExEx	[KERNEL32.@]
+ */
+BOOL WINAPI EnumCalendarInfoExEx( CALINFO_ENUMPROCEXEX calinfoproc, LPCWSTR locale, CALID calendar,
+    LPCWSTR reserved, CALTYPE caltype, LPARAM lParam)
+{
+  struct enumcalendar_context ctxt;
+
+  TRACE("(%p,%s,0x%08x,%p,0x%08x,0x%ld)\n", calinfoproc, debugstr_w(locale), calendar, reserved, caltype, lParam);
+
+  ctxt.type = CALLBACK_ENUMPROCEXEX;
+  ctxt.u.callbackexex = calinfoproc;
+  ctxt.lcid = LocaleNameToLCID(locale, 0);
+  ctxt.calendar = calendar;
+  ctxt.caltype = caltype;
+  ctxt.lParam = lParam;
   ctxt.unicode = TRUE;
   return NLS_EnumCalendarInfo(&ctxt);
 }
