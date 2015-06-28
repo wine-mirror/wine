@@ -18,6 +18,7 @@
  */
 
 #include "dmcompos_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
@@ -26,9 +27,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
  */
 typedef struct IDirectMusicChordMapTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
-    DMUS_OBJECTDESC *pDesc;
 } IDirectMusicChordMapTrack;
 
 /* IDirectMusicChordMapTrack IDirectMusicTrack8 part: */
@@ -50,7 +50,7 @@ static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *
             IsEqualIID(riid, &IID_IDirectMusicTrack8))
         *ret_iface = iface;
     else if (IsEqualIID(riid, &IID_IPersistStream))
-        *ret_iface = &This->PersistStreamVtbl;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
     else {
         WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
         return E_NOINTERFACE;
@@ -244,53 +244,27 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     IDirectMusicTrack8Impl_Join
 };
 
-/* IDirectMusicChordMapTrack IPersistStream part: */
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack8_QueryInterface(&This->IDirectMusicTrack8_iface, riid, ppobj);
+static inline IDirectMusicChordMapTrack *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicChordMapTrack, dmobj.IPersistStream_iface);
 }
 
-static ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack8_AddRef(&This->IDirectMusicTrack8_iface);
-}
-
-static ULONG WINAPI IDirectMusicChordMapTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack8_Release(&This->IDirectMusicTrack8_iface);
-}
-
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
-	ICOM_THIS_MULTI(IDirectMusicChordMapTrack, PersistStreamVtbl, iface);
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+{
+        IDirectMusicChordMapTrack *This = impl_from_IPersistStream(iface);
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl DirectMusicChordMapTrack_PersistStream_Vtbl = {
-	IDirectMusicChordMapTrack_IPersistStream_QueryInterface,
-	IDirectMusicChordMapTrack_IPersistStream_AddRef,
-	IDirectMusicChordMapTrack_IPersistStream_Release,
-	IDirectMusicChordMapTrack_IPersistStream_GetClassID,
-	IDirectMusicChordMapTrack_IPersistStream_IsDirty,
-	IDirectMusicChordMapTrack_IPersistStream_Load,
-	IDirectMusicChordMapTrack_IPersistStream_Save,
-	IDirectMusicChordMapTrack_IPersistStream_GetSizeMax
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
+    IPersistStreamImpl_Load,
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
@@ -305,12 +279,10 @@ HRESULT WINAPI create_dmchordmaptrack(REFIID lpcGUID, void **ppobj)
         return E_OUTOFMEMORY;
     }
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
-	track->PersistStreamVtbl = &DirectMusicChordMapTrack_PersistStream_Vtbl;
-	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(track->pDesc);
-	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	track->pDesc->guidClass = CLSID_DirectMusicChordMapTrack;
     track->ref = 1;
+    dmobject_init(&track->dmobj, &CLSID_DirectMusicChordMapTrack,
+                  (IUnknown *)&track->IDirectMusicTrack8_iface);
+    track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
     DMCOMPOS_LockModule();
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, lpcGUID, ppobj);
