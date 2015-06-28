@@ -28,6 +28,14 @@ static ULONG WINAPI IDirectMusicMuteTrack_IPersistStream_AddRef (LPPERSISTSTREAM
 /*****************************************************************************
  * IDirectMusicMuteTrack implementation
  */
+typedef struct IDirectMusicMuteTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicMuteTrack;
+
 /* IDirectMusicMuteTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicMuteTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicMuteTrack, UnknownVtbl, iface);

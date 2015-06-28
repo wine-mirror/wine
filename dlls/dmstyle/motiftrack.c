@@ -28,6 +28,14 @@ static ULONG WINAPI IDirectMusicMotifTrack_IPersistStream_AddRef (LPPERSISTSTREA
 /*****************************************************************************
  * IDirectMusicMotifTrack implementation
  */
+typedef struct IDirectMusicMotifTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicMotifTrack;
+
 /* IDirectMusicMotifTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicMotifTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicMotifTrack, UnknownVtbl, iface);

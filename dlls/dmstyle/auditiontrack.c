@@ -28,6 +28,14 @@ static ULONG WINAPI IDirectMusicAuditionTrack_IPersistStream_AddRef (LPPERSISTST
 /*****************************************************************************
  * IDirectMusicAuditionTrack implementation
  */
+typedef struct IDirectMusicAuditionTrack {
+    const IUnknownVtbl *UnknownVtbl;
+    const IDirectMusicTrack8Vtbl *TrackVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicAuditionTrack;
+
 /* IDirectMusicAuditionTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicAuditionTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicAuditionTrack, UnknownVtbl, iface);
