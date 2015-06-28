@@ -387,7 +387,7 @@ static void test_signposttrack(void)
     ok(IsEqualGUID(&class, &CLSID_DirectMusicSignPostTrack),
             "Expected class CLSID_DirectMusicSignPostTrack got %s\n", wine_dbgstr_guid(&class));
     hr = IPersistStream_Save(ps, NULL, TRUE);
-    todo_wine ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
+    ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
