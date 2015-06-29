@@ -1131,7 +1131,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                 last_cluster = i ? i - 1 : i;
 
             if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, i - start + 1, line, origin_x, s[0]);
+                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, s[0]);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */
