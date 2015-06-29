@@ -667,6 +667,22 @@ int __thiscall streambuf_sputbackc(streambuf *this, char ch)
     return call_streambuf_pbackfail(this, ch);
 }
 
+/* ?dbp@streambuf@@QAEXXZ */
+/* ?dbp@streambuf@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(streambuf_dbp, 4)
+void __thiscall streambuf_dbp(streambuf *this)
+{
+    printf("\nSTREAMBUF DEBUG INFO: this=%p, ", this);
+    if (this->unbuffered) {
+        printf("unbuffered\n");
+    } else {
+        printf("_fAlloc=%d\n", this->allocated);
+        printf(" base()=%p, ebuf()=%p,  blen()=%d\n", this->base, this->ebuf, streambuf_blen(this));
+        printf("pbase()=%p, pptr()=%p, epptr()=%d\n", this->pbase, this->pptr, this->epptr);
+        printf("eback()=%p, gptr()=%p, egptr()=%d\n", this->eback, this->gptr, this->egptr);
+    }
+}
+
 /******************************************************************
  *		 ??1ios@@UAE@XZ (MSVCRTI.@)
  *        class ios & __thiscall ios::-ios<<(void)

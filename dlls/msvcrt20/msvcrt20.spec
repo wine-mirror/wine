@@ -425,8 +425,8 @@
 @ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) msvcirt.?clrlock@streambuf@@QAEXXZ
 @ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) msvcirt.?clrlock@streambuf@@QEAAXXZ
 @ stub ?cout@@3Vostream_withassign@@A
-@ stub -arch=win32 ?dbp@streambuf@@QAEXXZ
-@ stub -arch=win64 ?dbp@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?dbp@streambuf@@QAEXXZ(ptr) msvcirt.?dbp@streambuf@@QAEXXZ
+@ cdecl -arch=win64 ?dbp@streambuf@@QEAAXXZ(ptr) msvcirt.?dbp@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?dec@@YAAAVios@@AAV1@@Z
 @ stub -arch=win64 ?dec@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?delbuf@ios@@QAEXH@Z

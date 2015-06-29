@@ -437,8 +437,8 @@
 @ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) streambuf_clrlock
 @ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) streambuf_clrlock
 @ stub ?cout@@3Vostream_withassign@@A  # class ostream_withassign cout
-@ stub -arch=win32 ?dbp@streambuf@@QAEXXZ  # void __thiscall streambuf::dbp(void)
-@ stub -arch=win64 ?dbp@streambuf@@QEAAXXZ
+@ thiscall -arch=win32 ?dbp@streambuf@@QAEXXZ(ptr) streambuf_dbp
+@ cdecl -arch=win64 ?dbp@streambuf@@QEAAXXZ(ptr) streambuf_dbp
 @ stub -arch=win32 ?dec@@YAAAVios@@AAV1@@Z  # class ios & __cdecl dec(class ios &)
 @ stub -arch=win64 ?dec@@YAAEAVios@@AEAV1@@Z
 @ stub -arch=win32 ?delbuf@ios@@QAEXH@Z  # void __thiscall ios::delbuf(int)
