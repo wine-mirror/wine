@@ -1335,7 +1335,13 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
     rgn = CreateRectRgnIndirect( &dst_rect );
     SelectClipRgn( hdc_dst, rgn );
     DeleteObject( rgn );
-    ExcludeUpdateRgn( hdc_dst, hwnd );
+    /* WS_CLIPCHILDREN doesn't exclude children from the window update
+     * region, and ExcludeUpdateRgn call may inappropriately clip valid
+     * child window contents from the copied parent window bits, but we
+     * still want to avoid copying invalid window bits when possible.
+     */
+    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CLIPCHILDREN ))
+        ExcludeUpdateRgn( hdc_dst, hwnd );
 
     code = X11DRV_START_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
