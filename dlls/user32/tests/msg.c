@@ -6646,6 +6646,20 @@ static void test_paint_messages(void)
     RedrawWindow( hparent, NULL, 0, RDW_ERASENOW );
     ok_sequence( WmEmptySeq, "WmChildPaintNc3", FALSE );
 
+    /* WS_CLIPCHILDREN doesn't exclude children from update region */
+    flush_sequence();
+    RedrawWindow( hparent, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
+    GetClientRect( hparent, &rect );
+    SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+    check_update_rgn( hparent, hrgn );
+    flush_events();
+
+    RedrawWindow( hparent, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+    GetClientRect( hparent, &rect );
+    SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+    check_update_rgn( hparent, hrgn );
+    flush_events();
+
     /* test RDW_INTERNALPAINT behavior */
 
     flush_sequence();
