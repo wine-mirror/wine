@@ -57,6 +57,7 @@ static void (*__thiscall p_streambuf_clrclock)(streambuf*);
 static int (*__thiscall p_streambuf_doallocate)(streambuf*);
 static void (*__thiscall p_streambuf_gbump)(streambuf*, int);
 static void (*__thiscall p_streambuf_lock)(streambuf*);
+static int (*__thiscall p_streambuf_pbackfail)(streambuf*, int);
 static void (*__thiscall p_streambuf_pbump)(streambuf*, int);
 static int (*__thiscall p_streambuf_sbumpc)(streambuf*);
 static void (*__thiscall p_streambuf_setb)(streambuf*, char*, char*, int);
@@ -148,6 +149,7 @@ static BOOL init(void)
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MEAAHXZ");
         SET(p_streambuf_gbump, "?gbump@streambuf@@IEAAXH@Z");
         SET(p_streambuf_lock, "?lock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_pbackfail, "?pbackfail@streambuf@@UEAAHH@Z");
         SET(p_streambuf_pbump, "?pbump@streambuf@@IEAAXH@Z");
         SET(p_streambuf_sbumpc, "?sbumpc@streambuf@@QEAAHXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IEAAXPEAD0H@Z");
@@ -170,6 +172,7 @@ static BOOL init(void)
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MAEHXZ");
         SET(p_streambuf_gbump, "?gbump@streambuf@@IAEXH@Z");
         SET(p_streambuf_lock, "?lock@streambuf@@QAEXXZ");
+        SET(p_streambuf_pbackfail, "?pbackfail@streambuf@@UAEHH@Z");
         SET(p_streambuf_pbump, "?pbump@streambuf@@IAEXH@Z");
         SET(p_streambuf_sbumpc, "?sbumpc@streambuf@@QAEHXZ");
         SET(p_streambuf_setb, "?setb@streambuf@@IAEXPAD0H@Z");
@@ -688,6 +691,30 @@ static void test_streambuf(void)
     call_func1(p_streambuf_stossc, &sb3);
     ok(sb3.stored_char == EOF, "wrong stored character, expected EOF got %c\n", sb3.stored_char);
     ok(underflow_count == 57, "no call to underflow expected\n");
+
+    /* pbackfail */
+    ret = (int) call_func2(p_streambuf_pbackfail, &sb, 'A');
+    ok(ret == 'A', "expected 'A' got '%c'\n", ret);
+    ok(sb.gptr == sb.eback + 2, "wrong get pointer, expected %p got %p\n", sb.eback + 2, sb.gptr);
+    ok(*sb.gptr == 'A', "expected 'A' in the get area, got %c\n", *sb.gptr);
+    ret = (int) call_func2(p_streambuf_pbackfail, &sb, EOF);
+    ok(ret == EOF, "expected EOF got '%c'\n", ret);
+    ok(sb.gptr == sb.eback + 1, "wrong get pointer, expected %p got %p\n", sb.eback + 1, sb.gptr);
+    ok(*sb.gptr == EOF, "expected EOF in the get area, got %c\n", *sb.gptr);
+    sb.gptr = sb.eback;
+    ret = (int) call_func2(p_streambuf_pbackfail, &sb, 'Z');
+    ok(ret == EOF, "expected EOF got '%c'\n", ret);
+    ok(sb.gptr == sb.eback, "wrong get pointer, expected %p got %p\n", sb.eback, sb.gptr);
+    ok(*sb.gptr == 'T', "expected 'T' in the get area, got %c\n", *sb.gptr);
+    ret = (int) call_func2(p_streambuf_pbackfail, &sb, EOF);
+    ok(ret == EOF, "expected EOF got '%c'\n", ret);
+    ok(sb.gptr == sb.eback, "wrong get pointer, expected %p got %p\n", sb.eback, sb.gptr);
+    ok(*sb.gptr == 'T', "expected 'T' in the get area, got %c\n", *sb.gptr);
+    sb2.gptr = sb2.egptr + 1;
+    ret = (int) call_func2(p_streambuf_pbackfail, &sb2, 'X');
+    ok(ret == 'X', "expected 'X' got '%c'\n", ret);
+    ok(sb2.gptr == sb2.egptr, "wrong get pointer, expected %p got %p\n", sb2.egptr, sb2.gptr);
+    ok(*sb2.gptr == 'X', "expected 'X' in the get area, got %c\n", *sb2.gptr);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

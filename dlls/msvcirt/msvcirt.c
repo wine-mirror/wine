@@ -367,8 +367,10 @@ int __thiscall streambuf_overflow(streambuf *this, int c)
 DEFINE_THISCALL_WRAPPER(streambuf_pbackfail, 8)
 int __thiscall streambuf_pbackfail(streambuf *this, int c)
 {
-    FIXME("(%p %d): stub\n", this, c);
-    return 0;
+    TRACE("(%p %d)\n", this, c);
+    if (this->gptr <= this->eback)
+        return EOF;
+    return *--this->gptr = c;
 }
 
 /* ?seekoff@streambuf@@UAEJJW4seek_dir@ios@@H@Z */
