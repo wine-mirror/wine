@@ -762,8 +762,8 @@
 # @ extern ?sh_write@filebuf@@2HB
 @ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) msvcirt.?snextc@streambuf@@QAEHXZ
 @ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) msvcirt.?snextc@streambuf@@QEAAHXZ
-@ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z
-@ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
+@ thiscall -arch=win32 ?sputbackc@streambuf@@QAEHD@Z(ptr long) msvcirt.?sputbackc@streambuf@@QAEHD@Z
+@ cdecl -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z(ptr long) msvcirt.?sputbackc@streambuf@@QEAAHD@Z
 @ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) msvcirt.?sputc@streambuf@@QAEHH@Z
 @ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) msvcirt.?sputc@streambuf@@QEAAHH@Z
 @ thiscall -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z(ptr str long) msvcirt.?sputn@streambuf@@QAEHPBDH@Z

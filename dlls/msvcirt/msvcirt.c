@@ -365,6 +365,7 @@ int __thiscall streambuf_overflow(streambuf *this, int c)
 /* ?pbackfail@streambuf@@UAEHH@Z */
 /* ?pbackfail@streambuf@@UEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_pbackfail, 8)
+#define call_streambuf_pbackfail(this, c) CALL_VTBL_FUNC(this, 36, int, (streambuf*, int), (this, c))
 int __thiscall streambuf_pbackfail(streambuf *this, int c)
 {
     TRACE("(%p %d)\n", this, c);
@@ -655,6 +656,15 @@ void __thiscall streambuf_stossc(streambuf *this)
         if (this->gptr < this->egptr)
             this->gptr++;
     }
+}
+
+/* ?sputbackc@streambuf@@QAEHD@Z */
+/* ?sputbackc@streambuf@@QEAAHD@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_sputbackc, 8)
+int __thiscall streambuf_sputbackc(streambuf *this, char ch)
+{
+    TRACE("(%p %d)\n", this, ch);
+    return call_streambuf_pbackfail(this, ch);
 }
 
 /******************************************************************

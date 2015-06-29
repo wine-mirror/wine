@@ -702,8 +702,8 @@
 # @ extern ?sh_write@filebuf@@2HB  # static int const filebuf::sh_write
 @ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) streambuf_snextc
 @ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) streambuf_snextc
-@ stub -arch=win32 ?sputbackc@streambuf@@QAEHD@Z  # int __thiscall streambuf::sputbackc(char)
-@ stub -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z
+@ thiscall -arch=win32 ?sputbackc@streambuf@@QAEHD@Z(ptr long) streambuf_sputbackc
+@ cdecl -arch=win64 ?sputbackc@streambuf@@QEAAHD@Z(ptr long) streambuf_sputbackc
 @ thiscall -arch=win32 ?sputc@streambuf@@QAEHH@Z(ptr long) streambuf_sputc
 @ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) streambuf_sputc
 @ thiscall -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z(ptr str long) streambuf_sputn
