@@ -1002,9 +1002,12 @@ BOOL macho_load_debug_info(struct module* module)
 
     macho_finish_stabs(module, &mdi.ht_symtab);
 
-    if (dwarf2_parse(module, module->reloc_delta, NULL /* FIXME: some thunks to deal with ? */,
-                     &module->format_info[DFI_MACHO]->u.macho_info->file_map))
-        ret = TRUE;
+    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    {
+        if (dwarf2_parse(module, module->reloc_delta, NULL /* FIXME: some thunks to deal with ? */,
+                         &module->format_info[DFI_MACHO]->u.macho_info->file_map))
+            ret = TRUE;
+    }
 
     pool_destroy(&mdi.pool);
     return ret;
