@@ -485,6 +485,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
     todo_wine ok(val == 0, "Expect 0, got %d\n", val);
 
+    text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
     todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
     todo_wine ok(text == NULL, "Expect NULL, got %p\n", text);
