@@ -4463,6 +4463,12 @@ static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf
 #define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
 
 typedef struct {
+    WORD version;
+    WORD numRecs;
+    WORD numRatios;
+} VDMX_Header;
+
+typedef struct {
     BYTE bCharSet;
     BYTE xRatio;
     BYTE yStartRatio;
@@ -4475,9 +4481,15 @@ typedef struct {
     BYTE endsz;
 } VDMX_group;
 
+typedef struct {
+    WORD yPelHeight;
+    WORD yMax;
+    WORD yMin;
+} VDMX_vTable;
+
 static LONG load_VDMX(GdiFont *font, LONG height)
 {
-    WORD hdr[3];
+    VDMX_Header hdr;
     VDMX_group group;
     BYTE devXRatio, devYRatio;
     USHORT numRecs, numRatios;
@@ -4485,7 +4497,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     LONG ppem = 0;
     int i;
 
-    result = get_font_data(font, MS_VDMX_TAG, 0, hdr, sizeof(hdr));
+    result = get_font_data(font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
 	return ppem;
@@ -4494,14 +4506,14 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     devXRatio = 1;
     devYRatio = 1;
 
-    numRecs = GET_BE_WORD(hdr[1]);
-    numRatios = GET_BE_WORD(hdr[2]);
+    numRecs = GET_BE_WORD(hdr.numRecs);
+    numRatios = GET_BE_WORD(hdr.numRatios);
 
-    TRACE("numRecs = %d numRatios = %d\n", numRecs, numRatios);
+    TRACE("version = %d numRecs = %d numRatios = %d\n", GET_BE_WORD(hdr.version), numRecs, numRatios);
     for(i = 0; i < numRatios; i++) {
 	Ratios ratio;
 
-	offset = (3 * 2) + (i * sizeof(Ratios));
+	offset = sizeof(hdr) + (i * sizeof(Ratios));
 	get_font_data(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
 	offset = -1;
 
@@ -4516,11 +4528,11 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	    devYRatio >= ratio.yStartRatio &&
 	    devYRatio <= ratio.yEndRatio))
 	    {
-		WORD tmp;
+		WORD group_offset;
 
-		offset = (3 * 2) + (numRatios * 4) + (i * 2);
-		get_font_data(font, MS_VDMX_TAG, offset, &tmp, sizeof(tmp));
-		offset = GET_BE_WORD(tmp);
+		offset = sizeof(hdr) + numRatios * sizeof(ratio) + i * sizeof(group_offset);
+		get_font_data(font, MS_VDMX_TAG, offset, &group_offset, sizeof(group_offset));
+		offset = GET_BE_WORD(group_offset);
 		break;
 	    }
     }
@@ -4538,8 +4550,8 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
-	vTable = HeapAlloc(GetProcessHeap(), 0, recs * 6);
-	result = get_font_data(font, MS_VDMX_TAG, offset + 4, vTable, recs * 6);
+	vTable = HeapAlloc(GetProcessHeap(), 0, recs * sizeof(VDMX_vTable));
+	result = get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
 	    goto end;
