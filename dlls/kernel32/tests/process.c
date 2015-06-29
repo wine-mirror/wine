@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Eric Pouech
  * Copyright 2006 Dmitry Timoshkov
+ * Copyright 2014 Michael Müller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -74,6 +75,7 @@ static BOOL   (WINAPI *pTerminateJobObject)(HANDLE job, UINT exit_code);
 static BOOL   (WINAPI *pQueryInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len, LPDWORD ret_len);
 static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len);
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
+static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -227,6 +229,7 @@ static BOOL init(void)
     pQueryInformationJobObject = (void *)GetProcAddress(hkernel32, "QueryInformationJobObject");
     pSetInformationJobObject = (void *)GetProcAddress(hkernel32, "SetInformationJobObject");
     pCreateIoCompletionPort = (void *)GetProcAddress(hkernel32, "CreateIoCompletionPort");
+    pGetNumaProcessorNode = (void *)GetProcAddress(hkernel32, "GetNumaProcessorNode");
     return TRUE;
 }
 
@@ -2692,6 +2695,39 @@ static void test_StartupNoConsole(void)
 #endif
 }
 
+static void test_GetNumaProcessorNode(void)
+{
+    SYSTEM_INFO si;
+    UCHAR node;
+    BOOL ret;
+    int i;
+
+    if (!pGetNumaProcessorNode)
+    {
+        skip("GetNumaProcessorNode is missing\n");
+        return;
+    }
+
+    GetSystemInfo(&si);
+    for (i = 0; i < 256; i++)
+    {
+        SetLastError(0xdeadbeef);
+        node = (i < si.dwNumberOfProcessors) ? 0xFF : 0xAA;
+        ret = pGetNumaProcessorNode(i, &node);
+        if (i < si.dwNumberOfProcessors)
+        {
+            ok(ret, "GetNumaProcessorNode returned FALSE for processor %d\n", i);
+            ok(node != 0xFF, "expected node != 0xFF, but got 0xFF\n");
+        }
+        else
+        {
+            ok(!ret, "GetNumaProcessorNode returned TRUE for processor %d\n", i);
+            ok(node == 0xFF || broken(node == 0xAA) /* WinXP */, "expected node 0xFF, got %x\n", node);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+        }
+    }
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -2741,6 +2777,7 @@ START_TEST(process)
     test_RegistryQuota();
     test_DuplicateHandle();
     test_StartupNoConsole();
+    test_GetNumaProcessorNode();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
