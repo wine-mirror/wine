@@ -1694,7 +1694,7 @@ static void test__strtod(void)
         d = strtod(NULL, &end);
         ok(almost_equal(d, 0.0), "d = %lf\n", d);
         ok(errno == EINVAL, "errno = %x\n", errno);
-        todo_wine ok(!end, "incorrect end ptr %p\n", end);
+        ok(!end, "incorrect end ptr %p\n", end);
 
         errno = EBADF;
         d = p__strtod_l(NULL, NULL, NULL);

@@ -317,8 +317,11 @@ static double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale
 
     if(err)
         *err = 0;
-    else
-        if(!MSVCRT_CHECK_PMT(str != NULL)) return 0;
+    else if(!MSVCRT_CHECK_PMT(str != NULL)) {
+        if (end)
+            *end = NULL;
+        return 0;
+    }
 
     if(!locale)
         locinfo = get_locinfo();
