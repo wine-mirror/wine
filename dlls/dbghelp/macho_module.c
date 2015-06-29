@@ -24,6 +24,17 @@
 #include "config.h"
 #include "wine/port.h"
 
+#ifdef HAVE_MACH_O_LOADER_H
+#include <CoreFoundation/CFString.h>
+#define LoadResource mac_LoadResource
+#define GetCurrentThread mac_GetCurrentThread
+#include <CoreServices/CoreServices.h>
+#undef LoadResource
+#undef GetCurrentThread
+#undef DPRINTF
+#endif
+
+#include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -92,6 +103,9 @@ typedef struct nlist                macho_nlist;
 #endif
 
 
+#define UUID_STRING_LEN 37 /* 16 bytes at 2 hex digits apiece, 4 dashes, and the null terminator */
+
+
 struct macho_module_info
 {
     struct image_file_map       file_map;
@@ -113,6 +127,14 @@ struct macho_info
 };
 
 static void macho_unmap_file(struct image_file_map* fmap);
+
+static char* format_uuid(const uint8_t uuid[16], char out[UUID_STRING_LEN])
+{
+    sprintf(out, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+            uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
+            uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+    return out;
+}
 
 /******************************************************************
  *              macho_calc_range
@@ -309,16 +331,20 @@ BOOL macho_find_section(struct image_file_map* ifm, const char* segname, const c
         sectname = tmp;
     }
 
-    fmap = &ifm->u.macho;
-    for (i = 0; i < fmap->num_sections; i++)
+    while (ifm)
     {
-        if (strcmp(fmap->sect[i].section->sectname, sectname) == 0 &&
-            (!segname || strcmp(fmap->sect[i].section->sectname, segname) == 0))
+        fmap = &ifm->u.macho;
+        for (i = 0; i < fmap->num_sections; i++)
         {
-            ism->fmap = ifm;
-            ism->sidx = i;
-            return TRUE;
+            if (strcmp(fmap->sect[i].section->sectname, sectname) == 0 &&
+                (!segname || strcmp(fmap->sect[i].section->sectname, segname) == 0))
+            {
+                ism->fmap = ifm;
+                ism->sidx = i;
+                return TRUE;
+            }
         }
+        ifm = fmap->dsym;
     }
 
     ism->fmap = NULL;
@@ -523,6 +549,18 @@ static int macho_load_section_info(struct macho_file_map* fmap, const struct loa
 }
 
 /******************************************************************
+ *              find_uuid
+ *
+ * Callback for macho_enum_load_commands.  Records the UUID load
+ * command of a Mach-O file.
+ */
+static int find_uuid(struct macho_file_map* fmap, const struct load_command* lc, void* user)
+{
+    fmap->uuid = (const struct uuid_command*)lc;
+    return 1;
+}
+
+/******************************************************************
  *              reset_file_map
  */
 static inline void reset_file_map(struct image_file_map* ifm)
@@ -530,7 +568,9 @@ static inline void reset_file_map(struct image_file_map* ifm)
     struct macho_file_map* fmap = &ifm->u.macho;
 
     fmap->fd = -1;
+    fmap->dsym = NULL;
     fmap->load_commands = IMAGE_NO_MAP;
+    fmap->uuid = NULL;
     fmap->num_sections = 0;
     fmap->sect = NULL;
 }
@@ -629,6 +669,7 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct image_file_map* ifm)
         case MH_DYLIB:
         case MH_DYLINKER:
         case MH_BUNDLE:
+        case MH_DSYM:
             break;
         default:
             goto done;
@@ -658,6 +699,16 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct image_file_map* ifm)
     TRACE("segs_start: 0x%08lx, segs_size: 0x%08lx\n", (unsigned long)fmap->segs_start,
             (unsigned long)fmap->segs_size);
 
+    if (macho_enum_load_commands(fmap, LC_UUID, find_uuid, NULL) < 0)
+        goto done;
+    if (fmap->uuid)
+    {
+        char uuid_string[UUID_STRING_LEN];
+        TRACE("UUID %s\n", format_uuid(fmap->uuid->uuid, uuid_string));
+    }
+    else
+        TRACE("no UUID found\n");
+
     ret = TRUE;
 done:
     if (!ret)
@@ -673,19 +724,33 @@ done:
  */
 static void macho_unmap_file(struct image_file_map* ifm)
 {
+    struct image_file_map* cursor;
+
     TRACE("(%p/%d)\n", ifm, ifm->u.macho.fd);
-    if (ifm->u.macho.fd != -1)
+
+    cursor = ifm;
+    while (cursor)
     {
-        struct image_section_map ism;
+        struct image_file_map* next;
 
-        ism.fmap = ifm;
-        for (ism.sidx = 0; ism.sidx < ifm->u.macho.num_sections; ism.sidx++)
-            macho_unmap_section(&ism);
+        if (ifm->u.macho.fd != -1)
+        {
+            struct image_section_map ism;
 
-        HeapFree(GetProcessHeap(), 0, ifm->u.macho.sect);
-        macho_unmap_load_commands(&ifm->u.macho);
-        close(ifm->u.macho.fd);
-        ifm->u.macho.fd = -1;
+            ism.fmap = ifm;
+            for (ism.sidx = 0; ism.sidx < ifm->u.macho.num_sections; ism.sidx++)
+                macho_unmap_section(&ism);
+
+            HeapFree(GetProcessHeap(), 0, ifm->u.macho.sect);
+            macho_unmap_load_commands(&ifm->u.macho);
+            close(ifm->u.macho.fd);
+            ifm->u.macho.fd = -1;
+        }
+
+        next = cursor->u.macho.dsym;
+        if (cursor != ifm)
+            HeapFree(GetProcessHeap(), 0, cursor);
+        cursor = next;
     }
 }
 
@@ -967,6 +1032,128 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 }
 
 /******************************************************************
+ *              try_dsym
+ *
+ * Try to load a debug symbol file from the given path and check
+ * if its UUID matches the UUID of an already-mapped file.  If so,
+ * stash the file map in the "dsym" field of the file and return
+ * TRUE.  If it can't be mapped or its UUID doesn't match, return
+ * FALSE.
+ */
+static BOOL try_dsym(const WCHAR* path, struct macho_file_map* fmap)
+{
+    struct image_file_map dsym_ifm;
+
+    if (macho_map_file(path, &dsym_ifm))
+    {
+        char uuid_string[UUID_STRING_LEN];
+
+        if (dsym_ifm.u.macho.uuid && !memcmp(dsym_ifm.u.macho.uuid->uuid, fmap->uuid->uuid, sizeof(fmap->uuid->uuid)))
+        {
+            TRACE("found matching debug symbol file at %s\n", debugstr_w(path));
+            fmap->dsym = HeapAlloc(GetProcessHeap(), 0, sizeof(dsym_ifm));
+            *fmap->dsym = dsym_ifm;
+            return TRUE;
+        }
+
+        TRACE("candidate debug symbol file at %s has wrong UUID %s; ignoring\n", debugstr_w(path),
+              format_uuid(dsym_ifm.u.macho.uuid->uuid, uuid_string));
+
+        macho_unmap_file(&dsym_ifm);
+    }
+    else
+        TRACE("couldn't map file at %s\n", debugstr_w(path));
+
+    return FALSE;
+}
+
+/******************************************************************
+ *              find_and_map_dsym
+ *
+ * Search for a debugging symbols file associated with a module and
+ * map it.  First look for a .dSYM bundle next to the module file
+ * (e.g. <path>.dSYM/Contents/Resources/DWARF/<basename of path>)
+ * as produced by dsymutil.  Next, look for a .dwarf file next to
+ * the module file (e.g. <path>.dwarf) as produced by
+ * "dsymutil --flat".  Finally, use Spotlight to search for a
+ * .dSYM bundle with the same UUID as the module file.
+ */
+static void find_and_map_dsym(struct module* module)
+{
+    static const WCHAR dot_dsym[] = {'.','d','S','Y','M',0};
+    static const WCHAR dsym_subpath[] = {'/','C','o','n','t','e','n','t','s','/','R','e','s','o','u','r','c','e','s','/','D','W','A','R','F','/',0};
+    static const WCHAR dot_dwarf[] = {'.','d','w','a','r','f',0};
+    struct macho_file_map* fmap = &module->format_info[DFI_MACHO]->u.macho_info->file_map.u.macho;
+    const WCHAR* p;
+    size_t len;
+    WCHAR* path = NULL;
+    char uuid_string[UUID_STRING_LEN];
+    CFStringRef uuid_cfstring;
+    CFStringRef query_string;
+    MDQueryRef query = NULL;
+
+    /* Without a UUID, we can't verify that any debug info file we find corresponds
+       to this file.  Better to have no debug info than incorrect debug info. */
+    if (!fmap->uuid)
+        return;
+
+    if ((p = strrchrW(module->module.LoadedImageName, '/')))
+        p++;
+    else
+        p = module->module.LoadedImageName;
+    len = strlenW(module->module.LoadedImageName) + strlenW(dot_dsym) + strlenW(dsym_subpath) + strlenW(p) + 1;
+    path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!path)
+        return;
+    strcpyW(path, module->module.LoadedImageName);
+    strcatW(path, dot_dsym);
+    strcatW(path, dsym_subpath);
+    strcatW(path, p);
+
+    if (try_dsym(path, fmap))
+        goto found;
+
+    strcpyW(path + strlenW(module->module.LoadedImageName), dot_dwarf);
+
+    if (try_dsym(path, fmap))
+        goto found;
+
+    format_uuid(fmap->uuid->uuid, uuid_string);
+    uuid_cfstring = CFStringCreateWithCString(NULL, uuid_string, kCFStringEncodingASCII);
+    query_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("com_apple_xcode_dsym_uuids == \"%@\""), uuid_cfstring);
+    CFRelease(uuid_cfstring);
+    query = MDQueryCreate(NULL, query_string, NULL, NULL);
+    CFRelease(query_string);
+    MDQuerySetMaxCount(query, 1);
+    if (MDQueryExecute(query, kMDQuerySynchronous) && MDQueryGetResultCount(query) >= 1)
+    {
+        MDItemRef item = (MDItemRef)MDQueryGetResultAtIndex(query, 0);
+        CFStringRef item_path = MDItemCopyAttribute(item, kMDItemPath);
+        if (item_path)
+        {
+            CFIndex item_path_len = CFStringGetLength(item_path);
+            if (item_path_len + strlenW(dsym_subpath) + strlenW(p) >= len)
+            {
+                HeapFree(GetProcessHeap(), 0, path);
+                len = item_path_len + strlenW(dsym_subpath) + strlenW(p) + 1;
+                path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            }
+            CFStringGetCharacters(item_path, CFRangeMake(0, item_path_len), (UniChar*)path);
+            strcpyW(path + item_path_len, dsym_subpath);
+            strcatW(path, p);
+            CFRelease(item_path);
+
+            if (try_dsym(path, fmap))
+                goto found;
+        }
+    }
+
+found:
+    HeapFree(GetProcessHeap(), 0, path);
+    if (query) CFRelease(query);
+}
+
+/******************************************************************
  *              macho_load_debug_info
  *
  * Loads Mach-O debugging information from the module image file.
@@ -990,6 +1177,15 @@ BOOL macho_load_debug_info(struct module* module)
 
     module->module.SymType = SymExport;
 
+    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    {
+        find_and_map_dsym(module);
+
+        if (dwarf2_parse(module, module->reloc_delta, NULL /* FIXME: some thunks to deal with ? */,
+                         &module->format_info[DFI_MACHO]->u.macho_info->file_map))
+            ret = TRUE;
+    }
+
     mdi.fmap = fmap;
     mdi.module = module;
     pool_init(&mdi.pool, 65536);
@@ -1000,14 +1196,17 @@ BOOL macho_load_debug_info(struct module* module)
     else if (result < 0)
         WARN("Couldn't correctly read stabs\n");
 
-    macho_finish_stabs(module, &mdi.ht_symtab);
-
-    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+    if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY) && fmap->dsym)
     {
-        if (dwarf2_parse(module, module->reloc_delta, NULL /* FIXME: some thunks to deal with ? */,
-                         &module->format_info[DFI_MACHO]->u.macho_info->file_map))
+        mdi.fmap = &fmap->dsym->u.macho;
+        result = macho_enum_load_commands(mdi.fmap, LC_SYMTAB, macho_parse_symtab, &mdi);
+        if (result > 0)
             ret = TRUE;
+        else if (result < 0)
+            WARN("Couldn't correctly read stabs\n");
     }
+
+    macho_finish_stabs(module, &mdi.ht_symtab);
 
     pool_destroy(&mdi.pool);
     return ret;

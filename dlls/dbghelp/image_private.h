@@ -110,10 +110,12 @@ struct image_file_map
             size_t                      segs_size;
             size_t                      segs_start;
             int                         fd;
+            struct image_file_map*      dsym;   /* the debug symbols file associated with this one */
 
 #ifdef HAVE_MACH_O_LOADER_H
             macho_mach_header           mach_header;
             const struct load_command*  load_commands;
+            const struct uuid_command*  uuid;
 
             /* The offset in the file which is this architecture.  mach_header was
              * read from arch_offset. */
