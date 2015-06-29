@@ -591,6 +591,13 @@ static HRESULT WINAPI testinlineobj_GetBreakConditions(IDWriteInlineObject *ifac
     return 0x8feacafe;
 }
 
+static HRESULT WINAPI testinlineobj2_GetBreakConditions(IDWriteInlineObject *iface, DWRITE_BREAK_CONDITION *before,
+    DWRITE_BREAK_CONDITION *after)
+{
+    *before = *after = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+    return S_OK;
+}
+
 static IDWriteInlineObjectVtbl testinlineobjvtbl = {
     testinlineobj_QI,
     testinlineobj_AddRef,
@@ -601,8 +608,19 @@ static IDWriteInlineObjectVtbl testinlineobjvtbl = {
     testinlineobj_GetBreakConditions
 };
 
+static IDWriteInlineObjectVtbl testinlineobjvtbl2 = {
+    testinlineobj_QI,
+    testinlineobj_AddRef,
+    testinlineobj_Release,
+    testinlineobj_Draw,
+    testinlineobj_GetMetrics,
+    testinlineobj_GetOverhangMetrics,
+    testinlineobj2_GetBreakConditions
+};
+
 static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
 static IDWriteInlineObject testinlineobj2 = { &testinlineobjvtbl };
+static IDWriteInlineObject testinlineobj3 = { &testinlineobjvtbl2 };
 
 static HRESULT WINAPI testeffect_QI(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -1728,6 +1746,26 @@ todo_wine
     ok(count == 2, "got %u\n", count);
     ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
     ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
+    ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
+    IDWriteTextLayout_Release(layout);
+
+    /* layout is fully covered by inline object with after condition DWRITE_BREAK_CONDITION_MAY_NOT_BREAK */
+    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 2, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = ~0u;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 2, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+todo_wine
+    ok(metrics[0].canWrapLineAfter == 1, "got %d\n", metrics[0].canWrapLineAfter);
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimm);

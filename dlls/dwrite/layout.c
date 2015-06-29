@@ -423,12 +423,21 @@ static inline DWRITE_BREAK_CONDITION override_break_condition(DWRITE_BREAK_CONDI
     return existingbreak;
 }
 
+/* This helper should be used to get effective range length, in other words it returns number of text
+   positions from range starting point to the end of the range, limited by layout text length */
+static inline UINT32 get_clipped_range_length(const struct dwrite_textlayout *layout, const struct layout_range *range)
+{
+    if (range->h.range.startPosition + range->h.range.length <= layout->len)
+        return range->h.range.length;
+    return layout->len - range->h.range.startPosition;
+}
+
 /* Actual breakpoint data gets updated with break condition required by inline object set for range 'cur'. */
 static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout, const struct layout_range *cur)
 {
     DWRITE_BREAK_CONDITION before, after;
+    UINT32 i, length;
     HRESULT hr;
-    UINT32 i;
 
     /* ignore returned conditions if failed */
     hr = IDWriteInlineObject_GetBreakConditions(cur->object, &before, &after);
@@ -442,7 +451,8 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
         memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
     }
 
-    for (i = cur->h.range.startPosition; i < cur->h.range.length + cur->h.range.startPosition; i++) {
+    length = get_clipped_range_length(layout, cur);
+    for (i = cur->h.range.startPosition; i < length + cur->h.range.startPosition; i++) {
         /* for first codepoint check if there's anything before it and update accordingly */
         if (i == cur->h.range.startPosition) {
             if (i > 0)
@@ -453,7 +463,7 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
             layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
         /* similar check for last codepoint */
-        else if (i == cur->h.range.startPosition + cur->h.range.length - 1) {
+        else if (i == cur->h.range.startPosition + length - 1) {
             if (i == layout->len - 1)
                 layout->actual_breakpoints[i].breakConditionAfter = after;
             else
@@ -566,15 +576,6 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
             return;
         }
     }
-}
-
-/* This helper should be used to get effective range length, in other words it returns number of text
-   positions from range starting point to the end of the range, limited by layout text length */
-static inline UINT32 get_clipped_range_length(const struct dwrite_textlayout *layout, const struct layout_range *range)
-{
-    if (range->h.range.startPosition + range->h.range.length <= layout->len)
-        return range->h.range.length;
-    return layout->len - range->h.range.startPosition;
 }
 
 static inline FLOAT get_scaled_font_metric(UINT32 metric, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
