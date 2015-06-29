@@ -383,15 +383,15 @@ static void test_signposttrack(void)
     hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicSignPostTrack),
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicSignPostTrack),
             "Expected class CLSID_DirectMusicSignPostTrack got %s\n", wine_dbgstr_guid(&class));
     hr = IPersistStream_Save(ps, NULL, TRUE);
     todo_wine ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
-    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
     hr = IPersistStream_GetSizeMax(ps, &size);
     ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
 
