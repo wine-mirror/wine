@@ -1839,14 +1839,11 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
 
   CFLAGS=$saved_CFLAGS
 
-  dnl On Darwin, prefer stabs; everywhere else, default to dwarf-2 debug info
+  dnl Default to dwarf-2 debug info
   for ac_flag in $CFLAGS; do
     case $ac_flag in
-      -g) case $host_os in
-            darwin*) WINE_TRY_CFLAGS([-gstabs+]) ;;
-            *) WINE_TRY_CFLAGS([-gdwarf-2])
-               WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
-          esac ;;
+      -g) WINE_TRY_CFLAGS([-gdwarf-2])
+          WINE_TRY_CFLAGS([-gstrict-dwarf]) ;;
     esac
   done
 

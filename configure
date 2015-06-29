@@ -14164,33 +14164,7 @@ fi
 
     for ac_flag in $CFLAGS; do
     case $ac_flag in
-      -g) case $host_os in
-            darwin*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gstabs+" >&5
-$as_echo_n "checking whether the compiler supports -gstabs+... " >&6; }
-if ${ac_cv_cflags__gstabsp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -gstabs+"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__gstabsp=yes
-else
-  ac_cv_cflags__gstabsp=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__gstabsp" >&5
-$as_echo "$ac_cv_cflags__gstabsp" >&6; }
-if test "x$ac_cv_cflags__gstabsp" = xyes; then :
-  EXTRACFLAGS="$EXTRACFLAGS -gstabs+"
-fi ;;
-            *) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-2" >&5
+      -g) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-2" >&5
 $as_echo_n "checking whether the compiler supports -gdwarf-2... " >&6; }
 if ${ac_cv_cflags__gdwarf_2+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -14215,7 +14189,7 @@ $as_echo "$ac_cv_cflags__gdwarf_2" >&6; }
 if test "x$ac_cv_cflags__gdwarf_2" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -gdwarf-2"
 fi
-               { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gstrict-dwarf" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gstrict-dwarf" >&5
 $as_echo_n "checking whether the compiler supports -gstrict-dwarf... " >&6; }
 if ${ac_cv_cflags__gstrict_dwarf+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -14240,7 +14214,6 @@ $as_echo "$ac_cv_cflags__gstrict_dwarf" >&6; }
 if test "x$ac_cv_cflags__gstrict_dwarf" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -gstrict-dwarf"
 fi ;;
-          esac ;;
     esac
   done
 
