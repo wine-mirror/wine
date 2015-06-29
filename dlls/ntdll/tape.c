@@ -87,11 +87,13 @@ static const char *io2str( DWORD io )
 /******************************************************************
  *      TAPE_GetStatus
  */
+#ifdef HAVE_SYS_MTIO_H
 static inline NTSTATUS TAPE_GetStatus( int error )
 {
     if (!error) return STATUS_SUCCESS;
     return FILE_GetNtStatus();
 }
+#endif
 
 /******************************************************************
  *      TAPE_CreatePartition
