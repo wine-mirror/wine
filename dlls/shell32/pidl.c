@@ -1477,6 +1477,7 @@ HRESULT WINAPI SHGetIDListFromObject(IUnknown *punk, PIDLIST_ABSOLUTE *ppidl)
         {
             /* We might be able to get IPersistFolder2 from a shellfolder. */
             ret = SHGetIDListFromObject((IUnknown*)psf, ppidl);
+            IShellFolder_Release(psf);
         }
         IFolderView_Release(pfv);
         return ret;

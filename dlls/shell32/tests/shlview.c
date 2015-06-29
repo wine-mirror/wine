@@ -688,6 +688,7 @@ static void test_IFolderView(void)
     IShellBrowser *browser;
     IFolderView2 *fv2;
     IFolderView *fv;
+    IUnknown *unk;
     HWND hwnd_view, hwnd_list;
     PITEMID_CHILD pidl;
     HRESULT hr;
@@ -830,6 +831,11 @@ if (0)
     ok(ref1 == ref2 || ref1 + 1 == ref2, /* >= vista */
        "expected same refcount, got %d\n", ref2);
     ok(desktop == folder, "\n");
+    if (folder) IShellFolder_Release(folder);
+
+    hr = IFolderView_GetFolder(fv, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    if (unk) IUnknown_Release(unk);
 
     hr = IFolderView_QueryInterface(fv, &IID_IFolderView2, (void**)&fv2);
     if (hr != S_OK)

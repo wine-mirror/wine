@@ -2713,15 +2713,7 @@ static HRESULT WINAPI FolderView_GetFolder(IFolderView2 *iface, REFIID riid, voi
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
-    if (!ppv) return E_POINTER;
-
-    if (IsEqualIID(riid, &IID_IShellFolder))
-    {
-        *ppv = This->pSFParent;
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
+    return IShellFolder_QueryInterface(This->pSFParent, riid, ppv);
 }
 
 static HRESULT WINAPI FolderView_Item(IFolderView2 *iface, int index, PITEMID_CHILD *ppidl)

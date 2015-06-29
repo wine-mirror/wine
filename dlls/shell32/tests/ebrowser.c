@@ -1469,7 +1469,7 @@ static void test_navigation(void)
         test_browse_pidl_sb(peb2, &ebev, pidl_relative, SBSP_RELATIVE, S_OK, 1, 1, 0, 1);
 
         ILFree(pidl_relative);
-        /* IShellFolder_Release(psf); */
+        IShellFolder_Release(psf);
         IFolderView_Release(pfv);
     }
 
