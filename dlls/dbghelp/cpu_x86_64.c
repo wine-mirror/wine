@@ -722,7 +722,7 @@ static void*    x86_64_find_runtime_function(struct module* module, DWORD64 addr
     return NULL;
 }
 
-static unsigned x86_64_map_dwarf_register(unsigned regno)
+static unsigned x86_64_map_dwarf_register(unsigned regno, BOOL eh_frame)
 {
     unsigned    reg;
 

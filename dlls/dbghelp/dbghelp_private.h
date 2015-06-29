@@ -530,7 +530,7 @@ struct cpu
     void*       (*find_runtime_function)(struct module*, DWORD64 addr);
 
     /* dwarf dedicated information */
-    unsigned    (*map_dwarf_register)(unsigned regno);
+    unsigned    (*map_dwarf_register)(unsigned regno, BOOL eh_frame);
 
     /* context related manipulation */
     void*       (*fetch_context_reg)(CONTEXT* context, unsigned regno, unsigned* size);
