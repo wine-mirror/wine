@@ -2704,7 +2704,7 @@ static void test_GetNumaProcessorNode(void)
 
     if (!pGetNumaProcessorNode)
     {
-        skip("GetNumaProcessorNode is missing\n");
+        win_skip("GetNumaProcessorNode is missing\n");
         return;
     }
 
