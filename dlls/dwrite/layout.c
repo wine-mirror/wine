@@ -1033,6 +1033,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     }
 
     layout->lines[*line] = *metrics;
+    layout->line_count += 1;
     *line += 1;
     return S_OK;
 }
@@ -1197,8 +1198,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         s[0] = s[1];
         textpos += layout->clustermetrics[i].length;
     }
-
-    layout->line_count = line;
 
     /* Now all line info is here, update effective runs positions in flow direction */
     erun = layout_get_next_erun(layout, NULL);
