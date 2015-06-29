@@ -96,8 +96,8 @@
 @ stub -arch=win64 ??0ostrstream@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0ostrstream@@QAE@PADHH@Z  # __thiscall ostrstream::ostrstream(char *,int,int)
 @ stub -arch=win64 ??0ostrstream@@QEAA@PEADHH@Z
-@ thiscall -arch=win32 ??0ostrstream@@QAE@XZ(ptr) MSVCIRT_ostrstream_sl_void  # __thiscall ostrstream::ostrstream(void)
-@ cdecl -arch=win64 ??0ostrstream@@QEAA@XZ(ptr) MSVCIRT_ostrstream_sl_void
+@ thiscall -arch=win32 ??0ostrstream@@QAE@XZ(ptr long) MSVCIRT_ostrstream_ctor
+@ cdecl -arch=win64 ??0ostrstream@@QEAA@XZ(ptr long) MSVCIRT_ostrstream_ctor
 @ stub -arch=win32 ??0stdiobuf@@QAE@ABV0@@Z  # __thiscall stdiobuf::stdiobuf(class stdiobuf const &)
 @ stub -arch=win64 ??0stdiobuf@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0stdiobuf@@QAE@PAU_iobuf@@@Z  # __thiscall stdiobuf::stdiobuf(struct _iobuf *)
@@ -158,8 +158,8 @@
 @ stub -arch=win64 ??1ostream@@UEAA@XZ
 @ stub -arch=win32 ??1ostream_withassign@@UAE@XZ  # virtual __thiscall ostream_withassign::~ostream_withassign(void)
 @ stub -arch=win64 ??1ostream_withassign@@UEAA@XZ
-@ thiscall -arch=win32 ??1ostrstream@@UAE@XZ(ptr) MSVCIRT_ostrstream_sl_void # virtual __thiscall ostrstream::~ostrstream(void)
-@ cdecl -arch=win64 ??1ostrstream@@UEAA@XZ(ptr) MSVCIRT_ostrstream_sl_void
+@ thiscall -arch=win32 ??1ostrstream@@UAE@XZ(ptr) MSVCIRT_ostrstream_dtor
+@ cdecl -arch=win64 ??1ostrstream@@UEAA@XZ(ptr) MSVCIRT_ostrstream_dtor
 @ stub -arch=win32 ??1stdiobuf@@UAE@XZ  # virtual __thiscall stdiobuf::~stdiobuf(void)
 @ stub -arch=win64 ??1stdiobuf@@UEAA@XZ
 @ stub -arch=win32 ??1stdiostream@@UAE@XZ  # virtual __thiscall stdiostream::~stdiostream(void)

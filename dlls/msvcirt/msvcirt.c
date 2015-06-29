@@ -696,13 +696,21 @@ void * __thiscall MSVCIRT_ios_sl_void(class_ios * _this)
 
 /******************************************************************
  *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
- *        class ostream & __thiscall ostrstream::ostrstream<<(void)
  */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_sl_void,4)
-void * __thiscall MSVCIRT_ostrstream_sl_void(class_ostream * _this)
+DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_ctor,8)
+void * __thiscall MSVCIRT_ostrstream_ctor(class_ostream *this, BOOL virt_init)
 {
-   FIXME("(%p) stub\n", _this);
-   return _this;
+   FIXME("(%p %x) stub\n", this, virt_init);
+   return this;
+}
+
+/******************************************************************
+ *		 ??1ostrstream@@UAE@XZ (MSVCRTI.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_dtor,4)
+void __thiscall MSVCIRT_ostrstream_dtor(class_ios *base)
+{
+    FIXME("(%p) stub\n", base);
 }
 
 /******************************************************************

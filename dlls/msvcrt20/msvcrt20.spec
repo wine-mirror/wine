@@ -86,8 +86,8 @@
 @ stub -arch=win64 ??0ostrstream@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0ostrstream@@QAE@PADHH@Z
 @ stub -arch=win64 ??0ostrstream@@QEAA@PEADHH@Z
-@ thiscall -arch=win32 ??0ostrstream@@QAE@XZ(ptr) msvcirt.??0ostrstream@@QAE@XZ
-@ cdecl -arch=win64 ??0ostrstream@@QEAA@XZ(ptr) msvcirt.??0ostrstream@@QEAA@XZ
+@ thiscall -arch=win32 ??0ostrstream@@QAE@XZ(ptr long) msvcirt.??0ostrstream@@QAE@XZ
+@ cdecl -arch=win64 ??0ostrstream@@QEAA@XZ(ptr long) msvcirt.??0ostrstream@@QEAA@XZ
 @ stub -arch=win32 ??0stdiobuf@@QAE@ABV0@@Z
 @ stub -arch=win64 ??0stdiobuf@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0stdiobuf@@QAE@PAU_iobuf@@@Z
