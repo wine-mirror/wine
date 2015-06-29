@@ -694,7 +694,6 @@ static void test_IFolderView(void)
     HRESULT hr;
     INT ret, count;
     POINT pt;
-    LONG ref1, ref2;
     RECT r;
 
     hr = SHGetDesktopFolder(&desktop);
@@ -822,14 +821,8 @@ if (0)
     hr = IFolderView_GetFolder(fv, &IID_IShellFolder, NULL);
     ok(hr == E_POINTER, "got (0x%08x)\n", hr);
 
-    ref1 = IShellFolder_AddRef(desktop);
-    IShellFolder_Release(desktop);
     hr = IFolderView_GetFolder(fv, &IID_IShellFolder, (void**)&folder);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
-    ref2 = IShellFolder_AddRef(desktop);
-    IShellFolder_Release(desktop);
-    ok(ref1 == ref2 || ref1 + 1 == ref2, /* >= vista */
-       "expected same refcount, got %d\n", ref2);
     ok(desktop == folder, "\n");
     if (folder) IShellFolder_Release(folder);
 
