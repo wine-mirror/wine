@@ -1659,7 +1659,6 @@ todo_wine
 
     ok(metrics[2].width > 0.0, "got %.2f\n", metrics[2].width);
     ok(metrics[2].length == 1, "got %d\n", metrics[2].length);
-todo_wine
     ok(metrics[2].canWrapLineAfter == 1, "got %d\n", metrics[2].canWrapLineAfter);
     ok(metrics[2].isWhitespace == 0, "got %d\n", metrics[2].isWhitespace);
     ok(metrics[2].isNewline == 0, "got %d\n", metrics[2].isNewline);
@@ -1686,7 +1685,6 @@ todo_wine
     /* object sets a width to 123.0, but returns failure from GetMetrics() */
     ok(metrics[0].width == 0.0, "got %.2f\n", metrics[0].width);
     ok(metrics[0].length == 4, "got %d\n", metrics[0].length);
-todo_wine
     ok(metrics[0].canWrapLineAfter == 1, "got %d\n", metrics[0].canWrapLineAfter);
     ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
     ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
@@ -1715,7 +1713,6 @@ todo_wine
 
     ok(metrics[1].width == 0.0, "got %.2f\n", metrics[1].width);
     ok(metrics[1].length == 2, "got %d\n", metrics[1].length);
-todo_wine
     ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
     ok(metrics[1].isWhitespace == 0, "got %d\n", metrics[1].isWhitespace);
     ok(metrics[1].isNewline == 0, "got %d\n", metrics[1].isNewline);
@@ -1763,7 +1760,6 @@ todo_wine
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 2, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 1, "got %u\n", count);
-todo_wine
     ok(metrics[0].canWrapLineAfter == 1, "got %d\n", metrics[0].canWrapLineAfter);
 
     IDWriteTextLayout_Release(layout);

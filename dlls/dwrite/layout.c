@@ -825,8 +825,11 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         break;
     }
 
-    if (hr == S_OK)
+    if (hr == S_OK) {
         layout->cluster_count = cluster;
+        if (cluster)
+            layout->clustermetrics[cluster-1].canWrapLineAfter = TRUE;
+    }
 
     IDWriteTextAnalyzer_Release(analyzer);
     return hr;
