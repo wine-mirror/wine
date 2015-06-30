@@ -500,10 +500,12 @@ static void AddComponentCategories(void)
 {
     TVINSERTSTRUCTW tvis;
     HKEY hKey, hCurKey;
+    WCHAR keyName[MAX_LOAD_STRING];
     WCHAR valName[MAX_LOAD_STRING];
     WCHAR buffer[MAX_LOAD_STRING];
     LONG lenBuffer;
     DWORD lenBufferHlp;
+    DWORD lenValName;
     int i=-1;
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM|TVIF_CHILDREN;
@@ -520,23 +522,24 @@ static void AddComponentCategories(void)
     {
         i++;
 
-        if(RegEnumKeyW(hKey, i, valName, sizeof(valName)/sizeof(valName[0])) != ERROR_SUCCESS) break;
+        if(RegEnumKeyW(hKey, i, keyName, sizeof(keyName)/sizeof(keyName[0])) != ERROR_SUCCESS) break;
 
-        if(RegOpenKeyW(hKey, valName, &hCurKey) != ERROR_SUCCESS) continue;
+        if(RegOpenKeyW(hKey, keyName, &hCurKey) != ERROR_SUCCESS) continue;
 
         lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
         lenBufferHlp = sizeof(WCHAR[MAX_LOAD_STRING]);
+        lenValName = sizeof(WCHAR[MAX_LOAD_STRING]);
 
         if(RegQueryValueW(hCurKey, NULL, buffer, &lenBuffer) == ERROR_SUCCESS && *buffer)
             U(tvis).item.pszText = buffer;
-        else if(RegEnumValueW(hCurKey, 0, NULL, NULL, NULL, NULL,
+        else if(RegEnumValueW(hCurKey, 0, valName, &lenValName, NULL, NULL,
                     (LPBYTE)buffer, &lenBufferHlp) == ERROR_SUCCESS && *buffer)
             U(tvis).item.pszText = buffer;
         else continue;
 
         RegCloseKey(hCurKey);
 
-        U(tvis).item.lParam = CreateITEM_INFO(REGTOP, valName, valName, NULL);
+        U(tvis).item.lParam = CreateITEM_INFO(REGTOP, keyName, keyName, NULL);
         SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
     }
 
