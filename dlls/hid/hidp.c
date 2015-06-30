@@ -421,3 +421,56 @@ NTSTATUS WINAPI HidP_InitializeReportForID(HIDP_REPORT_TYPE ReportType, UCHAR Re
 
     return HIDP_STATUS_SUCCESS;
 }
+
+ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, PHIDP_PREPARSED_DATA PreparsedData)
+{
+    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
+    WINE_HID_REPORT *report = NULL;
+    int r_count;
+    int i;
+    int count = 0;
+
+    TRACE("(%i, %x, %p)\n", ReportType, UsagePage, PreparsedData);
+
+    if (data->magic != HID_MAGIC)
+        return 0;
+
+    switch(ReportType)
+    {
+        case HidP_Input:
+            report = HID_INPUT_REPORTS(data);
+            r_count = data->dwInputReportCount;
+            break;
+        case HidP_Output:
+            report = HID_OUTPUT_REPORTS(data);
+            r_count = data->dwOutputReportCount;
+            break;
+        case HidP_Feature:
+            report = HID_FEATURE_REPORTS(data);
+            r_count = data->dwFeatureReportCount;
+            break;
+        default:
+            return HIDP_STATUS_INVALID_REPORT_TYPE;
+    }
+
+    if (!r_count || !report)
+        return 0;
+
+    for (i = 0; i < r_count; i++)
+    {
+        int j;
+        for (j = 0; j < report->elementCount; j++)
+        {
+            if (report->Elements[j].caps.button.UsagePage == UsagePage)
+            {
+                if (report->Elements[j].caps.button.IsRange)
+                    count += (report->Elements[j].caps.button.u.Range.UsageMax -
+                             report->Elements[j].caps.button.u.Range.UsageMin) + 1;
+                else
+                    count++;
+            }
+        }
+        report = HID_NEXT_REPORT(data, report);
+    }
+    return count;
+}
