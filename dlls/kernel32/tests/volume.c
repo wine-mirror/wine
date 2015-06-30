@@ -793,9 +793,9 @@ static void test_GetVolumePathNameA(void)
 
     for (i=0; i<sizeof(test_paths)/sizeof(test_paths[0]); i++)
     {
-        BOOL broken_ret = test_paths[i].broken_error == NO_ERROR ? TRUE : FALSE;
+        BOOL broken_ret = test_paths[i].broken_error == NO_ERROR;
         char *output = (test_paths[i].path_name != NULL ? volume_path : NULL);
-        BOOL expected_ret = test_paths[i].error == NO_ERROR ? TRUE : FALSE;
+        BOOL expected_ret = test_paths[i].error == NO_ERROR;
 
         volume_path[0] = 0;
         if (test_paths[i].path_len < sizeof(volume_path))
