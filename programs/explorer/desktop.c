@@ -1171,7 +1171,7 @@ static HRESULT WINAPI shellwindows_Revoke(IShellWindows *iface, LONG cookie)
 
 static HRESULT WINAPI shellwindows_OnNavigate(IShellWindows *iface, LONG cookie, VARIANT *loc)
 {
-    FIXME("0x%x %p\n", cookie, debugstr_variant(loc));
+    FIXME("0x%x %s\n", cookie, debugstr_variant(loc));
     return E_NOTIMPL;
 }
 
@@ -1184,7 +1184,7 @@ static HRESULT WINAPI shellwindows_OnActivated(IShellWindows *iface, LONG cookie
 static HRESULT WINAPI shellwindows_FindWindowSW(IShellWindows *iface, VARIANT *loc,
     VARIANT *root, int class, LONG *hwnd, int options, IDispatch **disp)
 {
-    TRACE("%s %p 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
+    TRACE("%s %s 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
         class, hwnd, options, disp);
 
     if (class != SWC_DESKTOP)
