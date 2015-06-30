@@ -358,3 +358,66 @@ NTSTATUS WINAPI HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, PHIDP_VALUE_CAPS 
     *ValueCapsLength = v_count;
     return HIDP_STATUS_SUCCESS;
 }
+
+NTSTATUS WINAPI HidP_InitializeReportForID(HIDP_REPORT_TYPE ReportType, UCHAR ReportID,
+                                           PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report,
+                                           ULONG ReportLength)
+{
+    int size;
+    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
+    WINE_HID_REPORT *report = NULL;
+    BOOL found=FALSE;
+    int r_count;
+    int i;
+
+    TRACE("(%i, %i, %p, %p, %i)\n",ReportType, ReportID, PreparsedData, Report, ReportLength);
+
+    if (data->magic != HID_MAGIC)
+        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+
+    switch(ReportType)
+    {
+        case HidP_Input:
+            size = data->caps.InputReportByteLength;
+            report = HID_INPUT_REPORTS(data);
+            r_count = data->dwInputReportCount;
+            break;
+        case HidP_Output:
+            size = data->caps.OutputReportByteLength;
+            report = HID_OUTPUT_REPORTS(data);
+            r_count = data->dwOutputReportCount;
+            break;
+        case HidP_Feature:
+            size = data->caps.FeatureReportByteLength;
+            report = HID_FEATURE_REPORTS(data);
+            r_count = data->dwFeatureReportCount;
+            break;
+        default:
+            return HIDP_STATUS_INVALID_REPORT_TYPE;
+    }
+
+    if (!r_count || !size || !report)
+        return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
+
+    if (size != ReportLength)
+        return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    ZeroMemory(Report, size);
+
+    for (i = 0; i < r_count; i++)
+    {
+        if (report->reportID == ReportID)
+        {
+            found = TRUE;
+            if (report->reportID)
+                Report[0] = ReportID;
+            /* TODO: Handle null and default values */
+        }
+        report = HID_NEXT_REPORT(data, report);
+    }
+
+    if (!found)
+        return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
+
+    return HIDP_STATUS_SUCCESS;
+}
