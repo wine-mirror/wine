@@ -2896,7 +2896,6 @@ static void test_MsiSourceListEnumMediaDisks(void)
                                       NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(label, "aaa"), "Expected \"aaa\", got \"%s\"\n", label);
-    todo_wine
     ok(id == 1, "Expected 1, got %d\n", id);
 
     /* szVolumeLabel, pcchVolumeLabel, szDiskPrompt and pcchDiskPrompt are NULL */
@@ -2905,7 +2904,6 @@ static void test_MsiSourceListEnumMediaDisks(void)
                                       MSICODE_PRODUCT, 0, &id, NULL, NULL,
                                       NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
     ok(id == 1, "Expected 1, got %d\n", id);
 
     /* pcchVolumeLabel is exactly 5 */
