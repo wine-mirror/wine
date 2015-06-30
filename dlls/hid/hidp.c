@@ -151,6 +151,71 @@ NTSTATUS WINAPI HidP_GetCaps(PHIDP_PREPARSED_DATA PreparsedData,
 }
 
 
+NTSTATUS WINAPI HidP_GetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
+                                   USAGE Usage, PULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,
+                                   PCHAR Report, ULONG ReportLength)
+{
+    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
+    WINE_HID_REPORT *report = NULL;
+    USHORT v_count = 0, r_count = 0;
+    int i;
+
+    TRACE("(%i, %x, %i, %i, %p, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, Usage, UsageValue,
+          PreparsedData, Report, ReportLength);
+
+    if (data->magic != HID_MAGIC)
+        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+
+    switch(ReportType)
+    {
+        case HidP_Input:
+            v_count = data->caps.NumberInputValueCaps;
+            r_count = data->dwInputReportCount;
+            report = HID_INPUT_REPORTS(data);
+            break;
+        case HidP_Output:
+            v_count = data->caps.NumberOutputValueCaps;
+            r_count = data->dwOutputReportCount;
+            report = HID_OUTPUT_REPORTS(data);
+            break;
+        case HidP_Feature:
+            v_count = data->caps.NumberFeatureValueCaps;
+            r_count = data->dwFeatureReportCount;
+            report = HID_FEATURE_REPORTS(data);
+            break;
+        default:
+            return HIDP_STATUS_INVALID_REPORT_TYPE;
+    }
+
+    if (!r_count || !v_count || !report)
+        return HIDP_STATUS_USAGE_NOT_FOUND;
+
+    for (i = 0; i < r_count; i++)
+    {
+        if (!report->reportID || report->reportID == Report[0])
+            break;
+        report = HID_NEXT_REPORT(data, report);
+    }
+
+    if (i == r_count)
+        return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
+
+    for (i = 0; i < report->elementCount; i++)
+    {
+        if (report->Elements[i].ElementType == ValueElement &&
+            report->Elements[i].caps.value.UsagePage == UsagePage &&
+            report->Elements[i].caps.value.u.NotRange.Usage == Usage)
+        {
+            return get_report_data((BYTE*)Report, ReportLength,
+                report->Elements[i].valueStartBit,
+                report->Elements[i].bitCount, UsageValue);
+        }
+    }
+
+    return HIDP_STATUS_USAGE_NOT_FOUND;
+}
+
+
 NTSTATUS WINAPI HidP_GetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
                                PUSAGE UsageList, PULONG UsageLength, PHIDP_PREPARSED_DATA PreparsedData,
                                PCHAR Report, ULONG ReportLength)

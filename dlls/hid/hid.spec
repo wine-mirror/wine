@@ -26,7 +26,7 @@
 @ stub HidP_GetScaledUsageValue
 @ stub HidP_GetSpecificButtonCaps
 @ stub HidP_GetSpecificValueCaps
-@ stub HidP_GetUsageValue
+@ stdcall HidP_GetUsageValue(long long long long ptr ptr ptr long)
 @ stub HidP_GetUsageValueArray
 @ stdcall HidP_GetUsages(long long long ptr ptr ptr ptr long)
 @ stub HidP_GetUsagesEx
