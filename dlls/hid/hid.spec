@@ -19,7 +19,7 @@
 @ stub HidD_SetNumInputBuffers
 @ stub HidD_SetOutputReport
 @ stub HidP_GetButtonCaps
-@ stub HidP_GetCaps
+@ stdcall HidP_GetCaps(ptr ptr)
 @ stub HidP_GetData
 @ stub HidP_GetExtendedAttributes
 @ stub HidP_GetLinkCollectionNodes
