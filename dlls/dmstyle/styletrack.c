@@ -95,6 +95,11 @@ static const IUnknownVtbl DirectMusicStyleTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicStyleTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicStyleTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicStyleTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicStyleTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicStyleTrack, TrackVtbl, iface);
 	return IDirectMusicStyleTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -209,10 +214,13 @@ static HRESULT WINAPI IDirectMusicStyleTrack_IDirectMusicTrack_SetParamEx (LPDIR
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyleTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicStyleTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicStyleTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicStyleTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
@@ -238,7 +246,7 @@ static const IDirectMusicTrack8Vtbl DirectMusicStyleTrack_Track_Vtbl = {
 	IDirectMusicStyleTrack_IDirectMusicTrack_PlayEx,
 	IDirectMusicStyleTrack_IDirectMusicTrack_GetParamEx,
 	IDirectMusicStyleTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicStyleTrack_IDirectMusicTrack_Compose,
+        IDirectMusicTrack8Impl_Compose,
 	IDirectMusicStyleTrack_IDirectMusicTrack_Join
 };
 

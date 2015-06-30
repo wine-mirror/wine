@@ -93,6 +93,11 @@ static const IUnknownVtbl DirectMusicAuditionTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicAuditionTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicAuditionTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicAuditionTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicAuditionTrack, TrackVtbl, iface);
 	return IDirectMusicAuditionTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -200,16 +205,23 @@ static HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_SetParamEx (LP
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicAuditionTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicAuditionTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicAuditionTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
+        IDirectMusicTrack *newtrack, MUSIC_TIME join, IUnknown *context, DWORD trackgroup,
+        IDirectMusicTrack **resulttrack)
+{
+    IDirectMusicAuditionTrack *This = impl_from_IDirectMusicTrack8(iface);
+    TRACE("(%p, %p, %d, %p, %d, %p): stub\n", This, newtrack, join, context, trackgroup,
+            resulttrack);
+    return E_NOTIMPL;
 }
 
 static const IDirectMusicTrack8Vtbl DirectMusicAuditionTrack_Track_Vtbl = {
@@ -229,8 +241,8 @@ static const IDirectMusicTrack8Vtbl DirectMusicAuditionTrack_Track_Vtbl = {
 	IDirectMusicAuditionTrack_IDirectMusicTrack_PlayEx,
 	IDirectMusicAuditionTrack_IDirectMusicTrack_GetParamEx,
 	IDirectMusicAuditionTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicAuditionTrack_IDirectMusicTrack_Compose,
-	IDirectMusicAuditionTrack_IDirectMusicTrack_Join
+    IDirectMusicTrack8Impl_Compose,
+    IDirectMusicTrack8Impl_Join
 };
 
 /* IDirectMusicAuditionTrack IPersistStream part: */

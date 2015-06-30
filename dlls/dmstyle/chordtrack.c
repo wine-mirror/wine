@@ -96,6 +96,11 @@ static const IUnknownVtbl DirectMusicChordTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicChordTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicChordTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicChordTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicChordTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
   ICOM_THIS_MULTI(IDirectMusicChordTrack, TrackVtbl, iface);
   return IDirectMusicChordTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -207,10 +212,13 @@ static HRESULT WINAPI IDirectMusicChordTrack_IDirectMusicTrack_SetParamEx (LPDIR
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicChordTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-  ICOM_THIS_MULTI(IDirectMusicChordTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-  return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicChordTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicChordTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
@@ -236,7 +244,7 @@ static const IDirectMusicTrack8Vtbl DirectMusicChordTrack_Track_Vtbl = {
   IDirectMusicChordTrack_IDirectMusicTrack_PlayEx,
   IDirectMusicChordTrack_IDirectMusicTrack_GetParamEx,
   IDirectMusicChordTrack_IDirectMusicTrack_SetParamEx,
-  IDirectMusicChordTrack_IDirectMusicTrack_Compose,
+  IDirectMusicTrack8Impl_Compose,
   IDirectMusicChordTrack_IDirectMusicTrack_Join
 };
 

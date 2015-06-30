@@ -95,6 +95,11 @@ static const IUnknownVtbl DirectMusicCommandTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicCommandTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicCommandTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicCommandTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
 	return IDirectMusicCommandTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -208,10 +213,13 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_SetParamEx (LPD
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicCommandTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicCommandTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicCommandTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
@@ -237,7 +245,7 @@ static const IDirectMusicTrack8Vtbl DirectMusicCommandTrack_Track_Vtbl = {
 	IDirectMusicCommandTrack_IDirectMusicTrack_PlayEx,
 	IDirectMusicCommandTrack_IDirectMusicTrack_GetParamEx,
 	IDirectMusicCommandTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicCommandTrack_IDirectMusicTrack_Compose,
+        IDirectMusicTrack8Impl_Compose,
 	IDirectMusicCommandTrack_IDirectMusicTrack_Join
 };
 
