@@ -28,7 +28,7 @@
 @ stub HidP_GetSpecificValueCaps
 @ stub HidP_GetUsageValue
 @ stub HidP_GetUsageValueArray
-@ stub HidP_GetUsages
+@ stdcall HidP_GetUsages(long long long ptr ptr ptr ptr long)
 @ stub HidP_GetUsagesEx
 @ stdcall HidP_GetValueCaps(long ptr ptr ptr)
 @ stub HidP_InitializeReportForID
