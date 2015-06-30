@@ -207,7 +207,7 @@ library MSScriptControl
 
         [id(0x05e3), propget] HRESULT Error([out, retval] IScriptError **ppse);
 
-        [id(0x03e8), propget] HRESULT CodeObject([out, retval] IDispatch *ppdispObject);
+        [id(0x03e8), propget] HRESULT CodeObject([out, retval] IDispatch **ppdispObject);
 
         [id(0x03e9), propget] HRESULT Procedures([out, retval] IScriptProcedureCollection **ppdispProcedures);
 
