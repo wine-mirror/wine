@@ -179,7 +179,7 @@ static ULONG WINAPI IcnsFrameEncode_Release(IWICBitmapFrameEncode *iface)
         if (This->icns_image != NULL)
             HeapFree(GetProcessHeap(), 0, This->icns_image);
 
-        IWICBitmapFrameEncode_Release(&This->encoder->IWICBitmapFrameEncode_iface);
+        IWICBitmapEncoder_Release(&This->encoder->IWICBitmapEncoder_iface);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
