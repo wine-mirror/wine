@@ -643,6 +643,32 @@ static void test_enum_value(void)
     ok( !strcmp( value, "Test" ), "value is '%s' instead of Test\n", value );
     ok( !strcmp( data, "foobar" ), "data is '%s' instead of foobar\n", data );
 
+    if (pRegGetValueA) /* avoid a crash on Windows 2000 */
+    {
+        /* no value and no val_count parameter */
+        data_count = 20;
+        type = 1234;
+        strcpy( data, "xxxxxxxxxx" );
+        res = RegEnumValueA( test_key, 0, NULL, NULL, NULL, &type, (BYTE*)data, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+
+        /* no value parameter */
+        val_count = 20;
+        data_count = 20;
+        type = 1234;
+        strcpy( data, "xxxxxxxxxx" );
+        res = RegEnumValueA( test_key, 0, NULL, &val_count, NULL, &type, (BYTE*)data, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+
+        /* no val_count parameter */
+        data_count = 20;
+        type = 1234;
+        strcpy( value, "xxxxxxxxxx" );
+        strcpy( data, "xxxxxxxxxx" );
+        res = RegEnumValueA( test_key, 0, value, NULL, NULL, &type, (BYTE*)data, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+    }
+
     /* Unicode tests */
 
     SetLastError(0xdeadbeef);
@@ -709,6 +735,32 @@ static void test_enum_value(void)
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
+
+    if (pRegGetValueA) /* avoid a crash on Windows 2000 */
+    {
+        /* no valueW and no val_count parameter */
+        data_count = 20;
+        type = 1234;
+        memcpy( dataW, xxxW, sizeof(xxxW) );
+        res = RegEnumValueW( test_key, 0, NULL, NULL, NULL, &type, (BYTE*)dataW, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+
+        /* no valueW parameter */
+        val_count = 20;
+        data_count = 20;
+        type = 1234;
+        memcpy( dataW, xxxW, sizeof(xxxW) );
+        res = RegEnumValueW( test_key, 0, NULL, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+
+        /* no val_count parameter */
+        data_count = 20;
+        type = 1234;
+        memcpy( valueW, xxxW, sizeof(xxxW) );
+        memcpy( dataW, xxxW, sizeof(xxxW) );
+        res = RegEnumValueW( test_key, 0, valueW, NULL, NULL, &type, (BYTE*)dataW, &data_count );
+        ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
+    }
 
 cleanup:
     RegDeleteKeyA(test_key, "");

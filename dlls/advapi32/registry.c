@@ -1912,8 +1912,8 @@ LSTATUS WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_
     TRACE("(%p,%d,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
 
-    /* NT only checks count, not val_count */
-    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved || !value || !val_count)
+        return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
@@ -1997,8 +1997,8 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
     TRACE("(%p,%d,%p,%p,%p,%p,%p,%p)\n",
           hkey, index, value, val_count, reserved, type, data, count );
 
-    /* NT only checks count, not val_count */
-    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved || !value || !val_count)
+        return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
