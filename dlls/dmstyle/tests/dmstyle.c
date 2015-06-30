@@ -251,14 +251,15 @@ static void test_track(void)
         REFCLSID clsid;
         const char *name;
         BOOL has_save;
+        BOOL has_join;
         BOOL todo;
     } class[] = {
-        { X(DirectMusicAuditionTrack), TRUE, TRUE },
-        { X(DirectMusicChordTrack), TRUE, FALSE },
-        { X(DirectMusicCommandTrack), TRUE, TRUE },
-        { X(DirectMusicMotifTrack), FALSE, TRUE },
-        { X(DirectMusicMuteTrack), TRUE, TRUE },
-        { X(DirectMusicStyleTrack), FALSE, FALSE },
+        { X(DirectMusicAuditionTrack), TRUE, FALSE, TRUE },
+        { X(DirectMusicChordTrack), TRUE, TRUE, FALSE },
+        { X(DirectMusicCommandTrack), TRUE, TRUE, TRUE },
+        { X(DirectMusicMotifTrack), FALSE, FALSE, TRUE },
+        { X(DirectMusicMuteTrack), TRUE, FALSE, TRUE },
+        { X(DirectMusicStyleTrack), FALSE, TRUE, FALSE },
     };
 #undef X
     unsigned int i;
@@ -274,8 +275,55 @@ static void test_track(void)
         ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
 
         /* IDirectMusicTrack8 */
+        hr = IDirectMusicTrack8_Init(dmt8, NULL);
+        todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_Init failed: %08x\n", hr);
+        if (class[i].clsid != &CLSID_DirectMusicChordTrack &&
+                class[i].clsid != &CLSID_DirectMusicCommandTrack) {
+            /* Crashes on native */
+            hr = IDirectMusicTrack8_InitPlay(dmt8, NULL, NULL, NULL, 0, 0);
+            if (class[i].clsid == &CLSID_DirectMusicMuteTrack)
+                ok(hr == S_OK, "IDirectMusicTrack8_InitPlay failed: %08x\n", hr);
+            else
+                todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_InitPlay failed: %08x\n", hr);
+        }
+        todo_wine {
+        hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %08x\n", hr);
+        hr = IDirectMusicTrack8_SetParam(dmt8, NULL, 0, NULL);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_SetParam failed: %08x\n", hr);
+        }
         hr = IDirectMusicTrack8_IsParamSupported(dmt8, NULL);
         ok(hr == E_POINTER, "IDirectMusicTrack8_IsParamSupported failed: %08x\n", hr);
+        if (class[i].clsid == &CLSID_DirectMusicMuteTrack) {
+            hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
+            hr = IDirectMusicTrack8_RemoveNotificationType(dmt8, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack8_RemoveNotificationType failed: %08x\n", hr);
+        } else todo_wine {
+            hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
+            ok(hr == E_POINTER, "IDirectMusicTrack8_AddNotificationType failed: %08x\n", hr);
+            hr = IDirectMusicTrack8_RemoveNotificationType(dmt8, NULL);
+            ok(hr == E_POINTER, "IDirectMusicTrack8_RemoveNotificationType failed: %08x\n", hr);
+        }
+        todo_wine {
+        hr = IDirectMusicTrack8_Clone(dmt8, 0, 0, NULL);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_Clone failed: %08x\n", hr);
+        hr = IDirectMusicTrack8_PlayEx(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_PlayEx failed: %08x\n", hr);
+        hr = IDirectMusicTrack8_GetParamEx(dmt8, NULL, 0, NULL, NULL, NULL, 0);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_GetParamEx failed: %08x\n", hr);
+        hr = IDirectMusicTrack8_SetParamEx(dmt8, NULL, 0, NULL, NULL, 0);
+        ok(hr == E_POINTER, "IDirectMusicTrack8_SetParamEx failed: %08x\n", hr);
+        }
+        hr = IDirectMusicTrack8_Compose(dmt8, NULL, 0, NULL);
+        ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Compose failed: %08x\n", hr);
+        if (class[i].has_join) {
+            hr = IDirectMusicTrack8_Join(dmt8, NULL, 0, NULL, 0, NULL);
+            todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_Join failed: %08x\n", hr);
+        } else {
+            hr = IDirectMusicTrack8_Join(dmt8, NULL, 0, NULL, 0, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Join failed: %08x\n", hr);
+        }
 
         /* IPersistStream */
         hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
