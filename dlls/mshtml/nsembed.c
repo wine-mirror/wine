@@ -795,7 +795,7 @@ void nsfree(void *mem)
     NS_Free(mem);
 }
 
-static BOOL nsACString_Init(nsACString *str, const char *data)
+BOOL nsACString_Init(nsACString *str, const char *data)
 {
     return NS_SUCCEEDED(NS_CStringContainerInit2(str, data, PR_UINT32_MAX, 0));
 }

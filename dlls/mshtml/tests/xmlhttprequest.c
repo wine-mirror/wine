@@ -503,7 +503,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     SET_EXPECT(xmlhttprequest_onreadystatechange_opened);
     hres = IHTMLXMLHttpRequest_open(xhr, method, url, vbool, vempty, vempty);
-    todo_wine ok(hres == S_OK, "open failed: %08x\n", hres);
+    ok(hres == S_OK, "open failed: %08x\n", hres);
     todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
 
     SysFreeString(method);
@@ -517,30 +517,37 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    ok(val == 0, "Expect 0, got %d\n", val);
+    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    todo_wine ok(val == 0, "Expect 0, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    ok(text == NULL, "Expect NULL, got %p\n", text);
+    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    todo_wine ok(text == NULL, "Expect NULL, got %p\n", text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
-    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    ok(val == 1, "Expect OPENED, got %d\n", val);
+    todo_wine ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    todo_wine ok(val == 1, "Expect OPENED, got %d\n", val);
 
     SET_EXPECT(xmlhttprequest_onreadystatechange_opened);
     SET_EXPECT(xmlhttprequest_onreadystatechange_headers_received);
     SET_EXPECT(xmlhttprequest_onreadystatechange_loading);
     SET_EXPECT(xmlhttprequest_onreadystatechange_done);
     hres = IHTMLXMLHttpRequest_send(xhr, vempty);
-    ok(hres == S_OK, "send failed: %08x\n", hres);
 
-    pump_msgs(&called_xmlhttprequest_onreadystatechange_done);
+    todo_wine ok(hres == S_OK, "send failed: %08x\n", hres);
+    if(SUCCEEDED(hres))
+        pump_msgs(&called_xmlhttprequest_onreadystatechange_done);
     todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
     todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
     todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
-    CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
+    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
+
+    if(FAILED(hres)) {
+        IHTMLXMLHttpRequest_Release(xhr);
+        xhr = NULL;
+        return;
+    }
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);

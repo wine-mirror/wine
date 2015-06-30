@@ -33,6 +33,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static HRESULT bstr_to_nsacstr(BSTR bstr, nsACString *str)
+{
+    char *cstr = heap_strdupWtoU(bstr);
+    if(!cstr)
+        return E_OUTOFMEMORY;
+    nsACString_Init(str, cstr);
+    heap_free(cstr);
+    return S_OK;
+}
+
+static HRESULT variant_to_nsastr(VARIANT var, nsAString *ret)
+{
+    switch(V_VT(&var)) {
+        case VT_NULL:
+        case VT_ERROR:
+        case VT_EMPTY:
+            nsAString_Init(ret, NULL);
+            return S_OK;
+        case VT_BSTR:
+            nsAString_InitDepend(ret, V_BSTR(&var));
+            return S_OK;
+        default:
+            FIXME("Unsupported VARIANT: %s\n", debugstr_variant(&var));
+            return E_INVALIDARG;
+    }
+}
+
 /* IHTMLXMLHttpRequest */
 typedef struct {
     EventTarget event_target;
@@ -198,8 +225,64 @@ static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
 static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR bstrMethod, BSTR bstrUrl, VARIANT varAsync, VARIANT varUser, VARIANT varPassword)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%s %s %s %s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl), debugstr_variant(&varAsync), debugstr_variant(&varUser), debugstr_variant(&varPassword));
-    return E_NOTIMPL;
+    nsACString method, url;
+    nsAString user, password;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s %s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl), debugstr_variant(&varAsync), debugstr_variant(&varUser), debugstr_variant(&varPassword));
+
+    if(V_VT(&varAsync) != VT_BOOL) {
+        FIXME("varAsync not supported: %s\n", debugstr_variant(&varAsync));
+        return E_FAIL;
+    }
+
+    /* Note: Starting with Gecko 30.0 (Firefox 30.0 / Thunderbird 30.0 / SeaMonkey 2.27),
+     * synchronous requests on the main thread have been deprecated due to the negative
+     * effects to the user experience.
+     */
+    if(!V_BOOL(&varAsync)) {
+        FIXME("Synchronous request is not supported yet\n");
+        return E_FAIL;
+    }
+
+    hres = variant_to_nsastr(varUser, &user);
+    if(FAILED(hres))
+        return hres;
+    hres = variant_to_nsastr(varPassword, &password);
+    if(FAILED(hres)) {
+        nsAString_Finish(&user);
+        return hres;
+    }
+
+    hres = bstr_to_nsacstr(bstrMethod, &method);
+    if(FAILED(hres)) {
+        nsAString_Finish(&user);
+        nsAString_Finish(&password);
+        return hres;
+    }
+    hres = bstr_to_nsacstr(bstrUrl, &url);
+    if(FAILED(hres)) {
+        nsAString_Finish(&user);
+        nsAString_Finish(&password);
+        nsACString_Finish(&method);
+        return hres;
+    }
+
+    nsres = nsIXMLHttpRequest_Open(This->nsxhr, &method, &url, TRUE,
+            &user, &password, 0);
+
+    nsACString_Finish(&method);
+    nsACString_Finish(&url);
+    nsAString_Finish(&user);
+    nsAString_Finish(&password);
+
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_Open failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIANT varBody)

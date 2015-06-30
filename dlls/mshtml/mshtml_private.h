@@ -855,6 +855,7 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*) DE
 void *nsalloc(size_t) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;
 void nsfree(void*) DECLSPEC_HIDDEN;
 
+BOOL nsACString_Init(nsACString *str, const char *data) DECLSPEC_HIDDEN;
 void nsACString_InitDepend(nsACString*,const char*) DECLSPEC_HIDDEN;
 void nsACString_SetData(nsACString*,const char*) DECLSPEC_HIDDEN;
 UINT32 nsACString_GetData(const nsACString*,const char**) DECLSPEC_HIDDEN;
