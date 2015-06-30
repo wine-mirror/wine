@@ -136,6 +136,7 @@ typedef struct _HIDP_CAPS
     USHORT  NumberFeatureDataIndices;
 } HIDP_CAPS, *PHIDP_CAPS;
 
+NTSTATUS WINAPI HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, PHIDP_BUTTON_CAPS ButtonCaps, PUSHORT  ButtonCapsLength, PHIDP_PREPARSED_DATA PreparsedData);
 NTSTATUS WINAPI HidP_GetCaps(PHIDP_PREPARSED_DATA PreparsedData, PHIDP_CAPS Capabilities);
 
 #ifndef FACILITY_HID_ERROR_CODE
