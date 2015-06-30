@@ -40,6 +40,7 @@ static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
 static const WCHAR wszFontWeight[]        = {'F','o','n','t','W','e','i','g','h','t',0};
 static const WCHAR wszHistoryBufferSize[] = {'H','i','s','t','o','r','y','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszHistoryNoDup[]      = {'H','i','s','t','o','r','y','N','o','D','u','p',0};
+static const WCHAR wszInsertMode[]        = {'I','n','s','e','r','t','M','o','d','e',0};
 static const WCHAR wszMenuMask[]          = {'M','e','n','u','M','a','s','k',0};
 static const WCHAR wszQuickEdit[]         = {'Q','u','i','c','k','E','d','i','t',0};
 static const WCHAR wszScreenBufferSize[]  = {'S','c','r','e','e','n','B','u','f','f','e','r','S','i','z','e',0};
@@ -48,10 +49,10 @@ static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z'
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
-    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x font=%s/%u hist=%u/%d flags=%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x font=%s/%u hist=%u/%d flags=%c%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
                pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
                wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size, cfg->history_nodup ? 1 : 2,
-               cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',
+               cfg->insert_mode ? 'I' : 'i', cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',
                cfg->menu_mask, cfg->sb_width, cfg->sb_height, cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height,
                cfg->edition_mode,
                wine_dbgstr_w(cfg->registry));
@@ -126,6 +127,10 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
         cfg->history_nodup = val;
 
     count = sizeof(val);
+    if (!RegQueryValueExW(hConKey, wszInsertMode, 0, &type, (LPBYTE)&val, &count))
+        cfg->insert_mode = val;
+
+    count = sizeof(val);
     if (!RegQueryValueExW(hConKey, wszMenuMask, 0, &type, (LPBYTE)&val, &count))
         cfg->menu_mask = val;
 
@@ -175,6 +180,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->font_weight = 0;
     cfg->history_size = 50;
     cfg->history_nodup = 0;
+    cfg->insert_mode = 1;
     cfg->menu_mask = 0;
     cfg->quick_edit = 0;
     cfg->sb_height = 25;
@@ -244,6 +250,9 @@ static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 
     val = cfg->history_nodup;
     RegSetValueExW(hConKey, wszHistoryNoDup, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
+
+    val = cfg->insert_mode;
+    RegSetValueExW(hConKey, wszInsertMode, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 
     val = cfg->menu_mask;
     RegSetValueExW(hConKey, wszMenuMask, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
