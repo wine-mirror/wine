@@ -23,7 +23,7 @@
 @ stub HidP_GetData
 @ stub HidP_GetExtendedAttributes
 @ stub HidP_GetLinkCollectionNodes
-@ stub HidP_GetScaledUsageValue
+@ stdcall HidP_GetScaledUsageValue(long long long long ptr ptr ptr long)
 @ stub HidP_GetSpecificButtonCaps
 @ stub HidP_GetSpecificValueCaps
 @ stdcall HidP_GetUsageValue(long long long long ptr ptr ptr long)
