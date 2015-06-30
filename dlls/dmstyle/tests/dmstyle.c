@@ -254,7 +254,7 @@ static void test_track(void)
         BOOL has_join;
         BOOL todo;
     } class[] = {
-        { X(DirectMusicAuditionTrack), TRUE, FALSE, TRUE },
+        { X(DirectMusicAuditionTrack), TRUE, FALSE, FALSE },
         { X(DirectMusicChordTrack), TRUE, TRUE, FALSE },
         { X(DirectMusicCommandTrack), TRUE, TRUE, TRUE },
         { X(DirectMusicMotifTrack), FALSE, FALSE, TRUE },
