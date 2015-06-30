@@ -32,9 +32,18 @@
 #include "winioctl.h"
 #include "ddk/wdm.h"
 
+#include "hidusage.h"
 #include "ddk/hidclass.h"
+#include "ddk/hidpi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
+
+BOOLEAN WINAPI HidD_FreePreparsedData(PHIDP_PREPARSED_DATA PreparsedData)
+{
+    TRACE("(%p)\n", PreparsedData);
+    HeapFree(GetProcessHeap(), 0, PreparsedData);
+    return TRUE;
+}
 
 BOOLEAN WINAPI HidD_GetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
 {
@@ -64,4 +73,27 @@ BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG
 {
     TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
     return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_PRODUCT_STRING, NULL, 0, Buffer, BufferLength, NULL, NULL);
+}
+
+BOOLEAN WINAPI HidD_GetPreparsedData(HANDLE HidDeviceObject, PHIDP_PREPARSED_DATA *PreparsedData)
+{
+    HID_COLLECTION_INFORMATION info;
+    PHIDP_PREPARSED_DATA data;
+
+    TRACE("(%p %p)\n", HidDeviceObject, PreparsedData);
+
+    if (!DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_COLLECTION_INFORMATION, NULL, 0,
+                         &info, sizeof(HID_COLLECTION_INFORMATION), NULL, NULL))
+        return FALSE;
+
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, info.DescriptorSize))) return FALSE;
+
+    if (!DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_COLLECTION_DESCRIPTOR, NULL, 0,
+                         data, info.DescriptorSize, NULL, NULL))
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        return FALSE;
+    }
+    *PreparsedData = data;
+    return TRUE;
 }

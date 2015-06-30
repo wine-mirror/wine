@@ -56,6 +56,15 @@ DEFINE_GUID (GUID_DEVINTERFACE_HID, \
 #define IOCTL_HID_SET_DRIVER_CONFIG           HID_BUFFER_CTL_CODE(101)
 #define IOCTL_HID_GET_MS_GENRE_DESCRIPTOR     HID_OUT_CTL_CODE(121)
 
+typedef struct _HID_COLLECTION_INFORMATION {
+    ULONG   DescriptorSize;
+    BOOLEAN Polled;
+    UCHAR   Reserved1[1];
+    USHORT  VendorID;
+    USHORT  ProductID;
+    USHORT  VersionNumber;
+} HID_COLLECTION_INFORMATION, *PHID_COLLECTION_INFORMATION;
+
 #ifdef __cplusplus
 }
 #endif

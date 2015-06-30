@@ -32,5 +32,7 @@ void WINAPI HidD_GetHidGuid(LPGUID guid);
 BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength);
 BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength);
 BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength);
+BOOLEAN WINAPI HidD_GetPreparsedData( HANDLE HidDeviceObject, PHIDP_PREPARSED_DATA *PreparsedData);
+BOOLEAN WINAPI HidD_FreePreparsedData(PHIDP_PREPARSED_DATA PreparsedData);
 
 #endif  /* __WINE_HIDSDI_H */

@@ -1,5 +1,5 @@
 @ stub HidD_FlushQueue
-@ stub HidD_FreePreparsedData
+@ stdcall HidD_FreePreparsedData(ptr)
 @ stub HidD_GetAttributes
 @ stub HidD_GetConfiguration
 @ stdcall HidD_GetFeature(long ptr long)
@@ -10,7 +10,7 @@
 @ stub HidD_GetMsGenreDescriptor
 @ stub HidD_GetNumInputBuffers
 @ stub HidD_GetPhysicalDescriptor
-@ stub HidD_GetPreparsedData
+@ stdcall HidD_GetPreparsedData(ptr ptr)
 @ stdcall HidD_GetProductString(long ptr long)
 @ stub HidD_GetSerialNumberString
 @ stub HidD_Hello
