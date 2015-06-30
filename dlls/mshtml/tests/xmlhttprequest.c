@@ -362,12 +362,12 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(V_DISPATCH(&var) == (IDispatch*)&xmlhttprequest_onreadystatechange_obj, "unexpected onreadystatechange value\n");
 
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, NULL);
-    todo_wine ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+    ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
-    todo_wine ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    todo_wine ok(val == 0, "Expect UNSENT, got %d\n", val);
+    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    ok(val == 0, "Expect UNSENT, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_status(xhr, NULL);
     todo_wine ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
@@ -492,8 +492,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
-    todo_wine ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    todo_wine ok(val == 0, "Expect UNSENT, got %d\n", val);
+    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    ok(val == 0, "Expect UNSENT, got %d\n", val);
 
     method = a2bstr("GET");
     url = a2bstr(xml_url);
@@ -526,8 +526,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
-    todo_wine ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    todo_wine ok(val == 1, "Expect OPENED, got %d\n", val);
+    ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+    ok(val == 1, "Expect OPENED, got %d\n", val);
 
     SET_EXPECT(xmlhttprequest_onreadystatechange_opened);
     SET_EXPECT(xmlhttprequest_onreadystatechange_headers_received);
@@ -564,7 +564,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
     ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    ok(val == 4, "Expect DONE, got %d\n", val);
+    todo_wine ok(val == 4, "Expect DONE, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_responseText(xhr, &text);
     ok(hres == S_OK, "get_responseText failed: %08x\n", hres);
