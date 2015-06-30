@@ -109,3 +109,61 @@ NTSTATUS WINAPI HidP_GetCaps(PHIDP_PREPARSED_DATA PreparsedData,
 
     return HIDP_STATUS_SUCCESS;
 }
+
+
+NTSTATUS WINAPI HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, PHIDP_VALUE_CAPS ValueCaps,
+                                  PUSHORT ValueCapsLength, PHIDP_PREPARSED_DATA PreparsedData)
+{
+    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
+    WINE_HID_REPORT *report = NULL;
+    USHORT v_count = 0, r_count = 0;
+    int i,j,u;
+
+    TRACE("(%i, %p, %p, %p)\n", ReportType, ValueCaps, ValueCapsLength, PreparsedData);
+
+    if (data->magic != HID_MAGIC)
+        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+
+    switch(ReportType)
+    {
+        case HidP_Input:
+            v_count = data->caps.NumberInputValueCaps;
+            r_count = data->dwInputReportCount;
+            report = HID_INPUT_REPORTS(data);
+            break;
+        case HidP_Output:
+            v_count = data->caps.NumberOutputValueCaps;
+            r_count = data->dwOutputReportCount;
+            report = HID_OUTPUT_REPORTS(data);
+            break;
+        case HidP_Feature:
+            v_count = data->caps.NumberFeatureValueCaps;
+            r_count = data->dwFeatureReportCount;
+            report = HID_FEATURE_REPORTS(data);
+            break;
+        default:
+            return HIDP_STATUS_INVALID_REPORT_TYPE;
+    }
+
+    if (!r_count || !v_count || !report)
+    {
+        *ValueCapsLength = 0;
+        return HIDP_STATUS_SUCCESS;
+    }
+
+    v_count = min(v_count, *ValueCapsLength);
+
+    u = 0;
+    for (j = 0; j < r_count && u < v_count; j++)
+    {
+        for (i = 0; i < report->elementCount && u < v_count; i++)
+        {
+            if (report->Elements[i].ElementType == ValueElement)
+                ValueCaps[u++] = report->Elements[i].caps.value;
+        }
+        report = HID_NEXT_REPORT(data, report);
+    }
+
+    *ValueCapsLength = v_count;
+    return HIDP_STATUS_SUCCESS;
+}
