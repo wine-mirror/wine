@@ -2368,7 +2368,7 @@ static HRESULT WINAPI ITextRange_fnCanPaste(ITextRange *me, VARIANT *v, LONG for
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
 
-    FIXME("(%p)->(%p %x %p): stub\n", This, debugstr_variant(v), format, ret);
+    FIXME("(%p)->(%s %x %p): stub\n", This, debugstr_variant(v), format, ret);
 
     if (!This->child.reole)
         return CO_E_RELEASED;
