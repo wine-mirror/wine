@@ -257,7 +257,7 @@ static void test_track(void)
         { X(DirectMusicAuditionTrack), TRUE, FALSE, FALSE },
         { X(DirectMusicChordTrack), TRUE, TRUE, FALSE },
         { X(DirectMusicCommandTrack), TRUE, TRUE, TRUE },
-        { X(DirectMusicMotifTrack), FALSE, FALSE, TRUE },
+        { X(DirectMusicMotifTrack), FALSE, FALSE, FALSE },
         { X(DirectMusicMuteTrack), TRUE, FALSE, FALSE },
         { X(DirectMusicStyleTrack), FALSE, TRUE, FALSE },
     };
